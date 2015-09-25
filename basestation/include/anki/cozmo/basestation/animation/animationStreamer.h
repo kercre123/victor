@@ -30,13 +30,16 @@ namespace Cozmo {
   {
   public:
     static const std::string LiveAnimation;
+    static const u8          IdleAnimationTag = 255;
     
     AnimationStreamer(CannedAnimationContainer& container);
     
     // Sets an animation to be streamed and how many times to stream it.
-    // Use zero to play the animation indefinitely.
+    // Use numLoops = 0 to play the animation indefinitely.
+    // Returns a tag you can use to monitor whether the robot is done playing this
+    // animation.
     // Actual streaming occurs on calls to Update().
-    Result SetStreamingAnimation(const std::string& name, u32 numLoops = 1);
+    u8 SetStreamingAnimation(const std::string& name, u32 numLoops = 1);
     
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.
@@ -59,16 +62,27 @@ namespace Cozmo {
 
     Animation      _liveAnimation;
 
-    Animation* _idleAnimation; // default points to "live" animation
-    Animation* _streamingAnimation;
+    Animation*  _idleAnimation; // default points to "live" animation
+    Animation*  _streamingAnimation;
+    TimeStamp_t _timeSpentIdling_ms;
     
     bool _isIdling;
     
     u32 _numLoops;
     u32 _loopCtr;
+    u8  _tagCtr;
     
     Util::RandomGenerator _rng;
-    int _nextBlink_ms;
+    
+    // For live animation
+    s32 _nextBlink_ms;
+    s32 _nextLookAround_ms;
+    s32 _bodyMoveDuration_ms;
+    s32 _liftMoveDuration_ms;
+    s32 _headMoveDuration_ms;
+    s32 _bodyMoveSpacing_ms;
+    s32 _liftMoveSpacing_ms;
+    s32 _headMoveSpacing_ms;
     
   }; // class AnimationStreamer
   

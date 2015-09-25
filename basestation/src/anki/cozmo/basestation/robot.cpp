@@ -8,6 +8,8 @@
 
 // TODO:(bn) should these be a full path?
 #include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/latticePlanner.h"
+#include "anki/cozmo/basestation/faceAndApproachPlanner.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
@@ -91,8 +93,6 @@ namespace Anki {
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
     , _isMoving(false)
-    , _isAnimating(false)
-    , _isIdleAnimating(false)
     , _battVoltage(5)
     , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
@@ -104,6 +104,7 @@ namespace Anki {
     , _animationStreamer(_cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
+    , _animationTag(0)
     , _emotionMgr(*this)
     {
       _poseHistory = new RobotPoseHistory();
@@ -114,23 +115,13 @@ namespace Anki {
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
       
-      _proceduralFace.MarkAsSentToRobot(true);
-      _lastProceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
+      _lastProceduralFace.MarkAsSentToRobot(true);
       
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
-      Json::Value mprims;
-      if (_dataPlatform != nullptr){
-        // Read planner motion primitives
-        // TODO: Use different motions primitives depending on the type/personality of this robot
-        // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
-        if(!success) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
-        }
-      }
-
 
       ReadAnimationDir(false);
       
@@ -162,7 +153,7 @@ namespace Anki {
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
-      _longPathPlanner  = new LatticePlanner(this, mprims);
+      _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       
@@ -336,10 +327,9 @@ namespace Anki {
       
       SetPickedUp( msg.status & IS_PICKED_UP );
       
-      _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
-      _isIdleAnimating = _animationStreamer.IsIdleAnimating();
-      
       _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
+      
+      _animationTag = msg.animTag;
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       
@@ -470,8 +460,6 @@ namespace Anki {
       // Engine modifications to state message.
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
       MessageRobotState stateMsg(msg);
-      if (_isIdleAnimating) { stateMsg.status |= IS_ANIMATING_IDLE; }
-      
       
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
@@ -1243,6 +1231,17 @@ namespace Anki {
       if(_blockWorld.GetObjectByID(_trackToObjectID) != nullptr) {
         _trackWithHeadOnly = headOnly;
         _trackToFaceID = Vision::TrackedFace::UnknownFace;
+
+        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking
+        _headLockedBeforeTracking = IsHeadLocked();
+        _wheelsLockedBeforeTracking = AreWheelsLocked();
+
+        LockHead(true);
+        if(!headOnly) {
+          LockWheels(true);
+        }
+        
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
@@ -1259,6 +1258,18 @@ namespace Anki {
       if(_faceWorld.GetFace(_trackToFaceID) != nullptr) {
         _trackWithHeadOnly = headOnly;
         _trackToObjectID.UnSet();
+        
+        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking
+        _headLockedBeforeTracking = IsHeadLocked();
+        _wheelsLockedBeforeTracking = AreWheelsLocked();
+        
+        LockHead(true);
+        if(!headOnly) {
+          LockWheels(true);
+        }
+        
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
@@ -1271,13 +1282,23 @@ namespace Anki {
     
     Result Robot::DisableTrackToObject()
     {
-      _trackToObjectID.UnSet();
+      if(_trackToObjectID.IsSet()) {
+        _trackToObjectID.UnSet();
+        // Restore lock state to whatever it was when we enabled tracking
+        LockHead(_headLockedBeforeTracking);
+        LockWheels(_wheelsLockedBeforeTracking);
+      }
       return RESULT_OK;
     }
     
     Result Robot::DisableTrackToFace()
     {
-      _trackToFaceID = Vision::TrackedFace::UnknownFace;
+      if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
+        // Restore lock state to whatever it was when we enabled tracking
+        LockHead(_headLockedBeforeTracking);
+        LockWheels(_wheelsLockedBeforeTracking);
+      }
       return RESULT_OK;
     }
       
@@ -1306,11 +1327,11 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
-    Result Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
+    u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      u8 tag = _animationStreamer.SetStreamingAnimation(animName, numLoops);
       _lastPlayedAnimationId = animName;
-      return lastResult;
+      return tag;
     }
     
     Result Robot::SetIdleAnimation(const std::string &animName)
@@ -1902,6 +1923,18 @@ namespace Anki {
       return SendMessage(msg);
     }
     
+    const std::set<ObjectID> Robot::GetCarryingObjects() const
+    {
+      std::set<ObjectID> objects;
+      if (_carryingObjectID.IsSet()) {
+        objects.insert(_carryingObjectID);
+      }
+      if (_carryingObjectOnTopID.IsSet()) {
+        objects.insert(_carryingObjectOnTopID);
+      }
+      return objects;
+    }
+    
     void Robot::SetCarryingObject(ObjectID carryObjectID)
     {
       ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
@@ -1937,34 +1970,41 @@ namespace Anki {
       }
     }
     
-    void Robot::UnSetCarryingObject()
+    void Robot::UnSetCarryingObjects()
     {
-      ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
-                          _carryingObjectID.GetValue(), GetID());
-      } else {
-        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
-        if(carriedObject == nullptr) {
-          // This really should not happen
-          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                            "Carried object %d could not be cast as an ActionableObject.\n",
-                            _carryingObjectID.GetValue());
-        } else if(carriedObject->IsBeingCarried() == false) {
-          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
-                              "Robot %d thinks it is carrying object %d but that object "
-                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
-          
+      std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
+      for (auto& objID : carriedObjectIDs) {
+        ObservableObject* object = _blockWorld.GetObjectByID(objID);
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                            "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                            objID.GetValue(), GetID());
         } else {
-          carriedObject->SetBeingCarried(false);
-          
-          // Tell the robot it's not carrying anything
-          SendSetCarryState(CARRY_NONE);
+          ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+          if(carriedObject == nullptr) {
+            // This really should not happen
+            PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                              "Carried object %d could not be cast as an ActionableObject.\n",
+                              objID.GetValue());
+          } else if(carriedObject->IsBeingCarried() == false) {
+            PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects",
+                                "Robot %d thinks it is carrying object %d but that object "
+                                "does not think it is being carried.\n", GetID(), objID.GetValue());
+            
+          } else {
+            carriedObject->SetBeingCarried(false);
+          }
         }
       }
+      
+      // Tell the robot it's not carrying anything
+      if (_carryingObjectID.IsSet()) {
+        SendSetCarryState(CARRY_NONE);
+      }
+
       // Even if the above failed, still mark the robot's carry ID as unset
       _carryingObjectID.UnSet();
+      _carryingObjectOnTopID.UnSet();
     }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
@@ -2085,7 +2125,7 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      UnSetCarryingObject(); // also sets carried object as not being carried anymore
+      UnSetCarryingObjects(); // also sets carried objects as not being carried anymore
       _carryingMarker = nullptr;
       
       if(_carryingObjectOnTopID.IsSet()) {

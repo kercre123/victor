@@ -422,6 +422,8 @@ namespace Anki {
       // it was docking/tracking
       robot->StopDocking();
       
+      robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::BlockPickedUp(msg.didSucceed)));
+      
       return lastResult;
     }
     
@@ -442,6 +444,8 @@ namespace Anki {
       
       robot->StopDocking();
       robot->StartLookingForMarkers();
+      
+      robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::BlockPlaced(msg.didSucceed)));
       
       return lastResult;
     }
@@ -625,8 +629,8 @@ namespace Anki {
           assert(object->IsActive());
           if(object->GetActiveID() == msg.objectID) {
             // TODO: Mark object as de-localized
-            printf("Received message that Object %d (Active ID %d) moved.\n",
-                   objectWithID.first.GetValue(), msg.objectID);
+            printf("Received message that Object %d (Active ID %d) moved. (%f, %f, %f) - upAxis %u\n",
+                   objectWithID.first.GetValue(), msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, msg.upAxis);
             
             // Don't notify game about moving objects that are being carried
             ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);

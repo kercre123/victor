@@ -79,11 +79,35 @@ namespace Cozmo {
   
   IBehavior::Status BehaviorInteractWithFaces::Update(double currentTime_sec)
   {
-    static double lastProceduralFaceUpdate = 0;
     switch(_currentState)
     {
       case State::Inactive:
       {
+        // If we're still finishing an action, just wait
+        if(_isActing)
+        {
+          break;
+        }
+        
+        // If enough time has passed since we looked down toward the ground, do that now
+        if (currentTime_sec - _lastGlanceTime >= kGlanceDownInterval_sec)
+        {
+          float headAngle = _robot.GetHeadAngle();
+          
+          // Move head down to check for a block
+          MoveHeadToAngleAction* moveHeadAction = new MoveHeadToAngleAction(0);
+          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          
+          // Now move the head back up to the angle it was previously at
+          moveHeadAction = new MoveHeadToAngleAction(headAngle);
+          
+          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          _lastActionTag = moveHeadAction->GetTag();
+          _isActing = true;
+          _lastGlanceTime = currentTime_sec;
+          break;
+        }
+        
         // If we don't have any faces to care about, we're done here
         auto iterFirst = _interestingFacesOrder.begin();
         if (_interestingFacesOrder.end() == iterFirst)
@@ -101,6 +125,15 @@ namespace Cozmo {
                             faceID);
           break;
         }
+        
+        auto dataIter = _interestingFacesData.find(faceID);
+        if (_interestingFacesData.end() == dataIter)
+        {
+          PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.MissingInteractionData",
+                            "Failed to find interaction data associated with faceID %llu", faceID);
+          break;
+        }
+        dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
         UpdateBaselineFace(face);
@@ -139,6 +172,21 @@ namespace Cozmo {
           break;
         }
         
+        // If we've watched this face longer than it's considered interesting, put it on cooldown and go to inactive
+        auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
+        if (watchingFaceDuration >= kFaceInterestingDuration_sec)
+        {
+          _robot.DisableTrackToFace();
+          _interestingFacesOrder.erase(_interestingFacesOrder.begin());
+          _interestingFacesData.erase(faceID);
+          _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration_sec;
+          
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.FaceOnCooldown",
+                           "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
+                           watchingFaceDuration, kFaceInterestingDuration_sec);
+          _currentState = State::Inactive;
+        }
+        
         // We need a face to work with
         const Face* face = _robot.GetFaceWorld().GetFace(faceID);
         if(face == nullptr)
@@ -151,41 +199,52 @@ namespace Cozmo {
           break;
         }
         
-        // This is too expensive to do every frame, so use a longer delay
-        if (currentTime_sec - lastProceduralFaceUpdate >= kMinProceduralFaceWait)
-        {
-          // Update cozmo's face based on our currently focused face
-          UpdateProceduralFace(_crntProceduralFace, *face);
-          lastProceduralFaceUpdate = currentTime_sec;
-        }
+        // Update cozmo's face based on our currently focused face
+        UpdateProceduralFace(_crntProceduralFace, *face);
         
-        if(!_isAnimating)
+        if(!_isActing)
         {
           Pose3d headWrtRobot;
-          if(false == face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot))
+          bool headPoseRetrieveSuccess = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot);
+          if(!headPoseRetrieveSuccess)
           {
             PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.PoseWrtFail","");
+            break;
           }
-          else if(headWrtRobot.GetTranslation().Length() < 300.f)
+          
+          Vec3f headTranslate = headWrtRobot.GetTranslation();
+          headTranslate.z() = 0.0f; // We only want to work with XY plane distance
+          auto distSqr = headTranslate.LengthSq();
+          if(distSqr < (kTooCloseDistance_mm * kTooCloseDistance_mm))
           {
             // The head is very close (scary!). Move backward along the line from the
             // robot to the head.
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
-            PlayAnimationAction* animAction = new PlayAnimationAction("shocked");
-            _animationActionTag = animAction->GetTag();
-            _robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
-            _isAnimating = true;
+            PlayAnimationAction* animAction = new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A");
+            _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
             _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
+            MoveToSafeDistanceFromPoint(headTranslate);
+          }
+          else if (distSqr > (kTooFarDistance_mm * kTooFarDistance_mm))
+          {
+            MoveToSafeDistanceFromPoint(headTranslate);
           }
         }
         
         break;
       }
       case State::Interrupted:
+      {
+        // Since we're ending being in InteractWithFaces, set our procedural face to be neutral
+        ProceduralFace resetFace;
+        auto oldTimeStamp = _robot.GetProceduralFace().GetTimeStamp();
+        oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
+        resetFace.SetTimeStamp(oldTimeStamp);
+        _robot.SetProceduralFace(resetFace);
         return Status::Complete;
-        
+      }
       default:
         
         return Status::Failure;
@@ -193,6 +252,28 @@ namespace Cozmo {
     
     return Status::Running;
   } // Update()
+  
+  void BehaviorInteractWithFaces::MoveToSafeDistanceFromPoint(const Vec3f& robotRelativePoint)
+  {
+    Pose3d goalPose = _robot.GetPose();
+    auto pointDistance = robotRelativePoint.Length();
+    // Calculate the ratio of the relative point minus the safe distance to the overall current distance
+    auto distanceRatio = (pointDistance - (kTooFarDistance_mm + kTooCloseDistance_mm) / 2.0f) / pointDistance;
+    
+    // Use the distance ratio to create a goal pose where the translation is the safe distance away from the relative point
+    goalPose.SetTranslation(goalPose.GetTranslation() + goalPose.GetRotation() * (robotRelativePoint * distanceRatio));
+    
+    DriveToPoseAction* driveAction = new DriveToPoseAction(goalPose, false, false);
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, driveAction);
+    _lastActionTag = driveAction->GetTag();
+    _isActing = true;
+    
+    // Disable our face tracking to allow the drive to pose action to function
+    _robot.DisableTrackToFace();
+    
+    // Set our state back to inactive so we can correctly refocus on a face when we're done moving
+    _currentState = State::Inactive;
+  }
   
   Result BehaviorInteractWithFaces::Interrupt(double currentTime_sec)
   {
@@ -279,7 +360,7 @@ namespace Cozmo {
     
     auto iter = _cooldownFaces.find(faceID);
     // If we have a cooldown entry for this face, check if the cooldown time has passed
-    if (_cooldownFaces.end() != iter && (*iter).second < event.GetCurrentTime())
+    if (_cooldownFaces.end() != iter && iter->second < event.GetCurrentTime())
     {
       _cooldownFaces.erase(iter);
       iter = _cooldownFaces.end();
@@ -416,10 +497,10 @@ namespace Cozmo {
   {
     const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
     
-    if(msg.actionType == RobotActionType::PLAY_ANIMATION && msg.idTag == _animationActionTag)
+    if(msg.idTag == _lastActionTag)
     {
       _robot.SetProceduralFace(_crntProceduralFace);
-      _isAnimating = false;
+      _isActing = false;
     }
   }
 } // namespace Cozmo

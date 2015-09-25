@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
@@ -39,18 +40,24 @@ namespace Anki {
     public:
       DriveToPoseAction(const Pose3d& pose,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       DriveToPoseAction(const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
       DriveToPoseAction(const std::vector<Pose3d>& poses,
                         const bool forceHeadDown  = true,
-                        const bool useManualSpeed = false);
+                        const bool useManualSpeed = false,
+                        const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
       
     protected:
 
@@ -93,7 +100,7 @@ namespace Anki {
     // specified action type. Drives there using a DriveToPoseAction. Then
     // moves the robot's head to the angle indicated by the pre-action pose
     // (which may be different from the angle used for path following).
-    class DriveToObjectAction : public IAction //: public DriveToPoseAction
+    class DriveToObjectAction : public IAction 
     {
     public:
       DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm = 0, const bool useManualSpeed = false);
@@ -104,6 +111,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
       
     protected:
       
@@ -156,6 +165,8 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -179,6 +190,8 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return HEAD_TRACK; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -191,7 +204,6 @@ namespace Anki {
       Radians     _headAngle;
       Radians     _angleTolerance;
       Radians     _variability;
-      Radians     _headAngleWithVariation;
       
       std::string _name;
       bool        _inPosition;
@@ -217,6 +229,8 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
       
     protected:
       
@@ -252,6 +266,8 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
@@ -272,6 +288,40 @@ namespace Anki {
     }; // class FacePoseAction
     
     
+    
+    // Verify that an object exists by facing tilting the head to face its
+    // last-known pose and verify that we can still see it. Optionally, you can
+    // also require that a specific marker be seen as well.
+    class VisuallyVerifyObjectAction : public IAction
+    {
+    public:
+      VisuallyVerifyObjectAction(ObjectID objectID,
+                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
+      
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
+      
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual bool ShouldLockWheels() const override { return true; }
+      
+      // Max amount of time to wait before verifying after moving head that we are
+      // indeed seeing the object/marker we expect.
+      // TODO: Can this default be reduced?
+      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
+      
+      ObjectID             _objectID;
+      Vision::Marker::Code _whichCode;
+      f32                  _waitToVerifyTime;
+      
+      
+      MoveLiftToHeightAction  _moveLiftToHeightAction;
+      bool                 _moveLiftToHeightActionDone;
+      
+    }; // class VisuallyVerifyObjectAction
+    
+    
     // Tilt head and rotate body to face the specified (marker on an) object.
     // Use angles specified at construction to control the body rotation.
     class FaceObjectAction : public FacePoseAction
@@ -284,14 +334,18 @@ namespace Anki {
       // maxTurnAngle to zero.
       
       FaceObjectAction(ObjectID objectID, Radians turnAngleTol, Radians maxTurnAngle,
+                       bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
       FaceObjectAction(ObjectID objectID, Vision::Marker::Code whichCode,
                        Radians turnAngleTol, Radians maxTurnAngle,
+                       bool visuallyVerifyWhenDone = false,
                        bool headTrackWhenDone = false);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
     protected:
       
@@ -304,41 +358,19 @@ namespace Anki {
       // Reduce delays from their defaults
       virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
-      // Amount of time to wait before verifying after moving head that we are
-      // indeed seeing the object/marker we expect.
-      // TODO: Can this default be reduced?
-      virtual f32 GetWaitToVerifyTime() const { return 0.25f; }
-      
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
-      bool                 _compoundActionDone;
+      bool                 _facePoseCompoundActionDone;
+      
+      VisuallyVerifyObjectAction    _visuallyVerifyAction;
       
       ObjectID             _objectID;
       Vision::Marker::Code _whichCode;
-      f32                  _waitToVerifyTime;
+      bool                 _visuallyVerifyWhenDone;
       bool                 _headTrackWhenDone;
       
     }; // FaceObjectAction
-    
-    
-    // Verify that an object exists by facing tilting the head to face its
-    // last-known pose and verify that we can still see it. Optionally, you can
-    // also require that a specific marker be seen as well.
-    class VisuallyVerifyObjectAction : public FaceObjectAction
-    {
-    public:
-      VisuallyVerifyObjectAction(ObjectID objectID,
-                                 Vision::Marker::Code whichCode = Vision::Marker::ANY_CODE);
-      
-      virtual const std::string& GetName() const override;
-      virtual RobotActionType GetType() const override { return RobotActionType::VISUALLY_VERIFY_OBJECT; }
-      
-    protected:
-      
-      virtual bool ShouldLockWheels() const override { return true; }
-      
-    }; // class VisuallyVerifyObjectAction
     
     
     // Interface for actions that involve "docking" with an object
@@ -357,6 +389,10 @@ namespace Anki {
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
+      
+      virtual u8 GetAnimTracksToDisable() const override {
+        return HEAD_TRACK | LIFT_TRACK | BODY_TRACK;
+      }
       
     protected:
       
@@ -384,7 +420,7 @@ namespace Anki {
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
       // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const { return !_useManualSpeed; }
+      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
       DockAction_t                _dockAction;
@@ -394,7 +430,7 @@ namespace Anki {
       f32                         _waitToVerifyTime;
       bool                        _wasPickingOrPlacing;
       bool                        _useManualSpeed;
-      VisuallyVerifyObjectAction* _visuallyVerifyAction;
+      FaceObjectAction*           _faceAndVerifyAction;
       f32                         _placementOffsetX_mm;
       f32                         _placementOffsetY_mm;
       f32                         _placementOffsetAngle_rad;
@@ -495,7 +531,6 @@ namespace Anki {
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
-        //new VisuallyVerifyObjectAction(objectID),
         new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
 
@@ -549,6 +584,8 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -560,7 +597,7 @@ namespace Anki {
       
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker;
-      VisuallyVerifyObjectAction* _verifyAction;
+      FaceObjectAction*           _faceAndVerifyAction;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -718,6 +755,8 @@ namespace Anki {
       std::string   _animName;
       std::string   _name;
       u32           _numLoops;
+      bool          _startedPlaying;
+      u8            _animTag;
       
     }; // class PlayAnimationAction
     

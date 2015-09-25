@@ -21,6 +21,8 @@ BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
 GTEST=$TOPLEVEL/tools/anki-util/libs/framework/
 
+echo "Entering directory \`$TOPLEVEL/coretech/project/gyp/'"
+
 # build
 xcodebuild \
 -project $PROJECT/coretech/project/gyp/$PROJECTNAME.xcodeproj \

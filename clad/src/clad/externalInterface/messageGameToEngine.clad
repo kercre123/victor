@@ -8,6 +8,7 @@
 #include "clad/types/cameraSettings.clad"
 #include "clad/types/testMode.clad"
 #include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/demoBehaviorState.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 
@@ -79,6 +80,7 @@ message FaceObject {
     float_32 turnAngleTol,
     float_32 maxTurnAngle,
     uint_8   robotID,
+    uint_8   visuallyVerifyWhenDone,
     uint_8   headTrackWhenDone
 }
 
@@ -536,6 +538,10 @@ message QueueCompoundAction {
   QueueActionPosition    position,
   RobotActionType        actionTypes[uint_8],
   RobotActionUnion       actions[uint_8]
+}
+
+message SetDemoState {
+  DemoBehaviorState demoState
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

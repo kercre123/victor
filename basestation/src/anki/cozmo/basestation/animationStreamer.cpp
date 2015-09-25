@@ -1,5 +1,5 @@
 
-#include "anki/cozmo/basestation/animationStreamer.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
@@ -15,46 +15,64 @@ namespace Cozmo {
   AnimationStreamer::AnimationStreamer(CannedAnimationContainer& container)
   : _animationContainer(container)
   , _liveAnimation(LiveAnimation)
-  , _idleAnimation(&_liveAnimation)
+  , _idleAnimation(nullptr)
   , _streamingAnimation(nullptr)
+  , _timeSpentIdling_ms(0)
   , _isIdling(false)
   , _numLoops(1)
   , _loopCtr(0)
+  , _tagCtr(0)
+  , _nextBlink_ms(0)
+  , _nextLookAround_ms(0)
+  , _bodyMoveDuration_ms(0)
+  , _liftMoveDuration_ms(0)
+  , _headMoveDuration_ms(0)
+  , _bodyMoveSpacing_ms(0)
+  , _liftMoveSpacing_ms(0)
+  , _headMoveSpacing_ms(0)
   {
     
   }
 
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
                        "Stopping streaming of animation '%s'.\n",
-                       _streamingAnimation->GetName().c_str());
+                       GetStreamingAnimationName().c_str());
 #     endif
       
       _streamingAnimation = nullptr;
-      return RESULT_OK;
+      return 0;
     }
     
     _streamingAnimation = _animationContainer.GetAnimation(name);
     if(_streamingAnimation == nullptr) {
-      return RESULT_FAIL;
+      return 0;
     } else {
       
+      // Incrememnt the tag counter and keep it from being one of the "special"
+      // values used to indicate "not animating" or "idle animation"
+      ++_tagCtr;
+      while(_tagCtr == 0 || _tagCtr == IdleAnimationTag) {
+        ++_tagCtr;
+      }
+    
       // Get the animation ready to play
-      _streamingAnimation->Init();
+      _streamingAnimation->Init(_tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
       
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
-                       "Will start streaming '%s' animation %d times.\n",
-                       name.c_str(), numLoops);
+                       "Will start streaming '%s' animation %d times with tag=%d.\n",
+                       name.c_str(), numLoops, _tagCtr);
 #     endif
-      return RESULT_OK;
+    
+      return _tagCtr;
     }
   }
 
@@ -93,6 +111,8 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     
     if(_streamingAnimation != nullptr) {
+      _timeSpentIdling_ms = 0;
+      
       if(_streamingAnimation->IsFinished()) {
         
         ++_loopCtr;
@@ -106,7 +126,7 @@ namespace Cozmo {
 #         endif
           
           // Reset the animation so it can be played again:
-          _streamingAnimation->Init();
+          _streamingAnimation->Init(_tagCtr);
           
         } else {
 #         if DEBUG_ANIMATION_STREAMING
@@ -144,15 +164,18 @@ namespace Cozmo {
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        _idleAnimation->Init();
+        _idleAnimation->Init(IdleAnimationTag);
         _isIdling = true;
+        //InitIdleAnimation();
       }
       
       _idleAnimation->Update(robot);
+      _timeSpentIdling_ms += BS_TIME_STEP;
     }
     
     return lastResult;
   } // AnimationStreamer::Update()
+  
   
   Result StreamProceduralFace(Robot& robot,
                               const ProceduralFace& lastFace,
@@ -166,19 +189,29 @@ namespace Cozmo {
     // old, or for a fixed max duration so we get a smooth change but don't
     // queue up tons of frames right now trying to get to the current face
     // (which would cause an unwanted delay).
-    const TimeStamp_t lastInterpTime = std::max(lastTime, nextTime - 4*IKeyFrame::SAMPLE_LENGTH_MS);
+    const TimeStamp_t maxDuration = 4*IKeyFrame::SAMPLE_LENGTH_MS;
+    TimeStamp_t lastInterpTime = lastTime;
+    if(nextTime > maxDuration) {
+      lastInterpTime = std::max(lastTime, nextTime - maxDuration);
+    }
     
     ProceduralFace proceduralFace;
-    proceduralFace.SetTimeStamp(lastInterpTime);
+    proceduralFace.SetTimeStamp(lastInterpTime + IKeyFrame::SAMPLE_LENGTH_MS);
 
-    while(proceduralFace.GetTimeStamp() < nextTime)
+    while(proceduralFace.GetTimeStamp() <= nextTime)
     {
-      // Increment interpolation time
-      proceduralFace.SetTimeStamp(proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
+      // Calculate next interpolation time
+      auto nextInterpFrameTime = proceduralFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS;
       
       // Interpolate based on time
-      const f32 blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
-                                               static_cast<f32>(nextTime - lastInterpTime)));
+      f32 blendFraction = 1.f;
+      // If there are more blending frames after this one actually calculate the blend. Otherwise this is the last
+      // frame and we should finish the interpolation
+      if (nextInterpFrameTime <= nextTime)
+      {
+        blendFraction = std::min(1.f, (static_cast<f32>(proceduralFace.GetTimeStamp() - lastInterpTime) /
+                                       static_cast<f32>(nextTime - lastInterpTime)));
+      }
       
       const bool useSaccades = true;
       proceduralFace.Interpolate(lastFace, nextFace, blendFraction, useSaccades);
@@ -187,17 +220,47 @@ namespace Cozmo {
       ProceduralFaceKeyFrame kf(proceduralFace);
       kf.SetIsLive(true);
       if(RESULT_OK != liveAnimation.AddKeyFrame(kf)) {
-        PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddFrameFaile", "");
+        PRINT_NAMED_ERROR("AnimationStreamer.StreamProceduralFace.AddFrameFailed", "");
         return RESULT_FAIL;
       }
+      
+      // Increment the procedural face time for the next interpolated frame
+      proceduralFace.SetTimeStamp(nextInterpFrameTime);
     }
     
     return RESULT_OK;
-  }
+  } // StreamProceduralFace()
+  
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
   {
     Result lastResult = RESULT_OK;
+    
+    // Live animation parameters:
+    // TODO: Get all these constants from config somehow
+    const s32 kBlinkCloseTime_ms = 150;
+    const s32 kBlinkOpenTime_ms  = 100;
+    const s32 kBlinkSpacingMinTime_ms = 3000;
+    const s32 kBlinkSpacingMaxTime_ms = 4000;
+    const s32 kTimeBeforeWiggleMotions_ms = 1000;
+    const s32 kBodyMovementSpacingMin_ms = 100;
+    const s32 kBodyMovementSpacingMax_ms = 1000;
+    const s32 kBodyMovementDurationMin_ms = 250;
+    const s32 kBodyMovementDurationMax_ms = 1500;
+    const s32 kBodyMovementSpeedMinMax_mmps = 10;
+    const f32 kBodyMovementStraightFraction = 0.5f;
+    const f32 kMaxPupilMovement = 0.5f;
+    const s32 kLiftMovementDurationMin_ms = 50;
+    const s32 kLiftMovementDurationMax_ms = 500;
+    const s32 kLiftMovementSpacingMin_ms = 250;
+    const s32 kLiftMovementSpacingMax_ms = 2000;
+    const u8  kLiftHeightMean_mm = 35;
+    const u8  kLiftHeightVariability_mm = 8;
+    const s32 kHeadMovementDurationMin_ms = 50;
+    const s32 kHeadMovementDurationMax_ms = 500;
+    const s32 kHeadMovementSpacingMin_ms = 250;
+    const s32 kHeadMovementSpacingMax_ms = 1000;
+    const u8  kHeadAngleVariability_deg = 6;
     
     // Use procedural face
     const ProceduralFace& lastFace = robot.GetLastProceduralFace();
@@ -206,43 +269,152 @@ namespace Cozmo {
     const TimeStamp_t nextTime = nextFace.GetTimeStamp();
     
     _nextBlink_ms -= BS_TIME_STEP;
-    if(_nextBlink_ms <= 0) { // "time to blink"
-      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
-      ProceduralFace blinkFace(lastFace);
-      blinkFace.Blink();
-      
-      // Close:
-      blinkFace.SetTimeStamp(lastTime + 150);
-      lastResult = StreamProceduralFace(robot, lastFace, blinkFace, _liveAnimation);
+    _nextLookAround_ms -= BS_TIME_STEP;
+    
+    bool faceSent = false;
+    if(nextFace.HasBeenSentToRobot() == false &&
+       lastFace.HasBeenSentToRobot() == true &&
+       nextTime >= (lastTime + IKeyFrame::SAMPLE_LENGTH_MS))
+    {
+      lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
       if(RESULT_OK != lastResult) {
         return lastResult;
       }
-      
-      // Open:
-      blinkFace.SetTimeStamp(nextTime - 100);
-      lastResult = StreamProceduralFace(robot, blinkFace, nextFace, _liveAnimation);
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
-      
-      _nextBlink_ms = _rng.RandIntInRange(2000, 3000); // Pick random next time to blink
       
       robot.MarkProceduralFaceAsSent();
+      faceSent = true;
     }
-    else {
+    else if(_nextBlink_ms <= 0) { // "time to blink"
+#     if DEBUG_ANIMATION_STREAMING
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
+#     endif
+      ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
+      ProceduralFace blinkFace(crntFace);
+      blinkFace.Blink();
       
-      if(nextFace.HasBeenSentToRobot() == false &&
-         lastFace.HasBeenSentToRobot() == true &&
-         nextTime > lastTime)
+      // Close: interpolate from current face to blink face (eyes closed)
+      blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + kBlinkCloseTime_ms);
+      lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      
+      // Open: interpolate from blink face (eyes closed) back to current face
+      crntFace.SetTimeStamp(blinkFace.GetTimeStamp() + kBlinkOpenTime_ms);
+      lastResult = StreamProceduralFace(robot, blinkFace, crntFace, _liveAnimation);
+      if(RESULT_OK != lastResult) {
+        return lastResult;
+      }
+      
+      // Pick random next time to blink
+      _nextBlink_ms = _rng.RandIntInRange(kBlinkSpacingMinTime_ms, kBlinkSpacingMaxTime_ms);
+      faceSent = true;
+    }
+    
+
+    // Don't start wiggling until we've been idling for a bit and make sure we
+    // picking or placing
+    if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms && !robot.IsPickingOrPlacing())
+    {
+      // If wheels are available, add a little random movement to keep Cozmo looking alive
+      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.AreWheelsLocked())
       {
-        lastResult = StreamProceduralFace(robot, lastFace, nextFace, _liveAnimation);
-        if(RESULT_OK != lastResult) {
-          return lastResult;
+        _bodyMoveDuration_ms = _rng.RandIntInRange(kBodyMovementDurationMin_ms, kBodyMovementDurationMax_ms);
+        s16 speed = _rng.RandIntInRange(-kBodyMovementSpeedMinMax_mmps, kBodyMovementSpeedMinMax_mmps);
+
+        // Drive straight sometimes, turn in place the rest of the time
+        s16 curvature = s16_MAX; // drive straight
+        if(_rng.RandDblInRange(0., 1.) < kBodyMovementStraightFraction) {
+          curvature = 0;
         }
         
-        robot.MarkProceduralFaceAsSent();
+        // If we haven't already sent a procedural face, use it to point eyes
+        // in direction of motion
+        if(!faceSent)
+        {
+          ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
+          
+          f32 x = 0, y = 0;
+          if(curvature == 0) {
+            x = (speed < 0 ? _rng.RandDblInRange(-kMaxPupilMovement, 0.) : _rng.RandDblInRange(0., kMaxPupilMovement));
+            y = _rng.RandDblInRange(-kMaxPupilMovement, kMaxPupilMovement);
+          }
+          for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right})
+          {
+            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX, x);
+            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY, y);
+          }
+          
+          ProceduralFaceKeyFrame kf(crntFace);
+          kf.SetIsLive(true);
+          if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+            PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddTurnLookProcFaceFrameFailed", "");
+            return RESULT_FAIL;
+          }
+        } // if(!faceSent)
+        
+#       if DEBUG_ANIMATION_STREAMING
+        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",
+                         "Speed=%d, curvature=%d, duration=%d",
+                         speed, curvature, _bodyMoveDuration_ms);
+#       endif
+        BodyMotionKeyFrame kf(speed, curvature, _bodyMoveDuration_ms);
+        kf.SetIsLive(true);
+        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddBodyMotionKeyFrameFailed", "");
+          return RESULT_FAIL;
+        }
+        
+        _bodyMoveSpacing_ms = _rng.RandIntInRange(kBodyMovementSpacingMin_ms, kBodyMovementSpacingMax_ms);
+        
+      } else {
+        _bodyMoveDuration_ms -= BS_TIME_STEP;
       }
-    }
+      
+      // If lift is available, add a little random movement to keep Cozmo looking alive
+      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.IsLiftLocked() && !robot.IsCarryingObject()) {
+        _liftMoveDuration_ms = _rng.RandIntInRange(kLiftMovementDurationMin_ms, kLiftMovementDurationMax_ms);
+
+#       if DEBUG_ANIMATION_STREAMING
+        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
+                         "duration=%d", _liftMoveDuration_ms);
+#       endif
+        LiftHeightKeyFrame kf(kLiftHeightMean_mm, kLiftHeightVariability_mm, _liftMoveDuration_ms);
+        kf.SetIsLive(true);
+        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddLiftHeightKeyFrameFailed", "");
+          return RESULT_FAIL;
+        }
+        
+        _liftMoveSpacing_ms = _rng.RandIntInRange(kLiftMovementSpacingMin_ms, kLiftMovementSpacingMax_ms);
+        
+      } else {
+        _liftMoveDuration_ms -= BS_TIME_STEP;
+      }
+      
+      // If head is available, add a little random movement to keep Cozmo looking alive
+      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0 && !robot.IsHeadLocked()) {
+        _headMoveDuration_ms = _rng.RandIntInRange(kHeadMovementDurationMin_ms, kHeadMovementDurationMax_ms);
+        const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
+
+#       if DEBUG_ANIMATION_STREAMING
+        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
+                         "duration=%d", _headMoveDuration_ms);
+#       endif
+        HeadAngleKeyFrame kf(currentAngle_deg, kHeadAngleVariability_deg, _headMoveDuration_ms);
+        kf.SetIsLive(true);
+        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+          PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");
+          return RESULT_FAIL;
+        }
+        
+        _headMoveSpacing_ms = _rng.RandIntInRange(kHeadMovementSpacingMin_ms, kHeadMovementSpacingMax_ms);
+        
+      } else {
+        _headMoveDuration_ms -= BS_TIME_STEP;
+      }
+      
+    } // if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
     
     return lastResult;
   }

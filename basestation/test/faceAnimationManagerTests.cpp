@@ -4,35 +4,7 @@
 
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "anki/cozmo/shared/faceDisplayDecode.h"
-
 #define SHOW_IMAGES 0
-
-// NOTE: This code for "uncompressing" the RLE format into an image for display was
-// copied from sim_hal.cpp
-static void DrawFaceRLE(const std::vector<u8>& rleData,
-                        cv::Mat_<u8>& outImg)
-{
-  using namespace Anki;
-  using namespace Cozmo;
-    
-  // Clear the display
-  outImg.setTo(0);
-
-  uint64_t decodedImg[FaceAnimationManager::IMAGE_WIDTH];
-  FaceDisplayDecode(rleData.data(), FaceAnimationManager::IMAGE_HEIGHT, FaceAnimationManager::IMAGE_WIDTH, decodedImg);
-
-  // Translate from 1-bit/pixel,column-major ordering to 1-byte/pixel, row-major
-  for (u8 i = 0; i < FaceAnimationManager::IMAGE_WIDTH; ++i) {
-    for (u8 j = 0; j < FaceAnimationManager::IMAGE_HEIGHT; ++j) {
-      if ((decodedImg[i] >> j) & 1) {
-        outImg(j,i) = 255;
-      }
-    }
-  }
-
-  
-} // DrawFaceRLE()
 
 // Helper for testing whether two images are exactly equal, pixelwise
 static bool AreImagesEqual(cv::Mat_<u8>& img1, cv::Mat_<u8>& img2)
@@ -70,7 +42,7 @@ TEST(FaceAnimationManager, TestCompressRLE)
   std::vector<u8> rleData;
   Anki::Cozmo::FaceAnimationManager::CompressRLE(img, rleData);
   
-  DrawFaceRLE(rleData, testImg);
+  Anki::Cozmo::FaceAnimationManager::DrawFaceRLE(rleData, testImg);
   
 # if SHOW_IMAGES
   cv::imshow("EmptyTestFace", img);
@@ -85,7 +57,7 @@ TEST(FaceAnimationManager, TestCompressRLE)
   img.setTo(255);
   Anki::Cozmo::FaceAnimationManager::CompressRLE(img, rleData);
   
-  DrawFaceRLE(rleData, testImg);
+  Anki::Cozmo::FaceAnimationManager::DrawFaceRLE(rleData, testImg);
   
 # if SHOW_IMAGES
   cv::imshow("FullTestFace", img);
@@ -115,7 +87,7 @@ TEST(FaceAnimationManager, TestCompressRLE)
   
   Anki::Cozmo::FaceAnimationManager::CompressRLE(img, rleData);
   
-  DrawFaceRLE(rleData, testImg);
+  Anki::Cozmo::FaceAnimationManager::DrawFaceRLE(rleData, testImg);
   
 # if SHOW_IMAGES
   cv::imshow("TwoEyesTestFace", img);
@@ -146,7 +118,7 @@ TEST(FaceAnimationManager, TestCompressRLE)
   
   Anki::Cozmo::FaceAnimationManager::CompressRLE(img, rleData);
   
-  DrawFaceRLE(rleData, testImg);
+  Anki::Cozmo::FaceAnimationManager::DrawFaceRLE(rleData, testImg);
   
 # if SHOW_IMAGES
   cv::imshow("TwoEyesAtTopTestFace", img);

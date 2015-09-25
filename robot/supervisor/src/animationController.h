@@ -32,6 +32,7 @@ namespace Anki {
       Result Init();
 
       // Buffer up a new KeyFrame for playing, using a KeyFrame message
+      Result BufferKeyFrame(const Messages::AnimKeyFrame_StartOfAnimation& msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle&      msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight&     msg);
       Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample&    msg);
@@ -65,9 +66,14 @@ namespace Anki {
       
       void ClearNumBytesPlayed();
       
-      // Enable/disable tracks from playing. If the bit for corresponding track is
-      // zero, any keyframes buffered for that track will be ignored.
-      void SetTracksToPlay(AnimTrackFlag tracksToPlay);
+      // Enables/disables the given tracks without changing the others' states.
+      // Keyframes for disabled tracks that are encountered in the buffer are
+      // discarded (but the numBytesPlayed count is still incremented)
+      void EnableTracks(u8 whichTracks);
+      void DisableTracks(u8 whichTracks);
+      
+      // Return the "tag" from the most recent StartOfAnimation keyframe
+      u8 GetCurrentTag();
       
     } // namespace AnimationController
   } // namespcae Cozmo

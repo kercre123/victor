@@ -62,21 +62,22 @@ namespace Anki {
     
     Result IKeyFrame::DefineFromJson(const Json::Value &json)
     {
-      Result lastResult = SetMembersFromJson(json);
+      Result lastResult = RESULT_OK;
+      
+      // Read the frame time from the json file as well
+      if(!json.isMember("triggerTime_ms")) {
+        PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
+        lastResult = RESULT_FAIL;
+      } else {
+        _triggerTime_ms = json["triggerTime_ms"].asUInt();
+        
+        // Only way to set isValid=true is that SetMembersFromJson succeeded and
+        // triggerTime was found:
+        _isValid = true;
+      }
       
       if(lastResult == RESULT_OK) {
-        
-        // Read the frame time from the json file as well
-        if(!json.isMember("triggerTime_ms")) {
-          PRINT_NAMED_ERROR("IKeyFrame.ReadFromJson", "Expecting 'triggerTime_ms' field in KeyFrame Json.\n");
-          lastResult = RESULT_FAIL;
-        } else {
-          _triggerTime_ms = json["triggerTime_ms"].asUInt();
-          
-          // Only way to set isValid=true is that SetMembersFromJson succeeded and
-          // triggerTime was found:
-          _isValid = true;
-        }
+        lastResult = SetMembersFromJson(json);
       }
       
       return lastResult;
@@ -104,15 +105,13 @@ return RESULT_FAIL; \
     // HeadAngleKeyFrame
     //
     
-    /*
-     HeadAngleKeyFrame::HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration)
-     : _durationTime_ms(duration)
+     HeadAngleKeyFrame::HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration_ms)
+     : _durationTime_ms(duration_ms)
      , _angle_deg(angle_deg)
      , _angleVariability_deg(angle_variability_deg)
      {
-     IKeyFrame::SetIsValid(true);
+       
      }
-     */
     
     RobotMessage* HeadAngleKeyFrame::GetStreamMessage()
     {
@@ -143,6 +142,14 @@ return RESULT_FAIL; \
     //
     // LiftHeightKeyFrame
     //
+
+    LiftHeightKeyFrame::LiftHeightKeyFrame(u8 height_mm, u8 heightVariability_mm, TimeStamp_t duration_ms)
+    : _durationTime_ms(duration_ms)
+    , _height_mm(height_mm)
+    , _heightVariability_mm(heightVariability_mm)
+    {
+      
+    }
     
     RobotMessage* LiftHeightKeyFrame::GetStreamMessage()
     {
@@ -293,15 +300,21 @@ return RESULT_FAIL; \
 #pragma mark ProceduralFaceKeyFrame
     
     static Result SetEyeArrayHelper(ProceduralFace::WhichEye whichEye,
-                                  const Json::Value& jsonRoot,
+                                    const Json::Value& jsonRoot,
                                     ProceduralFace& face)
     {
-      std::array<ProceduralFace::Value,static_cast<size_t>(ProceduralEyeParameter::NumParameters)> eyeArray;
+      std::vector<ProceduralFace::Value> eyeArray;
       const char* eyeStr = (whichEye == ProceduralFace::WhichEye::Left ?
                             "leftEye" : "rightEye");
-      
-      if(JsonTools::GetArrayOptional(jsonRoot, eyeStr, eyeArray)) {
-        for(s32 i=0; i<eyeArray.size(); ++i)
+      if(JsonTools::GetVectorOptional(jsonRoot, eyeStr, eyeArray)) {
+        const size_t N = static_cast<size_t>(ProceduralFace::Parameter::NumParameters);
+        if(eyeArray.size() != N) {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetEyeArrayHelper.WrongNumParams",
+                              "Unexpected number of parameters for %s array (%lu vs. %lu)",
+                              eyeStr, eyeArray.size(), N);
+        }
+        
+        for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
         {
           face.SetParameter(whichEye,
                             static_cast<ProceduralFace::Parameter>(i),
@@ -508,6 +521,12 @@ return RESULT_FAIL; \
     
     RobotMessage* RobotAudioKeyFrame::GetStreamMessage()
     {
+      if(_audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
+        return nullptr;
+      }
+        
       if(_sampleIndex == 0) {
         // Select one of the audio names to play
         if(_audioReferences.size()==1) {
@@ -710,6 +729,14 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
     : _currentTime_ms(0)
     {
       _stopMsg.speed = 0;
+    }
+    
+    BodyMotionKeyFrame::BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms)
+    : BodyMotionKeyFrame()
+    {
+      _durationTime_ms = duration_ms;
+      _streamMsg.speed = speed;
+      _streamMsg.curvatureRadius_mm = curvatureRadius_mm;
     }
     
     Result BodyMotionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)

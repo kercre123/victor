@@ -15,16 +15,23 @@
 #include "anki/common/basestation/math/polygon_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rotatedRect.h"
-#include "util/logging/logging.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "anki/planning/basestation/xythetaPlanner.h"
+#include "anki/planning/basestation/xythetaPlannerContext.h"
 #include "json/json.h"
-#include "pathPlanner.h"
-#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "latticePlanner.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/jsonWriter/jsonWriter.h"
+#include "util/logging/logging.h"
 
+// TODO:(bn) ANKI_DEVELOPER_CODE?
+#define LATTICE_PLANNER_DUMP_ENV_TO_CACHE 1
 
 // base padding on the robot footprint
 #define LATTICE_PLANNER_ROBOT_PADDING 7.0
@@ -38,7 +45,7 @@
 #define DEBUG_REPLAN_CHECKS 0
 
 // a global max so planning doesn't run forever
-#define LATTICE_PLANNER_MAX_EXPANSIONS 300000000
+#define LATTICE_PLANNER_MAX_EXPANSIONS 30000000
 
 // this is in units of seconds per mm, meaning the robot would drive X
 // seconds out of the way to avoid having to drive 1 mm through the
@@ -69,39 +76,201 @@ class LatticePlannerImpl
 {
 public:
 
-  LatticePlannerImpl(const Robot* robot, const Json::Value& mprims, const LatticePlanner* parent)
-    : robot_(robot)
-    , planner_(env_)
+  LatticePlannerImpl(const Robot* robot, Util::Data::DataPlatform* dataPlatform, const LatticePlanner* parent)
+    : _robot(robot)
+    , _planner(_context)
+    , _searchNum(0)
     , _parent(parent)
-    {
-      env_.Init(mprims);
+  {
+    if( dataPlatform == nullptr ) {
+      PRINT_NAMED_ERROR("LatticePlanner.InvalidDataPlatform",
+                        "LatticePlanner requires data platform to operate!");
     }
+    else {
+      Json::Value mprims;
+      const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources,
+                                                    "config/basestation/config/cozmo_mprim.json",
+                                                    mprims);
+      if(success) {
+        _context.env.Init(mprims);
+      }
+      else {
+        PRINT_NAMED_ERROR("LatticePlanner.MotionPrimitiveJsonParseFailure",
+                          "Failed to load motion primitives, Planner likely won't work.");
+      }
+
+      if( LATTICE_PLANNER_DUMP_ENV_TO_CACHE ) {
+        const std::string envDumpDir("planner/contextDump/");
+        _pathToEnvCache = dataPlatform->pathToResource(Util::Data::Scope::Cache, envDumpDir);
+
+        if (!Util::FileUtils::CreateDirectory(_pathToEnvCache, false, true)) {
+          PRINT_NAMED_ERROR("LatticePlanner.CreateDirFailed","%s", _pathToEnvCache.c_str());
+        }
+
+        std::string mprimFilename = "planner/contextDump/mprim.json";
+        if( ! dataPlatform->writeAsJson(Util::Data::Scope::Cache, mprimFilename, mprims) ) {
+          PRINT_NAMED_WARNING("LatticePlanner.MprimpCache", "could not write mprim object to cache");
+        }
+      }
+    }
+  }
 
   // imports and pads obstacles
   void ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor = nullptr);
 
-  const Robot* robot_;
-  xythetaEnvironment env_;
-  xythetaPlanner planner_;
-  xythetaPlan totalPlan_;
-  Pose3d targetPose_orig_;
+  IPathPlanner::EPlanStatus GetPlan(Planning::Path &path,
+                                    const Pose3d& startPose,
+                                    bool forceReplanFromScratch);
+
+  const Robot* _robot;
+  xythetaPlannerContext _context;
+  xythetaPlanner _planner;
+  xythetaPlan _totalPlan;
+  Pose3d _targetPose_orig;
+
+  std::string _pathToEnvCache;
+
+  int _searchNum;
 
   const LatticePlanner* _parent;
 };
 
-LatticePlanner::LatticePlanner(const Robot* robot, const Json::Value& mprims)
-{
-  impl_ = new LatticePlannerImpl(robot, mprims, this);
+//////////////////////////////////////////////////////////////////////////////// 
+// LatticePlanner functions
+//////////////////////////////////////////////////////////////////////////////// 
 
-  // TODO:(bn) param!
-  impl_->planner_.AllowFreeTurnInPlaceAtGoal(false);
+LatticePlanner::LatticePlanner(const Robot* robot, Util::Data::DataPlatform* dataPlatform)
+{
+  _impl = new LatticePlannerImpl(robot, dataPlatform, this);
 }
+
 
 LatticePlanner::~LatticePlanner()
 {
-  delete impl_;
-  impl_ = nullptr;
+  Util::SafeDelete(_impl);
 }
+
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d &startPose,
+                                                  const Pose3d &targetPose)
+{
+  // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
+
+  /*
+  const f32 Z_HEIGHT_DIFF_TOLERANCE = ROBOT_BOUNDING_Z * .2f;
+  if(!NEAR(startPose.GetTranslation().z(), targetPose.GetTranslation().z(),  Z_HEIGHT_DIFF_TOLERANCE)) {
+    PRINT_NAMED_ERROR("LatticePlannerImpl.GetPlan.DifferentHeights",
+                      "Can't producea  plan for start and target on different levels (%f vs. %f)\n",
+                      startPose.GetTranslation().z(), targetPose.GetTranslation().z());
+    return PLAN_NEEDED_BUT_PLAN_FAILURE;
+  }
+   */
+  
+  // Save original target pose
+  _impl->_targetPose_orig = targetPose;
+  
+  State_c target(targetPose.GetTranslation().x(),
+                 targetPose.GetTranslation().y(),
+                 targetPose.GetRotationAngle<'Z'>().ToFloat());
+
+  _impl->ImportBlockworldObstacles(false);
+
+  // Clear plan whenever we attempt to set goal
+  _impl->_totalPlan.Clear();
+
+  _impl->_context.goal = target;
+  
+  if( ! _impl->_planner.GoalIsValid() ) {
+    return PLAN_NEEDED_BUT_GOAL_FAILURE;
+  }
+
+  return GetPlan(path, startPose, true);
+}
+
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  const std::vector<Pose3d>& targetPoses,
+                                                  size_t& selectedIndex)
+{
+  // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan internalls
+
+  _impl->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
+
+  // for now just select the closest non-colliding goal as the true
+  // goal. Eventually I'll implement a real multi-goal planner that
+  // decides on its own which goal it wants
+
+  bool found = false;
+  size_t numTargetPoses = targetPoses.size();
+  size_t bestTargetIdx = 0;
+  float closestDist2 = 0;
+
+  // first try to find a pose with no soft collisions, then try to find one with no fatal collisions
+  for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
+
+    bestTargetIdx = 0;
+    closestDist2 = 0;
+    for(size_t i=0; i<numTargetPoses; ++i) {
+      float dist2 = (targetPoses[i].GetTranslation() - startPose.GetTranslation()).LengthSq();
+
+      if(!found || dist2 < closestDist2) {
+        State_c target_c(targetPoses[i].GetTranslation().x(),
+                         targetPoses[i].GetTranslation().y(),
+                         targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
+        State target(_impl->_context.env.State_c2State(target_c));
+        
+        if(_impl->_context.env.GetCollisionPenalty(target) < maxPenalty) {
+          closestDist2 = dist2;
+          bestTargetIdx = i;
+          found = true;
+        }
+      }
+    }
+
+    if(found)
+      break;
+  }
+
+  if(found) {
+    selectedIndex = bestTargetIdx;
+    return GetPlan(path, startPose, targetPoses[bestTargetIdx]);
+  }
+  else {
+    PRINT_NAMED_INFO("LatticePlanner.GetPlan.NoValidTarget", "could not find valid target out of %lu possible targets\n",
+                     numTargetPoses);
+    return PLAN_NEEDED_BUT_GOAL_FAILURE;
+  }
+}
+
+IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
+                                                  const Pose3d& startPose,
+                                                  bool forceReplanFromScratch)
+{
+  return _impl->GetPlan(path, startPose, forceReplanFromScratch);
+}
+
+void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
+{
+  State_c currentRobotState(startPose.GetTranslation().x(),
+                            startPose.GetTranslation().y(),
+                            startPose.GetRotationAngle<'Z'>().ToFloat());
+
+  _impl->_context.start = currentRobotState;
+
+  xythetaPlan plan;
+  _impl->_planner.GetTestPlan(plan);
+  printf("test plan:\n");
+  _impl->_context.env.PrintPlan(plan);
+
+  path.Clear();
+  _impl->_context.env.AppendToPath(plan, path);
+  printf("test path:\n");
+  path.PrintPath();
+}
+
+//////////////////////////////////////////////////////////////////////////////// 
+// LatticePlannerImpl functions
+//////////////////////////////////////////////////////////////////////////////// 
 
 void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, const ColorRGBA* vizColor)
 {
@@ -115,16 +284,16 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     robotPadding -= LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT;
   }
 
-  const bool didObjecsChange = robot_->GetBlockWorld().DidObjectsChange();
+  const bool didObjecsChange = _robot->GetBlockWorld().DidObjectsChange();
   
   if(!isReplanning ||  // if not replanning, this must be a fresh, new plan, so we always should get obstacles
      didObjecsChange)
   {
     std::vector<std::pair<Quad2f,ObjectID> > boundingBoxes;
 
-    robot_->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
+    _robot->GetBlockWorld().GetObstacles(boundingBoxes, obstaclePadding);
     
-    env_.ClearObstacles();
+    _context.env.ClearObstacles();
     
     if(vizColor != nullptr) {
       VizManager::getInstance()->EraseAllPlannerObstacles(isReplanning);
@@ -133,21 +302,20 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
     unsigned int numAdded = 0;
     unsigned int vizID = 0;
 
-    Planning::StateTheta numAngles = (StateTheta)env_.GetNumAngles();
+    Planning::StateTheta numAngles = (StateTheta) _context.env.GetNumAngles();
     for(StateTheta theta=0; theta < numAngles; ++theta) {
 
-      float thetaRads = env_.GetTheta_c(theta);
+      float thetaRads = _context.env.GetTheta_c(theta);
 
-      // Since the planner is given the driveCenter poses to be the robot's origin,
-      // compute the actual robot origin given a driveCenter pose at (0,0,0) in order
-      // to get the actual bounding box of the robot.
+      // Since the planner is given the driveCenter poses to be the robot's origin, compute the actual robot
+      // origin given a driveCenter pose at (0,0,0) in order to get the actual bounding box of the robot.
       Pose3d robotDriveCenterPose = Pose3d(thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f});
       Pose3d robotOriginPose;
-      robot_->ComputeOriginPose(robotDriveCenterPose, robotOriginPose);
+      _robot->ComputeOriginPose(robotDriveCenterPose, robotOriginPose);
       
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
-      robotPoly.ImportQuad2d(robot_->GetBoundingQuadXY(robotOriginPose, robotPadding) );
+      robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding) );
 
       for(auto boundingQuad : boundingBoxes) {
 
@@ -155,10 +323,11 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
         boundingPoly.ImportQuad2d(boundingQuad.first);
 
         /*const FastPolygon& expandedPoly =*/
-          env_.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
+        _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at
-        if(vizColor != nullptr && env_.GetTheta(robot_->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta
+        if(vizColor != nullptr &&
+           _context.env.GetTheta(_robot->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta
            // && !isReplanning
           ) {
 
@@ -197,99 +366,11 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
   }
 }
 
-      
-IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
-                                                  const Pose3d &startPose,
-                                                  const Pose3d &targetPose)
-{
-  /*
-  const f32 Z_HEIGHT_DIFF_TOLERANCE = ROBOT_BOUNDING_Z * .2f;
-  if(!NEAR(startPose.GetTranslation().z(), targetPose.GetTranslation().z(),  Z_HEIGHT_DIFF_TOLERANCE)) {
-    PRINT_NAMED_ERROR("LatticePlannerImpl.GetPlan.DifferentHeights",
-                      "Can't producea  plan for start and target on different levels (%f vs. %f)\n",
-                      startPose.GetTranslation().z(), targetPose.GetTranslation().z());
-    return PLAN_NEEDED_BUT_PLAN_FAILURE;
-  }
-   */
-  
-  // Save original target pose
-  impl_->targetPose_orig_ = targetPose;
-  
-  State_c target(targetPose.GetTranslation().x(),
-                    targetPose.GetTranslation().y(),
-                    targetPose.GetRotationAngle<'Z'>().ToFloat());
-
-  impl_->ImportBlockworldObstacles(false);
-
-  // Clear plan whenever we attempt to set goal
-  impl_->totalPlan_.Clear();
-  
-  if(!impl_->planner_.SetGoal(target))
-    return PLAN_NEEDED_BUT_GOAL_FAILURE;
-
-  // impl_->env_.WriteEnvironment("/Users/bneuman/blockWorld.env");
-
-  return GetPlan(path, startPose, true);
-}
-
-IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
-                                                  const Pose3d& startPose,
-                                                  const std::vector<Pose3d>& targetPoses,
-                                                  size_t& selectedIndex)
-{
-
-  impl_->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
-
-  // for now just select the closest non-colliding goal as the true
-  // goal. Eventually I'll implement a real multi-goal planner that
-  // decides on its own which goal it wants
-
-  bool found = false;
-  size_t numTargetPoses = targetPoses.size();
-  size_t bestTargetIdx = 0;
-  float closestDist2 = 0;
-
-  // first try to find a pose with no soft collisions, then try to find one with no fatal collisions
-  for(auto maxPenalty : (float[]){0.01, MAX_OBSTACLE_COST}) {
-
-    bestTargetIdx = 0;
-    closestDist2 = 0;
-    for(size_t i=0; i<numTargetPoses; ++i) {
-      float dist2 = (targetPoses[i].GetTranslation() - startPose.GetTranslation()).LengthSq();
-
-      if(!found || dist2 < closestDist2) {
-        State_c target_c(targetPoses[i].GetTranslation().x(),
-                         targetPoses[i].GetTranslation().y(),
-                         targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
-        State target(impl_->env_.State_c2State(target_c));
-        
-        if(impl_->env_.GetCollisionPenalty(target) < maxPenalty) {
-          closestDist2 = dist2;
-          bestTargetIdx = i;
-          found = true;
-        }
-      }
-    }
-
-    if(found)
-      break;
-  }
-
-  if(found) {
-    selectedIndex = bestTargetIdx;
-    return GetPlan(path, startPose, targetPoses[bestTargetIdx]);
-  }
-  else {
-    PRINT_NAMED_INFO("LatticePlanner.GetPlan.NoValidTarget", "could not find valid target out of %lu possible targets\n",
-                     numTargetPoses);
-    return PLAN_NEEDED_BUT_GOAL_FAILURE;
-  }
-}
 
 
-IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
-                                                  const Pose3d& startPose,
-                                                  bool forceReplanFromScratch)
+IPathPlanner::EPlanStatus LatticePlannerImpl::GetPlan(Planning::Path &path,
+                                                      const Pose3d& startPose,
+                                                      bool forceReplanFromScratch)
 {
   using namespace std;
 
@@ -297,43 +378,48 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
   xythetaPlan validOldPlan;
   size_t planIdx = 0;
 
+  _context.forceReplanFromScratch = forceReplanFromScratch;
+
   State_c currentRobotState(startPose.GetTranslation().x(),
                             startPose.GetTranslation().y(),
                             startPose.GetRotationAngle<'Z'>().ToFloat());
 
   //VizManager::getInstance()->EraseAllQuads();
-  
-  if(!forceReplanFromScratch) {
-    impl_->ImportBlockworldObstacles(true, &NamedColors::REPLAN_BLOCK_BOUNDING_QUAD);
+  if( ! _context.forceReplanFromScratch ) {
+    ImportBlockworldObstacles(true, &NamedColors::REPLAN_BLOCK_BOUNDING_QUAD);
 
-    // plan Idx is the number of plan actions to execute before getting
-    // to the starting point closest to start
+    // planIdx is the number of plan actions to execute before getting to the starting point closest to start
     float offsetFromPlan = 0.0;
-    planIdx = impl_->env_.FindClosestPlanSegmentToPose(impl_->totalPlan_, currentRobotState, offsetFromPlan);
+    planIdx = _context.env.FindClosestPlanSegmentToPose(_totalPlan,
+                                                        currentRobotState,
+                                                        offsetFromPlan);
 
     if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
-      PRINT_NAMED_INFO("LatticePlanner.GetPlanFailed",
-                       "Current state is %f away from the plan, failing\n",
-                       offsetFromPlan);
-      impl_->totalPlan_.Clear();
-      return PLAN_NEEDED_BUT_PLAN_FAILURE;
+      PRINT_NAMED_INFO("LatticePlanner.GetPlan.ForcePlan",
+                       "Current state is %f away from the plan (planIdx %zu), forcing replan from scratch\n",
+                       offsetFromPlan,
+                       planIdx);
+      _totalPlan.Clear();
     }
   }
   else {
-    impl_->totalPlan_.Clear();
+    _totalPlan.Clear();
   }
 
-  // TODO:(bn) param
+  // TODO:(bn) param. This is linked to other uses of this parameter as well
   const float maxDistancetoFollowOldPlan_mm = 40.0;
 
-  if(forceReplanFromScratch ||
-     !impl_->env_.PlanIsSafe(impl_->totalPlan_, maxDistancetoFollowOldPlan_mm, static_cast<int>(planIdx), lastSafeState, validOldPlan)) {
-    // at this point, we know the plan isn't completely
-    // safe. lastSafeState will be set to the furthest state along the
-    // plan (after planIdx) which is safe. validOldPlan will contain a
-    // partial plan starting at planIdx and ending at lastSafeState
+  if(_context.forceReplanFromScratch ||
+     ! _context.env.PlanIsSafe(_totalPlan,
+                               maxDistancetoFollowOldPlan_mm,
+                               static_cast<int>(planIdx),
+                               lastSafeState,
+                               validOldPlan)) {
+    // at this point, we know the plan isn't completely safe. lastSafeState will be set to the furthest state
+    // along the plan (after planIdx) which is safe. validOldPlan will contain a partial plan starting at
+    // planIdx and ending at lastSafeState
 
-    if(!forceReplanFromScratch) {
+    if(!_context.forceReplanFromScratch) {
       PRINT_NAMED_INFO("LatticePlanner.GetPlan.OldPlanUnsafe",
                        "old plan unsafe! Will replan, starting from %zu, keeping %zu actions from oldPlan.\n",
                        planIdx, validOldPlan.Size());
@@ -351,89 +437,103 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
       lastSafeState = currentRobotState;
     }
 
-    impl_->totalPlan_ = validOldPlan;
+    _totalPlan = validOldPlan;
 
     path.Clear();
 
-    if(!impl_->planner_.SetStart(lastSafeState)) {
+    _context.start = lastSafeState;
+
+    if(!_planner.StartIsValid()) {
       PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidStart", "could not set start\n");
-      return PLAN_NEEDED_BUT_START_FAILURE;
+      return LatticePlanner::PLAN_NEEDED_BUT_START_FAILURE;
     }
-    else if(!impl_->planner_.GoalIsValid()) {
+    else if(!_planner.GoalIsValid()) {
       PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.InvalidGoal", "Goal may have moved into collision.\n");
-      return PLAN_NEEDED_BUT_GOAL_FAILURE;
+      return LatticePlanner::PLAN_NEEDED_BUT_GOAL_FAILURE;
     }
     else {
-      if(forceReplanFromScratch) {
-        impl_->planner_.SetReplanFromScratch();
-      }
-
       // use real padding for re-plan
-      impl_->ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
+      ImportBlockworldObstacles(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
       PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.Replanning",
                        "from (%f, %f, %f) to (%f %f %f)\n",
                        lastSafeState.x_mm, lastSafeState.y_mm, lastSafeState.theta,
-                       impl_->planner_.GetGoal().x_mm, impl_->planner_.GetGoal().y_mm, impl_->planner_.GetGoal().theta);
+                       _context.goal.x_mm, _context.goal.y_mm, _context.goal.theta);
 
-      impl_->env_.PrepareForPlanning();
+      _context.env.PrepareForPlanning();
 
-      if(!impl_->planner_.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
+      _searchNum++;
+      PRINT_NAMED_INFO("LatticePlannerImpl.GetPlan", "searchNum: %d", _searchNum);
+
+      if( LATTICE_PLANNER_DUMP_ENV_TO_CACHE ) {
+        std::stringstream filenameSS;
+        filenameSS << _pathToEnvCache << "context_" << _searchNum << ".json";
+
+        std::string filename = filenameSS.str();
+
+        if(_searchNum == 1) {
+          PRINT_NAMED_INFO("LatticePlanner.EnvDump",
+                           "dumping planner context to files like '%s'",
+                           filename.c_str());
+        }
+
+        Util::JsonWriter contextDumpWriter(filename);
+        _context.Dump(contextDumpWriter);
+        contextDumpWriter.Close();
+      }
+
+      if(!_planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS)) {
         PRINT_NAMED_WARNING("LatticePlanner.ReplanIfNeeded.PlannerFailed", "plan failed during replanning!\n");
-        return PLAN_NEEDED_BUT_PLAN_FAILURE; 
+        return LatticePlanner::PLAN_NEEDED_BUT_PLAN_FAILURE; 
       }
       else {
-        if(impl_->planner_.GetPlan().Size() == 0) {
-          impl_->totalPlan_.Clear();
+        if(_planner.GetPlan().Size() == 0) {
+          _totalPlan.Clear();
         }
         else {
 
           path.Clear();
 
-          // TODO:(bn) hide in #if DEBUG or something like that
           // verify that the append will be correct
-          if(impl_->totalPlan_.Size() > 0) {
-            State endState = impl_->env_.GetPlanFinalState(impl_->totalPlan_);
-            if(endState != impl_->planner_.GetPlan().start_) {
-              using namespace std;
-              cout<<"ERROR: (LatticePlanner::ReplanIfNeeded) trying to append a plan with a mismatching state!\n";
-              cout<<"endState = "<<endState<<endl;
-              cout<<"next plan start = "<<impl_->planner_.GetPlan().start_<<endl;
+          if(_totalPlan.Size() > 0) {
+            State endState = _context.env.GetPlanFinalState(_totalPlan);
+            if(endState != _planner.GetPlan().start_) {
+              PRINT_STREAM_ERROR("LatticePlanner.PlanMismatch",
+                                 "trying to append a plan with a mismatching state!\n"
+                                 << "endState = " << endState << std::endl
+                                 << "next plan start = " << _planner.GetPlan().start_ << std::endl);
 
               cout<<"\ntotalPlan_:\n";
-              impl_->env_.PrintPlan(impl_->totalPlan_);
+              _context.env.PrintPlan(_totalPlan);
 
               cout<<"\nnew plan:\n";
-              impl_->env_.PrintPlan(impl_->planner_.GetPlan());
+              _context.env.PrintPlan(_planner.GetPlan());
 
-              assert(false);
+              return LatticePlanner::PLAN_NEEDED_BUT_PLAN_FAILURE;
             }
           }
 
-          impl_->totalPlan_.Append(impl_->planner_.GetPlan());
+          _totalPlan.Append( _planner.GetPlan() );
 
           printf("old plan:\n");
-          impl_->env_.PrintPlan(validOldPlan);
+          _context.env.PrintPlan(validOldPlan);
 
           printf("new plan:\n");
-          impl_->env_.PrintPlan(impl_->planner_.GetPlan());
+          _context.env.PrintPlan(_planner.GetPlan());
 
-          impl_->env_.AppendToPath(impl_->totalPlan_, path);
           printf("total path:\n");
+          _context.env.AppendToPath(_totalPlan, path);
           path.PrintPath();
         }
       }
     }
-    
 
     // Do final check on how close the plan's goal angle is to the originally requested goal angle
     // and either add a point turn at the end or modify the last point turn action.
     u8 numSegments = path.GetNumSegments();
-    Radians desiredGoalAngle = impl_->targetPose_orig_.GetRotationAngle<'Z'>();
+    Radians desiredGoalAngle = _targetPose_orig.GetRotationAngle<'Z'>();
     
     if (numSegments > 0) {
-      // TODO: Should we expect to see empty paths here? Ask Brad.
-    
       // Get last non-point turn segment of path
       PathSegment& lastSeg = path[numSegments-1];
 
@@ -460,7 +560,10 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
         f32 turnDir = angDiff > 0 ? 1.f : -1.f;
         f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
         
-        PRINT_NAMED_INFO("LatticePlanner.ReplanIfNeeded.", "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.", angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed);
+        PRINT_NAMED_INFO(
+          "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
+          "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. Adding point turn.",
+          angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
         
         path.AppendPointTurn(0, end_x, end_y, desiredGoalAngle.ToFloat(),
                              rotSpeed,
@@ -469,20 +572,18 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
                              true);
       }
     }
-    
-    
 
-    return DID_PLAN;
+    return LatticePlanner::DID_PLAN;
   }
   else {
 #if DEBUG_REPLAN_CHECKS
     using namespace std;
     if(validOldPlan.Size() > 0) {
       cout<<"LatticePlanner: safely checked plan starting at action "<<planIdx<<" from "<<validOldPlan.start_<<" to "
-          <<impl_->env_.GetPlanFinalState(validOldPlan)<< " goal = "<<impl_->planner_.GetGoal()
+          <<_context.env.GetPlanFinalState(validOldPlan)<< " goal = "<<_planner.GetGoal()
           <<" ("<<validOldPlan.Size()
-          <<" valid actions, totalPlan_.Size = "<<impl_->totalPlan_.Size()<<")\n";
-      cout<<"There are "<<impl_->env_.GetNumObstacles()<<" obstacles\n";
+          <<" valid actions, totalPlan_.Size = "<<_totalPlan.Size()<<")\n";
+      cout<<"There are "<<_context.env.GetNumObstacles()<<" obstacles\n";
     }
     else {
       printf("LatticePlanner: Plan safe, but validOldPlan is empty\n");
@@ -490,27 +591,9 @@ IPathPlanner::EPlanStatus LatticePlanner::GetPlan(Planning::Path &path,
 #endif
   }
 
-  return PLAN_NOT_NEEDED;
+  return LatticePlanner::PLAN_NOT_NEEDED;
 }
 
-void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
-{
-  State_c currentRobotState(startPose.GetTranslation().x(),
-                            startPose.GetTranslation().y(),
-                            startPose.GetRotationAngle<'Z'>().ToFloat());
-
-  impl_->planner_.SetStart(currentRobotState);
-
-  xythetaPlan plan;
-  impl_->planner_.GetTestPlan(plan);
-  printf("test plan:\n");
-  impl_->env_.PrintPlan(plan);
-
-  path.Clear();
-  impl_->env_.AppendToPath(plan, path);
-  printf("test path:\n");
-  path.PrintPath();
-}
 
 }
 }

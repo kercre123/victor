@@ -100,6 +100,11 @@ namespace Anki {
       virtual bool ShouldLockLift() const   { return true; }
       virtual bool ShouldLockWheels() const { return true; }
       
+      // Override to have the action disable any animation tracks that may have
+      // already been streamed and are in the robot's buffer, so they don't
+      // interfere with the action. Note: uses the bits defined by AnimTrackFlag.
+      virtual u8 GetAnimTracksToDisable() const { return 0; }
+      
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action is part of a compound action
       void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }

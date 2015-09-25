@@ -396,14 +396,25 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         // Pickup reaction
         //////////////////////////////////////////////////////////////
-        if (IMUFilter::IsPickedUp() && !wasPickedUp_) {
-          // Stop wheels
-          AnimationController::Clear();
-          PickAndPlaceController::Reset();
-          SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
-        }
-        wasPickedUp_ = IMUFilter::IsPickedUp();
+        const bool isPickedUp = IMUFilter::IsPickedUp();
+        if (isPickedUp && !wasPickedUp_) {
+          // Just got picked up
+          // Stop all movement (so we don't hurt people's hands)
+          LiftController::Disable();
+          HeadController::Disable();
+          WheelController::Disable();
 
+          PickAndPlaceController::Reset();
+          PathFollower::ClearPath();
+          wasPickedUp_ = true;
+        }
+        else if(!isPickedUp && wasPickedUp_) {
+          // Just got put back down
+          LiftController::Enable();
+          HeadController::Enable();
+          WheelController::Enable();
+          wasPickedUp_ = false;
+        }
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display

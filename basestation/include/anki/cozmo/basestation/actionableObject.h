@@ -60,7 +60,7 @@ namespace Anki {
       // If the object is selected, draws it using the "selected" color.
       // Otherwise draws it in the object's defined color.
       virtual void Visualize() override;
-      virtual void Visualize(const ColorRGBA& color) = 0; 
+      virtual void Visualize(const ColorRGBA& color) override = 0;
       
       // Draws just the pre-action poses. The reachableFrom pose (e.g. the
       // current pose of the robot) is passed along to GetCurrenPreActionsPoses()

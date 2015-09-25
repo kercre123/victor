@@ -21,6 +21,7 @@
 // Forward declaration
 namespace cv {
   class Mat;
+  template<typename T> class Mat_;
 }
 
 namespace Anki {
@@ -68,7 +69,9 @@ namespace Cozmo {
     // Get the total number of available animations
     size_t GetNumAvailableAnimations() const;
     
+    // Convert back and forth between an OpenCV image and our compressed RLE format:
     static Result CompressRLE(const cv::Mat& image, std::vector<u8>& rleData);
+    static void   DrawFaceRLE(const std::vector<u8>& rleData, cv::Mat_<u8>& outImg);
     
   protected:
     
