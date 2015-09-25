@@ -89,13 +89,15 @@ namespace Cozmo {
       
       // Remove a few pixels from the four corners
       const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
-      u8* topLine = roi.ptr(1-_firstScanLine);
-      u8* btmLine = roi.ptr(roi.rows-1-_firstScanLine);
+      u8* topLine0 = roi.ptr(0);
+      u8* topLine1 = roi.ptr(1);
+      u8* btmLine0 = roi.ptr(roi.rows-1);
+      u8* btmLine1 = roi.ptr(roi.rows-2);
       for(s32 j=0; j<NumCornerPixels; ++j) {
-        topLine[j] = 0;
-        btmLine[j] = 0;
-        topLine[roi.cols-1-j] = 0;
-        btmLine[roi.cols-1-j] = 0;
+        topLine0[j] = topLine1[j] = 0;
+        btmLine0[j] = btmLine1[j] = 0;
+        topLine0[roi.cols-1-j] = topLine1[roi.cols-1-j] = 0;
+        btmLine0[roi.cols-1-j] = btmLine1[roi.cols-1-j] = 0;
       }
       
       if(!ScanlinesAsPostProcess) {
