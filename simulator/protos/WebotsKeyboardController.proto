@@ -97,7 +97,7 @@ PROTO WebotsKeyboardController [
   # Animation to send
   field SFString animationToSendName "ANIM_TEST"
   field SFInt32  animationNumLoops 1
-  field SFString idleAnimationName ""
+  field SFString idleAnimationName "_LIVE_"
   
   # Behavior to send
   #  Use "AUTO" to auto-select next behavior
