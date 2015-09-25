@@ -62,7 +62,7 @@ public:
 
   void DisconnectFromRobot(RobotID_t whichRobot);
 
-  virtual void StartAnimationTool() {};
+  virtual void ReadAnimationsFromDisk() {};
 protected:
 
   // Derived classes must implement any special initialization in this method,
