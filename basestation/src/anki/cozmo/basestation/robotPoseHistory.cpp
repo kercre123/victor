@@ -423,7 +423,10 @@ namespace Anki {
       CORETECH_ASSERT(p1.GetPose().FindOrigin() == p0_it->second.GetPose().FindOrigin());
       Pose3d newPose;
       const bool GetWithRespectToResult = p1.GetPose().GetWithRespectTo(*p0_it->second.GetPose().GetParent(), newPose);
-      CORETECH_ASSERT(GetWithRespectToResult == true);
+      if (!GetWithRespectToResult)
+      {
+        CORETECH_ASSERT(GetWithRespectToResult == true);
+      }
       p1.SetPose(p1.GetFrameId(), newPose, p1.GetHeadAngle(), p1.GetLiftAngle());
       CORETECH_ASSERT(p1.GetPose().GetParent() == p0_it->second.GetPose().GetParent());
       

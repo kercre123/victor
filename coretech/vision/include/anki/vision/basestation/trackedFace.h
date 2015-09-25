@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/rect.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/shared/radians.h"
 
