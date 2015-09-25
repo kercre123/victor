@@ -44,6 +44,10 @@ namespace Anki {
         robot.LockLift( ShouldLockLift() );
         robot.LockWheels( ShouldLockWheels() );
         
+        MessageDisableAnimTracks msg;
+        msg.whichTracks = GetAnimTracksToDisable();
+        robot.SendMessage(msg);
+        
         _isRunning = true;
       }
 
@@ -76,6 +80,11 @@ namespace Anki {
           robot.LockHead(false);
           robot.LockLift(false);
           robot.LockWheels(false);
+          
+          // Re-enable any animation tracks that were disabled
+          MessageEnableAnimTracks msg;
+          msg.whichTracks = GetAnimTracksToDisable();
+          robot.SendMessage(msg);
         }
         _isRunning = false;
       }

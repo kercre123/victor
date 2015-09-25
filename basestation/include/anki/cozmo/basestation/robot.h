@@ -729,6 +729,8 @@ namespace Cozmo {
     ObjectID                    _trackToObjectID;
     Vision::TrackedFace::ID_t   _trackToFaceID;
     bool                        _trackWithHeadOnly;
+    bool                        _headLockedBeforeTracking;
+    bool                        _wheelsLockedBeforeTracking;
     
     /*
      // Plan a path to the pre-ascent/descent pose (depending on current
