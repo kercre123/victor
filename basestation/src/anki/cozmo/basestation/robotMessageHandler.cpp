@@ -269,11 +269,11 @@ namespace Anki {
         // Text is ready to print
         if (textIdx == 0) {
           // This message is not a part of a longer message. Just print!
-          printf("ROBOT-PRINT (%d): %s", robot->GetID(), newText);
+          PRINT_NAMED_INFO("ROBOT-PRINT", "(%d): %s\n", robot->GetID(), newText);
         } else {
           // This message is part of a longer message. Copy to local buffer and print.
           memcpy(text + textIdx, newText, strlen(newText)+1);
-          printf("ROBOT-PRINT (%d): %s", robot->GetID(), text);
+          PRINT_NAMED_INFO("ROBOT-PRINT", "(%d): %s\n", robot->GetID(), text);
           textIdx = 0;
         }
       } else {
