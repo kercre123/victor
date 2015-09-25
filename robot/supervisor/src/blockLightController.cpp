@@ -141,21 +141,21 @@ namespace BlockLightController {
     if (IsRegisteredBlock(blockID)) {
       
       bool blockLEDsUpdated = false;
-      Messages::SetBlockLights *m = &(_blockMsg[blockID]);
+      Messages::SetBlockLights &m = _blockMsg[blockID];
       
       for(u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
         u32 newColor;
         if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, newColor)) {
-          m->onColor[i] = newColor;   // Currently, onColor is the only thing that matters in this message.
+          m.onColor[i] = newColor;   // Currently, onColor is the only thing that matters in this message.
           blockLEDsUpdated = true;
         }
       }
       
       if (blockLEDsUpdated) {
         HAL::SetBlockLight(blockID,
-                           m->onColor, m->offColor,
-                           m->onPeriod_ms, m->offPeriod_ms,
-                           m->transitionOnPeriod_ms, m->transitionOffPeriod_ms);
+                           m.onColor, m.offColor,
+                           m.onPeriod_ms, m.offPeriod_ms,
+                           m.transitionOnPeriod_ms, m.transitionOffPeriod_ms);
       }
       
       return RESULT_OK;
@@ -195,9 +195,8 @@ namespace BlockLightController {
         } else {
           _nextUpdateCycleStartTime += BLOCK_LIGHT_UPDATE_PERIOD_MS;
         }
-      } else {
-        _nextBlockToUpdate = nextValidBlockID;
       }
+      _nextBlockToUpdate = nextValidBlockID;
       
     }
     
