@@ -23,7 +23,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-
+#include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000

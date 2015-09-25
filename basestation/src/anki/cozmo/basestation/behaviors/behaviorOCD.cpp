@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 #define DEBUG_OCD_BEHAVIOR 0
 
