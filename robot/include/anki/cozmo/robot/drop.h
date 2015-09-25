@@ -14,25 +14,29 @@
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
 #define ct_assert(e) enum { ASSERT_CONCAT(assert_line_, __LINE__) = 1/(!!(e)) }
 #define ASSERT_IS_POWER_OF_TWO(e) ct_assert((e & (e-1)) == 0)
-#define ASSERT_IS_MULTIPLE_OF_FOUR(e) ct_assert((e % 4) == 0)
+#define ASSERT_IS_MULTIPLE_OF_TWO(e) ct_assert((e % 2) == 0)
 
 /// Number of drops exchanged per second
 #define DROPS_PER_SECOND (7500)
 
 /// Number of bytes in each DMAed transaction
-#define DROP_SIZE (96)
-ASSERT_IS_MULTIPLE_OF_FOUR(DROP_SIZE);
+#define DROP_SIZE (98)
+ASSERT_IS_MULTIPLE_OF_TWO(DROP_SIZE);
+
+/// Number of samples of audio data delivered to the RTIP each drop.
+#define AUDIO_SAMPLES_PER_DROP 4
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_SIZE - 6)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_SIZE - AUDIO_SAMPLES_PER_DROP - 5)
 
 /// Drop structure for transfers from the WiFi to the RTIP
 typedef struct
 {
-  uint32_t audioData; ///< Isochronous audio data
+  uint8_t  audioData[AUDIO_SAMPLES_PER_DROP]; ///< Isochronous audio data
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
   uint8_t  tag;     ///< ToRTIPPayloadTag
   uint8_t  droplet; ///< Droplet enum
+  uint8_t  tail[3]; ///< 0xff at the end of the droplet because of running clock and stopping data
 } DropToRTIP;
 
 ct_assert(sizeof(DropToRTIP) == DROP_SIZE);
@@ -49,7 +53,7 @@ typedef enum
 /// The frequency with which we are allowed to send RTIP_MSG_BUF_SIZE bytes of data in miliseconds
 #define RTIP_MSG_INTERVAL_MS (7)
 
-#define DROP_TO_WIFI_MAX_PAYLOAD (DROP_SIZE - 2)
+#define DROP_TO_WIFI_MAX_PAYLOAD (DROP_SIZE - 5)
 
 /// Drop structure for transfers from RTIP to WiFi
 typedef struct 
@@ -57,6 +61,7 @@ typedef struct
   uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
   uint8_t msgLen;  ///< Number of bytes of message data following JPEG data
   uint8_t droplet; ///< Droplet enum / length field
+  uint8_t tail[3]; ///< Guard bytes at end of packet
 } DropToWiFi;
 
 ct_assert(sizeof(DropToWiFi) == DROP_SIZE);
@@ -70,12 +75,12 @@ typedef enum
   rtipUpdate  = 1<<7        /// Message contents are an RTIPState update to the WiFi firmware
 } Droplet;
 
+#define JPEG_LENGTH(i) ((i >> 2)&jpegLenMask)
+
 /// RTIP to WiFi state update message
 typedef struct
 {
   uint32_t status;
 } RTIPState;
-
-#define JPEG_LENGTH(i) ((i >> 2)&jpegLenMask)
 
 #endif

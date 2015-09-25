@@ -55,7 +55,7 @@ int main (void)
   I2CInit();
 
   // Espressif startup time
-  Anki::Cozmo::HAL::MicroWait(1000000);
+	for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
   
   SPIInit();
   //dac_init();
