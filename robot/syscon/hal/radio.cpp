@@ -30,10 +30,13 @@ extern GlobalDataToBody g_dataToBody;
   const uint8_t     cubePipe[] = {1};
   #define RADIO_ADDRS {0xE7,0xC1,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
 #elif defined(ROBOT41)
+  // Robot #2
   const uint8_t     cubePipe[] = {1,2,3,4};
-  #define RADIO_ADDRS {0xE6,0xA2,0xA3,0xA4,0xA5,0xA6,0xA7,0xA8}
+  const uint8_t     radioCannel = 83;
+  #define RADIO_ADDRS {0xE6,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8}
 #else
   const uint8_t     cubePipe[] = {1,2,3,4};
+  const uint8_t     radioCannel = 82;
   #define RADIO_ADDRS {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
 #endif
 
@@ -47,7 +50,7 @@ void Radio::init() {
     UESB_BITRATE_250KBPS,
     UESB_CRC_8BIT,
     UESB_TX_POWER_0DBM,
-    82,
+    radioCannel,
     PACKET_SIZE,
     5,
     {0xE7,0xE7,0xE7,0xE7},
