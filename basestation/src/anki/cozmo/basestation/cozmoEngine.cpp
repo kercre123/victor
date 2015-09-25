@@ -64,8 +64,8 @@ void CozmoEngine::ProcessDeviceImage(const Vision::Image &image) {
   _impl->ProcessDeviceImage(image);
 }
 
-void CozmoEngine::StartAnimationTool() {
-  _impl->StartAnimationTool();
+void CozmoEngine::ReadAnimationsFromDisk() {
+  _impl->ReadAnimationsFromDisk();
 }
 
 
