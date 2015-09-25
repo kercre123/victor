@@ -324,6 +324,14 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
   }
 
 }
+  
+void CozmoEngineHostImpl::ReadAnimationsFromDisk() {
+  Robot* robot = _robotMgr.GetFirstRobot();
+  if (robot != nullptr) {
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
+    robot->ReadAnimationDir();
+  }
+}
 
 void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {

@@ -56,13 +56,7 @@ public:
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution);
 
-  void ReadAnimationsFromDisk() override {
-    Robot* robot = _robotMgr.GetFirstRobot();
-    if (robot != nullptr) {
-      PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
-      robot->ReadAnimationDir();
-    }
-  };
+  void ReadAnimationsFromDisk() override;
 protected:
 
   virtual Result InitInternal() override;
