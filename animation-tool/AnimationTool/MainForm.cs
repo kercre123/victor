@@ -140,8 +140,8 @@ namespace AnimationTool
             headAngle.chart.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
             headAngle.chart.ChartAreas[0].AxisY.Minimum = -25;
             headAngle.chart.ChartAreas[0].AxisY.Maximum = 34;
-            ActionManager.Do(new DisableChart(headAngle), true);
-            ActionManager.Do(new EnableChart(headAngle), true);
+            (new DisableChart(headAngle)).Do();
+            (new EnableChart(headAngle)).Do();
             chartForms.Add(headAngle);
 
             //Lift Chart
@@ -151,8 +151,8 @@ namespace AnimationTool
             liftHeight.chart.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
             liftHeight.chart.ChartAreas[0].AxisY.Minimum = 31;
             liftHeight.chart.ChartAreas[0].AxisY.Maximum = 92;
-            ActionManager.Do(new DisableChart(liftHeight), true);
-            ActionManager.Do(new EnableChart(liftHeight), true);
+            (new DisableChart(liftHeight)).Do();
+            (new EnableChart(liftHeight)).Do();
             chartForms.Add(liftHeight);
 
             //Body Chart
@@ -160,8 +160,8 @@ namespace AnimationTool
             bodyMotion.chart.ChartAreas[0].AxisY.Minimum = 0;
             bodyMotion.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             bodyMotion.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(bodyMotion), true);
-            ActionManager.Do(new Sequencer.EnableChart(bodyMotion), true);
+            (new DisableChart(bodyMotion)).Do();
+            (new Sequencer.EnableChart(bodyMotion)).Do();
             chartForms.Add(bodyMotion);
 
             //Face Animation Data Chart
@@ -169,8 +169,8 @@ namespace AnimationTool
             proceduralFace.chart.ChartAreas[0].AxisY.Minimum = 0;
             proceduralFace.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             proceduralFace.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(proceduralFace), true);
-            ActionManager.Do(new Sequencer.EnableChart(proceduralFace), true);
+            (new DisableChart(proceduralFace)).Do();
+            (new Sequencer.EnableChart(proceduralFace)).Do();
             chartForms.Add(proceduralFace);
 
             //Face Animation Image Chart
@@ -178,8 +178,8 @@ namespace AnimationTool
             faceAnimation.chart.ChartAreas[0].AxisY.Minimum = 0;
             faceAnimation.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             faceAnimation.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(faceAnimation), true);
-            ActionManager.Do(new FaceAnimation.EnableChart(faceAnimation), true);
+            (new DisableChart(faceAnimation)).Do();
+            (new FaceAnimation.EnableChart(faceAnimation)).Do();
             chartForms.Add(faceAnimation);
 
             //Audio Robot Chart
@@ -187,8 +187,8 @@ namespace AnimationTool
             audioRobot.chart.ChartAreas[0].AxisY.Minimum = 0;
             audioRobot.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             audioRobot.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(audioRobot), true);
-            ActionManager.Do(new Sequencer.EnableChart(audioRobot), true);
+            (new DisableChart(audioRobot)).Do();
+            (new Sequencer.EnableChart(audioRobot)).Do();
             chartForms.Add(audioRobot);
 
             //Audio Robot Device
@@ -196,8 +196,8 @@ namespace AnimationTool
             audioDevice.chart.ChartAreas[0].AxisY.Minimum = 0;
             audioDevice.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
             audioDevice.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(audioDevice), true);
-            ActionManager.Do(new Sequencer.EnableChart(audioDevice), true);
+            (new DisableChart(audioDevice)).Do();
+            (new Sequencer.EnableChart(audioDevice)).Do();
             chartForms.Add(audioDevice);
 
             if (!File.Exists(currentFile))

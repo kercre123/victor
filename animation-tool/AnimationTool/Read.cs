@@ -31,8 +31,8 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(audioRobot), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(audioRobot.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(audioRobot)).Do();
+            (new Sequencer.AddDataPoint(audioRobot.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadAudioDeviceFromFile(AudioDevicePointData current)
@@ -48,26 +48,26 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(audioDevice), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(audioDevice.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(audioDevice)).Do();
+            (new Sequencer.AddDataPoint(audioDevice.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadLiftHeightFromFile(LiftHeightPointData current, LiftHeightPointData next)
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(liftHeight), true);
+            (new EnableChart(liftHeight)).Do();
 
             if (next == null) // if last point, move to correct y
             {
                 DataPoint last = liftHeight.chart.Series[0].Points[liftHeight.chart.Series[0].Points.Count - 1];
                 double x = liftHeight.chart.ChartAreas[0].AxisX.Maximum;
 
-                ActionManager.Do(new MoveDataPoint(last, x, current.height_mm), true);
+                (new MoveDataPoint(last, x, current.height_mm)).Do();
             }
             else
             {
-                ActionManager.Do(new AddDataPoint(liftHeight.chart, next.triggerTime_ms * 0.001D, current.height_mm, false), true);
+                (new AddDataPoint(liftHeight.chart, next.triggerTime_ms * 0.001D, current.height_mm, false)).Do();
             }
         }
 
@@ -83,8 +83,8 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new FaceAnimation.EnableChart(faceAnimation), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(faceAnimation.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new FaceAnimation.EnableChart(faceAnimation)).Do();
+            (new Sequencer.AddDataPoint(faceAnimation.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadProceduralFaceFromFile(ProceduralFacePointData current)
@@ -93,8 +93,8 @@ namespace AnimationTool
 
             Sequencer.ExtraProceduralFaceData extraData = new Sequencer.ExtraProceduralFaceData(current);
 
-            ActionManager.Do(new Sequencer.EnableChart(proceduralFace), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(proceduralFace.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(proceduralFace)).Do();
+            (new Sequencer.AddDataPoint(proceduralFace.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadBodyMotionFromFile(BodyMotionPointData current)
@@ -129,25 +129,25 @@ namespace AnimationTool
             }
 
             extraData.Length = current.durationTime_ms * 0.001D;
-            ActionManager.Do(new Sequencer.EnableChart(bodyMotion), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(bodyMotion.chart, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(bodyMotion)).Do();
+            (new Sequencer.AddDataPoint(bodyMotion.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadHeadAngleFromFile(HeadAnglePointData current, HeadAnglePointData next)
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(headAngle), true);
+            (new EnableChart(headAngle)).Do();
 
             if (next == null) // if last point, move to correct y
             {
                 DataPoint last = headAngle.chart.Series[0].Points[headAngle.chart.Series[0].Points.Count - 1];
                 double x = headAngle.chart.ChartAreas[0].AxisX.Maximum;
-                ActionManager.Do(new MoveDataPoint(last, x, current.angle_deg), true);
+                (new MoveDataPoint(last, x, current.angle_deg)).Do();
             }
             else
             {
-                ActionManager.Do(new AddDataPoint(headAngle.chart, next.triggerTime_ms * 0.001D, current.angle_deg, false), true);
+                (new AddDataPoint(headAngle.chart, next.triggerTime_ms * 0.001D, current.angle_deg, false)).Do();
             }
         }
 
@@ -205,7 +205,7 @@ namespace AnimationTool
                 }
             }
 
-            ActionManager.Do(new UnselectAllCharts(chartForms), true);
+            (new UnselectAllCharts(chartForms)).Do();
         }
 
         private double GetDurationNeeded(Dictionary<string, PointData[]> animation)
