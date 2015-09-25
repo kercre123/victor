@@ -10,7 +10,7 @@
 #include "spi.h"
 
 const int MAX_JPEG_DATA = 128;
-const int TRANSMISSION_SIZE = 98;
+const int TRANSMISSION_SIZE = DROP_SIZE;
 static uint32_t spi_tx_buff[TRANSMISSION_SIZE];
 static uint8_t  spi_rx_buff[TRANSMISSION_SIZE];
 
@@ -22,6 +22,12 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   // This should be altered to 
   memcpy(drop.payload, buf, buflen);  
   drop.droplet = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0);
+	/*for (int i=0; i<DROP_TO_WIFI_MAX_PAYLOAD; i++) drop.payload[i] = i+1;
+	drop.msgLen  = 0x80;
+	drop.droplet = 0x81;
+	drop.tail[0] = 0x90;
+	drop.tail[1] = 0x91;
+	drop.tail[2] = 0x92;*/
 
   for (int i = 0; i < sizeof(drop); i++, txDst += sizeof(uint32_t))
     *(txDst) = *(txSrc++);
