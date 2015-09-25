@@ -133,6 +133,16 @@ namespace Cozmo {
                             "Failed to find interaction data associated with faceID %llu", faceID);
           break;
         }
+        
+        // If we haven't played our init anim yet for this face, do so and break early
+        if (!dataIter->second._playedInitAnim)
+        {
+          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
+          PlayAnimation("Demo_Look_Around_See_Something_A");
+          dataIter->second._playedInitAnim = true;
+          break;
+        }
+        
         dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
@@ -222,14 +232,8 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
-            PlayAnimationAction* animAction = new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A");
-            _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
+            PlayAnimation("Demo_Face_Interaction_ShockedScared_A");
             _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
-            MoveToSafeDistanceFromPoint(headTranslate);
-          }
-          else if (distSqr > (kTooFarDistance_mm * kTooFarDistance_mm))
-          {
-            MoveToSafeDistanceFromPoint(headTranslate);
           }
         }
         
@@ -252,6 +256,14 @@ namespace Cozmo {
     
     return Status::Running;
   } // Update()
+  
+  void BehaviorInteractWithFaces::PlayAnimation(const std::string& animName)
+  {
+    PlayAnimationAction* animAction = new PlayAnimationAction(animName);
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
+    _lastActionTag = animAction->GetTag();
+    _isActing = true;
+  }
   
   void BehaviorInteractWithFaces::MoveToSafeDistanceFromPoint(const Vec3f& robotRelativePoint)
   {

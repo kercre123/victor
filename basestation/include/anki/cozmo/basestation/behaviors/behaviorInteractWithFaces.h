@@ -57,6 +57,7 @@ namespace Cozmo {
     
     void UpdateBaselineFace(const Face* face);
     void UpdateProceduralFace(ProceduralFace& proceduralFace, const Face& face) const;
+    void PlayAnimation(const std::string& animName);
     void MoveToSafeDistanceFromPoint(const Vec3f& robotPoint);
     
     enum class State {
@@ -86,6 +87,7 @@ namespace Cozmo {
     {
       double _lastSeen_sec = 0;
       double _trackingStart_sec = 0;
+      bool _playedInitAnim = false;
     };
     
     std::list<Face::ID_t> _interestingFacesOrder;
