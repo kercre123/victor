@@ -140,7 +140,7 @@ namespace Cozmo {
       const std::vector<std::vector<cv::Point> > eyebrow = {
         {leftPoint, rightPoint, rightPointBtm, leftPointBtm}
       };
-      cv::fillPoly(faceImg, eyebrow, 255, 4);
+      cv::fillConvexPoly(faceImg, eyebrow, 255, 4);
     }
     
   } // DrawEye()
