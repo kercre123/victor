@@ -23,6 +23,7 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "backpackLightController.h"
+#include "blockLightController.h"
 #include "anki/cozmo/shared/activeBlockTypes.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -636,8 +637,26 @@ void Process##__MSG_TYPE__##Message(const __MSG_TYPE__& msg) { ProcessAnimKeyFra
 
       void ProcessSetBlockLightsMessage(const SetBlockLights& msg)
       {
-        HAL::SetBlockLight(msg.blockID, msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
-                           msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+        // TODO: Block registration should be done when radio connection with block is established.
+        if (!BlockLightController::IsRegisteredBlock(msg.blockID) &&
+            BlockLightController::RegisterBlock(msg.blockID) != RESULT_OK) {
+          PRINT("ERROR: Failed to register blockID %d",msg.blockID);
+          return;
+        }
+        
+        LEDParams_t p[NUM_BLOCK_LEDS];
+        for (u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
+          p[i].onColor = msg.onColor[i];
+          p[i].offColor = msg.offColor[i];
+          p[i].onPeriod_ms = msg.onPeriod_ms[i];
+          p[i].offPeriod_ms = msg.offPeriod_ms[i];
+          p[i].transitionOnPeriod_ms = msg.transitionOnPeriod_ms[i];
+          p[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
+        }
+        
+        if (BlockLightController::SetLights(msg.blockID, p) != RESULT_OK) {
+          PRINT("ERROR: Failed to set lights on block %d", msg.blockID);
+        }
       }
 
 
