@@ -5708,7 +5708,7 @@ MonoBehaviour:
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
-  backwardsSlowDownFactor: .0500000007
+  backwardsSlowDownFactor: .100000001
   pegBounceVelFactor: .5
   pegDegrees: 2.5
   pegBendAngle: 10
@@ -6589,7 +6589,7 @@ MonoBehaviour:
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
-  backwardsSlowDownFactor: .0500000007
+  backwardsSlowDownFactor: .100000001
   pegBounceVelFactor: .5
   pegDegrees: 4
   pegBendAngle: 10
@@ -6769,7 +6769,7 @@ MonoBehaviour:
   maxSamples: 5
   pegSlowDownThreshold: 360
   pegSlowDownFactor: .975000024
-  backwardsSlowDownFactor: .0500000007
+  backwardsSlowDownFactor: .100000001
   pegBounceVelFactor: .5
   pegDegrees: 8
   pegBendAngle: 12

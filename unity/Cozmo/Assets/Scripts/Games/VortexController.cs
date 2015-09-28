@@ -1042,7 +1042,8 @@ public class VortexController : GameController {
         wheel.Unlock();
         if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
           // Debug.Log("should be tracking to head");
-          robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
+          if (robot != null)
+            robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
           faceUpdateTimer = Time.realtimeSinceStartup;
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[GetPoseIndex(currentPlayerIndex)], true, true);
         }
