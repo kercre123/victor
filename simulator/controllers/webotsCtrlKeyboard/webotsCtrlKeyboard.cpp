@@ -138,7 +138,7 @@ namespace Anki {
       const u16 width  = Vision::CameraResInfo[(int)msg.resolution].width;
       const u16 height = Vision::CameraResInfo[(int)msg.resolution].height;
       const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, width, height,
-        (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, (uint32_t)msg.data.size());
+        (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data.data(), (uint32_t)msg.data.size());
       
       
       if(isImageReady)
@@ -276,7 +276,6 @@ namespace Anki {
         printf("               Move head up/down:  s/x\n");
         printf("             Lift low/high/carry:  1/2/3\n");
         printf("            Head down/forward/up:  4/5/6\n");
-        printf("                Toggle headlight:  h\n");
         printf("            Request *game* image:  i\n");
         printf("           Request *robot* image:  Alt+i\n");
         printf("      Toggle *game* image stream:  Shift+i\n");
@@ -407,12 +406,12 @@ namespace Anki {
                 key += 10;
               }
               
-              TestModeClad m = TestModeClad(key - '0');
+              TestMode m = TestMode(key - '0');
 
               // Set parameters for special test cases
               s32 p1 = 0, p2 = 0, p3 = 0;
               switch(m) {
-                case TestModeClad::DirectDrive:
+                case TestMode::TM_DIRECT_DRIVE:
                   // p1: flags (See DriveTestFlags)
                   // p2: wheelPowerStepPercent (only applies if DTF_ENABLE_DIRECT_HAL_TEST is set)
                   // p3: wheelSpeed_mmps (only applies if DTF_ENABLE_DIRECT_HAL_TEST is not set)
@@ -423,29 +422,29 @@ namespace Anki {
                   p2 = 10;
                   p3 = root_->getField("driveTest_wheel_power")->getSFInt32();
                   break;
-                case TestModeClad::Lift:
+                case TestMode::TM_LIFT:
                   p1 = root_->getField("liftTest_flags")->getSFInt32();
                   p2 = root_->getField("liftTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if LiftTF_NODDING flag is set)
                   p3 = 250;
                   break;
-                case TestModeClad::Head:
+                case TestMode::TM_HEAD:
                   p1 = root_->getField("headTest_flags")->getSFInt32();
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
                   p3 = 250;
                   break;
-                case TestModeClad::Lights:
+                case TestMode::TM_LIGHTS:
                   // p1: flags (See LightTestFlags)
                   // p2: The LED channel to activate (applies if LTF_CYCLE_ALL not enabled)
                   // p3: The color to set it to (applies if LTF_CYCLE_ALL not enabled)
-                  p1 = LTF_CYCLE_ALL;
-                  p2 = LED_BACKPACK_RIGHT;
-                  p3 = LED_GREEN;
+                  p1 = (s32)LightTestFlags::LTF_CYCLE_ALL;
+                  p2 = (s32)LEDId::LED_BACKPACK_RIGHT;
+                  p3 = (s32)LEDColor::LED_GREEN;
                   break;
                 default:
                   break;
               }
               
-              printf("Sending test mode %s\n", TestModeCladToString(m));
+              printf("Sending test mode %s\n", TestModeToString(m));
               SendStartTestMode(m,p1,p2,p3);
 
               testMode = true;
@@ -609,17 +608,17 @@ namespace Anki {
 
                 // Determine resolution from "streamResolution" setting in the keyboard controller
                 // node
-                CameraResolutionClad resolution = (CameraResolutionClad)IMG_STREAM_RES;
+                ImageResolution resolution = (ImageResolution)IMG_STREAM_RES;
                
                 if (root_) {
                   const std::string resString = root_->getField("streamResolution")->getSFString();
                   printf("Attempting to switch robot to %s resolution.\n", resString.c_str());
                   if(resString == "VGA") {
-                    resolution = CameraResolutionClad::VGA;
+                    resolution = ImageResolution::VGA;
                   } else if(resString == "QVGA") {
-                    resolution = CameraResolutionClad::QVGA;
+                    resolution = ImageResolution::QVGA;
                   } else if(resString == "CVGA") {
-                    resolution = CameraResolutionClad::CVGA;
+                    resolution = ImageResolution::CVGA;
                   } else {
                     printf("Unsupported streamResolution = %s\n", resString.c_str());
                   }
@@ -716,14 +715,6 @@ namespace Anki {
                 break;
               }
                 
-              case (s32)'H':
-              {
-                static bool headlightsOn = false;
-                headlightsOn = !headlightsOn;
-                SendSetHeadlights(headlightsOn ? 128 : 0);
-                break;
-              }
-                
               case (s32)'G':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
@@ -760,7 +751,7 @@ namespace Anki {
                 
                 ExternalInterface::SetBackpackLEDs msg;
                 msg.robotID = 1;
-                for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i)
+                for(s32 i=0; i<(s32)LEDId::NUM_BACKPACK_LEDS; ++i)
                 {
                   msg.onColor[i] = 0;
                   msg.offColor[i] = 0;
@@ -771,11 +762,11 @@ namespace Anki {
                 }
                 
                 if(!backpackLightsOn) {
-                  msg.onColor[LED_BACKPACK_RIGHT]  = NamedColors::GREEN;
-                  msg.onColor[LED_BACKPACK_LEFT]   = NamedColors::RED;
-                  msg.onColor[LED_BACKPACK_BACK]   = NamedColors::BLUE;
-                  msg.onColor[LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
-                  msg.onColor[LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_RIGHT]  = NamedColors::GREEN;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_LEFT]   = NamedColors::RED;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK]   = NamedColors::BLUE;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
                 }
                 
                 ExternalInterface::MessageGameToEngine msgWrapper;
@@ -974,9 +965,6 @@ namespace Anki {
                   ExternalInterface::MessageGameToEngine msgWrapper;
                   msgWrapper.Set_VisionWhileMoving(msg);
                   SendMessage(msgWrapper);
-                } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  SendVisionSystemParams();
-                  SendFaceDetectParams();
                 } else {
                   f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
                   SendSetRobotVolume(robotVolume);
@@ -1008,9 +996,9 @@ namespace Anki {
                   jsonFile.close();
                   //ExternalInterface::SetActiveObjectLEDs msg(jsonMsg);
                   msg.robotID = 1;
-                  msg.makeRelative = RELATIVE_LED_MODE_OFF;
+                  msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                   msg.objectID = jsonMsg["objectID"].asUInt();
-                  for(s32 iLED = 0; iLED<NUM_BLOCK_LEDS; ++iLED) {
+                  for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
                     msg.onColor[iLED]  = jsonMsg["onColor"][iLED].asUInt();
                     msg.offColor[iLED]  = jsonMsg["offColor"][iLED].asUInt();
                     msg.onPeriod_ms[iLED]  = jsonMsg["onPeriod_ms"][iLED].asUInt();
@@ -1066,7 +1054,7 @@ namespace Anki {
                     msg.relativeToY = GetRobotPose().GetTranslation().y();
                     
                     ++edgeIndex;
-                    if(edgeIndex == NUM_BLOCK_LEDS) {
+                    if(edgeIndex == (s32)ActiveObjectConstants::NUM_CUBE_LEDS) {
                       edgeIndex = 0;
                       ++colorIndex;
                     }
@@ -1154,6 +1142,7 @@ namespace Anki {
               }
               case (s32)'*':
               {
+                /*
                 // Send a procedural face
                 using namespace ExternalInterface;
                 using Param = ProceduralEyeParameter;
@@ -1177,7 +1166,8 @@ namespace Anki {
                 msg.faceAngle = 2.f*static_cast<f32>(rand())/static_cast<f32>(RAND_MAX) - 1.f;
 
                 SendMessage(MessageGameToEngine(std::move(msg)));
-                
+                */
+
                 break;
               }
               case (s32)'^':
