@@ -103,8 +103,12 @@ namespace Cozmo {
     // Distance inside of which Cozmo will start noticing a face
     constexpr static float kCloseEnoughDistance_mm = 1500;
     
+    // Defines size of zone between "close enough" and "too far away", which prevents faces quickly going back and forth
+    // over threshold of close enough or not
+    constexpr static float kFaceBufferDistance_mm = 350;
+    
     // Distance to trigger Cozmo to start ignoring a face
-    constexpr static float kTooFarDistance_mm = 2000;
+    constexpr static float kTooFarDistance_mm = kCloseEnoughDistance_mm + kFaceBufferDistance_mm;
     
     // Distance to trigger Cozmo to get further away from the focused face
     constexpr static float kTooCloseDistance_mm = 300;
