@@ -77,7 +77,6 @@ namespace Anki {
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
-    , _startedTraversingPath(false)
     {
       
     }
@@ -85,7 +84,7 @@ namespace Anki {
     void DriveToPoseAction::Reset()
     {
       IAction::Reset();
-      _startedTraversingPath = false;
+      // TEMP:  // TEMP: ask andrew what to do here
     }
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
@@ -166,9 +165,7 @@ namespace Anki {
     ActionResult DriveToPoseAction::Init(Robot& robot)
     {
       ActionResult result = ActionResult::SUCCESS;
-      
-      _startedTraversingPath = false;
-      
+            
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
                           "Goal must be set before running this action.\n");
@@ -185,28 +182,21 @@ namespace Anki {
           }
         }
         
-        Planning::Path p;
         Result planningResult = RESULT_OK;
         
+        _selectedGoalIndex = 0;
+
         if(_goalPoses.size() == 1) {
-          planningResult = robot.GetPathToPose(_goalPoses.back(), p);
-          _selectedGoalIndex = 0;
+          planningResult = robot.StartDrivingToPose(_goalPoses.back());
         } else {
-          planningResult = robot.GetPathToPose(_goalPoses, _selectedGoalIndex, p);
+          planningResult = robot.StartDrivingToPose(_goalPoses, &_selectedGoalIndex);
         }
         
         if(planningResult != RESULT_OK) {
           PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to get path to goal pose.\n");
           result = ActionResult::FAILURE_ABORT;
         }
-        else if(robot.ExecutePath(p, _useManualSpeed) != RESULT_OK) {
-          PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed calling execute path.\n");
-          result = ActionResult::FAILURE_ABORT;
-        }
-        else if (p.GetNumSegments() == 0) {
-          PRINT_NAMED_INFO("DriveToPoseAction.Init", "Faking startedTraversingPath because path is empty.");
-          _startedTraversingPath = true;
-        }
+
         
         if(result == ActionResult::SUCCESS) {
           // So far so good.
@@ -233,7 +223,7 @@ namespace Anki {
                                "Received signal that robot %d's origin changed. Resetting action.\n",
                                robotID);
               this->Reset();
-              robotPtr->ClearPath();
+              robotPtr->StopDrivingToPose();
             }
           };
           _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
@@ -248,77 +238,28 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      if(!_startedTraversingPath) {
-        // Wait until robot reports it has started traversing the path
-        _startedTraversingPath = robot.IsTraversingPath();
-        
-      } else {
-        // Wait until robot reports it is no longer traversing a path
-        if(robot.IsTraversingPath())
-        {
-          {
-            static int ctr = 0;
-            if(ctr++ % 10 == 0) {
-              PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
-                               "Waiting for robot to complete its path traversal (%d), "
-                               "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
-                                robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
-            }
+      switch( robot.CheckDriveToPoseStatus() ) {
+        case ERobotDriveToPoseStatus::Error:
+          PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
+          result = ActionResult::FAILURE_ABORT;
+          break;
+
+        case ERobotDriveToPoseStatus::ComputingPath:
+          // TODO:(bn) or maybe put timeout info here
+          break;
+
+        case ERobotDriveToPoseStatus::FollowingPath: {
+          static int ctr = 0;
+          if(ctr++ % 10 == 0) {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
+                             "Waiting for robot to complete its path traversal (%d), "
+                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
+                             robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
           }
-          
-          // If the robot is traversing a path, consider replanning it
-          if(robot.GetBlockWorld().DidObjectsChange())
-          {
-            Planning::Path newPath;
-            
-            switch(robot.GetPathPlanner()->GetPlan(newPath, robot.GetDriveCenterPose(), _forceReplanOnNextWorldChange))
-            {
-              case IPathPlanner::DID_PLAN:
-              {
-                // clear path, but flag that we are replanning
-                robot.ClearPath();
-                _forceReplanOnNextWorldChange = false;
-                
-                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.UpdatePath", "sending new path to robot\n");
-                robot.ExecutePath(newPath, _useManualSpeed);
-                break;
-              } // case DID_PLAN:
-                
-              case IPathPlanner::PLAN_NEEDED_BUT_GOAL_FAILURE:
-              {
-                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewGoalForReplanNeeded",
-                                 "Replan failed due to bad goal. Aborting path.\n");
-                
-                robot.ClearPath();
-                break;
-              } // PLAN_NEEDED_BUT_GOAL_FAILURE:
-                
-              case IPathPlanner::PLAN_NEEDED_BUT_START_FAILURE:
-              {
-                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewStartForReplanNeeded",
-                                 "Replan failed during docking due to bad start. Will try again, and hope robot moves.\n");
-                break;
-              }
-                
-              case IPathPlanner::PLAN_NEEDED_BUT_PLAN_FAILURE:
-              {
-                PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.NewEnvironmentForReplanNeeded",
-                                 "Replan failed during docking due to a planner failure. Will try again, and hope environment changes.\n");
-                // clear the path, but don't change the state
-                robot.ClearPath();
-                _forceReplanOnNextWorldChange = true;
-                break;
-              }
-                
-              default:
-              {
-                // Don't do anything just proceed with the current plan...
-                break;
-              }
-            } // switch(GetPlan())
-            
-          } // if blocks changed
-        } else {
+          break;
+        }
+
+        case ERobotDriveToPoseStatus::Waiting: {
           // No longer traversing the path, so check to see if we ended up in the right place
           Vec3f Tdiff;
           
@@ -326,7 +267,7 @@ namespace Anki {
           const Point3f distanceThreshold(_goalDistanceThreshold.x(),
                                           _goalDistanceThreshold.y(),
                                           robot.GetHeight());
-          
+
           if(robot.GetPose().IsSameAs(_goalPoses[_selectedGoalIndex], distanceThreshold, _goalAngleThreshold, Tdiff))
           {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Success",
@@ -350,6 +291,7 @@ namespace Anki {
                              "Robot's state is FOLLOWING_PATH, but IsTraversingPath() returned false.\n");
             result = ActionResult::FAILURE_ABORT;
           }
+          break;
         }
       }
       
@@ -360,7 +302,7 @@ namespace Anki {
     {
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
-      robot.ClearPath();
+      robot.StopDrivingToPose();
       VizManager::getInstance()->ErasePath(robot.GetID());
       VizManager::getInstance()->EraseAllPlannerObstacles(true);
       VizManager::getInstance()->EraseAllPlannerObstacles(false);
@@ -1608,7 +1550,7 @@ namespace Anki {
       
       // Abort anything that shouldn't still be running
       if(robot.IsTraversingPath()) {
-        robot.ClearPath();
+        robot.StopDrivingToPose();
       }
       if(robot.IsPickingOrPlacing()) {
         robot.AbortDocking();

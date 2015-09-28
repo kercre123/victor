@@ -86,8 +86,6 @@ namespace Anki {
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
-      bool     _startedTraversingPath;
-      bool     _forceReplanOnNextWorldChange;
       
       Signal::SmartHandle _signalHandle;
       

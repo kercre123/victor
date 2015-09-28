@@ -59,12 +59,19 @@
 
 namespace Anki {
   
-  // Forward declaration:
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+// Forward declaration:
+namespace Util {
+namespace Data {
+class DataPlatform;
+}
+}
+
+enum class ERobotDriveToPoseStatus {
+  Error,
+  ComputingPath,
+  FollowingPath,
+  Waiting,
+};
   
 namespace Cozmo {
   
@@ -197,35 +204,35 @@ namespace Cozmo {
     
     // Computes robot origin pose for the given drive center pose
     void ComputeOriginPose(const Pose3d &driveCenterPose, Pose3d &robotPose) const;
-
-    
     
     //
     // Path Following
     //
 
-    // Clears the path that the robot is executing which also stops the robot
-    // (so this also aborts any current path)
-    Result ClearPath();
-    
-    // Removes the specified number of segments from the front and back of the path
-    Result TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments);
+    // Begin computation of a path to drive to the given pose (or poses). Once the path is computed, the robot
+    // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically If
+    // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
+    // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
+    // the path
+    Result StartDrivingToPose(const Pose3d& pose, bool useManualSpeed = false);
 
-    // Return a path to the given pose, internally selecting the best planner
-    // to use to generate it.
-    Result GetPathToPose(const Pose3d& pose, Planning::Path& path);
-    
-    // Same as above, but allows the planner to also select the "best" of the
-    // given poses, returning the index of which one it selected.
-    Result GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path);
+    // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
+    // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
+    // be set to the pose which is selected once planning is complete
+    Result StartDrivingToPose(const std::vector<Pose3d>& poses, size_t* selectedPoseIndex = nullptr, bool useManualSpeed = false);
 
-    // Sends a path to the robot to be immediately executed
-    Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
+    // This functions cancels all planning, clears the current path, and stops the robot
+    void StopDrivingToPose();
     
     // Executes a test path defined in latticePlanner
     void ExecuteTestPath();
-    
-    IPathPlanner* GetPathPlanner() { return _selectedPathPlanner; }
+
+    // This function checks the planning / path following status of the robot. If it is waiting on the
+    // planner, and not moving, it returns ComputingPath. If it is following a planned path (even if it is
+    // also replanning in another thread), it returns FollowingPath. If it isn't doing anything (e.g. before
+    // the first call, or after it finishes a path), it returns Waiting. Otherwise, if there is a problem, it
+    // returns Error
+    ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
     
     bool IsTraversingPath()   const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
     
@@ -570,7 +577,7 @@ namespace Cozmo {
     Result AbortAll();
     
     // Abort things individually
-    // NOTE: Use ClearPath() above to abort a path
+    // NOTE: Use StopDrivingToPose() above to abort a path
     Result AbortAnimation();
     Result AbortDocking(); // a.k.a. PickAndPlace
     
@@ -627,22 +634,30 @@ namespace Cozmo {
     bool             _wheelsLocked;
     bool             _headLocked;
     bool             _liftLocked;
-    
+        
+
     // Path Following. There are two planners, only one of which can
     // be selected at a time
-    IPathPlanner*    _selectedPathPlanner;
-    IPathPlanner*    _longPathPlanner;
-    IPathPlanner*    _shortPathPlanner;
-    s8               _currPathSegment;
-    u8               _numFreeSegmentSlots;
-    u16              _lastSentPathID;
-    u16              _lastRecvdPathID;
-    bool             _usingManualPathSpeed;
-    PathDolerOuter*  _pdo;
+    IPathPlanner*            _selectedPathPlanner;
+    IPathPlanner*            _longPathPlanner;
+    IPathPlanner*            _shortPathPlanner;
+    size_t*                  _selectedPoseIndexPtr;
+    int                      _numPlansStarted;
+    int                      _numPlansFinished;
+    ERobotDriveToPoseStatus  _driveToPoseStatus;
+    s8                       _currPathSegment;
+    u8                       _numFreeSegmentSlots;
+    u16                      _lastSentPathID;
+    u16                      _lastRecvdPathID;
+    bool                     _usingManualPathSpeed;
+    PathDolerOuter*          _pdo;
     
     // This functions sets _selectedPathPlanner to the appropriate
     // planner
     void SelectPlanner(const Pose3d& targetPose);
+
+    // Sends a path to the robot to be immediately executed
+    Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
     
     // Robot stores the calibration, camera just gets a reference to it
     // This is so we can share the same calibration data across multiple
@@ -814,6 +829,8 @@ namespace Cozmo {
                            const f32 rwheel_speed_mmps) const;
     
     Result SendStopAllMotors() const;
+
+    Result ClearPath();
 
     // Clears the path that the robot is executing which also stops the robot
     Result SendClearPath() const;

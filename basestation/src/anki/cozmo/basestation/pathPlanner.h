@@ -13,6 +13,7 @@
 #define __PATH_PLANNER_H__
 
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/planning/shared/path.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include <set>
@@ -22,54 +23,64 @@ namespace Anki {
 
 class Pose3d;
 
-namespace Planning {
-class Path;
-}
-
 namespace Cozmo {
+
+enum class EComputePathStatus {
+  Error, // Could not create path as requested
+  Running, // Signifies that planning has successfully begun (may also be finished already)
+  NoPlanNeeded, // Signifies that planning is not nessecary, useful in the replanning case
+};
+
+enum class EPlannerStatus {
+  Error, // Planner encountered an error while running
+  Running, // Planner is still thinking
+  CompleteWithPlan, // Planner has finished, and has a valid plan
+  CompleteNoPlan, // Planner has finished, but has no plan (either encountered an error, or stopped early)
+};
 
 class IPathPlanner
 {
 public:
 
-  IPathPlanner() {}      
+  IPathPlanner();
   virtual ~IPathPlanner() {}
 
-  // Replan if needed because the environment changed. Returns DID_REPLAN if there is a new path and
-  // REPLAN_NOT_NEEDED if no replan was necessary and the path has not changed.  If a new path is needed but
-  // could not be computed a corresponding enum value is returned.  Assumes the goal pose didn't change. If
-  // forceReplanFromScratch = true, then definitely do a new plan, from scratch.
+  // ComputePath functions start computation of a path. The underlying planner may run in a thread, or it may
+  // compute immediately in the calling thread.
   // 
-  // If the goal hasn't changed, it is better to call the version
-  // that doesn't specify a goal
+  // There are two versions of the function. They both take a single start pose, one takes multiple possible
+  // target poses, and one takes a signle target pose. The one with multiple poses allows the planner to chose
+  // which pose to drive to on its own.
   // 
-  // NOTE: Some planners may never attempt to replan unless you set forceReplanFromScratch
-  enum EPlanStatus {
-    PLAN_NOT_NEEDED,
-    DID_PLAN,
-    PLAN_NEEDED_BUT_START_FAILURE,
-    PLAN_NEEDED_BUT_GOAL_FAILURE,
-    PLAN_NEEDED_BUT_PLAN_FAILURE
-  };
+  // Return value of Error indicates that there was a problem starting the plan and it isn't running. Running
+  // means it is (or may have already finished)
 
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              bool forceReplanFromScratch = false) {return PLAN_NOT_NEEDED;};
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) = 0;
 
-  // A simple planner that doesn't really support replanning can just implement this
-  // function. forceReplanFromScratch is implied to be true because we are changing both the start and the
-  // goal
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const Pose3d& targetPose) = 0;
-     
-  // This version gets a plan to the closest of the goals you supply. It is up to the planner implementation
-  // to override and choose based on other criteria. The index of the selected target pose is returned in the
-  // last argument.
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const std::vector<Pose3d>& targetPoses,
-                              size_t& selectedIndex);
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const std::vector<Pose3d>& targetPoses);
+
+  // While we are following a path, we can do a more efficient check to see if we need to update that path
+  // based on new obstacles or other information. This function assumes that the robot is following the last
+  // path that was computed by ComputePath and returned by GetCompletePath. If a new path is needed, it will
+  // compute it just like ComputePath. If not, it may do something more efficient to return the existing path
+  // (or a portion of it). In either case, GetCompletePath should be called to return the path that should be
+  // used
+  // Default implementation never plans (just gives you the same path as last time)
+  virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
+                                                    bool forceReplanFromScratch = false);
+
+  virtual void StopPlanning() {}
+
+  virtual EPlannerStatus CheckPlanningStatus() const;
+
+  // returns true if it was able to copy a complete path into the passed in argument. If specified,
+  // selectedTargetIndex will be set to the index of the targetPoses that was selected in the original
+  // targetPoses vector passed in to ComputePath, or 0 if only one target pose was passed in to the most
+  // recent ComputePlan call
+  virtual bool GetCompletePath(Planning::Path &path);
+  virtual bool GetCompletePath(Planning::Path &path, size_t& selectedTargetIndex);
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
@@ -85,12 +96,17 @@ public:
   void AddIgnoreID(const ObjectID objID)          { _ignoreIDs.insert(objID); }
   void RemoveIgnoreID(const ObjectID objID)       { _ignoreIDs.erase(objID); }
   void ClearIgnoreIDs()                             { _ignoreIDs.clear(); }
-      
+  
 protected:
       
   std::set<ObjectFamily>             _ignoreFamilies;
   std::set<ObjectType>               _ignoreTypes;
   std::set<ObjectID>                 _ignoreIDs;
+
+  bool _hasValidPath;
+  bool _planningError;
+  size_t _selectedTargetIdx;
+  Planning::Path _path;
       
 }; // Interface IPathPlanner
 
@@ -100,10 +116,9 @@ class PathPlannerStub : public IPathPlanner
 public:
   PathPlannerStub() { }
 
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const Pose3d& targetPose) override {
-    return PLAN_NOT_NEEDED;
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) override {
+    return EComputePathStatus::Error;
   }
 };
     

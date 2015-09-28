@@ -17,16 +17,24 @@
 namespace Anki {
 namespace Cozmo {
 
-    
-IPathPlanner::EPlanStatus IPathPlanner::GetPlan(Planning::Path &path,
-                                                const Pose3d& startPose,
-                                                const std::vector<Pose3d>& targetPoses,
-                                                size_t& selectedIndex)
+
+IPathPlanner::IPathPlanner()
+  : _hasValidPath(false)
+  , _planningError(false)
+  , _selectedTargetIdx(0)
 {
+}
+
+EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
+                                             const std::vector<Pose3d>& targetPoses)
+{
+  _hasValidPath = false;
+  _planningError = false;
+
   // Select the closest
   const Pose3d* closestPose = nullptr;
       
-  selectedIndex = 0;
+  _selectedTargetIdx = 0;
   bool foundTarget = false;
   f32 shortestDistToPose = -1.f;
   for(size_t i=0; i<targetPoses.size(); ++i)
@@ -49,15 +57,57 @@ IPathPlanner::EPlanStatus IPathPlanner::GetPlan(Planning::Path &path,
       foundTarget = true;
       shortestDistToPose = distToPose;
       closestPose = &targetPose;
-      selectedIndex = i;
+      _selectedTargetIdx = i;
     }
   } // for each targetPose
     
   CORETECH_ASSERT(foundTarget);
   CORETECH_ASSERT(closestPose);
       
-  return this->GetPlan(path, startPose, *closestPose);
+  return ComputePath(startPose, targetPoses[_selectedTargetIdx]);
 }
+
+EComputePathStatus IPathPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
+                                                                      bool forceReplanFromScratch)
+{
+  return EComputePathStatus::NoPlanNeeded;
+}
+
+EPlannerStatus IPathPlanner::CheckPlanningStatus() const
+{
+  if( _planningError ) {
+    return EPlannerStatus::Error;
+  }
+
+  if( _hasValidPath ) {
+    return EPlannerStatus::CompleteWithPlan;
+  }
+  else {
+    return EPlannerStatus::CompleteNoPlan;
+  }
+}
+
+bool IPathPlanner::GetCompletePath(Planning::Path &path)
+{
+  if( ! _hasValidPath ) {
+    return false;
+  }
+
+  path = _path;
+  return true;
+}
+
+bool IPathPlanner::GetCompletePath(Planning::Path &path, size_t& selectedTargetIndex)
+{
+  if( ! _hasValidPath ) {
+    return false;
+  }
+
+  path = _path;
+  selectedTargetIndex = _selectedTargetIdx;
+  return true;
+}
+
     
     
 } // namespace Cozmo

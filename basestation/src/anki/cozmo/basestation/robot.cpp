@@ -69,6 +69,10 @@ namespace Anki {
     , _wheelsLocked(false)
     , _headLocked(false)
     , _liftLocked(false)
+    , _selectedPoseIndexPtr(nullptr)
+    , _numPlansStarted(0)
+    , _numPlansFinished(0)
+    , _driveToPoseStatus(ERobotDriveToPoseStatus::Waiting)
     , _currPathSegment(-1)
     , _lastSentPathID(0)
     , _lastRecvdPathID(0)
@@ -153,7 +157,17 @@ namespace Anki {
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
-      _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
+
+      if (nullptr != _dataPlatform) {
+        _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
+      }
+      else {
+        // For unit tests, or cases where we don't have data, use the short planner in it's place
+        PRINT_NAMED_WARNING("Robot.NoDataPlatform.WrongPlanner",
+                            "Using short planner as the long planner, since we dont have a data platform");
+        _longPathPlanner = new FaceAndApproachPlanner;
+      }
+
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       
@@ -959,6 +973,87 @@ namespace Anki {
         PRINT_NAMED_WARNING("Robot.Update",
                             "Robot %d had an animation streaming failure.\n", GetID());
       }
+
+
+      /////////// Update path planning / following ////////////
+
+      bool forceReplan = _driveToPoseStatus == ERobotDriveToPoseStatus::Error;
+
+      if( _numPlansFinished == _numPlansStarted ) {
+        // nothing to do with the planners, so just update the status based on the path following
+        if( IsTraversingPath() ) {
+          _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+
+          if( GetBlockWorld().DidObjectsChange() || forceReplan ) {
+            // see if we need to replan, but only bother checking if the world objects changed
+            switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
+            case EComputePathStatus::Error:
+              _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+              StopDrivingToPose();
+              PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
+              break;
+
+            case EComputePathStatus::Running:
+              _numPlansStarted++;
+              PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
+              // leave the status to following, since we continue to follow while computing the new path
+              break;
+
+            case EComputePathStatus::NoPlanNeeded:
+              // leave status as following, don't update plan attempts since no new planning is needed
+              break;
+            }
+          }
+        }
+        else {
+          _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
+        }
+      }
+      else {
+        // we are waiting on a plan to currently compute
+        // TODO:(bn) timeout logic might fit well here?
+        switch( _selectedPathPlanner->CheckPlanningStatus() ) {
+        case EPlannerStatus::Error:
+          _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
+          PRINT_NAMED_INFO("Robot.Update.Planner.Error", "Running planner returned error status");
+          StopDrivingToPose();
+          break;
+
+        case EPlannerStatus::Running:
+          _driveToPoseStatus =  ERobotDriveToPoseStatus::ComputingPath;
+          break;
+
+        case EPlannerStatus::CompleteWithPlan: {
+          PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
+
+          _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+          _numPlansFinished = _numPlansStarted;
+
+          size_t selectedPoseIdx;
+          Planning::Path newPath;
+          _selectedPathPlanner->GetCompletePath(newPath, selectedPoseIdx);
+          ExecutePath(newPath, _usingManualPathSpeed);
+
+          if( _selectedPoseIndexPtr != nullptr ) {
+            // tell the caller which pose we selected, then clear the pointer so we don't change it again until
+            // they request a new plan
+
+            // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
+            // replanning will always chose the same target pose, which should be OK for now
+            *_selectedPoseIndexPtr = selectedPoseIdx;
+            _selectedPoseIndexPtr = nullptr;
+          }
+          break;
+        }
+
+
+        case EPlannerStatus::CompleteNoPlan:
+          PRINT_NAMED_INFO("Robot.Update.Planner.CompleteNoPlan", "Running planner complete with no plan");
+          _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
+          _numPlansFinished = _numPlansStarted;
+          break;
+        }
+      }
         
       
       /////////// Update visualization ////////////
@@ -1090,32 +1185,7 @@ namespace Anki {
       CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
     }
         
-    Result Robot::GetPathToPose(const Pose3d& targetPose, Planning::Path& path)
-    {
-      Pose3d targetPoseWrtOrigin;
-      if(targetPose.GetWithRespectTo(*GetWorldOrigin(), targetPoseWrtOrigin) == false) {
-        PRINT_NAMED_ERROR("Robot.GetPathToPose.OriginMisMatch",
-                          "Could not get target pose w.r.t. robot %d's origin.\n", GetID());
-        return RESULT_FAIL;
-      }
-      
-      SelectPlanner(targetPoseWrtOrigin);
-      
-      // Compute drive center pose of given target robot pose
-      Pose3d targetDriveCenterPose;
-      ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
-      
-      // Compute drive center pose for start pose
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
-
-      if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
-        return RESULT_OK;
-      else
-        return RESULT_FAIL;
-    }
-
-    
-    void Robot::SelectPlanner(const Pose3d& targetPose)
+  void Robot::SelectPlanner(const Pose3d& targetPose)
     {
       Pose2d target2d(targetPose);
       Pose2d start2d(GetPose());
@@ -1131,54 +1201,96 @@ namespace Anki {
         _selectedPathPlanner = _longPathPlanner;
       }
     }
-    
-    Result Robot::GetPathToPose(const std::vector<Pose3d>& poses, size_t& selectedIndex, Planning::Path& path)
+
+    Result Robot::StartDrivingToPose(const Pose3d& targetPose, bool useManualSpeed)
     {
+      _usingManualPathSpeed = useManualSpeed;
+
+      Pose3d targetPoseWrtOrigin;
+      if(targetPose.GetWithRespectTo(*GetWorldOrigin(), targetPoseWrtOrigin) == false) {
+        PRINT_NAMED_ERROR("Robot.StartDrivingToPose.OriginMisMatch",
+                          "Could not get target pose w.r.t. robot %d's origin.\n", GetID());
+        _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+        return RESULT_FAIL;
+      }
+
+      SelectPlanner(targetPoseWrtOrigin);
+
+      // Compute drive center pose of given target robot pose
+      Pose3d targetDriveCenterPose;
+      ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
+
+      // Compute drive center pose for start pose
+      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPose);
+      if( status == EComputePathStatus::Error ) {
+        _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+        return RESULT_FAIL;
+      }
+
+      if( IsTraversingPath() ) {
+        _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+      }
+      else {
+        _driveToPoseStatus = ERobotDriveToPoseStatus::ComputingPath;
+      }
+
+      _numPlansStarted++;
+
+      return RESULT_OK;
+    }
+
+    Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses, size_t* selectedPoseIndexPtr, bool useManualSpeed)
+    {
+      _usingManualPathSpeed = useManualSpeed;
+      _selectedPoseIndexPtr = selectedPoseIndexPtr;
+
       // Let the long path (lattice) planner do its thing and choose a target
       _selectedPathPlanner = _longPathPlanner;
-      
+
       // Compute drive center pose for start pose and goal poses
       std::vector<Pose3d> targetDriveCenterPoses(poses.size());
       for (int i=0; i< poses.size(); ++i) {
         ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
-      IPathPlanner::EPlanStatus status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPoses, selectedIndex);
-      
-      if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN)
-      {
-        // See if SelectPlanner selects the long path planner based on the pose it
-        // selected
-        SelectPlanner(poses[selectedIndex]);
-        
-        // If SelectPlanner would rather use the short path planner, let it get a
-        // plan and use that one instead.
-        if(_selectedPathPlanner != _longPathPlanner) {
 
-          // Compute drive center pose for start pose and goal pose
-          Pose3d targetDriveCenterPose;
-          ComputeDriveCenterPose(poses[selectedIndex], targetDriveCenterPose);
-          status = _selectedPathPlanner->GetPlan(path, GetDriveCenterPose(), targetDriveCenterPose);
-        }
-        
-        if(status == IPathPlanner::PLAN_NOT_NEEDED || status == IPathPlanner::DID_PLAN) {
-          return RESULT_OK;
-        } else {
-          return RESULT_FAIL;
-        }
-      } else {
+      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPoses);
+      if( status == EComputePathStatus::Error ) {
+        _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+
         return RESULT_FAIL;
       }
-      
-    } // GetPathToPose(multiple poses)
-    
-  
+
+      if( IsTraversingPath() ) {
+        _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+      }
+      else {
+        _driveToPoseStatus = ERobotDriveToPoseStatus::ComputingPath;
+      }
+
+      _numPlansStarted++;
+
+      return RESULT_OK;
+    }
+
+    void Robot::StopDrivingToPose()
+    {
+      _selectedPathPlanner->StopPlanning();
+      ClearPath();
+      _numPlansFinished = _numPlansStarted;
+    }
+
     void Robot::ExecuteTestPath()
     {
       Planning::Path p;
       _longPathPlanner->GetTestPath(GetPose(), p);
       ExecutePath(p);
     }
-    
+
+    ERobotDriveToPoseStatus Robot::CheckDriveToPoseStatus() const
+    {
+      return _driveToPoseStatus;
+    }
+
     // =========== Motor commands ============
     
     // Sends message to move lift at specified speed
@@ -1449,13 +1561,6 @@ namespace Anki {
       _syncTimeAcknowledged = ack;
     }
       
-
-    Result Robot::TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
-    {
-      return SendTrimPath(numPopFrontSegments, numPopBackSegments);
-    }
-    
-    
     
     Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
     {
