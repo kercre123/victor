@@ -7,6 +7,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/activeObjectTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 
 namespace Anki {
@@ -414,7 +415,7 @@ message SetAllActiveObjectLEDs {
   uint_32  transitionOffPeriod_ms[4],
   float_32 relativeToX,
   float_32 relativeToY,
-  uint_8   makeRelative,  // if 0, ignores relativeX/relativeY
+  MakeRelativeMode   makeRelative,  // if 0, ignores relativeX/relativeY
   uint_8   robotID
 }
 

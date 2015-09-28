@@ -98,7 +98,6 @@ protected:
   void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
-  void SendSetHeadlights(u8 intensity);
   void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
   void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed);
   void SendPickAndPlaceObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
@@ -128,7 +127,6 @@ protected:
   void SendReadAnimationFile();
   void SendStartFaceTracking(u8 timeout_sec);
   void SendStopFaceTracking();
-  void SendVisionSystemParams();
   void SendForceAddRobot();
   void SendSetIdleAnimation(const std::string &animName);
   void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);

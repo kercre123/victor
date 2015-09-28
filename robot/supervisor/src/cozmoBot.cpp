@@ -3,6 +3,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "clad/types/imageTypes.h"
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
 #include "imuFilter.h"
@@ -37,8 +38,8 @@ namespace Anki {
 #ifdef SIMULATOR
     namespace HAL {
       ImageSendMode imageSendMode_;
-      Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
-      void SetImageSendMode(const ImageSendMode mode, const Vision::CameraResolution res)
+      ImageResolution captureResolution_ = CVGA;
+      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
         captureResolution_ = res;

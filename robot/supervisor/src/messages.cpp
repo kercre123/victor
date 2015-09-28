@@ -429,10 +429,7 @@ namespace Anki {
       {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.sendMode, msg.resolution);
 
-        ImageSendMode imageSendMode = static_cast<ImageSendMode>(msg.sendMode);
-        Vision::CameraResolution imageSendResolution = static_cast<Vision::CameraResolution>(msg.resolution);
-
-        HAL::SetImageSendMode(imageSendMode, imageSendResolution);
+        HAL::SetImageSendMode(msg.sendMode, msg.resolution);
 
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();

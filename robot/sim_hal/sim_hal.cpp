@@ -874,7 +874,7 @@ namespace Anki {
     }
 
     // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, ImageResolution res, bool enableLight)
     {
       // TODO: enableLight?
       AnkiConditionalErrorAndReturn(frame != NULL, "SimHAL.CameraGetFrame.NullFramePointer",

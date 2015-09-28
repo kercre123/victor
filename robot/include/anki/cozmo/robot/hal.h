@@ -350,7 +350,7 @@ namespace Anki
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection);
 
       // Starts camera frame synchronization (blocking call)
-      void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight);
+      void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);
 
 #     if SIMULATOR
       u32 GetCameraStartTime();
