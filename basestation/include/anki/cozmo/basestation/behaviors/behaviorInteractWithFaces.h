@@ -56,9 +56,9 @@ namespace Cozmo {
     void HandleRobotCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
     
     void UpdateBaselineFace(const Face* face);
+    void RemoveFaceID(Face::ID_t faceID);
     void UpdateProceduralFace(ProceduralFace& proceduralFace, const Face& face) const;
     void PlayAnimation(const std::string& animName);
-    void MoveToSafeDistanceFromPoint(const Vec3f& robotPoint);
     
     enum class State {
       Inactive,
@@ -100,8 +100,11 @@ namespace Cozmo {
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
     constexpr static float kFaceCooldownDuration_sec = 20;
     
-    // Distance to trigger Cozmo to get closer to the focused face
-    constexpr static float kTooFarDistance_mm = 600;
+    // Distance inside of which Cozmo will start noticing a face
+    constexpr static float kCloseEnoughDistance_mm = 1500;
+    
+    // Distance to trigger Cozmo to start ignoring a face
+    constexpr static float kTooFarDistance_mm = 2000;
     
     // Distance to trigger Cozmo to get further away from the focused face
     constexpr static float kTooCloseDistance_mm = 300;
