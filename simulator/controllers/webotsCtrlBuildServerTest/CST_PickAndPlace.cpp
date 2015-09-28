@@ -67,7 +67,7 @@ namespace Cozmo {
       {
         
         // Verify that head is in position
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(IS_MOVING) && NEAR(GetRobotHeadAngle_rad(), 0, 0.01),
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) && NEAR(GetRobotHeadAngle_rad(), 0, 0.01),
                                          2) {
 
           // Verify that the expected number of blocks was observed
@@ -92,7 +92,7 @@ namespace Cozmo {
       {
         // While it was picking the block up, it should have noticed another block appear
         // (i.e. the active block that was hiding behind it)
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(IS_CARRYING_BLOCK) && _observedNewObject,
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK) && _observedNewObject,
                                          10) {
           
           // Make list of known blocks minus the one that's being carried
@@ -114,7 +114,7 @@ namespace Cozmo {
       }
       case TestState::PlaceBlock:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(IS_CARRYING_BLOCK),
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK),
                                          15) {
           _testState = TestState::TestDone;
         }

@@ -28,7 +28,7 @@ protected:
   virtual void InitInternal() override;
   virtual s32 UpdateInternal() override;
 
-  virtual void HandleImageChunk(ExternalInterface::ImageChunk const& msg) override;
+  virtual void HandleImageChunk(ImageChunk const& msg) override;
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
   
