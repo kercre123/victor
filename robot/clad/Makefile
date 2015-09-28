@@ -7,7 +7,6 @@ CLAD_LIB_DIR=$(CLAD_BASE_DIR)/clad
 CLAD_DEPENDENCIES=$(CLAD_LIB_DIR)/*.py
 CLAD_CPP=$(CLAD_EMITTER_DIR)/CPP_emitter.py
 CLAD_CPPLITE=$(CLAD_EMITTER_DIR)/CPPLite_emitter.py
-CLAD_C=$(CLAD_EMITTER_DIR)/C_emitter.py
 CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
 CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPPLite_switch_emitter.py

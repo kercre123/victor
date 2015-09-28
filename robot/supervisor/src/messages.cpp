@@ -522,19 +522,6 @@ namespace Anki {
       {
         DockingController::ResetDocker();
       }
-
-      //
-      // Animation related:
-      //
-
-//      void ProcessPlayAnimation(const PlayAnimation& msg) {
-//        //PRINT("Processing play animation message\n");
-//        AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
-//      }
-
-//      void ProcessTransitionToStateAnimation(const TransitionToStateAnimation& msg) {
-//        AnimationController::TransitionAndPlay(msg.transitionAnimID, msg.stateAnimID);
-//      }
 
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
       {

@@ -16,9 +16,8 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/types/imageSendMode.h"
-#include "clad/types/testMode.h"
-#include "clad/types/cameraSettings.h"
+#include "clad/types/imageTypes.h"
+#include "clad/types/robotTestModes.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
 #include <webots/Supervisor.hpp>
@@ -76,10 +75,10 @@ protected:
   virtual void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn){};
   virtual void HandleRobotConnected(ExternalInterface::RobotConnected const &msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
-  virtual void HandleImageChunk(ExternalInterface::ImageChunk const& msg){};
-  virtual void HandleActiveObjectMoved(ExternalInterface::ActiveObjectMoved const& msg){};
-  virtual void HandleActiveObjectStoppedMoving(ExternalInterface::ActiveObjectStoppedMoving const& msg){};
-  virtual void HandleActiveObjectTapped(ExternalInterface::ActiveObjectTapped const& msg){};
+  virtual void HandleImageChunk(ImageChunk const& msg){};
+  virtual void HandleActiveObjectMoved(ObjectMoved const& msg){};
+  virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
+  virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
   
   
@@ -96,7 +95,7 @@ protected:
   void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode, u8 robotID);
-  void SendSetRobotImageSendMode(ImageSendMode mode, CameraResolutionClad resolution);
+  void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendSetHeadlights(u8 intensity);
@@ -122,7 +121,7 @@ protected:
   void SendLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxErrorSum);
   void SendSteeringControllerGains(const f32 k1, const f32 k2);
   void SendSetRobotVolume(const f32 volume);
-  void SendStartTestMode(TestModeClad mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
+  void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
@@ -181,10 +180,10 @@ private:
   void HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn);
   void HandleRobotConnectedBase(ExternalInterface::RobotConnected const &msg);
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);
-  void HandleImageChunkBase(ExternalInterface::ImageChunk const& msg);
-  void HandleActiveObjectMovedBase(ExternalInterface::ActiveObjectMoved const& msg);
-  void HandleActiveObjectStoppedMovingBase(ExternalInterface::ActiveObjectStoppedMoving const& msg);
-  void HandleActiveObjectTappedBase(ExternalInterface::ActiveObjectTapped const& msg);
+  void HandleImageChunkBase(ImageChunk const& msg);
+  void HandleActiveObjectMovedBase(ObjectMoved const& msg);
+  void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
+  void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   
   void UpdateActualObjectPoses();

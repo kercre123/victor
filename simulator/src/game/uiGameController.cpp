@@ -219,29 +219,29 @@ namespace Anki {
     
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void UiGameController::HandleImageChunkBase(ExternalInterface::ImageChunk const& msg)
+    void UiGameController::HandleImageChunkBase(ImageChunk const& msg)
     {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
     
-    void UiGameController::HandleActiveObjectMovedBase(ExternalInterface::ActiveObjectMoved const& msg)
+    void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
     {
      PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
-                      msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, UpAxisCladToString(msg.upAxis));
+                      msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
       
       HandleActiveObjectMoved(msg);
     }
     
-    void UiGameController::HandleActiveObjectStoppedMovingBase(ExternalInterface::ActiveObjectStoppedMoving const& msg)
+    void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%s",
-                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisCladToString(msg.upAxis));
+                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisToString(msg.upAxis));
       
       HandleActiveObjectStoppedMoving(msg);
     }
     
-    void UiGameController::HandleActiveObjectTappedBase(ExternalInterface::ActiveObjectTapped const& msg)
+    void UiGameController::HandleActiveObjectTappedBase(ObjectTapped const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
                        msg.objectID, msg.numTaps);
