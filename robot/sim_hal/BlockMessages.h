@@ -23,7 +23,6 @@
 #define ROBOT_2_BLOCK_MESSAGES_H
 
 #include "anki/common/types.h"
-#include "clad/types/lightCubeMessage.h"
 #include <functional>
 
 namespace Anki {

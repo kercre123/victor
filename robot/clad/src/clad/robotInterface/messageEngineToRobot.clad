@@ -6,12 +6,12 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
-#include "clad/types/activeObjectTypes.clad"
 #include "clad/types/animationKeyFrames.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
- 
+#include "clad/robotInterface/messageToActiveObject.clad"
+
 namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {

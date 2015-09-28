@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
 #include "BlockMessages.h"
+#include "clad/robotInterface/lightCubeMessage.h"
 
 // Webots Includes
 #include <webots/Robot.hpp>

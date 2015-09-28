@@ -2,7 +2,8 @@
  * @TODO One way or another this should be refactored so that the firmware and simulator look more similar.
  */
 
-#include "clad/types/activeObjectTypes.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/robotInterface/messageToActiveObject.clad"
 
 namespace Anki {
 namespace Cozmo {

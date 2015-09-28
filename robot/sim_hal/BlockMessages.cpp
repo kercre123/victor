@@ -1,5 +1,5 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "clad/types/lightCubeMessage.h"
+#include "clad/robotInterface/lightCubeMessage.h"
 #include "BlockMessages.h"
 #include <stdio.h>
 
@@ -8,7 +8,7 @@ namespace Anki {
     
     namespace ActiveBlock {
       // Auto-gen the ProcessBufferAs_MessageX() method prototypes using macros:
-      #include "clad/types/lightCubeMessage_declarations.def"
+      #include "clad/robotInterface/lightCubeMessage_declarations.def"
 
       void ProcessBadTag_LightCubeMessage(const BlockMessages::LightCubeMessage::Tag tag);
     }
