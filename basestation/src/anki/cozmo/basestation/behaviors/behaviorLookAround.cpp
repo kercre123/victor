@@ -143,7 +143,6 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
         IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
         
         _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
-        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlayAnimationAction("Demo_Look_Around_See_Something_A"));
         _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
         queuedFaceObjectAction = true;
         
