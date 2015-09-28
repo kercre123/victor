@@ -763,6 +763,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
+            <File>
+              <FileName>blockLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1655,6 +1660,11 @@
               <FileName>timeProfiler.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>blockLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
             </File>
           </Files>
         </Group>
