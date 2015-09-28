@@ -115,8 +115,8 @@ public class ActiveBlock : ObservedObject {
     }
   }
 
-  private byte lastRelativeMode;
-  public byte relativeMode;
+  private MakeRelativeMode lastRelativeMode;
+  public MakeRelativeMode relativeMode;
 
   private float lastRelativeToX;
   public float relativeToX;
@@ -240,12 +240,12 @@ public class ActiveBlock : ObservedObject {
     relativeToY = 0;
   }
 
-  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
                               uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {  
     SetLEDsRelative(relativeTo.x, relativeTo.y, onColor, offColor, whichLEDs, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
   }
 
-  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
                               uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
     SetLEDs(onColor, offColor, whichLEDs, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
 
