@@ -75,7 +75,7 @@ namespace Anki
         memcpy(&g_AccelStatus[id], (void*)&g_dataToHead.cubeStatus, sizeof(AcceleratorPacket));
         
         if (count) {
-          ActiveObjectTapped m;
+          ObjectTapped m;
           m.numTaps = count;
           m.objectID = id;
           RobotInterface::SendMessage(m);
