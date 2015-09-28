@@ -1,0 +1,29 @@
+/** Clad for messages from Engine or Game to robot regarding active objects.
+ * ROBOT_CLAD_SHARED
+ */
+
+#include "clad/types/activeObjectTypes.clad"
+
+
+namespace Anki {
+namespace Cozmo {
+  
+  message CubeLights
+  {
+    LightState lights[4],
+    uint_32    objectID,
+  }
+
+  message FlashObjectIDs
+  {
+    uint_32 objectID, // Place holder
+  }
+
+  message ObjectBeingCarried
+  {
+    uint_32 objectID,
+    bool    isBeingCarried,
+  }
+  
+} // Cozmo
+} // Anki
