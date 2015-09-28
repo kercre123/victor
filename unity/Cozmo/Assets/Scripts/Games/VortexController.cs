@@ -251,7 +251,7 @@ public class VortexController : GameController {
       break;
     case "winMatch":
     case "loseMatch":
-      robot.CancelAction();
+      //robot.CancelAction();
       break;
     default:
       break;
@@ -1038,20 +1038,22 @@ public class VortexController : GameController {
       wheel.DragStart(startDragPos, Time.time);
     }
     else {
-      wheel.Unlock();
-      if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
-        // Debug.Log("should be tracking to head");
-        robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
-        faceUpdateTimer = Time.realtimeSinceStartup;
-        CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[GetPoseIndex(currentPlayerIndex)], true, true);
-      }
-      else {
-        //Debug.Log("should be tracking to default");
-        CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+      if (round <= (roundsPerRing * rings)) {
+        wheel.Unlock();
+        if (actualFaces[GetPoseIndex(currentPlayerIndex)] != null) {
+          // Debug.Log("should be tracking to head");
+          robot.FacePose(actualFaces[GetPoseIndex(currentPlayerIndex)]);
+          faceUpdateTimer = Time.realtimeSinceStartup;
+          CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[GetPoseIndex(currentPlayerIndex)], true, true);
+        }
+        else {
+          //Debug.Log("should be tracking to default");
+          CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
 
-        // setting the head angle to ~35 degrees
-        if (robot != null)
-          robot.SetHeadAngle(.61f, null, true);
+          // setting the head angle to ~35 degrees
+          if (robot != null)
+            robot.SetHeadAngle(.61f, null, true);
+        }
       }
 
     }
@@ -1864,7 +1866,11 @@ public class VortexController : GameController {
           old_face = new Face(actualFaces[pose_index].ID, actualFaces[pose_index].WorldPosition.x, actualFaces[pose_index].WorldPosition.y, actualFaces[pose_index].WorldPosition.z);
         }
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
-        if (playState == VortexState.REQUEST_SPIN && pose_index == GetPoseIndex(currentPlayerIndex) && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq) {
+        if (state == GameState.PLAYING
+            && playState == VortexState.REQUEST_SPIN
+            && pose_index == GetPoseIndex(currentPlayerIndex)
+            && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq
+            && round <= (roundsPerRing * rings)) {
           /*
           if (old_face == null) {
             //DAS.Error("VortexController", "actualFaces[pose_index] == null");
