@@ -12,8 +12,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/vision/basestation/image.h"
@@ -21,6 +19,8 @@
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
+#include "clad/types/ledTypes.h"
+#include "clad/types/activeObjectTypes.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -133,9 +133,12 @@ namespace Anki {
     
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void WebotsKeyboardController::HandleImageChunk(ExternalInterface::ImageChunk const& msg)
+    void WebotsKeyboardController::HandleImageChunk(ImageChunk const& msg)
     {
-      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, msg.nrows, msg.ncols, (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, msg.chunkSize);
+      const u16 width  = Vision::CameraResInfo[(int)msg.resolution].width;
+      const u16 height = Vision::CameraResInfo[(int)msg.resolution].height;
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, width, height,
+        (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data, (uint32_t)msg.data.size());
       
       
       if(isImageReady)
