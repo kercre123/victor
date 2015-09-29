@@ -30,6 +30,7 @@ namespace Cozmo {
   {
   public:
     static const std::string LiveAnimation;
+    static const std::string AnimToolAnimation;
     static const u8          IdleAnimationTag = 255;
     
     AnimationStreamer(CannedAnimationContainer& container);
@@ -75,6 +76,7 @@ namespace Cozmo {
     Util::RandomGenerator _rng;
     
     // For live animation
+    bool _isLiveTwitchEnabled;
     s32 _nextBlink_ms;
     s32 _nextLookAround_ms;
     s32 _bodyMoveDuration_ms;
