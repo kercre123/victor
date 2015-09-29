@@ -585,59 +585,14 @@
           </GroupOption>
           <Files>
             <File>
-              <FileName>print_scan.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>k02_hal/lib/print_scan.c</FilePath>
-            </File>
-            <File>
-              <FileName>gpio_pins.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>k02_hal/lib/gpio_pins.c</FilePath>
-            </File>
-            <File>
               <FileName>hardware_init.c</FileName>
               <FileType>8</FileType>
               <FilePath>k02_hal/lib/hardware_init.c</FilePath>
             </File>
             <File>
-              <FileName>fsl_clock_MK02F12810.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_clock_MK02F12810.c</FilePath>
-            </File>
-            <File>
               <FileName>fsl_osc_hal.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\hal\fsl_osc_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_pmc_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_pmc_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_port_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_port_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_rcm_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_rcm_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_sim_hal_MK02F12810.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_sim_hal_MK02F12810.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_smc_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_smc_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_uart_hal.c</FilePath>
             </File>
             <File>
               <FileName>fsl_clock_manager.c</FileName>
@@ -658,6 +613,16 @@
               <FileName>fsl_mcg_hal_modes.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\k02_hal\lib\hal\fsl_mcg_hal_modes.c</FilePath>
+            </File>
+            <File>
+              <FileName>fsl_clock_MK02F12810.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\k02_hal\lib\hal\fsl_clock_MK02F12810.c</FilePath>
+            </File>
+            <File>
+              <FileName>fsl_sim_hal_MK02F12810.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\k02_hal\lib\hal\fsl_sim_hal_MK02F12810.c</FilePath>
             </File>
           </Files>
         </Group>
