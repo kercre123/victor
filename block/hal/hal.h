@@ -9,17 +9,17 @@
 
 // XXX: if timeout, don't send data back
 
-#define BLOCK_ID 0xA3
+#define BLOCK_ID 0xC3
 #define COMM_CHANNEL 82
 #define TAP_THRESH 10
 
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
 //#define DO_TAPS_TEST
-#define DO_MISSED_PACKET_TEST
+//#define DO_MISSED_PACKET_TEST
 //#define USE_EVAL_BOARD
 
-#define VERIFY_TRANSMITTER
+//#define VERIFY_TRANSMITTER
 //#define TIMING_SCOPE_TRIGGER
 //#define STREAM_ACCELEROMETER
 //#define DEBUG_PAYLOAD
@@ -72,11 +72,11 @@ static const u8 ADDRESS[5] = {BLOCK_ID, 0xC2, 0xC2, 0xC2, 0xC2};
 #ifdef VERIFY_TRANSMITTER
 static const u8 TIMER35MS_H = 0x10;
 static const u8 TIMER35MS_L = 0x00;
-static const u8 WAKEUP_OFFSET = 0x00; // 0.75 us per tick, 191.25 on H byte
+static const u8 WAKEUP_OFFSET = 0x00; // 0.75 us per tick, 192 us on H byte
 #else
 static const u8 TIMER35MS_H = 0xB6;
 static const u8 TIMER35MS_L = 0x4B;
-static const u8 WAKEUP_OFFSET = 0x06; // 0.75 us per tick, 191.25 on H byte
+static const u8 WAKEUP_OFFSET = 0x08; // 0.75 us per tick, 192 us on H byte
 #endif
 
 static const u8 MAX_MISSED_PACKETS = 3;
@@ -88,6 +88,7 @@ typedef enum eRadioTimerState
 };
 
 void InitTimer0();
+void ReceiveDataSync();
 void ReceiveData(u8 msTimeout, bool syncMode);
 void TransmitData();
 

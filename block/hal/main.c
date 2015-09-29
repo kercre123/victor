@@ -144,10 +144,17 @@ void main(void)
   sync = false;
   gDataReceived = false;
  
-  // Initalize Radio Sync Timer 
-  InitTimer0();
+
 
   #ifndef DO_MISSED_PACKET_TEST
+  LightOn(3); // No sync light
+  // Initalize Radio Sync Timer 
+  InitTimer0();
+  TR0 = 0; // Turn timer off
+  ReceiveDataSync();
+  StartTimer2(); // Start LED timer  
+  
+  /*
   while(sync == false)
   {
     // Process lights
@@ -167,6 +174,7 @@ void main(void)
     WDSV = 128; // 1 second
     WDSV = 0;
   }
+  */
   #endif
   
   #ifdef USE_UART

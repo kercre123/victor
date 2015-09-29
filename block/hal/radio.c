@@ -68,18 +68,33 @@ void InitPRX()
   CE_HIGH();
 }
 
+void ReceiveDataSync()
+{
+  // Initialize as primary receiver
+  radioBusy=true;
+  InitPRX();
+  while(radioBusy)
+  {
+    // Pet watchdog
+    WDSV = 128; // 1 second
+    WDSV = 0;
+    delay_us(10);
+  }
+  TR0 = 1; // turn timer back on
+  PowerDownRadio();
+}
+
 void ReceiveData(u8 msTimeout, bool syncMode)
 {
   u8 now;
   // get time
   now = TH0;
 
+  // Wait for a packet, or time out
+  radioBusy = true;
   // Initialize as primary receiver
   InitPRX();
   
-  // Wait for a packet, or time out
-  radioBusy = true;
- 
   #ifndef LISTEN_FOREVER
   if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
   {
@@ -183,7 +198,7 @@ NRF_ISR()
   
   // Read and clear IRQ flags from radio
   irq_flags = hal_nrf_get_clear_irq_flags();
-  
+  gDataReceived = true; 
   switch(irq_flags)
   {
     // Data received

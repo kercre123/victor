@@ -32,18 +32,22 @@ const u8 ledPins[4] = {1<<2, 1<<3, 1<<4, 1<<5};
 const u8 ledAnode[13] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0};
 const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
 
-volatile u8 xdata ledValues[13];
+volatile u8 xdata ledValues[13] = {0,0,0,0,0,0,0,0,0,0,0,0,128};
 
 volatile u8 gCurrentLed = 0;
 
 void SetLedValue(char led, char value)
 {
   ledValues[led] = value;
+  if(ledValues[12] == 0)
+    ledValues[12] = 16;
 }
 
 void SetLedValues(char *newValues)
 {
   memcpy(ledValues, newValues, sizeof(ledValues));
+  if(ledValues[12] == 0)
+    ledValues[12] = 1;
 } 
 
 void SetLedValuesByDelta()
@@ -106,6 +110,7 @@ T2_ISR()
   static unsigned int waitTime;
   
   // turn everyone off
+  ET2 = 0; // disable timer 2 interrupt
   PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]); 
   
   // Turn on an LED
@@ -119,21 +124,21 @@ T2_ISR()
     {
       gCurrentLed=0;
     }
-  }while(ledValues[gCurrentLed] == 0 && gCurrentLed != 12); // need a way to break out
+  }while(ledValues[gCurrentLed] < 16 && gCurrentLed != 12); // need a way to break out
   
   waitTime = (unsigned int)(ledValues[gCurrentLed]);
   waitTime = (waitTime*waitTime)>>8;
   
- 
-//  if(gCurrentLed != 2)
-//  {
   // Turn on LED
   PIN_OUT(P0DIR, ledPins[ledAnode[gCurrentLed]] | ledPins[ledCathode[gCurrentLed]]);
   GPIO_SET(P0, ledPins[ledAnode[gCurrentLed]]);
   GPIO_RESET(P0, ledPins[ledCathode[gCurrentLed]]);
-//  }
+
+  if (waitTime<32)
+    waitTime = 32;
   TL2 = 0xFF - (waitTime & 0xFF);
   TH2 = 0xFF;
   
   TF2 = 0; // reset timer 2 flag  
+  ET2 = 1; // enable timer 2 interrupt
 }
