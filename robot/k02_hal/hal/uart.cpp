@@ -18,7 +18,7 @@ static volatile int transferMode;
 
 inline void transmit_mode(bool tx);
 
-void uart_init() {
+void UartInit() {
   // Enable clocking to the UART and PORTD
   SIM_SOPT5 &= ~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK);
   SIM_SOPT5 |= SIM_SOPT5_UART0TXSRC(0) | SIM_SOPT5_UART0RXSRC(0);

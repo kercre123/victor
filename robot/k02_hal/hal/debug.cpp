@@ -35,7 +35,7 @@ void DebugInit() {
   UART1_C3 = UART_C3_ORIE_MASK | UART_C3_FEIE_MASK | UART_C3_TXDIR_MASK;
 }
 
-void DebugPrintf(char *format, ...)
+void DebugPrintf(const char *format, ...)
 {
   char buffer[512];
   

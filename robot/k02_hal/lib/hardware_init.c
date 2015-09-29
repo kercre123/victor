@@ -30,20 +30,4 @@
 
 #include "fsl_device_registers.h"
 #include "board.h"
-#include "fsl_clock_manager.h"
-#include "fsl_mcg_hal.h"
 
-void hardware_init(void)
-{
-    int32_t i;
-
-    /* enable clock for PORTs */
-    for (i = 0; i < HW_PORT_INSTANCE_COUNT; i++)
-    {
-        CLOCK_SYS_EnablePortClock(i);
-    }
-
-    /* Setup board clock source. */
-    g_xtal0ClkFreq = 9600000U;
-    g_xtalRtcClkFreq = 32768U;
-}

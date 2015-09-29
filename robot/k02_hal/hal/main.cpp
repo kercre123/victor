@@ -39,6 +39,16 @@ namespace Anki
   }
 }
 
+void hardware_init(void)
+{
+  SIM_SCGC5 |= 
+    SIM_SCGC5_PORTA_MASK |
+    SIM_SCGC5_PORTB_MASK |
+    SIM_SCGC5_PORTC_MASK |
+    SIM_SCGC5_PORTD_MASK |
+    SIM_SCGC5_PORTE_MASK;
+}
+
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
@@ -53,13 +63,14 @@ int main (void)
   PowerInit();
   I2CInit();
 
-  // Espressif startup time
-	for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
+  PRINTF("Espressif startup time... ");
+  for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
+  PRINTF("Done\n\r");
   
   //SPIInit();
   //dac_init();
   //i2c_init();
-  uart_init();
+  UartInit();
   
   CameraInit();
   for(;;) ;
