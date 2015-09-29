@@ -169,7 +169,7 @@ namespace Anki {
       }
       
       // Fail if we have exceeded timeout time
-      if(currentTimeInSeconds > _timeoutTime) {
+      if(currentTimeInSeconds >= _timeoutTime) {
         PRINT_NAMED_INFO("IAction.Update.TimedOut",
                          "%s timed out after %.1f seconds.\n",
                          GetName().c_str(), GetTimeoutInSeconds());
@@ -177,7 +177,7 @@ namespace Anki {
         result = ActionResult::FAILURE_TIMEOUT;
       }
       // Don't do anything until we have reached the waitUntilTime
-      else if(currentTimeInSeconds > _waitUntilTime)
+      else if(currentTimeInSeconds >= _waitUntilTime)
       {
         
         if(!_preconditionsMet) {
@@ -190,7 +190,7 @@ namespace Anki {
           // will get propagated out as the return value of the Update method.
           result = Init(robot);
           if(result == ActionResult::SUCCESS) {
-            PRINT_NAMED_INFO("IAction.Update.PrecondtionsMet",
+            PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
             
             // If preconditions were successfully met, switch result to RUNNING
@@ -205,7 +205,10 @@ namespace Anki {
             _waitUntilTime = currentTimeInSeconds + GetCheckIfDoneDelayInSeconds();
           }
           
-        } else {
+        }
+        
+        // Re-check if preconditions are met, since they could have _just_ been met
+        if(_preconditionsMet && currentTimeInSeconds >= _waitUntilTime) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.\n", GetName().c_str());
           SetStatus(GetName() + ": check if done");
           

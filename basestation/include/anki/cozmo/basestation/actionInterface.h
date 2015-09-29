@@ -196,11 +196,11 @@ namespace Anki {
       //  (e.g. for allowing for communications to physical robot to have an effect)
       //
       
-      // Before checking preconditions. Optional: default is 0.05s delay
-      virtual f32 GetStartDelayInSeconds()       const { return 0.05f; }
+      // Before checking preconditions. Optional: default is no delay
+      virtual f32 GetStartDelayInSeconds()       const { return 0.0f; }
       
-      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.05s delay
-      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.05f; }
+      // Before first CheckIfDone() call, after preconditions are met. Optional: default is no delay
+      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.0f; }
       
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
