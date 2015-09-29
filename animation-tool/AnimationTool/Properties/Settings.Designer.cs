@@ -85,7 +85,7 @@ namespace AnimationTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("_LIVE_NO_TWITCH_")]
+        [global::System.Configuration.DefaultSettingValueAttribute("_ANIM_TOOL_")]
         public string idleAnimation {
             get {
                 return ((string)(this["idleAnimation"]));

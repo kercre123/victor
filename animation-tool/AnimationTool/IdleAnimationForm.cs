@@ -48,7 +48,7 @@ namespace AnimationTool
             this.textBox.Name = "textBox";
             this.textBox.Size = new System.Drawing.Size(96, 20);
             this.textBox.TabIndex = 0;
-            this.textBox.Text = "_LIVE_NO_TWITCH_";
+            this.textBox.Text = "_ANIM_TOOL_";
             this.textBox.TextChanged += new System.EventHandler(this.textBox_TextChanged);
             // 
             // label
@@ -97,6 +97,8 @@ namespace AnimationTool
         private void Button_Click(object o, EventArgs e)
         {
             Properties.Settings.Default["idleAnimation"] = this.textBox.Text;
+            Properties.Settings.Default.Save();
+
             RobotEngineMessenger.instance.SendIdleAnimation(this.textBox.Text);
             Close();
         }
