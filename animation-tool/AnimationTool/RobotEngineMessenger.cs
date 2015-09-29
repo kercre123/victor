@@ -21,6 +21,7 @@ namespace AnimationTool
         public readonly SendQueue ProceduralFaceQueue;
         public readonly SendQueue HeadAngleQueue;
         public readonly SendQueue LiftHeightQueue;
+        public readonly SendQueue SetIdleAnimationQueue;
 
         static RobotEngineMessenger()
         {
@@ -32,6 +33,7 @@ namespace AnimationTool
             ProceduralFaceQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
             HeadAngleQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
             LiftHeightQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
+            SetIdleAnimationQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
         }
 
         public void SendAnimation(string animationName)
@@ -39,9 +41,24 @@ namespace AnimationTool
             ConnectionManager.SendAnimation(animationName);
         }
 
+        public void SendIdleAnimation(string animationName)
+        {
+            SetIdleAnimation setIdleAnimationMessage = new SetIdleAnimation();
+            setIdleAnimationMessage.robotID = 1;
+            setIdleAnimationMessage.animationName = animationName;
+
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.SetIdleAnimation = setIdleAnimationMessage;
+            SetIdleAnimationQueue.Send(message);
+        }
+
         public void SendProceduralFaceMessage(Sequencer.ExtraProceduralFaceData data)
         {
             if (data == null) return;
+
+            SetIdleAnimation setIdleAnimationMessage = new SetIdleAnimation();
+            setIdleAnimationMessage.robotID = 1;
+            setIdleAnimationMessage.animationName = "_LIVE_";
 
             DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
             displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
@@ -57,6 +74,7 @@ namespace AnimationTool
 
             MessageGameToEngine message = new MessageGameToEngine();
             message.DisplayProceduralFace = displayProceduralFaceMessage;
+            message.SetIdleAnimation = setIdleAnimationMessage;
             ProceduralFaceQueue.Send(message);
         }
 

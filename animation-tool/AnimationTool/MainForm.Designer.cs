@@ -62,6 +62,7 @@ namespace AnimationTool
             this.durationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.rootDirectoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setIPAddressToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.setIdleAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.animationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.playAnimationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.connectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -196,7 +197,8 @@ namespace AnimationTool
             this.settingsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.durationToolStripMenuItem,
             this.rootDirectoryToolStripMenuItem,
-            this.setIPAddressToolStripMenuItem});
+            this.setIPAddressToolStripMenuItem,
+            this.setIdleAnimationToolStripMenuItem});
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             this.settingsToolStripMenuItem.Size = new System.Drawing.Size(61, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
@@ -221,6 +223,13 @@ namespace AnimationTool
             this.setIPAddressToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
             this.setIPAddressToolStripMenuItem.Text = "Engine IP";
             this.setIPAddressToolStripMenuItem.Click += new System.EventHandler(this.SetIPAddress);
+            // 
+            // setIdleAnimationToolStripMenuItem
+            // 
+            this.setIdleAnimationToolStripMenuItem.Name = "setIdleAnimationToolStripMenuItem";
+            this.setIdleAnimationToolStripMenuItem.Size = new System.Drawing.Size(150, 22);
+            this.setIdleAnimationToolStripMenuItem.Text = "Idle Animation";
+            this.setIdleAnimationToolStripMenuItem.Click += new System.EventHandler(this.SetIdleAnimation);
             // 
             // animationToolStripMenuItem
             // 
@@ -864,6 +873,7 @@ namespace AnimationTool
         private ToolStripMenuItem rootDirectoryToolStripMenuItem;
         private ToolStripMenuItem playAnimationToolStripMenuItem;
         private ToolStripMenuItem setIPAddressToolStripMenuItem;
+        private ToolStripMenuItem setIdleAnimationToolStripMenuItem;
         private ToolStripMenuItem connectionToolStripMenuItem;
         private ChartForm headAngle;
         private ChartForm liftHeight;
