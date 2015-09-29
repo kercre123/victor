@@ -54,7 +54,7 @@ namespace AnimationTool
 
             MessageGameToEngine message = new MessageGameToEngine();
             message.SetIdleAnimation = setIdleAnimationMessage;
-            SetIdleAnimationQueue.Send(message);
+            ConnectionManager.SetIdleMessage(message);
         }
 
         public void SendProceduralFaceMessage(Sequencer.ExtraProceduralFaceData data)
