@@ -145,6 +145,7 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
 
   #region PUBLIC MEMBERS
 
+  //com
   public int GetDisplayedNumber() {
     return displayData.slice != null ? displayData.slice.Number : 0;
   }
@@ -548,8 +549,9 @@ public class SpinWheel : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDra
       data.pegTouching = false;
     }
     else if (data.pegTouching) {
-      float pegRepulsionFactor = Mathf.Clamp01(data.degToPegEnd / pegDegrees) * pegMaxAngularAccel * deltaTime;
+      float pegRepulsionFactor = Mathf.Sign(data.degToPegEnd / pegDegrees) * Mathf.Clamp01(Mathf.Abs(data.degToPegEnd / pegDegrees)) * pegMaxAngularAccel * deltaTime;
       data.angularVel += pegRepulsionFactor;
+      //Debug.Log("data.degToPegEnd / pegDegrees" + data.degToPegEnd / pegDegrees + ", data.angularVel: " + data.angularVel + ", pegRepulsionFactor:" + pegRepulsionFactor);
     }
     else {
       int crossedPegs = PegsCrossed(data.lastAngle, data.wheelAngle + deltaAngle);

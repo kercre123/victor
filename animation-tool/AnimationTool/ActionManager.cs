@@ -48,11 +48,9 @@ namespace AnimationTool
             currentAction.Do();
         }
 
-        public static bool Do(Action action, bool canNotBeUndone = false)
+        public static bool Do(Action action)
         {
             if (actions == null || !action.Do()) return false;
-
-            if (canNotBeUndone) return true;
 
             if (++currentActionIndex < actions.Count) // if not at the end of action list, remove all undid actions
             {

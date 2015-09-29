@@ -140,7 +140,7 @@ namespace AnimationTool
             this.PerformLayout();
         }
 
-        private void LeftTrackBar_Changed(object sender, EventArgs e)
+        private void LeftTrackBar_Changed(object o, EventArgs e)
         {
             if (leftTextBox.Text != leftTrackBar.Value.ToString())
             {
@@ -158,7 +158,7 @@ namespace AnimationTool
             }
         }
 
-        private void RightTrackBar_Changed(object sender, EventArgs e)
+        private void RightTrackBar_Changed(object o, EventArgs e)
         {
             if (rightTextBox.Text != rightTrackBar.Value.ToString())
             {
@@ -176,7 +176,7 @@ namespace AnimationTool
             }
         }
 
-        private void LeftTextBox_Changed(object sender, EventArgs e)
+        private void LeftTextBox_Changed(object o, EventArgs e)
         {
             try
             {
@@ -198,7 +198,7 @@ namespace AnimationTool
             catch (Exception) { }
         }
 
-        private void RightTextBox_Changed(object sender, EventArgs e)
+        private void RightTextBox_Changed(object o, EventArgs e)
         {
             try
             {

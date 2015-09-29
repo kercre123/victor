@@ -817,7 +817,7 @@ namespace AnimationTool
             // MainForm
             // 
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(1281, 698);
+            this.ClientSize = new System.Drawing.Size(1280, 720);
             this.Controls.Add(this.menuStrip);
             this.Controls.Add(this.headAngle);
             this.Controls.Add(this.liftHeight);

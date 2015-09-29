@@ -534,7 +534,7 @@ namespace AnimationTool
             {
                 if (previous != null)
                 {
-                    ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+                    (new RemoveDataPoint(curDataPoint, curChart)).Do();
                 }
                 RobotEngineMessenger.instance.SendProceduralFaceMessage(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
             }
@@ -549,7 +549,7 @@ namespace AnimationTool
             }
             else if(add)
             {
-                ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+                (new RemoveDataPoint(curDataPoint, curChart)).Do();
             }
         }
 
@@ -563,7 +563,7 @@ namespace AnimationTool
             }
             else if (add)
             {
-                ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+                (new RemoveDataPoint(curDataPoint, curChart)).Do();
             }
         }
 
@@ -576,7 +576,7 @@ namespace AnimationTool
             }
             else if (add)
             {
-                ActionManager.Do(new RemoveDataPoint(curDataPoint, curChart), true);
+                (new RemoveDataPoint(curDataPoint, curChart)).Do();
             }
         }
         
