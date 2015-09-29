@@ -30,6 +30,7 @@ namespace Cozmo {
   {
   public:
     static const std::string LiveAnimation;
+    static const std::string AnimToolAnimation;
     static const u8          IdleAnimationTag = 255;
     
     AnimationStreamer(CannedAnimationContainer& container);

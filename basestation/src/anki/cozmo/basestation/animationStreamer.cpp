@@ -11,6 +11,7 @@ namespace Anki {
 namespace Cozmo {
 
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
+  const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
   
   AnimationStreamer::AnimationStreamer(CannedAnimationContainer& container)
   : _animationContainer(container)
@@ -91,7 +92,7 @@ namespace Cozmo {
       _idleAnimation = &_liveAnimation;
       _isLiveTwitchEnabled = true;
       return RESULT_OK;
-    } else if(name == LiveAnimation + "NO_TWITCH_") {
+    } else if(name == AnimToolAnimation) {
       _idleAnimation = &_liveAnimation;
       _isLiveTwitchEnabled = false;
       return RESULT_OK;
@@ -308,7 +309,7 @@ namespace Cozmo {
       robot.MarkProceduralFaceAsSent();
       faceSent = true;
     }
-    else if(_nextBlink_ms <= 0) { // "time to blink"
+    else if(_isLiveTwitchEnabled && _nextBlink_ms <= 0) { // "time to blink"
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
 #     endif
