@@ -20,6 +20,7 @@
 #include "animationController.h"
 #include "proxSensors.h"
 #include "backpackLightController.h"
+#include "blockLightController.h"
 #include "timeProfiler.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
@@ -168,7 +169,7 @@ namespace Anki {
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "BackpackLightController init failed.\n");
-
+        
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -336,6 +337,7 @@ namespace Anki {
         PickAndPlaceController::Update();
         DockingController::Update();
         BackpackLightController::Update();
+        BlockLightController::Update();
 
         //////////////////////////////////////////////////////////////
         // Audio Subsystem

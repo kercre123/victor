@@ -66,7 +66,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 50;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 100;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -740,7 +740,7 @@ namespace Anki {
         
         // Skipping Dubins path since the straight line path seems to work fine as long as the steeringController gains
         // are set appropriately according to docking speed.
-        //followingBlockNormalPath_ = true;
+        followingBlockNormalPath_ = true;
         
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
