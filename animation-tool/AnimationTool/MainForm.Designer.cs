@@ -837,7 +837,7 @@ namespace AnimationTool
             this.Controls.Add(this.audioDevice);
             this.KeyPreview = true;
             this.MainMenuStrip = this.menuStrip;
-            this.Margin = new System.Windows.Forms.Padding(2);
+            this.Margin = new System.Windows.Forms.Padding(0);
             this.MinimumSize = new System.Drawing.Size(1280, 720);
             this.Name = "MainForm";
             this.Load += new System.EventHandler(this.MainForm_Load);
