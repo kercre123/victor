@@ -117,6 +117,9 @@ namespace Cozmo {
     // face to focus on; this interval shouln't interrupt his interaction)
     constexpr static float kGlanceDownInterval_sec = 12;
     
+    // Min time between plays of the animation when we see a new face
+    constexpr static float kSeeNewFaceAnimationCooldown_sec = 10;
+    
   }; // BehaviorInteractWithFaces
   
 } // namespace Cozmo
