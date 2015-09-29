@@ -355,9 +355,6 @@ namespace Anki {
       
       virtual Radians GetHeadAngle(f32 heightDiff) override;
       
-      // Reduce delays from their defaults
-      virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
-      
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }
       
