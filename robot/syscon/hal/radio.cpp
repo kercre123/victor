@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "tests.h"
 #include "nrf.h"
 #include "nrf51_bitfields.h"
 
@@ -31,10 +32,10 @@ extern GlobalDataToBody g_dataToBody;
   #define RADIO_ADDRS {0xE7,0xC1,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
 #elif defined(ROBOT41)
   // Robot #2
-  const uint8_t     cubePipe[] = {1,2,3,4};
-  const uint8_t     radioCannel = 83;
-  #define RADIO_ADDRS {0xE6,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8}
-#else
+  //const uint8_t     cubePipe[] = {1,2,3,4};
+  //const uint8_t     radioCannel = 83;
+  //#define RADIO_ADDRS {0xE6,0xB2,0xB3,0xB4,0xB5,0xB6,0xB7,0xB8}
+//#else
   const uint8_t     cubePipe[] = {1,2,3,4};
   const uint8_t     radioCannel = 82;
   #define RADIO_ADDRS {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
@@ -45,21 +46,21 @@ extern GlobalDataToBody g_dataToBody;
 LEDPacket         cubeTx[MAX_CUBES];
 AcceleratorPacket cubeRx[MAX_CUBES];
 
-void Radio::init() {
-  uesb_config_t uesb_config = {
-    UESB_BITRATE_250KBPS,
-    UESB_CRC_8BIT,
-    UESB_TX_POWER_0DBM,
-    radioCannel,
-    PACKET_SIZE,
-    5,
-    {0xE7,0xE7,0xE7,0xE7},
-    {0xC2,0xC2,0xC2,0xC2},
-    RADIO_ADDRS,
-    0x3F,
-    3
-  };
+const uesb_config_t uesb_config = {
+  UESB_BITRATE_250KBPS,
+  UESB_CRC_8BIT,
+  UESB_TX_POWER_0DBM,
+  radioCannel,
+  PACKET_SIZE,
+  5,
+  {0xE7,0xE7,0xE7,0xE7},
+  {0xC2,0xC2,0xC2,0xC2},
+  RADIO_ADDRS,
+  0x3F,
+  3
+};
 
+void Radio::init() {
   uesb_init(&uesb_config);
   uesb_start();
   
@@ -81,8 +82,8 @@ extern "C" void uesb_event_handler(void)
       memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
     }
 
-    #ifdef DEBUG_MESSAGES
-    UART::print("\r\nRx %x: ..", (uint8_t)addr);
+    #ifdef DO_RADIO_TESTING
+    UART::print("\r\nRx %x: ..", (uint8_t)addr, uesb_config.rx_address_prefix[addr+1]);
     UART::dump(rx_payload.length, (char*)rx_payload.data);
     #endif
   }
@@ -116,8 +117,8 @@ void Radio::manage() {
   // Transmit cubes round-robin
   if (currentCube < MAX_CUBES)
   {
-    #ifdef DEBUG_MESSAGES
-    UART::print("\r\nTx %i", currentCube);
+    #ifdef DO_RADIO_TESTING
+    UART::print("\r\nTx %i %2x", currentCube, uesb_config.rx_address_prefix[currentCube+1]);
     #endif
 
 #ifdef RADIO_TIMING_TEST

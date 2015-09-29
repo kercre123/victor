@@ -73,7 +73,7 @@ int main(void)
     
     // Update at 200Hz (5ms delay)
     timerStart += CYCLES_MS(5.0f);
-    while ( timerStart > GetCounter()) ;
+    while ( timerStart - GetCounter() > 0 ) ;
  
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)

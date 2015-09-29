@@ -2,11 +2,14 @@
 #include "motors.h"
 #include "head.h"
 #include "debug.h"
+#include "radio.h"
 #include "timer.h"
 #include "lights.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "anki/cozmo/robot/spineData.h"
+
+#include "hardware.h"
 
 #include "tests.h"
 
@@ -71,6 +74,17 @@ void TestMode(void)
       if (REQEND == c)
         TestRun(req[1], req[2] | (req[3] << 8));
     }
+  }
+}
+
+static void TestRadio() {
+  UART::print("\r\nStarting radio test");
+  int timerStart = GetCounter();
+  while(true) {
+    while ( GetCounter() - timerStart < CYCLES_MS(5.0f) ) ;
+    timerStart += CYCLES_MS(5.0f);
+
+    Radio::manage();  
   }
 }
 
@@ -171,7 +185,9 @@ static void TestEncoders() {
 }
 
 void TestFixtures::run() {
-#if defined(DO_ENCODER_TESTING)
+#if defined(DO_RADIO_TESTING)
+  TestRadio();
+#elif defined(DO_ENCODER_TESTING)
   TestEncoders();
 #elif defined(DO_MOTOR_TESTING)
   TestMotors();
