@@ -20,6 +20,7 @@ namespace AnimationTool
         private TurnInPlaceForm turnInPlaceForm;
         private FaceForm faceForm;
         private IPForm ipForm;
+        private IdleAnimationForm idleAnimationForm;
 
         private OpenFileDialog openFile;
         private FolderBrowserDialog selectFolder;
@@ -77,6 +78,7 @@ namespace AnimationTool
             ActionManager actionManager = new ActionManager();
 
             changeDurationForm = new ChangeDurationForm();
+            idleAnimationForm = new IdleAnimationForm();
             ipForm = new IPForm();
             faceForm = new FaceForm();
             bodyForm = new BodyForm();
@@ -95,6 +97,8 @@ namespace AnimationTool
             Application.ApplicationExit += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
             Application.Idle += UpdateConnectionText;
             Resize += MainForm_Resize;
+
+            RobotEngineMessenger.instance.SendIdleAnimation(Properties.Settings.Default.idleAnimation);
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
@@ -415,6 +419,11 @@ namespace AnimationTool
         private void SetIPAddress(object o, EventArgs e)
         {
             ipForm.Open(Location);
+        }
+
+        private void SetIdleAnimation(object o, EventArgs e)
+        {
+            idleAnimationForm.Open(Location);
         }
 
         private void UpdateConnectionText(object o, EventArgs e)

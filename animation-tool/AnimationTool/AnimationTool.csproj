@@ -89,6 +89,9 @@
     <Compile Include="FaceForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="IdleAnimationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="RobotEngineMessenger.cs" />
     <Compile Include="RobotSettings.cs" />
   </ItemGroup>
@@ -192,6 +195,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FaceForm.resx">
       <DependentUpon>FaceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="IdleAnimationForm.resx">
+      <DependentUpon>IdleAnimationForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="IPForm.resx">
       <DependentUpon>IPForm.cs</DependentUpon>
