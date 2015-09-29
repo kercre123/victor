@@ -3,7 +3,6 @@
 #include <math.h>
 
 #include "board.h"
-#include "fsl_debug_console.h"
 
 #include "dac.h"
 #include "anki/cozmo/robot/hal.h"

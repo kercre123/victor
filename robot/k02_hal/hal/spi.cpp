@@ -2,7 +2,6 @@
 #include <stdint.h>
 
 #include "board.h"
-#include "fsl_debug_console.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"

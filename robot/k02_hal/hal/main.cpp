@@ -3,7 +3,6 @@
 #include <stdint.h>
 
 #include "board.h"
-#include "fsl_debug_console.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -46,9 +45,9 @@ int main (void)
   
   // Kill this off as soon as we can ditch the Freescale libs
   hardware_init();
-  dbg_uart_init();
-
-  PRINTF("\r\nTesting self-contained project file.\n\n\r");
+  DebugInit();
+  
+  PRINTF("\r\nHeadboard 4.1 is booting.\n\n\r");
 
   TimerInit();
   PowerInit();
@@ -57,10 +56,10 @@ int main (void)
   // Espressif startup time
 	for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
   
-  SPIInit();
+  //SPIInit();
   //dac_init();
   //i2c_init();
-  //uart_init();
+  uart_init();
   
   CameraInit();
   for(;;) ;

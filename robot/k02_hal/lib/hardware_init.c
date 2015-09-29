@@ -48,11 +48,3 @@ void hardware_init(void)
     g_xtal0ClkFreq = 9600000U;
     g_xtalRtcClkFreq = 32768U;
 }
-
-void dbg_uart_init(void)
-{
-    // UART1 TX on PTE16 Alt 3
-    PORT_HAL_SetMuxMode(PORTE_BASE,16u,kPortMuxAlt3);
-
-    DbgConsole_Init(BOARD_DEBUG_UART_INSTANCE, 3000000 /*BOARD_DEBUG_UART_BAUD*/, kDebugConsoleUART);
-}

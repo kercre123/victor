@@ -4,7 +4,6 @@
 #include "hal/portable.h"
 
 #include "board.h"
-#include "fsl_debug_console.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
 #include "anki/common/robot/config.h"
