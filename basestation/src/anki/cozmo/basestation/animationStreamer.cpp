@@ -22,6 +22,7 @@ namespace Cozmo {
   , _numLoops(1)
   , _loopCtr(0)
   , _tagCtr(0)
+  , _isLiveTwitchEnabled(false)
   , _nextBlink_ms(0)
   , _nextLookAround_ms(0)
   , _bodyMoveDuration_ms(0)
@@ -88,8 +89,14 @@ namespace Cozmo {
       return RESULT_OK;
     } else if(name == LiveAnimation) {
       _idleAnimation = &_liveAnimation;
+      _isLiveTwitchEnabled = true;
+      return RESULT_OK;
+    } else if(name == LiveAnimation + "NO_TWITCH_") {
+      _idleAnimation = &_liveAnimation;
+      _isLiveTwitchEnabled = false;
       return RESULT_OK;
     }
+    
     
     _idleAnimation = _animationContainer.GetAnimation(name);
     if(_idleAnimation == nullptr) {
@@ -331,7 +338,9 @@ namespace Cozmo {
 
     // Don't start wiggling until we've been idling for a bit and make sure we
     // picking or placing
-    if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms && !robot.IsPickingOrPlacing())
+    if(_isLiveTwitchEnabled &&
+       _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms &&
+       !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
       if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.AreWheelsLocked())
@@ -431,7 +440,7 @@ namespace Cozmo {
         _headMoveDuration_ms -= BS_TIME_STEP;
       }
       
-    } // if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
+    } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
     
     return lastResult;
   }
