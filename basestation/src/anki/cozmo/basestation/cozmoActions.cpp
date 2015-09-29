@@ -538,15 +538,23 @@ namespace Anki {
           
           _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed, preActionPoseDistThresh));
         }
-      }
       
-      // Make sure we can see the object, unless we are carrying it (i.e. if we
-      // are doing a DriveToPlaceCarriedObject action)
-      if(!object->IsBeingCarried()) {
-        _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false));
-      }
       
-      _compoundAction.SetIsPartOfCompoundAction(true);
+        // Make sure we can see the object, unless we are carrying it (i.e. if we
+        // are doing a DriveToPlaceCarriedObject action)
+        if(!object->IsBeingCarried()) {
+          _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false));
+        }
+        
+        _compoundAction.SetIsPartOfCompoundAction(true);
+        
+        // Go ahead and do the first Update on the compound action, so we don't
+        // "waste" the first CheckIfDone call just initializing it
+        result = _compoundAction.Update(robot);
+        if(ActionResult::RUNNING == result || ActionResult::SUCCESS == result) {
+          result = ActionResult::SUCCESS;
+        }
+      }
       
       return result;
       
@@ -858,7 +866,18 @@ namespace Anki {
       // Prevent the compound action from signaling completion
       _compoundAction.SetIsPartOfCompoundAction(true);
       
-      return ActionResult::SUCCESS;
+      // Go ahead and do the first Update for the compound action so we don't
+      // "waste" the first CheckIfDone call doing so. Proceed so long as this
+      // first update doesn't _fail_
+      ActionResult compoundResult = _compoundAction.Update(robot);
+      if(ActionResult::SUCCESS == compoundResult ||
+         ActionResult::RUNNING == compoundResult)
+      {
+        return ActionResult::SUCCESS;
+      } else {
+        return compoundResult;
+      }
+      
     } // FacePoseAction::Init()
     
     
@@ -1003,6 +1022,7 @@ namespace Anki {
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
     
+    
     ActionResult FaceObjectAction::CheckIfDone(Robot& robot)
     {
       // Tick the compound action until it completes
@@ -1013,6 +1033,13 @@ namespace Anki {
           return compoundResult;
         } else {
           _facePoseCompoundActionDone = true;
+
+          // Go ahead and do a first tick of visual verification's Update, to
+          // get it initialized
+          ActionResult verificationResult = _visuallyVerifyAction.Update(robot);
+          if(ActionResult::SUCCESS != verificationResult) {
+            return verificationResult;
+          }
         }
       }
 
@@ -1081,14 +1108,25 @@ namespace Anki {
       _moveLiftToHeightAction.SetIsPartOfCompoundAction(true);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
-      return ActionResult::SUCCESS;
+      
+      // Go ahead and do the first update on moving the lift, so we don't "waste"
+      // the first tick of CheckIfDone initializing the sub-action.
+      ActionResult moveLiftInitResult = _moveLiftToHeightAction.Update(robot);
+      if(ActionResult::SUCCESS == moveLiftInitResult ||
+         ActionResult::RUNNING == moveLiftInitResult)
+      {
+        // Continue to CheckIfDone as long as the first Update didn't _fail_
+        return ActionResult::SUCCESS;
+      } else {
+        return moveLiftInitResult;
+      }
     }
 
     
     ActionResult VisuallyVerifyObjectAction::CheckIfDone(Robot& robot)
     {
 
-      ActionResult actionRes = ActionResult::RUNNING;
+      ActionResult actionRes = ActionResult::SUCCESS;
       
       if (!_moveLiftToHeightActionDone) {
         actionRes = _moveLiftToHeightAction.Update(robot);
@@ -1113,7 +1151,6 @@ namespace Anki {
       if(_waitToVerifyTime < 0.f) {
         _waitToVerifyTime = currentTime + GetWaitToVerifyTime();
       }
-      
       
       // Verify that we can see the object we were interested in
       ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_objectID);
@@ -1161,11 +1198,9 @@ namespace Anki {
         }
       }
 
-      
       if((currentTime < _waitToVerifyTime) && (actionRes != ActionResult::SUCCESS)) {
         return ActionResult::RUNNING;
       }
-
       
       return actionRes;
     }
@@ -1201,9 +1236,8 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
     {
-      const bool inPosition = (!robot.IsHeadMoving() &&
-                               NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(),
-                                    _angleTolerance.ToFloat()));
+      const bool inPosition = NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(),
+                                   _angleTolerance.ToFloat());
       
       return inPosition;
     }
@@ -1217,7 +1251,7 @@ namespace Anki {
       
       if(!_inPosition) {
         // TODO: Add ability to specify speed/accel
-        if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 10, 20) != RESULT_OK) {
+        if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 15, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -1506,7 +1540,19 @@ namespace Anki {
         // Disable the visual verification from issuing a completion signal
         _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
         
-        return ActionResult::SUCCESS;
+        // Go ahead and Update the FaceObjectAction once now, so we don't
+        // waste a tick doing so in CheckIfDone (since this is the first thing
+        // that will be done in CheckIfDone anyway)
+        ActionResult faceObjectResult = _faceAndVerifyAction->Update(robot);
+        
+        if(ActionResult::SUCCESS == faceObjectResult ||
+           ActionResult::RUNNING == faceObjectResult)
+        {
+          return ActionResult::SUCCESS;
+        } else {
+          return faceObjectResult;
+        }
+
       }
       
     } // Init()
@@ -1867,6 +1913,13 @@ namespace Anki {
               
               // Disable completion signals since this is inside another action
               _placementVerifyAction->SetIsPartOfCompoundAction(true);
+              
+              // Go ahead do the first update of the FaceObjectAction to get the
+              // init "out of the way" rather than wasting a tick here
+              result = _placementVerifyAction->Update(robot);
+              if(ActionResult::SUCCESS != result && ActionResult::RUNNING != result) {
+                return result;
+              }
             }
             
             result = _placementVerifyAction->Update(robot);
