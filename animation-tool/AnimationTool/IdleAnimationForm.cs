@@ -88,7 +88,7 @@ namespace AnimationTool
 
         private void textBox_TextChanged(object o, EventArgs e)
         {
-            if (this.textBox.Text != Properties.Settings.Default.idleAnimation)
+            if (!string.IsNullOrEmpty(this.textBox.Text) && this.textBox.Text != Properties.Settings.Default.idleAnimation)
             {
                 button.Enabled = true;
             }
