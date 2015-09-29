@@ -3,7 +3,7 @@
 
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
-#include "anki/vision/CameraSettings.h"
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -36,7 +36,7 @@ namespace Anki {
 
     
     // Resolution of images that are streamed to basestation (dev purposes)
-    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;
+    const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
     
     /***************************************************************************

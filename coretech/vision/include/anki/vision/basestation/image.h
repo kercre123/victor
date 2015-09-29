@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/point.h"
 
 #include "anki/vision/CameraSettings.h"
-
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
 namespace Vision {
@@ -137,11 +137,11 @@ namespace Vision {
     
     // Return true if image just completed and is available, false otherwise.
     bool AppendChunk(u32 imageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                     ImageEncoding_t encoding, u8 totalChunkCount,
+                     Cozmo::ImageEncoding encoding, u8 totalChunkCount,
                      u8 chunkId, const std::array<u8, CHUNK_SIZE>& data, u32 chunkSize);
     
     bool AppendChunk(u32 imageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                     ImageEncoding_t encoding, u8 totalChunkCount,
+                     Cozmo::ImageEncoding encoding, u8 totalChunkCount,
                      u8 chunkId, const u8* data, u32 chunkSize);
     
     cv::Mat GetImage() { return _img; }

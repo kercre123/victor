@@ -312,7 +312,7 @@ namespace Vision {
   } // miniGrayToJpeg()
   
   bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                                   ImageEncoding_t encoding, u8 totalChunkCount,
+                                   Cozmo::ImageEncoding encoding, u8 totalChunkCount,
                                    u8 chunkId, const u8* data, u32 chunkSize)
   {
     if(chunkSize > ImageDeChunker::CHUNK_SIZE) {
@@ -421,7 +421,7 @@ namespace Vision {
   }
   
   bool ImageDeChunker::AppendChunk(u32 newImageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                                   ImageEncoding_t encoding, u8 totalChunkCount,
+                                   Cozmo::ImageEncoding encoding, u8 totalChunkCount,
                                    u8 chunkId, const std::array<u8, CHUNK_SIZE>& data, u32 chunkSize)
   {
     return AppendChunk(newImageId, frameTimeStamp, nrows, ncols, encoding, totalChunkCount,
