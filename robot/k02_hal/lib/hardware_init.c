@@ -32,7 +32,6 @@
 #include "board.h"
 #include "fsl_clock_manager.h"
 #include "fsl_mcg_hal.h"
-#include "fsl_debug_console.h"
 
 void hardware_init(void)
 {
