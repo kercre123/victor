@@ -78,6 +78,8 @@ namespace Anki {
       // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
       virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
+      bool     _startedTraversingPath = false;
+      
     private:
       bool     _isGoalSet;
       bool     _driveWithHeadDown;
@@ -88,7 +90,6 @@ namespace Anki {
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
-      bool     _startedTraversingPath;
       bool     _forceReplanOnNextWorldChange;
       
       Signal::SmartHandle _signalHandle;
@@ -176,7 +177,6 @@ namespace Anki {
       Radians _turnAngle;
       Radians _variability;
       bool    _isAbsoluteAngle;
-      bool    _startedTraversingPath;
       
     }; // class TurnInPlaceAction
     
@@ -354,9 +354,6 @@ namespace Anki {
       virtual void Reset() override;
       
       virtual Radians GetHeadAngle(f32 heightDiff) override;
-      
-      // Reduce delays from their defaults
-      virtual f32 GetStartDelayInSeconds() const override { return 0.0f; }
       
       // Override to allow wheel control while facing the object
       virtual bool ShouldLockWheels() const override { return false; }

@@ -29,7 +29,6 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _robotMsgHandler(dataPlatform)
 , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
-, _animationReloadActive(false)
 {
 
   PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -266,7 +265,6 @@ void CozmoEngineHostImpl::ListenForRobotConnections(bool listen)
 
 Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
 {
-  ReloadAnimations(currTime_ns);
 
   // Update robot comms
   _robotChannel.Update();
@@ -288,22 +286,6 @@ Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
   return RESULT_OK;
 } // UpdateInternal()
-
-void CozmoEngineHostImpl::ReloadAnimations(const BaseStationTime_t currTime_ns)
-{
-  if (!_animationReloadActive) {
-    return;
-  }
-  const BaseStationTime_t reloadFrequency = static_cast<BaseStationTime_t>SEC_TO_NANOS(0.5f);
-  if (_lastAnimationFolderScan + reloadFrequency < currTime_ns) {
-    _lastAnimationFolderScan = currTime_ns;
-    Robot* robot = _robotMgr.GetFirstRobot();
-    if (robot != nullptr) {
-      PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
-      robot->ReadAnimationDir(true);
-    }
-  }
-}
 
 bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
 {
@@ -342,6 +324,14 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
   }
 
 }
+  
+void CozmoEngineHostImpl::ReadAnimationsFromDisk() {
+  Robot* robot = _robotMgr.GetFirstRobot();
+  if (robot != nullptr) {
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
+    robot->ReadAnimationDir();
+  }
+}
 
 void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
@@ -369,8 +359,8 @@ void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
     {
-      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "started animation tool");
-      StartAnimationTool();
+      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "Reading Animations from disk");
+      ReadAnimationsFromDisk();
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode:

@@ -261,11 +261,28 @@ namespace Cozmo {
     const s32 kHeadMovementSpacingMin_ms = 250;
     const s32 kHeadMovementSpacingMax_ms = 1000;
     const u8  kHeadAngleVariability_deg = 6;
+    const f32 kDockSquintEyeHeight = -0.4f;
+    const f32 kDockSquintEyebrowHeight = -0.4f;
     
     // Use procedural face
     const ProceduralFace& lastFace = robot.GetLastProceduralFace();
     const TimeStamp_t lastTime = lastFace.GetTimeStamp();
-    const ProceduralFace& nextFace = robot.GetProceduralFace();
+    //const ProceduralFace& nextFace = robot.GetProceduralFace();
+    ProceduralFace nextFace(robot.GetProceduralFace());
+    
+    // Squint the current face while picking/placing to show concentration:
+    if(robot.IsPickingOrPlacing()) {
+      for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right}) {
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight, kDockSquintEyeHeight);
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::BrowCenY, kDockSquintEyebrowHeight);
+      }
+      // Make sure squinting face gets displayed:
+      if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
+        nextFace.SetTimeStamp(nextFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
+      }
+      nextFace.MarkAsSentToRobot(false);
+    }
+    
     const TimeStamp_t nextTime = nextFace.GetTimeStamp();
     
     _nextBlink_ms -= BS_TIME_STEP;

@@ -37,6 +37,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/observableObjectLibrary_impl.h"
 #include "util/fileUtils/fileUtils.h"
 
 #include <fstream>
@@ -124,7 +126,7 @@ namespace Anki {
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
 
-      ReadAnimationDir(false);
+      ReadAnimationDir();
       
       // Read in emotion and behavior manager Json
       Json::Value emotionConfig;
@@ -1411,7 +1413,7 @@ namespace Anki {
 
 
     // Read the animations in a dir
-    void Robot::ReadAnimationDir(bool playLoadedAnimation)
+    void Robot::ReadAnimationDir()
     {
       if (_dataPlatform == nullptr) { return; }
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
@@ -1463,13 +1465,6 @@ namespace Anki {
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
-      }
-
-
-      if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
-        // send message to play animation
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
-        PlayAnimation(animationId, 1);
       }
     }
 
