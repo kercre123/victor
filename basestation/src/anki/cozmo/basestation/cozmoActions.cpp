@@ -77,7 +77,6 @@ namespace Anki {
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
-    , _startedTraversingPath(false)
     {
       
     }
@@ -706,7 +705,6 @@ namespace Anki {
     , _turnAngle(angle)
     , _variability(variability)
     , _isAbsoluteAngle(isAbsolute)
-    , _startedTraversingPath(false)
     {
       
     }
