@@ -56,10 +56,6 @@ namespace AnimationTool
         {
             if (data == null) return;
 
-            SetIdleAnimation setIdleAnimationMessage = new SetIdleAnimation();
-            setIdleAnimationMessage.robotID = 1;
-            setIdleAnimationMessage.animationName = "_LIVE_";
-
             DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
             displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
             displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
@@ -74,7 +70,6 @@ namespace AnimationTool
 
             MessageGameToEngine message = new MessageGameToEngine();
             message.DisplayProceduralFace = displayProceduralFaceMessage;
-            message.SetIdleAnimation = setIdleAnimationMessage;
             ProceduralFaceQueue.Send(message);
         }
 
