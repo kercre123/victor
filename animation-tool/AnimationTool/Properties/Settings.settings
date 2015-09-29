@@ -18,7 +18,7 @@
       <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="idleAnimation" Type="System.String" Scope="User">
-      <Value Profile="(Default)">_LIVE_NO_TWITCH_</Value>
+      <Value Profile="(Default)">_ANIM_TOOL_</Value>
     </Setting>
   </Settings>
 </SettingsFile>
