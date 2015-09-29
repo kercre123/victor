@@ -64,14 +64,14 @@ int main (void)
   I2CInit();
 
   PRINTF("Espressif startup time... ");
-  for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
+  //for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
   PRINTF("Done\n\r");
   
   //SPIInit();
-  //dac_init();
+  //DacInit();
   //i2c_init();
   UartInit();
   
-  CameraInit();
+  //CameraInit();
   for(;;) ;
 }

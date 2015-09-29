@@ -24,27 +24,23 @@ void UartInit() {
   SIM_SOPT5 |= SIM_SOPT5_UART0TXSRC(0) | SIM_SOPT5_UART0RXSRC(0);
 
   SIM_SCGC4 |= SIM_SCGC4_UART0_MASK;
-  SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK;
 
   // Enable UART for this shiz
+  PORTD_PCR6 = PORT_PCR_MUX(3);
   PORTD_PCR7 = PORT_PCR_MUX(3) | PORT_PCR_ODE_MASK; // Open drain on the UART pin
 
-  int sbr = BAUD_SBR(spine_baud_rate);
-  int brfa = BAUD_BRFA(spine_baud_rate);
-
-  UART0_BDL = UART_BDL_SBR(sbr);
+  UART0_BDL = UART_BDL_SBR(BAUD_SBR(spine_baud_rate));
   UART0_BDH = 0;
 
-  UART0_C1 = UART_C1_LOOPS_MASK | UART_C1_RSRC_MASK; // 8 bit, 1 bit stop no parity (single wire)
+  UART0_C1 = 0;                                      // 8 bit, 1 bit stop no parity (single wire)
   UART0_C2 = UART_C2_TE_MASK | UART_C2_RE_MASK;      // Enable one wire (requires both units be enabled)
+  UART0_S2 |= UART_S2_RXINV_MASK;
   UART0_C2 |= UART_C2_TCIE_MASK | UART_C2_RIE_MASK;  // Enable a few interrupts
-  UART0_C4 = UART_C4_BRFA(brfa);
+  UART0_C3 = UART_C3_TXINV_MASK;
+  UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
 
-  // Setup a 64-byte RX/TX fifo (and flush it)
-  UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(6) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(6) ;
+  UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK;
-
-  UART0_C3 = UART_C3_ORIE_MASK | UART_C3_FEIE_MASK;
 
   transmit_mode(false);
 
@@ -55,6 +51,25 @@ void UartInit() {
   NVIC_SetPriority(UART0_RX_TX_IRQn, 3);
   NVIC_EnableIRQ(UART0_RX_TX_IRQn);
   */
+
+  static uint8_t txbuff[64];
+  transferIndex = 0;
+
+  for(;;) {
+    while (UART0_RCFIFO) {
+      txbuff[transferIndex++] = UART0_D;
+      
+      if(txbuff[0] != 'B') transferIndex = 0;
+      else if(transferIndex >= sizeof(txbuff))  {
+        for (int i = 0; i < sizeof(txbuff); i++) {
+          PRINTF("%2x", txbuff[i]);
+        }
+        PRINTF("\n\r");
+        
+        transferIndex = 0;
+      }
+    }
+  }
 }
 
 void transmit_blob(void) {
@@ -75,16 +90,10 @@ inline void transmit_mode(bool tx) {
   }
 }
 
+/*
 extern "C" void UART0_RX_TX_IRQHandler(void) {
   uint8_t status = UART0_S1; // This is only useful to clear interrupt
 
-  while (UART0_RCFIFO) {
-    uint8_t data = UART0_D;
-
-    PRINTF("%2x", data);
-  }
-
-  /*
   switch (transferMode) {
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
@@ -111,7 +120,6 @@ extern "C" void UART0_RX_TX_IRQHandler(void) {
       }
       break ;
   }
-  */
 }
 
 extern "C" void UART0_ERR_IRQHandler(void) {
@@ -124,3 +132,4 @@ extern "C" void UART0_ERR_IRQHandler(void) {
     transferIndex = 0;
   }
 }
+*/
