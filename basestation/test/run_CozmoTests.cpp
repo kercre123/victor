@@ -63,7 +63,6 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_TRUE(blockWorld.GetAllExistingObjects().empty());
 
   // Fake a state message update for robot
-  robot.SetSyncTimeAcknowledged(true);
   RobotState stateMsg;
   stateMsg.pose_frame_id = 0;
   stateMsg.timestamp = 0;

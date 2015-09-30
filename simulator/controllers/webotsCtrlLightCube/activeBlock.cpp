@@ -164,10 +164,6 @@ namespace Anki {
         const bool isBeingCarried = static_cast<bool>(msg.isBeingCarried);
         state_ = (isBeingCarried ? BEING_CARRIED : NORMAL);
       }
-      
-      void Process_moved(const ObjectMoved& msg) {}
-      void Process_stopped(const ObjectStoppedMoving& msg) {}
-      void Process_tapped(const ObjectTapped& msg) {}
         
       void ProcessBadTag_LightCubeMessage(BlockMessages::LightCubeMessage::Tag badTag)
       {

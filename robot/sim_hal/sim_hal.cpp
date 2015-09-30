@@ -753,8 +753,36 @@ namespace Anki {
         // TODO: Make block comms receiver checking into a HAL function at some point
         //   and call it from the main execution loop
         while(blockCommsReceiver_->getQueueLength() > 0) {
-          u8* data = (u8*)(blockCommsReceiver_->getData());
-          HAL::RadioSendMessage(data+1, blockCommsReceiver_->getDataSize()-1, data[0]); // A little hacky to get tag in this context
+          BlockMessages::LightCubeMessage lcm;
+          memcpy(lcm.GetBuffer(), blockCommsReceiver_->getData(), blockCommsReceiver_->getDataSize());
+          switch(lcm.tag)
+          {
+            case BlockMessages::LightCubeMessage::Tag_moved:
+            {
+              ObjectMoved m;
+              memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            case BlockMessages::LightCubeMessage::Tag_stopped:
+            {
+              ObjectStoppedMoving m;
+              memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            case BlockMessages::LightCubeMessage::Tag_tapped:
+            {
+              ObjectTapped m;
+              memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            default:
+            {
+              printf("Received unexpected message from simulated object: %d\r\n", static_cast<int>(lcm.tag));
+            }
+          }
           blockCommsReceiver_->nextPacket();
         }
 
