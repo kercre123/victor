@@ -1064,7 +1064,7 @@ public class VortexController : GameController {
         }
         else {
           //Debug.Log("should be tracking to default");
-          CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+          CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true);
 
           // setting the head angle to ~35 degrees
           if (robot != null)
