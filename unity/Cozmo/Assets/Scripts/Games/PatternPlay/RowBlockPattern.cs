@@ -3,7 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class RowBlockPattern {
-  // left to right pattern relative to cozmo.
+
+  // block lights in cozmo-space.
+  // front is the light facing cozmo.
+  // left is the light left of cozmo etc.
   public List<BlockLights> blocks = new List<BlockLights>();
 
   public override bool Equals(System.Object obj) {
@@ -45,7 +48,15 @@ public class RowBlockPattern {
     return x;
   }
 
-  static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockLightConfig> blockLightConfigs) {
+  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockLights> blockLights) {
+    foreach (KeyValuePair<int, BlockLights> blockLight in blockLights) {
+      BlockLights newBlockLight = new BlockLights();
+      blockLights[blockLight.Key] = newBlockLight;
+    }
+  }
+
+  // patternSeen is populated in Cozmo space.
+  static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockLights> blockLightsLocalSpace) {
     patternSeen = new RowBlockPattern();
 
     // need at least 2 to form a pattern.
@@ -60,7 +71,6 @@ public class RowBlockPattern {
       if (Mathf.Abs(relativeForward.x) <= 0.94f && Mathf.Abs(relativeForward.y) <= 0.94f) {
         // non orthogonal forward vector, let's early out.
         return false;
-
       }
     }
 
@@ -81,87 +91,34 @@ public class RowBlockPattern {
 
     }
 
-    // build relative light pattern array
+    // convert block lights to cozmo space
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLight = new BlockLights();
+      BlockLights blockLightCozmoSpace = new BlockLights();
 
-      // logic for relative LEDs... should be refactored to be not as ugly.
-      switch (blockLightConfigs[robot.markersVisibleObjects[i].ID]) {
-      case BlockLightConfig.NONE:
-        break;
-      case BlockLightConfig.ONE:
-        if (relativeForward.x > 0.9f) {
-          blockLight.left = true;
-        }
-        else if (relativeForward.x < -0.9f) {
-          blockLight.right = true;
-        }
-        else if (relativeForward.y > 0.9f) {
-          blockLight.front = true;
-        }
-        else if (relativeForward.y < -0.9f) {
-          blockLight.back = true;
-        }
-        break;
-      case BlockLightConfig.TWO:
-        if (relativeForward.x > 0.9f) {
-          blockLight.left = true;
-          blockLight.back = true;
-        }
-        else if (relativeForward.x < -0.9f) {
-          blockLight.right = true;
-          blockLight.front = true;
-        }
-        else if (relativeForward.y > 0.9f) {
-          blockLight.front = true;
-          blockLight.left = true;
-        }
-        else if (relativeForward.y < -0.9f) {
-          blockLight.back = true;
-          blockLight.right = true;
-        }
-        break;
-      case BlockLightConfig.THREE:
-        if (relativeForward.x > 0.9f) {
-          blockLight.left = true;
-          blockLight.back = true;
-          blockLight.right = true;
-        }
-        else if (relativeForward.x < -0.9f) {
-          blockLight.right = true;
-          blockLight.front = true;
-          blockLight.left = true;
-        }
-        else if (relativeForward.y > 0.9f) {
-          blockLight.front = true;
-          blockLight.left = true;
-          blockLight.back = true;
-        }
-        else if (relativeForward.y < -0.9f) {
-          blockLight.back = true;
-          blockLight.right = true;
-          blockLight.front = true;
-        }
-        break;
-      case BlockLightConfig.FOUR:
-        blockLight.back = true;
-        blockLight.front = true;
-        blockLight.left = true;
-        blockLight.right = true;
-        break;
-      case BlockLightConfig.OPPOSITE:
-        if (relativeForward.x > 0.9f || relativeForward.x < -0.9f) {
-          blockLight.left = true;
-          blockLight.right = true;
-        }
-        else if (relativeForward.y > 0.9f || relativeForward.y < -0.9f) {
-          blockLight.front = true;
-          blockLight.back = true;
-        }
-        break;
+      if (relativeForward.x > 0.9f) {
+        blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].front;
+        blockLightCozmoSpace.back = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].right;
+        blockLightCozmoSpace.left = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].back;
+        blockLightCozmoSpace.front = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
       }
-      patternSeen.blocks.Add(blockLight);
+      else if (relativeForward.x < -0.9f) {
+        blockLightCozmoSpace.left = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].front;
+        blockLightCozmoSpace.front = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].right;
+        blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].back;
+        blockLightCozmoSpace.back = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
+      }
+      else if (relativeForward.y > 0.9f) {
+        blockLightCozmoSpace.back = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].front;
+        blockLightCozmoSpace.left = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].right;
+        blockLightCozmoSpace.front = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].back;
+        blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
+      }
+      else if (relativeForward.y < -0.9f) {
+        // do nothing, same space / orientation
+      }
+
+      patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 
     // make sure all of the light patterns match.
@@ -170,6 +127,7 @@ public class RowBlockPattern {
           patternSeen.blocks[i].front != patternSeen.blocks[i + 1].front ||
           patternSeen.blocks[i].left != patternSeen.blocks[i + 1].left ||
           patternSeen.blocks[i].right != patternSeen.blocks[i + 1].right) {
+        Debug.Log("pattern doesn't match");
         return false;
       }
     }
