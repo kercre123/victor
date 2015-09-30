@@ -15,6 +15,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
@@ -120,11 +121,10 @@ namespace Anki {
         webots::Display* cozmoCam_;
         webots::ImageRef* img_ = nullptr;
         
-        Vision::ImageDeChunker _imageDeChunker;
+        ImageDeChunker _imageDeChunker;
         
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
-        
         ExternalInterface::RobotObservedFace _lastFace;
         
       } // private namespace
@@ -138,7 +138,7 @@ namespace Anki {
       const u16 width  = Vision::CameraResInfo[(int)msg.resolution].width;
       const u16 height = Vision::CameraResInfo[(int)msg.resolution].height;
       const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, width, height,
-        (Vision::ImageEncoding_t)msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data.data(), (uint32_t)msg.data.size());
+        msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data.data(), (uint32_t)msg.data.size());
       
       
       if(isImageReady)
@@ -1645,4 +1645,3 @@ int main(int argc, char **argv)
 
   return 0;
 }
-
