@@ -29,12 +29,20 @@ extern GlobalDataToBody g_dataToBody;
 #ifdef RADIO_TIMING_TEST
   const uint8_t     cubePipe[] = {1};
   #define RADIO_ADDRS {0xE7,0xC1,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
-#elif defined(ROBOT41)
-  const uint8_t     cubePipe[] = {1,2,3,4};
-  #define RADIO_ADDRS {0xE6,0xA2,0xA3,0xA4,0xA5,0xA6,0xA7,0xA8}
 #else
   const uint8_t     cubePipe[] = {1,2,3,4};
-  #define RADIO_ADDRS {0xE7,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8}
+
+  /* Robot #2 - C blocks
+   */
+  #define CUBE_BASE_ADDR 0xC2
+  #define ROBOT_ADDR 0xE7
+  #define RADIO_CHANNEL 82
+
+  /* Robot #4 - A blocks
+  #define CUBE_BASE_ADDR 0xA2
+  #define ROBOT_ADDR 0xE6
+  #define RADIO_CHANNEL 84
+  */  
 #endif
 
 #define MAX_CUBES sizeof(cubePipe)
@@ -47,12 +55,12 @@ void Radio::init() {
     UESB_BITRATE_250KBPS,
     UESB_CRC_8BIT,
     UESB_TX_POWER_0DBM,
-    82,
+    RADIO_CHANNEL,
     PACKET_SIZE,
-    5,
+    5,              // Address length
     {0xE7,0xE7,0xE7,0xE7},
     {0xC2,0xC2,0xC2,0xC2},
-    RADIO_ADDRS,
+    {ROBOT_ADDR,CUBE_BASE_ADDR,CUBE_BASE_ADDR+1,CUBE_BASE_ADDR+2,CUBE_BASE_ADDR+3,CUBE_BASE_ADDR+4,CUBE_BASE_ADDR+5,CUBE_BASE_ADDR+6},
     0x3F,
     3
   };
@@ -72,7 +80,7 @@ extern "C" void uesb_event_handler(void)
   {
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
-    uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - 0xC2;
+    uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - CUBE_BASE_ADDR;
     
     if (addr < MAX_CUBES) {
       memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
