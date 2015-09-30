@@ -2259,20 +2259,20 @@ namespace Anki
             const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
             f32 scaleF = 1.0f;
             switch(IMG_STREAM_RES) {
-              case Vision::CAMERA_RES_CVGA:
-              case Vision::CAMERA_RES_QVGA:
+              case ImageResolution::CVGA:
+              case ImageResolution::QVGA:
                 break;
-              case Vision::CAMERA_RES_QQVGA:
+              case ImageResolution::QQVGA:
                 scaleF *= 0.5;
                 break;
-              case Vision::CAMERA_RES_QQQVGA:
+              case ImageResolution::QQQVGA:
                 scaleF *= 0.25;
                 break;
-              case Vision::CAMERA_RES_QQQQVGA:
+              case ImageResolution::QQQQVGA:
                 scaleF *= 0.125;
                 break;
               default:
-                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", IMG_STREAM_RES);
+                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", (int)IMG_STREAM_RES);
                 break;
             }
             VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,

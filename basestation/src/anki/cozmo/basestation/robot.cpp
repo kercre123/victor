@@ -108,7 +108,7 @@ namespace Anki {
     , _animationStreamer(_cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
-    , _imageDeChunker(*(new Vision::ImageDeChunker()))
+    , _imageDeChunker(*(new ImageDeChunker()))
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");

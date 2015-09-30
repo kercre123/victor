@@ -21,7 +21,8 @@ enum int_8 ImageResolution
   UXGA,      // 1600 x 1200
   QXGA,      // 2048 x 1536
   QUXGA,     // 3200 x 2400  
-  ImageResolutionCount
+  ImageResolutionCount,
+  ImageResolutionNone
 }
 
 enum uint_8 ImageEncoding

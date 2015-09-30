@@ -19,6 +19,7 @@
 #include "anki/vision/robot/lucasKanade.h"
 
 #include "anki/vision/CameraSettings.h"
+#include "clad/types/imageTypes.h"
 
 //#include "anki/cozmo/robot/hal.h"
 
@@ -71,7 +72,7 @@ namespace Anki {
         static const s32 MAX_MARKERS = 64;
         
         bool isInitialized;
-        Vision::CameraResolution detectionResolution;
+        ImageResolution detectionResolution;
         s32 detectionWidth;
         s32 detectionHeight;
         s32 scaleImage_thresholdMultiplier;
@@ -100,7 +101,7 @@ namespace Anki {
         
         // Methods
         DetectFiducialMarkersParameters();
-        void Initialize(Vision::CameraResolution resolution);
+        void Initialize(ImageResolution resolution);
         
       }; // struct DetectFiducialMarkersParameters
       
@@ -109,7 +110,7 @@ namespace Anki {
       struct TrackerParameters
       {
         bool isInitialized;
-        Vision::CameraResolution trackingResolution;
+        ImageResolution trackingResolution;
         s32 trackingImageHeight;
         s32 trackingImageWidth;
         f32 normalizationFilterWidthFraction; // as fraction of tracking quad diagonal (0 to disable)
@@ -164,7 +165,7 @@ namespace Anki {
 #endif
         
         TrackerParameters();
-        void Initialize(Vision::CameraResolution resolution);
+        void Initialize(ImageResolution resolution);
         
       }; // struct TrackerParameters
       
@@ -196,7 +197,7 @@ namespace Anki {
       struct FaceDetectionParameters {
         bool isInitialized;
         
-        Vision::CameraResolution detectionResolution;
+        ImageResolution detectionResolution;
         s32 faceDetectionHeight;
         s32 faceDetectionWidth;
         
@@ -215,7 +216,7 @@ namespace Anki {
         static const u32 MAX_FACE_DETECTIONS = 16;
         
         FaceDetectionParameters();
-        void Initialize(Vision::CameraResolution resolution);
+        void Initialize(ImageResolution resolution);
         
       }; // struct FaceDetectionParameters
       
@@ -245,4 +246,3 @@ namespace Anki {
 } // namespace Anki
 
 #endif // ANKI_COZMO_BASESTATION_VISIONPARAMETERS_H
-

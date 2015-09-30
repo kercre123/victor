@@ -280,7 +280,7 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
   const bool isImageReady = _imageDeChunker.AppendChunk(payload.imageId, payload.frameTimeStamp,
     height, width,
-    (Vision::ImageEncoding_t)payload.imageEncoding,
+    payload.imageEncoding,
     payload.imageChunkCount,
     payload.chunkId, payload.data.data(), (uint32_t)payload.data.size() );
 

@@ -337,7 +337,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
   const u16 width = Vision::CameraResInfo[(int)payload.resolution].width;
   const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
   const bool isImageReady = _imageDeChunker.AppendChunk(payload.imageId, 0, height, width,
-    (Vision::ImageEncoding_t)payload.imageEncoding,
+    payload.imageEncoding,
     payload.imageChunkCount, payload.chunkId, payload.data.data(), (uint32_t)payload.data.size());
 
   if(isImageReady)
@@ -439,4 +439,3 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
 
 } // end namespace Cozmo
 } // end namespace Anki
-

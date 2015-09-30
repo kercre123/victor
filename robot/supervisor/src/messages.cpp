@@ -663,19 +663,19 @@ namespace Anki {
           case 240:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==320*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
-            m.resolution = Vision::CAMERA_RES_QVGA;
+            m.resolution = QVGA;
             break;
 
           case 296:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==400*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
-            m.resolution = Vision::CAMERA_RES_CVGA;
+            m.resolution = CVGA;
             break;
 
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
-            m.resolution = Vision::CAMERA_RES_VGA;
+            m.resolution = VGA;
             break;
 
           default:
@@ -704,7 +704,7 @@ namespace Anki {
         m.chunkId = 0;
         m.data_length = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
-        m.imageEncoding = Vision::IE_JPEG_COLOR;
+        m.imageEncoding = JPEGColor;
 
         u32 totalByteCnt = 0;
         u32 chunkByteCnt = 0;

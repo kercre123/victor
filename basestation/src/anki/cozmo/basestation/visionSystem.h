@@ -51,6 +51,7 @@
 #include "visionParameters.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/imageTypes.h"
 
 
 namespace Anki {  
@@ -335,11 +336,11 @@ namespace Cozmo {
     DetectFiducialMarkersParameters _detectionParameters;
     TrackerParameters               _trackerParameters;
     FaceDetectionParameters         _faceDetectionParameters;
-    Vision::CameraResolution        _captureResolution;
+    ImageResolution                 _captureResolution;
     
     // For sending images to basestation
     ImageSendMode                 _imageSendMode = ImageSendMode::Off;
-    Vision::CameraResolution        _nextSendImageResolution = Vision::CAMERA_RES_NONE;
+    ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
     // For taking snapshots
     bool                            _isWaitingOnSnapShot;
