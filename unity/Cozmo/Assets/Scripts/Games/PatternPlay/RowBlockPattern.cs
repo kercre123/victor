@@ -115,7 +115,8 @@ public class RowBlockPattern {
         blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
       }
       else if (relativeForward.y < -0.9f) {
-        // do nothing, same space / orientation
+        // same orientation so copy it over
+        blockLightCozmoSpace = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID];
       }
 
       patternSeen.blocks.Add(blockLightCozmoSpace);
@@ -127,7 +128,6 @@ public class RowBlockPattern {
           patternSeen.blocks[i].front != patternSeen.blocks[i + 1].front ||
           patternSeen.blocks[i].left != patternSeen.blocks[i + 1].left ||
           patternSeen.blocks[i].right != patternSeen.blocks[i + 1].right) {
-        Debug.Log("pattern doesn't match");
         return false;
       }
     }
