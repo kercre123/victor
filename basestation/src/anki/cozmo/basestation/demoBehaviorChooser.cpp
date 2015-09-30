@@ -28,7 +28,6 @@ namespace Cozmo {
 DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config)
   : super()
   , _robot(robot)
-  , _liveIdleEnabled(false)
 {
   SetupBehaviors(robot, config);
   
