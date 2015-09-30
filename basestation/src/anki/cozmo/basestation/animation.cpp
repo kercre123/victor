@@ -50,7 +50,7 @@ namespace Cozmo {
     /*
     if(!jsonRoot.isMember("Name")) {
       PRINT_NAMED_ERROR("Animation.DefineFromJson.NoName",
-                        "Missing 'Name' field for animation.\n");
+                        "Missing 'Name' field for animation.");
       return RESULT_FAIL;
     }
      */
@@ -67,7 +67,7 @@ namespace Cozmo {
       
       if(!jsonFrame.isMember("Name")) {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.NoFrameName",
-                          "Missing 'Name' field for frame %d of '%s' animation.\n",
+                          "Missing 'Name' field for frame %d of '%s' animation.",
                           iFrame, _name.c_str());
         return RESULT_FAIL;
       }
@@ -99,14 +99,14 @@ namespace Cozmo {
         addResult = _proceduralFaceTrack.AddKeyFrame(jsonFrame);
       } else {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.UnrecognizedFrameName",
-                          "Frame %d in '%s' animation has unrecognized name '%s'.\n",
+                          "Frame %d in '%s' animation has unrecognized name '%s'.",
                           iFrame, _name.c_str(), frameName.c_str());
         return RESULT_FAIL;
       }
       
       if(addResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Animation.DefineFromJson.AddKeyFrameFailure",
-                          "Adding %s frame %d failed.\n",
+                          "Adding %s frame %d failed.",
                           frameName.c_str(), iFrame);
         return addResult;
       }
@@ -191,7 +191,7 @@ _blinkTrack.__METHOD__()
   Result Animation::Init()
   {
 #   if DEBUG_ANIMATIONS
-    PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'\n", GetName().c_str());
+    PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'", GetName().c_str());
 #   endif
     
     _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -208,7 +208,7 @@ _blinkTrack.__METHOD__()
     ALL_TRACKS(Init, ;);
     
     if(!_sendBuffer.empty()) {
-      PRINT_NAMED_WARNING("Animation.Init", "Expecting SendBuffer to be empty. Will clear.\n");
+      PRINT_NAMED_WARNING("Animation.Init", "Expecting SendBuffer to be empty. Will clear.");
       _sendBuffer.clear();
     }
     
@@ -237,7 +237,7 @@ _blinkTrack.__METHOD__()
     while(!_sendBuffer.empty()) {
 #     if DEBUG_ANIMATIONS
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                       "Send buffer length=%lu.\n", _sendBuffer.size());
+                       "Send buffer length=%lu.", _sendBuffer.size());
 #     endif
       
 
@@ -259,7 +259,7 @@ _blinkTrack.__METHOD__()
         // Out of bytes to send, continue on next Update()
 #         if DEBUG_ANIMATIONS
         PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                         "Ran out of bytes to send from buffer, will continue next Update().\n");
+                         "Ran out of bytes to send from buffer, will continue next Update().");
 #         endif
         return RESULT_OK;
       }
@@ -279,14 +279,14 @@ _blinkTrack.__METHOD__()
     Result lastResult = RESULT_OK;
     
     if(!_isInitialized) {
-      PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.\n");
+      PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.");
       return RESULT_FAIL;
     }
     
     const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     
 //#   if DEBUG_ANIMATIONS
-//    PRINT_NAMED_INFO("Animation.Update", "Current time = %dms\n", currTime_ms);
+//    PRINT_NAMED_INFO("Animation.Update", "Current time = %dms", currTime_ms);
 //#   endif
     
     // Is it time to play device audio? (using actual basestation time)
@@ -323,7 +323,7 @@ _blinkTrack.__METHOD__()
     // Send anything still left in the buffer after last Update()
     lastResult = SendBufferedMessages(robot);
     if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "\n");
+      PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
       return lastResult;
     }
     
@@ -333,7 +333,7 @@ _blinkTrack.__METHOD__()
     while(_sendBuffer.empty() && !AllTracksBuffered())
     {
 #     if DEBUG_ANIMATIONS
-      //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.\n",
+      //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
       //                 numBytesToSend);
 #     endif
       
@@ -347,13 +347,13 @@ _blinkTrack.__METHOD__()
         {
           // No samples left to send for this keyframe. Move to next keyframe,
           // and for now send silence.
-          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
+          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
           _robotAudioTrack.MoveToNextKeyFrame();
           BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
         }
       } else {
         // No frames left or not time to play next frame yet, so send silence
-        //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.\n");
+        //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
         BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
       
@@ -374,56 +374,56 @@ _blinkTrack.__METHOD__()
       
       if(BufferMessageToSend(_headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
       
       if(BufferMessageToSend(_liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
       
       if(BufferMessageToSend(_facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
       
       if(BufferMessageToSend(_faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
       
       if(BufferMessageToSend(_proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
     
       if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
       
       if(BufferMessageToSend(_backpackLightsTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
       
       if(BufferMessageToSend(_bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
 #       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyMotionKeyFrame at t=%dms.\n",
+        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyMotionKeyFrame at t=%dms.",
                          _streamingTime_ms - _startTime_ms);
 #       endif
       }
@@ -438,7 +438,7 @@ _blinkTrack.__METHOD__()
       // getting reassigned before they get sent out!)
       lastResult = SendBufferedMessages(robot);
       if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "\n");
+        PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
         return lastResult;
       }
       
@@ -463,7 +463,7 @@ _blinkTrack.__METHOD__()
     if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)
     {
 #     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.\n",
+      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.",
                        _streamingTime_ms - _startTime_ms);
 #     endif
       RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
