@@ -135,11 +135,12 @@ static void TestMotors() {
       Motors::setPower(i, 0x2800);
     #endif
     Motors::update();
-    MicroWait(50000);
+    MicroWait(5000);
     Motors::update();
 
-    Motors::printEncodersRaw();
+    // Let motors run, then print the deltas
     MicroWait(500000);
+    Motors::printEncodersRaw();
 
     UART::print("  Backward: ");
     #ifndef DO_GEAR_RATIO_TESTING
@@ -149,11 +150,12 @@ static void TestMotors() {
       Motors::setPower(i, -0x2800);
     #endif
     Motors::update();
-    MicroWait(50000);
+    MicroWait(5000);
     Motors::update();
 
-    Motors::printEncodersRaw();
+    // Let motors run, then print the deltas
     MicroWait(500000);
+    Motors::printEncodersRaw();
 
     Battery::update();
   }
