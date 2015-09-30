@@ -140,7 +140,8 @@ public class PatternPlayController : GameController {
           seenPatterns.Add(currentPattern);
         }
         else if (lastPatternSeen.Equals(currentPattern) == false) {
-          SendAnimation("Satisfaction");
+          //SendAnimation("Satisfaction");
+          SendAnimation("majorWinBeatBox");
         }
       }
     }
@@ -251,14 +252,14 @@ public class PatternPlayController : GameController {
 
     if (currentInputMode == InputMode.ONE) {
       while (tappedTimes > 0) {
-        blockLightsLocalSpace[blockID] = GetNextConfig(blockLightsLocalSpace[blockID]);
+        blockLightsLocalSpace[blockID] = BlockLights.GetNextConfig(blockLightsLocalSpace[blockID]);
         tappedTimes--;
       }
     }
     else if (currentInputMode == InputMode.DOUBLE) {
       if (Time.time - lastTimeTapped[blockID] < 0.4f && Time.time - lastTimeTapped[blockID] > 0.1f) {
         while (tappedTimes > 0) {
-          blockLightsLocalSpace[blockID] = GetNextConfig(blockLightsLocalSpace[blockID]);
+          blockLightsLocalSpace[blockID] = BlockLights.GetNextConfig(blockLightsLocalSpace[blockID]);
           tappedTimes--;
         }
       }
@@ -268,7 +269,7 @@ public class PatternPlayController : GameController {
       if (Time.time - lastTimeTapped[blockID] < 0.3f || lastFrameZAccel[blockID] < 10.0f) {
         lastTimeTapped[blockID] = Time.time;
         while (tappedTimes > 0) {
-          blockLightsLocalSpace[blockID] = GetNextConfig(blockLightsLocalSpace[blockID]);
+          blockLightsLocalSpace[blockID] = BlockLights.GetNextConfig(blockLightsLocalSpace[blockID]);
           tappedTimes--;
         }
       }
@@ -309,7 +310,7 @@ public class PatternPlayController : GameController {
     if (index != -1) {
       foreach (KeyValuePair<int, BlockLights> block in blockLightsLocalSpace) {
         if (currentIndex == index) {
-          blockLightsLocalSpace[block.Key] = GetNextConfig(block.Value);
+          blockLightsLocalSpace[block.Key] = BlockLights.GetNextConfig(block.Value);
           break;
         }
         currentIndex++; 
@@ -317,39 +318,10 @@ public class PatternPlayController : GameController {
     }
   }
 
-  private BlockLights GetNextConfig(BlockLights lights) {
-    BlockLights newLights = new BlockLights();
-    if (!lights.front && !lights.right && !lights.back && !lights.left) {
-      newLights.front = true;
-    }
-    else if (lights.front && !lights.right && !lights.back && !lights.left) {
-      newLights.front = true;
-      newLights.right = true;
-    }
-    else if (lights.front && lights.right && !lights.back && !lights.left) {
-      newLights.front = true;
-      newLights.right = true;
-      newLights.back = true;
-    }
-    else if (lights.front && lights.right && lights.back && !lights.left) {
-      newLights.front = true;
-      newLights.right = true;
-      newLights.back = true;
-      newLights.left = true;
-    }
-    else if (lights.front && lights.right && lights.back && lights.left) {
-      newLights.front = true;
-      newLights.back = true;
-    }
-    else if (lights.front && !lights.right && lights.back && !lights.left) {
-
-    }
-    return newLights;
-  }
-
   private void DonePlayingAnimation(bool success) {
     animationPlaying = false;
     lastAnimationFinishedTime = Time.time;
+    RowBlockPattern.SetRandomConfig(robot, blockLightsLocalSpace, lastPatternSeen);
     ResetLookHeadForkLift();
   }
 

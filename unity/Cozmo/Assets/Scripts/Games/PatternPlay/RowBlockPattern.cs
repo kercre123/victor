@@ -48,10 +48,32 @@ public class RowBlockPattern {
     return x;
   }
 
-  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockLights> blockLights) {
-    foreach (KeyValuePair<int, BlockLights> blockLight in blockLights) {
-      BlockLights newBlockLight = new BlockLights();
-      blockLights[blockLight.Key] = newBlockLight;
+  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockLights> blockLights, RowBlockPattern lastPatternSeen) {
+    BlockLights patternLight = lastPatternSeen.blocks[0];
+
+    // generate a new config that is not the current config.
+    int nextConfigCount = Random.Range(1, 5);
+    BlockLights newBlockLight = patternLight;
+    while (nextConfigCount > 0) {
+      newBlockLight = BlockLights.GetNextConfig(newBlockLight);
+      nextConfigCount--;
+    }
+
+    // never go to empty lights config.
+    if (!newBlockLight.back && !newBlockLight.front && !newBlockLight.left && !newBlockLight.right) {
+      newBlockLight = BlockLights.GetNextConfig(newBlockLight);
+    }
+
+    List<int> keys = new List<int>(blockLights.Keys);
+    BlockLights newRotatedLights = newBlockLight;
+    foreach (int blockID in keys) {
+      // rotate the pregenerated pattern by a random orthogonal rotation.
+      int rotationCount = Random.Range(1, 4);
+      while (rotationCount > 0) {
+        newRotatedLights = BlockLights.GetRotatedClockwise(newRotatedLights);
+        rotationCount--;
+      }
+      blockLights[blockID] = newRotatedLights;
     }
   }
 
@@ -59,8 +81,8 @@ public class RowBlockPattern {
   static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockLights> blockLightsLocalSpace) {
     patternSeen = new RowBlockPattern();
 
-    // need at least 2 to form a pattern.
-    if (robot.markersVisibleObjects.Count < 2)
+    // 3 to a pattern
+    if (robot.markersVisibleObjects.Count < 3)
       return false;
 
     // check rotation alignment
@@ -88,37 +110,12 @@ public class RowBlockPattern {
       if (Mathf.Abs(block0 - block1) > 10.0f) {
         return false;
       }
-
     }
 
-    // convert block lights to cozmo space
+    // convert get block lights in cozmo space.
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = new BlockLights();
-
-      if (relativeForward.x > 0.9f) {
-        blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].front;
-        blockLightCozmoSpace.back = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].right;
-        blockLightCozmoSpace.left = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].back;
-        blockLightCozmoSpace.front = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
-      }
-      else if (relativeForward.x < -0.9f) {
-        blockLightCozmoSpace.left = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].front;
-        blockLightCozmoSpace.front = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].right;
-        blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].back;
-        blockLightCozmoSpace.back = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
-      }
-      else if (relativeForward.y > 0.9f) {
-        blockLightCozmoSpace.back = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].front;
-        blockLightCozmoSpace.left = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].right;
-        blockLightCozmoSpace.front = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].back;
-        blockLightCozmoSpace.right = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID].left;
-      }
-      else if (relativeForward.y < -0.9f) {
-        // same orientation so copy it over
-        blockLightCozmoSpace = blockLightsLocalSpace[robot.markersVisibleObjects[i].ID];
-      }
-
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockLightsLocalSpace[robot.markersVisibleObjects[i].ID], relativeForward);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 
@@ -139,6 +136,35 @@ public class RowBlockPattern {
     }
 
     return true;
+  }
+
+  static private BlockLights GetInCozmoSpace(BlockLights blockLocalSpace, Vector3 blockForward) {
+    BlockLights blockLightCozmoSpace = new BlockLights();
+
+    if (blockForward.x > 0.9f) {
+      blockLightCozmoSpace.right = blockLocalSpace.front;
+      blockLightCozmoSpace.back = blockLocalSpace.right;
+      blockLightCozmoSpace.left = blockLocalSpace.back;
+      blockLightCozmoSpace.front = blockLocalSpace.left;
+    }
+    else if (blockForward.x < -0.9f) {
+      blockLightCozmoSpace.left = blockLocalSpace.front;
+      blockLightCozmoSpace.front = blockLocalSpace.right;
+      blockLightCozmoSpace.right = blockLocalSpace.back;
+      blockLightCozmoSpace.back = blockLocalSpace.left;
+    }
+    else if (blockForward.y > 0.9f) {
+      blockLightCozmoSpace.back = blockLocalSpace.front;
+      blockLightCozmoSpace.left = blockLocalSpace.right;
+      blockLightCozmoSpace.front = blockLocalSpace.back;
+      blockLightCozmoSpace.right = blockLocalSpace.left;
+    }
+    else if (blockForward.y < -0.9f) {
+      // same orientation so copy it over
+      blockLightCozmoSpace = blockLocalSpace;
+    }
+
+    return blockLightCozmoSpace;
   }
 
 }
