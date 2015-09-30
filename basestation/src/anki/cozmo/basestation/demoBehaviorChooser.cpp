@@ -80,6 +80,11 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
   
 Result DemoBehaviorChooser::Update(double currentTime_sec)
 {
+  if(!_liveIdleEnabled) {
+    _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+    _liveIdleEnabled = true;
+  }
+  
   Result updateResult = super::Update(currentTime_sec);
   if (Result::RESULT_OK != updateResult)
   {

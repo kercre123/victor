@@ -448,11 +448,6 @@
               <FilePath>.\hal\radio.cpp</FilePath>
             </File>
             <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\debug.cpp</FilePath>
-            </File>
-            <File>
               <FileName>tests.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\tests.cpp</FilePath>
@@ -461,6 +456,11 @@
               <FileName>drop.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\drop.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\debug.cpp</FilePath>
             </File>
           </Files>
         </Group>

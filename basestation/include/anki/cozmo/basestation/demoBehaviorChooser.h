@@ -62,6 +62,8 @@ protected:
   
 private:
   using super = ReactionaryBehaviorChooser;
+
+  bool _liveIdleEnabled = false;
   
 }; // class DemoBehaviorChooser
   

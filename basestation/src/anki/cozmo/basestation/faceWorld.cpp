@@ -20,8 +20,6 @@ namespace Cozmo {
   
   FaceWorld::FaceWorld(Robot& robot)
   : _robot(robot)
-  , _deletionTimeout_ms(3000)
-  , _idCtr(0)
   {
     
   }

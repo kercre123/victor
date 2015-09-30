@@ -53,7 +53,6 @@ int main(void)
     g_dataToBody.common.source = SPI_SOURCE_CLEAR;
 
     // Only call every loop through - not all the time
-    // Radio::manage();
     Motors::update();
     Battery::update();
 
@@ -61,22 +60,12 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
     #endif
 
-    // If we're not on the charge contacts, exchange data with the head board
-    if (!Battery::onContacts)
-    {
-      Head::TxRx();
-    }
-    else // If not, reset the spine system
-    {
-      Head::spokenTo = false;
-    }
-    
     // Update at 200Hz (5ms delay) - with unsigned subtract to handle wraparound
     const u32 DELAY = CYCLES_MS(5.0f);
     while (GetCounter() - timerStart < DELAY)
       ;
     timerStart += DELAY;
- 
+
     // Verify the source
     if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
     {
@@ -95,6 +84,16 @@ int main(void)
       {
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
+    }
+
+    // If we're not on the charge contacts, exchange data with the head board
+    if (!Battery::onContacts)
+    {
+      Head::TxRx();
+    }
+    else // If not, reset the spine system
+    {
+      Head::spokenTo = false;
     }
   }
 }
