@@ -581,7 +581,7 @@ namespace Cozmo {
     // Events
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-    inline bool HasExternalInterface() { return _externalInterface != nullptr; }
+    inline bool HasExternalInterface() const { return _externalInterface != nullptr; }
     inline IExternalInterface* GetExternalInterface() {
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
     inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }

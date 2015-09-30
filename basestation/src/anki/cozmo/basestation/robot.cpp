@@ -103,7 +103,7 @@ namespace Anki {
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
-    , _animationStreamer(_cannedAnimations)
+    , _animationStreamer(_externalInterface, _cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
     , _animationTag(0)

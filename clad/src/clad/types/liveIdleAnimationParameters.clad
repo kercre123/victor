@@ -1,0 +1,40 @@
+// "Live" Idle Animation Parameters
+//  for the C-Like Abstract Data language
+// Author: Andrew Stein
+// Copyright: Anki Inc (c) 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 LiveIdleAnimationParameter {
+  BlinkCloseTime_ms,
+  BlinkOpenTime_ms,
+  BlinkSpacingMinTime_ms,
+  BlinkSpacingMaxTime_ms,
+  TimeBeforeWiggleMotions_ms,
+  BodyMovementSpacingMin_ms,
+  BodyMovementSpacingMax_ms,
+  BodyMovementDurationMin_ms,
+  BodyMovementDurationMax_ms,
+  BodyMovementSpeedMinMax_mmps,
+  BodyMovementStraightFraction,
+  MaxPupilMovement,
+  LiftMovementDurationMin_ms,
+  LiftMovementDurationMax_ms,
+  LiftMovementSpacingMin_ms,
+  LiftMovementSpacingMax_ms,
+  LiftHeightMean_mm,
+  LiftHeightVariability_mm,
+  HeadMovementDurationMin_ms,
+  HeadMovementDurationMax_ms,
+  HeadMovementSpacingMin_ms,
+  HeadMovementSpacingMax_ms,
+  HeadAngleVariability_deg,
+  DockSquintEyeHeight,
+  DockSquintEyebrowHeight,
+
+  NumParameters
+}
+
+} // namespace Cozmo
+} // namespace Anki
