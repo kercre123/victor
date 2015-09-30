@@ -453,7 +453,6 @@ public:
     bool IsIdleAnimating() const;
 
     Result SyncTime();
-    void SetSyncTimeAcknowledged(bool ack);
 
     Result RequestImage(const ImageSendMode mode, const ImageResolution resolution) const;
     
@@ -588,9 +587,6 @@ public:
     
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable;
-    
-    // Whether or not the robot acknowledged a SyncTime message
-    bool              _syncTimeAcknowledged;
     
     // A reference to the MessageHandler that the robot uses for outgoing comms
     RobotInterface::MessageHandler* _msgHandler;

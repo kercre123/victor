@@ -56,7 +56,6 @@ namespace Anki {
     , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
-    , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
@@ -237,14 +236,6 @@ namespace Anki {
     Result Robot::UpdateFullRobotState(const RobotState& msg)
     {
       Result lastResult = RESULT_OK;
-
-      if (!_syncTimeAcknowledged) {
-        // Don't process RobotState messages until the robot has received
-        // the sync time message.
-        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.Ignoring",
-                            "Robot has not received sync time yet. Timestamp might be in the future (t=%d)\n", msg.timestamp);
-        return RESULT_FAIL;
-      }
 
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
@@ -1417,12 +1408,6 @@ namespace Anki {
       return SendSyncTime();
     }
     
-    void Robot::SetSyncTimeAcknowledged(bool ack)
-    {
-      _syncTimeAcknowledged = ack;
-    }
-      
-
     Result Robot::TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
     {
       return SendMessage(RobotInterface::EngineToRobot(RobotInterface::TrimPath(numPopFrontSegments, numPopBackSegments)));
