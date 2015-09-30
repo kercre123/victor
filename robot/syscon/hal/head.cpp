@@ -5,6 +5,8 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "radio.h"
+
 #include "hardware.h"
 
 #include "anki/cozmo/robot/spineData.h"
@@ -110,6 +112,9 @@ void UART0_IRQHandler()
     }
     
     TxRxIdx++;
+    
+    // This is here because the antenna sucks do not change it.  ;_;
+    if (TxRxIdx == 33) Radio::manage();
     
     if (TxRxIdx >= sizeof(g_dataToBody)) {
       memcpy(&g_dataToBody, TxRxBuffer, sizeof(g_dataToBody));

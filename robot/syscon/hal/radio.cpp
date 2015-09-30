@@ -61,7 +61,7 @@ const uesb_config_t uesb_config = {
   {0xC2,0xC2,0xC2,0xC2},
   {ROBOT_ADDR,CUBE_BASE_ADDR,CUBE_BASE_ADDR+1,CUBE_BASE_ADDR+2,CUBE_BASE_ADDR+3,CUBE_BASE_ADDR+4,CUBE_BASE_ADDR+5,CUBE_BASE_ADDR+6},
   0x3F,
-  3
+  1
 };
 
 void Radio::init() {
@@ -81,7 +81,7 @@ extern "C" void uesb_event_handler(void)
     uesb_payload_t rx_payload;
     uesb_read_rx_payload(&rx_payload);
     uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - CUBE_BASE_ADDR;
-    
+
     if (addr < MAX_CUBES) {
       memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
     }
