@@ -23,7 +23,7 @@ public class OptionsScreen : MonoBehaviour {
   [SerializeField] Toggle toggle_visionRecording;
   [SerializeField] Toggle toggle_userTestMode;
   [SerializeField] Toggle toggle_autoCollect;
-  [SerializeField] Toggle toggle_assistedControls;
+  [SerializeField] Toggle toggle_faceDetection;
   [SerializeField] Toggle toggle_skipLayoutTracker;
   [SerializeField] Toggle toggle_useAltConfig;
 
@@ -131,8 +131,8 @@ public class OptionsScreen : MonoBehaviour {
       toggle_autoCollect.isOn = PlayerPrefs.GetInt("EnergyHuntAutoCollect", 0) == 1;
     }
 
-    if (toggle_assistedControls != null) {
-      toggle_assistedControls.isOn = PlayerPrefs.GetInt("CozmoAssistedControls", 0) == 1;
+    if (toggle_faceDetection != null) {
+      toggle_faceDetection.isOn = PlayerPrefs.GetInt("FaceDetection", 1) == 1;
     }
 
     if (toggle_skipLayoutTracker != null) {
@@ -312,8 +312,8 @@ public class OptionsScreen : MonoBehaviour {
     if (toggle_autoCollect != null) {
       toggle_autoCollect.onValueChanged.AddListener(ToggleEnergyHuntAutoCollect);
     }
-    if (toggle_assistedControls != null) {
-      toggle_assistedControls.onValueChanged.AddListener(ToggleAssitedControls);
+    if (toggle_faceDetection != null) {
+      toggle_faceDetection.onValueChanged.AddListener(ToggleFaceDetection);
     }
     if (toggle_skipLayoutTracker != null) {
       toggle_skipLayoutTracker.onValueChanged.AddListener(ToggleSkipLayoutTracker);
@@ -488,8 +488,8 @@ public class OptionsScreen : MonoBehaviour {
     PlayerPrefs.SetInt("EnergyHuntAutoCollect", val ? 1 : 0);
   }
 
-  void ToggleAssitedControls(bool val) {
-    PlayerPrefs.SetInt("CozmoAssistedControls", val ? 1 : 0);
+  void ToggleFaceDetection(bool val) {
+    PlayerPrefs.SetInt("FaceDetection", val ? 1 : 0);
   }
 
   void ToggleSkipLayoutTracker(bool val) {
@@ -509,7 +509,7 @@ public class OptionsScreen : MonoBehaviour {
     PlayerPrefs.DeleteKey("ToggleUserTestMode");
     PlayerPrefs.DeleteKey("EnergyHuntAutoCollect");
     PlayerPrefs.DeleteKey("FlushLogs");
-    PlayerPrefs.DeleteKey("CozmoAssistedControls");
+    PlayerPrefs.DeleteKey("FaceDetection");
     PlayerPrefs.DeleteKey("DebugSkipLayoutTracker");
     PlayerPrefs.DeleteKey("DebugUseAltConfig");
     PlayerPrefs.DeleteKey("Volume");
