@@ -786,6 +786,10 @@ namespace Cozmo {
     // Handled in DemoBehaviorChooser::HandleSetDemoState
   }
 
+  void CozmoGameImpl::Process_SetLiveIdleAnimationParameters(const ExternalInterface::SetLiveIdleAnimationParameters &msg)
+  {
+    // Handled by LiveAnimationStreamer
+  }
 
 void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
 {
