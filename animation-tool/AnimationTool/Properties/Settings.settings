@@ -2,9 +2,6 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="AnimationTool.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="Setting" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
-    </Setting>
     <Setting Name="maxTime" Type="System.Double" Scope="User">
       <Value Profile="(Default)">6</Value>
     </Setting>
@@ -15,10 +12,13 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="IPAddress" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">127.0.0.1</Value>
     </Setting>
     <Setting Name="LocalPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
+    </Setting>
+    <Setting Name="idleAnimation" Type="System.String" Scope="User">
+      <Value Profile="(Default)">_ANIM_TOOL_</Value>
     </Setting>
   </Settings>
 </SettingsFile>

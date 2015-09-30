@@ -13,10 +13,10 @@ namespace AnimationTool
     public class RobotEngineMessenger
     {
         // Can put TimeSpan.Zero if you want to turn it off
-        private static readonly TimeSpan FixedRefreshRate = TimeSpan.FromSeconds(.25);
+        private static readonly TimeSpan FixedRefreshRate;
         public static readonly RobotEngineMessenger instance;
 
-        public readonly ConnectionManager ConnectionManager = new ConnectionManager();
+        public readonly ConnectionManager ConnectionManager;
 
         public readonly SendQueue ProceduralFaceQueue;
         public readonly SendQueue HeadAngleQueue;
@@ -25,10 +25,13 @@ namespace AnimationTool
         static RobotEngineMessenger()
         {
             instance = new RobotEngineMessenger();
+            FixedRefreshRate = TimeSpan.FromSeconds(.25);
         }
 
         public RobotEngineMessenger()
         {
+            ConnectionManager = new ConnectionManager();
+
             ProceduralFaceQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
             HeadAngleQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
             LiftHeightQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
@@ -37,6 +40,19 @@ namespace AnimationTool
         public void SendAnimation(string animationName)
         {
             ConnectionManager.SendAnimation(animationName);
+        }
+
+        public void SendIdleAnimation(string animationName)
+        {
+            if (string.IsNullOrEmpty(animationName)) return;
+
+            SetIdleAnimation setIdleAnimationMessage = new SetIdleAnimation();
+            setIdleAnimationMessage.robotID = 1;
+            setIdleAnimationMessage.animationName = animationName;
+
+            MessageGameToEngine message = new MessageGameToEngine();
+            message.SetIdleAnimation = setIdleAnimationMessage;
+            ConnectionManager.SetIdleMessage(message);
         }
 
         public void SendProceduralFaceMessage(Sequencer.ExtraProceduralFaceData data)

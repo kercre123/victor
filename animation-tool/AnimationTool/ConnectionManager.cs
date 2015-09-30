@@ -90,6 +90,7 @@ namespace AnimationTool
         private string queuedAnimationName = null;
         private List<MessageGameToEngine> outgoingQueue = new List<MessageGameToEngine>();
         private List<SendQueue> sendQueues = new List<SendQueue>();
+        private MessageGameToEngine idleMessage;
         private bool isReadyToSend = false;
         private int lastStateMessage = 0;
 
@@ -169,6 +170,16 @@ namespace AnimationTool
                 queuedAnimationName = animationName;
             }
             RequestConnect();
+        }
+
+        public void SetIdleMessage(MessageGameToEngine idleMessage)
+        {
+            lock (sync)
+            {
+                this.idleMessage = idleMessage;
+                if (!isReadyToSend) return;
+            }
+            SendMessage(idleMessage);
         }
 
         public void SendMessage(MessageGameToEngine message)
@@ -425,8 +436,15 @@ namespace AnimationTool
                 case MessageEngineToGame.Tag.RobotState:
                     if (channel.IsConnected)
                     {
-                        isReadyToSend = true;
                         lastStateMessage = Environment.TickCount;
+                        if (!isReadyToSend)
+                        {
+                            isReadyToSend = true;
+                            if (idleMessage != null)
+                            {
+                                channel.Send(idleMessage);
+                            }
+                        }
                     }
                     break;
             }

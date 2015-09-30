@@ -194,11 +194,13 @@ namespace AnimationTool
             this.browAngle.LeftLabel = "Angle (deg)";
             this.browAngle.LeftMaximum = 100;
             this.browAngle.LeftMinimum = -100;
+            this.browAngle.LeftValue = 0F;
             this.browAngle.Location = new System.Drawing.Point(514, 24);
             this.browAngle.Name = "browAngle";
             this.browAngle.RightLabel = "Angle (deg)";
             this.browAngle.RightMaximum = 100;
             this.browAngle.RightMinimum = -100;
+            this.browAngle.RightValue = 0F;
             this.browAngle.Size = new System.Drawing.Size(480, 50);
             this.browAngle.TabIndex = 55;
             // 
@@ -209,11 +211,13 @@ namespace AnimationTool
             this.browX.LeftLabel = "X";
             this.browX.LeftMaximum = 100;
             this.browX.LeftMinimum = -100;
+            this.browX.LeftValue = 0F;
             this.browX.Location = new System.Drawing.Point(514, 96);
             this.browX.Name = "browX";
             this.browX.RightLabel = "X";
             this.browX.RightMaximum = 100;
             this.browX.RightMinimum = -100;
+            this.browX.RightValue = 0F;
             this.browX.Size = new System.Drawing.Size(480, 50);
             this.browX.TabIndex = 56;
             // 
@@ -224,11 +228,13 @@ namespace AnimationTool
             this.browY.LeftLabel = "Y";
             this.browY.LeftMaximum = 100;
             this.browY.LeftMinimum = -100;
+            this.browY.LeftValue = 0F;
             this.browY.Location = new System.Drawing.Point(514, 168);
             this.browY.Name = "browY";
             this.browY.RightLabel = "Y";
             this.browY.RightMaximum = 100;
             this.browY.RightMinimum = -100;
+            this.browY.RightValue = 0F;
             this.browY.Size = new System.Drawing.Size(480, 50);
             this.browY.TabIndex = 57;
             // 
@@ -239,11 +245,13 @@ namespace AnimationTool
             this.face.LeftLabel = "Y";
             this.face.LeftMaximum = 100;
             this.face.LeftMinimum = -100;
+            this.face.LeftValue = 0F;
             this.face.Location = new System.Drawing.Point(514, 335);
             this.face.Name = "face";
             this.face.RightLabel = "Angle (deg)";
             this.face.RightMaximum = 100;
             this.face.RightMinimum = -100;
+            this.face.RightValue = 0F;
             this.face.Size = new System.Drawing.Size(480, 50);
             this.face.TabIndex = 58;
             // 
@@ -254,11 +262,13 @@ namespace AnimationTool
             this.browLength.LeftLabel = "Length";
             this.browLength.LeftMaximum = 100;
             this.browLength.LeftMinimum = -100;
+            this.browLength.LeftValue = 0F;
             this.browLength.Location = new System.Drawing.Point(514, 240);
             this.browLength.Name = "browLength";
             this.browLength.RightLabel = "Length";
             this.browLength.RightMaximum = 100;
             this.browLength.RightMinimum = -100;
+            this.browLength.RightValue = 0F;
             this.browLength.Size = new System.Drawing.Size(480, 50);
             this.browLength.TabIndex = 59;
             // 
@@ -289,11 +299,13 @@ namespace AnimationTool
             this.eyeHeight.LeftLabel = "Height";
             this.eyeHeight.LeftMaximum = 100;
             this.eyeHeight.LeftMinimum = -100;
+            this.eyeHeight.LeftValue = 0F;
             this.eyeHeight.Location = new System.Drawing.Point(0, 24);
             this.eyeHeight.Name = "eyeHeight";
             this.eyeHeight.RightLabel = "Height";
             this.eyeHeight.RightMaximum = 100;
             this.eyeHeight.RightMinimum = -100;
+            this.eyeHeight.RightValue = 0F;
             this.eyeHeight.Size = new System.Drawing.Size(480, 50);
             this.eyeHeight.TabIndex = 60;
             // 
@@ -304,11 +316,13 @@ namespace AnimationTool
             this.eyeWidth.LeftLabel = "Width";
             this.eyeWidth.LeftMaximum = 100;
             this.eyeWidth.LeftMinimum = -100;
+            this.eyeWidth.LeftValue = 0F;
             this.eyeWidth.Location = new System.Drawing.Point(0, 96);
             this.eyeWidth.Name = "eyeWidth";
             this.eyeWidth.RightLabel = "Width";
             this.eyeWidth.RightMaximum = 100;
             this.eyeWidth.RightMinimum = -100;
+            this.eyeWidth.RightValue = 0F;
             this.eyeWidth.Size = new System.Drawing.Size(480, 50);
             this.eyeWidth.TabIndex = 61;
             // 
@@ -319,11 +333,13 @@ namespace AnimationTool
             this.eyeY.LeftLabel = "Y";
             this.eyeY.LeftMaximum = 100;
             this.eyeY.LeftMinimum = -100;
+            this.eyeY.LeftValue = 0F;
             this.eyeY.Location = new System.Drawing.Point(0, 168);
             this.eyeY.Name = "eyeY";
             this.eyeY.RightLabel = "Y";
             this.eyeY.RightMaximum = 100;
             this.eyeY.RightMinimum = -100;
+            this.eyeY.RightValue = 0F;
             this.eyeY.Size = new System.Drawing.Size(480, 50);
             this.eyeY.TabIndex = 62;
             // 
@@ -334,11 +350,13 @@ namespace AnimationTool
             this.pupilX.LeftLabel = "X";
             this.pupilX.LeftMaximum = 100;
             this.pupilX.LeftMinimum = -100;
+            this.pupilX.LeftValue = 0F;
             this.pupilX.Location = new System.Drawing.Point(0, 263);
             this.pupilX.Name = "pupilX";
             this.pupilX.RightLabel = "X";
             this.pupilX.RightMaximum = 100;
             this.pupilX.RightMinimum = -100;
+            this.pupilX.RightValue = 0F;
             this.pupilX.Size = new System.Drawing.Size(480, 50);
             this.pupilX.TabIndex = 63;
             // 
@@ -349,11 +367,13 @@ namespace AnimationTool
             this.pupilY.LeftLabel = "Y";
             this.pupilY.LeftMaximum = 100;
             this.pupilY.LeftMinimum = -100;
+            this.pupilY.LeftValue = 0F;
             this.pupilY.Location = new System.Drawing.Point(0, 335);
             this.pupilY.Name = "pupilY";
             this.pupilY.RightLabel = "Y";
             this.pupilY.RightMaximum = 100;
             this.pupilY.RightMinimum = -100;
+            this.pupilY.RightValue = 0F;
             this.pupilY.Size = new System.Drawing.Size(480, 50);
             this.pupilY.TabIndex = 64;
             // 
@@ -364,17 +384,20 @@ namespace AnimationTool
             this.pupilSize.LeftLabel = "Size";
             this.pupilSize.LeftMaximum = 100;
             this.pupilSize.LeftMinimum = -100;
+            this.pupilSize.LeftValue = 0F;
             this.pupilSize.Location = new System.Drawing.Point(0, 407);
             this.pupilSize.Name = "pupilSize";
             this.pupilSize.RightLabel = "Size";
             this.pupilSize.RightMaximum = 100;
             this.pupilSize.RightMinimum = -100;
+            this.pupilSize.RightValue = 0F;
             this.pupilSize.Size = new System.Drawing.Size(480, 50);
             this.pupilSize.TabIndex = 65;
             // 
             // FaceForm
             // 
-            this.ClientSize = new System.Drawing.Size(1011, 473);
+            this.AutoScroll = true;
+            this.ClientSize = new System.Drawing.Size(1030, 515);
             this.Controls.Add(this.pupilLabel);
             this.Controls.Add(this.eyesLabel);
             this.Controls.Add(this.button);
@@ -392,6 +415,7 @@ namespace AnimationTool
             this.Controls.Add(this.pupilY);
             this.Controls.Add(this.pupilSize);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.MaximumSize = new System.Drawing.Size(1030, 515);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "FaceForm";
