@@ -13,6 +13,9 @@ namespace AnimationTool
         {
             if (current == null) return -1;
 
+            int minimum = (int)(MoveSelectedDataPoints.DELTA_X * 1000);
+            current.durationTime_ms = current.durationTime_ms < minimum ? minimum : current.durationTime_ms; // because procedural face points have duration time of zero
+
             double x = Math.Round((current.triggerTime_ms + current.durationTime_ms) * 0.001D, 1);
 
             return x;
