@@ -188,7 +188,7 @@ public class PatternPlayController : GameController {
       Color enabledColor;
       Color disabledColor;
 
-      disabledColor = new Color(0.0f, 0.0f, 0.4f, 1.0f);
+      disabledColor = new Color(0.0f, 0.0f, 0.0f, 1.0f);
       enabledColor = new Color(0.0f, 0.6f, 1.0f, 1.0f);
 
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
@@ -216,7 +216,6 @@ public class PatternPlayController : GameController {
 
       for (int i = 0; i < 4; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
-        robot.activeBlocks[blockConfig.Key].lights[i].offColor = CozmoPalette.ColorToUInt(Color.black);
       }
 
       if (blockConfig.Value.back) {
