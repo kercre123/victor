@@ -5,7 +5,7 @@
   # initially to empty. They will be filled in below in the 'conditions' as
   # needed:
   # (NOTE: This is duplicated from coretech-internal.gyp!)
-  'face_library': 'facesdk', # one of: 'opencv', 'faciometric', or 'facesdk'
+  'face_library': 'faciometric', # one of: 'opencv', 'faciometric', or 'facesdk'
   'face_library_path':         [ ],
   'face_library_includes':     [ ],
   'face_library_libs':         [ ],

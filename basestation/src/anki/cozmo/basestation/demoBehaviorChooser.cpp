@@ -68,6 +68,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     return;
   }
   
+  /*
   // Setup Fidget behavior
   _behaviorFidget = new BehaviorFidget(robot, config);
   addResult = super::AddBehavior(_behaviorFidget);
@@ -76,10 +77,17 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorFidget was not created properly.");
     return;
   }
+   */
+  
 }
   
 Result DemoBehaviorChooser::Update(double currentTime_sec)
 {
+  if(!_liveIdleEnabled) {
+    _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+    _liveIdleEnabled = true;
+  }
+  
   Result updateResult = super::Update(currentTime_sec);
   if (Result::RESULT_OK != updateResult)
   {

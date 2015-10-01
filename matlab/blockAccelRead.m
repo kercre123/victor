@@ -82,3 +82,39 @@ fclose(fid);
 %% Close down the screen
 cmd = 'screen -X quit';
 system(sprintf('osascript -e ''tell application "Terminal" to do script "%s" in window 1''', cmd));
+
+%% Windows
+% Serial seems to work in Windows
+
+%% Open the connection
+s = serial('COM3', 'BaudRate', 57600);
+fopen(s);
+
+%% Read/Plot Data Continuously:
+set(gcf, 'CurrentCharacter', ' ');
+historyLength = 100;
+for j=1:3
+    subplot(3,1,j)
+    h(j) = plot(1:historyLength, nan(1,historyLength));
+    set(gca, 'XLim', [1 historyLength], 'YLim', [0 255]);
+end
+
+data = zeros(3,historyLength);
+while(get(gcf, 'CurrentCharacter')~= 27) 
+    line = fgets(s);
+    temp = sscanf(line, '%d', [3 1]); 
+    
+    if length(temp) ~= 3
+        continue;
+    end
+    
+    data(:,1:end-1) = data(:,2:end);
+    data(:,end) = temp;
+    for j=1:3
+        set(h(j), 'YData', data(j,:));
+    end
+    drawnow
+end
+
+%% Close the connection
+fclose(s)
