@@ -4,13 +4,18 @@
 
 #include "board.h"
 
+#include "anki/cozmo/robot/hal.h"
+#include "hal/portable.h"
+#include "anki/cozmo/robot/spineData.h"
+
 #include "uart.h"
 #include "oled.h"
 #include "spi.h"
 #include "dac.h"
 #include "hal/i2c.h"
-#include "anki/cozmo/robot/hal.h"
-#include "hal/portable.h"
+
+GlobalDataToHead g_dataToHead;
+GlobalDataToBody g_dataToBody;
 
 namespace Anki
 {

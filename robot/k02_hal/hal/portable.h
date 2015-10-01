@@ -11,6 +11,16 @@
 #define GPIO_IN(gp, pin)                 (gp)->PDDR &= ~(pin)
 #define GPIO_OUT(gp, pin)                (gp)->PDDR |= (pin)
 
+#include <stdint.h>
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
 // This sets up everything about the pin in one call - pull-up/pull-down, open-drain, altmux, etc
 // OR together the bits you want from enum SourceSetup_t into setup
 #define SOURCE_SETUP(gp, src, setup)    ((PORT_Type *)(PORTA_BASE + PORT_INDEX(gp)*0x1000))->PCR[(src)] = (setup)

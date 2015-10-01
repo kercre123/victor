@@ -4,9 +4,14 @@
 #include <stdarg.h>
 
 #include "board.h"
+#include "anki/cozmo/robot/hal.h"
+#include "hal/portable.h"
+
+#include "anki/cozmo/robot/spineData.h"
+
 #include "uart.h"
 
-void DebugInit() {
+void Anki::Cozmo::HAL::DebugInit() {
   // Enable clocking to the UART and PORTD
   SIM_SOPT5 &= ~(SIM_SOPT5_UART1TXSRC_MASK | SIM_SOPT5_UART1RXSRC_MASK);
   SIM_SOPT5 |= SIM_SOPT5_UART1TXSRC(0) | SIM_SOPT5_UART1RXSRC(0);
@@ -29,7 +34,7 @@ void DebugInit() {
   UART1_CFIFO = UART_CFIFO_TXFLUSH_MASK;
 }
 
-void DebugPrintf(const char *format, ...)
+void Anki::Cozmo::HAL::DebugPrintf(const char *format, ...)
 {
   char buffer[512];
   

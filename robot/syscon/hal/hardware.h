@@ -2,8 +2,7 @@
 #define HARDWARE_H
 
 #define NRF_BAUD(x) (int)(x * 268.435456) // 2^28/1MHz
-#define UART_BAUDRATE NRF_BAUD(600000)
-#define DEBUG_BAUDRATE NRF_BAUD(1000000)
+#define UART_BAUDRATE NRF_BAUD(spine_baud_rate)
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
 // ROBOT41 is defined in the project GCC settings in keil.

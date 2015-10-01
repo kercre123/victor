@@ -11,17 +11,28 @@
 
 #define MAX(a, b) ((a > b) ? a : b)
 
-static const uint8_t HEAD_PREAMBLE[] = {SPI_SOURCE_HEAD, 0xFA, 0xF3, 0x20};
+static uint8_t rxBuffer[sizeof(GlobalDataToBody)];
+static uint8_t txBuffer[sizeof(GlobalDataToHead)];
+static int rxIndex, txIndex;
 
-uint8_t TxRxBuffer[sizeof(GlobalDataToBody)];
 bool Head::spokenTo;
-volatile bool Head::uartIdle;
-int TxRxIdx;
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-void Head::init()
+void setTransmit(bool tx) {
+  if (tx) {
+    NRF_UART0->PSELRXD = 0xFFFFFFFF;
+    NRF_UART0->PSELTXD = PIN_TX_HEAD;
+    nrf_gpio_cfg_output(PIN_TX_HEAD);
+  } else {
+    NRF_UART0->PSELRXD = PIN_TX_HEAD;
+    NRF_UART0->PSELTXD = 0xFFFFFFFF;
+    nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
+  }
+}
+
+void Head::init() 
 {
   Head::spokenTo = false;
 
@@ -36,84 +47,82 @@ void Head::init()
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->TASKS_STARTRX = 1;
 
+  // Initialize the UART for the specified baudrate
+  NRF_UART0->BAUDRATE = UART_BAUDRATE;
+
+  // We begin in receive mode (slave)
+  setTransmit(false);
+  MicroWait(80);
+
+  // Clear our UART interrupts
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  NRF_UART0->EVENTS_TXDRDY = 0;
+
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
-  NVIC_SetPriority(UART0_IRQn, 0);
+  NVIC_SetPriority(UART0_IRQn, 1);
   NVIC_EnableIRQ(UART0_IRQn);
 
   // Sync pattern
   g_dataToHead.common.source = SPI_SOURCE_BODY;
-  g_dataToHead.tail = 0x84;
 
-  Head::uartIdle = true;
   Head::spokenTo = false;
+  rxIndex = 0;
+  txIndex = 0;
 }
 
-// Transmit first, then wait for a reply
-void Head::TxRx()
-{ 
-  memset(g_dataToBody.backpackColors, 0xFF, sizeof(g_dataToBody.backpackColors));
-  
-  // Initialize the UART for the specified baudrate
-  // Mike noticed the baud rate is almost rate*268 - it's actually (2^28 / 1MHz)
-  NRF_UART0->BAUDRATE = UART_BAUDRATE;
-  MicroWait(80); // Give the uart some time to catch up
-  
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  NRF_UART0->EVENTS_TXDRDY = 0;
-  ENABLE_UART_IRQ;
-  
-  NRF_UART0->PSELRXD = 0xFFFFFFFF;
-  NRF_UART0->PSELTXD = PIN_TX_HEAD;
-  nrf_gpio_cfg_output(PIN_TX_HEAD);
+inline void transmitByte() {
+  if(txIndex == 0) {
+    memcpy(txBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
+  }
 
-  // Setup Buffers
-  memcpy(TxRxBuffer, &g_dataToHead, sizeof(g_dataToHead));
-  TxRxIdx = 0;
-  Head::uartIdle = false;
-  
-  // Transmit first byte
-  MicroWait(40);
-  NRF_UART0->TXD = TxRxBuffer[TxRxIdx++];
+  NRF_UART0->TXD = txBuffer[txIndex];
+  txIndex = (txIndex + 1) % sizeof(GlobalDataToHead);
 }
 
 extern "C"
 void UART0_IRQHandler()
 {
-  // We transmitted a byte
-  if (NRF_UART0->EVENTS_TXDRDY) {
-    NRF_UART0->EVENTS_TXDRDY = 0;
-
-    if (TxRxIdx < sizeof(g_dataToHead)) {
-      NRF_UART0->TXD = TxRxBuffer[TxRxIdx++];
-    } else {
-      TxRxIdx = 0;
-
-      nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-      NRF_UART0->PSELTXD = 0xFFFFFFFF;  // Disconnect TX
-
-      // Wait 10uS for turnaround - 80uS on the other side
-      NRF_UART0->PSELRXD = PIN_TX_HEAD;
-    }
-  }
-
   // We received a byte
   if (NRF_UART0->EVENTS_RXDRDY) {
     NRF_UART0->EVENTS_RXDRDY = 0;
 
-    TxRxBuffer[TxRxIdx] = NRF_UART0->RXD;
+    rxBuffer[rxIndex] = NRF_UART0->RXD;
     
-    if (TxRxIdx < sizeof(HEAD_PREAMBLE) && HEAD_PREAMBLE[TxRxIdx] != TxRxBuffer[TxRxIdx]) {
-      TxRxIdx = 0;
-      return ;
+    const uint32_t target = SPI_SOURCE_HEAD;
+    
+    // Re-sync
+    if (rxIndex < 4) {
+      const uint8_t header = target >> (rxIndex * 8);
+      
+      if(rxBuffer[rxIndex] != header) {
+        rxIndex = 0;
+        return ;
+      }
     }
-    
-    TxRxIdx++;
-    
-    if (TxRxIdx >= sizeof(g_dataToBody)) {
-      memcpy(&g_dataToBody, TxRxBuffer, sizeof(g_dataToBody));
-      Head::spokenTo = true;
-      Head::uartIdle = true;
+        
+    // We received a full packet
+    if (++rxIndex >= 64) {
+      rxIndex = 0;
+      memcpy(&g_dataToBody, rxBuffer, sizeof(GlobalDataToBody));
+    }
+
+    // Turn around uart when we hit a chunk baby.
+    if (rxIndex % uart_chunk_size == 0) {
+      setTransmit(true);
+      MicroWait(20);
+      transmitByte();
+    }
+  }
+
+  // We transmitted a byte
+  if (NRF_UART0->EVENTS_TXDRDY) {
+    NRF_UART0->EVENTS_TXDRDY = 0;
+
+    if (txIndex % uart_chunk_size == 0) {
+      setTransmit(false);
+    } else {
+      transmitByte();
     }
   }
 }
