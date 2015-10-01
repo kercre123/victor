@@ -11,6 +11,7 @@
 */
 
 #include "anki/cozmo/simulator/game/cozmoSimTestController.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 
 namespace Anki {
@@ -29,6 +30,7 @@ namespace Cozmo {
     
   private:
     
+    // TODO: This should be 6 but marker detection range needs to be improved!
     const u32 NUM_BLOCKS_EXPECTED_ON_START = 6;
     
     virtual s32 UpdateInternal() override;
@@ -38,9 +40,11 @@ namespace Cozmo {
     s32 _pickupBlockID = -1;
     s32 _placeBlockID = -1;
     bool _observedNewObject = false;
+    bool _lastActionSucceeded = false;
     
     // Message handlers
     virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
+    virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
     
     // Helper functions
     s32 GetClosestObjectID(const std::vector<s32>& objectIDs);
@@ -67,21 +71,20 @@ namespace Cozmo {
       {
         
         // Verify that head is in position
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) && NEAR(GetRobotHeadAngle_rad(), 0, 0.01),
-                                         2) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) && NEAR(GetRobotHeadAngle_rad(), 0, 0.01), 2) {
 
           // Verify that the expected number of blocks was observed
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(GetNumObjects() == NUM_BLOCKS_EXPECTED_ON_START,
-                                           2) {
+          IF_CONDITION_WITH_TIMEOUT_ASSERT(GetNumObjects() == NUM_BLOCKS_EXPECTED_ON_START, 2) {
             
           // Get closest block and try to pick it up
           _pickupBlockID = GetClosestObjectID( GetAllObjectIDs() );
           CST_ASSERT(_pickupBlockID >= 0, "Failed to find closest object to robot");
           
           PRINT_NAMED_INFO("CST_PickAndPlace.VerifyBlocks.PickingUpBlock", "%d", _pickupBlockID);
-          SendPickAndPlaceObject(_pickupBlockID, true, false);
+          SendPickAndPlaceObject(_pickupBlockID, true);
           
           _observedNewObject = false;
+          _lastActionSucceeded = false;
           _testState = TestState::PickupBlock;
             
           }
@@ -92,8 +95,7 @@ namespace Cozmo {
       {
         // While it was picking the block up, it should have noticed another block appear
         // (i.e. the active block that was hiding behind it)
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK) && _observedNewObject,
-                                         10) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK) && _lastActionSucceeded && _observedNewObject, 10) {
           
           // Make list of known blocks minus the one that's being carried
           std::vector<s32> blockIDs = GetAllObjectIDs();
@@ -107,15 +109,16 @@ namespace Cozmo {
           CST_ASSERT(_placeBlockID >= 0, "Failed to find closest object to robot");
           
           PRINT_NAMED_INFO("CST_PickAndPlace.PickupBlock.PlacingBlock", "%d", _placeBlockID);
-          SendPickAndPlaceObject(_placeBlockID, true, false);
+          SendPickAndPlaceObject(_placeBlockID, true);
+          
+          _lastActionSucceeded = false;
           _testState = TestState::PlaceBlock;
         }
         break;
       }
       case TestState::PlaceBlock:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK),
-                                         15) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK) && _lastActionSucceeded, 15) {
           _testState = TestState::TestDone;
         }
         break;
@@ -161,6 +164,13 @@ namespace Cozmo {
         _observedNewObject = true;
       }
       lastObjectCount = GetNumObjects();
+    }
+  }
+  
+  void CST_PickAndPlace::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
+  {
+    if (msg.result == ActionResult::SUCCESS) {
+      _lastActionSucceeded = true;
     }
   }
   
