@@ -48,7 +48,7 @@ public class RowBlockPattern {
     return x;
   }
 
-  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockLights> blockLights, RowBlockPattern lastPatternSeen) {
+  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockPatternData> blockPatternData, RowBlockPattern lastPatternSeen) {
     BlockLights patternLight = lastPatternSeen.blocks[0];
 
     // generate a new config that is not the current config.
@@ -64,7 +64,7 @@ public class RowBlockPattern {
       newBlockLight = BlockLights.GetNextConfig(newBlockLight);
     }
 
-    List<int> keys = new List<int>(blockLights.Keys);
+    List<int> keys = new List<int>(blockPatternData.Keys);
     BlockLights newRotatedLights = newBlockLight;
     foreach (int blockID in keys) {
       // rotate the pregenerated pattern by a random orthogonal rotation.
@@ -73,12 +73,12 @@ public class RowBlockPattern {
         newRotatedLights = BlockLights.GetRotatedClockwise(newRotatedLights);
         rotationCount--;
       }
-      blockLights[blockID] = newRotatedLights;
+      blockPatternData[blockID].blockLightsLocalSpace = newRotatedLights;
     }
   }
 
   // patternSeen is populated in Cozmo space.
-  static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockLights> blockLightsLocalSpace) {
+  static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockPatternData> blockPatternData) {
     patternSeen = new RowBlockPattern();
 
     // 3 to a pattern
@@ -115,7 +115,7 @@ public class RowBlockPattern {
     // convert get block lights in cozmo space.
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockLightsLocalSpace[robot.markersVisibleObjects[i].ID], relativeForward);
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 

@@ -24,13 +24,10 @@ public class PatternPlayController : GameController {
 
   private InputMode currentInputMode = InputMode.NONE;
 
-  // TODO: Maybe refactor this into its own class?
-  private Dictionary<int, BlockLights> blockLightsLocalSpace = new Dictionary<int, BlockLights>();
-
   // blocks in here are in cozmo space.
   private HashSet<RowBlockPattern> seenPatterns = new HashSet<RowBlockPattern>();
-  private Dictionary<int, float> lastFrameZAccel = new Dictionary<int, float>();
-  private Dictionary<int, float> lastTimeTapped = new Dictionary<int, float>();
+
+  private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
   protected override void OnEnable() {
     base.OnEnable();
@@ -86,9 +83,7 @@ public class PatternPlayController : GameController {
     base.Enter_PLAYING();
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
-      blockLightsLocalSpace.Add(activeBlock.Key, new BlockLights());
-      lastFrameZAccel.Add(activeBlock.Key, 30.0f);
-      lastTimeTapped.Add(activeBlock.Key, 0.0f);
+      blockPatternData.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
     }
     ResetLookHeadForkLift();
   }
@@ -122,7 +117,7 @@ public class PatternPlayController : GameController {
     // check cozmo vision for patterns.
     RowBlockPattern currentPattern = null;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
-      if (RowBlockPattern.ValidPatternSeen(out currentPattern, robot, blockLightsLocalSpace)) {
+      if (RowBlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
         lastPatternSeen = currentPattern;
         if (!PatternSeen(currentPattern)) {
           cozmoEnergyLevel++;
@@ -182,7 +177,7 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
     // update block lights
-    foreach (KeyValuePair<int, BlockLights> blockConfig in blockLightsLocalSpace) {
+    foreach (KeyValuePair<int, BlockPatternData> blockConfig in blockPatternData) {
 
       // setting onColor based on if cozmo sees the block or not.
       Color enabledColor;
@@ -208,7 +203,7 @@ public class PatternPlayController : GameController {
       }
  
       if (currentInputMode == InputMode.TILT) {
-        if (Time.time - lastTimeTapped[blockConfig.Key] < 0.3f || lastFrameZAccel[blockConfig.Key] < 10.0f) {
+        if (Time.time - blockConfig.Value.lastTimeTapped < 0.3f || blockConfig.Value.lastFrameZAccel < 10.0f) {
           enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
           disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
         }
@@ -218,30 +213,30 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
-      if (blockConfig.Value.back) {
+      if (blockConfig.Value.blockLightsLocalSpace.back) {
         robot.activeBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
-      if (blockConfig.Value.front) {
+      if (blockConfig.Value.blockLightsLocalSpace.front) {
         robot.activeBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
-      if (blockConfig.Value.left) {
+      if (blockConfig.Value.blockLightsLocalSpace.left) {
         robot.activeBlocks[blockConfig.Key].lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
-      if (blockConfig.Value.right) {
+      if (blockConfig.Value.blockLightsLocalSpace.right) {
         robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
     }
   }
 
   private bool NextBlockConfig(ActiveBlock activeBlock) {
-    if (lastFrameZAccel[activeBlock.ID] < -2.0f && activeBlock.zAccel > 2.0f) {
-      lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
+    if (blockPatternData[activeBlock.ID].lastFrameZAccel < -2.0f && activeBlock.zAccel > 2.0f) {
+      blockPatternData[activeBlock.ID].lastFrameZAccel = activeBlock.zAccel;
       return true;
     }
-    lastFrameZAccel[activeBlock.ID] = activeBlock.zAccel;
+    blockPatternData[activeBlock.ID].lastFrameZAccel = activeBlock.zAccel;
     return false;
   }
 
@@ -251,24 +246,24 @@ public class PatternPlayController : GameController {
 
     if (currentInputMode == InputMode.ONE) {
       while (tappedTimes > 0) {
-        blockLightsLocalSpace[blockID] = BlockLights.GetNextConfig(blockLightsLocalSpace[blockID]);
+        blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[blockID].blockLightsLocalSpace);
         tappedTimes--;
       }
     }
     else if (currentInputMode == InputMode.DOUBLE) {
-      if (Time.time - lastTimeTapped[blockID] < 0.4f && Time.time - lastTimeTapped[blockID] > 0.1f) {
+      if (Time.time - blockPatternData[blockID].lastTimeTapped < 0.4f && Time.time - blockPatternData[blockID].lastTimeTapped > 0.1f) {
         while (tappedTimes > 0) {
-          blockLightsLocalSpace[blockID] = BlockLights.GetNextConfig(blockLightsLocalSpace[blockID]);
+          blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[blockID].blockLightsLocalSpace);
           tappedTimes--;
         }
       }
-      lastTimeTapped[blockID] = Time.time;
+      blockPatternData[blockID].lastTimeTapped = Time.time;
     }
     else if (currentInputMode == InputMode.TILT) {
-      if (Time.time - lastTimeTapped[blockID] < 0.3f || lastFrameZAccel[blockID] < 10.0f) {
-        lastTimeTapped[blockID] = Time.time;
+      if (Time.time - blockPatternData[blockID].lastTimeTapped < 0.3f || blockPatternData[blockID].lastFrameZAccel < 10.0f) {
+        blockPatternData[blockID].lastTimeTapped = Time.time;
         while (tappedTimes > 0) {
-          blockLightsLocalSpace[blockID] = BlockLights.GetNextConfig(blockLightsLocalSpace[blockID]);
+          blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[blockID].blockLightsLocalSpace);
           tappedTimes--;
         }
       }
@@ -284,7 +279,7 @@ public class PatternPlayController : GameController {
     }
 
     Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
-    lastFrameZAccel[blockID] = zAccel;
+    blockPatternData[blockID].lastFrameZAccel = zAccel;
   }
 
   private void KeyboardBlockCycle() {
@@ -307,9 +302,9 @@ public class PatternPlayController : GameController {
     }
 
     if (index != -1) {
-      foreach (KeyValuePair<int, BlockLights> block in blockLightsLocalSpace) {
+      foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
         if (currentIndex == index) {
-          blockLightsLocalSpace[block.Key] = BlockLights.GetNextConfig(block.Value);
+          block.Value.blockLightsLocalSpace = BlockLights.GetNextConfig(block.Value.blockLightsLocalSpace);
           break;
         }
         currentIndex++; 
@@ -320,7 +315,7 @@ public class PatternPlayController : GameController {
   private void DonePlayingAnimation(bool success) {
     animationPlaying = false;
     lastAnimationFinishedTime = Time.time;
-    RowBlockPattern.SetRandomConfig(robot, blockLightsLocalSpace, lastPatternSeen);
+    RowBlockPattern.SetRandomConfig(robot, blockPatternData, lastPatternSeen);
     ResetLookHeadForkLift();
   }
 
