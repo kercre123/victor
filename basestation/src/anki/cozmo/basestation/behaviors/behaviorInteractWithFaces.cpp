@@ -62,8 +62,6 @@ namespace Cozmo {
   
   Result BehaviorInteractWithFaces::Init(double currentTime_sec)
   {
-
-    
     // Make sure the robot's idle animation is set to use Live, since we are
     // going to stream live face mimicking
     _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
@@ -214,7 +212,8 @@ namespace Cozmo {
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(_crntProceduralFace, *face);
         
-        if(!_isActing)
+        if(!_isActing &&
+           (currentTime_sec - _lastTooCloseScaredTime) > kTooCloseScaredInterval_sec)
         {
           Pose3d headWrtRobot;
           bool headPoseRetrieveSuccess = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot);
@@ -234,8 +233,13 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
+            
+            // Relinquish control over head/wheels so animation plays correctly,
+            _robot.DisableTrackToFace();
+            
             PlayAnimation("Demo_Face_Interaction_ShockedScared_A");
             _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
+            _lastTooCloseScaredTime = currentTime_sec;
           }
         }
         
@@ -480,9 +484,9 @@ namespace Cozmo {
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
       proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
-                                       eyeHeightFraction);
+                                  std::max(-.5f, std::min(.5f, eyeHeightFraction)));
       proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                       std::max(.25f, std::min(.75f,eyeHeightFraction)));
+                                  std::max(-.5f, std::min(.5f,eyeHeightFraction)));
     }
     // Adjust pupil positions depending on where face is in the image
     Point2f newPupilPos(face.GetLeftEyeCenter());
