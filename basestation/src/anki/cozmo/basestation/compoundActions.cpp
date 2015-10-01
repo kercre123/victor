@@ -104,6 +104,14 @@ namespace Anki {
       return false;
     }
 
+    u8 ICompoundAction::GetAnimTracksToDisable() const
+    {
+      u8 whichTracks = 0;
+      for(auto & action : _actions) {
+        whichTracks |= action.second->GetAnimTracksToDisable();
+      }
+      return whichTracks;
+    }
     
     void ICompoundAction::Cleanup(Robot& robot)
     {

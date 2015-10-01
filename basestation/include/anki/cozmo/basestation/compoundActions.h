@@ -44,6 +44,11 @@ namespace Anki {
       virtual bool ShouldLockLift() const override;
       virtual bool ShouldLockWheels() const override;
       
+      // A compound action will disable the union of all tracks its constituent
+      // actions want locked *for the entire duration of the compound action*.
+      // TODO: Similar to above, we may only want this for parallel actions, not sequential
+      virtual u8 GetAnimTracksToDisable() const override;
+      
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
       
     protected:
