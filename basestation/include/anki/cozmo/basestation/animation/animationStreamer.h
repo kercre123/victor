@@ -30,6 +30,7 @@ namespace Cozmo {
   {
   public:
     static const std::string LiveAnimation;
+    static const std::string AnimToolAnimation;
     static const u8          IdleAnimationTag = 255;
     
     AnimationStreamer(CannedAnimationContainer& container);
@@ -62,8 +63,9 @@ namespace Cozmo {
 
     Animation      _liveAnimation;
 
-    Animation* _idleAnimation; // default points to "live" animation
-    Animation* _streamingAnimation;
+    Animation*  _idleAnimation; // default points to "live" animation
+    Animation*  _streamingAnimation;
+    TimeStamp_t _timeSpentIdling_ms;
     
     bool _isIdling;
     
@@ -72,7 +74,17 @@ namespace Cozmo {
     u8  _tagCtr;
     
     Util::RandomGenerator _rng;
-    int _nextBlink_ms;
+    
+    // For live animation
+    bool _isLiveTwitchEnabled;
+    s32 _nextBlink_ms;
+    s32 _nextLookAround_ms;
+    s32 _bodyMoveDuration_ms;
+    s32 _liftMoveDuration_ms;
+    s32 _headMoveDuration_ms;
+    s32 _bodyMoveSpacing_ms;
+    s32 _liftMoveSpacing_ms;
+    s32 _headMoveSpacing_ms;
     
   }; // class AnimationStreamer
   

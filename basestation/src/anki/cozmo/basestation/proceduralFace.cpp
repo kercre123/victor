@@ -56,6 +56,33 @@ namespace Cozmo {
     return GetScaledValue(-browCenY, 1, NominalEyeCenY-std::round(static_cast<f32>(eyeHeightPix)*0.5f));// + _firstScanLine;
   }
 
+  inline void RoundedRectangleHelper(cv::Mat& roi,
+                                     const u8 fillValue,
+                                     const s32 numCornerPixels)
+  {
+    assert(fillValue == 0 || fillValue == 255);
+    if(!roi.empty())
+    {
+      roi.setTo(fillValue);
+      
+      if(numCornerPixels > 0) {
+        const u8 cornerValue = (fillValue == 0 ? 255 : 0);
+        
+        // Add a few pixels to the four corners
+        u8* topLine0 = roi.ptr(0);
+        u8* topLine1 = roi.ptr(1);
+        u8* btmLine0 = roi.ptr(roi.rows-1);
+        u8* btmLine1 = roi.ptr(roi.rows-2);
+        for(s32 j=0; j<numCornerPixels; ++j) {
+          topLine0[j] = topLine1[j] = cornerValue;
+          btmLine0[j] = btmLine1[j] = cornerValue;
+          topLine0[roi.cols-1-j] = topLine1[roi.cols-1-j] = cornerValue;
+          btmLine0[roi.cols-1-j] = btmLine1[roi.cols-1-j] = cornerValue;
+        }
+      }
+    }
+  }
+  
   void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
   {
     assert(faceImg.rows == ProceduralFace::HEIGHT &&
@@ -83,32 +110,11 @@ namespace Cozmo {
     
     // Fill eye
     cv::Mat_<u8> roi = faceImg(eyeRect & imgRect);
-    if(!roi.empty())
-    {
-      roi.setTo(255);
-      
-      // Remove a few pixels from the four corners
-      const s32 NumCornerPixels = 3; // TODO: Make this a static const parameter?
-      u8* topLine = roi.ptr(1-_firstScanLine);
-      u8* btmLine = roi.ptr(roi.rows-1-_firstScanLine);
-      for(s32 j=0; j<NumCornerPixels; ++j) {
-        topLine[j] = 0;
-        btmLine[j] = 0;
-        topLine[roi.cols-1-j] = 0;
-        btmLine[roi.cols-1-j] = 0;
-      }
-      
-      if(!ScanlinesAsPostProcess) {
-        // Set every other row to 0 to get interlaced appearance
-        for(int i=_firstScanLine; i<roi.rows; i+=2) {
-          roi.row(i).setTo(0);
-        }
-      }
-    }
+    RoundedRectangleHelper(roi, 255, 3);
     
     // Black out pupil
     roi = faceImg(pupilRect & imgRect);
-    roi.setTo(0);
+    RoundedRectangleHelper(roi, 0, 2);
     
     // Eyebrow: (quadrilateral)
     const f32 browAngleRad = DEG_TO_RAD(static_cast<f32>(GetScaledValue(GetParameter(whichEye, Parameter::BrowAngle),
@@ -131,10 +137,11 @@ namespace Cozmo {
       const cv::Point leftPointBtm(leftPoint.x,   leftPoint.y + 3);
       const cv::Point rightPointBtm(rightPoint.x, rightPoint.y + 3);
       
-      const std::vector<std::vector<cv::Point> > eyebrow = {
-        {leftPoint, rightPoint, rightPointBtm, leftPointBtm}
+      const std::vector<cv::Point> eyebrow = {
+        leftPoint, rightPoint, rightPointBtm, leftPointBtm
       };
-      cv::fillPoly(faceImg, eyebrow, 255, 4);
+      
+      cv::fillConvexPoly(faceImg, eyebrow, 255, 4);
     }
     
   } // DrawEye()
@@ -156,14 +163,13 @@ namespace Cozmo {
       cv::Mat R = cv::getRotationMatrix2D(cv::Point2f(WIDTH/2,HEIGHT/2), faceAngleDeg, 1.0);
       cv::warpAffine(faceImg, faceImg, R, cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
-    
-    if(ScanlinesAsPostProcess) {
-      // Apply interlacing / scanlines at the end
-      // TODO: Switch odd/even periodically to avoid burn-in?
-      for(s32 i=_firstScanLine; i<HEIGHT; i+=2) {
-        faceImg.row(i).setTo(0);
-      }
+
+    // Apply interlacing / scanlines at the end
+    // TODO: Switch odd/even periodically to avoid burn-in?
+    for(s32 i=_firstScanLine; i<HEIGHT; i+=2) {
+      faceImg.row(i).setTo(0);
     }
+
     return faceImg;
   } // DrawFace()
   

@@ -10,6 +10,7 @@
  **/
 
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "pathPlanner.h"
 #include "util/logging/logging.h"
 

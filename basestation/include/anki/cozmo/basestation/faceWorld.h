@@ -37,9 +37,11 @@ namespace Cozmo {
     
     std::map<Vision::TrackedFace::ID_t, KnownFace> _knownFaces;
     
-    TimeStamp_t _deletionTimeout_ms;
+    TimeStamp_t _deletionTimeout_ms = 3000;
     
     Result UpdateFaceTracking(const Vision::TrackedFace& face);
+    
+    Vision::TrackedFace::ID_t _idCtr = 0;
     
   }; // class FaceWorld
   

@@ -133,6 +133,18 @@ namespace Cozmo {
                             "Failed to find interaction data associated with faceID %llu", faceID);
           break;
         }
+        
+        static auto newFaceAnimCooldownTime = currentTime_sec;
+        // If we haven't played our init anim yet for this face and it's been awhile since we did so, do so and break early
+        if (!dataIter->second._playedInitAnim && currentTime_sec >= newFaceAnimCooldownTime)
+        {
+          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
+          PlayAnimation("Demo_Look_Around_See_Something_A");
+          dataIter->second._playedInitAnim = true;
+          newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
+          break;
+        }
+        
         dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
@@ -222,14 +234,8 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
-            PlayAnimationAction* animAction = new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A");
-            _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
+            PlayAnimation("Demo_Face_Interaction_ShockedScared_A");
             _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
-            MoveToSafeDistanceFromPoint(headTranslate);
-          }
-          else if (distSqr > (kTooFarDistance_mm * kTooFarDistance_mm))
-          {
-            MoveToSafeDistanceFromPoint(headTranslate);
           }
         }
         
@@ -253,26 +259,12 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  void BehaviorInteractWithFaces::MoveToSafeDistanceFromPoint(const Vec3f& robotRelativePoint)
+  void BehaviorInteractWithFaces::PlayAnimation(const std::string& animName)
   {
-    Pose3d goalPose = _robot.GetPose();
-    auto pointDistance = robotRelativePoint.Length();
-    // Calculate the ratio of the relative point minus the safe distance to the overall current distance
-    auto distanceRatio = (pointDistance - (kTooFarDistance_mm + kTooCloseDistance_mm) / 2.0f) / pointDistance;
-    
-    // Use the distance ratio to create a goal pose where the translation is the safe distance away from the relative point
-    goalPose.SetTranslation(goalPose.GetTranslation() + goalPose.GetRotation() * (robotRelativePoint * distanceRatio));
-    
-    DriveToPoseAction* driveAction = new DriveToPoseAction(goalPose, false, false);
-    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, driveAction);
-    _lastActionTag = driveAction->GetTag();
+    PlayAnimationAction* animAction = new PlayAnimationAction(animName);
+    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
+    _lastActionTag = animAction->GetTag();
     _isActing = true;
-    
-    // Disable our face tracking to allow the drive to pose action to function
-    _robot.DisableTrackToFace();
-    
-    // Set our state back to inactive so we can correctly refocus on a face when we're done moving
-    _currentState = State::Inactive;
   }
   
   Result BehaviorInteractWithFaces::Interrupt(double currentTime_sec)
@@ -358,6 +350,15 @@ namespace Cozmo {
     
     Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
     
+    // We need a face to work with
+    const Face* face = _robot.GetFaceWorld().GetFace(faceID);
+    if(face == nullptr)
+    {
+      PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.InvalidFaceID",
+                        "Got event that face ID %lld was observed, but it wasn't found.", faceID);
+      return;
+    }
+    
     auto iter = _cooldownFaces.find(faceID);
     // If we have a cooldown entry for this face, check if the cooldown time has passed
     if (_cooldownFaces.end() != iter && iter->second < event.GetCurrentTime())
@@ -372,21 +373,56 @@ namespace Cozmo {
       return;
     }
     
-    // If we don't already have data on this faceID, we need to add it to our order list
-    auto dataIter = _interestingFacesData.find(faceID);
-    if (_interestingFacesData.end() == dataIter)
+    Pose3d headPose;
+    bool gotPose = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headPose);
+    if (!gotPose)
     {
-      _interestingFacesOrder.push_back(faceID);
+      PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.InvalidFacePose",
+                        "Got event that face ID %lld was observed, but face pose wasn't found.", faceID);
+
+      return;
     }
-    _interestingFacesData[faceID]._lastSeen_sec = event.GetCurrentTime();
+    
+    Vec3f distVec = headPose.GetTranslation();
+    distVec.z() = 0;
+    auto dataIter = _interestingFacesData.find(faceID);
+
+    // If we do have data on this face id but now it's too far, remove it
+    if (_interestingFacesData.end() != dataIter
+        && distVec.LengthSq() > (kTooFarDistance_mm * kTooFarDistance_mm))
+    {
+      RemoveFaceID(faceID);
+      return;
+    }
+    // If we aren't tracking this face and it's close enough, add it
+    else if (_interestingFacesData.end() == dataIter
+             && distVec.LengthSq() < (kCloseEnoughDistance_mm * kCloseEnoughDistance_mm))
+    {
+      
+      _interestingFacesOrder.push_back(faceID);
+      auto insertRet = _interestingFacesData.insert( { faceID, FaceData() } );
+      if (insertRet.second)
+      {
+        dataIter = insertRet.first;
+      }
+    }
+
+    // If we are now keeping track of this faceID, update its last seen
+    if (_interestingFacesData.end() != dataIter)
+    {
+      dataIter->second._lastSeen_sec = event.GetCurrentTime();
+    }
   }
   
   void BehaviorInteractWithFaces::HandleRobotDeletedFace(const AnkiEvent<MessageEngineToGame>& event)
   {
     const RobotDeletedFace& msg = event.GetData().Get_RobotDeletedFace();
     
-    Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
-    
+    RemoveFaceID(static_cast<Face::ID_t>(msg.faceID));
+  }
+  
+  void BehaviorInteractWithFaces::RemoveFaceID(Face::ID_t faceID)
+  {
     auto dataIter = _interestingFacesData.find(faceID);
     if (_interestingFacesData.end() != dataIter)
     {
@@ -470,12 +506,12 @@ namespace Cozmo {
       Point2f pupilChange(newPupilPos);
       pupilChange.x() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
       pupilChange.y() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
-      if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
+      //if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
                                          -newPupilPos.x());
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
                                          newPupilPos.y());
-      }
+      //}
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)

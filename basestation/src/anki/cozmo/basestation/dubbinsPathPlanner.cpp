@@ -11,6 +11,7 @@
  **/
 
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/planning/shared/path.h"
 #include "dubbinsPathPlanner.h"
 #include "util/logging/logging.h"
