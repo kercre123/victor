@@ -33,12 +33,15 @@ namespace Anki
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
-      {
+      {       
+        UartTransmit();
         // Send data, if we have any
         if (buflen && buflen < 120)
         {
             TransmitDrop(buf, buflen, eof);
         }
+
+        UartReceive(); // This should be done last
       }
     }
   }
@@ -77,6 +80,6 @@ int main (void)
   //i2c_init();
   UartInit();
   
-  //CameraInit();
+  CameraInit();
   for(;;) ;
 }

@@ -45,12 +45,6 @@ void Anki::Cozmo::HAL::UartInit() {
   rxIndex = 0;
 
   g_dataToBody.common.source = (uint32_t)SPI_SOURCE_HEAD;
-
-  for(;;) {
-    UartTransmit();
-    UartReceive();
-    MicroWait(1000);
-  }
 }
 
 inline void transmit_mode(bool tx) {
@@ -66,9 +60,6 @@ inline void transmit_mode(bool tx) {
 }
 
 void Anki::Cozmo::HAL::UartTransmit(void) {
-  transmit_mode(true);
-  MicroWait(10);
-
   // Dequeue received bytes
   while (UART0_RCFIFO) {
     rxBuffer[rxIndex] = UART0_D;
@@ -92,6 +83,9 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
       PRINTF("\r\nUart Rx");
     }
   }
+
+  transmit_mode(true);
+  MicroWait(10);
 
   // Enqueue transmissions
   for (int i = 0; i < uart_chunk_size; i++) {

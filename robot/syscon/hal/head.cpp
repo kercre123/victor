@@ -34,7 +34,12 @@ void setTransmit(bool tx) {
 
 void Head::init() 
 {
+  // Sync pattern
+  g_dataToHead.common.source = SPI_SOURCE_BODY;
+
   Head::spokenTo = false;
+  rxIndex = 0;
+  txIndex = 0;
 
   // Power on the peripheral
   NRF_UART0->POWER = 1;
@@ -62,13 +67,6 @@ void Head::init()
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
   NVIC_SetPriority(UART0_IRQn, 1);
   NVIC_EnableIRQ(UART0_IRQn);
-
-  // Sync pattern
-  g_dataToHead.common.source = SPI_SOURCE_BODY;
-
-  Head::spokenTo = false;
-  rxIndex = 0;
-  txIndex = 0;
 }
 
 inline void transmitByte() {
