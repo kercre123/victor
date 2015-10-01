@@ -8,6 +8,8 @@
 
 // TODO:(bn) should these be a full path?
 #include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/latticePlanner.h"
+#include "anki/cozmo/basestation/faceAndApproachPlanner.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
@@ -35,6 +37,8 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/observableObjectLibrary_impl.h"
 #include "util/fileUtils/fileUtils.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -125,19 +129,8 @@ namespace Anki {
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
-      Json::Value mprims;
-      if (_dataPlatform != nullptr){
-        // Read planner motion primitives
-        // TODO: Use different motions primitives depending on the type/personality of this robot
-        // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
-        if(!success) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
-        }
-      }
 
-
-      ReadAnimationDir(false);
+      ReadAnimationDir();
       
       // Read in emotion and behavior manager Json
       Json::Value emotionConfig;
@@ -167,7 +160,7 @@ namespace Anki {
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
-      _longPathPlanner  = new LatticePlanner(this, mprims);
+      _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       
@@ -1231,6 +1224,17 @@ namespace Anki {
       if(_blockWorld.GetObjectByID(_trackToObjectID) != nullptr) {
         _trackWithHeadOnly = headOnly;
         _trackToFaceID = Vision::TrackedFace::UnknownFace;
+
+        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking
+        _headLockedBeforeTracking = IsHeadLocked();
+        _wheelsLockedBeforeTracking = AreWheelsLocked();
+
+        LockHead(true);
+        if(!headOnly) {
+          LockWheels(true);
+        }
+        
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
@@ -1247,6 +1251,18 @@ namespace Anki {
       if(_faceWorld.GetFace(_trackToFaceID) != nullptr) {
         _trackWithHeadOnly = headOnly;
         _trackToObjectID.UnSet();
+        
+        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking
+        _headLockedBeforeTracking = IsHeadLocked();
+        _wheelsLockedBeforeTracking = AreWheelsLocked();
+        
+        LockHead(true);
+        if(!headOnly) {
+          LockWheels(true);
+        }
+        
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
@@ -1259,13 +1275,23 @@ namespace Anki {
     
     Result Robot::DisableTrackToObject()
     {
-      _trackToObjectID.UnSet();
+      if(_trackToObjectID.IsSet()) {
+        _trackToObjectID.UnSet();
+        // Restore lock state to whatever it was when we enabled tracking
+        LockHead(_headLockedBeforeTracking);
+        LockWheels(_wheelsLockedBeforeTracking);
+      }
       return RESULT_OK;
     }
     
     Result Robot::DisableTrackToFace()
     {
-      _trackToFaceID = Vision::TrackedFace::UnknownFace;
+      if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
+        // Restore lock state to whatever it was when we enabled tracking
+        LockHead(_headLockedBeforeTracking);
+        LockWheels(_wheelsLockedBeforeTracking);
+      }
       return RESULT_OK;
     }
       
@@ -1377,7 +1403,7 @@ namespace Anki {
 
 
     // Read the animations in a dir
-    void Robot::ReadAnimationDir(bool playLoadedAnimation)
+    void Robot::ReadAnimationDir()
     {
       if (_dataPlatform == nullptr) { return; }
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
@@ -1429,13 +1455,6 @@ namespace Anki {
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
-      }
-
-
-      if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
-        // send message to play animation
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
-        PlayAnimation(animationId, 1);
       }
     }
 

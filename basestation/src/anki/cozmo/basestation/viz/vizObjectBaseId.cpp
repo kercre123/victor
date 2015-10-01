@@ -23,8 +23,8 @@ const uint32_t VizObjectBaseID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES+1] = {
   2000, // VIZ_OBJECT_RAMP
   3000, // VIZ_OBJECT_CHARGER
   4000, // VIZ_OJECT_PREDOCKPOSE
-  5000, // VIZ_OBJECT_HUMAN_HEAD
-  6000, // VIZ_OBJECT_CAMERA_FACE
+  7000, // VIZ_OBJECT_HUMAN_HEAD
+  8000, // VIZ_OBJECT_CAMERA_FACE
   std::numeric_limits<uint32_t>::max() - 100 // Last valid object ID allowed
 };
 

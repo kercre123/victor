@@ -238,7 +238,9 @@ union EngineToRobot
   AnimKeyFrame::BackpackLights  animBackpackLights          = 0x98,
   AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,
   AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x9A,
-  AnimKeyFrame::StartOfAnimation  animStartOfAnimation      = 0x9B,
+  AnimKeyFrame::StartOfAnimation animStartOfAnimation       = 0x9B,
+  AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9C,
+  AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
 
 }
 

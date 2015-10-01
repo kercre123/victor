@@ -28,7 +28,7 @@
 
 // Until we have a speaker in the robot, use this to play RobotAudioKeyFrames using
 // the device's SoundManager
-#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
+#define PLAY_ROBOT_AUDIO_ON_DEVICE 0
 
 namespace Anki {
 namespace Cozmo {

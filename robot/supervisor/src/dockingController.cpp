@@ -22,6 +22,12 @@
 // this probably won't be necessary.
 #define RESET_LOC_ON_BLOCK_UPDATE 0
 
+// Limits how quickly the dockPose angle can change per docking error message received.
+// The purpose being to mitigate the error introduced by rolling shutter on marker pose.
+// TODO: Eventually, accurate stamping of images with time and gyro data should make it
+//       possible to do rolling shutter correction on the engine. Then we can take this stuff out.
+#define DOCK_ANGLE_DAMPING 1
+
 namespace Anki {
   namespace Cozmo {
     namespace DockingController {
@@ -61,7 +67,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 60;
+        const u16 DOCK_APPROACH_SPEED_MMPS = 100;
         //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
         const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
         const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
@@ -103,6 +109,10 @@ namespace Anki {
 
         // The docking pose
         Anki::Embedded::Pose2d dockPose_;
+
+#if(DOCK_ANGLE_DAMPING)
+        bool dockPoseAngleInitialized_;
+#endif
         
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
@@ -194,40 +204,18 @@ namespace Anki {
         // Compute angle to marker from robot
         Radians angleToMarkerCenter = atan2_fast(markerCenterY - y, markerCenterX - x);
         
-        // Compute coordinates of marker edges
+        // Compute angle to marker edges
         // (For now, assuming marker faces the robot.)
-        // TODO: Use marker
-        Radians angleToMarkerEdgeFromCenter = angleToMarkerCenter + PIDIV2_F;
+        // TODO: Use marker angle
+        f32 distToMarkerCenter = sqrtf((markerCenterY - y)*(markerCenterY - y) + (markerCenterX - x)*(markerCenterX - x));
+        Radians angleToMarkerLeftEdge = angleToMarkerCenter + atan2_fast(0.5f * markerWidth, distToMarkerCenter);
+        Radians angleToMarkerRightEdge = angleToMarkerCenter - atan2_fast(0.5f * markerWidth, distToMarkerCenter);
         
-        f32 markerLeftEdgeX = markerCenterX + 0.5f * markerWidth * cosf(angleToMarkerEdgeFromCenter.ToFloat());
-        f32 markerLeftEdgeY = markerCenterY + 0.5f * markerWidth * sinf(angleToMarkerEdgeFromCenter.ToFloat());
-        f32 markerRightEdgeX = markerCenterX - 0.5f * markerWidth * cosf(angleToMarkerEdgeFromCenter.ToFloat());
-        f32 markerRightEdgeY = markerCenterY - 0.5f * markerWidth * sinf(angleToMarkerEdgeFromCenter.ToFloat());
-        
-        // Compute angle to marker edges from the robot
-        Radians angleToMarkerLeftEdge = atan2_fast(markerLeftEdgeY - y, markerLeftEdgeX - x);
-        Radians angleToMarkerRightEdge = atan2_fast(markerRightEdgeY - y, markerRightEdgeX - x);
         
         // Check if either of the edges is outside of the fov
         f32 leftDiff = (leftEdge - angleToMarkerLeftEdge).ToFloat();
-        f32 rightDiff = (rightEdge - angleToMarkerLeftEdge).ToFloat();
-
-        // If leftDiff and rightDiff have same sign,
-        // then marker left edge is outside field of view
-        if (leftDiff * rightDiff > 0) {
-          return false;
-        }
-
-        leftDiff = (leftEdge - angleToMarkerRightEdge).ToFloat();
-        rightDiff = (rightEdge - angleToMarkerRightEdge).ToFloat();
-        
-        // If leftDiff and rightDiff have same sign,
-        // then marker right edge is outside field of view
-        if (leftDiff * rightDiff > 0) {
-          return false;
-        }
-        
-        return true;
+        f32 rightDiff = (rightEdge - angleToMarkerRightEdge).ToFloat();
+        return (leftDiff >= 0) && (rightDiff <= 0);
       }
       
       
@@ -685,7 +673,17 @@ namespace Anki {
         // Compute dock pose
         dockPose_.x() = blockPose_.x() - dockOffsetDistX_ * cosf(blockPose_.angle.ToFloat());
         dockPose_.y() = blockPose_.y() - dockOffsetDistX_ * sinf(blockPose_.angle.ToFloat());
+#if(DOCK_ANGLE_DAMPING)
+        if (!dockPoseAngleInitialized_) {
+          dockPose_.angle = blockPose_.angle;
+          dockPoseAngleInitialized_ = true;
+        } else {
+          Radians angDiff = blockPose_.angle - dockPose_.angle;
+          dockPose_.angle = dockPose_.angle + CLIP(angDiff, -0.01, 0.01);
+        }
+#else
         dockPose_.angle = blockPose_.angle;
+#endif
         
         // Send goal pose up to engine for viz
         SendGoalPoseMessage(dockPose_);
@@ -799,6 +797,10 @@ namespace Anki {
         mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = false;
         success_ = false;
+        
+#if(DOCK_ANGLE_DAMPING)
+        dockPoseAngleInitialized_ = false;
+#endif
       }
       
       void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)

@@ -91,7 +91,7 @@ public:
   // NOTE: This is virtual for now so derived Host can do something different for force-added robots.
   virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
 
-  void StartAnimationTool();
+  void ReadAnimationsFromDisk();
   virtual Robot* GetFirstRobot() { return nullptr; };
 
   void DisconnectFromRobot(RobotID_t whichRobot);

@@ -102,7 +102,7 @@ namespace Anki {
     public:
       HeadAngleKeyFrame() { }
       
-      //HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration);
+      HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration_ms);
       
       virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
@@ -130,6 +130,7 @@ namespace Anki {
     {
     public:
       LiftHeightKeyFrame() { }
+      LiftHeightKeyFrame(u8 height_mm, u8 heightVariability_mm, TimeStamp_t duration_ms);
       
       virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       
@@ -395,6 +396,7 @@ namespace Anki {
     {
     public:
       BodyMotionKeyFrame();
+      BodyMotionKeyFrame(s16 speed, s16 curvatureRadius_mm, s32 duration_ms);
       
       virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
       

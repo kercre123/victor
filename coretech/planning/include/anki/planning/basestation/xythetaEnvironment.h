@@ -18,6 +18,10 @@ namespace Anki
 
 class RotatedRectangle;
 
+namespace Util {
+class JsonWriter;
+}
+
 namespace Planning
 {
 
@@ -40,9 +44,9 @@ typedef uint8_t StateTheta;
 typedef int16_t StateXY;
 typedef uint8_t ActionID;
 
-class xythetaEnvironment;
 class State;
-class StateID;
+class xythetaEnvironment;
+union StateID;
 
 struct Point
 {
@@ -63,6 +67,7 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   bool operator==(const State& other) const;
   bool operator!=(const State& other) const;
@@ -74,22 +79,35 @@ public:
   StateTheta theta;
 };
 
+union StateIDConverter;
+
 // bit field representation that packs into an int
-class StateID
+union StateID
 {
-  friend bool operator==(const StateID& lhs, const StateID& rhs);
-public:
+  StateID() : v(0) {}
+  StateID(const StateID& other) : v(other.v) {}
+  StateID(const State& state) : s(state) {}
 
-  bool operator<(const StateID& rhs) const;
+  // Allow for conversion freely to/from int
+  StateID(u32 val) : v(val) {}
+  operator u32() { return v; }
+  operator u32() const { return v; }
 
-  StateID() : theta(0), x(0), y(0) {};
-  StateID(const State& state) { *this = state.GetStateID(); };
+  struct S
+  {
+    S() : theta(0), x(0), y(0) {}
+    explicit S(const State& state) : S( state.GetStateID().s ) {}
 
-  // TODO:(bn) check that these are packed properly
-  unsigned int theta : THETA_BITS;
-  signed int x : MAX_XY_BITS;
-  signed int y : MAX_XY_BITS;
+    unsigned int theta : THETA_BITS;
+    signed int x : MAX_XY_BITS;
+    signed int y : MAX_XY_BITS;
+  };
+
+  S s;
+  u32 v;
 };
+
+static_assert(sizeof(StateID::S) == sizeof(u32), "StateID must pack into 32 bits");
 
 // continuous states are set up with the exact state being at the
 // bottom left of the cell // TODO:(bn) think more about that, should probably add half a cell width
@@ -102,6 +120,7 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   float x_mm;
   float y_mm;
@@ -110,12 +129,22 @@ public:
 
 struct IntermediatePosition
 {
+  IntermediatePosition()
+    : nearestTheta(0)
+    , oneOverDistanceFromLastPosition(1.0f)
+    {
+    }
+
   IntermediatePosition(State_c s, StateTheta nearestTheta, float d)
     : position(s)
     , nearestTheta(nearestTheta)
     , oneOverDistanceFromLastPosition(d)
     {
     }
+
+  // returns true on success
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   State_c position;
   StateTheta nearestTheta;
@@ -128,8 +157,13 @@ public:
 
   MotionPrimitive() {}
 
-  // returns true if successful
-  bool Import(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
+  // reads raw primitive config and uses the starting angle and environment to compute what is needed
+  // Returns true if successful
+  bool Create(const Json::Value& config, StateTheta startingAngle, const xythetaEnvironment& env);
+
+  // returns true if successful, reads a complete config as created by the Dump() call
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
   // returns the minimum PathSegmentOffset associated with this action
   u8 AddSegmentsToPath(State_c start, Path& path) const;
@@ -235,43 +269,71 @@ public:
 
   // returns true if successful
   bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
 
-  const std::string& GetName() const {return name_;}
-  Cost GetExtraCostFactor() const {return extraCostFactor_;}  
-  bool IsReverseAction() const {return reverse_;}
+
+  const std::string& GetName() const {return _name;}
+  Cost GetExtraCostFactor() const {return _extraCostFactor;}  
+  bool IsReverseAction() const {return _reverse;}
 
 private:
 
-  Cost extraCostFactor_;
-  ActionID id_;
-  std::string name_;
-  bool reverse_;
+  Cost _extraCostFactor;
+  ActionID _id;
+  std::string _name;
+  bool _reverse;
 };
+
+
+// This struct holds values that the motions will use to calculate costs, based on the turning radius and
+// velocity of the robot
+struct RobotActionParams
+{
+  RobotActionParams();
+
+  void Reset();
+
+  // returns true on success
+  bool Import(const Json::Value& config);
+  void Dump(Util::JsonWriter& writer) const;
+
+  double halfWheelBase_mm;
+  double maxVelocity_mmps;
+  double maxReverseVelocity_mmps;
+  double oneOverMaxVelocity;
+};
+
 
 class xythetaEnvironment
 {
   friend class SuccessorIterator;
+  friend class MotionPrimitive;
 public:
   // for testing, has no prims or map!
   xythetaEnvironment();
 
   // just for now, eventually we won't use filenames like this, obviously......
   // TEMP: remove this and only use Init instead
-  xythetaEnvironment(const char* mprimFilename, const char* mapFile);
+  xythetaEnvironment(const char* mprimFilename);
 
   ~xythetaEnvironment();
 
   // returns true if everything worked
-  bool Init(const char* mprimFilename, const char* mapFile);
+  bool Init(const char* mprimFilename);
 
   // inits with motion primitives and an empty environment
   bool Init(const Json::Value& mprimJson);
 
-  // dumps the obstacles to the given map file
-  void WriteEnvironment(const char* mapFile) const;
-
   // Imports motion primitives from the given json file. Returns true if success
   bool ReadMotionPrimitives(const char* mprimFilename);
+
+  // Dumps the entire environment to JSON. after dumping, deleting, then importing, the obstacles should be
+  // identical. Does NOT dump motion primitives
+  void Dump(Util::JsonWriter& writer) const;
+
+  // Imports the environment from the config. Returns true on success, must have matching motion primitives to
+  // work
+  bool Import(const Json::Value& config);
 
   // defaults to a fatal obstacle  // TEMP: will be removed
   void AddObstacle(const RotatedRectangle& rect, Cost cost = FATAL_OBSTACLE_COST);
@@ -320,22 +382,34 @@ public:
                                       float& distanceToPlan,
                                       bool debug = false) const;
 
-  // Returns true if the plan is safe and complete, false otherwise,
-  // including if the penalty increased by too much (see
-  // REPLAN_PENALTY_BUFFER in the cpp file). This should always return
-  // true immediately after Replan returns true, but if the
-  // environment is updated it can be useful to re-check the plan.
+  // Returns true if the plan is safe and complete, false otherwise, including if the penalty increased by too
+  // much (see REPLAN_PENALTY_BUFFER in the cpp file). This should always return true immediately after Replan
+  // returns true, but if the environment is updated it can be useful to re-check the plan.
   // 
-  // second argument is how much of the path has already been
-  // executed. Note that this is different form the robot's
-  // currentPathSegment because our plans are different from robot
-  // paths
+  // Arguments:
   // 
-  // Second argument value will be set to last valid state along the
-  // path before collision if unsafe (or the goal if safe)
+  // plan - the plan to check, will not be modified
+  //
+  // maxDistancetoFollowOldPlan_mm - Even if the plan is not safe, we may still be able to use part of the old
+  // plan. This is the maximum "amount" of old plan that we want to use, in terms of distance. If this number
+  // were 0, we'd replan without using any of the old plan, which would maximize efficiency of the new plan
+  // (since it isn't artificially limited to follow the old plan), but the robot is currently driving while we
+  // plan, so to avoid a jerky sudden stop, or being in the wrong place, we do want to keep some of the old
+  // plan. If the number were FLT_MAX or something, we could keep the whole old plan, which would be safe, but
+  // might look really dumb in case we need to go a different way after seeing the new obstacle
   // 
-  // Third argument is the valid portion of the plan, up to lastSafeState
-  bool PlanIsSafe(const xythetaPlan& plan, const float maxDistancetoFollowOldPlan_mm, int currentPathIndex = 0) const;
+  // currentPathIndex - The index in the plan that the robot is currently following. The Plan is the full plan
+  // from the last planning cycle, which means that some of it has already been executed. Note that this is
+  // different from the robot's currentPathSegment because our plans are different from robot paths
+  // 
+  // lastSafeState - will be set to the last state which is safe and fits within maxDistancetoFollowOldPlan_mm
+  // (this is where a new plan could start)
+  // 
+  // validPlan - will be set to the potion of the plan which is valid (no collision or increased penalty),
+  // within maxDistancetoFollowOldPlan_mm
+  bool PlanIsSafe(const xythetaPlan& plan,
+                  const float maxDistancetoFollowOldPlan_mm,
+                  int currentPathIndex = 0) const;
   bool PlanIsSafe(const xythetaPlan& plan, 
                   const float maxDistancetoFollowOldPlan_mm,
                   int currentPathIndex,
@@ -375,8 +449,6 @@ public:
   inline static float GetYFromStateID(StateID sid);
   inline static float GetThetaFromStateID(StateID sid);
 
-  // TEMP:  // TODO:(bn) explicit?
-
   inline float GetX_mm(StateXY x) const;
   inline float GetY_mm(StateXY y) const;
   inline float GetTheta_c(StateTheta theta) const;
@@ -406,21 +478,27 @@ public:
   // path. Also updates plan to set the robotPathSegmentIdx_
   void AppendToPath(xythetaPlan& plan, Path& path) const;
 
-  // TODO:(bn) move these??
+  double GetMaxVelocity_mmps() const {return _robotParams.maxVelocity_mmps;}
+  double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
+  double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
 
-  double GetHalfWheelBase_mm() const {return halfWheelBase_mm_;}
-  double GetMaxVelocity_mmps() const {return maxVelocity_mmps_;}
-  double GetMaxReverseVelocity_mmps() const {return maxReverseVelocity_mmps_;}
-
-  double GetOneOverMaxVelocity() const {return oneOverMaxVelocity_;}
+  // TEMP:  // TEMP:  // TEMP: call this with the real values
+  void SetRobotActionParams(double halfWheelBase_mm,
+                            double maxVelocity_mmps,
+                            double maxReverseVelocity_mmps);
 
   float GetResolution_mm() const { return resolution_mm_; }
 
 private:
 
   // returns true on success
-  bool ReadEnvironment(FILE* fEnv);
-  bool ParseMotionPrims(const Json::Value& config);
+  bool ParseObstacles(const Json::Value& config);
+  void DumpObstacles(Util::JsonWriter& writer) const;
+
+  // These are depricated! Consider removing them. They could come in handy again if we need to dump the fully
+  // parsed-out mprims
+  void DumpMotionPrims(Util::JsonWriter& writer) const;
+  bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
 
   float resolution_mm_;
   float oneOverResolution_;
@@ -433,11 +511,7 @@ private:
   float oneOverRadiansPerAngle_;
 
   // First index is starting angle, second is prim ID
-  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
-
-  // Obstacles per theta. First index is theta, second of pair is cost
-  std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
-  
+  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;  
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
@@ -447,12 +521,11 @@ private:
   // evenly divided (see docs)  // TODO:(bn) write docs....
   std::vector<float> angles_;
 
-  // robot parameters. These probably don't belong here, but are needed for computing costs
+  // Obstacles per theta. First index is theta, second of pair is cost
+  std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
 
-  double halfWheelBase_mm_;
-  double maxVelocity_mmps_;
-  double maxReverseVelocity_mmps_;
-  double oneOverMaxVelocity_;
+  // TODO:(bn) this won't support multiple different robots!
+  RobotActionParams _robotParams;
 };
 
 bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const
@@ -477,22 +550,22 @@ State xythetaEnvironment::State_c2State(const State_c& c) const
 
 State_c xythetaEnvironment::StateID2State_c(StateID sid) const
 {
-  return State_c(GetX_mm(sid.x), GetY_mm(sid.y), GetTheta_c(sid.theta));
+  return State_c(GetX_mm(sid.s.x), GetY_mm(sid.s.y), GetTheta_c(sid.s.theta));
 }
 
 float xythetaEnvironment::GetXFromStateID(StateID sid)
 {
-  return sid.x; //sid & ((1<<MAX_XY_BITS) - 1);
+  return sid.s.x;
 }
 
 float xythetaEnvironment::GetYFromStateID(StateID sid)
 {
-  return sid.y; //(sid >> MAX_XY_BITS) & ((1<<MAX_XY_BITS) - 1);
+  return sid.s.y;
 }
 
 float xythetaEnvironment::GetThetaFromStateID(StateID sid)
 {
-  return sid.theta; //sid >> (2*MAX_XY_BITS);
+  return sid.s.theta;
 }
 
 float xythetaEnvironment::GetX_mm(StateXY x) const

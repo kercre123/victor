@@ -30,7 +30,7 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = -17.f;
+const f32 DRIVE_CENTER_OFFSET = 0.f;
 
 // The height of the lift at various configurations
 // Actual limit in proto is closer to 20.4mm, but there is a weird

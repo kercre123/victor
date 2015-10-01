@@ -100,6 +100,11 @@ namespace Anki {
       virtual bool ShouldLockLift() const   { return true; }
       virtual bool ShouldLockWheels() const { return true; }
       
+      // Override to have the action disable any animation tracks that may have
+      // already been streamed and are in the robot's buffer, so they don't
+      // interfere with the action. Note: uses the bits defined by AnimTrackFlag.
+      virtual u8 GetAnimTracksToDisable() const { return 0; }
+      
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action is part of a compound action
       void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
@@ -191,11 +196,11 @@ namespace Anki {
       //  (e.g. for allowing for communications to physical robot to have an effect)
       //
       
-      // Before checking preconditions. Optional: default is 0.05s delay
-      virtual f32 GetStartDelayInSeconds()       const { return 0.05f; }
+      // Before checking preconditions. Optional: default is no delay
+      virtual f32 GetStartDelayInSeconds()       const { return 0.0f; }
       
-      // Before first CheckIfDone() call, after preconditions are met. Optional: default is 0.05s delay
-      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.05f; }
+      // Before first CheckIfDone() call, after preconditions are met. Optional: default is no delay
+      virtual f32 GetCheckIfDoneDelayInSeconds() const { return 0.0f; }
       
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }

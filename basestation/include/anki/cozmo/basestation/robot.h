@@ -454,7 +454,7 @@ public:
     void ReadAnimationFile(const char* filename, std::string& animationID);
 
     // Read the animations in a dir
-    void ReadAnimationDir(bool playLoadedAnimation);
+    void ReadAnimationDir();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -734,6 +734,8 @@ public:
     ObjectID                    _trackToObjectID;
     Vision::TrackedFace::ID_t   _trackToFaceID;
     bool                        _trackWithHeadOnly;
+    bool                        _headLockedBeforeTracking;
+    bool                        _wheelsLockedBeforeTracking;
     
     /*
      // Plan a path to the pre-ascent/descent pose (depending on current

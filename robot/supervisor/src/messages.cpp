@@ -24,6 +24,7 @@
 #include "animationController.h"
 #include "backpackLightController.h"
 #include "clad/types/activeObjectTypes.h"
+#include "blockLightController.h"
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
@@ -524,6 +525,16 @@ namespace Anki {
       {
         AnimationController::Clear();
       }
+      
+      void ProcessDisableAnimTracksMessage(const DisableAnimTracks& msg)
+      {
+        AnimationController::DisableTracks(msg.whichTracks);
+      }
+      
+      void ProcessEnableAnimTracksMessage(const EnableAnimTracks& msg)
+      {
+        AnimationController::EnableTracks(msg.whichTracks);
+      }
 
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
@@ -553,7 +564,26 @@ namespace Anki {
 
       void Process_setCubeLights(const CubeLights& msg)
       {
-        HAL::SetBlockLight(msg.objectID, msg.lights);
+        // TODO: Block registration should be done when radio connection with block is established.
+        if (!BlockLightController::IsRegisteredBlock(msg.blockID) &&
+            BlockLightController::RegisterBlock(msg.blockID) != RESULT_OK) {
+          PRINT("ERROR: Failed to register blockID %d",msg.blockID);
+          return;
+        }
+        
+        LEDParams_t p[NUM_BLOCK_LEDS];
+        for (u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
+          p[i].onColor = msg.onColor[i];
+          p[i].offColor = msg.offColor[i];
+          p[i].onPeriod_ms = msg.onPeriod_ms[i];
+          p[i].offPeriod_ms = msg.offPeriod_ms[i];
+          p[i].transitionOnPeriod_ms = msg.transitionOnPeriod_ms[i];
+          p[i].transitionOffPeriod_ms = msg.transitionOffPeriod_ms[i];
+        }
+        
+        if (BlockLightController::SetLights(msg.blockID, p) != RESULT_OK) {
+          PRINT("ERROR: Failed to set lights on block %d", msg.blockID);
+        }
       }
 
 

@@ -1368,6 +1368,8 @@ namespace Cozmo {
     //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
     const TimeStamp_t imageTimeStamp = inputImage.GetTimestamp(); // robotState.timestamp;
     
+    std::vector<Quad2f> markerQuads;
+    
     if(_mode & TAKING_SNAPSHOT) {
       // Nothing to do, unless a snapshot was requested
       
@@ -1388,7 +1390,6 @@ namespace Cozmo {
       }
       
     } // if(_mode & TAKING_SNAPSHOT)
-    
     
     if(_mode & LOOKING_FOR_MARKERS) {
       Simulator::SetDetectionReadyTime(); // no-op on real hardware
@@ -1463,6 +1464,7 @@ namespace Cozmo {
       }
       
       const s32 numMarkers = _memory._markers.get_size();
+      markerQuads.reserve(numMarkers);
       
       bool isTrackingMarkerFound = false;
       for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
@@ -1479,11 +1481,12 @@ namespace Cozmo {
                     {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
                       crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
         
+        markerQuads.emplace_back(quad);
+        
         Vision::ObservedMarker obsMarker(imageTimeStamp, crntMarker.markerType,
                                          quad, _camera);
         
         _visionMarkerMailbox.putMessage(obsMarker);
-        
         
         // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
         if(!(_mode & TRACKING)          &&
@@ -1767,7 +1770,25 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      _faceTracker->Update(inputImage);
+      if(!markerQuads.empty())
+      {
+        // Black out detected markers so we don't find faces in them
+        Vision::Image maskedImage(inputImage);
+        const cv::Rect_<f32> imgRect(0,0,inputImage.GetNumCols(),inputImage.GetNumRows());
+        
+        for(auto & quad : markerQuads)
+        {
+          Anki::Rectangle<f32> rect(quad);
+          cv::Mat roi = maskedImage.get_CvMat_()(rect.get_CvRect_() & imgRect);
+          roi.setTo(0);
+        }
+        
+        _faceTracker->Update(maskedImage);
+      } else {
+        // No markers were detected, so nothing to black out before looking
+        // for faces
+        _faceTracker->Update(inputImage);
+      }
       
       for(auto & currentFace : _faceTracker->GetFaces())
       {

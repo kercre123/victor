@@ -71,6 +71,16 @@ namespace AnimKeyFrame {
                                // ...0: turn in place (+ve speed: left, -ve speed: right)
   }
 
+  message EnableAnimTracks
+  {
+    uint_8 whichTracks
+  }
+
+  message DisableAnimTracks
+  {
+    uint_8 whichTracks
+  }
+
   message StartOfAnimation
   {
     uint_8 tag

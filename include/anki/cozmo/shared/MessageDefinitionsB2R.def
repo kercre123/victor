@@ -1,0 +1,443 @@
+// All message definitions should look like this:
+//
+//   START_MESSAGE_DEFINITION(MessageTypeName, Priority)
+//   ADD_MESSAGE_MEMBER(MemberType, MemberName)
+//   ADD_MESSAGE_MEMBER(MemberType, MemberName)
+//   ...
+//   END_MESSAGE_DEFINITION(MessageTypeName)
+//
+// For example:
+//
+//   START_MESSAGE_DEFINITION(CozmoMsg_Foo, 1)
+//   ADD_MESSAGE_MEMBER(f32, fooMember1)
+//   ADD_MESSAGE_MEMBER(u16, fooMember2)
+//   ADD_MESSAGE_MEMBER(u8,  fooMember3)
+//   END_MESSAGE_DEFINITION(CozmoMsg_Foo)
+//
+// To add a timestamp member, use the START_TIMESTAMPED_MESSAGE_DEFINITION
+// command, which will add a member "timestamp" to the struct, with type
+// "TimeStamp".
+//
+// IMPORTANT NOTE: You should always add members from largest to smallest type!
+//                 (This prevents memory alignment badness when doing memcopies
+//                  or casts later.)
+//
+
+// This file is not specific to robot or basestation, as it defines the common
+// message protocol between them.  However, the macros used to generate actual
+// code based on the definitions below *is* specific to the two platforms.
+// Include the correct one based on the definition of COZMO_ROBOT / COZMO_BASESTATION
+#if defined(COZMO_ROBOT)
+#include "anki/cozmo/shared/MessageDefMacros_Robot.h"
+#elif defined(COZMO_BASESTATION)
+#include "anki/cozmo/shared/MessageDefMacros_Basestation.h"
+#else
+#error Either COZMO_ROBOT or COZMO_BASESTATION should be defined.
+#endif
+
+#if 0 // EXAMPLE
+// Foo message
+START_MESSAGE_DEFINITION(Foo, 1)
+ADD_MESSAGE_MEMBER(f32, fooMember1)
+ADD_MESSAGE_MEMBER(u16, fooMember2)
+ADD_MESSAGE_MEMBER(u8,  fooMember3)
+END_MESSAGE_DEFINITION(Foo)
+#endif
+
+// DriveWheels
+START_MESSAGE_DEFINITION(DriveWheels, 1)
+ADD_MESSAGE_MEMBER(f32, lwheel_speed_mmps)
+ADD_MESSAGE_MEMBER(f32, rwheel_speed_mmps)
+END_MESSAGE_DEFINITION(DriveWheels)
+
+// DriveWheelsCurvature
+START_MESSAGE_DEFINITION(DriveWheelsCurvature, 1)
+ADD_MESSAGE_MEMBER(s16, speed_mmPerSec)      // Commanded speed in mm/sec
+ADD_MESSAGE_MEMBER(u16, accel_mmPerSec2)     // Commanded max absolute value of...
+ADD_MESSAGE_MEMBER(u16, decel_mmPerSec2)     // ...acceleration/deceleration in mm/sec^2
+ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
+                                             // ...u16_MAX: point turn left, 16_MIN: point ...
+                                             // ...turn right, 0: straight
+END_MESSAGE_DEFINITION(DriveWheelsCurvature)
+
+
+// MoveLift
+START_MESSAGE_DEFINITION(MoveLift, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+END_MESSAGE_DEFINITION(MoveLift)
+
+// MoveHead
+START_MESSAGE_DEFINITION(MoveHead, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+END_MESSAGE_DEFINITION(MoveHead)
+
+
+// SetLiftHeight
+START_MESSAGE_DEFINITION(SetLiftHeight, 1)
+ADD_MESSAGE_MEMBER(f32, height_mm)
+ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+ADD_MESSAGE_MEMBER(f32, duration_sec)
+END_MESSAGE_DEFINITION(SetLiftHeight)
+
+// SetHeadAngle
+START_MESSAGE_DEFINITION(SetHeadAngle, 1)
+ADD_MESSAGE_MEMBER(f32, angle_rad)
+ADD_MESSAGE_MEMBER(f32, max_speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+ADD_MESSAGE_MEMBER(f32, duration_sec)
+END_MESSAGE_DEFINITION(SetHeadAngle)
+
+// StopAllMotors
+START_MESSAGE_DEFINITION(StopAllMotors, 1)
+END_MESSAGE_DEFINITION(StopAllMotors)
+
+// ClearPath
+START_MESSAGE_DEFINITION(ClearPath, 1)
+ADD_MESSAGE_MEMBER(u16, pathID)
+END_MESSAGE_DEFINITION(ClearPath)
+
+// Common members for PathSegment message definitions below:
+#define ADD_COMMON_PATH_SEGMENT_MEMBERS \
+ADD_MESSAGE_MEMBER(f32, targetSpeed) \
+ADD_MESSAGE_MEMBER(f32, accel) \
+ADD_MESSAGE_MEMBER(f32, decel)
+
+// AppendPathSegmentLine
+START_MESSAGE_DEFINITION(AppendPathSegmentLine, 1)
+ADD_MESSAGE_MEMBER(f32, x_start_mm)
+ADD_MESSAGE_MEMBER(f32, y_start_mm)
+ADD_MESSAGE_MEMBER(f32, x_end_mm)
+ADD_MESSAGE_MEMBER(f32, y_end_mm)
+ADD_COMMON_PATH_SEGMENT_MEMBERS
+END_MESSAGE_DEFINITION(AppendPathSegmentLine)
+
+// AppendPathSegmentArc
+START_MESSAGE_DEFINITION(AppendPathSegmentArc, 1)
+ADD_MESSAGE_MEMBER(f32, x_center_mm)
+ADD_MESSAGE_MEMBER(f32, y_center_mm)
+ADD_MESSAGE_MEMBER(f32, radius_mm)
+ADD_MESSAGE_MEMBER(f32, startRad)
+ADD_MESSAGE_MEMBER(f32, sweepRad)
+ADD_COMMON_PATH_SEGMENT_MEMBERS
+END_MESSAGE_DEFINITION(AppendPathSegmentArc)
+
+// AppendPathSegmentPointTurn
+START_MESSAGE_DEFINITION(AppendPathSegmentPointTurn, 1)
+ADD_MESSAGE_MEMBER(f32, x_center_mm)
+ADD_MESSAGE_MEMBER(f32, y_center_mm)
+ADD_MESSAGE_MEMBER(f32, targetRad)
+ADD_COMMON_PATH_SEGMENT_MEMBERS  // targetSpeed indicates rotational speed in rad/s
+ADD_MESSAGE_MEMBER(u8, useShortestDir)
+END_MESSAGE_DEFINITION(AppendPathSegmentPointTurn)
+
+// TrimPath
+START_MESSAGE_DEFINITION(TrimPath, 1)
+ADD_MESSAGE_MEMBER(u8, numPopFrontSegments)
+ADD_MESSAGE_MEMBER(u8, numPopBackSegments)
+END_MESSAGE_DEFINITION(TrimPath)
+
+// ExecutePath
+START_MESSAGE_DEFINITION(ExecutePath, 1)
+ADD_MESSAGE_MEMBER(u16, pathID)   // u16 or u8?
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
+END_MESSAGE_DEFINITION(ExecutePath)
+
+// DockWithObject
+START_MESSAGE_DEFINITION(DockWithObject, 1)
+ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
+END_MESSAGE_DEFINITION(DockWithObject)
+
+// AbortDocking
+START_MESSAGE_DEFINITION(AbortDocking, 1)
+END_MESSAGE_DEFINITION(AbortDocking)
+
+// PlaceObjectOnGround
+START_MESSAGE_DEFINITION(PlaceObjectOnGround, 1)
+ADD_MESSAGE_MEMBER(f32, rel_x_mm)    // Distance of object face center in forward axis
+ADD_MESSAGE_MEMBER(f32, rel_y_mm)    // Distance of object face center in horizontal axis. (Left of robot is +ve)
+ADD_MESSAGE_MEMBER(f32, rel_angle)   // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
+ADD_MESSAGE_MEMBER(u8, useManualSpeed)
+END_MESSAGE_DEFINITION(PlaceObjectOnGround)
+
+
+// AbsLocalizationUpdate
+START_TIMESTAMPED_MESSAGE_DEFINITION(AbsLocalizationUpdate, 1)
+ADD_MESSAGE_MEMBER(u32, pose_frame_id)
+ADD_MESSAGE_MEMBER(f32, xPosition)
+ADD_MESSAGE_MEMBER(f32, yPosition)
+ADD_MESSAGE_MEMBER(f32, headingAngle)
+END_MESSAGE_DEFINITION(AbsLocalizationUpdate)
+
+// SyncTime
+START_MESSAGE_DEFINITION(SyncTime, 1)
+ADD_MESSAGE_MEMBER(u32, robotID)
+ADD_MESSAGE_MEMBER(u32, syncTime)
+END_MESSAGE_DEFINITION(SyncTime)
+
+/*
+// TemplateInitialized
+START_MESSAGE_DEFINITION(TemplateInitialized, 1)
+ADD_MESSAGE_MEMBER(u8, success)
+END_MESSAGE_DEFINITION(TemplateInitialized)
+
+// TotalBlocksDetected
+START_MESSAGE_DEFINITION(TotalVisionMarkersSeen, 1)
+ADD_MESSAGE_MEMBER(u8, numMarkers)
+END_MESSAGE_DEFINITION(TotalVisionMarkersSeen)
+*/
+
+// HeadAngleUpdate
+START_MESSAGE_DEFINITION(HeadAngleUpdate, 1)
+ADD_MESSAGE_MEMBER(f32, newAngle)
+END_MESSAGE_DEFINITION(HeadAngleUpdate)
+
+// ImageRequest
+START_MESSAGE_DEFINITION(ImageRequest, 1)
+ADD_MESSAGE_MEMBER(u8, imageSendMode)
+ADD_MESSAGE_MEMBER(u8, resolution)
+END_MESSAGE_DEFINITION(ImageRequest)
+
+// StartTestMode
+START_MESSAGE_DEFINITION(StartTestMode, 1)
+ADD_MESSAGE_MEMBER(s32, p1)
+ADD_MESSAGE_MEMBER(s32, p2)
+ADD_MESSAGE_MEMBER(s32, p3)
+ADD_MESSAGE_MEMBER(u8, mode)
+END_MESSAGE_DEFINITION(StartTestMode)
+
+// SetHeadlight
+START_MESSAGE_DEFINITION(SetHeadlight, 1)
+ADD_MESSAGE_MEMBER(u8, intensity)
+END_MESSAGE_DEFINITION(SetHeadlight)
+
+// SetDefaultLights
+START_MESSAGE_DEFINITION(SetDefaultLights, 1)
+//ADD_MESSAGE_MEMBER(u32, eye_left_color)
+//ADD_MESSAGE_MEMBER(u32, eye_right_color)
+ADD_MESSAGE_MEMBER(u32, color)
+END_MESSAGE_DEFINITION(SetDefaultLights)
+
+// SetWheelControllerGains
+START_MESSAGE_DEFINITION(SetWheelControllerGains, 1)
+//ADD_MESSAGE_MEMBER(f32, kp)
+//ADD_MESSAGE_MEMBER(f32, ki)
+//ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+ADD_MESSAGE_MEMBER(f32, kpLeft)
+ADD_MESSAGE_MEMBER(f32, kiLeft)
+ADD_MESSAGE_MEMBER(f32, maxIntegralErrorLeft)
+ADD_MESSAGE_MEMBER(f32, kpRight)
+ADD_MESSAGE_MEMBER(f32, kiRight)
+ADD_MESSAGE_MEMBER(f32, maxIntegralErrorRight)
+END_MESSAGE_DEFINITION(SetWheelControllerGains)
+
+// SetHeadControllerGains
+START_MESSAGE_DEFINITION(SetHeadControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, kd)
+ADD_MESSAGE_MEMBER(f32, ki)
+ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+END_MESSAGE_DEFINITION(SetHeadControllerGains)
+
+// SetLiftControllerGains
+START_MESSAGE_DEFINITION(SetLiftControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, kp)
+ADD_MESSAGE_MEMBER(f32, kd)
+ADD_MESSAGE_MEMBER(f32, ki)
+ADD_MESSAGE_MEMBER(f32, maxIntegralError)
+END_MESSAGE_DEFINITION(SetLiftControllerGains)
+
+// SetSteeringControllerGains
+START_MESSAGE_DEFINITION(SetSteeringControllerGains, 1)
+ADD_MESSAGE_MEMBER(f32, k1)
+ADD_MESSAGE_MEMBER(f32, k2)
+END_MESSAGE_DEFINITION(SetSteeringControllerGains)
+
+// DockingErrorSignal
+START_TIMESTAMPED_MESSAGE_DEFINITION(DockingErrorSignal, 1)
+ADD_MESSAGE_MEMBER(f32, x_distErr)
+ADD_MESSAGE_MEMBER(f32, y_horErr)
+ADD_MESSAGE_MEMBER(f32, z_height)
+ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
+END_MESSAGE_DEFINITION(DockingErrorSignal)
+
+// TODO: Remove this message (keeping for now to avoid changing ID ordering for python)
+// SetVisionSystemParams
+START_MESSAGE_DEFINITION(SetVisionSystemParams, 1)
+ADD_MESSAGE_MEMBER(s32, autoexposureOn)
+ADD_MESSAGE_MEMBER(f32, exposureTime)
+ADD_MESSAGE_MEMBER(s32, integerCountsIncrement)
+ADD_MESSAGE_MEMBER(f32, minExposureTime)
+ADD_MESSAGE_MEMBER(f32, maxExposureTime)
+ADD_MESSAGE_MEMBER(f32, percentileToMakeHigh)
+ADD_MESSAGE_MEMBER(s32, limitFramerate)
+ADD_MESSAGE_MEMBER(u8, highValue)
+END_MESSAGE_DEFINITION(SetVisionSystemParams)
+
+// TODO: Remove this now that face detection happens on Basestation and is not sent to robot
+// FaceDetection
+START_TIMESTAMPED_MESSAGE_DEFINITION(FaceDetection, 1)
+ADD_MESSAGE_MEMBER(u16, x_upperLeft)
+ADD_MESSAGE_MEMBER(u16, y_upperLeft)
+ADD_MESSAGE_MEMBER(u16, width)
+ADD_MESSAGE_MEMBER(u16, height)
+ADD_MESSAGE_MEMBER(u8, visualize)
+END_MESSAGE_DEFINITION(FaceDetection)
+
+// TODO: Remove this message (keeping for now to avoid changing ID ordering for python)
+// SetFaceDetectParams
+START_MESSAGE_DEFINITION(SetFaceDetectParams, 1)
+ADD_MESSAGE_MEMBER(f32, scaleFactor)
+ADD_MESSAGE_MEMBER(s32, minNeighbors)
+ADD_MESSAGE_MEMBER(s32, minObjectHeight)
+ADD_MESSAGE_MEMBER(s32, minObjectWidth)
+ADD_MESSAGE_MEMBER(s32, maxObjectHeight)
+ADD_MESSAGE_MEMBER(s32, maxObjectWidth)
+END_MESSAGE_DEFINITION(SetFaceDetectParams)
+
+// AbortAnimation
+START_MESSAGE_DEFINITION(AbortAnimation, 1)
+END_MESSAGE_DEFINITION(AbortAnimation)
+
+// IMURequest
+START_MESSAGE_DEFINITION(IMURequest, 1)
+ADD_MESSAGE_MEMBER(u32, length_ms)
+END_MESSAGE_DEFINITION(IMURequest)
+
+// FaceTracking
+START_MESSAGE_DEFINITION(FaceTracking, 1)
+ADD_MESSAGE_MEMBER(u8, enabled)
+ADD_MESSAGE_MEMBER(u8, timeout_sec)
+END_MESSAGE_DEFINITION(FaceTracking)
+
+// PanAndTiltHead
+START_MESSAGE_DEFINITION(PanAndTiltHead, 1)
+// TODO: make these fixed point
+ADD_MESSAGE_MEMBER(f32, bodyPanAngle_rad)
+ADD_MESSAGE_MEMBER(f32, headTiltAngle_rad)
+END_MESSAGE_DEFINITION(PanAndTiltHead)
+
+// TurnInPlaceAtSpeed
+START_MESSAGE_DEFINITION(TurnInPlaceAtSpeed, 1)
+ADD_MESSAGE_MEMBER(f32, speed_rad_per_sec)
+ADD_MESSAGE_MEMBER(f32, accel_rad_per_sec2)
+END_MESSAGE_DEFINITION(TurnInPlaceAtSpeed)
+
+START_MESSAGE_DEFINITION(SetCarryState, 1)
+ADD_MESSAGE_MEMBER(u8, state)  // See CarryState_t
+END_MESSAGE_DEFINITION(SetCarryState)
+
+START_MESSAGE_DEFINITION(SetBackpackLights, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onColor, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offColor, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms, 5)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 5)
+END_MESSAGE_DEFINITION(SetBackpackLights)
+
+START_MESSAGE_DEFINITION(TapBlockOnGround, 1)
+ADD_MESSAGE_MEMBER(u8, numTaps)  // 0 taps means stop tapping
+END_MESSAGE_DEFINITION(TapBlockOnGround)
+
+
+///////// Block messages ////////
+
+// SetBlockLights
+START_MESSAGE_DEFINITION(SetBlockLights, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onColor, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offColor, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, onPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, offPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOnPeriod_ms, 4)
+ADD_MESSAGE_MEMBER_ARRAY(u32, transitionOffPeriod_ms, 4)
+ADD_MESSAGE_MEMBER(u8, blockID)
+END_MESSAGE_DEFINITION(SetBlockLights)
+
+// FlashBlockIDs
+START_MESSAGE_DEFINITION(FlashBlockIDs, 1)
+END_MESSAGE_DEFINITION(FlashBlockIDs)
+
+// SetBlockBeingCarried
+START_MESSAGE_DEFINITION(SetBlockBeingCarried, 1)
+ADD_MESSAGE_MEMBER(u8, blockID)
+ADD_MESSAGE_MEMBER(u8, isBeingCarried)
+END_MESSAGE_DEFINITION(SetBlockBeingCarried)
+
+
+/////// Animation KeyFrame Streaming ///////
+
+// AnimKeyFrame_StartOfAnimation
+//  This just lets us keep track of _which_ animation is playing on the robot
+//  by giving it a "random" tag to report back while it is playing.
+START_MESSAGE_DEFINITION(AnimKeyFrame_StartOfAnimation, 1)
+ADD_MESSAGE_MEMBER(u8, tag)
+END_MESSAGE_DEFINITION(AnimKeyFrame_StartOfAnimation)
+
+// AnimKeyFrame_AudioSample
+START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
+END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample)
+
+// AnimKeyFrame_AudioSilence
+START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSilence, 1)
+END_MESSAGE_DEFINITION(AnimKeyFrame_AudioSilence)
+
+// AnimKeyFrame_HeadAngle
+START_MESSAGE_DEFINITION(AnimKeyFrame_HeadAngle, 1)
+ADD_MESSAGE_MEMBER(u16, time_ms)
+ADD_MESSAGE_MEMBER(s8,  angle_deg)
+END_MESSAGE_DEFINITION(AnimKeyFrame_HeadAngle)
+
+// AnimKeyFrame_LiftHeight
+START_MESSAGE_DEFINITION(AnimKeyFrame_LiftHeight, 1)
+ADD_MESSAGE_MEMBER(u16, time_ms)
+ADD_MESSAGE_MEMBER(u8,  height_mm)
+END_MESSAGE_DEFINITION(AnimKeyFrame_LiftHeight)
+
+// AnimKeyFrame_FacePosition
+START_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition, 1)
+ADD_MESSAGE_MEMBER(s8, xCen)
+ADD_MESSAGE_MEMBER(s8, yCen)
+END_MESSAGE_DEFINITION(AnimKeyFrame_FacePosition)
+
+// AnimKeyFrame_Blink
+START_MESSAGE_DEFINITION(AnimKeyFrame_Blink, 1)
+ADD_MESSAGE_MEMBER(u8, enable)
+ADD_MESSAGE_MEMBER(u8, blinkNow)
+END_MESSAGE_DEFINITION(AnimKeyFrame_Blink)
+
+// AnimKeyFrame_FaceImage
+// TODO: Need variable-length arrays!
+START_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u8, image, 512) // TODO: Somehow make this use MAX_FACE_FRAME_SIZE
+END_MESSAGE_DEFINITION(AnimKeyFrame_FaceImage)
+
+// AnimKeyFrame_BackpackLights
+START_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights, 1)
+ADD_MESSAGE_MEMBER_ARRAY(u32, colors, 5) // TODO: Use NUM_BACKPACK_LEDS instead of "5"
+END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
+
+// AnimKeyFrame_BodyMotion
+START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
+ADD_MESSAGE_MEMBER(s16, speed)               // Commanded speed in mm/sec or deg/sec
+ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
+                                             // ...s16_MAX/MIN: drive straight...
+                                             // ...0: turn in place (+ve speed: left, -ve speed: right)
+END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
+
+// AnimKeyFrame_EndOfAnimation
+START_MESSAGE_DEFINITION(AnimKeyFrame_EndOfAnimation, 1)
+END_MESSAGE_DEFINITION(AnimKeyFrame_EndOfAnimation)
+
+// EnableAnimTracks
+START_MESSAGE_DEFINITION(EnableAnimTracks, 1)
+ADD_MESSAGE_MEMBER(u8, whichTracks)
+END_MESSAGE_DEFINITION(EnableAnimTracks)
+
+// DisableAnimTracks
+START_MESSAGE_DEFINITION(DisableAnimTracks, 1)
+ADD_MESSAGE_MEMBER(u8, whichTracks)
+END_MESSAGE_DEFINITION(DisableAnimTracks)
+

@@ -40,8 +40,6 @@ namespace Cozmo {
     static constexpr s32   MaxBrowLengthPix      = MaxEyeWidthPix;
     static constexpr s32   MaxBrowAngle          = 15; // Degrees (symmtric, also used for -ve angle)
     static constexpr s32   MaxFaceAngle          = 25; //   "
-
-    static const bool ScanlinesAsPostProcess = true;
     
     using Parameter = ProceduralEyeParameter;
     

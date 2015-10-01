@@ -55,15 +55,13 @@ public:
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
-  void StartAnimationTool() override { _animationReloadActive = true; };
+  void ReadAnimationsFromDisk() override;
 protected:
 
   virtual Result InitInternal() override;
   virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) override;
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void InitPlaybackAndRecording();
-
-  void ReloadAnimations(const BaseStationTime_t currTime_ns);
 
   Result AddRobot(RobotID_t robotID);
 
@@ -75,7 +73,6 @@ protected:
 
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   BaseStationTime_t _lastAnimationFolderScan;
-  bool _animationReloadActive;
   
 #ifdef COZMO_RECORDING_PLAYBACK
   // TODO: Make use of these for playback/recording
