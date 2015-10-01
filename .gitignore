@@ -20,6 +20,12 @@ simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
 
+# Symlinks for face libraries:
+simulator/controllers/webotsCtrlGameEngine/lib 
+simulator/controllers/webotsCtrlGameEngine/libfsdk.dylib
+simulator/controllers/webotsCtrlKeyboard/lib
+simulator/controllers/webotsCtrlViz/lib
+
 # Mac OS
 *.DS_Store
 # Xcode
@@ -170,6 +176,7 @@ generated
 unity/ios/UnityBuild
 unity/ios/build
 unity/ios/opencv
+unity/ios/sphinx
 unity/Cozmo/Assets/WellFired/shared.meta
 unity/Cozmo/Assets/WellFired/shared/compiled.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime.meta

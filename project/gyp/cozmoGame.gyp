@@ -1,4 +1,9 @@
 {
+  'includes': [
+    '../../lib/anki/cozmo-engine/coretech/project/gyp/opencv.gypi',
+    '../../lib/anki/cozmo-engine/coretech/project/gyp/face-library.gypi'
+  ],
+
   'variables': {
 
     'game_source': 'cozmoGame.lst',
@@ -19,49 +24,31 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
 
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
+    'sphinx_libs': [
+      'libpocketSphinx.a',
+      'libsphinxad.a',
+      'libsphinxBase.a',
     ],
 
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
+    'cte_lib_search_path_mac_debug': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
+    ],
+
+    'cte_lib_search_path_mac_release': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
+    ],
+
+    'cte_lib_search_path_ios_debug': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
+    ],
+
+    'cte_lib_search_path_ios_release': [
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
     ],
-    
-    # Here we pick which face library to use and set its path/includes/libs
-    # initially to empty. They will be filled in below in the 'conditions' as
-    # needed:
-    # (NOTE: This is duplicated from coretech-internal.gyp!)
-    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
-    'face_library_path':      [ ],
-    'face_library_includes' : [ ],
-    'face_library_libs':      [ ],
     
     'compiler_flags': [
       '-Wdeprecated-declarations',
@@ -107,46 +94,7 @@
     'arch_group%': '<(arch_group)',
     
     'conditions': [
-      # Face libraries, depending on platform:
-      ['face_library=="faciometric"', {
-        'face_library_path': [
-          '<(coretech_external_path)/IntraFace',
-        ],
-      }],
-      ['OS=="mac" and face_library=="facesdk"', {
-        'face_library_libs': [
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/osx_x86_64/libfsdk.dylib',
-        ],
-      }],
-      ['OS=="mac" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/osx_demo_126/include',
-        ],
-        'face_library_libs': [
-          '<(face_library_path)/osx_demo_126/lib/libintraface_core126.dylib',
-          '<(face_library_path)/osx_demo_126/lib/libintraface_emo126.dylib',
-          '<(face_library_path)/osx_demo_126/lib/libintraface_gaze126.dylib',
-        ],
-      }],
-      ['OS=="ios" and face_library=="facesdk"', {
-        'face_library_libs': [
-          # TODO: handle different architectures
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/iOS/libfsdk-static.a',
-        ],
-      }],
-      ['OS=="ios" and face_library=="faciometric"', {
-        'face_library_libs': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
-        ],
-      }],
-      ['OS=="android" and face_library=="facesdk"', {
-        'face_library_libs': [
-          # TODO: handle different architectures
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libfsdk.so',
-          '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a/libstlport_shared.so',
-        ],
-      }],
-      
+    
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
       }],
@@ -244,15 +192,30 @@
     },
     'configurations': {
       'Debug': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_debug)',
+                  '<(webots_path)/lib/',
+                ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_debug)',
+                  '<(webots_path)/lib/',
+                ],
+              },
+            }],
+          ],
           'cflags': ['-O0'],
           'cflags_cc': ['-O0'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-            ],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -260,15 +223,30 @@
           ],
       },
       'Profile': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_release)',
+                  '<(webots_path)/lib/',
+                ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_release)',
+                  '<(webots_path)/lib/',
+                ],
+              },
+            }],
+          ],
           'cflags': ['-Os'],
           'cflags_cc': ['-Os'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
            },
           'defines': [
             'NDEBUG=1',
@@ -276,15 +254,30 @@
           ],
       },
       'Release': {
+          'conditions': [
+            ['OS=="ios"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_ios_release)',
+                  '<(webots_path)/lib/',
+                ],
+              },
+            }],
+            ['OS=="mac"', {
+              'xcode_settings': {
+                'LIBRARY_SEARCH_PATHS': [
+                  '<@(cte_lib_search_path_mac_release)',
+                  '<(webots_path)/lib/',
+                ],
+              },
+            }],
+          ],
           'cflags': ['-Os'],
           'cflags_cc': ['-Os'],
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
+            'OTHER_LDFLAGS': ['<@(linker_flags)'],
            },
           'defines': [
             'NDEBUG=1',
@@ -440,14 +433,51 @@
             ],
             'sources': [ '<!@(cat <(ctrlGameEngine_source))' ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
+              '<@(sphinx_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
+            'actions': [
+              {
+                'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '../../simulator/controllers/webotsCtrlGameEngine/',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVGameAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
           }, # end controller Game Engine
 
           {
@@ -469,8 +499,33 @@
             ],
             'sources': [ '<!@(cat <(ctrlKeyboard_source))' ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
+            ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlKeyboard_faciometricLibs',
+                    'inputs': [ ],
+                    'outputs': [ ],
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '../../simulator/controllers/webotsCtrlKeyboard/',
+                    ],
+                  },
+                ], # actions
+              }], # conditions
             ],
           }, # end controller Keyboard
 
@@ -480,7 +535,7 @@
             'include_dirs': [
               '<@(webots_includes)',
               '<@(opencv_includes)',
-              '<(cti-cozmo_engine_path)/simulator/include'
+              '<(cti-cozmo_engine_path)/simulator/include',
             ],
             'dependencies': [
               'cozmoGame',
@@ -493,11 +548,28 @@
             ],
             'sources': [ '<!@(cat <(ctrlBuildServerTest_source))' ],
             'libraries': [
-              '<(webots_path)/lib/libCppController.dylib',
+              'libCppController.dylib',
               '<@(opencv_libs)',
             ],
           }, # end controller Keyboard
 
+          {
+            'target_name': 'allUnitTests',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-ce_gyp_path):cozmoEngineUnitTest',
+              '<(cg-cti_gyp_path):ctiUnitTest',
+              '<(cg-util_gyp_path):UtilUnitTest',
+            ],
+          },
+
+          {
+            'target_name': 'allCoretechTools',
+            'type': 'none',
+            'dependencies': [
+              '<(cg-cti_gyp_path):ctiPlanningStandalone',
+            ],            
+          },
 
           {
             'target_name': 'webotsControllers',
@@ -626,6 +698,23 @@
                 ],
               },
               {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs': [
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                ],
+                'outputs': [
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/pocketsphinx',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
                 'action_name': 'create_symlink_webotsCtrlRobot',
                 'inputs': [
                   '<(PRODUCT_DIR)/webotsCtrlRobot',
@@ -689,67 +778,8 @@
                   '<@(_outputs)',
                 ],
               },
-
-              # Face-library-specific actions:
-    
-              {
-                # The FacioMetric dynamic libs are expected to be in a "lib"
-                # subdirectory of the executable directory, so make a symlink
-                # to their location in the same directory where we put the
-                # game engine controller
-                'action_name': 'create_symlink_webotsCtrlGameEngine_facioMetricLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="faciometric"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_path)/osx_demo_126/lib',
-                      '../../simulator/controllers/webotsCtrlGameEngine/lib',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                      '"Skipping Faciometric-specific action."'
-                    ],
-                  }],
-                ],
-              },
-              
-              
-              {
-                # The FaceSDK dynamic libs are expected to be in the
-                # subdirectory with the executable, so make a symlink
-                # to their location in the same directory where we put the
-                # game engine controller
-                'action_name': 'create_symlink_webotsCtrlGameEngine_facesdkLibs',
-                'inputs': [ ],
-                'outputs': [ ],
-                'conditions': [
-                  ['face_library=="facesdk"', {
-                    'action': [
-                      'ln',
-                      '-s',
-                      '-f',
-                      '<(face_library_libs)',
-                      '../../simulator/controllers/webotsCtrlGameEngine/',
-                    ],
-                  },
-                  { # else
-                    'action': [
-                      'echo',
-                      '"Skipping FaceSDK-specific action."'
-                    ],
-                  }],
-                ],
-              },
               
             ], # actions
-           
-            
             
           }, # end webotsControllers
 
@@ -810,7 +840,7 @@
             {
               'action_name': 'copy_faciometric_models',
               'inputs': [
-                '<(face_library_path)/models',
+                '<(face_library_path)/Demo/models',
               ],
               'outputs': [
                 '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',

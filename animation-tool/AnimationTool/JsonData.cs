@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using Anki.Cozmo;
 
 namespace AnimationTool
 {
@@ -72,6 +73,25 @@ namespace AnimationTool
         public FaceAnimationPointData()
         {
             Name = NAME;
+        }
+    }
+
+    [Serializable]
+    public class ProceduralFacePointData : PointData
+    {
+        public const string NAME = "ProceduralFaceKeyFrame";
+
+        public float faceAngle;
+
+        public float[] leftEye;
+        public float[] rightEye;
+
+        public ProceduralFacePointData()
+        {
+            Name = NAME;
+
+            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
         }
     }
 

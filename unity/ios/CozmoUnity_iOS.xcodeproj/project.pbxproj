@@ -103,6 +103,9 @@
 		83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2570A0E62FF8A00468741 /* QuartzCore.framework */; };
 		83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574B0E63022200468741 /* OpenAL.framework */; };
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
+		ADED221A1B9A2E7900B5D289 /* libpocketSphinx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */; };
+		ADED221B1B9A2E7900B5D289 /* libsphinxad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22181B9A2E7900B5D289 /* libsphinxad.a */; };
+		ADED221C1B9A2E7900B5D289 /* libsphinxBase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22191B9A2E7900B5D289 /* libsphinxBase.a */; };
 		F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */; };
 		F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */; };
 		F8BD0CFD1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = F8BD0CFB1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s */; };
@@ -272,6 +275,9 @@
 		83B2574B0E63022200468741 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpocketSphinx.a; path = sphinx/libpocketSphinx.a; sourceTree = "<group>"; };
+		ADED22181B9A2E7900B5D289 /* libsphinxad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxad.a; path = sphinx/libsphinxad.a; sourceTree = "<group>"; };
+		ADED22191B9A2E7900B5D289 /* libsphinxBase.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxBase.a; path = sphinx/libsphinxBase.a; sourceTree = "<group>"; };
 		F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = ios.xcconfig; path = generated/ios.xcconfig; sourceTree = "<group>"; };
 		F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
 		F8BD0CFB1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = UnityEngine.Analytics.dll.s; sourceTree = "<group>"; };
@@ -283,7 +289,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
 				491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */,
+				ADED221B1B9A2E7900B5D289 /* libsphinxad.a in Frameworks */,
 				F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */,
 				46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */,
 				46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */,
@@ -297,6 +305,7 @@
 				46D2C2461B4F9D6B00FC7553 /* libjsoncpp.a in Frameworks */,
 				46D2C2471B4F9D6B00FC7553 /* libkazmath.a in Frameworks */,
 				46D2C2481B4F9D6B00FC7553 /* libutil.a in Frameworks */,
+				ADED221C1B9A2E7900B5D289 /* libsphinxBase.a in Frameworks */,
 				46D2C2F71B4FA57000FC7553 /* libutilEmbedded.a in Frameworks */,
 				462D5BC51B0576230027DC17 /* libopencv_video.a in Frameworks */,
 				462D5BC61B0576230027DC17 /* libopencv_features2d.a in Frameworks */,
@@ -313,7 +322,6 @@
 				830B5C110E5ED4C100C7819F /* UIKit.framework in Frameworks */,
 				83B256E20E62FEA000468741 /* OpenGLES.framework in Frameworks */,
 				83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */,
-				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
 				83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */,
 				46D2C2D01B4F9E3E00FC7553 /* libiPhone-lib.a in Frameworks */,
 				8358D1B80ED1CC3700E3A684 /* AudioToolbox.framework in Frameworks */,
@@ -321,6 +329,7 @@
 				5682F4B20F3B34FF007A219C /* MediaPlayer.framework in Frameworks */,
 				5692F3DD0FA9D8E500EBA2F1 /* CoreLocation.framework in Frameworks */,
 				56BCBA390FCF049A0030C3B2 /* SystemConfiguration.framework in Frameworks */,
+				ADED221A1B9A2E7900B5D289 /* libpocketSphinx.a in Frameworks */,
 				08B24F76137BFDFA00FBA309 /* iAd.framework in Frameworks */,
 				7F36C11113C5C673007FBDD9 /* CoreMedia.framework in Frameworks */,
 				7F36C11213C5C673007FBDD9 /* CoreVideo.framework in Frameworks */,
@@ -366,6 +375,9 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */,
+				ADED22181B9A2E7900B5D289 /* libsphinxad.a */,
+				ADED22191B9A2E7900B5D289 /* libsphinxBase.a */,
 				49109E021B8BA48D00827BBF /* libfsdk-static.a */,
 				491A6D971B5F1D64003E91FB /* Security.framework */,
 				F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */,
@@ -727,7 +739,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/scripts/build/CopyResources.sh\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/resources/config\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
+			shellScript = "\"${ANKI_BUILD_REPO_ROOT}/project/iosCopyResources.sh\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/resources/config\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
 			showEnvVarsInLog = 0;
 		};
 		83D0C1FB0E6C8D5900EBCE5D /* Run Unity Build */ = {
@@ -862,6 +874,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
+					"$(SRCROOT)/sphinx",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 				);
@@ -911,6 +924,8 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
+					"/Users/andrew/Code/coretech-external/Luxand_FaceSDK/bin/iOS",
+					"$(SRCROOT)/sphinx",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-mno-thumb";

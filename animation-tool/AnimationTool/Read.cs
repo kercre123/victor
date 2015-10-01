@@ -13,6 +13,9 @@ namespace AnimationTool
         {
             if (current == null) return -1;
 
+            int minimum = (int)(MoveSelectedDataPoints.DELTA_X * 1000);
+            current.durationTime_ms = current.durationTime_ms < minimum ? minimum : current.durationTime_ms; // because procedural face points have duration time of zero
+
             double x = Math.Round((current.triggerTime_ms + current.durationTime_ms) * 0.001D, 1);
 
             return x;
@@ -31,8 +34,8 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, cbAudioRobot), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cAudioRobot, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(audioRobot)).Do();
+            (new Sequencer.AddDataPoint(audioRobot.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadAudioDeviceFromFile(AudioDevicePointData current)
@@ -48,30 +51,30 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, cbAudioDevice), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cAudioDevice, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(audioDevice)).Do();
+            (new Sequencer.AddDataPoint(audioDevice.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadLiftHeightFromFile(LiftHeightPointData current, LiftHeightPointData next)
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(cLiftHeight, cbLift), true);
+            (new EnableChart(liftHeight)).Do();
 
             if (next == null) // if last point, move to correct y
             {
-                DataPoint last = cLiftHeight.Series[0].Points[cLiftHeight.Series[0].Points.Count - 1];
-                double x = cLiftHeight.ChartAreas[0].AxisX.Maximum;
+                DataPoint last = liftHeight.chart.Series[0].Points[liftHeight.chart.Series[0].Points.Count - 1];
+                double x = liftHeight.chart.ChartAreas[0].AxisX.Maximum;
 
-                ActionManager.Do(new MoveDataPoint(last, x, current.height_mm), true);
+                (new MoveDataPoint(last, x, current.height_mm)).Do();
             }
             else
             {
-                ActionManager.Do(new AddDataPoint(cLiftHeight, next.triggerTime_ms * 0.001D, current.height_mm, false), true);
+                (new AddDataPoint(liftHeight.chart, next.triggerTime_ms * 0.001D, current.height_mm, false)).Do();
             }
         }
 
-        private void ReadFaceAnimationFromFile(FaceAnimationPointData current)
+        private void ReadFaceAnimationImageFromFile(FaceAnimationPointData current)
         {
             if (current == null) return;
 
@@ -83,8 +86,18 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, cbFaceAnimation), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cFaceAnimation, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new FaceAnimation.EnableChart(faceAnimation)).Do();
+            (new Sequencer.AddDataPoint(faceAnimation.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
+        }
+
+        private void ReadProceduralFaceFromFile(ProceduralFacePointData current)
+        {
+            if (current == null) return;
+
+            Sequencer.ExtraProceduralFaceData extraData = new Sequencer.ExtraProceduralFaceData(current);
+
+            (new Sequencer.EnableChart(proceduralFace)).Do();
+            (new Sequencer.AddDataPoint(proceduralFace.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadBodyMotionFromFile(BodyMotionPointData current)
@@ -119,31 +132,31 @@ namespace AnimationTool
             }
 
             extraData.Length = current.durationTime_ms * 0.001D;
-            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, cbBodyMotion), true);
-            ActionManager.Do(new Sequencer.AddDataPoint(cBodyMotion, extraData, current.triggerTime_ms * 0.001D, false), true);
+            (new Sequencer.EnableChart(bodyMotion)).Do();
+            (new Sequencer.AddDataPoint(bodyMotion.chart, extraData, current.triggerTime_ms * 0.001D, false)).Do();
         }
 
         private void ReadHeadAngleFromFile(HeadAnglePointData current, HeadAnglePointData next)
         {
             if (current == null) return;
 
-            ActionManager.Do(new EnableChart(cHeadAngle, cbHeadAngle), true);
+            (new EnableChart(headAngle)).Do();
 
             if (next == null) // if last point, move to correct y
             {
-                DataPoint last = cHeadAngle.Series[0].Points[cHeadAngle.Series[0].Points.Count - 1];
-                double x = cHeadAngle.ChartAreas[0].AxisX.Maximum;
-                ActionManager.Do(new MoveDataPoint(last, x, current.angle_deg), true);
+                DataPoint last = headAngle.chart.Series[0].Points[headAngle.chart.Series[0].Points.Count - 1];
+                double x = headAngle.chart.ChartAreas[0].AxisX.Maximum;
+                (new MoveDataPoint(last, x, current.angle_deg)).Do();
             }
             else
             {
-                ActionManager.Do(new AddDataPoint(cHeadAngle, next.triggerTime_ms * 0.001D, current.angle_deg, false), true);
+                (new AddDataPoint(headAngle.chart, next.triggerTime_ms * 0.001D, current.angle_deg, false)).Do();
             }
         }
 
         private void ReadChartsFromFile(string text)
         {
-            if (text == null || channelList == null) return;
+            if (text == null || chartForms == null) return;
 
             Dictionary<string, PointData[]> animation = null;
 
@@ -158,7 +171,7 @@ namespace AnimationTool
                 return;
             }
 
-            ActionManager.Do(new ChangeAllChartDurations(channelList, GetDurationNeeded(animation)));
+            ActionManager.Do(new ChangeAllChartDurations(chartForms, GetDurationNeeded(animation)));
 
             DisableAllCharts(); // disable all charts, only enable them if the file has points for them
 
@@ -183,7 +196,10 @@ namespace AnimationTool
                             ReadAudioDeviceFromFile(points[i] as AudioDevicePointData);
                             break;
                         case FaceAnimationPointData.NAME:
-                            ReadFaceAnimationFromFile(points[i] as FaceAnimationPointData);
+                            ReadFaceAnimationImageFromFile(points[i] as FaceAnimationPointData);
+                            break;
+                        case ProceduralFacePointData.NAME:
+                            ReadProceduralFaceFromFile(points[i] as ProceduralFacePointData);
                             break;
                         case BodyMotionPointData.NAME:
                             ReadBodyMotionFromFile(points[i] as BodyMotionPointData);
@@ -192,7 +208,7 @@ namespace AnimationTool
                 }
             }
 
-            ActionManager.Do(new UnselectAllCharts(channelList), true);
+            (new UnselectAllCharts(chartForms)).Do();
         }
 
         private double GetDurationNeeded(Dictionary<string, PointData[]> animation)
@@ -219,31 +235,11 @@ namespace AnimationTool
 
         private void DisableAllCharts()
         {
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart.Enabled)
+                if (chartForm.Enabled)
                 {
-                    switch (chart.Name)
-                    {
-                        case "cHeadAngle":
-                            ActionManager.Do(new DisableChart(cHeadAngle, cbHeadAngle));
-                            break;
-                        case "cLiftHeight":
-                            ActionManager.Do(new DisableChart(cLiftHeight, cbLift));
-                            break;
-                        case "cAudioRobot":
-                            ActionManager.Do(new DisableChart(cAudioRobot, cbAudioRobot));
-                            break;
-                        case "cAudioDevice":
-                            ActionManager.Do(new DisableChart(cAudioDevice, cbAudioDevice));
-                            break;
-                        case "cFaceAnimation":
-                            ActionManager.Do(new DisableChart(cFaceAnimation, cbFaceAnimation));
-                            break;
-                        case "cBodyMotion":
-                            ActionManager.Do(new DisableChart(cBodyMotion, cbBodyMotion));
-                            break;
-                    }
+                    ActionManager.Do(new DisableChart(chartForm));
                 }
             }
         }

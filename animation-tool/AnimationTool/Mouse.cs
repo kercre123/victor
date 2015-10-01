@@ -1,15 +1,16 @@
 ﻿using System;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
+using System.Drawing;
 
 namespace AnimationTool
 {
     partial class MainForm
     {
-        DataPoint curDataPoint; // current selected point
-        DataPoint curPreviewBar;
+        private DataPoint curDataPoint; // current selected point
+        private DataPoint curPreviewBar;
 
-        double GetPixelPositionToValue(Axis axis, double pixel, int round)
+        private double GetPixelPositionToValue(Axis axis, double pixel, int round)
         {
             double value = double.MaxValue;
 
@@ -32,7 +33,7 @@ namespace AnimationTool
             //Get the sender as the current chart
             curChart = (Chart)sender;
 
-            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? channelList : null));
+            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? chartForms : null));
 
             ActiveControl = curChart;
 
@@ -73,6 +74,16 @@ namespace AnimationTool
                 {
                     movingDataPointsWithMouse = true;
 
+                    switch (curChart.Name)
+                    {
+                        case "cHeadAngle":
+                            RobotEngineMessenger.instance.SendHeadAngleMessage(curDataPoint.YValues[0]);
+                            break;
+                        case "cLiftHeight":
+                            RobotEngineMessenger.instance.SendLiftHeightMessage(curDataPoint.YValues[0]);
+                            break;
+                    }
+
                     double maxX = curChartArea.AxisX.ValueToPixelPosition(curChartArea.AxisX.Maximum);
                     double minX = curChartArea.AxisX.ValueToPixelPosition(curChartArea.AxisX.Minimum);
                     double minY = 0;
@@ -92,7 +103,7 @@ namespace AnimationTool
 
                     while ((left || right || up || down) && ++count < 100)
                     {
-                        if (!ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
+                        if (!ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, up, down)))
                         {
                             break;
                         }
@@ -103,9 +114,9 @@ namespace AnimationTool
                         down = curDataPoint.YValues[0] > mouseYValue;
                     }
 
-                    foreach (Chart chart in channelList)
+                    foreach (ChartForm chartForm in chartForms)
                     {
-                        chart.Refresh();
+                        chartForm.chart.Refresh();
                     }
 
                     return;
@@ -133,14 +144,29 @@ namespace AnimationTool
                     if (curChart.Name != "cFaceAnimation")
                     {
                         ActionManager.Do(new SelectDataPoint(curDataPoint, curChart));
+
+                        switch (curChart.Name)
+                        {
+                            case "cProceduralFace":
+                                string key = curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key);
+                                Sequencer.ExtraProceduralFaceData data = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraProceduralFaceData;
+                                RobotEngineMessenger.instance.SendProceduralFaceMessage(data);
+                                break;
+                            case "cHeadAngle":
+                                RobotEngineMessenger.instance.SendHeadAngleMessage(curDataPoint.YValues[0]);
+                                break;
+                            case "cLiftHeight":
+                                RobotEngineMessenger.instance.SendLiftHeightMessage(curDataPoint.YValues[0]);
+                                break;
+                        }
                     }
                     else
                     {
-                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, pbFaceAnimation));
+                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, faceAnimation.pictureBox));
 
                         if (curPreviewBar != null)
                         {
-                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, pbFaceAnimation));
+                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, faceAnimation.pictureBox));
                         }
                     }
                 }
@@ -206,6 +232,16 @@ namespace AnimationTool
                 if (addDataPoint)
                 {
                     ActionManager.Do(new AddDataPoint(curChart, mouseXValue, mouseYValue, true, ModifierKeys != Keys.Shift));
+
+                    switch (curChart.Name)
+                    {
+                        case "cHeadAngle":
+                            RobotEngineMessenger.instance.SendHeadAngleMessage(mouseYValue);
+                            break;
+                        case "cLiftHeight":
+                            RobotEngineMessenger.instance.SendLiftHeightMessage(mouseYValue);
+                            break;
+                    }
                 }
                 else
                 {
@@ -243,9 +279,9 @@ namespace AnimationTool
                         bool left = curPreviewBar.YValues[0] > mouseXValue;
                         bool right = curPreviewBar.YValues[1] < mouseXValue;
 
-                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
+                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
                         {
-                            cFaceAnimation.Refresh();
+                            faceAnimation.chart.Refresh();
                         }
                     }
                     else // else moving data points
@@ -255,15 +291,15 @@ namespace AnimationTool
 
                         while ((left || right) && ++count < 100)
                         {
-                            ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, false, false));
+                            ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, false, false));
 
                             left = curDataPoint.YValues[0] > mouseXValue;
                             right = curDataPoint.YValues[1] < mouseXValue;
                         }
 
-                        foreach (Chart chart in channelList)
+                        foreach (ChartForm chartForm in chartForms)
                         {
-                            chart.Refresh();
+                            chartForm.chart.Refresh();
                         }
                     }
 
@@ -284,7 +320,7 @@ namespace AnimationTool
             //Get the sender as the current chart
             curChart = (Chart)sender;
 
-            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? channelList : null));
+            ActionManager.Do(new SelectChart(curChart, ModifierKeys != Keys.Shift ? chartForms : null));
 
             ActiveControl = curChart;
 
@@ -306,7 +342,7 @@ namespace AnimationTool
 
                     if (mouseXValue >= dp.YValues[0] && mouseXValue < dp.YValues[1])
                     {
-                        if (dp.Color == System.Drawing.Color.Red)
+                        if (dp.Color == Color.Red)
                         {
                             curPreviewBar = dp;
                         }
@@ -338,6 +374,9 @@ namespace AnimationTool
                     case "cAudioRobot":
                     case "cAudioDevice":
                         ShowVolumeForm();
+                        break;
+                    case "cProceduralFace":
+                        ShowProceduralFaceForm();
                         break;
                 }
             }
@@ -385,9 +424,14 @@ namespace AnimationTool
                     Sequencer.ExtraData extraData = null;
 
                     bool body = false;
+                    bool faceAnimationData = false;
 
                     switch (curChart.Name)
                     {
+                        case "cProceduralFace":
+                            faceAnimationData = true;
+                            extraData = new Sequencer.ExtraProceduralFaceData();
+                            break;
                         case "cFaceAnimation":
                             extraData = Sequencer.ExtraFaceAnimationData.SelectFaceFolder(selectFolder);
                             break;
@@ -399,7 +443,6 @@ namespace AnimationTool
                             body = true;
                             bodyForm.StartPosition = FormStartPosition.CenterParent;
                             DialogResult result = bodyForm.ShowDialog(curChart);
-                            double maxTime = Sequencer.ExtraData.GetDistanceFromNextRight(curDataPoint, curPoints);
 
                             if (result == DialogResult.OK) // straight
                             {
@@ -426,7 +469,7 @@ namespace AnimationTool
                         }
                         else
                         {
-                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, pbFaceAnimation, ModifierKeys != Keys.Shift);
+                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, faceAnimation.pictureBox, ModifierKeys != Keys.Shift);
                         }
 
                         ActionManager.Do(add);
@@ -434,7 +477,26 @@ namespace AnimationTool
                         if (body)
                         {
                             curDataPoint = add.dataPoint;
-                            ShowBodyForm();
+                            ShowBodyForm(true);
+                        }
+                        else if (faceAnimationData)
+                        {
+                            curDataPoint = add.dataPoint;
+                            DataPoint previous = null;
+
+                            for (int i = 0; i < curPoints.Count - 1; ++i)
+                            {
+                                if (curPoints[i + 1] == curDataPoint)
+                                {
+                                    if (!curPoints[i].IsEmpty && curPoints[i].Color != Color.Red)
+                                    {
+                                        previous = curPoints[i];
+                                    }
+                                    break;
+                                }
+                            }
+
+                            ShowProceduralFaceForm(previous);
                         }
                     }
                 }
@@ -453,16 +515,45 @@ namespace AnimationTool
             }
         }
 
-        private void ShowStraightForm(Sequencer.ExtraStraightData straightData, double maxTime)
+        private void ShowProceduralFaceForm(Sequencer.ExtraProceduralFaceData previous, Sequencer.ExtraProceduralFaceData extraData)
+        {
+            if (faceForm.Open(previous != null ? previous : extraData) == DialogResult.OK)
+            {
+                extraData.faceAngle = faceForm.faceAngle;
+
+                for (int i = 0; i < extraData.leftEye.Length && i < faceForm.eyes.Length; ++i)
+                {
+                    if (faceForm.eyes[i] != null)
+                    {
+                        extraData.leftEye[i] = faceForm.eyes[i].LeftValue;
+                        extraData.rightEye[i] = faceForm.eyes[i].RightValue;
+                    }
+                }
+            }
+            else
+            {
+                if (previous != null)
+                {
+                    (new RemoveDataPoint(curDataPoint, curChart)).Do();
+                }
+                RobotEngineMessenger.instance.SendProceduralFaceMessage(previous != null ? previous : extraData); // Else if cancelled, set back to previous face
+            }
+        }
+
+        private void ShowStraightForm(Sequencer.ExtraStraightData straightData, double maxTime, bool add)
         {
             if (straightForm.Open(maxTime, straightData.Speed_mms, straightData.Length, curChart) == DialogResult.OK)
             {
                 straightData.Length = straightForm.Time;
                 straightData.Speed_mms = straightForm.Speed;
             }
+            else if(add)
+            {
+                (new RemoveDataPoint(curDataPoint, curChart)).Do();
+            }
         }
 
-        private void ShowArcForm(Sequencer.ExtraArcData arcData, double maxTime)
+        private void ShowArcForm(Sequencer.ExtraArcData arcData, double maxTime, bool add)
         {
             if (arcForm.Open(maxTime, arcData.Speed_mms, arcData.Radius_mm, arcData.Length, curChart) == DialogResult.OK)
             {
@@ -470,14 +561,22 @@ namespace AnimationTool
                 arcData.Speed_mms = arcForm.Speed;
                 arcData.Radius_mm = arcForm.Radius;
             }
+            else if (add)
+            {
+                (new RemoveDataPoint(curDataPoint, curChart)).Do();
+            }
         }
 
-        private void ShowTurnInPlaceForm(Sequencer.ExtraTurnInPlaceData turnInPlaceData, double maxTime)
+        private void ShowTurnInPlaceForm(Sequencer.ExtraTurnInPlaceData turnInPlaceData, double maxTime, bool add)
         {
             if (turnInPlaceForm.Open(maxTime, turnInPlaceData.Angle_deg, turnInPlaceData.Length, curChart) == DialogResult.OK)
             {
                 turnInPlaceData.Length = turnInPlaceForm.Time;
                 turnInPlaceData.Angle_deg = turnInPlaceForm.Angle;
+            }
+            else if (add)
+            {
+                (new RemoveDataPoint(curDataPoint, curChart)).Do();
             }
         }
         
@@ -496,7 +595,23 @@ namespace AnimationTool
             curChart.Refresh();
         }
 
-        private void ShowBodyForm()
+        private void ShowProceduralFaceForm(DataPoint previous = null)
+        {
+            if (curDataPoint == null || curChart == null) return;
+
+            Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[curDataPoint.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData;
+            Sequencer.ExtraProceduralFaceData previousData = previous != null ? Sequencer.ExtraData.Entries[previous.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraProceduralFaceData : null;
+
+            ShowProceduralFaceForm(previousData, extraData);
+
+            // Hack: update info 
+            ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] + MoveSelectedDataPoints.DELTA_X));
+            ActionManager.Do(new Sequencer.MoveDataPoint(curDataPoint, curDataPoint.YValues[0] - MoveSelectedDataPoints.DELTA_X));
+
+            curChart.Refresh();
+        }
+
+        private void ShowBodyForm(bool add = false)
         {
             if (curDataPoint == null || curChart == null) return;
 
@@ -507,7 +622,7 @@ namespace AnimationTool
 
             if (straightData != null)
             {
-                ShowStraightForm(straightData, maxTime);
+                ShowStraightForm(straightData, maxTime, add);
             }
             else
             {
@@ -515,7 +630,7 @@ namespace AnimationTool
 
                 if (arcData != null)
                 {
-                    ShowArcForm(arcData, maxTime);
+                    ShowArcForm(arcData, maxTime, add);
                 }
                 else
                 {
@@ -523,7 +638,7 @@ namespace AnimationTool
 
                     if (turnInPlaceData != null)
                     {
-                        ShowTurnInPlaceForm(turnInPlaceData, maxTime);
+                        ShowTurnInPlaceForm(turnInPlaceData, maxTime, add);
                     }
                 }
             }

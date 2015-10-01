@@ -10,28 +10,28 @@ namespace AnimationTool
     public partial class MainForm : Form
     {
         //This list contains all channels so we can access them directly
-        List<Component> channelList;
+        private List<ChartForm> chartForms;
 
-        ChangeDurationForm changeDurationForm;
-        BodyForm bodyForm;
-        VolumeForm volumeForm;
-        StraightForm straightForm;
-        ArcForm arcForm;
-        TurnInPlaceForm turnInPlaceForm;
-        IPForm ipForm;
+        private ChangeDurationForm changeDurationForm;
+        private BodyForm bodyForm;
+        private VolumeForm volumeForm;
+        private StraightForm straightForm;
+        private ArcForm arcForm;
+        private TurnInPlaceForm turnInPlaceForm;
+        private FaceForm faceForm;
+        private IPForm ipForm;
+        private IdleAnimationForm idleAnimationForm;
 
-        OpenFileDialog openFile;
-        FolderBrowserDialog selectFolder;
-        SaveFileDialog saveFileAs;
+        private OpenFileDialog openFile;
+        private FolderBrowserDialog selectFolder;
+        private SaveFileDialog saveFileAs;
 
         //reference to the currently selected Chart
-        Chart curChart;
-        ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
-        DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
+        private Chart curChart;
+        private ChartArea curChartArea { get { return curChart != null && curChart.ChartAreas.Count > 0 ? curChart.ChartAreas[0] : null; } }
+        private DataPointCollection curPoints { get { return curChart != null && curChart.Series.Count > 0 ? curChart.Series[0].Points : null; } }
 
-        RobotEngineMessenger robotEngineMessenger;
-
-        string jsonFilePath { get { return rootDirectory + "\\animations"; } }
+        private string jsonFilePath { get { return rootDirectory + "\\animations"; } }
 
         private static MainForm instance;
 
@@ -75,9 +75,12 @@ namespace AnimationTool
         {
             instance = this;
             Sequencer.ExtraData.Entries = new Dictionary<string, Sequencer.ExtraData>();
-            ActionManager singleton = new ActionManager();
+            ActionManager actionManager = new ActionManager();
+
             changeDurationForm = new ChangeDurationForm();
+            idleAnimationForm = new IdleAnimationForm();
             ipForm = new IPForm();
+            faceForm = new FaceForm();
             bodyForm = new BodyForm();
             volumeForm = new VolumeForm();
             straightForm = new StraightForm();
@@ -86,14 +89,16 @@ namespace AnimationTool
             openFile = new OpenFileDialog();
             selectFolder = new FolderBrowserDialog();
             saveFileAs = new SaveFileDialog();
-            channelList = new List<Component>();
-            robotEngineMessenger = new RobotEngineMessenger();
+            chartForms = new List<ChartForm>();
 
-            robotEngineMessenger.ConnectionTextUpdate += ChangeConnectionText;
-            robotEngineMessenger.Start();
-            FormClosing += (unused1, unused2) => robotEngineMessenger.Stop();
-            Application.ApplicationExit += (unused1, unused2) => robotEngineMessenger.Stop();
+            RobotEngineMessenger.instance.ConnectionManager.ConnectionTextUpdate += ChangeConnectionText;
+            RobotEngineMessenger.instance.ConnectionManager.Start();
+            FormClosing += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
+            Application.ApplicationExit += (unused1, unused2) => RobotEngineMessenger.instance.ConnectionManager.Stop();
             Application.Idle += UpdateConnectionText;
+            Resize += MainForm_Resize;
+
+            RobotEngineMessenger.instance.SendIdleAnimation(Properties.Settings.Default.idleAnimation);
 
             Sequencer.AddDataPoint.ChangeDuration += ChangeDuration;
 
@@ -110,80 +115,94 @@ namespace AnimationTool
             {
                 if (!file.IsReadOnly)
                 {
-                    file.Delete();
+                    try
+                    {
+                        file.Delete();
+                    }
+                    catch (Exception) { }
                 }
             }
 
             InitializeComponent();
         }
 
-        private void MainForm_Load(object sender, EventArgs e)
+        private void MainForm_Load(object o, EventArgs e)
         {
-            if (Sequencer.ExtraData.Entries == null || channelList == null) return;
+            if (Sequencer.ExtraData.Entries == null || chartForms == null) return;
 
             ActionManager.Reset();
             Sequencer.ExtraData.Reset();
-            channelList.Clear();
+            faceForm.Reset();
+            chartForms.Clear();
 
             double interval = ChangeChartDuration.Clamp(Math.Round(Properties.Settings.Default.maxTime * 0.1, 1), 0.1, 0.5);
 
             //Head Chart
-            cHeadAngle.Series[0].Points.Clear();
-            cHeadAngle.ChartAreas[0].AxisX.Minimum = 0;
-            cHeadAngle.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
-            cHeadAngle.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
-            cHeadAngle.ChartAreas[0].AxisY.Minimum = -25;
-            cHeadAngle.ChartAreas[0].AxisY.Maximum = 34;
-            ActionManager.Do(new DisableChart(cHeadAngle, cbHeadAngle), true);
-            ActionManager.Do(new EnableChart(cHeadAngle, cbHeadAngle), true);
-            channelList.Add(cHeadAngle);
+            headAngle.chart.Series[0].Points.Clear();
+            headAngle.chart.ChartAreas[0].AxisX.Minimum = 0;
+            headAngle.chart.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
+            headAngle.chart.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
+            headAngle.chart.ChartAreas[0].AxisY.Minimum = -25;
+            headAngle.chart.ChartAreas[0].AxisY.Maximum = 34;
+            (new DisableChart(headAngle)).Do();
+            (new EnableChart(headAngle)).Do();
+            chartForms.Add(headAngle);
 
             //Lift Chart
-            cLiftHeight.Series[0].Points.Clear();
-            cLiftHeight.ChartAreas[0].AxisX.Minimum = 0;
-            cLiftHeight.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
-            cLiftHeight.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
-            cLiftHeight.ChartAreas[0].AxisY.Minimum = 31;
-            cLiftHeight.ChartAreas[0].AxisY.Maximum = 92;
-            ActionManager.Do(new DisableChart(cLiftHeight, cbLift), true);
-            ActionManager.Do(new EnableChart(cLiftHeight, cbLift), true);
-            channelList.Add(cLiftHeight);
+            liftHeight.chart.Series[0].Points.Clear();
+            liftHeight.chart.ChartAreas[0].AxisX.Minimum = 0;
+            liftHeight.chart.ChartAreas[0].AxisX.Maximum = Properties.Settings.Default.maxTime;
+            liftHeight.chart.ChartAreas[0].AxisX.LabelStyle.Interval = interval;
+            liftHeight.chart.ChartAreas[0].AxisY.Minimum = 31;
+            liftHeight.chart.ChartAreas[0].AxisY.Maximum = 92;
+            (new DisableChart(liftHeight)).Do();
+            (new EnableChart(liftHeight)).Do();
+            chartForms.Add(liftHeight);
 
             //Body Chart
-            cBodyMotion.Series[0].Points.Clear();
-            cBodyMotion.ChartAreas[0].AxisY.Minimum = 0;
-            cBodyMotion.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cBodyMotion.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cBodyMotion, cbBodyMotion), true);
-            ActionManager.Do(new Sequencer.EnableChart(cBodyMotion, cbBodyMotion), true);
-            channelList.Add(cBodyMotion);
+            bodyMotion.chart.Series[0].Points.Clear();
+            bodyMotion.chart.ChartAreas[0].AxisY.Minimum = 0;
+            bodyMotion.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            bodyMotion.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            (new DisableChart(bodyMotion)).Do();
+            (new Sequencer.EnableChart(bodyMotion)).Do();
+            chartForms.Add(bodyMotion);
 
-            //Face Animation Chart
-            cFaceAnimation.Series[0].Points.Clear();
-            cFaceAnimation.ChartAreas[0].AxisY.Minimum = 0;
-            cFaceAnimation.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cFaceAnimation.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cFaceAnimation, cbFaceAnimation), true);
-            ActionManager.Do(new FaceAnimation.EnableChart(cFaceAnimation, cbFaceAnimation), true);
-            channelList.Add(cFaceAnimation);
+            //Face Animation Data Chart
+            proceduralFace.chart.Series[0].Points.Clear();
+            proceduralFace.chart.ChartAreas[0].AxisY.Minimum = 0;
+            proceduralFace.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            proceduralFace.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            (new DisableChart(proceduralFace)).Do();
+            (new Sequencer.EnableChart(proceduralFace)).Do();
+            chartForms.Add(proceduralFace);
+
+            //Face Animation Image Chart
+            faceAnimation.chart.Series[0].Points.Clear();
+            faceAnimation.chart.ChartAreas[0].AxisY.Minimum = 0;
+            faceAnimation.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            faceAnimation.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            (new DisableChart(faceAnimation)).Do();
+            (new FaceAnimation.EnableChart(faceAnimation)).Do();
+            chartForms.Add(faceAnimation);
 
             //Audio Robot Chart
-            cAudioRobot.Series[0].Points.Clear();
-            cAudioRobot.ChartAreas[0].AxisY.Minimum = 0;
-            cAudioRobot.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cAudioRobot.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cAudioRobot, cbAudioRobot), true);
-            ActionManager.Do(new Sequencer.EnableChart(cAudioRobot, cbAudioRobot), true);
-            channelList.Add(cAudioRobot);
+            audioRobot.chart.Series[0].Points.Clear();
+            audioRobot.chart.ChartAreas[0].AxisY.Minimum = 0;
+            audioRobot.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            audioRobot.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            (new DisableChart(audioRobot)).Do();
+            (new Sequencer.EnableChart(audioRobot)).Do();
+            chartForms.Add(audioRobot);
 
             //Audio Robot Device
-            cAudioDevice.Series[0].Points.Clear();
-            cAudioDevice.ChartAreas[0].AxisY.Minimum = 0;
-            cAudioDevice.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
-            cAudioDevice.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
-            ActionManager.Do(new DisableChart(cAudioDevice, cbAudioDevice), true);
-            ActionManager.Do(new Sequencer.EnableChart(cAudioDevice, cbAudioDevice), true);
-            channelList.Add(cAudioDevice);
+            audioDevice.chart.Series[0].Points.Clear();
+            audioDevice.chart.ChartAreas[0].AxisY.Minimum = 0;
+            audioDevice.chart.ChartAreas[0].AxisY.Maximum = Properties.Settings.Default.maxTime;
+            audioDevice.chart.ChartAreas[0].AxisY.LabelStyle.Interval = interval;
+            (new DisableChart(audioDevice)).Do();
+            (new Sequencer.EnableChart(audioDevice)).Do();
+            chartForms.Add(audioDevice);
 
             if (!File.Exists(currentFile))
             {
@@ -229,16 +248,16 @@ namespace AnimationTool
             {
                 if (curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
                 {
-                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, pbFaceAnimation)))
+                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
                     {
-                        cFaceAnimation.Refresh();
+                        faceAnimation.chart.Refresh();
                     }
                 }
-                else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(channelList, left, right, up, down)))
+                else if (ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, up, down)))
                 {
-                    foreach (Chart chart in channelList)
+                    foreach (ChartForm chartForm in chartForms)
                     {
-                        chart.Refresh();
+                        chartForm.chart.Refresh();
                     }
                 }
             }
@@ -246,37 +265,37 @@ namespace AnimationTool
 
         private void Undo(object o, EventArgs e)
         {
-            if (channelList == null) return;
+            if (chartForms == null) return;
 
             ActionManager.Undo();
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                chart.Refresh();
+                chartForm.chart.Refresh();
             }
         }
 
         private void Redo(object o, EventArgs e)
         {
-            if (channelList == null) return;
+            if (chartForms == null) return;
 
             ActionManager.Redo();
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                chart.Refresh();
+                chartForm.chart.Refresh();
             }
         }
 
         private void Delete(object o, EventArgs e)
         {
-            if (channelList == null) return;
+            if (chartForms == null) return;
 
-            ActionManager.Do(new RemoveSelectedDataPointsOfSelectedCharts(channelList));
+            ActionManager.Do(new RemoveSelectedDataPointsOfSelectedCharts(chartForms));
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                chart.Refresh();
+                chartForm.chart.Refresh();
             }
         }
 
@@ -303,11 +322,11 @@ namespace AnimationTool
             {
                 if (result == DialogResult.OK) // truncate
                 {
-                    ActionManager.Do(new TruncateAllChartDurations(channelList, changeDurationForm.Duration));
+                    ActionManager.Do(new TruncateAllChartDurations(chartForms, changeDurationForm.Duration));
                 }
                 else if (result == DialogResult.Yes) // scale
                 {
-                    ActionManager.Do(new ScaleAllChartDurations(channelList, changeDurationForm.Duration));
+                    ActionManager.Do(new ScaleAllChartDurations(chartForms, changeDurationForm.Duration));
                 }
             }
         }
@@ -336,8 +355,7 @@ namespace AnimationTool
             string face = path + "\\faceAnimations";
             string sounds = path + "\\sounds";
 
-            return !string.IsNullOrEmpty(path) && Directory.Exists(path) && Directory.Exists(json) &&
-                Directory.Exists(face) && Directory.Exists(sounds);
+            return !string.IsNullOrEmpty(path) && Directory.Exists(path) && Directory.Exists(json) && Directory.Exists(face) && Directory.Exists(sounds);
         }
 
         private void OpenFile(object o, EventArgs e)
@@ -350,7 +368,7 @@ namespace AnimationTool
                 if (File.Exists(openFile.FileName))
                 {
                     currentFile = openFile.FileName;
-                    MainForm_Load(null, null);
+                    MainForm_Load(o, e);
                 }
             }
         }
@@ -393,19 +411,24 @@ namespace AnimationTool
             }
         }
 
-        private void PlayAnimation(object sender, EventArgs e)
+        private void PlayAnimation(object o, EventArgs e)
         {
-            robotEngineMessenger.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
+            RobotEngineMessenger.instance.SendAnimation(Path.GetFileNameWithoutExtension(currentFile));
         }
 
         private void SetIPAddress(object o, EventArgs e)
         {
-            DialogResult result = ipForm.Open(Location, robotEngineMessenger);
+            ipForm.Open(Location);
+        }
+
+        private void SetIdleAnimation(object o, EventArgs e)
+        {
+            idleAnimationForm.Open(Location);
         }
 
         private void UpdateConnectionText(object o, EventArgs e)
         {
-            connectionToolStripMenuItem.Text = robotEngineMessenger.ConnectionText;
+            connectionToolStripMenuItem.Text = RobotEngineMessenger.instance.ConnectionManager.ConnectionText;
         }
 
         private void ChangeConnectionText(string connectionText)
@@ -418,6 +441,44 @@ namespace AnimationTool
             }
 
             //connectionTextComponent.Text = connectionText;
+        }
+
+        private void MainForm_Resize(object o, EventArgs e)
+        {
+            int size = (int)(Size.Width * 0.97);
+
+            if (headAngle.Size.Width != size)
+            {
+                headAngle.Size = new System.Drawing.Size(size, headAngle.Size.Height);
+                liftHeight.Size = new System.Drawing.Size(size, liftHeight.Size.Height);
+                bodyMotion.Size = new System.Drawing.Size(size, bodyMotion.Size.Height);
+                proceduralFace.Size = new System.Drawing.Size(size, proceduralFace.Size.Height);
+                faceAnimation.Size = new System.Drawing.Size(size, faceAnimation.Size.Height);
+                audioRobot.Size = new System.Drawing.Size(size, audioRobot.Size.Height);
+                audioDevice.Size = new System.Drawing.Size(size, audioDevice.Size.Height);
+            }
+        }
+
+        private void ReadAndWritesAllFiles(object o, EventArgs e)
+        {
+            if (!Directory.Exists(jsonFilePath)) return;
+
+            DirectoryInfo directory = new DirectoryInfo(jsonFilePath);
+
+            foreach (FileInfo file in directory.GetFiles())
+            {
+                if (!file.IsReadOnly)
+                {
+                    currentFile = file.FullName;
+                    string text = File.ReadAllText(currentFile);
+
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        MainForm_Load(o, e);
+                        SaveFile(o, e);
+                    }
+                }
+            }
         }
     }
 }

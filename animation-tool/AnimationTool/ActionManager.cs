@@ -13,11 +13,15 @@ namespace AnimationTool
         private int _currentActionIndex;
         private Action _currentAction { get { return actions == null || currentActionIndex < 0 || currentActionIndex >= actions.Count ? null : actions[currentActionIndex]; } }
 
+        static ActionManager()
+        {
+            instance = new ActionManager();
+        }
+
         public ActionManager()
         {
             _actions = new List<Action>();
             _currentActionIndex = -1;
-            instance = this;
         }
 
         public static void Reset()
@@ -44,11 +48,9 @@ namespace AnimationTool
             currentAction.Do();
         }
 
-        public static bool Do(Action action, bool canNotBeUndone = false)
+        public static bool Do(Action action)
         {
             if (actions == null || !action.Do()) return false;
-
-            if (canNotBeUndone) return true;
 
             if (++currentActionIndex < actions.Count) // if not at the end of action list, remove all undid actions
             {

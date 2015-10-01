@@ -18,34 +18,34 @@ namespace AnimationTool
 
             List<PointData> points = new List<PointData>();
 
-            foreach (Chart chart in channelList)
+            foreach (ChartForm chartForm in chartForms)
             {
-                if (chart.Enabled)
+                if (chartForm.chart.Enabled)
                 {
-                    switch (chart.Name)
+                    switch (chartForm.chart.Name)
                     {
                         case "cHeadAngle":
-                            for (int i = 0; i < chart.Series[0].Points.Count - 1; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count - 1; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
-                                DataPoint next = chart.Series[0].Points[i + 1];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
+                                DataPoint next = chartForm.chart.Series[0].Points[i + 1];
 
                                 points.Add(WriteHeadAngleToFile(current, next));
                             }
                             break;
                         case "cLiftHeight":
-                            for (int i = 0; i < chart.Series[0].Points.Count - 1; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count - 1; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
-                                DataPoint next = chart.Series[0].Points[i + 1];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
+                                DataPoint next = chartForm.chart.Series[0].Points[i + 1];
 
                                 points.Add(WriteLiftHeightToFile(current, next));
                             }
                             break;
                         case "cAudioRobot":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 
@@ -53,9 +53,9 @@ namespace AnimationTool
                             }
                             break;
                         case "cAudioDevice":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 
@@ -63,19 +63,29 @@ namespace AnimationTool
                             }
                             break;
                         case "cFaceAnimation":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty || current.Color == Color.Red) continue;
 
                                 points.Add(WriteFaceAnimationToFile(current));
                             }
                             break;
-                        case "cBodyMotion":
-                            for (int i = 0; i < chart.Series[0].Points.Count; ++i)
+                        case "cProceduralFace":
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
                             {
-                                DataPoint current = chart.Series[0].Points[i];
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
+
+                                if (current.IsEmpty) continue;
+
+                                points.Add(WriteProceduralFaceToFile(current));
+                            }
+                            break;
+                        case "cBodyMotion":
+                            for (int i = 0; i < chartForm.chart.Series[0].Points.Count; ++i)
+                            {
+                                DataPoint current = chartForm.chart.Series[0].Points[i];
 
                                 if (current.IsEmpty) continue;
 
@@ -144,8 +154,8 @@ namespace AnimationTool
 
         private AudioRobotPointData WriteAudioToFile(AudioRobotPointData pointData, DataPoint current)
         {
-            Sequencer.ExtraAudioData extraData =
-                Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraAudioData;
+            string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
+            Sequencer.ExtraAudioData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraAudioData;
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = (int)(extraData.Length * 1000); // convert to ms
             pointData.volume = Math.Round(extraData.Volume, 1);
@@ -187,8 +197,8 @@ namespace AnimationTool
         private FaceAnimationPointData WriteFaceAnimationToFile(DataPoint current)
         {
             FaceAnimationPointData pointData = new FaceAnimationPointData();
-            Sequencer.ExtraFaceAnimationData extraData =
-                Sequencer.ExtraData.Entries[current.GetCustomProperty(Sequencer.ExtraData.Key)] as Sequencer.ExtraFaceAnimationData;
+            string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
+            Sequencer.ExtraFaceAnimationData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraFaceAnimationData;
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = (int)(extraData.Length * 1000); // convert to ms
 
@@ -204,6 +214,26 @@ namespace AnimationTool
             else
             {
                 MessageBox.Show(extraData.FileNameWithPath + " is not in root directory " + Sequencer.ExtraFaceAnimationData.FullPath);
+            }
+
+            return pointData;
+        }
+
+        private ProceduralFacePointData WriteProceduralFaceToFile(DataPoint current)
+        {
+            ProceduralFacePointData pointData = new ProceduralFacePointData();
+            string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
+            Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraProceduralFaceData;
+
+            pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
+            pointData.durationTime_ms = 0;
+
+            pointData.faceAngle = extraData.faceAngle;
+
+            for (int i = 0; i < extraData.leftEye.Length && i < pointData.leftEye.Length; ++i)
+            {
+                pointData.leftEye[i] = (float)Math.Round(extraData.leftEye[i], 2);
+                pointData.rightEye[i] = (float)Math.Round(extraData.rightEye[i], 2);
             }
 
             return pointData;

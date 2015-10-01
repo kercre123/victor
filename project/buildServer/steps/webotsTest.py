@@ -129,8 +129,8 @@ def cleanWebots(options):
 
 def SetTestStatus(testName, status, totalResultFlag, testStatuses):
   testStatuses[testName] = status
-  UtilLog.info('Test ' + testName + (' FAILED' if status < 0 else ' PASSED'))
-  if status < 0 or not totalResultFlag:
+  UtilLog.info('Test ' + testName + (' FAILED' if status <> 0 else ' PASSED'))
+  if status <> 0 or not totalResultFlag:
     return False
   return True
 

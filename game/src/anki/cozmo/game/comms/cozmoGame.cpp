@@ -440,7 +440,7 @@ namespace Cozmo {
                   msg.carryingObjectID = -1;
                 }
                 if(!robot->GetActionList().IsEmpty()) {
-                  msg.status |= (uint32_t)RobotStatusFlag::IS_PERFORMING_ACTION;
+                  msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
                 }
                 
                 msg.gameStatus = 0;

@@ -301,19 +301,19 @@ public class FaceReactionController : GameController {
     int fixedIndex = Random.Range(0, 5);
     switch (fixedIndex) {
     case 0:
-      SendAnimation("majorWinBeatBox");
+      robot.SendAnimation("majorWinBeatBox");
       break;
     case 1:
-      SendAnimation("MinorIrritation");
+      robot.SendAnimation("MinorIrritation");
       break;
     case 2:
-      SendAnimation("Satisfaction");
+      robot.SendAnimation("Satisfaction");
       break;
     case 3:
-      SendAnimation("winMatch");
+      robot.SendAnimation("winMatch");
       break;
     case 4:
-      SendAnimation("shocked");
+      robot.SendAnimation("shocked");
       break;
     }
 
@@ -352,13 +352,6 @@ public class FaceReactionController : GameController {
     if (success && action_type == RobotActionType.PLAY_ANIMATION) {
       animationPlaying = false;
     }
-  }
-
-  private void SendAnimation(string animName) {
-    CozmoAnimation newAnimation = new CozmoAnimation();
-    newAnimation.animName = animName;
-    newAnimation.numLoops = 1;
-    CozmoEmotionManager.instance.SendAnimation(newAnimation);
   }
 
   private void SetBackpackColors(Color c) {

@@ -11,6 +11,21 @@
     <AssemblyName>AnimationTool</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -18,7 +33,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;ANIMATION_TOOL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -28,11 +43,15 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;ANIMATION_TOOL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Windows.Forms.DataVisualization" />
@@ -43,9 +62,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
-    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed">
-      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\DAS.cs">
@@ -63,9 +79,20 @@
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
       <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
     </Compile>
+    <Compile Include="ChartForm.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ConnectionManager.cs" />
+    <Compile Include="FaceTrackBarForm.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="FaceForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="IdleAnimationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RobotEngineMessenger.cs" />
     <Compile Include="RobotSettings.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -138,7 +165,6 @@
     <Compile Include="Read.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="RobotEngineMessenger.cs" />
     <Compile Include="StraightForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -161,8 +187,17 @@
     <EmbeddedResource Include="ChangeDurationForm.resx">
       <DependentUpon>ChangeDurationForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="ChartForm.resx">
+      <DependentUpon>ChartForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FaceTrackBarForm.resx">
+      <DependentUpon>FaceTrackBarForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FaceForm.resx">
       <DependentUpon>FaceForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="IdleAnimationForm.resx">
+      <DependentUpon>IdleAnimationForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="IPForm.resx">
       <DependentUpon>IPForm.cs</DependentUpon>
@@ -182,6 +217,9 @@
     </Compile>
     <EmbeddedResource Include="StraightForm.resx">
       <DependentUpon>StraightForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="TurnInPlaceForm.resx">
+      <DependentUpon>TurnInPlaceForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="VolumeForm.resx">
       <DependentUpon>VolumeForm.cs</DependentUpon>
@@ -220,6 +258,18 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.5">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.5 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

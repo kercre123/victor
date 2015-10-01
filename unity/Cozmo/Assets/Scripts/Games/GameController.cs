@@ -217,6 +217,7 @@ public class GameController : MonoBehaviour {
     if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedAnimation;
       RobotEngineManager.instance.RobotCompletedCompoundAction += RobotCompletedCompoundAction;
+      RobotEngineManager.instance.RobotCompletedTaggedAction += RobotCompletedTaggedAction;
     }
   }
 
@@ -264,6 +265,7 @@ public class GameController : MonoBehaviour {
     if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedAnimation;
       RobotEngineManager.instance.RobotCompletedCompoundAction -= RobotCompletedCompoundAction;
+      RobotEngineManager.instance.RobotCompletedTaggedAction -= RobotCompletedTaggedAction;
     }
 
     if (emotionWaitLimiterRoutine != null)
@@ -340,6 +342,7 @@ public class GameController : MonoBehaviour {
       Update_RESULTS();
       break;
     }
+    Update_ALL();
   }
 
   void ExitState() {
@@ -433,12 +436,18 @@ public class GameController : MonoBehaviour {
   }
 
   void RobotCompletedCompoundAction(bool success, uint tagId) {
-    DAS.Debug("GameController", "RobotCompletedAnimation(" + success + ", " + tagId + ")");
+    DAS.Debug("GameController", "RobotCompletedCompound(" + success + ", " + tagId + ")");
     if (emotionWaitLimiterRoutine != null)
       StopCoroutine(emotionWaitLimiterRoutine);
     emotionWaitLimiterRoutine = null;
 
     waitingForEmoteToFinish = false;
+
+    CompoundCompleteCallBack(success, tagId);
+  }
+
+  void RobotCompletedTaggedAction(bool success, uint tagId) {
+    TaggedCompleteCallBack(success, tagId);
   }
 
   #endregion
@@ -489,6 +498,12 @@ public class GameController : MonoBehaviour {
         textError.color = color;
       }
     }
+  }
+
+  protected virtual void CompoundCompleteCallBack(bool success, uint tagId) {
+  }
+
+  protected virtual void TaggedCompleteCallBack(bool success, uint tagId) {
   }
 
   protected virtual void Enter_BUILDING() {
@@ -676,6 +691,9 @@ public class GameController : MonoBehaviour {
       if (robotBusyDuringResults)
         robot.isBusy = false;
     }
+  }
+
+  protected virtual void Update_ALL() {
   }
 
   protected virtual bool IsGameReady() {

@@ -85,7 +85,7 @@ MonoBehaviour:
     playAllAnims: 0
     emotionAnims:
     - animName: KnowsWrong
-      numLoops: 0
+      numLoops: 1
   - stateName: SHOCKED
     playAllAnims: 0
     emotionAnims:
@@ -150,6 +150,26 @@ MonoBehaviour:
     playAllAnims: 0
     emotionAnims:
     - animName: tapFourTimes
+      numLoops: 1
+  - stateName: EARLY_RISK_WIN
+    playAllAnims: 0
+    emotionAnims:
+    - animName: EarlyRiskWin
+      numLoops: 1
+  - stateName: EARLY_RISK_LOSE
+    playAllAnims: 0
+    emotionAnims:
+    - animName: EarlyRiskLose
+      numLoops: 1
+  - stateName: ONLY_WRONG
+    playAllAnims: 0
+    emotionAnims:
+    - animName: OnlyWrong
+      numLoops: 1
+  - stateName: ALL_WRONG
+    playAllAnims: 0
+    emotionAnims:
+    - animName: AllWrong
       numLoops: 1
 --- !u!1001 &100100000
 Prefab:

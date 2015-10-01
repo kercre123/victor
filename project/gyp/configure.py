@@ -230,6 +230,19 @@ def main(scriptArgs):
   if options.mex:
     buildMex = 'yes'
 
+  # symlink coretech external resources 
+  if subprocess.call(['mkdir', '-p',
+    os.path.join(projectRoot, 'generated/resources')]) != 0 :
+    UtilLog.error("error creating generated/resources")
+    return False
+
+  # symlink coretech external resources 
+  if subprocess.call(['ln', '-s', '-f', '-h',
+    os.path.join(coretechExternalPath, 'pocketsphinx/pocketsphinx/model/en-us'),
+    os.path.join(projectRoot, 'generated/resources/pocketsphinx')]) != 0 :
+    UtilLog.error("error symlinking pocket sphinx resources")
+    return False
+  
   # mac
   if 'mac' in options.platforms:
       os.environ['GYP_DEFINES'] = """ 

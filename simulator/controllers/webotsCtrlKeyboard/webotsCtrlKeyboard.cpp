@@ -17,11 +17,13 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/types/demoBehaviorState.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -301,6 +303,11 @@ namespace Anki {
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("        Force-add specifed robot:  Shift+r\n");
+        printf("           Set DemoState Default:  j\n");
+        printf("         Set DemoState FacesOnly:  Shift+j\n");
+        printf("        Set DemoState BlocksOnly:  Alt+j\n");
+        printf("      Play 'animationToSendName':  Shift+6\n");
+        printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("                      Print help:  ?\n");
         printf("\n");
       }
@@ -431,6 +438,11 @@ namespace Anki {
                   p1 = root_->getField("headTest_flags")->getSFInt32();
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
                   p3 = 250;
+                  break;
+                case TestModeClad::PlaceBlockOnGround:
+                  p1 = 100;  // x_offset_mm
+                  p2 = -10;  // y_offset_mm
+                  p3 = 0;    // angle_offset_degrees
                   break;
                 case TestMode::TM_LIGHTS:
                   // p1: flags (See LightTestFlags)
@@ -850,9 +862,21 @@ namespace Anki {
               case (s32)'P':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                //bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
                 
-                SendPickAndPlaceSelectedObject(usePreDockPose, useManualSpeed);
+                // Hijacking ALT key for low placement
+                bool useManualSpeed = false;
+                bool placeOnGroundAtOffset = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+
+                f32 placementOffsetX_mm = 0;
+                if (placeOnGroundAtOffset) {
+                  placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
+                }
+                
+                SendPickAndPlaceSelectedObject(usePreDockPose,
+                                               placementOffsetX_mm, 0, 0,
+                                               placeOnGroundAtOffset,
+                                               useManualSpeed);
                 break;
               }
                 
@@ -1172,25 +1196,38 @@ namespace Anki {
               }
               case (s32)'^':
               {
-                // Send whatever animation is specified in the animationToSendName field
-                webots::Field* animToSendNameField = root_->getField("animationToSendName");
-                if (animToSendNameField == nullptr) {
-                  printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
-                  break;
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
+                  webots::Field* idleAnimToSendField = root_->getField("idleAnimationName");
+                  if(idleAnimToSendField == nullptr) {
+                    printf("ERROR: No idleAnimationName field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                  std::string idleAnimToSendName = idleAnimToSendField->getSFString();
+                  
+                  SendSetIdleAnimation(idleAnimToSendName);
                 }
-                std::string animToSendName = animToSendNameField->getSFString();
-                if (animToSendName.empty()) {
-                  printf("ERROR: animationToSendName field is empty\n");
-                  break;
+                else {
+                  // Send whatever animation is specified in the animationToSendName field
+                  webots::Field* animToSendNameField = root_->getField("animationToSendName");
+                  if (animToSendNameField == nullptr) {
+                    printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                  std::string animToSendName = animToSendNameField->getSFString();
+                  if (animToSendName.empty()) {
+                    printf("ERROR: animationToSendName field is empty\n");
+                    break;
+                  }
+                  
+                  webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
+                  u32 animNumLoops = 1;
+                  if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
+                    animNumLoops = animNumLoopsField->getSFInt32();
+                  }
+                  
+                  SendAnimation(animToSendName.c_str(), animNumLoops);
                 }
-                
-                webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
-                u32 animNumLoops = 1;
-                if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
-                  animNumLoops = animNumLoopsField->getSFInt32();
-                }
-
-                SendAnimation(animToSendName.c_str(), animNumLoops);
                 break;
               }
               case (s32)'~':
@@ -1227,6 +1264,26 @@ namespace Anki {
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FacePose(_lastFace.world_x, _lastFace.world_y, _lastFace.world_z, DEG_TO_RAD(10), M_PI, 1)));
                 } else {
                   SendStartFaceTracking(5);
+                }
+                break;
+              }
+                
+              case (s32)'J':
+              {
+                if (webots::Supervisor::KEYBOARD_SHIFT == modifier_key)
+                {
+                  // Send DemoState FacesOnly
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::FacesOnly)));
+                }
+                else if (webots::Supervisor::KEYBOARD_ALT == modifier_key)
+                {
+                  // Send DemoState BlocksOnly
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::BlocksOnly)));
+                }
+                else
+                {
+                  // Send DemoState Default
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::Default)));
                 }
                 break;
               }
@@ -1493,7 +1550,7 @@ namespace Anki {
                 case GC_BUTTON_RB:
                 {
                   bool usePreDockPose = !LT_held;
-                  SendPickAndPlaceSelectedObject(usePreDockPose, false);
+                  SendPickAndPlaceSelectedObject(usePreDockPose);
                   break;
                 }
                 case GC_BUTTON_DIR_UP:

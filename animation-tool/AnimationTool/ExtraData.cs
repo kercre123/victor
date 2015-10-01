@@ -8,6 +8,7 @@ using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Reflection;
+using Anki.Cozmo;
 
 namespace AnimationTool.Sequencer
 {
@@ -192,7 +193,7 @@ namespace AnimationTool.Sequencer
             int count = 0;
             Images = new Dictionary<double, string>();
 
-            if(!Directory.Exists(path))
+            if (!Directory.Exists(path))
             {
                 return length;
             }
@@ -251,6 +252,40 @@ namespace AnimationTool.Sequencer
             }
 
             return length;
+        }
+    }
+
+    public class ExtraProceduralFaceData : ExtraData
+    {
+        public float faceAngle;
+
+        public float[] leftEye;
+        public float[] rightEye;
+
+        public ExtraProceduralFaceData()
+        {
+            Length = MoveSelectedDataPoints.DELTA_X;
+            Exists = true;
+
+            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+        }
+
+        public ExtraProceduralFaceData(ProceduralFacePointData data)
+        {
+            Length = MoveSelectedDataPoints.DELTA_X;
+            Exists = true;
+
+            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+
+            faceAngle = data.faceAngle;
+
+            for (int i = 0; data.leftEye != null && i < data.leftEye.Length && i < leftEye.Length; ++i)
+            {
+                leftEye[i] = data.leftEye[i];
+                rightEye[i] = data.rightEye[i];
+            }
         }
     }
 

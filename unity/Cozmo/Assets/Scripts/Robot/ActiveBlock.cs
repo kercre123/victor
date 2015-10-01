@@ -20,9 +20,8 @@ public class ActiveBlock : ObservedObject {
       LEFT_NORTH = 0x02,
       FRONT_WEST = 0x04,
       RIGHT_SOUTH = 0x08,
-      ALL = 0xff}
-
-    ;
+      ALL = 0xff
+    }
 
     public static PositionFlag IndexToPosition(int i) {
       switch (i) {
@@ -128,6 +127,7 @@ public class ActiveBlock : ObservedObject {
   public event Action<ActiveBlock> OnAxisChange;
 
   public static Action<int, int> TappedAction;
+  public static Action<int, float, float, float> MovedAction;
 
   public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
@@ -150,21 +150,19 @@ public class ActiveBlock : ObservedObject {
   }
 
   public void Moving(ObjectMoved message) {
-    if (isMoving)
-      return;
-
     isMoving = true;
 
     upAxis = message.upAxis;
     xAccel = message.accel.x;
     yAccel = message.accel.y;
     zAccel = message.accel.z;
+
+    if (MovedAction != null) {
+      MovedAction(ID, xAccel, yAccel, zAccel);
+    }
   }
 
   public void StoppedMoving(ObjectStoppedMoving message) {
-    if (!isMoving)
-      return;
-
     isMoving = false;
 
     if (message.rolled) {

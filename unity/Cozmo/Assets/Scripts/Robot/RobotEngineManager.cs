@@ -45,6 +45,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,RobotActionType> SuccessOrFailure;
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
+  public event Action<bool,uint> RobotCompletedTaggedAction;
 
   private bool cozmoBindingStarted = false;
   private ChannelBase channel = null;
@@ -285,6 +286,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotObservedObject:
       ReceivedSpecificMessage(message.RobotObservedObject);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotObservedFace:
+      ReceivedSpecificMessage(message.RobotObservedFace);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedNothing:
       ReceivedSpecificMessage(message.RobotObservedNothing);
       break;
@@ -311,6 +315,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.ObjectMoved:
       ReceivedSpecificMessage(message.ObjectMoved);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotDeletedFace:
+      ReceivedSpecificMessage(message.RobotDeletedFace);
       break;
     case G2U.MessageEngineToGame.Tag.ObjectStoppedMoving:
       ReceivedSpecificMessage(message.ObjectStoppedMoving);
@@ -403,10 +410,16 @@ public class RobotEngineManager : MonoBehaviour {
     current.UpdateObservedObjectInfo(message);
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
+    if (current == null)
+      return;
+    current.UpdateObservedFaceInfo(message);
+  }
+
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
     if (current == null)
       return;
-
+    
     if (current.selectedObjects.Count == 0 && !current.isBusy) {
       current.ClearObservedObjects();
     }
@@ -444,13 +457,26 @@ public class RobotEngineManager : MonoBehaviour {
       current.activeBlocks.Remove((int)message.objectID);
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
+    if (current == null)
+      return;
+		
+    Face deleted = current.faceObjects.Find(x => x == message.faceID);
+
+    if (deleted != null) {
+      DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
+      current.faceObjects.Remove(deleted);
+    }
+
+  }
+
   private void ReceivedSpecificMessage(G2U.RobotCompletedAction message) {
     if (current == null)
       return;
 
 
     RobotActionType action_type = (RobotActionType)message.actionType;
-    bool success = (message.result == ActionResult.SUCCESS) || (action_type == RobotActionType.PLAY_ANIMATION && message.result == ActionResult.CANCELLED);
+    bool success = (message.result == ActionResult.SUCCESS) || ((action_type == RobotActionType.PLAY_ANIMATION || action_type == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
     current.selectedObjects.Clear();
     current.targetLockedObject = null;
 
@@ -473,7 +499,11 @@ public class RobotEngineManager : MonoBehaviour {
       if (RobotCompletedCompoundAction != null) {
         RobotCompletedCompoundAction(success, message.idTag);
       }
-      
+    }
+    else if (message.idTag > 0) {
+      if (RobotCompletedTaggedAction != null) {
+        RobotCompletedTaggedAction(success, message.idTag);
+      }
     }
 
     if (!success) {
@@ -670,11 +700,10 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       texture.LoadImage(jpegArray);
-      
+      current.ClearObservedObjects();
+
       if (RobotImage != null) {
         RobotImage(sprite);
-        
-        current.ClearObservedObjects();
       }
       
       SaveJpeg(jpegArray, currentImageIndex);
@@ -753,11 +782,9 @@ public class RobotEngineManager : MonoBehaviour {
 
       texture.SetPixels32(color32Array);
       texture.Apply(false);
-      
+      current.ClearObservedObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
-        
-        current.ClearObservedObjects();
       }
     }
   }
@@ -786,11 +813,9 @@ public class RobotEngineManager : MonoBehaviour {
       ResetTexture(dim.width, dim.height, TextureFormat.RGB24);
 
       texture.LoadImage(jpegArray);
-
+      current.ClearObservedObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
-        
-        current.ClearObservedObjects();
       }
 
       SaveJpeg(jpegArray, currentImageIndex);

@@ -20,9 +20,8 @@ public class Robot : IDisposable {
       TWO = 0x02,
       THREE = 0x04,
       FOUR = 0x08,
-      ALL = 0xff}
-
-    ;
+      ALL = 0xff
+    }
 
     private PositionFlag IndexToPosition(int i) {
       switch (i) {
@@ -106,6 +105,8 @@ public class Robot : IDisposable {
     private bool initialized = false;
   }
 
+  public delegate void RobotCallback(bool success);
+
   public byte ID { get; private set; }
 
   public float headAngle_rad { get; private set; }
@@ -154,6 +155,8 @@ public class Robot : IDisposable {
 
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
+  public List<Face> faceObjects { get; private set; }
+
   public Light[] lights { get; private set; }
 
   private bool lightsChanged {
@@ -196,6 +199,7 @@ public class Robot : IDisposable {
   private U2G.SetHeadAngle SetHeadAngleMessage;
   private U2G.TrackToObject TrackToObjectMessage;
   private U2G.FaceObject FaceObjectMessage;
+  private U2G.FacePose FacePoseMessage;
   private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
   private U2G.RollObject RollObjectMessage;
   private U2G.TapBlockOnGround TapBlockMessage;
@@ -215,6 +219,7 @@ public class Robot : IDisposable {
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
   private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
   private U2G.StartFaceTracking StartFaceTrackingMessage;
+  private U2G.StopFaceTracking StopFaceTrackingMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
 
   private ObservedObject _carryingObject;
@@ -245,6 +250,8 @@ public class Robot : IDisposable {
     KNOWN,
     OBSERVED_RECENTLY
   }
+
+  private List<KeyValuePair<RobotActionType, RobotCallback>> robotCallbacks = new List<KeyValuePair<RobotActionType, RobotCallback>>();
 
   protected ObservedObjectListType observedObjectListType = ObservedObjectListType.MARKERS_SEEN;
   protected float objectPertinenceRange = 220f;
@@ -302,7 +309,7 @@ public class Robot : IDisposable {
     get {
       return localBusyOverride
       || localBusyTimer > 0f
-      || Status(RobotStatusFlag.IS_PERFORMING_ACTION)
+      || Status(RobotStatusFlag.IS_PATHING)
       || (Status(RobotStatusFlag.IS_ANIMATING) && !Status(RobotStatusFlag.IS_ANIMATING_IDLE))
       || Status(RobotStatusFlag.IS_PICKED_UP);
     }
@@ -342,6 +349,7 @@ public class Robot : IDisposable {
     lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
     knownObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
+    faceObjects = new List< global::Face>();
 
     DriveWheelsMessage = new U2G.DriveWheels();
     PlaceObjectOnGroundHereMessage = new U2G.PlaceObjectOnGroundHere();
@@ -349,6 +357,7 @@ public class Robot : IDisposable {
     SetHeadAngleMessage = new U2G.SetHeadAngle();
     TrackToObjectMessage = new U2G.TrackToObject();
     FaceObjectMessage = new U2G.FaceObject();
+    FacePoseMessage = new G2U.FacePose();
     PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
     RollObjectMessage = new U2G.RollObject();
     TapBlockMessage = new U2G.TapBlockOnGround();
@@ -368,6 +377,7 @@ public class Robot : IDisposable {
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
     SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
+    StopFaceTrackingMessage = new U2G.StopFaceTracking();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
@@ -381,15 +391,27 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
     RefreshObjectPertinence();
+    RobotEngineManager.instance.SuccessOrFailure += RobotEngineMessages;
   }
 
   public void Dispose() {
     RobotEngineManager.instance.DisconnectedFromClient -= Reset;
+    RobotEngineManager.instance.SuccessOrFailure -= RobotEngineMessages;
   }
 
   public void CooldownTimers(float delta) {
     if (localBusyTimer > 0f) {
       localBusyTimer -= delta;
+    }
+  }
+
+  private void RobotEngineMessages(bool success, RobotActionType messageType) {
+    for (int i = 0; i < robotCallbacks.Count; ++i) {
+      if (messageType == robotCallbacks[i].Key) {
+        robotCallbacks[i].Value(success);
+        robotCallbacks.RemoveAt(i);
+        i--;
+      }
     }
   }
 
@@ -545,6 +567,11 @@ public class Robot : IDisposable {
 
       AddObservedObject(knownObject, message);
     }
+      
+    // HACK: This is to solve an edge case where there is a partially observed object but no
+    // actual observed object so the markersVisible list is not being properly cleared since
+    // ObservedNothing is not being sent from engine.
+    ClearObservedObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
@@ -595,6 +622,37 @@ public class Robot : IDisposable {
     }
   }
 
+  public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
+    //DAS.Debug ("Robot", "saw a face at " + message.faceID);
+    Face face = faceObjects.Find(x => x.ID == message.faceID);
+    AddObservedFace(face != null ? face : null, message);
+  }
+
+  private void AddObservedFace(Face faceObject, G2U.RobotObservedFace message) {
+
+    bool newFace = false;
+    if (faceObject == null) {
+      faceObject = new Face(message);
+
+      //activeBlocks.Add(activeBlock, activeBlock);
+      faceObjects.Add(faceObject);
+      newFace = true;
+    }
+    else {
+      faceObject.UpdateInfo(message);
+    }
+
+
+    //foreach (Face face in faceObjects) {
+    //	DAS.Debug ("Robot", "face spotted at " + face.WorldPosition.ToString ());
+    //}
+
+    if (newFace) {
+      if (ObservedObject.SignificantChangeDetected != null)
+        ObservedObject.SignificantChangeDetected();
+    }
+  }
+
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     DriveWheelsMessage.lwheel_speed_mmps = leftWheelSpeedMmps;
     DriveWheelsMessage.rwheel_speed_mmps = rightWheelSpeedMmps;
@@ -622,6 +680,17 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
+  public void SendAnimation(string animName, RobotCallback callback = null) {
+    CozmoAnimation newAnimation = new CozmoAnimation();
+    newAnimation.animName = animName;
+    newAnimation.numLoops = 1;
+    CozmoEmotionManager.instance.SendAnimation(newAnimation);
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLAY_ANIMATION, callback));
+    }
+  }
+
   public float GetHeadAngleFactor() {
 
     float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : headAngle_rad;
@@ -646,7 +715,11 @@ public class Robot : IDisposable {
   /// </summary>
   /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
-  public void SetHeadAngle(float angleFactor = -0.8f, bool useExactAngle = false, float accelRadSec = 2f, float maxSpeedFactor = 1f) {
+  public void SetHeadAngle(float angleFactor = -0.8f, 
+                           Robot.RobotCallback onComplete = null,
+                           bool useExactAngle = false, 
+                           float accelRadSec = 2f, 
+                           float maxSpeedFactor = 1f) {
 
     float radians = angleFactor;
 
@@ -674,6 +747,10 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetHeadAngle = SetHeadAngleMessage;
     RobotEngineManager.instance.SendMessage();
+
+    if (onComplete != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
+    }
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
@@ -717,6 +794,18 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
+  public void FacePose(Face face) {
+    FacePoseMessage.maxTurnAngle = float.MaxValue;
+    FacePoseMessage.robotID = ID;
+    FacePoseMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
+    FacePoseMessage.world_x = face.WorldPosition.x;
+    FacePoseMessage.world_y = face.WorldPosition.y;
+    FacePoseMessage.world_z = face.WorldPosition.z;
+
+    RobotEngineManager.instance.Message.FacePose = FacePoseMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
   public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
     PickAndPlaceObjectMessage.objectID = selectedObject;
     PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
@@ -730,7 +819,7 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
+  public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
     RollObjectMessage.objectID = selectedObject;
     RollObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     RollObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -741,6 +830,9 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
+    }
   }
 
   public void TapBlockOnGround(int taps) {
@@ -764,6 +856,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
   }
 
   public Vector3 NudgePositionOutOfObjects(Vector3 position) {
@@ -819,7 +912,7 @@ public class Robot : IDisposable {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : liftHeight_factor;
   }
 
-  public void SetLiftHeight(float height_factor) {
+  public void SetLiftHeight(float height_factor, RobotCallback callback = null) {
     if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || liftHeight_factor == height_factor)
       return;
 
@@ -832,6 +925,10 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.instance.SendMessage();
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
+    }
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
@@ -951,22 +1048,13 @@ public class Robot : IDisposable {
 
     SetBackpackLEDsMessage.robotID = ID;
 
-    for (int i = 0, j = 0; i < lights.Length && j < lights.Length; ++i, ++j) {
-      SetBackpackLEDsMessage.onColor[j] = lights[i].onColor;
-      SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
-      SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
-      SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
-      SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
-      SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
-
-      if (i == 2 && lights.Length > 3) { // HACK: index 2 and 3 are same lights
-        SetBackpackLEDsMessage.onColor[++j] = lights[i].onColor;
-        SetBackpackLEDsMessage.offColor[j] = lights[i].offColor;
-        SetBackpackLEDsMessage.onPeriod_ms[j] = lights[i].onPeriod_ms;
-        SetBackpackLEDsMessage.offPeriod_ms[j] = lights[i].offPeriod_ms;
-        SetBackpackLEDsMessage.transitionOnPeriod_ms[j] = lights[i].transitionOnPeriod_ms;
-        SetBackpackLEDsMessage.transitionOffPeriod_ms[j] = lights[i].transitionOffPeriod_ms;
-      }
+    for (int i = 0; i < lights.Length; ++i) {
+      SetBackpackLEDsMessage.onColor[i] = lights[i].onColor;
+      SetBackpackLEDsMessage.offColor[i] = lights[i].offColor;
+      SetBackpackLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
+      SetBackpackLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
+      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
+      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
     }
     
     RobotEngineManager.instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
@@ -989,8 +1077,14 @@ public class Robot : IDisposable {
   }
 
   public void StartFaceAwareness() {
-    //StartFaceTrackingMessage.timeout_sec = ID;
+    StartFaceTrackingMessage.timeout_sec = byte.MaxValue;
+
     RobotEngineManager.instance.Message.StartFaceTracking = StartFaceTrackingMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void StopFaceAwareness() {
+    RobotEngineManager.instance.Message.StopFaceTracking = StopFaceTrackingMessage;
     RobotEngineManager.instance.SendMessage();
   }
 

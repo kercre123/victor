@@ -221,7 +221,7 @@ public class RobotStateText : MonoBehaviour {
     CheckSpecificStatus(RobotStatusFlag.IS_PICKING_OR_PLACING);
     CheckSpecificStatus(RobotStatusFlag.IS_PICKED_UP);
     CheckSpecificStatus(RobotStatusFlag.IS_ANIMATING);
-    CheckSpecificStatus(RobotStatusFlag.IS_PERFORMING_ACTION);
+    CheckSpecificStatus(RobotStatusFlag.IS_PATHING);
 
     string statusString = prefix_status + eol;
 

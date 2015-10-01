@@ -12,8 +12,6 @@ namespace AnimationTool
 
         private Button button;
 
-        private RobotEngineMessenger robotEngineMessenger;
-
         public IPForm()
         {
             FormBorderStyle = FormBorderStyle.FixedToolWindow;
@@ -23,16 +21,15 @@ namespace AnimationTool
             InitializeComponent();
         }
 
-        public DialogResult Open(Point location, RobotEngineMessenger robotEngineManager)
+        public DialogResult Open(Point location)
         {
             StartPosition = FormStartPosition.Manual;
             Location = location;
-            this.robotEngineMessenger = robotEngineManager;
             button.Enabled = false;
 
-            if (Properties.Settings.Default.IPAddress != null)
+            if (!string.IsNullOrEmpty(RobotSettings.RobotIPAddress))
             {
-                this.textBox.Text = Properties.Settings.Default.IPAddress;
+                this.textBox.Text = RobotSettings.RobotIPAddress;
             }
 
             return ShowDialog();
@@ -44,7 +41,6 @@ namespace AnimationTool
             this.label = new System.Windows.Forms.Label();
             this.button = new System.Windows.Forms.Button();
             this.SuspendLayout();
-
             // 
             // textBox
             // 
@@ -81,27 +77,34 @@ namespace AnimationTool
             this.Controls.Add(this.button);
             this.Controls.Add(this.label);
             this.Controls.Add(this.textBox);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "IPForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
-        private void textBox_TextChanged(object sender, EventArgs e)
+        private void textBox_TextChanged(object o, EventArgs e)
         {
             button.Enabled = false;
 
             try
             {
-                IPAddress.Parse(this.textBox.Text);
-                button.Enabled = true;
+                if (this.textBox.Text != RobotSettings.RobotIPAddress)
+                {
+                    IPAddress.Parse(this.textBox.Text);
+                    button.Enabled = true;
+                }
             }
             catch (Exception) { }
         }
 
-        private void Button_Click(object sender, EventArgs e)
+        private void Button_Click(object o, EventArgs e)
         {
-			RobotSettings.RobotIPAddress = this.textBox.Text;
-            robotEngineMessenger.Reset();
+            RobotSettings.RobotIPAddress = this.textBox.Text;
+            RobotEngineMessenger.instance.ConnectionManager.Reset();
             Close();
         }
     }
