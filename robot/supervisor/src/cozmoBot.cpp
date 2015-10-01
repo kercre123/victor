@@ -3,6 +3,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "clad/types/imageTypes.h"
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
 #include "imuFilter.h"
@@ -36,9 +37,9 @@ namespace Anki {
     
 #ifdef SIMULATOR
     namespace HAL {
-      ImageSendMode_t imageSendMode_;
-      Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
-      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res)
+      ImageSendMode imageSendMode_;
+      ImageResolution captureResolution_ = CVGA;
+      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
         captureResolution_ = res;
@@ -481,7 +482,7 @@ namespace Anki {
           return retVal;
         }
 
-        if (HAL::imageSendMode_ != ISM_OFF) {
+        if (HAL::imageSendMode_ != Off) {
         
           TimeStamp_t currentTime = HAL::GetTimeStamp();
 
@@ -526,8 +527,8 @@ namespace Anki {
           } // if(lastImageSentTime != currentImageTime)
           
           
-          if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
-            HAL::imageSendMode_ = ISM_OFF;
+          if (HAL::imageSendMode_ == SingleShot) {
+            HAL::imageSendMode_ = Off;
           }
           
         } // if (HAL::imageSendMode_ != ISM_OFF)

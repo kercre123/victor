@@ -51,6 +51,7 @@ namespace Anki {
         // Flag for receipt of Init message
         bool initReceived_ = false;
 
+        const int IMAGE_SEND_JPEG_COMPRESSION_QUALITY = 50; // 0 to 100
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -82,9 +83,9 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_setControllerGains:
           case RobotInterface::EngineToRobot::Tag_setCarryState:
           case RobotInterface::EngineToRobot::Tag_setBackpackLights:
-          case RobotInterface::EngineToRobot::Tag_setBlockLights:
-          case RobotInterface::EngineToRobot::Tag_flashBlockIDs:
-          case RobotInterface::EngineToRobot::Tag_setBlockBeingCarried:
+          case RobotInterface::EngineToRobot::Tag_setCubeLights:
+          case RobotInterface::EngineToRobot::Tag_flashObjectIDs:
+          case RobotInterface::EngineToRobot::Tag_setObjectBeingCarried:
             return false;
           default:
             break;
@@ -428,10 +429,7 @@ namespace Anki {
       {
         PRINT("Image requested (mode: %d, resolution: %d)\n", msg.sendMode, msg.resolution);
 
-        ImageSendMode imageSendMode = static_cast<ImageSendMode>(msg.sendMode);
-        Vision::CameraResolution imageSendResolution = static_cast<Vision::CameraResolution>(msg.resolution);
-
-        HAL::SetImageSendMode(imageSendMode, imageSendResolution);
+        HAL::SetImageSendMode(msg.sendMode, msg.resolution);
 
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
@@ -522,19 +520,6 @@ namespace Anki {
         DockingController::ResetDocker();
       }
 
-      //
-      // Animation related:
-      //
-
-//      void ProcessPlayAnimation(const PlayAnimation& msg) {
-//        //PRINT("Processing play animation message\n");
-//        AnimationController::Play((AnimationID_t)msg.animationID, msg.numLoops);
-//      }
-
-//      void ProcessTransitionToStateAnimation(const TransitionToStateAnimation& msg) {
-//        AnimationController::TransitionAndPlay(msg.transitionAnimID, msg.stateAnimID);
-//      }
-
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
       {
         AnimationController::Clear();
@@ -560,19 +545,19 @@ namespace Anki {
 
       // --------- Block control messages ----------
 
-      void Process_flashBlockIDs(const RobotInterface::FlashBlockIDs& msg)
+      void Process_flashObjectIDs(const  FlashObjectIDs& msg)
       {
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
       }
 
-      void Process_setBlockLights(const RobotInterface::BlockLights& msg)
+      void Process_setCubeLights(const CubeLights& msg)
       {
-        HAL::SetBlockLight(msg.blockID, msg.lights);
+        HAL::SetBlockLight(msg.objectID, msg.lights);
       }
 
 
-      void Process_setBlockBeingCarried(const RobotInterface::SetBlockBeingCarried& msg)
+      void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
       {
         // TODO: need to add this hal.h and implement
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
@@ -673,25 +658,25 @@ namespace Anki {
 #     ifdef SIMULATOR
       Result CompressAndSendImage(const Embedded::Array<u8> &img, const TimeStamp_t captureTime)
       {
-        Messages::ImageChunk m;
+        ImageChunk m;
 
         switch(img.get_size(0)) {
           case 240:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==320*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
-            m.resolution = Vision::CAMERA_RES_QVGA;
+            m.resolution = QVGA;
             break;
 
           case 296:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==400*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
-            m.resolution = Vision::CAMERA_RES_CVGA;
+            m.resolution = CVGA;
             break;
 
           case 480:
             AnkiConditionalErrorAndReturnValue(img.get_size(1)==640*3, RESULT_FAIL, "CompressAndSendImage",
                                                "Unrecognized resolution: %dx%d.\n", img.get_size(1)/3, img.get_size(0));
-            m.resolution = Vision::CAMERA_RES_VGA;
+            m.resolution = VGA;
             break;
 
           default:
@@ -718,9 +703,9 @@ namespace Anki {
         m.frameTimeStamp = captureTime;
         m.imageId = ++imgID;
         m.chunkId = 0;
-        m.chunkSize = IMAGE_CHUNK_SIZE;
+        m.data_length = IMAGE_CHUNK_SIZE;
         m.imageChunkCount = ceilf((f32)numTotalBytes / IMAGE_CHUNK_SIZE);
-        m.imageEncoding = Vision::IE_JPEG_COLOR;
+        m.imageEncoding = JPEGColor;
 
         u32 totalByteCnt = 0;
         u32 chunkByteCnt = 0;
@@ -734,14 +719,14 @@ namespace Anki {
 
           if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
             //PRINT("Sending image chunk %d\n", m.chunkId);
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m, false, true);
+            RobotInterface::SendMessage(m, false, true);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if (totalByteCnt == numTotalBytes) {
             // This should be the last message!
             //PRINT("Sending LAST image chunk %d\n", m.chunkId);
-            m.chunkSize = chunkByteCnt;
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::ImageChunk), &m, false, true);
+            m.data_length = chunkByteCnt;
+            RobotInterface::SendMessage(m, false, true);
           }
         } // for each byte in the compressed buffer
 
@@ -811,11 +796,11 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
   memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
   if (!msgBuf.IsValid())
   {
-    Anki::Cozmo::PRINT("Receiver got %02x[%d] invald\n", buffer[0], bufferSize);
+    PRINT("Receiver got %02x[%d] invald\n", buffer[0], bufferSize);
   }
   else if (msgBuf.Size() != bufferSize)
   {
-    Anki::Cozmo::PRINT("Parsed message size error %d != %d\n", bufferSize, msgBuf.Size());
+    PRINT("Parsed message size error %d != %d\n", bufferSize, msgBuf.Size());
   }
   else
   {

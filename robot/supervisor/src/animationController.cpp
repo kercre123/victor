@@ -35,8 +35,6 @@ namespace AnimationController {
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
 
-    u8  _currentTag = 0;
-    
     bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
@@ -317,7 +315,6 @@ namespace AnimationController {
     
     _currentBufferPos = 0;
     _lastBufferPos = 0;
-    _currentTag = 0;
     
     _numAudioFramesBuffered = 0;
 
@@ -407,29 +404,6 @@ namespace AnimationController {
         _bufferFullMessagePrintedThisTick = true;
       }
       return RESULT_FAIL;
-    }
-    SetTypeIndicator(msgID);
-    CopyIntoBuffer((u8*)&msg, Messages::GetSize(msgID));
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_StartOfAnimation& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_StartOfAnimation));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering StartOfAnimation KeyFrame with Tag=%d\n", msg.tag);
-#   endif
-    return RESULT_OK;
-}
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_EndOfAnimation));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
     }
     
     s32 numBytes = msg.Size();
@@ -521,7 +495,6 @@ namespace AnimationController {
         RobotInterface::EngineToRobot::Tag msgID = PeekBufferTag();
         RobotInterface::EngineToRobot msg;
         
-        // Next thing should be audio sample or silence.
         // If the next message is not audio, then delete it until it is.
         while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
@@ -588,17 +561,7 @@ namespace AnimationController {
               nextAudioFrameFound = true;
               break;
             }  
-            case Messages::AnimKeyFrame_StartOfAnimation_ID:
-            {
-              Messages::AnimKeyFrame_StartOfAnimation msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
-              _currentTag = msg.tag;
-#             if DEBUG_ANIMATION_CONTROLLER
-              PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
-#             endif
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:  
+            case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
             {
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] hit EndOfAnimation\n",
@@ -780,10 +743,9 @@ namespace AnimationController {
           _haveReceivedTerminationFrame = false;
           --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
-          PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
-                _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
+          PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
+                _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
-          _currentTag = 0;
         }
 
         // Print time profile stats
@@ -800,11 +762,6 @@ namespace AnimationController {
   void SetTracksToPlay(AnimTrackFlag tracksToPlay)
   {
     _tracksToPlay = tracksToPlay;
-  }
-  
-  u8 GetCurrentTag()
-  {
-    return _currentTag;
   }
   
 } // namespace AnimationController

@@ -124,38 +124,7 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const RobotInterface::PrintText& payload = message.GetData().Get_printText();
-  const u32 MAX_PRINT_STRING_LENGTH = 1024;
-  const u32 PRINT_TEXT_MSG_LENGTH = 50;
-  static char text[MAX_PRINT_STRING_LENGTH];  // Local storage for large messages which may come across in multiple packets
-  static u32 textIdx = 0;
-
-  const char *newText = payload.text.c_str();
-
-  // If the last byte is 0, it means this is the last packet (possibly of a series of packets).
-  if (payload.text[PRINT_TEXT_MSG_LENGTH-1] == 0) {
-    // Text is ready to print
-    if (textIdx == 0) {
-      // This message is not a part of a longer message. Just print!
-      printf("ROBOT-PRINT (%d): %s", GetID(), newText);
-    } else {
-      // This message is part of a longer message. Copy to local buffer and print.
-      memcpy(text + textIdx, newText, strlen(newText)+1);
-      printf("ROBOT-PRINT (%d): %s", GetID(), text);
-      textIdx = 0;
-    }
-  } else {
-    // This message is part of a larger text. Copy to local buffer. There is more to come!
-    memcpy(text + textIdx, newText, PRINT_TEXT_MSG_LENGTH);
-    textIdx = MIN(textIdx + PRINT_TEXT_MSG_LENGTH, MAX_PRINT_STRING_LENGTH-1);
-
-    // The message received was too long or garbled (i.e. chunks somehow lost)
-    if (textIdx == MAX_PRINT_STRING_LENGTH-1) {
-      text[MAX_PRINT_STRING_LENGTH-1] = 0;
-      printf("ROBOT-PRINT-garbled (%d): %s", GetID(), text);
-      textIdx = 0;
-    }
-
-  }
+  printf("ROBOT-PRINT (%d): %s", GetID(), payload.text.c_str());
 }
 
 void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -311,7 +280,7 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
   const bool isImageReady = _imageDeChunker.AppendChunk(payload.imageId, payload.frameTimeStamp,
     height, width,
-    (Vision::ImageEncoding_t)payload.imageEncoding,
+    payload.imageEncoding,
     payload.imageChunkCount,
     payload.chunkId, payload.data.data(), (uint32_t)payload.data.size() );
 

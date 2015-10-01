@@ -5,11 +5,11 @@
 
 
 #include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/activeObjectTypes.clad"
 #include "clad/types/rtipTraces.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -63,8 +63,8 @@ message AnimationState
 {
   uint_32 timestamp,
   int_32  numAnimBytesPlayed,
-  uint_8 tag,
   RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+  uint_8 tag,
 }
 
 message CameraCalibration

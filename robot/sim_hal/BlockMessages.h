@@ -37,4 +37,3 @@ namespace Anki {
 
 
 #endif  // #ifndef ROBOT_2_BLOCK_MESSAGES_H
-

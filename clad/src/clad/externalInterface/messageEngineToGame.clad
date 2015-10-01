@@ -5,12 +5,12 @@
 
 #include "clad/types/actionTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
-#include "clad/types/activeObjectTypes.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
 
 namespace Anki {
 namespace Cozmo {

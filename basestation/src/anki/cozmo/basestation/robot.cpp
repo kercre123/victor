@@ -56,7 +56,6 @@ namespace Anki {
     , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
-    , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
@@ -106,9 +105,9 @@ namespace Anki {
     , _animationStreamer(_cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
-    , _imageDeChunker(*(new Vision::ImageDeChunker()))
     , _animationTag(0)
     , _emotionMgr(*this)
+    , _imageDeChunker(*(new ImageDeChunker()))
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -250,14 +249,6 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
 
-      if (!_syncTimeAcknowledged) {
-        // Don't process RobotState messages until the robot has received
-        // the sync time message.
-        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.Ignoring",
-                            "Robot has not received sync time yet. Timestamp might be in the future (t=%d)\n", msg.timestamp);
-        return RESULT_FAIL;
-      }
-
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
       {
@@ -345,8 +336,6 @@ namespace Anki {
       
       SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
       
-      _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
-      _animationTag = msg.animTag;
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
       _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
       _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
@@ -473,13 +462,7 @@ namespace Anki {
       
       // Engine modifications to state message.
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
-<<<<<<< HEAD
       RobotState stateMsg(msg);
-      if (_isIdleAnimating) { stateMsg.status |= (uint16_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
-      
-=======
-      MessageRobotState stateMsg(msg);
->>>>>>> master
       
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
@@ -869,26 +852,6 @@ namespace Anki {
                                                      trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
                                                      trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
         }
-<<<<<<< HEAD
-
-        {
-          DockingErrorSignal dockingErrorSignal;
-          if (true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
-
-            // HACK: Robot seems to dock slightly to the right rather consistently
-            if (_isPhysical) {
-              dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
-            }
-
-            // Visualize docking error signal
-            VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
-              dockingErrorSignal.y_horErr,
-              dockingErrorSignal.angleErr);
-
-            // Try to use this for closed-loop control by sending it on to the robot
-            SendMessage(RobotInterface::EngineToRobot(std::move(dockingErrorSignal)));
-          }
-=======
         
         //MessageDockingErrorSignal dockingErrorSignal;
         std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
@@ -917,7 +880,7 @@ namespace Anki {
           Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
           markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
           
-          MessageDockingErrorSignal dockErrMsg;
+          DockingErrorSignal dockErrMsg;
           dockErrMsg.timestamp = markerPoseWrtCamera.second;
           dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
           dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
@@ -930,9 +893,7 @@ namespace Anki {
                                                      dockErrMsg.angleErr);
           
           // Try to use this for closed-loop control by sending it on to the robot
-          SendMessage(dockErrMsg);
-          
->>>>>>> master
+          SendMessage(RobotInterface::EngineToRobot(std::move(dockErrMsg)));
         }
         {
           RobotInterface::PanAndTilt panTiltHead;
@@ -1483,12 +1444,6 @@ namespace Anki {
       return SendSyncTime();
     }
     
-    void Robot::SetSyncTimeAcknowledged(bool ack)
-    {
-      _syncTimeAcknowledged = ack;
-    }
-      
-
     Result Robot::TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
     {
       return SendMessage(RobotInterface::EngineToRobot(RobotInterface::TrimPath(numPopFrontSegments, numPopBackSegments)));
@@ -1840,14 +1795,10 @@ namespace Anki {
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
-<<<<<<< HEAD
                                  const DockAction dockAction,
-=======
-                                 const DockAction_t dockAction,
                                  const f32 placementOffsetX_mm,
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
->>>>>>> master
                                  const bool useManualSpeed)
     {
       return DockWithObject(objectID,
@@ -1981,12 +1932,6 @@ namespace Anki {
                             "Object %d robot %d thought it was carrying no longer exists in the world.\n",
                             objID.GetValue(), GetID());
         } else {
-<<<<<<< HEAD
-          carriedObject->SetBeingCarried(false);
-          
-          // Tell the robot it's not carrying anything
-          SendSetCarryState(CarryState::CARRY_NONE);
-=======
           ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
           if(carriedObject == nullptr) {
             // This really should not happen
@@ -2001,13 +1946,12 @@ namespace Anki {
           } else {
             carriedObject->SetBeingCarried(false);
           }
->>>>>>> master
         }
       }
       
       // Tell the robot it's not carrying anything
       if (_carryingObjectID.IsSet()) {
-        SendSetCarryState(CARRY_NONE);
+        SendSetCarryState(CarryState::CARRY_NONE);
       }
 
       // Even if the above failed, still mark the robot's carry ID as unset

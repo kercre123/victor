@@ -98,7 +98,7 @@ namespace Anki
         //DisplayStatus(id);
 
         if (count > 0 && count < 16) {
-          ActiveObjectTapped m;
+          ObjectTapped m;
           m.numTaps = count;
           m.objectID = id;
           RobotInterface::SendMessage(m);

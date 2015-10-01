@@ -1027,15 +1027,15 @@ namespace Cozmo {
       {
         case 640:
           calibSizeValid = camCalib.GetNrows() == 480;
-          _captureResolution = Vision::CAMERA_RES_VGA;
+          _captureResolution = ImageResolution::VGA;
           break;
         case 400:
           calibSizeValid = camCalib.GetNrows() == 296;
-          _captureResolution = Vision::CAMERA_RES_CVGA;
+          _captureResolution = ImageResolution::CVGA;
           break;
         case 320:
           calibSizeValid = camCalib.GetNrows() == 240;
-          _captureResolution = Vision::CAMERA_RES_QVGA;
+          _captureResolution = ImageResolution::QVGA;
           break;
       }
       AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
@@ -1372,8 +1372,8 @@ namespace Cozmo {
       // Nothing to do, unless a snapshot was requested
       
       if(_isWaitingOnSnapShot) {
-        const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-        const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+        const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+        const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
         
         
         Array<u8> grayscaleImage(captureHeight, captureWidth,
@@ -1397,8 +1397,8 @@ namespace Cozmo {
       
       //MemoryStack _offchipScratchlocal(VisionMemory::_offchipScratch);
       
-      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+      const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+      const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory._offchipScratch, Flags::Buffer(false,false,false));
@@ -1558,8 +1558,8 @@ namespace Cozmo {
         MemoryStack _offchipScratchlocal(_memory._offchipScratch);
         MemoryStack _onchipScratchlocal(_memory._onchipScratch);
         
-        const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-        const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+        const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+        const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
         
         Array<u8> grayscaleImage(captureHeight, captureWidth,
                                  _onchipScratchlocal, Flags::Buffer(false,false,false));
@@ -1708,7 +1708,7 @@ namespace Cozmo {
         // Send tracker quad if image streaming
         if (_imageSendMode == ImageSendMode::Stream) {
           f32 scale = 1.f;
-          for (u8 s = (u8)Vision::CAMERA_RES_CVGA; s<(u8)_nextSendImageResolution; ++s) {
+          for (u8 s = (u8)ImageResolution::CVGA; s<(u8)_nextSendImageResolution; ++s) {
             scale *= 0.5f;
           }
           

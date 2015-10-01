@@ -60,12 +60,15 @@ public:
   bool IsEmpty() const { return _frames.empty(); }
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
+  
+  void ClearPlayedLiveFrames();
 
 private:
 
   using FrameList = std::list<FRAME_TYPE>;
-  FrameList                    _frames;
+  FrameList _frames;
   typename FrameList::iterator _frameIter;
+  typename FrameList::iterator _lastClearedLiveFrame;
 }; // class Animation::Track
 
 
@@ -73,6 +76,7 @@ template<typename FRAME_TYPE>
 void Track<FRAME_TYPE>::Init()
 {
   _frameIter = _frames.begin();
+  _lastClearedLiveFrame = _frameIter;
 }
 
 template<typename FRAME_TYPE>
@@ -105,6 +109,7 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const FRAME_TYPE& keyFrame)
   // back to the beginning.
   if(_frames.size() == 1) {
     _frameIter = _frames.begin();
+    _lastClearedLiveFrame = _frameIter;
   }
 
   return RESULT_OK;
@@ -158,7 +163,30 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const Json::Value &jsonRoot)
   return lastResult;
 }
 
-
+template<typename FRAME_TYPE>
+void Animations::Track<FRAME_TYPE>::ClearPlayedLiveFrames()
+{
+#   if DEBUG_ANIMATIONS
+  s32 numCleared = 0;
+#   endif
+  
+  while(_lastClearedLiveFrame != _frameIter) {
+    if(_lastClearedLiveFrame->IsLive()){
+      _lastClearedLiveFrame = _frames.erase(_lastClearedLiveFrame);
+#       if DEBUG_ANIMATIONS
+      ++numCleared;
+#       endif
+    } else {
+      ++_lastClearedLiveFrame;
+    }
+  }
+  
+#   if DEBUG_ANIMATIONS
+  if(numCleared > 0) {
+    PRINT_NAMED_INFO("Animation.Track.ClearPlayedLiveFrames", "Cleared %d frames.", numCleared);
+  }
+#   endif
+}
 
 } // end namespace Animations
 } // end namespace Cozmo

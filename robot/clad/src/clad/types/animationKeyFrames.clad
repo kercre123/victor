@@ -70,7 +70,12 @@ namespace AnimKeyFrame {
                                // ...u16_MAX/MIN: drive straight...
                                // ...0: turn in place (+ve speed: left, -ve speed: right)
   }
-  
+
+  message StartOfAnimation
+  {
+    uint_8 tag
+  }
+
   message EndOfAnimation
   {
   }

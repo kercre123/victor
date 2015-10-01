@@ -48,7 +48,7 @@ public:
   template<class KeyFrameType>
   Result AddKeyFrame(const KeyFrameType& kf);
 
-  Result Init();
+  Result Init(uint8_t tag);
   Result Update(Robot& robot);
 
   // An animation is Empty if *all* its tracks are empty
@@ -66,8 +66,9 @@ private:
 
   // Name of this animation
   std::string _name;
-
   bool _isInitialized;
+  uint8_t _tag;
+  bool _startOfAnimationSent;
 
   // When this animation started playing (was initialized) in milliseconds, in
   // "real" basestation time

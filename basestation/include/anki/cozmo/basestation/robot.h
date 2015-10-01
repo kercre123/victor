@@ -48,6 +48,8 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/imageDeChunker.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -64,10 +66,6 @@ namespace Util {
 namespace Data {
   class DataPlatform;
 }
-}
-
-namespace Vision {
-class ImageDeChunker;
 }
   
 namespace Cozmo {
@@ -470,7 +468,6 @@ public:
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
-    void SetSyncTimeAcknowledged(bool ack);
 
     Result RequestImage(const ImageSendMode mode, const ImageResolution resolution) const;
     
@@ -607,9 +604,6 @@ public:
     
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable;
-    
-    // Whether or not the robot acknowledged a SyncTime message
-    bool              _syncTimeAcknowledged;
     
     // A reference to the MessageHandler that the robot uses for outgoing comms
     RobotInterface::MessageHandler* _msgHandler;
@@ -796,7 +790,7 @@ public:
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
     std::vector<Signal::SmartHandle> _signalHandles;
-    Vision::ImageDeChunker& _imageDeChunker;
+    ImageDeChunker& _imageDeChunker;
     uint8_t _imuSeqID = 0;
     uint32_t _imuDataSize = 0;
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
@@ -954,7 +948,7 @@ inline bool Robot::IsIdleAnimating() const {
 }
 
 inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
-  return SetObjectLights(objectID, WhichBlockLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
+  return SetObjectLights(objectID, WhichCubeLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
                          false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
 }
 

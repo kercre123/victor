@@ -35,6 +35,13 @@ public:
   , _data( std::forward<FwdType>(newData) )
 { }
 
+  template <typename FwdType>
+  AnkiEvent(uint32_t type, FwdType&& newData)
+  : _currentTime(0.0)
+  , _myType(type)
+  , _data( std::forward<FwdType>(newData) )
+  { }
+
   double GetCurrentTime() const { return _currentTime; }
   uint32_t GetType() const { return _myType; }
   const DataType& GetData() const { return _data; }

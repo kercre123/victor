@@ -68,11 +68,6 @@ Result CozmoEngineHostImpl::InitInternal()
   std::string keywordFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
   std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
   _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
-  Result lastResult = _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
-}
-
-Result CozmoEngineHostImpl::InitInternal()
-{
   _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
   return RESULT_OK;
 }

@@ -1,4 +1,4 @@
-/** Clad definitions for blocks
+/** Clad definitions for active objects
  * ROBOT_CLAD_SHARED
  */
 
@@ -73,57 +73,6 @@ enum uint_8 UpAxis {
   NumAxes,
   Unknown
 }
-
-message CubeLights
-{
-  LightState lights[4],
-  uint_32    objectID,
-}
-
-message FlashObjectIDs
-{
-  uint_32 objectID, // Place holder
-}
-
-message ObjectBeingCarried
-{
-  uint_32 objectID,
-  bool    isBeingCarried,
-}
-
-message ObjectMoved
-{
-  uint_32     objectID,
-  uint_32     robotID,
-  ActiveAccel accel,
-  UpAxis      upAxis,
-}
-
-message ObjectStoppedMoving
-{
-  uint_32 objectID,
-  uint_32 robotID,
-  UpAxis  upAxis,
-  bool    rolled,
-}
-
-message ObjectTapped
-{
-  uint_32 objectID,
-  uint_32 robotID,
-  uint_8  numTaps,
-}
-
-namespace BlockMessages
-{
-
- union LightCubeMessage {
-      FlashObjectIDs      flashID,
-      CubeLights          setCubeLights,
-      ObjectBeingCarried  setObjectBeingCarried,
-  }
-
-} // Namespace BlockMessages
 
 } // namespace Cozmo
 } // namespace Anki

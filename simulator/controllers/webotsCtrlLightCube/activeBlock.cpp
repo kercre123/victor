@@ -8,10 +8,9 @@
 
 #include "activeBlock.h"
 #include "BlockMessages.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
-#include "anki/cozmo/robot/ledController.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/robotInterface/lightCubeMessage.h"
+#include "anki/cozmo/robot/ledController.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -71,8 +70,8 @@ namespace Anki {
         
         BlockState state_ = NORMAL;
         
-        webots::LED* led_[NUM_BLOCK_LEDS];
-        LightState ledParams_[NUM_BLOCK_LEDS];
+        webots::LED* led_[NUM_CUBE_LEDS];
+        LightState ledParams_[NUM_CUBE_LEDS];
         
         UpAxis currentUpAxis_;
         
@@ -87,7 +86,7 @@ namespace Anki {
         // as if it were oriented front-side up.
         // When the top marker is facing down, these positions are with respect to the marker
         // as if you were looking down on it (through the top of the block).
-        const u8 ledIndexLUT[NUM_UP_AXES][NUM_BLOCK_LEDS] =
+        const u8 ledIndexLUT[NumAxes][NUM_CUBE_LEDS] =
         {
           // Xneg (Front Face on top)
           {0, 1, 2, 3},
@@ -153,19 +152,23 @@ namespace Anki {
             ledParams_[i].transitionOnPeriod_ms  = msg.lights[i].transitionOnPeriod_ms;
             
             ledParams_[i].nextSwitchTime = 0; // force immediate upate
-            ledParams_[i].state = LEDState_t::LED_STATE_OFF;
+            ledParams_[i].state = LED_STATE_OFF;
           }
         } else {
           printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
       }
       
-      void ProcessSetBlockBeingCarriedMessage(const BlockMessages::SetBlockBeingCarried& msg)
+      void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
       {
         const bool isBeingCarried = static_cast<bool>(msg.isBeingCarried);
         state_ = (isBeingCarried ? BEING_CARRIED : NORMAL);
       }
-      
+        
+      void ProcessBadTag_LightCubeMessage(BlockMessages::LightCubeMessage::Tag badTag)
+      {
+        printf("Ignoring LightCubeMessage with invalid tag: %d\n", badTag);
+      }
       // ================== End of callbacks ==================
       
       // Returns the ID of the block which is used as the
@@ -197,7 +200,7 @@ namespace Anki {
         printf("Starting ActiveBlock %d\n", blockID_);
         
         // Get all LED handles
-        for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
+        for (int i=0; i<NUM_CUBE_LEDS; ++i) {
           char led_name[32];
           sprintf(led_name, "led%d", i);
           led_[i] = block_controller.getLED(led_name);
@@ -222,11 +225,12 @@ namespace Anki {
         
         wasMoving_ = false;
         wasLastMovingTime_sec_ = 0.0;
-        startingUpAxis_ = UP_AXIS_UNKNOWN;
+        startingUpAxis_ = Unknown;
         
         // Register callbacks
-        RegisterCallbackForMessageFlashID(ProcessFlashIDMessage);
-        RegisterCallbackForMessageSetBlockLights(ProcessSetBlockLightsMessage);
+        // I don't think these are relivant anymore. ~Daniel
+        //RegisterCallbackForMessageFlashID(ProcessFlashIDMessage);
+        //RegisterCallbackForMessageSetBlockLights(ProcessSetBlockLightsMessage);
         
         return RESULT_OK;
       }
@@ -249,7 +253,7 @@ namespace Anki {
         const double* accelVals = accel_->getValues();
 
         // Determine the axis with the largest absolute acceleration
-        UpAxis retVal = UP_AXIS_UNKNOWN;
+        UpAxis retVal = Unknown;
         double maxAbsAccel = -1;
         double absAccel[3];
 
@@ -269,15 +273,15 @@ namespace Anki {
         switch(whichAxis)
         {
           case X:
-            retVal = (accelVals[X] < 0 ? UP_AXIS_Xneg : UP_AXIS_Xpos);
+            retVal = (accelVals[X] < 0 ? XNegative : XPositive);
             break;
             
           case Y:
-            retVal = (accelVals[Y] < 0 ? UP_AXIS_Yneg : UP_AXIS_Ypos);
+            retVal = (accelVals[Y] < 0 ? YNegative : YPositive);
             break;
 
           case Z:
-            retVal = (accelVals[Z] < 0 ? UP_AXIS_Zneg : UP_AXIS_Zpos);
+            retVal = (accelVals[Z] < 0 ? ZNegative : ZPositive);
             break;
             
           default:
@@ -333,7 +337,7 @@ namespace Anki {
       {
         static const u8 FIRST_BIT = 0x01;
         u8 shiftedLEDs = static_cast<u8>(whichLEDs);
-        for(u8 i=0; i<NUM_BLOCK_LEDS; ++i) {
+        for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
           if(shiftedLEDs & FIRST_BIT) {
             SetLED_helper(ledIndexLUT[currentUpAxis_][i], color);
           }
@@ -349,7 +353,7 @@ namespace Anki {
       
       void ApplyLEDParams(TimeStamp_t currentTime)
       {
-        for(int i=0; i<NUM_BLOCK_LEDS; ++i)
+        for(int i=0; i<NUM_CUBE_LEDS; ++i)
         {
           u32 newColor;
           const bool colorUpdated = GetCurrentLEDcolor(ledParams_[i], currentTime, newColor);
@@ -360,7 +364,7 @@ namespace Anki {
       } // ApplyLEDParams()
       
       void SetAllLEDs(u32 color) {
-        for(int i=0; i<NUM_BLOCK_LEDS; ++i) {
+        for(int i=0; i<NUM_CUBE_LEDS; ++i) {
           SetLED_helper(i, color);
         }
       }
@@ -460,7 +464,6 @@ namespace Anki {
           while (receiver_->getQueueLength() > 0) {
             int dataSize = receiver_->getDataSize();
             u8* data = (u8*)receiver_->getData();
-        
             BlockMessages::ProcessMessage(data, dataSize);
             receiver_->nextPacket();
           }
@@ -478,10 +481,11 @@ namespace Anki {
           // Check for taps
           //////////////////////
           if (CheckForTap(accelVals[0], accelVals[1], accelVals[2])) {
-            BlockMessages::BlockTapped msg;
-            msg.blockID = blockID_;
-            msg.numTaps = 1;
-            emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockTapped_ID));
+            BlockMessages::LightCubeMessage msg;
+            msg.tag = BlockMessages::LightCubeMessage::Tag_tapped;
+            msg.tapped.objectID = blockID_;
+            msg.tapped.numTaps = 1;
+            emitter_->send(msg.GetBuffer(), msg.Size());
           }
 
           
@@ -510,13 +514,14 @@ namespace Anki {
                   printf("Block %d appears to be moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
                   
                   // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
-                  BlockMessages::BlockMoved msg;
-                  msg.blockID = blockID_;
-                  msg.xAccel = accelVals[0];
-                  msg.yAccel = accelVals[1];
-                  msg.zAccel = accelVals[2];
-                  msg.upAxis = currentUpAxis_;
-                  emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockMoved_ID));
+                  BlockMessages::LightCubeMessage msg;
+                  msg.tag = BlockMessages::LightCubeMessage::Tag_moved;
+                  msg.moved.objectID = blockID_;
+                  msg.moved.accel.x = accelVals[0];
+                  msg.moved.accel.y = accelVals[1];
+                  msg.moved.accel.z = accelVals[2];
+                  msg.moved.upAxis = currentUpAxis_;
+                  emitter_->send(msg.GetBuffer(), msg.Size());
                   
                   if(!wasMoving_) {
                     // Store the Up axis when we first start movement
@@ -531,14 +536,15 @@ namespace Anki {
                   printf("Block %d stopped moving (UpAxis=%d).\n", blockID_, currentUpAxis_);
                   
                   // TODO: There should really be a message ID in here, rather than just determining it from message size on the other end.
-                  BlockMessages::BlockStoppedMoving msg;
-                  msg.blockID = blockID_;
-                  msg.upAxis  = currentUpAxis_;
-                  msg.rolled  = currentUpAxis_ != startingUpAxis_; // we rolled if we have a different up axis from when we started moving
-                  emitter_->send(&msg, BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID));
+                  BlockMessages::LightCubeMessage msg;
+                  msg.tag = BlockMessages::LightCubeMessage::Tag_stopped;
+                  msg.stopped.objectID = blockID_;
+                  msg.stopped.upAxis   = currentUpAxis_;
+                  msg.stopped.rolled   = currentUpAxis_ != startingUpAxis_; // we rolled if we have a different up axis from when we started moving
+                  emitter_->send(msg.GetBuffer(), msg.Size());
                   
                   wasMoving_ = false;
-                  startingUpAxis_ = UP_AXIS_UNKNOWN;
+                  startingUpAxis_ = Unknown;
                 }
               } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
               

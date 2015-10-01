@@ -580,7 +580,7 @@ namespace Anki {
                                     const s32 &numAnimBytesFree,
                                     const u8 &videoFramefateHz)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, videoFramefateHz));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg)));
     }
     
     /*

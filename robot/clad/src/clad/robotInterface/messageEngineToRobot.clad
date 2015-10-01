@@ -6,12 +6,12 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/ledTypes.clad"
-#include "clad/types/activeObjectTypes.clad"
 #include "clad/types/animationKeyFrames.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
- 
+#include "clad/robotInterface/messageToActiveObject.clad"
+
 namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
@@ -238,6 +238,8 @@ union EngineToRobot
   AnimKeyFrame::BackpackLights  animBackpackLights          = 0x98,
   AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,
   AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x9A,
+  AnimKeyFrame::StartOfAnimation  animStartOfAnimation      = 0x9B,
+
 }
 
 } // namespace Robot Interface

@@ -15,6 +15,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
+#include "anki/cozmo/basestation/imageDeChunker.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -107,7 +108,7 @@ private:
   std::map<uint8_t, uint8_t> robotIDToVizBotIdxMap_;
 
   // Image message processing
-  Vision::ImageDeChunker _imageDeChunker;
+  ImageDeChunker _imageDeChunker;
 
   AnkiEventMgr<VizInterface::MessageViz> _eventMgr;
 };
