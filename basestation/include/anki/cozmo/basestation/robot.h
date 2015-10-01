@@ -931,6 +931,17 @@ inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
 inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
 { return _cameraCalibration; }
 
+  inline const f32 Robot::GetHeadAngle() const
+  { return _currentHeadAngle; }
+  
+  inline const f32 Robot::GetLiftAngle() const
+  { return _currentLiftAngle; }
+  
+  inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
+    _rampID = rampID;
+    _rampDirection = direction;
+  }
+
 inline Result Robot::SetDockObjectAsAttachedToLift(){
   return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
 }

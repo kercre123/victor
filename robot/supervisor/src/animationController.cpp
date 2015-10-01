@@ -35,6 +35,8 @@ namespace AnimationController {
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
 
+    u8  _currentTag = 0;
+    
     bool _isBufferStarved;
     bool _haveReceivedTerminationFrame;
     bool _isPlaying;
@@ -315,6 +317,7 @@ namespace AnimationController {
     
     _currentBufferPos = 0;
     _lastBufferPos = 0;
+    _currentTag = 0;
     
     _numAudioFramesBuffered = 0;
 
@@ -560,6 +563,15 @@ namespace AnimationController {
             {
               nextAudioFrameFound = true;
               break;
+            }
+            case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
+            {
+              GetFromBuffer(&msg);
+              _currentTag = msg.animStartOfAnimation.tag;
+#             if DEBUG_ANIMATION_CONTROLLER
+              PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
+#             endif
+              break;
             }  
             case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
             {
@@ -743,9 +755,10 @@ namespace AnimationController {
           _haveReceivedTerminationFrame = false;
           --_numAudioFramesBuffered;
 #         if DEBUG_ANIMATION_CONTROLLER
-          PRINT("Reached animation termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
-                _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
+          PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
+                _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
 #         endif
+          _currentTag = 0;
         }
 
         // Print time profile stats
@@ -762,6 +775,11 @@ namespace AnimationController {
   void SetTracksToPlay(AnimTrackFlag tracksToPlay)
   {
     _tracksToPlay = tracksToPlay;
+  }
+  
+  u8 GetCurrentTag()
+  {
+    return _currentTag;
   }
   
 } // namespace AnimationController
