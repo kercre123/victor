@@ -94,16 +94,29 @@ CozmoAPI::~CozmoAPI()
 void CozmoAPI::Clear()
 {
   // If there is a thread running, kill it first
-  _cozmoRunnerThread = std::thread();
+  if (_cozmoRunnerThread.joinable())
+  {
+    if (nullptr != _cozmoRunner)
+    {
+      _cozmoRunner->Stop();
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("CozmoAPI.Clear", "Running thread has null object... what?");
+    }
+    _cozmoRunnerThread.join();
+    _cozmoRunnerThread = std::thread();
+  }
   
   Util::SafeDelete(_cozmoRunner);
 }
 
 #pragma mark --- CozmoInstanceRunner Methods ---
 
-  CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
-                                                     const Json::Value& config, Result& initResult)
-  : _cozmoInstance(dataPlatform)
+CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
+                                                   const Json::Value& config, Result& initResult)
+: _cozmoInstance(dataPlatform)
+, _isRunning(true)
 {
   initResult = _cozmoInstance.Init(config);
 }
@@ -111,21 +124,30 @@ void CozmoAPI::Clear()
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
   auto runStart = std::chrono::system_clock::now();
+  auto tickStart = runStart;
   
-  while(true)
+  while(_isRunning)
   {
-    auto tickStart = std::chrono::system_clock::now();
     std::chrono::duration<double> timeSeconds = tickStart - runStart;
     
     Update(timeSeconds.count());
     
-    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tickStart);
-    if (ms_left < std::chrono::milliseconds(0)) {
-      PRINT_NAMED_WARNING("CozmoInstanceRunner.overtime", "over by %lld ms", std::chrono::duration_cast<std::chrono::seconds>(-ms_left).count());
+    auto tickNow = std::chrono::system_clock::now();
+    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
+    if (ms_left < std::chrono::milliseconds(0))
+    {
+      // Don't sleep if we're overtime, but only complain if we're more than 10ms overtime
+      if (ms_left < std::chrono::milliseconds(-10))
+      {
+        PRINT_NAMED_WARNING("CozmoInstanceRunner.overtime", "over by %lld ms", (-ms_left).count());
+      }
     }
-    else {
+    else
+    {
       std::this_thread::sleep_for(ms_left);
     }
+    
+    tickStart = tickNow;
   }
 }
 

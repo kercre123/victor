@@ -344,7 +344,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(msg.robotID);
     if(robot != nullptr) {
       if(msg.objectID < 0) {
-        robot->UnSetCarryingObject();
+        robot->UnSetCarryingObjects();
       } else {
         ObjectID whichObject;
         whichObject = msg.objectID;
@@ -738,6 +738,21 @@ namespace Cozmo {
   {
     // not handled
   }
+  
+  void CozmoGameImpl::Process_SetDemoState(const ExternalInterface::SetDemoState &msg)
+  {
+    // Handled in DemoBehaviorChooser::HandleSetDemoState
+  }
+
+
+void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
+{
+  // ignored here..
+}
+void CozmoGameImpl::Process_KeyWordRecognitionEnabled(const ExternalInterface::KeyWordRecognitionEnabled& msg)
+{
+  // ignored here..
+}
 
 }
 }
