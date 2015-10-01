@@ -1,0 +1,65 @@
+// A sample .adef file
+// ( by Mark Pauley for Anki, Inc 01/26/2015)
+
+#include "Foo.clad"
+#include "Bar.clad"
+
+namespace Baz {
+  message Dog {
+    AnkiTypes::AnkiEnum a,
+    int_8 b
+  }
+} // namespace Baz
+
+message SoManyStrings {
+  string   varStringBuff[uint_16],
+  string   fixedStringBuff[3],
+  string[uint_16] anotherVarStringBuff[uint_8],
+  string[uint_8] anotherFixedStringBuff[2]
+}
+
+message od432 {
+  Foo aFoo,
+  int_8 otherByte
+}
+
+message od433 {
+  Foo a[uint_16],
+  Foo b[2],
+  int_8 otherByte
+}
+
+message od434 {
+  uint_64 vehiclesPlayed[uint_64]
+}
+
+structure Trip {
+  string destination,
+  int_32 price
+}
+
+message od217One {
+  Trip plans,
+  int_16 count
+}
+
+message od217Two {
+  int_32 employeeId,
+  Trip travels[uint_16]
+}
+
+namespace Cat {
+  union MyMessage {
+    Foo myFoo,
+    Bar myBar,
+    Baz::Dog myDog,
+    SoManyStrings mySoManyStrings,
+    od432 myOD432
+  }
+} // namespace Cat
+
+/*union MetaUnion {
+  Foo foo,
+  Cat::MyMessage subunion,
+  Cat::MyMessage subunion2
+}*/

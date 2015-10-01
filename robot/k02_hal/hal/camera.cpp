@@ -1,9 +1,8 @@
 #include "anki/cozmo/robot/hal.h"
+#include "lib/device/fsl_device_registers.h"
 
 #include "anki/common/robot/trig_fast.h"
 #include "hal/portable.h"
-
-#include "board.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
 #include "anki/common/robot/config.h"

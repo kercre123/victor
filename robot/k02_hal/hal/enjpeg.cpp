@@ -7,10 +7,11 @@
  * Call JPEGEnd() to complete the frame
  */
 #ifdef ROBOT_HARDWARE
-#include "board.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/config.h"
 #include "hal/portable.h"
+#include "lib/device/fsl_device_registers.h"
+#include "core_cm4.h"
 #else
 #include <stdio.h>
 typedef unsigned char u8;

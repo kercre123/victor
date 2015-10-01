@@ -1,10 +1,10 @@
 // Placeholder bit-banging I2C implementation
 // Vandiver:  Replace me with a nice DMA version that runs 4 transactions at a time off HALExec
 // For HAL use only - see i2c.h for instructions, imu.cpp and camera.cpp for examples 
-#include "board.h"
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 #include "hal/i2c.h"
+#include "lib/device/fsl_device_registers.h"
 
 namespace Anki
 {

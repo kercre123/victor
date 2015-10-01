@@ -1,8 +1,8 @@
-#include "board.h"
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "lib/device/fsl_device_registers.h"
 
 #include "uart.h"
 

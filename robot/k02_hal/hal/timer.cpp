@@ -1,6 +1,6 @@
-#include "board.h"
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
+#include "lib/device/fsl_device_registers.h"
 #include "core_cm4.h"
 
 namespace Anki
