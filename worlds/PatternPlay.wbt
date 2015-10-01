@@ -34,7 +34,7 @@ LightCube {
   rotation 0 1 0 0
 }
 LightCube {
-  translation -0.13 0.295 0.0219969
+  translation 0.26 0.295 0.0219969
   rotation 0 1 0 0
   ID 1
 }
