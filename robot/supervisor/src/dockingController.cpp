@@ -8,6 +8,7 @@
 #include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "localization.h"
 #include "speedController.h"
 #include "steeringController.h"

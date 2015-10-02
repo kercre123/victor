@@ -6,6 +6,7 @@
 #include "clad/types/imageTypes.h"
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"

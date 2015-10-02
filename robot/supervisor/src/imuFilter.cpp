@@ -21,6 +21,8 @@
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 
 // For event callbacks
 #include "testModeController.h"

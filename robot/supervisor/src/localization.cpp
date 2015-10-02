@@ -4,6 +4,7 @@
 #include "anki/common/robot/geometry.h"
 #include "imuFilter.h"
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 #define DEBUG_LOCALIZATION 0
 #define DEBUG_POSE_HISTORY 0

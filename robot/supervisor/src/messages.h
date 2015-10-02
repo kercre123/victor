@@ -27,7 +27,6 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 namespace Anki {
   namespace Cozmo {

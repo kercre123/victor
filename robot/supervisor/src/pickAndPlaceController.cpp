@@ -10,6 +10,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/dockingSignals.h"
 #include "speedController.h"
 #include "steeringController.h"
