@@ -439,7 +439,7 @@ namespace Anki {
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
                   p3 = 250;
                   break;
-                case TestModeClad::PlaceBlockOnGround:
+                case TestMode::TM_PLACE_BLOCK_ON_GROUND:
                   p1 = 100;  // x_offset_mm
                   p2 = -10;  // y_offset_mm
                   p3 = 0;    // angle_offset_degrees
