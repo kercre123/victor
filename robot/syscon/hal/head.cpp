@@ -24,7 +24,13 @@ void setTransmit(bool tx) {
   if (tx) {
     NRF_UART0->PSELRXD = 0xFFFFFFFF;
     NRF_UART0->PSELTXD = PIN_TX_HEAD;
+
+    // Configure pin so it is open-drain
     nrf_gpio_cfg_output(PIN_TX_HEAD);
+
+    NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = 
+      (NRF_GPIO->PIN_CNF[PIN_TX_HEAD] & ~GPIO_PIN_CNF_DRIVE_Msk) | 
+      (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
   } else {
     NRF_UART0->PSELRXD = PIN_TX_HEAD;
     NRF_UART0->PSELTXD = 0xFFFFFFFF;
@@ -53,7 +59,7 @@ void Head::init()
   NRF_UART0->TASKS_STARTRX = 1;
 
   // Initialize the UART for the specified baudrate
-  NRF_UART0->BAUDRATE = UART_BAUDRATE;
+  NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
   // We begin in receive mode (slave)
   setTransmit(false);
@@ -65,7 +71,7 @@ void Head::init()
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
-  NVIC_SetPriority(UART0_IRQn, 1);
+  NVIC_SetPriority(UART0_IRQn, 0);
   NVIC_EnableIRQ(UART0_IRQn);
 }
 
