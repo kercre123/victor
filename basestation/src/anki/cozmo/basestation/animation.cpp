@@ -26,9 +26,10 @@
 
 #define DEBUG_ANIMATIONS 0
 
-// Until we have a speaker in the robot, use this to play RobotAudioKeyFrames using
-// the device's SoundManager
-#define PLAY_ROBOT_AUDIO_ON_DEVICE 0
+// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
+// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
+// and needing sound.
+#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -281,10 +282,6 @@ _blinkTrack.__METHOD__()
     // buffer -- i.e., all the frames associated with the last audio keyframe
     assert(_numBytesToSend >= 0);
     assert(_sendBuffer.empty());
-    
-    // If there's nothing waiting to go out, we are safe to clean out Live frames
-    // that have already been seen
-    ALL_TRACKS(ClearPlayedLiveFrames, ;);
     
 #   if DEBUG_ANIMATIONS
     if(numSent > 0) {
