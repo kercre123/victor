@@ -67,9 +67,20 @@ class DataPlatform;
 }
 
 enum class ERobotDriveToPoseStatus {
+  // There was an internal error while planning
   Error,
+
+  // computing the inital path (the robot is not moving)
   ComputingPath,
+
+  // replanning based on an environment change. The robot is likely following the old path while this is
+  // happening
+  Replanning,
+
+  // Following a planned path
   FollowingPath,
+
+  // Stopped and waiting (not planning or following)
   Waiting,
 };
   
@@ -213,25 +224,21 @@ namespace Cozmo {
     // will immediately start following it, and will replan (e.g. to avoid new obstacles) automatically If
     // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
     // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
-    // the path
+    // the path. If specified, the maxReplanTime arguments specifies the maximum nyum
     Result StartDrivingToPose(const Pose3d& pose, bool useManualSpeed = false);
 
     // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
     // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
     // be set to the pose which is selected once planning is complete
-    Result StartDrivingToPose(const std::vector<Pose3d>& poses, size_t* selectedPoseIndex = nullptr, bool useManualSpeed = false);
-
-    // This functions cancels all planning, clears the current path, and stops the robot
-    void StopDrivingToPose();
+    Result StartDrivingToPose(const std::vector<Pose3d>& poses,
+                              size_t* selectedPoseIndex = nullptr,
+                              bool useManualSpeed = false);
     
     // Executes a test path defined in latticePlanner
     void ExecuteTestPath();
 
-    // This function checks the planning / path following status of the robot. If it is waiting on the
-    // planner, and not moving, it returns ComputingPath. If it is following a planned path (even if it is
-    // also replanning in another thread), it returns FollowingPath. If it isn't doing anything (e.g. before
-    // the first call, or after it finishes a path), it returns Waiting. Otherwise, if there is a problem, it
-    // returns Error
+    // This function checks the planning / path following status of the robot. See the enum definition for
+    // details
     ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
     
     bool IsTraversingPath()   const {return (_currPathSegment >= 0) || (_lastSentPathID > _lastRecvdPathID);}
@@ -577,9 +584,9 @@ namespace Cozmo {
     Result AbortAll();
     
     // Abort things individually
-    // NOTE: Use StopDrivingToPose() above to abort a path
     Result AbortAnimation();
     Result AbortDocking(); // a.k.a. PickAndPlace
+    Result AbortDrivingToPose(); // stops planning and path following
     
     // Send a message to the physical robot
     Result SendMessage(const RobotMessage& message,
@@ -641,7 +648,7 @@ namespace Cozmo {
     IPathPlanner*            _selectedPathPlanner;
     IPathPlanner*            _longPathPlanner;
     IPathPlanner*            _shortPathPlanner;
-    size_t*                  _selectedPoseIndexPtr;
+    size_t*                  _plannerSelectedPoseIndexPtr;
     int                      _numPlansStarted;
     int                      _numPlansFinished;
     ERobotDriveToPoseStatus  _driveToPoseStatus;

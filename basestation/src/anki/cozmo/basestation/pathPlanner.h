@@ -78,9 +78,11 @@ public:
   // returns true if it was able to copy a complete path into the passed in argument. If specified,
   // selectedTargetIndex will be set to the index of the targetPoses that was selected in the original
   // targetPoses vector passed in to ComputePath, or 0 if only one target pose was passed in to the most
-  // recent ComputePlan call
-  virtual bool GetCompletePath(Planning::Path &path);
-  virtual bool GetCompletePath(Planning::Path &path, size_t& selectedTargetIndex);
+  // recent ComputePlan call. If the robot has moved significantly between computing the path and getting the
+  // complete path, the path may trim the first few actions removed to account for the robots motion, based on
+  // the passed in position
+  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path);
+  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex);
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}

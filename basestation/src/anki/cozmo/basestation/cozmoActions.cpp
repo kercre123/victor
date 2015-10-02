@@ -77,6 +77,9 @@ namespace Anki {
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
+    , _maxPlanningTime(DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S)
+    , _maxReplanPlanningTime(DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S)
+    , _timeToAbortPlanning(-1.0f)
     {
       
     }
@@ -84,16 +87,21 @@ namespace Anki {
     void DriveToPoseAction::Reset()
     {
       IAction::Reset();
-      // TEMP:  // TEMP: ask andrew what to do here
+      _timeToAbortPlanning = -1.0f;
     }
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
-                                         const Radians& angleThreshold)
-    : DriveToPoseAction(forceHeadDown, useManualSpeed)
+                                         const Radians& angleThreshold,
+                                         const float maxPlanningTime,
+                                         const float maxReplanPlanningTime)
+      : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
+      _maxPlanningTime = maxPlanningTime;
+      _maxReplanPlanningTime = maxReplanPlanningTime;
+
       SetGoal(pose, distThreshold, angleThreshold);
     }
     
@@ -101,9 +109,14 @@ namespace Anki {
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
-                                         const Radians& angleThreshold)
-    : DriveToPoseAction(forceHeadDown, useManualSpeed)
+                                         const Radians& angleThreshold,
+                                         const float maxPlanningTime,
+                                         const float maxReplanPlanningTime)
+      : DriveToPoseAction(forceHeadDown, useManualSpeed)
     {
+      _maxPlanningTime = maxPlanningTime;
+      _maxReplanPlanningTime = maxReplanPlanningTime;
+
       SetGoals(poses, distThreshold, angleThreshold);
     }
     
@@ -165,6 +178,8 @@ namespace Anki {
     ActionResult DriveToPoseAction::Init(Robot& robot)
     {
       ActionResult result = ActionResult::SUCCESS;
+
+      _timeToAbortPlanning = -1.0f;
             
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
@@ -187,9 +202,9 @@ namespace Anki {
         _selectedGoalIndex = 0;
 
         if(_goalPoses.size() == 1) {
-          planningResult = robot.StartDrivingToPose(_goalPoses.back());
+          planningResult = robot.StartDrivingToPose(_goalPoses.back(), _useManualSpeed);
         } else {
-          planningResult = robot.StartDrivingToPose(_goalPoses, &_selectedGoalIndex);
+          planningResult = robot.StartDrivingToPose(_goalPoses, &_selectedGoalIndex, _useManualSpeed);
         }
         
         if(planningResult != RESULT_OK) {
@@ -223,7 +238,7 @@ namespace Anki {
                                "Received signal that robot %d's origin changed. Resetting action.\n",
                                robotID);
               this->Reset();
-              robotPtr->StopDrivingToPose();
+              robotPtr->AbortDrivingToPose();
             }
           };
           _signalHandle = robot.OnRobotWorldOriginChanged().ScopedSubscribe(cbRobotOriginChanged);
@@ -241,14 +256,51 @@ namespace Anki {
       switch( robot.CheckDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Error:
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
+          _timeToAbortPlanning = -1.0f;
           result = ActionResult::FAILURE_ABORT;
           break;
 
-        case ERobotDriveToPoseStatus::ComputingPath:
-          // TODO:(bn) or maybe put timeout info here
+        case ERobotDriveToPoseStatus::ComputingPath: {
+          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          
+          // handle aborting the plan. If we don't have a timeout set, set one now
+          if( _timeToAbortPlanning < 0.0f ) {
+            _timeToAbortPlanning = currTime + _maxPlanningTime;
+          }
+          else if( currTime >= _timeToAbortPlanning ) {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.ComputingPathTimeout",
+                             "Robot has been planning for more than %f seconds, aborting",
+                             _maxPlanningTime);
+            robot.AbortDrivingToPose();
+            result = ActionResult::FAILURE_ABORT;
+            _timeToAbortPlanning = -1.0f;
+          }
           break;
+        }
+
+        case ERobotDriveToPoseStatus::Replanning: {
+          float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          
+          // handle aborting the plan. If we don't have a timeout set, set one now
+          if( _timeToAbortPlanning < 0.0f ) {
+            _timeToAbortPlanning = currTime + _maxReplanPlanningTime;              
+          }
+          else if( currTime >= _timeToAbortPlanning ) {
+            PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Replanning.Timeout",
+                             "Robot has been planning for more than %f seconds, aborting",
+                             _maxReplanPlanningTime);
+            robot.AbortDrivingToPose();
+            // re-try in this case, since we might be able to succeed once we stop and take more time to plan
+            result = ActionResult::FAILURE_RETRY;
+            _timeToAbortPlanning = -1.0f;
+          }
+          break;
+        }
 
         case ERobotDriveToPoseStatus::FollowingPath: {
+          // clear abort timing, since we got a path
+          _timeToAbortPlanning = -1.0f;
+
           static int ctr = 0;
           if(ctr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
@@ -260,6 +312,9 @@ namespace Anki {
         }
 
         case ERobotDriveToPoseStatus::Waiting: {
+          // clear abort timing, since we got a path
+          _timeToAbortPlanning = -1.0f;
+
           // No longer traversing the path, so check to see if we ended up in the right place
           Vec3f Tdiff;
           
@@ -302,7 +357,7 @@ namespace Anki {
     {
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
-      robot.StopDrivingToPose();
+      robot.AbortDrivingToPose();
       VizManager::getInstance()->ErasePath(robot.GetID());
       VizManager::getInstance()->EraseAllPlannerObstacles(true);
       VizManager::getInstance()->EraseAllPlannerObstacles(false);
@@ -1595,7 +1650,7 @@ namespace Anki {
       
       // Abort anything that shouldn't still be running
       if(robot.IsTraversingPath()) {
-        robot.StopDrivingToPose();
+        robot.AbortDrivingToPose();
       }
       if(robot.IsPickingOrPlacing()) {
         robot.AbortDocking();

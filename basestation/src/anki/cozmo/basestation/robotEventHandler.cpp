@@ -317,6 +317,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::GotoPose:
     {
+      numRetries = 2;
       newAction = GetDriveToPoseActionHelper(robot, event.GetData().Get_GotoPose());
       break;
     }

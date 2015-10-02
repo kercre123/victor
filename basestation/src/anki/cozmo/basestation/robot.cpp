@@ -71,7 +71,7 @@ namespace Anki {
     , _wheelsLocked(false)
     , _headLocked(false)
     , _liftLocked(false)
-    , _selectedPoseIndexPtr(nullptr)
+    , _plannerSelectedPoseIndexPtr(nullptr)
     , _numPlansStarted(0)
     , _numPlansFinished(0)
     , _driveToPoseStatus(ERobotDriveToPoseStatus::Waiting)
@@ -991,14 +991,14 @@ namespace Anki {
             switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
             case EComputePathStatus::Error:
               _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
-              StopDrivingToPose();
+              AbortDrivingToPose();
               PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
               break;
 
             case EComputePathStatus::Running:
               _numPlansStarted++;
               PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
-              // leave the status to following, since we continue to follow while computing the new path
+              _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
               break;
 
             case EComputePathStatus::NoPlanNeeded:
@@ -1018,11 +1018,18 @@ namespace Anki {
         case EPlannerStatus::Error:
           _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
           PRINT_NAMED_INFO("Robot.Update.Planner.Error", "Running planner returned error status");
-          StopDrivingToPose();
+          AbortDrivingToPose();
+          _numPlansFinished = _numPlansStarted;
           break;
 
         case EPlannerStatus::Running:
-          _driveToPoseStatus =  ERobotDriveToPoseStatus::ComputingPath;
+          // status should stay the same, but double check it
+          if( _driveToPoseStatus != ERobotDriveToPoseStatus::ComputingPath &&
+              _driveToPoseStatus != ERobotDriveToPoseStatus::Replanning) {
+            PRINT_NAMED_WARNING("Robot.Planning.StatusError.Running",
+                                "Status was invalid, setting to ComputePath");
+            _driveToPoseStatus =  ERobotDriveToPoseStatus::ComputingPath;
+          }
           break;
 
         case EPlannerStatus::CompleteWithPlan: {
@@ -1033,17 +1040,19 @@ namespace Anki {
 
           size_t selectedPoseIdx;
           Planning::Path newPath;
-          _selectedPathPlanner->GetCompletePath(newPath, selectedPoseIdx);
+
+          _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx);
           ExecutePath(newPath, _usingManualPathSpeed);
 
-          if( _selectedPoseIndexPtr != nullptr ) {
-            // tell the caller which pose we selected, then clear the pointer so we don't change it again until
-            // they request a new plan
+          if( _plannerSelectedPoseIndexPtr != nullptr ) {
+            // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
+            // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
+            // non-null, set it now, then clear the pointer so we won't set it again
 
             // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
             // replanning will always chose the same target pose, which should be OK for now
-            *_selectedPoseIndexPtr = selectedPoseIdx;
-            _selectedPoseIndexPtr = nullptr;
+            *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
+            _plannerSelectedPoseIndexPtr = nullptr;
           }
           break;
         }
@@ -1244,7 +1253,7 @@ namespace Anki {
     Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses, size_t* selectedPoseIndexPtr, bool useManualSpeed)
     {
       _usingManualPathSpeed = useManualSpeed;
-      _selectedPoseIndexPtr = selectedPoseIndexPtr;
+      _plannerSelectedPoseIndexPtr = selectedPoseIndexPtr;
 
       // Let the long path (lattice) planner do its thing and choose a target
       _selectedPathPlanner = _longPathPlanner;
@@ -1272,13 +1281,6 @@ namespace Anki {
       _numPlansStarted++;
 
       return RESULT_OK;
-    }
-
-    void Robot::StopDrivingToPose()
-    {
-      _selectedPathPlanner->StopPlanning();
-      ClearPath();
-      _numPlansFinished = _numPlansStarted;
     }
 
     void Robot::ExecuteTestPath()
@@ -3099,7 +3101,7 @@ namespace Anki {
       
       _actionList.Cancel();
       
-      if(ClearPath() != RESULT_OK) {
+      if(AbortDrivingToPose() != RESULT_OK) {
         anyFailures = true;
       }
       
@@ -3130,6 +3132,15 @@ namespace Anki {
       return SendAbortAnimation();
     }
     
+    Result Robot::AbortDrivingToPose()
+    {
+      _selectedPathPlanner->StopPlanning();
+      Result ret = ClearPath();
+      _numPlansFinished = _numPlansStarted;
+
+      return ret;
+    }
+
     Result Robot::SendAbortAnimation()
     {
       MessageAbortAnimation m;

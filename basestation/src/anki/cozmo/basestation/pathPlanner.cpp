@@ -88,7 +88,7 @@ EPlannerStatus IPathPlanner::CheckPlanningStatus() const
   }
 }
 
-bool IPathPlanner::GetCompletePath(Planning::Path &path)
+bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path)
 {
   if( ! _hasValidPath ) {
     return false;
@@ -98,7 +98,7 @@ bool IPathPlanner::GetCompletePath(Planning::Path &path)
   return true;
 }
 
-bool IPathPlanner::GetCompletePath(Planning::Path &path, size_t& selectedTargetIndex)
+bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
 {
   if( ! _hasValidPath ) {
     return false;

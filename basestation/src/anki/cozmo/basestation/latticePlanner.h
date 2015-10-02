@@ -50,6 +50,13 @@ public:
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
                                                     bool forceReplanFromScratch = false) override;
 
+  virtual void StopPlanning() override;
+
+  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path) override;
+  virtual bool GetCompletePath(const Pose3d& currentRobotPose,
+                               Planning::Path &path,
+                               size_t& selectedTargetIndex) override;
+
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) override;
 
   virtual EPlannerStatus CheckPlanningStatus() const override;
