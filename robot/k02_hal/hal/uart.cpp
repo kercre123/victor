@@ -99,6 +99,6 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
 }
 
 void Anki::Cozmo::HAL::UartReceive(void) {
-  while (~UART0_S1 & UART_S1_TC_MASK ) ;
-  transmit_mode(false);
+  //while (~UART0_S1 & UART_S1_TC_MASK ) ;
+  //transmit_mode(false);
 }

@@ -61,7 +61,6 @@ int main (void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  // Kill this off as soon as we can ditch the Freescale libs
   hardware_init();
   DebugInit();
   
