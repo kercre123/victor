@@ -52,17 +52,17 @@ public class RowBlockPattern {
     BlockLights patternLight = lastPatternSeen.blocks[0];
 
     // generate a new config that is not the current config.
-
+    int nextConfigCount = Random.Range(1, 5);
     BlockLights newBlockLight = patternLight;
+    while (nextConfigCount > 0) {
+      newBlockLight = BlockLights.GetNextConfig(newBlockLight);
+      nextConfigCount--;
+    }
 
     // never go to empty lights config.
-    do {
-      int nextConfigCount = Random.Range(1, 5);
-      while (nextConfigCount > 0) {
-        newBlockLight = BlockLights.GetNextConfig(newBlockLight);
-        nextConfigCount--;
-      }
-    } while (!(!newBlockLight.back && !newBlockLight.front && !newBlockLight.left && !newBlockLight.right));
+    if (!newBlockLight.back && !newBlockLight.front && !newBlockLight.left && !newBlockLight.right) {
+      newBlockLight = BlockLights.GetNextConfig(newBlockLight);
+    }
 
     List<int> keys = new List<int>(blockPatternData.Keys);
     BlockLights newRotatedLights = newBlockLight;

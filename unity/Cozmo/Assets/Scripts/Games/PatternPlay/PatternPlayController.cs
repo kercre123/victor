@@ -19,10 +19,12 @@ public class PatternPlayController : GameController {
     NONE,
     ONE,
     TILT,
-    DOUBLE
+    DOUBLE,
+    PHONE,
+    COZMO
   }
 
-  private InputMode currentInputMode = InputMode.NONE;
+  private InputMode currentInputMode = InputMode.PHONE;
 
   // blocks in here are in cozmo space.
   private HashSet<RowBlockPattern> seenPatterns = new HashSet<RowBlockPattern>();
@@ -92,6 +94,9 @@ public class PatternPlayController : GameController {
     base.Update_PLAYING();
 
     KeyboardBlockCycle();
+    if (currentInputMode == InputMode.PHONE) {
+      PhoneCycle();
+    }
 
     Color[] levelColors = { new Color(0.8f, 0.5f, 0.0f, 1.0f), Color.green };
 
@@ -209,6 +214,13 @@ public class PatternPlayController : GameController {
         }
       }
 
+      if (currentInputMode == InputMode.PHONE) {
+        if (blockConfig.Value.BlockActiveTimeTouched()) {
+          enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+          disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+        }
+      }
+
       for (int i = 0; i < 4; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
@@ -280,6 +292,18 @@ public class PatternPlayController : GameController {
 
     Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
     blockPatternData[blockID].lastFrameZAccel = zAccel;
+    blockPatternData[blockID].lastTimeTouched = Time.time;
+  }
+
+  private void PhoneCycle() {
+    if (Input.GetMouseButtonDown(0)) {
+      foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
+        if (block.Value.BlockActiveTimeTouched()) {
+          block.Value.blockLightsLocalSpace = BlockLights.GetNextConfig(block.Value.blockLightsLocalSpace);
+          block.Value.lastTimeTouched = Time.time;
+        }
+      }
+    }
   }
 
   private void KeyboardBlockCycle() {
@@ -315,7 +339,9 @@ public class PatternPlayController : GameController {
   private void DonePlayingAnimation(bool success) {
     animationPlaying = false;
     lastAnimationFinishedTime = Time.time;
-    RowBlockPattern.SetRandomConfig(robot, blockPatternData, lastPatternSeen);
+    if (currentInputMode == InputMode.COZMO) {
+      RowBlockPattern.SetRandomConfig(robot, blockPatternData, lastPatternSeen);
+    }
     ResetLookHeadForkLift();
   }
 

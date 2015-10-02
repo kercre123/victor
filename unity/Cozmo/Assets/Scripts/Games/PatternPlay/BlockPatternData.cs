@@ -12,5 +12,11 @@ public class BlockPatternData {
   public BlockLights blockLightsLocalSpace;
   public float lastFrameZAccel;
   public float lastTimeTapped;
+  // for phone input
+  public float lastTimeTouched;
+
+  public bool BlockActiveTimeTouched() {
+    return Time.time - lastTimeTouched < 0.8f;
+  }
 }
 
