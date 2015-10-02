@@ -2,10 +2,8 @@
 #include <stdint.h>
 #include <math.h>
 
-#include "board.h"
-
-#include "dac.h"
 #include "anki/cozmo/robot/hal.h"
+#include "lib/device/fsl_device_registers.h"
 
 void DacInit() {
   SIM_SCGC6 |= SIM_SCGC6_DAC0_MASK;
