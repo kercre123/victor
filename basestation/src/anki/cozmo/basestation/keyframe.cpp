@@ -266,13 +266,7 @@ return RESULT_FAIL; \
           return nullptr;
         }
         
-        if(rleFrame->size() >= sizeof(_faceImageMsg.image)) {
-          PRINT_NAMED_ERROR("FaceAnimationKeyFrame.GetStreamMessage",
-                            "RLE frame %d for animation %s too large to fit in message (%lu>=%lu).\n",
-                            _curFrame, _animName.c_str(), rleFrame->size(), sizeof(_faceImageMsg.image));
-          return nullptr;
-        }
-        
+        // copy std vector
         _faceImageMsg.image = *rleFrame;
         ++_curFrame;
         
