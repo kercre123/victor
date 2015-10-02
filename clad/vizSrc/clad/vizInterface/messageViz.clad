@@ -14,7 +14,10 @@ namespace VizInterface {
 
 message RobotStateMessage
 {
-  RobotState state
+  RobotState state,
+  int_32 numAnimBytesFree,
+  uint_8 videoFramefateHz,
+  uint_8 animTag
 }
 
 // VizObject

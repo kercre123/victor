@@ -412,11 +412,9 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (f32)payload.state.battVolt10x/10);
   DrawText(VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
-  /*
   sprintf(txt, "Video: %d HZ   AnimBufFree: %d",
-    payload.state.videoFramerateHZ, payload.state.numAnimBytesFree);
+    payload.videoFramefateHz, payload.numAnimBytesFree);
   DrawText(VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
-  */
 
   sprintf(txt, "Status: %5s %5s %7s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
@@ -424,11 +422,15 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "        %5s %9s",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_ANIMATING ? "ANIM" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE ? "ANIM_IDLE" : "");
+  if(payload.animTag == 255) {
+    sprintf(txt, "   ANIM_IDLE");
+  } else if(payload.animTag != 0) {
+    sprintf(txt, "   ANIM[%d]", payload.animTag);
+  } else {
+    sprintf(txt, "");
+  }
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
-
+  
   sprintf(txt, "        %7s %7s %6s",
     payload.state.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS ? "" : "LIFTING",
     payload.state.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS ? "" : "HEADING",

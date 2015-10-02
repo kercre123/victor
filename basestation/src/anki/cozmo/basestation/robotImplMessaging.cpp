@@ -60,6 +60,11 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
 
 
   // lambda for some simple message handling
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::animState,
+     [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+       _numAnimationBytesPlayed = message.GetData().Get_animState().numAnimBytesPlayed;
+       _animationTag = message.GetData().Get_animState().tag;
+     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
     [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it started traversing a ramp.", GetID());

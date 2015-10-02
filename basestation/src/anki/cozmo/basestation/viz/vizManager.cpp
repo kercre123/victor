@@ -577,10 +577,10 @@ namespace Anki {
     
 
     void VizManager::SendRobotState(const RobotState &msg,
-                                    const s32 &numAnimBytesFree,
-                                    const u8 &videoFramefateHz)
+                                    const s32 numAnimBytesFree,
+                                    const u8 videoFramefateHz, const u8 animTag)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, videoFramefateHz, animTag)));
     }
     
     /*

@@ -337,8 +337,8 @@ namespace Anki {
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
       void SendRobotState(const RobotState &msg,
-                          const s32 &numAnimBytesFree,
-                          const u8 &videoFramefateHz);
+                          const s32 numAnimBytesFree,
+                          const u8 videoFramefateHz, const u8 animTag);
       
     protected:
       

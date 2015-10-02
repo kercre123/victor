@@ -428,6 +428,16 @@ namespace AnimationController {
       memcpy(_keyFrameBuffer, msg.GetBuffer()+firstChunk, numBytes - firstChunk);
       _lastBufferPos = numBytes-firstChunk;
      }
+    switch(msg.tag) {
+      case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
+        _haveReceivedTerminationFrame = true;
+      case RobotInterface::EngineToRobot::Tag_animAudioSample:
+      case RobotInterface::EngineToRobot::Tag_animAudioSilence:
+        ++_numAudioFramesBuffered;
+        break;
+        default:
+        break;
+    }
     
     assert(_lastBufferPos >= 0 && _lastBufferPos < sizeof(_keyFrameBuffer));
     
