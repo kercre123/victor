@@ -66,37 +66,6 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      // Checks whitelist of all messages that are allowed to
-      // be processed while the robot is picked up.
-      bool IgnoreMessageDuringPickup(const RobotInterface::EngineToRobot::Tag msgID) {
-        
-        if (!IMUFilter::IsPickedUp()) {
-          return false;
-        }
-        
-        switch(msgID) {
-          case RobotInterface::EngineToRobot::Tag_moveHead:
-          case RobotInterface::EngineToRobot::Tag_headAngle:
-          case RobotInterface::EngineToRobot::Tag_headAngleUpdate:
-          case RobotInterface::EngineToRobot::Tag_stop:
-          case RobotInterface::EngineToRobot::Tag_clearPath:
-          case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
-          case RobotInterface::EngineToRobot::Tag_syncTime:
-          case RobotInterface::EngineToRobot::Tag_imageRequest:
-          case RobotInterface::EngineToRobot::Tag_setControllerGains:
-          case RobotInterface::EngineToRobot::Tag_setCarryState:
-          case RobotInterface::EngineToRobot::Tag_setBackpackLights:
-          case RobotInterface::EngineToRobot::Tag_setCubeLights:
-          case RobotInterface::EngineToRobot::Tag_flashObjectIDs:
-          case RobotInterface::EngineToRobot::Tag_setObjectBeingCarried:
-            return false;
-          default:
-            break;
-        }
-        
-        return true;
-      }
-      
       void ProcessBadTag_EngineToRobot(RobotInterface::EngineToRobot::Tag badTag)
       {
         PRINT("Received message with bad tag %02x\n", badTag);
@@ -104,10 +73,7 @@ namespace Anki {
       
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
-        if (!IgnoreMessageDuringPickup(msg.tag))
-        {
-          #include "clad/robotInterface/messageEngineToRobot_switch.def"
-        }
+        #include "clad/robotInterface/messageEngineToRobot_switch.def"
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
