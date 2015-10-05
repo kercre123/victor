@@ -1832,17 +1832,22 @@ namespace Anki
     
     void BlockWorld::ClearAllExistingObjects()
     {
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto objectsByType : objectsByFamily.second) {
-          for(auto objectsByID : objectsByType.second) {
-            ClearObjectHelper(objectsByID.second);
+      if(_canDeleteObjects) {
+        for(auto & objectsByFamily : _existingObjects) {
+          for(auto objectsByType : objectsByFamily.second) {
+            for(auto objectsByID : objectsByType.second) {
+              ClearObjectHelper(objectsByID.second);
+            }
           }
         }
+        
+        _existingObjects.clear();
+        
+        ObjectID::Reset();
+      }  else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearAllExistingObjects.DeleteDisabled",
+                            "Will not clear all objects because object deletion is disabled.");
       }
-      
-      _existingObjects.clear();
-
-      ObjectID::Reset();
     }
     
     void BlockWorld::ClearObjectHelper(ObservableObject* object)
@@ -2039,8 +2044,8 @@ namespace Anki
           _existingObjects.erase(family);
         }
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily",
-                            "Will not delete family %d objects because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.DeleteDisabled",
+                            "Will not delete family %d objects because object deletion is disabled.",
                             family);
       }
     }
@@ -2062,8 +2067,8 @@ namespace Anki
           }
         }
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType",
-                            "Will not delete %s objects because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType.DeleteDisabled",
+                            "Will not delete %s objects because object deletion is disabled.",
                             ObjectTypeToString(type));
 
       }
@@ -2089,8 +2094,8 @@ namespace Anki
               // IDs are unique, so we can return as soon as the ID is found and cleared
               return true;
             } else {
-              PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                                  "Will not delete object %d because object deletion is disabled.\n",
+              PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
+                                  "Will not delete object %d because object deletion is disabled.",
                                   withID.GetValue());
               return false;
             }
@@ -2115,8 +2120,8 @@ namespace Anki
         
         return _existingObjects[fromFamily][withType].erase(objIter);
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                            "Will not delete object %d because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
+                            "Will not delete object %d because object deletion is disabled.",
                             object->GetID().GetValue());
         auto retIter(objIter);
         return ++retIter;
@@ -2136,8 +2141,8 @@ namespace Anki
         // existing objects
         _existingObjects[fromFamily][withType].erase(objID);
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                            "Will not delete object %d because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
+                            "Will not delete object %d because object deletion is disabled.",
                             object->GetID().GetValue());
       }
     }
