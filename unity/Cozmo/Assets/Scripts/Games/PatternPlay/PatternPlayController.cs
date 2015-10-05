@@ -181,6 +181,9 @@ public class PatternPlayController : GameController {
   }
 
   private void SetBlockLights() {
+
+    int lastTimerID = GetMostRecentMovedID();
+
     // update block lights
     foreach (KeyValuePair<int, BlockPatternData> blockConfig in blockPatternData) {
 
@@ -215,7 +218,7 @@ public class PatternPlayController : GameController {
       }
 
       if (currentInputMode == InputMode.PHONE) {
-        if (blockConfig.Value.BlockActiveTimeTouched()) {
+        if (blockConfig.Key == lastTimerID) {
           enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
           disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
         }
@@ -295,13 +298,25 @@ public class PatternPlayController : GameController {
     blockPatternData[blockID].lastTimeTouched = Time.time;
   }
 
+  private int GetMostRecentMovedID() {
+    int lastTouchedID = -1;
+    float minTime = 0.0f;
+    foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
+      if (block.Value.lastTimeTouched > minTime && block.Value.BlockActiveTimeTouched()) {
+        lastTouchedID = block.Key;
+        minTime = block.Value.lastTimeTouched;
+      }
+    }
+    return lastTouchedID;
+  }
+
   private void PhoneCycle() {
     if (Input.GetMouseButtonDown(0)) {
-      foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
-        if (block.Value.BlockActiveTimeTouched()) {
-          block.Value.blockLightsLocalSpace = BlockLights.GetNextConfig(block.Value.blockLightsLocalSpace);
-          block.Value.lastTimeTouched = Time.time;
-        }
+      int lastTouchedID = GetMostRecentMovedID();
+
+      if (lastTouchedID != -1) {
+        blockPatternData[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[lastTouchedID].blockLightsLocalSpace);
+        blockPatternData[lastTouchedID].lastTimeTouched = Time.time;
       }
     }
   }

@@ -16,7 +16,7 @@ public class BlockPatternData {
   public float lastTimeTouched;
 
   public bool BlockActiveTimeTouched() {
-    return Time.time - lastTimeTouched < 0.8f;
+    return Time.time - lastTimeTouched < 1.2f;
   }
 }
 
