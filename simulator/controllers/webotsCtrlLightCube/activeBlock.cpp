@@ -137,7 +137,7 @@ namespace Anki {
       
       void Process_setCubeLights(const CubeLights& msg)
       {
-        /*
+        
         // See if the message is actually changing anything about the block's current
         // state. If not, don't update anything.
         bool isDifferent = false;
@@ -165,7 +165,7 @@ namespace Anki {
         } else {
           printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
-         */
+        
         
         // Set lights immediately
         for (u32 i=0; i<NUM_CUBE_LEDS; ++i) {

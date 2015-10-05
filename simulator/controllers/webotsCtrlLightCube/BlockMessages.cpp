@@ -21,7 +21,7 @@ namespace Anki {
         LightCubeMessage msg;
         
         memcpy(msg.GetBuffer(), buffer, bufferSize);
-        
+              
         #include "clad/robotInterface/lightCubeMessage_switch.def"
         
         return RESULT_OK;
