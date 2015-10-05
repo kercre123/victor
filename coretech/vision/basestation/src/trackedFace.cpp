@@ -12,6 +12,7 @@
 
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/camera.h"
+#include "anki/common/basestation/math/point_impl.h"
 
 namespace Anki {
 namespace Vision {

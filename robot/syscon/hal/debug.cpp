@@ -50,7 +50,10 @@ void UART::print( const char* fmt, ...)
 }
 
 void UART::dump(int count, char* data) {
+  const char hex[] = "0123456789ABCDEF";
   while(count-- > 0) {
-    print("%2x ", *(data++));
+    char ch = *(data++);
+    put(hex[ch>>4]);
+    put(hex[ch&0xF]);
   }
 }

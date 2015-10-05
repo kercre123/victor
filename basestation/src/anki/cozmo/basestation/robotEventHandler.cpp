@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 

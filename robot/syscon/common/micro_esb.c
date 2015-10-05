@@ -143,7 +143,7 @@ static void tx_fifo_remove_last()
     }
 }
 
-uint32_t uesb_init(uesb_config_t *parameters)
+uint32_t uesb_init(const uesb_config_t *parameters)
 {
     if(m_uesb_mainstate != UESB_STATE_UNINITIALIZED) return UESB_ERROR_ALREADY_INITIALIZED;
     memcpy(&m_config_local, parameters, sizeof(uesb_config_t));

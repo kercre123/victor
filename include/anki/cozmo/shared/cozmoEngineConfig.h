@@ -83,7 +83,7 @@ namespace Anki {
 
     // When getting a preaction pose for an offset dock, this is the amount by which the
     // preaction pose is offset relative to the specified docking offset. (0 < val < 1)
-    const f32 PREACTION_POSE_OFFSET_SCALAR = 0.75f;
+    const f32 PREACTION_POSE_OFFSET_SCALAR = 1.0f;
     
   } // namespace Cozmo
 } // namespace Anki

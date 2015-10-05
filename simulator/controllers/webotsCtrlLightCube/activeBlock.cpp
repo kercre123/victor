@@ -119,6 +119,13 @@ namespace Anki {
       } // private namespace
 
       
+      // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
+      // to make it suitable for webots LED 24bit RGB color
+      inline void SetLED_helper(u32 index, u32 rgbaColor) {
+        led_[index]->set(rgbaColor>>8);
+      }
+      
+      
       // ========== Callbacks for messages from robot =========
       void ProcessFlashIDMessage(const BlockMessages::FlashID& msg)
       {
@@ -129,6 +136,7 @@ namespace Anki {
       
       void ProcessSetBlockLightsMessage(const BlockMessages::SetBlockLights& msg)
       {
+        /*
         // See if the message is actually changing anything about the block's current
         // state. If not, don't update anything.
         bool isDifferent = false;
@@ -156,6 +164,13 @@ namespace Anki {
         } else {
           printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
+         */
+        
+        // Set lights immediately
+        for (u32 i=0; i<NUM_BLOCK_LEDS; ++i) {
+          SetLED_helper(i, msg.onColor[i]);
+        }
+        
       }
       
       void ProcessSetBlockBeingCarriedMessage(const BlockMessages::SetBlockBeingCarried& msg)
@@ -321,11 +336,6 @@ namespace Anki {
       }
        */
       
-      // Handle the shift by 8 bits to remove alpha channel from 32bit RGBA pixel
-      // to make it suitable for webots LED 24bit RGB color
-      inline void SetLED_helper(u32 index, u32 rgbaColor) {
-        led_[index]->set(rgbaColor>>8);
-      }
       
       void SetLED(WhichBlockLEDs whichLEDs, u32 color)
       {
@@ -541,7 +551,7 @@ namespace Anki {
               } // if(SEND_MOVING_MESSAGES_EVERY_N_TIMESTEPS)
               
               // Apply ledParams
-              ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
+              //ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
               
               break;
             }
@@ -549,7 +559,7 @@ namespace Anki {
             case BEING_CARRIED:
             {
               // Just apply ledParams, don't check for movement since we're being carried
-              ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
+              //ApplyLEDParams(static_cast<TimeStamp_t>(currTime_sec*1000));
               
               break;
             }

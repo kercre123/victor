@@ -5,6 +5,8 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "radio.h"
+
 #include "hardware.h"
 
 #include "anki/cozmo/robot/spineData.h"
@@ -71,7 +73,7 @@ void Head::init()
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
-  NVIC_SetPriority(UART0_IRQn, 0);
+  NVIC_SetPriority(UART0_IRQn, 1);
   NVIC_EnableIRQ(UART0_IRQn);
 }
 

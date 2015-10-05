@@ -11,6 +11,7 @@ namespace Anki {
 namespace Cozmo {
 
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
+  const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
   
   AnimationStreamer::AnimationStreamer(CannedAnimationContainer& container)
   : _animationContainer(container)
@@ -22,6 +23,7 @@ namespace Cozmo {
   , _numLoops(1)
   , _loopCtr(0)
   , _tagCtr(0)
+  , _isLiveTwitchEnabled(false)
   , _nextBlink_ms(0)
   , _nextLookAround_ms(0)
   , _bodyMoveDuration_ms(0)
@@ -88,8 +90,14 @@ namespace Cozmo {
       return RESULT_OK;
     } else if(name == LiveAnimation) {
       _idleAnimation = &_liveAnimation;
+      _isLiveTwitchEnabled = true;
+      return RESULT_OK;
+    } else if(name == AnimToolAnimation) {
+      _idleAnimation = &_liveAnimation;
+      _isLiveTwitchEnabled = false;
       return RESULT_OK;
     }
+    
     
     _idleAnimation = _animationContainer.GetAnimation(name);
     if(_idleAnimation == nullptr) {
@@ -261,11 +269,28 @@ namespace Cozmo {
     const s32 kHeadMovementSpacingMin_ms = 250;
     const s32 kHeadMovementSpacingMax_ms = 1000;
     const u8  kHeadAngleVariability_deg = 6;
+    const f32 kDockSquintEyeHeight = -0.4f;
+    const f32 kDockSquintEyebrowHeight = -0.4f;
     
     // Use procedural face
     const ProceduralFace& lastFace = robot.GetLastProceduralFace();
     const TimeStamp_t lastTime = lastFace.GetTimeStamp();
-    const ProceduralFace& nextFace = robot.GetProceduralFace();
+    //const ProceduralFace& nextFace = robot.GetProceduralFace();
+    ProceduralFace nextFace(robot.GetProceduralFace());
+    
+    // Squint the current face while picking/placing to show concentration:
+    if(robot.IsPickingOrPlacing()) {
+      for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right}) {
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight, kDockSquintEyeHeight);
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::BrowCenY, kDockSquintEyebrowHeight);
+      }
+      // Make sure squinting face gets displayed:
+      if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
+        nextFace.SetTimeStamp(nextFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
+      }
+      nextFace.MarkAsSentToRobot(false);
+    }
+    
     const TimeStamp_t nextTime = nextFace.GetTimeStamp();
     
     _nextBlink_ms -= BS_TIME_STEP;
@@ -284,7 +309,7 @@ namespace Cozmo {
       robot.MarkProceduralFaceAsSent();
       faceSent = true;
     }
-    else if(_nextBlink_ms <= 0) { // "time to blink"
+    else if(_isLiveTwitchEnabled && _nextBlink_ms <= 0) { // "time to blink"
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
 #     endif
@@ -314,7 +339,9 @@ namespace Cozmo {
 
     // Don't start wiggling until we've been idling for a bit and make sure we
     // picking or placing
-    if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms && !robot.IsPickingOrPlacing())
+    if(_isLiveTwitchEnabled &&
+       _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms &&
+       !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
       if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.AreWheelsLocked())
@@ -414,7 +441,7 @@ namespace Cozmo {
         _headMoveDuration_ms -= BS_TIME_STEP;
       }
       
-    } // if(_timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
+    } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
     
     return lastResult;
   }

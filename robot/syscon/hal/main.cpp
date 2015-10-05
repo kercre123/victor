@@ -48,7 +48,6 @@ int main(void)
   for (;;)
   {
     // Only call every loop through - not all the time
-    Radio::manage();
     Motors::update();
     Battery::update();
 
@@ -60,6 +59,12 @@ int main(void)
     timerStart += CYCLES_MS(5.0f);
     while ( timerStart > GetCounter()) ;
  
+    // Update at 200Hz (5ms delay) - with unsigned subtract to handle wraparound
+    const u32 DELAY = CYCLES_MS(5.0f);
+    while (GetCounter() - timerStart < DELAY)
+      ;
+    timerStart += DELAY;
+
     /*
     // Verify the source
     if (Head::spokenTo)
