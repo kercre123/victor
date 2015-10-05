@@ -170,22 +170,6 @@ Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
     return RESULT_FAIL;
   }
 
-  // Check if engine tic is exceeding expected time
-  static TimeStamp_t prevTime = 0;
-  TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  if (prevTime != 0) {
-    TimeStamp_t timeSinceLastTic = currTime - prevTime;
-    // Print warning if this tic was executed more than the expected amount of time
-    // (with some margin) after the last tic.
-    if (timeSinceLastTic > BS_TIME_STEP + 10) {
-      PRINT_NAMED_WARNING("CozmoEngine.Update.LateTic",
-                          "currTime %dms, timeSinceLastTic %dms (should be ~%dms)\n",
-                          currTime, timeSinceLastTic, BS_TIME_STEP);
-    }
-  }
-  prevTime = currTime;
-
-
   // Notify any listeners that robots are advertising
   std::vector<Comms::ConnectionId> advertisingRobots;
   _robotChannel.GetAdvertisingConnections(advertisingRobots);
