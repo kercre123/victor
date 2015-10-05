@@ -17,12 +17,12 @@ namespace Anki {
 
       Result ProcessMessage(const u8* buffer, const u8 bufferSize)
       {
-        //using namespace ActiveBlock;
-        //LightCubeMessage msg;
-        //
-        //memcpy(msg.GetBuffer(), buffer, bufferSize);
-        //
-        //#include "clad/types/lightCubeMessage_switch.def"
+        using namespace ActiveBlock;
+        LightCubeMessage msg;
+        
+        memcpy(msg.GetBuffer(), buffer, bufferSize);
+        
+        #include "clad/robotInterface/lightCubeMessage_switch.def"
         
         return RESULT_OK;
       } // ProcessBuffer()      
