@@ -112,8 +112,12 @@ void UART0_IRQHandler()
     TxRxIdx++;
     
     // This is here because the antenna sucks do not change it.  ;_;
-    if (TxRxIdx == 33) Radio::manage();
-    
+    if (TxRxIdx == 33) 
+    {
+      // Leave this commented except for robot #2
+      //Radio::manage();
+    }
+      
     if (TxRxIdx >= sizeof(g_dataToBody)) {
       memcpy(&g_dataToBody, TxRxBuffer, sizeof(g_dataToBody));
       Head::spokenTo = true;
