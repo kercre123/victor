@@ -81,8 +81,8 @@ public class RowBlockPattern {
   static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockPatternData> blockPatternData) {
     patternSeen = new RowBlockPattern();
 
-    // 3 to a pattern
-    if (robot.markersVisibleObjects.Count < 3)
+    // 2 to a pattern
+    if (robot.markersVisibleObjects.Count < 2)
       return false;
 
     // check rotation alignment
