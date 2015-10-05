@@ -81,7 +81,8 @@ namespace Cozmo {
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
-    if(name.empty()) {
+    // Special cases for disabling, animation tool, or "live"
+    if(name.empty() || name == "NONE") {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
                        "Disabling idle animation.\n");
@@ -98,7 +99,7 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
-    
+    // Otherwise find the specified name and use that as the idle
     _idleAnimation = _animationContainer.GetAnimation(name);
     if(_idleAnimation == nullptr) {
       return RESULT_FAIL;
