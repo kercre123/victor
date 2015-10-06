@@ -1,5 +1,5 @@
 #include "anki/cozmo/robot/hal.h"
-#include "lib/device/fsl_device_registers.h"
+#include "MK02F12810.h"
 
 #include "anki/common/robot/trig_fast.h"
 #include "hal/portable.h"
@@ -262,6 +262,7 @@ void DMA0_IRQHandler(void)
   u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
   
   // Encode 10 macroblocks (one strip)
+  /*
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
     buflen += JPEGEnd(p + buflen);
@@ -269,7 +270,7 @@ void DMA0_IRQHandler(void)
   } else {
     eof = 0;
   }
-
+  */
   // Copy YUYV data from DMA buffer into swizzle buffer
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)

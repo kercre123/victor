@@ -85,6 +85,8 @@
 #define MK02F12810_H_
 #define MCU_MK02F12810
 
+#define K02F12810_SERIES
+
 /* Check if another memory map has not been also included */
 #if (defined(MCU_ACTIVE))
   #error MK02F12810 memory map: There is already included another memory map. Only one memory map can be included.
@@ -261,7 +263,6 @@ typedef enum IRQn {
 #define __FPU_PRESENT                  1         /**< Defines if an FPU is present or not */
 
 #include "core_cm4.h"                  /* Core Peripheral Access Layer */
-#include "system_MK02F12810.h"         /* Device specific configuration file */
 
 /*!
  * @}
@@ -7281,6 +7282,10 @@ typedef struct {
  * @}
  */ /* end of group Backward_Compatibility_Symbols */
 
+/* Extension register definitions */
+#include "MK02F12810_registers.h"
+/* CPU specific feature definitions */
+#include "MK02F12810_features.h"
 
 #else /* #if !defined(MK02F12810_H_) */
   /* There is already included the same memory map. Check if it is compatible (has the same major version) */

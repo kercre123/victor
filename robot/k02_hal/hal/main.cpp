@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#include "lib/device/fsl_device_registers.h"
+#include "MK02F12810.h"
 
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
@@ -34,14 +34,14 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {       
-        UartTransmit();
+        //UartTransmit();
         // Send data, if we have any
         if (buflen && buflen < 120)
         {
-            TransmitDrop(buf, buflen, eof);
+            //TransmitDrop(buf, buflen, eof);
         }
 
-        UartReceive(); // This should be done last
+        //UartReceive(); // This should be done last
       }
     }
   }
@@ -63,21 +63,24 @@ int main (void)
   
   hardware_init();
   DebugInit();
-  
-  PRINTF("\r\nHeadboard 4.1 is booting.\n\n\r");
+
+  DebugPrintf("\r\nHeadboard 4.1 is booting.\n\n\r");
 
   TimerInit();
   PowerInit();
   I2CInit();
 
-  PRINTF("Espressif startup time... ");
-  //for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
-  PRINTF("Done\n\r");
+  DebugPrintf("Espressif startup time... ");
+  for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
+  DebugPrintf("Done\n\r");
+  
+  // Switch to 10MHz external reference to enable 100MHz clock
+  MCG_C2 &= ~MCG_C2_EREFS_MASK;
   
   //SPIInit();
   //DacInit();
   //i2c_init();
-  UartInit();
+  //UartInit();
   
   CameraInit();
   for(;;) ;

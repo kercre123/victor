@@ -5,14 +5,14 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
-#include "lib/device/fsl_device_registers.h"
+#include "MK02F12810.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
 #include "uart.h"
 
 void Anki::Cozmo::HAL::DebugInit() {
-  // Enable clocking to the UART and PORTD
+  // Enable clocking to the UART
   SIM_SOPT5 &= ~(SIM_SOPT5_UART1TXSRC_MASK | SIM_SOPT5_UART1RXSRC_MASK);
   SIM_SOPT5 |= SIM_SOPT5_UART1TXSRC(0) | SIM_SOPT5_UART1RXSRC(0);
 
@@ -29,7 +29,7 @@ void Anki::Cozmo::HAL::DebugInit() {
   UART1_C3 = 0;
   UART1_C4 = UART_C4_BRFA(BAUD_BRFA(debug_baud_rate));
 
-  // Setup a 64-byte RX/TX fifo (and flush it)
+  // Setup a 1-byte RX/TX fifo (and flush it)
   UART1_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(0);
   UART1_CFIFO = UART_CFIFO_TXFLUSH_MASK;
 }

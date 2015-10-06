@@ -29,7 +29,7 @@
  */
 
 #include "startup.h"
-#include "device/fsl_device_registers.h"
+#include "MK02F12810.h"
 
 #if (defined(__ICCARM__))
     #pragma section = ".data"

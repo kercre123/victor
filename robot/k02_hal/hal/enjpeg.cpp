@@ -10,8 +10,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/common/robot/config.h"
 #include "hal/portable.h"
-#include "lib/device/fsl_device_registers.h"
-#include "core_cm4.h"
+#include "MK02F12810.h"
 #else
 #include <stdio.h>
 typedef unsigned char u8;

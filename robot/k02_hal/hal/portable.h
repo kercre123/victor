@@ -54,8 +54,8 @@ typedef enum {
 // This gets the port index of the GPIO, where A=0, B=1, etc
 #define PORT_INDEX(gp) ((((int)gp)-PTA_BASE) >> 6)
 
-// 32KHz input clock (internal) with 96 MHz output, 48MHz peripheral (bus) clock
-#define CORE_CLOCK (96000000)
+// 32KHz input clock (internal) with 100MHz output, 50MHz peripheral (bus) clock
+#define CORE_CLOCK (100000000)
 #define BUS_CLOCK (CORE_CLOCK >> 1)
 
 // Consistent naming scheme for GPIO, pins, and source variables
