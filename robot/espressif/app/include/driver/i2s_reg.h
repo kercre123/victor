@@ -7,7 +7,7 @@
 #define I2S_BCK_DIV_NUM_S 22
 #define I2S_CLKM_DIV_NUM 0x0000003F
 #define I2S_CLKM_DIV_NUM_S 16
-#define I2S_BITS_MOD 0x0000000F
+#define I2S_BITS_MOD 0x0000000F // adds I2S_BITS_MOD * 2 dead bits to the transmission
 #define I2S_BITS_MOD_S 12
 #define I2S_RECE_MSB_SHIFT (BIT(11))
 #define I2S_TRANS_MSB_SHIFT (BIT(10))
@@ -82,9 +82,9 @@
 #define I2S_TRANS_BCK_IN_DELAY_S 0
 
 #define I2S_FIFO_CONF (DR_REG_I2S_BASE + 0x0020)
-#define I2S_I2S_RX_FIFO_MOD 0x00000007
+#define I2S_I2S_RX_FIFO_MOD 0x00000002
 #define I2S_I2S_RX_FIFO_MOD_S 16
-#define I2S_I2S_TX_FIFO_MOD 0x00000007
+#define I2S_I2S_TX_FIFO_MOD 0x00000002
 #define I2S_I2S_TX_FIFO_MOD_S 13
 #define I2S_I2S_DSCR_EN (BIT(12))
 #define I2S_I2S_TX_DATA_NUM 0x0000003F
@@ -102,12 +102,19 @@
 #define I2S_I2S_SIGLE_DATA_S 0
 
 #define I2SCONF_CHAN (DR_REG_I2S_BASE + 0x002c)
-#define I2S_RX_CHAN_MOD 0x00000003
+#define I2S_RX_CHAN_MOD 0x00000000
 #define I2S_RX_CHAN_MOD_S 3
-#define I2S_TX_CHAN_MOD 0x00000007
+#define I2S_TX_CHAN_MOD 0x00000000
 #define I2S_TX_CHAN_MOD_S 0
 
+#define ETS_SLC_INUM       1
 
+#define ETS_SLC_INTR_ATTACH(func, arg)\
+    ets_isr_attach(ETS_SLC_INUM, (func), (void *)(arg))
+
+
+#define ETS_SLC_INTR_ENABLE() \
+    ETS_INTR_ENABLE(ETS_SLC_INUM)
 #define FUNC_I2SI_DATA                      1
 #define FUNC_I2SI_BCK                        1
 #define FUNC_I2SI_WS                        1
