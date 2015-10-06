@@ -47,8 +47,8 @@ namespace Cozmo {
     
     Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
     
-    static const Radians minHeadAngle(DEG_TO_RAD(3.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(7.5f));
+    static const Radians minHeadAngle(DEG_TO_RAD(1.f));
+    static const Radians minBodyAngle(DEG_TO_RAD(1.f));
     
     RobotInterface::PanAndTilt msg;
     if((headAngle - _robot.GetHeadAngle()).getAbsoluteVal() > minHeadAngle) {
