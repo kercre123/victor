@@ -20,8 +20,6 @@ build/
 [Bb]uild[Ll]og.*
 
 # PNG images, for now...
-*.png
- 
 *_i.c
 *_p.c
 *.ilk
