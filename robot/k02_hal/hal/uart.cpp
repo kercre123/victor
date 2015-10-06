@@ -2,7 +2,7 @@
 #include "hal/portable.h"
 
 #include "anki/cozmo/robot/spineData.h"
-#include "lib/device/fsl_device_registers.h"
+#include "MK02F12810.h"
 
 #include "uart.h"
 
@@ -80,7 +80,7 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
     if (++rxIndex >= 64) {
       rxIndex = 0;
       memcpy(&g_dataToHead, rxBuffer, sizeof(GlobalDataToHead));
-      PRINTF("\r\nUart Rx");
+      DebugPrintf("\r\nUart Rx");
     }
   }
 

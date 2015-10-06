@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "lib/device/fsl_device_registers.h"
+#include "MK02F12810.h"
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/drop.h"
