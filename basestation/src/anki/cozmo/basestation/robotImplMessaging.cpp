@@ -174,7 +174,8 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
 
 void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ObjectMoved& payload = message.GetData().Get_activeObjectMoved();
+  // We make a copy of this message so we can update the object ID before broadcasting
+  ObjectMoved payload = message.GetData().Get_activeObjectMoved();
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
@@ -196,6 +197,8 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
         ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
         assert(actionObject != nullptr);
         if(!actionObject->IsBeingCarried()) {
+          // Update the ID to be the blockworld ID before broadcasting
+          payload.objectID = object->GetID();
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
         }
 
@@ -210,7 +213,8 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
 
 void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ObjectStoppedMoving& payload = message.GetData().Get_activeObjectStopped();
+  // We make a copy of this message so we can update the object ID before broadcasting
+  ObjectStoppedMoving payload = message.GetData().Get_activeObjectStopped();
   const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
     GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
 
@@ -222,7 +226,9 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
         // TODO: Mark object as de-localized
         PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageActiveObjectStoppedMoving",
           "Received message that Object %d (Active ID %d) stopped moving.", objectWithID.first.GetValue(), payload.objectID);
-
+        
+        // Update the ID to be the blockworld ID before broadcasting
+        payload.objectID = object->GetID();
         _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
         return;
       }
@@ -235,7 +241,8 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
 
 void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const ObjectTapped& payload = message.GetData().Get_activeObjectTapped();
+  // We make a copy of this message so we can update the object ID before broadcasting
+  ObjectTapped payload = message.GetData().Get_activeObjectTapped();
   const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
     GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
 
@@ -249,7 +256,9 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
           "MessageActiveObjectTapped",
           "Received message that object %d (Active ID %d) was tapped %d times.",
           objectWithID.first.GetValue(), payload.objectID, payload.numTaps);
-
+        
+        // Update the ID to be the blockworld ID before broadcasting
+        payload.objectID = object->GetID();
         GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
 
         return;
