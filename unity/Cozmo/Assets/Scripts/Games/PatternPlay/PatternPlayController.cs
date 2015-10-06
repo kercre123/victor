@@ -302,7 +302,7 @@ public class PatternPlayController : GameController {
     int lastTouchedID = -1;
     float minTime = 0.0f;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
-      if (block.Value.lastTimeTouched > minTime && block.Value.BlockActiveTimeTouched()) {
+      if (block.Value.lastTimeTouched > minTime) {
         lastTouchedID = block.Key;
         minTime = block.Value.lastTimeTouched;
       }
