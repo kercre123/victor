@@ -20,7 +20,6 @@
 
 #include "anki/vision/CameraSettings.h"
 
-
 namespace Anki {
 namespace Vision {
 
@@ -125,44 +124,7 @@ namespace Vision {
     Image ToGray() const;
     
   }; // class ImageRGBA
-  
-  
-  
-  class ImageDeChunker
-  {
-  public:
-    static const u32 CHUNK_SIZE = 1300;
     
-    ImageDeChunker();
-    
-    // Return true if image just completed and is available, false otherwise.
-    bool AppendChunk(u32 imageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                     ImageEncoding_t encoding, u8 totalChunkCount,
-                     u8 chunkId, const std::array<u8, CHUNK_SIZE>& data, u32 chunkSize);
-    
-    bool AppendChunk(u32 imageId, u32 frameTimeStamp, u16 nrows, u16 ncols,
-                     ImageEncoding_t encoding, u8 totalChunkCount,
-                     u8 chunkId, const u8* data, u32 chunkSize);
-    
-    cv::Mat GetImage() { return _img; }
-    const std::vector<u8>& GetRawData() const { return _imgData; }
-    
-    //void SetImageCompleteCallback(std::function<void(const Vision::Image&)>callback) const;
-    
-  private:
-
-    u32              _imgID;
-    std::vector<u8>  _imgData;
-    u32              _imgBytes;
-    u32              _imgWidth, _imgHeight;
-    u8               _expectedChunkId;
-    bool             _isImgValid;
-    
-    cv::Mat          _img;
-    
-  }; // class ImageDeChunker
-  
-  
   
   //
   // Inlined implemenations

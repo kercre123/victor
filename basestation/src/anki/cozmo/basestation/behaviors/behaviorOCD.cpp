@@ -49,7 +49,7 @@ namespace Cozmo {
       ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
       ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
       ExternalInterface::MessageEngineToGameTag::RobotDeletedObject,
-      ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved,
+      ExternalInterface::MessageEngineToGameTag::ObjectMoved,
       ExternalInterface::MessageEngineToGameTag::BlockPlaced
     };
     
@@ -79,8 +79,8 @@ namespace Cozmo {
         _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject(), event.GetCurrentTime());
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved:
-        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved(), event.GetCurrentTime());
+      case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ObjectMoved(), event.GetCurrentTime());
         break;
         
       case ExternalInterface::MessageEngineToGameTag::BlockPlaced:
@@ -694,14 +694,14 @@ namespace Cozmo {
     switch(state) {
       case BlockLightState::Messy:
         // TODO: Get "messy" color and on/off settings from config
-        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        _robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::RED, ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       case BlockLightState::Neat:
         // TODO: Get "neat" color and on/off settings from config
-        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        _robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::CYAN, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       case BlockLightState::Complete:
-        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::GREEN, NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        _robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       default:
         break;
@@ -1174,7 +1174,7 @@ namespace Cozmo {
   } // HandleActionCompleted()
   
   
-  Result BehaviorOCD::HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec)
+  Result BehaviorOCD::HandleObjectMoved(const ObjectMoved& msg, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     

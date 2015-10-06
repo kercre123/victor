@@ -86,12 +86,11 @@ namespace Cozmo {
     
     // Handlers for signals coming from the engine
     // TODO: These need to be some kind of _internal_ signal or event
-    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec);
-    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg, double currentTime_sec);
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec);
-    
-    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec);
-    Result HandleBlockPlaced(const ExternalInterface::BlockPlaced &msg, double currentTime_sec);
+    Result HandleObjectMoved(const ObjectMoved &msg, double currentTime_sec);
+    Result HandleObservedObject(const ExternalInterface::RobotObservedObject& msg, double currentTime_sec);
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
+    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg, double currentTime_sec);
+    Result HandleBlockPlaced(const ExternalInterface::BlockPlaced& msg, double currentTime_sec);
     
     Result SelectArrangement();
     Result SelectNextObjectToPickUp();
