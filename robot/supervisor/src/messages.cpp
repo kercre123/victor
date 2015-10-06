@@ -286,10 +286,10 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-          PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.action, msg.useManualSpeed);
+        PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.action, msg.useManualSpeed);
 
-          PickAndPlaceController::DockToBlock(msg.useManualSpeed,
-                                              static_cast<DockAction>(msg.action), msg.useManualSpeed);
+        // Currently passing in default values for rel_x, rel_y, and rel_angle
+        PickAndPlaceController::DockToBlock(msg.action, 0, 0, 0, msg.useManualSpeed);
       }
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
