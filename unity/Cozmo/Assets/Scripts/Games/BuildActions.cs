@@ -35,7 +35,7 @@ public class BuildActions : GameActions {
       return;
     }
 
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       //stack is overwritten to be our assisted place command
       if (robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn) {
         buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);
