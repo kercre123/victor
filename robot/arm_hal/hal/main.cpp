@@ -6,6 +6,7 @@
 #include "clad/types/imageTypes.h"
 
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 namespace Anki
 {

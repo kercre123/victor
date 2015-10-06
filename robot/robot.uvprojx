@@ -762,7 +762,7 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
-			<File>
+            <File>
               <FileName>blockLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
@@ -1724,11 +1724,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
-			<File>
+            <File>
               <FileName>blockLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
-            </File>			
+            </File>
             <File>
               <FileName>ledController.cpp</FileName>
               <FileType>8</FileType>
