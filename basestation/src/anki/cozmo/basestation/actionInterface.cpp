@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 namespace Anki {
   
@@ -43,11 +44,7 @@ namespace Anki {
         robot.LockHead( ShouldLockHead() );
         robot.LockLift( ShouldLockLift() );
         robot.LockWheels( ShouldLockWheels() );
-        
-        MessageDisableAnimTracks msg;
-        msg.whichTracks = GetAnimTracksToDisable();
-        robot.SendMessage(msg);
-        
+        robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(GetAnimTracksToDisable())));
         _isRunning = true;
       }
 
@@ -80,11 +77,8 @@ namespace Anki {
           robot.LockHead(false);
           robot.LockLift(false);
           robot.LockWheels(false);
-          
           // Re-enable any animation tracks that were disabled
-          MessageEnableAnimTracks msg;
-          msg.whichTracks = GetAnimTracksToDisable();
-          robot.SendMessage(msg);
+          robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(GetAnimTracksToDisable())));
         }
         _isRunning = false;
       }

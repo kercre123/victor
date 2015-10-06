@@ -16,7 +16,8 @@
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/fileUtils/fileUtils.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 #include <unistd.h>
 
 Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
@@ -53,7 +54,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   Result lastResult;
   
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, nullptr);
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
@@ -62,8 +63,9 @@ TEST(BlockWorld, AddAndRemoveObject)
   ASSERT_TRUE(blockWorld.GetAllExistingObjects().empty());
 
   // Fake a state message update for robot
-  robot.SetSyncTimeAcknowledged(true);
-  MessageRobotState stateMsg;
+  RobotState stateMsg;
+  stateMsg.pose_frame_id = 0;
+  stateMsg.timestamp = 0;
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
 
@@ -192,7 +194,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   // Create the modules we need (and stubs of those we don't)
   RobotManager        robotMgr(nullptr, nullptr);
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
  
   robotMgr.AddRobot(0, &msgHandler);
   Robot& robot = *robotMgr.GetRobotByID(0);
@@ -248,7 +250,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // Create a fake robot state message to do a fake RawOdometryPose update.
     // I think we need to make sure we have one for each matPose VisionMarker
     // message.
-    MessageRobotState msg;
+    RobotState msg;
     msg.timestamp = currentTimeStamp;
     msg.pose_frame_id = robot.GetPoseFrameID();
     msg.headAngle  = headAngle;
@@ -257,22 +259,21 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
     // If we're not going to be checking the robot's pose, we need to set it
     // to the ground truth now, *before* queueing up the markers
     if(!checkRobotPose) {
-      msg.pose_x = trueRobotPose.GetTranslation().x();
-      msg.pose_y = trueRobotPose.GetTranslation().y();
-      msg.pose_z = trueRobotPose.GetTranslation().z();
-      msg.pose_angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
+      msg.pose.x = trueRobotPose.GetTranslation().x();
+      msg.pose.y = trueRobotPose.GetTranslation().y();
+      msg.pose.z = trueRobotPose.GetTranslation().z();
+      msg.pose.angle = trueRobotPose.GetRotationAngle<'Z'>().ToFloat();
     } else {
-      msg.pose_x = 0;
-      msg.pose_y = 0;
-      msg.pose_z = 0;
-      msg.pose_angle = 0;
+      msg.pose.x = 0;
+      msg.pose.y = 0;
+      msg.pose.z = 0;
+      msg.pose.angle = 0;
     }
-    
-    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp,
-                                            msg.pose_frame_id,
-                                            msg.pose_x, msg.pose_y, msg.pose_z,
-                                            msg.pose_angle,
-                                            msg.headAngle, msg.liftAngle), RESULT_OK);
+
+    ASSERT_EQ(robot.AddRawOdomPoseToHistory(msg.timestamp, msg.pose_frame_id, msg.pose.x, msg.pose.y, msg.pose.z,
+      msg.pose.angle, msg.headAngle, msg.liftAngle)
+      , RESULT_OK
+      );
     
     ASSERT_TRUE(robot.UpdateCurrPoseFromHistory(*robot.GetPose().GetParent()));
     

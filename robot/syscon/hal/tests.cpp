@@ -2,11 +2,14 @@
 #include "motors.h"
 #include "head.h"
 #include "debug.h"
+#include "radio.h"
 #include "timer.h"
 #include "lights.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
 #include "anki/cozmo/robot/spineData.h"
+
+#include "hardware.h"
 
 #include "tests.h"
 
@@ -74,6 +77,17 @@ void TestMode(void)
   }
 }
 
+static void TestRadio() {
+  UART::print("\r\nStarting radio test");
+  int timerStart = GetCounter();
+  while(true) {
+    while ( GetCounter() - timerStart < CYCLES_MS(5.0f) ) ;
+    timerStart += CYCLES_MS(5.0f);
+
+    Radio::manage();  
+  }
+}
+
 static void TestMotors() {
   // Motor testing, loop forever
   //  nrf_gpio_pin_clear(PIN_LED1);
@@ -121,11 +135,12 @@ static void TestMotors() {
       Motors::setPower(i, 0x2800);
     #endif
     Motors::update();
-    MicroWait(50000);
+    MicroWait(5000);
     Motors::update();
 
-    Motors::printEncodersRaw();
+    // Let motors run, then print the deltas
     MicroWait(500000);
+    Motors::printEncodersRaw();
 
     UART::print("  Backward: ");
     #ifndef DO_GEAR_RATIO_TESTING
@@ -135,11 +150,12 @@ static void TestMotors() {
       Motors::setPower(i, -0x2800);
     #endif
     Motors::update();
-    MicroWait(50000);
+    MicroWait(5000);
     Motors::update();
 
-    Motors::printEncodersRaw();
+    // Let motors run, then print the deltas
     MicroWait(500000);
+    Motors::printEncodersRaw();
 
     Battery::update();
   }
@@ -171,7 +187,9 @@ static void TestEncoders() {
 }
 
 void TestFixtures::run() {
-#if defined(DO_ENCODER_TESTING)
+#if defined(DO_RADIO_TESTING)
+  TestRadio();
+#elif defined(DO_ENCODER_TESTING)
   TestEncoders();
 #elif defined(DO_MOTOR_TESTING)
   TestMotors();

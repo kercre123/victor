@@ -3,6 +3,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/portable.h"
 #include "anki/cozmo/robot/spineData.h"
+#include "clad/types/imageTypes.h"
 
 #include "messages.h"
 
@@ -58,9 +59,9 @@ namespace Anki
           m_idCard.esn = 1;
       }
       
-      volatile ImageSendMode_t imageSendMode_ = ISM_STREAM;
-      volatile Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
-      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res)
+      volatile ImageSendMode imageSendMode_ = Stream;
+      volatile ImageResolution captureResolution_ = CVGA;
+      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
         captureResolution_ = res;  // TODO: Currently ignored
@@ -116,18 +117,18 @@ void StreamJPEG()
   // Stack-allocate enough space for two whole image chunks, to handle overflow
   u8 buffer[IMAGE_CHUNK_SIZE*2];
   // Point message buffer +2 bytes ahead, to round 14 byte header up to 16 bytes for buffer alignment
-  Anki::Cozmo::Messages::ImageChunk* m = (Anki::Cozmo::Messages::ImageChunk*)(buffer + 2);
+  Anki::Cozmo::ImageChunk* m = (Anki::Cozmo::ImageChunk*)(buffer + 2);
 
   // Initialize the encoder
   JPEGStart(m->data, WIDTH, HEIGHT, QUALITY);
 
-  m->resolution = Anki::Vision::CAMERA_RES_CVGA;
-  m->imageEncoding = Anki::Vision::IE_MINIPEG_GRAY;
+  m->resolution    = CVGA;
+  m->imageEncoding = JPEGMinimizedGray;
   m->imageId = 0;
 
   while (1)
   {
-    if (HAL::imageSendMode_ != ISM_OFF) {
+    if (HAL::imageSendMode_ != Off) {
       
       // Skip frames (to prevent choking the Espressif)
       for (int i = 0; i < FRAMESKIP; i++)
@@ -169,24 +170,24 @@ void StreamJPEG()
         {
           // Leave imageChunkCount at 255 until the final chunk
           m->imageChunkCount = (eof && datalen <= IMAGE_CHUNK_SIZE) ? m->chunkId+1 : 255;
-          m->chunkSize = MIN(datalen, IMAGE_CHUNK_SIZE);
+          m->data_length = MIN(datalen, IMAGE_CHUNK_SIZE);
 
           // On the first chunk, write the quality into the image (cheesy hack)
           if (0 == m->chunkId)
             m->data[0] = QUALITY;
 
-          HAL::RadioSendImageChunk(m, Messages::GetSize(Messages::ImageChunk_ID));
+          Anki::Cozmo::RobotInterface::SendMessage(*m, false);
 
           // Copy anything left at end to front of buffer
-          datalen -= m->chunkSize;
+          datalen -= m->data_length;
           if (datalen)
             memcpy(m->data, m->data + IMAGE_CHUNK_SIZE, datalen);
           m->chunkId++;
         }
       }
       
-      if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
-        HAL::imageSendMode_ = ISM_OFF;
+      if (HAL::imageSendMode_ == SingleShot) {
+        HAL::imageSendMode_ = Off;
       }
     } else {
       Yield();

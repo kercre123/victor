@@ -13,8 +13,7 @@
 #define __Anki_Cozmo_Basestation_EngineImpl_CozmoEngineHostImpl_H__
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
-#include "clad/types/imageSendMode.h"
-#include "clad/types/cameraSettings.h"
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -54,7 +53,7 @@ public:
   bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
 
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
-  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution);
+  void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
   void ReadAnimationsFromDisk() override;
 protected:
@@ -69,7 +68,7 @@ protected:
   bool                         _isListeningForRobots;
   Comms::AdvertisementService  _robotAdvertisementService;
   RobotManager                 _robotMgr;
-  RobotMessageHandler          _robotMsgHandler;
+  RobotInterface::MessageHandler& _robotMsgHandler;
   SpeechRecognition::KeyWordRecognizer* _keywordRecognizer;
 
   std::map<AdvertisingRobot, bool> _forceAddedRobots;

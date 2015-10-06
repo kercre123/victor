@@ -134,12 +134,14 @@ namespace Cozmo {
           break;
         }
         
-        // If we haven't played our init anim yet for this face, do so and break early
-        if (!dataIter->second._playedInitAnim)
+        static auto newFaceAnimCooldownTime = currentTime_sec;
+        // If we haven't played our init anim yet for this face and it's been awhile since we did so, do so and break early
+        if (!dataIter->second._playedInitAnim && currentTime_sec >= newFaceAnimCooldownTime)
         {
           _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
           PlayAnimation("Demo_Look_Around_See_Something_A");
           dataIter->second._playedInitAnim = true;
+          newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
           break;
         }
         
@@ -504,12 +506,12 @@ namespace Cozmo {
       Point2f pupilChange(newPupilPos);
       pupilChange.x() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
       pupilChange.y() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
-      if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
+      //if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
                                          -newPupilPos.x());
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
                                          newPupilPos.y());
-      }
+      //}
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)

@@ -4,9 +4,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
-
-// When accel processing moves to engine, these can go away
-#include "anki/cozmo/shared/activeBlockTypes.h"
+#include "messages.h"
+#include "clad/types/activeObjectTypes.h"
 
 //#define OLD_CUBE_EXPERIMENT 1 // for testing
 
@@ -41,8 +40,6 @@ uint32_t isqrt(uint32_t a_nInput)
     }
     return res;
 }
-
-#include <stdio.h>
 
 namespace Anki
 {
@@ -101,10 +98,10 @@ namespace Anki
         //DisplayStatus(id);
 
         if (count > 0 && count < 16) {
-          Messages::ActiveObjectTapped m;
+          ObjectTapped m;
           m.numTaps = count;
           m.objectID = id;
-          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectTapped), &m);
+          RobotInterface::SendMessage(m);
         }        
         
         
@@ -152,15 +149,14 @@ namespace Anki
           --movingTimeoutCtr[id];
         }
         
-        if (upAxisChanged ||
-            ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
-          Messages::ActiveObjectMoved m;
+        if (upAxisChanged || ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
+          ActiveObjectMoved m;
           m.objectID = id;
           m.xAccel = ax;
           m.yAccel = ay;
           m.zAccel = az;
           m.upAxis = upAxis;  // This should get processed on engine eventually
-          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectMoved), &m);
+          RobotInterface::SendMessage(m);
           isMoving[id] = true;
           movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
         } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
@@ -168,19 +164,13 @@ namespace Anki
           m.objectID = id;
           m.upAxis = upAxis;  // This should get processed on engine eventually
           m.rolled = 0;  // This should get processed on engine eventually
-          RadioSendMessage(GET_MESSAGE_ID(Messages::ActiveObjectStoppedMoving), &m);
+          RobotInterface::SendMessage(m);
           isMoving[id] = false;
         }
-              
-        
         #endif
       }
 
-      #ifndef OLD_CUBE_EXPERIMENT
-
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+      Result SetBlockLight(const u32 blockID, const LightState* lights)
       {
         if (blockID >= MAX_CUBES) {
           return RESULT_FAIL;
@@ -188,10 +178,10 @@ namespace Anki
        
         uint8_t *light  = g_LedStatus[blockID].ledStatus;
         uint32_t sum = 0;
-        int order[] = {0,3,2,1};
+        static const int order[] = {0,3,2,1};
         
         for (int c = 0; c < NUM_BLOCK_LEDS; c++) {
-          uint32_t color = onColor[order[c]];
+          uint32_t color = lights[order[c]].onColor;
           
           for (int ch = 24; ch > 0; ch -= 8) {
             uint8_t status = (color >> ch) & 0xFF;
@@ -207,30 +197,6 @@ namespace Anki
         
         return RESULT_OK;
       }
-      #else
-
-      Result SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                           const u32* onPeriod_ms, const u32* offPeriod_ms,
-                           const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
-      {
-         u8 buffer[256];
-         const u32 size = Messages::GetSize(Messages::SetBlockLights_ID);
-         Anki::Cozmo::Messages::SetBlockLights m;
-         m.blockID = blockID;
-
-         for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-           m.onColor[i] = onColor[i];
-           m.offColor[i] = offColor[i];
-           m.onPeriod_ms[i] = onPeriod_ms[i];
-           m.offPeriod_ms[i] = offPeriod_ms[i];
-           m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == NULL ? 0 : transitionOnPeriod_ms[i]);
-           m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == NULL ? 0 : transitionOffPeriod_ms[i]);
-         }
-         buffer[0] = Messages::SetBlockLights_ID;
-         memcpy(buffer + 1, &m, size);
-         return RadioSendPacket(buffer, size+1, blockID + 1) ? RESULT_OK : RESULT_FAIL;
-      }
-#endif
     }
   }
 }

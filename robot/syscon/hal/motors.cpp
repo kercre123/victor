@@ -42,7 +42,7 @@ struct MotorInfo
   s16 oldPWM;
 };
 
-const u32 IRQ_PRIORITY = 1;
+const u32 IRQ_PRIORITY = 0;
 
 // 16 MHz timer with PWM running at 20kHz
 const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
@@ -77,11 +77,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_LEFT_N1,
     PIN_LEFT_N2,
     PIN_LEFT_P,
-#ifdef ROBOT41
     false,
-#else
-    true,
-#endif
     0,
     PIN_ENCODER_LEFT,
     ENCODER_NONE,
@@ -92,11 +88,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_RIGHT_N1,
     PIN_RIGHT_N2,
     PIN_RIGHT_P,
-#ifdef ROBOT41
-    false,
-#else
-    true,
-#endif
+    true,   // XXX - Rumor says robot #2 is wired backward
     0,
     PIN_ENCODER_RIGHT,
     ENCODER_NONE,
@@ -107,11 +99,7 @@ MotorInfo m_motors[MOTOR_COUNT] =
     PIN_LIFT_N1,
     PIN_LIFT_N2,
     PIN_LIFT_P,
-#ifdef ROBOT41
     false,
-#else
-    true,
-#endif
     0,
     PIN_ENCODER_LIFTA,
     PIN_ENCODER_LIFTB,
@@ -455,6 +443,9 @@ void Motors::printEncodersRaw()
       (Fixed)TO_FIXED_8_24_TO_16_16(tmp1),
       (Fixed)TO_FIXED_8_24_TO_16_16(tmp2),
       (int)m_motors[2].position, (int)m_motors[3].position);
+  
+  // After printing, reset encoders (this is okay because it's used for encoder testing)
+  m_motors[0].position = m_motors[1].position = m_motors[2].position = m_motors[3].position = 0;
 }
 
 

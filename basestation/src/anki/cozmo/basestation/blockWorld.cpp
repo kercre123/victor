@@ -11,7 +11,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "bridge.h"
 #include "flatMat.h"
@@ -19,10 +18,11 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/humanHead.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
 // The amount of time a proximity obstacle exists beyond the latest detection
@@ -49,18 +49,7 @@
 
 namespace Anki
 {
-  namespace NamedColors {
-    // Add some BlockWorld-specific named colors:
-    const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
-    const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 0.0f);
-    const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
-    const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
-  }
-  
+
   namespace Cozmo
   {
     
@@ -673,7 +662,7 @@ namespace Anki
           const f32 minDist = std::sqrt(minDistSq);
           const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
           //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
-          MessagePanAndTiltHead msg;
+          RobotInterface::PanAndTilt msg;
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
@@ -688,7 +677,7 @@ namespace Anki
                            RAD_TO_DEG(msg.headTiltAngle_rad),
                            RAD_TO_DEG(msg.bodyPanAngle_rad));
           */
-          _robot->SendMessage(msg);
+          _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
         }
       } // if/else observedMarkers.empty()
       
@@ -1454,6 +1443,7 @@ namespace Anki
       
     } // UpdateObjectPoses()
 
+    /*
     Result BlockWorld::UpdateProxObstaclePoses()
     {
       TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
@@ -1529,7 +1519,9 @@ namespace Anki
         {
           for (auto proxObsIter = proxTypeMap->second.begin();
                proxObsIter != proxTypeMap->second.end();
-               /* increment iter in loop, depending on erase*/)
+                   */
+/* increment iter in loop, depending on erase*/    /*
+)
           {
             if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS)
             {
@@ -1546,7 +1538,8 @@ namespace Anki
       
       return RESULT_OK;
     }
-    
+    */
+
     
     Result BlockWorld::Update(uint32_t& numObjectsObserved)
     {
@@ -1803,10 +1796,12 @@ namespace Anki
       // Toss any remaining markers?
       ClearAllObservedMarkers();
       
+      /*
       Result lastResult = UpdateProxObstaclePoses();
       if(lastResult != RESULT_OK) {
         return lastResult;
       }
+      */
 
       return RESULT_OK;
       
@@ -2290,20 +2285,20 @@ namespace Anki
             const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
             f32 scaleF = 1.0f;
             switch(IMG_STREAM_RES) {
-              case Vision::CAMERA_RES_CVGA:
-              case Vision::CAMERA_RES_QVGA:
+              case ImageResolution::CVGA:
+              case ImageResolution::QVGA:
                 break;
-              case Vision::CAMERA_RES_QQVGA:
+              case ImageResolution::QQVGA:
                 scaleF *= 0.5;
                 break;
-              case Vision::CAMERA_RES_QQQVGA:
+              case ImageResolution::QQQVGA:
                 scaleF *= 0.25;
                 break;
-              case Vision::CAMERA_RES_QQQQVGA:
+              case ImageResolution::QQQQVGA:
                 scaleF *= 0.125;
                 break;
               default:
-                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", IMG_STREAM_RES);
+                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", (int)IMG_STREAM_RES);
                 break;
             }
             VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,
