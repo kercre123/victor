@@ -328,6 +328,8 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AnimationAvailable:
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotPickedUp:
+      break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
