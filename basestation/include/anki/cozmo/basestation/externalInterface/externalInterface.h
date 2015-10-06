@@ -14,7 +14,6 @@
 #define __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__
 
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
-
 #include <vector>
 
 namespace Anki {

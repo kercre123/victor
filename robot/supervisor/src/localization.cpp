@@ -3,6 +3,8 @@
 #include "pickAndPlaceController.h"
 #include "anki/common/robot/geometry.h"
 #include "imuFilter.h"
+#include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 #define DEBUG_LOCALIZATION 0
 #define DEBUG_POSE_HISTORY 0
@@ -408,18 +410,12 @@ namespace Anki {
         
         return RESULT_OK;
       }
-/*
-      Anki::Embedded::Pose2d GetCurrMatPose()
-      {
-        return currMatPose;
-      }
-*/
       
       Result SendRampTraverseStartMessage()
       {
-        Messages::RampTraverseStart msg;
+        RampTraverseStart msg;
         msg.timestamp = HAL::GetTimeStamp();
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseStart), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -427,10 +423,10 @@ namespace Anki {
       
       Result SendRampTraverseComplete(const bool success)
       {
-        Messages::RampTraverseComplete msg;
+        RampTraverseComplete msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseComplete), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -441,17 +437,17 @@ namespace Anki {
         Result lastResult = RESULT_OK;
         if(onRamp == true && onRamp_ == false) {
           // We weren't on a ramp but now we are
-          Messages::RampTraverseStart msg;
+          RampTraverseStart msg;
           msg.timestamp = HAL::GetTimeStamp();
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseStart), &msg) == false) {
+          if(RobotInterface::SendMessage(msg) == false) {
             lastResult = RESULT_FAIL;
           }
         }
         else if(onRamp == false && onRamp_ == true) {
           // We were on a ramp and now we're not
-          Messages::RampTraverseComplete msg;
+          RampTraverseComplete msg;
           msg.timestamp = HAL::GetTimeStamp();
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RampTraverseComplete), &msg) == false) {
+          if(RobotInterface::SendMessage(msg) == false) {
             lastResult = RESULT_FAIL;
           }
         }
@@ -472,17 +468,17 @@ namespace Anki {
         
         if(onBridge == true && onBridge_ == false) {
           // We weren't on a bridge but now we are
-          Messages::BridgeTraverseStart msg;
+          BridgeTraverseStart msg;
           msg.timestamp = HAL::GetTimeStamp();
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BridgeTraverseStart), &msg) == false) {
+          if(RobotInterface::SendMessage(msg) == false) {
             lastResult = RESULT_FAIL;
           }
         }
         else if(onBridge == false && onBridge_ == true) {
           // We were on a bridge and no we're not
-          Messages::BridgeTraverseComplete msg;
+          BridgeTraverseComplete msg;
           msg.timestamp = HAL::GetTimeStamp();
-          if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BridgeTraverseComplete), &msg) == false) {
+          if(RobotInterface::SendMessage(msg) == false) {
             lastResult = RESULT_FAIL;
           }
         }

@@ -42,7 +42,7 @@ struct MotorInfo
   s16 oldPWM;
 };
 
-const u32 IRQ_PRIORITY = 1;
+const u32 IRQ_PRIORITY = 0;
 
 // 16 MHz timer with PWM running at 20kHz
 const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;

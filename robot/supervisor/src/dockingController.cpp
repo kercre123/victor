@@ -7,6 +7,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/robot/geometry.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "localization.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -156,7 +158,7 @@ namespace Anki {
         f32 headCamFOV_ver_;
         f32 headCamFOV_hor_;
         
-        Messages::DockingErrorSignal dockingErrSignalMsg_;
+        DockingErrorSignal dockingErrSignalMsg_;
         bool dockingErrSignalMsgReady_ = false;
         
       } // "private" namespace
@@ -186,7 +188,7 @@ namespace Anki {
       {
         // Half fov of camera at center horizontal.
         // 0.36 radians is roughly the half-FOV of the camera bounded by the lift posts.
-        const f32 HALF_FOV = MIN(0.5*GetHorizontalFOV(), 0.36);
+        const f32 HALF_FOV = MIN(0.5f*GetHorizontalFOV(), 0.36f);
         
         const f32 markerCenterX = markerPose.GetX();
         const f32 markerCenterY = markerPose.GetY();
@@ -220,13 +222,13 @@ namespace Anki {
       
       Result SendGoalPoseMessage(const Anki::Embedded::Pose2d &p)
       {
-        Messages::GoalPose msg;
-        msg.pose_x = p.GetX();
-        msg.pose_y = p.GetY();
-        msg.pose_z = 0;
-        msg.pose_angle = p.GetAngle().ToFloat();
+        GoalPose msg;
+        msg.pose.x = p.GetX();
+        msg.pose.y = p.GetY();
+        msg.pose.z = 0;
+        msg.pose.angle = p.GetAngle().ToFloat();
         msg.followingMarkerNormal = followingBlockNormalPath_;
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::GoalPose), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -421,7 +423,7 @@ namespace Anki {
             }
           }
           
-        } // while dockErrSignalMailbox has mail
+        } // while new docking error message has mail
 
         
         
@@ -850,7 +852,7 @@ namespace Anki {
         return false;
       }
       
-      void SetDockingErrorSignalMessage(const Messages::DockingErrorSignal& msg)
+      void SetDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
         dockingErrSignalMsg_ = msg;
         dockingErrSignalMsgReady_ = true;

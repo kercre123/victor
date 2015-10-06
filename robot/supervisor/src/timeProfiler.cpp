@@ -15,6 +15,8 @@
 
 #include "timeProfiler.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -118,14 +120,24 @@ namespace Cozmo {
   }
   
   void TimeProfiler::PrintStats() {
+    RobotInterface::TimeProfileStat msg;
     u32 *avgTimes;
     u32 *maxTimes;
     
     u32 numProfiles = ComputeStats(&avgTimes, &maxTimes);
-
-    PRINT("TimeProfiler %s stats:\n", name_);
+    
+    msg.isHeader = true;
+    msg.profName_length = strlen(name_); // Limits to 255 because _length is a u8
+    memcpy(msg.profName, name_, msg.profName_length);
+    RobotInterface::SendMessage(msg);
+    msg.isHeader = false;
+    
     for (u32 i=0; i<numProfiles; ++i) {
-      PRINT(" %s: avg %d us, max %d us\n", timeProfName_[i], avgTimes[i], maxTimes[i]);
+      msg.profName_length = strlen(timeProfName_[i]);  // Limits to 255 because _length is a u8
+      memcpy(msg.profName, timeProfName_[i], msg.profName_length);
+      msg.avg = avgTimes[i];
+      msg.max = maxTimes[i];
+      RobotInterface::SendMessage(msg);
     }
   }
   

@@ -1,0 +1,35 @@
+/** For IMU related messages and definitions
+ */
+ 
+ 
+namespace Anki {
+namespace Cozmo {
+  
+enum uint_8 IMUConstants
+{
+    IMU_CHUNK_SIZE = 32,
+}
+  
+namespace RobotInterface {
+
+structure IMUDataChunk
+{
+  uint_8 seqId,
+  uint_8 chunkId,
+  uint_8 totalNumChunks,
+  int_8  aX[32], // IMU_CHUNK_SIZE
+  int_8  aY[32],
+  int_8  aZ[32],
+  int_8  gX[32],
+  int_8  gY[32],
+  int_8  gZ[32],
+}
+
+structure ImuRequest
+{
+  uint_32 length_ms
+}
+
+} // RobotInterface
+} // Cozmo
+} // Anki
