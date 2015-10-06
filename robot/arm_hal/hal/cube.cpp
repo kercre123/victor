@@ -6,6 +6,8 @@
 #include "hal/portable.h"
 #include "messages.h"
 #include "clad/types/activeObjectTypes.h"
+#include "clad/robotInterface/messageFromActiveObject.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 //#define OLD_CUBE_EXPERIMENT 1 // for testing
 
@@ -110,7 +112,7 @@ namespace Anki
         const u8 STOP_MOVING_COUNT_THRESH = 20;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
         static u8 movingTimeoutCtr[MAX_CUBES] = {0};
         static bool isMoving[MAX_CUBES] = {false};
-        static UpAxis prevUpAxis[MAX_CUBES] = {UP_AXIS_UNKNOWN};
+        static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};
         
         s8 ax = g_AccelStatus[id].x;
         s8 ay = g_AccelStatus[id].y;
@@ -120,20 +122,20 @@ namespace Anki
         // Compute upAxis
         // Send ObjectMoved message if upAxis changes
         s8 maxAccelVal = 0;
-        UpAxis upAxis = UP_AXIS_UNKNOWN;
+        UpAxis upAxis = Unknown;
         if (abs(ax) > maxAccelVal) {
-          upAxis = ax > 0 ? UP_AXIS_Xpos : UP_AXIS_Xneg;
+          upAxis = ax > 0 ? XPositive : XNegative;
           maxAccelVal = abs(ax);
         }
         if (abs(ay) > maxAccelVal) {
-          upAxis = ay > 0 ? UP_AXIS_Ypos : UP_AXIS_Yneg;
+          upAxis = ay > 0 ? YPositive : YNegative;
           maxAccelVal = abs(ay);
         }
         if (abs(az) > maxAccelVal) {
-          upAxis = az > 0 ? UP_AXIS_Zpos : UP_AXIS_Zneg;
+          upAxis = az > 0 ? ZPositive : YNegative;
           maxAccelVal = abs(az);
         }
-        bool upAxisChanged = (prevUpAxis[id] != UP_AXIS_UNKNOWN) && (prevUpAxis[id] != upAxis);
+        bool upAxisChanged = (prevUpAxis[id] != Unknown) && (prevUpAxis[id] != upAxis);
         prevUpAxis[id] = upAxis;
         
         
@@ -149,18 +151,19 @@ namespace Anki
           --movingTimeoutCtr[id];
         }
         
-        if (upAxisChanged || ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
-          ActiveObjectMoved m;
+        if (upAxisChanged ||
+            ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
+          ObjectMoved m;
           m.objectID = id;
-          m.xAccel = ax;
-          m.yAccel = ay;
-          m.zAccel = az;
+          m.accel.x = ax;
+          m.accel.y = ay;
+          m.accel.z = az;
           m.upAxis = upAxis;  // This should get processed on engine eventually
           RobotInterface::SendMessage(m);
           isMoving[id] = true;
           movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
         } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
-          Messages::ActiveObjectStoppedMoving m;
+          ObjectStoppedMoving m;
           m.objectID = id;
           m.upAxis = upAxis;  // This should get processed on engine eventually
           m.rolled = 0;  // This should get processed on engine eventually
