@@ -2770,7 +2770,7 @@ namespace Anki {
           lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
           lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
         }
-        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
       
@@ -2806,7 +2806,7 @@ namespace Anki {
           lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
         }
 
-        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 
     }
@@ -2957,7 +2957,7 @@ namespace Anki {
         lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
         lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
       }
-      return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetID())));
+      return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }
       
       
