@@ -132,7 +132,7 @@ namespace Anki
           maxAccelVal = abs(ay);
         }
         if (abs(az) > maxAccelVal) {
-          upAxis = az > 0 ? ZPositive : YNegative;
+          upAxis = az > 0 ? ZPositive : ZNegative;
           maxAccelVal = abs(az);
         }
         bool upAxisChanged = (prevUpAxis[id] != Unknown) && (prevUpAxis[id] != upAxis);
