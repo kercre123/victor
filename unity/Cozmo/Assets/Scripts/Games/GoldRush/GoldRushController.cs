@@ -84,17 +84,14 @@ public class GoldRushController : GameController {
     AUTO_DEPOSITING,
     RETURNED,
     DEPOSITING,
-    NUMSTATES}
-
-  ;
+    NUMSTATES
+  }
 
   private PlayState playState = PlayState.IDLE;
   float playStateTimer = 0;
 
   // only increments when the robot is searching for or returing gold
   float totalActiveTime = 0;
-
-
 
   public bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
 
@@ -106,9 +103,8 @@ public class GoldRushController : GameController {
     WAITING_TO_PICKUP_BLOCK,
     WAITING_FOR_STACK,
     WAITING_FOR_PLAY,
-    NUMSTATES}
-
-  ;
+    NUMSTATES
+  }
 
   private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
