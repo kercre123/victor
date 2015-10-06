@@ -31,11 +31,12 @@ void setTransmit(bool tx) {
     nrf_gpio_cfg_output(PIN_TX_HEAD);
 
     NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = 
-      (NRF_GPIO->PIN_CNF[PIN_TX_HEAD] & ~GPIO_PIN_CNF_DRIVE_Msk) | 
+      (NRF_GPIO->PIN_CNF[PIN_TX_HEAD] & ~GPIO_PIN_CNF_DRIVE_Msk) |
       (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
   } else {
     NRF_UART0->PSELRXD = PIN_TX_HEAD;
     NRF_UART0->PSELTXD = 0xFFFFFFFF;
+
     nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
   }
 }

@@ -39,7 +39,7 @@ void Anki::Cozmo::HAL::UartInit() {
   UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
 
   UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(6) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(6) ;
-  UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK;
+  UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
   txIndex = 0;
   rxIndex = 0;
@@ -99,6 +99,6 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
 }
 
 void Anki::Cozmo::HAL::UartReceive(void) {
-  //while (~UART0_S1 & UART_S1_TC_MASK ) ;
-  //transmit_mode(false);
+  while (~UART0_S1 & UART_S1_TC_MASK ) ;
+  transmit_mode(false);
 }

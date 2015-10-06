@@ -77,7 +77,7 @@ int main (void)
   //SPIInit();
   //DacInit();
   //i2c_init();
-  UartInit();
+  //UartInit();
   
   CameraInit();
   for(;;) ;
