@@ -371,7 +371,7 @@ namespace Cozmo {
 
         // Drive straight sometimes, turn in place the rest of the time
         s16 curvature = s16_MAX; // drive straight
-        if(_rng.RandDblInRange(0., 1.) < GET_PARAM(f32, BodyMovementStraightFraction)) {
+        if(_rng.RandDblInRange(0., 1.) > GET_PARAM(f32, BodyMovementStraightFraction)) {
           curvature = 0;
         }
         
