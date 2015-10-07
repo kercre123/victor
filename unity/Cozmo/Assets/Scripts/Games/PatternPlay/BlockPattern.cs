@@ -93,34 +93,27 @@ public class BlockPattern {
     if (robot.markersVisibleObjects.Count < 3)
       return false;
 
+    patternSeen.facingCozmo = CheckFacingCozmo(robot);
+    patternSeen.verticalStack = CheckVerticalStack(robot);
+
+    bool rowAlignment = CheckRowAlignment(robot);
+
+    if (patternSeen.verticalStack == false && rowAlignment == false) {
+      return false;
+    }
+
     // check rotation alignment
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
       relativeForward.Normalize();
 
-      if (Mathf.Abs(relativeForward.x) <= 0.94f && Mathf.Abs(relativeForward.y) <= 0.94f) {
-        // non orthogonal forward vector, let's early out.
+      if (Mathf.Abs(relativeForward.x) <= 0.94f && Mathf.Abs(relativeForward.y) <= 0.94f && Mathf.Abs(relativeForward.z) <= 0.94f) {
+        // non orthogonal forward vector, let's early out. the z-axis is for if the cube is on the side and facing cozmo.
         return false;
       }
     }
 
-    // check position alignment (within certain x threshold)
-    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
-
-      Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
-
-      float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
-      float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
-
-      if (Mathf.Abs(block0 - block1) > 10.0f) {
-        return false;
-      }
-    }
-
-    // convert get block lights in cozmo space.
+    // convert get block lights in cozmo space. build out pattern seen.
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
       BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward);
@@ -138,11 +131,52 @@ public class BlockPattern {
     }
 
     // if all of the patterns match but no lights are on don't match.
-    if (patternSeen.blocks[0].back == false && patternSeen.blocks[0].front == false
-        && patternSeen.blocks[0].left == false && patternSeen.blocks[0].right == false) {
+    if (patternSeen.blocks[0].LightsOff()) {
       return false;
     }
 
+    DAS.Info("BlockPattern", "PatternSeen: " + "facingCozmo: " + patternSeen.facingCozmo + " vertical: " + patternSeen.verticalStack +
+    " lights: " + patternSeen.blocks[0].back + " " + patternSeen.blocks[0].front + " " + patternSeen.blocks[0].left + " " + patternSeen.blocks[0].right);
+
+    return true;
+  }
+
+  static bool CheckFacingCozmo(Robot robot) {
+    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Up;
+      if (relativeUp.x > -0.9f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool CheckVerticalStack(Robot robot) {
+    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
+      Vector2 flatPos0 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition);
+      Vector2 flatPos1 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition);
+      if (Vector2.Distance(flatPos0, flatPos1) > 0.5f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool CheckRowAlignment(Robot robot) {
+    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
+      Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
+      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
+
+      Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
+      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
+
+      float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
+      float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
+
+      if (Mathf.Abs(block0 - block1) > 10.0f) {
+        return false;
+      }
+    }
     return true;
   }
 

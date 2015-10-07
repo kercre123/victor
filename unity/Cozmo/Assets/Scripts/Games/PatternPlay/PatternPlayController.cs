@@ -291,7 +291,6 @@ public class PatternPlayController : GameController {
       // TODO: Interrupt animation because cozmo is upset the pattern may have been messed up.
     }
 
-    Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
     blockPatternData[blockID].lastFrameZAccel = zAccel;
     blockPatternData[blockID].lastTimeTouched = Time.time;
   }
