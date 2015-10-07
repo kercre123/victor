@@ -18,22 +18,22 @@
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/utils/hasSettableParameters.h"
 #include "clad/types/liveIdleAnimationParameters.h"
-
-#include "util/signals/simpleSignal_fwd.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
   
   // Forward declaration
   class Robot;
+  
   class IExternalInterface;
   namespace ExternalInterface {
     class MessageGameToEngine;
   }
-  template<typename T>class AnkiEvent;
- 
-  class AnimationStreamer
+  
+  class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::SetLiveIdleAnimationParameters, f32>
   {
   public:
     static const std::string LiveAnimation;
@@ -61,6 +61,9 @@ namespace Cozmo {
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
+    
+    // Required by HasSettableParameters:
+    virtual void SetDefaultParams() override;
     
   private:
     
@@ -92,14 +95,6 @@ namespace Cozmo {
     s32 _bodyMoveSpacing_ms;
     s32 _liftMoveSpacing_ms;
     s32 _headMoveSpacing_ms;
-    
-    std::vector<Signal::SmartHandle> _eventHandlers;
-    void HandleSetLiveAnimationParameter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-    
-    template<typename T> T GetParam(LiveIdleAnimationParameter whichParam);
-    std::map<LiveIdleAnimationParameter, f32> _liveIdleParams;
-    
-    void SetDefaultLiveIdleParams();
     
   }; // class AnimationStreamer
   

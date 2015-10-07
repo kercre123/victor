@@ -5,6 +5,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 
 #include "util/logging/logging.h"
 
@@ -18,7 +19,8 @@ namespace Cozmo {
   
   AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
                                        CannedAnimationContainer& container)
-  : _animationContainer(container)
+  : HasSettableParameters(externalInterface)
+  , _animationContainer(container)
   , _liveAnimation(LiveAnimation)
   , _idleAnimation(nullptr)
   , _streamingAnimation(nullptr)
@@ -37,15 +39,7 @@ namespace Cozmo {
   , _liftMoveSpacing_ms(0)
   , _headMoveSpacing_ms(0)
   {
-    if(nullptr != externalInterface) {
-      auto setParamCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) {
-        this->HandleSetLiveAnimationParameter(event);
-      };
-      
-      _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, setParamCallback));
-    }
-    
-    SetDefaultLiveIdleParams();
+
   }
 
   u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
@@ -251,15 +245,11 @@ namespace Cozmo {
     return RESULT_OK;
   } // StreamProceduralFace()
   
-  template<typename T>
-  T AnimationStreamer::GetParam(LiveIdleAnimationParameter whichParam)
-  {
-    return static_cast<T>(_liveIdleParams[whichParam]);
-  }
+
   
-  void AnimationStreamer::SetDefaultLiveIdleParams()
+  void AnimationStreamer::SetDefaultParams()
   {
-#   define SET_DEFAULT(__NAME__, __VALUE__) _liveIdleParams[LiveIdleAnimationParameter::__NAME__] = static_cast<f32>(__VALUE__)
+#   define SET_DEFAULT(__NAME__, __VALUE__) SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
     
     SET_DEFAULT(BlinkCloseTime_ms, 150);
     SET_DEFAULT(BlinkOpenTime_ms, 150);
@@ -293,7 +283,7 @@ namespace Cozmo {
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
   {
-#   define GET_PARAM(__TYPE__, __NAME__) static_cast<__TYPE__>(_liveIdleParams[LiveIdleAnimationParameter::__NAME__])
+#   define GET_PARAM(__TYPE__, __NAME__) GetParam<__TYPE__>(LiveIdleAnimationParameter::__NAME__)
     
     Result lastResult = RESULT_OK;
     
@@ -495,22 +485,7 @@ namespace Cozmo {
     return _streamingAnimation ? _streamingAnimation->GetName() : "";
   }
   
-  void AnimationStreamer::HandleSetLiveAnimationParameter(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-  {
-    const ExternalInterface::SetLiveIdleAnimationParameters& msg = event.GetData().Get_SetLiveIdleAnimationParameters();
-    
-    if(msg.paramNames.size() != msg.paramValues.size()) {
-      PRINT_NAMED_ERROR("AnimationStreamer.HandleSetLiveAnimationParameter.MismatchedLengths",
-                        "ParamNames and ParamValues not the same length (%lu & %lu)\n",
-                        msg.paramNames.size(), msg.paramValues.size());
-    } else {
-      
-      for(size_t i=0; i<msg.paramNames.size(); ++i) {
-        _liveIdleParams[msg.paramNames[i]] = msg.paramValues[i];
-      }
-      
-    }
-  }
+
   
 } // namespace Cozmo
 } // namespace Anki
