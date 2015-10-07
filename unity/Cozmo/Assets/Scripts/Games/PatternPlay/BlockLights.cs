@@ -6,6 +6,7 @@ public struct BlockLights {
   public bool back;
   public bool left;
   public bool right;
+  public bool facingCozmo;
 
   static public BlockLights GetNextConfig(BlockLights currentConfig) {
     BlockLights newLights = new BlockLights();
@@ -28,10 +29,6 @@ public struct BlockLights {
       newLights.left = true;
     }
     else if (currentConfig.front && currentConfig.right && currentConfig.back && currentConfig.left) {
-      newLights.front = true;
-      newLights.back = true;
-    }
-    else if (currentConfig.front && !currentConfig.right && currentConfig.back && !currentConfig.left) {
 
     }
     return newLights;
