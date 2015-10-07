@@ -37,7 +37,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.MovedAction += BlockMoved;
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
-    CozmoEmotionManager.instance.SetIdleAnimation("None");
+    //CozmoEmotionManager.instance.SetIdleAnimation("None");
   }
 
   protected override void OnDisable() {

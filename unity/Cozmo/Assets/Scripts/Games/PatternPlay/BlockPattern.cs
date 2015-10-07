@@ -8,6 +8,8 @@ public class BlockPattern {
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
   public List<BlockLights> blocks = new List<BlockLights>();
+  public bool facingCozmo;
+  public bool verticalStack;
 
   public override bool Equals(System.Object obj) {
     if (obj == null) {
@@ -26,6 +28,12 @@ public class BlockPattern {
       return false;
 
     if (pattern.blocks.Count != blocks.Count)
+      return false;
+
+    if (pattern.facingCozmo != facingCozmo)
+      return false;
+
+    if (pattern.verticalStack != verticalStack)
       return false;
 
     for (int i = 0; i < pattern.blocks.Count; ++i) {

@@ -6,7 +6,6 @@ public struct BlockLights {
   public bool back;
   public bool left;
   public bool right;
-  public bool facingCozmo;
 
   static public BlockLights GetNextConfig(BlockLights currentConfig) {
     BlockLights newLights = new BlockLights();
