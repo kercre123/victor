@@ -35,11 +35,7 @@ namespace Anki
       void HALExec(u8* buf, int buflen, int eof)
       {       
         //UartTransmit();
-        // Send data, if we have any
-        if (buflen && buflen < 120)
-        {
-            //TransmitDrop(buf, buflen, eof);
-        }
+        TransmitDrop(buf, buflen, eof);
 
         //UartReceive(); // This should be done last
       }
@@ -77,7 +73,7 @@ int main (void)
   // Switch to 10MHz external reference to enable 100MHz clock
   MCG_C2 &= ~MCG_C2_EREFS_MASK;
   
-  //SPIInit();
+  SPIInit();
   //DacInit();
   //i2c_init();
   //UartInit();
