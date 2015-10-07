@@ -40,8 +40,3 @@ extern "C" int8_t ICACHE_FLASH_ATTR task0Init(void)
     return 0;
   }
 }
-
-bool inline task0Post(zeroSubTask task, uint32_t param)
-{
-  return 
-}
