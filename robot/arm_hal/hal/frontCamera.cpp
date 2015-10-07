@@ -9,6 +9,7 @@
 
 #include "hal/i2c.h"
 
+#include "clad/types/imageTypes.h"
 
 /***************************************************************************
  *
@@ -1273,7 +1274,7 @@ namespace Anki
         }
       }
 
-      void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
+      void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight)
       {
         m_isEOF = false;
 

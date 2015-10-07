@@ -663,16 +663,52 @@ namespace Cozmo {
       }
       
       // Make sure it's approximately at the same height as the robot
-      if(NEAR(poseWrtRobot.GetTranslation().z(), oObject->GetSize().z()*(heightLevel + 0.5f), 10.f)) {
+      const f32 zTol = oObject->GetSize().z()*0.5f;
+      if(NEAR(poseWrtRobot.GetTranslation().z(),
+              oObject->GetSize().z()*(heightLevel + 0.5f),
+              zTol))
+      {
         // See if there's anything on top of it
-        ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*oObject, 15.f);
-        if((ootStatus == ObjectOnTopStatus::DontCareIfObjectOnTop) || (ootStatus == ObjectOnTopStatus::ObjectOnTop && onTop != nullptr) || (ootStatus == ObjectOnTopStatus::NoObjectOnTop && onTop == nullptr)) {
+        ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*oObject, zTol);
+        if((ootStatus == ObjectOnTopStatus::DontCareIfObjectOnTop) ||
+           (ootStatus == ObjectOnTopStatus::ObjectOnTop   && onTop != nullptr) ||
+           (ootStatus == ObjectOnTopStatus::NoObjectOnTop && onTop == nullptr))
+        {
           const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
           if(currentDistSq < closestDistSq) {
             closestDistSq = currentDistSq;
             objectID = objID;
+            
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                                   "BehaviorOCD.GetClosestObjectInSet.NewClosest",
+                                   "Selecting new closest object %d at d=%f",
+                                   objectID.GetValue(), std::sqrt(currentDistSq));
+            
+          } else {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                                   "BehaviorOCD.GetClosestObjectInSet.TooFar",
+                                   "Skipping object %d at d=%f, which is not closer "
+                                   "than current best object %d at d=%f",
+                                   objID.GetValue(), std::sqrt(currentDistSq),
+                                   objectID.GetValue(), std::sqrt(closestDistSq));
           }
+          
+        } else {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                                 "BehaviorOCD.GetClosestObjectInSet.WrongOnTopStatus",
+                                 "Skipping object %d which %s object on top",
+                                 oObject->GetID().GetValue(),
+                                 (onTop == nullptr ? "does not have" : "has"));
         }
+      } else {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                               "BehaviorOCD.GetClosestObjectInSet.WrongHeight",
+                               "Skipping object %d whose height wrt robot (%f) is "
+                               "not close enough to required value (%f) [heightLevel=%d]",
+                               oObject->GetID().GetValue(),
+                               poseWrtRobot.GetTranslation().z(),
+                               oObject->GetSize().z()*(heightLevel + 0.5f),
+                               heightLevel);
       }
     } // for each neat object
     

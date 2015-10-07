@@ -80,6 +80,7 @@ namespace Cozmo {
     u32 _lastActionTag;
     bool _isActing = false;
     double _lastGlanceTime = 0;
+    double _lastTooCloseScaredTime = 0;
     
     std::vector<::Signal::SmartHandle> _eventHandles;
     
@@ -101,7 +102,7 @@ namespace Cozmo {
     constexpr static float kFaceCooldownDuration_sec = 20;
     
     // Distance inside of which Cozmo will start noticing a face
-    constexpr static float kCloseEnoughDistance_mm = 1500;
+    constexpr static float kCloseEnoughDistance_mm = 1250;
     
     // Defines size of zone between "close enough" and "too far away", which prevents faces quickly going back and forth
     // over threshold of close enough or not
@@ -111,7 +112,7 @@ namespace Cozmo {
     constexpr static float kTooFarDistance_mm = kCloseEnoughDistance_mm + kFaceBufferDistance_mm;
     
     // Distance to trigger Cozmo to get further away from the focused face
-    constexpr static float kTooCloseDistance_mm = 300;
+    constexpr static float kTooCloseDistance_mm = 200;
     
     // Maximum frequency that Cozmo should glance down when interacting with faces (could be longer if he has a stable
     // face to focus on; this interval shouln't interrupt his interaction)
@@ -119,6 +120,10 @@ namespace Cozmo {
     
     // Min time between plays of the animation when we see a new face
     constexpr static float kSeeNewFaceAnimationCooldown_sec = 10;
+    
+    // Min time between playing the shocked/scared animation when a face gets
+    // too close
+    constexpr static float kTooCloseScaredInterval_sec = 2;
     
   }; // BehaviorInteractWithFaces
   

@@ -270,7 +270,7 @@ namespace Anki {
       } else if(face.GetName().empty()) {
         name = "Face" + std::to_string(face.GetID());
       } else {
-        name = face.GetName();
+        name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
       }
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       

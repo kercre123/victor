@@ -62,8 +62,6 @@ namespace Cozmo {
   
   Result BehaviorInteractWithFaces::Init(double currentTime_sec)
   {
-
-    
     // Make sure the robot's idle animation is set to use Live, since we are
     // going to stream live face mimicking
     _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
@@ -214,7 +212,8 @@ namespace Cozmo {
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(_crntProceduralFace, *face);
         
-        if(!_isActing)
+        if(!_isActing &&
+           (currentTime_sec - _lastTooCloseScaredTime) > kTooCloseScaredInterval_sec)
         {
           Pose3d headWrtRobot;
           bool headPoseRetrieveSuccess = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot);
@@ -234,8 +233,13 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotObservedFace.Shocked",
                              "Head is %.1fmm away: playing shocked anim.",
                              headWrtRobot.GetTranslation().Length());
+            
+            // Relinquish control over head/wheels so animation plays correctly,
+            _robot.DisableTrackToFace();
+            
             PlayAnimation("Demo_Face_Interaction_ShockedScared_A");
             _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
+            _lastTooCloseScaredTime = currentTime_sec;
           }
         }
         
@@ -478,12 +482,6 @@ namespace Cozmo {
     const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
     const f32 eyeHeightFraction = (GetEyeHeight(&face) - expectedEyeHeight)/expectedEyeHeight + .1f; // bias a little larger
     
-    for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-      proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
-                                       eyeHeightFraction);
-      proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                       std::max(.25f, std::min(.75f,eyeHeightFraction)));
-    }
     // Adjust pupil positions depending on where face is in the image
     Point2f newPupilPos(face.GetLeftEyeCenter());
     newPupilPos += face.GetRightEyeCenter();
@@ -493,13 +491,16 @@ namespace Cozmo {
                           _robot.GetCamera().GetCalibration().GetNrows()/2);
     newPupilPos -= imageHalfSize; // make relative to image center
     newPupilPos /= imageHalfSize; // scale to be between -1 and 1
-    newPupilPos *= .8f; // magic value to make it more realistic
+
+    // magic value to make pupil tracking feel more realistic
+    // TODO: Actually intersect vector from robot head to tracked face with screen
+    newPupilPos *= .75f;
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
       proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
-                                       eyeHeightFraction);
+                                  std::max(-.8f, std::min(.8f, eyeHeightFraction)));
       proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                       eyeHeightFraction);
+                                  std::max(-.75f, std::min(.75f, eyeHeightFraction)));
       
       // To get saccade-like movement, only update the pupils if they new position is
       // different enough
