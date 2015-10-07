@@ -41,19 +41,19 @@
 
 /// Number of samples of audio data delivered to the RTIP each drop.
 #define AUDIO_BYTES_PER_DROP 4
-/// Number of bytes of I2C data to the RTIP each drop
-#define I2C_BYTES_PER_DROP 4
+/// Number of bytes of SCREEN data to the RTIP each drop
+#define SCREEN_BYTES_PER_DROP 4
 
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_SIZE - DROP_PREAMBLE_SIZE - AUDIO_BYTES_PER_DROP - I2C_BYTES_PER_DROP - 1)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_SIZE - DROP_PREAMBLE_SIZE - AUDIO_BYTES_PER_DROP - SCREEN_BYTES_PER_DROP - 1)
 
 /// Drop structure for transfers from the WiFi to the RTIP
 typedef struct
 {
   char     preamble[DROP_PREAMBLE_SIZE]; ///< Synchronization Preamble indicating drop destination
   uint8_t  audioData[AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
-  uint8_t  i2cData[I2C_BYTES_PER_DROP]; ///< Isochronous I2C write data
+  uint8_t  screenData[SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
   uint8_t  droplet; ///< Drop flags
 } DropToRTIP;
@@ -87,7 +87,7 @@ typedef enum
   DRPLT_RSRVD = 1<<6,       ///< Reserved for future use
 // To RTIP drop fields
   audioDataValid = 1<<0,    ///< Bytes in the iscochronous audio field are valid
-  i2cDataValid   = 1<<1,    ///< Bytes in the iscochronous i2c field are valid
+  screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
   payloadValid   = 1<<2,    ///< Bytes in the payload field are valid
 // Shared fields
   ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi

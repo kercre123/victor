@@ -37,10 +37,31 @@ void i2spiStop(void);
 /** Queues a buffer to transmit over I2S
  * @param msgData a pointer to the data to be sent to the RTIP
  * @param msgLen the number of bytes of message data pointed to by msgData
- * @param tag The type of data to be sent to the RTIP
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen, uint8_t tag);
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen);
+
+/** Test if the i2spi buffer is ready to accept audio data
+ * @return true if i2spiPushAudioData may be called.
+ */
+bool i2spiReadyForAudioData(void);
+
+/** Pushes audio data into the I2SPI system to send out isochronously.
+ * @param audioData A pointer to audio data.
+ * @param len The number of bytes of data
+ */
+void i2spiPushAudioData(uint8_t* audioData, uint16_t len);
+
+/** Test if the i2spi buffer is ready to accept screen data
+ * @return true if the i2spiPushScreenData may be called.
+ */
+bool i2spiReadyForScreenData(void);
+
+/** Pushes screen data into the I2SPI system to send out iscochronously.
+ * @param screenData A pointer to screen data.
+ * @param len The number of bytes of screen data.
+ */
+void i2spiPushScreenData(uint8_t screenData, uint16_t len);
 
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;

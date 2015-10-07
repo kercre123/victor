@@ -12,7 +12,7 @@
 #include "driver/i2s_reg.h"
 #include "driver/slc_register.h"
 #include "driver/sdio_slv.h"
-#include "driver/i2spi.h"
+#include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
 #include "client.h"
 
@@ -50,7 +50,7 @@ static int16_t dropPhase;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops
-#define DROP_TX_PHASE_ADJUST (0) 
+#define DROP_TX_PHASE_ADJUST (0)
 /// Uninitalized phase number
 #define DROP_PHASE_UNINITALIZED (-32767)
 
@@ -186,12 +186,14 @@ LOCAL void i2spiTask(os_event_t *event)
     {
       int w;
       uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+      uint8_t* txBB = (uint8_t*)txBuf;
       if (asDesc(desc->next_link_ptr) == nextOutgoingDesc)
       {
         nextOutgoingDesc = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
         i2spiTxUnderflowCount++;
       }
-      for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = w;//0xFFFFffff; // Reset to idle high using word size writes
+      //for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0xFFFFffff; // Reset to idle high using word size writes
+      for(w=0; w<DMA_BUF_SIZE; w++) txBB[w] = w;
       break;
     }
     default:
@@ -333,7 +335,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   //set RX eof num
 	WRITE_PERI_REG(I2SRXEOF_NUM, 128);
   
-  // Tweak the I2C timing
+  // Tweak the I2S timing
   CLEAR_PERI_REG_MASK(I2STIMING, (I2S_RECE_SD_IN_DELAY    << I2S_RECE_SD_IN_DELAY_S)   |
                                  (I2S_RECE_WS_IN_DELAY    << I2S_RECE_WS_IN_DELAY_S)   |
                                  (I2S_RECE_BCK_IN_DELAY   << I2S_RECE_BCK_IN_DELAY_S)  |
@@ -345,7 +347,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
                                ((0 & I2S_RECE_WS_IN_DELAY)    << I2S_RECE_WS_IN_DELAY_S)   |
                                ((0 & I2S_RECE_BCK_IN_DELAY)   << I2S_RECE_BCK_IN_DELAY_S)  |
                                ((0 & I2S_TRANS_SD_OUT_DELAY)  << I2S_TRANS_SD_OUT_DELAY_S) |
-                               ((3 & I2S_TRANS_WS_OUT_DELAY)  << I2S_TRANS_WS_IN_DELAY_S)  |
+                               ((0 & I2S_TRANS_WS_OUT_DELAY)  << I2S_TRANS_WS_IN_DELAY_S)  |
                                ((0 & I2S_TRANS_BCK_OUT_DELAY) << I2S_TRANS_BCK_IN_DELAY_S));// | I2S_TRANS_BCK_IN_INV);// | I2S_TRANS_DSYNC_SW);
   //trans master&rece slave,MSB shift,right_first,msb right
   CLEAR_PERI_REG_MASK(I2SCONF, I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
@@ -388,7 +390,7 @@ void ICACHE_FLASH_ATTR i2spiStop(void)
   SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_STOP);
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen, uint8_t tag)
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
 {
   //XXX Implement queing message data
   return false;
