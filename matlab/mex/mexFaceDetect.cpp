@@ -1,5 +1,5 @@
 
-// Usage example: [faces,eyes] = mexFaceDetect(im);
+// Usage example: [faces,eyes,hands] = mexFaceDetect(im);
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -19,8 +19,10 @@
 
 cv::CascadeClassifier *face_cascade = NULL;
 cv::CascadeClassifier *eyes_cascade = NULL;
+cv::CascadeClassifier *hand_cascade = NULL;
 std::string faceCascadeFilename = "";
 std::string eyeCascadeFilename = "";
+std::string handCascadeFilename = "";
 
 void closeHelper(void) {
   if(face_cascade != NULL) {
@@ -30,10 +32,14 @@ void closeHelper(void) {
   if(eyes_cascade != NULL) {
     delete eyes_cascade;
   }
+  
+  if(hand_cascade != NULL) {
+    delete hand_cascade;
+  }
 }
 
 #ifndef OPENCV_ROOT_PATH
-#error OPENCV_ROOT_PATH should be defined. You may need to re-run cmake.
+#error OPENCV_ROOT_PATH should be defined. You may need to re-run cmake/configure.
 #endif
 
 typedef struct
@@ -52,54 +58,73 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   mexAtExit(closeHelper);
 
-  if(! (nlhs == 2 && nrhs >= 1 && nrhs <= 5))
+  if(! (nlhs == 3 && nrhs >= 1 && nrhs <= 6))
   {
-    mexErrMsgTxt("Usage: [faces,eyes] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>, <scaleFactor>, <minNeighbors>);\nTo use the default cascade for face or eyes, use filename ''. To not use the eye cascade, use filename 'none'.\n");
+    mexErrMsgTxt("Usage: [faces,eyes,hands] = mexFaceDetect(im, <faceCascadeFilename>, <eyeCascadeFilename>, <handCascadeFilename>, <scaleFactor>, <minNeighbors>);\nTo use the default cascade for face or eyes, use filename ''. To not use the eye cascade, use filename 'none'.\n");
     return;
   }
   
   std::string newFaceCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/lbpcascades/lbpcascade_frontalface.xml";
   std::string newEyeCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/haarcascades/haarcascade_eye_tree_eyeglasses.xml";
+  std::string newHandCascadeFilename = QUOTE(OPENCV_ROOT_PATH) "/data/haarcascades/hands/hand.xml";
+  
   double scaleFactor = 1.1;
   int minNeighbors = 3;
   bool useEyeCascade = true;
+  bool useHandCascade = false; // doesn't work well, so disabled by default
   
   if(nrhs >= 2)
   {
     std::string tmpFaceCascadeFilename = mxArrayToString(prhs[1]);
     
-    if(tmpFaceCascadeFilename.length() > 3)
+    if(tmpFaceCascadeFilename.length() > 3) {
       newFaceCascadeFilename = tmpFaceCascadeFilename;
+    }
   }
   
   if(nrhs >= 3)
   {
     std::string tmpEyeCascadeFilename = mxArrayToString(prhs[2]);
     
-    if(strcmp(tmpEyeCascadeFilename.data(), "none") == 0)
+    if(tmpEyeCascadeFilename ==  "none") {
       useEyeCascade = false;
+    }
     
-    if(tmpEyeCascadeFilename.length() > 3)
+    if(tmpEyeCascadeFilename.length() > 3) {
       newEyeCascadeFilename = tmpEyeCascadeFilename;
+    }
   }
   
   if(nrhs >= 4)
   {
-    const double tmpScaleFactor = Anki::Embedded::saturate_cast<f64>(mxGetScalar(prhs[3]));
+    std::string tmpHandCascadeFilename = mxArrayToString(prhs[3]);
+    if(tmpHandCascadeFilename == "none") {
+      useHandCascade = false;
+    }
+    
+    if(tmpHandCascadeFilename.length() > 3) {
+      newHandCascadeFilename = tmpHandCascadeFilename;
+      useHandCascade = true;
+    }
+  }
+  
+  if(nrhs >= 5)
+  {
+    const double tmpScaleFactor = Anki::Embedded::saturate_cast<f64>(mxGetScalar(prhs[4]));
     
     if(tmpScaleFactor >= 1.0)
       scaleFactor = tmpScaleFactor;
   }
   
-  if(nrhs >= 5)
+  if(nrhs >=6)
   {
-    const int tmpMinNeighbors = Anki::Embedded::saturate_cast<s32>(mxGetScalar(prhs[4]));
+    const int tmpMinNeighbors = Anki::Embedded::saturate_cast<s32>(mxGetScalar(prhs[5]));
     
     if(tmpMinNeighbors >= 1.0)
       minNeighbors = tmpMinNeighbors;
   }
   
-  if(strcmp(newFaceCascadeFilename.data(), faceCascadeFilename.data()) != 0)
+  if(newFaceCascadeFilename != faceCascadeFilename)
   {
     if(face_cascade) {
       delete(face_cascade);
@@ -110,7 +135,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     
     face_cascade = new cv::CascadeClassifier();
 
-    if(! face_cascade->load(faceCascadeFilename.data()))
+    if(! face_cascade->load(faceCascadeFilename))
     {
       mexErrMsgTxt("Could not load face cascade XML data. Check path.");
     } else
@@ -119,7 +144,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     }
   }
 
-  if(useEyeCascade && strcmp(newEyeCascadeFilename.data(), eyeCascadeFilename.data()) != 0)
+  if(useEyeCascade && newEyeCascadeFilename != eyeCascadeFilename)
   {
     if(eyes_cascade) {
       delete(eyes_cascade);
@@ -129,12 +154,28 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     eyeCascadeFilename = newEyeCascadeFilename;
     
     eyes_cascade = new cv::CascadeClassifier();
-    if(! eyes_cascade->load(eyeCascadeFilename.data()))
+    if(! eyes_cascade->load(eyeCascadeFilename))
     {
       mexErrMsgTxt("Could not load eyes cascade XML data. Check path.");
     } else
     {
       mexPrintf("Loaded %s\n", eyeCascadeFilename.data());
+    }
+  }
+  
+  if(useHandCascade && newHandCascadeFilename != handCascadeFilename) {
+    if(hand_cascade) {
+      delete(hand_cascade);
+      hand_cascade = NULL;
+    }
+    
+    handCascadeFilename = newHandCascadeFilename;
+    hand_cascade = new cv::CascadeClassifier();
+    if(! hand_cascade->load(handCascadeFilename))
+    {
+      mexErrMsgTxt("Could not load hand cascade XML data. Check path.");
+    } else {
+      mexPrintf("Loaded %s\n", handCascadeFilename.c_str());
     }
   }
   
@@ -215,6 +256,34 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     eye_y[iEye] = storedEyes[iEye].y;
     eye_w[iEye] = storedEyes[iEye].w;
     eye_h[iEye] = storedEyes[iEye].h;
+  }
+
+  std::vector<cv::Rect> hands;
+
+  if(hand_cascade)
+  {
+    hand_cascade->detectMultiScale(grayscaleFrame, hands, 1.2, 2,
+                                   cv::CASCADE_DO_CANNY_PRUNING, cv::Size(100,100));
+    
+  }
+  
+  plhs[2] = mxCreateDoubleMatrix(hands.size(), 4, mxREAL);
+
+  if(hand_cascade)
+  {
+    const size_t numHands = hands.size();
+    double *x = mxGetPr(plhs[2]);
+    double *y = x + numHands;
+    double *w = y + numHands;
+    double *h = w + numHands;
+    for(int iHand = 0; iHand < hands.size(); ++iHand)
+    {
+      // Record the face:
+      x[iHand] = hands[iHand].x;
+      y[iHand] = hands[iHand].y;
+      w[iHand] = hands[iHand].width;
+      h[iHand] = hands[iHand].height;
+    }
   }
 
   return;
