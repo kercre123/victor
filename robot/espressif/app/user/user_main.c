@@ -133,8 +133,6 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Initalize i2SPI interface
   i2spiInit();
 
-  // Setup high priority task
-  //task2Init();
   // Enable UART0 RX interrupt
   // Only after clientInit
   uart_start();
@@ -142,7 +140,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   i2spiStart();
 
   // Set up shared background tasks
-  //task0Init();
+  task0Init();
   
   // Set up shared foreground tasks
   task1Init();
