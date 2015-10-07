@@ -427,20 +427,20 @@ namespace Cozmo {
                 msg.liftHeight_mm = robot->GetLiftHeight();
                 
                 msg.status = 0;
-                if(robot->IsMoving())           { msg.status |= (uint32_t)RobotStatusFlagClad::Moving; }
-                if(robot->IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlagClad::PickingOrPlacing; }
-                if(robot->IsPickedUp())         { msg.status |= (uint32_t)RobotStatusFlagClad::PickedUp; }
-                if(robot->IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlagClad::Animating; }
-                if(robot->IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlagClad::AnimatingIdle; }
+                if(robot->IsMoving())           { msg.status |= (uint32_t)RobotStatusFlag::IS_MOVING; }
+                if(robot->IsPickingOrPlacing()) { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING; }
+                if(robot->IsPickedUp())         { msg.status |= (uint32_t)RobotStatusFlag::IS_PICKED_UP; }
+                if(robot->IsAnimating())        { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING; }
+                if(robot->IsIdleAnimating())    { msg.status |= (uint32_t)RobotStatusFlag::IS_ANIMATING_IDLE; }
                 if(robot->IsCarryingObject())   {
-                  msg.status |= (uint32_t)RobotStatusFlagClad::CarryingBlock;
+                  msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
                   msg.carryingObjectID = robot->GetCarryingObject();
                   msg.carryingObjectOnTopID = robot->GetCarryingObjectOnTop();
                 } else {
                   msg.carryingObjectID = -1;
                 }
                 if(!robot->GetActionList().IsEmpty()) {
-                  msg.status |= (uint32_t)RobotStatusFlagClad::PerformingAction;
+                  msg.status |= (uint32_t)RobotStatusFlag::IS_PATHING;
                 }
                 
                 msg.gameStatus = 0;
@@ -487,79 +487,6 @@ namespace Cozmo {
     
     return lastResult;
   } // UpdateAsClient()
-  
-  bool CozmoGameImpl::SendRobotImage(RobotID_t robotID)
-  {
-    PRINT_NAMED_WARNING("CozmoGameImpl.SendRobotImage",
-                        "SendRobotImage is deprecated. Expecting to use direct forwarding of compressed image chunks to UI.");
-    
-    // Get the image from the robot
-    Vision::Image img;
-    // TODO: fill in the timestamp?
-    const bool gotImage = GetCurrentRobotImage(robotID, img, 0);
-    
-    // TODO: Send full resolution images
-    // For now, just resize to QVGA for sending to UI
-    img.Resize(240, 320);
-    
-    if(gotImage) {
-      
-      static u32 imgID = 0;
-      
-      // Downsample and split into image chunk message
-      const s32 ncols = img.GetNumCols();
-      const s32 nrows = img.GetNumRows();
-      
-      const u32 numTotalBytes = nrows*ncols;
-
-      ExternalInterface::ImageChunk m;
-      
-      // TODO: pass this in so it corresponds to actual frame capture time instead of send time
-      m.frameTimeStamp = img.GetTimestamp();
-      m.nrows = nrows;
-      m.ncols = ncols;
-      m.imageId = ++imgID;
-      m.chunkId = 0;
-      m.chunkSize = m.data.size();
-      m.imageChunkCount = ceilf((f32)numTotalBytes / m.data.size());
-      m.imageEncoding = ImageEncodingClad::RawGray;
-      
-      u32 totalByteCnt = 0;
-      u32 chunkByteCnt = 0;
-      
-      //PRINT("Downsample: from %d x %d  to  %d x %d\n", img.get_size(1), img.get_size(0), xRes, yRes);
-      
-      ExternalInterface::MessageEngineToGame message;
-      
-      for(s32 i=0; i<nrows; ++i) {
-        
-        const u8* img_i = img.GetRow(i);
-        
-        for(s32 j=0; j<ncols; ++j) {
-          m.data[chunkByteCnt] = img_i[j];
-          ++chunkByteCnt;
-          ++totalByteCnt;
-          
-          if(chunkByteCnt == m.data.size()) {
-            // Filled this chunk
-            message.Set_ImageChunk(m);
-            _uiMsgHandler.Broadcast(message);
-            ++m.chunkId;
-            chunkByteCnt = 0;
-          } else if(totalByteCnt == numTotalBytes) {
-            // This is the last chunk!
-            m.chunkSize = chunkByteCnt;
-            message.Set_ImageChunk(m);
-            _uiMsgHandler.Broadcast(message);
-          }
-        } // for each col
-      } // for each row
-      
-    } // if gotImage
-    
-    return gotImage;
-    
-  } // SendImage()
   
   void CozmoGameImpl::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
   {

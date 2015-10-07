@@ -77,7 +77,7 @@ public class CozmoVision_AutoSelect : CozmoVision {
         return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);
       });
 
-      if (robot.Status(RobotStatusFlagClad.CarryingBlock)) { // if holding a block
+      if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) { // if holding a block
         if (observedObjects.Count > 0 && observedObjects[0] != robot.carryingObject) { // if can see at least one block
           robot.selectedObjects.Add(observedObjects[0]);
           

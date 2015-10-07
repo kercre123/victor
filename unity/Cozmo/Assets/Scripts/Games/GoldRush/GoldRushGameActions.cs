@@ -35,7 +35,7 @@ public class GoldRushGameActions : GameActions {
     if (robot.isBusy)
       return;
 
-    if (robot.Status(Anki.Cozmo.RobotStatusFlagClad.CarryingBlock)) {
+    if (robot.Status(Anki.Cozmo.RobotStatusFlag.IS_CARRYING_BLOCK)) {
       if (goldController.state == GameController.GameState.PRE_GAME) {
         if (robot.selectedObjects.Count > 0 && buttons.Length > 1)
           buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);

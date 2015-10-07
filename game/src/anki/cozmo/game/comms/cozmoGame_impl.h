@@ -84,8 +84,6 @@ namespace Cozmo {
     
     Result UpdateAsHost(const float currentTime_sec);
     Result UpdateAsClient(const float currentTime_sec);
-    
-    bool SendRobotImage(RobotID_t robotID);
 
     //
     // U2G Message Handling

@@ -573,7 +573,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateSearching() {
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock) && robot.carryingObject != null) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK) && robot.carryingObject != null) {
       lastCarriedObjectId = robot.carryingObject;
       Vector2 buriedLocation;
       if (buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) {
@@ -619,7 +619,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateIdle() {
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       EnterPlayState(PlayState.SEARCHING);
     }
   }
@@ -629,7 +629,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateReadyToReturn() {
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       EnterPlayState(PlayState.RETURNING);
     }
   }
