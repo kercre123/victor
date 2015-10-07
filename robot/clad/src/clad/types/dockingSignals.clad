@@ -1,0 +1,82 @@
+/** Docking control signals
+ */
+ 
+#include "clad/types/robotStatusAndActions.clad"
+ 
+namespace Anki {
+namespace Cozmo {
+
+message DockWithObject
+{
+  float_32 horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
+  DockAction action,
+  bool       useManualSpeed,
+}
+
+message AbortDocking
+{
+}
+
+message PlaceObjectOnGround
+{
+  float_32 rel_x_mm,  // Distance of object face center in forward axis
+  float_32 rel_y_mm,  // Distance of object face center in horizontal axis. (Left of robot is +ve)
+  float_32 rel_angle, // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
+  bool     useManualSpeed,
+}
+
+
+message DockingErrorSignal
+{
+  uint_32  timestamp,
+  float_32 x_distErr,
+  float_32 y_horErr,
+  float_32 z_height,
+  float_32 angleErr,
+  bool didTrackingSucceed,
+  bool isApproximate,
+}
+
+message BlockPickedUp
+{
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
+message BlockPlaced
+{
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
+message RampTraverseStart
+{
+  uint_32  timestamp,
+}
+
+message RampTraverseComplete
+{
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
+message BridgeTraverseStart
+{
+  uint_32  timestamp,
+}
+
+message BridgeTraverseComplete
+{
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
+structure GoalPose
+{
+  RobotPose pose,
+  bool followingMarkerNormal, 
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

@@ -220,29 +220,29 @@ namespace Anki {
     
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void UiGameController::HandleImageChunkBase(ExternalInterface::ImageChunk const& msg)
+    void UiGameController::HandleImageChunkBase(ImageChunk const& msg)
     {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
     
-    void UiGameController::HandleActiveObjectMovedBase(ExternalInterface::ActiveObjectMoved const& msg)
+    void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
     {
      PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
-                      msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, UpAxisCladToString(msg.upAxis));
+                      msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
       
       HandleActiveObjectMoved(msg);
     }
     
-    void UiGameController::HandleActiveObjectStoppedMovingBase(ExternalInterface::ActiveObjectStoppedMoving const& msg)
+    void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%s",
-                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisCladToString(msg.upAxis));
+                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisToString(msg.upAxis));
       
       HandleActiveObjectStoppedMoving(msg);
     }
     
-    void UiGameController::HandleActiveObjectTappedBase(ExternalInterface::ActiveObjectTapped const& msg)
+    void UiGameController::HandleActiveObjectTappedBase(ObjectTapped const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
                        msg.objectID, msg.numTaps);
@@ -349,14 +349,14 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
             HandleRobotCompletedActionBase(message.Get_RobotCompletedAction());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectMoved:
-            HandleActiveObjectMovedBase(message.Get_ActiveObjectMoved());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectMoved:
+            HandleActiveObjectMovedBase(message.Get_ObjectMoved());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectStoppedMoving:
-            HandleActiveObjectStoppedMovingBase(message.Get_ActiveObjectStoppedMoving());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectStoppedMoving:
+            HandleActiveObjectStoppedMovingBase(message.Get_ObjectStoppedMoving());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
-            HandleActiveObjectTappedBase(message.Get_ActiveObjectTapped());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
+            HandleActiveObjectTappedBase(message.Get_ObjectTapped());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
@@ -672,7 +672,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, CameraResolutionClad resolution)
+    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
       m.mode = mode;
@@ -707,15 +707,6 @@ namespace Anki {
       message.Set_EnableDisplay(m);
       SendMessage(message);
    }
-    
-    void UiGameController::SendSetHeadlights(u8 intensity)
-    {
-      ExternalInterface::SetHeadlights m;
-      m.intensity = intensity;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetHeadlights(m);
-      SendMessage(message);
-    }
     
     void UiGameController::SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed)
     {
@@ -945,7 +936,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendStartTestMode(TestModeClad mode, s32 p1, s32 p2, s32 p3)
+    void UiGameController::SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
       m.robotID = 1;
@@ -1063,46 +1054,6 @@ namespace Anki {
       SendMessage(message);
     }
 
-    void UiGameController::SendVisionSystemParams()
-    {
-      if (_root) {
-         // Vision system params
-         ExternalInterface::SetVisionSystemParams p;
-         p.autoexposureOn = _root->getField("camera_autoexposureOn")->getSFInt32();
-         p.exposureTime = _root->getField("camera_exposureTime")->getSFFloat();
-         p.integerCountsIncrement = _root->getField("camera_integerCountsIncrement")->getSFInt32();
-         p.minExposureTime = _root->getField("camera_minExposureTime")->getSFFloat();
-         p.maxExposureTime = _root->getField("camera_maxExposureTime")->getSFFloat();
-         p.highValue = _root->getField("camera_highValue")->getSFInt32();
-         p.percentileToMakeHigh = _root->getField("camera_percentileToMakeHigh")->getSFFloat();
-         p.limitFramerate = _root->getField("camera_limitFramerate")->getSFInt32();
-
-        PRINT_NAMED_INFO("UiGameController.SendVisionSystemParams", "New Camera params");
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_SetVisionSystemParams(p);
-        SendMessage(message);
-       }
-    }
-
-    void UiGameController::SendFaceDetectParams()
-    {
-      if (_root) {
-        // Face Detect params
-        ExternalInterface::SetFaceDetectParams p;
-        p.scaleFactor = _root->getField("fd_scaleFactor")->getSFFloat();
-        p.minNeighbors = _root->getField("fd_minNeighbors")->getSFInt32();
-        p.minObjectHeight = _root->getField("fd_minObjectHeight")->getSFInt32();
-        p.minObjectWidth = _root->getField("fd_minObjectWidth")->getSFInt32();
-        p.maxObjectHeight = _root->getField("fd_maxObjectHeight")->getSFInt32();
-        p.maxObjectWidth = _root->getField("fd_maxObjectWidth")->getSFInt32();
-
-        PRINT_NAMED_INFO("UiGameController.SendFaceDetectParams", "New Face detect params");
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_SetFaceDetectParams(p);
-        SendMessage(message);
-      }
-    }
-    
     void UiGameController::SendForceAddRobot()
     {
       if (_root) {
@@ -1189,7 +1140,7 @@ namespace Anki {
     
     bool UiGameController::IsRobotStatus(RobotStatusFlag mask) const
     {
-      return _robotStateMsg.status & mask;
+      return _robotStateMsg.status & (uint16_t)mask;
     }
     
     std::vector<s32> UiGameController::GetAllObjectIDs() const

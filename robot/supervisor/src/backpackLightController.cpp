@@ -18,8 +18,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/ledController.h"
 
-#include "anki/cozmo/shared/ledTypes.h"
-
 namespace Anki {
 namespace Cozmo {
 namespace BackpackLightController {
@@ -28,8 +26,8 @@ namespace BackpackLightController {
     
     //LEDId       _ledLUT[NUM_LEDS];
     
-    LEDParams_t _ledParams[NUM_BACKPACK_LEDS];
-    bool        _enable;
+    LightState _ledParams[NUM_BACKPACK_LEDS];
+    bool       _enable;
   };
   
   void Enable()
@@ -87,7 +85,7 @@ namespace BackpackLightController {
                  u32 onPeriod_ms, u32 offPeriod_ms,
                  u32 transitionOnPeriod_ms, u32 transitionOffPeriod_ms)
   {
-    LEDParams_t& params = _ledParams[whichLED];
+    LightState& params = _ledParams[whichLED];
     
     params.onColor = onColor;
     params.offColor = offColor;
