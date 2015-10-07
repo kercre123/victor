@@ -79,8 +79,8 @@ namespace Cozmo {
 
   protected:
     // This class is not directly instantiable, and instead should be inherited from.
-    // The derived class must provide an external interface at construction, to
-    // registure event handling.
+    // The derived class must provide an external interface at construction to
+    // register event handling.
     HasSettableParameters(IExternalInterface* externalInterface);
 
   private:
