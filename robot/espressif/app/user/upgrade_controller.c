@@ -9,7 +9,7 @@
 #include "mem.h"
 #include "espconn.h"
 #include "upgrade.h"
-#include "task0.h"
+#include "task1.h"
 #include "nv_params.h"
 #include "upgrade_controller.h"
 #include "driver/i2spi.h"
@@ -331,7 +331,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           os_printf("fwWriteAddr = %08x [%x], Erase sectors: %d..%d\r\n", fwWriteAddress, bytesExpected, flashEraseSector, flashEraseEnd);
           system_upgrade_flag_set(UPGRADE_FLAG_START);
           taskState = UPGRADE_TASK_ERASE;
-          if (task0Post(upgradeTask, 0) == false)
+          if (task1Post(upgradeTask, 0) == false)
           {
             os_printf("ERROR: Couldn't queue upgrade task\r\n");
             resetUpgradeState();
@@ -393,7 +393,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     os_memcpy((void*)fwd->data, (void*)usrdata, length);
     fwd->length = length;
     bytesReceived += length;
-    if (task0Post(upgradeTask, (uint32)fwd) == false)
+    if (task1Post(upgradeTask, (uint32)fwd) == false)
     {
       os_printf("ERROR: Couldn't post upgrade task\r\n");
       resetUpgradeState();
