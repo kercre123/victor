@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class RowBlockPattern {
+public class BlockPattern {
 
   // block lights in cozmo-space.
   // front is the light facing cozmo.
@@ -14,14 +14,14 @@ public class RowBlockPattern {
       return false;
     }
 
-    RowBlockPattern p = obj as RowBlockPattern;
+    BlockPattern p = obj as BlockPattern;
     if ((System.Object)p == null) {
       return false;
     }
     return Equals(p);
   }
 
-  public bool Equals(RowBlockPattern pattern) {
+  public bool Equals(BlockPattern pattern) {
     if (pattern == null)
       return false;
 
@@ -48,7 +48,7 @@ public class RowBlockPattern {
     return x;
   }
 
-  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockPatternData> blockPatternData, RowBlockPattern lastPatternSeen) {
+  static public void SetRandomConfig(Robot robot, Dictionary<int, BlockPatternData> blockPatternData, BlockPattern lastPatternSeen) {
     BlockLights patternLight = lastPatternSeen.blocks[0];
 
     // generate a new config that is not the current config.
@@ -78,8 +78,8 @@ public class RowBlockPattern {
   }
 
   // patternSeen is populated in Cozmo space.
-  static public bool ValidPatternSeen(out RowBlockPattern patternSeen, Robot robot, Dictionary<int, BlockPatternData> blockPatternData) {
-    patternSeen = new RowBlockPattern();
+  static public bool ValidPatternSeen(out BlockPattern patternSeen, Robot robot, Dictionary<int, BlockPatternData> blockPatternData) {
+    patternSeen = new BlockPattern();
 
     // 3 to a pattern
     if (robot.markersVisibleObjects.Count < 3)

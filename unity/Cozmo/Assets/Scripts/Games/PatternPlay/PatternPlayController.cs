@@ -13,7 +13,7 @@ public class PatternPlayController : GameController {
   private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
 
-  private RowBlockPattern lastPatternSeen = null;
+  private BlockPattern lastPatternSeen = null;
 
   private enum InputMode {
     NONE,
@@ -27,7 +27,7 @@ public class PatternPlayController : GameController {
   private InputMode currentInputMode = InputMode.PHONE;
 
   // blocks in here are in cozmo space.
-  private HashSet<RowBlockPattern> seenPatterns = new HashSet<RowBlockPattern>();
+  private HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
@@ -59,7 +59,6 @@ public class PatternPlayController : GameController {
       }
     }
 
-    // makes sure cozmo sees all 4 blocks first.
     if (robot.activeBlocks.Count >= 3) {
       gameReady = true;
     }
@@ -120,9 +119,9 @@ public class PatternPlayController : GameController {
     SetBlockLights();
 
     // check cozmo vision for patterns.
-    RowBlockPattern currentPattern = null;
+    BlockPattern currentPattern = null;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
-      if (RowBlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
+      if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
         lastPatternSeen = currentPattern;
         if (!PatternSeen(currentPattern)) {
           cozmoEnergyLevel++;
@@ -355,13 +354,13 @@ public class PatternPlayController : GameController {
     animationPlaying = false;
     lastAnimationFinishedTime = Time.time;
     if (currentInputMode == InputMode.COZMO) {
-      RowBlockPattern.SetRandomConfig(robot, blockPatternData, lastPatternSeen);
+      BlockPattern.SetRandomConfig(robot, blockPatternData, lastPatternSeen);
     }
     ResetLookHeadForkLift();
   }
 
-  private bool PatternSeen(RowBlockPattern patternSeen) {
-    foreach (RowBlockPattern pattern in seenPatterns) {
+  private bool PatternSeen(BlockPattern patternSeen) {
+    foreach (BlockPattern pattern in seenPatterns) {
       if (pattern.Equals(patternSeen)) {
         return true;
       }
