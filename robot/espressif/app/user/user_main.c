@@ -12,7 +12,7 @@
 #include "gpio.h"
 #include "nv_params.h"
 #include "task0.h"
-#include "task2.h"
+#include "task1.h"
 #include "telnet.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
@@ -142,8 +142,10 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   i2spiStart();
 
   // Set up shared background tasks
-  task0Init();
-  //task0Post(userTask, 0);
+  //task0Init();
+  
+  // Set up shared foreground tasks
+  task1Init();
 
   os_timer_disarm(&userTimer);
   os_timer_setfn(&userTimer, userIntervalTask, NULL);

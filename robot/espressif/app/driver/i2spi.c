@@ -186,14 +186,14 @@ LOCAL void i2spiTask(os_event_t *event)
     {
       int w;
       uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
-      uint8_t* txBB = (uint8_t*)txBuf;
+      //uint8_t* txBB = (uint8_t*)txBuf;
       if (asDesc(desc->next_link_ptr) == nextOutgoingDesc)
       {
         nextOutgoingDesc = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
         i2spiTxUnderflowCount++;
       }
-      //for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0xFFFFffff; // Reset to idle high using word size writes
-      for(w=0; w<DMA_BUF_SIZE; w++) txBB[w] = w;
+      for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0xFFc0c0c0; //0xFFFFffff; // Reset to idle high using word size writes
+      //for(w=0; w<DMA_BUF_SIZE; w++) txBB[w] = w;
       break;
     }
     default:
