@@ -139,7 +139,7 @@ namespace Anki {
     {
       const u16 width  = Vision::CameraResInfo[(int)msg.resolution].width;
       const u16 height = Vision::CameraResInfo[(int)msg.resolution].height;
-      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, width, height,
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, height, width,
         msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data.data(), (uint32_t)msg.data.size());
       
       
