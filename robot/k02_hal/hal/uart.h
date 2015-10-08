@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "anki/cozmo/robot/spineData.h"
+
 static const uint32_t perf_clock = 96000000;
 static const uint32_t debug_baud_rate = 1000000;
 

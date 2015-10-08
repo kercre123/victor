@@ -9,6 +9,8 @@
 #ifndef _DROP_H_
 #define _DROP_H_
 
+#include <stdint.h>
+
 // ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
 #define ASSERT_CONCAT_(a, b) a##b
 #define ASSERT_CONCAT(a, b) ASSERT_CONCAT_(a, b)
@@ -33,11 +35,9 @@
 /// Number of usable bytes on the I2SPI bus for drops
 #define DROP_SIZE (100)
 /// Number of bytes of drop prefix
-#define DROP_PREAMBLE_SIZE 4
+#define DROP_PREAMBLE_SIZE sizeof(preambleType)
 /// Preamble for drops from WiFi to RTIP
-#define TO_RTIP_PREAMBLE "RTIP"
 /// Preamble for drops from RTIP to WiFi
-#define TO_WIFI_PREAMBLE "WiFi"
 
 /// Number of samples of audio data delivered to the RTIP each drop.
 #define AUDIO_BYTES_PER_DROP 4
@@ -48,10 +48,18 @@
 /// Maximum variable payload to RTIP
 #define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_SIZE - DROP_PREAMBLE_SIZE - AUDIO_BYTES_PER_DROP - SCREEN_BYTES_PER_DROP - 1)
 
+enum DROP_PREAMBLE {
+  TO_RTIP_PREAMBLE = 'RTIP',
+  TO_WIFI_PREAMBLE = 'WiFi'
+};
+
+typedef uint32_t preambleType;
+
+
 /// Drop structure for transfers from the WiFi to the RTIP
 typedef struct
 {
-  char     preamble[DROP_PREAMBLE_SIZE]; ///< Synchronization Preamble indicating drop destination
+  preambleType preamble; ///< Synchronization Preamble indicating drop destination
   uint8_t  audioData[AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
   uint8_t  screenData[SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
@@ -70,7 +78,7 @@ ct_assert(sizeof(DropToRTIP) == DROP_SIZE);
 /// Drop structure for transfers from RTIP to WiFi
 typedef struct
 {
-  char    preamble[DROP_PREAMBLE_SIZE]; ///< Synchronization preamble indicating drop destination
+  preambleType preamble;
   uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
   uint8_t msgLen;  ///< Number of bytes of message data following JPEG data
   uint8_t droplet; ///< Drop flags and bit fields
