@@ -179,8 +179,8 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  //uart_tx_one_char_no_wait(UART0, c);
-  uart_tx_one_char(UART0, c);
+  uart_tx_one_char_no_wait(UART0, c);
+  //uart_tx_one_char(UART0, c);
 }
 
 void os_put_hex(unsigned int i, unsigned short nibbles)

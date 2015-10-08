@@ -250,6 +250,31 @@ namespace BlueCode
             }
         }
 
+        private void receiveNoHeader(byte[] buf)
+        {
+            for (int i = 0; i < buf.Length; i++)
+                m_image[i + m_imageLen] = buf[i];
+
+            m_imageLen += buf.Length;
+            System.Console.WriteLine(buf.Length + "/" + m_imageLen);
+
+            if (buf.Length < 1300)
+            {
+                m_readyImage = m_image;
+                m_readyLen = m_imageLen;
+                this.scanPicBox.BeginInvoke(
+                (MethodInvoker)delegate()
+                {
+                    scanPicBox.Refresh();
+                });
+                System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
+
+                m_image = new byte[MAXLEN];
+                m_imageLen = 0;
+            }
+        }
+
+
         // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
         private byte[] miniGrayToJpeg(byte[] bin, int len)
         {
@@ -403,17 +428,7 @@ namespace BlueCode
             try
             {
                 Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
-
-                if (buf.Length == 0x534)
-                {
-                    //receive(buf, buf.Length, true);
-                }
-                else
-                {
-                    ; // Console.WriteLine(System.Text.Encoding.Default.GetString(buf));
-                    if (buf.Length > 0x534)
-                        Console.WriteLine("WTF buffer is " + buf.Length);
-                }
+                receiveNoHeader(buf);
             }
             catch (Exception x)
             {

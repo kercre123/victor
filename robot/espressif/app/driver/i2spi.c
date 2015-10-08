@@ -1,4 +1,4 @@
-/**
+/*
  * @file I2S driver for Espressif chip.
  * @author Daniel Casner <daniel@anki.com>
  *
@@ -6,34 +6,26 @@
  * bidirectional communication.
  */
 
-/*
-How does this work? Basically, to get sound, you need to:
-- Connect an I2S codec to the I2S pins on the ESP.
-- Start up a thread that's going to do the sound output
-- Call I2sInit()
-- Call I2sSetRate() with the sample rate you want.
-- Generate sound and call i2sPushSample() with 32-bit samples.
-The 32bit samples basically are 2 16-bit signed values (the analog values for
-the left and right channel) concatenated as (Rout<<16)+Lout
-
-I2sPushSample will block when you're sending data too quickly, so you can just
-generate and push data as fast as you can and I2sPushSample will regulate the
-speed.
-*/
-
 #include "ets_sys.h"
 #include "osapi.h"
-#include "os_type.h"
 #include "driver/uart.h"
 #include "driver/i2s_reg.h"
 #include "driver/slc_register.h"
 #include "driver/sdio_slv.h"
-#include "driver/i2spi.h"
+#include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
 #include "client.h"
 
+#define min(a, b) (a < b ? a : b)
+
+uint32_t i2spiTxUnderflowCount;
+uint32_t i2spiRxOverflowCount;
+uint32_t i2spiPhaseErrorCount;
+
+#define asDesc(x) ((struct sdio_queue*)(x))
+
 /// Signals to the I2SPI task
-enum 
+enum
 {
   TASK_SIG_I2SPI_RX,
   TASK_SIG_I2SPI_TX
@@ -51,12 +43,22 @@ static struct sdio_queue txQueue[DMA_BUF_COUNT];
 static unsigned int rxBufs[DMA_BUF_COUNT][DMA_BUF_SIZE/4];
 /// DMA transmit queue control structure
 static struct sdio_queue rxQueue[DMA_BUF_COUNT];
+/// A pointer to the next txQueue we can fill
+static struct sdio_queue* nextOutgoingDesc;
+/// Stores the estiamted alightment of drops in the DMA buffer. If <0 then no estimate is known yet
+static int16_t dropPhase; 
+/// Stores the alignment for outgoing drops.
+static int16_t outgoingPhase;
+/// Phase relationship between incoming drops and outgoing drops
+#define DROP_TX_PHASE_ADJUST (0)
+/// Uninitalized phase number
+#define DROP_PHASE_UNINITALIZED (-32767)
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
-static void inline prepSdioQueue(struct sdio_queue* desc)
+static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
 {
   desc->owner     = 1;
-  desc->eof       = 1;
+  desc->eof       = eof;
   desc->sub_sof   = 0;
   desc->datalen   = DMA_BUF_SIZE;
   desc->blocksize = DMA_BUF_SIZE;
@@ -74,59 +76,124 @@ static void processDrop(DropToWiFi* drop)
 #define PACKET_SIZE 1420
   static uint8  packet[PACKET_SIZE];
   static uint16 len = 0;
-  const uint8 rxJpegLen = drop->droplet & jpegLenMask;
+  const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
+
+  //os_printf("PD l=%d rxjl=%d eof=%d dl=%02x\r\n", len, rxJpegLen, drop->droplet & jpegEOF, drop->droplet);
   os_memcpy(packet + len, drop->payload, rxJpegLen);
   len += rxJpegLen;
-  if ((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) // Couldn't handle another drop to send the packet
+  if (((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) || // Couldn't handle another drop to send the packet
+      (drop->droplet & jpegEOF)) // Or end of frame
   {
     clientQueuePacket(packet, len);
+    os_put_char('Q');
     len = 0;
   }
 }
 
-/** Collects and passes along drops collected from DMA buffers
- * @param buf A pointer to the DMA buffer data
- * @warning Call from a task not an ISR
+/** A special function used at the beginning of operation to find the first drop from the RTIP so we can synchronize 
+ * phases. This is has ICACHE_FLASH_ATTR set so we can get rid of this code after startup.
+ * @param buf A pointer to a DMA buffer with received data.
+ * @return True if a drop was found and the module variable dropPhase has been set. False if we haven't synchronized
+ * yet.
  */
-static void collectDrops(uint8* buf)
+LOCAL bool ICACHE_FLASH_ATTR synchronizeDrops(uint8* buf)
 {
-  static DropToWiFi drop; // The drop we are receiving into when bridging buffers
-  static uint8 phase = 0; // Tracks the offset in the DMA buffer of the start of next drop
-  if (phase > 0) // Finishing a drop started last buffer
+  static uint8 prePhase = 0; // Preamble discovery phase
+  int16_t offset = 0;
+  while(offset < DMA_BUF_SIZE)
   {
-    os_memcpy(((uint8*)&drop) + phase, buf, DROP_SIZE - phase);
-    processDrop(&drop);
-    phase += DROP_SIZE - phase;
+    if (prePhase < DROP_PREAMBLE_SIZE)
+    {
+      if (buf[offset] == TO_WIFI_PREAMBLE[prePhase])
+      {
+        prePhase++;
+      }
+      else
+      {
+        prePhase = 0;
+      }
+    }
+    else // Found full preamble, lock on to drop
+    {
+      dropPhase = offset - DROP_PREAMBLE_SIZE;
+      offset++;
+      return true;
+    }
+    offset++;
   }
-  while (phase < (DMA_BUF_SIZE - DROP_SIZE)) // While there are whole drops in the buffer
-  {
-    processDrop((DropToWiFi*)(buf + phase)); // No need to copy, just process in place
-    phase += DROP_SIZE;
-  }
-  // Last partial drop in the buffer
-  os_memcpy(&drop, buf + phase, DMA_BUF_SIZE - phase);
+  return false;
 }
+
 
 LOCAL void i2spiTask(os_event_t *event)
 {
-  struct sdio_queue* desc = (struct sdio_queue*)(event->par);
-  
+  struct sdio_queue* desc = asDesc(event->par);
+
   if (desc == NULL)
   {
     os_printf("ERROR: I2SPI task got null descriptor with signal %u\r\n", (unsigned int)event->sig);
     return;
   }
-  
+
   switch (event->sig)
   {
     case TASK_SIG_I2SPI_RX:
     {
-      collectDrops((uint8*)(desc->buf_ptr));
+      static DropToWiFi drop;
+      static uint8 dropWrInd = 0;
+      uint8* buf = (uint8*)(desc->buf_ptr);
+      int16_t bytesLeftInBuf, bytesRead;
+      if (dropPhase == DROP_PHASE_UNINITALIZED)
+      {
+        if (synchronizeDrops(buf))
+        {
+          dropWrInd = DROP_PREAMBLE_SIZE;
+          bytesLeftInBuf = (DMA_BUF_SIZE - dropPhase) + dropWrInd;
+          outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+        }
+        else
+        {
+          break;
+        }
+      }
+      else
+      {
+        bytesLeftInBuf = DMA_BUF_SIZE - dropPhase;
+      }
+      // One way or another we are pointing at a drop now.
+      while (bytesLeftInBuf > 0)
+      {
+        bytesRead = min(DROP_SIZE - dropWrInd, bytesLeftInBuf);
+        os_memcpy((&drop) + dropWrInd, buf + dropPhase, bytesRead);
+        dropWrInd += bytesRead;
+        if (dropWrInd == DROP_SIZE)
+        {
+          if (os_strncmp(drop.preamble, TO_WIFI_PREAMBLE, DROP_PREAMBLE_SIZE))
+          {
+            os_printf("Unexpected drop to WiFi preamble %02x%02x%02x%02x\r\n", drop.preamble[0], drop.preamble[1], drop.preamble[2], drop.preamble[3]);
+          }
+          else
+          {
+            processDrop(&drop);
+          }
+        }
+        dropPhase = (DMA_BUF_SIZE + DROP_SPACING) & DMA_BUF_SIZE_MASK;
+        bytesLeftInBuf -= DROP_SPACING;
+      }
       break;
     }
     case TASK_SIG_I2SPI_TX:
     {
-      //XXX Handle returned TX buffer
+      int w;
+      uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+      uint8_t* txBB = (uint8_t*)txBuf;
+      if (asDesc(desc->next_link_ptr) == nextOutgoingDesc)
+      {
+        nextOutgoingDesc = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
+        i2spiTxUnderflowCount++;
+      }
+      //for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0xFFFFffff; // Reset to idle high using word size writes
+      for(w=0; w<DMA_BUF_SIZE; w++) txBB[w] = w;
       break;
     }
     default:
@@ -135,8 +202,8 @@ LOCAL void i2spiTask(os_event_t *event)
                 (unsigned int)event->sig, (unsigned int)event->par);
     }
   }
-  // Reset the buffer for reuse
-  prepSdioQueue(desc);
+  
+  prepSdioQueue(desc, 1);
 }
 
 
@@ -153,15 +220,19 @@ LOCAL void dmaisr(void* arg) {
 
   //os_put_hex(slc_intr_status, 8); os_put_char('\r'); os_put_char('\n');
 
-  if (slc_intr_status & SLC_TX_EOF_INT_ST) { // Receive complete interrupt
-    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, READ_PERI_REG(SLC_TX_EOF_DES_ADDR)) == false)
+  if (slc_intr_status & SLC_TX_EOF_INT_ST) // Receive complete interrupt
+  {
+    uint32_t eofDesAddr = READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
+    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, eofDesAddr) == false)
     {
       os_put_char('!'); os_put_char('I'); os_put_char('R');
     }
   }
-  if (slc_intr_status & SLC_RX_EOF_INT_ST)
-  { // Transmit complete interrupt
-    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, READ_PERI_REG(SLC_RX_EOF_DES_ADDR)) == false)
+  
+  if (slc_intr_status & SLC_RX_EOF_INT_ST) // Transmit complete interrupt
+  {
+    uint32_t eofDesAddr = READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
+    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, eofDesAddr) == false)
     {
       os_put_char('!'); os_put_char('I'); os_put_char('T');
     }
@@ -173,15 +244,22 @@ LOCAL void dmaisr(void* arg) {
 int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
+  dropPhase = DROP_PHASE_UNINITALIZED; // No established phase estimate
+  outgoingPhase = DROP_PHASE_UNINITALIZED; // Not established yet
+  nextOutgoingDesc = &txQueue[1]; // 0th entry will imeediately be going out so first possible one comes after it.
+  i2spiTxUnderflowCount = 0;
+  i2spiRxOverflowCount  = 0;
+  i2spiPhaseErrorCount  = 0;
+
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
   // Setup the buffers and descriptors
   for (i=0; i<DMA_BUF_COUNT; ++i)
   {
-    os_memset(txBufs, 0x00, DMA_BUF_COUNT*DMA_BUF_SIZE);
-    os_memset(rxBufs, 0x00, DMA_BUF_COUNT*DMA_BUF_SIZE);
-    prepSdioQueue(&txQueue[i]);
-    prepSdioQueue(&rxQueue[i]);
+    os_memset(txBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
+    os_memset(rxBufs, 0xff, DMA_BUF_COUNT*DMA_BUF_SIZE);
+    prepSdioQueue(&txQueue[i], 1);
+    prepSdioQueue(&rxQueue[i], 0);
     txQueue[i].buf_ptr = (uint32_t)&txBufs[i];
     txQueue[i].next_link_ptr = (int)((i<(DMA_BUF_COUNT-1))?(&txQueue[i+1]):(&txQueue[0]));
     //os_printf("TX Q 0x%08x\tB 0x%08x\t",  (unsigned int)&txQueue[i], txQueue[i].buf_ptr);
@@ -190,38 +268,38 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
     //os_printf("RX Q 0x%08x\tB 0x%08x\r\n",  (unsigned int)&rxQueue[i], rxQueue[i].buf_ptr);
   }
 
-	//Reset DMA
-	SET_PERI_REG_MASK(  SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
-	CLEAR_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
+  //Reset DMA
+  SET_PERI_REG_MASK(  SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
+  CLEAR_PERI_REG_MASK(SLC_CONF0, SLC_RXLINK_RST|SLC_TXLINK_RST);
 
-	//Clear DMA int flags
-	SET_PERI_REG_MASK(  SLC_INT_CLR,  0xffffffff);
-	CLEAR_PERI_REG_MASK(SLC_INT_CLR,  0xffffffff);
+  //Clear DMA int flags
+  SET_PERI_REG_MASK(  SLC_INT_CLR,  0xffffffff);
+  CLEAR_PERI_REG_MASK(SLC_INT_CLR,  0xffffffff);
 
-	//Enable and configure DMA
-	CLEAR_PERI_REG_MASK(SLC_CONF0, (SLC_MODE<<SLC_MODE_S));
-	SET_PERI_REG_MASK(  SLC_CONF0, (1<<SLC_MODE_S));
-	SET_PERI_REG_MASK(  SLC_RX_DSCR_CONF, SLC_INFOR_NO_REPLACE | SLC_TOKEN_NO_REPLACE);
-	CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN       | SLC_RX_EOF_MODE     | SLC_RX_FILL_MODE);
+  //Enable and configure DMA
+  CLEAR_PERI_REG_MASK(SLC_CONF0, (SLC_MODE<<SLC_MODE_S));
+  SET_PERI_REG_MASK(  SLC_CONF0, (1<<SLC_MODE_S));
+  SET_PERI_REG_MASK(  SLC_RX_DSCR_CONF, SLC_INFOR_NO_REPLACE | SLC_TOKEN_NO_REPLACE);
+  CLEAR_PERI_REG_MASK(SLC_RX_DSCR_CONF, SLC_RX_FILL_EN       | SLC_RX_EOF_MODE     | SLC_RX_FILL_MODE);
 
-	/* Feed DMA the buffer descriptors
-    TX and RX are from the DMA's perspective so we use the TX LINK part to receive data from the I2S DMA and the RX LINK
-    part to send data out the DMA to I2S.
+  /* Feed DMA the buffer descriptors
+     TX and RX are from the DMA's perspective so we use the TX LINK part to receive data from the I2S DMA and the RX LINK
+     part to send data out the DMA to I2S.
   */
-	CLEAR_PERI_REG_MASK(SLC_TX_LINK,SLC_TXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&rxQueue[0])  & SLC_TXLINK_DESCADDR_MASK);
-	CLEAR_PERI_REG_MASK(SLC_RX_LINK,SLC_RXLINK_DESCADDR_MASK);
-	SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&txQueue[0]) & SLC_RXLINK_DESCADDR_MASK);
+  CLEAR_PERI_REG_MASK(SLC_TX_LINK,SLC_TXLINK_DESCADDR_MASK);
+  SET_PERI_REG_MASK(SLC_TX_LINK, ((uint32)&rxQueue[0])  & SLC_TXLINK_DESCADDR_MASK);
+  CLEAR_PERI_REG_MASK(SLC_RX_LINK,SLC_RXLINK_DESCADDR_MASK);
+  SET_PERI_REG_MASK(SLC_RX_LINK, ((uint32)&txQueue[0]) & SLC_RXLINK_DESCADDR_MASK);
 
-	//Attach the DMA interrupt
-	ets_isr_attach(ETS_SLC_INUM, dmaisr, NULL);
-	//Enable DMA operation intr Want to get interrupts for both end of transmits
-	WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);
-	//clear any interrupt flags that are set
-	WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
-	///enable DMA intr in cpu
-	ets_isr_unmask(1<<ETS_SLC_INUM);
-  
+  //Attach the DMA interrupt
+  ets_isr_attach(ETS_SLC_INUM, dmaisr, NULL);
+  //Enable DMA operation intr Want to get interrupts for both end of transmits
+  WRITE_PERI_REG(SLC_INT_ENA,  SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA | SLC_RX_UDF_INT_ENA | SLC_TX_DSCR_ERR_INT_ENA);
+  //clear any interrupt flags that are set
+  WRITE_PERI_REG(SLC_INT_CLR, 0xffffffff);
+  ///enable DMA intr in cpu
+  ets_isr_unmask(1<<ETS_SLC_INUM);
+
   // Start DMA transmitting
   SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_START);
   // Start DMA receiving
@@ -230,59 +308,69 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
 //----
 
 	//Init pins to i2s functions
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U,  FUNC_I2SO_BCK);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_I2SO_DATA);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_I2SO_WS);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDO_U,  FUNC_I2SO_BCK);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTDI_U,  FUNC_I2SI_DATA);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTCK_U,  FUNC_I2SI_BCK);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_MTMS_U , FUNC_I2SI_WS);
 
-	//Enable clock to i2s subsystem
-	i2c_writeReg_Mask_def(i2c_bbpll, i2c_bbpll_en_audio_clock_out, 1);
+  //Enable clock to i2s subsystem
+  i2c_writeReg_Mask_def(i2c_bbpll, i2c_bbpll_en_audio_clock_out, 1);
 
-	//Reset I2S subsystem
-	CLEAR_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
-	SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
-	CLEAR_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
+  //Reset I2S subsystem
+  CLEAR_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
+  SET_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
+  CLEAR_PERI_REG_MASK(I2SCONF,I2S_I2S_RESET_MASK);
 
-	//Select 16bits per channel (FIFO_MOD=0), no DMA access (FIFO only)
-	CLEAR_PERI_REG_MASK(I2S_FIFO_CONF, I2S_I2S_DSCR_EN | (I2S_I2S_RX_FIFO_MOD<<I2S_I2S_RX_FIFO_MOD_S) |
-                                     (I2S_I2S_TX_FIFO_MOD<<I2S_I2S_TX_FIFO_MOD_S));
+  //Select 16bits per channel (FIFO_MOD=0), no DMA access (FIFO only)
+	CLEAR_PERI_REG_MASK(I2S_FIFO_CONF, I2S_I2S_DSCR_EN|(I2S_I2S_RX_FIFO_MOD<<I2S_I2S_RX_FIFO_MOD_S)|(I2S_I2S_TX_FIFO_MOD<<I2S_I2S_TX_FIFO_MOD_S));
 	//Enable DMA in i2s subsystem
 	SET_PERI_REG_MASK(I2S_FIFO_CONF, I2S_I2S_DSCR_EN);
+  
+  //set I2S_CHAN 
+  //set rx,tx channel mode, both are "two channel" here
+  SET_PERI_REG_MASK(I2SCONF_CHAN, (I2S_TX_CHAN_MOD<<I2S_TX_CHAN_MOD_S)|(I2S_RX_CHAN_MOD<<I2S_RX_CHAN_MOD_S));
 
-	//tx/rx binaureal
-	CLEAR_PERI_REG_MASK(I2SCONF_CHAN, (I2S_TX_CHAN_MOD<<I2S_TX_CHAN_MOD_S)|(I2S_RX_CHAN_MOD<<I2S_RX_CHAN_MOD_S));
+  //set RX eof num
+	WRITE_PERI_REG(I2SRXEOF_NUM, 128);
+  
+  // Tweak the I2S timing
+  CLEAR_PERI_REG_MASK(I2STIMING, (I2S_RECE_SD_IN_DELAY    << I2S_RECE_SD_IN_DELAY_S)   |
+                                 (I2S_RECE_WS_IN_DELAY    << I2S_RECE_WS_IN_DELAY_S)   |
+                                 (I2S_RECE_BCK_IN_DELAY   << I2S_RECE_BCK_IN_DELAY_S)  |
+                                 (I2S_TRANS_SD_OUT_DELAY  << I2S_TRANS_SD_OUT_DELAY_S) |
+                                 (I2S_TRANS_WS_OUT_DELAY  << I2S_TRANS_WS_IN_DELAY_S)  |
+                                 (I2S_TRANS_BCK_OUT_DELAY << I2S_TRANS_BCK_IN_DELAY_S));
 
-	//Clear int
-	SET_PERI_REG_MASK(I2SINT_CLR,   I2S_I2S_TX_REMPTY_INT_CLR|I2S_I2S_TX_WFULL_INT_CLR|
-			I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
-	CLEAR_PERI_REG_MASK(I2SINT_CLR,   I2S_I2S_TX_REMPTY_INT_CLR|I2S_I2S_TX_WFULL_INT_CLR|
-			I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
+  SET_PERI_REG_MASK(I2STIMING, ((0 & I2S_RECE_SD_IN_DELAY)    << I2S_RECE_SD_IN_DELAY_S)   |
+                               ((0 & I2S_RECE_WS_IN_DELAY)    << I2S_RECE_WS_IN_DELAY_S)   |
+                               ((0 & I2S_RECE_BCK_IN_DELAY)   << I2S_RECE_BCK_IN_DELAY_S)  |
+                               ((0 & I2S_TRANS_SD_OUT_DELAY)  << I2S_TRANS_SD_OUT_DELAY_S) |
+                               ((0 & I2S_TRANS_WS_OUT_DELAY)  << I2S_TRANS_WS_IN_DELAY_S)  |
+                               ((0 & I2S_TRANS_BCK_OUT_DELAY) << I2S_TRANS_BCK_IN_DELAY_S));// | I2S_TRANS_BCK_IN_INV);// | I2S_TRANS_DSYNC_SW);
+  //trans master&rece slave,MSB shift,right_first,msb right
+  CLEAR_PERI_REG_MASK(I2SCONF, I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
+		               (I2S_BITS_MOD<<I2S_BITS_MOD_S)|
+		               (I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
+		               (I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
+  SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|//I2S_TRANS_SLAVE_MOD|
+		                         I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT |
+                             (( 4&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)| // Clock counter, must be a multiple of 2 for 50% duty cycle
+			                       (( 4&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S)| // Clock prescaler
+                             (  0<<I2S_BITS_MOD_S)); // Dead bit insertion?
 
-	//trans master&rece slave,MSB shift,right_first,msb right
-	CLEAR_PERI_REG_MASK(I2SCONF, I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
-						(I2S_BITS_MOD<<I2S_BITS_MOD_S)|
-						(I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
-						(I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
-	SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|I2S_TRANS_SLAVE_MOD|
-						//I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT|
-						((8   &I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)|
-						((1&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S));
+  //clear int
+  SET_PERI_REG_MASK(I2SINT_CLR,   I2S_I2S_TX_REMPTY_INT_CLR|I2S_I2S_TX_WFULL_INT_CLR|I2S_I2S_RX_REMPTY_INT_CLR|
+                                  I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
+  CLEAR_PERI_REG_MASK(I2SINT_CLR, I2S_I2S_TX_REMPTY_INT_CLR|I2S_I2S_TX_WFULL_INT_CLR|I2S_I2S_RX_REMPTY_INT_CLR|
+                                  I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
+ 
+  //enable int
+  SET_PERI_REG_MASK(I2SINT_ENA,   I2S_I2S_TX_REMPTY_INT_ENA|I2S_I2S_TX_WFULL_INT_ENA|I2S_I2S_RX_REMPTY_INT_ENA|
+  I2S_I2S_RX_WFULL_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
 
-
-	//No idea if ints are needed...
-	//clear int
-	SET_PERI_REG_MASK(I2SINT_CLR,   I2S_I2S_TX_REMPTY_INT_CLR|I2S_I2S_TX_WFULL_INT_CLR|
-			I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
-	CLEAR_PERI_REG_MASK(I2SINT_CLR,   I2S_I2S_TX_REMPTY_INT_CLR|I2S_I2S_TX_WFULL_INT_CLR|
-			I2S_I2S_RX_WFULL_INT_CLR|I2S_I2S_PUT_DATA_INT_CLR|I2S_I2S_TAKE_DATA_INT_CLR);
-	//enable int
-	SET_PERI_REG_MASK(I2SINT_ENA,   I2S_I2S_TX_REMPTY_INT_ENA|I2S_I2S_TX_WFULL_INT_ENA|
-	I2S_I2S_RX_REMPTY_INT_ENA|I2S_I2S_RX_WFULL_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
-
-
-	return 0;
+  return 0;
 }
 
 void ICACHE_FLASH_ATTR i2spiStart(void)
@@ -293,14 +381,16 @@ void ICACHE_FLASH_ATTR i2spiStart(void)
 
 void ICACHE_FLASH_ATTR i2spiStop(void)
 {
+  // Disable interrupts
+  CLEAR_PERI_REG_MASK(SLC_INT_ENA, SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);
+
   // Stop DMA transmitting
   SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_STOP);
   // Stop DMA receiving
   SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_STOP);
-  // @TODO How do we stop the I2S peripheral? Does halting DMA do the trick?
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen, ToRTIPPayloadTag tag)
+bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
 {
   //XXX Implement queing message data
   return false;
