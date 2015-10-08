@@ -4,22 +4,22 @@
  * @author Daniel Casner
  */
 
-#include "ip_addr.h"
-#include "c_types.h"
+#include <stdint.h>
 #include "os_type.h"
-#include "espconn.h"
 
 /** Initalize the client connection
  * @return 0 for okay or non-zero on error
  */
 sint8 clientInit();
 
-/** Queues a buffer to be sent to client
- * @param Pointer to contiguous data to be sent
- * @param len The number of bytes to send
- * @return true if the packet was asuccessfully queued, false if it couldn't be queued
+/** Method for sending messages NOT PACKETS
+ * @param msgID The ID (tag) of the message to be sent
+ * @param buffer A pointer to the message to be sent
+ * @param reliable Specifify if the message should be transferred reliably. Default true.
+ * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
+ * @return True if sucessfully queued, false otherwise
  */
-bool clientQueuePacket(uint8* data, uint16 len);
+bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot);
 
 /** Callback for new received data from WiFi client
  * This function is called by but not defined in the client module and must be defined by the user application.
@@ -28,7 +28,13 @@ bool clientQueuePacket(uint8* data, uint16 len);
  * @param payload The received data
  * @param tag The type dag for the payload
  */
-void clientRecvCallback(char* data, unsigned short len);
+void clientRecvCallback(u8* payload, const u16 len);
 
+/** Periodic update function for client.
+ */
+void clientUpdate(void);
+
+/// Check if client is connected.
+bool clientConnected(void);
 
 #endif

@@ -1,1 +1,0 @@
-../../../../tools/anki-util/source/anki/utilEmbedded/transport/IReceiver.h

@@ -40,6 +40,7 @@ endif
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
+INCLUDES += -I ../../../../tools/anki-util/source/anki
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

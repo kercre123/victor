@@ -3,45 +3,67 @@
  */
 
 #include "client.h"
+#include "ip_addr.h"
+#include "espconn.h"
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
 #include "driver/uart.h"
-#include "telnet.h"
+#include "utilEmbedded/transport/IReceiver.h"
+#include "utilEmbedded/transport/reliableTransport.h"
 
 //#define DEBUG_CLIENT
 
-static struct espconn *udpServer;
-static bool haveClient = false;
+#define printf os_printf
+
+static ReliableConnection connection;
+static bool haveClient;
+
+bool clientConnected(void)
+{
+  return haveClient;
+}
+
+void clientUpdate(void)
+{
+  if (ReliableTransport_Update(&connection) == false)
+  {
+    Receiver_OnDisconnect(&connection);
+    printf("Client reliable transport timed out\r\n");
+  }
+}
 
 static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  if (arg != (void*)udpServer)
+  u16 res;
+  
+  if (arg != connection.dest)
   {
-    telnetPrintf("Client receive unexpected arg %08x\r\n", arg);
+    printf("Client receive unexpected arg %08x\r\n", (unsigned int)arg);
   }
 
 #ifdef DEBUG_CLIENT
-  //os_printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
+  //printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
   if (haveClient == false)
   {
-    telnetPrintf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
+    printf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
   }
 #endif
 
-  haveClient = true;
-
-  //clientRecvCallback(usrdata, len);
+  res = ReliableTransport_ReceiveData(&connection, (uint8_t*)usrdata, len);
+  if (res < 0)
+  {
+    printf("ReliableTransport didn't accept data: %d\r\n", res);
+  }
 }
-
 
 sint8 ICACHE_FLASH_ATTR clientInit()
 {
   int8 err;
 
-  os_printf("clientInit\r\n");
+  printf("clientInit\r\n");
 
-  haveClient = false;
+  struct espconn *udpServer;
 
   udpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
   ets_memset( udpServer, 0, sizeof( struct espconn ) );
@@ -53,38 +75,62 @@ sint8 ICACHE_FLASH_ATTR clientInit()
   err = espconn_regist_recvcb(udpServer, udpServerRecvCB);
   if (err != 0)
   {
-    os_printf("\tError registering receive callback %d\r\n", err);
+    printf("\tError registering receive callback %d\r\n", err);
     return err;
   }
 
   err = espconn_create(udpServer);
   if (err != 0)
   {
-    os_printf("\tError creating server %d\r\n", err);
+    printf("\tError creating server %d\r\n", err);
     return err;
   }
+  
+  ReliableTransport_Init();
+  ReliableConnection_Init(&connection, udpServer);
 
-  os_printf("\tno error\r\n");
+  printf("\tno error\r\n");
   return ESPCONN_OK;
 }
 
-inline bool clientQueuePacket(uint8* data, uint16 len)
+bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
 #ifdef DEBUG_CLIENT
-telnetPrintf("clientQueuePacket\n");
+printf("clientQueuePacket\n");
 #endif
 
-  if(haveClient)
+  const int8 err = espconn_send(connection.dest, data, len);
+  if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
   {
-    const int8 err = espconn_send(udpServer, data, len);
-    if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+    printf("Failed to queue UDP packet %d\n", err);
+    return false;
+  }
+  else
+  {
+    return true;
+  }
+}
+
+bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+{
+  if (clientConnected())
+  {
+    if (reliable)
     {
-      telnetPrintf("Failed to queue UDP packet %d\n", err);
-      return false;
+      if (ReliableTransport_SendMessage(buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
+      {
+        ReliableTransport_Disconnect(&connection);
+        Receiver_OnDisconnect(&connection);
+        return false;
+      }
+      else
+      {
+        return true;
+      }
     }
     else
     {
-      return true;
+      return ReliableTransport_SendMessage(buffer, size, &connection, eRMT_SingleUnreliableMessage, hot, msgID);
     }
   }
   else
