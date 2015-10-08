@@ -241,6 +241,8 @@ public class VortexController : GameController {
   bool idleSet = false;
 
   void RobotCompletedVortexAnimation(bool success, string animName) {
+    if (state != GameState.PLAYING && playState != VortexState.SPINNING)
+      return;
     switch (animName) {
     case "firstTap":
     case "tapTwoTimes":
@@ -257,7 +259,7 @@ public class VortexController : GameController {
       break;
     }
     if (!idleSet) {
-      CozmoEmotionManager.instance.SetIdleAnimation(CozmoEmotionManager.instance.GetCurrentDefaultIdle());
+      //
       idleSet = true;
     }
   }
@@ -334,7 +336,12 @@ public class VortexController : GameController {
     if (robot != null) {
       RobotEngineManager.instance.SuccessOrFailure += ResetFaceAwareness;
       RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedVortexAnimation;
-      robot.StartFaceAwareness();
+      if (PlayerPrefs.GetInt("FaceDetection", 1) == 1) {
+        robot.StartFaceAwareness();
+      }
+      else {
+        robot.StopFaceAwareness();
+      }
     }
     
 
@@ -625,6 +632,7 @@ public class VortexController : GameController {
     base.Enter_RESULTS();
 
     //wheel.gameObject.SetActive(false);
+    StopAllCoroutines();
 
     playAgainButton.gameObject.SetActive(true);
 
@@ -653,7 +661,7 @@ public class VortexController : GameController {
       else {
         sortedScoreData.Add(scoreData);
       }
-      
+      playState = VortexState.INTRO;
     }
 
     List<Color> gearColors = new List<Color>();
@@ -876,11 +884,18 @@ public class VortexController : GameController {
   protected override void RefreshHUD() {
     base.RefreshHUD();
 
-    textRoundNumber.text = "ROUND " + Mathf.Max(1, round).ToString();
-
-    int newNumber = wheel.GetDisplayedNumber();
-    textCurrentNumber.text = newNumber.ToString();
-    textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
+    if (state == GameState.PLAYING) {
+      textRoundNumber.text = "ROUND " + Mathf.Max(1, round).ToString();
+    
+      int newNumber = wheel.GetDisplayedNumber();
+      textCurrentNumber.text = newNumber.ToString();
+      textPlayState.text = state == GameState.PLAYING ? playState.ToString() : "";
+    }
+    else {
+      textRoundNumber.text = "";
+      textCurrentNumber.text = "";
+      textPlayState.text = "";
+    }
   }
 
   #endregion
@@ -1034,7 +1049,7 @@ public class VortexController : GameController {
       endDragPos += UnityEngine.Random.insideUnitCircle * Screen.height * 0.1f;
       dragTimer = cozmoDragTime;
       dragCount = 0;
-      dragCountMax = UnityEngine.Random.Range(2, 4);
+      dragCountMax = 1;//UnityEngine.Random.Range(2, 4);
       wheel.DragStart(startDragPos, Time.time);
     }
     else {
@@ -1049,7 +1064,7 @@ public class VortexController : GameController {
         }
         else {
           //Debug.Log("should be tracking to default");
-          CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true, true);
+          CozmoEmotionManager.instance.SetEmotionTurnInPlace("YOUR_TURN", GetPoseFromPlayerIndex(currentPlayerIndex).rad, true, true);
 
           // setting the head angle to ~35 degrees
           if (robot != null)
@@ -1862,24 +1877,13 @@ public class VortexController : GameController {
       if (face_index >= 0) {
         //DAS.Error("VortexController", "Got new face for pose index " + pose_index.ToString());
         Face face = robot.faceObjects[face_index];
-        Face old_face = null;
-        if (actualFaces[pose_index] != null) {
-          old_face = new Face(actualFaces[pose_index].ID, actualFaces[pose_index].WorldPosition.x, actualFaces[pose_index].WorldPosition.y, actualFaces[pose_index].WorldPosition.z);
-        }
+
         actualFaces[pose_index] = new Face(face.ID, face.WorldPosition.x, face.WorldPosition.y, face.WorldPosition.z);
         if (state == GameState.PLAYING
             && playState == VortexState.REQUEST_SPIN
             && pose_index == GetPoseIndex(currentPlayerIndex)
             && Time.realtimeSinceStartup - faceUpdateTimer > faceUpdateFreq
             && round <= (roundsPerRing * rings)) {
-          /*
-          if (old_face == null) {
-            //DAS.Error("VortexController", "actualFaces[pose_index] == null");
-          }
-          else {
-            //DAS.Error("VortexController", "diff: " + (face.WorldPosition - old_face.WorldPosition).sqrMagnitude);
-          }
-          */
           CozmoEmotionManager.instance.SetEmotionFacePose("YOUR_TURN", actualFaces[pose_index], true, true);
           faceUpdateTimer = Time.realtimeSinceStartup;
         }
@@ -2074,7 +2078,12 @@ public class VortexController : GameController {
 
   void ResetFaceAwareness(bool success, RobotActionType action_type) {
     if (robot != null) {
-      robot.StartFaceAwareness();
+      if (PlayerPrefs.GetInt("FaceDetection", 1) == 1) {
+        robot.StartFaceAwareness();
+      }
+      else {
+        robot.StopFaceAwareness();
+      }
     }
   }
 

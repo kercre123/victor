@@ -312,18 +312,7 @@ namespace Cozmo {
   {
     VizManager::getInstance()->ShowObjects(msg.enable);
   }
-  
-  void CozmoGameImpl::Process_SetHeadlights(ExternalInterface::SetHeadlights const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetHeadlight(msg.intensity);
-    }
-  }
-  
+
   void CozmoGameImpl::Process_GotoPose(ExternalInterface::GotoPose const& msg)
   {
     // Handled in RobotEventHandler::HandleActionEvents
@@ -485,7 +474,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ErasePoseMarker(ExternalInterface::ErasePoseMarker const& msg)
   {
-    VizManager::getInstance()->EraseAllQuadsWithType(VIZ_QUAD_POSE_MARKER);
+    VizManager::getInstance()->EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_POSE_MARKER);
   }
 
   void CozmoGameImpl::Process_SetWheelControllerGains(ExternalInterface::SetWheelControllerGains const& msg)
@@ -604,48 +593,7 @@ namespace Cozmo {
       robot->StopFaceTracking();
     }
   }
-  
-  void CozmoGameImpl::Process_SetVisionSystemParams(ExternalInterface::SetVisionSystemParams const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      
-      VisionSystemParams_t p;
-      p.autoexposureOn = msg.autoexposureOn;
-      p.exposureTime = msg.exposureTime;
-      p.integerCountsIncrement = msg.integerCountsIncrement;
-      p.minExposureTime = msg.minExposureTime;
-      p.maxExposureTime = msg.maxExposureTime;
-      p.percentileToMakeHigh = msg.percentileToMakeHigh;
-      p.highValue = msg.highValue;
-      p.limitFramerate = msg.limitFramerate;
-      
-      robot->SendVisionSystemParams(p);
-    }
-  }
-  
-  void CozmoGameImpl::Process_SetFaceDetectParams(ExternalInterface::SetFaceDetectParams const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      FaceDetectParams_t p;
-      p.scaleFactor = msg.scaleFactor;
-      p.minNeighbors = msg.minNeighbors;
-      p.minObjectHeight = msg.minObjectHeight;
-      p.minObjectWidth = msg.minObjectWidth;
-      p.maxObjectHeight = msg.maxObjectHeight;
-      p.maxObjectWidth = msg.maxObjectWidth;
-      
-      robot->SendFaceDetectParams(p);
-    }
-  }
-  
+
   void CozmoGameImpl::Process_StartLookingForMarkers(ExternalInterface::StartLookingForMarkers const& msg)
   {
     // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
@@ -680,7 +628,7 @@ namespace Cozmo {
       
       MakeRelativeMode makeRelative = static_cast<MakeRelativeMode>(msg.makeRelative);
       robot->SetObjectLights(whichObject,
-                             static_cast<WhichBlockLEDs>(msg.whichLEDs),
+                             static_cast<WhichCubeLEDs>(msg.whichLEDs),
                              msg.onColor, msg.offColor, msg.onPeriod_ms, msg.offPeriod_ms,
                              msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
                              msg.turnOffUnspecifiedLEDs,
@@ -689,7 +637,7 @@ namespace Cozmo {
       /*
       ActiveCube* activeCube = robot->GetActiveObject(whichObject);
       if(activeCube != nullptr) {
-        activeCube->SetLEDs(static_cast<ActiveCube::WhichBlockLEDs>(msg.whichLEDs),
+        activeCube->SetLEDs(static_cast<ActiveCube::WhichCubeLEDs>(msg.whichLEDs),
                             msg.color, msg.onPeriod_ms, msg.offPeriod_ms);
         
         if(msg.makeRelative) {
@@ -768,7 +716,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_EraseQuad(ExternalInterface::EraseQuad const& msg)
   {
-    VizManager::getInstance()->EraseQuad(VIZ_QUAD_GENERIC_3D, msg.quadID);
+    VizManager::getInstance()->EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
   }
   
   void CozmoGameImpl::Process_QueueSingleAction(const ExternalInterface::QueueSingleAction &msg)
@@ -779,6 +727,16 @@ namespace Cozmo {
   void CozmoGameImpl::Process_QueueCompoundAction(const ExternalInterface::QueueCompoundAction &msg)
   {
     // Handled in RobotEventHandler::HandleQueueCompoundAction
+  }
+
+  void CozmoGameImpl::Process_ImageChunk(const ImageChunk &msg)
+  {
+    // not handled
+  }
+
+  void CozmoGameImpl::Process_StartControllerTestMode(const StartControllerTestMode &msg)
+  {
+    // not handled
   }
   
   void CozmoGameImpl::Process_SetDemoState(const ExternalInterface::SetDemoState &msg)

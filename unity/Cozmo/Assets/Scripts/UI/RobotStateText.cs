@@ -48,7 +48,7 @@ public class RobotStateText : MonoBehaviour {
   const string degree = "°";
   const string empty = "";
 
-  List<RobotStatusFlagClad> statuses = new List<RobotStatusFlagClad>();
+  List<RobotStatusFlag> statuses = new List<RobotStatusFlag>();
 
   byte lastID;
   float lastHeadAngle;
@@ -57,7 +57,7 @@ public class RobotStateText : MonoBehaviour {
   float lastRightWheelSpeed;
   float lastLiftHeight;
   Vector3 lastWorldPosition;
-  RobotStatusFlagClad lastStatus;
+  RobotStatusFlag lastStatus;
   float lastBatteryPercent;
   ObservedObject lastCarryingObjectID;
   ObservedObject lastHeadTracking;
@@ -194,7 +194,7 @@ public class RobotStateText : MonoBehaviour {
     lastWorldPosition = bot.WorldPosition;
   }
 
-  void CheckSpecificStatus(RobotStatusFlagClad status) {
+  void CheckSpecificStatus(RobotStatusFlag status) {
     
     bool statusActive = bot.Status(status);
     
@@ -216,12 +216,12 @@ public class RobotStateText : MonoBehaviour {
     if (text_status == null)
       return;
 
-    CheckSpecificStatus(RobotStatusFlagClad.Moving);
-    CheckSpecificStatus(RobotStatusFlagClad.CarryingBlock);
-    CheckSpecificStatus(RobotStatusFlagClad.PickingOrPlacing);
-    CheckSpecificStatus(RobotStatusFlagClad.PickedUp);
-    CheckSpecificStatus(RobotStatusFlagClad.Animating);
-    CheckSpecificStatus(RobotStatusFlagClad.PerformingAction);
+    CheckSpecificStatus(RobotStatusFlag.IS_MOVING);
+    CheckSpecificStatus(RobotStatusFlag.IS_CARRYING_BLOCK);
+    CheckSpecificStatus(RobotStatusFlag.IS_PICKING_OR_PLACING);
+    CheckSpecificStatus(RobotStatusFlag.IS_PICKED_UP);
+    CheckSpecificStatus(RobotStatusFlag.IS_ANIMATING);
+    CheckSpecificStatus(RobotStatusFlag.IS_PATHING);
 
     string statusString = prefix_status + eol;
 

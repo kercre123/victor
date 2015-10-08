@@ -84,17 +84,14 @@ public class GoldRushController : GameController {
     AUTO_DEPOSITING,
     RETURNED,
     DEPOSITING,
-    NUMSTATES}
-
-  ;
+    NUMSTATES
+  }
 
   private PlayState playState = PlayState.IDLE;
   float playStateTimer = 0;
 
   // only increments when the robot is searching for or returing gold
   float totalActiveTime = 0;
-
-
 
   public bool inExtractRange { get { return playState == PlayState.CAN_EXTRACT; } }
 
@@ -106,9 +103,8 @@ public class GoldRushController : GameController {
     WAITING_TO_PICKUP_BLOCK,
     WAITING_FOR_STACK,
     WAITING_FOR_PLAY,
-    NUMSTATES}
-
-  ;
+    NUMSTATES
+  }
 
   private BuildState buildState = BuildState.WAITING_TO_PICKUP_BLOCK;
 
@@ -577,7 +573,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateSearching() {
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock) && robot.carryingObject != null) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK) && robot.carryingObject != null) {
       lastCarriedObjectId = robot.carryingObject;
       Vector2 buriedLocation;
       if (buriedLocations.TryGetValue(robot.carryingObject, out buriedLocation)) {
@@ -623,7 +619,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateIdle() {
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       EnterPlayState(PlayState.SEARCHING);
     }
   }
@@ -633,7 +629,7 @@ public class GoldRushController : GameController {
   }
 
   void UpdateReadyToReturn() {
-    if (robot.Status(RobotStatusFlagClad.CarryingBlock)) {
+    if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
       EnterPlayState(PlayState.RETURNING);
     }
   }

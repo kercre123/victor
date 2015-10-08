@@ -21,7 +21,6 @@ public class ActiveBlock : ObservedObject {
       FRONT_WEST = 0x04,
       RIGHT_SOUTH = 0x08,
       ALL = 0xff
-
     }
 
     public static PositionFlag IndexToPosition(int i) {
@@ -85,7 +84,7 @@ public class ActiveBlock : ObservedObject {
 
   public bool isMoving { get; private set; }
 
-  public UpAxisClad upAxis { get; private set; }
+  public UpAxis upAxis { get; private set; }
 
   public float xAccel { get; private set; }
 
@@ -115,8 +114,8 @@ public class ActiveBlock : ObservedObject {
     }
   }
 
-  private byte lastRelativeMode;
-  public byte relativeMode;
+  private MakeRelativeMode lastRelativeMode;
+  public MakeRelativeMode relativeMode;
 
   private float lastRelativeToX;
   public float relativeToX;
@@ -133,7 +132,7 @@ public class ActiveBlock : ObservedObject {
   public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
 
-    upAxis = UpAxisClad.Unknown;
+    upAxis = UpAxis.Unknown;
     xAccel = byte.MaxValue;
     yAccel = byte.MaxValue;
     zAccel = byte.MaxValue;
@@ -150,20 +149,20 @@ public class ActiveBlock : ObservedObject {
     SetMode(Mode.Off);
   }
 
-  public void Moving(G2U.ActiveObjectMoved message) {
+  public void Moving(ObjectMoved message) {
     isMoving = true;
 
     upAxis = message.upAxis;
-    xAccel = message.xAccel;
-    yAccel = message.yAccel;
-    zAccel = message.zAccel;
+    xAccel = message.accel.x;
+    yAccel = message.accel.y;
+    zAccel = message.accel.z;
 
     if (MovedAction != null) {
       MovedAction(ID, xAccel, yAccel, zAccel);
     }
   }
 
-  public void StoppedMoving(G2U.ActiveObjectStoppedMoving message) {
+  public void StoppedMoving(ObjectStoppedMoving message) {
     isMoving = false;
 
     if (message.rolled) {
@@ -172,7 +171,7 @@ public class ActiveBlock : ObservedObject {
     }
   }
 
-  public void Tapped(G2U.ActiveObjectTapped message) {
+  public void Tapped(ObjectTapped message) {
     DAS.Debug("ActiveBlock", "Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps);
@@ -239,12 +238,12 @@ public class ActiveBlock : ObservedObject {
     relativeToY = 0;
   }
 
-  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
                               uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {  
     SetLEDsRelative(relativeTo.x, relativeTo.y, onColor, offColor, whichLEDs, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
   }
 
-  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, byte relativeMode = 1,
+  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
                               uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
     SetLEDs(onColor, offColor, whichLEDs, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
 

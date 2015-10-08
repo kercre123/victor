@@ -62,6 +62,7 @@ public class CozmoEmotionMachine : MonoBehaviour {
     
     if (CozmoEmotionManager.instance != null) {
       CozmoEmotionManager.instance.RegisterMachine(this);
+      CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
     }
 
     InitializeMachine();

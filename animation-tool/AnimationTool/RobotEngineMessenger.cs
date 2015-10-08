@@ -21,7 +21,6 @@ namespace AnimationTool
         public readonly SendQueue ProceduralFaceQueue;
         public readonly SendQueue HeadAngleQueue;
         public readonly SendQueue LiftHeightQueue;
-        public readonly SendQueue SetIdleAnimationQueue;
 
         static RobotEngineMessenger()
         {
@@ -36,7 +35,6 @@ namespace AnimationTool
             ProceduralFaceQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
             HeadAngleQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
             LiftHeightQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
-            SetIdleAnimationQueue = ConnectionManager.CreateSendQueue(FixedRefreshRate);
         }
 
         public void SendAnimation(string animationName)
@@ -54,7 +52,7 @@ namespace AnimationTool
 
             MessageGameToEngine message = new MessageGameToEngine();
             message.SetIdleAnimation = setIdleAnimationMessage;
-            SetIdleAnimationQueue.Send(message);
+            ConnectionManager.SetIdleMessage(message);
         }
 
         public void SendProceduralFaceMessage(Sequencer.ExtraProceduralFaceData data)
