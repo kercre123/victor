@@ -12,6 +12,7 @@ public class PatternPlayController : GameController {
   private float lastAnimationFinishedTime = 0.0f;
   private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
+  private float lastBlinkTime = 0.0f;
 
   private BlockPattern lastPatternSeen = null;
 
@@ -132,7 +133,8 @@ public class PatternPlayController : GameController {
 
           DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
           " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
-          
+
+          Debug.Log(robot.activeBlocks[robot.markersVisibleObjects[0].ID].Forward);
 
           if (cozmoEnergyLevel % 3 == 0) {
             SendAnimation("Celebration");
@@ -194,8 +196,8 @@ public class PatternPlayController : GameController {
       Color enabledColor;
       Color disabledColor;
 
-      disabledColor = new Color(0.0f, 0.0f, 0.0f, 1.0f);
-      enabledColor = new Color(0.0f, 0.6f, 1.0f, 1.0f);
+      enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
+      disabledColor = new Color(0.1f, 0.0f, 0.0f, 1.0f);
 
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
@@ -215,15 +217,16 @@ public class PatternPlayController : GameController {
  
       if (currentInputMode == InputMode.TILT) {
         if (Time.time - blockConfig.Value.lastTimeTapped < 0.3f || blockConfig.Value.lastFrameZAccel < 10.0f) {
-          enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-          disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+          enabledColor = new Color(0.2f, 0.1f, 1.0f, 1.0f);
+          disabledColor = new Color(0.1f, 0.1f, 0.1f, 1.0f);
         }
       }
 
       if (currentInputMode == InputMode.PHONE) {
-        if (blockConfig.Key == lastTimerID) {
-          enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-          disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+
+        if (blockConfig.Key == lastTimerID && Time.time - GetMostRecentMovedTime() < 3.0f) {
+          enabledColor = new Color(1.0f, 0.7f, 0.0f, 1.0f);
+          disabledColor = new Color(1.0f, 0.05f, 0.0f, 1.0f);
         }
       }
 
@@ -310,6 +313,16 @@ public class PatternPlayController : GameController {
       }
     }
     return lastTouchedID;
+  }
+
+  private float GetMostRecentMovedTime() {
+    float minTime = 0.0f;
+    foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
+      if (block.Value.lastTimeTouched > minTime) {
+        minTime = block.Value.lastTimeTouched;
+      }
+    }
+    return minTime;
   }
 
   private void PhoneCycle() {

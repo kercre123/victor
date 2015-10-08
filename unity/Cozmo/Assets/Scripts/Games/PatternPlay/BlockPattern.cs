@@ -96,8 +96,6 @@ public class BlockPattern {
     patternSeen.facingCozmo = CheckFacingCozmo(robot);
     patternSeen.verticalStack = CheckVerticalStack(robot);
 
-    Debug.LogWarning(patternSeen.verticalStack);
-
     bool rowAlignment = CheckRowAlignment(robot);
 
     if (patternSeen.verticalStack == false && rowAlignment == false) {
@@ -118,7 +116,7 @@ public class BlockPattern {
     // convert get block lights in cozmo space. build out pattern seen.
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward);
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward, patternSeen.facingCozmo);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 
@@ -188,31 +186,59 @@ public class BlockPattern {
     return true;
   }
 
-  static private BlockLights GetInCozmoSpace(BlockLights blockLocalSpace, Vector3 blockForward) {
+  static private BlockLights GetInCozmoSpace(BlockLights blockLocalSpace, Vector3 blockForward, bool facingCozmo) {
     BlockLights blockLightCozmoSpace = new BlockLights();
 
-    if (blockForward.x > 0.9f) {
-      blockLightCozmoSpace.right = blockLocalSpace.front;
-      blockLightCozmoSpace.back = blockLocalSpace.right;
-      blockLightCozmoSpace.left = blockLocalSpace.back;
-      blockLightCozmoSpace.front = blockLocalSpace.left;
+    if (facingCozmo) {
+      if (blockForward.z > 0.9f) {
+        blockLightCozmoSpace.right = blockLocalSpace.front;
+        blockLightCozmoSpace.back = blockLocalSpace.right;
+        blockLightCozmoSpace.left = blockLocalSpace.back;
+        blockLightCozmoSpace.front = blockLocalSpace.left;
+      }
+      else if (blockForward.z < -0.9f) {
+        blockLightCozmoSpace.left = blockLocalSpace.front;
+        blockLightCozmoSpace.front = blockLocalSpace.right;
+        blockLightCozmoSpace.right = blockLocalSpace.back;
+        blockLightCozmoSpace.back = blockLocalSpace.left;
+      }
+      else if (blockForward.y > 0.9f) {
+        blockLightCozmoSpace.back = blockLocalSpace.front;
+        blockLightCozmoSpace.left = blockLocalSpace.right;
+        blockLightCozmoSpace.front = blockLocalSpace.back;
+        blockLightCozmoSpace.right = blockLocalSpace.left;
+      }
+      else if (blockForward.y < -0.9f) {
+        // same orientation so copy it over
+        blockLightCozmoSpace = blockLocalSpace;
+      }
     }
-    else if (blockForward.x < -0.9f) {
-      blockLightCozmoSpace.left = blockLocalSpace.front;
-      blockLightCozmoSpace.front = blockLocalSpace.right;
-      blockLightCozmoSpace.right = blockLocalSpace.back;
-      blockLightCozmoSpace.back = blockLocalSpace.left;
+    else {
+      if (blockForward.x > 0.9f) {
+        blockLightCozmoSpace.right = blockLocalSpace.front;
+        blockLightCozmoSpace.back = blockLocalSpace.right;
+        blockLightCozmoSpace.left = blockLocalSpace.back;
+        blockLightCozmoSpace.front = blockLocalSpace.left;
+      }
+      else if (blockForward.x < -0.9f) {
+        blockLightCozmoSpace.left = blockLocalSpace.front;
+        blockLightCozmoSpace.front = blockLocalSpace.right;
+        blockLightCozmoSpace.right = blockLocalSpace.back;
+        blockLightCozmoSpace.back = blockLocalSpace.left;
+      }
+      else if (blockForward.y > 0.9f) {
+        blockLightCozmoSpace.back = blockLocalSpace.front;
+        blockLightCozmoSpace.left = blockLocalSpace.right;
+        blockLightCozmoSpace.front = blockLocalSpace.back;
+        blockLightCozmoSpace.right = blockLocalSpace.left;
+      }
+      else if (blockForward.y < -0.9f) {
+        // same orientation so copy it over
+        blockLightCozmoSpace = blockLocalSpace;
+      }
     }
-    else if (blockForward.y > 0.9f) {
-      blockLightCozmoSpace.back = blockLocalSpace.front;
-      blockLightCozmoSpace.left = blockLocalSpace.right;
-      blockLightCozmoSpace.front = blockLocalSpace.back;
-      blockLightCozmoSpace.right = blockLocalSpace.left;
-    }
-    else if (blockForward.y < -0.9f) {
-      // same orientation so copy it over
-      blockLightCozmoSpace = blockLocalSpace;
-    }
+
+
 
     return blockLightCozmoSpace;
   }
