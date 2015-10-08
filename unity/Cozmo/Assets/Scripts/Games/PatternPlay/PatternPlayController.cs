@@ -129,6 +129,11 @@ public class PatternPlayController : GameController {
             cozmoEnergyLevel = cozmoMaxEnergyLevel;
           }
 
+
+          DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
+          " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
+          
+
           if (cozmoEnergyLevel % 3 == 0) {
             SendAnimation("Celebration");
           }
