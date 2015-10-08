@@ -7,10 +7,7 @@
 #include "anki/cozmo/robot/drop.h" ///< I2SPI transaction contract
 
 /// Buffer size must match I2S TX FIFO depth
-#define DMA_BUF_SIZE (512)
-ASSERT_IS_POWER_OF_TWO(DMA_BUF_SIZE); // Must be a power of two for mask to work
-/// Bit mask for DMA buffer size operations
-#define DMA_BUF_SIZE_MASK (DMA_BUF_SIZE-1)
+#define DMA_BUF_SIZE (512) /// This must be 512 Espressif DMA to work and for logic in i2spi.c to work
 /// How often we will garuntee servicing the DMA buffers
 #define DMA_SERVICE_INTERVAL_MS (5)
 /// How many buffers are required given the above constraints. + 1 for ceiling function

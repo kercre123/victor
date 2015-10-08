@@ -9,7 +9,7 @@
 #ifndef _DROP_H_
 #define _DROP_H_
 
-#include <stdint.h>
+//#include <stdint.h>
 
 // ct_assert is a compile time assertion, useful for checking sizeof() and other compile time knowledge
 #define ASSERT_CONCAT_(a, b) a##b
@@ -49,12 +49,11 @@
 #define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_SIZE - DROP_PREAMBLE_SIZE - AUDIO_BYTES_PER_DROP - SCREEN_BYTES_PER_DROP - 1)
 
 enum DROP_PREAMBLE {
-  TO_RTIP_PREAMBLE = 'RTIP',
-  TO_WIFI_PREAMBLE = 'WiFi'
+  TO_RTIP_PREAMBLE = 0x5452,
+  TO_WIFI_PREAMBLE = 0x6957,
 };
 
-typedef uint32_t preambleType;
-
+typedef uint16_t preambleType;
 
 /// Drop structure for transfers from the WiFi to the RTIP
 typedef struct

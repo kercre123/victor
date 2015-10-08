@@ -16,6 +16,9 @@
 #include "driver/i2s_ets.h"
 #include "client.h"
 
+#define likely(x)      __builtin_expect(!!(x), 1)
+#define unlikely(x)    __builtin_expect(!!(x), 0)
+
 #define min(a, b) (a < b ? a : b)
 
 uint32_t i2spiTxUnderflowCount;
@@ -52,7 +55,7 @@ static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops
 #define DROP_TX_PHASE_ADJUST (0)
 /// Uninitalized phase number
-#define DROP_PHASE_UNINITALIZED (-32767)
+#define DROP_PHASE_UNINITALIZED (-32768)
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -65,12 +68,22 @@ static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
   desc->unused    = 0;
 }
 
-
+/** 16-bit half word wise copy function
+ * Copies num words from src to dest
+ */
+void halfWordCopy(uint16_t* dest, uint16_t* src, int num)
+{
+  int w;
+  for (w=0; w<num; ++w)
+  {
+    dest[w] = src[w];
+  }
+}
 
 /** Processes an incomming drop from the RTIP to the WiFi
  * @param drop A pointer to a complete drop
  * @warning Call from a task not an ISR.
- */
+
 static void processDrop(DropToWiFi* drop)
 {
 #define PACKET_SIZE 1420
@@ -78,7 +91,7 @@ static void processDrop(DropToWiFi* drop)
   static uint16 len = 0;
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
 
-  //os_printf("PD l=%d rxjl=%d eof=%d dl=%02x\r\n", len, rxJpegLen, drop->droplet & jpegEOF, drop->droplet);
+  os_printf("PD l=%d rxjl=%d eof=%d dl=%02x\r\n", len, rxJpegLen, drop->droplet & jpegEOF, drop->droplet);
   os_memcpy(packet + len, drop->payload, rxJpegLen);
   len += rxJpegLen;
   if (((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) || // Couldn't handle another drop to send the packet
@@ -89,41 +102,30 @@ static void processDrop(DropToWiFi* drop)
     len = 0;
   }
 }
-
+*/
 /** A special function used at the beginning of operation to find the first drop from the RTIP so we can synchronize 
  * phases. This is has ICACHE_FLASH_ATTR set so we can get rid of this code after startup.
  * @param buf A pointer to a DMA buffer with received data.
  * @return True if a drop was found and the module variable dropPhase has been set. False if we haven't synchronized
  * yet.
  */
-LOCAL bool ICACHE_FLASH_ATTR synchronizeDrops(uint8* buf)
+LOCAL bool ICACHE_FLASH_ATTR synchronizeDrops(uint16_t* buf, int start)
 {
-  static uint8 prePhase = 0; // Preamble discovery phase
-  int16_t offset = 0;
-  while(offset < DMA_BUF_SIZE)
+  int offset;
+  for (offset = start; offset < DMA_BUF_SIZE/2; offset++)
   {
-    if (prePhase < DROP_PREAMBLE_SIZE)
+    if (buf[offset] == TO_WIFI_PREAMBLE)
     {
-      if (buf[offset] == TO_WIFI_PREAMBLE[prePhase])
-      {
-        prePhase++;
-      }
-      else
-      {
-        prePhase = 0;
-      }
-    }
-    else // Found full preamble, lock on to drop
-    {
-      dropPhase = offset - DROP_PREAMBLE_SIZE;
-      offset++;
+      dropPhase = offset;
+      outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+      //os_printf("Synchronized at offset %d\r\n", offset);
       return true;
     }
-    offset++;
   }
   return false;
 }
 
+ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 
 LOCAL void i2spiTask(os_event_t *event)
 {
@@ -139,61 +141,78 @@ LOCAL void i2spiTask(os_event_t *event)
   {
     case TASK_SIG_I2SPI_RX:
     {
-      static DropToWiFi drop;
-      static uint8 dropWrInd = 0;
-      uint8* buf = (uint8*)(desc->buf_ptr);
-      int16_t bytesLeftInBuf, bytesRead;
-      if (dropPhase == DROP_PHASE_UNINITALIZED)
+      uint16_t* buf = (uint16_t*)(desc->buf_ptr);
+#if 1
+      static int16_t expectHeader = 0;
+      static int32 diffSum = 0;
+      int16_t startLooking = 0;
+      while (synchronizeDrops(buf, startLooking) == true)
       {
-        if (synchronizeDrops(buf))
+        const int16_t diff = dropPhase - expectHeader;
+        diffSum += diff;
+        if (diff > 0)
         {
-          dropWrInd = DROP_PREAMBLE_SIZE;
-          bytesLeftInBuf = (DMA_BUF_SIZE - dropPhase) + dropWrInd;
-          outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+          os_put_char('+');
+          os_put_hex(diff, 4); os_put_char(',');
+          os_put_hex(diffSum, 8);
+          os_put_char('\r'); os_put_char('\n');
         }
-        else
+        else if (diff < -0)
         {
-          break;
+          os_put_char('-');
+          os_put_hex(-1*diff, 4); os_put_char(',');
+          os_put_hex(diffSum, 8);
+          os_put_char('\r'); os_put_char('\n');
         }
+        
+        startLooking = dropPhase + 1;
+        expectHeader = (dropPhase + DROP_SPACING/2) % (DMA_BUF_SIZE/2);
+      }
+      os_memset(buf, DMA_BUF_SIZE, 0xff);
+#else
+      static DropToWiFi drop;
+      static uint8 dropWrInd = 0; // In 16bit half-words
+      if (unlikely(dropPhase == DROP_PHASE_UNINITALIZED))
+      {
+        synchronizeDrops(buf, 0);
       }
       else
       {
-        bytesLeftInBuf = DMA_BUF_SIZE - dropPhase;
-      }
-      // One way or another we are pointing at a drop now.
-      while (bytesLeftInBuf > 0)
-      {
-        bytesRead = min(DROP_SIZE - dropWrInd, bytesLeftInBuf);
-        os_memcpy((&drop) + dropWrInd, buf + dropPhase, bytesRead);
-        dropWrInd += bytesRead;
-        if (dropWrInd == DROP_SIZE)
+        while ((dropPhase >= 0) && (dropWrInd == 0))
         {
-          if (os_strncmp(drop.preamble, TO_WIFI_PREAMBLE, DROP_PREAMBLE_SIZE))
+          const int8 halfWordsToRead = min(DROP_SIZE, DMA_BUF_SIZE - (dropPhase*2))/2;
+          halfWordCopy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead);
+          dropWrInd += halfWordsToRead;
+          if (dropWrInd*2 == DROP_SIZE)
           {
-            os_printf("Unexpected drop to WiFi preamble %02x%02x%02x%02x\r\n", drop.preamble[0], drop.preamble[1], drop.preamble[2], drop.preamble[3]);
-          }
-          else
-          {
-            processDrop(&drop);
+            if (unlikely(drop.preamble != TO_WIFI_PREAMBLE))
+            {
+              os_printf("Unexpected drop to WiFi preamble %8x\r\n", (unsigned int)drop.preamble);
+            }
+            else
+            {
+              processDrop(&drop);
+            }
+            dropWrInd = 0;
+            dropPhase += DROP_SPACING/4;
           }
         }
-        dropPhase = (DMA_BUF_SIZE + DROP_SPACING) & DMA_BUF_SIZE_MASK;
-        bytesLeftInBuf -= DROP_SPACING;
+        dropPhase &= 127; // Next drop will be at this offset in next buffer
       }
+#endif
+      prepSdioQueue(desc, 0);
       break;
     }
     case TASK_SIG_I2SPI_TX:
     {
       int w;
       uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
-      //uint8_t* txBB = (uint8_t*)txBuf;
       if (asDesc(desc->next_link_ptr) == nextOutgoingDesc)
       {
         nextOutgoingDesc = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
         i2spiTxUnderflowCount++;
       }
-      for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0xFFc0c0c0; //0xFFFFffff; // Reset to idle high using word size writes
-      //for(w=0; w<DMA_BUF_SIZE; w++) txBB[w] = w;
+      for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
       break;
     }
     default:
@@ -202,8 +221,6 @@ LOCAL void i2spiTask(os_event_t *event)
                 (unsigned int)event->sig, (unsigned int)event->par);
     }
   }
-  
-  prepSdioQueue(desc, 1);
 }
 
 
@@ -217,8 +234,6 @@ LOCAL void dmaisr(void* arg) {
 	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
 	//clear all intr flags
 	WRITE_PERI_REG(SLC_INT_CLR, slc_intr_status);
-
-  //os_put_hex(slc_intr_status, 8); os_put_char('\r'); os_put_char('\n');
 
   if (slc_intr_status & SLC_TX_EOF_INT_ST) // Receive complete interrupt
   {
@@ -354,7 +369,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
 		               (I2S_BITS_MOD<<I2S_BITS_MOD_S)|
 		               (I2S_BCK_DIV_NUM <<I2S_BCK_DIV_NUM_S)|
 		               (I2S_CLKM_DIV_NUM<<I2S_CLKM_DIV_NUM_S));
-  SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|I2S_MSB_RIGHT|I2S_RECE_SLAVE_MOD|//I2S_TRANS_SLAVE_MOD|
+  SET_PERI_REG_MASK(I2SCONF, I2S_RIGHT_FIRST|/*I2S_MSB_RIGHT|*/I2S_RECE_SLAVE_MOD|//I2S_TRANS_SLAVE_MOD|
 		                         I2S_RECE_MSB_SHIFT|I2S_TRANS_MSB_SHIFT |
                              (( 4&I2S_BCK_DIV_NUM )<<I2S_BCK_DIV_NUM_S)| // Clock counter, must be a multiple of 2 for 50% duty cycle
 			                       (( 4&I2S_CLKM_DIV_NUM)<<I2S_CLKM_DIV_NUM_S)| // Clock prescaler

@@ -133,12 +133,6 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   // Initalize i2SPI interface
   i2spiInit();
 
-  // Enable UART0 RX interrupt
-  // Only after clientInit
-  uart_start();
-  // Enable I2SPI start only after clientInit
-  i2spiStart();
-
   // Set up shared background tasks
   task0Init();
   
@@ -148,6 +142,12 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   os_timer_disarm(&userTimer);
   os_timer_setfn(&userTimer, userIntervalTask, NULL);
   //os_timer_arm(&userTimer, USER_TASK_INTERVAL_MS, true);
+
+  // Enable UART0 RX interrupt
+  // Only after clientInit
+  uart_start();
+  // Enable I2SPI start only after clientInit
+  i2spiStart();
 
   os_printf("CPU Freq: %d MHz\r\n", system_get_cpu_freq());
 
