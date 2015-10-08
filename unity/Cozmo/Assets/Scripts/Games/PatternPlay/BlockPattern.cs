@@ -44,6 +44,7 @@ public class BlockPattern {
         return false;
       }
     }
+
     return true;
   }
 
@@ -172,7 +173,7 @@ public class BlockPattern {
       float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
 
-      if (Mathf.Abs(block0 - block1) > 10.0f) {
+      if (Mathf.Abs(block0 - block1) > 15.0f) {
         return false;
       }
 

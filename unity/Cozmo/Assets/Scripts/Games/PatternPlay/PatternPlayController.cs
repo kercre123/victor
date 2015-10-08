@@ -13,6 +13,7 @@ public class PatternPlayController : GameController {
   private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
   private float lastBlinkTime = 0.0f;
+  private int lastMovedID = -1;
 
   private BlockPattern lastPatternSeen = null;
 
@@ -122,7 +123,7 @@ public class PatternPlayController : GameController {
     BlockPattern currentPattern = null;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
       if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
-        lastPatternSeen = currentPattern;
+        
         if (!PatternSeen(currentPattern)) {
           cozmoEnergyLevel++;
 
@@ -140,14 +141,15 @@ public class PatternPlayController : GameController {
             SendAnimation("Celebration");
           }
           else {
-            SendAnimation("majorWinBeatBox");
+            SendAnimation("majorWin");
           }
           seenPatterns.Add(currentPattern);
         }
         else if (lastPatternSeen.Equals(currentPattern) == false) {
-          //SendAnimation("Satisfaction");
-          SendAnimation("majorWinBeatBox");
+          SendAnimation("minorWin");
         }
+
+        lastPatternSeen = currentPattern;
       }
     }
 
@@ -187,7 +189,10 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
 
-    int lastTimerID = GetMostRecentMovedID();
+    int currentMovedID = GetMostRecentMovedID();
+    if (currentMovedID != lastMovedID) {
+      lastBlinkTime = Time.time;
+    }
 
     // update block lights
     foreach (KeyValuePair<int, BlockPatternData> blockConfig in blockPatternData) {
@@ -196,8 +201,8 @@ public class PatternPlayController : GameController {
       Color enabledColor;
       Color disabledColor;
 
-      enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-      disabledColor = new Color(0.1f, 0.0f, 0.0f, 1.0f);
+      enabledColor = Color.blue;
+      disabledColor = Color.black;
 
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
@@ -224,10 +229,11 @@ public class PatternPlayController : GameController {
 
       if (currentInputMode == InputMode.PHONE) {
 
-        if (blockConfig.Key == lastTimerID && Time.time - GetMostRecentMovedTime() < 3.0f) {
-          enabledColor = new Color(1.0f, 0.7f, 0.0f, 1.0f);
-          disabledColor = new Color(1.0f, 0.05f, 0.0f, 1.0f);
+        if (blockConfig.Key == currentMovedID && Time.time - lastBlinkTime < 0.5f) {
+          enabledColor = Color.green;
+          disabledColor = Color.green;
         }
+
       }
 
       for (int i = 0; i < 4; ++i) {
@@ -250,6 +256,8 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
     }
+
+    lastMovedID = currentMovedID;
   }
 
   private bool NextBlockConfig(ActiveBlock activeBlock) {
@@ -390,7 +398,7 @@ public class PatternPlayController : GameController {
   }
 
   private void ResetLookHeadForkLift() {
-    robot.SetHeadAngle(-0.5f);
+    robot.SetHeadAngle(-0.1f);
     robot.SetLiftHeight(2.0f);
   }
     
