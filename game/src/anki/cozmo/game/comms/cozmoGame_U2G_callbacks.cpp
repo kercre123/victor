@@ -749,11 +749,6 @@ namespace Cozmo {
     // Handled directly by AnimationStreamer
   }
 
-  void CozmoGameImpl::Process_SetLiveIdleAnimationParameters(const ExternalInterface::SetLiveIdleAnimationParameters &msg)
-  {
-    // Handled by LiveAnimationStreamer
-  }
-
 void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
 {
   // ignored here..
