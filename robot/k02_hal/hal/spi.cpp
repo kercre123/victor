@@ -11,8 +11,10 @@
 
 const int MAX_JPEG_DATA = 128;
 const int TRANSMISSION_SIZE = DROP_SIZE;
-static uint8_t spi_tx_buff[TRANSMISSION_SIZE];
-static uint8_t spi_rx_buff[TRANSMISSION_SIZE];
+typedef uint8_t transmissionWord;
+static transmissionWord spi_tx_buff[TRANSMISSION_SIZE];
+static transmissionWord spi_rx_buff[TRANSMISSION_SIZE];
+static bool syncronized = false;
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   /*
@@ -39,7 +41,8 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
     *(txDst) = *(txSrc++);
   */
 
-  memset(spi_tx_buff, 0, sizeof(spi_tx_buff));
+  memset(spi_tx_buff, 0xC2, sizeof(spi_tx_buff));
+  spi_tx_buff[0] = 0xFF;
 
   // Clear done flags for DMA
   DMA_CDNE = DMA_CDNE_CDNE(2);
@@ -48,11 +51,34 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   // Enable DMA
   SPIInitDMA();
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+
+  if (!syncronized) {
+    while(~GPIOD_PDIR & (1<<4)) ;
+    while( GPIOD_PDIR & (1<<4)) ;
+    PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
+    syncronized = true;
+    
+    //__enable_irq();
+    //PORTD_PCR4 |= PORT_PCR_ISF_MASK;
+    //NVIC_SetPriority(PORTD_IRQn, 0);
+    //NVIC_EnableIRQ(PORTD_IRQn);
+    //__asm { WFI };
+    //NVIC_DisableIRQ(PORTD_IRQn);
+  }
+}
+
+extern "C"
+void PORTD_IRQHandler(void)
+{
+/*
+  PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
+  syncronized = true;
+*/
 }
 
 void Anki::Cozmo::HAL::SPIInitDMA(void) {
   const uint32_t num_words = TRANSMISSION_SIZE;
-  const int transferSize = sizeof(uint32_t);
+  const int transferSize = sizeof(transmissionWord);
 
   // Disable DMA
   DMA_ERQ &= ~DMA_ERQ_ERQ3_MASK & ~DMA_ERQ_ERQ2_MASK;
@@ -65,8 +91,8 @@ void Anki::Cozmo::HAL::SPIInitDMA(void) {
   DMA_TCD2_SLAST          = 0;
 
   DMA_TCD2_DADDR          = (uint32_t)spi_rx_buff;
-  DMA_TCD2_DOFF           = 1;
-  DMA_TCD2_DLASTSGA       = -num_words;
+  DMA_TCD2_DOFF           = transferSize;
+  DMA_TCD2_DLASTSGA       = -num_words * transferSize;
 
   DMA_TCD2_NBYTES_MLNO    = transferSize;                               // The minor loop moves 32 bytes per transfer
   DMA_TCD2_BITER_ELINKNO  = num_words;                                  // Major loop iterations
@@ -88,7 +114,7 @@ void Anki::Cozmo::HAL::SPIInitDMA(void) {
 
   DMA_TCD3_NBYTES_MLNO    = transferSize;                               // The minor loop moves 32 bytes per transfer
   DMA_TCD3_BITER_ELINKNO  = num_words;                                  // Major loop iterations
-  DMA_TCD3_CITER_ELINKNO  = num_words;                                  // Set current interation count  
+  DMA_TCD3_CITER_ELINKNO  = num_words;                                  // Set current interation count
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(0) | DMA_ATTR_DSIZE(0));    // Source/destination size (8bit)
  
   DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
@@ -101,9 +127,15 @@ void Anki::Cozmo::HAL::SPIInit(void) {
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
   // Configure SPI pins
-  PORTD_PCR0  = PORT_PCR_MUX(2) |  // SPI0_PCS0
+  PORTD_PCR0  = PORT_PCR_MUX(2) |  // SPI0_PCS0 (internal)
                 PORT_PCR_PE_MASK;
-  PORTE_PCR17 = PORT_PCR_MUX(2); // SPI0_SCK
+
+  PORTD_PCR4  = PORT_PCR_MUX(1) |  // PTD4
+                PORT_PCR_IRQC(11);
+
+  GPIOD_PDDR &= ~(1 << 4);
+
+  PORTE_PCR17 = PORT_PCR_MUX(0); // SPI0_SCK
   PORTE_PCR18 = PORT_PCR_MUX(2); // SPI0_SOUT
   PORTE_PCR19 = PORT_PCR_MUX(2); // SPI0_SIN
 
@@ -113,9 +145,7 @@ void Anki::Cozmo::HAL::SPIInit(void) {
              SPI_MCR_CLR_TXF_MASK |
              SPI_MCR_CLR_RXF_MASK;
 
-  SPI0_CTAR0_SLAVE = SPI_CTAR_CPOL_MASK |
-                     SPI_CTAR_CPHA_MASK |
-                     SPI_CTAR_FMSZ(7);
+  SPI0_CTAR0_SLAVE = SPI_CTAR_FMSZ(7);
 
   SPI0_RSER = SPI_RSER_TFFF_RE_MASK |
               SPI_RSER_TFFF_DIRS_MASK |
