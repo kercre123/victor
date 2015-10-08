@@ -14,6 +14,7 @@ public class PatternPlayController : GameController {
   private static int cozmoMaxEnergyLevel = 6;
   private float lastBlinkTime = 0.0f;
   private int lastMovedID = -1;
+  private PatternPlayAudio patternPlayAudio;
 
   private BlockPattern lastPatternSeen = null;
 
@@ -39,6 +40,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.MovedAction += BlockMoved;
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
+    patternPlayAudio = GetComponent<PatternPlayAudio>();
   }
 
   protected override void OnDisable() {
@@ -192,6 +194,7 @@ public class PatternPlayController : GameController {
     int currentMovedID = GetMostRecentMovedID();
     if (currentMovedID != lastMovedID) {
       lastBlinkTime = Time.time;
+      patternPlayAudio.PlayInputReady();
     }
 
     // update block lights
@@ -338,8 +341,10 @@ public class PatternPlayController : GameController {
       int lastTouchedID = GetMostRecentMovedID();
 
       if (lastTouchedID != -1) {
+        
         blockPatternData[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[lastTouchedID].blockLightsLocalSpace);
         blockPatternData[lastTouchedID].lastTimeTouched = Time.time;
+        patternPlayAudio.PlayLightsSound(blockPatternData[lastTouchedID].blockLightsLocalSpace.NumberOfLightsOn());
       }
     }
   }
