@@ -32,16 +32,18 @@ public class MemoryBank {
   }
 
   public void Add(BlockPattern pattern) {
-    MemorySlotSignature bankSignature = new MemorySlotSignature(
+    MemorySlotSignature slotSignature = new MemorySlotSignature(
                                           RequirementFlagUtil.FromBool(pattern.facingCozmo),
                                           RequirementFlagUtil.FromBool(pattern.verticalStack), 
                                           pattern.blocks[0].NumberOfLightsOn());
 
-    if (slots.ContainsKey(bankSignature)) {
-      slots[bankSignature].TryAdd(pattern);
+    if (slots.ContainsKey(slotSignature)) {
+      slots[slotSignature].TryAdd(pattern);
+      DAS.Info("MemoryBank", "Pattern Added with signature: " + slotSignature.facingCozmo + " " + slotSignature.verticalStack + " " + slotSignature.lightCount);
+      DAS.Info("MemoryBank", "There are now " + slots[slotSignature].GetSeenPatterns().Count + " patterns in that slot");
     }
     else {
-      DAS.Error("PatternPlayController", "Invalid pattern signature in memory bank");
+      DAS.Error("PatternPlayController", "Invalid pattern signature in memory slot");
     }
   }
 
