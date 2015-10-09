@@ -12,12 +12,14 @@ import os, argparse, serial, datetime, sys
 
 """ Main function sets up the args, parses them to make sure they're valid, then uses them """
 def main():
-    parser = argparse.ArgumentParser(description='Listen to input serial device and output with timestamps. Specifying the output directory will auto create files named with timestamp for each capture.')
+    parser = argparse.ArgumentParser(description='Listen to input serial device and output with timestamps. Specifying the output directory will auto create files named with timestamp for each capture.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('inDevice', help='Device from which to listen to serial data.', action='store')
+    parser.add_argument('-r', help='Baud rate for the serial device.', type=int, nargs='?', default=57600, dest='rate')
     parser.add_argument('time', help='Amount of time in seconds to capture data.', action='store', type=float)
     parser.add_argument('outDirectory', help='Output directory in which to store data or none for stdout.', action='store', nargs='?', default=None, type=is_directory_writable)
     args = parser.parse_args()
-    capture(args.inDevice, args.time, args.outDirectory)
+    capture(args.inDevice, args.rate, args.time, args.outDirectory)
 
 """ Simple check on the directory to make sure it's valid """
 def is_directory_writable(value):
@@ -31,13 +33,13 @@ def is_directory_writable(value):
     return value
 
 """ Capture function continuously pulls from serial device and writes to output for time duration """
-def capture(inDevice, time, outDir):
+def capture(inDevice, rate, time, outDir):
 
     f = sys.stdout
     if outDir != None:
         f = open(outDir + os.sep + 'serialOutput' + '_' + datetime.datetime.now().isoformat('_') + '.dat', 'wb')
 
-    s = serial.Serial(inDevice, 57600)
+    s = serial.Serial(inDevice, rate)
     s.flushInput()
     s.flushOutput()
 
