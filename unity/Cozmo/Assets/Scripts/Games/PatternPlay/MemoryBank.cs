@@ -2,63 +2,110 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class MemoryBank {
-  
-  private Dictionary<MemorySlotSignature, MemorySlot> slots = new Dictionary<MemorySlotSignature, MemorySlot>();
+// we use this and not just a boolean because some
+// memory bank requirements don't care about if the blocks
+// are facing cozmo or are a vertical stack (ie the 4 lights pattern).
+public enum BankRequirementFlag {
+  FALSE,
+  TRUE,
+  NOT_REQUIRED
+}
 
-  public void Initialize() {
-    AddMemorySlotSignature(SlotRequirementFlag.FALSE, SlotRequirementFlag.FALSE, 1);
-    AddMemorySlotSignature(SlotRequirementFlag.FALSE, SlotRequirementFlag.FALSE, 2);
-    AddMemorySlotSignature(SlotRequirementFlag.FALSE, SlotRequirementFlag.FALSE, 3);
-
-    AddMemorySlotSignature(SlotRequirementFlag.TRUE, SlotRequirementFlag.FALSE, 1);
-    AddMemorySlotSignature(SlotRequirementFlag.TRUE, SlotRequirementFlag.FALSE, 2);
-    AddMemorySlotSignature(SlotRequirementFlag.TRUE, SlotRequirementFlag.FALSE, 3);
-
-    AddMemorySlotSignature(SlotRequirementFlag.FALSE, SlotRequirementFlag.TRUE, 1);
-    AddMemorySlotSignature(SlotRequirementFlag.FALSE, SlotRequirementFlag.TRUE, 2);
-    AddMemorySlotSignature(SlotRequirementFlag.FALSE, SlotRequirementFlag.TRUE, 3);
-
-    AddMemorySlotSignature(SlotRequirementFlag.TRUE, SlotRequirementFlag.TRUE, 1);
-    AddMemorySlotSignature(SlotRequirementFlag.TRUE, SlotRequirementFlag.TRUE, 2);
-    AddMemorySlotSignature(SlotRequirementFlag.TRUE, SlotRequirementFlag.TRUE, 3);
-
-    AddMemorySlotSignature(SlotRequirementFlag.NOT_REQUIRED, SlotRequirementFlag.NOT_REQUIRED, 4);
-  }
-
-  private void AddMemorySlotSignature(SlotRequirementFlag facingCozmo, SlotRequirementFlag verticalStack, int lightCount) {
-    MemorySlotSignature newSignature = new MemorySlotSignature(facingCozmo, verticalStack, lightCount);
-    slots.Add(newSignature, new MemorySlot(newSignature));
-  }
-
-  public void Add(BlockPattern pattern) {
-    MemorySlotSignature slotSignature = new MemorySlotSignature(
-                                          RequirementFlagUtil.FromBool(pattern.facingCozmo),
-                                          RequirementFlagUtil.FromBool(pattern.verticalStack), 
-                                          pattern.blocks[0].NumberOfLightsOn());
-
-    if (slots.ContainsKey(slotSignature)) {
-      slots[slotSignature].TryAdd(pattern);
-      DAS.Info("MemoryBank", "Pattern Added with signature: " + slotSignature.facingCozmo + " " + slotSignature.verticalStack + " " + slotSignature.lightCount);
-      DAS.Info("MemoryBank", "There are now " + slots[slotSignature].GetSeenPatterns().Count + " patterns in that slot");
+public static class RequirementFlagUtil {
+  public static BankRequirementFlag FromBool(bool flag) {
+    if (flag) {
+      return BankRequirementFlag.TRUE;
     }
     else {
-      DAS.Error("PatternPlayController", "Invalid pattern signature in memory slot");
+      return BankRequirementFlag.FALSE;
+    }
+  }
+}
+
+public class MemoryBankSignature {
+  public BankRequirementFlag facingCozmo;
+  public BankRequirementFlag verticalStack;
+  public int lightCount;
+
+  public MemoryBankSignature(BankRequirementFlag facingCozmo_, BankRequirementFlag verticalStack_, int lightCount_) {
+    facingCozmo = facingCozmo_;
+    verticalStack = verticalStack_;
+    lightCount = lightCount_;
+    if (lightCount == 0) {
+      DAS.Error("MemoryBankSignature", "Signatures should not have 0 lightcount");
     }
   }
 
-  public bool Contains(BlockPattern pattern) {
-    MemorySlotSignature bankSignature = new MemorySlotSignature(
-                                          RequirementFlagUtil.FromBool(pattern.facingCozmo),
-                                          RequirementFlagUtil.FromBool(pattern.verticalStack), 
-                                          pattern.blocks[0].NumberOfLightsOn());
+  public override bool Equals(System.Object obj) {
+    if (obj == null) {
+      return false;
+    }
 
-    if (slots.ContainsKey(bankSignature)) {
-      if (slots[bankSignature].GetSeenPatterns().Contains(pattern)) {
-        return true;
-      }
+    MemoryBankSignature p = obj as MemoryBankSignature;
+    if ((System.Object)p == null) {
+      return false;
+    }
+    return Equals(p);
+  }
+
+  public bool Equals(MemoryBankSignature signature) {
+    if (signature == null)
+      return false;
+
+    return facingCozmo == signature.facingCozmo && verticalStack == signature.verticalStack && lightCount == signature.lightCount;
+  }
+
+  public bool Equals(BlockPattern pattern) {
+    if (lightCount != pattern.blocks[0].NumberOfLightsOn()) {
+      return false;
+    }
+
+    if (facingCozmo == BankRequirementFlag.TRUE && !pattern.facingCozmo) {
+      return false;
+    }
+
+    if (facingCozmo == BankRequirementFlag.FALSE && pattern.facingCozmo) {
+      return false;
+    }
+
+    if (verticalStack == BankRequirementFlag.TRUE && !pattern.verticalStack) {
+      return false;
+    }
+
+    if (verticalStack == BankRequirementFlag.FALSE && pattern.verticalStack) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public override int GetHashCode() {
+    return (int)facingCozmo ^ (int)verticalStack ^ lightCount;
+  }
+
+}
+
+public class MemoryBank {
+
+  MemoryBankSignature signature;
+
+  public MemoryBank(MemoryBankSignature signature_) {
+    signature = signature_;
+  }
+
+  public bool TryAdd(BlockPattern newPattern) {
+    if (signature.Equals(newPattern)) {
+      seenPatterns.Add(newPattern);
+      return true;
     }
     return false;
   }
+
+  public HashSet<BlockPattern> GetSeenPatterns() {
+    return seenPatterns;
+  }
+
+  // seen patterns stored in cozmo space that fit the signature
+  private HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
 
 }
