@@ -126,14 +126,19 @@ namespace Anki
       
       void HALExec(u8* buf, int buflen, int eof);
       
+//#define ENABLE_JPEG      
+#ifdef ENABLE_JPEG
       int JPEGStart(int quality);
       int JPEGCompress(u8* out, u8* in, int pitch);
       int JPEGEnd(u8* out);
+#endif
       
       // Set up camera 
       static void InitCam()
       {
+#ifdef ENABLE_JPEG
         JPEGStart(50);
+#endif
         
         // Power-up/reset the camera
         MicroWait(50);
@@ -261,8 +266,8 @@ void DMA0_IRQHandler(void)
   int pitch = whichpitch ? 80 : 640;
   u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
   
+#ifdef ENCODE_JPEG
   // Encode 10 macroblocks (one strip)
-  /*
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
     buflen += JPEGEnd(p + buflen);
@@ -270,11 +275,12 @@ void DMA0_IRQHandler(void)
   } else {
     eof = 0;
   }
-  */
+  
   // Copy YUYV data from DMA buffer into swizzle buffer
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)
       swizz[x + y*pitch] = dmaBuff_[(y * 80 + x) * 4 + 3];
+#endif
     
   // Advance through image a line at a time
   line++;
