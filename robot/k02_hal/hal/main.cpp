@@ -71,7 +71,7 @@ int main (void)
   DebugPrintf("Done\n\r");
   
   // Switch to 10MHz external reference to enable 100MHz clock
-  MCG_C2 &= ~MCG_C2_EREFS_MASK;
+  MCG_C1 &= ~MCG_C1_IREFS_MASK;
   
   SPIInit();
   //DacInit();

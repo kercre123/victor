@@ -77,5 +77,8 @@ typedef enum {
 // This section can only be used by either CPU or DMA, not both at once
 // Thus, the RAM is only useful at the start of HALExec() or with careful timing in camera.c
 #define CAMRAM __attribute__((section("CAMRAM")))
-    
+
+// RAM for block 1 - generally usable for executing code
+#define CODERAM __attribute__((section("CODERAM")))
+
 #endif
