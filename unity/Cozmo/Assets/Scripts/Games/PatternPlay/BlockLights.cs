@@ -7,6 +7,23 @@ public struct BlockLights {
   public bool left;
   public bool right;
 
+  public bool LightsOff() {
+    return !front && !back && !left && !right;
+  }
+
+  public int NumberOfLightsOn() {
+    int count = 0;
+    if (front)
+      count++;
+    if (back)
+      count++;
+    if (left)
+      count++;
+    if (right)
+      count++;
+    return count;
+  }
+
   static public BlockLights GetNextConfig(BlockLights currentConfig) {
     BlockLights newLights = new BlockLights();
     if (!currentConfig.front && !currentConfig.right && !currentConfig.back && !currentConfig.left) {
@@ -28,10 +45,6 @@ public struct BlockLights {
       newLights.left = true;
     }
     else if (currentConfig.front && currentConfig.right && currentConfig.back && currentConfig.left) {
-      newLights.front = true;
-      newLights.back = true;
-    }
-    else if (currentConfig.front && !currentConfig.right && currentConfig.back && !currentConfig.left) {
 
     }
     return newLights;
