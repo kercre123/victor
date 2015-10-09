@@ -34,7 +34,7 @@ public class PatternPlayController : GameController {
 
   private InputMode currentInputMode = InputMode.PHONE;
 
-  private MemoryBank memoryBank = new MemoryBank();
+  private PatternMemory memoryBank = new PatternMemory();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 

@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class PatternPlayUIController : MonoBehaviour {
-  public void UpdateUI(MemoryBank memoryBank) {
+  public void UpdateUI(PatternMemory memoryBank) {
     
   }
 }
