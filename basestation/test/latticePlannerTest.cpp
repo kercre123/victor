@@ -22,7 +22,8 @@
 #include "anki/common/types.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 using namespace Anki;
 using namespace Cozmo;
@@ -32,7 +33,7 @@ extern Anki::Util::Data::DataPlatform* dataPlatform;
 TEST(LatticePlanner, Create)
 {
 
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
@@ -96,7 +97,7 @@ void ExpectPlanComplete(int maxTimeMs, LatticePlanner* planner)
 
 TEST(LatticePlanner, PlanOnceEmpty)
 {
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
@@ -122,7 +123,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
 
 TEST(LatticePlanner, PlanTwiceEmpty)
 {
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
@@ -172,7 +173,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
 
 TEST(LatticePlanner, PlanWhilePlanning)
 {
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
@@ -209,7 +210,7 @@ TEST(LatticePlanner, StopPlanning)
   // through. If this happens, just make it plan a further distance, or add some complex obstacles to the
   // environment to slow it down
 
-  MessageHandlerStub  msgHandler;
+  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
 
   LatticePlanner* planner = dynamic_cast<LatticePlanner*>(robot._longPathPlanner);
