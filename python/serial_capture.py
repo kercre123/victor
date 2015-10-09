@@ -12,7 +12,7 @@ import os, argparse, serial, datetime, sys
 
 """ Main function sets up the args, parses them to make sure they're valid, then uses them """
 def main():
-    parser = argparse.ArgumentParser(description='Listen to input serial device and output with timestamps.')
+    parser = argparse.ArgumentParser(description='Listen to input serial device and output with timestamps. Specifying the output directory will auto create files named with timestamp for each capture.')
     parser.add_argument('inDevice', help='Device from which to listen to serial data.', action='store')
     parser.add_argument('time', help='Amount of time in seconds to capture data.', action='store', type=float)
     parser.add_argument('outDirectory', help='Output directory in which to store data or none for stdout.', action='store', nargs='?', default=None, type=is_directory_writable)
