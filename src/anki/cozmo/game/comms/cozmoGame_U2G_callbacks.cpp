@@ -435,7 +435,7 @@ namespace Cozmo {
     Robot* robot = GetRobotByID(robotID);
     
     if(robot != nullptr) {
-      robot->ClearPath();
+      robot->AbortDrivingToPose();
     }
   }
   
