@@ -142,12 +142,7 @@ public class PatternPlayController : GameController {
 
           Debug.Log(robot.activeBlocks[robot.markersVisibleObjects[0].ID].Forward);
 
-          if (cozmoEnergyLevel % 3 == 0) {
-            SendAnimation("Celebration");
-          }
-          else {
-            SendAnimation("majorWin");
-          }
+          SendAnimation("majorWin");
           memoryBank.Add(currentPattern);
         }
         else if (lastPatternSeen.Equals(currentPattern) == false) {
