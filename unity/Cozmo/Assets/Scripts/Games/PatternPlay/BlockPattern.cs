@@ -108,7 +108,7 @@ public class BlockPattern {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
       relativeForward.Normalize();
 
-      if (Mathf.Abs(relativeForward.x) <= 0.94f && Mathf.Abs(relativeForward.y) <= 0.94f && Mathf.Abs(relativeForward.z) <= 0.94f) {
+      if (Mathf.Abs(relativeForward.x) < 0.92f && Mathf.Abs(relativeForward.y) < 0.92f && Mathf.Abs(relativeForward.z) < 0.92f) {
         // non orthogonal forward vector, let's early out. the z-axis is for if the cube is on the side and facing cozmo.
         return false;
       }
@@ -173,7 +173,7 @@ public class BlockPattern {
       float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
 
-      if (Mathf.Abs(block0 - block1) > 15.0f) {
+      if (Mathf.Abs(block0 - block1) > 25.0f) {
         return false;
       }
 

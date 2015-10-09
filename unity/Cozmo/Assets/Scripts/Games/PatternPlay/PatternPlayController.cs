@@ -29,8 +29,7 @@ public class PatternPlayController : GameController {
 
   private InputMode currentInputMode = InputMode.PHONE;
 
-  // blocks in here are in cozmo space.
-  private HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
+  private MemoryBank memoryBank = new MemoryBank();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
@@ -41,6 +40,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     patternPlayAudio = GetComponent<PatternPlayAudio>();
+    memoryBank.Initialize();
   }
 
   protected override void OnDisable() {
@@ -126,7 +126,7 @@ public class PatternPlayController : GameController {
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
       if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
         
-        if (!PatternSeen(currentPattern)) {
+        if (!memoryBank.Contains(currentPattern)) {
           cozmoEnergyLevel++;
 
           if (cozmoEnergyLevel > cozmoMaxEnergyLevel) {
@@ -145,7 +145,7 @@ public class PatternPlayController : GameController {
           else {
             SendAnimation("majorWin");
           }
-          seenPatterns.Add(currentPattern);
+          memoryBank.Add(currentPattern);
         }
         else if (lastPatternSeen.Equals(currentPattern) == false) {
           SendAnimation("minorWin");
@@ -386,15 +386,6 @@ public class PatternPlayController : GameController {
       BlockPattern.SetRandomConfig(robot, blockPatternData, lastPatternSeen);
     }
     ResetLookHeadForkLift();
-  }
-
-  private bool PatternSeen(BlockPattern patternSeen) {
-    foreach (BlockPattern pattern in seenPatterns) {
-      if (pattern.Equals(patternSeen)) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private void SendAnimation(string animName) {
