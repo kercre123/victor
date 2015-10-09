@@ -34,13 +34,12 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/planning/shared/path.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
+#include "clad/types/activeObjectTypes.h"
+#include "clad/types/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
@@ -49,8 +48,11 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/imageDeChunker.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "util/signals/simpleSignal.hpp"
-#include "clad/types/imageSendMode.h"
+#include "clad/types/robotStatusAndActions.h"
+#include "clad/types/imageTypes.h"
 #include <queue>
 #include <unordered_map>
 #include <time.h>
@@ -86,26 +88,35 @@ enum class ERobotDriveToPoseStatus {
   
 namespace Cozmo {
   
-  // Forward declarations:
-  class IRobotMessageHandler;
-  class IPathPlanner;
-  class MatPiece;
-  class PathDolerOuter;
-  class RobotPoseHistory;
-  class RobotPoseStamp;
-  class IExternalInterface;
-  
-  class Robot
-  {
-  public:
+// Forward declarations:
+class IPathPlanner;
+class MatPiece;
+class PathDolerOuter;
+class RobotPoseHistory;
+class RobotPoseStamp;
+class IExternalInterface;
+struct RobotState;
+
+namespace RobotInterface {
+class MessageHandler;
+class EngineToRobot;
+class RobotToEngine;
+enum class EngineToRobotTag : uint8_t;
+enum class RobotToEngineTag : uint8_t;
+} // end namespace RobotInterface
+
+// indent 2 spaces << that way !!!! coding standards !!!!
+class Robot
+{
+public:
     
-    Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
+    Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
           IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
     ~Robot();
     
     Result Update();
     
-    Result UpdateFullRobotState(const MessageRobotState& msg);
+    Result UpdateFullRobotState(const RobotState& msg);
     
     bool HasReceivedRobotState() const;
     
@@ -276,7 +287,7 @@ namespace Cozmo {
     Result DockWithObject(const ObjectID objectID,
                               const Vision::KnownMarker* marker,
                               const Vision::KnownMarker* marker2,
-                              const DockAction_t dockAction,
+                              const DockAction dockAction,
                               const u16 image_pixel_x,
                               const u16 image_pixel_y,
                               const u8 pixel_radius,
@@ -289,7 +300,7 @@ namespace Cozmo {
     Result DockWithObject(const ObjectID objectID,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
-                          const DockAction_t dockAction,
+                          const DockAction dockAction,
                           const f32 placementOffsetX_mm = 0,
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
@@ -315,17 +326,19 @@ namespace Cozmo {
     
     Result StopDocking();
     
+    /*
     //
     // Proximity Sensors
     //
     u8   GetProxSensorVal(ProxSensor_t sensor)    const {return _proxVals[sensor];}
     bool IsProxSensorBlocked(ProxSensor_t sensor) const {return _proxBlocked[sensor];}
-    
+
     // Pose of where objects are assumed to be with respect to robot pose when
     // obstacles are detected by proximity sensors
     static const Pose3d ProxDetectTransform[NUM_PROX];
-    
-    
+    */
+
+
     //
     // Vision
     //
@@ -469,13 +482,8 @@ namespace Cozmo {
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
-    void SetSyncTimeAcknowledged(bool ack);
-    
-    // Turn on/off headlight LEDs
-    Result SetHeadlight(u8 intensity);
-    
-    Result RequestImage(const ImageSendMode_t mode,
-                        const Vision::CameraResolution resolution) const;
+
+    Result RequestImage(const ImageSendMode mode, const ImageResolution resolution) const;
     
     Result RequestIMU(const u32 length_ms) const;
 
@@ -491,9 +499,7 @@ namespace Cozmo {
     Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
     Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
     Result SetSteeringControllerGains(const f32 k1, const f32 k2);
-    Result SendVisionSystemParams(VisionSystemParams_t p);
-    Result SendFaceDetectParams(FaceDetectParams_t p);
-    
+
     // =========== Pose history =============
     
     Result AddRawOdomPoseToHistory(const TimeStamp_t t,
@@ -538,12 +544,12 @@ namespace Cozmo {
     // Color specified as RGBA, where A(lpha) will be ignored
     void SetDefaultLights(const u32 color);
     
-    void SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
-                           const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
-                           const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
-                           const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
-                           const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
-                           const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
+    void SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                           const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
    
     
     // =========  Block messages  ============
@@ -553,18 +559,18 @@ namespace Cozmo {
     
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
-                           const std::array<u32,NUM_BLOCK_LEDS>& onColor,
-                           const std::array<u32,NUM_BLOCK_LEDS>& offColor,
-                           const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
-                           const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
-                           const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
-                           const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
+                           const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
                            const MakeRelativeMode makeRelative,
                            const Point2f& relativeToPoint);
     
     // Set all LEDs of the specified block to the same color/flashrate
     Result SetObjectLights(const ObjectID& objectID,
-                           const WhichBlockLEDs whichLEDs,
+                           const WhichCubeLEDs whichLEDs,
                            const u32 onColor, const u32 offColor,
                            const u32 onPeriod_ms, const u32 offPeriod_ms,
                            const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
@@ -589,7 +595,7 @@ namespace Cozmo {
     Result AbortDrivingToPose(); // stops planning and path following
     
     // Send a message to the physical robot
-    Result SendMessage(const RobotMessage& message,
+    Result SendMessage(const RobotInterface::EngineToRobot& message,
                        bool reliable = true, bool hot = false) const;
     
     // Events
@@ -613,11 +619,8 @@ namespace Cozmo {
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable;
     
-    // Whether or not the robot acknowledged a SyncTime message
-    bool              _syncTimeAcknowledged;
-    
     // A reference to the MessageHandler that the robot uses for outgoing comms
-    IRobotMessageHandler* _msgHandler;
+    RobotInterface::MessageHandler* _msgHandler;
     
     // A reference to the BlockWorld the robot lives in
     BlockWorld        _blockWorld;
@@ -672,11 +675,13 @@ namespace Cozmo {
     Vision::CameraCalibration _cameraCalibration;
     Vision::Camera            _camera;
     bool                      _visionWhileMovingEnabled;
-    
+
+    /*
     // Proximity sensors
     std::array<u8,   NUM_PROX>  _proxVals;
     std::array<bool, NUM_PROX>  _proxBlocked;
-    
+    */
+
     // Geometry / Pose
     std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
     Pose3d*          _worldOrigin;
@@ -788,7 +793,9 @@ namespace Cozmo {
     void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
     void SetPickingOrPlacing(bool t)        {_isPickingOrPlacing = t;}
     void SetPickedUp(bool t);
+    /*
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
+    */
 
     ///////// Animation /////////
     
@@ -806,7 +813,31 @@ namespace Cozmo {
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
-    
+    std::vector<Signal::SmartHandle> _signalHandles;
+    ImageDeChunker& _imageDeChunker;
+    uint8_t _imuSeqID = 0;
+    uint32_t _imuDataSize = 0;
+    int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
+
+
+  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    // For processing image chunks arriving from robot.
+    // Sends complete images to VizManager for visualization (and possible saving).
+    void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    // For processing imu data chunks arriving from robot.
+    // Writes the entire log of 3-axis accelerometer and 3-axis
+    // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
+    // can be read in from Matlab. (See robot/util/imuLogsTool.m)
+    void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,
                                      const PoseFrameID_t& frameId) const;
@@ -850,9 +881,6 @@ namespace Cozmo {
     // Sends a path to the robot to be immediately executed
     Result SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const;
     
-    // Turn on/off headlight LEDs
-    Result SendHeadlight(u8 intensity);
-    
     // Sync time with physical robot and trigger it robot to send back camera
     // calibration
     Result SendSyncTime() const;
@@ -862,30 +890,19 @@ namespace Cozmo {
     
     // Update the head angle on the robot
     Result SendHeadAngleUpdate() const;
-    
-    // Request camera snapshot from robot
-    Result SendImageRequest(const ImageSendMode_t mode,
-                            const Vision::CameraResolution resolution) const;
-    
+
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
     
-    // Run a test mode
-    Result SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
-    
     Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
 
-    Result SendDockWithObject(const DockAction_t dockAction,
+    Result SendDockWithObject(const DockAction dockAction,
                               const bool useManualSpeed);
-    
-    Result SendStartFaceTracking(const u8 timeout_sec);
-    Result SendStopFaceTracking();
-    Result SendPing();
     
     Result SendAbortDocking();
     Result SendAbortAnimation();
     
-    Result SendSetCarryState(CarryState_t state);
+    Result SendSetCarryState(CarryState state);
 
     
     // =========  Active Object messages  ============
@@ -895,57 +912,57 @@ namespace Cozmo {
     void ActiveObjectLightTest(const ObjectID& objectID);  // For testing
     
     
-  }; // class Robot
+}; // class Robot
 
   
-  //
-  // Inline accessors:
-  //
-  inline const RobotID_t Robot::GetID(void) const
-  { return _ID; }
-  
-  inline const Pose3d& Robot::GetPose(void) const
-  { return _pose; }
-  
-  inline const Pose3d& Robot::GetDriveCenterPose(void) const
-  {return _driveCenterPose; }
-  
-  inline void Robot::EnableVisionWhileMoving(bool enable)
-  { _visionWhileMovingEnabled = enable; }
-  
-  inline const Vision::Camera& Robot::GetCamera(void) const
-  { return _camera; }
-  
-  inline Vision::Camera& Robot::GetCamera(void)
-  { return _camera; }
-  
-  inline void Robot::SetLocalizedTo(const ObjectID& toID)
-  { _localizedToID = toID;}
-  
-  inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
-  {
-    if (_cameraCalibration != calib) {
-    
-      _cameraCalibration = calib;
-      _camera.SetSharedCalibration(&_cameraCalibration);
-      
-      //_faceTracker.Init(calib);
-      
+//
+// Inline accessors:
+//
+inline const RobotID_t Robot::GetID(void) const
+{ return _ID; }
+
+inline const Pose3d& Robot::GetPose(void) const
+{ return _pose; }
+
+inline const Pose3d& Robot::GetDriveCenterPose(void) const
+{return _driveCenterPose; }
+
+inline void Robot::EnableVisionWhileMoving(bool enable)
+{ _visionWhileMovingEnabled = enable; }
+
+inline const Vision::Camera& Robot::GetCamera(void) const
+{ return _camera; }
+
+inline Vision::Camera& Robot::GetCamera(void)
+{ return _camera; }
+
+inline void Robot::SetLocalizedTo(const ObjectID& toID)
+{ _localizedToID = toID;}
+
+inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
+{
+  if (_cameraCalibration != calib) {
+
+    _cameraCalibration = calib;
+    _camera.SetSharedCalibration(&_cameraCalibration);
+
+    //_faceTracker.Init(calib);
+
 #if ASYNC_VISION_PROCESSING
-      // Now that we have camera calibration, we can start the vision
-      // processing thread
-      _visionProcessor.Start(_cameraCalibration);
+    // Now that we have camera calibration, we can start the vision
+    // processing thread
+    _visionProcessor.Start(_cameraCalibration);
 #else
-      _visionProcessor.SetCameraCalibration(_cameraCalibration);
+    _visionProcessor.SetCameraCalibration(_cameraCalibration);
 #endif
-    } else {
-      PRINT_NAMED_INFO("Robot.SetCameraCalibration.IgnoringDuplicateCalib","");
-    }
+  } else {
+    PRINT_NAMED_INFO("Robot.SetCameraCalibration.IgnoringDuplicateCalib","");
   }
+}
 
-  inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
-  { return _cameraCalibration; }
-  
+inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
+{ return _cameraCalibration; }
+
   inline const f32 Robot::GetHeadAngle() const
   { return _currentHeadAngle; }
   
@@ -957,38 +974,38 @@ namespace Cozmo {
     _rampDirection = direction;
   }
 
-  inline Result Robot::SetDockObjectAsAttachedToLift(){
-    return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
-  }
-  
-  inline u8 Robot::GetCurrentAnimationTag() const {
-    return _animationTag;
-  }
-  
-  inline bool Robot::IsAnimating() const {
-    return _animationTag != 0;
-  }
-  
-  inline bool Robot::IsIdleAnimating() const {
-    return _animationTag == 255;
-  }
-  
-  inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
-    return SetObjectLights(objectID, WhichBlockLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
-                           false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
-  }
-  
-  inline s32 Robot::GetNumAnimationBytesPlayed() const {
-    return _numAnimationBytesPlayed;
-  }
-  
-  inline s32 Robot::GetNumAnimationBytesStreamed() {
-    return _numAnimationBytesStreamed;
-  }
-  
-  inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
-    _numAnimationBytesStreamed += num;
-  }
+inline Result Robot::SetDockObjectAsAttachedToLift(){
+  return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
+}
+
+inline u8 Robot::GetCurrentAnimationTag() const {
+  return _animationTag;
+}
+
+inline bool Robot::IsAnimating() const {
+  return _animationTag != 0;
+}
+
+inline bool Robot::IsIdleAnimating() const {
+  return _animationTag == 255;
+}
+
+inline Result Robot::TurnOffObjectLights(const ObjectID& objectID) {
+  return SetObjectLights(objectID, WhichCubeLEDs::ALL, 0, 0, 10000, 10000, 0, 0,
+                         false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {0.f,0.f});
+}
+
+inline s32 Robot::GetNumAnimationBytesPlayed() const {
+  return _numAnimationBytesPlayed;
+}
+
+inline s32 Robot::GetNumAnimationBytesStreamed() {
+  return _numAnimationBytesStreamed;
+}
+
+inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
+  _numAnimationBytesStreamed += num;
+}
   
 } // namespace Cozmo
 } // namespace Anki

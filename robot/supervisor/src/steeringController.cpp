@@ -16,6 +16,7 @@
 #include "wheelController.h"
 #include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
 
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/robot/trig_fast.h"
@@ -34,8 +35,6 @@ namespace Anki {
       //Steering gains: Heading tracking gain K1, Crosstrack approach rate K2
       f32 K1_ = DEFAULT_STEERING_K1;
       f32 K2_ = DEFAULT_STEERING_K2;
-
-      bool isInit_ = false;
 
       SteerMode currSteerMode_ = SM_PATH_FOLLOW;
       
@@ -81,7 +80,6 @@ namespace Anki {
     
     void ReInit()
     {
-      isInit_ = false;
     }
     
     //sets the steering controller constants
@@ -182,7 +180,7 @@ namespace Anki {
       if (maxRotationWheelSpeedDiff > 0) {
         wheelSpeedDiff = *higherWheelSpeed - *lowerWheelSpeed;
         if (wheelSpeedDiff > maxRotationWheelSpeedDiff) {
-          f32 speedAdjust = 0.5*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
+          f32 speedAdjust = 0.5f*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
           *higherWheelSpeed -= speedAdjust;
           *lowerWheelSpeed += speedAdjust;
           PRINT("  Wheel speed adjust: (%f, %f), adjustment %f\n", *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);

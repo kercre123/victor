@@ -9,13 +9,14 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/activeBlockTypes.h"
 #include "anki/cozmo/shared/faceDisplayDecode.h"
 #include "messages.h"
 #include "wheelController.h"
 
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
-#include "BlockMessages.h"
+#include "clad/robotInterface/lightCubeMessage.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 
 // Webots Includes
 #include <webots/Robot.hpp>
@@ -248,32 +249,19 @@ namespace Anki {
       }
 
 
-      Result SendBlockMessage(const u8 blockID, BlockMessages::ID msgID, u8* buffer)
+      Result SendBlockMessage(const u8 blockID, const BlockMessages::LightCubeMessage& msg)
       {
-
-        // Check that blockID is valid
-        //if (blockID >= blockIDs_.size()) {
-        if (blockIDs_.count(blockID) == 0) {
-          PRINT("***ERROR (SendBlockMessage): Unknown active block ID %d\n", blockID);
-          return RESULT_FAIL;
-        }
-
         // Set channel
         blockCommsEmitter_->setChannel( blockID );
-
-        // Prepend msgID to buffer
-        u16 msgSize = BlockMessages::GetSize(msgID);
-        u8 buf[msgSize+1];
-        buf[0] = msgID;
-        memcpy(buf+1, buffer, msgSize);
-        blockCommsEmitter_->send(buf, msgSize + 1);
-
+        blockCommsEmitter_->send(msg.GetBuffer(), msg.Size());
         return RESULT_OK;
       }
 
       Result FlashBlock(const u8 blockID) {
-        Anki::Cozmo::BlockMessages::FlashID m;
-        return SendBlockMessage(blockID, BlockMessages::FlashID_ID, (u8*)&m);
+        BlockMessages::LightCubeMessage m;
+        m.tag = BlockMessages::LightCubeMessage::Tag_flashID;
+        m.flashID.objectID = blockID;
+        return SendBlockMessage(blockID, m);
       }
 
 
@@ -439,7 +427,6 @@ namespace Anki {
 
       // Reset index of block that is currently flashing ID
       flashBlockIdx_ = -1;
-
 
       // Get IDs of all available active blocks in the world
       blockIDs_.clear();
@@ -767,35 +754,35 @@ namespace Anki {
         // TODO: Make block comms receiver checking into a HAL function at some point
         //   and call it from the main execution loop
         while(blockCommsReceiver_->getQueueLength() > 0) {
-          int dataSize = blockCommsReceiver_->getDataSize();
-          u8* data = (u8*)blockCommsReceiver_->getData();
-
-          // TODO: Use a message ID to switch here instead of depending on size to differentiate message type
-
-          if(dataSize == BlockMessages::GetSize(BlockMessages::BlockMoved_ID)) {
-            BlockMessages::BlockMoved* msgIn = reinterpret_cast<BlockMessages::BlockMoved*>(data);
-            Messages::ActiveObjectMoved msgOut;
-            msgOut.objectID = msgIn->blockID;
-            msgOut.xAccel   = msgIn->xAccel;
-            msgOut.yAccel   = msgIn->yAccel;
-            msgOut.zAccel   = msgIn->zAccel;
-            msgOut.upAxis   = msgIn->upAxis;
-            HAL::RadioSendMessage(Messages::ActiveObjectMoved_ID, &msgOut);
-          } else if(dataSize == BlockMessages::GetSize(BlockMessages::BlockStoppedMoving_ID)) {
-            BlockMessages::BlockStoppedMoving* msgIn = reinterpret_cast<BlockMessages::BlockStoppedMoving*>(data);
-            Messages::ActiveObjectStoppedMoving msgOut;
-            msgOut.objectID = msgIn->blockID;
-            msgOut.upAxis   = msgIn->upAxis;
-            msgOut.rolled   = msgIn->rolled;
-            HAL::RadioSendMessage(Messages::ActiveObjectStoppedMoving_ID, &msgOut);
-          } else if(dataSize == BlockMessages::GetSize(BlockMessages::BlockTapped_ID)) {
-            BlockMessages::BlockTapped* msgIn = reinterpret_cast<BlockMessages::BlockTapped*>(data);
-            Messages::ActiveObjectTapped msgOut;
-            msgOut.objectID = msgIn->blockID;
-            msgOut.numTaps  = msgIn->numTaps;
-            HAL::RadioSendMessage(Messages::ActiveObjectTapped_ID, &msgOut);
-          } else {
-            printf("Received unknown-sized message (%d bytes) over block comms.\n", dataSize);
+          BlockMessages::LightCubeMessage lcm;
+          memcpy(lcm.GetBuffer(), blockCommsReceiver_->getData(), blockCommsReceiver_->getDataSize());
+          switch(lcm.tag)
+          {
+            case BlockMessages::LightCubeMessage::Tag_moved:
+            {
+              ObjectMoved m;
+              memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            case BlockMessages::LightCubeMessage::Tag_stopped:
+            {
+              ObjectStoppedMoving m;
+              memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            case BlockMessages::LightCubeMessage::Tag_tapped:
+            {
+              ObjectTapped m;
+              memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
+              RobotInterface::SendMessage(m);
+              break;
+            }
+            default:
+            {
+              printf("Received unexpected message from simulated object: %d\r\n", static_cast<int>(lcm.tag));
+            }
           }
           blockCommsReceiver_->nextPacket();
         }
@@ -917,7 +904,7 @@ namespace Anki {
     }
 
     // Starts camera frame synchronization
-    void HAL::CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
+    void HAL::CameraGetFrame(u8* frame, ImageResolution res, bool enableLight)
     {
       // TODO: enableLight?
       AnkiConditionalErrorAndReturn(frame != NULL, "SimHAL.CameraGetFrame.NullFramePointer",
@@ -1005,7 +992,7 @@ namespace Anki {
 
     // Play one frame of audio or silence
     // @param frame - a pointer to an audio frame or NULL to play one frame of silence
-    void HAL::AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg)
+    void HAL::AudioPlayFrame(AnimKeyFrame::AudioSample *msg)
     {
       if (audioEndTime_ == 0) {
         audioEndTime_ = HAL::GetTimeStamp();
@@ -1149,21 +1136,21 @@ namespace Anki {
       flashStartTime_ = HAL::GetTimeStamp();
     }
 
-    Result HAL::SetBlockLight(const u8 blockID, const u32* onColor, const u32* offColor,
-                              const u32* onPeriod_ms, const u32* offPeriod_ms,
-                              const u32* transitionOnPeriod_ms, const u32* transitionOffPeriod_ms)
+    Result HAL::SetBlockLight(const u32 blockID, const LightState* lights)
     {
-      Anki::Cozmo::BlockMessages::SetBlockLights m;
-      for (int i=0; i<NUM_BLOCK_LEDS; ++i) {
-        m.onColor[i] = onColor[i];
-        m.offColor[i] = offColor[i];
-        m.onPeriod_ms[i] = onPeriod_ms[i];
-        m.offPeriod_ms[i] = offPeriod_ms[i];
-        m.transitionOnPeriod_ms[i] = (transitionOnPeriod_ms == nullptr ? 0 : transitionOnPeriod_ms[i]);
-        m.transitionOffPeriod_ms[i] = (transitionOffPeriod_ms == nullptr ? 0 : transitionOffPeriod_ms[i]);
+      BlockMessages::LightCubeMessage m;
+      m.tag = BlockMessages::LightCubeMessage::Tag_setCubeLights;
+      for (int i=0; i<NUM_CUBE_LEDS; ++i) {
+        m.setCubeLights.lights[i].onColor = lights[i].onColor;
+        m.setCubeLights.lights[i].offColor = lights[i].offColor;
+        m.setCubeLights.lights[i].onPeriod_ms = lights[i].onPeriod_ms;
+        m.setCubeLights.lights[i].offPeriod_ms = lights[i].offPeriod_ms;
+        m.setCubeLights.lights[i].transitionOnPeriod_ms = lights[i].transitionOnPeriod_ms;
+        m.setCubeLights.lights[i].transitionOffPeriod_ms = lights[i].transitionOffPeriod_ms;
       }
+      m.setCubeLights.objectID = blockID;
 
-      return SendBlockMessage(blockID, BlockMessages::SetBlockLights_ID, (u8*)&m);
+      return SendBlockMessage(blockID, m);
     }
 
     void HAL::ManageCubes(void)

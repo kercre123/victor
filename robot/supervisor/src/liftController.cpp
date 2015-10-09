@@ -7,7 +7,7 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/errorHandling.h"
-
+#include "messages.h"
 
 #define DEBUG_LIFT_CONTROLLER 0
 
@@ -315,7 +315,7 @@ namespace Anki {
 #ifdef SIMULATOR
         power = desired_speed_rad_per_sec * 0.05;
 #else
-        CarryState_t cs = PickAndPlaceController::GetCarryState();
+        CarryState cs = PickAndPlaceController::GetCarryState();
         if (desired_speed_rad_per_sec > 0) {
           power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP[cs];
         } else {

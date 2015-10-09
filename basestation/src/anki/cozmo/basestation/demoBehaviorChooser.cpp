@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
+#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -68,12 +69,23 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     return;
   }
   
+  /*
   // Setup Fidget behavior
   _behaviorFidget = new BehaviorFidget(robot, config);
   addResult = super::AddBehavior(_behaviorFidget);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorFidget was not created properly.");
+    return;
+  }
+  */
+  
+  // Setup None Behavior
+  _behaviorNone = new BehaviorNone(robot, config);
+  addResult = super::AddBehavior(_behaviorNone);
+  if (Result::RESULT_OK != addResult)
+  {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorNone was not created properly.");
     return;
   }
 }
@@ -147,6 +159,10 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
   else if (runnable(_behaviorFidget))
   {
     return _behaviorFidget;
+  }
+  else if (runnable(_behaviorNone))
+  {
+    return _behaviorNone;
   }
   
   return nullptr;

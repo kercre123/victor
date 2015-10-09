@@ -673,7 +673,7 @@ namespace Anki {
                 
                 // Cycle through different power levels
                 if (!up) {
-                  liftPower_ += 0.05;
+                  liftPower_ += 0.05f;
                   if (liftPower_ >=1.01f) {
                     liftPower_ = LIFT_POWER_CMD;
                   }
@@ -697,7 +697,7 @@ namespace Anki {
 
         // Print speed at the end of a continuous segment of non-zero speeds
         f32 lSpeed = HAL::MotorGetSpeed(HAL::MOTOR_LIFT);
-        if (ABS(lSpeed) > 0.001) {
+        if (ABS(lSpeed) > 0.001f) {
           // Is this the start of a sequence of non-zero lift speeds?
           if (avgLiftSpeed_ == 0) {
             startLiftHeightMM_ = LiftController::GetHeightMM();
@@ -814,7 +814,7 @@ namespace Anki {
                 
                 // Cycle through different power levels
                 if (!up) {
-                  headPower_ += 0.1;
+                  headPower_ += 0.1f;
                   if (headPower_ >=1.01f) {
                     headPower_ = HEAD_POWER_CMD;
                   }

@@ -14,14 +14,14 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
-#include "anki/cozmo/shared/activeBlockTypes.h"
+#include "clad/types/activeObjectTypes.h"
 
 namespace Anki {
   
@@ -277,7 +277,7 @@ namespace Anki {
       // whichLEDs will be turned off. Otherwise, they will be left in their current
       // state.
       // NOTE: Alpha is ignored.
-      void SetLEDs(const WhichBlockLEDs whichLEDs,
+      void SetLEDs(const WhichCubeLEDs whichLEDs,
                    const ColorRGBA& onColor,        const ColorRGBA& offColor,
                    const u32 onPeriod_ms,           const u32 offPeriod_ms,
                    const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
@@ -303,9 +303,9 @@ namespace Anki {
       //  to the face currently closest to the given position
       void MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode);
       
-      // Similar to above, but returns rotated WhichBlockLEDs rather than changing
+      // Similar to above, but returns rotated WhichCubeLEDs rather than changing
       // the block's current state.
-      WhichBlockLEDs MakeWhichLEDsRelativeToXY(const WhichBlockLEDs whichLEDs,
+      WhichCubeLEDs MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
                                                const Point2f& xyPosition,
                                                MakeRelativeMode mode) const;
       
@@ -323,15 +323,15 @@ namespace Anki {
       
       // Take the given top LED pattern and create a pattern that indicates
       // the corresponding bottom LEDs as well
-      static WhichBlockLEDs MakeTopAndBottomPattern(WhichBlockLEDs topPattern);
+      static WhichCubeLEDs MakeTopAndBottomPattern(WhichCubeLEDs topPattern);
       
       // Get the LED specification for the top (and bottom) LEDs on the corner closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
-      WhichBlockLEDs GetCornerClosestToXY(const Point2f& xyPosition) const;
+      WhichCubeLEDs GetCornerClosestToXY(const Point2f& xyPosition) const;
       
       // Get the LED specification for the four LEDs on the face closest
       // to the specified (x,y) position, using the ActiveCube's current pose.
-      WhichBlockLEDs GetFaceClosestToXY(const Point2f& xyPosition) const;
+      WhichCubeLEDs GetFaceClosestToXY(const Point2f& xyPosition) const;
       
       // Rotate the currently specified pattern of colors/flashing once slot in
       // the specified direction (assuming you are looking down at the top face)
@@ -339,7 +339,7 @@ namespace Anki {
       
       // Helper for figuring out which LEDs will be selected after rotating
       // a given pattern of LEDs one slot in the specified direction
-      static WhichBlockLEDs RotateWhichLEDsAroundTopFace(WhichBlockLEDs whichLEDs, bool clockwise);
+      static WhichCubeLEDs RotateWhichLEDsAroundTopFace(WhichCubeLEDs whichLEDs, bool clockwise);
       
       // Get the orientation of the top marker around the Z axis. An angle of 0
       // means the top marker is in the canonical orienation, such that the corners
@@ -348,9 +348,10 @@ namespace Anki {
       
       // Populate a message specifying the current state of the block, for sending
       // out to actually set the physical block to match
-      void FillMessage(MessageSetBlockLights& msg) const;
-      
-    protected:
+      //void FillMessage(SetBlockLights& msg) const;
+
+      // TODO: Make protected/private
+    //protected:
       
       // TODO: Promote to Block object
       const Vision::KnownMarker& GetTopMarker(Pose3d& markerPoseWrtOrigin) const;
@@ -458,9 +459,9 @@ namespace Anki {
      */
     
     
-    inline WhichBlockLEDs ActiveCube::MakeTopAndBottomPattern(WhichBlockLEDs topPattern) {
+    inline WhichCubeLEDs ActiveCube::MakeTopAndBottomPattern(WhichCubeLEDs topPattern) {
       u8 pattern = static_cast<u8>(topPattern);
-      return static_cast<WhichBlockLEDs>((pattern << 4) + (pattern & 0x0F));
+      return static_cast<WhichCubeLEDs>((pattern << 4) + (pattern & 0x0F));
     }
     
   } // namespace Cozmo

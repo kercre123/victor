@@ -18,8 +18,6 @@
 
 #include "anki/vision/basestation/observableObject.h"
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
-
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"

@@ -575,7 +575,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
           // multi-angle stuff. For now just draw the quads with
           // padding
           VizManager::getInstance()->DrawQuad (
-            isReplanning ? VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VIZ_QUAD_PLANNER_OBSTACLE,
+            isReplanning ? VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE_REPLAN : VizQuadType::VIZ_QUAD_PLANNER_OBSTACLE,
             vizID++, boundingQuad.first, 0.1f, *vizColor );
         }
         numAdded++;

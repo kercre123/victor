@@ -16,8 +16,11 @@
 #include <cassert>
 
 namespace Anki {
-namespace Cozmo {
-
+namespace Cozmo {    
+  // Transitions are not allowed to be more than 2 seconds apart
+  // This rule (workaround?) unjams the controller when SetTimeStamp changes the time underneath us
+  const int MAX_TRANSITION_MS = 2000;
+  
   // Alpha blending (w/ black) without using floating point:
   //  See also: http://stackoverflow.com/questions/12011081/alpha-blending-2-rgba-colors-in-c
   inline u32 AlphaBlend(const u32 onColor, const u32 offColor, const u8 alpha)
@@ -38,12 +41,13 @@ namespace Cozmo {
     return result;
   }
 
-  bool GetCurrentLEDcolor(LEDParams_t& ledParams, TimeStamp_t currentTime,
+  bool GetCurrentLEDcolor(LightState& ledParams, TimeStamp_t currentTime,
                           u32& newColor)
   {
     bool colorUpdated = false;
-    
-    if(currentTime > ledParams.nextSwitchTime)
+
+    int timeLeft = ledParams.nextSwitchTime - currentTime;
+    if (timeLeft <= 0 || timeLeft >= MAX_TRANSITION_MS)
     {
       switch(ledParams.state)
       {

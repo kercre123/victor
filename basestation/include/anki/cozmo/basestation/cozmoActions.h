@@ -22,6 +22,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/animationKeyFrames.h"
 
 namespace Anki {
   
@@ -61,7 +62,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
 
@@ -121,7 +122,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       
@@ -174,7 +175,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       
@@ -198,7 +199,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return HEAD_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       
@@ -238,7 +239,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       
@@ -274,7 +275,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;
@@ -396,7 +397,7 @@ namespace Anki {
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
       
       virtual u8 GetAnimTracksToDisable() const override {
-        return HEAD_TRACK | LIFT_TRACK | BODY_TRACK;
+        return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
       }
       
     protected:
@@ -428,7 +429,7 @@ namespace Anki {
       virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
-      DockAction_t                _dockAction;
+      DockAction                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2;
       Radians                     _preActionPoseAngleTolerance;
@@ -589,7 +590,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       

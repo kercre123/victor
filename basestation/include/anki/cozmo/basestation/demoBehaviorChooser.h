@@ -29,6 +29,7 @@ class BehaviorLookAround;
 class BehaviorInteractWithFaces;
 class BehaviorOCD;
 class BehaviorFidget;
+class BehaviorNone;
 class Robot;
 namespace ExternalInterface {
   class MessageGameToEngine;
@@ -56,6 +57,7 @@ protected:
   BehaviorInteractWithFaces* _behaviorInteractWithFaces = nullptr;
   BehaviorOCD* _behaviorOCD = nullptr;
   BehaviorFidget* _behaviorFidget = nullptr;
+  BehaviorNone* _behaviorNone = nullptr;
   
   void SetupBehaviors(Robot& robot, const Json::Value& config);
   void HandleSetDemoState(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
