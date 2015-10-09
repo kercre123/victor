@@ -14,7 +14,12 @@ public class PatternPlayController : GameController {
   private static int cozmoMaxEnergyLevel = 6;
   private float lastBlinkTime = 0.0f;
   private int lastMovedID = -1;
+
+  [SerializeField]
   private PatternPlayAudio patternPlayAudio;
+
+  [SerializeField]
+  private PatternPlayUIController patternPlayUIController;
 
   private BlockPattern lastPatternSeen = null;
 
@@ -39,7 +44,6 @@ public class PatternPlayController : GameController {
     ActiveBlock.MovedAction += BlockMoved;
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
-    patternPlayAudio = GetComponent<PatternPlayAudio>();
     memoryBank.Initialize();
   }
 
@@ -133,7 +137,6 @@ public class PatternPlayController : GameController {
             cozmoEnergyLevel = cozmoMaxEnergyLevel;
           }
 
-
           DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
           " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
 
@@ -154,6 +157,9 @@ public class PatternPlayController : GameController {
         lastPatternSeen = currentPattern;
       }
     }
+
+    // this may need to be moved to include other states if we want UI for them.
+    patternPlayUIController.UpdateUI(memoryBank);
 
   }
 

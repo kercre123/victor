@@ -465,6 +465,7 @@ GameObject:
   - 4: {fileID: 257459302}
   - 114: {fileID: 257459303}
   - 114: {fileID: 257459304}
+  - 114: {fileID: 257459305}
   m_Layer: 0
   m_Name: PatternPlayController
   m_TagString: Untagged
@@ -547,6 +548,8 @@ MonoBehaviour:
   minStarPop: .300000012
   robotBusyDuringResults: 1
   maxEmotionWaitTime: 20
+  patternPlayAudio: {fileID: 257459304}
+  patternPlayUIController: {fileID: 257459305}
 --- !u!114 &257459304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -565,6 +568,17 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 48715a99938c14c10a8b5ceb360df92c, type: 3}
   - {fileID: 8300000, guid: 99ccd2007770b4d80b4d91635c9c8677, type: 3}
   lightInputReady: {fileID: 8300000, guid: 6ba259cb545254239ae1a431df620d34, type: 3}
+--- !u!114 &257459305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 257459301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5e1656102c2e4b8c990a1f08212e480, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &276409754
 GameObject:
   m_ObjectHideFlags: 0
