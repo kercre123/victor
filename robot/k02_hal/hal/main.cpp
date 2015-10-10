@@ -71,8 +71,12 @@ int main (void)
   DebugPrintf("Done\n\r");
   
   // Switch to 10MHz external reference to enable 100MHz clock
-  MCG_C2 &= ~MCG_C2_EREFS_MASK;
-  
+  MCG_C1 &= ~MCG_C1_IREFS_MASK;
+  // Wait for IREF to turn off
+  while((MCG->S & MCG_S_IREFST_MASK)) ;
+  // Wait for FLL to lock
+  while((MCG->S & MCG_S_CLKST_MASK)) ;
+    
   SPIInit();
   //DacInit();
   //i2c_init();

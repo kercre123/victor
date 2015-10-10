@@ -13,27 +13,38 @@
 typedef uint16_t transmissionWord;
 const int TRANSMISSION_SIZE = DROP_SIZE / sizeof(transmissionWord);
 
+static transmissionWord spi_tx_buff[TRANSMISSION_SIZE];
 static union {
-  transmissionWord spi_tx_buff[TRANSMISSION_SIZE];
+  transmissionWord spi_tx_side[TRANSMISSION_SIZE];
   DropToWiFi drop_tx ;
 };
-//static union {
+
+static union {
   transmissionWord spi_rx_buff[TRANSMISSION_SIZE];
-  //DropToRTIP drop_rx ;
-//};
+  DropToRTIP drop_rx ;
+};
 
-void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
-  // Clear done flags for DMA
-  DMA_CDNE = DMA_CDNE_CDNE(2);
-  DMA_CDNE = DMA_CDNE_CDNE(3);
-
-  // Enable DMA
-  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
-
+void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
   drop_tx.preamble = TO_WIFI_PREAMBLE;
   memcpy(drop_tx.payload, buf, buflen);
   drop_tx.msgLen  = 0;
   drop_tx.droplet = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0);
+}
+
+extern "C"
+void DMA2_IRQHandler(void) {
+  // Process drop receive
+
+  DMA_CDNE = DMA_CDNE_CDNE(2);
+  DMA_CINT = 2;
+}
+
+extern "C"
+void DMA3_IRQHandler(void) {
+  memcpy(spi_tx_buff, spi_tx_side, sizeof(spi_tx_side));
+
+  DMA_CDNE = DMA_CDNE_CDNE(3);
+  DMA_CINT = 3;
 }
 
 void Anki::Cozmo::HAL::SPIInitDMA(void) {
@@ -56,7 +67,7 @@ void Anki::Cozmo::HAL::SPIInitDMA(void) {
   DMA_TCD2_CITER_ELINKNO  = TRANSMISSION_SIZE;                          // Set current interation count  
   DMA_TCD2_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
+  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               
 
   // Configure transfer buffer
   DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 
@@ -74,7 +85,10 @@ void Anki::Cozmo::HAL::SPIInitDMA(void) {
   DMA_TCD3_CITER_ELINKNO  = TRANSMISSION_SIZE;                          // Set current interation count
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration               
+  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               
+
+  NVIC_EnableIRQ(DMA2_IRQn);
+  NVIC_EnableIRQ(DMA3_IRQn);
 }
 
 inline uint16_t WaitForByte(void) {
@@ -130,6 +144,7 @@ void Anki::Cozmo::HAL::SPIInit(void) {
   PORTD_PCR0  = PORT_PCR_MUX(2) |  // SPI0_PCS0 (internal)
                 PORT_PCR_PE_MASK;
 
+  PORTD_PCR4  = PORT_PCR_MUX(1);
   GPIOD_PDDR &= ~(1 << 4);
 
   PORTE_PCR18 = PORT_PCR_MUX(2); // SPI0_SOUT

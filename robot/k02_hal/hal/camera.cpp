@@ -45,7 +45,7 @@ namespace Anki
 
       // Camera exposure value
       u32 exposure_;
-      
+
       // For self-test purposes only.
       // XXX - restore this code for EP1
 #if 0
@@ -232,7 +232,33 @@ extern "C"
 void DMA0_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+
+  SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+  FTM2_CNTIN = 0;
+  FTM2_MOD = 168 * 40; // 168 bytes at 10mhz
+
+  // Sink edge GPIO
+  while(~GPIOD_PDIR & (1 << 4)) ;
+  while( GPIOD_PDIR & (1 << 4)) ;
+
+  FTM2_SC = FTM_SC_TOF_MASK |
+            FTM_SC_TOIE_MASK |
+            FTM_SC_CLKS(1) | // 100mhz
+            FTM_SC_PS(0);
+
+  NVIC_EnableIRQ(FTM2_IRQn);
+  NVIC_DisableIRQ(DMA0_IRQn);
+}
+
+extern "C"
+void FTM2_IRQHandler(void)
+{
+  using namespace Anki::Cozmo::HAL;
+
+  // Enable SPI DMA, Clear flag
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+  FTM2_SC &= ~FTM_SC_TOF_MASK;
+
   static u16 line = 0;
   static int last = 0;
   

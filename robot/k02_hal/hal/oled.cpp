@@ -94,7 +94,7 @@ void DMA_TX_Init(const void* source_addr, void* dest_addr, uint32_t num_bytes) {
 
   // DMA source DMA Mux (i2c0)
   DMAMUX_CHCFG1 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(18)); 
-  
+
   // Configure source address
   DMA_TCD1_SADDR          = (uint32_t)source_addr;
   DMA_TCD1_SOFF           = 1;
