@@ -971,90 +971,94 @@ namespace Anki {
 
       /////////// Update path planning / following ////////////
 
-      bool forceReplan = _driveToPoseStatus == ERobotDriveToPoseStatus::Error;
 
-      if( _numPlansFinished == _numPlansStarted ) {
-        // nothing to do with the planners, so just update the status based on the path following
-        if( IsTraversingPath() ) {
-          _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+      if( _driveToPoseStatus != ERobotDriveToPoseStatus::Waiting ) {
 
-          if( GetBlockWorld().DidObjectsChange() || forceReplan ) {
-            // see if we need to replan, but only bother checking if the world objects changed
-            switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
-            case EComputePathStatus::Error:
-              _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
-              AbortDrivingToPose();
-              PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
-              break;
+        bool forceReplan = _driveToPoseStatus == ERobotDriveToPoseStatus::Error;
 
-            case EComputePathStatus::Running:
-              _numPlansStarted++;
-              PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
-              _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
-              break;
+        if( _numPlansFinished == _numPlansStarted ) {
+          // nothing to do with the planners, so just update the status based on the path following
+          if( IsTraversingPath() ) {
+            _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
 
-            case EComputePathStatus::NoPlanNeeded:
-              // leave status as following, don't update plan attempts since no new planning is needed
-              break;
+            if( GetBlockWorld().DidObjectsChange() || forceReplan ) {
+              // see if we need to replan, but only bother checking if the world objects changed
+              switch( _selectedPathPlanner->ComputeNewPathIfNeeded( GetDriveCenterPose(), forceReplan ) ) {
+              case EComputePathStatus::Error:
+                _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
+                AbortDrivingToPose();
+                PRINT_NAMED_INFO("Robot.Update.Replan.Fail", "ComputeNewPathIfNeeded returned failure!");
+                break;
+
+              case EComputePathStatus::Running:
+                _numPlansStarted++;
+                PRINT_NAMED_INFO("Robot.Update.Replan.Running", "ComputeNewPathIfNeeded running");
+                _driveToPoseStatus = ERobotDriveToPoseStatus::Replanning;
+                break;
+
+              case EComputePathStatus::NoPlanNeeded:
+                // leave status as following, don't update plan attempts since no new planning is needed
+                break;
+              }
             }
+          }
+          else {
+            _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
           }
         }
         else {
-          _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
-        }
-      }
-      else {
-        // we are waiting on a plan to currently compute
-        // TODO:(bn) timeout logic might fit well here?
-        switch( _selectedPathPlanner->CheckPlanningStatus() ) {
-        case EPlannerStatus::Error:
-          _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
-          PRINT_NAMED_INFO("Robot.Update.Planner.Error", "Running planner returned error status");
-          AbortDrivingToPose();
-          _numPlansFinished = _numPlansStarted;
-          break;
+          // we are waiting on a plan to currently compute
+          // TODO:(bn) timeout logic might fit well here?
+          switch( _selectedPathPlanner->CheckPlanningStatus() ) {
+          case EPlannerStatus::Error:
+            _driveToPoseStatus =  ERobotDriveToPoseStatus::Error;
+            PRINT_NAMED_INFO("Robot.Update.Planner.Error", "Running planner returned error status");
+            AbortDrivingToPose();
+            _numPlansFinished = _numPlansStarted;
+            break;
 
-        case EPlannerStatus::Running:
-          // status should stay the same, but double check it
-          if( _driveToPoseStatus != ERobotDriveToPoseStatus::ComputingPath &&
-              _driveToPoseStatus != ERobotDriveToPoseStatus::Replanning) {
-            PRINT_NAMED_WARNING("Robot.Planning.StatusError.Running",
-                                "Status was invalid, setting to ComputePath");
-            _driveToPoseStatus =  ERobotDriveToPoseStatus::ComputingPath;
+          case EPlannerStatus::Running:
+            // status should stay the same, but double check it
+            if( _driveToPoseStatus != ERobotDriveToPoseStatus::ComputingPath &&
+                _driveToPoseStatus != ERobotDriveToPoseStatus::Replanning) {
+              PRINT_NAMED_WARNING("Robot.Planning.StatusError.Running",
+                                  "Status was invalid, setting to ComputePath");
+              _driveToPoseStatus =  ERobotDriveToPoseStatus::ComputingPath;
+            }
+            break;
+
+          case EPlannerStatus::CompleteWithPlan: {
+            PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
+
+            _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
+            _numPlansFinished = _numPlansStarted;
+
+            size_t selectedPoseIdx;
+            Planning::Path newPath;
+
+            _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx);
+            ExecutePath(newPath, _usingManualPathSpeed);
+
+            if( _plannerSelectedPoseIndexPtr != nullptr ) {
+              // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
+              // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
+              // non-null, set it now, then clear the pointer so we won't set it again
+
+              // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
+              // replanning will always chose the same target pose, which should be OK for now
+              *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
+              _plannerSelectedPoseIndexPtr = nullptr;
+            }
+            break;
           }
-          break;
 
-        case EPlannerStatus::CompleteWithPlan: {
-          PRINT_NAMED_INFO("Robot.Update.Planner.CompleteWithPlan", "Running planner complete with a plan");
 
-          _driveToPoseStatus = ERobotDriveToPoseStatus::FollowingPath;
-          _numPlansFinished = _numPlansStarted;
-
-          size_t selectedPoseIdx;
-          Planning::Path newPath;
-
-          _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx);
-          ExecutePath(newPath, _usingManualPathSpeed);
-
-          if( _plannerSelectedPoseIndexPtr != nullptr ) {
-            // When someone called StartDrivingToPose with multiple possible poses, they had an option to pass
-            // in a pointer to be set when we know which pose was selected by the planner. If that pointer is
-            // non-null, set it now, then clear the pointer so we won't set it again
-
-            // TODO:(bn) think about re-planning, here, what if replanning wanted to switch targets? For now,
-            // replanning will always chose the same target pose, which should be OK for now
-            *_plannerSelectedPoseIndexPtr = selectedPoseIdx;
-            _plannerSelectedPoseIndexPtr = nullptr;
+          case EPlannerStatus::CompleteNoPlan:
+            PRINT_NAMED_INFO("Robot.Update.Planner.CompleteNoPlan", "Running planner complete with no plan");
+            _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
+            _numPlansFinished = _numPlansStarted;
+            break;
           }
-          break;
-        }
-
-
-        case EPlannerStatus::CompleteNoPlan:
-          PRINT_NAMED_INFO("Robot.Update.Planner.CompleteNoPlan", "Running planner complete with no plan");
-          _driveToPoseStatus = ERobotDriveToPoseStatus::Waiting;
-          _numPlansFinished = _numPlansStarted;
-          break;
         }
       }
         
