@@ -180,17 +180,17 @@ TEST(LatticePlanner, PlanWhilePlanning)
   ASSERT_TRUE(planner != nullptr);
 
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
-  Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,100,0) );
+  Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,1000,0) );
 
-  EComputePathStatus ret = planner->ComputePath(start, goal);
-  EXPECT_EQ(ret, EComputePathStatus::Running);
+  EComputePathStatus ret1 = planner->ComputePath(start, goal);
+  EComputePathStatus ret2 = planner->ComputePath(start, goal);
 
-  ret = planner->ComputePath(start, goal);
-  EXPECT_EQ(ret, EComputePathStatus::Error);
+  EXPECT_EQ(ret1, EComputePathStatus::Running);
+  EXPECT_EQ(ret2, EComputePathStatus::Error);
 
   // should still be able to finish he original plan
 
-  ExpectPlanComplete(100, planner);
+  ExpectPlanComplete(1000, planner);
 
   size_t selectedTargetIdx = 100;
   Planning::Path path;
