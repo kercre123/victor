@@ -235,7 +235,7 @@ void DMA0_IRQHandler(void)
 
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
   FTM2_CNTIN = 0;
-  FTM2_MOD = 168 * 40; // 168 bytes at 10mhz
+  FTM2_MOD = 168 * 40 - 1; // 168 bytes at 10mhz
 
   // Sink edge GPIO
   while(~GPIOD_PDIR & (1 << 4)) ;
