@@ -12,6 +12,14 @@ public class PatternPlayController : GameController {
   private float lastAnimationFinishedTime = 0.0f;
   private int cozmoEnergyLevel = 0;
   private static int cozmoMaxEnergyLevel = 6;
+  private float lastBlinkTime = 0.0f;
+  private int lastMovedID = -1;
+
+  [SerializeField]
+  private PatternPlayAudio patternPlayAudio;
+
+  [SerializeField]
+  private PatternPlayUIController patternPlayUIController;
 
   private BlockPattern lastPatternSeen = null;
 
@@ -26,8 +34,7 @@ public class PatternPlayController : GameController {
 
   private InputMode currentInputMode = InputMode.PHONE;
 
-  // blocks in here are in cozmo space.
-  private HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
+  private PatternMemory memoryBank = new PatternMemory();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
@@ -37,7 +44,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.MovedAction += BlockMoved;
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
-    CozmoEmotionManager.instance.SetIdleAnimation("None");
+    memoryBank.Initialize();
   }
 
   protected override void OnDisable() {
@@ -122,28 +129,37 @@ public class PatternPlayController : GameController {
     BlockPattern currentPattern = null;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
       if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
-        lastPatternSeen = currentPattern;
-        if (!PatternSeen(currentPattern)) {
+        
+        if (!memoryBank.Contains(currentPattern)) {
           cozmoEnergyLevel++;
 
           if (cozmoEnergyLevel > cozmoMaxEnergyLevel) {
             cozmoEnergyLevel = cozmoMaxEnergyLevel;
           }
 
+          DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
+          " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
+
+          Debug.Log(robot.activeBlocks[robot.markersVisibleObjects[0].ID].Forward);
+
           if (cozmoEnergyLevel % 3 == 0) {
             SendAnimation("Celebration");
           }
           else {
-            SendAnimation("majorWinBeatBox");
+            SendAnimation("majorWin");
           }
-          seenPatterns.Add(currentPattern);
+          memoryBank.Add(currentPattern);
         }
         else if (lastPatternSeen.Equals(currentPattern) == false) {
-          //SendAnimation("Satisfaction");
-          SendAnimation("majorWinBeatBox");
+          SendAnimation("minorWin");
         }
+
+        lastPatternSeen = currentPattern;
       }
     }
+
+    // this may need to be moved to include other states if we want UI for them.
+    patternPlayUIController.UpdateUI(memoryBank);
 
   }
 
@@ -181,7 +197,11 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
 
-    int lastTimerID = GetMostRecentMovedID();
+    int currentMovedID = GetMostRecentMovedID();
+    if (currentMovedID != lastMovedID) {
+      lastBlinkTime = Time.time;
+      patternPlayAudio.PlayInputReady();
+    }
 
     // update block lights
     foreach (KeyValuePair<int, BlockPatternData> blockConfig in blockPatternData) {
@@ -190,8 +210,8 @@ public class PatternPlayController : GameController {
       Color enabledColor;
       Color disabledColor;
 
-      disabledColor = new Color(0.0f, 0.0f, 0.0f, 1.0f);
-      enabledColor = new Color(0.0f, 0.6f, 1.0f, 1.0f);
+      enabledColor = Color.blue;
+      disabledColor = Color.black;
 
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
@@ -211,16 +231,18 @@ public class PatternPlayController : GameController {
  
       if (currentInputMode == InputMode.TILT) {
         if (Time.time - blockConfig.Value.lastTimeTapped < 0.3f || blockConfig.Value.lastFrameZAccel < 10.0f) {
-          enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-          disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+          enabledColor = new Color(0.2f, 0.1f, 1.0f, 1.0f);
+          disabledColor = new Color(0.1f, 0.1f, 0.1f, 1.0f);
         }
       }
 
       if (currentInputMode == InputMode.PHONE) {
-        if (blockConfig.Key == lastTimerID) {
-          enabledColor = new Color(1.0f, 0.5f, 0.0f, 1.0f);
-          disabledColor = new Color(0.3f, 0.0f, 0.0f, 1.0f);
+
+        if (blockConfig.Key == currentMovedID && Time.time - lastBlinkTime < 0.5f) {
+          enabledColor = Color.green;
+          disabledColor = Color.green;
         }
+
       }
 
       for (int i = 0; i < 4; ++i) {
@@ -243,6 +265,8 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
     }
+
+    lastMovedID = currentMovedID;
   }
 
   private bool NextBlockConfig(ActiveBlock activeBlock) {
@@ -292,7 +316,6 @@ public class PatternPlayController : GameController {
       // TODO: Interrupt animation because cozmo is upset the pattern may have been messed up.
     }
 
-    Debug.Log(blockID + " : " + xAccel + " " + yAccel + " " + zAccel);
     blockPatternData[blockID].lastFrameZAccel = zAccel;
     blockPatternData[blockID].lastTimeTouched = Time.time;
   }
@@ -309,13 +332,25 @@ public class PatternPlayController : GameController {
     return lastTouchedID;
   }
 
+  private float GetMostRecentMovedTime() {
+    float minTime = 0.0f;
+    foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
+      if (block.Value.lastTimeTouched > minTime) {
+        minTime = block.Value.lastTimeTouched;
+      }
+    }
+    return minTime;
+  }
+
   private void PhoneCycle() {
     if (Input.GetMouseButtonDown(0)) {
       int lastTouchedID = GetMostRecentMovedID();
 
       if (lastTouchedID != -1) {
+        
         blockPatternData[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[lastTouchedID].blockLightsLocalSpace);
         blockPatternData[lastTouchedID].lastTimeTouched = Time.time;
+        patternPlayAudio.PlayLightsSound(blockPatternData[lastTouchedID].blockLightsLocalSpace.NumberOfLightsOn());
       }
     }
   }
@@ -359,22 +394,13 @@ public class PatternPlayController : GameController {
     ResetLookHeadForkLift();
   }
 
-  private bool PatternSeen(BlockPattern patternSeen) {
-    foreach (BlockPattern pattern in seenPatterns) {
-      if (pattern.Equals(patternSeen)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private void SendAnimation(string animName) {
     animationPlaying = true;
     robot.SendAnimation(animName, DonePlayingAnimation);
   }
 
   private void ResetLookHeadForkLift() {
-    robot.SetHeadAngle(-0.5f);
+    robot.SetHeadAngle(-0.1f);
     robot.SetLiftHeight(2.0f);
   }
     

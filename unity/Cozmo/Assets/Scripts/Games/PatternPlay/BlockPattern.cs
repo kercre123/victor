@@ -8,6 +8,8 @@ public class BlockPattern {
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
   public List<BlockLights> blocks = new List<BlockLights>();
+  public bool facingCozmo;
+  public bool verticalStack;
 
   public override bool Equals(System.Object obj) {
     if (obj == null) {
@@ -28,6 +30,12 @@ public class BlockPattern {
     if (pattern.blocks.Count != blocks.Count)
       return false;
 
+    if (pattern.facingCozmo != facingCozmo)
+      return false;
+
+    if (pattern.verticalStack != verticalStack)
+      return false;
+
     for (int i = 0; i < pattern.blocks.Count; ++i) {
       if (pattern.blocks[i].back != blocks[i].back ||
           pattern.blocks[i].front != blocks[i].front ||
@@ -36,6 +44,7 @@ public class BlockPattern {
         return false;
       }
     }
+
     return true;
   }
 
@@ -85,37 +94,30 @@ public class BlockPattern {
     if (robot.markersVisibleObjects.Count < 3)
       return false;
 
+    patternSeen.facingCozmo = CheckFacingCozmo(robot);
+    patternSeen.verticalStack = CheckVerticalStack(robot);
+
+    bool rowAlignment = CheckRowAlignment(robot);
+
+    if (patternSeen.verticalStack == false && rowAlignment == false) {
+      return false;
+    }
+
     // check rotation alignment
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
       relativeForward.Normalize();
 
-      if (Mathf.Abs(relativeForward.x) <= 0.94f && Mathf.Abs(relativeForward.y) <= 0.94f) {
-        // non orthogonal forward vector, let's early out.
+      if (Mathf.Abs(relativeForward.x) < 0.92f && Mathf.Abs(relativeForward.y) < 0.92f && Mathf.Abs(relativeForward.z) < 0.92f) {
+        // non orthogonal forward vector, let's early out. the z-axis is for if the cube is on the side and facing cozmo.
         return false;
       }
     }
 
-    // check position alignment (within certain x threshold)
-    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
-
-      Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
-
-      float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
-      float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
-
-      if (Mathf.Abs(block0 - block1) > 10.0f) {
-        return false;
-      }
-    }
-
-    // convert get block lights in cozmo space.
+    // convert get block lights in cozmo space. build out pattern seen.
     for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward);
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward, patternSeen.facingCozmo);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 
@@ -130,39 +132,114 @@ public class BlockPattern {
     }
 
     // if all of the patterns match but no lights are on don't match.
-    if (patternSeen.blocks[0].back == false && patternSeen.blocks[0].front == false
-        && patternSeen.blocks[0].left == false && patternSeen.blocks[0].right == false) {
+    if (patternSeen.blocks[0].LightsOff()) {
       return false;
     }
 
     return true;
   }
 
-  static private BlockLights GetInCozmoSpace(BlockLights blockLocalSpace, Vector3 blockForward) {
+  static bool CheckFacingCozmo(Robot robot) {
+    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Up;
+      if (relativeUp.x > -0.9f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool CheckVerticalStack(Robot robot) {
+
+    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
+      Vector2 flatPos0 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition);
+      Vector2 flatPos1 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition);
+
+      if (Vector2.Distance(flatPos0, flatPos1) > 5.0f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool CheckRowAlignment(Robot robot) {
+    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
+      Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
+      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
+
+      Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
+      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
+
+      float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
+      float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
+
+      if (Mathf.Abs(block0 - block1) > 25.0f) {
+        return false;
+      }
+
+      float diffZ = (robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition).z;
+
+      // enforce horizontal rule
+      if (Mathf.Abs(diffZ) > 1.0f) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static private BlockLights GetInCozmoSpace(BlockLights blockLocalSpace, Vector3 blockForward, bool facingCozmo) {
     BlockLights blockLightCozmoSpace = new BlockLights();
 
-    if (blockForward.x > 0.9f) {
-      blockLightCozmoSpace.right = blockLocalSpace.front;
-      blockLightCozmoSpace.back = blockLocalSpace.right;
-      blockLightCozmoSpace.left = blockLocalSpace.back;
-      blockLightCozmoSpace.front = blockLocalSpace.left;
+    if (facingCozmo) {
+      if (blockForward.z > 0.9f) {
+        blockLightCozmoSpace.right = blockLocalSpace.front;
+        blockLightCozmoSpace.back = blockLocalSpace.right;
+        blockLightCozmoSpace.left = blockLocalSpace.back;
+        blockLightCozmoSpace.front = blockLocalSpace.left;
+      }
+      else if (blockForward.z < -0.9f) {
+        blockLightCozmoSpace.left = blockLocalSpace.front;
+        blockLightCozmoSpace.front = blockLocalSpace.right;
+        blockLightCozmoSpace.right = blockLocalSpace.back;
+        blockLightCozmoSpace.back = blockLocalSpace.left;
+      }
+      else if (blockForward.y > 0.9f) {
+        blockLightCozmoSpace.back = blockLocalSpace.front;
+        blockLightCozmoSpace.left = blockLocalSpace.right;
+        blockLightCozmoSpace.front = blockLocalSpace.back;
+        blockLightCozmoSpace.right = blockLocalSpace.left;
+      }
+      else if (blockForward.y < -0.9f) {
+        // same orientation so copy it over
+        blockLightCozmoSpace = blockLocalSpace;
+      }
     }
-    else if (blockForward.x < -0.9f) {
-      blockLightCozmoSpace.left = blockLocalSpace.front;
-      blockLightCozmoSpace.front = blockLocalSpace.right;
-      blockLightCozmoSpace.right = blockLocalSpace.back;
-      blockLightCozmoSpace.back = blockLocalSpace.left;
+    else {
+      if (blockForward.x > 0.9f) {
+        blockLightCozmoSpace.right = blockLocalSpace.front;
+        blockLightCozmoSpace.back = blockLocalSpace.right;
+        blockLightCozmoSpace.left = blockLocalSpace.back;
+        blockLightCozmoSpace.front = blockLocalSpace.left;
+      }
+      else if (blockForward.x < -0.9f) {
+        blockLightCozmoSpace.left = blockLocalSpace.front;
+        blockLightCozmoSpace.front = blockLocalSpace.right;
+        blockLightCozmoSpace.right = blockLocalSpace.back;
+        blockLightCozmoSpace.back = blockLocalSpace.left;
+      }
+      else if (blockForward.y > 0.9f) {
+        blockLightCozmoSpace.back = blockLocalSpace.front;
+        blockLightCozmoSpace.left = blockLocalSpace.right;
+        blockLightCozmoSpace.front = blockLocalSpace.back;
+        blockLightCozmoSpace.right = blockLocalSpace.left;
+      }
+      else if (blockForward.y < -0.9f) {
+        // same orientation so copy it over
+        blockLightCozmoSpace = blockLocalSpace;
+      }
     }
-    else if (blockForward.y > 0.9f) {
-      blockLightCozmoSpace.back = blockLocalSpace.front;
-      blockLightCozmoSpace.left = blockLocalSpace.right;
-      blockLightCozmoSpace.front = blockLocalSpace.back;
-      blockLightCozmoSpace.right = blockLocalSpace.left;
-    }
-    else if (blockForward.y < -0.9f) {
-      // same orientation so copy it over
-      blockLightCozmoSpace = blockLocalSpace;
-    }
+
+
 
     return blockLightCozmoSpace;
   }
