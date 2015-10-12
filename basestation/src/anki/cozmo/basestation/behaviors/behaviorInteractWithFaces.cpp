@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/emotionManager.h"
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
