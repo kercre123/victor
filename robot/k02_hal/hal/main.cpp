@@ -60,28 +60,31 @@ int main (void)
   hardware_init();
   DebugInit();
 
-  DebugPrintf("\r\nHeadboard 4.1 is booting.\n\n\r");
+  // UART is at 800kbps until we sync - why bother?
+  //DebugPrintf("\r\nHeadboard 4.1 is booting.\n\n\r");
 
   TimerInit();
   PowerInit();
   I2CInit();
 
-  DebugPrintf("Espressif startup time... ");
-  for (int i=0; i<5; ++i) Anki::Cozmo::HAL::MicroWait(1000000);
-  DebugPrintf("Done\n\r");
-  
+  for (int i=0; i<1; ++i)
+    Anki::Cozmo::HAL::MicroWait(1000000);
+
   // Switch to 10MHz external reference to enable 100MHz clock
   MCG_C1 &= ~MCG_C1_IREFS_MASK;
   // Wait for IREF to turn off
   while((MCG->S & MCG_S_IREFST_MASK)) ;
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
-    
+
   SPIInit();
   //DacInit();
   //i2c_init();
   //UartInit();
-  
+
   CameraInit();
+
+  DebugPrintf("\n\rWe're now streaming at 100MHz\n\r");
+  
   for(;;) ;
 }

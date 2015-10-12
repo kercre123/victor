@@ -11,6 +11,7 @@
 #include "anki/common/robot/config.h"
 #include "hal/portable.h"
 #include "MK02F12810.h"
+#include "uart.h"
 #else
 #include <stdio.h>
 typedef unsigned char u8;
@@ -29,11 +30,12 @@ int JPEGStart(int quality);
 int JPEGCompress(u8* out, u8* in, int pitch);
 int JPEGEnd(u8* out);
 
-//#define PROFILE
+#define PROFILE
+      
 #ifdef PROFILE
-static unsigned short timeDCT, timeQuant, timeHuff;
-#define START(x)  do { __disable_irq(); x -= TIM6->CNT; } while(0)
-#define STOP(x)   do { __enable_irq();  x += TIM6->CNT; } while(0)
+static int timeDCT, timeQuant, timeHuff;
+#define START(x)  do { __disable_irq(); x += SysTick->VAL; } while(0)
+#define STOP(x)   do { __enable_irq();  x -= SysTick->VAL; } while(0)
 #else
 #define START(x)
 #define STOP(x)
@@ -458,7 +460,7 @@ static void doYBlock(u8 *image, int pitch)
 	// Encode DC
 	int diff = quant[0] - m_lastDC; 
 	m_lastDC = quant[0];
-  while (diff <= -DC_ENTRIES/2 || diff >= DC_ENTRIES/2)
+  //while (diff <= -DC_ENTRIES/2 || diff >= DC_ENTRIES/2)
     ;
   writeBits(DCYTAB(diff));
   
@@ -487,7 +489,7 @@ static void doYBlock(u8 *image, int pitch)
       zeros -= 16;
     }
     
-    while (quant[i] <= -AC_ENTRIES/2 || quant[i] >= AC_ENTRIES/2)
+    //while (quant[i] <= -AC_ENTRIES/2 || quant[i] >= AC_ENTRIES/2)
       ;
     writeBits(ACYTAB(zeros, quant[i]));
 	}
@@ -529,7 +531,10 @@ int JPEGEnd(u8* out)
   m_out += ((m_bitCnt + 7) >> 3);
 
 #ifdef PROFILE
-  printf(" DCT=%5dus, Quant=%5dus, Huff=%5dus\n", timeDCT, timeQuant, timeHuff);
+  while (timeDCT < 0)   timeDCT += 6553600;
+  while (timeQuant < 0) timeQuant += 6553600;
+  while (timeHuff < 0)  timeHuff += 6553600;
+  DebugPrintf(" DCT=%5dus, Quant=%5dus, Huff=%5dus\n", timeDCT/100, timeQuant/100, timeHuff/100);
   timeDCT = timeQuant = timeHuff = 0;
 #endif  
     

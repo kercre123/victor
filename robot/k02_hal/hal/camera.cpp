@@ -202,8 +202,8 @@ namespace Anki
       void CameraInit()
       {
         InitIO();
-        InitDMA();
         InitCam();
+        InitDMA();
       }
         
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
@@ -235,7 +235,7 @@ void DMA0_IRQHandler(void)
 
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
   FTM2_CNTIN = 0;
-  FTM2_MOD = 168 * 40 - 1; // 168 bytes at 10mhz
+  FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1; // 168 bytes at I2S_CLOCK
 
   // Sink edge GPIO
   while(~GPIOD_PDIR & (1 << 4)) ;
@@ -243,11 +243,14 @@ void DMA0_IRQHandler(void)
 
   FTM2_SC = FTM_SC_TOF_MASK |
             FTM_SC_TOIE_MASK |
-            FTM_SC_CLKS(1) | // 100mhz
+            FTM_SC_CLKS(1) | // BUS_CLOCK
             FTM_SC_PS(0);
 
   NVIC_EnableIRQ(FTM2_IRQn);
-  NVIC_DisableIRQ(DMA0_IRQn);
+  
+  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
+  DMA_CINT = 0;   // Clear interrupt channel 0
+  DMA_TCD0_CSR = 0;   // Disable interrupts on DMA0_IRQn
 }
 
 extern "C"
@@ -269,6 +272,7 @@ void FTM2_IRQHandler(void)
   static u8 eof = 0;
   
   // Kludgey look for start of frame
+  /*
   int now = SysTick->VAL;
   int diff = last-now;
   last = now;
@@ -277,6 +281,7 @@ void FTM2_IRQHandler(void)
   if (diff > 100000) {
     line = 232;       // Swizzle buffer delays us by 8 lines
   }
+  */
   
   HALExec(&buf[whichbuf][4], buflen, eof);
   
@@ -292,7 +297,7 @@ void FTM2_IRQHandler(void)
   int pitch = whichpitch ? 80 : 640;
   u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
   
-#ifdef ENCODE_JPEG
+#ifdef ENABLE_JPEG
   // Encode 10 macroblocks (one strip)
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
@@ -313,7 +318,4 @@ void FTM2_IRQHandler(void)
   if (line >= 240) {
     line = 0;
   }
-
-  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
-  DMA_CINT = 0;   // Clear interrupt channel 0
 }
