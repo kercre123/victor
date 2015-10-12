@@ -21,19 +21,18 @@
 
 namespace Anki {
 namespace Cozmo {
+ 
+  using GameToEngTag = ExternalInterface::MessageGameToEngineTag;
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
-  HasSettableParameters<Param_t,SetMsg_t,Value_t>::HasSettableParameters(IExternalInterface* externalInterface)
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  HasSettableParameters<Param_t,SetMsgTag,Value_t>::HasSettableParameters(IExternalInterface* externalInterface)
   {
     if(nullptr != externalInterface) {
       auto setParamCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) {
         this->HandleSetParameters(event);
       };
       
-      // Look up the tag corresponding to this SetMsg_t:
-      const auto msgTag = ExternalInterface::MessageGameToEngine::LookupTag<SetMsg_t>();
-      
-      _eventHandler = externalInterface->Subscribe(msgTag, setParamCallback);
+      _eventHandler = externalInterface->Subscribe(SetMsgTag, setParamCallback);
     }
     
     // Make sure there's an entry for all enum values in Param_t, and initialize to zero.
@@ -43,9 +42,9 @@ namespace Cozmo {
     }
   }
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
   template<typename T>
-  T HasSettableParameters<Param_t,SetMsg_t,Value_t>::GetParam(Param_t whichParam)
+  T HasSettableParameters<Param_t,SetMsgTag,Value_t>::GetParam(Param_t whichParam)
   {
     if(!_isInitialized) {
       _isInitialized = true;
@@ -55,8 +54,8 @@ namespace Cozmo {
     return static_cast<T>(_params[whichParam]);
   }
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
-  void HasSettableParameters<Param_t,SetMsg_t,Value_t>::SetParam(Param_t whichParam,
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  void HasSettableParameters<Param_t,SetMsgTag,Value_t>::SetParam(Param_t whichParam,
                                                                  Value_t newValue)
   {
     if(!_isInitialized) {
@@ -68,10 +67,11 @@ namespace Cozmo {
     _params[whichParam] = std::max(range.first, std::min(range.second, newValue));
   }
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
-  void HasSettableParameters<Param_t,SetMsg_t,Value_t>::HandleSetParameters(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  void HasSettableParameters<Param_t,SetMsgTag,Value_t>::HandleSetParameters(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
   {
-    const SetMsg_t& msg = event.GetData().Get_<SetMsg_t>();
+    using MsgType = typename ExternalInterface::MessageGameToEngine_TagToType<SetMsgTag>::type;
+    const MsgType& msg = event.GetData().Get_<SetMsgTag>();
     
     // Note that this won't compile if the message type does not contain "paramNames"
     // and "paramValues"
@@ -88,8 +88,8 @@ namespace Cozmo {
     }
   }
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
-  const typename HasSettableParameters<Param_t,SetMsg_t,Value_t>::Range& HasSettableParameters<Param_t,SetMsg_t,Value_t>::GetParamRange(Param_t whichParam)
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  const typename HasSettableParameters<Param_t,SetMsgTag,Value_t>::Range& HasSettableParameters<Param_t,SetMsgTag,Value_t>::GetParamRange(Param_t whichParam)
   {
     // Return specified range if there is one; otherwise return full range of Value_t
     auto rangeIter = _ranges.find(whichParam);
@@ -102,14 +102,14 @@ namespace Cozmo {
     }
   }
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
-  void HasSettableParameters<Param_t,SetMsg_t,Value_t>::SetParamRange(Param_t whichParam, Range range)
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  void HasSettableParameters<Param_t,SetMsgTag,Value_t>::SetParamRange(Param_t whichParam, Range range)
   {
     _ranges[whichParam] = range;
   }
   
-  template<typename Param_t, typename SetMsg_t, typename Value_t>
-  Result HasSettableParameters<Param_t,SetMsg_t,Value_t>::SetParamsFromJson(const Json::Value& json)
+  template<typename Param_t, GameToEngTag SetMsgTag, typename Value_t>
+  Result HasSettableParameters<Param_t,SetMsgTag,Value_t>::SetParamsFromJson(const Json::Value& json)
   {
     // Note that we can't loop over the members of the Json here because we don't
     // have a CLAD-generated way to look up an enum from a string value (yet?).

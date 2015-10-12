@@ -33,7 +33,7 @@ namespace Cozmo {
     class MessageGameToEngine;
   }
   
-  class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::SetLiveIdleAnimationParameters, f32>
+  class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
   public:
     static const std::string LiveAnimation;
