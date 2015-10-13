@@ -66,5 +66,8 @@ extern uint32_t i2spiTxUnderflowCount;
 extern uint32_t i2spiRxOverflowCount;
 /// Count how many times the drop phase has jumped more than we expected it to
 extern uint32_t i2spiPhaseErrorCount;
+/// Count the integral drift in the I2SPI system
+extern int32_t i2spiIntegralDrift;
+
 
 #endif

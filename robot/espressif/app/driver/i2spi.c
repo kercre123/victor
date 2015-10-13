@@ -24,6 +24,7 @@
 uint32_t i2spiTxUnderflowCount;
 uint32_t i2spiRxOverflowCount;
 uint32_t i2spiPhaseErrorCount;
+int32_t  i2spiIntegralDrift;
 
 #define asDesc(x) ((struct sdio_queue*)(x))
 
@@ -48,14 +49,10 @@ static unsigned int rxBufs[DMA_BUF_COUNT][DMA_BUF_SIZE/4];
 static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 /// A pointer to the next txQueue we can fill
 static struct sdio_queue* nextOutgoingDesc;
-/// Stores the estiamted alightment of drops in the DMA buffer. If <0 then no estimate is known yet
-static int16_t dropPhase; 
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops
 #define DROP_TX_PHASE_ADJUST (0)
-/// Uninitalized phase number
-#define DROP_PHASE_UNINITALIZED (-32768)
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -83,7 +80,7 @@ void halfWordCopy(uint16_t* dest, uint16_t* src, int num)
 /** Processes an incomming drop from the RTIP to the WiFi
  * @param drop A pointer to a complete drop
  * @warning Call from a task not an ISR.
-
+ */
 static void processDrop(DropToWiFi* drop)
 {
 #define PACKET_SIZE 1420
@@ -91,38 +88,14 @@ static void processDrop(DropToWiFi* drop)
   static uint16 len = 0;
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
 
-  os_printf("PD l=%d rxjl=%d eof=%d dl=%02x\r\n", len, rxJpegLen, drop->droplet & jpegEOF, drop->droplet);
   os_memcpy(packet + len, drop->payload, rxJpegLen);
   len += rxJpegLen;
   if (((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) || // Couldn't handle another drop to send the packet
       (drop->droplet & jpegEOF)) // Or end of frame
   {
     clientQueuePacket(packet, len);
-    os_put_char('Q');
     len = 0;
   }
-}
-*/
-/** A special function used at the beginning of operation to find the first drop from the RTIP so we can synchronize 
- * phases. This is has ICACHE_FLASH_ATTR set so we can get rid of this code after startup.
- * @param buf A pointer to a DMA buffer with received data.
- * @return True if a drop was found and the module variable dropPhase has been set. False if we haven't synchronized
- * yet.
- */
-LOCAL bool ICACHE_FLASH_ATTR synchronizeDrops(uint16_t* buf, int start)
-{
-  int offset;
-  for (offset = start; offset < DMA_BUF_SIZE/2; offset++)
-  {
-    if (buf[offset] == TO_WIFI_PREAMBLE)
-    {
-      dropPhase = offset;
-      outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
-      //os_printf("Synchronized at offset %d\r\n", offset);
-      return true;
-    }
-  }
-  return false;
 }
 
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
@@ -141,66 +114,44 @@ LOCAL void i2spiTask(os_event_t *event)
   {
     case TASK_SIG_I2SPI_RX:
     {
-      uint16_t* buf = (uint16_t*)(desc->buf_ptr);
-#if 1
-      static int16_t expectHeader = 0;
-      static int32 diffSum = 0;
-      int16_t startLooking = 0;
-      while (synchronizeDrops(buf, startLooking) == true)
-      {
-        const int16_t diff = dropPhase - expectHeader;
-        diffSum += diff;
-        if (diff > 0)
-        {
-          os_put_char('+');
-          os_put_hex(diff, 4); os_put_char(',');
-          os_put_hex(diffSum, 8);
-          os_put_char('\r'); os_put_char('\n');
-        }
-        else if (diff < -0)
-        {
-          os_put_char('-');
-          os_put_hex(-1*diff, 4); os_put_char(',');
-          os_put_hex(diffSum, 8);
-          os_put_char('\r'); os_put_char('\n');
-        }
-        
-        startLooking = dropPhase + 1;
-        expectHeader = (dropPhase + DROP_SPACING/2) % (DMA_BUF_SIZE/2);
-      }
-      os_memset(buf, DMA_BUF_SIZE, 0xff);
-#else
       static DropToWiFi drop;
       static uint8 dropWrInd = 0; // In 16bit half-words
-      if (unlikely(dropPhase == DROP_PHASE_UNINITALIZED))
+      static int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
+      uint16_t* buf = (uint16_t*)(desc->buf_ptr);
+      int16_t drift = -2; // Look as much as two bytes early.
+      static uint8_t periodicPrint = 0;
+      while(true)
       {
-        synchronizeDrops(buf, 0);
-      }
-      else
-      {
-        while ((dropPhase >= 0) && (dropWrInd == 0))
+        while((dropPhase < DMA_BUF_SIZE/2) && (dropWrInd == 0)) // Search for preamble
         {
-          const int8 halfWordsToRead = min(DROP_SIZE, DMA_BUF_SIZE - (dropPhase*2))/2;
+          if (buf[dropPhase] == TO_WIFI_PREAMBLE) 
+          {
+            if (unlikely(drift > 2)) os_printf("!I2SPI too much drift: %d", drift);
+            i2spiIntegralDrift += drift;
+            drift = -2;
+            break;
+          }
+          dropPhase++;
+          drift++;
+        }
+        if (dropPhase < DMA_BUF_SIZE/2) // If we found a header
+        {
+          const int8 halfWordsToRead = min(DROP_TO_WIFI_SIZE-(dropWrInd*2), DMA_BUF_SIZE - (dropPhase*2))/2;
           halfWordCopy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead);
           dropWrInd += halfWordsToRead;
-          if (dropWrInd*2 == DROP_SIZE)
+          if (dropWrInd*2 == DROP_TO_WIFI_SIZE) // The end of the drop was in this buffer
           {
-            if (unlikely(drop.preamble != TO_WIFI_PREAMBLE))
-            {
-              os_printf("Unexpected drop to WiFi preamble %8x\r\n", (unsigned int)drop.preamble);
-            }
-            else
-            {
-              processDrop(&drop);
-            }
+            processDrop(&drop);
             dropWrInd = 0;
-            dropPhase += DROP_SPACING/4;
+            dropPhase += (DROP_SPACING/2) + drift;
           }
+          else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
-        dropPhase &= 127; // Next drop will be at this offset in next buffer
+        else break; // Didn't find the next header in this one
       }
-#endif
+      dropPhase -= DMA_BUF_SIZE/2; // Now looking in next buffer
       prepSdioQueue(desc, 0);
+      if (periodicPrint++ == 0) os_printf("ID=%d\r\n", (int)i2spiIntegralDrift);
       break;
     }
     case TASK_SIG_I2SPI_TX:
@@ -259,12 +210,12 @@ LOCAL void dmaisr(void* arg) {
 int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
-  dropPhase = DROP_PHASE_UNINITALIZED; // No established phase estimate
-  outgoingPhase = DROP_PHASE_UNINITALIZED; // Not established yet
+  outgoingPhase = 0; // Not established yet
   nextOutgoingDesc = &txQueue[1]; // 0th entry will imeediately be going out so first possible one comes after it.
   i2spiTxUnderflowCount = 0;
   i2spiRxOverflowCount  = 0;
   i2spiPhaseErrorCount  = 0;
+  i2spiIntegralDrift    = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 

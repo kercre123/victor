@@ -125,7 +125,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   telnetInit();
 
   // Enable upgrade controller
-  upgradeControllerInit();
+  //upgradeControllerInit();
 
   // Setup Basestation client
   clientInit();
@@ -134,10 +134,10 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   i2spiInit();
 
   // Set up shared background tasks
-  task0Init();
+  //task0Init();
   
   // Set up shared foreground tasks
-  task1Init();
+  //task1Init();
 
   os_timer_disarm(&userTimer);
   os_timer_setfn(&userTimer, userIntervalTask, NULL);
