@@ -112,7 +112,7 @@ static u8* m_out;                // Pointer to the output byte buffer
 static int m_bitBuf, m_bitCnt;   // Current (unflushed) bit buffer and count of bits
 
 static float m_quantY[64], m_quantUV[64];  // Quantization tables, including AAN scalers
-static s16 m_quantIY[64], m_quantIU[64];   // Integer versions
+s16 CODERAM m_quantIY[64], m_quantIU[64];   // Integer versions
 
 // Turn a coefficient into a bit count and bit value
 // The encoding here is tricky - positive numbers have their MSB set, negative numbers don't
@@ -424,7 +424,7 @@ static inline void fixDCT(
 } 
 
 // Compress a Y macroblock from pixels to bits - this is 99% of the work
-static void doYBlock(u8 *image, int pitch)
+void CODERAM doYBlock(u8 *image, int pitch)
 {
   elem coeff[64];
 	int quant[64];

@@ -589,7 +589,7 @@
 	0x05 , 0x03,  // HBlank time - X+648+4+42 (12.5MHz in YUYV mode)
 	0x06 , 0xda,  // 3DA = 986 (+648+4+42) = 1680 columns/12.5MHz ticks or 1344 10MHz "bits" or 168 bytes
 	0x07 , 0x00,  // VBlank time - must be >=8 with default vs_st + vs_et
-	0x08 , 0x0c,  // 488 + 12 = 500 lines
+	0x08 , 0x08,  // 488 + 8 = 496 lines or 15Hz at 12500000/1680/496
   
   0x59 , 0x11,  // Don't subsample rows or columns
   

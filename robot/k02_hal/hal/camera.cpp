@@ -10,6 +10,9 @@
 
 #include "hal/i2c.h"
 
+//#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
+//#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
+
 namespace Anki
 {
   namespace Cozmo
@@ -45,6 +48,7 @@ namespace Anki
 
       // Camera exposure value
       u32 exposure_;
+      volatile bool timingSynced_ = false;
 
       // For self-test purposes only.
       // XXX - restore this code for EP1
@@ -126,7 +130,6 @@ namespace Anki
       
       void HALExec(u8* buf, int buflen, int eof);
       
-//#define ENABLE_JPEG      
 #ifdef ENABLE_JPEG
       int JPEGStart(int quality);
       int JPEGCompress(u8* out, u8* in, int pitch);
@@ -201,9 +204,15 @@ namespace Anki
       // Initialize camera
       void CameraInit()
       {
+        timingSynced_ = false;
+        
         InitIO();
         InitCam();
         InitDMA();
+        
+        // Wait for everything to sync
+        while (!timingSynced_)
+        {}
       }
         
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
@@ -232,12 +241,27 @@ extern "C"
 void DMA0_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
+  
+  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
+  DMA_CINT = 0;   // Clear interrupt channel 0
+  
+  static u8 countdown = 100;
+  if (countdown)
+  {
+    countdown--;
+    return;
+  }
 
+  // Shut off DMA IRQ - we'll use FTM IRQ from now on
+  DMA_TCD0_CSR = 0;   
+
+  // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+  FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK);  // Place toward center of transition
+  FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
   FTM2_CNTIN = 0;
-  FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1; // 168 bytes at I2S_CLOCK
-
-  // Sink edge GPIO
+  
+  // Sync to falling edge
   while(~GPIOD_PDIR & (1 << 4)) ;
   while( GPIOD_PDIR & (1 << 4)) ;
 
@@ -246,18 +270,22 @@ void DMA0_IRQHandler(void)
             FTM_SC_CLKS(1) | // BUS_CLOCK
             FTM_SC_PS(0);
 
+  timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
-  
-  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
-  DMA_CINT = 0;   // Clear interrupt channel 0
-  DMA_TCD0_CSR = 0;   // Disable interrupts on DMA0_IRQn
 }
 
 extern "C"
 void FTM2_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
-
+  
+  static u8 countdown = 100;
+  if (countdown)
+  {
+    countdown--;
+    return;
+  }
+  
   // Enable SPI DMA, Clear flag
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
   FTM2_SC &= ~FTM_SC_TOF_MASK;
@@ -285,6 +313,13 @@ void FTM2_IRQHandler(void)
   
   HALExec(&buf[whichbuf][4], buflen, eof);
   
+#ifdef SERIAL_IMAGE
+  
+  
+#endif
+
+  
+#ifdef ENABLE_JPEG
   // Fill next buffer
   whichbuf ^= 1;
   u8* p = &buf[whichbuf][4];  // Offset 4 chars to leave room for a UART header
@@ -296,8 +331,7 @@ void FTM2_IRQHandler(void)
     whichpitch ^= 1;
   int pitch = whichpitch ? 80 : 640;
   u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
-  
-#ifdef ENABLE_JPEG
+
   // Encode 10 macroblocks (one strip)
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
@@ -311,11 +345,11 @@ void FTM2_IRQHandler(void)
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)
       swizz[x + y*pitch] = dmaBuff_[(y * 80 + x) * 4 + 3];
-#endif
     
   // Advance through image a line at a time
   line++;
   if (line >= 240) {
     line = 0;
   }
+#endif
 }
