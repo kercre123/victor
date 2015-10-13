@@ -73,6 +73,9 @@ namespace Anki {
     
     bool Contains(const Point<2,T>& point) const;
     
+    // Return new rectangle scaled about the center of the current one
+    Rectangle<T> Scale(const f32 scaleFactor) const;
+    
 #if ANKICORETECH_USE_OPENCV
     Rectangle(const cv::Rect_<T>& cvRect);
     const cv::Rect_<T>& get_CvRect_() const;
