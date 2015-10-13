@@ -567,7 +567,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 0527a7ecbcfc94b1b8308b356a669fc2, type: 3}
   - {fileID: 8300000, guid: 48715a99938c14c10a8b5ceb360df92c, type: 3}
   - {fileID: 8300000, guid: 99ccd2007770b4d80b4d91635c9c8677, type: 3}
-  lightInputReady: {fileID: 8300000, guid: 6ba259cb545254239ae1a431df620d34, type: 3}
 --- !u!114 &257459305
 MonoBehaviour:
   m_ObjectHideFlags: 0

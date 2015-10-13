@@ -14,6 +14,7 @@ public class BlockPatternData {
   public float lastTimeTapped;
   // for phone input
   public float lastTimeTouched;
+  public bool moving = false;
 
   public bool BlockActiveTimeTouched() {
     return Time.time - lastTimeTouched < 1.2f;
