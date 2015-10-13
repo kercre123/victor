@@ -4,9 +4,9 @@
  * Author: Brad Neuman
  * Created: 2014-04-30
  *
- * Description: A* lattice planner
+ * Description: A* lattice planner in (x,y,theta) space
  *
- * Copyright: Anki, Inc. 2014
+ * Copyright: Anki, Inc. 2014-2015
  *
  **/
 
@@ -25,47 +25,36 @@ namespace Planning
 
 // TODO:(bn) env_fwd.h file?
 
-struct xythetaPlannerImpl;
-class xythetaEnvironment;
-class xythetaPlan;
 class State_c;
+class xythetaPlan;
+struct xythetaPlannerContext;
+struct xythetaPlannerImpl;
 
 class xythetaPlanner
 {
 public:
 
-  xythetaPlanner(const xythetaEnvironment& env);
+  // NOTE: you can't change context while the planner is running or undefined behavior will result!
+  xythetaPlanner(const xythetaPlannerContext& context);
   ~xythetaPlanner();
 
-  // set a goal in meters and radians. Returns true if it is valid,
-  // false otherwise
-  bool SetGoal(const State_c& goal);
-  State_c GetGoal() const;
-
-  // Re-checks the existing goal to see if it is valid
+  // Check if the goal (from context) is valid
   bool GoalIsValid() const;
 
-  // set the starting state. Will be rounded to the nearest continuous
-  // state. Returns true if it is valid, false otherwise
-  bool SetStart(const State_c& start);
-  State_c GetStart() const;
+  // Check if the start (from context) is valid
+  bool StartIsValid() const;
 
-  // Allow (or disallow) free turn-in-place at the goal
-  void AllowFreeTurnInPlaceAtGoal(bool allow = true);
-
-  // Tells the planner to replan from scratch next time
-  void SetReplanFromScratch();
-
-  // Computes a path from start to goal. Returns true if path found,
-  // false otherwise. Note that replanning may or may not actually
-  // trigger the planner. E.g. if the environment hasn't changed
-  // (much), it may just use the same path
+  // Computes a path from start to goal. Returns true if path found, false otherwise. Note that replanning may
+  // or may not actually trigger the planner. E.g. if the environment hasn't changed (much), it may just use
+  // the same path. Everything in context is allowed to change between replan calls (but it won't necessarily
+  // be efficient if too many things change)
   bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS);  
 
   // must call compute path before getting the plan
   xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
 
+  // Return one of a set of hardcoded plans, useful for testing other components of the system
   void GetTestPlan(xythetaPlan& plan);
 
   Cost GetFinalCost() const;

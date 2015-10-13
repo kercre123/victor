@@ -11,7 +11,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "bridge.h"
 #include "flatMat.h"
@@ -19,11 +18,12 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/humanHead.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
@@ -51,19 +51,7 @@
 
 namespace Anki
 {
-  namespace NamedColors {
-    // Add some BlockWorld-specific named colors:
-    const ColorRGBA EXECUTED_PATH              (1.f, 0.0f, 0.0f, 1.0f);
-    const ColorRGBA PREDOCKPOSE                (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA PRERAMPPOSE                (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA SELECTED_OBJECT            (0.f, 1.0f, 0.0f, 1.0f);
-    const ColorRGBA BLOCK_BOUNDING_QUAD        (0.f, 0.0f, 1.0f, 0.75f);
-    const ColorRGBA OBSERVED_QUAD              (1.f, 0.0f, 0.0f, 0.75f);
-    const ColorRGBA ROBOT_BOUNDING_QUAD        (0.f, 0.8f, 0.0f, 0.75f);
-    const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD (1.f, 0.1f, 1.0f, 0.75f);
-    const ColorRGBA LOCALIZATION_OBJECT        (1.0, 0.0f, 1.0f, 1.0f);
-  }
-  
+
   namespace Cozmo
   {
     
@@ -422,7 +410,7 @@ namespace Anki
               if (_robot->GetCarryingObject() == observedObject->GetID()) {
                 PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
                                  "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
-                _robot->UnSetCarryingObject();
+                _robot->UnSetCarryingObjects();
               }
             } else {
               PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
@@ -486,7 +474,31 @@ namespace Anki
            */
           
         } else {
-
+          
+          // Check if there are objects on top of this object that need to be moved since the
+          // object it's resting on has moved.
+          const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+          ObservableObject* objectOnBottom = matchingObject;
+          ObservableObject* objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+          while(objectOnTop != nullptr) {
+            // If the object was already updated this timestamp then don't bother doing this.
+            if (objectOnTop->GetLastObservedTime() != objSeen->GetLastObservedTime()) {
+              
+              // Get difference in position between top object's pose and the previous pose of the observed bottom object.
+              // Apply difference to the new observed pose to get the new top object pose.
+              Pose3d topPose = objectOnTop->GetPose();
+              Pose3d bottomPose = objectOnBottom->GetPose();
+              Vec3f diff = topPose.GetTranslation() - bottomPose.GetTranslation();
+              topPose.SetTranslation( objSeen->GetPose().GetTranslation() + diff );
+              objectOnTop->SetPose(topPose);
+            }
+            
+            // See if there's an object above this object
+            objectOnBottom = objectOnTop;
+            objectOnTop = FindObjectOnTopOf(*objectOnBottom, STACKED_HEIGHT_TOL_MM);
+          }
+          // TODO: Do the same adjustment for blocks that are _below_ observed blocks? Does this make sense?
+          
           // Update lastObserved times of this object
           // (Do this before possibly attempting to localize to the object below!)
           matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
@@ -752,7 +764,7 @@ namespace Anki
           const f32 minDist = std::sqrt(minDistSq);
           const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
           //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
-          MessagePanAndTiltHead msg;
+          RobotInterface::PanAndTilt msg;
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
@@ -767,7 +779,7 @@ namespace Anki
                            RAD_TO_DEG(msg.headTiltAngle_rad),
                            RAD_TO_DEG(msg.bodyPanAngle_rad));
           */
-          _robot->SendMessage(msg);
+          _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
         }
       } // if/else observedMarkers.empty()
       
@@ -847,7 +859,7 @@ namespace Anki
                         "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
-        } else if(unobserved.family != ObjectFamily::Mat && unobserved.object->GetID() != _robot->GetCarryingObject()) {
+        } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
           // close enough, and was seen fairly recently, then
@@ -1004,9 +1016,7 @@ namespace Anki
 
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
-      std::set<ObjectID> ignoreIDs = {
-        _robot->GetCarryingObject() // TODO: what if robot is carrying multiple objects?
-      };
+      std::set<ObjectID> ignoreIDs = _robot->GetCarryingObjects();
       
       // If the robot is localized, check to see if it is "on" the mat it is
       // localized to. If so, ignore the mat as an obstacle.
@@ -1551,6 +1561,7 @@ namespace Anki
       
     } // UpdateObjectPoses()
 
+    /*
     Result BlockWorld::UpdateProxObstaclePoses()
     {
       TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
@@ -1626,7 +1637,9 @@ namespace Anki
         {
           for (auto proxObsIter = proxTypeMap->second.begin();
                proxObsIter != proxTypeMap->second.end();
-               /* increment iter in loop, depending on erase*/)
+                   */
+/* increment iter in loop, depending on erase*/    /*
+)
           {
             if (lastTimestamp - proxObsIter->second->GetLastObservedTime() > PROX_OBSTACLE_LIFETIME_MS)
             {
@@ -1643,7 +1656,8 @@ namespace Anki
       
       return RESULT_OK;
     }
-    
+    */
+
     
     Result BlockWorld::Update(uint32_t& numObjectsObserved)
     {
@@ -1879,7 +1893,7 @@ namespace Anki
                      ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                      */
                     
-                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY());
+                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY(ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION));
                     
                     if( inSamePlane && bboxIntersects )
                     {
@@ -1921,10 +1935,12 @@ namespace Anki
       // Toss any remaining markers?
       ClearAllObservedMarkers();
       
+      /*
       Result lastResult = UpdateProxObstaclePoses();
       if(lastResult != RESULT_OK) {
         return lastResult;
       }
+      */
 
       return RESULT_OK;
       
@@ -1950,17 +1966,22 @@ namespace Anki
     
     void BlockWorld::ClearAllExistingObjects()
     {
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto objectsByType : objectsByFamily.second) {
-          for(auto objectsByID : objectsByType.second) {
-            ClearObjectHelper(objectsByID.second);
+      if(_canDeleteObjects) {
+        for(auto & objectsByFamily : _existingObjects) {
+          for(auto objectsByType : objectsByFamily.second) {
+            for(auto objectsByID : objectsByType.second) {
+              ClearObjectHelper(objectsByID.second);
+            }
           }
         }
+        
+        _existingObjects.clear();
+        
+        ObjectID::Reset();
+      }  else {
+        PRINT_NAMED_WARNING("BlockWorld.ClearAllExistingObjects.DeleteDisabled",
+                            "Will not clear all objects because object deletion is disabled.");
       }
-      
-      _existingObjects.clear();
-
-      ObjectID::Reset();
     }
     
     void BlockWorld::ClearObjectHelper(ObservableObject* object)
@@ -1988,7 +2009,7 @@ namespace Anki
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
-          _robot->UnSetCarryingObject();
+          _robot->UnSetCarryingObjects();
         }
         
         if(_selectedObject == object->GetID()) {
@@ -2034,6 +2055,8 @@ namespace Anki
                                                             f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
+      sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
+      sameDistTol.y() *= 0.5f;
       sameDistTol.z() = zTolerance;
       sameDistTol = objectOnBottom.GetPose().GetRotation() * sameDistTol;
       sameDistTol.Abs();
@@ -2155,8 +2178,8 @@ namespace Anki
           _existingObjects.erase(family);
         }
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily",
-                            "Will not delete family %d objects because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.DeleteDisabled",
+                            "Will not delete family %d objects because object deletion is disabled.",
                             family);
       }
     }
@@ -2178,8 +2201,8 @@ namespace Anki
           }
         }
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType",
-                            "Will not delete %s objects because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType.DeleteDisabled",
+                            "Will not delete %s objects because object deletion is disabled.",
                             ObjectTypeToString(type));
 
       }
@@ -2205,8 +2228,8 @@ namespace Anki
               // IDs are unique, so we can return as soon as the ID is found and cleared
               return true;
             } else {
-              PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                                  "Will not delete object %d because object deletion is disabled.\n",
+              PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
+                                  "Will not delete object %d because object deletion is disabled.",
                                   withID.GetValue());
               return false;
             }
@@ -2231,8 +2254,8 @@ namespace Anki
         
         return _existingObjects[fromFamily][withType].erase(objIter);
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                            "Will not delete object %d because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
+                            "Will not delete object %d because object deletion is disabled.",
                             object->GetID().GetValue());
         auto retIter(objIter);
         return ++retIter;
@@ -2252,8 +2275,8 @@ namespace Anki
         // existing objects
         _existingObjects[fromFamily][withType].erase(objID);
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObject",
-                            "Will not delete object %d because object deletion is disabled.\n",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
+                            "Will not delete object %d because object deletion is disabled.",
                             object->GetID().GetValue());
       }
     }
@@ -2406,20 +2429,20 @@ namespace Anki
             const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
             f32 scaleF = 1.0f;
             switch(IMG_STREAM_RES) {
-              case Vision::CAMERA_RES_CVGA:
-              case Vision::CAMERA_RES_QVGA:
+              case ImageResolution::CVGA:
+              case ImageResolution::QVGA:
                 break;
-              case Vision::CAMERA_RES_QQVGA:
+              case ImageResolution::QQVGA:
                 scaleF *= 0.5;
                 break;
-              case Vision::CAMERA_RES_QQQVGA:
+              case ImageResolution::QQQVGA:
                 scaleF *= 0.25;
                 break;
-              case Vision::CAMERA_RES_QQQQVGA:
+              case ImageResolution::QQQQVGA:
                 scaleF *= 0.125;
                 break;
               default:
-                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", IMG_STREAM_RES);
+                printf("WARNING (DrawObsMarkers): Unsupported streaming res %d\n", (int)IMG_STREAM_RES);
                 break;
             }
             VizManager::getInstance()->SendTrackerQuad(q[Quad::TopLeft].x()*scaleF,     q[Quad::TopLeft].y()*scaleF,

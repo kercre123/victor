@@ -17,13 +17,33 @@
 #include "anki/common/basestation/math/rotation.h"
 
 #include "util/logging/logging.h"
-
+#include "util/helpers/templateHelpers.h"
 
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
 // FacioMetric
-#  include <intraface/gaze/gaze.h>
+#  define ESTIMATE_EMOTION 0
+#  define ESTIMATE_GAZE    0
+#  define DO_RECOGNITION   0
+
+#  include <intraface/core/core.h>
 #  include <intraface/core/LocalManager.h>
-#  include <intraface/emo/EmoDet.h>
+
+#  if DO_RECOGNITION
+#    include <intraface/facerecog/SubjectSerializer.h>
+#    include <intraface/facerecog/FaceRecog.h>
+#    include <intraface/facerecog/SubjectRecogData.h>
+#    include <intraface/facerecog/Macros.h>
+#    include <fstream>
+#    include <dirent.h>
+#  endif
+
+#  if ESTIMATE_GAZE
+#    include <intraface/gaze/gaze.h>
+#  endif
+
+#  if ESTIMATE_EMOTION
+#    include <intraface/emo/EmoDet.h>
+#  endif
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
 // Luxand FaceSDK
@@ -45,12 +65,7 @@ namespace Anki {
 namespace Vision {
   
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
-  
-  static const cv::Scalar BLUE(255, 0, 0); ///< Definition of the blue color
-  static const cv::Scalar GREEN(0, 255, 0); ///< Definition of the green color
-  static const cv::Scalar RED(0, 0, 255); ///< Definition of the red color
-  static const cv::Scalar FACECOLOR(50, 255, 50); ///< Definition of the face color
-  static const cv::Scalar GAZECOLOR(255, 0, 255); ///< Definition of the gaze color
+#pragma mark - FacioMetric-Based FaceTracker
   
   class FaceTracker::Impl
   {
@@ -64,27 +79,38 @@ namespace Vision {
     std::list<TrackedFace> GetFaces() const;
     
   private:
-    using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
-    using IE  = facio::IrisEstimator<facio::IrisFeature, facio::LocalManager>;
-    using HPE = facio::HPEstimatorProcrustes<facio::LocalManager>;
-    using GE  = facio::DMGazeEstimation<facio::LocalManager>;
-    using ED  = facio::EmoDet<facio::LocalManager>;
-    
-    //const std::string _modelPath;
-    
     // License manager:
     static facio::LocalManager _lm;
     
+    // OpenCV face detector:
     cv::CascadeClassifier _faceCascade;
     
-    static SDM* _sdm;
-    //std::unique_ptr<SDM> _sdm;
-    IE*  _ie;
-    HPE* _hpe;
-    GE*  _ge;
-    ED*  _ed;
+    using SDM = facio::FaceAlignmentSDM<facio::AlignmentFeature, facio::NO_CONTOUR, facio::LocalManager>;
+    using HPE = facio::HPEstimatorProcrustes<facio::LocalManager>;
     
+    static SDM* _sdm;
+    HPE* _hpe;
+    
+#   if ESTIMATE_GAZE
+    using IE  = facio::IrisEstimator<facio::IrisFeature, facio::LocalManager>;
+    using GE  = facio::DMGazeEstimation<facio::LocalManager>;
+    IE*  _ie;
+    GE*  _ge;
+#   endif
+    
+#   if ESTIMATE_EMOTION
+    using ED  = facio::EmoDet<facio::LocalManager>;
+    ED*  _ed;
     facio::emoScores _Emo; // Emotions to show
+#   endif
+    
+#   if DO_RECOGNITION
+    facio::FaceRecog* _fr;
+    std::vector<facio::SubjectRecogData> _recognizableFaces;
+    std::string _recognizedFacesPath;
+#   endif
+    
+    //const std::string _modelPath;
     
     static int _faceCtr;
     
@@ -103,10 +129,273 @@ namespace Vision {
   facio::LocalManager FaceTracker::Impl::_lm;
   
   
+# if DO_RECOGNITION
+  //! This function gives a vector with all the files inside a given folder
+  /*!
+   \param path  Path of the folder you want to search the files.
+   
+   \return std::vector<std::string> Vector containing all the files inside the given folder
+   */
+  std::vector<std::string> getSubjectsPaths(std::string path)
+  {
+    
+    DIR*    dir;
+    dirent* pdir;
+    std::vector<std::string> files;
+    
+    dir = opendir(path.c_str());
+    
+    
+    if (dir == NULL) // if pent has not been initialised correctly
+    {
+      printf ("ERROR! Couldn't get Library");
+      exit (0);
+    }
+    
+    
+    while ((pdir = readdir(dir))) {
+      std::string s(pdir->d_name);
+      if(s.substr(s.find_last_of(".") + 1) == "dat")
+      {
+        files.push_back(path + "/" + s);
+      }
+    }
+    
+    return files;
+  } // getSubjectsPaths()
+  
+  
+  //! This function loads all the subject files from the given folder
+  /*!
+   \param folder Path of the folder you want to search the files.
+   
+   \return std::vector<facio::SubjectRecogData> Vector containing the loaded subjects
+   */
+  std::vector<facio::SubjectRecogData> loadEnrolledSubjectsFromFolder(std::string folder)
+  {
+    
+    std::vector<facio::SubjectRecogData> vectorSubjectRecogData;
+    
+    //Init SubjectSerializer
+    std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
+    
+    //Get the path of the subjects
+    std::vector<std::string> subjectsPaths = getSubjectsPaths(folder);
+    
+    for (int i=0; i< (int) subjectsPaths.size();i++)
+    {
+      //We load every subject
+      std::ifstream infile (subjectsPaths[i],std::ifstream::binary);
+      
+      if(infile.is_open()){
+        
+        char* bufferSizeMetaData = new char[sizeof(size_t)];
+        char* bufferSizeData = new char[sizeof(size_t)];
+        
+        //We get the MetaData of the subject
+        infile.read(bufferSizeMetaData, (long)sizeof(size_t));
+        size_t* sizeMetadata = (size_t *) bufferSizeMetaData;
+        
+        char *bufferMetaData = new char[*sizeMetadata];
+        infile.read(bufferMetaData,(long)*sizeMetadata);
+        
+        //We get the Data of the subject
+        infile.read(bufferSizeData, (long)sizeof(size_t));
+        size_t* sizeData = (size_t *) bufferSizeData;
+        
+        char *bufferData = new char[*sizeData];
+        infile.read(bufferData,(long)*sizeData);
+        
+        //Close file
+        infile.close();
+        
+        facio::SubjectRecogData subjectData;
+        
+        //Now we deserialize the data (It will return 1 if everything is correct
+        int successDeserialize = subjectSerializer->deserialize(bufferMetaData, bufferData, subjectData);
+        if( successDeserialize == 0){
+          //We add the current Deserialized subject to the vector
+          vectorSubjectRecogData.push_back(subjectData);
+          
+        }else{
+          PRINT_STREAM_INFO("FaceTracker.loadEnrolledSubjectsFromFolder",
+                            "There was a problem deserializing the subject with error: " << successDeserialize);
+        }
+      }
+    }
+    
+    if(!vectorSubjectRecogData.empty()) {
+      PRINT_NAMED_INFO("FaceTracker.loadEnrolledSubjectsFromFolder.Success",
+                       "Loaded %lu subjects", vectorSubjectRecogData.size());
+    }
+    
+    return vectorSubjectRecogData;
+  } // loadEnrolledSubjectsFromFolder()
+  
+  Result saveSubjectData(facio::SubjectRecogData& subjectDataToEnroll, std::string fileToSave)
+  {
+    //Variables to save the information
+    char *subjectMetaData;
+    size_t subjectMetaDataSize;
+    char *subjectData;
+    size_t subjectDataSize;
+
+    //Init SubjectSerializer
+    std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
+    
+    //We serialize the subject to save it to a file
+    if(subjectSerializer->serialize(subjectDataToEnroll,subjectMetaData, subjectMetaDataSize, subjectData, subjectDataSize) == 1){
+      
+      //Now we save the serialized data to a file for later use
+      std::ofstream outfile (fileToSave,std::ofstream::binary);
+      
+      //If we can open file
+      if(outfile.is_open()){
+        //Save size of metadata
+        outfile.write((char*)&subjectMetaDataSize,(long)sizeof(size_t));
+        //Save metadata
+        outfile.write(subjectMetaData,subjectMetaDataSize);
+        //Save size of data
+        outfile.write((char*)&subjectDataSize,(long)sizeof(size_t));
+        //Save data
+        outfile.write(subjectData,subjectDataSize);
+        
+        //Close file
+        outfile.close();
+        
+        //Enrollment done
+        PRINT_NAMED_INFO("FaceTracker.saveSubjectData.Success",
+                         "Successfully enrolled %s to the following path: %s",
+                         subjectDataToEnroll.getLabel().c_str(), fileToSave.c_str());
+      }
+      else{
+        PRINT_NAMED_ERROR("FaceTracker.saveSubjectData.Fail",
+                          "Could not open file %s", fileToSave.c_str());
+        return RESULT_FAIL;
+      }
+    }
+    
+    return RESULT_OK;
+  } // saveSubjectData()
+  
+  
+  //! This function perfom the recognition of the subject
+  /*!
+   \param faceRecog  Recognizer object to create the subject and perform the recognition.
+   \param imRDList  Vector containing the ImRawData necessary to create the subject that will be recognized.
+   \param vectorSubjectRecogData  Vector containing all the subject to recognize with.
+   */
+  int doRecognition(facio::FaceRecog &faceRecog,
+                     std::vector<facio::ImRawData> imRDList,
+                     std::vector<facio::SubjectRecogData> vectorSubjectRecogData,
+                     std::vector<float>& scores)
+  {
+    // Index of the subject recornized (if it is not recognized it will be set to -1)
+    int subject = -1;
+    
+    bool status = false;
+    
+    //Perform recognition
+    /*
+    PRINT_NAMED_INFO("FaceTracker.doRecognition",
+                     "Performing recognition with %lu images.",
+                     imRDList.size());
+     */
+    
+    //We prepare the subject that we will recognize
+    facio::SubjectRecogData subjectDataToRecognize;
+    std::string label("ToRecognize");
+    
+    bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, label, subjectDataToRecognize);
+    
+    if(subjectCreated){
+      
+      //Perform recodnition
+
+      status = faceRecog.predict(subjectDataToRecognize, vectorSubjectRecogData, subject, scores);
+      
+      // Debug:
+      //saveSubjectData(subjectDataToRecognize, "/Users/andrew/temp/toRecognize.dat");
+      //saveSubjectData(vectorSubjectRecogData[0], "/Users/andrew/temp/enrolledFace.dat");
+      
+      if(status)
+      {/*
+        if (subject != -1) {
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Recognized: %s with score %f",
+                           vectorSubjectRecogData[subject].getLabel().c_str(),
+                           scores[subject]);
+        } else {
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject not found");
+        }
+        for (int i = 0; i < (int) scores.size(); i++) {
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject %s with score %f",
+                           vectorSubjectRecogData[i].getLabel().c_str(), scores[i]);
+        }
+         */
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("FaceTracker.doRecognition.InvalidInputs", "");
+      }
+      
+    }else{
+      PRINT_NAMED_ERROR("FaceTracker.doRecognition.CouldNotCreateSubject", "");
+    }
+    
+    return subject;
+  } // doRecognition()
+  
+  //! This function asks for a name and enrolls de subject to the given folder
+  /*!
+   \param faceRecog  Recognizer that will create the subject that we will enroll.
+   \param imRDList  Vector containing the ImRawData necessary to create the subject that we will enroll.
+   \param folder Path of the folder we save the enrolled objects.
+   */
+  bool enrollSubject(facio::FaceRecog &faceRecog,
+                     std::string name,
+                     std::vector<facio::ImRawData> imRDList,
+                     std::string folder,
+                     std::vector<facio::SubjectRecogData>& knownFaces)
+  {
+    facio::SubjectRecogData subjectDataToEnroll;
+   
+    /*
+    //Get the name of the person
+    std::cout << "Name: " << std::endl;
+    std::cin >> name;
+    */
+    
+    // Fill the subjectDataToEnroll with the information
+    bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, name, subjectDataToEnroll);
+    
+    if(subjectCreated){
+      //Store in the given vector
+      knownFaces.push_back(subjectDataToEnroll);
+
+      PRINT_NAMED_INFO("FaceTracker.enrollSubject.SubjectAdded",
+                       "Added subject with label %s and name %s.",
+                       subjectDataToEnroll.getLabel().c_str(),
+                       name.c_str());
+
+      // Uncomment to save each subject as they are enrolled (for use on next run)
+      //std::string fileToSave = folder+"/"+name+".dat";
+      //saveSubjectData(subjectDataToEnroll, fileToSave);
+      
+    }
+    else{
+      PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
+                        "The subject could not be created for recognition.");
+    }
+    
+    return subjectCreated;
+  } // enrollSubject()
+  
+# endif // DO_RECOGNITION
+  
   FaceTracker::Impl::Impl(const std::string& modelPath)
   //: _displayEnabled(false)
   {
-    const std::string subPath = modelPath + "/faciometric/";
+    const std::string subPath = modelPath + "/faciometric/models/";
     
     const std::string cascadeFilename = subPath + "haarcascade_frontalface_alt2.xml";
     
@@ -116,7 +405,7 @@ namespace Vision {
                         "Failed to load face cascade from %s\n",
                         cascadeFilename.c_str());
     }
-
+    
     // Tracker object, we are using a unique pointer(http://en.cppreference.com/w/cpp/memory/unique_ptr)
     // Please notice that the SDM class does not have an explicit constructor.
     // To get an instance of the SDM class, please use the function SDM::getInstance
@@ -125,6 +414,7 @@ namespace Vision {
       _sdm = SDM::getInstance((subPath + "tracker_model49.bin").c_str(), &_lm);
     }
     
+#   if ESTIMATE_GAZE
     // Create an instance of the class IrisEstimator
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateIE", "");
     _ie  = new IE((subPath + "iris_model.bin").c_str(), &_lm);
@@ -132,28 +422,54 @@ namespace Vision {
     // Create an instance of the class GazeEstimator
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateGE", "");
     _ge  = new GE((subPath + "gaze_model.bin").c_str(), &_lm);
+#   endif
     
     // Create an instance of the class HPEstimatorProcrustes
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateHPE", "");
     _hpe = new HPE((subPath + "hp_model.bin").c_str(), &_lm);
     
+#   if ESTIMATE_EMOTION
     // Create an instance of the class EmoDet
     PRINT_NAMED_INFO("FaceTrackerImpl.Constructor.InstantiateED", "");
     _ed  = new ED((subPath + "emo_model.bin").c_str(), &_lm);
+#   endif
+    
+#   if DO_RECOGNITION
+    
+    // Load any faces we already know about
+    _recognizedFacesPath = subPath + "subjects";
+    _recognizableFaces = loadEnrolledSubjectsFromFolder(_recognizedFacesPath);
+    
+    // Initialize Face Recognition
+    _fr = new facio::FaceRecog(subPath);
+#   endif
     
   }
   
-
+  
   
   FaceTracker::Impl::~Impl()
   {
     //if(_sdm) delete _sdm; // points to a singleton, so don't delete, call ~SDM();
     //_sdm->~SDM();
+
+    Util::SafeDelete(_hpe);
     
-    if(_ie)  delete _ie;
-    if(_hpe) delete _hpe;
-    if(_ge)  delete _ge;
-    if(_ed)  delete _ed;
+    Util::SafeDelete(_hpe);
+    
+#   if ESTIMATE_GAZE
+    Util::SafeDelete(_ie);
+    Util::SafeDelete(_ge);
+#   endif
+    
+#   if ESTIMATE_EMOTION
+    Util::SafeDelete(_ed);
+#   endif
+    
+#   if DO_RECOGNITION
+    Util::SafeDelete(_fr);
+#   endif
+    
   }
   
   // For arbitrary indices
@@ -186,10 +502,25 @@ namespace Vision {
     if(closed) {
       pointVec.emplace_back(x[fromIndex], y[fromIndex]);
     }
-
+    
     return pointVec;
   }
   
+  static inline Point2f GetFeatureAverageHelper(const float* x, const float* y,
+                                                const int fromIndex, const int toIndex)
+  {
+    Point2f avg(0.f,0.f);
+    
+    for(int i=fromIndex; i<=toIndex; ++i) {
+      avg.x() += x[i];
+      avg.y() += y[i];
+    }
+    
+    avg /= static_cast<float>(toIndex-fromIndex+1);
+    
+    return avg;
+  }
+                                                
   static inline void UpdateFaceFeatures(const cv::Mat& landmarks,
                                         TrackedFace& face)
   {
@@ -205,6 +536,11 @@ namespace Vision {
     face.SetFeature(TrackedFace::Nose,         GetFeatureHelper(x, y, 14, 18));
     face.SetFeature(TrackedFace::LeftEye,      GetFeatureHelper(x, y, 19, 24, true));
     face.SetFeature(TrackedFace::RightEye,     GetFeatureHelper(x, y, 25, 30, true));
+    
+#   if !ESTIMATE_GAZE
+    face.SetLeftEyeCenter(GetFeatureAverageHelper(x, y, 19, 24));
+    face.SetRightEyeCenter(GetFeatureAverageHelper(x, y, 25, 30));
+#   endif
     
     face.SetFeature(TrackedFace::UpperLip, GetFeatureHelper(x, y, {
       31,32,33,34,35,36,37,45,44,43,31}));
@@ -284,7 +620,10 @@ namespace Vision {
         TrackedFace newFace;
         
         newFace.SetRect(Rectangle<f32>(newFaceRect));
+        
+#       if !DO_RECOGNITION
         newFace.SetID(_faceCtr++);
+#       endif
         
         _faces.emplace_back(newFace, landmarks);
       }
@@ -301,18 +640,35 @@ namespace Vision {
       // Update the TrackedFace::Features from the FacioMetric landmarks:
       UpdateFaceFeatures(landmarks, face);
       
+#     if ESTIMATE_EMOTION
       // Computing the Emotion information & Predicting the emotion information
       _ed->predict(frame, landmarks, &_Emo);
-     
+#     endif
+      
       // Estimating the headpose
       facio::HeadPose headPose;
       _hpe->estimateHP(landmarks, headPose);
-      RotationMatrix3d Rmat;
-      Rmat.get_CvMatx_() = headPose.rot;
+      
+      // Construct a rotation matrix from the cv::Mat from faciometric. First
+      // constructing a SmallSquareMatrix and then constructing an Rmat forces
+      // a renormalization.
+      SmallSquareMatrix<3,f32> Rtemp;
+      Rtemp.get_CvMatx_() = headPose.rot;
+      RotationMatrix3d Rmat(Rtemp);
+      
+      // Set the observed head orientation
+      face.SetHeadOrientation(Rmat.GetAngleAroundZaxis(), Rmat.GetAngleAroundXaxis(), Rmat.GetAngleAroundYaxis());
+      
+      // Set the initial head pose with the same orientation. Later, we will hook
+      // this up to the robot's (historical) camera and then get w.r.t. origin.
+      // We store the head orientation w.r.t. camera above separately so that it
+      // is preserved.
+      Rmat *= RotationMatrix3d(-M_PI_2, X_AXIS_3D());
       Pose3d pose(Rmat, {});
       face.SetHeadPose(pose);
       // TODO: Hook up pose parent to camera?
      
+#     if ESTIMATE_GAZE
       // Estimating the irises
       facio::Irisesf irises;
       _ie->detect(frame, landmarks, irises);
@@ -320,9 +676,52 @@ namespace Vision {
       face.SetRightEyeCenter(irises.right.center);
       
       // Estimating the gaze, the gaze information is stored in the struct 'egs'
-      //facio::EyeGazes gazes;
-      //_ge->compute(landmarks, irises, headPose, gazes);
-    }
+      facio::EyeGazes gazes;
+      _ge->compute(landmarks, irises, headPose, gazes);
+#     endif
+      
+#     if DO_RECOGNITION
+      // Save ImRawData to create the subject in the future for several frames
+      // and store it to the vector
+      facio::ImRawData ird;
+      ird.im = frame.clone();
+      ird.lmks = landmarks.clone();
+      ird.score = score;
+      ird.hpData.rot = headPose.rot.clone();
+      ird.hpData.angles = headPose.angles;
+      ird.hpData.xyz = headPose.xyz;
+      std::vector<facio::ImRawData> currentRecogData{ird};
+
+      // Vector of the scores resulting from the recognition
+      std::vector<float> scores;
+      
+      int subject = -1;
+      
+      if(!_recognizableFaces.empty()) {
+        // Index of the subject recornized (if it is not recognized it will be set to -1)
+        subject = doRecognition(*_fr, currentRecogData, _recognizableFaces, scores);
+      }
+      
+      const float scoreThreshold = 0.9f;
+      if(subject != -1 && scores[subject] > scoreThreshold) {
+        face.SetID(subject);
+        face.SetName(_recognizableFaces[subject].getLabel());
+      } else {
+        std::string newName("Person" + std::to_string(_faceCtr++));
+        if(false == enrollSubject(*_fr, newName,
+                                  currentRecogData, _recognizedFacesPath,
+                                  _recognizableFaces))
+        {
+          PRINT_NAMED_ERROR("FaceTracker.Impl.Update",
+                            "Failed to enroll new subject.");
+          return RESULT_FAIL;
+        }
+        face.SetID(_recognizableFaces.size()-1);
+        face.SetName(_recognizableFaces.back().getLabel());
+      }
+#     endif // DO_RECOGNITION
+      
+    } // for each face
     
     return RESULT_OK;
   } // Update()
@@ -338,6 +737,7 @@ namespace Vision {
   }
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_FACESDK
+#pragma mark - FaceSDK-Based FaceTracker
   
   class FaceTracker::Impl
   {
@@ -365,7 +765,7 @@ namespace Vision {
   FaceTracker::Impl::Impl(const std::string& modelPath)
   : _isInitialized(false)
   {
-    int result = FSDK_ActivateLibrary("kGo498FByonCaniP29B7pwzGcHBIZJP5D9N0jcF90UhsR8gEBGyGNEmAB7XzcJxFOm9WpqBEgy6hBahqk/Eot0P1zaoWFoEa2vwitt0S7fukLfPixcwBZxnaCBmoR5NGFBbZYHX1I9vXWASt+MjqfCgpwfjZKI/oWLcGZ3AiFpA=");
+    int result = FSDK_ActivateLibrary("ELkdyOk2HkQzszNuy/UiJi3MeO2CaR14pgUHiledsvUNYPvUlOGXS3bz4f9FxZfmXwFfGO5faL2EHo03ORXu7aPxRFafrUBTWiI2x3sckO4oJBrgqb2kJGpdImPObq5vYeI55m3DWlTp7w6NWyzUxgsqTfwrjoMLFfnhHoHVoNs=");
     
     if(result != FSDKE_OK) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.ActivationFailure",
@@ -476,7 +876,6 @@ namespace Vision {
       
       // Update the timestamp
       face.SetTimeStamp(frameOrig.GetTimestamp());
-
       
       TFacePosition facePos;
       res = FSDK_GetTrackerFacePosition(_tracker, 0, IDs[iFace], &facePos);
@@ -507,6 +906,13 @@ namespace Vision {
         
         face.SetRightEyeCenter(Point2f(features[FSDKP_RIGHT_EYE].x,
                                           features[FSDKP_RIGHT_EYE].y));
+        
+        // Set the observed head orientation
+        // NOTE: FaceSDK doesn't have head pose estimation, so just use angle of the
+        // line connecting the eyes as a proxy for roll
+        Point2f eyeLine(face.GetRightEyeCenter());
+        eyeLine -= face.GetLeftEyeCenter();
+        face.SetHeadOrientation(std::atan2f(eyeLine.y(), eyeLine.x()), 0, 0);
         
         face.SetFeature(TrackedFace::LeftEyebrow, GetFeatureHelper(features, {
           FSDKP_LEFT_EYEBROW_OUTER_CORNER,
@@ -647,6 +1053,7 @@ namespace Vision {
   }
 
 #elif FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
+#pragma mark - OpenCV-Based FaceTracker
   
   class FaceTracker::Impl
   {
@@ -664,6 +1071,7 @@ namespace Vision {
     bool _isInitialized;
     
     cv::CascadeClassifier _faceCascade;
+    cv::CascadeClassifier _eyeCascade;
     
     u32 _faceCtr;
     
@@ -676,13 +1084,23 @@ namespace Vision {
   : _isInitialized(false)
   , _faceCtr(0)
   {
-    const std::string cascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
+    const std::string faceCascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     
-    const bool loadSuccess = _faceCascade.load(cascadeFilename);
+    bool loadSuccess = _faceCascade.load(faceCascadeFilename);
     if(!loadSuccess) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.LoadFaceCascade",
+      PRINT_NAMED_ERROR("FaceTracker.Impl.LoadFaceCascade",
                         "Failed to load face cascade from %s\n",
-                        cascadeFilename.c_str());
+                        faceCascadeFilename.c_str());
+      return;
+    }
+    
+    const std::string eyeCascadeFilename = modelPath + "/haarcascade_eye_tree_eyeglasses.xml";
+    
+    loadSuccess = _eyeCascade.load(eyeCascadeFilename);
+    if(!loadSuccess) {
+      PRINT_NAMED_ERROR("FaceTracker.Impl.LoadEyeCascade",
+                        "Failed to load eye cascade from %s\n",
+                        eyeCascadeFilename.c_str());
       return;
     }
     
@@ -758,10 +1176,36 @@ namespace Vision {
       
       // Just use assumed eye locations within the rectangle
       // TODO: Use OpenCV's eye detector?
-      face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
-                                    face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
-      face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
-                                     face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+      std::vector<cv::Rect> eyeRects;
+      const cv::Rect_<float>& faceRect = face.GetRect().get_CvRect_();
+      cv::Mat faceRoi = frame.get_CvMat_()(faceRect);
+      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.1, 2, 0, cv::Size(5,5),
+                                    cv::Size(faceRoi.cols/4,faceRoi.rows/4));
+      if(eyeRects.size() == 2) {
+        // Iff we find two eyes within the face rectangle, use them
+        cv::Rect& leftEyeRect = eyeRects[0];
+        cv::Rect& rightEyeRect = eyeRects[1];
+        if(eyeRects[0].x > eyeRects[1].x) {
+          std::swap(leftEyeRect, rightEyeRect);
+        }
+        
+        face.SetLeftEyeCenter(Point2f(faceRect.x + leftEyeRect.x + leftEyeRect.width/2,
+                                      faceRect.y + leftEyeRect.y + leftEyeRect.height/2));
+        face.SetRightEyeCenter(Point2f(faceRect.x + rightEyeRect.x + rightEyeRect.width/2,
+                                       faceRect.y + rightEyeRect.y + rightEyeRect.height/2));
+        
+        // Use the line connecting the eyes to estimate head roll:
+        Point2f eyeLine(face.GetRightEyeCenter());
+        eyeLine -= face.GetLeftEyeCenter();
+        face.SetHeadOrientation(std::atan2f(eyeLine.y(), eyeLine.x()), 0, 0);
+                                
+      } else {
+        // Otherwise, just use assumed fake eye locations
+        face.SetLeftEyeCenter(Point2f(face.GetRect().GetXmid() - .25f*face.GetRect().GetWidth(),
+                                      face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+        face.SetRightEyeCenter(Point2f(face.GetRect().GetXmid() + .25f*face.GetRect().GetWidth(),
+                                       face.GetRect().GetYmid() - .125f*face.GetRect().GetHeight()));
+      }
       
     }
     

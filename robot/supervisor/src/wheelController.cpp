@@ -10,7 +10,7 @@
 #include "steeringController.h"
 #include "speedController.h"
 #include "wheelController.h"
-
+#include "messages.h"
 #include <stdio.h>
 
 #define DEBUG_WHEEL_CONTROLLER 0
@@ -93,7 +93,16 @@ namespace Anki {
     
     void Disable()
     {
-      enable_ = false;
+      if(enable_) {
+        enable_ = false;
+        
+        ResetIntegralGainSums();
+        power_l_ = 0.f;
+        power_r_ = 0.f;
+        
+        HAL::MotorSetPower(HAL::MOTOR_LEFT_WHEEL, power_l_);
+        HAL::MotorSetPower(HAL::MOTOR_RIGHT_WHEEL, power_r_);
+      }
     }
     
     
@@ -107,10 +116,10 @@ namespace Anki {
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 10) {
-        out_ol = 0.003319096 * x + 0.10109226;
+        out_ol = (float)(0.003319096 * (double)x + 0.10109226);
       } else {
         // power = speed  * 0.2 power /  10 mm/s
-        out_ol = 0.02 * x;
+        out_ol = 0.02f * x;
       }
 #     endif
       
@@ -127,15 +136,15 @@ namespace Anki {
       f32 x = ABS(desired_speed_mmps);
       
 #     ifdef SIMULATOR
-      f32 out_ol = x * 0.004;
+      f32 out_ol = x * 0.004f;
 #     else
       // Piecewise linear
       f32 out_ol = 0;
       if (x > 10) {
-        out_ol = 0.00336296136 * x + 0.10104465883;
+        out_ol = (float)(0.00336296136 * (double)x + 0.10104465883);
       } else {
         // power = speed  * 0.2 power /  10 mm/s
-        out_ol = 0.02 * x;
+        out_ol = 0.02f * x;
       }
 #     endif
       

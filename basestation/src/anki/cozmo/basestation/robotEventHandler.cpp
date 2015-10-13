@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 
@@ -106,9 +107,19 @@ IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    return new DriveToPickAndPlaceObjectAction(selectedObjectID,
+                                               msg.useManualSpeed,
+                                               msg.placementOffsetX_mm,
+                                               msg.placementOffsetY_mm,
+                                               msg.placementOffsetAngle_rad,
+                                               msg.placeOnGroundIfCarrying);
   } else {
-    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID, msg.useManualSpeed);
+    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID,
+                                                                    msg.useManualSpeed,
+                                                                    msg.placementOffsetX_mm,
+                                                                    msg.placementOffsetY_mm,
+                                                                    msg.placementOffsetAngle_rad,
+                                                                    msg.placeOnGroundIfCarrying);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -166,7 +177,17 @@ IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::
   return new FaceObjectAction(objectID,
                               Radians(msg.turnAngleTol),
                               Radians(msg.maxTurnAngle),
+                              msg.visuallyVerifyWhenDone,
                               msg.headTrackWhenDone);
+}
+  
+IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::FacePose& facePose)
+{
+  Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
+              robot.GetWorldOrigin());
+  return new FacePoseAction(pose,
+                            Radians(facePose.turnAngleTol),
+                            Radians(facePose.maxTurnAngle));
 }
   
 IActionRunner* CreateNewActionByType(Robot& robot,
@@ -198,6 +219,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionType::FACE_OBJECT:
       return GetFaceObjectActionHelper(robot, actionUnion.faceObject);
+      
+    case RobotActionType::FACE_POSE:
+      return GetFacePoseActionHelper(robot, actionUnion.facePose);
       
     case RobotActionType::ROLL_OBJECT_LOW:
       return GetRollObjectActionHelper(robot, actionUnion.rollObject);
@@ -333,11 +357,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::FacePose:
     {
       const ExternalInterface::FacePose& facePose = event.GetData().Get_FacePose();
-      Pose3d pose(0, Z_AXIS_3D(), {facePose.world_x, facePose.world_y, facePose.world_z},
-                  robotPointer->GetWorldOrigin());
-      newAction = new FacePoseAction(pose,
-                                     Radians(facePose.turnAngleTol),
-                                     Radians(facePose.maxTurnAngle));
+      newAction = GetFacePoseActionHelper(robot, facePose);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TurnInPlace:

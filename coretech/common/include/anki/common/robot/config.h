@@ -13,18 +13,15 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 #define _ANKICORETECHEMBEDDED_COMMON_CONFIG_H_
 
-//
+// 
 // Compiler-specific configuration, with various defines that make different compilers work on the same code
 //
 
 // Section directives to allocate memory in specific places
 #ifdef STM32F429_439xx  // Early version with external memory
-// NOTE: If you don't define a location, read-only will go to IROM, and read-write will go to RW_IRAM2 (Core-coupled memory)
-#define OFFCHIP #error Obsolete please stop using this
 #define ONCHIP __attribute__((section("ONCHIP")))
-#define CCM #error Obsolete please stop using this
 #else
-#define OFFCHIP   
+#define OFFCHIP
 #define ONCHIP
 #define CCM
 #endif

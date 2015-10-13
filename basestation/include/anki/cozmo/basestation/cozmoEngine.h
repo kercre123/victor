@@ -32,7 +32,6 @@
 #ifndef ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"
@@ -92,7 +91,7 @@ public:
   // NOTE: This is virtual for now so derived Host can do something different for force-added robots.
   virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
 
-  void StartAnimationTool();
+  void ReadAnimationsFromDisk();
   virtual Robot* GetFirstRobot() { return nullptr; };
 
   void DisconnectFromRobot(RobotID_t whichRobot);

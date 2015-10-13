@@ -9,10 +9,50 @@
 
 #include "hal/i2c.h"
 
+#include "clad/types/imageTypes.h"
+
+/***************************************************************************
+ *
+ *                          Camera Calibration
+ *
+ **************************************************************************/
+
 namespace Anki
 {
   namespace Cozmo
   {
+    
+#ifdef COZMO_ROBOT_V40
+    // Calibration values from August 11, 2015 - on headboard with SSID 3a99
+    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 273.316765624f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 274.838250766f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 199.638842523f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 160.682934109f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      0.03956f,
+      -0.08955f,
+      0.00044f,
+      0.00188f
+    };
+#else
+    // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
+    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.065116921f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.867229568f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 197.801561858f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 151.672492176f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      0.11281163f,
+      -0.31673507f,
+      -0.00226334f,
+      0.00200109f
+    };
+#endif
+    
+    
     namespace HAL
     {
       // For headboard 4.0
@@ -1234,7 +1274,7 @@ namespace Anki
         }
       }
 
-      void CameraGetFrame(u8* frame, Vision::CameraResolution res, bool enableLight)
+      void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight)
       {
         m_isEOF = false;
 

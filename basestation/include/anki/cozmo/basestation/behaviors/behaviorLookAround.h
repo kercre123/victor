@@ -32,14 +32,14 @@ class BehaviorLookAround : public IBehavior
 public:
   BehaviorLookAround(Robot& robot, const Json::Value& config);
   
-  virtual bool IsRunnable(float currentTime_sec) const override;
+  virtual bool IsRunnable(double currentTime_sec) const override;
   
-  virtual Result Init() override;
+  virtual Result Init(double currentTime_sec) override;
   
-  virtual Status Update(float currentTime_sec) override;
+  virtual Status Update(double currentTime_sec) override;
   
   // Finish placing current object if there is one, otherwise good to go
-  virtual Result Interrupt(float currentTime_sec) override;
+  virtual Result Interrupt(double currentTime_sec) override;
   
   virtual bool GetRewardBid(Reward& reward) override;
   
@@ -63,11 +63,11 @@ private:
   };
   
   // How long to wait before we trying to look around again (among other factors)
-  constexpr static f32 kLookAroundCooldownDuration = 11;
+  constexpr static f32 kLookAroundCooldownDuration = 7;
   // How fast to rotate when looking around
   constexpr static f32 kDegreesRotatePerSec = 25;
   // The default radius (in mm) we assume exists for us to move around in
-  constexpr static f32 kDefaultSafeRadius = 250;
+  constexpr static f32 kDefaultSafeRadius = 150;
   // Number of destinations we want to reach before resting for a bit (needs to be at least 2)
   constexpr static u32 kDestinationsToReach = 6;
   
@@ -89,6 +89,7 @@ private:
   void ResetBehavior(float currentTime_sec);
   Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
+  void ResetSafeRegion();
   
   void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
   void HandleCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);

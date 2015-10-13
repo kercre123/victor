@@ -25,7 +25,6 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/signals/simpleSignal_fwd.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
 #include "anki/cozmo/basestation/recording/playback.h"
 
 #define DEVICE_VISION_MODE_OFF   0
@@ -62,7 +61,7 @@ public:
 
   void DisconnectFromRobot(RobotID_t whichRobot);
 
-  virtual void StartAnimationTool() {};
+  virtual void ReadAnimationsFromDisk() {};
 protected:
 
   // Derived classes must implement any special initialization in this method,
@@ -74,27 +73,11 @@ protected:
   virtual Result UpdateInternal(const BaseStationTime_t currTime_ns) = 0;
 
   bool                      _isInitialized;
-
   int                       _engineID;
-
   Json::Value               _config;
-
   MultiClientChannel        _robotChannel;
-
   IExternalInterface* _externalInterface;
   Util::Data::DataPlatform* _dataPlatform;
-  
-  /*
-  // TODO: Merge this into RobotManager
-  // Each engine can potetnailly talk to multiple physical robots.
-  // Package up the stuff req'd to deal with one robot and store a map
-  // of them keyed by robot ID.
-  struct RobotContainer {
-    VisionProcessingThread    visionThread;
-    RobotMessageHandler       visionMsgHandler;
-  };
-  std::map<AdvertisingRobot, RobotContainer> _connectedRobots;
-  */
 
 # if DEVISION_VISION_MODE != DEVICE_VISION_MODE_OFF
   VisionProcessingThread    _deviceVisionThread;

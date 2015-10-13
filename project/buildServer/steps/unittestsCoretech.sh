@@ -19,6 +19,9 @@ BUILDTOOLS=$TOPLEVEL/tools/anki-util/tools/build-tools
 PROJECT=$TOPLEVEL/$PROJECTROOT/generated/mac
 BUILD_TYPE="Debug"
 DERIVED_DATA=$PROJECT/DerivedData
+GTEST=$TOPLEVEL/tools/anki-util/libs/framework/
+
+echo "Entering directory \`$TOPLEVEL/coretech/project/gyp/'"
 
 # build
 xcodebuild \
@@ -37,23 +40,48 @@ set +e
 # clean output
 rm -rf $DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest*
 rm -rf $DERIVED_DATA/$BUILD_TYPE/case*
+rm -f $DERIVED_DATA/$BUILD_TYPE/*.txt
+
+DUMP_OUTPUT=0
+ARGS=""
+while (( "$#" )); do
+
+    if [[ "$1" == "-x" ]]; then
+        DUMP_OUTPUT=1
+    else
+        if [[ "$ARGS" == "" ]]; then
+            ARGS="--gtest_filter=$1"
+        else
+            ARGS="$ARGS $1"
+        fi
+    fi
+    shift
+done
+
+if (( \! $DUMP_OUTPUT )); then
+    ARGS="$ARGS --silent"
+fi
 
 # execute
 ANKIWORKROOT="$DERIVED_DATA/$BUILD_TYPE/" \
 ANKICONFIGROOT="$DERIVED_DATA/$BUILD_TYPE/" \
-DYLD_FRAMEWORK_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
-DYLD_LIBRARY_PATH="$DERIVED_DATA/$BUILD_TYPE/" \
+DYLD_FRAMEWORK_PATH="$GTEST" \
+DYLD_LIBRARY_PATH="$GTEST" \
 GTEST_OUTPUT=xml:$DERIVED_DATA/$BUILD_TYPE/${TESTNAME}GoogleTest_.xml \
 $BUILDTOOLS/tools/ankibuild/multiTest.py \
---silent \
 --path $DERIVED_DATA/$BUILD_TYPE \
 --executable ${TESTNAME}UnitTest \
 --stdout_file \
 --xml_dir "$DERIVED_DATA/$BUILD_TYPE" \
---xml_basename ${TESTNAME}GoogleTest_
+--xml_basename ${TESTNAME}GoogleTest_ \
+$ARGS
 
 EXIT_STATUS=$?
 set -e
+
+if (( $DUMP_OUTPUT )); then
+    cat $DERIVED_DATA/$BUILD_TYPE/*.txt
+fi
 
 #tarball files together
 cd $DERIVED_DATA/$BUILD_TYPE

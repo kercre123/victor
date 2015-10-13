@@ -4,11 +4,14 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
-#include "clad/types/imageSendMode.clad"
-#include "clad/types/cameraSettings.clad"
-#include "clad/types/testMode.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/demoBehaviorState.clad"
+#include "clad/types/activeObjectTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognitionState.clad"
+#include "clad/types/liveIdleAnimationParameters.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -78,6 +81,7 @@ message FaceObject {
     float_32 turnAngleTol,
     float_32 maxTurnAngle,
     uint_8   robotID,
+    uint_8   visuallyVerifyWhenDone,
     uint_8   headTrackWhenDone
 }
 
@@ -147,7 +151,7 @@ message ImageRequest {
 message SetRobotImageSendMode {
     uint_8 robotID,
     ImageSendMode mode,
-    CameraResolutionClad resolution
+    ImageResolution resolution
 }
 
 // SaveImages
@@ -163,11 +167,6 @@ message SaveRobotState {
 // EnableDisplay
 message EnableDisplay {
     uint_8 enable
-}
-
-// SetHeadlights
-message SetHeadlights {
-    uint_8 intensity
 }
 
 // GotoPose
@@ -210,7 +209,11 @@ message SelectNextObject {
 // PickAndPlaceObject
 message PickAndPlaceObject {
     int_32 objectID, // negative value means "currently selected object"
+    float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
+    float_32 placementOffsetY_mm,  // Y-axis offset for object placement (where +y extends out towards the left if you are facing the marker)
+    float_32 placementOffsetAngle_rad, // Angular offset for object placement (right of marker normal if you are facing marker is +ve)
     uint_8 usePreDockPose,
+    uint_8 placeOnGroundIfCarrying,  // Does PLACE_HIGH if false, otherwise places at placementOffsetX_mm from objectID
     uint_8 useManualSpeed
 }
 
@@ -340,7 +343,7 @@ message StartTestMode {
     int_32 p1,
     int_32 p2,
     int_32 p3,
-    TestModeClad mode
+    TestMode mode
 }
 
 // IMURequest
@@ -392,28 +395,6 @@ message StartLookingForMarkers {
 message StopLookingForMarkers {
 }
 
-// SetVisionSystemParams
-message SetVisionSystemParams {
-    int_32 autoexposureOn,
-    float_32 exposureTime,
-    int_32 integerCountsIncrement,
-    float_32 minExposureTime,
-    float_32 maxExposureTime,
-    float_32 percentileToMakeHigh,
-    int_32 limitFramerate,
-    uint_8 highValue
-}
-
-// SetFaceDetectParams
-message SetFaceDetectParams {
-    float_32 scaleFactor,
-    int_32 minNeighbors,
-    int_32 minObjectHeight,
-    int_32 minObjectWidth,
-    int_32 maxObjectHeight,
-    int_32 maxObjectWidth
-}
-
 // SetActiveObjectLEDs
 message SetActiveObjectLEDs {
     uint_32  objectID,
@@ -442,7 +423,7 @@ message SetAllActiveObjectLEDs {
   uint_32  transitionOffPeriod_ms[4],
   float_32 relativeToX,
   float_32 relativeToY,
-  uint_8   makeRelative,  // if 0, ignores relativeX/relativeY
+  MakeRelativeMode   makeRelative,  // if 0, ignores relativeX/relativeY
   uint_8   robotID
 }
 
@@ -468,6 +449,12 @@ message DisplayProceduralFace {
   float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
   float_32 rightEye[uint_8], //
   uint_8   robotID
+}
+
+message SetLiveIdleAnimationParameters {
+  LiveIdleAnimationParameter   paramNames[uint_8],
+  float_32                     paramValues[uint_8], // must be same length as paramNames
+  uint_8                       robotID
 }
 
 // VisualizeQuad
@@ -531,6 +518,10 @@ message QueueCompoundAction {
   QueueActionPosition    position,
   RobotActionType        actionTypes[uint_8],
   RobotActionUnion       actions[uint_8]
+}
+
+message SetDemoState {
+  DemoBehaviorState demoState
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

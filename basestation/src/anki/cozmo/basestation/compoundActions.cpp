@@ -104,6 +104,14 @@ namespace Anki {
       return false;
     }
 
+    u8 ICompoundAction::GetAnimTracksToDisable() const
+    {
+      u8 whichTracks = 0;
+      for(auto & action : _actions) {
+        whichTracks |= action.second->GetAnimTracksToDisable();
+      }
+      return whichTracks;
+    }
     
     void ICompoundAction::Cleanup(Robot& robot)
     {
@@ -159,10 +167,10 @@ namespace Anki {
         IActionRunner* currentAction = _currentActionPair->second;
         assert(currentAction != nullptr); // should not have been allowed in by constructor
         
-        if(_waitUntilTime < 0.f ||
-           BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > _waitUntilTime)
+        double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        if(_waitUntilTime < 0.f || currentTime >= _waitUntilTime)
         {
-          const ActionResult subResult = currentAction->Update(robot);
+          ActionResult subResult = currentAction->Update(robot);
           SetStatus(currentAction->GetStatus());
           switch(subResult)
           {
@@ -174,7 +182,7 @@ namespace Anki {
               if(_delayBetweenActionsInSeconds > 0.f) {
                 // If there's a delay specified, figure out how long we need to
                 // wait from now to start next action
-                _waitUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _delayBetweenActionsInSeconds;
+                _waitUntilTime = currentTime + _delayBetweenActionsInSeconds;
               }
               
               ++_currentActionPair;
@@ -185,10 +193,15 @@ namespace Anki {
                 RunCallbacks(ActionResult::SUCCESS);
 #             endif
                 return ActionResult::SUCCESS;
+              } else if(currentTime >= _waitUntilTime) {
+                
+                // Otherwise, we are still running. Go ahead and immediately do an
+                // update on the next action now to get its initialization and
+                // precondition checking going, to reduce lag between actions.
+                subResult = _currentActionPair->second->Update(robot);
               }
               
-              // Otherwise, we are still running
-              return ActionResult::RUNNING;
+              return subResult;
             }
               
             case ActionResult::FAILURE_RETRY:

@@ -9,6 +9,9 @@
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/dockingSignals.h"
 #include "speedController.h"
 #include "steeringController.h"
 
@@ -57,7 +60,7 @@ namespace Anki {
         
         Mode mode_ = IDLE;
         
-        DockAction_t action_ = DA_PICKUP_LOW;
+        DockAction action_ = DA_PICKUP_LOW;
 
         Embedded::Point2f ptStamp_;
         Radians angleStamp_;
@@ -69,7 +72,7 @@ namespace Anki {
         // Last seen marker pose used for bridge crossing
         f32 relMarkerX_, relMarkerY_, relMarkerAng_;
         
-        CarryState_t carryState_ = CARRY_NONE;
+        CarryState carryState_ = CARRY_NONE;
         bool lastActionSucceeded_ = false;
         
         // When to transition to the next state. Only some states use this.
@@ -105,10 +108,10 @@ namespace Anki {
       
       Result SendBlockPickUpMessage(const bool success)
       {
-        Messages::BlockPickedUp msg;
+        BlockPickedUp msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPickedUp), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -116,10 +119,10 @@ namespace Anki {
       
       Result SendBlockPlacedMessage(const bool success)
       {
-        Messages::BlockPlaced msg;
+        BlockPlaced msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPlaced), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -141,7 +144,7 @@ namespace Anki {
         PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
               relMarkerX_, backoutDist_mm, backoutTime_sec);
         
-        transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3);
+        transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3f);
         
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
         
@@ -179,10 +182,14 @@ namespace Anki {
                 break;
               case DA_PLACE_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                dockOffsetDistX_ += ORIGIN_TO_LOW_LIFT_DIST_MM;
+                break;
+              case DA_PLACE_LOW_BLIND:
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 break;
               case DA_PLACE_HIGH:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
-                dockOffsetDistX_ = ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
+                dockOffsetDistX_ += ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_ROLL_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
@@ -216,7 +223,7 @@ namespace Anki {
 #endif
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
               
-              if (action_ == DA_PLACE_LOW) {
+              if (action_ == DA_PLACE_LOW_BLIND) {
                 DockingController::StartDockingToRelPose(dockOffsetDistX_,
                                                          dockOffsetDistY_,
                                                          dockOffsetAng_,
@@ -232,6 +239,7 @@ namespace Anki {
                   case DA_PICKUP_LOW:
                   case DA_PLACE_HIGH:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
+                    break;
                   default:
                     break;
                 }
@@ -316,6 +324,7 @@ namespace Anki {
                   } // PICKUP
                     
                   case DA_PLACE_LOW:
+                  case DA_PLACE_LOW_BLIND:
                   case DA_PLACE_HIGH:
                   case DA_ROLL_LOW:
                   {
@@ -350,6 +359,7 @@ namespace Anki {
             mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DA_PLACE_LOW:
+              case DA_PLACE_LOW_BLIND:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 break;
@@ -405,6 +415,7 @@ namespace Anki {
                 } // HIGH
                 case DA_PICKUP_LOW:
                 case DA_PLACE_LOW:
+                case DA_PLACE_LOW_BLIND:
                 case DA_ROLL_LOW:
                 {
                   HeadController::SetDesiredAngle(DEG_TO_RAD(-15));
@@ -427,6 +438,7 @@ namespace Anki {
                 } // PICKUP
 
                 case DA_PLACE_LOW:
+                case DA_PLACE_LOW_BLIND:
                 case DA_PLACE_HIGH:
                 case DA_ROLL_LOW:
                 {
@@ -582,34 +594,38 @@ namespace Anki {
         return carryState_ != CARRY_NONE;
       }
 
-      void SetCarryState(CarryState_t state)
+      void SetCarryState(CarryState state)
       {
         carryState_ = state;
       }
       
-      CarryState_t GetCarryState()
+      CarryState GetCarryState()
       {
         return carryState_;
       }
       
-      void DockToBlock(const bool useManualSpeed,
-                       const DockAction_t action)
+      void DockToBlock(const DockAction action,
+                       const f32 rel_x,
+                       const f32 rel_y,
+                       const f32 rel_angle,
+                       const bool useManualSpeed)
       {
 #if(DEBUG_PAP_CONTROLLER)
         PRINT("PAP: DOCK TO BLOCK (action %d)\n", action);
 #endif
 
-        if (action == DA_PLACE_LOW) {
-          PRINT("WARNING: Invalid action %d for DockToBlock(). Ignoring.\n", action);
-          return;
+        action_ = action;
+
+        if (action_ == DA_PLACE_LOW_BLIND) {
+          dockOffsetDistX_ = rel_x;
+          dockOffsetDistY_ = rel_y;
+          dockOffsetAng_ = rel_angle;
+        } else {
+          dockOffsetDistX_ = 0;
+          dockOffsetDistY_ = 0;
+          dockOffsetAng_ = 0;
         }
         
-        action_ = action;
-        
-        dockOffsetDistX_ = 0;
-        dockOffsetDistY_ = 0;
-        dockOffsetAng_ = 0;
-        
         useManualSpeed_ = useManualSpeed;
         
         relMarkerX_ = -1.f;
@@ -618,22 +634,10 @@ namespace Anki {
         lastActionSucceeded_ = false;
       }
 
-      
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
       {
-        action_ = DA_PLACE_LOW;
-        dockOffsetDistX_ = rel_x;
-        dockOffsetDistY_ = rel_y;
-        dockOffsetAng_ = rel_angle;
-        
-        useManualSpeed_ = useManualSpeed;
-        
-        relMarkerX_ = -1.f;
-        
-        mode_ = SET_LIFT_PREDOCK;
-        lastActionSucceeded_ = false;
+        DockToBlock(DA_PLACE_LOW_BLIND, rel_x, rel_y, rel_angle, useManualSpeed);
       }
-
       
     } // namespace PickAndPlaceController
   } // namespace Cozmo

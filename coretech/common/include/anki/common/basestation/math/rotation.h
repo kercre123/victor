@@ -206,23 +206,31 @@ namespace Anki {
     RotationMatrix3d(std::initializer_list<float> initVals);
     RotationMatrix3d(const Radians angle, const Vec3f &axis);
     
+    // Construct from Euler angles
+    RotationMatrix3d(const Radians& angleX, const Radians& angleY, const Radians& angleZ);
+    
     // Return total angular rotation from the identity (no rotation)
     Radians GetAngle() const;
     
     // Return angular rotation difference from another rotation matrix
     Radians GetAngleDiffFrom(const RotationMatrix3d &other) const;
     
-    /*
     // Return the Euler angles, under the convention that the
     // rotation matrix is the composition of three ordered rotations around
-    // each of the axes, namely:  R = Rz * Ry * Rx    
-    void GetEulerAngles(Radians& angle_x, Radians& angle_y, Radians& angle_z) const;
-    */
+    // each of the axes, namely:  R = Rz * Ry * Rx. Returns true if the
+    // matrix is in Gimbal Lock (in which case angle_y will arbitrarily be set
+    // to zero).
+    // Note that any many situations, there is more than one solution. We often
+    //   don't care, but if you need both (e.g. for unit tests), pass non-NULL
+    //   pointers for the second set of angles. If any is requested, all should be.
+    bool GetEulerAngles(Radians& angle_x, Radians& angle_y, Radians& angle_z,
+                        Radians* angle_x2 = nullptr,
+                        Radians* angle_y2 = nullptr,
+                        Radians* angle_z2 = nullptr) const;
     
     Radians GetAngleAroundXaxis() const;
     Radians GetAngleAroundYaxis() const;
     Radians GetAngleAroundZaxis() const;
-    
     
   }; // class RotationMatrix3d
   

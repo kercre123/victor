@@ -23,9 +23,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
   
 static std::vector<std::string> _animReactions = {
-  "Fear",
-  "shocked",
-  "VeryIrritated",
+  "Demo_Face_Interaction_ShockedScared_A",
 };
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
@@ -55,7 +53,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
   }
 }
 
-bool BehaviorReactToPickup::IsRunnable(float currentTime_sec) const
+bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
 {
   switch (_currentState)
   {
@@ -74,12 +72,12 @@ bool BehaviorReactToPickup::IsRunnable(float currentTime_sec) const
   return false;
 }
 
-Result BehaviorReactToPickup::Init()
+Result BehaviorReactToPickup::Init(double currentTime_sec)
 {
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
+IBehavior::Status BehaviorReactToPickup::Update(double currentTime_sec)
 {
   switch (_currentState)
   {
@@ -96,7 +94,7 @@ IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
     {
       static u32 animIndex = 0;
       // For now we simply rotate through the animations we want to play when picked up
-      if (0 != _animReactions.size())
+      if (!_animReactions.empty())
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
@@ -132,7 +130,7 @@ IBehavior::Status BehaviorReactToPickup::Update(float currentTime_sec)
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::Interrupt(float currentTime_sec)
+Result BehaviorReactToPickup::Interrupt(double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

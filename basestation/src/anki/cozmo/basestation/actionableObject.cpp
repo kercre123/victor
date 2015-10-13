@@ -96,13 +96,15 @@ namespace Anki {
         const f32 stepSize = 10.f; // 1cm
         Vec2f   stepVec(xyEnd);
         stepVec -= xyStart;
-        const f32 lineLength = stepVec.MakeUnitLength();
+        f32 lineLength = stepVec.MakeUnitLength();
         Vec2f offsetVec(stepVec.y(), -stepVec.x());
         offsetVec *= 0.5f*ROBOT_BOUNDING_Y;
-        const s32 numSteps = std::floor(lineLength / stepSize);
         
         // Pull back xyStart to the rear of the robot's bounding box when the robot is at the preaction pose.
         xyStart -= (stepVec * (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT));
+        lineLength += (ROBOT_BOUNDING_X - ROBOT_BOUNDING_X_FRONT);
+        
+        const s32 numSteps = std::floor(lineLength / stepSize);
         
         stepVec *= stepSize;
         
@@ -183,7 +185,8 @@ namespace Anki {
                                                     const std::set<PreActionPose::ActionType>& withAction,
                                                     const std::set<Vision::Marker::Code>& withCode,
                                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
-                                                    const Pose3d* reachableFromPose)
+                                                    const Pose3d* reachableFromPose,
+                                                    const f32 offset_mm)
     {
       const Pose3d& relToObjectPose = GetPose();
       
@@ -192,7 +195,9 @@ namespace Anki {
         if((withCode.empty()   || withCode.count(preActionPose.GetMarker()->GetCode()) > 0) &&
            (withAction.empty() || withAction.count(preActionPose.GetActionType()) > 0))
         {
-          PreActionPose currentPose(preActionPose, relToObjectPose);
+          // offset_mm is scaled by some amount because otherwise it might too far to see the marker
+          // it's docking to.
+          PreActionPose currentPose(preActionPose, relToObjectPose, PREACTION_POSE_OFFSET_SCALAR * offset_mm);
           
           if(IsPreActionPoseValid(currentPose, reachableFromPose, obstacles)) {
             preActionPoses.emplace_back(currentPose);
@@ -229,7 +234,10 @@ namespace Anki {
       {
         GetCurrentPreActionPoses(poses, {actionType}, std::set<Vision::Marker::Code>(), obstacles, reachableFrom);
         for(auto & pose : poses) {
-          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID + GetID().GetValue()*100,
+          // TODO: In computing poseID to pass to DrawPreDockPose, multiply object ID by the max number of
+          //       preaction poses we expect to visualize per object. Currently, hardcoded to 48 (4 dock and
+          //       4 roll per side). We probably won't have more than this.
+          _vizPreActionPoseHandles.emplace_back(VizManager::getInstance()->DrawPreDockPose(poseID + GetID().GetValue()*48,
                                                                                            pose.GetPose().GetWithRespectToOrigin(),
                                                                                            PreActionPose::GetVisualizeColor(actionType)));
           ++poseID;

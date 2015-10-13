@@ -115,7 +115,7 @@ function(run_clad GENERATED_FILES_VARIABLE_NAME EMITTER
     make_relative("EMITTER_PATH" "${CMAKE_CURRENT_SOURCE_DIR}"
         "${CLAD_DIR}/emitters")
     make_relative("CUSTOM_EMITTER_PATH" "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${COZMO_ENGINE_CLAD_INCLUDE_LIST_DIR}/emitters")
+        "${CLAD_DIR}/emitters/specialized")
     
     # need to make sure we use relative, portable paths when we hit the command line
     # these are relative to ${CMAKE_CURRENT_SOURCE_DIR}

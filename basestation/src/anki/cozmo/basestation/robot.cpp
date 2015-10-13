@@ -8,10 +8,11 @@
 
 // TODO:(bn) should these be a full path?
 #include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/latticePlanner.h"
+#include "anki/cozmo/basestation/faceAndApproachPlanner.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -24,7 +25,7 @@
 #include "anki/vision/CameraSettings.h"
 // TODO: This is shared between basestation and robot and should be moved up
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/robotMessageHandler.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -33,9 +34,14 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/robotStatusAndActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/observableObjectLibrary_impl.h"
 #include "util/fileUtils/fileUtils.h"
+#include "anki/vision/basestation/image.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -47,14 +53,13 @@
 namespace Anki {
   namespace Cozmo {
     
-    Robot::Robot(const RobotID_t robotID, IRobotMessageHandler* msgHandler,
+    Robot::Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
                  IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _ID(robotID)
     , _isPhysical(false)
     , _newStateMsgAvailable(false)
-    , _syncTimeAcknowledged(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
@@ -73,8 +78,10 @@ namespace Anki {
     , _usingManualPathSpeed(false)
     , _camera(robotID)
     , _visionWhileMovingEnabled(false)
+    /*
     , _proxVals{{0}}
     , _proxBlocked{{false}}
+    */
     , _poseOrigins(1)
     , _worldOrigin(&_poseOrigins.front())
     , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
@@ -91,19 +98,21 @@ namespace Anki {
     , _isPickingOrPlacing(false)
     , _isPickedUp(false)
     , _isMoving(false)
-    , _isAnimating(false)
-    , _isIdleAnimating(false)
     , _battVoltage(5)
     , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
+    , _trackToFaceID(Vision::TrackedFace::UnknownFace)
     , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
     , _lastImgTimeStamp(0)
-    , _animationStreamer(_cannedAnimations)
+    , _animationStreamer(_externalInterface, _cannedAnimations)
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
+    , _animationTag(0)
+    , _emotionMgr(*this)
+    , _imageDeChunker(*(new ImageDeChunker()))
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -112,45 +121,47 @@ namespace Anki {
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
+      InitRobotMessageComponent(_msgHandler,robotID);
       
-      _proceduralFace.MarkAsSentToRobot(true);
-      _lastProceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.MarkAsSentToRobot(false);
+      _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
+      _lastProceduralFace.MarkAsSentToRobot(true);
       
       // The call to Delocalize() will increment frameID, but we want it to be
       // initialzied to 0, to match the physical robot's initialization
       _frameId = 0;
-      Json::Value mprims;
-      if (_dataPlatform != nullptr){
-        // Read planner motion primitives
-        // TODO: Use different motions primitives depending on the type/personality of this robot
-        // TODO: Stop storing *cozmo* motion primitives in a coretech location
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, "config/basestation/config/cozmo_mprim.json", mprims);
-        if(!success) {
-          PRINT_NAMED_ERROR("Robot.MotionPrimitiveJsonParseFailure", "Failed to load motion primitives, Planner likely won't work.");
-        }
-      }
 
-
-      ReadAnimationDir(false);
+      ReadAnimationDir();
       
-      // Read in behavior manager Json
+      // Read in emotion and behavior manager Json
+      Json::Value emotionConfig;
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
       {
-        const std::string jsonFilename = "config/basestation/config/behavior_config.json";
-        const bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
+        std::string jsonFilename = "config/basestation/config/behavior_config.json";
+        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
           PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
                             "Behavior Json config file %s not found.",
                             jsonFilename.c_str());
         }
+        
+        jsonFilename = "config/basestation/config/emotion_config.json";
+        success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, emotionConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.EmotionConfigJsonNotFound",
+                            "Emotion Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
       }
+      _emotionMgr.Init(emotionConfig);
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(msgHandler, robotID);
-      _longPathPlanner  = new LatticePlanner(this, mprims);
+      _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       
@@ -160,6 +171,7 @@ namespace Anki {
 
     Robot::~Robot()
     {
+      delete &_imageDeChunker;
       delete _poseHistory;
       _poseHistory = nullptr;
       
@@ -274,17 +286,9 @@ namespace Anki {
     } // SetLocalizedTo()
     
     
-    Result Robot::UpdateFullRobotState(const MessageRobotState& msg)
+    Result Robot::UpdateFullRobotState(const RobotState& msg)
     {
       Result lastResult = RESULT_OK;
-
-      if (!_syncTimeAcknowledged) {
-        // Don't process RobotState messages until the robot has received
-        // the sync time message.
-        PRINT_NAMED_WARNING("Robot.UpdateFullRobotState.Ignoring",
-                            "Robot has not received sync time yet. Timestamp might be in the future (t=%d)\n", msg.timestamp);
-        return RESULT_FAIL;
-      }
 
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
@@ -311,8 +315,8 @@ namespace Anki {
         fputs(stateMsgLine, stateFile);
         fclose(stateFile);
 #endif
-
-        
+        /*
+        // clad functionality missing: ToJson()
         // Write state message to JSON file
         // TODO: (ds/as) use current game log folder instead?
         std::string msgFilename(std::string(AnkiUtil::kP_ROBOT_STATE_CAPTURE_DIR) + "/cozmo" + std::to_string(GetID()) + "_state_" + std::to_string(msg.timestamp) + ".json");
@@ -320,6 +324,7 @@ namespace Anki {
         Json::Value json = msg.CreateJson();
         PRINT_NAMED_INFO("Robot.UpdateFullRobotState", "Writing RobotState JSON to file %s", msgFilename.c_str());
         _dataPlatform->writeAsJson(Util::Data::Scope::Cache, msgFilename, json);
+        */
 #if(0)
         // Compose line for IMU output file.
         // Used for determining delay constant in image timestamp.
@@ -349,10 +354,11 @@ namespace Anki {
       // Update lift angle
       SetLiftAngle(msg.liftAngle);
 
-      // Update proximity sensor values
-      SetProxSensorData(PROX_LEFT, msg.proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
-      SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
-      SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
+      // TODO: (KY/DS) remove SetProxSensorData
+      //// Update proximity sensor values
+      //SetProxSensorData(PROX_LEFT, msg. proxLeft, msg.status & IS_PROX_SIDE_BLOCKED);
+      //SetProxSensorData(PROX_FORWARD, msg.proxForward, msg.status & IS_PROX_FORWARD_BLOCKED);
+      //SetProxSensorData(PROX_RIGHT, msg.proxRight, msg.status & IS_PROX_SIDE_BLOCKED);
       
       // Get ID of last/current path that the robot executed
       SetLastRecvdPathID(msg.lastPathID);
@@ -367,21 +373,14 @@ namespace Anki {
       }
       
       //robot->SetCarryingBlock( msg.status & IS_CARRYING_BLOCK ); // Still needed?
-      SetPickingOrPlacing( msg.status & IS_PICKING_OR_PLACING );
+      SetPickingOrPlacing((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKING_OR_PLACING ));
       
-      SetPickedUp( msg.status & IS_PICKED_UP );
-      
-      _isAnimating = static_cast<bool>(msg.status & IS_ANIMATING);
-      _isIdleAnimating = _animationStreamer.IsIdleAnimating();
-      
-      _numAnimationBytesPlayed = msg.numAnimBytesPlayed;
+      SetPickedUp((bool)( msg.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ));
       
       _battVoltage = (f32)msg.battVolt10x * 0.1f;
-      
-      _isMoving = static_cast<bool>(msg.status & IS_MOVING);
-      _isHeadMoving = !static_cast<bool>(msg.status & HEAD_IN_POS);
-      _isLiftMoving = !static_cast<bool>(msg.status & LIFT_IN_POS);
-      
+      _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
+      _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
+      _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
@@ -397,7 +396,7 @@ namespace Anki {
         // and compare that to where it was when it started traversing the ramp.
         // Adjust according to the angle of the ramp we know it's on.
         
-        const f32 distanceTraveled = (Point2f(msg.pose_x, msg.pose_y) - _rampStartPosition).Length();
+        const f32 distanceTraveled = (Point2f(msg.pose.x, msg.pose.y) - _rampStartPosition).Length();
         
         Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, ObjectFamily::Ramp));
         if(ramp == nullptr) {
@@ -467,7 +466,7 @@ namespace Anki {
         }
         
         // Need to put the odometry update in terms of the current robot origin
-        newPose = Pose3d(msg.pose_angle, Z_AXIS_3D(), {{msg.pose_x, msg.pose_y, pose_z}}, _worldOrigin);
+        newPose = Pose3d(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, pose_z}, _worldOrigin);
         
       } // if/else on ramp
       
@@ -504,14 +503,12 @@ namespace Anki {
       
       // Engine modifications to state message.
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
-      MessageRobotState stateMsg(msg);
-      if (_isIdleAnimating) { stateMsg.status |= IS_ANIMATING_IDLE; }
-      
+      RobotState stateMsg(msg);
       
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
                                                 KEYFRAME_BUFFER_SIZE - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
-                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX));
+                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX), _animationTag);
       
       return lastResult;
       
@@ -570,7 +567,7 @@ namespace Anki {
       RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
-      // Precompute with robot body to neck pose
+      // Precompose with robot body to neck pose
       camPose.PreComposeWith(_neckPose);
       
       // Set parent pose to be the historical robot pose
@@ -747,7 +744,7 @@ namespace Anki {
                                   "Could not estimate pose of mat marker. Not visualizing.\n");
             } else {
               if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
+                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
               } else {
                 PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                     "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -792,7 +789,6 @@ namespace Anki {
       }
        */
     }
-    
     
     Result Robot::Update(void)
     {
@@ -885,12 +881,11 @@ namespace Anki {
           }
           
           VizManager::getInstance()->DrawCameraFace(faceDetection,
-                                                    faceDetection.IsBeingTracked() ?
-                                                    NamedColors::GREEN : NamedColors::RED);
+            faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
 
         }
         
-        MessageTrackerQuad trackerQuad;
+        VizInterface::TrackerQuad trackerQuad;
         if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
           // Send tracker quad info to viz
           VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
@@ -899,29 +894,53 @@ namespace Anki {
                                                      trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
         }
         
-        MessageDockingErrorSignal dockingErrorSignal;
-        if(true == _visionProcessor.CheckMailbox(dockingErrorSignal)) {
+        //MessageDockingErrorSignal dockingErrorSignal;
+        std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
+        if(true == _visionProcessor.CheckMailbox(markerPoseWrtCamera)) {
           
-          // HACK: Robot seems to dock slightly to the right rather consistently
-          if (_isPhysical) {
-            dockingErrorSignal.x_distErr -= DOCKING_LATERAL_OFFSET_HACK;
+          // Convert from camera frame to robot frame
+          Anki::Cozmo::RobotPoseStamp p;
+          TimeStamp_t t;
+          _poseHistory->GetRawPoseAt(markerPoseWrtCamera.second, t, p);
+          
+          // Hook the pose coming out of the vision system up to the historical
+          // camera at that timestamp
+          Vision::Camera histCamera(GetHistoricalCamera(&p, t));
+          markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
+          /*
+          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+          Pose3d markerPoseWrtRobot;
+          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+            PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
+                              "Could not get marker pose w.r.t. robot.");
+            return RESULT_FAIL;
           }
+          */
+          //Pose3d poseWrtRobot = poseWrtCam;
+          //poseWrtRobot.PreComposeWith(camWrtRobotPose);
+          Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
+          markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
           
+          DockingErrorSignal dockErrMsg;
+          dockErrMsg.timestamp = markerPoseWrtCamera.second;
+          dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
+          dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
+          dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
+          dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
+                    
           // Visualize docking error signal
-          VizManager::getInstance()->SetDockingError(dockingErrorSignal.x_distErr,
-                                                     dockingErrorSignal.y_horErr,
-                                                     dockingErrorSignal.angleErr);
+          VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
+                                                     dockErrMsg.y_horErr,
+                                                     dockErrMsg.angleErr);
           
           // Try to use this for closed-loop control by sending it on to the robot
-          SendMessage(dockingErrorSignal);
-          
+          SendMessage(RobotInterface::EngineToRobot(std::move(dockErrMsg)));
         }
-        
-        MessagePanAndTiltHead panTiltHead;
-        if(true == _visionProcessor.CheckMailbox(panTiltHead)) {
-          
-          SendMessage(panTiltHead);
-          
+        {
+          RobotInterface::PanAndTilt panTiltHead;
+          if (true == _visionProcessor.CheckMailbox(panTiltHead)) {
+            SendMessage(RobotInterface::EngineToRobot(std::move(panTiltHead)));
+          }
         }
         
         ////////// Update the robot's blockworld //////////
@@ -946,9 +965,13 @@ namespace Anki {
       // module(s) would do.  e.g. Some combination of game state, build planner,
       // personality planner, etc.
       
+      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      
+      _emotionMgr.Update(currentTime);
+      
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
-        _behaviorMgr.Update(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+        _behaviorMgr.Update(currentTime);
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
@@ -968,14 +991,14 @@ namespace Anki {
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update(*this);
       if(actionResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.\n", GetID());
+        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.", GetID());
       }
         
       //////// Stream Animations /////////
       Result animStreamResult = _animationStreamer.Update(*this);
       if(animStreamResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.Update",
-                            "Robot %d had an animation streaming failure.\n", GetID());
+                            "Robot %d had an animation streaming failure.", GetID());
       }
         
       
@@ -1260,6 +1283,17 @@ namespace Anki {
       if(_blockWorld.GetObjectByID(_trackToObjectID) != nullptr) {
         _trackWithHeadOnly = headOnly;
         _trackToFaceID = Vision::TrackedFace::UnknownFace;
+
+        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking
+        _headLockedBeforeTracking = IsHeadLocked();
+        _wheelsLockedBeforeTracking = AreWheelsLocked();
+
+        LockHead(true);
+        if(!headOnly) {
+          LockWheels(true);
+        }
+        
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
@@ -1276,6 +1310,18 @@ namespace Anki {
       if(_faceWorld.GetFace(_trackToFaceID) != nullptr) {
         _trackWithHeadOnly = headOnly;
         _trackToObjectID.UnSet();
+        
+        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking        // Store whether head/wheels were locked before tracking so we can
+        // return them to this state when we disable tracking
+        _headLockedBeforeTracking = IsHeadLocked();
+        _wheelsLockedBeforeTracking = AreWheelsLocked();
+        
+        LockHead(true);
+        if(!headOnly) {
+          LockWheels(true);
+        }
+        
         return RESULT_OK;
       } else {
         PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
@@ -1288,7 +1334,23 @@ namespace Anki {
     
     Result Robot::DisableTrackToObject()
     {
-      _trackToObjectID.UnSet();
+      if(_trackToObjectID.IsSet()) {
+        _trackToObjectID.UnSet();
+        // Restore lock state to whatever it was when we enabled tracking
+        LockHead(_headLockedBeforeTracking);
+        LockWheels(_wheelsLockedBeforeTracking);
+      }
+      return RESULT_OK;
+    }
+    
+    Result Robot::DisableTrackToFace()
+    {
+      if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
+        _trackToFaceID = Vision::TrackedFace::UnknownFace;
+        // Restore lock state to whatever it was when we enabled tracking
+        LockHead(_headLockedBeforeTracking);
+        LockWheels(_wheelsLockedBeforeTracking);
+      }
       return RESULT_OK;
     }
       
@@ -1317,11 +1379,11 @@ namespace Anki {
       return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
     }
     
-    Result Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
+    u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      Result lastResult = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      u8 tag = _animationStreamer.SetStreamingAnimation(animName, numLoops);
       _lastPlayedAnimationId = animName;
-      return lastResult;
+      return tag;
     }
     
     Result Robot::SetIdleAnimation(const std::string &animName)
@@ -1400,7 +1462,7 @@ namespace Anki {
 
 
     // Read the animations in a dir
-    void Robot::ReadAnimationDir(bool playLoadedAnimation)
+    void Robot::ReadAnimationDir()
     {
       if (_dataPlatform == nullptr) { return; }
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
@@ -1453,13 +1515,6 @@ namespace Anki {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
         }
       }
-
-
-      if (!animationId.empty() && loadedFileCount == 1 && playLoadedAnimation) {
-        // send message to play animation
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "playing animation id %s", animationId.c_str());
-        PlayAnimation(animationId, 1);
-      }
     }
 
     Result Robot::SyncTime()
@@ -1467,15 +1522,9 @@ namespace Anki {
       return SendSyncTime();
     }
     
-    void Robot::SetSyncTimeAcknowledged(bool ack)
-    {
-      _syncTimeAcknowledged = ack;
-    }
-      
-
     Result Robot::TrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments)
     {
-      return SendTrimPath(numPopFrontSegments, numPopBackSegments);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::TrimPath(numPopFrontSegments, numPopBackSegments)));
     }
     
     
@@ -1881,7 +1930,7 @@ namespace Anki {
     {
       VizManager::getInstance()->ErasePath(_ID);
       _pdo->ClearPath();
-      return SendClearPath();
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::ClearPath(0)));
     }
     
     // Sends a path to the robot to be immediately executed
@@ -2005,25 +2054,37 @@ namespace Anki {
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
-                                 const DockAction_t dockAction,
+                                 const DockAction dockAction,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
-      return DockWithObject(objectID, marker, marker2, dockAction, 0, 0, u8_MAX, useManualSpeed);
+      return DockWithObject(objectID,
+                            marker,
+                            marker2,
+                            dockAction,
+                            0, 0, u8_MAX,
+                            placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
+                            useManualSpeed);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
-                                 const DockAction_t dockAction,
+                                 const DockAction dockAction,
                                  const u16 image_pixel_x,
                                  const u16 image_pixel_y,
                                  const u8 pixel_radius,
+                                 const f32 placementOffsetX_mm,
+                                 const f32 placementOffsetY_mm,
+                                 const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.DockWithObject.ObjectDoesNotExist",
-                          "Object with ID=%d no longer exists for docking.\n", objectID.GetValue());
+          "Object with ID=%d no longer exists for docking.", objectID.GetValue());
         return RESULT_FAIL;
       }
       
@@ -2052,12 +2113,13 @@ namespace Anki {
         // When we are "docking" with a ramp or crossing a bridge, we
         // don't want to worry about the X angle being large (since we
         // _expect_ it to be large, since the markers are facing upward).
-        const bool checkAngleX = !(dockAction == DA_RAMP_ASCEND  ||
-                                   dockAction == DA_RAMP_DESCEND ||
-                                   dockAction == DA_CROSS_BRIDGE);
+        const bool checkAngleX = !(dockAction == DockAction::DA_RAMP_ASCEND  ||
+                                   dockAction == DockAction::DA_RAMP_DESCEND ||
+                                   dockAction == DockAction::DA_CROSS_BRIDGE);
         
         // Tell the VisionSystem to start tracking this marker:
-        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX);
+        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX,
+                                          placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad);
       }
       
       return sendResult;
@@ -2069,16 +2131,22 @@ namespace Anki {
     // the marker can be seen anywhere in the image (same as above function), otherwise the
     // marker's center must be seen at the specified image coordinates
     // with pixel_radius pixels.
-    Result Robot::SendDockWithObject(const DockAction_t dockAction,
+    Result Robot::SendDockWithObject(const DockAction dockAction,
                                      const bool useManualSpeed)
     {
-      // Create message to send to physical robot
-      MessageDockWithObject msg;
-      msg.useManualSpeed = useManualSpeed;
-      msg.dockAction     = dockAction;
-      
-      
-      return SendMessage(msg);
+      return SendMessage(RobotInterface::EngineToRobot(::Anki::Cozmo::DockWithObject(0.0f, dockAction, useManualSpeed)));
+    }
+    
+    const std::set<ObjectID> Robot::GetCarryingObjects() const
+    {
+      std::set<ObjectID> objects;
+      if (_carryingObjectID.IsSet()) {
+        objects.insert(_carryingObjectID);
+      }
+      if (_carryingObjectOnTopID.IsSet()) {
+        objects.insert(_carryingObjectOnTopID);
+      }
+      return objects;
     }
     
     void Robot::SetCarryingObject(ObjectID carryObjectID)
@@ -2086,21 +2154,18 @@ namespace Anki {
       ObservableObject* object = _blockWorld.GetObjectByID(carryObjectID);
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetCarryingObject",
-                          "Object %d no longer exists in the world. Can't set it as robot's carried object.\n",
-                          carryObjectID.GetValue());
+          "Object %d no longer exists in the world. Can't set it as robot's carried object.", carryObjectID.GetValue());
       } else {
         ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
         if(carriedObject == nullptr) {
           // This really should not happen
           PRINT_NAMED_ERROR("Robot.SetCarryingObject",
-                            "Object %d could not be cast as an ActionableObject, so cannot mark it as carried.\n",
-                            carryObjectID.GetValue());
+            "Object %d could not be cast as an ActionableObject, so cannot mark it as carried.", carryObjectID.GetValue());
         } else {
-          if(carriedObject->IsBeingCarried() == true) {
+          if(carriedObject->IsBeingCarried()) {
             PRINT_NAMED_WARNING("Robot.SetCarryingObject",
-                                "Robot %d is about to mark object %d as carried but that object "
-                                "already thinks it is being carried.\n", GetID(), carryObjectID.GetValue());
-            
+              "Robot %d is about to mark object %d as carried but that object already thinks it is being carried.",
+              GetID(), carryObjectID.GetValue());
           }
           carriedObject->SetBeingCarried(true);
           _carryingObjectID = carryObjectID;
@@ -2108,42 +2173,49 @@ namespace Anki {
           // Tell the robot it's carrying something
           // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
           if(_carryingObjectOnTopID.IsSet()) {
-            SendSetCarryState(CARRY_2_BLOCK);
+            SendSetCarryState(CarryState::CARRY_2_BLOCK);
           } else {
-            SendSetCarryState(CARRY_1_BLOCK);
+            SendSetCarryState(CarryState::CARRY_1_BLOCK);
           }
         }
       }
     }
     
-    void Robot::UnSetCarryingObject()
+    void Robot::UnSetCarryingObjects()
     {
-      ObservableObject* object = _blockWorld.GetObjectByID(_carryingObjectID);
-      if(object == nullptr) {
-        PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                          "Object %d robot %d thought it was carrying no longer exists in the world.\n",
-                          _carryingObjectID.GetValue(), GetID());
-      } else {
-        ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
-        if(carriedObject == nullptr) {
-          // This really should not happen
-          PRINT_NAMED_ERROR("Robot.UnSetCarryingObject",
-                            "Carried object %d could not be cast as an ActionableObject.\n",
-                            _carryingObjectID.GetValue());
-        } else if(carriedObject->IsBeingCarried() == false) {
-          PRINT_NAMED_WARNING("Robot.UnSetCarryingObject",
-                              "Robot %d thinks it is carrying object %d but that object "
-                              "does not think it is being carried.\n", GetID(), _carryingObjectID.GetValue());
-          
+      std::set<ObjectID> carriedObjectIDs = GetCarryingObjects();
+      for (auto& objID : carriedObjectIDs) {
+        ObservableObject* object = _blockWorld.GetObjectByID(objID);
+        if(object == nullptr) {
+          PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                            "Object %d robot %d thought it was carrying no longer exists in the world.\n",
+                            objID.GetValue(), GetID());
         } else {
-          carriedObject->SetBeingCarried(false);
-          
-          // Tell the robot it's not carrying anything
-          SendSetCarryState(CARRY_NONE);
+          ActionableObject* carriedObject = dynamic_cast<ActionableObject*>(object);
+          if(carriedObject == nullptr) {
+            // This really should not happen
+            PRINT_NAMED_ERROR("Robot.UnSetCarryingObjects",
+                              "Carried object %d could not be cast as an ActionableObject.\n",
+                              objID.GetValue());
+          } else if(carriedObject->IsBeingCarried() == false) {
+            PRINT_NAMED_WARNING("Robot.UnSetCarryingObjects",
+                                "Robot %d thinks it is carrying object %d but that object "
+                                "does not think it is being carried.\n", GetID(), objID.GetValue());
+            
+          } else {
+            carriedObject->SetBeingCarried(false);
+          }
         }
       }
+      
+      // Tell the robot it's not carrying anything
+      if (_carryingObjectID.IsSet()) {
+        SendSetCarryState(CarryState::CARRY_NONE);
+      }
+
       // Even if the above failed, still mark the robot's carry ID as unset
       _carryingObjectID.UnSet();
+      _carryingObjectOnTopID.UnSet();
     }
     
     Result Robot::SetObjectAsAttachedToLift(const ObjectID& objectID, const Vision::KnownMarker* objectMarker)
@@ -2264,7 +2336,7 @@ namespace Anki {
                        object->GetPose().GetTranslation().y(),
                        object->GetPose().GetTranslation().z());
 
-      UnSetCarryingObject(); // also sets carried object as not being carried anymore
+      UnSetCarryingObjects(); // also sets carried objects as not being carried anymore
       _carryingMarker = nullptr;
       
       if(_carryingObjectOnTopID.IsSet()) {
@@ -2296,13 +2368,7 @@ namespace Anki {
       
     } // UnattachCarriedObject()
     
-    
-    Result Robot::SetHeadlight(u8 intensity)
-    {
-      return SendHeadlight(intensity);
-    }
-    
-    
+
     void Robot::StartBehavior(const std::string& behaviorName)
     {
       if(behaviorName == "NONE") {
@@ -2327,11 +2393,11 @@ namespace Anki {
     
     // ============ Messaging ================
     
-    Result Robot::SendMessage(const RobotMessage& msg, bool reliable, bool hot) const
+    Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
     {
       Result sendResult = _msgHandler->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.\n", _ID);
+        PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
       }
       return sendResult;
     }
@@ -2339,19 +2405,13 @@ namespace Anki {
     // Sync time with physical robot and trigger it robot to send back camera calibration
     Result Robot::SendSyncTime() const
     {
-      MessageSyncTime m;
-      m.robotID  = _ID;
-      m.syncTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      
-      Result result = SendMessage(m);
+
+      Result result = SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::SyncTime(_ID, BaseStationTimer::getInstance()->GetCurrentTimeStamp())));
       
       if(result == RESULT_OK) {
-        // For specifying resolution for basestation vision:
-        // (Start with QVGA)
-        MessageImageRequest m;
-        m.imageSendMode = ISM_STREAM;
-        m.resolution    = Vision::CAMERA_RES_CVGA;
-        result = SendMessage(m);
+        result = SendMessage(RobotInterface::EngineToRobot(
+          RobotInterface::ImageRequest(ImageSendMode::Stream, ImageResolution::CVGA)));
         
         // Reset pose on connect
         PRINT_NAMED_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
@@ -2364,63 +2424,28 @@ namespace Anki {
       return result;
     }
     
-    // Clears the path that the robot is executing which also stops the robot
-    Result Robot::SendClearPath() const
-    {
-      MessageClearPath m;
-      m.pathID = 0;
-      
-      return SendMessage(m);
-    }
-    
-    // Removes the specified number of segments from the front and back of the path
-    Result Robot::SendTrimPath(const u8 numPopFrontSegments, const u8 numPopBackSegments) const
-    {
-      MessageTrimPath m;
-      m.numPopFrontSegments = numPopFrontSegments;
-      m.numPopBackSegments = numPopBackSegments;
-
-      return SendMessage(m);
-    }
-    
     // Sends a path to the robot to be immediately executed
     Result Robot::SendExecutePath(const Planning::Path& path, const bool useManualSpeed) const
     {
       // Send start path execution message
-      MessageExecutePath m;
-      m.pathID = _lastSentPathID;
-      m.useManualSpeed = useManualSpeed;
-      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)\n", _lastSentPathID, useManualSpeed);
-      
-      return SendMessage(m);
+      PRINT_NAMED_INFO("Robot::SendExecutePath", "sending start execution message (pathID = %d, manualSpeed == %d)", _lastSentPathID, useManualSpeed);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::ExecutePath(_lastSentPathID, useManualSpeed)));
     }
     
     Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
     {
-      MessagePlaceObjectOnGround m;
-      
-      m.rel_angle = rel_angle;
-      m.rel_x_mm  = rel_x;
-      m.rel_y_mm  = rel_y;
-      m.useManualSpeed = useManualSpeed;
-      
-      return SendMessage(m);
-    } // SendPlaceBlockOnGround()
+      return SendMessage(RobotInterface::EngineToRobot(
+        Anki::Cozmo::PlaceObjectOnGround(rel_x, rel_y, rel_angle, useManualSpeed)));
+    }
     
     Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
     {
-      MessageMoveLift m;
-      m.speed_rad_per_sec = speed_rad_per_sec;
-      
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::MoveLift(speed_rad_per_sec)));
     }
     
     Result Robot::SendMoveHead(const f32 speed_rad_per_sec) const
     {
-      MessageMoveHead m;
-      m.speed_rad_per_sec = speed_rad_per_sec;
-      
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::MoveHead(speed_rad_per_sec)));
     }
 
     Result Robot::SendSetLiftHeight(const f32 height_mm,
@@ -2428,13 +2453,8 @@ namespace Anki {
                                     const f32 accel_rad_per_sec2,
                                     const f32 duration_sec) const
     {
-      MessageSetLiftHeight m;
-      m.height_mm = height_mm;
-      m.max_speed_rad_per_sec = max_speed_rad_per_sec;
-      m.accel_rad_per_sec2 = accel_rad_per_sec2;
-      m.duration_sec = duration_sec;
-      
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::SetLiftHeight(height_mm,max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec)));
     }
     
     Result Robot::SendSetHeadAngle(const f32 angle_rad,
@@ -2442,65 +2462,52 @@ namespace Anki {
                                    const f32 accel_rad_per_sec2,
                                    const f32 duration_sec) const
     {
-      MessageSetHeadAngle m;
-      m.angle_rad = angle_rad;
-      m.max_speed_rad_per_sec = max_speed_rad_per_sec;
-      m.accel_rad_per_sec2 = accel_rad_per_sec2;
-      m.duration_sec = duration_sec;
-      
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::SetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec)));
     }
 
     Result Robot::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
                                          const f32 accel_rad_per_sec2) const
     {
-      MessageTurnInPlaceAtSpeed m;
-      m.speed_rad_per_sec = speed_rad_per_sec;
-      m.accel_rad_per_sec2 = accel_rad_per_sec2;
-      
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::TurnInPlaceAtSpeed(speed_rad_per_sec, accel_rad_per_sec2)));
     }
     
     Result Robot::SendTapBlockOnGround(const u8 numTaps) const
     {
+      /*
       MessageTapBlockOnGround m;
       m.numTaps = numTaps;
       
       return _msgHandler->SendMessage(_ID,m);
+      */
+      return Result::RESULT_OK;
     }
     
     Result Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
     {
-      MessageDriveWheels m;
-      m.lwheel_speed_mmps = lwheel_speed_mmps;
-      m.rwheel_speed_mmps = rwheel_speed_mmps;
-      
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::DriveWheels(lwheel_speed_mmps, rwheel_speed_mmps)));
     }
     
     Result Robot::SendStopAllMotors() const
     {
-      MessageStopAllMotors m;
-      return _msgHandler->SendMessage(_ID,m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::StopAllMotors()));
     }
     
     Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
                                             const TimeStamp_t&   t,
                                             const PoseFrameID_t& frameId) const
     {
-      // TODO: Add z?
-      MessageAbsLocalizationUpdate m;
-      
-      m.timestamp = t;
-      
-      m.pose_frame_id = frameId;
-      
-      m.xPosition = pose.GetTranslation().x();
-      m.yPosition = pose.GetTranslation().y();
-      
-      m.headingAngle = pose.GetRotation().GetAngleAroundZaxis().ToFloat();
-      
-      return SendMessage(m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::AbsoluteLocalizationUpdate(
+          t,
+          frameId,
+          pose.GetTranslation().x(),
+          pose.GetTranslation().y(),
+          pose.GetRotation().GetAngleAroundZaxis().ToFloat()
+        )));
     }
     
     Result Robot::SendAbsLocalizationUpdate() const
@@ -2518,48 +2525,19 @@ namespace Anki {
     
     Result Robot::SendHeadAngleUpdate() const
     {
-      MessageHeadAngleUpdate m;
-      
-      m.newAngle = _currentHeadAngle;
-      
-      return SendMessage(m);
-    }
-
-    Result Robot::SendImageRequest(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
-    {
-      MessageImageRequest m;
-      
-      m.imageSendMode = mode;
-      m.resolution    = resolution;
-      
-      return SendMessage(m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::HeadAngleUpdate(_currentHeadAngle)));
     }
 
     Result Robot::SendIMURequest(const u32 length_ms) const
     {
+      /*
       MessageIMURequest m;
       m.length_ms = length_ms;
-      
+
       return SendMessage(m);
-    }
-    
-    Result Robot::SendStartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
-    {
-      MessageStartTestMode m;
-      
-      m.mode = mode;
-      m.p1 = p1;
-      m.p2 = p2;
-      m.p3 = p3;
-      
-      return SendMessage(m);
-    }
-    
-    Result Robot::SendHeadlight(u8 intensity)
-    {
-      MessageSetHeadlight m;
-      m.intensity = intensity;
-      return SendMessage(m);
+      */
+      return Result::RESULT_OK;
     }
 
     void Robot::SetSaveStateMode(const SaveMode_t mode)
@@ -2612,7 +2590,7 @@ namespace Anki {
       // implementation on the robot). We'll just reassemble that from
       // pose history, but this should not be necessary forever.
       // NOTE: only the info found in pose history will be valid in the state message!
-      MessageRobotState robotState;
+      RobotState robotState;
       
       RobotPoseStamp p;
       TimeStamp_t actualTimestamp;
@@ -2628,10 +2606,10 @@ namespace Anki {
       robotState.pose_frame_id = p.GetFrameId();
       robotState.headAngle     = p.GetHeadAngle();
       robotState.liftAngle = p.GetLiftAngle();
-      robotState.pose_x    = p.GetPose().GetTranslation().x();
-      robotState.pose_y    = p.GetPose().GetTranslation().y();
-      robotState.pose_z    = p.GetPose().GetTranslation().z();
-      robotState.pose_angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
+      robotState.pose.x    = p.GetPose().GetTranslation().x();
+      robotState.pose.y    = p.GetPose().GetTranslation().y();
+      robotState.pose.z    = p.GetPose().GetTranslation().z();
+      robotState.pose.angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
       
 #     if ASYNC_VISION_PROCESSING
       
@@ -2652,33 +2630,16 @@ namespace Anki {
     
     Result Robot::StartFaceTracking(u8 timeout_sec)
     {
-      Result lastResult = SendStartFaceTracking(timeout_sec);
       _visionProcessor.EnableFaceDetection(true);
-      return lastResult;
+      return RESULT_OK;
     }
     
     Result Robot::StopFaceTracking()
     {
-      Result lastResult = SendStopFaceTracking();
       _visionProcessor.EnableFaceDetection(false);
-      return lastResult;
+      return RESULT_OK;
     }
     
-    Result Robot::SendStartFaceTracking(const u8 timeout_sec)
-    {
-      MessageFaceTracking m;
-      m.enabled = static_cast<u8>(true);
-      m.timeout_sec = timeout_sec;
-      return SendMessage(m);
-    }
-    
-    Result Robot::SendStopFaceTracking()
-    {
-      MessageFaceTracking m;
-      m.enabled = static_cast<u8>(false);
-      return SendMessage(m);
-    }
-
     Result Robot::StartLookingForMarkers()
     {
       _visionProcessor.EnableMarkerDetection(true);
@@ -2691,44 +2652,13 @@ namespace Anki {
       return RESULT_OK;
     }
       
+    /*
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D(), Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, -25, 0)) };
+    */
 
-    
-    void Robot::GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const
-    {
-      GetBoundingBox(GetPose(), bbox3d, padding_mm);
-    }
-    
-    void Robot::GetBoundingBox(const Pose3d& atPose, std::array<Point3f,8>& corners,
-                               const Point3f& padding_mm) const
-    {
-      static const std::array<Point3f,8> CanonicalCorners = {{
-        Point3f(ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y,  0.f),
-        Point3f(ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y,  0.f),
-        Point3f(ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
-        Point3f(ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
-        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y,  0.f),
-        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y,  0.f),
-        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z),
-        Point3f(ROBOT_BOUNDING_X_FRONT-ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y,  ROBOT_BOUNDING_Z)
-      }};
-      
-      // Start with canonical corners
-      std::copy(CanonicalCorners.begin(), CanonicalCorners.end(), corners.begin());
-      
-      // Add padding
-      for(auto & corner : corners) {
-        corner.x() += (corner.x() < 0 ? -padding_mm.x() : padding_mm.x());
-        corner.y() += (corner.y() < 0 ? -padding_mm.y() : padding_mm.y());
-        corner.z() += (corner.z() < 0 ? -padding_mm.z() : padding_mm.z());
-      }
-      
-      // Rotate and translate to the given pose
-      atPose.ApplyTo(CanonicalCorners, corners);
-    }
-    
+
     Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
     {
       return GetBoundingQuadXY(_pose, padding_mm);
@@ -2756,7 +2686,7 @@ namespace Anki {
       using namespace Quad;
       for(CornerName iCorner = FirstCorner; iCorner < NumCorners; ++iCorner) {
         // Rotate to given pose
-        boundingQuad[iCorner] = R * CanonicalBoundingBoxXY[iCorner];
+        boundingQuad[iCorner] = R * boundingQuad[iCorner];
       }
       
       // Re-center
@@ -2783,79 +2713,46 @@ namespace Anki {
     Result Robot::SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
                                           const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight)
     {
-      MessageSetWheelControllerGains m;
-      m.kpLeft = kpLeft;
-      m.kiLeft = kiLeft;
-      m.maxIntegralErrorLeft = maxIntegralErrorLeft;
-      m.kpRight = kpRight;
-      m.kiRight = kiRight;
-      m.maxIntegralErrorRight = maxIntegralErrorRight;
-      
-      return SendMessage(m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::ControllerGains(kpLeft, kiLeft, 0.0f, maxIntegralErrorLeft,
+          Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel
+        )));
     }
       
     Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
-      MessageSetHeadControllerGains m;
-      m.kp = kp;
-      m.ki = ki;
-      m.kd = kd;
-      m.maxIntegralError = maxIntegralError;
-      return SendMessage(m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::ControllerGains(kp, ki, kd, maxIntegralError,
+          Anki::Cozmo::RobotInterface::ControllerChannel::controller_head
+        )));
     }
     
     Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
     {
-      MessageSetLiftControllerGains m;
-      m.kp = kp;
-      m.ki = ki;
-      m.kd = kd;      
-      m.maxIntegralError = maxIntegralError;
-      return SendMessage(m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::ControllerGains(kp, ki, kd, maxIntegralError,
+          Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift
+        )));
     }
     
     Result Robot::SetSteeringControllerGains(const f32 k1, const f32 k2)
     {
-      MessageSetSteeringControllerGains m;
-      m.k1 = k1;
-      m.k2 = k2;
-      return SendMessage(m);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::ControllerGains(k1, k2, 0.0f, 0.0f,
+          Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing
+        )));
     }
-      
-    Result Robot::SendVisionSystemParams(VisionSystemParams_t p)
-    {
-      MessageSetVisionSystemParams m;
-      m.autoexposureOn = p.autoexposureOn;
-      m.exposureTime = p.exposureTime;
-      m.minExposureTime = p.minExposureTime;
-      m.maxExposureTime = p.maxExposureTime;
-      m.percentileToMakeHigh = p.percentileToMakeHigh;
-      m.integerCountsIncrement = p.integerCountsIncrement;
-      m.highValue = p.highValue;
-      m.limitFramerate = p.limitFramerate;
-      return _msgHandler->SendMessage(_ID,m);
-    }
-    
-    Result Robot::SendFaceDetectParams(FaceDetectParams_t p)
-    {
-      MessageSetFaceDetectParams m;
-      m.scaleFactor = p.scaleFactor;
-      m.minNeighbors = p.minNeighbors;
-      m.minObjectHeight = p.minObjectHeight;
-      m.minObjectWidth = p.minObjectWidth;
-      m.maxObjectHeight = p.maxObjectHeight;
-      m.maxObjectWidth = p.maxObjectWidth;
-      return SendMessage(m);
-    }
-    
+
     Result Robot::StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
     {
-      return SendStartTestMode(mode, p1, p2, p3);
+      return SendMessage(RobotInterface::EngineToRobot(
+        StartControllerTestMode(p1, p2, p3, mode)));
     }
     
-    Result Robot::RequestImage(const ImageSendMode_t mode, const Vision::CameraResolution resolution) const
+    Result Robot::RequestImage(const ImageSendMode mode, const ImageResolution resolution) const
     {
-      return SendImageRequest(mode, resolution);
+      return SendMessage(RobotInterface::EngineToRobot(
+        RobotInterface::ImageRequest(mode, resolution)));
     }
     
     Result Robot::RequestIMU(const u32 length_ms) const
@@ -3019,33 +2916,26 @@ namespace Anki {
       return poseUpdated;
     }
     
-    
-    void Robot::SetDefaultLights(const u32 color)
+
+    void Robot::SetBackpackLights(const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onColor,
+                                  const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offColor,
+                                  const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& onPeriod_ms,
+                                  const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& offPeriod_ms,
+                                  const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
     {
-      MessageSetDefaultLights m;
-      //m.eye_left_color = eye_left_color;
-      //m.eye_right_color = eye_right_color;
-      m.color = color;
-      _msgHandler->SendMessage(GetID(), m);
-    }
-      
-      
-    void Robot::SetBackpackLights(const std::array<u32,NUM_BACKPACK_LEDS>& onColor,
-                                  const std::array<u32,NUM_BACKPACK_LEDS>& offColor,
-                                  const std::array<u32,NUM_BACKPACK_LEDS>& onPeriod_ms,
-                                  const std::array<u32,NUM_BACKPACK_LEDS>& offPeriod_ms,
-                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
-                                  const std::array<u32,NUM_BACKPACK_LEDS>& transitionOffPeriod_ms)
-    {
-      MessageSetBackpackLights msg;
-      msg.onColor = onColor;
-      msg.offColor = offColor;
-      msg.onPeriod_ms = onPeriod_ms;
-      msg.offPeriod_ms = offPeriod_ms;
-      msg.transitionOnPeriod_ms = transitionOnPeriod_ms;
-      msg.transitionOffPeriod_ms = transitionOffPeriod_ms;
-      
-      _msgHandler->SendMessage(GetID(), msg);
+      ASSERT_NAMED((int)LEDId::NUM_BACKPACK_LEDS == 5, "Robot.wrong.number.of.backpack.ligths");
+      std::array<Anki::Cozmo::LightState, 5> lights;
+      for (int i = 0; i < (int)LEDId::NUM_BACKPACK_LEDS; ++i){
+        lights[i].onColor = onColor[i];
+        lights[i].offColor = offColor[i];
+        lights[i].onPeriod_ms = onPeriod_ms[i];
+        lights[i].offPeriod_ms = offPeriod_ms[i];
+        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
+        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+      }
+
+      SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
     }
     
 
@@ -3088,7 +2978,7 @@ namespace Anki {
     } // GetActiveObject()
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
-                                  const WhichBlockLEDs whichLEDs,
+                                  const WhichCubeLEDs whichLEDs,
                                   const u32 onColor, const u32 offColor,
                                   const u32 onPeriod_ms, const u32 offPeriod_ms,
                                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
@@ -3103,7 +2993,7 @@ namespace Anki {
       } else {
         
         // NOTE: if make relative mode is "off", this call doesn't do anything:
-        const WhichBlockLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
+        const WhichCubeLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
                                                                                       relativeToPoint,
                                                                                       makeRelative);
         
@@ -3111,19 +3001,27 @@ namespace Anki {
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
         
-        MessageSetBlockLights m;
-        activeCube->FillMessage(m);
-        return _msgHandler->SendMessage(GetID(), m);
+        std::array<Anki::Cozmo::LightState, 4> lights;
+        ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+        for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
+          lights[i].onColor = activeCube->_ledState[i].onColor;
+          lights[i].offColor = activeCube->_ledState[i].offColor;
+          lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
+          lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
+          lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
+          lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+        }
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
     }
       
     Result Robot::SetObjectLights(const ObjectID& objectID,
-                                  const std::array<u32,NUM_BLOCK_LEDS>& onColor,
-                                  const std::array<u32,NUM_BLOCK_LEDS>& offColor,
-                                  const std::array<u32,NUM_BLOCK_LEDS>& onPeriod_ms,
-                                  const std::array<u32,NUM_BLOCK_LEDS>& offPeriod_ms,
-                                  const std::array<u32,NUM_BLOCK_LEDS>& transitionOnPeriod_ms,
-                                  const std::array<u32,NUM_BLOCK_LEDS>& transitionOffPeriod_ms,
+                                  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
+                                  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offColor,
+                                  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onPeriod_ms,
+                                  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& offPeriod_ms,
+                                  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOnPeriod_ms,
+                                  const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& transitionOffPeriod_ms,
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
@@ -3138,9 +3036,18 @@ namespace Anki {
         // NOTE: if make relative mode is "off", this call doesn't do anything:
         activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
         
-        MessageSetBlockLights m;
-        activeCube->FillMessage(m);
-        return _msgHandler->SendMessage(GetID(), m);
+        std::array<Anki::Cozmo::LightState, 4> lights;
+        ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+        for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
+          lights[i].onColor = onColor[i];
+          lights[i].offColor = offColor[i];
+          lights[i].onPeriod_ms = onPeriod_ms[i];
+          lights[i].offPeriod_ms = offPeriod_ms[i];
+          lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms[i];
+          lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms[i];
+        }
+
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
 
     }
@@ -3206,27 +3113,22 @@ namespace Anki {
     
     Result Robot::SendAbortAnimation()
     {
-      MessageAbortAnimation m;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::AbortAnimation()));
     }
     
     Result Robot::SendAbortDocking()
     {
-      MessageAbortDocking m;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::AbortDocking()));
     }
  
-    Result Robot::SendSetCarryState(CarryState_t state)
+    Result Robot::SendSetCarryState(CarryState state)
     {
-      MessageSetCarryState m;
-      m.state = state;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryState(state)));
     }
       
     Result Robot::SendFlashObjectIDs()
     {
-      MessageFlashBlockIDs m;
-      return _msgHandler->SendMessage(GetID(), m);
+      return SendMessage(RobotInterface::EngineToRobot(FlashObjectIDs()));
     }
      
       /*
@@ -3274,7 +3176,7 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      activeCube->SetLEDs(ActiveCube::WhichBlockLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
+      activeCube->SetLEDs(ActiveCube::WhichCubeLEDs::ALL, color, onPeriod_ms, offPeriod_ms);
       
       return SendSetObjectLights(activeCube);
       */
@@ -3286,10 +3188,17 @@ namespace Anki {
         PRINT_NAMED_ERROR("Robot.SendSetObjectLights", "Null active object pointer provided.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       }
-      
-      MessageSetBlockLights m;
-      activeCube->FillMessage(m);
-      return _msgHandler->SendMessage(GetID(), m);
+      std::array<Anki::Cozmo::LightState, 4> lights;
+      ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
+      for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
+        lights[i].onColor = activeCube->_ledState[i].onColor;
+        lights[i].offColor = activeCube->_ledState[i].offColor;
+        lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
+        lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
+        lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
+        lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+      }
+      return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }
       
       

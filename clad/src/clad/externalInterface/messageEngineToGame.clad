@@ -4,12 +4,13 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/types/actionTypes.clad"
-#include "clad/types/robotStatusFlag.clad"
-#include "clad/types/cameraSettings.clad"
-#include "clad/types/upAxis.clad"
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
 #include "clad/externalInterface/messageShared.clad"
+#include "clad/externalInterface/keyWordRecognized.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -103,20 +104,6 @@ message RobotImage_640x480 {
 }
 */
 
-// ImageChunk
-message ImageChunk {
-    uint_32 imageId,
-    uint_32 frameTimeStamp,
-    uint_16 nrows,
-    uint_16 ncols,
-    uint_16 chunkSize,
-    ImageEncodingClad imageEncoding,
-    uint_8 imageChunkCount,
-    uint_8 chunkId,
-    uint_8 data[1300] // Should match R2B MessageImageChunk size!
-}
-
-
 // RobotObservedObject for signaling that an object
 //  with specified ID/Type/Family was seen at a particular location in the image
 //  and the world
@@ -199,7 +186,15 @@ message RobotCompletedAction {
     ActionCompletedStruct completionInfo  //  "
 }
 
+// BlockPickedUp
+message BlockPickedUp {
+    bool didSucceed                       // true if robot thinks it picked up a block (from low or high position)
+}
 
+// BlockPlaced
+message BlockPlaced {
+    bool didSucceed                       // true if robot thinks it placed up a block (from low or high position)
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  SOUND  ////////////////////////////////////
@@ -223,32 +218,6 @@ message StopSound {
 
 message AnimationAvailable {
 string animName
-}
-
-///////////////////////////////////////////////////////////////////////////////
-/////////////////////////////  ACTIVE OBJECTS /////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-message ActiveObjectMoved {
-    uint_8   robotID,
-    uint_32  objectID,
-    float_32 xAccel,
-    float_32 yAccel,
-    float_32 zAccel,
-    UpAxisClad upAxis
-}
-
-message ActiveObjectStoppedMoving {
-    uint_8   robotID,
-    uint_32  objectID,
-    UpAxisClad upAxis,
-    bool     rolled
-}
-
-message ActiveObjectTapped {
-  uint_8   robotID,
-  uint_32  objectID,
-  uint_8   numTaps
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

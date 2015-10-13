@@ -14,29 +14,46 @@
 #ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 #define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
-
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
-
+#include "clad/types/robotStatusAndActions.h"
 #include <thread>
 #include <mutex>
 
 namespace Anki {
   
-  // Forward declaration
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
+// Forward declaration
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+}
+  
+  namespace Vision {
+    class TrackedFace;
   }
   
 namespace Cozmo {
-  
+
+namespace RobotInterface {
+struct PanAndTilt;
+class EngineToRobot;
+class RobotToEngine;
+enum class EngineToRobotTag : uint8_t;
+enum class RobotToEngineTag : uint8_t;
+} // end namespace RobotInterface
+
+namespace VizInterface {
+class MessageViz;
+struct TrackerQuad;
+enum class MessageVizTag : uint8_t;
+} // end namespace VizInterface
+
 // Forward declaration
 class VisionSystem;
+struct DockingErrorSignal;
 
 class VisionProcessingThread
   {
@@ -53,7 +70,7 @@ class VisionProcessingThread
     void Stop();
     
     void SetNextImage(const Vision::Image& image,
-                      const MessageRobotState& robotState);
+                      const RobotState& robotState);
     
     //
     // Synchronous operation
@@ -61,14 +78,17 @@ class VisionProcessingThread
     void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
     void Update(const Vision::Image& image,
-                const MessageRobotState& robotState);
+                const RobotState& robotState);
 
     
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
                           const f32                    markerWidth_mm,
                           const Point2f&               imageCenter,
                           const f32                    radius,
-                          const bool                   checkAngleX);
+                          const bool                   checkAngleX,
+                          const f32                    postOffsetX_mm = 0,
+                          const f32                    postOffsetY_mm = 0,
+                          const f32                    postOffsetAngle_rad = 0);
     
     // Enable/disable different types of processing
     void EnableMarkerDetection(bool tf);
@@ -80,11 +100,11 @@ class VisionProcessingThread
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(MessageDockingErrorSignal&  msg);
+    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
     //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(MessageTrackerQuad&         msg);
-    bool CheckMailbox(MessagePanAndTiltHead&      msg);
+    bool CheckMailbox(VizInterface::TrackerQuad&         msg);
+    bool CheckMailbox(RobotInterface::PanAndTilt&      msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
     // If the current image is newer than the specified timestamp, copy it into
@@ -109,8 +129,8 @@ class VisionProcessingThread
     Vision::Image _nextImg;
     Vision::Image _lastImg; // the last image we processed
     
-    MessageRobotState _currentRobotState;
-    MessageRobotState _nextRobotState;
+    RobotState _currentRobotState;
+    RobotState _nextRobotState;
     
     std::thread _processingThread;
     

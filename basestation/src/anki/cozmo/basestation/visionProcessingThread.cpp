@@ -12,10 +12,11 @@
  **/
 
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-#include "visionSystem.h"
+#include "anki/cozmo/basestation/visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
-#include "anki/vision/markerCodeDefinitions.h"
+#include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -115,7 +116,7 @@ namespace Cozmo {
 
 
   void VisionProcessingThread::SetNextImage(const Vision::Image &image,
-                                            const Anki::Cozmo::MessageRobotState &robotState)
+                                            const RobotState &robotState)
   {
     Lock();
     
@@ -135,13 +136,19 @@ namespace Cozmo {
                         const f32                    markerWidth_mm,
                         const Point2f&               imageCenter,
                         const f32                    radius,
-                        const bool                   checkAngleX)
+                        const bool                   checkAngleX,
+                        const f32                    postOffsetX_mm,
+                        const f32                    postOffsetY_mm,
+                        const f32                    postOffsetAngle_rad)
   {
     if(_visionSystem != nullptr) {
       Embedded::Point2f pt(imageCenter.x(), imageCenter.y());
       Vision::MarkerType markerType = static_cast<Vision::MarkerType>(markerToTrack);
       _visionSystem->SetMarkerToTrack(markerType, markerWidth_mm,
-                                      pt, radius, checkAngleX);
+                                      pt, radius, checkAngleX,
+                                      postOffsetX_mm,
+                                      postOffsetY_mm,
+                                      postOffsetAngle_rad);
     } else {
       PRINT_NAMED_ERROR("VisionProcessingThread.SetMarkerToTrack.NullVisionSystem", "Cannot set vision marker to track before vision system is instantiated.\n");
     }
@@ -226,7 +233,7 @@ namespace Cozmo {
   }
 
   void VisionProcessingThread::Update(const Vision::Image& image,
-                                      const MessageRobotState& robotState)
+                                      const RobotState& robotState)
   {
     if(_isCamCalibSet) {
       if(!_visionSystem->IsInitialized()) {
@@ -322,15 +329,15 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessageDockingErrorSignal& msg)
+  bool VisionProcessingThread::CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*&& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
                                        "CheckMailbox called before vision system instantiated.");// and initialized.");
-    return _visionSystem->CheckMailbox(msg);
+    return _visionSystem->CheckMailbox(markerPoseWrtCamera);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessageTrackerQuad& msg)
+  bool VisionProcessingThread::CheckMailbox(VizInterface::TrackerQuad& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
@@ -338,7 +345,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessagePanAndTiltHead& msg)
+  bool VisionProcessingThread::CheckMailbox(RobotInterface::PanAndTilt& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",

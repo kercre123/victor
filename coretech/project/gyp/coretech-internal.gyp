@@ -1,4 +1,9 @@
 {
+  'includes': [
+    'face-library.gypi',
+    'opencv.gypi',
+  ],
+  
   'variables': {
 
     'common_library_type': 'static_library',
@@ -34,44 +39,6 @@
       'ANKICORETECH_EMBEDDED_USE_OPENCV=1',
     ],
 
-    # TODO: should this be passed in, or shared?
-    'opencv_includes': [
-      # '<(coretech_external_path)/opencv-2.4.8/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/core/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/highgui/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/imgproc/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/contrib/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/calib3d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/objdetect/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/video/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/features2d/include',
-      '<(coretech_external_path)/opencv-2.4.8/modules/flann/include',
-    ],
-    'opencv_libs': [
-      'libzlib.a',
-      'liblibjpeg.a',
-      'liblibpng.a',
-      'liblibtiff.a',
-      'liblibjasper.a',
-      'libIlmImf.a',
-      'libopencv_core.a',
-      'libopencv_imgproc.a',
-      'libopencv_highgui.a',
-      'libopencv_calib3d.a',
-      'libopencv_contrib.a',
-      'libopencv_objdetect.a',
-      'libopencv_video.a',
-      'libopencv_features2d.a',
-    ],
-    
-    # Here we pick which face library to use and set its path/includes/libs
-    # initially to empty. They will be filled in below in the 'conditions' as
-    # needed:
-    'face_library' : 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
-    'face_library_path':      [ ],
-    'face_library_includes' : [ ],
-    'face_library_libs':      [ ],
-    
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -115,34 +82,6 @@
     # Copy overridden vars into this scope
     'arch_group%': '<(arch_group)',
     'conditions': [
-      # Face libraries, depending on platform:
-      ['face_library=="faciometric"', {
-        'face_library_path': [
-          '<(coretech_external_path)/IntraFace',
-        ]
-      }],
-      ['OS=="mac" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/osx_demo_126/include',
-          '<(face_library_path)/osx_demo_126/3rdparty/Eigen3/include',
-        ],
-      }],
-      ['OS=="ios" and face_library=="faciometric"', {
-        'face_library_includes': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/3rdparty/include',
-        ],
-        'face_library_libs': [
-          '<(face_library_path)/IntraFace_126_iOS_Anki/Library/intraface.framework',
-        ],
-      }],
-      ['face_library=="facesdk"', {
-        'face_library_includes': [
-          '<(coretech_external_path)/Luxand_FaceSDK/include/C',
-        ],
-      }],
-      ['OS=="android"', {
-
-      }],
     
       ['OS=="ios" and arch_group=="universal"', {
         'target_archs%': ['armv7', 'arm64'],
@@ -253,10 +192,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -269,10 +204,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -285,10 +216,6 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
-            'OTHER_LDFLAGS': [
-              '-L<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-              '-L<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -363,7 +290,6 @@
               '../../common/shared/src',
               '../../common/basestation/test',
               '../../planning/basestation/test',
-              '../../planning/basestation/test',
               '../../vision/basestation/test',
               '<@(opencv_includes)',
             ],
@@ -389,19 +315,127 @@
               ['exclude', 'run_coreTechPlanningTests.cpp'],
               ['exclude', 'run_coreTechPlanningStandalone.cpp'],
             ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(cti-gtest_path)',
+            },
             'libraries': [
               '<(cti-gtest_path)/gtest.framework',
               '<@(opencv_libs)',
             ],
-            'copies': [
+            'actions' : [
               {
-                'files': [
-                  '<(cti-gtest_path)/gtest.framework',
-                ],
-                'destination': '<(PRODUCT_DIR)',
+                'action_name': 'create_symlink_ctiUnitTestFaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVCTIAction',
+                    ],
+                  }],
+                ], # conditions
               },
-            ],
+            ] # actions
           }, # end unittest target
+
+          {
+            'target_name': 'ctiPlanningStandalone',
+            'type': 'executable',
+            'variables': {
+              'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
+            },
+            'include_dirs': [
+              '../../common/shared/src',
+              '../../common/basestation/test',
+              '../../planning/basestation/test',
+              '../../vision/basestation/test',
+              '<@(opencv_includes)',
+            ],
+            'defines': [
+              'TEST_DATA_PATH=<(cti-cozmo_engine_path)/coretech/'
+            ],
+            'dependencies': [
+              'ctiCommon',
+              'ctiVision',
+              'ctiPlanning',
+              '<(cti-util_gyp_path):util',
+              '<(cti-util_gyp_path):jsoncpp',
+            ],
+            'sources': [ 
+              '<!@(cat <(common_test_source))',
+              '<!@(cat <(common_shared_test_source))',
+              '<!@(cat <(vision_test_source))',
+              '<!@(cat <(planning_test_source))',
+              '<!@(cat <(planning_standalone_source))',
+            ],
+            'sources/': [
+              ['exclude', 'run_coreTechCommonSharedTests.cpp'],
+              ['exclude', 'run_coreTechVisionTests.cpp'],
+              ['exclude', 'run_coreTechPlanningTests.cpp'],
+              ['exclude', 'run_coreTechCommonTests.cpp'],
+              ['exclude', '.*/test/.*'],
+              ['include', 'run_coreTechPlanningStandalone.cpp'],
+            ],
+            'xcode_settings': {
+            },
+            'libraries': [
+              '<@(opencv_libs)',
+            ],
+            'actions' : [
+              {
+                'action_name': 'create_symlink_ctiUnitTestFaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                      'echo',
+                      'dummyOpenCVCTIAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
+          },
 
         ], # end targets
       },
@@ -521,6 +555,7 @@
       'dependencies': [
         'ctiCommon',
         '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util',
       ],
       'defines': [
         'CORETECH_BASESTATION'
@@ -562,8 +597,12 @@
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(face_library_includes)',
       ],
-      'libraries': [
-        '<@(face_library_libs)',
+      'conditions': [
+        ['OS=="ios" and face_library=="facesdk"', {
+          'libraries': [
+            '<@(face_library_libs)',
+          ],
+        }],
       ],
       'direct_dependent_settings': {
         'include_dirs': [

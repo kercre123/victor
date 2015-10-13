@@ -3,12 +3,13 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
+#include "clad/types/imageTypes.h"
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "imuFilter.h"
 #include "pickAndPlaceController.h"
 #include "dockingController.h"
-#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "testModeController.h"
@@ -20,6 +21,7 @@
 #include "animationController.h"
 #include "proxSensors.h"
 #include "backpackLightController.h"
+#include "blockLightController.h"
 #include "timeProfiler.h"
 
 #include "anki/messaging/shared/utilMessaging.h"
@@ -37,9 +39,9 @@ namespace Anki {
     
 #ifdef SIMULATOR
     namespace HAL {
-      ImageSendMode_t imageSendMode_;
-      Vision::CameraResolution captureResolution_ = Vision::CAMERA_RES_CVGA;
-      void SetImageSendMode(const ImageSendMode_t mode, const Vision::CameraResolution res)
+      ImageSendMode imageSendMode_;
+      ImageResolution captureResolution_ = CVGA;
+      void SetImageSendMode(const ImageSendMode mode, const ImageResolution res)
       {
         imageSendMode_ = mode;
         captureResolution_ = res;
@@ -161,14 +163,10 @@ namespace Anki {
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "PathFollower System init failed.\n");
 
-        lastResult = EyeController::Init();
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "Robot::Init()", "EyeController init failed.\n");
-
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                            "Robot::Init()", "BackpackLightController init failed.\n");
-
+        
         // Initialize subsystems if/when available:
         /*
          if(WheelController::Init() == RESULT_FAIL) {
@@ -327,7 +325,6 @@ namespace Anki {
           AnimationController::Clear();
         }
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
-        EyeController::Update(); 
         HeadController::Update();
         LiftController::Update();
 
@@ -336,6 +333,7 @@ namespace Anki {
         PickAndPlaceController::Update();
         DockingController::Update();
         BackpackLightController::Update();
+        BlockLightController::Update();
 
         //////////////////////////////////////////////////////////////
         // Audio Subsystem
@@ -354,10 +352,10 @@ namespace Anki {
             if(MotorCalibrationUpdate()) {
               // Once initialization is done, broadcast a message that this robot
               // is ready to go
-              Messages::RobotAvailable msg;
+              RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
               PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
-              HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::RobotAvailable), &msg);
+              RobotInterface::SendMessage(msg);
 
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
@@ -392,18 +390,29 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         Anki::Cozmo::HAL::ManageCubes();
         
-
+        
         //////////////////////////////////////////////////////////////
         // Pickup reaction
         //////////////////////////////////////////////////////////////
-        if (IMUFilter::IsPickedUp() && !wasPickedUp_) {
-          // Stop wheels
-          AnimationController::Clear();
-          PickAndPlaceController::Reset();
-          SpeedController::SetBothDesiredAndCurrentUserSpeed(0);
-        }
-        wasPickedUp_ = IMUFilter::IsPickedUp();
+        const bool isPickedUp = IMUFilter::IsPickedUp();
+        if (isPickedUp && !wasPickedUp_) {
+          // Just got picked up
+          // Stop all movement (so we don't hurt people's hands)
+          LiftController::Disable();
+          HeadController::Disable();
+          WheelController::Disable();
 
+          PickAndPlaceController::Reset();
+          PathFollower::ClearPath();
+          wasPickedUp_ = true;
+        }
+        else if(!isPickedUp && wasPickedUp_) {
+          // Just got put back down
+          LiftController::Enable();
+          HeadController::Enable();
+          WheelController::Enable();
+          wasPickedUp_ = false;
+        }
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display
@@ -441,13 +450,13 @@ namespace Anki {
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
-          Messages::MainCycleTimeError m;
+          RobotInterface::MainCycleTimeError m;
           m.numMainTooLateErrors = mainTooLateCnt_;
           m.avgMainTooLateTime = avgMainTooLateTime_;
           m.numMainTooLongErrors = mainTooLongCnt_;
           m.avgMainTooLongTime = avgMainTooLongTime_;
 
-          HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::MainCycleTimeError), &m);
+          RobotInterface::SendMessage(m);
 
           mainTooLateCnt_ = 0;
           avgMainTooLateTime_ = 0;
@@ -476,7 +485,7 @@ namespace Anki {
           return retVal;
         }
 
-        if (HAL::imageSendMode_ != ISM_OFF) {
+        if (HAL::imageSendMode_ != Off) {
         
           TimeStamp_t currentTime = HAL::GetTimeStamp();
 
@@ -521,8 +530,8 @@ namespace Anki {
           } // if(lastImageSentTime != currentImageTime)
           
           
-          if (HAL::imageSendMode_ == ISM_SINGLE_SHOT) {
-            HAL::imageSendMode_ = ISM_OFF;
+          if (HAL::imageSendMode_ == SingleShot) {
+            HAL::imageSendMode_ = Off;
           }
           
         } // if (HAL::imageSendMode_ != ISM_OFF)

@@ -7,7 +7,7 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/errorHandling.h"
-
+#include "messages.h"
 
 #define DEBUG_LIFT_CONTROLLER 0
 
@@ -59,10 +59,16 @@ namespace Anki {
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
         
+        // The height of the "fingers"
+        const f32 LIFT_FINGER_HEIGHT = 3.8f;
+        
+        // Calibration offset
+        const f32 LIFT_CAL_OFFSET = 0; //mm
+        
 #elif defined(COZMO_ROBOT_V40)
         // Cozmo 4.0
-        f32 Kp_ = 3.f;    // proportional control constant
-        f32 Kd_ = 1250.f;  // derivative gain
+        f32 Kp_ = 2.5;    // proportional control constant
+        f32 Kd_ = 400.f;  // derivative gain
         f32 Ki_ = 0.1f; //0.05f;   // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 4.f;
@@ -76,6 +82,9 @@ namespace Anki {
 
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
+
+        // Calibration offset
+        const f32 LIFT_CAL_OFFSET = -3;
 #else
         // Cozmo 4.1 - smooth gearbox
         f32 Kp_ = 2.5f;    // proportional control constant
@@ -93,6 +102,9 @@ namespace Anki {
         
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
+        
+        // Calibration offset
+        const f32 LIFT_CAL_OFFSET = -8; //mm
 #endif
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -157,7 +169,7 @@ namespace Anki {
 
       // Returns the angle between the shoulder joint and the wrist joint.
       f32 Height2Rad(f32 height_mm) {
-        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        height_mm = CLIP(height_mm, LIFT_HEIGHT_LOWDOCK + LIFT_CAL_OFFSET, LIFT_HEIGHT_CARRY);
         return asinf((height_mm - LIFT_BASE_POSITION[2] - LIFT_FORK_HEIGHT_REL_TO_ARM_END)/LIFT_ARM_LENGTH);
       }
       
@@ -169,7 +181,7 @@ namespace Anki {
       Result Init()
       {
         // Init consts
-        LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK);
+        LIFT_ANGLE_LOW_LIMIT = Height2Rad(LIFT_HEIGHT_LOWDOCK + LIFT_CAL_OFFSET);
         return RESULT_OK;
       }
       
@@ -303,7 +315,7 @@ namespace Anki {
 #ifdef SIMULATOR
         power = desired_speed_rad_per_sec * 0.05;
 #else
-        CarryState_t cs = PickAndPlaceController::GetCarryState();
+        CarryState cs = PickAndPlaceController::GetCarryState();
         if (desired_speed_rad_per_sec > 0) {
           power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP[cs];
         } else {

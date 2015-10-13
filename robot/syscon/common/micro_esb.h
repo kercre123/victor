@@ -129,6 +129,7 @@ typedef struct
 {
     uint8_t length;
     uint8_t pipe;
+    uint8_t address;
     int8_t  rssi;
 
     struct {
@@ -146,7 +147,7 @@ typedef struct
     uint32_t        count;
 } uesb_payload_fifo_t;
 
-uint32_t uesb_init(uesb_config_t *parameters);
+uint32_t uesb_init(const uesb_config_t *parameters);
 uint32_t uesb_disable(void);
 bool     uesb_is_idle(void);
 uint32_t uesb_write_tx_payload(uint8_t pipe, uint8_t *payload, uint8_t length);

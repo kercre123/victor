@@ -145,7 +145,6 @@ END_MESSAGE_DEFINITION(ExecutePath)
 
 // DockWithObject
 START_MESSAGE_DEFINITION(DockWithObject, 1)
-ADD_MESSAGE_MEMBER(f32, horizontalOffset_mm)  // Offset wrt to docking object. Don't know if this will work yet.
 ADD_MESSAGE_MEMBER(u8, dockAction)  // See DockAction_t
 ADD_MESSAGE_MEMBER(u8, useManualSpeed)
 END_MESSAGE_DEFINITION(DockWithObject)
@@ -261,8 +260,6 @@ ADD_MESSAGE_MEMBER(f32, x_distErr)
 ADD_MESSAGE_MEMBER(f32, y_horErr)
 ADD_MESSAGE_MEMBER(f32, z_height)
 ADD_MESSAGE_MEMBER(f32, angleErr) // in radians
-ADD_MESSAGE_MEMBER(u8,  didTrackingSucceed)
-ADD_MESSAGE_MEMBER(u8,  isApproximate)
 END_MESSAGE_DEFINITION(DockingErrorSignal)
 
 // TODO: Remove this message (keeping for now to avoid changing ID ordering for python)
@@ -371,6 +368,13 @@ END_MESSAGE_DEFINITION(SetBlockBeingCarried)
 
 /////// Animation KeyFrame Streaming ///////
 
+// AnimKeyFrame_StartOfAnimation
+//  This just lets us keep track of _which_ animation is playing on the robot
+//  by giving it a "random" tag to report back while it is playing.
+START_MESSAGE_DEFINITION(AnimKeyFrame_StartOfAnimation, 1)
+ADD_MESSAGE_MEMBER(u8, tag)
+END_MESSAGE_DEFINITION(AnimKeyFrame_StartOfAnimation)
+
 // AnimKeyFrame_AudioSample
 START_MESSAGE_DEFINITION(AnimKeyFrame_AudioSample, 1)
 ADD_MESSAGE_MEMBER_ARRAY(u8, sample, 800) // TODO: Somehow make this use AUDIO_SAMPLE_SIZE
@@ -419,7 +423,7 @@ END_MESSAGE_DEFINITION(AnimKeyFrame_BackpackLights)
 START_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion, 1)
 ADD_MESSAGE_MEMBER(s16, speed)               // Commanded speed in mm/sec or deg/sec
 ADD_MESSAGE_MEMBER(s16, curvatureRadius_mm)  // +ve: curves left, -ve: curves right, ...
-                                             // ...u16_MAX/MIN: drive straight...
+                                             // ...s16_MAX/MIN: drive straight...
                                              // ...0: turn in place (+ve speed: left, -ve speed: right)
 END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 
@@ -427,4 +431,13 @@ END_MESSAGE_DEFINITION(AnimKeyFrame_BodyMotion)
 START_MESSAGE_DEFINITION(AnimKeyFrame_EndOfAnimation, 1)
 END_MESSAGE_DEFINITION(AnimKeyFrame_EndOfAnimation)
 
+// EnableAnimTracks
+START_MESSAGE_DEFINITION(EnableAnimTracks, 1)
+ADD_MESSAGE_MEMBER(u8, whichTracks)
+END_MESSAGE_DEFINITION(EnableAnimTracks)
+
+// DisableAnimTracks
+START_MESSAGE_DEFINITION(DisableAnimTracks, 1)
+ADD_MESSAGE_MEMBER(u8, whichTracks)
+END_MESSAGE_DEFINITION(DisableAnimTracks)
 

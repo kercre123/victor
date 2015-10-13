@@ -26,7 +26,7 @@
 #include "anki/common/basestation/exceptions.h"
 
 #include "anki/vision/basestation/observableObjectLibrary.h"
-
+#include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
@@ -34,19 +34,6 @@
 
 namespace Anki
 {
-  
-  namespace NamedColors {
-    // Add some BlockWorld-specific named colors:
-    extern const ColorRGBA EXECUTED_PATH              ;
-    extern const ColorRGBA PREDOCKPOSE                ;
-    extern const ColorRGBA PRERAMPPOSE                ;
-    extern const ColorRGBA SELECTED_OBJECT            ;
-    extern const ColorRGBA BLOCK_BOUNDING_QUAD        ;
-    extern const ColorRGBA OBSERVED_QUAD              ;
-    extern const ColorRGBA ROBOT_BOUNDING_QUAD        ;
-    extern const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD ;
-  }
-  
   namespace Cozmo
   {
     // Forward declarations:
@@ -237,9 +224,11 @@ namespace Anki
                                const TimeStamp_t atTimestamp,
                                size_t& numObjectsUpdated);
       
+      /*
       // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
       Result UpdateProxObstaclePoses();
-      
+      */
+
       // Finds existing objects that overlap with and are of the same type as objectSeen,
       // where overlap is defined by the IsSameAs() function.
       void FindOverlappingObjects(const ObservableObject* objectSeen,

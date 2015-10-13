@@ -1,0 +1,64 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum int_8 ImageResolution
+{
+  VerificationSnapshot, // 16 x 16
+  QQQQVGA,   // 40 x 30
+  QQQVGA,    // 80 x 60
+  QQVGA,     // 160 x 120
+  QVGA,      // 320 x 240
+  CVGA,      // 400 x 296
+  VGA,       // 640 x 480
+  SVGA,      // 800 x 600
+  XGA,       // 1024 x 768
+  SXGA,      // 1280 x 960, technically SXGA-
+  UXGA,      // 1600 x 1200
+  QXGA,      // 2048 x 1536
+  QUXGA,     // 3200 x 2400  
+  ImageResolutionCount,
+  ImageResolutionNone
+}
+
+enum uint_8 ImageEncoding
+{
+  NoneImageEncoding,
+  RawGray, // no compression
+  RawRGB,  // no compression, just [RGBRGBRG...]
+  YUYV,
+  BAYER,
+  JPEGGray,
+  JPEGColor,
+  JPEGColorHalfWidth,
+  JPEGMinimizedGray, // Minimized grayscale JPEG - no header, no footer, no byte stuffing
+  JPEGMinimizedColor // Minimized grayscale JPEG - no header, no footer, no byte stuffing, with added color data
+}
+
+enum uint_8 ImageSendMode {
+    Off,
+    Stream,
+    SingleShot
+}
+
+enum uint_32 ImageConstants
+{
+  IMAGE_CHUNK_SIZE = 1200
+}
+
+message ImageChunk {
+  uint_32 frameTimeStamp,
+  uint_32 imageId,
+  ImageEncoding imageEncoding,
+  ImageResolution resolution,
+  uint_8 imageChunkCount,
+  uint_8 chunkId,
+  uint_8 data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above
+}
+
+} // namespace Cozmo
+} // namespace Anki

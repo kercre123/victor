@@ -11,6 +11,9 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -24,9 +27,9 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
 , _robotMgr(externalInterface, dataPlatform)
-, _robotMsgHandler(dataPlatform)
+, _robotMsgHandler(*(new RobotInterface::MessageHandler()))
+, _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
-, _animationReloadActive(false)
 {
 
   PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -51,11 +54,21 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 
 }
 
+CozmoEngineHostImpl::~CozmoEngineHostImpl()
+{
+  delete(&_robotMsgHandler);
+  delete _keywordRecognizer;
+  _keywordRecognizer = nullptr;
+}
+
 Result CozmoEngineHostImpl::InitInternal()
 {
-  Result lastResult = _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
-
-  return lastResult;
+  std::string hmmFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
+  std::string keywordFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
+  std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
+  _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
+  _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
+  return RESULT_OK;
 }
 
 void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
@@ -254,7 +267,6 @@ void CozmoEngineHostImpl::ListenForRobotConnections(bool listen)
 
 Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
 {
-  ReloadAnimations(currTime_ns);
 
   // Update robot comms
   _robotChannel.Update();
@@ -273,24 +285,9 @@ Result CozmoEngineHostImpl::UpdateInternal(const BaseStationTime_t currTime_ns)
   // robots in the world.
   _robotMgr.UpdateAllRobots();
 
+  _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
   return RESULT_OK;
 } // UpdateInternal()
-
-void CozmoEngineHostImpl::ReloadAnimations(const BaseStationTime_t currTime_ns)
-{
-  if (!_animationReloadActive) {
-    return;
-  }
-  const BaseStationTime_t reloadFrequency = static_cast<BaseStationTime_t>SEC_TO_NANOS(0.5f);
-  if (_lastAnimationFolderScan + reloadFrequency < currTime_ns) {
-    _lastAnimationFolderScan = currTime_ns;
-    Robot* robot = _robotMgr.GetFirstRobot();
-    if (robot != nullptr) {
-      PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
-      robot->ReadAnimationDir(true);
-    }
-  }
-}
 
 bool CozmoEngineHostImpl::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
 {
@@ -312,7 +309,7 @@ void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, ImageSendMode newM
     return robot->SetImageSendMode(newMode);
   }
 }
-void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution)
+void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution)
 {
   Robot* robot = GetRobotByID(robotID);
 
@@ -324,10 +321,17 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
       robot->GetBlockWorld().EnableDraw(true);
     }
 
-    robot->RequestImage((ImageSendMode_t)newMode,
-      (Vision::CameraResolution)resolution);
+    robot->RequestImage(newMode, resolution);
   }
 
+}
+  
+void CozmoEngineHostImpl::ReadAnimationsFromDisk() {
+  Robot* robot = _robotMgr.GetFirstRobot();
+  if (robot != nullptr) {
+    PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
+    robot->ReadAnimationDir();
+  }
 }
 
 void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -356,8 +360,8 @@ void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::ReadAnimationFile:
     {
-      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "started animation tool");
-      StartAnimationTool();
+      PRINT_NAMED_INFO("CozmoGame.HandleEvents", "Reading Animations from disk");
+      ReadAnimationsFromDisk();
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode:

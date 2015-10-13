@@ -20,6 +20,9 @@
 #include "liftController.h"
 #include "wheelController.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 
 // For event callbacks
 #include "testModeController.h"
@@ -80,7 +83,7 @@ namespace Anki {
         // Recorded buffer
         bool isRecording_ = false;
         u8 recordDataIdx_ = 0;
-        Messages::IMUDataChunk imuChunkMsg_;
+        RobotInterface::IMUDataChunk imuChunkMsg_;
 
         
         // ====== Event detection vars ======
@@ -268,12 +271,6 @@ namespace Anki {
         HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
       }
       
-      void StartPickAndPlaceTest()
-      {
-        TestModeController::Start(TM_PICK_AND_PLACE);
-        TurnOffIndicatorLight();
-      }
-      
       void StartPathFollowTest()
       {
         TestModeController::Start(TM_PATH_FOLLOW);
@@ -311,7 +308,7 @@ namespace Anki {
         // TODO: This should probably go somewhere else
         eventActivationCallbacks[UPSIDE_DOWN] = ToggleHeadLights;
         eventActivationCallbacks[RIGHTSIDE_DOWN] = TurnOnIndicatorLight;
-        eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
+        //eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
         eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
         eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
         eventActivationCallbacks[FRONTSIDE_DOWN] = TurnOnIndicatorLight;
@@ -689,7 +686,7 @@ namespace Anki {
 
           // Send message when it's full
           if (++recordDataIdx_ == IMU_CHUNK_SIZE) {
-            HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::IMUDataChunk), &imuChunkMsg_);
+            RobotInterface::SendMessage(imuChunkMsg_);
             recordDataIdx_ = 0;
             ++imuChunkMsg_.chunkId;
             

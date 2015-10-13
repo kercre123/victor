@@ -11,6 +11,7 @@
 #include "anki/common/shared/velocityProfileGenerator.h"
 
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
 
 
 #define DEBUG_PATH_FOLLOWER 0
