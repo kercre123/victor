@@ -128,6 +128,7 @@ public class ActiveBlock : ObservedObject {
 
   public static Action<int, int> TappedAction;
   public static Action<int, float, float, float> MovedAction;
+  public static Action<int> StoppedAction;
 
   public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
@@ -168,6 +169,9 @@ public class ActiveBlock : ObservedObject {
     if (message.rolled) {
       if (OnAxisChange != null)
         OnAxisChange(this);
+    }
+    if (StoppedAction != null) {
+      StoppedAction(ID);
     }
   }
 

@@ -18,7 +18,7 @@ public class LookForPattern : State {
     }
     else if (NoBlocksMoved()) {
       // nobody has moved blocks for a while... ima make my own pattern.
-      stateMachine.SetNextState(new HaveIdeaForPattern());
+      // stateMachine.SetNextState(new HaveIdeaForPattern());
     }
   }
 
