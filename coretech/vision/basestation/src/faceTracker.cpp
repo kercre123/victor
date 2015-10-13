@@ -1129,6 +1129,9 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    // Apply contrast-limited adaptive histogram equalization (CLAHE) to help
+    // normalize illumination
+    // TODO: apply this further up the chain
     cv::Mat cvFrame;
     clahe->apply(frame.get_CvMat_(), cvFrame);
     
@@ -1138,7 +1141,7 @@ namespace Vision {
       
       // Search entire frame
       std::vector<cv::Rect> newFaceRects;
-      _faceCascade.detectMultiScale(frame.get_CvMat_(), newFaceRects,
+      _faceCascade.detectMultiScale(cvFrame, newFaceRects,
                                     opencvDetectScaleFactor, 2, 0,
                                     opencvDetectMinFaceSize);
       
@@ -1201,7 +1204,7 @@ namespace Vision {
         cv::Rect_<f32> cvFaceRect = (faceRect.get_CvRect_() &
                                     cv::Rect_<f32>(0, 0, frame.GetNumCols(), frame.GetNumRows()));
         
-        cv::Mat faceRoi = frame.get_CvMat_()(cvFaceRect);
+        cv::Mat faceRoi = cvFrame(cvFaceRect);
         
         _faceCascade.detectMultiScale(faceRoi, updatedRects,
                                       opencvDetectScaleFactor, 2, 0,
@@ -1231,10 +1234,9 @@ namespace Vision {
       face.SetTimeStamp(frame.GetTimestamp());
       
       // Just use assumed eye locations within the rectangle
-      // TODO: Use OpenCV's eye detector?
       std::vector<cv::Rect> eyeRects;
       const cv::Rect_<float>& faceRect = face.GetRect().get_CvRect_();
-      cv::Mat faceRoi = frame.get_CvMat_()(faceRect);
+      cv::Mat faceRoi = cvFrame(faceRect);
       _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.25, 2, 0, cv::Size(5,5),
                                     cv::Size(faceRoi.cols/4,faceRoi.rows/4));
       if(eyeRects.size() == 2) {
