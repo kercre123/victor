@@ -17,6 +17,7 @@
 #include <anki/messaging/basestation/IComms.h>
 
 #include "anki/cozmo/basestation/cozmoEngine.h"
+#include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"

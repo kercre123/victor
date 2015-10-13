@@ -139,7 +139,7 @@ namespace Anki {
     {
       const u16 width  = Vision::CameraResInfo[(int)msg.resolution].width;
       const u16 height = Vision::CameraResInfo[(int)msg.resolution].height;
-      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, width, height,
+      const bool isImageReady = _imageDeChunker.AppendChunk(msg.imageId, msg.frameTimeStamp, height, width,
         msg.imageEncoding, msg.imageChunkCount, msg.chunkId, msg.data.data(), (uint32_t)msg.data.size());
       
       
@@ -150,6 +150,8 @@ namespace Anki {
           cvtColor(img, img, CV_GRAY2RGB);
         }
         
+        const s32 outputColor = 1; // 1 for Green, 2 for Blue
+        
         for(s32 i=0; i<img.rows; ++i) {
           
           if(i % 2 == 0) {
@@ -158,12 +160,14 @@ namespace Anki {
           } else {
             u8* img_i = img.ptr(i);
             for(s32 j=0; j<img.cols; ++j) {
-              img_i[3*j] = 0;
-              img_i[3*j+2] /= 3;
+              img_i[3*j+outputColor] = std::max(std::max(img_i[3*j], img_i[3*j + 1]), img_i[3*j + 2]);
+              
+              img_i[3*j+(3-outputColor)] /= 2;
+              img_i[3*j] = 0; // kill red channel
               
               // [Optional] Add a bit of noise
               f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
-              img_i[3*j+1] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+1]) + noise)));
+              img_i[3*j+outputColor] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+outputColor]) + noise)));
               
             }
           }
