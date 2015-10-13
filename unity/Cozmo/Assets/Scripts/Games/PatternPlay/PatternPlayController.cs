@@ -8,8 +8,6 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
-  private int cozmoEnergyLevel = 0;
-  private static int cozmoMaxEnergyLevel = 6;
   private float lastBlinkTime = 0.0f;
   private int lastMovedID = -1;
   private bool seenPattern = false;
@@ -101,6 +99,8 @@ public class PatternPlayController : GameController {
       blockPatternData.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
     }
     ResetLookHeadForkLift();
+
+    // setup pattern play state machine
     patternPlayStateMachine.SetGameController(this);
     patternPlayStateMachine.SetNextState(new LookForPattern());
     stateMachineManager.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine);
@@ -109,41 +109,31 @@ public class PatternPlayController : GameController {
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
 
+    // inputs for setting block lights
     KeyboardBlockCycle();
     PhoneCycle();
 
-    Color[] levelColors = { new Color(0.8f, 0.5f, 0.0f, 1.0f), Color.green };
-
-    // update backpack lights
-    // iterate through each of the lights and determine if
-    // the light should be on, and if so, which color.
-
-    for (int i = 0; i < 3; ++i) {
-      int localEnergyLevel = cozmoEnergyLevel;
-      int localLoopCount = 0;
-      robot.lights[i].onColor = CozmoPalette.ColorToUInt(Color.black);
-      do {
-        if (localEnergyLevel > i) {
-          robot.lights[i].onColor = CozmoPalette.ColorToUInt(levelColors[localLoopCount]);
-        }
-        localLoopCount++;
-        localEnergyLevel -= 3;
-      } while (localEnergyLevel > i && localLoopCount < levelColors.Length);
-    }
-
+    // actually set the lights on the physical blocks.
     SetBlockLights();
 
+    // detect patterns based on cozmo's vision
+    DetectPatterns();
+
+    // update cozmo's behavioral state machine for pattern play.
+    stateMachineManager.UpdateAllMachines();
+
+    // this may need to be moved to include other states if we want UI for them.
+    patternPlayUIController.UpdateUI(memoryBank);
+
+  }
+
+  private void DetectPatterns() {
     // check cozmo vision for patterns.
     BlockPattern currentPattern = null;
     seenPattern = false;
 
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
       if (!memoryBank.Contains(currentPattern)) {
-        cozmoEnergyLevel++;
-
-        if (cozmoEnergyLevel > cozmoMaxEnergyLevel) {
-          cozmoEnergyLevel = cozmoMaxEnergyLevel;
-        }
 
         DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
         " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
@@ -159,12 +149,6 @@ public class PatternPlayController : GameController {
 
       lastPatternSeen = currentPattern;
     }
-
-    stateMachineManager.UpdateAllMachines();
-
-    // this may need to be moved to include other states if we want UI for them.
-    patternPlayUIController.UpdateUI(memoryBank);
-
   }
 
   protected override void Exit_PLAYING(bool overrideStars = false) {
@@ -223,6 +207,15 @@ public class PatternPlayController : GameController {
       if (blockConfig.Key == currentMovedID && blockPatternData[blockConfig.Key].moving) {
         enabledColor = Color.green;
         disabledColor = Color.green;
+      }
+      else {
+        for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+          if (robot.markersVisibleObjects[i].ID == (blockConfig.Key)) {
+            enabledColor = Color.white;
+          }
+          break;
+        }
+
       }
 
       for (int i = 0; i < 4; ++i) {
