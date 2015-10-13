@@ -13,7 +13,7 @@
 #ifndef __Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
 #define __Anki_Cozmo_Basestation_RobotInterface_MessageHandler_H__
 
-#include "anki/cozmo/basestation/events/ankiMailboxEventMgr.h"
+#include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/common/types.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -53,7 +53,7 @@ protected:
 private:
   void ProcessPacket(const Comms::IncomingPacket& packet);
 
-  AnkiMailboxEventMgr<RobotInterface::RobotToEngine> _eventMgr;
+  AnkiEventMgr<RobotInterface::RobotToEngine, MailboxSignalMap<RobotInterface::RobotToEngine> > _eventMgr;
   Comms::IChannel* _channel;
   RobotManager* _robotManager;
   bool _isInitialized;

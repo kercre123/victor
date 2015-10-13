@@ -64,6 +64,13 @@
 namespace Anki {
 namespace Vision {
   
+#if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC || \
+    FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
+  // Parameters used by cv::detectMultiScale for both of these face trackers
+  static const f32 opencvDetectScaleFactor = 1.3f;
+  static const cv::Size opencvDetectMinFaceSize(48,48);
+#endif
+  
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
 #pragma mark - FacioMetric-Based FaceTracker
   
@@ -601,11 +608,12 @@ namespace Vision {
         ++faceIter;
       }
     }
-    
+
     // Detecting new faces in the image
     // TODO: Expose these parameters
     std::vector<cv::Rect> newFaceRects;
-    _faceCascade.detectMultiScale(frame, newFaceRects, 1.1, 2, 0, cv::Size(15,15));
+    _faceCascade.detectMultiScale(frame, newFaceRects, opencvDetectScaleFactor,
+                                  2, 0, opencvDetectMinFaceSize);
     
     // TODO: See if we recognize this face
     
@@ -992,6 +1000,7 @@ namespace Vision {
           FSDKP_FACE_CONTOUR13,
           FSDKP_FACE_CONTOUR12}));
       }
+       
     }
     
     // Remove any faces that were not observed
@@ -1068,21 +1077,24 @@ namespace Vision {
     
   private:
     
-    bool _isInitialized;
+    bool _isInitialized = false;
     
     cv::CascadeClassifier _faceCascade;
     cv::CascadeClassifier _eyeCascade;
     
-    u32 _faceCtr;
+    u32 _faceCtr = 0;
+    
+    u32 _frameCtr = 0;
+    const u32 _checkForNewFacesEveryNthFrame = 5; // TODO: Make a settable parameter?
     
     std::map<TrackedFace::ID_t, TrackedFace> _faces;
     
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+
   }; // class FaceTracker::Impl
   
   
   FaceTracker::Impl::Impl(const std::string& modelPath)
-  : _isInitialized(false)
-  , _faceCtr(0)
   {
     const std::string faceCascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     
@@ -1104,6 +1116,9 @@ namespace Vision {
       return;
     }
     
+    // TODO: Make a settable parameter, and/or apply this further up the chain
+    clahe->setClipLimit(4);
+    
     _isInitialized = true;
   }
   
@@ -1114,60 +1129,104 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    std::vector<cv::Rect> newFaceRects;
-    _faceCascade.detectMultiScale(frame.get_CvMat_(), newFaceRects, 1.1, 2, 0, cv::Size(15,15));
+    // Apply contrast-limited adaptive histogram equalization (CLAHE) to help
+    // normalize illumination
+    // TODO: apply this further up the chain
+    cv::Mat cvFrame;
+    clahe->apply(frame.get_CvMat_(), cvFrame);
     
-    // Match detections to existing faces if they overlap enough
-    const f32 intersectionOverUnionThreshold = 0.5f;
-    
-    // Keep a list of existing faces to check and remove any that we find matches
-    // for in the loop below
-    std::list<std::map<TrackedFace::ID_t,TrackedFace>::iterator> existingFacesToCheck;
-    for(auto iter = _faces.begin(); iter != _faces.end(); ++iter) {
-      existingFacesToCheck.emplace_back(iter);
-    }
-    
-    for(auto & newFaceRect : newFaceRects)
+    if(_frameCtr++ == _checkForNewFacesEveryNthFrame)
     {
-      Rectangle<f32> rect_f32(newFaceRect);
+      _frameCtr = 0;
       
-      bool matchFound = false;
-      for(auto existingIter = existingFacesToCheck.begin();
-          !matchFound && existingIter != existingFacesToCheck.end(); )
+      // Search entire frame
+      std::vector<cv::Rect> newFaceRects;
+      _faceCascade.detectMultiScale(cvFrame, newFaceRects,
+                                    opencvDetectScaleFactor, 2, 0,
+                                    opencvDetectMinFaceSize);
+      
+      // Match detections to existing faces if they overlap enough
+      const f32 intersectionOverUnionThreshold = 0.5f;
+      
+      // Keep a list of existing faces to check and remove any that we find matches
+      // for in the loop below
+      std::list<std::map<TrackedFace::ID_t,TrackedFace>::iterator> existingFacesToCheck;
+      for(auto iter = _faces.begin(); iter != _faces.end(); ++iter) {
+        existingFacesToCheck.emplace_back(iter);
+      }
+      
+      for(auto & newFaceRect : newFaceRects)
       {
-        TrackedFace& existingFace = (*existingIter)->second;
-        const Rectangle<f32>& existingRect = existingFace.GetRect();
-        const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
-        const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
-        const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
+        Rectangle<f32> rect_f32(newFaceRect);
         
-        if(IoU > intersectionOverUnionThreshold) {
-          // Update existing face and remove it from additional checking for matches
-          existingFace.SetRect(std::move(rect_f32));
-          existingIter = existingFacesToCheck.erase(existingIter);
-          matchFound = true;
-          break;
-        } else {
-          ++existingIter;
+        bool matchFound = false;
+        for(auto existingIter = existingFacesToCheck.begin();
+            !matchFound && existingIter != existingFacesToCheck.end(); )
+        {
+          TrackedFace& existingFace = (*existingIter)->second;
+          const Rectangle<f32>& existingRect = existingFace.GetRect();
+          const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
+          const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
+          const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
+          
+          if(IoU > intersectionOverUnionThreshold) {
+            // Update existing face and remove it from additional checking for matches
+            existingFace.SetRect(std::move(rect_f32));
+            existingIter = existingFacesToCheck.erase(existingIter);
+            matchFound = true;
+            break;
+          } else {
+            ++existingIter;
+          }
+        } // for each existing face
+        
+        if(!matchFound) {
+          // Add as new face
+          TrackedFace newFace;
+          
+          newFace.SetRect(Rectangle<f32>(newFaceRect));
+          newFace.SetID(_faceCtr++);
+          _faces.emplace(newFace.GetID(), newFace);
         }
-      } // for each existing face
+      }
       
-      if(!matchFound) {
-        // Add as new face
-        TrackedFace newFace;
+      // Remove any faces we are no longer seeing
+      for(auto oldFace : existingFacesToCheck) {
+        _faces.erase(oldFace);
+      }
+      
+    } else {
+      // Search in ROIs around existing faces
+      std::vector<cv::Rect> updatedRects;
+      for(auto faceIter = _faces.begin(); faceIter != _faces.end(); )
+      {
+        Rectangle<f32> faceRect = faceIter->second.GetRect().Scale(1.5f);
+        cv::Rect_<f32> cvFaceRect = (faceRect.get_CvRect_() &
+                                    cv::Rect_<f32>(0, 0, frame.GetNumCols(), frame.GetNumRows()));
         
-        newFace.SetRect(Rectangle<f32>(newFaceRect));
-        newFace.SetID(_faceCtr++);
-        _faces.emplace(newFace.GetID(), newFace);
+        cv::Mat faceRoi = cvFrame(cvFaceRect);
+        
+        _faceCascade.detectMultiScale(faceRoi, updatedRects,
+                                      opencvDetectScaleFactor, 2, 0,
+                                      cv::Size(cvFaceRect.width/2, cvFaceRect.height/2));
+        if(updatedRects.empty()) {
+          // Lost face
+          faceIter = _faces.erase(faceIter);
+        } else {
+          // Update face
+          if(updatedRects.size() > 1) {
+            PRINT_NAMED_WARNING("FaceTracker.Impl.Update.MultipleFaceUpdates",
+                                "Found more than one face in vicinity of existing face. Using first.");
+          }
+          faceIter->second.SetRect(Rectangle<f32>(cvFaceRect.x + updatedRects[0].x,
+                                                  cvFaceRect.y + updatedRects[0].y,
+                                                  updatedRects[0].width, updatedRects[0].height));
+          ++faceIter;
+        }
       }
     }
     
-    // Remove any faces we are no longer seeing
-    for(auto oldFace : existingFacesToCheck) {
-      _faces.erase(oldFace);
-    }
-    
-    // Update all existing faces
+    // Update all remaining existing faces
     for(auto & facePair : _faces)
     {
       TrackedFace& face = facePair.second;
@@ -1175,11 +1234,10 @@ namespace Vision {
       face.SetTimeStamp(frame.GetTimestamp());
       
       // Just use assumed eye locations within the rectangle
-      // TODO: Use OpenCV's eye detector?
       std::vector<cv::Rect> eyeRects;
       const cv::Rect_<float>& faceRect = face.GetRect().get_CvRect_();
-      cv::Mat faceRoi = frame.get_CvMat_()(faceRect);
-      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.1, 2, 0, cv::Size(5,5),
+      cv::Mat faceRoi = cvFrame(faceRect);
+      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.25, 2, 0, cv::Size(5,5),
                                     cv::Size(faceRoi.cols/4,faceRoi.rows/4));
       if(eyeRects.size() == 2) {
         // Iff we find two eyes within the face rectangle, use them
