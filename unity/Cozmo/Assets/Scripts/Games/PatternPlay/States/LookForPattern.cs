@@ -7,6 +7,7 @@ public class LookForPattern : State {
 
   public override void Enter() {
     base.Enter();
+    DAS.Info("State", "LookForPattern");
     // TODO: Set eyes to scan.
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
   }

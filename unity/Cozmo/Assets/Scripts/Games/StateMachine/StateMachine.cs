@@ -23,7 +23,9 @@ public class StateMachine {
 
   public void UpdateStateMachine() {
     if (nextState != null) {
-      currState.Exit();
+      if (currState != null) {
+        currState.Exit();
+      }
       nextState.Enter();
       currState = nextState;
       nextState = null;

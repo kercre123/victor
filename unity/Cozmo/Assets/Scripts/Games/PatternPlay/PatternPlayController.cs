@@ -13,7 +13,7 @@ public class PatternPlayController : GameController {
   private float lastBlinkTime = 0.0f;
   private int lastMovedID = -1;
   private bool seenPattern = false;
-  private bool seenNewPattern = false;
+  private bool lastSeenPatternNew = false;
 
   [SerializeField]
   private PatternPlayAudio patternPlayAudio;
@@ -21,8 +21,9 @@ public class PatternPlayController : GameController {
   [SerializeField]
   private PatternPlayUIController patternPlayUIController;
 
-  [SerializeField]
-  private StateMachineManager stateMachineManager;
+  private StateMachineManager stateMachineManager = new StateMachineManager();
+
+  private StateMachine patternPlayStateMachine = new StateMachine();
 
   private BlockPattern lastPatternSeen = null;
 
@@ -38,8 +39,8 @@ public class PatternPlayController : GameController {
     return seenPattern;
   }
 
-  public bool SeenNewPattern() {
-    return seenNewPattern;
+  public bool LastSeenPatternNew() {
+    return lastSeenPatternNew;
   }
 
   protected override void OnEnable() {
@@ -100,13 +101,15 @@ public class PatternPlayController : GameController {
       blockPatternData.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
     }
     ResetLookHeadForkLift();
+    patternPlayStateMachine.SetGameController(this);
+    patternPlayStateMachine.SetNextState(new LookForPattern());
+    stateMachineManager.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine);
   }
 
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
 
     KeyboardBlockCycle();
-
     PhoneCycle();
 
     Color[] levelColors = { new Color(0.8f, 0.5f, 0.0f, 1.0f), Color.green };
@@ -133,7 +136,7 @@ public class PatternPlayController : GameController {
     // check cozmo vision for patterns.
     BlockPattern currentPattern = null;
     seenPattern = false;
-    seenNewPattern = false;
+
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
       if (!memoryBank.Contains(currentPattern)) {
         cozmoEnergyLevel++;
@@ -146,15 +149,18 @@ public class PatternPlayController : GameController {
         " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
 
         seenPattern = true;
-        seenNewPattern = true;
+        lastSeenPatternNew = true;
         memoryBank.Add(currentPattern);
       }
       else if (lastPatternSeen.Equals(currentPattern) == false) {
         seenPattern = true;
+        lastSeenPatternNew = false;
       }
 
       lastPatternSeen = currentPattern;
     }
+
+    stateMachineManager.UpdateAllMachines();
 
     // this may need to be moved to include other states if we want UI for them.
     patternPlayUIController.UpdateUI(memoryBank);
@@ -266,6 +272,9 @@ public class PatternPlayController : GameController {
   }
 
   private void BlockStopped(int blockID) {
+    if (gameReady == false)
+      return;
+    
     blockPatternData[blockID].moving = false;
   }
 

@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class StateMachineManager : MonoBehaviour {
+public class StateMachineManager {
 
   Dictionary<string, StateMachine> stateMachines = new Dictionary<string, StateMachine>();
 
@@ -17,7 +17,7 @@ public class StateMachineManager : MonoBehaviour {
     return stateMachines.Remove(stateMachineName);
   }
 
-  void Update() {
+  public void UpdateAllMachines() {
     foreach (KeyValuePair<string, StateMachine> kvp in stateMachines) {
       kvp.Value.UpdateStateMachine();
     }
