@@ -6,6 +6,16 @@ public class StateMachine {
   State currState = null;
   State nextState = null;
 
+  GameController gameController = null;
+
+  public GameController GetGameController() {
+    return gameController;
+  }
+
+  public void SetGameController(GameController gameController_) {
+    gameController = gameController_;
+  }
+
   public void SetNextState(State nextState_) {
     nextState = nextState_;
     nextState.SetStateMachine(this);

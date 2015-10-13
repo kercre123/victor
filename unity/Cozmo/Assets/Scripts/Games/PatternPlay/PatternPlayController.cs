@@ -14,6 +14,7 @@ public class PatternPlayController : GameController {
   private static int cozmoMaxEnergyLevel = 6;
   private float lastBlinkTime = 0.0f;
   private int lastMovedID = -1;
+  private bool seenPattern = false;
 
   [SerializeField]
   private PatternPlayAudio patternPlayAudio;
@@ -37,6 +38,14 @@ public class PatternPlayController : GameController {
   private PatternMemory memoryBank = new PatternMemory();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
+
+  public BlockPattern GetLastPatternSeen() {
+    return lastPatternSeen;
+  }
+
+  public bool SeenPattern() {
+    return seenPattern;
+  }
 
   protected override void OnEnable() {
     base.OnEnable();
@@ -127,9 +136,11 @@ public class PatternPlayController : GameController {
 
     // check cozmo vision for patterns.
     BlockPattern currentPattern = null;
+    seenPattern = false;
     if (!animationPlaying && Time.time - lastAnimationFinishedTime > 2.0f) {
       if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
-        
+        seenPattern = true;
+
         if (!memoryBank.Contains(currentPattern)) {
           cozmoEnergyLevel++;
 
@@ -139,8 +150,6 @@ public class PatternPlayController : GameController {
 
           DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
           " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
-
-          Debug.Log(robot.activeBlocks[robot.markersVisibleObjects[0].ID].Forward);
 
           SendAnimation("majorWin");
           memoryBank.Add(currentPattern);
@@ -195,7 +204,6 @@ public class PatternPlayController : GameController {
     int currentMovedID = GetMostRecentMovedID();
     if (currentMovedID != lastMovedID) {
       lastBlinkTime = Time.time;
-      patternPlayAudio.PlayInputReady();
     }
 
     // update block lights
@@ -327,7 +335,7 @@ public class PatternPlayController : GameController {
     return lastTouchedID;
   }
 
-  private float GetMostRecentMovedTime() {
+  public float GetMostRecentMovedTime() {
     float minTime = 0.0f;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
       if (block.Value.lastTimeTouched > minTime) {

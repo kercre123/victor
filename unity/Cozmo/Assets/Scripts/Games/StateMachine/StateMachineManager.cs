@@ -4,15 +4,22 @@ using System.Collections.Generic;
 
 public class StateMachineManager : MonoBehaviour {
 
-  List<StateMachine> stateMachines = new List<StateMachine>();
+  Dictionary<string, StateMachine> stateMachines = new Dictionary<string, StateMachine>();
 
-  public void AddStateMachine(StateMachine stateMachine) {
-    stateMachines.Add(stateMachine);
+  public void AddStateMachine(string stateMachineName, StateMachine stateMachine) {
+    if (stateMachines.ContainsKey(stateMachineName)) {
+      DAS.Error("StateMachineManager", "Duplicate State Machine Name");
+    }
+    stateMachines.Add(stateMachineName, stateMachine);
+  }
+
+  public bool RemoveStateMachine(string stateMachineName) {
+    return stateMachines.Remove(stateMachineName);
   }
 
   void Update() {
-    for (int i = 0; i < stateMachines.Count; ++i) {
-      stateMachines[i].UpdateStateMachine();
+    foreach (KeyValuePair<string, StateMachine> kvp in stateMachines) {
+      kvp.Value.UpdateStateMachine();
     }
   }
 }
