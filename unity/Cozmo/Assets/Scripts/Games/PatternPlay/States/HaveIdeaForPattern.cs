@@ -7,7 +7,7 @@ public class HaveIdeaForPattern : State {
     base.Enter();
     // TODO: pick a pattern to build.
     // TODO: Have idea animation
-    robot.SendAnimation("majorWin", AnimationDone);
+    robot.SendAnimation("shocked", AnimationDone);
   }
 
   private void AnimationDone(bool success) {

@@ -16,7 +16,6 @@ public class CelebratePattern : State {
     else {
       robot.SendAnimation("minorWin", AnimationDone);
     }
-
   }
 
   void AnimationDone(bool success) {

@@ -204,18 +204,16 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
  
+      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+        if (robot.markersVisibleObjects[i].ID == blockConfig.Key) {
+          enabledColor = Color.white;
+          break;
+        }
+      }
+
       if (blockConfig.Key == currentMovedID && blockPatternData[blockConfig.Key].moving) {
         enabledColor = Color.green;
         disabledColor = Color.green;
-      }
-      else {
-        for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-          if (robot.markersVisibleObjects[i].ID == (blockConfig.Key)) {
-            enabledColor = Color.white;
-          }
-          break;
-        }
-
       }
 
       for (int i = 0; i < 4; ++i) {
@@ -307,32 +305,25 @@ public class PatternPlayController : GameController {
   }
 
   private void KeyboardBlockCycle() {
-    int index = -1;
-    int currentIndex = 0;
+    int blockIndex = -1;
     if (Input.GetKeyDown(KeyCode.Alpha1)) {
-      index = 0;
+      blockIndex = 0;
     }
 
     if (Input.GetKeyDown(KeyCode.Alpha2)) {
-      index = 1;
+      blockIndex = 1;
     }
 
     if (Input.GetKeyDown(KeyCode.Alpha3)) {
-      index = 2;
+      blockIndex = 2;
     }
 
     if (Input.GetKeyDown(KeyCode.Alpha4)) {
-      index = 3;
+      blockIndex = 3;
     }
 
-    if (index != -1) {
-      foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
-        if (currentIndex == index) {
-          block.Value.blockLightsLocalSpace = BlockLights.GetNextConfig(block.Value.blockLightsLocalSpace);
-          break;
-        }
-        currentIndex++; 
-      }
+    if (blockIndex != -1) {
+      blockPatternData[blockIndex].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[blockIndex].blockLightsLocalSpace);
     }
   }
 

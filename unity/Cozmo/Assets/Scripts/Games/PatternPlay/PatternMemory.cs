@@ -37,6 +37,10 @@ public class PatternMemory {
     memoryBanks.Add(newSignature, new MemoryBank(newSignature));
   }
 
+  public Dictionary<MemoryBankSignature, MemoryBank> GetMemoryBanks() {
+    return memoryBanks;
+  }
+
   public void Add(BlockPattern pattern) {
     MemoryBankSignature bankSignature = new MemoryBankSignature(
                                           RequirementFlagUtil.FromBool(pattern.facingCozmo),
