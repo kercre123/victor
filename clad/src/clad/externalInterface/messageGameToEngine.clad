@@ -11,6 +11,7 @@
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
+#include "clad/types/liveIdleAnimationParameters.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -448,6 +449,12 @@ message DisplayProceduralFace {
   float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
   float_32 rightEye[uint_8], //
   uint_8   robotID
+}
+
+message SetLiveIdleAnimationParameters {
+  LiveIdleAnimationParameter   paramNames[uint_8],
+  float_32                     paramValues[uint_8], // must be same length as paramNames
+  uint_8                       robotID
 }
 
 // VisualizeQuad
