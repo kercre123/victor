@@ -2,7 +2,7 @@
 using System.Collections;
 
 public class LookForCubes : State {
-  int cubeSeenCount;
+  int cubeSeenCount = 0;
 
   public override void Enter() {
     base.Enter();
