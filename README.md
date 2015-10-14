@@ -42,20 +42,6 @@ To run the configure python scripts you'll need xcpretty.
 
     sudo gem install xcpretty
 
-### Install Coretech 
-
-Set the `CORETECH_EXTERNAL_DIR` environment variable to where you want your coretech products to live.
-
-    echo 'export CORETECH_EXTERNAL_DIR=~/CozmoExternal' >> ~/.bash_profile && . ~/.bash_profile && mkdir ~/CozmoExternal
-
-#### manual build
-
-Clone the [Cozmo-Coretech](https://github.com/anki/coretech-external) repository, and follow the instructions there to build it.
-
-#### obtaining prebuilt coretech libs
-
-If you have a teamcity account, you can grab prebuilt versions of the coretech libs directly from the [build server](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build)
-
 ### Webots
 
 The Webots projects can be found in cozmo-game/simulator/worlds
