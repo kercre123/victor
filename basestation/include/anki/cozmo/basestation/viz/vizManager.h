@@ -51,6 +51,7 @@ namespace Anki {
       typedef enum : u8 {
         ACTION,
         LOCALIZED_TO,
+        WORLD_ORIGIN,
         VISION_MODE,
         BEHAVIOR_STATE
       } TextLabelType;

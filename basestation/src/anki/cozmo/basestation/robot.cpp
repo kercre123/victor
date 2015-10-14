@@ -83,10 +83,6 @@ namespace Anki {
     , _proxVals{{0}}
     , _proxBlocked{{false}}
     */
-    , _poseOrigins(1)
-    , _worldOrigin(&_poseOrigins.front())
-    , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
-    , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
     , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
@@ -117,6 +113,7 @@ namespace Anki {
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
+      
       _pose.SetName("Robot_" + std::to_string(_ID));
       _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
@@ -165,8 +162,6 @@ namespace Anki {
       _longPathPlanner  = new LatticePlanner(this, _dataPlatform);
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
-      
-      _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
       
     } // Constructor: Robot
 
@@ -232,7 +227,11 @@ namespace Anki {
       // Update VizText
       VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-    }
+      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+                                         "WorldOrigin[%lu]: %s",
+                                         _poseOrigins.size(),
+                                         _worldOrigin->GetName().c_str());
+    } // Delocalize()
 
     Result Robot::SetLocalizedTo(const ObservableObject* object)
     {
@@ -274,6 +273,10 @@ namespace Anki {
       VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: %s_%d",
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
+      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+                                         "WorldOrigin[%lu]: %s",
+                                         _poseOrigins.size(),
+                                         _worldOrigin->GetName().c_str());
       
       return RESULT_OK;
       
