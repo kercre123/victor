@@ -881,7 +881,7 @@ public class Robot : IDisposable {
     return position;
   }
 
-  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false) {
+  public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
     GotoPoseMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     GotoPoseMessage.x_mm = x_mm;
@@ -894,6 +894,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
+    }
   }
 
   public void GotoObject(ObservedObject obj, float distance_mm) {

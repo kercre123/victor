@@ -1,21 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PickUpCube : State {
-
+public class PlaceCube : State {
   public override void Enter() {
     base.Enter();
-    //robot.PickAndPlaceObject()
+    //robot.PlaceObjectOnGround();
   }
 
-  void PickUpDone(bool success) {
+  void PlaceDone(bool success) {
     if (success) {
-      stateMachine.SetNextState(new SetCubeToPattern());
+      stateMachine.SetNextState(new LookAtPatternConstruction());
     }
     else {
       stateMachine.SetNextState(new LookForCubes());
     }
-
   }
-
 }
