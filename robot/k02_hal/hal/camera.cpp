@@ -196,9 +196,6 @@ namespace Anki
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_HSYNC));     
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
-
-        //DMA_TCD0_CSR = 0; // DMA_CSR_START_MASK;
-
       }
 
       // Initialize camera
@@ -237,6 +234,8 @@ namespace Anki
   }
 }
 
+// This is triggered on camera DMA complete - but does not trigger during vblank
+// So, we setup an FTM to trigger repeatedly at just the right time
 extern "C"
 void DMA0_IRQHandler(void)
 {
@@ -245,7 +244,8 @@ void DMA0_IRQHandler(void)
   DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
   DMA_CINT = 0;   // Clear interrupt channel 0
   
-  static u8 countdown = 100;
+  // XXX: Allow DMA0 to stabilize
+  static u8 countdown = 10;
   if (countdown)
   {
     countdown--;
@@ -257,8 +257,8 @@ void DMA0_IRQHandler(void)
 
   // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
-  FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK);  // Place toward center of transition
   FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
+  FTM2_CNT = FTM2_CNTIN = 24 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
   FTM2_CNTIN = 0;
   
   // Sync to falling edge
@@ -279,7 +279,7 @@ void FTM2_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  static u8 countdown = 100;
+  static u8 countdown = 10;
   if (countdown)
   {
     countdown--;
@@ -314,8 +314,12 @@ void FTM2_IRQHandler(void)
   HALExec(&buf[whichbuf][4], buflen, eof);
   
 #ifdef SERIAL_IMAGE
+  // At 3mbaud, during 60% time, can send about 20 bytes per line
   
-  
+
+  line++;
+  if (line >= 496)
+    line = 0;
 #endif
 
   

@@ -83,8 +83,9 @@ int main (void)
   //UartInit();
 
   CameraInit();
-
-  DebugPrintf("\n\rWe're now streaming at 100MHz\n\r");
   
-  for(;;) ;
+  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
+  // So, we just loop around for now
+  for(;;)
+    ;
 }
