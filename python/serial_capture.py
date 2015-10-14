@@ -16,10 +16,11 @@ def main():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('inDevice', help='Device from which to listen to serial data.', action='store')
     parser.add_argument('-r', help='Baud rate for the serial device.', type=int, nargs='?', default=57600, dest='rate')
+    parser.add_argument('-lt', help='Time in ms to use between lines coming from the device.', type=float, nargs='?', default=3.968, dest='timePerLine')
     parser.add_argument('time', help='Amount of time in seconds to capture data.', action='store', type=float)
     parser.add_argument('outDirectory', help='Output directory in which to store data or none for stdout.', action='store', nargs='?', default=None, type=is_directory_writable)
     args = parser.parse_args()
-    capture(args.inDevice, args.rate, args.time, args.outDirectory)
+    capture(args.inDevice, args.rate, args.time, args.outDirectory, args.timePerLine)
 
 """ Simple check on the directory to make sure it's valid """
 def is_directory_writable(value):
@@ -33,7 +34,7 @@ def is_directory_writable(value):
     return value
 
 """ Capture function continuously pulls from serial device and writes to output for time duration """
-def capture(inDevice, rate, time, outDir):
+def capture(inDevice, rate, time, outDir, timePerLine):
 
     f = sys.stdout
     if outDir != None:
@@ -43,13 +44,15 @@ def capture(inDevice, rate, time, outDir):
     s.flushInput()
     s.flushOutput()
 
-    """ Throw out the first line in case it's partial """
-    get_line(s)
+    """ Throw out the first lines to account for serial connection driver garbage data """
+    for x in xrange(50):
+        get_line(s)
 
-    endTime = datetime.datetime.now() + datetime.timedelta(seconds=time)
+    currTime = datetime.datetime.now()
+    endTime = currTime + datetime.timedelta(seconds=time)
 
     while True:
-        currTime = datetime.datetime.now()
+        currTime += datetime.timedelta(milliseconds=timePerLine)
         f.write(currTime.isoformat('\t') + '\t' + get_line(s))
         if currTime > endTime:
             break
@@ -60,10 +63,11 @@ def capture(inDevice, rate, time, outDir):
 """ Grab the next few bytes of data up until the newline """
 def get_line(serialIn):
     line = str()
-    nextByte = ''
-    while nextByte != '\n':
+    while True:
         nextByte = serialIn.read()
         line += nextByte
+        if nextByte == '\n':
+            break
     return line
 
 if __name__ == "__main__":
