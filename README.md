@@ -1,14 +1,14 @@
-cozmo-game
+# cozmo-game
 ==================
 
 The Cozmo repository for game prototyping.
 
-Building cozmo-game
+# Building cozmo-game
 ==========================
 
 At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
 
-#### Prerequisites
+## Prerequisites
 
 You'll need [brew](http://brew.sh/) to install some tools.
 
@@ -26,7 +26,7 @@ Move the OpenCV libraries inside of Webots out of the way:
     mv libopencv* opencv_unused
 
 
-#### Build coretech-external
+### Build coretech-external
 
 Instructions [here](https://github.com/anki/coretech-external).
 
@@ -36,27 +36,26 @@ Important: Once you set your paths you may need to restart your terminal for the
 
 source ~/.bash_profile
 
-#### Building cozmo-game
+### Building cozmo-game
 
 To run the configure python scripts you'll need xcpretty.
 
     sudo gem install xcpretty
 
-Run ./configure
+Run ./configure.py from the root of your cosmo-game folder.
 
-Run ./configure build
+    cd <path-to-cozmo-repository>
+    ./configure.py
+    ./configure.py build
+
+Open <path-to-cozmo-repository>/Assets/Scenes/Shell.unity
+You should be able to run the scene.
+
+### Webots
 
 The Webots projects can be found in cozmo-game/simulator/worlds
 
 #### iOS Project
-
-For working with iOS within cozmo-game, first do the above and then:
-
-1. Build the Cozmo iOS fat libs by running this from the cozmo-game root directory:
-  * python make_iOS_libs.py
-
-2. Open the CozmoVision Xcode project found in the "cozmo-game/ios" directory. Experiment with the Webots world file: 
-  * cozmo-game/robot/simulator/worlds/iOStest.wbt 
 
 configure.py Commands
 ==========================

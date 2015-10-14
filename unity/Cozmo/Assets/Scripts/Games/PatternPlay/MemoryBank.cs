@@ -51,7 +51,7 @@ public class MemoryBankSignature {
   public bool Equals(MemoryBankSignature signature) {
     if (signature == null)
       return false;
-
+    
     return facingCozmo == signature.facingCozmo && verticalStack == signature.verticalStack && lightCount == signature.lightCount;
   }
 
