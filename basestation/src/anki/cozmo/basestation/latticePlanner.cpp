@@ -235,10 +235,24 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
 
   if( ! _impl->_contextMutex.try_lock() ) {
-    // thread is already running.
-    PRINT_NAMED_WARNING("LatticePlanner.ComputePath.AlreadyRunning",
-                        "Tried to compute a new path, but the planner is already running!");
-    return EComputePathStatus::Error;
+
+    // if the thread is actually computing, than thats an error (trying to compute while we are already
+    // computing). But, it might just be the case that someone else has the lock for a bit, in which case we
+    // should do a blocking lock. Note that there is no guarantee here that we don't block for an entire plan,
+    // we just try to avoid it, if possible
+
+    if( _impl->_timeToPlan || _impl->_plannerRunning ) {
+
+      // thread is already running.
+      PRINT_NAMED_WARNING("LatticePlanner.ComputePath.AlreadyRunning",
+                          "Tried to compute a new path, but the planner is already running! (timeToPlan %d, running %d)",
+                          _impl->_timeToPlan,
+                          _impl->_plannerRunning);
+      return EComputePathStatus::Error;
+    }
+    else {
+      _impl->_contextMutex.lock();
+    }
   }
 
   std::lock_guard<std::recursive_mutex> lg(_impl->_contextMutex, std::adopt_lock);
@@ -282,10 +296,24 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan internally
 
   if( ! _impl->_contextMutex.try_lock() ) {
-    // thread is already running.
-    PRINT_NAMED_WARNING("LatticePlanner.ComputePath.AlreadyRunning",
-                        "Tried to compute a new path, but the planner is already running!");
-    return EComputePathStatus::Error;
+
+    // if the thread is actually computing, than thats an error (trying to compute while we are already
+    // computing). But, it might just be the case that someone else has the lock for a bit, in which case we
+    // should do a blocking lock. Note that there is no guarantee here that we don't block for an entire plan,
+    // we just try to avoid it, if possible
+
+    if( _impl->_timeToPlan || _impl->_plannerRunning ) {
+
+      // thread is already running.
+      PRINT_NAMED_WARNING("LatticePlanner.ComputePath.AlreadyRunning",
+                          "Tried to compute a new path, but the planner is already running! (timeToPlan %d, running %d)",
+                          _impl->_timeToPlan,
+                          _impl->_plannerRunning);
+      return EComputePathStatus::Error;
+    }
+    else {
+      _impl->_contextMutex.lock();
+    }
   }
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
@@ -394,9 +422,6 @@ bool LatticePlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::P
 // LatticePlannerImpl functions
 //////////////////////////////////////////////////////////////////////////////// 
 
-
-#define LATTICE_PLANNER_THREAD_DEBUG 0
-
 void LatticePlannerImpl::worker()
 {
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
@@ -425,14 +450,13 @@ void LatticePlannerImpl::worker()
     }
 
     if( _timeToPlan ) {
-      _timeToPlan = false;
-
       if( LATTICE_PLANNER_THREAD_DEBUG ) {
         printf("running planner in thread!\n");
       }
 
       _internalComputeStatus = EPlannerStatus::Running;
       _plannerRunning = true;
+      _timeToPlan = false;
       bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
       _plannerRunning = false;
 
@@ -482,6 +506,12 @@ void LatticePlannerImpl::worker()
       }
     }
   }
+
+  if( LATTICE_PLANNER_THREAD_DEBUG ) {
+    std::cout << "Planner worker thread returning: object" << this
+              << " running in thread " << std::this_thread::get_id() << std::endl;
+  }
+
 }
 
 void LatticePlannerImpl::StopPlanning()
@@ -612,7 +642,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
   // double check that we have the mutex. It's recursive, so this adds a small performance hit, but is safer
   if( ! _contextMutex.try_lock() ) {
     // thread is already running.
-    PRINT_NAMED_ERROR("LatticePlanner.StartPlanning",
+    PRINT_NAMED_ERROR("LatticePlanner.StartPlanning.InternalThreadingError",
                       "Somehow failed to get mutex inside StartPlanning, but we should already have it at this point");
     return EComputePathStatus::Error;
   }
