@@ -459,7 +459,8 @@ namespace Anki {
           lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                              "Failed to get last pose from history with frame ID=%d.\n", msg.pose_frame_id);
+                              "Failed to get last pose from history with frame ID=%d.\n",
+                              msg.pose_frame_id);
             return lastResult;
           }
           pose_z = p.GetPose().GetTranslation().z();
@@ -1699,7 +1700,6 @@ namespace Anki {
                         GetPose().GetRotationAxis().y(),
                         GetPose().GetRotationAxis().z(),
                         GetPoseFrameID());
-      
       
       // Send the ground truth pose that was computed instead of the new current
       // pose and let the robot deal with updating its current pose based on the

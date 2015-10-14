@@ -585,22 +585,49 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      auto poseIter = poses_.rbegin();
-      while(poseIter->second.GetFrameId() != frameID) {
-        ++poseIter;
-        if(poseIter == poses_.rend() || poseIter->second.GetFrameId() < frameID) {
-          PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.FrameIdNotFound",
-                            "Reached beginning of history without finding frame ID=%d. "
-                            "(First frameID in history is %d, last is %d)\n", frameID,
-                            poses_.begin()->second.GetFrameId(),
-                            poses_.rbegin()->second.GetFrameId());
-          return RESULT_FAIL;
+      // First look through "raw" poses for the frame ID. We don't need to look
+      // any further once the frameID drops below the one we are looking for,
+      // because they are ordered
+      bool found = false;
+      auto poseIter = poses_.rend();
+      for(poseIter = poses_.rbegin();
+          poseIter != poses_.rend() && !found && poseIter->second.GetFrameId() >= frameID; ++poseIter )
+      {
+        if(poseIter->second.GetFrameId() == frameID) {
+          found = true; // break out of the loop
         }
       }
       
-      p = poseIter->second;
+      // NOTE: this second loop over vision poses will only occur if found is still false,
+      // meaning we didn't find a pose already in the first loop.
+      if(!found) {
+        for(poseIter = visPoses_.rbegin();
+            poseIter != visPoses_.rend() && !found && poseIter->second.GetFrameId() >= frameID; ++poseIter)
+        {
+          if(poseIter->second.GetFrameId() == frameID) {
+            found = true;
+          }
+        }
+      }
       
-      return RESULT_OK;
+      if(found) {
+        // Success!
+        assert(poseIter != poses_.rend());
+        p = poseIter->second;
+        return RESULT_OK;
+        
+      } else {
+        PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.FrameIdNotFound",
+                          "Could not frame ID=%d in pose history. "
+                          "(First frameID in pose history is %d, last is %d. "
+                          "First frameID in vis pose history is %d, last is %d.\n", frameID,
+                          poses_.begin()->second.GetFrameId(),
+                          poses_.rbegin()->second.GetFrameId(),
+                          visPoses_.begin()->second.GetFrameId(),
+                          visPoses_.rbegin()->second.GetFrameId());
+        return RESULT_FAIL;
+
+      }
       
     } // GetLastPoseWithFrameID()
     
