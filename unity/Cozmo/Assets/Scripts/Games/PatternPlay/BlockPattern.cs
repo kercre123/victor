@@ -239,8 +239,6 @@ public class BlockPattern {
       }
     }
 
-
-
     return blockLightCozmoSpace;
   }
 

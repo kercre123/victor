@@ -8,10 +8,11 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
-  private float lastBlinkTime = 0.0f;
   private int lastMovedID = -1;
   private bool seenPattern = false;
   private bool lastSeenPatternNew = false;
+  private int lastSetID = -1;
+  private float lastSetTime = 0.0f;
 
   [SerializeField]
   private PatternPlayAudio patternPlayAudio;
@@ -187,7 +188,7 @@ public class PatternPlayController : GameController {
 
     int currentMovedID = GetMostRecentMovedID();
     if (currentMovedID != lastMovedID) {
-      lastBlinkTime = Time.time;
+      lastSetTime = -100.0f;
     }
 
     // update block lights
@@ -211,7 +212,7 @@ public class PatternPlayController : GameController {
         }
       }
 
-      if (blockConfig.Key == currentMovedID && blockPatternData[blockConfig.Key].moving) {
+      if (blockConfig.Key == currentMovedID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {
         enabledColor = Color.green;
         disabledColor = Color.green;
       }
@@ -300,8 +301,14 @@ public class PatternPlayController : GameController {
         blockPatternData[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[lastTouchedID].blockLightsLocalSpace);
         blockPatternData[lastTouchedID].lastTimeTouched = Time.time;
         patternPlayAudio.PlayLightsSound(blockPatternData[lastTouchedID].blockLightsLocalSpace.NumberOfLightsOn());
+        LightSet(lastTouchedID);
       }
     }
+  }
+
+  private void LightSet(int blockID) {
+    lastSetID = blockID;
+    lastSetTime = Time.time;
   }
 
   private void KeyboardBlockCycle() {
@@ -324,6 +331,7 @@ public class PatternPlayController : GameController {
 
     if (blockIndex != -1) {
       blockPatternData[blockIndex].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData[blockIndex].blockLightsLocalSpace);
+      LightSet(blockIndex);
     }
   }
 
