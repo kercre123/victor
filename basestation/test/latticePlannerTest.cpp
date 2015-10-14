@@ -171,7 +171,8 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   EXPECT_NE(firstPathLength, secondPathLength) << "should have a different path the second time";
 }
 
-TEST(LatticePlanner, PlanWhilePlanning)
+// This test is disabled because it relies on timing, which won't always work on e.g. the build server
+TEST(LatticePlanner, DISABLED_PlanWhilePlanning)
 {
   RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, dataPlatform);
