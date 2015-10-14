@@ -17,16 +17,16 @@ const u32 V_SCALE       = 0x3ff; // 10 bit ADC
 const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
 const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
-const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
-const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
-const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
+//const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
+//const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
+//const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
 
-const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
+//const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
 // Read battery dead state N times before we believe it is dead
-const u8 BATTERY_DEAD_CYCLES = 60;
+//const u8 BATTERY_DEAD_CYCLES = 60;
 // Read charger contact state N times before we believe it changed
-const u8 CONTACT_DEBOUNCE_CYCLES = 30;
+//const u8 CONTACT_DEBOUNCE_CYCLES = 30;
 
 // Are we currently on charge contacts?
 bool Battery::onContacts = false;
