@@ -462,8 +462,17 @@ void InitAcc()
   WriteVerify(PMU_RANGE, RANGE_2G);
   delay_ms(1);
   
+#ifdef STREAM_ACCELEROMETER  
+  // Shadowing
+  WriteVerify(ACCD_HBW, 0);
+  delay_ms(1);
+  
+  // 125 Hz bandwidth
+  WriteVerify(PMU_BW, BW_125);
+#else
   // 250 Hz bandwidth
   WriteVerify(PMU_BW, BW_250);
+#endif
   delay_ms(1);
   
   // Configure and enable FIFO
@@ -494,10 +503,21 @@ void ReadAcc(s8 *accData)
 {
   static u8 buffer[6];
   DataReadMultiple(ACCD_X_LSB, 6, buffer);
+  #ifdef STREAM_ACCELEROMETER
+  accData[0] = (s8)buffer[0];
+  accData[1] = (s8)buffer[1];
+  accData[2] = (s8)buffer[2]; 
+  accData[3] = (s8)buffer[3];
+  accData[4] = (s8)buffer[4];
+  accData[5] = (s8)buffer[5];  
+  #else
   accData[0] = (s8)buffer[1];
   accData[1] = (s8)buffer[3];
-  accData[2] = (s8)buffer[5];
+  accData[2] = (s8)buffer[5];  
+  #endif
 }
+
+
 
 u8 ReadFifoTaps()
 {

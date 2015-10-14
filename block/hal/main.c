@@ -25,7 +25,7 @@ extern volatile u8 TH1now, TL1now;
 const u8 skipPacket[6] = {0,0,1,1,1,1};
 #endif
 
-#ifdef VERIFY_TRANSMITTER
+#if defined(VERIFY_TRANSMITTER) || defined(STREAM_ACCELEROMETER)
 void InitTimer1()
 {  
   TMOD = (TMOD & ~(3<<4)) | (0x01 << 4); // 16-bit

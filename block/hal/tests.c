@@ -3,23 +3,47 @@
 void StreamAccelerometer()
 {
   #ifdef STREAM_ACCELEROMETER
-  volatile s8 accData[3];
+  volatile s8 accData[8];
+  u8 TH, TL;
   //s8 accDataLast[3];
   InitUart();
   InitAcc();
-  
+  InitTimer1();
   while(1)
   {
-    ReadAcc(accData);
-    PutDec(accData[0]);
-    //puthex(accData[0]-accDataLast[0]);
-    PutChar('\t');
-    PutDec(accData[1]);
-    //puthex(accData[1]-accDataLast[1]);
-    PutChar('\t');
-    PutDec(accData[2]);
-    //puthex(accData[2]-accDataLast[2]);
-    PutString("\r\n");
+    ReadAcc(accData);  
+    if((accData[0] & 0x01) || (accData[2] & 0x01) || (accData[4] & 0x01))
+    {
+      TH = TH1;
+      TL = TL1;
+      if(TH != TH1)
+      {
+        TH = TH1;
+        TL = TL1;
+      }
+      PutHex(TH);
+      PutHex(TL);
+      
+      PutChar('\t');
+      
+      if(accData[0] & 0x01)
+        PutDec(accData[1]);
+      else
+        PutChar('.');
+      PutChar('\t');
+      if(accData[2] & 0x01)
+        PutDec(accData[3]);
+      else
+        PutChar('.');
+      PutChar('\t');
+      if(accData[4] & 0x01)
+        PutDec(accData[5]);
+      else
+        PutChar('.');
+      
+      PutString("\r\n");
+    }
+
     //ReadFifo();
     //memcpy(accDataLast, accData, sizeof(accData));
     //delay_ms(9); // 100 hz loop.
@@ -32,9 +56,8 @@ void StreamAccelerometer()
     // Maybe even 1.5 ms
     // 250 hz delay = 4ms-1.5ms = 2.5 ms
     // In practice 2.83 so I2C read is ~1.17ms
-    delay_ms(2);
-    delay_us(830);
-    
+    //delay_ms(2);
+    //delay_us(830);
   }
   #endif
 }
