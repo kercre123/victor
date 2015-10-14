@@ -49,10 +49,10 @@ public class BlockPattern {
   }
 
   public override int GetHashCode() {
-    int x = 0;
+    int x = 33;
     for (int i = 0; i < blocks.Count; ++i) {
-      x ^= System.Convert.ToInt32(blocks[i].back) ^ System.Convert.ToInt32(blocks[i].front) ^
-      System.Convert.ToInt32(blocks[i].left) ^ System.Convert.ToInt32(blocks[i].right);
+      x ^= System.Convert.ToInt32(blocks[i].back) ^ System.Convert.ToInt32(blocks[i].front) << 1 ^
+      System.Convert.ToInt32(blocks[i].left) << 2 ^ System.Convert.ToInt32(blocks[i].right) << 3 ^ i << 4;
     }
     return x;
   }

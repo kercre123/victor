@@ -1307,7 +1307,7 @@ public class GameLayoutTracker : MonoBehaviour {
     pos = bestBlock.GetCozmoSpacePose(out facing_rad); 
     string description = null;
     CozmoBusyPanel.instance.SetDescription("drop\n", robot.carryingObject, ref description);
-    robot.DropObjectAtPose(pos, facing_rad);
+    robot.PlaceObjectOnGround(pos, facing_rad);
     
     return true;
   }

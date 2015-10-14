@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class PatternMemory {
   
-  private Dictionary<MemoryBankSignature, MemoryBank> memoryBanks = new Dictionary<MemoryBankSignature, MemoryBank>();
+  private List<MemoryBank> memoryBanks = new List<MemoryBank>();
   private HashSet<BlockPattern> keyPatterns = new HashSet<BlockPattern>();
 
   public void Initialize() {
@@ -34,10 +34,10 @@ public class PatternMemory {
 
   private void AddMemoryBankSignature(BankRequirementFlag facingCozmo, BankRequirementFlag verticalStack, int lightCount) {
     MemoryBankSignature newSignature = new MemoryBankSignature(facingCozmo, verticalStack, lightCount);
-    memoryBanks.Add(newSignature, new MemoryBank(newSignature));
+    memoryBanks.Add(new MemoryBank(newSignature));
   }
 
-  public Dictionary<MemoryBankSignature, MemoryBank> GetMemoryBanks() {
+  public List<MemoryBank> GetMemoryBanks() {
     return memoryBanks;
   }
 
@@ -47,24 +47,23 @@ public class PatternMemory {
                                           RequirementFlagUtil.FromBool(pattern.verticalStack), 
                                           pattern.blocks[0].NumberOfLightsOn());
 
-    if (memoryBanks.ContainsKey(bankSignature)) {
-      memoryBanks[bankSignature].TryAdd(pattern);
-      DAS.Info("MemoryBank", "Pattern Added with signature: " + bankSignature.facingCozmo + " " + bankSignature.verticalStack + " " + bankSignature.lightCount);
-      DAS.Info("MemoryBank", "There are now " + memoryBanks[bankSignature].GetSeenPatterns().Count + " patterns in that bank");
+    for (int i = 0; i < memoryBanks.Count; ++i) {
+      
+      if (memoryBanks[i].TryAdd(pattern)) {
+        DAS.Info("MemoryBank", "Pattern Added with signature: " + bankSignature.facingCozmo + " " + bankSignature.verticalStack + " " + bankSignature.lightCount);
+        DAS.Info("MemoryBank", "There are now " + memoryBanks[i].GetSeenPatterns().Count + " patterns in that bank");
+        return;
+      }
+
     }
-    else {
-      DAS.Error("PatternPlayController", "Invalid pattern signature in memory bank");
-    }
+
+    DAS.Error("PatternPlayController", "Invalid pattern signature in memory bank");
+
   }
 
   public bool Contains(BlockPattern pattern) {
-    MemoryBankSignature bankSignature = new MemoryBankSignature(
-                                          RequirementFlagUtil.FromBool(pattern.facingCozmo),
-                                          RequirementFlagUtil.FromBool(pattern.verticalStack), 
-                                          pattern.blocks[0].NumberOfLightsOn());
-
-    if (memoryBanks.ContainsKey(bankSignature)) {
-      if (memoryBanks[bankSignature].GetSeenPatterns().Contains(pattern)) {
+    for (int i = 0; i < memoryBanks.Count; ++i) {
+      if (memoryBanks[i].GetSeenPatterns().Contains(pattern)) {
         return true;
       }
     }

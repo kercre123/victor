@@ -843,7 +843,7 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void DropObjectAtPose(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false) {
+  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false) {
     PlaceObjectOnGroundMessage.x_mm = position.x;
     PlaceObjectOnGroundMessage.y_mm = position.y;
     PlaceObjectOnGroundMessage.rad = facing_rad;
