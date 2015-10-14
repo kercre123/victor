@@ -46,12 +46,12 @@ bool xythetaPlanner::StartIsValid() const
   return _impl->StartIsValid();
 }
 
-bool xythetaPlanner::Replan(unsigned int maxExpansions)
+bool xythetaPlanner::Replan(unsigned int maxExpansions, bool* runPlan)
 {
   using namespace std::chrono;
 
   high_resolution_clock::time_point start = high_resolution_clock::now();
-  bool ret = _impl->ComputePath(maxExpansions);
+  bool ret = _impl->ComputePath(maxExpansions, runPlan);
   high_resolution_clock::time_point end = high_resolution_clock::now();
 
   duration<double> time_d = duration_cast<duration<double>>(end - start);
@@ -99,6 +99,7 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaPlannerContext& context)
   , _start(0,0,0)
   , _goalChanged(false)
   , _searchNum(0)
+  , _runPlan(nullptr)
 {
   _startID = _start.GetStateID();
   Reset();
@@ -242,6 +243,11 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
   unsigned int heurExpansions = 0;
 
   while(!q.empty()) {
+
+    if( _runPlan && !*_runPlan ) {
+      return 0.0;
+    }
+
     Cost c = q.topF();
     curr = q.pop();
 
@@ -316,8 +322,10 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
 
 
 
-bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
+bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
 {
+  _runPlan = runPlan;
+
   bool fromScratch = _context.forceReplanFromScratch;
 
   // handle context
@@ -380,6 +388,11 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions)
 
   bool foundGoal = false;
   while( !_open.empty() ) {
+
+    if( _runPlan && !*_runPlan ) {
+      return false;
+    }
+
     StateID sid = _open.pop();
     if(sid == _goalID) {
       foundGoal = true;

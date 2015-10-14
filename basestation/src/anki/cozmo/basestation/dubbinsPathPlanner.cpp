@@ -28,10 +28,12 @@ namespace Cozmo {
 
 DubbinsPlanner::DubbinsPlanner() {}
 
-IPathPlanner::EPlanStatus DubbinsPlanner::GetPlan(Planning::Path &path,
-                                                  const Pose3d &startPose,
-                                                  const Pose3d &targetPose)
+EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
+                                               const Pose3d& targetPose)
 {
+  _hasValidPath = false;
+  _path.Clear();
+
   Vec3f startPt = startPose.GetTranslation();
   f32 startAngle = startPose.GetRotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted
       
@@ -47,7 +49,7 @@ IPathPlanner::EPlanStatus DubbinsPlanner::GetPlan(Planning::Path &path,
     PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_start",
                       "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
                       rotAxis.x(), rotAxis.y(), rotAxis.z());
-    return PLAN_NEEDED_BUT_START_FAILURE;
+    return EComputePathStatus::Error;
   }
   if (FLT_NEAR(rotAxis.z(), -1.f)) {
     startAngle *= -1;
@@ -66,15 +68,16 @@ IPathPlanner::EPlanStatus DubbinsPlanner::GetPlan(Planning::Path &path,
     PRINT_NAMED_ERROR("PathPlanner.GetPlan.NonZAxisRot_target",
                       "GetPlan() does not support rotations around anything other than z-axis (%f %f %f)\n",
                       rotAxis.x(), rotAxis.y(), rotAxis.z());
-    return PLAN_NEEDED_BUT_GOAL_FAILURE;
+    return EComputePathStatus::Error;
   }
+
   if (FLT_NEAR(rotAxis.z(), -1.f)) {
     targetAngle *= -1;
   }
 
   const f32 dubinsRadius = (targetPt - startPt).Length() * 0.25f;
       
-  if (Planning::GenerateDubinsPath(path,
+  if (Planning::GenerateDubinsPath(_path,
                                    startPt.x(), startPt.y(), startAngle,
                                    targetPt.x(), targetPt.y(), targetAngle,
                                    std::min(DUBINS_START_RADIUS_MM, dubinsRadius),
@@ -84,10 +87,12 @@ IPathPlanner::EPlanStatus DubbinsPlanner::GetPlan(Planning::Path &path,
                      "Could not generate Dubins path (startPose %f %f %f, targetPose %f %f %f)\n",
                      startPt.x(), startPt.y(), startAngle,
                      targetPt.x(), targetPt.y(), targetAngle);
-    return PLAN_NEEDED_BUT_PLAN_FAILURE;
+    return EComputePathStatus::Error;
   }
-
-  return DID_PLAN;
+  else {
+    _hasValidPath = true;
+    return EComputePathStatus::Running;
+  }
 }
 
 }

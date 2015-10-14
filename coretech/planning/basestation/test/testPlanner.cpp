@@ -55,6 +55,134 @@ GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 }
 
+GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
+{
+  // Assuming this is running from root/build......
+  
+  xythetaPlannerContext context;
+
+  // know not to change or remove it
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) +
+                                                std::string(TEST_PRIM_FILE)).c_str()));
+
+  xythetaPlanner planner(context);
+
+  State_c start(0.0, 1.0, 0.57);
+  State_c goal(-10.0, 3.0, -1.5);
+
+  context.start = start;
+  context.goal = goal;
+  
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
+  printf("first plan:\n");
+  context.env.PrintPlan(planner.GetPlan());
+
+  size_t firstPlanLength = planner.GetPlan().Size();
+  EXPECT_GT(firstPlanLength, 0);
+
+  context.start = State_c{0.0, -2.0, -1.5};
+  context.goal = State_c{0.0, 3.0, 0.0};
+  context.forceReplanFromScratch = true;
+
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
+  printf("second plan:\n");
+  context.env.PrintPlan(planner.GetPlan());
+
+  size_t secondPlanLength = planner.GetPlan().Size();
+  EXPECT_GT(secondPlanLength, 0);
+
+  // NOTE: this is a lazy way to see that the plans differ. If the motion primitives change, this could break
+  EXPECT_NE(firstPlanLength, secondPlanLength) << "plans should be different";
+}
+
+GTEST_TEST(TestPlanner, PlanWithMaxExps)
+{
+  // Assuming this is running from root/build......
+  
+  xythetaPlannerContext context;
+
+  // know not to change or remove it
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) +
+                                                std::string(TEST_PRIM_FILE)).c_str()));
+
+  xythetaPlanner planner(context);
+
+  State_c start(0.0, 1.0, 0.57);
+  State_c goal(-10.0, 3.0, -1.5);
+
+  context.start = start;
+  context.goal = goal;
+  
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  EXPECT_TRUE(planner.Replan());
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
+  unsigned int firstPlanExps = planner._impl->_expansions;
+  printf("first plan completed in %d expansions\n", firstPlanExps);
+
+  ASSERT_GT(firstPlanExps, 2) << "invalid test";
+
+  context.forceReplanFromScratch = true;
+
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  // now replan with enough expansions that the plan should still work
+
+  EXPECT_TRUE(planner.Replan(firstPlanExps + 1));
+  EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
+
+  unsigned int secondPlanExps = planner._impl->_expansions;
+  printf("second plan completed in %d expansions\n", secondPlanExps);
+
+  EXPECT_EQ(firstPlanExps, secondPlanExps);
+
+  // now restrict the number of expansiosn so planning will fail
+
+  context.forceReplanFromScratch = true;
+
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  // now replan with enough expansions that the plan should still work
+
+  EXPECT_FALSE(planner.Replan(firstPlanExps - 1)) << "planning should fail with limited expansions";
+}
+
+GTEST_TEST(TestPlanner, DontPlanVariable)
+{
+  xythetaPlannerContext context;
+
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) +
+                                                std::string(TEST_PRIM_FILE)).c_str()));
+
+  xythetaPlanner planner(context);
+
+  State_c start(0.0, 1.0, 0.57);
+  State_c goal(-10.0, 3.0, -1.5);
+
+  context.start = start;
+  context.goal = goal;
+  
+  ASSERT_TRUE(planner.GoalIsValid());
+  ASSERT_TRUE(planner.StartIsValid());
+
+  bool var = false;
+  EXPECT_FALSE(planner.Replan(10000, &var));
+}
+
 GTEST_TEST(TestPlanner, PlanAroundBox)
 {
   // Assuming this is running from root/build......
@@ -432,6 +560,10 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
   planner._impl->_plan.Push(3, 0.0);
   planner._impl->_plan.Push(0, 0.0);
 
+  printf("manually created plan:\n");
+  context.env.PrintPlan(planner.GetPlan());
+
+
   // go through each intermediate point, perturb it a bit, and make sure it returns correctly
   State curr = State(0,0,6);
 
@@ -441,8 +573,11 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
 
     float distFromPlan = 9999.0;
 
-    ASSERT_EQ(planIdx, context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), context.env.State2State_c(curr), distFromPlan))
-      << "initial state wrong";
+    ASSERT_EQ(planIdx,
+              context.env.FindClosestPlanSegmentToPose(planner.GetPlan(),
+                                                       context.env.State2State_c(curr),
+                                                       distFromPlan))
+      << "initial state wrong planIdx="<<planIdx<<" distFromPlan="<<distFromPlan<< " curr = "<<curr;
     EXPECT_LT(distFromPlan, 15.0) << "too far away from plan";
 
     ASSERT_FALSE(prim.intermediatePositions.empty());

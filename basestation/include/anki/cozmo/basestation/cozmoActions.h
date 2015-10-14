@@ -43,7 +43,9 @@ namespace Anki {
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
+                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
+                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       DriveToPoseAction(const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
@@ -51,7 +53,9 @@ namespace Anki {
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
+                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
+                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
@@ -91,7 +95,11 @@ namespace Anki {
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
-      bool     _forceReplanOnNextWorldChange;
+
+      float _maxPlanningTime;
+      float _maxReplanPlanningTime;
+
+      float _timeToAbortPlanning;
       
       Signal::SmartHandle _signalHandle;
       
