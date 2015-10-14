@@ -47,18 +47,13 @@ struct LEDPacket {
   uint8_t ledDark;       // Dark byte
 };
 
-enum HeadDataFlags {
-  DROP_DETECTED = 1
-};
-
 union GlobalDataToHead
 {
   struct {
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
-    uint8_t flags;
-    uint8_t unused[2];
+    uint32_t cliffLevel;
     Fixed VBat;
     Fixed VExt;
     u8    chargeStat;

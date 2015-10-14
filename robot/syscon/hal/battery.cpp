@@ -8,12 +8,11 @@
 #include "hardware.h"
 
 // Updated to 3.0
-static const int DROP_SENSE_LEVEL = 0x40;
-
 const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
 const u32 V_PRESCALE    = 3;
 const u32 V_SCALE       = 0x3ff; // 10 bit ADC
 
+const Fixed CLIFF_SCALE = TO_FIXED(1.0); // Cozmo 4.1 voltage divider
 const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
 const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
@@ -94,8 +93,9 @@ void Battery::init()
 
   g_dataToHead.VBat = getADCsample(ANALOG_V_BAT_SENSE, VBAT_SCALE); // Battery voltage
   g_dataToHead.VExt = getADCsample(ANALOG_V_EXT_SENSE, VEXT_SCALE); // External voltage
+  int temp = getADCsample(ANALOG_CLIFF_SENSE, VEXT_SCALE);
 
-  startADCsample(ANALOG_V_BAT_SENSE);
+  startADCsample(ANALOG_CLIFF_SENSE);
 }
 
 void Battery::powerOn()
@@ -125,19 +125,14 @@ static inline void sampleCliffSensor() {
     resultLedOn = NRF_ADC->RESULT;
     nrf_gpio_pin_clear(PIN_IR_DROP);
 
-    int diff = resultLedOn - resultLedOff;
-    
-    if (diff > DROP_SENSE_LEVEL) {
-      g_dataToHead.flags |= DROP_DETECTED;
-    } else {
-      g_dataToHead.flags &= ~DROP_DETECTED;
-    }
+    g_dataToHead.cliffLevel = resultLedOn - resultLedOff;
     
     startADCsample(ANALOG_V_BAT_SENSE);
+    //startADCsample(ANALOG_CLIFF_SENSE);
   } else {
     resultLedOff = NRF_ADC->RESULT;
     nrf_gpio_pin_set(PIN_IR_DROP);
-     startADCsample(ANALOG_CLIFF_SENSE);
+    startADCsample(ANALOG_CLIFF_SENSE);
   }
   
   ledOn = !ledOn;
@@ -145,6 +140,7 @@ static inline void sampleCliffSensor() {
 
 void Battery::update()
 {
+  UART::print("%li\n\r", g_dataToHead.cliffLevel);
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
@@ -157,7 +153,7 @@ void Battery::update()
       break ;
 
     case ANALOG_V_EXT_SENSE:
-      g_dataToHead.VExt = calcResult(VEXT_SCALE);  
+      g_dataToHead.VExt = calcResult(VEXT_SCALE);
       startADCsample(ANALOG_CLIFF_SENSE);
       break ;
     
