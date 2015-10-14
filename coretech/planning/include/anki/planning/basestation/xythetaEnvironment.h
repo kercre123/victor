@@ -474,15 +474,15 @@ public:
 
   void PrintPlan(const xythetaPlan& plan) const;
 
-  // Convert the plan to Planning::PathSegment's and append it to
-  // path. Also updates plan to set the robotPathSegmentIdx_
-  void AppendToPath(xythetaPlan& plan, Path& path) const;
+  // Convert the plan to Planning::PathSegment's and append it to path. Also updates plan to set the
+  // robotPathSegmentIdx_ If skipActions is nonzero, then that many actions from plan will be skipped (not
+  // copied into path), but the state will still be correctly updated
+  void AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip = 0) const;
 
   double GetMaxVelocity_mmps() const {return _robotParams.maxVelocity_mmps;}
   double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
   double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
 
-  // TEMP:  // TEMP:  // TEMP: call this with the real values
   void SetRobotActionParams(double halfWheelBase_mm,
                             double maxVelocity_mmps,
                             double maxReverseVelocity_mmps);

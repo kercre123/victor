@@ -47,21 +47,20 @@ struct LEDPacket {
   uint8_t ledDark;       // Dark byte
 };
 
+enum HeadDataFlags {
+  DROP_DETECTED = 1
+};
+
 union GlobalDataToHead
 {
   struct {
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
-#ifdef ROBOT41
-    Fixed _unused;
+    uint8_t flags;
+    uint8_t unused[2];
     Fixed VBat;
     Fixed VExt;
-#else
-    Fixed IBat;
-    Fixed VBat;
-    Fixed Vusb;
-#endif
     u8    chargeStat;
 
     u8                cubeToUpdate;

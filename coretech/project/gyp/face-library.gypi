@@ -5,7 +5,7 @@
   # initially to empty. They will be filled in below in the 'conditions' as
   # needed:
   # (NOTE: This is duplicated from coretech-internal.gyp!)
-  'face_library': 'facesdk', # one of: 'opencv', 'faciometric', or 'facesdk'
+  'face_library': 'opencv', # one of: 'opencv', 'faciometric', or 'facesdk'
   'face_library_path':         [ ],
   'face_library_includes':     [ ],
   'face_library_libs':         [ ],
@@ -90,6 +90,22 @@
 }, # variables
 
 'target_defaults': {
+  'defines' : [
+    'FACE_TRACKER_FACIOMETRIC=0',
+    'FACE_TRACKER_FACESDK=1',
+    'FACE_TRACKER_OPENCV=2',
+  ],
+  'conditions': [
+    ['face_library=="faciometric"', {
+      'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_FACIOMETRIC'],
+    }],
+    ['face_library=="facesdk"', {
+      'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_FACESDK'],
+    }],
+    ['face_library=="opencv"', {
+      'defines' : ['FACE_TRACKER_PROVIDER=FACE_TRACKER_OPENCV'],
+    }],
+  ],
   'xcode_settings': {
     'conditions': [
       ['OS=="ios" and face_library=="faciometric"', {
