@@ -30,7 +30,7 @@ struct xythetaPlannerImpl
   bool StartIsValid() const;
 
   // This function starts by making a copy of the context, then computes a plan
-  bool ComputePath(unsigned int maxExpansions);
+  bool ComputePath(unsigned int maxExpansions, bool* runPlan);
 
   // helper functions
   void Reset();
@@ -92,6 +92,8 @@ struct xythetaPlannerImpl
   unsigned int _collisionChecks;
 
   unsigned int _searchNum;
+
+  bool* _runPlan;
 
   // assuming that `sid` is in soft collision, this function will do a breadth-first expansion until we
   // "escape" from the soft penalty. It will add these penalties to a heuristic map, so the heuristic can take

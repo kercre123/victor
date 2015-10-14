@@ -39,7 +39,7 @@ namespace Planning {
 
 #define REPLAN_PENALTY_BUFFER 0.5
 
-#define HACK_USE_FIXED_SPEED 60.0
+// #define HACK_USE_FIXED_SPEED 60.0
 
 State::State(StateID sid)
   :
@@ -1432,9 +1432,11 @@ SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG)
   return SuccessorIterator(this, startID, currG);
 }
 
-void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
+void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip) const
 {
   State curr = plan.start_;
+
+  int actionsLeftToSkip = numActionsToSkip;
 
   for(const auto& actionID : plan.actions_) {
     if(curr.theta >= allMotionPrimitives_.size() || actionID >= allMotionPrimitives_[curr.theta].size()) {
@@ -1445,12 +1447,28 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path) const
     // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
 
     const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-    /*u8 pathSegmentOffset =*/ prim->AddSegmentsToPath(State2State_c(curr), path);
+
+    if( actionsLeftToSkip == 0 ) {
+      prim->AddSegmentsToPath(State2State_c(curr), path);
+    }
+    else {
+      actionsLeftToSkip--;
+    }
 
     curr.x += prim->endStateOffset.x;
     curr.y += prim->endStateOffset.y;
     curr.theta = prim->endStateOffset.theta;
   }
+}
+
+void xythetaEnvironment::SetRobotActionParams(double halfWheelBase_mm,
+                                              double maxVelocity_mmps,
+                                              double maxReverseVelocity_mmps)
+{
+  _robotParams.halfWheelBase_mm = halfWheelBase_mm;
+  _robotParams.maxVelocity_mmps = maxVelocity_mmps;
+  _robotParams.maxReverseVelocity_mmps = maxReverseVelocity_mmps;
+  _robotParams.oneOverMaxVelocity = 1.0 / _robotParams.maxVelocity_mmps; 
 }
 
 void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
@@ -1514,7 +1532,11 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     float initialDist = sqrt(pow(target.x_mm, 2) + pow(target.y_mm, 2));
     if(debug)
       cout<<planIdx<<": "<<"iniitial "<<target<<" = "<<initialDist;
-    if(initialDist <= closest + 1e-6) {
+
+    // give a tiny bonus (1e-6) to the initial state, so we prefer it over the last intermediate state of the
+    // previous action
+
+    if(initialDist < closest + 1e-6) {
       closest = initialDist;
       startPoint = planIdx;
       if(debug)
