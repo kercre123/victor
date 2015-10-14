@@ -42,6 +42,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/helpers/templateHelpers.h"
 
 #include <fstream>
 #include <dirent.h>
@@ -112,7 +113,7 @@ namespace Anki {
     , _numAnimationBytesStreamed(0)
     , _animationTag(0)
     , _emotionMgr(*this)
-    , _imageDeChunker(*(new ImageDeChunker()))
+    , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
@@ -171,18 +172,11 @@ namespace Anki {
 
     Robot::~Robot()
     {
-      delete &_imageDeChunker;
-      delete _poseHistory;
-      _poseHistory = nullptr;
-      
-      delete _pdo;
-      _pdo = nullptr;
-
-      delete _longPathPlanner;
-      _longPathPlanner = nullptr;
-      
-      delete _shortPathPlanner;
-      _shortPathPlanner = nullptr;
+      Util::SafeDelete(_imageDeChunker);
+      Util::SafeDelete(_poseHistory);
+      Util::SafeDelete(_pdo);
+      Util::SafeDelete(_longPathPlanner);
+      Util::SafeDelete(_shortPathPlanner);
       
       _selectedPathPlanner = nullptr;
       

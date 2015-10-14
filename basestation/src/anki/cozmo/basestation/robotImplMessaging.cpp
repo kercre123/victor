@@ -292,7 +292,8 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   const u16 width  = Vision::CameraResInfo[(int)payload.resolution].width;
   const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
 
-  const bool isImageReady = _imageDeChunker.AppendChunk(payload.imageId, payload.frameTimeStamp,
+  const bool isImageReady = _imageDeChunker->
+  AppendChunk(payload.imageId, payload.frameTimeStamp,
     height, width,
     payload.imageEncoding,
     payload.imageChunkCount,
@@ -316,7 +317,7 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   if(isImageReady)
   {
     Vision::Image image;
-    cv::Mat cvImg = _imageDeChunker.GetImage();
+    cv::Mat cvImg = _imageDeChunker->GetImage();
     if(cvImg.channels() == 1) {
       image = Vision::Image(height, width, cvImg.data);
     } else {

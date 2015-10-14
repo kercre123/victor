@@ -810,7 +810,7 @@ public:
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
     std::vector<Signal::SmartHandle> _signalHandles;
-    ImageDeChunker& _imageDeChunker;
+    ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
     uint32_t _imuDataSize = 0;
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
