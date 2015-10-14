@@ -413,9 +413,9 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>imu.cpp</FileName>
+              <FileName>imuhal.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\imuhal.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>
@@ -1313,9 +1313,9 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>imu.cpp</FileName>
+              <FileName>imuhal.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imu.cpp</FilePath>
+              <FilePath>.\arm_hal\hal\imuhal.cpp</FilePath>
             </File>
             <File>
               <FileName>lights.cpp</FileName>
