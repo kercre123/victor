@@ -73,8 +73,8 @@ int main(void)
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
         #ifndef RADIO_TIMING_TEST
-        //Battery::powerOff();
-        //return -1;
+        Battery::powerOff();
+        return -1;
         #endif
       }
     } else {
@@ -89,7 +89,7 @@ int main(void)
     // If we're not on the charge contacts, exchange data with the head board
     if (!Battery::onContacts)
     {
-      //Head::TxRx();
+      Head::TxRx();
     }
     else // If not, reset the spine system
     {

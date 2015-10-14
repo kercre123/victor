@@ -128,7 +128,6 @@ static inline void sampleCliffSensor() {
     g_dataToHead.cliffLevel = resultLedOn - resultLedOff;
     
     startADCsample(ANALOG_V_BAT_SENSE);
-    //startADCsample(ANALOG_CLIFF_SENSE);
   } else {
     resultLedOff = NRF_ADC->RESULT;
     nrf_gpio_pin_set(PIN_IR_DROP);
@@ -140,7 +139,7 @@ static inline void sampleCliffSensor() {
 
 void Battery::update()
 {
-  UART::print("%li\n\r", g_dataToHead.cliffLevel);
+  //UART::print("%li\n\r", g_dataToHead.cliffLevel);
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
