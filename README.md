@@ -42,6 +42,15 @@ To run the configure python scripts you'll need xcpretty.
 
     sudo gem install xcpretty
 
+Run ./configure.py from the root of your cosmo-game folder.
+
+    cd <path-to-cozmo-repository>
+    ./configure.py
+    ./configure.py build
+
+Open <path-to-cozmo-repository>/Assets/Scenes/Shell.unity
+You should be able to run the scene.
+
 ### Webots
 
 The Webots projects can be found in cozmo-game/simulator/worlds
