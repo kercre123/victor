@@ -642,7 +642,7 @@ namespace Anki {
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
-    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACEMENT, 0, useManualSpeed)
+    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACE_ON_GROUND, 0, useManualSpeed)
     , _placementPose(placementPose)
     {
 
@@ -1660,6 +1660,7 @@ namespace Anki {
 #pragma mark ---- PickAndPlaceObjectAction ----
     
     PickAndPlaceObjectAction::PickAndPlaceObjectAction(ObjectID objectID,
+                                                       const bool doPlacement,
                                                        const bool useManualSpeed,
                                                        const f32 placementOffsetX_mm,
                                                        const f32 placementOffsetY_mm,
@@ -1668,6 +1669,7 @@ namespace Anki {
     : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)
     , _placementVerifyAction(nullptr)
     , _verifyComplete(false)
+    , _actionType(doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING)
     {
       
     }

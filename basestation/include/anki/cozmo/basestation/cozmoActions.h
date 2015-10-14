@@ -442,6 +442,7 @@ namespace Anki {
     {
     public:
       PickAndPlaceObjectAction(ObjectID objectID,
+                               const bool doPlacement,
                                const bool useManualSpeed = false,
                                const f32 placementOffsetX_mm = 0,
                                const f32 placementOffsetY_mm = 0,
@@ -459,7 +460,7 @@ namespace Anki {
       
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return _actionType; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
@@ -477,6 +478,8 @@ namespace Anki {
       
       IActionRunner*             _placementVerifyAction;
       bool                       _verifyComplete; // used in PLACE modes
+      
+      PreActionPose::ActionType  _actionType;
       
     }; // class PickAndPlaceObjectAction
 
@@ -500,7 +503,7 @@ namespace Anki {
 
     protected:
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
@@ -522,14 +525,15 @@ namespace Anki {
     {
     public:
       DriveToPickAndPlaceObjectAction(const ObjectID& objectID,
+                                      const bool doPlacement,  // True if placing something on top of this object
                                       const bool useManualSpeed = false,
                                       const f32 placementOffsetX_mm = 0,
                                       const f32 placementOffsetY_mm = 0,
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
-        new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
+        new DriveToObjectAction(objectID, doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
+        new PickAndPlaceObjectAction(objectID, doPlacement, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
 
       }
@@ -553,7 +557,7 @@ namespace Anki {
     public:
       DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
