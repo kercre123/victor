@@ -99,6 +99,7 @@ static void processDrop(DropToWiFi* drop)
 }
 
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
+#define DRIFT_MARGIN 2
 
 LOCAL void i2spiTask(os_event_t *event)
 {
@@ -117,18 +118,17 @@ LOCAL void i2spiTask(os_event_t *event)
       static DropToWiFi drop;
       static uint8 dropWrInd = 0; // In 16bit half-words
       static int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
+      static int16_t drift = 0;
       uint16_t* buf = (uint16_t*)(desc->buf_ptr);
-      int16_t drift = -2; // Look as much as two bytes early.
-      static uint8_t periodicPrint = 0;
       while(true)
       {
         while((dropPhase < DMA_BUF_SIZE/2) && (dropWrInd == 0)) // Search for preamble
         {
           if (buf[dropPhase] == TO_WIFI_PREAMBLE) 
           {
-            if (unlikely(drift > 2)) os_printf("!I2SPI too much drift: %d", drift);
+            if (unlikely(drift > DRIFT_MARGIN)) os_printf("!I2SPI too much drift: %d", drift);
             i2spiIntegralDrift += drift;
-            drift = -2;
+            drift = -DRIFT_MARGIN;
             break;
           }
           dropPhase++;
@@ -151,7 +151,6 @@ LOCAL void i2spiTask(os_event_t *event)
       }
       dropPhase -= DMA_BUF_SIZE/2; // Now looking in next buffer
       prepSdioQueue(desc, 0);
-      if (periodicPrint++ == 0) os_printf("ID=%d\r\n", (int)i2spiIntegralDrift);
       break;
     }
     case TASK_SIG_I2SPI_TX:
