@@ -139,7 +139,6 @@ static inline void sampleCliffSensor() {
 
 void Battery::update()
 {
-  //UART::print("%li\n\r", g_dataToHead.cliffLevel);
   if (!NRF_ADC->EVENTS_END) {
     return ;
   }
