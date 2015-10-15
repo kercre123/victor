@@ -25,7 +25,76 @@ public class PatternCollectionViewController : MonoBehaviour {
 		PatternMemory patternMemory = new PatternMemory ();
 		patternMemory.Initialize ();
 
-		// TODO: Add seen patterns to memory
+		// Add fake seen patterns to memory
+    BlockPattern newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = true, left = false, right = false },
+      new BlockLights{ front = false, back = true, left = false, right = false },
+      new BlockLights{ front = false, back = true, left = false, right = false }
+    };
+    newPattern.facingCozmo = true;
+    newPattern.verticalStack = true;
+    patternMemory.Add (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = false, left = false, right = true },
+      new BlockLights{ front = false, back = false, left = false, right = true },
+      new BlockLights{ front = false, back = false, left = false, right = true }
+    };
+    newPattern.facingCozmo = true;
+    newPattern.verticalStack = true;
+    patternMemory.Add (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = true, left = true, right = false },
+      new BlockLights{ front = false, back = true, left = true, right = false },
+      new BlockLights{ front = false, back = true, left = true, right = false }
+    };
+    newPattern.facingCozmo = false;
+    newPattern.verticalStack = false;
+    patternMemory.Add (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = true, back = true, left = true, right = false },
+      new BlockLights{ front = true, back = true, left = true, right = false },
+      new BlockLights{ front = true, back = true, left = true, right = false }
+    };
+    newPattern.facingCozmo = true;
+    newPattern.verticalStack = false;
+    patternMemory.Add (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = true, left = false, right = false },
+      new BlockLights{ front = false, back = true, left = false, right = false },
+      new BlockLights{ front = false, back = true, left = false, right = false }
+    };
+    newPattern.facingCozmo = false;
+    newPattern.verticalStack = true;
+    patternMemory.Add (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = true, back = true, left = true, right = true },
+      new BlockLights{ front = true, back = true, left = true, right = true },
+      new BlockLights{ front = true, back = true, left = true, right = true }
+    };
+    newPattern.facingCozmo = true;
+    newPattern.verticalStack = true;
+    patternMemory.Add (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = true, back = true, left = true, right = true },
+      new BlockLights{ front = true, back = true, left = true, right = true },
+      new BlockLights{ front = true, back = true, left = true, right = true }
+    };
+    newPattern.facingCozmo = false;
+    newPattern.verticalStack = false;
+    patternMemory.Add (newPattern);
 
 		return patternMemory;
 	}
