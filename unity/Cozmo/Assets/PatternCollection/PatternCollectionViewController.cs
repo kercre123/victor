@@ -8,16 +8,33 @@ public class PatternCollectionViewController : MonoBehaviour {
  
   [SerializeField]
   private PatternCollectionDialog _patternCollectionDialog;
+  
+  [SerializeField]
+  private PatternPlayInstructions _patternPlayInstructions;
 
   private PatternMemory _testPatternMemory;
   
   // Use this for initialization
-  void Start () {
+  private void Start () {
   	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
     _testPatternMemory = CreateTestPatternMemory ();
 
+    // Show instructions
+    _patternPlayInstructions.gameObject.SetActive (true);
+    _patternPlayInstructions.Initialize ();
+    _patternPlayInstructions.InstructionsFinished += OnInstructionsFinished;
+
   	// Populate dialog with cards using memory
     _patternCollectionDialog.Initialize (_testPatternMemory);
+    
+    // Hide collection of patterns
+    _patternCollectionDialog.gameObject.SetActive (false);
+
+  }
+
+  private void OnDestroy()
+  {
+    _patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
   }
 
 
@@ -92,4 +109,10 @@ public class PatternCollectionViewController : MonoBehaviour {
 
 		return patternMemory;
 	}
+
+  private void OnInstructionsFinished()
+  {
+    _patternCollectionDialog.gameObject.SetActive (true);
+    _patternPlayInstructions.gameObject.SetActive (false);
+  }
 }

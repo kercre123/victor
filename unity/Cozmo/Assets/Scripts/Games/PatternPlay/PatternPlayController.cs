@@ -216,6 +216,7 @@ public class PatternPlayController : GameController {
     // update cozmo's behavioral state machine for pattern play.
     stateMachineManager.UpdateAllMachines();
 
+    // TODO: Remove
     // this may need to be moved to include other states if we want UI for them.
     patternPlayUIController.UpdateUI(memoryBank);
 
@@ -265,6 +266,7 @@ public class PatternPlayController : GameController {
 
         seenPattern = true;
         lastSeenPatternNew = true;
+
         memoryBank.AddSeen(currentPattern);
       }
       else {
