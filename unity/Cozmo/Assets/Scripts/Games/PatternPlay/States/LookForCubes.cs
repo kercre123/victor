@@ -8,6 +8,7 @@ public class LookForCubes : State {
 
   public override void Enter() {
     base.Enter();
+    DAS.Info("PatternPlayState", "LookForCubes");
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
   }
@@ -16,6 +17,7 @@ public class LookForCubes : State {
     base.Update();
     if (patternPlayAutoBuild.AvailableBlocks() > 0) {
       stateMachine.SetNextState(new PickUpCube());
+      // robot.ExecuteBehavior("NONE");
     }
     else {
       SearchForAvailableBlock();
@@ -23,6 +25,6 @@ public class LookForCubes : State {
   }
 
   void SearchForAvailableBlock() {
-    
+    // robot.ExecuteBehavior("LOOK_AROUND");
   }
 }

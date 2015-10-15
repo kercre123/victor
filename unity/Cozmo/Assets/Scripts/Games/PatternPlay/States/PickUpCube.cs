@@ -8,9 +8,17 @@ public class PickUpCube : State {
 
   public override void Enter() {
     base.Enter();
+    DAS.Info("PatternPlayState", "PickUpCube");
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+
     ObservedObject targetObject = patternPlayAutoBuild.GetClosestAvailableBlock();
+
+    if (targetObject == null) {
+      stateMachine.SetNextState(new LookForCubes());
+      patternPlayAutoBuild.SetObjectHeld(null);
+      return;
+    }
 
     robot.PickAndPlaceObject(targetObject);
     patternPlayAutoBuild.SetObjectHeld(targetObject);

@@ -9,6 +9,8 @@ public class SetCubeToPattern : State {
   public override void Enter() {
     base.Enter();
 
+    DAS.Info("PatternPlayState", "SetCubeToPattern");
+
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
 
@@ -19,7 +21,5 @@ public class SetCubeToPattern : State {
   void SetPattern() {
     int heldObjectID = patternPlayAutoBuild.GetHeldObject().ID;
     patternPlayAutoBuild.SetBlockLightsToPattern(heldObjectID);
-
-    // TODO: play some kind of sound
   }
 }

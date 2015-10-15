@@ -8,6 +8,8 @@ public class HaveIdeaForPattern : State {
   public override void Enter() {
     base.Enter();
 
+    DAS.Info("PatternPlayState", "HaveIdeaForPattern");
+
     // pick a pattern to build
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayController.GetAutoBuild().PickNewTargetPattern();

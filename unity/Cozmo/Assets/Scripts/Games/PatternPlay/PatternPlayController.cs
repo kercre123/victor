@@ -34,7 +34,34 @@ public class PatternPlayController : GameController {
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
   public void SetPatternOnBlock(int blockID, int lightCount) {
-    // check relative world orientation, then decide which lights to set.
+    // TODO: make sure orientation is actually correct.
+
+    blockPatternData[blockID].blockLightsLocalSpace.TurnOffLights();
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.front = true;
+      lightCount--;
+    }
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.left = true;
+      lightCount--;
+    }
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.back = true;
+      lightCount--;
+    }
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.right = true;
+      lightCount--;
+    }
+
+  }
+
+  public Robot GetRobot() {
+    return robot;
   }
 
   public PatternPlayAutoBuild GetAutoBuild() {
