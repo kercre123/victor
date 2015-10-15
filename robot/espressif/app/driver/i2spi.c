@@ -18,15 +18,15 @@
 
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
-
 #define min(a, b) (a < b ? a : b)
+#define asDesc(x) ((struct sdio_queue*)(x))
+
+#define UNINITALIZED_PHASE (-32768)
 
 uint32_t i2spiTxUnderflowCount;
 uint32_t i2spiRxOverflowCount;
 uint32_t i2spiPhaseErrorCount;
 int32_t  i2spiIntegralDrift;
-
-#define asDesc(x) ((struct sdio_queue*)(x))
 
 /// Signals to the I2SPI task
 enum
@@ -52,7 +52,17 @@ static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops
-#define DROP_TX_PHASE_ADJUST (0)
+#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+/// Audio data storage
+static uint8_t audioStorage[AUDIO_BUFFER_SIZE];
+/// Read index in audio storage
+static int16_t audioReadIndex;
+/// Screen data storage
+static uint8_t screenStorage[128*96/8];
+/// Read index for screen storage
+static int16_t screenReadIndex;
+/// Number of bytes available in screenStorage
+static int16_t screenDataAvailable;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -98,6 +108,62 @@ static void processDrop(DropToWiFi* drop)
   }
 }
 
+/** Fills a drop into the outgoing DMA buffers
+ * Uses the outgoingPhase and nextOutgoingDesc module variables and advances them as nessisary
+ * @param payload A pointer to the payload data to fill the drop with or NULL
+ * @param length The number of bytes of payload to be put into this drop
+ */
+static void makeDrop(uint8_t* payload, uint8_t length)
+{
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  DropToRTIP drop;
+  os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
+  drop.preamble = TO_RTIP_PREAMBLE;
+  // Fill in the drop itself
+  if (AUDIO_BUFFER_SIZE - audioReadIndex > 0)
+  {
+    os_memcpy(&(drop.audioData), audioStorage + audioReadIndex, AUDIO_BYTES_PER_DROP);
+    drop.droplet |= audioDataValid;
+    audioReadIndex += AUDIO_BYTES_PER_DROP;
+  }
+  if (screenDataAvailable - screenReadIndex > 0)
+  {
+    os_memcpy(&drop.screenData, screenStorage + screenReadIndex, SCREEN_BYTES_PER_DROP);
+    screenReadIndex += SCREEN_BYTES_PER_DROP;
+    drop.droplet |= screenDataValid;
+  }
+  if (length > 0)
+  {
+    os_memcpy(&(drop.payload), payload, length);
+    drop.droplet |= payloadValid;
+  }
+  // Copy into the DMA buffer
+  if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
+  {
+    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
+    outgoingPhase += DROP_SPACING/2;
+    if (outgoingPhase > DMA_BUF_SIZE/2) // Have rolled over into next buffer
+    {
+      // XXX NEED TO HANDLE OVERFLOW
+      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+      os_memset(txBuf, 0, DMA_BUF_SIZE);
+      outgoingPhase -= DMA_BUF_SIZE/2;
+    }
+  }
+  else // Split across two buffers
+  {
+    const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
+    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
+    /// XXX NEED TO HANDLE OVERFLOW
+    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    os_memset(txBuf, 0, DMA_BUF_SIZE);
+    halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
+    outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
+  }
+}
+
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
@@ -124,9 +190,18 @@ LOCAL void i2spiTask(os_event_t *event)
       {
         while((dropPhase < DMA_BUF_SIZE/2) && (dropWrInd == 0)) // Search for preamble
         {
-          if (buf[dropPhase] == TO_WIFI_PREAMBLE) 
+          if (buf[dropPhase] == TO_WIFI_PREAMBLE)
           {
             if (unlikely(drift > DRIFT_MARGIN)) os_printf("!I2SPI too much drift: %d", drift);
+            if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
+            {
+              // Going past the end is OKAY as that will be used to increment the buffer
+              outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+            }
+            else // Have a phase, just adjust for drift
+            {
+              outgoingPhase += drift;
+            }
             i2spiIntegralDrift += drift;
             drift = -DRIFT_MARGIN;
             break;
@@ -143,7 +218,7 @@ LOCAL void i2spiTask(os_event_t *event)
           {
             processDrop(&drop);
             dropWrInd = 0;
-            dropPhase += (DROP_SPACING/2) + drift;
+            dropPhase += (DROP_SPACING/2) - DRIFT_MARGIN;
           }
           else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
@@ -155,14 +230,21 @@ LOCAL void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_TX:
     {
-      int w;
-      uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
-      if (asDesc(desc->next_link_ptr) == nextOutgoingDesc)
-      {
-        nextOutgoingDesc = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
-        i2spiTxUnderflowCount++;
+      if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) { // Durring startup
+        uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+        int w;
+        for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
       }
-      for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+      else // When running
+      {
+        struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
+        while (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
+        {
+          i2spiTxUnderflowCount++; // Keep track of the underflow
+          makeDrop(NULL, 0);
+        }
+      }
       break;
     }
     default:
@@ -209,12 +291,15 @@ LOCAL void dmaisr(void* arg) {
 int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
-  outgoingPhase = 0; // Not established yet
-  nextOutgoingDesc = &txQueue[1]; // 0th entry will imeediately be going out so first possible one comes after it.
+  outgoingPhase = UNINITALIZED_PHASE; // Not established yet
+  nextOutgoingDesc = &txQueue[2]; // 0th entry will imeediately be going out and we want to stay one ahead
   i2spiTxUnderflowCount = 0;
   i2spiRxOverflowCount  = 0;
   i2spiPhaseErrorCount  = 0;
   i2spiIntegralDrift    = 0;
+  audioReadIndex        = AUDIO_BUFFER_SIZE;
+  screenDataAvailable   = 0;
+  screenReadIndex       = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
@@ -359,4 +444,33 @@ bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
 {
   //XXX Implement queing message data
   return false;
+}
+
+bool i2spiReadyForAudioData(void)
+{
+  return audioReadIndex >= AUDIO_BUFFER_SIZE;
+}
+
+void i2spiPushAudioData(uint8_t* audioData)
+{
+  os_memcpy(audioStorage, audioData, AUDIO_BUFFER_SIZE);
+}
+
+uint8_t* i2spiGetScreenDataBuffer(void)
+{
+  if (screenReadIndex >= screenDataAvailable)
+  {
+    screenDataAvailable = 0;
+    screenReadIndex     = 0;
+    return screenStorage;
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+void i2spiSetScreenDataLength(uint16_t length)
+{
+  screenDataAvailable = length;
 }
