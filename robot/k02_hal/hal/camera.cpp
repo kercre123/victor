@@ -10,6 +10,9 @@
 
 #include "hal/i2c.h"
 
+//#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
+//#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
+
 namespace Anki
 {
   namespace Cozmo
@@ -45,7 +48,8 @@ namespace Anki
 
       // Camera exposure value
       u32 exposure_;
-      
+      volatile bool timingSynced_ = false;
+
       // For self-test purposes only.
       // XXX - restore this code for EP1
 #if 0
@@ -126,14 +130,18 @@ namespace Anki
       
       void HALExec(u8* buf, int buflen, int eof);
       
+#ifdef ENABLE_JPEG
       int JPEGStart(int quality);
       int JPEGCompress(u8* out, u8* in, int pitch);
       int JPEGEnd(u8* out);
+#endif
       
       // Set up camera 
       static void InitCam()
       {
+#ifdef ENABLE_JPEG
         JPEGStart(50);
+#endif
         
         // Power-up/reset the camera
         MicroWait(50);
@@ -188,17 +196,20 @@ namespace Anki
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_HSYNC));     
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
-
-        //DMA_TCD0_CSR = 0; // DMA_CSR_START_MASK;
-
       }
 
       // Initialize camera
       void CameraInit()
       {
+        timingSynced_ = false;
+        
         InitIO();
-        InitDMA();
         InitCam();
+        InitDMA();
+        
+        // Wait for everything to sync
+        while (!timingSynced_)
+        {}
       }
         
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
@@ -223,11 +234,62 @@ namespace Anki
   }
 }
 
+// This is triggered on camera DMA complete - but does not trigger during vblank
+// So, we setup an FTM to trigger repeatedly at just the right time
 extern "C"
 void DMA0_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
+  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
+  DMA_CINT = 0;   // Clear interrupt channel 0
+  
+  // XXX: Allow DMA0 to stabilize
+  static u8 countdown = 10;
+  if (countdown)
+  {
+    countdown--;
+    return;
+  }
+
+  // Shut off DMA IRQ - we'll use FTM IRQ from now on
+  DMA_TCD0_CSR = 0;   
+
+  // Set up FTM IRQ to match hsync - must match gc0329.h timing!
+  SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+  FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
+  FTM2_CNT = FTM2_CNTIN = 24 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
+  FTM2_CNTIN = 0;
+  
+  // Sync to falling edge
+  while(~GPIOD_PDIR & (1 << 4)) ;
+  while( GPIOD_PDIR & (1 << 4)) ;
+
+  FTM2_SC = FTM_SC_TOF_MASK |
+            FTM_SC_TOIE_MASK |
+            FTM_SC_CLKS(1) | // BUS_CLOCK
+            FTM_SC_PS(0);
+
+  timingSynced_ = true;
+  NVIC_EnableIRQ(FTM2_IRQn);
+}
+
+extern "C"
+void FTM2_IRQHandler(void)
+{
+  using namespace Anki::Cozmo::HAL;
+  
+  static u8 countdown = 10;
+  if (countdown)
+  {
+    countdown--;
+    return;
+  }
+  
+  // Enable SPI DMA, Clear flag
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+  FTM2_SC &= ~FTM_SC_TOF_MASK;
+
   static u16 line = 0;
   static int last = 0;
   
@@ -238,6 +300,7 @@ void DMA0_IRQHandler(void)
   static u8 eof = 0;
   
   // Kludgey look for start of frame
+  /*
   int now = SysTick->VAL;
   int diff = last-now;
   last = now;
@@ -246,9 +309,21 @@ void DMA0_IRQHandler(void)
   if (diff > 100000) {
     line = 232;       // Swizzle buffer delays us by 8 lines
   }
+  */
   
   HALExec(&buf[whichbuf][4], buflen, eof);
   
+#ifdef SERIAL_IMAGE
+  // At 3mbaud, during 60% time, can send about 20 bytes per line
+  
+
+  line++;
+  if (line >= 496)
+    line = 0;
+#endif
+
+  
+#ifdef ENABLE_JPEG
   // Fill next buffer
   whichbuf ^= 1;
   u8* p = &buf[whichbuf][4];  // Offset 4 chars to leave room for a UART header
@@ -260,9 +335,8 @@ void DMA0_IRQHandler(void)
     whichpitch ^= 1;
   int pitch = whichpitch ? 80 : 640;
   u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
-  
+
   // Encode 10 macroblocks (one strip)
-  /*
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
     buflen += JPEGEnd(p + buflen);
@@ -270,7 +344,7 @@ void DMA0_IRQHandler(void)
   } else {
     eof = 0;
   }
-  */
+  
   // Copy YUYV data from DMA buffer into swizzle buffer
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)
@@ -281,7 +355,5 @@ void DMA0_IRQHandler(void)
   if (line >= 240) {
     line = 0;
   }
-
-  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
-  DMA_CINT = 0;   // Clear interrupt channel 0
+#endif
 }

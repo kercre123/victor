@@ -3,11 +3,13 @@
 
 #include <stdint.h>
 
-static const uint32_t perf_clock = 96000000;
+#include "hal/portable.h"
+#include "anki/cozmo/robot/spineData.h"
+
 static const uint32_t debug_baud_rate = 1000000;
 
-#define BAUD_SBR(baud)  (perf_clock * 2 / baud / 32)
-#define BAUD_BRFA(baud) (perf_clock * 2 / baud % 32)
+#define BAUD_SBR(baud)  (CORE_CLOCK * 2 / baud / 32)
+#define BAUD_BRFA(baud) (CORE_CLOCK * 2 / baud % 32)
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;

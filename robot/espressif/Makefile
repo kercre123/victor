@@ -194,7 +194,6 @@ CCFLAGS += 			\
 	-g			\
 	-Wpointer-arith		\
 	-Wundef			\
-	-Werror			\
 	-Wl,-EL			\
 	-fno-inline-functions	\
 	-nostdlib       \
@@ -202,7 +201,8 @@ CCFLAGS += 			\
 	-mtext-section-literals \
 	-ffunction-sections \
 	-fdata-sections \
-	-Wall			
+	-Wall \
+  -Werror
 
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)

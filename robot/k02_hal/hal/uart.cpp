@@ -52,7 +52,7 @@ inline void transmit_mode(bool tx) {
     PORTD_PCR6 = PORT_PCR_MUX(0);
     PORTD_PCR7 = PORT_PCR_MUX(3);
     UART0_C2 = UART_C2_TE_MASK;
-  }else {
+  } else {
     PORTD_PCR6 = PORT_PCR_MUX(3);
     PORTD_PCR7 = PORT_PCR_MUX(0);
     UART0_C2 = UART_C2_RE_MASK;
