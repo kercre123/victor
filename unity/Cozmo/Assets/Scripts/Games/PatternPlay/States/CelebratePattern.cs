@@ -11,7 +11,7 @@ public class CelebratePattern : State {
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
 
     if (patternPlayController.LastSeenPatternNew()) {
-      robot.SendAnimation("majorWin", AnimationDone);
+      robot.SendAnimation("enjoyPattern", AnimationDone);
     }
     else {
       robot.SendAnimation("minorWin", AnimationDone);
