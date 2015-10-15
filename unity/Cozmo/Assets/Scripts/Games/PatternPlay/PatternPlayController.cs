@@ -141,6 +141,8 @@ public class PatternPlayController : GameController {
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
 
+    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
+
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockPatternData.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
     }
@@ -382,7 +384,7 @@ public class PatternPlayController : GameController {
 
   public void ResetLookHeadForkLift() {
     robot.SetHeadAngle(-0.1f);
-    robot.SetLiftHeight(2.0f);
+    robot.SetLiftHeight(0.0f);
   }
 
 }
