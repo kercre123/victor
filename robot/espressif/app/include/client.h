@@ -25,10 +25,11 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
  * This function is called by but not defined in the client module and must be defined by the user application.
  * @WARNING This function is called from radio service callback so it should be handled quickly and any long running
  * processing should be scheduled into a task.
+ * @param dest A pointer to the network endpoint the message came from
  * @param payload The received data
  * @param tag The type dag for the payload
  */
-void clientRecvCallback(u8* payload, const u16 len);
+void clientRecvCallback(const void* dest, u8* payload, const u16 len);
 
 /** Periodic update function for client.
  */
@@ -36,5 +37,12 @@ void clientUpdate(void);
 
 /// Check if client is connected.
 bool clientConnected(void);
+
+/** Cross link function for queuing image Data
+ * @param imgData A pointer to the image data to queue
+ * @param len     The number of bytes to take from imgData
+ * @param eof     True if this is the end of an image
+ */
+void clientQueueImageData(uint8_t* imgData, uint8_t len, bool eof);
 
 #endif

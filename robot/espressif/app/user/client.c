@@ -16,41 +16,56 @@
 
 #define printf os_printf
 
-static ReliableConnection connection;
-static bool haveClient;
+#define destsEqual(a, b) (((a)->remote_port == (b)->remote_port) && ((a)->remote_ip[3] == (b)->remote_ip[3]))
+
+static struct espconn* socket;
+static ReliableConnection* connection;
 
 bool clientConnected(void)
 {
-  return haveClient;
+  return connection != NULL;
 }
 
-void clientUpdate(void)
+void ICACHE_FLASH_ATTR clientUpdate(void)
 {
-  if (ReliableTransport_Update(&connection) == false)
+  if (connection != NULL)
   {
-    Receiver_OnDisconnect(&connection);
-    printf("Client reliable transport timed out\r\n");
+    if (ReliableTransport_Update(connection) == false)
+    {
+      Receiver_OnDisconnect(connection);
+      printf("Client reliable transport timed out\r\n");
+    }
   }
 }
 
-static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned short len)
+static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
 {
-  u16 res;
+  struct espconn* src = (struct espconn*)arg;
   
-  if (arg != connection.dest)
+  if (unlikely(!clientConnected()))
   {
-    printf("Client receive unexpected arg %08x\r\n", (unsigned int)arg);
-  }
-
 #ifdef DEBUG_CLIENT
-  //printf("udpServerRecvCB %02x[%d] bytes\n", usrdata[0], len);
-  if (haveClient == false)
-  {
-    printf("Client from %d.%d.%d.%d:%d\r\n", udpServer->proto.udp->remote_ip[0], udpServer->proto.udp->remote_ip[1], udpServer->proto.udp->remote_ip[2], udpServer->proto.udp->remote_ip[3], udpServer->proto.udp->remote_port);
+    printf("Initalizing new connection from  %d.%d.%d.%d:%d\r\n", src->proto.udp->remote_ip[0], src->proto.udp->remote_ip[1], src->proto.udp->remote_ip[2], src->proto.udp->remote_ip[3], src->proto.udp->remote_port);
+#endif    
+    esp_udp* dest = os_zalloc(sizeof(esp_udp));
+    connection    = os_zalloc(sizeof(ReliableConnection));
+    if (unlikely(connection == NULL || dest == NULL))
+    {
+      os_printf("DIE! Couldn't allocate memory for reliable connection!\r\n");
+      return;
+    }
+    os_memcpy(dest, src->proto.udp, sizeof(esp_udp));
+    ReliableConnection_Init(connection, dest);
   }
+  else if (unlikely(!destsEqual(src->proto.udp, (esp_udp*)connection->dest)))
+  {
+#ifdef DEBUG_CLIENT
+    printf("Ignoring UDP traffic from unconnected source at  %d.%d.%d.%d:%d\r\n", src->proto.udp->remote_ip[0], src->proto.udp->remote_ip[1], src->proto.udp->remote_ip[2], src->proto.udp->remote_ip[3], src->proto.udp->remote_port);
 #endif
-
-  res = ReliableTransport_ReceiveData(&connection, (uint8_t*)usrdata, len);
+    return;
+  }
+  
+  u16 res = ReliableTransport_ReceiveData(connection, (uint8_t*)usrdata, len);
   if (res < 0)
   {
     printf("ReliableTransport didn't accept data: %d\r\n", res);
@@ -63,43 +78,70 @@ sint8 ICACHE_FLASH_ATTR clientInit()
 
   printf("clientInit\r\n");
 
-  struct espconn *udpServer;
+  connection = NULL;
 
-  udpServer = (struct espconn *)os_zalloc(sizeof(struct espconn));
-  ets_memset( udpServer, 0, sizeof( struct espconn ) );
-  udpServer->type = ESPCONN_UDP;
-  udpServer->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
-  ets_memset(udpServer->proto.udp, 0, sizeof(esp_udp));
-  udpServer->proto.udp->local_port = 5551;
+  socket = (struct espconn *)os_zalloc(sizeof(struct espconn));
+  os_memset( socket, 0, sizeof( struct espconn ) );
+  socket->type = ESPCONN_UDP;
+  socket->proto.udp = (esp_udp *)os_zalloc(sizeof(esp_udp));
+  os_memset(socket->proto.udp, 0, sizeof(esp_udp));
+  socket->proto.udp->local_port = 5551;
 
-  err = espconn_regist_recvcb(udpServer, udpServerRecvCB);
+  err = espconn_regist_recvcb(socket, socketRecvCB);
   if (err != 0)
   {
     printf("\tError registering receive callback %d\r\n", err);
     return err;
   }
 
-  err = espconn_create(udpServer);
+  err = espconn_create(socket);
   if (err != 0)
   {
     printf("\tError creating server %d\r\n", err);
     return err;
   }
-  
+    
   ReliableTransport_Init();
-  ReliableConnection_Init(&connection, udpServer);
 
   printf("\tno error\r\n");
   return ESPCONN_OK;
 }
 
+bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+{
+  if (likely(clientConnected()))
+  {
+    if (unlikely(reliable))
+    {
+      if (unlikely(ReliableTransport_SendMessage(buffer, size, connection, eRMT_SingleReliableMessage, hot, msgID) == false)) // failed to queue reliable message!
+      {
+        ReliableTransport_Disconnect(connection);
+        Receiver_OnDisconnect(connection);
+        return false;
+      }
+      else
+      {
+        return true;
+      }
+    }
+    else
+    {
+      return ReliableTransport_SendMessage(buffer, size, connection, eRMT_SingleUnreliableMessage, hot, msgID);
+    }
+  }
+  else
+  {
+    return false;
+  }
+}
+
 bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
 #ifdef DEBUG_CLIENT
-printf("clientQueuePacket\n");
+  printf("clientQueuePacket\n");
 #endif
 
-  const int8 err = espconn_send(connection.dest, data, len);
+  const int8 err = espconn_send(socket, data, len);
   if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
   {
     printf("Failed to queue UDP packet %d\n", err);
@@ -111,30 +153,30 @@ printf("clientQueuePacket\n");
   }
 }
 
-bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+void ICACHE_FLASH_ATTR Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
-  if (clientConnected())
-  {
-    if (reliable)
-    {
-      if (ReliableTransport_SendMessage(buffer, size, &connection, eRMT_SingleReliableMessage, hot, msgID) == false) // failed to queue reliable message!
-      {
-        ReliableTransport_Disconnect(&connection);
-        Receiver_OnDisconnect(&connection);
-        return false;
-      }
-      else
-      {
-        return true;
-      }
-    }
-    else
-    {
-      return ReliableTransport_SendMessage(buffer, size, &connection, eRMT_SingleUnreliableMessage, hot, msgID);
-    }
-  }
-  else
-  {
-    return false;
-  }
+  printf("New Reliable transport connection request\r\n");
+  ReliableTransport_FinishConnection(connection); // Accept the connection
+}
+
+void ICACHE_FLASH_ATTR Receiver_OnConnected(ReliableConnection* connection)
+{
+  printf("Reliable transport connection completed\r\n");
+}
+
+void ICACHE_FLASH_ATTR Receiver_OnDisconnect(ReliableConnection* connection)
+{
+  printf("Reliable transport disconnected\r\n");
+  os_free(connection);
+  connection = NULL;
+}
+
+void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
+{
+  //XXX  cross link to message dispatch
+}
+
+void clientQueueImageData(uint8_t* imgData, uint8_t len, bool eof)
+{
+  /// XXX queue image data!
 }

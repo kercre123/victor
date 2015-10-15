@@ -16,8 +16,6 @@
 #include "driver/i2s_ets.h"
 #include "client.h"
 
-#define likely(x)      __builtin_expect(!!(x), 1)
-#define unlikely(x)    __builtin_expect(!!(x), 0)
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
 
@@ -75,37 +73,15 @@ static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
   desc->unused    = 0;
 }
 
-/** 16-bit half word wise copy function
- * Copies num words from src to dest
- */
-void halfWordCopy(uint16_t* dest, uint16_t* src, int num)
-{
-  int w;
-  for (w=0; w<num; ++w)
-  {
-    dest[w] = src[w];
-  }
-}
-
 /** Processes an incomming drop from the RTIP to the WiFi
  * @param drop A pointer to a complete drop
  * @warning Call from a task not an ISR.
  */
 static void processDrop(DropToWiFi* drop)
 {
-#define PACKET_SIZE 1420
-  static uint8  packet[PACKET_SIZE];
-  static uint16 len = 0;
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
-
-  os_memcpy(packet + len, drop->payload, rxJpegLen);
-  len += rxJpegLen;
-  if (((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) || // Couldn't handle another drop to send the packet
-      (drop->droplet & jpegEOF)) // Or end of frame
-  {
-    clientQueuePacket(packet, len);
-    len = 0;
-  }
+  if (rxJpegLen > 0) clientQueueImageData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
+  // XXX do stuff with the rest of the payload
 }
 
 /** Fills a drop into the outgoing DMA buffers
@@ -140,7 +116,7 @@ static void makeDrop(uint8_t* payload, uint8_t length)
   // Copy into the DMA buffer
   if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
   {
-    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
+    os_memcpy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE);
     outgoingPhase += DROP_SPACING/2;
     if (outgoingPhase > DMA_BUF_SIZE/2) // Have rolled over into next buffer
     {
@@ -154,12 +130,12 @@ static void makeDrop(uint8_t* payload, uint8_t length)
   else // Split across two buffers
   {
     const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
-    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
+    os_memcpy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten*2);
     /// XXX NEED TO HANDLE OVERFLOW
     nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
     txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
     os_memset(txBuf, 0, DMA_BUF_SIZE);
-    halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
+    os_memcpy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, (DROP_TO_RTIP_SIZE/2 - halfWordsWritten)*2);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
 }
@@ -212,7 +188,7 @@ LOCAL void i2spiTask(os_event_t *event)
         if (dropPhase < DMA_BUF_SIZE/2) // If we found a header
         {
           const int8 halfWordsToRead = min(DROP_TO_WIFI_SIZE-(dropWrInd*2), DMA_BUF_SIZE - (dropPhase*2))/2;
-          halfWordCopy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead);
+          os_memcpy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead*2);
           dropWrInd += halfWordsToRead;
           if (dropWrInd*2 == DROP_TO_WIFI_SIZE) // The end of the drop was in this buffer
           {

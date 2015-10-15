@@ -27,6 +27,11 @@
   return false;
 }*/
 
+inline uint32_t GetTimeStamp(void)
+{
+  return system_get_time()/1000; // Convert us counter to ms
+}
+
 static ETSTimer userTimer;
 
 LOCAL void ICACHE_FLASH_ATTR userIntervalTask(void *timer_arg)
@@ -149,9 +154,6 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   os_timer_setfn(&userTimer, userIntervalTask, NULL);
   //os_timer_arm(&userTimer, USER_TASK_INTERVAL_MS, true);
 
-  // Enable UART0 RX interrupt
-  // Only after clientInit
-  uart_start();
   // Enable I2SPI start only after clientInit
   i2spiStart();
 
