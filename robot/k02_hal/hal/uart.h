@@ -6,7 +6,7 @@
 #include "hal/portable.h"
 #include "anki/cozmo/robot/spineData.h"
 
-static const uint32_t debug_baud_rate = 1000000;
+static const uint32_t debug_baud_rate = 3000000;
 
 #define BAUD_SBR(baud)  (CORE_CLOCK * 2 / baud / 32)
 #define BAUD_BRFA(baud) (CORE_CLOCK * 2 / baud % 32)
@@ -26,6 +26,7 @@ namespace Anki
       
       void DebugInit(void);
       void DebugPrintf(const char *format, ...);
+      void DebugPutc(char c);
     }
   }
 }

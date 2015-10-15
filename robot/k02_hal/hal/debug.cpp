@@ -34,6 +34,12 @@ void Anki::Cozmo::HAL::DebugInit() {
   UART1_CFIFO = UART_CFIFO_TXFLUSH_MASK;
 }
 
+void Anki::Cozmo::HAL::DebugPutc(char c)
+{
+  while (UART1_TCFIFO) ;  // Wait for FIFO to empty
+  UART1_D = c;
+}
+
 void Anki::Cozmo::HAL::DebugPrintf(const char *format, ...)
 {
   char buffer[512];

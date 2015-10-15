@@ -23,7 +23,7 @@
 /// Number of raw (not usable) bytes on the I2SPI bus
 #define I2SPI_RAW_BYTES_PER_SECOND (I2SPI_FREQUENCY/8)
 /// The frequency which which drops are exchanged
-#define DROPS_PER_SECOND (7500)
+#define DROPS_PER_SECOND (7440)
 /// The estimated spacing between drop starts in bytes. We start looking at this location
 #define DROP_BYTE_SPACING (I2SPI_RAW_BYTES_PER_SECOND / DROPS_PER_SECOND)
 

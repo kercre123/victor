@@ -586,12 +586,12 @@
   //            Default: 0x22c + 0x2a + 0x288 + 4 or 1250 decimal - measured at 5000 clocks, believable
   // Frame time = VBlank (7/8) + Win_Height (d/e) (-8+8)
   //            Default: 0xb8 + 0x1e8 = 672 decimal lines
-	0x05 , 0x03,  // HBlank time - X+648+4+42 (12.5MHz in YUYV mode)
-	0x06 , 0xda,  // 3DA = 986 (+648+4+42) = 1680 columns/12.5MHz ticks or 1344 10MHz "bits" or 168 bytes
+	0x05 , 0x0a,  // HBlank time - X+648+4+42 (12.5MHz in YUYV mode)
+	0x06 , 0x6a,  // 3DA = 986 (+648+4+42) = 1680 columns/12.5MHz ticks or 1344 10MHz "bits" or 168 bytes
 	0x07 , 0x00,  // VBlank time - must be >=8 with default vs_st + vs_et
-	0x08 , 0x08,  // 488 + 8 = 496 lines or 15Hz at 12500000/1680/496
+	0x08 , 0x04,  // 488 + 8 = 496 lines or 15Hz at 12500000/1680/496
   
-  0x59 , 0x11,  // Don't subsample rows or columns
+  0x59 , 0x21,  // 0x21 = 640x240, 0x11 = 640x480
   
 	0xfe , 0x01,  // Page 1 
 	0x29 , 0x00,  //anti-flicker step [11:8]
