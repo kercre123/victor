@@ -132,7 +132,7 @@ public class BlockPattern {
     }
 
     // if all of the patterns match but no lights are on don't match.
-    if (patternSeen.blocks[0].LightsOff()) {
+    if (patternSeen.blocks[0].AreLightsOff()) {
       return false;
     }
 

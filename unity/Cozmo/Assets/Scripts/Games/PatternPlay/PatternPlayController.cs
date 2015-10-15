@@ -41,6 +41,12 @@ public class PatternPlayController : GameController {
     return patternPlayAudioBuild;
   }
 
+  public void ClearBlockLights() {
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
+      kvp.Value.blockLightsLocalSpace.TurnOffLights();
+    }
+  }
+
   public BlockPattern GetLastPatternSeen() {
     return lastPatternSeen;
   }

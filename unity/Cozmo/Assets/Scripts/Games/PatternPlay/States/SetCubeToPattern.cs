@@ -11,6 +11,7 @@ public class SetCubeToPattern : State {
 
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+
     SetPattern();
     stateMachine.SetNextState(new PlaceCube());
   }

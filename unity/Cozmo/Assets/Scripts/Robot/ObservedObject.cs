@@ -112,7 +112,7 @@ public class ObservedObject {
     }
   }
 
-  public const float RemoveDelay = 0.15f;
+  public const float RemoveDelay = 0.33f;
 
   public string InfoString { get; private set; }
 

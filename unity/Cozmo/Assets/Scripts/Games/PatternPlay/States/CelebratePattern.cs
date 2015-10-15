@@ -21,5 +21,6 @@ public class CelebratePattern : State {
   void AnimationDone(bool success) {
     patternPlayController.ResetLookHeadForkLift();
     stateMachine.SetNextState(new LookForPattern());
+    patternPlayController.ClearBlockLights();
   }
 }
