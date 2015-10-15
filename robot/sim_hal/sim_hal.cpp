@@ -109,6 +109,7 @@ namespace Anki {
       webots::DistanceSensor *proxLeft_;
       webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *proxRight_;
+      webots::DistanceSensor *cliffSensor_;
 
       // Charge contact
       webots::Connector* chargeContact_;
@@ -409,9 +410,12 @@ namespace Anki {
       proxLeft_ = webotRobot_.getDistanceSensor("proxSensorLeft");
       proxCenter_ = webotRobot_.getDistanceSensor("proxSensorCenter");
       proxRight_ = webotRobot_.getDistanceSensor("proxSensorRight");
+      cliffSensor_ = webotRobot_.getDistanceSensor("cliffSensor");
+      
       proxLeft_->enable(TIME_STEP);
       proxCenter_->enable(TIME_STEP);
       proxRight_->enable(TIME_STEP);
+      cliffSensor_->enable(TIME_STEP);
 
       // Charge contact
       chargeContact_ = webotRobot_.getConnector("ChargeContact");
