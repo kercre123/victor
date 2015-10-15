@@ -46,6 +46,9 @@ static void ICACHE_FLASH_ATTR udpServerRecvCB(void *arg, char *usrdata, unsigned
                  clientInfo.remote_ip[0], clientInfo.remote_ip[1], clientInfo.remote_ip[2], clientInfo.remote_ip[3], clientInfo.remote_port, clientInfo.local_port,
                  newInfo.remote_ip[0], newInfo.remote_ip[1], newInfo.remote_ip[2], newInfo.remote_ip[3], newInfo.remote_port, newInfo.local_port);
 #endif
+    // Reset the connection destination
+    udpServer->proto.udp->remote_ip[3] = clientInfo.remote_ip[3];
+    udpServer->proto.udp->remote_port  = clientInfo.remote_port;
     return; // Ignore the traffic
   }
   lastClientTime = now;
