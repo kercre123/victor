@@ -8,7 +8,7 @@ Author: Lee Crippen
 10-07-2015
 """
 
-import os, argparse, serial, datetime, sys
+import os, argparse, argparse_help, serial, datetime, sys
 
 """ Main function sets up the args, parses them to make sure they're valid, then uses them """
 def main():
@@ -18,20 +18,9 @@ def main():
     parser.add_argument('-r', help='Baud rate for the serial device.', type=int, nargs='?', default=57600, dest='rate')
     parser.add_argument('-lt', help='Time in ms to use between lines coming from the device.', type=float, nargs='?', default=3.968, dest='timePerLine')
     parser.add_argument('time', help='Amount of time in seconds to capture data.', action='store', type=float)
-    parser.add_argument('outDirectory', help='Output directory in which to store data or none for stdout.', action='store', nargs='?', default=None, type=is_directory_writable)
+    parser.add_argument('outDirectory', help='Output directory in which to store data or none for stdout.', action='store', nargs='?', default=None, type=argparse_help.is_directory_writable)
     args = parser.parse_args()
     capture(args.inDevice, args.rate, args.time, args.outDirectory, args.timePerLine)
-
-""" Simple check on the directory to make sure it's valid """
-def is_directory_writable(value):
-    if value == None:
-        return value
-
-    if not os.path.isdir(value):
-        raise argparse.ArgumentTypeError("{0} is not a valid directory!".format(value))
-    elif not os.access(value, os.W_OK):
-        raise argparse.ArgumentTypeError("{0} is not a writable directory!".format(value))
-    return value
 
 """ Capture function continuously pulls from serial device and writes to output for time duration """
 def capture(inDevice, rate, time, outDir, timePerLine):
@@ -48,12 +37,13 @@ def capture(inDevice, rate, time, outDir, timePerLine):
     for x in xrange(50):
         get_line(s)
 
-    currTime = datetime.datetime.now()
+    currTime = startTime = datetime.datetime.now()
     endTime = currTime + datetime.timedelta(seconds=time)
 
     while True:
+        secElapsed = float((currTime - startTime).total_seconds())
+        f.write(str(secElapsed) + '\t' + get_line(s))
         currTime += datetime.timedelta(milliseconds=timePerLine)
-        f.write(currTime.isoformat('\t') + '\t' + get_line(s))
         if currTime > endTime:
             break
 
