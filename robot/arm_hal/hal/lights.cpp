@@ -9,7 +9,7 @@ namespace Anki
   {
     namespace HAL
     {
-      static const uint32_t DROP_LEVEL = 0x40;
+      static const uint32_t DROP_LEVEL = 20;
         
       extern volatile GlobalDataToBody g_dataToBody;
       char const backpackLightLUT[5] = {3, 2, 1, 0, 0};
