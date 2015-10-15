@@ -14,7 +14,7 @@ public class CelebratePattern : State {
       robot.SendAnimation("enjoyPattern", AnimationDone);
     }
     else {
-      robot.SendAnimation("minorWin", AnimationDone);
+      robot.SendAnimation("seeOldPattern", AnimationDone);
     }
   }
 
