@@ -93,6 +93,29 @@ public class PatternCollectionBankCard : MonoBehaviour {
 
   private void ShowSpecialPatterns(MemoryBank memoryBank)
   {
-    Debug.LogError ("Show special cases");
+    IEnumerable<BlockPattern> patterns = memoryBank.GetSeenPatterns ();
+    int createdStacks = 0;
+    int createdRows = 0;
+
+    if (patterns != null) {
+      foreach (BlockPattern pattern in patterns) {
+        if (pattern.verticalStack) {
+          CreatePatternCard(pattern, _halfHorizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
+          createdStacks++;
+        }
+        else {
+          CreatePatternCard(pattern, _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
+          createdRows++;
+        }
+      }
+    }
+
+    // Fill out the rest of the layout with empty cards
+    for (int i = 0; i < 2 - createdRows; i++) {
+      CreatePatternCard(null, _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
+    }
+    for (int i = 0; i < 2 - createdStacks; i++) {
+      CreatePatternCard(null, _halfHorizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
+    }
   }
 }
