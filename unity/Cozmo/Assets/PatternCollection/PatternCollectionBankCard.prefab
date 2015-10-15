@@ -11,6 +11,7 @@ GameObject:
   - 222: {fileID: 22269846}
   - 114: {fileID: 11468180}
   - 114: {fileID: 11427520}
+  - 114: {fileID: 11402378}
   m_Layer: 0
   m_Name: PatternCollectionBankCard
   m_TagString: Untagged
@@ -67,6 +68,17 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11402378
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 132270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a16bc64d06554b4bae76ecffe8e8210, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11427520
 MonoBehaviour:
   m_ObjectHideFlags: 1

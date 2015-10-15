@@ -2,54 +2,31 @@
 using System.Collections;
 using System.Collections.Generic;
 
+// Temp class for testing dialog functionality. Should have PatternCollectionDialog
+// hook up to PatternPlayUIController later
 public class PatternCollectionViewController : MonoBehaviour {
-  public PatternDisplay horizontalPatternDisplay;
+ 
+  [SerializeField]
+  private PatternCollectionDialog _patternCollectionDialog;
 
-  public BlockPattern[] testPatterns;
-	// Use this for initialization
-	void Start () {
-    testPatterns = new BlockPattern[3];
-    testPatterns[0] = new BlockPattern();
-    testPatterns[0].blocks = new List<BlockLights> { 
-      new BlockLights{ front = false, back = true, left = false, right = false },
-      new BlockLights{ front = false, back = true, left = false, right = false },
-      new BlockLights{ front = false, back = true, left = false, right = false },
-      new BlockLights{ front = false, back = true, left = false, right = false },
-    };
+  private PatternMemory _testPatternMemory;
+  
+  // Use this for initialization
+  void Start () {
+  	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
+    _testPatternMemory = CreateTestPatternMemory ();
 
-    testPatterns[1] = new BlockPattern();
-    testPatterns[1].blocks = new List<BlockLights> { 
-      new BlockLights{ front = true, back = false, left = false, right = false },
-      new BlockLights{ front = true, back = false, left = false, right = false },
-      new BlockLights{ front = true, back = false, left = false, right = false },
-      new BlockLights{ front = true, back = false, left = false, right = false },
-    };
-
-    testPatterns[2] = new BlockPattern();
-    testPatterns[2].blocks = new List<BlockLights> { 
-      new BlockLights{ front = false, back = false, left = false, right = false },
-      new BlockLights{ front = false, back = false, left = false, right = false },
-      new BlockLights{ front = false, back = false, left = false, right = false },
-      new BlockLights{ front = false, back = false, left = false, right = false },
-    };
-
-    horizontalPatternDisplay.pattern = testPatterns[2];
-	}
-
-  public void onOneClicked() {
-    horizontalPatternDisplay.pattern = testPatterns[0];
+  	// Populate dialog with cards using memory
+    _patternCollectionDialog.Initialize (_testPatternMemory);
   }
 
-  public void onTwoClicked() {
-    horizontalPatternDisplay.pattern = testPatterns[1];
-  }
+	private PatternMemory CreateTestPatternMemory()
+	{
+		PatternMemory patternMemory = new PatternMemory ();
+		patternMemory.Initialize ();
 
-  public void onThreeClicked() {
-    horizontalPatternDisplay.pattern = testPatterns[2];
-  }
-	
-	// Update is called once per frame
-	void Update () {
-	
+		// TODO: Add seen patterns to memory
+
+		return patternMemory;
 	}
 }

@@ -10,6 +10,7 @@ GameObject:
   - 224: {fileID: 22450736}
   - 222: {fileID: 22259306}
   - 114: {fileID: 11422778}
+  - 114: {fileID: 11448498}
   m_Layer: 5
   m_Name: PatternCollectionDialog
   m_TagString: Untagged
@@ -121,6 +122,20 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11448498
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 140772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d29b10a7bdb9b415f8965d1b77d0750f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _memoryBankCardPrefab: {fileID: 11402378, guid: c9f5369cdc6734c8e9ab0fa74c47495e,
+    type: 2}
+  _memoryBankCardContentPanel: {fileID: 22453032}
 --- !u!114 &11467954
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -146,7 +161,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Padding:
     m_Left: 0
-    m_Right: 10
+    m_Right: 0
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
@@ -209,7 +224,7 @@ RectTransform:
   m_Father: {fileID: 22497932}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: .5}
@@ -229,7 +244,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -40, y: -60}
+  m_SizeDelta: {x: -50, y: -50}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:

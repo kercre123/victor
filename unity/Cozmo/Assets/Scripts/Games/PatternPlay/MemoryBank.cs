@@ -88,6 +88,10 @@ public class MemoryBankSignature {
 public class MemoryBank {
 
   MemoryBankSignature signature;
+  public MemoryBankSignature Signature {
+    get { return signature; } 
+    private set { signature = value; }
+  }
 
   public MemoryBank(MemoryBankSignature signature_) {
     signature = signature_;

@@ -369,7 +369,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1cc5214f734c4d29a7ee58dcdd70795, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  horizontalPatternDisplay: {fileID: 0}
+  _patternCollectionDialog: {fileID: 1900936886}
 --- !u!4 &1097518195
 Transform:
   m_ObjectHideFlags: 0
@@ -527,8 +527,14 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22453032, guid: abab7cda4de7b428fa17f9b115fddb81, type: 2}
       propertyPath: m_SizeDelta.x
-      value: 10
+      value: -900
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: abab7cda4de7b428fa17f9b115fddb81, type: 2}
   m_IsPrefabParent: 0
+--- !u!114 &1900936886 stripped
+MonoBehaviour:
+  m_PrefabParentObject: {fileID: 11448498, guid: abab7cda4de7b428fa17f9b115fddb81,
+    type: 2}
+  m_PrefabInternal: {fileID: 1900936885}
+  m_Script: {fileID: 11500000, guid: d29b10a7bdb9b415f8965d1b77d0750f, type: 3}
