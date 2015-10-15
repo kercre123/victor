@@ -96,8 +96,10 @@ private:
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();
 
-  // TODO: Remove this once we aren't playing robot audio on the device
+  // TODO: Remove these once we aren't playing robot audio on the device
   TimeStamp_t _playedRobotAudio_ms;
+  std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
+  const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
 
   bool _endOfAnimationSent;
 
