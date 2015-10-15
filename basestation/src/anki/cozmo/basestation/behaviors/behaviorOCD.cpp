@@ -388,7 +388,7 @@ namespace Cozmo {
     }
     
     _robot.GetActionList().Cancel(_lastActionTag);
-    IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp);
+    IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp, false);
     _lastActionTag = pickupAction->GetTag();
     _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupAction);
     
@@ -519,7 +519,7 @@ namespace Cozmo {
         
         if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new DriveToPickAndPlaceObjectAction(_objectToPlaceOn);
+          placementAction = new DriveToPickAndPlaceObjectAction(_objectToPlaceOn, true);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.",
                            _objectToPlaceOn.GetValue());
         } else {
@@ -544,6 +544,7 @@ namespace Cozmo {
 
             // Place block at specified offset from lastObjectPlacedOnGround.
             placementAction = new DriveToPickAndPlaceObjectAction(_lastObjectPlacedOnGround,
+                                                                  true,
                                                                   false,
                                                                   kLowPlacementOffsetMM,
                                                                   0,
