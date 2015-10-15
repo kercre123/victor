@@ -3,9 +3,17 @@ using System.Collections;
 
 public class PickUpCube : State {
 
+  PatternPlayController patternPlayController = null;
+  PatternPlayAutoBuild patternPlayAutoBuild = null;
+
   public override void Enter() {
     base.Enter();
-    //robot.PickAndPlaceObject()
+    patternPlayController = (PatternPlayController)stateMachine.GetGameController();
+    patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+    ObservedObject targetObject = patternPlayAutoBuild.GetClosestAvailableBlock();
+
+    robot.PickAndPlaceObject(targetObject);
+    patternPlayAutoBuild.SetObjectHeld(targetObject);
   }
 
   void PickUpDone(bool success) {
@@ -14,6 +22,7 @@ public class PickUpCube : State {
     }
     else {
       stateMachine.SetNextState(new LookForCubes());
+      patternPlayAutoBuild.SetObjectHeld(null);
     }
 
   }

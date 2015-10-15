@@ -843,7 +843,7 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false) {
+  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null) {
     PlaceObjectOnGroundMessage.x_mm = position.x;
     PlaceObjectOnGroundMessage.y_mm = position.y;
     PlaceObjectOnGroundMessage.rad = facing_rad;
@@ -856,6 +856,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+    }
 
   }
 
