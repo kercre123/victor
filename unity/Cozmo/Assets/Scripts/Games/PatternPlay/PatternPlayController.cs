@@ -33,6 +33,8 @@ public class PatternPlayController : GameController {
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
+  private int currentMovedID = -1;
+
   public void SetPatternOnBlock(int blockID, int lightCount) {
     // TODO: make sure orientation is actually correct.
 
@@ -233,7 +235,10 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
 
-    int currentMovedID = GetMostRecentMovedID();
+    if (currentMovedID == -1) {
+      currentMovedID = GetMostRecentMovedID();
+    }
+
     if (currentMovedID != lastMovedID) {
       lastSetTime = -100.0f;
     }
@@ -313,7 +318,11 @@ public class PatternPlayController : GameController {
   private void BlockStopped(int blockID) {
     if (gameReady == false)
       return;
-    
+
+    if (blockID == currentMovedID) {
+      currentMovedID = -1;
+    }
+
     blockPatternData[blockID].moving = false;
   }
 
@@ -321,7 +330,7 @@ public class PatternPlayController : GameController {
     int lastTouchedID = -1;
     float minTime = 0.0f;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
-      if (block.Value.lastTimeTouched > minTime) {
+      if (block.Value.lastTimeTouched > minTime && Time.time - block.Value.lastTimeTouched > 0.3f) {
         lastTouchedID = block.Key;
         minTime = block.Value.lastTimeTouched;
       }
