@@ -147,12 +147,6 @@ public class Robot : IDisposable {
 
   public List<ObservedObject> selectedObjects { get; private set; }
 
-  public List<ObservedObject> lastSelectedObjects { get; private set; }
-
-  public List<ObservedObject> lastObservedObjects { get; private set; }
-
-  public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
   public List<Face> faceObjects { get; private set; }
@@ -342,11 +336,8 @@ public class Robot : IDisposable {
     ID = robotID;
     const int initialSize = 64;
     selectedObjects = new List<ObservedObject>(3);
-    lastSelectedObjects = new List<ObservedObject>(3);
     observedObjects = new List<ObservedObject>(initialSize);
-    lastObservedObjects = new List<ObservedObject>(initialSize);
     markersVisibleObjects = new List<ObservedObject>(initialSize);
-    lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
     knownObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
     faceObjects = new List< global::Face>();
@@ -455,11 +446,8 @@ public class Robot : IDisposable {
     }
 
     selectedObjects.Clear();
-    lastSelectedObjects.Clear();
     observedObjects.Clear();
-    lastObservedObjects.Clear();
     markersVisibleObjects.Clear();
-    lastMarkersVisibleObjects.Clear();
     knownObjects.Clear();
     activeBlocks.Clear();
     status = RobotStatusFlag.NoneRobotStatusFlag;

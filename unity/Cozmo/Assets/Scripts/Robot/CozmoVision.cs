@@ -380,20 +380,6 @@ public class CozmoVision : MonoBehaviour {
     }
   }
 
-  protected virtual void LateUpdate() {
-    if (robot != null) {
-      robot.lastObservedObjects.Clear();
-      robot.lastSelectedObjects.Clear();
-      robot.lastMarkersVisibleObjects.Clear();
-      
-      if (!robot.isBusy) {
-        robot.lastObservedObjects.AddRange(robot.observedObjects);
-        robot.lastSelectedObjects.AddRange(robot.selectedObjects);
-        robot.lastMarkersVisibleObjects.AddRange(robot.markersVisibleObjects);
-      }
-    }
-  }
-
   protected virtual void OnDisable() {
     if (RobotEngineManager.instance != null) {
       RobotEngineManager.instance.RobotImage -= RobotImage;
