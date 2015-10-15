@@ -2,21 +2,29 @@
 using System.Collections;
 
 public class LookForCubes : State {
-  int cubeSeenCount = 0;
+
+  PatternPlayController patternPlayController = null;
+  PatternPlayAutoBuild patternPlayAutoBuild = null;
 
   public override void Enter() {
     base.Enter();
+    DAS.Info("PatternPlayState", "LookForCubes");
+    patternPlayController = (PatternPlayController)stateMachine.GetGameController();
+    patternPlayAutoBuild = patternPlayController.GetAutoBuild();
   }
 
   public override void Update() {
     base.Update();
-    if (cubeSeenCount > 0) {
+    if (patternPlayAutoBuild.AvailableBlocks() > 0) {
       stateMachine.SetNextState(new PickUpCube());
+      // robot.ExecuteBehavior("NONE");
+    }
+    else {
+      SearchForAvailableBlock();
     }
   }
 
-  public override void Exit() {
-    base.Exit();
+  void SearchForAvailableBlock() {
+    // robot.ExecuteBehavior("LOOK_AROUND");
   }
-
 }

@@ -132,7 +132,7 @@ public class BlockPattern {
     }
 
     // if all of the patterns match but no lights are on don't match.
-    if (patternSeen.blocks[0].LightsOff()) {
+    if (patternSeen.blocks[0].AreLightsOff()) {
       return false;
     }
 
@@ -173,14 +173,14 @@ public class BlockPattern {
       float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
       float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
 
-      if (Mathf.Abs(block0 - block1) > 25.0f) {
+      if (Mathf.Abs(block0 - block1) > 30.0f) {
         return false;
       }
 
       float diffZ = (robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition).z;
 
       // enforce horizontal rule
-      if (Mathf.Abs(diffZ) > 1.0f) {
+      if (Mathf.Abs(diffZ) > 1.5f) {
         return false;
       }
     }

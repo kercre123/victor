@@ -147,12 +147,6 @@ public class Robot : IDisposable {
 
   public List<ObservedObject> selectedObjects { get; private set; }
 
-  public List<ObservedObject> lastSelectedObjects { get; private set; }
-
-  public List<ObservedObject> lastObservedObjects { get; private set; }
-
-  public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
-
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
   public List<Face> faceObjects { get; private set; }
@@ -342,11 +336,8 @@ public class Robot : IDisposable {
     ID = robotID;
     const int initialSize = 64;
     selectedObjects = new List<ObservedObject>(3);
-    lastSelectedObjects = new List<ObservedObject>(3);
     observedObjects = new List<ObservedObject>(initialSize);
-    lastObservedObjects = new List<ObservedObject>(initialSize);
     markersVisibleObjects = new List<ObservedObject>(initialSize);
-    lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
     knownObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
     faceObjects = new List< global::Face>();
@@ -455,11 +446,8 @@ public class Robot : IDisposable {
     }
 
     selectedObjects.Clear();
-    lastSelectedObjects.Clear();
     observedObjects.Clear();
-    lastObservedObjects.Clear();
     markersVisibleObjects.Clear();
-    lastMarkersVisibleObjects.Clear();
     knownObjects.Clear();
     activeBlocks.Clear();
     status = RobotStatusFlag.NoneRobotStatusFlag;
@@ -843,7 +831,7 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false) {
+  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null) {
     PlaceObjectOnGroundMessage.x_mm = position.x;
     PlaceObjectOnGroundMessage.y_mm = position.y;
     PlaceObjectOnGroundMessage.rad = facing_rad;
@@ -856,6 +844,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+    }
 
   }
 
@@ -881,7 +873,7 @@ public class Robot : IDisposable {
     return position;
   }
 
-  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false) {
+  public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
     GotoPoseMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     GotoPoseMessage.x_mm = x_mm;
@@ -894,6 +886,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
+    }
   }
 
   public void GotoObject(ObservedObject obj, float distance_mm) {

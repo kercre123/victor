@@ -7,8 +7,15 @@ public struct BlockLights {
   public bool left;
   public bool right;
 
-  public bool LightsOff() {
+  public bool AreLightsOff() {
     return !front && !back && !left && !right;
+  }
+
+  public void TurnOffLights() {
+    front = false;
+    back = false;
+    left = false;
+    right = false;
   }
 
   public int NumberOfLightsOn() {

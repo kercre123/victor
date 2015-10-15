@@ -14,6 +14,9 @@ public class PatternPlayController : GameController {
   private int lastSetID = -1;
   private float lastSetTime = 0.0f;
 
+  // variables for autonomous pattern building
+  PatternPlayAutoBuild patternPlayAudioBuild = new PatternPlayAutoBuild();
+
   [SerializeField]
   private PatternPlayAudio patternPlayAudio;
 
@@ -29,6 +32,47 @@ public class PatternPlayController : GameController {
   private PatternMemory memoryBank = new PatternMemory();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
+
+  public void SetPatternOnBlock(int blockID, int lightCount) {
+    // TODO: make sure orientation is actually correct.
+
+    blockPatternData[blockID].blockLightsLocalSpace.TurnOffLights();
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.front = true;
+      lightCount--;
+    }
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.left = true;
+      lightCount--;
+    }
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.back = true;
+      lightCount--;
+    }
+
+    if (lightCount > 0) {
+      blockPatternData[blockID].blockLightsLocalSpace.right = true;
+      lightCount--;
+    }
+
+  }
+
+  public Robot GetRobot() {
+    return robot;
+  }
+
+  public PatternPlayAutoBuild GetAutoBuild() {
+    return patternPlayAudioBuild;
+  }
+
+  public void ClearBlockLights() {
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
+      kvp.Value.blockLightsLocalSpace.TurnOffLights();
+    }
+  }
 
   public BlockPattern GetLastPatternSeen() {
     return lastPatternSeen;
@@ -50,6 +94,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     memoryBank.Initialize();
+    patternPlayAudioBuild.controller = this;
   }
 
   protected override void OnDisable() {
@@ -339,6 +384,6 @@ public class PatternPlayController : GameController {
     robot.SetHeadAngle(-0.1f);
     robot.SetLiftHeight(2.0f);
   }
-    
+
 }
   
