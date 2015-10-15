@@ -95,10 +95,10 @@ struct xythetaPlannerImpl
 
   bool* _runPlan;
 
-  // assuming that `sid` is in soft collision, this function will do a breadth-first expansion until we
+  // assuming that goal is in soft collision, this function will do a breadth-first expansion until we
   // "escape" from the soft penalty. It will add these penalties to a heuristic map, so the heuristic can take
-  // these soft penalties into account
-  Cost ExpandStatesForHeur(StateID sid);
+  // these soft penalties into account. It works backwards, for the case when sid is the goal
+  Cost ExpandCollisionStatesFromGoal();
 
   // heuristic pre-computation stuff
   Cost _costOutsideHeurMap;

@@ -263,3 +263,45 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
 
   EXPECT_TRUE(it.Done(env));
 }
+
+GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch)
+{
+  // Assuming this is running from root/build......
+  xythetaEnvironment env;
+
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+
+  State curr(-14,107,15);
+
+  SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0);
+
+  // now go through each one, then from there, apply the reverse successors and make sure they match up
+  ASSERT_FALSE(it.Done(env));
+  it.Next(env);
+
+  while( ! it.Done(env) ) {
+    StateID nextID = it.Front().stateID;
+
+    SuccessorIterator rIt = env.GetSuccessors(nextID, 0.0, true);
+    ASSERT_FALSE(rIt.Done(env));
+    rIt.Next(env);
+    int numMatches = 0;
+
+    while( ! rIt.Done(env) ) {
+      if( rIt.Front().stateID == curr.GetStateID() ) {
+        numMatches++;
+        EXPECT_EQ(rIt.Front().actionID, it.Front().actionID);
+        EXPECT_FLOAT_EQ(rIt.Front().g, it.Front().g);
+        EXPECT_FLOAT_EQ(rIt.Front().penalty, it.Front().penalty);
+      }
+      rIt.Next(env);
+    }
+
+    EXPECT_EQ(numMatches, 1) << "going forward then backwards should have exactly 1 match";
+
+    it.Next(env);
+  }
+
+
+}
+

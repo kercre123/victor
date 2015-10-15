@@ -185,11 +185,12 @@ void IntermediatePosition::Dump(Util::JsonWriter& writer) const
 }
 
 
-SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG)
-  : start_c_(env->StateID2State_c(startID)),
-    start_(startID),
-    startG_(startG),
-    nextAction_(0)
+SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse)
+  : start_c_(env->StateID2State_c(startID))
+  , start_(startID)
+  , startG_(startG)
+  , nextAction_(0)
+  , reverse_(reverse)
 {
   assert(start_.theta == xythetaEnvironment::GetThetaFromStateID(startID));
 }
@@ -197,7 +198,12 @@ SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID star
 // TODO:(bn) inline?
 bool SuccessorIterator::Done(const xythetaEnvironment& env) const
 {
-  return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
+  if( ! reverse_ ) {
+    return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
+  }
+  else {
+    return nextAction_ > env.reverseMotionPrimitives_[start_.theta].size();
+  }
 }
 
 Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
@@ -357,9 +363,23 @@ const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(StateTheta thet
 
 void SuccessorIterator::Next(const xythetaEnvironment& env)
 {
-  size_t numActions = env.allMotionPrimitives_[start_.theta].size();
+  size_t numActions = 0;
+
+  if( ! reverse_ ) {
+    numActions = env.allMotionPrimitives_[start_.theta].size();
+  }
+  else {
+    numActions = env.reverseMotionPrimitives_[start_.theta].size();
+  }
+
   while(nextAction_ < numActions) {
-    const MotionPrimitive* prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
+    const MotionPrimitive* prim = nullptr; 
+    if( ! reverse_ ) {
+      prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
+    }
+    else { 
+      prim = &env.reverseMotionPrimitives_[start_.theta][nextAction_];
+    }
 
     // collision checking
     long endPoints = prim->intermediatePositions.size();
@@ -384,9 +404,9 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
             collision = true;
             break;
           }
+
           else {
             // apply soft penalty, but allow the action
-
             penalty += env.obstaclesPerAngle_[angle][obsIdx].second *
               prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
 
@@ -415,7 +435,8 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
       assert(!isnan(nextSucc_.g));
 
       nextSucc_.penalty = penalty;
-      nextSucc_.actionID = nextAction_;
+      nextSucc_.actionID = prim->id;
+      assert( reverse_ || nextAction_ == prim->id);
       break;
     }
 
@@ -784,7 +805,30 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
     return false;
   }
 
+  PopulateReverseMotionPrims();
+
   return true;
+}
+
+void xythetaEnvironment::PopulateReverseMotionPrims()
+{
+  reverseMotionPrimitives_.clear();
+  reverseMotionPrimitives_.resize(numAngles_);
+
+  // go through each motion primitive, and populate the corresponding reverse primitive
+  for(int startAngle = 0; startAngle < numAngles_; ++startAngle) {
+    for(int actionID = 0; actionID < allMotionPrimitives_[ startAngle ].size(); ++actionID) {
+      const MotionPrimitive& prim( allMotionPrimitives_[ startAngle ][ actionID ] );
+      int endAngle = prim.endStateOffset.theta;
+
+      MotionPrimitive reversePrim(prim);
+      reversePrim.endStateOffset.theta = startAngle;
+      reversePrim.endStateOffset.x = -reversePrim.endStateOffset.x;
+      reversePrim.endStateOffset.y = -reversePrim.endStateOffset.y;
+
+      reverseMotionPrimitives_[endAngle].push_back( reversePrim );
+    }
+  }
 }
 
 void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
@@ -1276,7 +1320,7 @@ bool MotionPrimitive::Import(const Json::Value& config)
   return true;
 }
 
-void MotionPrimitive::Dump(Util::JsonWriter& writer) const // TEMP:  // TEMP: all dumps should be const
+void MotionPrimitive::Dump(Util::JsonWriter& writer) const
 {
   writer.AddEntry("action_index", id);
   writer.AddEntry("start_theta", startTheta);
@@ -1427,9 +1471,9 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
   return sqrtf(distSq);
 }
 
-SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG) const
+SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG, bool reverse) const
 {
-  return SuccessorIterator(this, startID, currG);
+  return SuccessorIterator(this, startID, currG, reverse);
 }
 
 void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip) const

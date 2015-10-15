@@ -211,7 +211,9 @@ public:
 class SuccessorIterator
 {
 public:
-  SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG);
+
+  // if reverse is true, then advance through predecessors instead of successors
+  SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse = false);
 
   // Returns true if there are no more results left
   bool Done(const xythetaEnvironment& env) const;
@@ -231,6 +233,8 @@ private:
   ActionID nextAction_;
 
   Successor nextSucc_;
+  
+  bool reverse_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -356,9 +360,9 @@ public:
 
   size_t GetNumObstacles() const;
 
-  // Returns an iterator to the successors from state "start". Use
-  // this one if you want to check each action
-  SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
+  // Returns an iterator to the successors from state "start". Use this one if you want to check each
+  // action. If reverse is true, then get predecessors (reverse successors) instead
+  SuccessorIterator GetSuccessors(StateID startID, Cost currG, bool reverse = false) const;
 
   // This function tries to apply the given action to the state. It
   // returns the penalty of the path (i.e. no cost for actions, just
@@ -500,6 +504,8 @@ private:
   void DumpMotionPrims(Util::JsonWriter& writer) const;
   bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
 
+  void PopulateReverseMotionPrims();
+
   float resolution_mm_;
   float oneOverResolution_;
 
@@ -511,7 +517,12 @@ private:
   float oneOverRadiansPerAngle_;
 
   // First index is starting angle, second is prim ID
-  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;  
+  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
+
+  // Reverse motion primitives, for getting predecessors to a state. The first index is the ending angle, the
+  // second is meaningless. The primitive will have the action ID corresponding to the correct forward
+  // primitive, but the endStateOffset will be reverse, so you can follow backwards
+  std::vector< std::vector<MotionPrimitive> > reverseMotionPrimitives_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
