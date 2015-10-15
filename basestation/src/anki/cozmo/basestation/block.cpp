@@ -64,7 +64,9 @@ namespace Anki {
     
     void Block::AddFace(const FaceName whichFace,
                         const Vision::MarkerType &code,
-                        const float markerSize_mm)
+                        const float markerSize_mm,
+                        const u8 dockOrientations,
+                        const u8 rollOrientations)
     {
       /* Still needed??
       if(whichFace >= NUM_FACES) {
@@ -123,38 +125,55 @@ namespace Anki {
       const Vision::KnownMarker* marker = &AddMarker(code, facePose, markerSize_mm);
       
       // NOTE: these preaction poses are really only valid for cube blocks!!!
-      
+
       // The four rotation vectors for the pre-action poses created below
       const std::array<RotationVector3d,4> preActionPoseRotations = {{
-        {0.f, Y_AXIS_3D()},  {M_PI_2, Y_AXIS_3D()},  {-M_PI_2, Y_AXIS_3D()},  {M_PI, Y_AXIS_3D()}
+        {0.f, Y_AXIS_3D()},  {M_PI_2, Y_AXIS_3D()},  {M_PI, Y_AXIS_3D()},  {-M_PI_2, Y_AXIS_3D()}
       }};
       
       // Add a pre-dock pose to each face, at fixed distance normal to the face,
       // and one for each orientation of the block
-      {
-        for(auto const& Rvec : preActionPoseRotations) {
-          
+      for (u8 rot = 0; rot < 4; ++rot) {
+        
+        auto const& Rvec = preActionPoseRotations[rot];
+        
+        // Add docking preaction poses
+        if (dockOrientations & (1 << rot)) {
           for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
             Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
             preDockPose.RotateBy(Rvec);
             AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
           }
+        }
+        
+        // Add rolling preaction poses
+        if (rollOrientations & (1 << rot)) {
+          for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
+            Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
+            preDockPose.RotateBy(Rvec);
+            AddPreActionPose(PreActionPose::ROLLING, marker, preDockPose);
+          }
+        }
+      }
 
-        }
+      const f32 DefaultPrePlaceOnGroundDistance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - DRIVE_CENTER_OFFSET;
+      for(auto const& Rvec : preActionPoseRotations) {
+        
+        // Add a pre-placeOnGround pose to each face, where the robot will be sitting
+        // relative to the face when we put down the block -- one for each
+        // orientation of the block.
+        Pose3d prePlaceOnGroundPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlaceOnGroundDistance, -halfHeight}}, &marker->GetPose());
+        prePlaceOnGroundPose.RotateBy(Rvec);
+        AddPreActionPose(PreActionPose::PLACE_ON_GROUND, marker, prePlaceOnGroundPose);
+        
+        // Add a pre-placeRelative pose to each face, where the robot should be before
+        // it approaches the block in order to place a carried object on top of or in front of it.
+        Pose3d prePlaceRelativePose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -halfHeight}}, &marker->GetPose());
+        prePlaceRelativePose.RotateBy(Rvec);
+        AddPreActionPose(PreActionPose::PLACE_RELATIVE, marker, prePlaceRelativePose);
       }
-      
-      // Add a pre-placement pose to each face, where the robot will be sitting
-      // relative to the face when we put down the block -- one for each
-      // orientation of the block
-      {
-        const f32 DefaultPrePlacementDistance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - DRIVE_CENTER_OFFSET;
-        for(auto const& Rvec : preActionPoseRotations) {
-          Pose3d prePlacementPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlacementDistance, -halfHeight}}, &marker->GetPose());
-          prePlacementPose.RotateBy(Rvec);
-          AddPreActionPose(PreActionPose::PLACEMENT, marker, prePlacementPose);
-        }
-      }
-      
+    
+    
       // Store a pointer to the marker on each face:
       markersByFace_[whichFace] = marker;
       
@@ -173,7 +192,7 @@ namespace Anki {
       markersByFace_.fill(NULL);
       
       for(auto face : LookupBlockInfo(_type).faces) {
-        AddFace(face.whichFace, face.code, face.size);
+        AddFace(face.whichFace, face.code, face.size, face.dockOrientations, face.rollOrientations);
       }
       
       // Every block should at least have a front face defined in the BlockDefinitions file
