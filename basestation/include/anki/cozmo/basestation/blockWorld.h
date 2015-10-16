@@ -330,6 +330,8 @@ namespace Anki
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;
       
+      std::set<ObjectID> _unidentifiedActiveObjects;
+      
     }; // class BlockWorld
 
     
@@ -410,6 +412,12 @@ namespace Anki
     {
       if(!object->GetID().IsSet()) {
         object->SetID();
+      }
+      
+      // If this is a new active object, trigger an identification procedure
+      if(object->IsActive()) {
+        _unidentifiedActiveObjects.insert(object->GetID());
+        object->Identify();
       }
       
       existingFamily[object->GetType()][object->GetID()] = object;

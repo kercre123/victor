@@ -84,9 +84,14 @@ namespace Anki {
       
       
       // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
+      enum class IdentityState : u8 {
+        Unidentified,
+        WaitingForIdentity,
+        Identified
+      };
       virtual bool IsActive() const { return false; }
-      virtual bool IsIdentified() const { return false; }
       virtual void Identify() { /* no-op */ }
+      IdentityState GetIdentityState() const { return _identityState; }
       
       // Override for objects that can be used for localization (e.g., mats
       // or active blocks that have not moved since last localization)
@@ -204,9 +209,11 @@ namespace Anki {
       virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
       ObjectID     _ID;
-      TimeStamp_t  _lastObservedTime;
-      u32          _numTimesObserved;
+      TimeStamp_t  _lastObservedTime = 0;
+      u32          _numTimesObserved = 0;
       ColorRGBA    _color;
+      
+      IdentityState _identityState = IdentityState::Unidentified;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -224,7 +231,7 @@ namespace Anki {
       Pose3d _pose;
       
       // Pose has been set
-      bool   _isLocalized;
+      bool   _isLocalized = false;
       
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents

@@ -140,6 +140,7 @@ namespace Anki {
     protected:
       
       Block(const ObjectType type);
+      Block(const ObjectFamily family, const ObjectType type);
       
       // Make this protected so we have to use public AddFace() method
       using ActionableObject::AddMarker;
@@ -316,7 +317,6 @@ namespace Anki {
       // Trigger a brief change in flash/color to allow identification of this block
       // (Possibly actually flash out the block's ID? TBD...)
       virtual void Identify() override;
-      virtual bool IsIdentified() const override { return _activeID >= 0; }
       
       virtual bool IsActive() const override { return true; }
       

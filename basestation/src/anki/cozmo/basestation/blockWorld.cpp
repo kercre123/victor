@@ -40,7 +40,7 @@
 //  2 = turn this on for physical and simulatd robots
 #define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 0
 
-#define ENABLE_BLOCK_BASED_LOCALIZATION 0
+#define ENABLE_BLOCK_BASED_LOCALIZATION 1
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
@@ -442,7 +442,8 @@ namespace Anki
           }
             
           // no existing objects overlapped with the objects we saw, so add it
-          // as a new object
+          // as a new object.
+          // NOTE: This will also trigger identification of active objects.
           AddNewObject(objectsExisting, objSeen);
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
@@ -473,7 +474,43 @@ namespace Anki
            robot->GetID());
            */
           
-        } else {
+        } else { // This is an existing object
+          
+          if(matchingObject->IsActive())
+          {
+            if(ObservableObject::IdentityState::Identified == matchingObject->GetIdentityState())
+            {
+              if(_unidentifiedActiveObjects.count(matchingObject->GetID()) > 0)
+              {
+                // This object just got identified, so make sure it is not an active
+                // object we already knew about.
+                
+                _unidentifiedActiveObjects.erase(matchingObject->GetID());
+                
+                for(auto & objectIter : _existingObjects[matchingObject->GetFamily()][matchingObject->GetType()])
+                {
+                  ObservableObject* candidateObject = objectIter.second;
+                  assert(candidateObject->IsActive()); // all objects of this type should be active
+                  
+                  if(candidateObject->GetID() != matchingObject->GetID() &&
+                     candidateObject->GetActiveID() == matchingObject->GetActiveID())
+                  {
+                    PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObject.FoundDuplicateActiveID",
+                                     "Will use pre-existing active ID %d",
+                                     matchingObject->GetActiveID());
+                    ClearObject(matchingObject->GetID());
+                    matchingObject = candidateObject;
+                    break;
+                  }
+                }
+              }
+            } else {
+              // "Tick" the fake identification process forward
+                // TODO: Shouldn't need to do this once we have real block identification
+              matchingObject->Identify();
+            }
+          } // if(matchingObject->IsActive())
+          
           
           // Check if there are objects on top of this object that need to be moved since the
           // object it's resting on has moved.
@@ -582,6 +619,7 @@ namespace Anki
                              objSeen->GetPose().GetTranslation().z(),
                              objSeen->GetPose().GetRotationAngle<'Z'>().getDegrees());
              */
+                        
             matchingObject->SetPose( objSeen->GetPose() );
           }
           
@@ -617,8 +655,11 @@ namespace Anki
         
         // If this is an active object and has not been identified yet, identify
         // it now.
-        if(observedObject->IsActive() && !observedObject->IsIdentified()) {
+        if(observedObject->IsActive() &&
+           observedObject->GetIdentityState() != ObservableObject::IdentityState::Identified)
+        {
           // TODO: Need to do more here probably...
+          PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObject.IdentifyingActiveObject", "");
           observedObject->Identify();
         }
         
@@ -632,7 +673,7 @@ namespace Anki
         ActionableObject* actionObject = dynamic_cast<ActionableObject*>(observedObject);
         if(actionObject != nullptr) {
           if(actionObject->IsBeingCarried() && _robot->GetCarryingObject() != obsID) {
-            PRINT_NAMED_WARNING("BlockWorld.CycleSelectedObject",
+            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.CarryStateMismatch",
                                 "Object %d thinks it is being carried, but does not match "
                                 "robot %d's carried object ID (%d). Setting as uncarried.\n",
                                 obsID.GetValue(), _robot->GetID(),
@@ -647,7 +688,10 @@ namespace Anki
           return RESULT_FAIL;
         }
         
-        if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+        // Don't broadcast this object until we've seen it enough times and it is
+        // through identifying
+        if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
+           observedObject->GetIdentityState() != ObservableObject::IdentityState::WaitingForIdentity)
         {
           // Use the projected corners to add an occluder and to keep track of the
           // bounding quads of all the observed objects in this Update
@@ -789,6 +833,11 @@ namespace Anki
     {
       u32 numVisibleObjects = 0;
       
+      if(_robot->IsPickedUp()) {
+        // Don't bother if the robot is picked up
+        return numVisibleObjects;
+      }
+      
       // Create a list of unobserved objects for further consideration below.
       struct UnobservedObjectContainer {
         ObjectFamily family;
@@ -811,7 +860,9 @@ namespace Anki
           {
             ObservableObject* object = objectIter->second;
             
-            if(object->GetLastObservedTime() < atTimestamp) {
+            if(object->GetLastObservedTime() < atTimestamp &&
+               &object->GetPose().FindOrigin() == _robot->GetWorldOrigin())
+            {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
                 // If this object has only been seen once and that was too long ago,
                 // just delete it
@@ -831,7 +882,8 @@ namespace Anki
                 
               }
             } else {
-              // Object _was_ observed
+              // Object _was_ observed or does not share an origin with the robot,
+              // so skip it for analyzing below whether we *should* have seen it
               ++objectIter;
             } // if/else object was not observed
             
@@ -1870,7 +1922,7 @@ namespace Anki
                   // entirely if the block isn't in the same coordinate tree as the
                   // robot.
                   Pose3d objectPoseWrtRobotOrigin;
-                  if(object->GetPose().GetWithRespectTo(_robot->GetPose().FindOrigin(), objectPoseWrtRobotOrigin) == true)
+                  if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true)
                   {
                     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                     const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -1893,7 +1945,10 @@ namespace Anki
                      ((robotBottom >= blockBottom) && (robotBottom <= blockTop)));
                      */
                     
-                    const bool bboxIntersects   = objectBBox.Intersects(_robot->GetBoundingQuadXY(ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION));
+                    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToOrigin(),
+                                                                       ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION);
+                    
+                    const bool bboxIntersects = robotBBox.Intersects(objectBBox);
                     
                     if( inSamePlane && bboxIntersects )
                     {
@@ -2131,8 +2186,8 @@ namespace Anki
     }
     
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
-                                                                    const Vec3f& distThreshold,
-                                                                    const Radians& angleThreshold)
+                                                            const Vec3f& distThreshold,
+                                                            const Radians& angleThreshold)
     {
       ObservableObject* closestObject = nullptr;
       Vec3f closestDist(distThreshold);
@@ -2242,17 +2297,15 @@ namespace Anki
     } // ClearObject()
     
     
-    
-    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(const ObjectsMapByID_t::iterator objIter,
-                                                                   const ObjectType&   withType,
-                                                                   const ObjectFamily& fromFamily)
+    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(ObjectsMapByID_t::iterator objIter,
+                                                                   ObjectsMapByID_t& inContainer)
     {
       ObservableObject* object = objIter->second;
       
       if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ClearObjectHelper(object);
         
-        return _existingObjects[fromFamily][withType].erase(objIter);
+        return inContainer.erase(objIter);
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
                             "Will not delete object %d because object deletion is disabled.",
@@ -2260,7 +2313,13 @@ namespace Anki
         auto retIter(objIter);
         return ++retIter;
       }
-      
+    }
+    
+    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(const ObjectsMapByID_t::iterator objIter,
+                                                                   const ObjectType&   withType,
+                                                                   const ObjectFamily& fromFamily)
+    {
+      return ClearObject(objIter, _existingObjects[fromFamily][withType]);
     }
     
     void BlockWorld::ClearObject(ObservableObject* object,

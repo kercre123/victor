@@ -180,15 +180,19 @@ namespace Anki {
     void Robot::SetPickedUp(bool t)
     {
       if(_isPickedUp == false && t == true) {
-        // Robot is being picked up: de-localize it and clear all known objects
+        // Robot is being picked up: de-localize it
         Delocalize();
-        _blockWorld.ClearAllExistingObjects();
+        
+        _visionProcessor.Pause(true);
         
         if (_externalInterface != nullptr) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
         }
       }
       else if (true == _isPickedUp && false == t) {
+        
+        _visionProcessor.Pause(false);
+        
         if (_externalInterface != nullptr) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
         }
@@ -1660,6 +1664,37 @@ namespace Anki {
         return lastResult;
       }
       
+      if(_worldOrigin != &existingObject->GetPose().FindOrigin())
+      {
+        PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
+                         "Robot %d's current world origin is %s, about to "
+                         "localize to world origin %s.",
+                         GetID(),
+                         _worldOrigin->GetName().c_str(),
+                         existingObject->GetPose().FindOrigin().GetName().c_str());
+        
+        _worldOrigin->SetRotation(GetPose().GetRotation());
+        _worldOrigin->SetTranslation(GetPose().GetTranslation());
+        _worldOrigin->Invert();
+        _worldOrigin->PreComposeWith(robotPoseWrtOrigin);
+        _worldOrigin->SetParent(&robotPoseWrtObject.FindOrigin());
+        _worldOrigin->SetName("RejiggeredOrigin");
+        
+        assert(_worldOrigin->IsOrigin() == false);
+        
+        _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
+        
+        /*
+        if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetPoseOriginFailure",
+                            "Failed to update robot %d's world origin when (re-)localizing it.\n",
+                            GetID());
+          return lastResult;
+          
+        }
+         */
+      }
+      
       
       // Update the computed historical pose as well so that subsequent block
       // pose updates use obsMarkers whose camera's parent pose is correct.
@@ -1684,7 +1719,7 @@ namespace Anki {
       }
       
       // Overly-verbose. Use for debugging localization issues
-      
+      /*
        PRINT_NAMED_INFO("Robot.LocalizeToObject",
                         "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f), frameID=%d\n",
                         ObjectTypeToString(existingObject->GetType()),
@@ -1697,6 +1732,7 @@ namespace Anki {
                         GetPose().GetRotationAxis().y(),
                         GetPose().GetRotationAxis().z(),
                         GetPoseFrameID());
+      */
       
       // Send the ground truth pose that was computed instead of the new current
       // pose and let the robot deal with updating its current pose based on the
@@ -2956,7 +2992,7 @@ namespace Anki {
         return nullptr;
       }
       
-      if(!object->IsIdentified()) {
+      if(object->GetIdentityState() != ObservableObject::IdentityState::Identified) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d is active but has not been identified.\n",
                           objectID.GetValue());

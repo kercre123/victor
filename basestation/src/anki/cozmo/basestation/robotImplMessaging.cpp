@@ -187,12 +187,18 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
     for(auto objectWithID : objectsByID.second) {
       ObservableObject* object = objectWithID.second;
       assert(object->IsActive());
-      if(object->GetActiveID() == payload.objectID) {
-        // TODO: Mark object as de-localized
+      if(object->GetActiveID() == payload.objectID)
+      {
         PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ActiveObjectMoved",
-          "Received message that Object %d (Active ID %d) moved.",
+          "Received message that Object %d (Active ID %d) moved. Delocalizing it.",
           objectWithID.first.GetValue(), payload.objectID);
 
+        // Once an object moves, we can no longer use it for localization because
+        // we don't know where it is anymore. Next time we see it, relocalize it
+        // relative to robot's pose estimate. Then we can use it for localization
+        // again.
+        object->Delocalize();
+        
         // Don't notify game about moving objects that are being carried
         ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
         assert(actionObject != nullptr);
@@ -223,9 +229,17 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
       ObservableObject* object = objectWithID.second;
       assert(object->IsActive());
       if(object->GetActiveID() == payload.objectID) {
-        // TODO: Mark object as de-localized
+
         PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageActiveObjectStoppedMoving",
-          "Received message that Object %d (Active ID %d) stopped moving.", objectWithID.first.GetValue(), payload.objectID);
+                         "Received message that Object %d (Active ID %d) stopped moving.",
+                         objectWithID.first.GetValue(), payload.objectID);
+
+        if(object->IsLocalized()) {
+          // Not sure how an object could get localized before it stopped moving,
+          // but just to be safe, re-delocalize and force a re-localization now
+          // that we've gotten the stopped-moving message.
+          Delocalize();
+        }
         
         // Update the ID to be the blockworld ID before broadcasting
         payload.objectID = object->GetID();

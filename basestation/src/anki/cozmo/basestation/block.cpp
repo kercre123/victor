@@ -163,7 +163,13 @@ namespace Anki {
     } // AddFace()
     
     Block::Block(const ObjectType type)
-    : ActionableObject(ObjectFamily::Block, type)
+    : Block(ObjectFamily::Block, type)
+    {
+      
+    }
+    
+    Block::Block(const ObjectFamily family, const ObjectType type)
+    : ActionableObject(family, type)
     , _size(LookupBlockInfo(_type).size)
     , _name(LookupBlockInfo(_type).name)
     , _vizHandle(VizManager::INVALID_HANDLE)
@@ -463,7 +469,7 @@ namespace Anki {
     }
     
     ActiveCube::ActiveCube(ObjectType type)
-    : Block(type)
+    : Block(ObjectFamily::LightCube, type)
     , _activeID(-1)
     {
       // For now, assume 6 different markers, so we can avoid rotation ambiguities
@@ -685,37 +691,51 @@ namespace Anki {
     
     bool ActiveCube::CanBeUsedForLocalization() const
     {
-      return IsLocalized();
+      return IsLocalized() && GetIdentityState() == IdentityState::Identified;
     }
     
     void ActiveCube::Identify()
     {
-      // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
-      switch(_markers.front().GetCode())
-      {
-        case Vision::MARKER_1:
-        case Vision::MARKER_LIGHTNINGBOLT_01:
-          _activeID = 0;
-          break;
-          
-        case Vision::MARKER_INVERTED_1:
-        case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
-          _activeID = 1;
-          break;
-          
-        case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
-          _activeID = 2;
-          break;
+      static s32 timeCtr = 300; // timer for faking duration of identification process
 
-        case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
-          _activeID = 3;
-          break;
-          
-        default:
-          _activeID = -1;
-          PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
-                            "ActiveID not defined for block with front marker = %d\n",
-                            _markers.front().GetCode());
+      if(timeCtr > 0) {
+        timeCtr -= BS_TIME_STEP;
+        _identityState = IdentityState::WaitingForIdentity;
+      } else {
+        // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
+        switch(_markers.front().GetCode())
+        {
+          case Vision::MARKER_1:
+          case Vision::MARKER_LIGHTNINGBOLT_01:
+            _activeID = 0;
+            _identityState = IdentityState::Identified;
+            break;
+            
+          case Vision::MARKER_INVERTED_1:
+          case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
+            _activeID = 1;
+            _identityState = IdentityState::Identified;
+            break;
+            
+          case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
+            _activeID = 2;
+            _identityState = IdentityState::Identified;
+            break;
+            
+          case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
+            _activeID = 3;
+            _identityState = IdentityState::Identified;
+            break;
+            
+          default:
+            _activeID = -1;
+            _identityState = IdentityState::Unidentified;
+            PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
+                              "ActiveID not defined for block with front marker = %d\n",
+                              _markers.front().GetCode());
+        }
+        
+        timeCtr = 300;
       }
     } // Identify()
     
