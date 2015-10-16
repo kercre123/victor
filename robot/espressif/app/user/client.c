@@ -142,7 +142,7 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 #endif
 
   const int8 err = espconn_send(socket, data, len);
-  if (err < 0) // XXX I think a negative number is an error. 0 is OK, I don't know what positive numbers are
+  if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
   {
     printf("Failed to queue UDP packet %d\n", err);
     return false;

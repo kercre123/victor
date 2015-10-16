@@ -24,7 +24,8 @@ SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
 	user    \
 	driver  \
-  transport
+  transport \
+  application
 endif # } PDIR
 
 APPDIR = .
@@ -47,7 +48,8 @@ endif
 COMPONENTS_eagle.app.v6 = \
 	user/libuser.a  \
 	driver/libdriver.a \
-  transport/libtransport.a
+  transport/libtransport.a \
+  application/libapplication.a
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
@@ -73,7 +75,8 @@ LINKFLAGS_eagle.app.v6 = \
 	-lpwm	\
 	-lsmartconfig \
 	$(DEP_LIBS_eagle.app.v6)					\
-	-Wl,--end-group
+	-Wl,--end-group \
+  -Xlinker --Map=esp.map
 
 DEPENDS_eagle.app.v6 = \
                 $(LD_FILE) \
