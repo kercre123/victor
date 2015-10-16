@@ -17,6 +17,8 @@ public class LookForPattern : State {
   int lastFrameVisibleCount = 0;
   int lastSeenThresholdCount = 0;
 
+  bool lastFrameHasVerticalBlock = false;
+
   public override void Update() {
     base.Update();
 
@@ -27,10 +29,20 @@ public class LookForPattern : State {
     float closestD = ClosestsObject();
     int seenThreshold = patternPlayController.SeenBlocksOverThreshold(0.5f);
 
+    bool hasVerticalBlock = patternPlayController.HasVerticalBlock();
+
     if (seenThreshold > lastSeenThresholdCount) {
       robot.SendAnimation("enjoyLight", AnimationDone);
       animationPlaying = true;
       robot.DriveWheels(0.0f, 0.0f);
+    }
+
+    if (hasVerticalBlock && !lastFrameHasVerticalBlock) {
+      robot.SetHeadAngle(0.2f);
+    }
+
+    if (!hasVerticalBlock && lastFrameHasVerticalBlock) {
+      robot.SetHeadAngle(-0.1f);
     }
 
     if (robot.visibleObjects.Count > 0) {
@@ -61,6 +73,7 @@ public class LookForPattern : State {
 
     lastFrameVisibleCount = robot.visibleObjects.Count;
     lastSeenThresholdCount = seenThreshold;
+    lastFrameHasVerticalBlock = hasVerticalBlock;
   }
 
   bool NoBlocksMoved() {

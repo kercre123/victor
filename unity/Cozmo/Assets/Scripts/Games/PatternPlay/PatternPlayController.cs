@@ -89,6 +89,16 @@ public class PatternPlayController : GameController {
     return count;
   }
 
+  public bool HasVerticalBlock() {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 rel = robot.visibleObjects[i].WorldPosition - robot.WorldPosition;
+      if (rel.z > 20.0f) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
