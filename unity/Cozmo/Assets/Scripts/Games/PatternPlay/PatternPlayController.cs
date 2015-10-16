@@ -144,6 +144,24 @@ public class PatternPlayController : GameController {
     patternPlayStateMachine.SetGameController(this);
     patternPlayStateMachine.SetNextState(new LookForPattern());
     stateMachineManager.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine);
+
+    // set idle parameters
+    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+      Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
+      Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
+      Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+      Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
+    };
+
+    float[] paramValues = {
+      3.0f,
+      0.2f,
+      5.0f,
+      0.0f
+    };
+
+    CozmoEmotionManager.instance.SetLiveIdleAnimationParameters(paramNames, paramValues);
+
   }
 
   protected override void Update_PLAYING() {
@@ -176,8 +194,8 @@ public class PatternPlayController : GameController {
         return;
       }
     }
-    // TODO: set idle animation parameters
-    // CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
+
+    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 
   private void DetectPatterns() {
