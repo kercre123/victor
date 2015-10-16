@@ -10,7 +10,7 @@ public class PatternCollectionDialog : MonoBehaviour {
   [SerializeField]
   private RectTransform _memoryBankCardContentPanel;
 
-  private Dictionary<MemoryBankSignature, PatternCollectionBankCard> _signatureToCardDict;
+  private Dictionary<MemoryBank, PatternCollectionBankCard> _signatureToCardDict;
 
 	public void Initialize(PatternMemory patternMemory){
     // Create all the memory bank cards
@@ -22,9 +22,9 @@ public class PatternCollectionDialog : MonoBehaviour {
     // TODO: Set up other buttons? (Key pattern filter, back button)
   }
   
-  private Dictionary<MemoryBankSignature, PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
-    Dictionary<MemoryBankSignature, PatternCollectionBankCard> memoryBankCards 
-      = new Dictionary<MemoryBankSignature, PatternCollectionBankCard>();
+  private Dictionary<MemoryBank, PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
+    Dictionary<MemoryBank, PatternCollectionBankCard> memoryBankCards 
+    = new Dictionary<MemoryBank, PatternCollectionBankCard>();
 
     // Foreach memory bank...
     List<MemoryBank> memoryBanks = patternMemory.GetMemoryBanks ();
@@ -44,7 +44,7 @@ public class PatternCollectionDialog : MonoBehaviour {
       bankCardScript.Initialize(bank);
 
       // Add the card to the dictionary
-      memoryBankCards.Add ( bank.Signature, bankCardScript );
+      memoryBankCards.Add ( bank, bankCardScript );
     }
 
     return memoryBankCards;

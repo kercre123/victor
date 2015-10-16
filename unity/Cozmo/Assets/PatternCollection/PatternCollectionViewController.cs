@@ -20,6 +20,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternCollectionDialog.Initialize (_testPatternMemory);
   }
 
+
 	private PatternMemory CreateTestPatternMemory()
 	{
 		PatternMemory patternMemory = new PatternMemory ();
@@ -34,7 +35,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = true;
     newPattern.verticalStack = true;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -44,7 +45,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = true;
     newPattern.verticalStack = true;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -54,7 +55,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = false;
     newPattern.verticalStack = false;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -64,7 +65,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = true;
     newPattern.verticalStack = false;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -74,7 +75,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = false;
     newPattern.verticalStack = true;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -84,7 +85,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = true;
     newPattern.verticalStack = true;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -94,7 +95,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.facingCozmo = false;
     newPattern.verticalStack = false;
-    patternMemory.Add (newPattern);
+    patternMemory.AddSeen (newPattern);
 
 		return patternMemory;
 	}
