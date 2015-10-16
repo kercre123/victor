@@ -176,7 +176,8 @@ public class PatternPlayController : GameController {
         return;
       }
     }
-    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
+    // TODO: set idle animation parameters
+    // CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 
   private void DetectPatterns() {
