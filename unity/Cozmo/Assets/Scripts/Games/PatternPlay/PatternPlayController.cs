@@ -8,11 +8,11 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
-  private int lastMovedID = -1;
+  private int previousInputID = -1;
   private bool seenPattern = false;
   private bool lastSeenPatternNew = false;
   private int lastSetID = -1;
-  private float lastSetTime = 0.0f;
+  private float lastSetTime = -100.0f;
 
   // variables for autonomous pattern building
   PatternPlayAutoBuild patternPlayAudioBuild = new PatternPlayAutoBuild();
@@ -254,9 +254,9 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
 
-    int currentMovedID = SelectNewInputCandidate();
+    int currentInputID = SelectNewInputCandidate();
 
-    if (currentMovedID != lastMovedID) {
+    if (currentInputID != previousInputID) {
       lastSetTime = -100.0f;
     }
 
@@ -281,7 +281,7 @@ public class PatternPlayController : GameController {
         }
       }
 
-      if (blockConfig.Key == currentMovedID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {
+      if (blockConfig.Key == currentInputID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {
         enabledColor = Color.green;
         disabledColor = Color.green;
       }
@@ -307,7 +307,7 @@ public class PatternPlayController : GameController {
       }
     }
 
-    lastMovedID = currentMovedID;
+    previousInputID = currentInputID;
   }
 
   private bool NextBlockConfig(ActiveBlock activeBlock) {
