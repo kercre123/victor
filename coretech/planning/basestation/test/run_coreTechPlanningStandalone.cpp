@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
       return -1;
     }
 
+    context.env.PrepareForPlanning();
+
     xythetaPlanner planner(context);
     planner.Replan();
 

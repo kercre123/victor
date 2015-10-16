@@ -349,9 +349,35 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
 
 void xythetaEnvironment::PrepareForPlanning()
 {
+  int numObstacles = 0;
+
   for(size_t angle = 0; angle < numAngles_; ++angle) {
     for( auto& obstaclePair : obstaclesPerAngle_[angle] ) {
+      if( angle == 0 ) {
+        numObstacles++;
+      }
       obstaclePair.first.SortEdgeVectors();
+    }
+  }
+
+  // fill in the obstacle bounds, default values are set
+  obstacleBounds_.resize(numObstacles);
+  
+  for(size_t angle = 0; angle < numAngles_; ++angle) {
+    for( int obsIdx = 0; obsIdx < obstaclesPerAngle_[angle].size(); ++obsIdx ) {
+      if( obstaclesPerAngle_[angle][obsIdx].first.GetMinX() < obstacleBounds_[obsIdx].minX ) {
+        obstacleBounds_[obsIdx].minX = obstaclesPerAngle_[angle][obsIdx].first.GetMinX();
+      }
+      if( obstaclesPerAngle_[angle][obsIdx].first.GetMaxX() > obstacleBounds_[obsIdx].maxX ) {
+        obstacleBounds_[obsIdx].maxX = obstaclesPerAngle_[angle][obsIdx].first.GetMaxX();
+      }
+
+      if( obstaclesPerAngle_[angle][obsIdx].first.GetMinY() < obstacleBounds_[obsIdx].minY ) {
+        obstacleBounds_[obsIdx].minY = obstaclesPerAngle_[angle][obsIdx].first.GetMinY();
+      }
+      if( obstaclesPerAngle_[angle][obsIdx].first.GetMaxY() > obstacleBounds_[obsIdx].maxY ) {
+        obstacleBounds_[obsIdx].maxY = obstaclesPerAngle_[angle][obsIdx].first.GetMaxY();
+      }
     }
   }
 }
@@ -389,29 +415,92 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
 
     Cost penalty = 0.0f;
 
-    for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
+    // first, check if we are well-clear of everything, and can skip this check
+    bool possibleObstacle = false;
 
-      StateTheta angle = prim->intermediatePositions[pointIdx].nearestTheta;
-      size_t endObs = env.obstaclesPerAngle_[angle].size();
+    if( env.obstacleBounds_.empty() && ! env.obstaclesPerAngle_[0].empty() ) {
+      // unit tests might do this
+      PRINT_NAMED_WARNING("xythetaEnvironment.Successor.NoBounds",
+                          "missing obstacle bounding boxes! Did you call env.PrepareForPlanning()???");
+      possibleObstacle = true;      
+    }
+    else {
+      for( const auto& bound : env.obstacleBounds_ ) {
+        if( prim->maxX < bound.minX ||
+            prim->minX > bound.maxX ||
+            prim->maxY < bound.minY ||
+            prim->minY > bound.maxY ) {
+          // can't possibly be a collision
+          continue;
+        }
+        // otherwise, we need to do a full check
+        possibleObstacle = true;
+        break;
+      }
+    }
 
-      for(size_t obsIdx=0; obsIdx<endObs && !collision; ++obsIdx) {
+    if( possibleObstacle ) {
 
-        if( env.obstaclesPerAngle_[angle][obsIdx].first.Contains(
-              start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
-              start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
+      // two collision check cases. If the angle is changing, then we'll need to potentially switch which
+      // obstacle angle we check while checking, so that is the more complciated case
 
-          if(env.obstaclesPerAngle_[angle][obsIdx].second >= MAX_OBSTACLE_COST) {
-            collision = true;
-            break;
+      // First, handle the simpler case, for straight lines. In this case, we can do a quick bounding box check first
+
+      if( prim->endStateOffset.theta == prim->startTheta ) {
+        for( const auto& obs : env.obstaclesPerAngle_[prim->startTheta] ) {
+
+          if( prim->maxX < obs.first.GetMinX() ||
+              prim->minX > obs.first.GetMaxX() ||
+              prim->maxY < obs.first.GetMinY() ||
+              prim->minY > obs.first.GetMaxY() ) {
+            // can't possibly be a collision, rule out this whole obstacle
+            continue;
           }
 
-          else {
-            // apply soft penalty, but allow the action
-            penalty += env.obstaclesPerAngle_[angle][obsIdx].second *
-              prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
+          for( const auto& pt : prim->intermediatePositions ) {
+            if( obs.first.Contains(start_c_.x_mm + pt.position.x_mm,
+                                   start_c_.y_mm + pt.position.y_mm ) ) {
 
-            assert(!isinf(penalty));
-            assert(!isnan(penalty));
+              if(obs.second >= MAX_OBSTACLE_COST) {
+                collision = true;
+                break;
+              }
+              else {
+                // apply soft penalty, but allow the action
+                penalty += obs.second * pt.oneOverDistanceFromLastPosition;
+
+                assert(!isinf(penalty));
+                assert(!isnan(penalty));
+              }
+            }
+          }
+        }
+      }
+
+      else {
+        // handle the more complex case
+
+        for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
+
+          StateTheta angle = prim->intermediatePositions[pointIdx].nearestTheta;
+          for( const auto& obs : env.obstaclesPerAngle_[angle] ) {
+
+            if( obs.first.Contains(
+                  start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
+                  start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
+
+              if(obs.second >= MAX_OBSTACLE_COST) {
+                collision = true;
+                break;
+              }
+              else {
+                // apply soft penalty, but allow the action
+                penalty += obs.second * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
+
+                assert(!isinf(penalty));
+                assert(!isnan(penalty));
+              }
+            }
           }
         }
       }
@@ -1261,6 +1350,8 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
     return false;
   }
 
+  CacheBoundingBox();
+
   return true;
 }
 
@@ -1317,7 +1408,33 @@ bool MotionPrimitive::Import(const Json::Value& config)
     return false;
   }
 
+  CacheBoundingBox();
+
   return true;
+}
+
+void MotionPrimitive::CacheBoundingBox()
+{
+  minX = -999999.9f;
+  maxX = 999999.9f;
+  minY = -999999.9f;
+  maxY = 999999.9f;
+
+  for( const auto& pt : intermediatePositions ) {
+    if( pt.position.x_mm < minX ) {
+      minX = pt.position.x_mm;
+    }
+    if( pt.position.x_mm > maxX ) {
+      maxX = pt.position.x_mm;
+    }
+
+    if( pt.position.y_mm < minY ) {
+      minY = pt.position.y_mm;
+    }
+    if( pt.position.y_mm > maxY ) {
+      maxY = pt.position.y_mm;
+    }
+  }
 }
 
 void MotionPrimitive::Dump(Util::JsonWriter& writer) const

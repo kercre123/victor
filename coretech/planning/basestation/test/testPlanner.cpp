@@ -51,6 +51,8 @@ GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 }
@@ -76,6 +78,8 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 
@@ -91,6 +95,8 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
 
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
+
+  context.env.PrepareForPlanning();
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
@@ -126,6 +132,8 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 
@@ -140,6 +148,8 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
   ASSERT_TRUE(planner.StartIsValid());
 
   // now replan with enough expansions that the plan should still work
+
+  context.env.PrepareForPlanning();
 
   EXPECT_TRUE(planner.Replan(firstPlanExps + 1));
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
@@ -157,6 +167,8 @@ GTEST_TEST(TestPlanner, PlanWithMaxExps)
   ASSERT_TRUE(planner.StartIsValid());
 
   // now replan with enough expansions that the plan should still work
+
+  context.env.PrepareForPlanning();
 
   EXPECT_FALSE(planner.Replan(firstPlanExps - 1)) << "planning should fail with limited expansions";
 }
@@ -179,6 +191,8 @@ GTEST_TEST(TestPlanner, DontPlanVariable)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   bool var = false;
   EXPECT_FALSE(planner.Replan(10000, &var));
 }
@@ -192,7 +206,6 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   // know not to change or remove it
   EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-
   context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0));
 
   xythetaPlanner planner(context);
@@ -205,6 +218,8 @@ GTEST_TEST(TestPlanner, PlanAroundBox)
   
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
+
+  context.env.PrepareForPlanning();
 
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
@@ -233,6 +248,8 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 
@@ -253,6 +270,8 @@ GTEST_TEST(TestPlanner, PlanAroundBoxDumpAndImportContext)
 
   ASSERT_TRUE(planner2.GoalIsValid());
   ASSERT_TRUE(planner2.StartIsValid());
+
+  context2.env.PrepareForPlanning();
 
   ASSERT_TRUE(planner2.Replan());
   EXPECT_TRUE(context2.env.PlanIsSafe(planner2.GetPlan(), 0));
@@ -300,6 +319,8 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 
@@ -317,6 +338,8 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   context.env.ClearObstacles();
   // now add it with a high cost
   context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 50.0);
+
+  context.env.PrepareForPlanning();
 
   context.forceReplanFromScratch = true;
   ASSERT_TRUE(planner.Replan());
@@ -339,6 +362,8 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   // now add it with a very low cost
   context.env.AddObstacle(Anki::RotatedRectangle(50.0, -10.0, 80.0, -10.0, 20.0), 1e-4);
 
+  context.env.PrepareForPlanning();
+
   context.forceReplanFromScratch = true;
   ASSERT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
@@ -355,6 +380,8 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
 
   context.env.ClearObstacles();
   // this time leave the world empty
+
+  context.env.PrepareForPlanning();
 
   context.forceReplanFromScratch = true;
   ASSERT_TRUE(planner.Replan());
@@ -391,12 +418,16 @@ GTEST_TEST(TestPlanner, ReplanEasy)
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
 
+  context.env.PrepareForPlanning();
+
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
 
   context.env.AddObstacle(Anki::RotatedRectangle(50.0, -100.0, 80.0, -100.0, 20.0));
 
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0)) << "new obstacle should not interfere with plan";
+
+  context.env.PrepareForPlanning();
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
@@ -423,6 +454,8 @@ GTEST_TEST(TestPlanner, ReplanHard)
   
   ASSERT_TRUE(planner.GoalIsValid());
   ASSERT_TRUE(planner.StartIsValid());
+
+  context.env.PrepareForPlanning();
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
@@ -467,6 +500,8 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   ASSERT_TRUE(planner.StartIsValid());
   ASSERT_TRUE(planner.GoalIsValid()) << "goal should still be valid";
+
+  context.env.PrepareForPlanning();
 
   EXPECT_TRUE(planner.Replan());
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));

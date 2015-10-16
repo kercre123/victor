@@ -186,7 +186,17 @@ public:
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
   std::vector<IntermediatePosition> intermediatePositions;
+
+  // bounding box for everything inside intermediatePositions
+  float minX;
+  float maxX;
+  float minY;
+  float maxY;
+
 private:
+
+  // compute min/max x/y
+  void CacheBoundingBox(); 
 
   Path pathSegments_;
 };
@@ -534,6 +544,26 @@ private:
 
   // Obstacles per theta. First index is theta, second of pair is cost
   std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
+
+  struct Bounds {
+    Bounds()
+      : minX(FLT_MAX)
+      , maxX(FLT_MIN)
+      , minY(FLT_MAX)
+      , maxY(FLT_MIN)
+      {
+      }
+
+    float minX;
+    float maxX;
+    float minY;
+    float maxY;
+  };
+
+  // one per obstacle, this is the bounding box that will bound that obstacle at every angle. If you are clear
+  // of all of these, then you can skip the check. Order is the same as the obstacle order within the angles
+  // in obstaclesPerAngle_
+  std::vector< Bounds > obstacleBounds_;
 
   // TODO:(bn) this won't support multiple different robots!
   RobotActionParams _robotParams;

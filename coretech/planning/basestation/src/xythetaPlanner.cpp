@@ -452,7 +452,10 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
 
 void xythetaPlannerImpl::ExpandState(StateID currID)
 {
-  Cost currG = _table[currID].g_;
+  // hold iterator to current table entry
+  auto currTableEntry = _table[currID];
+
+  Cost currG = currTableEntry.g_;
   
   SuccessorIterator it = _context.env.GetSuccessors(currID, currG);
 
@@ -469,6 +472,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       newG = currG;
     }
 
+    // hold iterator to next state entry
     auto oldEntry = _table.find(nextID);
 
     if(oldEntry == _table.end()) {
@@ -498,7 +502,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
     it.Next( _context.env );
   }
 
-  _table[currID].closedIter_ = _searchNum;
+  currTableEntry.closedIter_ = _searchNum;
 }
 
 Cost xythetaPlannerImpl::heur(StateID sid)
