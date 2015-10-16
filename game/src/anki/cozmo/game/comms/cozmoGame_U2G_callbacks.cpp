@@ -415,16 +415,19 @@ namespace Cozmo {
     // Handled in RobotEventHandler::HandleActionEvents
   }
   
-  
   void CozmoGameImpl::Process_ExecuteBehavior(ExternalInterface::ExecuteBehavior const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StartBehavior(msg.behaviorName);
-    }
+    // Optionally handled in implementations of BehaviorChooser
+  }
+  
+  void CozmoGameImpl::Process_SetBehaviorSystemEnabled(ExternalInterface::SetBehaviorSystemEnabled const& msg)
+  {
+    // Handled in Robot
+  }
+  
+  void CozmoGameImpl::Process_ActivateBehaviorChooser(ExternalInterface::ActivateBehaviorChooser const& msg)
+  {
+    // Handled in Behaviormanager
   }
   
 
