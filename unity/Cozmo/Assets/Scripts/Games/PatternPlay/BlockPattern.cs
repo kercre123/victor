@@ -49,10 +49,11 @@ public class BlockPattern {
   }
 
   public override int GetHashCode() {
-    int x = 33;
+    // Old-school dbj hash
+    int x = 5381;
     for (int i = 0; i < blocks.Count; ++i) {
-      x ^= System.Convert.ToInt32(blocks[i].back) ^ System.Convert.ToInt32(blocks[i].front) << 1 ^
-      System.Convert.ToInt32(blocks[i].left) << 2 ^ System.Convert.ToInt32(blocks[i].right) << 3 ^ i << 4;
+      x = (x * 33) + (System.Convert.ToInt32(blocks[i].back) | System.Convert.ToInt32(blocks[i].front) << 1 |
+                      System.Convert.ToInt32(blocks[i].left) << 2 | System.Convert.ToInt32(blocks[i].right) << 3);
     }
     return x;
   }
