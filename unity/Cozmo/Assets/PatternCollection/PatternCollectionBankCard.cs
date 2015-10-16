@@ -28,27 +28,29 @@ public class PatternCollectionBankCard : MonoBehaviour {
 
   public void Initialize(MemoryBank memoryBank) {
     // Depending on the signature, we need to use a particular layout
-    switch (memoryBank.Signature.verticalStack) {
-    case BankRequirementFlag.FALSE:
+    switch (memoryBank.IsVertical) {
+    case false:
       ShowRowPatterns (memoryBank);
       break;
-    case BankRequirementFlag.TRUE:
+    case true:
       ShowStackPatterns (memoryBank);
       break;
+    /*
     case BankRequirementFlag.NOT_REQUIRED:
       ShowSpecialPatterns (memoryBank);
       break;
     default:
       Debug.LogError ("Not implemented!");
       break;
+    */
     }
 
-    SetHeaderText ();
+    SetHeaderText (memoryBank);
   }
 
-  private void SetHeaderText() {
+  private void SetHeaderText(MemoryBank memoryBank) {
     // TODO: Localize this?
-    _headerText.text = "Memory Bank";
+    _headerText.text = memoryBank.name;
   }
 
   private void ShowRowPatterns(MemoryBank memoryBank)

@@ -204,14 +204,14 @@ public class PatternPlayController : GameController {
     seenPattern = false;
 
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
-      if (!memoryBank.Contains(currentPattern)) {
+      if (!memoryBank.ContainsSeen(currentPattern)) {
 
         DAS.Info("PatternPlayController", "New Pattern: " + "facingCozmo: " + currentPattern.facingCozmo + " vertical: " + currentPattern.verticalStack +
         " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
 
         seenPattern = true;
         lastSeenPatternNew = true;
-        memoryBank.Add(currentPattern);
+        memoryBank.AddSeen(currentPattern);
       }
       else {
         seenPattern = true;
