@@ -121,7 +121,10 @@ public:
       
     // Set the object we are localized to
     Result                 SetLocalizedTo(const ObservableObject* object);
-    
+  
+    // Has the robot moved since it was last localized
+    bool                   HasMovedSinceBeingLocalized() const;
+  
     // Get the squared distance to the closest, most recently observed marker
     // on the object we are localized to
     f32                    GetLocalizedToDistanceSq() const;
@@ -683,6 +686,7 @@ public:
     Pose3d           _driveCenterPose;
     PoseFrameID_t    _frameId;
     ObjectID         _localizedToID;       // ID of mat object robot is localized to
+    bool             _hasMovedSinceLocalization;
     bool             _localizedToFixedObject; // false until robot sees a _fixed_ mat
     f32              _localizedMarkerDistToCameraSq; // Stores (sqaured) distance to the closest observed marker of the object we're localized to
 
@@ -995,6 +999,11 @@ inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
 inline f32 Robot::GetLocalizedToDistanceSq() const {
   return _localizedMarkerDistToCameraSq;
 }
+  
+inline bool Robot::HasMovedSinceBeingLocalized() const {
+  return _hasMovedSinceLocalization;
+}
+  
   
 } // namespace Cozmo
 } // namespace Anki

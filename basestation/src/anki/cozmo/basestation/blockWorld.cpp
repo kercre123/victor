@@ -548,7 +548,9 @@ namespace Anki
           // this object has been seen more recently than the one the robot is
           // localized to.
 #         if ENABLE_BLOCK_BASED_LOCALIZATION
-          bool useThisObjectToLocalize = !haveLocalizedRobotToObject && matchingObject->CanBeUsedForLocalization();
+          bool useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
+                                          matchingObject->CanBeUsedForLocalization() &&
+                                          _robot->HasMovedSinceBeingLocalized());
 #         else 
           bool useThisObjectToLocalize = false;
 #         endif

@@ -84,6 +84,7 @@ namespace Anki {
     , _proxBlocked{{false}}
     */
     , _frameId(0)
+    , _hasMovedSinceLocalization(true) // force localization if we see object right when we "wake up"
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
@@ -272,6 +273,7 @@ namespace Anki {
       assert(_localizedMarkerDistToCameraSq >= 0.f);
       
       _localizedToID = object->GetID();
+      _hasMovedSinceLocalization = false;
       
       // Update VizText
       VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
@@ -384,6 +386,8 @@ namespace Anki {
       _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
+      
+      _hasMovedSinceLocalization = _isMoving || _isPickedUp;
       
       Pose3d newPose;
       
@@ -1629,27 +1633,8 @@ namespace Anki {
       } // if robot is on ramp
 #     endif
       
-#     if 0 // TODO: Put this back?
-      if(existingObject->GetID() != _localizedToID) {
-        // Localizing to a different object than we were, so we need to
-        // update pose origins so that anything it has seen so far becomes rooted
-        // to this object's origin
-        PRINT_NAMED_INFO("Robot.LocalizeToObject.UpdatingWorldOrigin",
-                         "Switching robot %d's world origin from object %d to %d.",
-                         GetID(), _localizedToID.GetValue(), existingObject->GetID().GetValue());
-        
-        if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetPoseOriginFailure",
-                            "Failed to update robot %d's pose origin when (re-)localizing it.\n", GetID());
-          return lastResult;
-        
-        }
-      }
-#     endif
-
       // Add the new vision-based pose to the robot's history. Note that we use
       // the pose w.r.t. the origin for storing poses in history.
-      //RobotPoseStamp p(robot->GetPoseFrameID(), robotPoseWrtMat.GetWithRespectToOrigin(), posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
       Pose3d robotPoseWrtOrigin = robotPoseWrtObject.GetWithRespectToOrigin();
       
       if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
@@ -1664,6 +1649,9 @@ namespace Anki {
         return lastResult;
       }
       
+      // If the robot's world origin is about to change by virtue of being localized
+      // to existingObject, rejigger things so anything seen while the robot was
+      // rooted to this world origin will get updated to be w.r.t. the new origin.
       if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       {
         PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
@@ -1673,6 +1661,9 @@ namespace Anki {
                          _worldOrigin->GetName().c_str(),
                          existingObject->GetPose().FindOrigin().GetName().c_str());
         
+        // Update the origin to which _worldOrigin currently points to contain
+        // the transformation from its current pose to what is about to be the
+        // robot's new origin.
         _worldOrigin->SetRotation(GetPose().GetRotation());
         _worldOrigin->SetTranslation(GetPose().GetTranslation());
         _worldOrigin->Invert();
@@ -1682,17 +1673,9 @@ namespace Anki {
         
         assert(_worldOrigin->IsOrigin() == false);
         
+        // Now that the previous origin is hooked up to the new one (which is
+        // now the old one's parent), point the worldOrigin at the new one.
         _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
-        
-        /*
-        if((lastResult = UpdateWorldOrigin(robotPoseWrtObject)) != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetPoseOriginFailure",
-                            "Failed to update robot %d's world origin when (re-)localizing it.\n",
-                            GetID());
-          return lastResult;
-          
-        }
-         */
       }
       
       
