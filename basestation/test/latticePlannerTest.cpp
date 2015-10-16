@@ -149,7 +149,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   EXPECT_GT(firstPathLength, 1) << "should be more than one action in the path";
 
   Pose3d start2(0, Z_AXIS_3D(), Vec3f(17,-15,0) );
-  Pose3d goal2(0, Z_AXIS_3D(), Vec3f(200,10,0) );
+  Pose3d goal2(0, Z_AXIS_3D(), Vec3f(2000,10,0) );
 
   ret = planner->ComputePath(start2, goal2);
   EXPECT_EQ(ret, EComputePathStatus::Running);

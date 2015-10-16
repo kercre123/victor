@@ -186,7 +186,17 @@ public:
   // vector containing continuous relative offsets for positions in
   // between (0,0,startTheta) and (end)
   std::vector<IntermediatePosition> intermediatePositions;
+
+  // bounding box for everything inside intermediatePositions
+  float minX;
+  float maxX;
+  float minY;
+  float maxY;
+
 private:
+
+  // compute min/max x/y
+  void CacheBoundingBox(); 
 
   Path pathSegments_;
 };
@@ -211,7 +221,9 @@ public:
 class SuccessorIterator
 {
 public:
-  SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG);
+
+  // if reverse is true, then advance through predecessors instead of successors
+  SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse = false);
 
   // Returns true if there are no more results left
   bool Done(const xythetaEnvironment& env) const;
@@ -231,6 +243,8 @@ private:
   ActionID nextAction_;
 
   Successor nextSucc_;
+  
+  bool reverse_;
 };
 
 // TODO:(bn) move some of these to seperate files
@@ -356,9 +370,9 @@ public:
 
   size_t GetNumObstacles() const;
 
-  // Returns an iterator to the successors from state "start". Use
-  // this one if you want to check each action
-  SuccessorIterator GetSuccessors(StateID startID, Cost currG) const;
+  // Returns an iterator to the successors from state "start". Use this one if you want to check each
+  // action. If reverse is true, then get predecessors (reverse successors) instead
+  SuccessorIterator GetSuccessors(StateID startID, Cost currG, bool reverse = false) const;
 
   // This function tries to apply the given action to the state. It
   // returns the penalty of the path (i.e. no cost for actions, just
@@ -500,6 +514,8 @@ private:
   void DumpMotionPrims(Util::JsonWriter& writer) const;
   bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
 
+  void PopulateReverseMotionPrims();
+
   float resolution_mm_;
   float oneOverResolution_;
 
@@ -511,7 +527,12 @@ private:
   float oneOverRadiansPerAngle_;
 
   // First index is starting angle, second is prim ID
-  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;  
+  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
+
+  // Reverse motion primitives, for getting predecessors to a state. The first index is the ending angle, the
+  // second is meaningless. The primitive will have the action ID corresponding to the correct forward
+  // primitive, but the endStateOffset will be reverse, so you can follow backwards
+  std::vector< std::vector<MotionPrimitive> > reverseMotionPrimitives_;
 
   // index is actionID
   std::vector<ActionType> actionTypes_;
@@ -523,6 +544,26 @@ private:
 
   // Obstacles per theta. First index is theta, second of pair is cost
   std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
+
+  struct Bounds {
+    Bounds()
+      : minX(FLT_MAX)
+      , maxX(FLT_MIN)
+      , minY(FLT_MAX)
+      , maxY(FLT_MIN)
+      {
+      }
+
+    float minX;
+    float maxX;
+    float minY;
+    float maxY;
+  };
+
+  // one per obstacle, this is the bounding box that will bound that obstacle at every angle. If you are clear
+  // of all of these, then you can skip the check. Order is the same as the obstacle order within the angles
+  // in obstaclesPerAngle_
+  std::vector< Bounds > obstacleBounds_;
 
   // TODO:(bn) this won't support multiple different robots!
   RobotActionParams _robotParams;

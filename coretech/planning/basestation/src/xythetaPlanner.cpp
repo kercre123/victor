@@ -23,8 +23,13 @@
 namespace Anki {
 namespace Planning {
 
-#define MAX_HEUR_EXPANSIONS 10000
-  
+// When doing the soft obstacle goal heuristic expansion, don't do more than this many (to avoid getting stuck
+// in a loop there)
+#define MAX_HEUR_EXPANSIONS 1000
+
+// When doing the soft obstacle goal heuristic expansion, keep expanding until this many states "escape" the
+// penalty zone
+#define COLLISION_GOAL_HEURISTIC_NUM_ESCAPES 20
   
 xythetaPlanner::xythetaPlanner(const xythetaPlannerContext& context)
 {
@@ -198,17 +203,10 @@ bool xythetaPlannerImpl::InitializeHeuristic()
   _heurMap.clear();
 
   if( _context.env.IsInSoftCollision( _goalID ) ) {
-    _costOutsideHeurMap = ExpandStatesForHeur( _goalID );
+    _costOutsideHeurMap = ExpandCollisionStatesFromGoal();
     PRINT_NAMED_INFO("xythetaPlanner.GoalInSoftCollision.ExpandHeur",
                      "expanded penalty states near goal. Cost outside map = %f",
                      _costOutsideHeurMap);
-  }
-
-  if( _context.env.IsInSoftCollision( _startID ) ) {
-    float startPenalty = ExpandStatesForHeur( _startID );
-    PRINT_NAMED_INFO("xythetaPlanner.StartInSoftCollision.ExpandHeur",
-                     "expanded penalty states near start. Cost outside map = %f",
-                     startPenalty);
   }
 
   if( _costOutsideHeurMap > 1000.0f ) {
@@ -221,26 +219,21 @@ bool xythetaPlannerImpl::InitializeHeuristic()
   return true;
 }
 
-Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
+Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
 {
-  // NOTE: this function assumes that forwards and backwards actions are equivalent. More specifically, it
-  // assumes that the min cost path from A to B is the same cost as the min cost path from B to A.
-
-  // TEMP: // TEMP: think more about this. This appears to be the cause of the slow planning bug, which
-  // happens because the _costOutsideHeurMap returned by this function is too low when the goal is in
-  // collision during a replan. We may want to split this up into two functions. Need to thin kabout if going
-  // backwards is OK. See TEMP note below
-
-  StateID curr(sid);
-  Cost h = heur_internal(curr) + _costOutsideHeurMap;
-
-  _heurMap.insert(std::make_pair(curr, h));
+  StateID curr(_goalID);
+  
+  _heurMap.insert(std::make_pair(curr, 0.0f));
 
   // use a separate open list to track expansions
   OpenList q;
-  q.insert(curr, h);
+  q.insert(curr, 0.0f);
 
   unsigned int heurExpansions = 0;
+
+  // keep track of the number of times we break out of the cost region
+  int numEscapes = 0;
+  float minCostOutside = 0.0f;
 
   while(!q.empty()) {
 
@@ -251,19 +244,29 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
     Cost c = q.topF();
     curr = q.pop();
 
-    // TODO:(bn) opt: also bail out early if we reach the start / goal (whichever we didn't start from)
-
     if(!_context.env.IsInSoftCollision(curr)) {
-      PRINT_NAMED_INFO("xythetaPlanner.ExpandStatesForHeur", 
-                       "expanded %u states for heuristic, reached free space with cost of %f and have %lu in heurMap",
-                       heurExpansions,
-                       c,
-                       _heurMap.size());
-      return c;
+      if( numEscapes == 0 ) {
+        minCostOutside = c;
+      }
+
+      numEscapes++;
+
+      if( numEscapes >= COLLISION_GOAL_HEURISTIC_NUM_ESCAPES ) {
+        PRINT_NAMED_INFO("xythetaPlanner.ExpandCollisionStatesFromGoal", 
+                         "expanded %u states for heuristic, reached free space %d times with cost of %f and have %lu in heurMap",
+                         heurExpansions,
+                         numEscapes,
+                         minCostOutside,
+                         _heurMap.size());
+        return minCostOutside;
+      }
+      else {
+        continue;
+      }
     }
 
-    // this logic is almost identical to ExpandState
-    SuccessorIterator it = _context.env.GetSuccessors(curr, c);
+    // this logic is almost identical to ExpandState, but using reverse successors
+    SuccessorIterator it = _context.env.GetSuccessors(curr, c, true);
 
     if(!it.Done(_context.env))
       it.Next(_context.env);
@@ -276,22 +279,15 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
       // returns FLT_MAX if nextID isn't present
       float oldFval = q.fVal(nextID);
       if(oldFval > newC) {
-        Cost h = heur_internal(nextID) + _costOutsideHeurMap;
 
-        // TEMP: // TEMP: // TODO:(bn) find a way to add penalty here. We know there will be penalty. Maybe I
-        // need to split this function up into two, one explicitly for the goal that uses g instead of h for
-        // theur map, and the other for the start. Problem with the slow plan bug is that, for some crazy
-        // reason, when we are holding a block, the _costOutsideHeurMap is way too low.
+        // if this is a state we haven't expanded yet, store the heuristic and insert it for further
+        // expansion. Also store it in the heurMap, using the actual cost, so we'll have a perfect heuristic
+        // value for this state later
 
-        // it is possible that the start and goal obstacles actually overlap (or are the same obstacle), so
-        // there might already be an entry in heurMap_. We never want to increase the heuristic, so check
-        // first. Since we call this function for the goal fist, if anything already exist in the heurMap,
-        // don't update it)
         if(_heurMap.count(nextID) == 0) {
-          _heurMap.insert(std::make_pair(nextID, h));
+          _heurMap.insert(std::make_pair(nextID, newC));
+          q.insert(nextID, newC);
         }
-
-        q.insert(nextID, newC);
       }
 
       it.Next(_context.env);
@@ -299,10 +295,9 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
 
     heurExpansions++;
     
-    
     // Check for too many expansions
     if (heurExpansions > MAX_HEUR_EXPANSIONS) {
-      PRINT_NAMED_WARNING("xythetaPlanner.ExpandStatesForHeur.ExceededMaxExpansions", 
+      PRINT_NAMED_WARNING("xythetaPlanner.ExpandCollisionStatesFromGoal.ExceededMaxExpansions", 
                           "exceeded max allowed expansions of %d",
                           MAX_HEUR_EXPANSIONS);
       // instead of hanging forever, just return an invalid value, which will trigger a plan failure
@@ -314,12 +309,11 @@ Cost xythetaPlannerImpl::ExpandStatesForHeur(StateID sid)
   // We should usually be able to escape form a soft collision, but if we run out of states to expand, it
   // means we couldn't escape, but hopefully we filled up heurMap enough to plan. This could happen if the
   // start and goal were both inside a soft obstacle that had a hard obstacle around it
-  PRINT_NAMED_WARNING("xythetaPlanner.ExpandStatesForHeur.EmptyOpenList",
-                      "ran out of open list entries during ExpandStatesForHeur after %u exps!",
-                      heurExpansions);
-  return 0.0;
+  PRINT_NAMED_INFO("xythetaPlanner.ExpandCollisionStatesFromGoal.EmptyOpenList",
+                   "ran out of open list entries during ExpandStatesForHeur after %u exps!",
+                   heurExpansions);
+  return minCostOutside;
 }
-
 
 
 bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
@@ -458,7 +452,10 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
 
 void xythetaPlannerImpl::ExpandState(StateID currID)
 {
-  Cost currG = _table[currID].g_;
+  // hold iterator to current table entry
+  auto currTableEntry = _table[currID];
+
+  Cost currG = currTableEntry.g_;
   
   SuccessorIterator it = _context.env.GetSuccessors(currID, currG);
 
@@ -475,6 +472,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
       newG = currG;
     }
 
+    // hold iterator to next state entry
     auto oldEntry = _table.find(nextID);
 
     if(oldEntry == _table.end()) {
@@ -504,7 +502,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
     it.Next( _context.env );
   }
 
-  _table[currID].closedIter_ = _searchNum;
+  currTableEntry.closedIter_ = _searchNum;
 }
 
 Cost xythetaPlannerImpl::heur(StateID sid)
