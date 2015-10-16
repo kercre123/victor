@@ -423,7 +423,7 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     
     if (current.seenObjects.Count == 0 && !current.isBusy) {
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
     }
   }
 
@@ -433,11 +433,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
-    ObservedObject deleted = current.  seenObjects.Find(x => x == message.objectID);
+    ObservedObject deleted = current.seenObjects.Find(x => x == message.objectID);
 
     if (deleted != null) {
       deleted.Delete();
-      current.  seenObjects.Remove(deleted);
+      current.seenObjects.Remove(deleted);
     }
 
     deleted = current.seenObjects.Find(x => x == message.objectID);
@@ -702,7 +702,7 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       texture.LoadImage(jpegArray);
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
 
       if (RobotImage != null) {
         RobotImage(sprite);
@@ -784,7 +784,7 @@ public class RobotEngineManager : MonoBehaviour {
 
       texture.SetPixels32(color32Array);
       texture.Apply(false);
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
       }
@@ -815,7 +815,7 @@ public class RobotEngineManager : MonoBehaviour {
       ResetTexture(dim.width, dim.height, TextureFormat.RGB24);
 
       texture.LoadImage(jpegArray);
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
       }

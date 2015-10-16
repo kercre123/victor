@@ -143,6 +143,8 @@ public class Robot : IDisposable {
 
   public List<ObservedObject> seenObjects { get; private set; }
 
+  public List<ObservedObject> dirtyObjects { get; private set; }
+
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
   public List<Face> faceObjects { get; private set; }
@@ -333,6 +335,7 @@ public class Robot : IDisposable {
     const int initialSize = 8;
     seenObjects = new List<ObservedObject>(initialSize);
     visibleObjects = new List<ObservedObject>(initialSize);
+    dirtyObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
     faceObjects = new List< global::Face>();
 
@@ -440,9 +443,7 @@ public class Robot : IDisposable {
     }
 
     seenObjects.Clear();
-    seenObjects.Clear();
     visibleObjects.Clear();
-    seenObjects.Clear();
     activeBlocks.Clear();
     status = RobotStatusFlag.NoneRobotStatusFlag;
     gameStatus = GameStatusFlag.Nothing;
@@ -475,13 +476,7 @@ public class Robot : IDisposable {
     }
   }
 
-  public void ClearObservedObjects() {
-    for (int i = 0; i < seenObjects.Count; ++i) {
-      if (seenObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
-        seenObjects.RemoveAt(i--);
-      }
-    }
-
+  public void ClearSeenObjects() {
     for (int i = 0; i < visibleObjects.Count; ++i) {
       if (visibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
         visibleObjects.RemoveAt(i--);
@@ -553,7 +548,7 @@ public class Robot : IDisposable {
     // HACK: This is to solve an edge case where there is a partially observed object but no
     // actual observed object so the markersVisible list is not being properly cleared since
     // ObservedNothing is not being sent from engine.
-    ClearObservedObjects();
+    ClearSeenObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
