@@ -27,13 +27,9 @@ public class PatternPlayController : GameController {
 
   private StateMachine patternPlayStateMachine = new StateMachine();
 
-  private BlockPattern lastPatternSeen = null;
-
   private PatternMemory memoryBank = new PatternMemory();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
-
-  private int currentMovedID = -1;
 
   public void SetPatternOnBlock(int blockID, int lightCount) {
     // TODO: make sure orientation is actually correct.
@@ -74,10 +70,6 @@ public class PatternPlayController : GameController {
     foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
       kvp.Value.blockLightsLocalSpace.TurnOffLights();
     }
-  }
-
-  public BlockPattern GetLastPatternSeen() {
-    return lastPatternSeen;
   }
 
   public bool SeenPattern() {
@@ -143,8 +135,6 @@ public class PatternPlayController : GameController {
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
 
-    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
-
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockPatternData.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
     }
@@ -163,6 +153,8 @@ public class PatternPlayController : GameController {
     KeyboardBlockCycle();
     PhoneCycle();
 
+    CheckShouldPlayIdle();
+
     // actually set the lights on the physical blocks.
     SetBlockLights();
 
@@ -175,6 +167,16 @@ public class PatternPlayController : GameController {
     // this may need to be moved to include other states if we want UI for them.
     patternPlayUIController.UpdateUI(memoryBank);
 
+  }
+
+  private void CheckShouldPlayIdle() {
+    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+      if (blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
+        CozmoEmotionManager.instance.SetIdleAnimation("NONE");
+        return;
+      }
+    }
+    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 
   private void DetectPatterns() {
@@ -192,12 +194,10 @@ public class PatternPlayController : GameController {
         lastSeenPatternNew = true;
         memoryBank.Add(currentPattern);
       }
-      else if (lastPatternSeen.Equals(currentPattern) == false) {
+      else {
         seenPattern = true;
         lastSeenPatternNew = false;
       }
-
-      lastPatternSeen = currentPattern;
     }
   }
 
@@ -235,9 +235,7 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
 
-    if (currentMovedID == -1) {
-      currentMovedID = GetMostRecentMovedID();
-    }
+    int currentMovedID = SelectNewInputCandidate();
 
     if (currentMovedID != lastMovedID) {
       lastSetTime = -100.0f;
@@ -319,18 +317,26 @@ public class PatternPlayController : GameController {
     if (gameReady == false)
       return;
 
-    if (blockID == currentMovedID) {
-      currentMovedID = -1;
-    }
-
     blockPatternData[blockID].moving = false;
   }
 
-  private int GetMostRecentMovedID() {
+  private int SelectNewInputCandidate() {
     int lastTouchedID = -1;
-    float minTime = 0.0f;
+    float minTime = -float.MaxValue;
+    bool inView = false;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
-      if (block.Value.lastTimeTouched > minTime && Time.time - block.Value.lastTimeTouched > 0.3f) {
+      // don't pick blocks that are in cozmo's view.
+      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+        if (robot.markersVisibleObjects[i].ID == block.Key) {
+          inView = true;
+        }
+      }
+
+      if (inView) {
+        continue;
+      }
+      
+      if (block.Value.lastTimeTouched > minTime) {
         lastTouchedID = block.Key;
         minTime = block.Value.lastTimeTouched;
       }
@@ -350,7 +356,7 @@ public class PatternPlayController : GameController {
 
   private void PhoneCycle() {
     if (Input.GetMouseButtonDown(0)) {
-      int lastTouchedID = GetMostRecentMovedID();
+      int lastTouchedID = SelectNewInputCandidate();
 
       if (lastTouchedID != -1) {
         
