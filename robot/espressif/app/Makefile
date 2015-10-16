@@ -22,7 +22,7 @@ GEN_IMAGES= eagle.app.v6.out
 GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
-	user    \
+	hal    \
 	driver  \
   transport \
   application
@@ -46,7 +46,7 @@ ifeq ($(FLAVOR),release)
 endif
 
 COMPONENTS_eagle.app.v6 = \
-	user/libuser.a  \
+	hal/libuserhal.a  \
 	driver/libdriver.a \
   transport/libtransport.a \
   application/libapplication.a
