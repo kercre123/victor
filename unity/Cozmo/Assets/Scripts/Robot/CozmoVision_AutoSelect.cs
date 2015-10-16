@@ -43,7 +43,7 @@ public class CozmoVision_AutoSelect : CozmoVision {
     ShowObservedObjects();
 
     if (!robot.isBusy) {
-      robot.selectedObjects.Clear();
+      robot.seenObjects.Clear();
       observedObjects.Clear();
       observedObjects.AddRange(robot.pertinentObjects);
 
@@ -79,10 +79,10 @@ public class CozmoVision_AutoSelect : CozmoVision {
 
       if (robot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) { // if holding a block
         if (observedObjects.Count > 0 && observedObjects[0] != robot.carryingObject) { // if can see at least one block
-          robot.selectedObjects.Add(observedObjects[0]);
+          robot.seenObjects.Add(observedObjects[0]);
           
           if (observedObjects.Count == 1) {
-            robot.TrackToObject(robot.selectedObjects[0]);
+            robot.TrackToObject(robot.seenObjects[0]);
           }
         }
         
@@ -90,11 +90,11 @@ public class CozmoVision_AutoSelect : CozmoVision {
       else { // if not holding a block
         if (observedObjects.Count > 0) {
           for (int i = 0; i < 2 && i < observedObjects.Count; ++i) {
-            robot.selectedObjects.Add(observedObjects[i]);
+            robot.seenObjects.Add(observedObjects[i]);
           }
           
           if (observedObjects.Count == 1) {
-            robot.TrackToObject(robot.selectedObjects[0]);
+            robot.TrackToObject(robot.seenObjects[0]);
           }
         }
         
@@ -116,10 +116,10 @@ public class CozmoVision_AutoSelect : CozmoVision {
 
   protected override void Dings() {
     if (robot != null) {
-      if (!robot.isBusy && robot.selectedObjects.Count > 0/*robot.lastSelectedObjects.Count*/) {
+      if (!robot.isBusy && robot.seenObjects.Count > 0/*robot.lastSelectedObjects.Count*/) {
         Ding(true);
       }
-      /*else if( robot.selectedObjects.Count < robot.lastSelectedObjects.Count )
+      /*else if( robot.seenObjects.Count < robot.lastSelectedObjects.Count )
       {
         Ding( false );
       }*/

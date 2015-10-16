@@ -5,6 +5,8 @@ public class LookForPattern : State {
 
   PatternPlayController patternPlayController = null;
 
+  bool animationPlaying = false;
+
   public override void Enter() {
     base.Enter();
     DAS.Info("State", "LookForPattern");
@@ -13,13 +15,37 @@ public class LookForPattern : State {
   }
 
   int lastFrameVisibleCount = 0;
+  int lastSeenThresholdCount = 0;
+
+  bool lastFrameHasVerticalBlock = false;
 
   public override void Update() {
     base.Update();
 
-    float closestD = ClosestsObject();
+    if (animationPlaying) {
+      return;
+    }
 
-    if (robot.markersVisibleObjects.Count > 0) {
+    float closestD = ClosestsObject();
+    int seenThreshold = patternPlayController.SeenBlocksOverThreshold(0.5f);
+
+    bool hasVerticalBlock = patternPlayController.HasVerticalBlock();
+
+    if (seenThreshold > lastSeenThresholdCount) {
+      robot.SendAnimation("enjoyLight", AnimationDone);
+      animationPlaying = true;
+      robot.DriveWheels(0.0f, 0.0f);
+    }
+
+    if (hasVerticalBlock && !lastFrameHasVerticalBlock) {
+      robot.SetHeadAngle(0.2f);
+    }
+
+    if (!hasVerticalBlock && lastFrameHasVerticalBlock) {
+      robot.SetHeadAngle(-0.1f);
+    }
+
+    if (robot.visibleObjects.Count > 0) {
       if (closestD < 140.0f) {
         robot.DriveWheels(-60.0f, -60.0f);
       }
@@ -33,7 +59,7 @@ public class LookForPattern : State {
 
     // last frame visible count flag is used to prevent locking up the
     // wheels on the idle animation.
-    if (lastFrameVisibleCount > 0 && robot.markersVisibleObjects.Count == 0) {
+    if (lastFrameVisibleCount > 0 && robot.visibleObjects.Count == 0) {
       robot.DriveWheels(0.0f, 0.0f);
     }
 
@@ -45,7 +71,9 @@ public class LookForPattern : State {
       // stateMachine.SetNextState(new HaveIdeaForPattern());
     }
 
-    lastFrameVisibleCount = robot.markersVisibleObjects.Count;
+    lastFrameVisibleCount = robot.visibleObjects.Count;
+    lastSeenThresholdCount = seenThreshold;
+    lastFrameHasVerticalBlock = hasVerticalBlock;
   }
 
   bool NoBlocksMoved() {
@@ -54,12 +82,16 @@ public class LookForPattern : State {
 
   float ClosestsObject() {
     float closest = float.MaxValue;
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      float d = Vector3.Distance(robot.WorldPosition, robot.markersVisibleObjects[i].WorldPosition);
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      float d = Vector3.Distance(robot.WorldPosition, robot.visibleObjects[i].WorldPosition);
       if (d < closest) {
         closest = d;
       }
     }
     return closest;
+  }
+
+  void AnimationDone(bool success) {
+    animationPlaying = false;
   }
 }

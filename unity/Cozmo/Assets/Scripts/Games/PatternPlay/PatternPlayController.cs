@@ -8,14 +8,14 @@ public class PatternPlayController : GameController {
   private bool gameOver = false;
   private bool gameReady = false;
 
-  private int lastMovedID = -1;
+  private int previousInputID = -1;
   private bool seenPattern = false;
   private bool lastSeenPatternNew = false;
   private int lastSetID = -1;
-  private float lastSetTime = 0.0f;
+  private float lastSetTime = -100.0f;
 
   // variables for autonomous pattern building
-  PatternPlayAutoBuild patternPlayAudioBuild = new PatternPlayAutoBuild();
+  PatternPlayAutoBuild patternPlayAutoBuild = new PatternPlayAutoBuild();
 
   [SerializeField]
   private PatternPlayAudio patternPlayAudio;
@@ -32,7 +32,6 @@ public class PatternPlayController : GameController {
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
   public void SetPatternOnBlock(int blockID, int lightCount) {
-    // TODO: make sure orientation is actually correct.
 
     blockPatternData[blockID].blockLightsLocalSpace.TurnOffLights();
 
@@ -63,7 +62,7 @@ public class PatternPlayController : GameController {
   }
 
   public PatternPlayAutoBuild GetAutoBuild() {
-    return patternPlayAudioBuild;
+    return patternPlayAutoBuild;
   }
 
   public void ClearBlockLights() {
@@ -80,6 +79,26 @@ public class PatternPlayController : GameController {
     return lastSeenPatternNew;
   }
 
+  public int SeenBlocksOverThreshold(float threshold) {
+    int count = 0;
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
+      if (kvp.Value.seenAccumulator > threshold && kvp.Value.blockLightsLocalSpace.AreLightsOff() == false) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public bool HasVerticalBlock() {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 rel = robot.visibleObjects[i].WorldPosition - robot.WorldPosition;
+      if (rel.z > 20.0f) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
@@ -88,7 +107,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     memoryBank.Initialize();
-    patternPlayAudioBuild.controller = this;
+    patternPlayAutoBuild.controller = this;
   }
 
   protected override void OnDisable() {
@@ -179,6 +198,8 @@ public class PatternPlayController : GameController {
     // detect patterns based on cozmo's vision
     DetectPatterns();
 
+    SeenAccumulatorCompute();
+
     // update cozmo's behavioral state machine for pattern play.
     stateMachineManager.UpdateAllMachines();
 
@@ -187,9 +208,29 @@ public class PatternPlayController : GameController {
 
   }
 
+  private void SeenAccumulatorCompute() {
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
+      bool isVisible = false;
+      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+        if (robot.visibleObjects[i].ID == kvp.Key) {
+          isVisible = true;
+          break;
+        }
+      }
+      if (isVisible) {
+        kvp.Value.seenAccumulator = Mathf.Min(1.5f, kvp.Value.seenAccumulator + Time.deltaTime);
+      }
+      else {
+        kvp.Value.seenAccumulator = Mathf.Max(0.0f, kvp.Value.seenAccumulator - Time.deltaTime * 2.0f);
+      }
+
+    }
+
+  }
+
   private void CheckShouldPlayIdle() {
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      if (blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      if (blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
         CozmoEmotionManager.instance.SetIdleAnimation("NONE");
         return;
       }
@@ -252,11 +293,12 @@ public class PatternPlayController : GameController {
     base.RefreshHUD();
   }
 
+  // sets the lights on the physical blocks based on configurations in Pattern Play.
   private void SetBlockLights() {
 
-    int currentMovedID = SelectNewInputCandidate();
+    int currentInputID = SelectNewInputCandidate();
 
-    if (currentMovedID != lastMovedID) {
+    if (currentInputID != previousInputID) {
       lastSetTime = -100.0f;
     }
 
@@ -274,14 +316,14 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
  
-      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-        if (robot.markersVisibleObjects[i].ID == blockConfig.Key) {
+      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+        if (robot.visibleObjects[i].ID == blockConfig.Key) {
           enabledColor = Color.white;
           break;
         }
       }
 
-      if (blockConfig.Key == currentMovedID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {
+      if (blockConfig.Key == currentInputID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {
         enabledColor = Color.green;
         disabledColor = Color.green;
       }
@@ -307,7 +349,7 @@ public class PatternPlayController : GameController {
       }
     }
 
-    lastMovedID = currentMovedID;
+    previousInputID = currentInputID;
   }
 
   private bool NextBlockConfig(ActiveBlock activeBlock) {
@@ -330,6 +372,7 @@ public class PatternPlayController : GameController {
     blockPatternData[blockID].moving = true;
     blockPatternData[blockID].lastFrameZAccel = zAccel;
     blockPatternData[blockID].lastTimeTouched = Time.time;
+    patternPlayAutoBuild.ObjectMoved(blockID);
   }
 
   private void BlockStopped(int blockID) {

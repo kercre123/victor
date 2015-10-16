@@ -92,7 +92,7 @@ public class BlockPattern {
     patternSeen = new BlockPattern();
 
     // 3 to a pattern
-    if (robot.markersVisibleObjects.Count < 3)
+    if (robot.visibleObjects.Count < 3)
       return false;
 
     patternSeen.facingCozmo = CheckFacingCozmo(robot);
@@ -105,8 +105,8 @@ public class BlockPattern {
     }
 
     // check rotation alignment
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Forward;
       relativeForward.Normalize();
 
       if (Mathf.Abs(relativeForward.x) < 0.92f && Mathf.Abs(relativeForward.y) < 0.92f && Mathf.Abs(relativeForward.z) < 0.92f) {
@@ -116,9 +116,9 @@ public class BlockPattern {
     }
 
     // convert get block lights in cozmo space. build out pattern seen.
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward, patternSeen.facingCozmo);
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Forward;
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace, relativeForward, patternSeen.facingCozmo);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 
@@ -141,8 +141,8 @@ public class BlockPattern {
   }
 
   static bool CheckFacingCozmo(Robot robot) {
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Up;
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Up;
       if (relativeUp.x > -0.9f) {
         return false;
       }
@@ -152,9 +152,9 @@ public class BlockPattern {
 
   static bool CheckVerticalStack(Robot robot) {
 
-    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector2 flatPos0 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition);
-      Vector2 flatPos1 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition);
+    for (int i = 0; i < robot.visibleObjects.Count - 1; ++i) {
+      Vector2 flatPos0 = (Vector2)(robot.activeBlocks[robot.visibleObjects[i].ID].WorldPosition);
+      Vector2 flatPos1 = (Vector2)(robot.activeBlocks[robot.visibleObjects[i + 1].ID].WorldPosition);
 
       if (Vector2.Distance(flatPos0, flatPos1) > 5.0f) {
         return false;
@@ -164,8 +164,8 @@ public class BlockPattern {
   }
 
   static bool CheckRowAlignment(Robot robot) {
-    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector3 obj0to1 = robot.markersVisibleObjects[i + 1].WorldPosition - robot.markersVisibleObjects[i].WorldPosition;
+    for (int i = 0; i < robot.visibleObjects.Count - 1; ++i) {
+      Vector3 obj0to1 = robot.visibleObjects[i + 1].WorldPosition - robot.visibleObjects[i].WorldPosition;
       obj0to1.Normalize();
       if (Vector3.Dot(obj0to1, robot.Forward) > 0.1f) {
         return false;

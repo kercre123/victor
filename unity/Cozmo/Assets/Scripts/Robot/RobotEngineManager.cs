@@ -422,8 +422,8 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
     
-    if (current.selectedObjects.Count == 0 && !current.isBusy) {
-      current.ClearObservedObjects();
+    if (current.seenObjects.Count == 0 && !current.isBusy) {
+      current.ClearSeenObjects();
     }
   }
 
@@ -433,27 +433,27 @@ public class RobotEngineManager : MonoBehaviour {
 
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
-    ObservedObject deleted = current.knownObjects.Find(x => x == message.objectID);
+    ObservedObject deleted = current.seenObjects.Find(x => x == message.objectID);
 
     if (deleted != null) {
       deleted.Delete();
-      current.knownObjects.Remove(deleted);
+      current.seenObjects.Remove(deleted);
     }
 
-    deleted = current.selectedObjects.Find(x => x == message.objectID);
+    deleted = current.seenObjects.Find(x => x == message.objectID);
 
     if (deleted != null)
-      current.selectedObjects.Remove(deleted);
+      current.seenObjects.Remove(deleted);
 
-    deleted = current.observedObjects.Find(x => x == message.objectID);
+    deleted = current.seenObjects.Find(x => x == message.objectID);
     
     if (deleted != null)
-      current.observedObjects.Remove(deleted);
+      current.seenObjects.Remove(deleted);
 
-    deleted = current.markersVisibleObjects.Find(x => x == message.objectID);
+    deleted = current.visibleObjects.Find(x => x == message.objectID);
     
     if (deleted != null)
-      current.markersVisibleObjects.Remove(deleted);
+      current.visibleObjects.Remove(deleted);
 
     if (current.activeBlocks.ContainsKey((int)message.objectID))
       current.activeBlocks.Remove((int)message.objectID);
@@ -479,7 +479,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     RobotActionType action_type = (RobotActionType)message.actionType;
     bool success = (message.result == ActionResult.SUCCESS) || ((action_type == RobotActionType.PLAY_ANIMATION || action_type == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
-    current.selectedObjects.Clear();
+    current.seenObjects.Clear();
     current.targetLockedObject = null;
 
     current.localBusyTimer = 0f;
@@ -702,7 +702,7 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       texture.LoadImage(jpegArray);
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
 
       if (RobotImage != null) {
         RobotImage(sprite);
@@ -784,7 +784,7 @@ public class RobotEngineManager : MonoBehaviour {
 
       texture.SetPixels32(color32Array);
       texture.Apply(false);
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
       }
@@ -815,7 +815,7 @@ public class RobotEngineManager : MonoBehaviour {
       ResetTexture(dim.width, dim.height, TextureFormat.RGB24);
 
       texture.LoadImage(jpegArray);
-      current.ClearObservedObjects();
+      current.ClearSeenObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
       }

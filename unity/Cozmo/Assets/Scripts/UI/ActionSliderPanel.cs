@@ -229,22 +229,22 @@ public class ActionSliderPanel : ActionPanel {
       currentButton = bottomAction;
 
       float minZ = float.MaxValue;
-      for (int i = 0; i < robot.selectedObjects.Count && i < 2; i++) {
-        if (minZ < robot.selectedObjects[i].WorldPosition.z)
+      for (int i = 0; i < robot.seenObjects.Count && i < 2; i++) {
+        if (minZ < robot.seenObjects[i].WorldPosition.z)
           continue;
-        minZ = robot.selectedObjects[i].WorldPosition.z;
-        robot.targetLockedObject = robot.selectedObjects[i];
+        minZ = robot.seenObjects[i].WorldPosition.z;
+        robot.targetLockedObject = robot.seenObjects[i];
       }
     }
     else if (actionSlider.slider.value > 0.5f && topAction.mode != ActionButton.Mode.DISABLED) {
       currentButton = topAction;
       
       float maxZ = float.MinValue;
-      for (int i = 0; i < robot.selectedObjects.Count && i < 2; i++) {
-        if (maxZ > robot.selectedObjects[i].WorldPosition.z)
+      for (int i = 0; i < robot.seenObjects.Count && i < 2; i++) {
+        if (maxZ > robot.seenObjects[i].WorldPosition.z)
           continue;
-        maxZ = robot.selectedObjects[i].WorldPosition.z;
-        robot.targetLockedObject = robot.selectedObjects[i];
+        maxZ = robot.seenObjects[i].WorldPosition.z;
+        robot.targetLockedObject = robot.seenObjects[i];
       }
     }
     

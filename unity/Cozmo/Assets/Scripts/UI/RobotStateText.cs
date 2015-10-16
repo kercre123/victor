@@ -273,14 +273,14 @@ public class RobotStateText : MonoBehaviour {
   }
 
   bool DirtyKnownObjects() {
-    return lastKnownObjects != bot.knownObjects.Count;
+    return lastKnownObjects != bot.  seenObjects.Count;
   }
 
   void RefreshKnownObjects() {
     if (text_knownObjects == null)
       return;
-    text_knownObjects.text = prefix_text_knownObjects + bot.knownObjects.Count.ToString();
-    lastKnownObjects = bot.knownObjects.Count;
+    text_knownObjects.text = prefix_text_knownObjects + bot.  seenObjects.Count.ToString();
+    lastKnownObjects = bot.  seenObjects.Count;
   }
 
   bool DirtySearching() {

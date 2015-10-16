@@ -211,12 +211,12 @@ public class FaceReactionController : GameController {
     bool faceSeenThisFrame = false;
     // HACK: shouldn't have to use accumulators when the face detection
     // is more reliable (not as many false positives)
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      if (robot.markersVisibleObjects[i].isFace) {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      if (robot.visibleObjects[i].isFace) {
         if (faceSeenTime > 1.5f) {
           DAS.Debug("FaceReactionController", "we found a face!");
           nextState = FaceReactionState.ALIGN_TO_FACE;
-          foundFace = robot.markersVisibleObjects[i];
+          foundFace = robot.visibleObjects[i];
         }
         faceSeenThisFrame = true;
         faceSeenTime += Time.deltaTime;

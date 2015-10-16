@@ -101,7 +101,7 @@ public class CozmoVision : MonoBehaviour {
     box.rectTransform.sizeDelta = new Vector2(boxW, boxH);
     box.rectTransform.anchoredPosition = new Vector2(boxX, -boxY);
     
-    if (robot.selectedObjects.Find(x => x == observedObject) != null) {
+    if (robot.seenObjects.Find(x => x == observedObject) != null) {
       box.SetColor(selected);
       box.text.text = observedObject.InfoString;
     }
@@ -118,13 +118,13 @@ public class CozmoVision : MonoBehaviour {
     if (robot == null || robot.pertinentObjects == null)
       return;
 
-    for (int i = 0; i < robot.selectedObjects.Count; ++i) {
-      if (robot.pertinentObjects.Find(x => x == robot.selectedObjects[i]) == null) {
-        robot.selectedObjects.RemoveAt(i--);
+    for (int i = 0; i < robot.seenObjects.Count; ++i) {
+      if (robot.pertinentObjects.Find(x => x == robot.seenObjects[i]) == null) {
+        robot.seenObjects.RemoveAt(i--);
       }
     }
 
-    /*if(robot.selectedObjects.Count == 0) {
+    /*if(robot.seenObjects.Count == 0) {
       robot.SetHeadAngle();
     }*/
   }
@@ -172,7 +172,7 @@ public class CozmoVision : MonoBehaviour {
       RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
       if (robot != null)
-        robot.selectedObjects.Clear();
+        robot.seenObjects.Clear();
     }
     
     RequestImage();
@@ -313,7 +313,7 @@ public class CozmoVision : MonoBehaviour {
 
   protected void PlayVisionActivateSound() {
     if (AudioManager.CozmoVisionLoop == null || visionActivateSound == null || AudioManager.CozmoVisionLoop.clip == visionActiveLoop ||
-        actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0)
+        actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.seenObjects.Count == 0)
       return;
 
     AudioManager.PlayOneShot(visionActivateSound, 0f, 1f, maxVisionStartVol);
@@ -353,7 +353,7 @@ public class CozmoVision : MonoBehaviour {
   }
 
   protected virtual void Dings() {
-    if (robot == null || robot.isBusy || robot.selectedObjects.Count > 0)
+    if (robot == null || robot.isBusy || robot.seenObjects.Count > 0)
       return;
       
     if (robot.pertinentObjects.Count > 0/*lastObservedObjects.Count*/) {
@@ -407,8 +407,8 @@ public class CozmoVision : MonoBehaviour {
 
   public void Selection(ObservedObject obj) {
     if (robot != null) {
-      robot.selectedObjects.Clear();
-      robot.selectedObjects.Add(obj);
+      robot.seenObjects.Clear();
+      robot.seenObjects.Add(obj);
       robot.TrackToObject(obj);
     }
     

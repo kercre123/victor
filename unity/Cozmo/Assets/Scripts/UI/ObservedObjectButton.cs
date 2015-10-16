@@ -9,8 +9,8 @@ public class ObservedObjectButton : ObservedObjectBox {
 
   public virtual void Selection() { 
     if (robot != null) {
-      robot.selectedObjects.Clear();
-      robot.selectedObjects.Add(observedObject);
+      robot.seenObjects.Clear();
+      robot.seenObjects.Add(observedObject);
       robot.TrackToObject(observedObject);
     }
 
