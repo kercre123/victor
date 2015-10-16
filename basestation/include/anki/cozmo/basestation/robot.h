@@ -619,10 +619,10 @@ public:
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
     // The robot's identifier
     RobotID_t         _ID;
-    bool              _isPhysical;
+    bool              _isPhysical = false;
     
     // Flag indicating whether a robotStateMessage was ever received
-    bool              _newStateMsgAvailable;
+    bool              _newStateMsgAvailable = false;
     
     // A reference to the MessageHandler that the robot uses for outgoing comms
     RobotInterface::MessageHandler* _msgHandler;
@@ -638,28 +638,28 @@ public:
 #   if !ASYNC_VISION_PROCESSING
     Vision::Image     _image;
     MessageRobotState _robotStateForImage;
-    bool              _haveNewImage;
+    bool              _haveNewImage = false;
 #   endif
     
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled;
+    bool             _isBehaviorMgrEnabled = false;
     
     //ActionQueue      _actionQueue;
     ActionList       _actionList;
-    bool             _wheelsLocked;
-    bool             _headLocked;
-    bool             _liftLocked;
+    bool             _wheelsLocked = false;
+    bool             _headLocked   = false;
+    bool             _liftLocked   = false;
     
     // Path Following. There are two planners, only one of which can
     // be selected at a time
     IPathPlanner*    _selectedPathPlanner;
     IPathPlanner*    _longPathPlanner;
     IPathPlanner*    _shortPathPlanner;
-    s8               _currPathSegment;
+    s8               _currPathSegment = -1;
     u8               _numFreeSegmentSlots;
-    u16              _lastSentPathID;
-    u16              _lastRecvdPathID;
-    bool             _usingManualPathSpeed;
+    u16              _lastSentPathID  = 0;
+    u16              _lastRecvdPathID = 0;
+    bool             _usingManualPathSpeed = false;
     PathDolerOuter*  _pdo;
     
     // This functions sets _selectedPathPlanner to the appropriate
@@ -671,7 +671,7 @@ public:
     // cameras (e.g. those stored inside the pose history)
     Vision::CameraCalibration _cameraCalibration;
     Vision::Camera            _camera;
-    bool                      _visionWhileMovingEnabled;
+    bool                      _visionWhileMovingEnabled = false;
 
     /*
     // Proximity sensors
@@ -680,15 +680,15 @@ public:
     */
 
     // Geometry / Pose
-    std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
-    Pose3d*          _worldOrigin;
-    Pose3d           _pose;
-    Pose3d           _driveCenterPose;
-    PoseFrameID_t    _frameId;
-    ObjectID         _localizedToID;       // ID of mat object robot is localized to
-    bool             _hasMovedSinceLocalization;
-    bool             _localizedToFixedObject; // false until robot sees a _fixed_ mat
-    f32              _localizedMarkerDistToCameraSq; // Stores (sqaured) distance to the closest observed marker of the object we're localized to
+    std::list<Pose3d> _poseOrigins; // placeholder origin poses while robot isn't localized
+    Pose3d*           _worldOrigin;
+    Pose3d            _pose;
+    Pose3d            _driveCenterPose;
+    PoseFrameID_t     _frameId = 0;
+    ObjectID          _localizedToID;       // ID of mat object robot is localized to
+    bool              _hasMovedSinceLocalization = false;
+    bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
+    f32               _localizedMarkerDistToCameraSq; // Stores (squared) distance to the closest observed marker of the object we're localized to
 
     
     Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
@@ -699,26 +699,27 @@ public:
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
     f32              _currentHeadAngle;
-    f32              _currentLiftAngle;
+    f32              _currentLiftAngle = 0;
     
     f32              _leftWheelSpeed_mmps;
     f32              _rightWheelSpeed_mmps;
     
     // Ramping
-    bool             _onRamp;
+    bool             _onRamp = false;
     ObjectID         _rampID;
     Point2f          _rampStartPosition;
     f32              _rampStartHeight;
     Ramp::TraversalDirection _rampDirection;
     
     // State
-    bool             _isPickingOrPlacing;
-    bool             _isPickedUp;
-    bool             _isMoving;
-    bool             _isHeadMoving;
-    bool             _isLiftMoving;
-    f32              _battVoltage;
-    ImageSendMode _imageSendMode;
+    bool             _isPickingOrPlacing = false;
+    bool             _isPickedUp         = false;
+    bool             _isMoving           = false;
+    bool             _isHeadMoving       = false;
+    bool             _isLiftMoving       = false;
+    f32              _battVoltage        = 5;
+    ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+  
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                            TimeStamp_t& t, RobotPoseStamp** p,
@@ -746,15 +747,15 @@ public:
     // exists and is still valid (since, therefore, the marker must
     // be as well)
     ObjectID                    _dockObjectID;
-    const Vision::KnownMarker*  _dockMarker;
+    const Vision::KnownMarker*  _dockMarker               = nullptr;
     ObjectID                    _carryingObjectID;
     ObjectID                    _carryingObjectOnTopID;
-    const Vision::KnownMarker*  _carryingMarker;
-    bool                        _lastPickOrPlaceSucceeded;
+    const Vision::KnownMarker*  _carryingMarker           = nullptr;
+    bool                        _lastPickOrPlaceSucceeded = false;
     
     // Object/Face to track head to whenever it is observed
     ObjectID                    _trackToObjectID;
-    Vision::TrackedFace::ID_t   _trackToFaceID;
+    Vision::TrackedFace::ID_t   _trackToFaceID = Vision::TrackedFace::UnknownFace;
     bool                        _trackWithHeadOnly;
     bool                        _headLockedBeforeTracking;
     bool                        _wheelsLockedBeforeTracking;
@@ -774,14 +775,14 @@ public:
     std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
     
     // Save mode for robot state
-    SaveMode_t _stateSaveMode;
+    SaveMode_t _stateSaveMode = SAVE_OFF;
     
     // Save mode for robot images
-    SaveMode_t _imageSaveMode;
+    SaveMode_t _imageSaveMode = SAVE_OFF;
     
     // Maintains an average period of incoming robot images
-    u32 _imgFramePeriod;
-    TimeStamp_t _lastImgTimeStamp;
+    u32         _imgFramePeriod        = 0;
+    TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
@@ -803,9 +804,9 @@ public:
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed;
-    s32 _numAnimationBytesStreamed;
-    u8  _animationTag;
+    s32 _numAnimationBytesPlayed   = 0;
+    s32 _numAnimationBytesStreamed = 0;
+    u8  _animationTag              = 0;
     
     ///////// Emotion ////////
     EmotionManager _emotionMgr;
