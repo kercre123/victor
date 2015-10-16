@@ -8,6 +8,7 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "backgroundTask.h"
+#include "client.h"
 }
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
@@ -25,7 +26,19 @@ LOCAL void ICACHE_FLASH_ATTR backgroundTaskExec(os_event_t *event)
   const u32 btInterval = btStart - lastBTT;
   if (btInterval > EXPECTED_BT_INTERVAL_US*2) os_printf("Background task interval too long: %dus!\r\n", btInterval);
   
-  
+  switch (event->sig)
+  {
+    case 0:
+    {
+      clientUpdate();
+      break;
+    }
+    // Add new "long execution" tasks as switch cases here.
+    default:
+    {
+      event->sig = -1; // So next call will be event 0
+    }
+  }
   
   const u32 btRunTime = system_get_time() - btStart;
   if (btRunTime > BT_MAX_RUN_TIME_US) os_printf("Background task run time too long: %dus!\r\n", btRunTime);
