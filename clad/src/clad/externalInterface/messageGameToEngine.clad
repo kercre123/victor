@@ -264,11 +264,21 @@ message VisionWhileMoving {
     uint_8 enable // True or false
 }
 
+// SetBehaviorSystemEnabled
+message SetBehaviorSystemEnabled {
+  bool enabled
+}
+
+// ActivateBehaviorChooser
+// Valid options are: "DemoBehaviorChooser" or "SelectionBehaviorChooser"
+message ActivateBehaviorChooser {
+  string chooserName
+}
+
 // ExecuteBehavior
-// Use "NONE" to disable behaviors.
-// Use "AUTO" to enable automatic behavior selection.
+// Valid options are: "LookAround", "InteractWithFaces", "OCD", or "None"
 message ExecuteBehavior {
-    string behaviorName
+  string behaviorName
 }
 
 // AbortPath

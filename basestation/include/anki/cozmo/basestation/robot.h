@@ -490,9 +490,6 @@ public:
     // Tell the robot to start a given test mode
     Result StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
 
-    // Start a Behavior in BehaviorManager
-    void StartBehavior(const std::string& name);
-         
     // For debugging robot parameters:
     Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
                                    const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);

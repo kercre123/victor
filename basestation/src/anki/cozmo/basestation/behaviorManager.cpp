@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
+#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
@@ -52,6 +53,23 @@ namespace Cozmo {
     
     SetupBehaviorChooser(config);
     
+    if (_robot.HasExternalInterface())
+    {
+      IExternalInterface* externalInterface = _robot.GetExternalInterface();
+      _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
+       [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+       {
+         const std::string& name = event.GetData().Get_ActivateBehaviorChooser().chooserName;
+         if (name == "DemoBehaviorChooser")
+         {
+           SetupBehaviorChooser(config);
+         }
+         else if (name == "SelectionBehaviorChooser")
+         {
+           SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+         }
+       }));
+    }
     _isInitialized = true;
     
     _lastSwitchTime_sec = 0.f;
@@ -62,7 +80,7 @@ namespace Cozmo {
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
     DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot, config);
-    _behaviorChooser = newDemoChooser;
+    SetBehaviorChooser(newDemoChooser);
     
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
   }
@@ -278,7 +296,10 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
+    // These behavior pointers are going to be invalidated, so clear them
+    _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
     Util::SafeDelete(_behaviorChooser);
+    
     _behaviorChooser = newChooser;
   }
   

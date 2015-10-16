@@ -127,6 +127,15 @@ namespace Anki {
       Delocalize();
       InitRobotMessageComponent(_msgHandler,robotID);
       
+      if (HasExternalInterface())
+      {
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetBehaviorSystemEnabled,
+                                                               [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          _isBehaviorMgrEnabled = event.GetData().Get_SetBehaviorSystemEnabled().enabled;
+        }));
+      }
+      
       _proceduralFace.MarkAsSentToRobot(false);
       _proceduralFace.SetTimeStamp(1); // Make greater than lastFace's timestamp, so it gets streamed
       _lastProceduralFace.MarkAsSentToRobot(true);
@@ -2239,29 +2248,6 @@ namespace Anki {
       return RESULT_OK;
       
     } // UnattachCarriedObject()
-    
-
-    void Robot::StartBehavior(const std::string& behaviorName)
-    {
-      if(behaviorName == "NONE") {
-        PRINT_NAMED_INFO("Robot.StartBehavior.DisablingBehaviorManager", "\n");
-        _isBehaviorMgrEnabled = false;
-      } else {
-        _isBehaviorMgrEnabled = true;
-        if(behaviorName == "AUTO") {
-          PRINT_NAMED_INFO("Robot.StartBehavior.EnablingAutoBehaviorSelection", "\n");
-        } else {
-          if(RESULT_OK != _behaviorMgr.SelectNextBehavior(behaviorName, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds())) {
-            PRINT_NAMED_ERROR("Robot.StartBehavior.Fail", "\n");
-          } else {
-            PRINT_NAMED_INFO("Robot.StartBehavior.Success",
-                             "Switching to behavior '%s'\n",
-                             behaviorName.c_str());
-          }
-        }
-      }
-      
-    }
     
     // ============ Messaging ================
     

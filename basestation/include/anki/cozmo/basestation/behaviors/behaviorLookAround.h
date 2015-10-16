@@ -31,6 +31,7 @@ class BehaviorLookAround : public IBehavior
 {
 public:
   BehaviorLookAround(Robot& robot, const Json::Value& config);
+  virtual ~BehaviorLookAround() override;
   
   virtual bool IsRunnable(double currentTime_sec) const override;
   
