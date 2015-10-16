@@ -342,7 +342,6 @@ public class PatternPlayController : GameController {
   private int SelectNewInputCandidate() {
     int lastTouchedID = -1;
     float minTime = -float.MaxValue;
-    bool inView = false;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
       if (block.Value.lastTimeTouched > minTime) {
         lastTouchedID = block.Key;

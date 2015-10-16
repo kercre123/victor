@@ -80,6 +80,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
+    SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
     GotoPoseMessage = new U2G.GotoPose();
     TurnInPlaceMessage = new U2G.TurnInPlace();
     FacePoseMessage = new U2G.FacePose();
