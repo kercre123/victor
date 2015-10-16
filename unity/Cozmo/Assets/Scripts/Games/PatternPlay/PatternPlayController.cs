@@ -79,6 +79,16 @@ public class PatternPlayController : GameController {
     return lastSeenPatternNew;
   }
 
+  public int SeenBlocksOverThreshold(float threshold) {
+    int count = 0;
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
+      if (kvp.Value.seenAccumulator > threshold && kvp.Value.blockLightsLocalSpace.AreLightsOff() == false) {
+        count++;
+      }
+    }
+    return count;
+  }
+
   protected override void OnEnable() {
     base.OnEnable();
     robot.VisionWhileMoving(true);
@@ -178,11 +188,33 @@ public class PatternPlayController : GameController {
     // detect patterns based on cozmo's vision
     DetectPatterns();
 
+    SeenAccumulatorCompute();
+
     // update cozmo's behavioral state machine for pattern play.
     stateMachineManager.UpdateAllMachines();
 
     // this may need to be moved to include other states if we want UI for them.
     patternPlayUIController.UpdateUI(memoryBank);
+
+  }
+
+  private void SeenAccumulatorCompute() {
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
+      bool isVisible = false;
+      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+        if (robot.visibleObjects[i].ID == kvp.Key) {
+          isVisible = true;
+          break;
+        }
+      }
+      if (isVisible) {
+        kvp.Value.seenAccumulator = Mathf.Min(1.5f, kvp.Value.seenAccumulator + Time.deltaTime);
+      }
+      else {
+        kvp.Value.seenAccumulator = Mathf.Max(0.0f, kvp.Value.seenAccumulator - Time.deltaTime * 2.0f);
+      }
+
+    }
 
   }
 

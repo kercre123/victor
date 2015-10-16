@@ -5,6 +5,8 @@ public class LookForPattern : State {
 
   PatternPlayController patternPlayController = null;
 
+  bool animationPlaying = false;
+
   public override void Enter() {
     base.Enter();
     DAS.Info("State", "LookForPattern");
@@ -13,11 +15,23 @@ public class LookForPattern : State {
   }
 
   int lastFrameVisibleCount = 0;
+  int lastSeenThresholdCount = 0;
 
   public override void Update() {
     base.Update();
 
+    if (animationPlaying) {
+      return;
+    }
+
     float closestD = ClosestsObject();
+    int seenThreshold = patternPlayController.SeenBlocksOverThreshold(0.5f);
+
+    if (seenThreshold > lastSeenThresholdCount) {
+      robot.SendAnimation("enjoyLight", AnimationDone);
+      animationPlaying = true;
+      robot.DriveWheels(0.0f, 0.0f);
+    }
 
     if (robot.visibleObjects.Count > 0) {
       if (closestD < 140.0f) {
@@ -46,6 +60,7 @@ public class LookForPattern : State {
     }
 
     lastFrameVisibleCount = robot.visibleObjects.Count;
+    lastSeenThresholdCount = seenThreshold;
   }
 
   bool NoBlocksMoved() {
@@ -61,5 +76,9 @@ public class LookForPattern : State {
       }
     }
     return closest;
+  }
+
+  void AnimationDone(bool success) {
+    animationPlaying = false;
   }
 }
