@@ -325,17 +325,6 @@ public class PatternPlayController : GameController {
     float minTime = -float.MaxValue;
     bool inView = false;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
-      // don't pick blocks that are in cozmo's view.
-      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-        if (robot.markersVisibleObjects[i].ID == block.Key) {
-          inView = true;
-        }
-      }
-
-      if (inView) {
-        continue;
-      }
-      
       if (block.Value.lastTimeTouched > minTime) {
         lastTouchedID = block.Key;
         minTime = block.Value.lastTimeTouched;
