@@ -24,6 +24,8 @@
 #include "clad/types/ledTypes.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/demoBehaviorState.h"
+#include "clad/types/behaviorType.h"
+#include "clad/types/behaviorChooserType.h"
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
@@ -860,14 +862,14 @@ namespace Anki {
                     if (behaviorName == "AUTO" && !isDemoMode)
                     {
                       isDemoMode = true;
-                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser("DemoBehaviorChooser")));
+                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Demo)));
                     }
                     else if (behaviorName != "AUTO" && isDemoMode)
                     {
                       isDemoMode = false;
-                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser("SelectionBehaviorChooser")));
+                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
                     }
-                    SendExecuteBehavior(behaviorName);
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
                     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(true)));
                   }
                   
