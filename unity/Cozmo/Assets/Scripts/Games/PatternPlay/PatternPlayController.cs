@@ -27,8 +27,6 @@ public class PatternPlayController : GameController {
 
   private StateMachine patternPlayStateMachine = new StateMachine();
 
-  private BlockPattern lastPatternSeen = null;
-
   private PatternMemory memoryBank = new PatternMemory();
 
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
@@ -72,10 +70,6 @@ public class PatternPlayController : GameController {
     foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
       kvp.Value.blockLightsLocalSpace.TurnOffLights();
     }
-  }
-
-  public BlockPattern GetLastPatternSeen() {
-    return lastPatternSeen;
   }
 
   public bool SeenPattern() {
@@ -150,6 +144,24 @@ public class PatternPlayController : GameController {
     patternPlayStateMachine.SetGameController(this);
     patternPlayStateMachine.SetNextState(new LookForPattern());
     stateMachineManager.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine);
+
+    // set idle parameters
+    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+      Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
+      Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
+      Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+      Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
+    };
+
+    float[] paramValues = {
+      3.0f,
+      0.2f,
+      5.0f,
+      0.0f
+    };
+
+    CozmoEmotionManager.instance.SetLiveIdleAnimationParameters(paramNames, paramValues);
+
   }
 
   protected override void Update_PLAYING() {
@@ -158,6 +170,8 @@ public class PatternPlayController : GameController {
     // inputs for setting block lights
     KeyboardBlockCycle();
     PhoneCycle();
+
+    CheckShouldPlayIdle();
 
     // actually set the lights on the physical blocks.
     SetBlockLights();
@@ -171,6 +185,17 @@ public class PatternPlayController : GameController {
     // this may need to be moved to include other states if we want UI for them.
     patternPlayUIController.UpdateUI(memoryBank);
 
+  }
+
+  private void CheckShouldPlayIdle() {
+    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
+      if (blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
+        CozmoEmotionManager.instance.SetIdleAnimation("NONE");
+        return;
+      }
+    }
+
+    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 
   private void DetectPatterns() {
@@ -188,12 +213,10 @@ public class PatternPlayController : GameController {
         lastSeenPatternNew = true;
         memoryBank.AddSeen(currentPattern);
       }
-      else if (lastPatternSeen.Equals(currentPattern) == false) {
+      else {
         seenPattern = true;
         lastSeenPatternNew = false;
       }
-
-      lastPatternSeen = currentPattern;
     }
   }
 
@@ -231,7 +254,8 @@ public class PatternPlayController : GameController {
 
   private void SetBlockLights() {
 
-    int currentMovedID = GetMostRecentMovedID();
+    int currentMovedID = SelectNewInputCandidate();
+
     if (currentMovedID != lastMovedID) {
       lastSetTime = -100.0f;
     }
@@ -311,13 +335,13 @@ public class PatternPlayController : GameController {
   private void BlockStopped(int blockID) {
     if (gameReady == false)
       return;
-    
+
     blockPatternData[blockID].moving = false;
   }
 
-  private int GetMostRecentMovedID() {
+  private int SelectNewInputCandidate() {
     int lastTouchedID = -1;
-    float minTime = 0.0f;
+    float minTime = -float.MaxValue;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData) {
       if (block.Value.lastTimeTouched > minTime) {
         lastTouchedID = block.Key;
@@ -339,7 +363,7 @@ public class PatternPlayController : GameController {
 
   private void PhoneCycle() {
     if (Input.GetMouseButtonDown(0)) {
-      int lastTouchedID = GetMostRecentMovedID();
+      int lastTouchedID = SelectNewInputCandidate();
 
       if (lastTouchedID != -1) {
         
@@ -382,7 +406,7 @@ public class PatternPlayController : GameController {
 
   public void ResetLookHeadForkLift() {
     robot.SetHeadAngle(-0.1f);
-    robot.SetLiftHeight(2.0f);
+    robot.SetLiftHeight(0.0f);
   }
 
 }

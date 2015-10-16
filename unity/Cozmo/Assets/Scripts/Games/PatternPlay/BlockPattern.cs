@@ -165,23 +165,9 @@ public class BlockPattern {
 
   static bool CheckRowAlignment(Robot robot) {
     for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
-
-      Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
-
-      float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
-      float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
-
-      if (Mathf.Abs(block0 - block1) > 30.0f) {
-        return false;
-      }
-
-      float diffZ = (robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition).z;
-
-      // enforce horizontal rule
-      if (Mathf.Abs(diffZ) > 1.5f) {
+      Vector3 obj0to1 = robot.markersVisibleObjects[i + 1].WorldPosition - robot.markersVisibleObjects[i].WorldPosition;
+      obj0to1.Normalize();
+      if (Vector3.Dot(obj0to1, robot.Forward) > 0.1f) {
         return false;
       }
     }
