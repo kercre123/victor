@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_SelectionBehaviorChooser_H__
 
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "clad/types/behaviorType.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
@@ -47,7 +48,7 @@ protected:
   
   void HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
-  IBehavior* AddNewBehavior(const std::string& behaviorName);
+  IBehavior* AddNewBehavior(BehaviorType newType);
   
 }; // class SelectionBehaviorChooser
   

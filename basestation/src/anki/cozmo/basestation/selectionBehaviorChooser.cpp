@@ -70,14 +70,15 @@ IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(double currentTime_sec) 
 void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   const ExternalInterface::ExecuteBehavior& msg = event.GetData().Get_ExecuteBehavior();
-  IBehavior* selectedBehavior = GetBehaviorByName(msg.behaviorName);
+  BehaviorType type = msg.behaviorType;
+  IBehavior* selectedBehavior = GetBehaviorByName(EnumToString(type));
   if (nullptr == selectedBehavior)
   {
-    selectedBehavior = AddNewBehavior(msg.behaviorName);
+    selectedBehavior = AddNewBehavior(type);
     if (nullptr == selectedBehavior)
     {
       PRINT_NAMED_ERROR("SelectionBehaviorChooser.HandleExecuteBehavior",
-                        "SelectionBehaviorChooser could not select the behavior %s.", msg.behaviorName.c_str());
+                        "SelectionBehaviorChooser could not select the behavior %s.", EnumToString(type));
       return;
     }
   }
@@ -85,21 +86,30 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   _selectedBehavior = selectedBehavior;
 }
   
-IBehavior* SelectionBehaviorChooser::AddNewBehavior(const std::string& behaviorName)
+IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
 {
   IBehavior* newBehavior = nullptr;
   
-  if (behaviorName == "LookAround")
+  switch (newType)
   {
-    newBehavior = new BehaviorLookAround(_robot, _config);
-  }
-  else if (behaviorName == "OCD")
-  {
-    newBehavior = new BehaviorOCD(_robot, _config);
-  }
-  else if (behaviorName == "InteractWithFaces")
-  {
-    newBehavior = new BehaviorInteractWithFaces(_robot, _config);
+    case BehaviorType::LookAround:
+    {
+      newBehavior = new BehaviorLookAround(_robot, _config);
+      break;
+    }
+    case BehaviorType::OCD:
+    {
+      newBehavior = new BehaviorOCD(_robot, _config);
+      break;
+    }
+    case BehaviorType::InteractWithFaces:
+    {
+      newBehavior = new BehaviorInteractWithFaces(_robot, _config);
+      break;
+    }
+    default:
+      // Do nothing
+      break;
   }
   
   Result addResult = AddBehavior(newBehavior);
@@ -110,7 +120,7 @@ IBehavior* SelectionBehaviorChooser::AddNewBehavior(const std::string& behaviorN
   
   if (nullptr == newBehavior)
   {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.AddNewBehavior", "Behavior %s was not created properly.", behaviorName.c_str());
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.AddNewBehavior", "Behavior %s was not created properly.", EnumToString(newType));
   }
   
   return newBehavior;

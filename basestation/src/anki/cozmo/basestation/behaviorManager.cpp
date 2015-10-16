@@ -25,6 +25,8 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
+#include "clad/types/behaviorChooserType.h"
+
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -59,14 +61,20 @@ namespace Cozmo {
       _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
        [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
        {
-         const std::string& name = event.GetData().Get_ActivateBehaviorChooser().chooserName;
-         if (name == "DemoBehaviorChooser")
+         switch (event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType)
          {
-           SetupBehaviorChooser(config);
-         }
-         else if (name == "SelectionBehaviorChooser")
-         {
-           SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+           case BehaviorChooserType::Demo:
+           {
+             SetupBehaviorChooser(config);
+             break;
+           }
+           case BehaviorChooserType::Selection:
+           {
+             SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+             break;
+           }
+           default:
+             break;
          }
        }));
     }

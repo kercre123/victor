@@ -8,6 +8,8 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
 #include "clad/types/demoBehaviorState.clad"
+#include "clad/types/behaviorType.clad"
+#include "clad/types/behaviorChooserType.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
@@ -270,15 +272,13 @@ message SetBehaviorSystemEnabled {
 }
 
 // ActivateBehaviorChooser
-// Valid options are: "DemoBehaviorChooser" or "SelectionBehaviorChooser"
 message ActivateBehaviorChooser {
-  string chooserName
+  BehaviorChooserType behaviorChooserType
 }
 
 // ExecuteBehavior
-// Valid options are: "LookAround", "InteractWithFaces", "OCD", or "None"
 message ExecuteBehavior {
-  string behaviorName
+  BehaviorType behaviorType
 }
 
 // AbortPath
