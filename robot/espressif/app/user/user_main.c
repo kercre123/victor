@@ -22,19 +22,19 @@
 /** User "idle" task
  * Called by OS with lowest priority.
  */
-/*LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
+/*LOCAL bool userTask(uint32_t param)
 {
   return false;
 }*/
 
-inline uint32_t GetTimeStamp(void)
+inline uint32_t IRAM_ATTR GetTimeStamp(void)
 {
   return system_get_time()/1000; // Convert us counter to ms
 }
 
 static ETSTimer userTimer;
 
-LOCAL void ICACHE_FLASH_ATTR userIntervalTask(void *timer_arg)
+LOCAL void userIntervalTask(void *timer_arg)
 {
   static int32 tick = 0;
   int32 tock = system_get_time();
@@ -45,7 +45,7 @@ LOCAL void ICACHE_FLASH_ATTR userIntervalTask(void *timer_arg)
 
 /** Handle wifi events passed by the OS
  */
-void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
+void wifi_event_callback(System_Event_t *evt)
 {
   switch (evt->event)
   {
@@ -115,7 +115,7 @@ void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
  * I think everything else should still happen in user_init and system_init_done
  */
-void ICACHE_FLASH_ATTR user_rf_pre_init(void)
+void user_rf_pre_init(void)
 {
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
   system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
@@ -124,7 +124,7 @@ void ICACHE_FLASH_ATTR user_rf_pre_init(void)
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
-static void ICACHE_FLASH_ATTR system_init_done(void)
+static void system_init_done(void)
 {
   // Set up the remote debugging port
   telnetInit();
@@ -167,8 +167,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
  * Setting up any user application code to run on the espressif.
  * It is called automatically from the os main function.
  */
-void ICACHE_FLASH_ATTR
-user_init(void)
+void user_init(void)
 {
     NVParams* nvpars;
     int8 err;

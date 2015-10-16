@@ -9,11 +9,11 @@
 #include "foregroundTask.h"
 
 #define foregroundTaskQueueLen 16 ///< Maximum number of task 1 subtasks which can be in the queue
-os_event_t foregroundTaskQueue[foregroundTaskQueueLen]; ///< Memory for the task 1 queue
+static os_event_t foregroundTaskQueue[foregroundTaskQueueLen]; ///< Memory for the task 1 queue
 
 /** The OS task which dispatches subtasks.
 */
-LOCAL void ICACHE_FLASH_ATTR foregroundTaskTask(os_event_t *event)
+LOCAL void foregroundTaskTask(os_event_t *event)
 {
   const foregroundTask subTask = (foregroundTask)(event->sig);
   if (subTask == NULL)
@@ -30,7 +30,7 @@ LOCAL void ICACHE_FLASH_ATTR foregroundTaskTask(os_event_t *event)
   }
 }
 
-int8_t ICACHE_FLASH_ATTR foregroundTaskInit(void)
+int8_t foregroundTaskInit(void)
 {
   os_printf("foregroundTask init\r\n");
   if (system_os_task(foregroundTaskTask, foregroundTask_PRIO, foregroundTaskQueue, foregroundTaskQueueLen) == false)

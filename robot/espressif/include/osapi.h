@@ -45,7 +45,4 @@
 unsigned long os_random(void);
 int os_get_random(unsigned char *buf, size_t len);
 
-#define likely(x)      __builtin_expect(!!(x), 1)
-#define unlikely(x)    __builtin_expect(!!(x), 0)
-
 #endif

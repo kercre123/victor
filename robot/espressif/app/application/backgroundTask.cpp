@@ -18,7 +18,7 @@ static os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for t
 
 /** The OS task which dispatches subtasks.
 */
-LOCAL void ICACHE_FLASH_ATTR backgroundTaskExec(os_event_t *event)
+LOCAL void backgroundTaskExec(os_event_t *event)
 {
   static u32 lastBTT = system_get_time();
   const u32 btStart  = system_get_time();
@@ -33,7 +33,7 @@ LOCAL void ICACHE_FLASH_ATTR backgroundTaskExec(os_event_t *event)
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
-extern "C" int8_t ICACHE_FLASH_ATTR backgroundTaskInit(void)
+extern "C" int8_t backgroundTaskInit(void)
 {
   os_printf("backgroundTask init\r\n");
   if (system_os_task(backgroundTaskExec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)

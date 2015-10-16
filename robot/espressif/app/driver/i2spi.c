@@ -63,7 +63,7 @@ static int16_t screenReadIndex;
 static int16_t screenDataAvailable;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
-static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
+static IRAM_ATTR void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
 {
   desc->owner     = 1;
   desc->eof       = eof;
@@ -77,7 +77,7 @@ static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
  * @param drop A pointer to a complete drop
  * @warning Call from a task not an ISR.
  */
-static void processDrop(DropToWiFi* drop)
+static IRAM_ATTR void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) clientQueueImageData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
@@ -89,7 +89,7 @@ static void processDrop(DropToWiFi* drop)
  * @param payload A pointer to the payload data to fill the drop with or NULL
  * @param length The number of bytes of payload to be put into this drop
  */
-static void makeDrop(uint8_t* payload, uint8_t length)
+static IRAM_ATTR void makeDrop(uint8_t* payload, uint8_t length)
 {
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   DropToRTIP drop;
@@ -143,7 +143,7 @@ static void makeDrop(uint8_t* payload, uint8_t length)
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
-LOCAL void i2spiTask(os_event_t *event)
+static IRAM_ATTR void i2spiTask(os_event_t *event)
 {
   struct sdio_queue* desc = asDesc(event->par);
 
@@ -237,7 +237,7 @@ LOCAL void i2spiTask(os_event_t *event)
  * Everything is passed off to tasks to be handled
  * @warnings ISRs cannot call printf or any radio related functions and must return in under 10us
  */
-LOCAL void dmaisr(void* arg) {
+static IRAM_ATTR void dmaisr(void* arg) {
 	//Grab int status
 	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
 	//clear all intr flags
@@ -264,7 +264,7 @@ LOCAL void dmaisr(void* arg) {
 
 
 //Initialize I2S subsystem for DMA circular buffer use
-int8_t ICACHE_FLASH_ATTR i2spiInit() {
+int8_t i2spiInit() {
   int i;
 
   outgoingPhase = UNINITALIZED_PHASE; // Not established yet
@@ -399,13 +399,13 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-void ICACHE_FLASH_ATTR i2spiStart(void)
+void i2spiStart(void)
 {
   //Start i2s start and receive
   SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START | I2S_I2S_RX_START);
 }
 
-void ICACHE_FLASH_ATTR i2spiStop(void)
+void i2spiStop(void)
 {
   // Disable interrupts
   CLEAR_PERI_REG_MASK(SLC_INT_ENA, SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);

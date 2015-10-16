@@ -21,12 +21,12 @@
 static struct espconn* socket;
 static ReliableConnection* connection;
 
-bool clientConnected(void)
+bool IRAM_ATTR clientConnected(void)
 {
   return connection != NULL;
 }
 
-void ICACHE_FLASH_ATTR clientUpdate(void)
+void clientUpdate(void)
 {
   if (connection != NULL)
   {
@@ -72,7 +72,7 @@ static void socketRecvCB(void *arg, char *usrdata, unsigned short len)
   }
 }
 
-sint8 ICACHE_FLASH_ATTR clientInit()
+sint8 clientInit()
 {
   int8 err;
 
@@ -107,7 +107,7 @@ sint8 ICACHE_FLASH_ATTR clientInit()
   return ESPCONN_OK;
 }
 
-bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+bool IRAM_ATTR clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
 {
   if (likely(clientConnected()))
   {
@@ -135,7 +135,7 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
   }
 }
 
-bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
+bool IRAM_ATTR UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
 #ifdef DEBUG_CLIENT
   printf("clientQueuePacket\n");
@@ -153,18 +153,18 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
   }
 }
 
-void ICACHE_FLASH_ATTR Receiver_OnConnectionRequest(ReliableConnection* connection)
+void Receiver_OnConnectionRequest(ReliableConnection* connection)
 {
   printf("New Reliable transport connection request\r\n");
   ReliableTransport_FinishConnection(connection); // Accept the connection
 }
 
-void ICACHE_FLASH_ATTR Receiver_OnConnected(ReliableConnection* connection)
+void Receiver_OnConnected(ReliableConnection* connection)
 {
   printf("Reliable transport connection completed\r\n");
 }
 
-void ICACHE_FLASH_ATTR Receiver_OnDisconnect(ReliableConnection* connection)
+void Receiver_OnDisconnect(ReliableConnection* connection)
 {
   printf("Reliable transport disconnected\r\n");
   os_free(connection);
@@ -176,7 +176,7 @@ void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnecti
   //XXX  cross link to message dispatch
 }
 
-void clientQueueImageData(uint8_t* imgData, uint8_t len, bool eof)
+void IRAM_ATTR clientQueueImageData(uint8_t* imgData, uint8_t len, bool eof)
 {
   /// XXX queue image data!
 }
