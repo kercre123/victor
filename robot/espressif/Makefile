@@ -204,6 +204,8 @@ CCFLAGS += 			\
 	-Wall \
   -Werror
 
+CXXFLAGS = -fno-threadsafe-statics 
+
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 
@@ -335,13 +337,13 @@ $(OBJODIR)/%.d: %.c
 
 $(OBJODIR)/%.o: %.cpp
 	@mkdir -p $(OBJODIR);
-	$(CXX) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CFLAGS)) $(COPTS_$(*F)) -o $@ -c $<
+	$(CXX) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CFLAGS)) $(CXXFLAGS) $(COPTS_$(*F)) -o $@ -c $<
 
 $(OBJODIR)/%.d: %.cpp
 	@mkdir -p $(OBJODIR);
 	@echo DEPEND: $(CC) -M $(CFLAGS) $<
 	@set -e; rm -f $@; \
-	$(CXX) -M $(CFLAGS) $< > $@.$$$$; \
+	$(CXX) -M $(CFLAGS) $(CXXFLAGS) $< > $@.$$$$; \
 	sed 's,\($*\.o\)[ :]*,$(OBJODIR)/\1 $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 

@@ -89,17 +89,19 @@ need to be taken.
  * All level 2 tasks queued run before any queued level 1 tasks and so on.
  * Task level 2 is reserved for HAL functions
 * Timers which are due are higher priority than tasks.
-* Tasks and timers *do not* pre-empt each other. A new task or timer cannot start until the runing task / timer has ended.
+* Tasks and timers *do not* pre-empt each other. A new task or timer cannot start until the runing task / timer has
+  ended.
 * Interrupts must not be locked out for more than 10us at a time or WiFi will crash
 
 #### Performance and Memory
-* All application code should have the `ICACHE_FLASH_ATTR` decorator.
-* The Espressif is not especially fast and fetching code is relatively slow, however, it has a relatively large amount
-of RAM so when making computation/code-size/RAM use trade offs, generally take the path that uses more RAM.
+* The Expressif has a fast clock speed but low cycle efficiency for and most significantly fetching code is relatively
+slow as it comes from an external QSPI flash chip when not in cache, however, it has a relatively large amount of RAM so
+when making computation/code-size/RAM use trade offs, generally take the path that uses more RAM.
 * Heep (malloc and free) is available but should be used sparingly and cautiously.
 * Code size:
- * Since the Espressif uses external SPI flash, there is effectively unlimited code memory.
- * However, loading code from SPI flash is relatively slow and there is a limited code cache in local chip RAM. Hence inner loops and code which executes often should be kept relatively small to reduce cache thrashing.
+ * Since the Espressif uses external QSPI flash, there is effectively unlimited code memory.
+ * However, loading code from SPI flash is relatively slow and there is a limited code cache in local chip RAM. Hence
+  inner loops and code which executes often should be kept relatively small to reduce cache thrashing.
 
 ### For HAL
 In addition to all the guidelines above:
