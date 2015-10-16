@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -65,6 +66,7 @@ namespace Cozmo {
     _behaviorChooser = newDemoChooser;
     
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
+    AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be

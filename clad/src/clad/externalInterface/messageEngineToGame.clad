@@ -8,6 +8,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/objectFamilies.clad"
+#include "clad/types/proxMessages.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"

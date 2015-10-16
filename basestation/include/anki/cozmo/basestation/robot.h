@@ -829,6 +829,7 @@ public:
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
     void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);

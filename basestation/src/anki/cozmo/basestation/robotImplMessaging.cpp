@@ -46,6 +46,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleActiveObjectTapped, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::goalPose,
     std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cliffEvent,
+    std::bind(&Robot::HandleCliffEvent, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::image,
     std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
@@ -283,6 +285,30 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
   }
 }
 
+  
+
+void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  if (message.GetData().Get_cliffEvent().detected) {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
+                     message.GetData().Get_cliffEvent().x_mm, message.GetData().Get_cliffEvent().y_mm);
+    
+    // Stop whatever we were doing and add a cliff obstacle to the world
+    GetActionList().Cancel();
+    
+    // TODO: Add cliff obstacle
+    // ...
+    
+    
+  } else {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
+  }
+  
+  // Forward on with EngineToGame event
+  CliffEvent payload = message.GetData().Get_cliffEvent();
+  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
+  
+}
 
 // For processing image chunks arriving from robot.
 // Sends complete images to VizManager for visualization (and possible saving).
