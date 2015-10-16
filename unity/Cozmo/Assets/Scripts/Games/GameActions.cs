@@ -109,8 +109,8 @@ public class GameActions : MonoBehaviour {
       //        }
       //      }
       
-      if (buttons.Length > 1 && robot.selectedObjects.Count > 0 && robot.selectedObjects[0].canBeStackedOn) {
-        buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);
+      if (buttons.Length > 1 && robot.seenObjects.Count > 0 && robot.seenObjects[0].canBeStackedOn) {
+        buttons[1].SetMode(ActionButton.Mode.STACK, robot.seenObjects[0]);
       }
       
       if (buttons.Length > 0)
@@ -118,15 +118,15 @@ public class GameActions : MonoBehaviour {
       
     }
     else {
-      if (buttons.Length > 2 && robot.selectedObjects.Count == 1) {
-        buttons[1].SetMode(ActionButton.Mode.PICK_UP, robot.selectedObjects[0]);
+      if (buttons.Length > 2 && robot.seenObjects.Count == 1) {
+        buttons[1].SetMode(ActionButton.Mode.PICK_UP, robot.seenObjects[0]);
         #if ALLOW_ROLL
-        buttons[0].SetMode( ActionButton.Mode.ROLL, robot.selectedObjects[0] );
+        buttons[0].SetMode( ActionButton.Mode.ROLL, robot.seenObjects[0] );
         #endif
       }
       else {
-        for (int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i) {
-          buttons[i].SetMode(ActionButton.Mode.PICK_UP, robot.selectedObjects[i], i == 0 ? BOTTOM : TOP);
+        for (int i = 0; i < robot.seenObjects.Count && i < 2 && i < buttons.Length; ++i) {
+          buttons[i].SetMode(ActionButton.Mode.PICK_UP, robot.seenObjects[i], i == 0 ? BOTTOM : TOP);
         }
       }
     }
@@ -135,7 +135,7 @@ public class GameActions : MonoBehaviour {
       if (isSlider) {
         buttons[2].SetMode(ActionButton.Mode.TARGET, null, null, true);
       }
-      else if (robot.selectedObjects.Count > 0) {
+      else if (robot.seenObjects.Count > 0) {
         buttons[2].SetMode(ActionButton.Mode.CANCEL, null);
       }
     }

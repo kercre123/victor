@@ -15,7 +15,7 @@ public class PatternPlayController : GameController {
   private float lastSetTime = -100.0f;
 
   // variables for autonomous pattern building
-  PatternPlayAutoBuild patternPlayAudioBuild = new PatternPlayAutoBuild();
+  PatternPlayAutoBuild patternPlayAutoBuild = new PatternPlayAutoBuild();
 
   [SerializeField]
   private PatternPlayAudio patternPlayAudio;
@@ -32,7 +32,6 @@ public class PatternPlayController : GameController {
   private Dictionary<int, BlockPatternData> blockPatternData = new Dictionary<int, BlockPatternData>();
 
   public void SetPatternOnBlock(int blockID, int lightCount) {
-    // TODO: make sure orientation is actually correct.
 
     blockPatternData[blockID].blockLightsLocalSpace.TurnOffLights();
 
@@ -63,7 +62,7 @@ public class PatternPlayController : GameController {
   }
 
   public PatternPlayAutoBuild GetAutoBuild() {
-    return patternPlayAudioBuild;
+    return patternPlayAutoBuild;
   }
 
   public void ClearBlockLights() {
@@ -88,7 +87,7 @@ public class PatternPlayController : GameController {
     ActiveBlock.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     memoryBank.Initialize();
-    patternPlayAudioBuild.controller = this;
+    patternPlayAutoBuild.controller = this;
   }
 
   protected override void OnDisable() {
@@ -188,8 +187,8 @@ public class PatternPlayController : GameController {
   }
 
   private void CheckShouldPlayIdle() {
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      if (blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      if (blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
         CozmoEmotionManager.instance.SetIdleAnimation("NONE");
         return;
       }
@@ -252,6 +251,7 @@ public class PatternPlayController : GameController {
     base.RefreshHUD();
   }
 
+  // sets the lights on the physical blocks based on configurations in Pattern Play.
   private void SetBlockLights() {
 
     int currentInputID = SelectNewInputCandidate();
@@ -274,8 +274,8 @@ public class PatternPlayController : GameController {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
  
-      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-        if (robot.markersVisibleObjects[i].ID == blockConfig.Key) {
+      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+        if (robot.visibleObjects[i].ID == blockConfig.Key) {
           enabledColor = Color.white;
           break;
         }
@@ -330,6 +330,7 @@ public class PatternPlayController : GameController {
     blockPatternData[blockID].moving = true;
     blockPatternData[blockID].lastFrameZAccel = zAccel;
     blockPatternData[blockID].lastTimeTouched = Time.time;
+    patternPlayAutoBuild.ObjectMoved(blockID);
   }
 
   private void BlockStopped(int blockID) {

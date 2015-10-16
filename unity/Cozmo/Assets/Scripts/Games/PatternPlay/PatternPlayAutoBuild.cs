@@ -7,6 +7,8 @@ public class PatternPlayAutoBuild {
   public BlockPattern targetPattern;
   public float lastIdeaTime;
   ObservedObject objectHeld = null;
+  Vector3 idealViewPosition;
+  float idealViewAngle = 0.0f;
 
   // the index 0 object should always be the anchor object.
   public List<ObservedObject> neatList = new List<ObservedObject>();
@@ -27,7 +29,14 @@ public class PatternPlayAutoBuild {
       lightPattern.back = false;
       targetPattern.blocks.Add(lightPattern);
     }
+  }
 
+  public Vector3 IdealViewPosition() {
+    return idealViewPosition;
+  }
+
+  public float IdealViewAngle() {
+    return idealViewAngle;
   }
 
   public int AvailableBlocks() {
@@ -40,15 +49,15 @@ public class PatternPlayAutoBuild {
     float minDist = float.MaxValue;
     ObservedObject closest = null;
 
-    for (int i = 0; i < robot.observedObjects.Count; ++i) {
-      if (neatList.Contains(robot.observedObjects[i])) {
+    for (int i = 0; i < robot.seenObjects.Count; ++i) {
+      if (neatList.Contains(robot.seenObjects[i])) {
         continue;
       }
 
-      float d = Vector3.Distance(robot.observedObjects[i].WorldPosition, robot.WorldPosition);
+      float d = Vector3.Distance(robot.seenObjects[i].WorldPosition, robot.WorldPosition);
       if (d < minDist) {
         minDist = d;
-        closest = robot.observedObjects[i];
+        closest = robot.seenObjects[i];
       }
     }
     return closest;
@@ -64,6 +73,9 @@ public class PatternPlayAutoBuild {
 
   public void PlaceBlockSuccess() {
     neatList.Add(objectHeld);
+    if (neatList.Count == 1) {
+      ComputeIdealViewPose();
+    }
     objectHeld = null;
   }
 
@@ -82,5 +94,10 @@ public class PatternPlayAutoBuild {
 
   public void SetBlockLightsToPattern(int blockID) {
     controller.SetPatternOnBlock(blockID, targetPattern.blocks[0].NumberOfLightsOn());
+  }
+
+  private void ComputeIdealViewPose() {
+    idealViewPosition = neatList[0].WorldPosition + neatList[0].Forward * 130.0f;
+
   }
 }

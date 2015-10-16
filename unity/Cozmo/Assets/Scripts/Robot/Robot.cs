@@ -139,13 +139,9 @@ public class Robot : IDisposable {
 
   public float batteryPercent { get; private set; }
 
-  public List<ObservedObject> markersVisibleObjects { get; private set; }
+  public List<ObservedObject> visibleObjects { get; private set; }
 
-  public List<ObservedObject> observedObjects { get; private set; }
-
-  public List<ObservedObject> knownObjects { get; private set; }
-
-  public List<ObservedObject> selectedObjects { get; private set; }
+  public List<ObservedObject> seenObjects { get; private set; }
 
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
@@ -221,7 +217,7 @@ public class Robot : IDisposable {
   public ObservedObject carryingObject {
     get {
       if (_carryingObject != carryingObjectID)
-        _carryingObject = knownObjects.Find(x => x == carryingObjectID);
+        _carryingObject = seenObjects.Find(x => x == carryingObjectID);
 
       return _carryingObject;
     }
@@ -232,7 +228,7 @@ public class Robot : IDisposable {
   public ObservedObject headTrackingObject {
     get {
       if (_headTrackingObject != headTrackingObjectID)
-        _headTrackingObject = knownObjects.Find(x => x == headTrackingObjectID);
+        _headTrackingObject = seenObjects.Find(x => x == headTrackingObjectID);
       
       return _headTrackingObject;
     }
@@ -273,16 +269,16 @@ public class Robot : IDisposable {
       
       switch (observedObjectListType) {
       case ObservedObjectListType.MARKERS_SEEN: 
-        _pertinentObjects.AddRange(markersVisibleObjects);
+        _pertinentObjects.AddRange(visibleObjects);
         break;
       case ObservedObjectListType.OBSERVED_RECENTLY: 
-        _pertinentObjects.AddRange(observedObjects);
+        _pertinentObjects.AddRange(seenObjects);
         break;
       case ObservedObjectListType.KNOWN: 
-        _pertinentObjects.AddRange(knownObjects);
+        _pertinentObjects.AddRange(seenObjects);
         break;
       case ObservedObjectListType.KNOWN_IN_RANGE: 
-        _pertinentObjects.AddRange(knownObjects);
+        _pertinentObjects.AddRange(seenObjects);
         _pertinentObjects.RemoveAll(IsNotInRange_callback);
         break;
       }
@@ -334,11 +330,9 @@ public class Robot : IDisposable {
   public Robot(byte robotID)
     : this() {
     ID = robotID;
-    const int initialSize = 64;
-    selectedObjects = new List<ObservedObject>(3);
-    observedObjects = new List<ObservedObject>(initialSize);
-    markersVisibleObjects = new List<ObservedObject>(initialSize);
-    knownObjects = new List<ObservedObject>(initialSize);
+    const int initialSize = 8;
+    seenObjects = new List<ObservedObject>(initialSize);
+    visibleObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
     faceObjects = new List< global::Face>();
 
@@ -445,10 +439,10 @@ public class Robot : IDisposable {
       DAS.Debug("Robot", "Robot data cleared");
     }
 
-    selectedObjects.Clear();
-    observedObjects.Clear();
-    markersVisibleObjects.Clear();
-    knownObjects.Clear();
+    seenObjects.Clear();
+    seenObjects.Clear();
+    visibleObjects.Clear();
+    seenObjects.Clear();
     activeBlocks.Clear();
     status = RobotStatusFlag.NoneRobotStatusFlag;
     gameStatus = GameStatusFlag.Nothing;
@@ -482,15 +476,15 @@ public class Robot : IDisposable {
   }
 
   public void ClearObservedObjects() {
-    for (int i = 0; i < observedObjects.Count; ++i) {
-      if (observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
-        observedObjects.RemoveAt(i--);
+    for (int i = 0; i < seenObjects.Count; ++i) {
+      if (seenObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
+        seenObjects.RemoveAt(i--);
       }
     }
 
-    for (int i = 0; i < markersVisibleObjects.Count; ++i) {
-      if (markersVisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
-        markersVisibleObjects.RemoveAt(i--);
+    for (int i = 0; i < visibleObjects.Count; ++i) {
+      if (visibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
+        visibleObjects.RemoveAt(i--);
       }
     }
   }
@@ -551,7 +545,7 @@ public class Robot : IDisposable {
       AddActiveBlock(activeBlocks.ContainsKey(message.objectID) ? activeBlocks[message.objectID] : null, message);
     }
     else {
-      ObservedObject knownObject = knownObjects.Find(x => x == message.objectID);
+      ObservedObject knownObject = seenObjects.Find(x => x == message.objectID);
 
       AddObservedObject(knownObject, message);
     }
@@ -568,7 +562,7 @@ public class Robot : IDisposable {
       activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
 
       activeBlocks.Add(activeBlock, activeBlock);
-      knownObjects.Add(activeBlock);
+      seenObjects.Add(activeBlock);
       newBlock = true;
     }
 
@@ -586,7 +580,7 @@ public class Robot : IDisposable {
     if (knownObject == null) {
       knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
       
-      knownObjects.Add(knownObject);
+      seenObjects.Add(knownObject);
       newBlock = true;
     }
     
@@ -595,12 +589,12 @@ public class Robot : IDisposable {
 
     knownObject.UpdateInfo(message);
     
-    if (observedObjects.Find(x => x == message.objectID) == null) {
-      observedObjects.Add(knownObject);
+    if (seenObjects.Find(x => x == message.objectID) == null) {
+      seenObjects.Add(knownObject);
     }
     
-    if (knownObject.MarkersVisible && markersVisibleObjects.Find(x => x == message.objectID) == null) {
-      markersVisibleObjects.Add(knownObject);
+    if (knownObject.MarkersVisible && visibleObjects.Find(x => x == message.objectID) == null) {
+      visibleObjects.Add(knownObject);
     }
 
     //if block new or moved a lot since last time we saw it
@@ -858,8 +852,8 @@ public class Robot : IDisposable {
     while (attempts++ < 3) {
       Vector3 nudge = Vector3.zero;
       float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
-      for (int i = 0; i < knownObjects.Count; i++) {
-        Vector3 fromObject = position - knownObjects[i].WorldPosition;
+      for (int i = 0; i < seenObjects.Count; i++) {
+        Vector3 fromObject = position - seenObjects[i].WorldPosition;
         if (fromObject.magnitude > padding)
           continue;
         nudge += fromObject.normalized * padding;
@@ -935,7 +929,7 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetRobotCarryingObject = SetRobotCarryingObjectMessage;
     RobotEngineManager.instance.SendMessage();
-    selectedObjects.Clear();
+    seenObjects.Clear();
     targetLockedObject = null;
     
     SetLiftHeight(0f);

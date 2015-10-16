@@ -63,8 +63,8 @@ public class CozmoAssistedControls : MonoBehaviour {
 
 
 
-    for (int i = 0; i < robot.knownObjects.Count; i++) {
-      ObservedObject obj = robot.knownObjects[i];
+    for (int i = 0; i < robot.  seenObjects.Count; i++) {
+      ObservedObject obj = robot.  seenObjects[i];
       if (Vector3.Magnitude(robot.WorldPosition - obj.WorldPosition) < detectRange) {
         bool collided = true;
 

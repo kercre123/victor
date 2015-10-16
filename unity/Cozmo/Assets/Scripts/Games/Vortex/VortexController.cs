@@ -477,21 +477,21 @@ public class VortexController : GameController {
     
     if (robot != null && PlayerPrefs.GetInt("DebugSkipLayoutTracker", 0) == 0) {
 
-      for (int i = 0; i < robot.knownObjects.Count; i++) {
-        if (!robot.knownObjects[i].isActive)
+      for (int i = 0; i < robot.  seenObjects.Count; i++) {
+        if (!robot.  seenObjects[i].isActive)
           continue;
 
-        ActiveBlock block = robot.knownObjects[i] as ActiveBlock;
+        ActiveBlock block = robot.  seenObjects[i] as ActiveBlock;
 
         block.SetMode(GetPlayerActiveCubeColorMode(playerInputBlocks.Count));
 
         playerInputBlocks.Add(block);
       }
 
-      for (int i = 0; i < robot.knownObjects.Count; i++) {
-        if (!robot.knownObjects[i].isFace)
+      for (int i = 0; i < robot.  seenObjects.Count; i++) {
+        if (!robot.  seenObjects[i].isFace)
           continue;
-        humanHead = robot.knownObjects[i];
+        humanHead = robot.  seenObjects[i];
         break;
       }
       
@@ -541,10 +541,10 @@ public class VortexController : GameController {
       }
       else if (humanHead == null) {
         
-        for (int i = 0; i < robot.knownObjects.Count; i++) {
-          if (!robot.knownObjects[i].isFace)
+        for (int i = 0; i < robot.  seenObjects.Count; i++) {
+          if (!robot.  seenObjects[i].isFace)
             continue;
-          humanHead = robot.knownObjects[i];
+          humanHead = robot.  seenObjects[i];
           break;
         }
       }
@@ -606,10 +606,10 @@ public class VortexController : GameController {
     if (robot != null) {
       if (humanHead == null) {
         
-        for (int i = 0; i < robot.knownObjects.Count; i++) {
-          if (!robot.knownObjects[i].isFace)
+        for (int i = 0; i < robot.  seenObjects.Count; i++) {
+          if (!robot.  seenObjects[i].isFace)
             continue;
-          humanHead = robot.knownObjects[i];
+          humanHead = robot.  seenObjects[i];
           break;
         }
       }
@@ -742,10 +742,10 @@ public class VortexController : GameController {
     if (robot != null) {
       if (humanHead == null) {
         
-        for (int i = 0; i < robot.knownObjects.Count; i++) {
-          if (!robot.knownObjects[i].isFace)
+        for (int i = 0; i < robot.  seenObjects.Count; i++) {
+          if (!robot.  seenObjects[i].isFace)
             continue;
-          humanHead = robot.knownObjects[i];
+          humanHead = robot.  seenObjects[i];
           break;
         }
       }
@@ -790,10 +790,10 @@ public class VortexController : GameController {
     if (robot != null) {
       if (humanHead == null) {
         
-        for (int i = 0; i < robot.knownObjects.Count; i++) {
-          if (!robot.knownObjects[i].isFace)
+        for (int i = 0; i < robot.  seenObjects.Count; i++) {
+          if (!robot.  seenObjects[i].isFace)
             continue;
-          humanHead = robot.knownObjects[i];
+          humanHead = robot.  seenObjects[i];
           break;
         }
       }

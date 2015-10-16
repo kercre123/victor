@@ -314,11 +314,11 @@ public class HypnosisController : GameController {
 
     bool tappedBlockFound = false;
  
-    for (int i = 0; i < robot.observedObjects.Count; ++i) {
+    for (int i = 0; i < robot.seenObjects.Count; ++i) {
       float angle = Vector2.Angle(robot.Forward, robot.activeBlocks[mostRecentTappedID].WorldPosition - robot.WorldPosition);
-      if (robot.observedObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
+      if (robot.seenObjects[i].ID == mostRecentTappedID && angle < 10.0f) {
         tappedBlockFound = true;
-        tranceTarget = robot.observedObjects[i];
+        tranceTarget = robot.seenObjects[i];
         for (int j = 0; j < robot.activeBlocks[mostRecentTappedID].lights.Length; ++j) {
           robot.activeBlocks[mostRecentTappedID].lights[j].onColor = CozmoPalette.ColorToUInt(Color.red);
         }

@@ -229,7 +229,7 @@ public class RobotRelativeControls : MonoBehaviour {
       CheckGyroTurning();
       CheckDebugHorizontalAxesTurning();
 
-      if (inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.selectedObjects.Count == 0 && robot.headTrackingObject == null) {
+      if (inputs.y != 0 && !headAngleSliderEngaged && !robot.searching && robot.seenObjects.Count == 0 && robot.headTrackingObject == null) {
         robot.SetHeadAngle();
       }
     }
@@ -366,7 +366,7 @@ public class RobotRelativeControls : MonoBehaviour {
   ObservedObject RefreshTargetLock() {
     targetLock = null;
     //if(!targetLockSelectedObject) return null;
-    if (robot.selectedObjects.Count == 0)
+    if (robot.seenObjects.Count == 0)
       return null;
 
     targetLock = robot.targetLockedObject;
@@ -385,7 +385,7 @@ public class RobotRelativeControls : MonoBehaviour {
       turn = turn * turn;
       inputs.x = turn * Mathf.Sign(Vector2.Dot(atTarget, robotRight));
       if (debugTargetLock)
-        DAS.Debug("RobotRelativeControls", "frame(" + Time.frameCount + ") time(" + Time.timeSinceLevelLoad + ") snapHeadingToSelectedObject turn(" + turn + ") selected(" + robot.selectedObjects[0] + ") robot.Rotation(" + robot.Rotation + ")");
+        DAS.Debug("RobotRelativeControls", "frame(" + Time.frameCount + ") time(" + Time.timeSinceLevelLoad + ") snapHeadingToSelectedObject turn(" + turn + ") selected(" + robot.seenObjects[0] + ") robot.Rotation(" + robot.Rotation + ")");
     }
   
     Debug.DrawRay(Vector3.zero, atTarget.normalized * 5f, Color.cyan);

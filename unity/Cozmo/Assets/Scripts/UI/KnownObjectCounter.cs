@@ -9,7 +9,7 @@ public class KnownObjectCounter : MonoBehaviour {
 
   void Update() {
     if (robot != null) { 
-      text.text = "known: " + robot.knownObjects.Count.ToString();
+      text.text = "known: " + robot.  seenObjects.Count.ToString();
     }
   }
 }
