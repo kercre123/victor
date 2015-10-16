@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -8,8 +8,15 @@ public class BlockPattern {
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
   public List<BlockLights> blocks = new List<BlockLights>();
-  public bool facingCozmo;
   public bool verticalStack;
+
+  public bool facingCozmo {
+    set {
+      for (int i = 0; i < blocks.Count; i++) {
+        blocks[i].facing_cozmo = value;
+      }
+    }
+  }
 
   public override bool Equals(System.Object obj) {
     if (obj == null) {
@@ -30,9 +37,6 @@ public class BlockPattern {
     if (pattern.blocks.Count != blocks.Count)
       return false;
 
-    if (pattern.facingCozmo != facingCozmo)
-      return false;
-
     if (pattern.verticalStack != verticalStack)
       return false;
 
@@ -40,7 +44,9 @@ public class BlockPattern {
       if (pattern.blocks[i].back != blocks[i].back ||
           pattern.blocks[i].front != blocks[i].front ||
           pattern.blocks[i].left != blocks[i].left ||
-          pattern.blocks[i].right != blocks[i].right) {
+          pattern.blocks[i].right != blocks[i].right ||
+          pattern.blocks[i].facing_cozmo != blocks[i].facing_cozmo
+          ) {
         return false;
       }
     }
@@ -49,11 +55,12 @@ public class BlockPattern {
   }
 
   public override int GetHashCode() {
-    // Old-school dbj hash
-    int x = 5381;
+    int x = System.Convert.ToInt32(verticalStack);
     for (int i = 0; i < blocks.Count; ++i) {
-      x = (x * 33) + (System.Convert.ToInt32(blocks[i].back) | System.Convert.ToInt32(blocks[i].front) << 1 |
-                      System.Convert.ToInt32(blocks[i].left) << 2 | System.Convert.ToInt32(blocks[i].right) << 3);
+      // If more attribs are added, please increase this radix value.
+      x = (x * 64) + (System.Convert.ToInt32(blocks[i].back) | System.Convert.ToInt32(blocks[i].front) << 1 |
+                      System.Convert.ToInt32(blocks[i].left) << 2 | System.Convert.ToInt32(blocks[i].right) << 3 |
+                      System.Convert.ToInt32(blocks[i].facing_cozmo) << 4);
     }
     return x;
   }
@@ -95,7 +102,8 @@ public class BlockPattern {
     if (robot.visibleObjects.Count < 3)
       return false;
 
-    patternSeen.facingCozmo = CheckFacingCozmo(robot);
+    bool facingCozmo = CheckFacingCozmo(robot);
+    patternSeen.facingCozmo = facingCozmo;
     patternSeen.verticalStack = CheckVerticalStack(robot);
 
     bool rowAlignment = CheckRowAlignment(robot);
@@ -118,7 +126,7 @@ public class BlockPattern {
     // convert get block lights in cozmo space. build out pattern seen.
     for (int i = 0; i < robot.visibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace, relativeForward, patternSeen.facingCozmo);
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace, relativeForward, facingCozmo);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 

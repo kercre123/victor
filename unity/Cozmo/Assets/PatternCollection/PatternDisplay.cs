@@ -30,7 +30,7 @@ public class PatternDisplay : MonoBehaviour {
           cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? Color.green : Color.black;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
-          cubes[i].SetOrientation(_pattern.facingCozmo);
+          cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
         }
       }
       else {
