@@ -176,112 +176,106 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectMoved payload = message.GetData().Get_activeObjectMoved();
+  
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-
-  const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
-    GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
-
-  for(auto objectsByID : activeBlocksByType) {
-    for(auto objectWithID : objectsByID.second) {
-      ObservableObject* object = objectWithID.second;
-      assert(object->IsActive());
-      if(object->GetActiveID() == payload.objectID)
-      {
-        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ActiveObjectMoved",
-          "Received message that Object %d (Active ID %d) moved. Delocalizing it.",
-          objectWithID.first.GetValue(), payload.objectID);
-
-        // Once an object moves, we can no longer use it for localization because
-        // we don't know where it is anymore. Next time we see it, relocalize it
-        // relative to robot's pose estimate. Then we can use it for localization
-        // again.
-        object->Delocalize();
-        
-        // Don't notify game about moving objects that are being carried
-        ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
-        assert(actionObject != nullptr);
-        if(!actionObject->IsBeingCarried()) {
-          // Update the ID to be the blockworld ID before broadcasting
-          payload.objectID = object->GetID();
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
-        }
-
-        return;
-      }
+  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  
+  if(nullptr == object)
+  {
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectMoved.UnknownActiveID",
+                        "Could not find match for active object ID %d", payload.objectID);
+  } else {
+    assert(object->IsActive());
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ActiveObjectMoved",
+                     "Received message that %s %d (Active ID %d) moved. Delocalizing it.",
+                     EnumToString(object->GetType()),
+                     object->GetID().GetValue(), object->GetActiveID());
+    
+    // Once an object moves, we can no longer use it for localization because
+    // we don't know where it is anymore. Next time we see it, relocalize it
+    // relative to robot's pose estimate. Then we can use it for localization
+    // again.
+    object->Delocalize();
+    
+    // If this is the object we were localized to, we are now delocalized
+    if(GetLocalizedTo() == object->GetID()) {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingRobot",
+                       "Delocalizing robot %d, which is currently localized %s "
+                       "%d, which reported being moved.",
+                       GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+      Delocalize();
+    }
+    
+    // Don't notify game about moving objects that are being carried
+    ActionableObject* actionObject = dynamic_cast<ActionableObject*>(object);
+    assert(actionObject != nullptr);
+    if(!actionObject->IsBeingCarried()) {
+      // Update the ID to be the blockworld ID before broadcasting
+      payload.objectID = object->GetID();
+      _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
     }
   }
-
-  PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ActiveObjectMoved",
-    "Could not find match for active object ID %d", payload.objectID);
 }
 
 void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectStoppedMoving payload = message.GetData().Get_activeObjectStopped();
-  const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
-    GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
+  
+  // The message from the robot has the active object ID in it, so we need
+  // to find the object in blockworld (which has its own bookkeeping ID) that
+  // has the matching active ID
+  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  
+  if(nullptr == object)
+  {
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnknownActiveID",
+                     "Could not find match for active object ID %d", payload.objectID);
+  } else {
+    assert(object->IsActive());
 
-  for(auto objectsByID : activeBlocksByType) {
-    for(auto objectWithID : objectsByID.second) {
-      ObservableObject* object = objectWithID.second;
-      assert(object->IsActive());
-      if(object->GetActiveID() == payload.objectID) {
-
-        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageActiveObjectStoppedMoving",
-                         "Received message that Object %d (Active ID %d) stopped moving.",
-                         objectWithID.first.GetValue(), payload.objectID);
-
-        if(object->IsLocalized()) {
-          // Not sure how an object could get localized before it stopped moving,
-          // but just to be safe, re-delocalize and force a re-localization now
-          // that we've gotten the stopped-moving message.
-          Delocalize();
-        }
-        
-        // Update the ID to be the blockworld ID before broadcasting
-        payload.objectID = object->GetID();
-        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
-        return;
-      }
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.MessageActiveObjectStoppedMoving",
+                     "Received message that %s %d (Active ID %d) stopped moving.",
+                     EnumToString(object->GetType()),
+                     object->GetID().GetValue(), payload.objectID);
+    
+    if(object->IsLocalized()) {
+      // Not sure how an object could get localized before it stopped moving,
+      // but just to be safe, re-delocalize and force a re-localization now
+      // that we've gotten the stopped-moving message.
+      Delocalize();
     }
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = object->GetID();
+    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
   }
-
-  PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageActiveObjectStoppedMoving",
-    "Could not find match for active object ID %d", payload.objectID);
 }
 
 void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  const BlockWorld::ObjectsMapByType_t& activeBlocksByType =
-    GetBlockWorld().GetExistingObjectsByFamily(ObjectFamily::LightCube);
-
-  for(auto objectsByID : activeBlocksByType) {
-    for(auto objectWithID : objectsByID.second) {
-      ObservableObject* object = objectWithID.second;
-      assert(object->IsActive());
-      if(object->GetActiveID() == payload.objectID) {
-
-        PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage."
-          "MessageActiveObjectTapped",
-          "Received message that object %d (Active ID %d) was tapped %d times.",
-          objectWithID.first.GetValue(), payload.objectID, payload.numTaps);
-        
-        // Update the ID to be the blockworld ID before broadcasting
-        payload.objectID = object->GetID();
-        GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
-
-        return;
-      }
-    }
+  ObservableObject* object = GetActiveObjectByActiveID(payload.objectID);
+  
+  if(nullptr == object)
+  {
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.UnknownActiveID",
+                     "Could not find match for active object ID %d", payload.objectID);
+  } else {
+    assert(object->IsActive());
+    
+    PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.MessageActiveObjectTapped",
+                     "Received message that %s %d (Active ID %d) was tapped %d times.",
+                     EnumToString(object->GetType()),
+                     object->GetID().GetValue(), payload.objectID, payload.numTaps);
+    
+    // Update the ID to be the blockworld ID before broadcasting
+    payload.objectID = object->GetID();
+    GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
   }
-
-  PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageActiveObjectTapped",
-    "Could not find match for active object ID %d", payload.objectID);
 }
 
 void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message)
