@@ -32,7 +32,6 @@
 #ifndef ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 #define ANKI_COZMO_BASESTATION_COZMO_ENGINE_H
 
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"

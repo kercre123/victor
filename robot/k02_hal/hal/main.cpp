@@ -67,7 +67,8 @@ int main (void)
   PowerInit();
   I2CInit();
 
-  for (int i=0; i<1; ++i)
+  // Wait for Espressif to boot
+  for (int i=0; i<2; ++i)
     Anki::Cozmo::HAL::MicroWait(1000000);
 
   // Switch to 10MHz external reference to enable 100MHz clock

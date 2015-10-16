@@ -18,131 +18,129 @@
 #define ANKI_COZMO_CANNED_ANIMATION_H
 
 #include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "anki/common/basestation/jsonTools.h"
-
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-
-#include "anki/cozmo/basestation/animation/animationTrack.h"
-
+#include "anki/cozmo/basestation/animations/track.h"
 #include <list>
 #include <queue>
 
 namespace Anki {
-  namespace Cozmo {
+namespace Cozmo {
 
-    // Forward declaration
-    class Robot;
+// Forward declaration
+namespace RobotInterface {
+class EngineToRobot;
+enum class EngineToRobotTag : uint8_t;
+}
+class Robot;
 
-    class Animation
-    {
-    public:
+class Animation
+{
+public:
 
-      Animation(const std::string& name = "");
+  Animation(const std::string& name = "");
 
-      // For reading canned animations from files
-      Result DefineFromJson(const std::string& name, Json::Value& json);
+  // For reading canned animations from files
+  Result DefineFromJson(const std::string& name, Json::Value& json);
 
-      // For defining animations at runtime (e.g. procedural faces)
-      template<class KeyFrameType>
-      Result AddKeyFrame(const KeyFrameType& kf);
+  // For defining animations at runtime (e.g. procedural faces)
+  template<class KeyFrameType>
+  Result AddKeyFrame(const KeyFrameType& kf);
 
-      Result Init(u8 tag);
-      Result Update(Robot& robot);
+  Result Init(uint8_t tag);
+  Result Update(Robot& robot);
 
-      // An animation is Empty if *all* its tracks are empty
-      bool IsEmpty() const;
+  // An animation is Empty if *all* its tracks are empty
+  bool IsEmpty() const;
 
-      // An animation is finished when none of its track have frames left to play
-      bool IsFinished() const;
+  // An animation is finished when none of its track have frames left to play
+  bool IsFinished() const;
 
-      void Clear();
+  void Clear();
 
-      const std::string& GetName() const { return _name; }
+  const std::string& GetName() const { return _name; }
 
-    private:
+private:
 
-      // Name of this animation
-      std::string _name;
 
-      bool _isInitialized;
+  // Name of this animation
+  std::string _name;
+  bool _isInitialized;
+  uint8_t _tag;
+  bool _startOfAnimationSent;
 
-      // When this animation started playing (was initialized) in milliseconds, in
-      // "real" basestation time
-      TimeStamp_t _startTime_ms;
+  // When this animation started playing (was initialized) in milliseconds, in
+  // "real" basestation time
+  TimeStamp_t _startTime_ms;
 
-      // Where we are in the animation in terms of what has been streamed out, since
-      // we don't stream in real time. Each time we send an audio frame to the
-      // robot (silence or actual audio), this increments by one audio sample
-      // length, since that's what keeps time for streaming animations (not a
-      // clock)
-      TimeStamp_t _streamingTime_ms;
+  // Where we are in the animation in terms of what has been streamed out, since
+  // we don't stream in real time. Each time we send an audio frame to the
+  // robot (silence or actual audio), this increments by one audio sample
+  // length, since that's what keeps time for streaming animations (not a
+  // clock)
+  TimeStamp_t _streamingTime_ms;
 
-      // A reusable "Silence" message for when we have no audio to send robot
-      MessageAnimKeyFrame_AudioSilence _silenceMsg;
+  // All the animation tracks, storing different kinds of KeyFrames
+  Animations::Track<HeadAngleKeyFrame>      _headTrack;
+  Animations::Track<LiftHeightKeyFrame>     _liftTrack;
+  Animations::Track<FaceAnimationKeyFrame>  _faceAnimTrack;
+  Animations::Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
+  Animations::Track<FacePositionKeyFrame>   _facePosTrack;
+  Animations::Track<BlinkKeyFrame>          _blinkTrack;
+  Animations::Track<BackpackLightsKeyFrame> _backpackLightsTrack;
+  Animations::Track<BodyMotionKeyFrame>     _bodyPosTrack;
+  Animations::Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
+  Animations::Track<RobotAudioKeyFrame>     _robotAudioTrack;
 
-      // All the animation tracks, storing different kinds of KeyFrames
-      AnimationTrack<HeadAngleKeyFrame>      _headTrack;
-      AnimationTrack<LiftHeightKeyFrame>     _liftTrack;
-      //Track<FaceImageKeyFrame>      _faceImageTrack;
-      AnimationTrack<FaceAnimationKeyFrame>  _faceAnimTrack;
-      AnimationTrack<ProceduralFaceKeyFrame> _proceduralFaceTrack;
-      AnimationTrack<FacePositionKeyFrame>   _facePosTrack;
-      AnimationTrack<BlinkKeyFrame>          _blinkTrack;
-      AnimationTrack<BackpackLightsKeyFrame> _backpackLightsTrack;
-      AnimationTrack<BodyMotionKeyFrame>     _bodyPosTrack;
-      AnimationTrack<DeviceAudioKeyFrame>    _deviceAudioTrack;
-      AnimationTrack<RobotAudioKeyFrame>     _robotAudioTrack;
+  template<class KeyFrameType>
+  Animations::Track<KeyFrameType>& GetTrack();
 
-      template<class KeyFrameType>
-      AnimationTrack<KeyFrameType>& GetTrack();
-      
-      // TODO: Remove this once we aren't playing robot audio on the device
-      TimeStamp_t _playedRobotAudio_ms;
+  // TODO: Remove these once we aren't playing robot audio on the device
+  TimeStamp_t _playedRobotAudio_ms;
+  std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
+  const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
 
-      bool _startOfAnimationSent;
-      bool _endOfAnimationSent;
-      MessageAnimKeyFrame_StartOfAnimation _startMsg;
-      MessageAnimKeyFrame_EndOfAnimation   _endMsg;
-      
-      ProceduralFace _proceduralFace;
-      MessageAnimKeyFrame_FaceImage _proceduralFaceStreamMsg;
-      
-      bool BufferMessageToSend(RobotMessage* msg);
-      Result SendBufferedMessages(Robot& robot);
-      
-      bool AllTracksBuffered() const;
-      std::list<RobotMessage*> _sendBuffer;
-      s32 _numBytesToSend;
-      
-      // Send larger keyframes "hot" for reliable transport (this includes
-      // audio samples and face images)
-      static const bool SEND_LARGE_KEYFRAMES_HOT = false;
+  bool _endOfAnimationSent;
 
-      // "Flow control" for not overrunning reliable transport in a single
-      // update tick
-      static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
-      
-    }; // class Animation
+  ProceduralFace _proceduralFace;
 
-    template<class KeyFrameType>
-    Result Animation::AddKeyFrame(const KeyFrameType& kf)
-    {
-      Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
-      if(RESULT_OK != addResult) {
-        PRINT_NAMED_ERROR("Animation.AddKeyFrame.Failed", "");
-      } else {
-        // If we add a keyframe after initialization (at which time this animation
-        // could have been empty), make sure to mark that we haven't yet sent
-        // end of animation.
-        _endOfAnimationSent = false;
-      }
-      
-      return addResult;
-    }
+  bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
+  Result SendBufferedMessages(Robot& robot);
+
+  bool AllTracksBuffered() const;
+  std::list<RobotInterface::EngineToRobot*> _sendBuffer;
+  s32 _numBytesToSend;
+
+  // Send larger keyframes "hot" for reliable transport (this includes
+  // audio samples and face images)
+  static const bool SEND_LARGE_KEYFRAMES_HOT = false;
+
+  // "Flow control" for not overrunning reliable transport in a single
+  // update tick
+  static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
+
+}; // class Animation
+
+
+template<class KeyFrameType>
+Result Animation::AddKeyFrame(const KeyFrameType& kf)
+{
+  Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
+  if(RESULT_OK != addResult) {
+    PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
+  } else {
+    // If we add a keyframe after initialization (at which time this animation
+    // could have been empty), make sure to mark that we haven't yet sent
+    // end of animation.
+    _endOfAnimationSent = false;
+  }
+
+  return addResult;
+}
     
-  } // namespace Cozmo
+
+} // namespace Cozmo
 } // namespace Anki
 
 #endif // ANKI_COZMO_CANNED_ANIMATION_H

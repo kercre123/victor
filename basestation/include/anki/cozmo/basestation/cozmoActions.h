@@ -22,6 +22,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/animationKeyFrames.h"
 
 namespace Anki {
   
@@ -42,7 +43,9 @@ namespace Anki {
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
+                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
+                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       DriveToPoseAction(const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
@@ -50,14 +53,16 @@ namespace Anki {
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
+                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
+                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
 
@@ -90,7 +95,11 @@ namespace Anki {
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
-      bool     _forceReplanOnNextWorldChange;
+
+      float _maxPlanningTime;
+      float _maxReplanPlanningTime;
+
+      float _timeToAbortPlanning;
       
       Signal::SmartHandle _signalHandle;
       
@@ -113,7 +122,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       
@@ -166,7 +175,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       
@@ -190,7 +199,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return HEAD_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       
@@ -230,7 +239,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       
@@ -266,7 +275,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;
@@ -388,7 +397,7 @@ namespace Anki {
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
       
       virtual u8 GetAnimTracksToDisable() const override {
-        return HEAD_TRACK | LIFT_TRACK | BODY_TRACK;
+        return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
       }
       
     protected:
@@ -420,7 +429,7 @@ namespace Anki {
       virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
-      DockAction_t                _dockAction;
+      DockAction                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2;
       Radians                     _preActionPoseAngleTolerance;
@@ -441,6 +450,7 @@ namespace Anki {
     {
     public:
       PickAndPlaceObjectAction(ObjectID objectID,
+                               const bool doPlacement,
                                const bool useManualSpeed = false,
                                const f32 placementOffsetX_mm = 0,
                                const f32 placementOffsetY_mm = 0,
@@ -458,7 +468,7 @@ namespace Anki {
       
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return _actionType; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
@@ -476,6 +486,8 @@ namespace Anki {
       
       IActionRunner*             _placementVerifyAction;
       bool                       _verifyComplete; // used in PLACE modes
+      
+      PreActionPose::ActionType  _actionType;
       
     }; // class PickAndPlaceObjectAction
 
@@ -499,7 +511,7 @@ namespace Anki {
 
     protected:
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
@@ -521,14 +533,15 @@ namespace Anki {
     {
     public:
       DriveToPickAndPlaceObjectAction(const ObjectID& objectID,
+                                      const bool doPlacement,  // True if placing something on top of this object
                                       const bool useManualSpeed = false,
                                       const f32 placementOffsetX_mm = 0,
                                       const f32 placementOffsetY_mm = 0,
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
-        new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
+        new DriveToObjectAction(objectID, doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
+        new PickAndPlaceObjectAction(objectID, doPlacement, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
       {
 
       }
@@ -552,7 +565,7 @@ namespace Anki {
     public:
       DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
@@ -581,7 +594,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       

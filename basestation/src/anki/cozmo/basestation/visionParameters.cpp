@@ -34,11 +34,11 @@ namespace Anki {
       
       }
         
-      void DetectFiducialMarkersParameters::Initialize(Vision::CameraResolution resolution)
+      void DetectFiducialMarkersParameters::Initialize(ImageResolution resolution)
       {
         detectionResolution = resolution;
-        detectionWidth  = Vision::CameraResInfo[detectionResolution].width;
-        detectionHeight = Vision::CameraResInfo[detectionResolution].height;
+        detectionWidth  = Vision::CameraResInfo[static_cast<size_t>(detectionResolution)].width;
+        detectionHeight = Vision::CameraResInfo[static_cast<size_t>(detectionResolution)].height;
 
 #ifdef SIMULATOR
         scaleImage_thresholdMultiplier = 32768; // 0.5*(2^16)=32768
@@ -113,7 +113,7 @@ namespace Anki {
         
       }
       
-      void TrackerParameters::Initialize(Vision::CameraResolution resolution)
+      void TrackerParameters::Initialize(ImageResolution resolution)
       {
         // This is size of the box filter used to locally normalize the image
         // as a fraction of the size of the current tracking quad.
@@ -126,8 +126,8 @@ namespace Anki {
         trackingResolution   = resolution;
         numPyramidLevels     = 3; // TODO: Compute from resolution to get down to a given size?
         
-        trackingImageWidth   = Vision::CameraResInfo[trackingResolution].width;
-        trackingImageHeight  = Vision::CameraResInfo[trackingResolution].height;
+        trackingImageWidth   = Vision::CameraResInfo[static_cast<size_t>(trackingResolution)].width;
+        trackingImageHeight  = Vision::CameraResInfo[static_cast<size_t>(trackingResolution)].height;
         
         maxIterations             = 50;
         verify_maxPixelDifference = 30;
@@ -166,12 +166,12 @@ namespace Anki {
         
       } // FaceDetectionParameters()
       
-      void FaceDetectionParameters::Initialize(Vision::CameraResolution resolution)
+      void FaceDetectionParameters::Initialize(ImageResolution resolution)
       {
         detectionResolution = resolution;
         
-        faceDetectionHeight = Vision::CameraResInfo[detectionResolution].height;
-        faceDetectionWidth  = Vision::CameraResInfo[detectionResolution].width;
+        faceDetectionHeight = Vision::CameraResInfo[static_cast<size_t>(detectionResolution)].height;
+        faceDetectionWidth  = Vision::CameraResInfo[static_cast<size_t>(detectionResolution)].width;
 
         scaleFactor    = 1.1;
         minNeighbors   = 2;
@@ -188,5 +188,3 @@ namespace Anki {
 
   } // namespace Cozmo
 } // namespace Anki
-
-

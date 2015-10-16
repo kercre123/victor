@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/shared/VizStructs.h"
+//#include "clad/types/vizTypes.h"
 #include "anki/cozmo/simulator/robot/sim_viz.h"
 
 namespace Anki {
@@ -12,26 +12,34 @@ namespace Anki {
       namespace Viz {
         
         namespace {
+          /*
           // For communications with the cozmo_physics plugin used for drawing
           // paths with OpenGL.
           UdpClient physicsClient_;
           
           static const u32 MAX_SIZE_SEND_BUF = 128;
           char sendBuf[MAX_SIZE_SEND_BUF];
+          */
         }
         
         void Init()
         {
+          /*
           physicsClient_.Connect(Anki::Cozmo::HAL::GetLocalIP(), Anki::Cozmo::VIZ_SERVER_PORT);
+          */
         }
         
         s32 SendMsg(const char* buf, u32 size)
         {
+          /*
           return physicsClient_.Send(buf, size);
+          */
+          return size;
         }
         
         void ErasePath(s32 path_id)
         {
+          /*
           VizErasePath msg;
           msg.pathID = path_id;
           
@@ -40,11 +48,13 @@ namespace Anki {
           SendMsg(sendBuf, sizeof(msg)+1);
           
           //PRINT("ERASE PATH: %d bytes\n", (int)sizeof(msg) + 1);
+          */
 
         }
         
         void AppendPathSegmentLine(s32 path_id, f32 x_start_mm, f32 y_start_mm, f32 x_end_mm, f32 y_end_mm)
         {
+          /*
           VizAppendPathSegmentLine msg;
           msg.pathID = path_id;
           msg.x_start_m = MM_TO_M(x_start_mm);
@@ -59,10 +69,12 @@ namespace Anki {
           SendMsg(sendBuf, sizeof(msg)+1);
           
           //PRINT("APPEND LINE: %d bytes\n", (int)sizeof(msg) + 1);
+          */
         }
         
         void AppendPathSegmentArc(s32 path_id, f32 x_center_mm, f32 y_center_mm, f32 radius_mm, f32 startRad, f32 sweepRad)
         {
+          /*
           VizAppendPathSegmentArc msg;
           msg.pathID = path_id;
           msg.x_center_m = MM_TO_M(x_center_mm);
@@ -76,11 +88,13 @@ namespace Anki {
           SendMsg(sendBuf, sizeof(msg)+1);
           
           //PRINT("APPEND ARC: %d bytes\n", (int)sizeof(msg) + 1);
+          */
         }
         
         
         void DrawPath(s32 path_id, const Planning::Path& p) {
 
+          /*
           ErasePath(0);
           for (u8 i=0; i<p.GetNumSegments(); ++i) {
             const Planning::PathSegmentDef& ps = p.GetSegmentConstRef(i).GetDef();
@@ -104,11 +118,13 @@ namespace Anki {
                 break;
             }
           }
+          */
 
         }
 
         void SetLabel(s32 label_id, const char* format, ...)
         {
+          /*
           VizSetLabel msg;
           msg.labelID = label_id;
           msg.colorID = 0xffffff;
@@ -121,6 +137,7 @@ namespace Anki {
           sendBuf[0] = VizSetLabel_ID;
           memcpy(sendBuf + 1, &msg, sizeof(msg));
           SendMsg(sendBuf, sizeof(msg)+1);
+          */
         }
         
         

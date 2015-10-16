@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -49,7 +49,7 @@ namespace Cozmo {
       ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
       ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
       ExternalInterface::MessageEngineToGameTag::RobotDeletedObject,
-      ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved,
+      ExternalInterface::MessageEngineToGameTag::ObjectMoved,
       ExternalInterface::MessageEngineToGameTag::BlockPlaced
     };
     
@@ -79,8 +79,8 @@ namespace Cozmo {
         _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject(), event.GetCurrentTime());
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::ActiveObjectMoved:
-        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ActiveObjectMoved(), event.GetCurrentTime());
+      case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+        _lastHandlerResult= HandleObjectMoved(event.GetData().Get_ObjectMoved(), event.GetCurrentTime());
         break;
         
       case ExternalInterface::MessageEngineToGameTag::BlockPlaced:
@@ -388,7 +388,7 @@ namespace Cozmo {
     }
     
     _robot.GetActionList().Cancel(_lastActionTag);
-    IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp);
+    IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp, false);
     _lastActionTag = pickupAction->GetTag();
     _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupAction);
     
@@ -519,7 +519,7 @@ namespace Cozmo {
         
         if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new DriveToPickAndPlaceObjectAction(_objectToPlaceOn);
+          placementAction = new DriveToPickAndPlaceObjectAction(_objectToPlaceOn, true);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.",
                            _objectToPlaceOn.GetValue());
         } else {
@@ -544,6 +544,7 @@ namespace Cozmo {
 
             // Place block at specified offset from lastObjectPlacedOnGround.
             placementAction = new DriveToPickAndPlaceObjectAction(_lastObjectPlacedOnGround,
+                                                                  true,
                                                                   false,
                                                                   kLowPlacementOffsetMM,
                                                                   0,
@@ -663,16 +664,52 @@ namespace Cozmo {
       }
       
       // Make sure it's approximately at the same height as the robot
-      if(NEAR(poseWrtRobot.GetTranslation().z(), oObject->GetSize().z()*(heightLevel + 0.5f), 10.f)) {
+      const f32 zTol = oObject->GetSize().z()*0.5f;
+      if(NEAR(poseWrtRobot.GetTranslation().z(),
+              oObject->GetSize().z()*(heightLevel + 0.5f),
+              zTol))
+      {
         // See if there's anything on top of it
-        ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*oObject, 15.f);
-        if((ootStatus == ObjectOnTopStatus::DontCareIfObjectOnTop) || (ootStatus == ObjectOnTopStatus::ObjectOnTop && onTop != nullptr) || (ootStatus == ObjectOnTopStatus::NoObjectOnTop && onTop == nullptr)) {
+        ObservableObject* onTop = blockWorld.FindObjectOnTopOf(*oObject, zTol);
+        if((ootStatus == ObjectOnTopStatus::DontCareIfObjectOnTop) ||
+           (ootStatus == ObjectOnTopStatus::ObjectOnTop   && onTop != nullptr) ||
+           (ootStatus == ObjectOnTopStatus::NoObjectOnTop && onTop == nullptr))
+        {
           const f32 currentDistSq = poseWrtRobot.GetTranslation().LengthSq();
           if(currentDistSq < closestDistSq) {
             closestDistSq = currentDistSq;
             objectID = objID;
+            
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                                   "BehaviorOCD.GetClosestObjectInSet.NewClosest",
+                                   "Selecting new closest object %d at d=%f",
+                                   objectID.GetValue(), std::sqrt(currentDistSq));
+            
+          } else {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                                   "BehaviorOCD.GetClosestObjectInSet.TooFar",
+                                   "Skipping object %d at d=%f, which is not closer "
+                                   "than current best object %d at d=%f",
+                                   objID.GetValue(), std::sqrt(currentDistSq),
+                                   objectID.GetValue(), std::sqrt(closestDistSq));
           }
+          
+        } else {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                                 "BehaviorOCD.GetClosestObjectInSet.WrongOnTopStatus",
+                                 "Skipping object %d which %s object on top",
+                                 oObject->GetID().GetValue(),
+                                 (onTop == nullptr ? "does not have" : "has"));
         }
+      } else {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR,
+                               "BehaviorOCD.GetClosestObjectInSet.WrongHeight",
+                               "Skipping object %d whose height wrt robot (%f) is "
+                               "not close enough to required value (%f) [heightLevel=%d]",
+                               oObject->GetID().GetValue(),
+                               poseWrtRobot.GetTranslation().z(),
+                               oObject->GetSize().z()*(heightLevel + 0.5f),
+                               heightLevel);
       }
     } // for each neat object
     
@@ -694,14 +731,14 @@ namespace Cozmo {
     switch(state) {
       case BlockLightState::Messy:
         // TODO: Get "messy" color and on/off settings from config
-        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::RED, NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        _robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::RED, ::Anki::NamedColors::BLACK, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       case BlockLightState::Neat:
         // TODO: Get "neat" color and on/off settings from config
-        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::CYAN, NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        _robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::CYAN, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       case BlockLightState::Complete:
-        _robot.SetObjectLights(objID, WhichBlockLEDs::ALL, NamedColors::GREEN, NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
+        _robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::GREEN, 200, 200, 50, 50, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
         break;
       default:
         break;
@@ -1174,7 +1211,7 @@ namespace Cozmo {
   } // HandleActionCompleted()
   
   
-  Result BehaviorOCD::HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec)
+  Result BehaviorOCD::HandleObjectMoved(const ObjectMoved& msg, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     

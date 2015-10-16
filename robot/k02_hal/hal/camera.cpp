@@ -9,9 +9,10 @@
 #include "anki/common/robot/benchmarking.h"
 
 #include "hal/i2c.h"
+#include "uart.h"
 
 //#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
-//#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
+#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 
 namespace Anki
 {
@@ -258,7 +259,7 @@ void DMA0_IRQHandler(void)
   // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
   FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
-  FTM2_CNT = FTM2_CNTIN = 24 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
+  FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
   FTM2_CNTIN = 0;
   
   // Sync to falling edge
@@ -299,30 +300,41 @@ void FTM2_IRQHandler(void)
   static u8 whichpitch = 0;    // Swizzle pitch (80 or 640)
   static u8 eof = 0;
   
-  // Kludgey look for start of frame
-  /*
-  int now = SysTick->VAL;
-  int diff = last-now;
-  last = now;
-  if (diff < 0)
-    diff += 6291456;
-  if (diff > 100000) {
-    line = 232;       // Swizzle buffer delays us by 8 lines
-  }
-  */
+  // Cheesy way to check if camera DMA buffer was updated - if it wasn't, this is a vblank line
+  static u8 vblank = 0;
+  if (1 == dmaBuff_[0])
+    vblank++;
+  else
+    vblank = 0;
+  if (vblank > 3)
+    line = 956 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
+  dmaBuff_[0] = 1;
   
   HALExec(&buf[whichbuf][4], buflen, eof);
-  
-#ifdef SERIAL_IMAGE
-  // At 3mbaud, during 60% time, can send about 20 bytes per line
-  
 
-  line++;
-  if (line >= 496)
-    line = 0;
+#ifdef SERIAL_IMAGE
+  static int pclkoffset = 0;
+  int hline = line >> 1;
+  if (!(line & 1))
+  {
+    // At 3mbaud, during 60% time, can send about 20 bytes per line, or 160x60
+    if (hline < 480)
+      for (int i = 0; i < 20; i++)
+        DebugPutc(dmaBuff_[((hline & 7) * 20 + i) * 16 + 3 + (pclkoffset >> 4)]);
+    
+    // Write header for start of next frame
+    if (hline == 480)
+    {
+      DebugPutc(0xBE);
+      DebugPutc(0xEF);
+      DebugPutc(0xF0);
+      DebugPutc(0xFF);
+      DebugPutc(0xBD);
+      // pclkoffset++;
+    }
+  }
 #endif
 
-  
 #ifdef ENABLE_JPEG
   // Fill next buffer
   whichbuf ^= 1;
@@ -349,11 +361,10 @@ void FTM2_IRQHandler(void)
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)
       swizz[x + y*pitch] = dmaBuff_[(y * 80 + x) * 4 + 3];
-    
-  // Advance through image a line at a time
-  line++;
-  if (line >= 240) {
-    line = 0;
-  }
 #endif
+  
+  // Advance through the lines
+  line++;
+  if (line >= 1000)
+    line = 0;
 }

@@ -11,24 +11,27 @@
 #include "uart.h"
 
 typedef uint16_t transmissionWord;
-const int TRANSMISSION_SIZE = DROP_SIZE / sizeof(transmissionWord);
+const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
+const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord);
 
-static transmissionWord spi_tx_buff[TRANSMISSION_SIZE];
+static transmissionWord spi_tx_buff[TX_SIZE];
 static union {
-  transmissionWord spi_tx_side[TRANSMISSION_SIZE];
+  transmissionWord spi_tx_side[TX_SIZE];
   DropToWiFi drop_tx ;
 };
 
 static union {
-  transmissionWord spi_rx_buff[TRANSMISSION_SIZE];
+  transmissionWord spi_rx_buff[RX_SIZE];
   DropToRTIP drop_rx ;
 };
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
+  static int eoftime = 0;
+  eoftime++;
   drop_tx.preamble = TO_WIFI_PREAMBLE;
-  memcpy(drop_tx.payload, buf, buflen);
+  memcpy(drop_tx.payload, "0123456789ABCDEF", 16);
   drop_tx.msgLen  = 0;
-  drop_tx.droplet = JPEG_LENGTH(buflen) | (eof ? jpegEOF : 0);
+  drop_tx.droplet = JPEG_LENGTH(16) | (eoftime & 63 ? 0 : jpegEOF);
 }
 
 extern "C"
@@ -63,8 +66,8 @@ void Anki::Cozmo::HAL::SPIInitDMA(void) {
   DMA_TCD2_DLASTSGA       = -sizeof(spi_rx_buff);
 
   DMA_TCD2_NBYTES_MLNO    = sizeof(transmissionWord);                   // The minor loop moves 32 bytes per transfer
-  DMA_TCD2_BITER_ELINKNO  = TRANSMISSION_SIZE;                          // Major loop iterations
-  DMA_TCD2_CITER_ELINKNO  = TRANSMISSION_SIZE;                          // Set current interation count  
+  DMA_TCD2_BITER_ELINKNO  = RX_SIZE;                          // Major loop iterations
+  DMA_TCD2_CITER_ELINKNO  = RX_SIZE;                          // Set current interation count  
   DMA_TCD2_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
   DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               
@@ -81,8 +84,8 @@ void Anki::Cozmo::HAL::SPIInitDMA(void) {
   DMA_TCD3_DLASTSGA       = 0;
 
   DMA_TCD3_NBYTES_MLNO    = sizeof(transmissionWord);                   // The minor loop moves 32 bytes per transfer
-  DMA_TCD3_BITER_ELINKNO  = TRANSMISSION_SIZE;                          // Major loop iterations
-  DMA_TCD3_CITER_ELINKNO  = TRANSMISSION_SIZE;                          // Set current interation count
+  DMA_TCD3_BITER_ELINKNO  = TX_SIZE;                          // Major loop iterations
+  DMA_TCD3_CITER_ELINKNO  = TX_SIZE;                          // Set current interation count
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
   DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               

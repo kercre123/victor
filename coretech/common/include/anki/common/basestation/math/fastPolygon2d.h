@@ -52,6 +52,11 @@ public:
   // be faster
   void SortEdgeVectors();
 
+  float GetMinX() const {return _minX;}
+  float GetMaxX() const {return _maxX;}
+  float GetMinY() const {return _minY;}
+  float GetMaxY() const {return _maxY;}
+
   static void ResetCounts();
   static int _numChecks;
   static int _numDotProducts;
@@ -59,6 +64,12 @@ public:
 private:
 
   const Poly2f _poly;
+
+  // outermost bounding-box of poly
+  float _minX;
+  float _maxX;
+  float _minY;
+  float _maxY;
 
   // keep track of two circles, centered at the same point (for
   // now). The circumscribed circle is the smallest one (given the

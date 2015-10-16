@@ -71,43 +71,46 @@ bool FastPolygon::Contains(float x, float y) const
   // possible. First compute the squared distance to the center, and
   // do circle checks
 
+#ifndef NDEBUG
   _numChecks++;
+#endif
+
+  if( x < _minX || x > _maxX || y < _minY || y > _maxY ) {
+    return false;
+  }
 
   float dy = y - _circleCenter.y();
   float dx = x - _circleCenter.x();
 
-  float distSqaured = SQUARE(dx) + SQUARE(dy);
+  float distSquared = SQUARE(dx) + SQUARE(dy);
 
-  if(distSqaured > _circumscribedRadiusSquared) {
+  if(distSquared > _circumscribedRadiusSquared) {
     // definitely not inside
     return false;
   }
 
-  if(distSqaured < _inscribedRadiusSquared) {
+  if(distSquared < _inscribedRadiusSquared) {
     // definitely is inside
     return true;
   }
 
   // otherwise we have to check the actual edges.
 
-  size_t numPts = _poly.size();
-  assert(_perpendicularEdgeVectors.size() == numPts);
+  for( const auto& edgeVec : _perpendicularEdgeVectors ) {
 
-  //unsigned int numChecked = 0;
-
-  for(size_t i = 0; i < numPts; ++i) {
     // if the dot product is positive, the test point is inside of the
     // edge, so we must continue. Otherwise we can bail out early
-    size_t pointIdx = _perpendicularEdgeVectors[i].second;
+    size_t pointIdx = edgeVec.second;
 
     // dot product of perpendicular vector and (x,y) - polygonPoint
 
-    float dot = _perpendicularEdgeVectors[i].first.x() * ( x - _poly[pointIdx].x() ) +
-      _perpendicularEdgeVectors[i].first.y() * ( y - _poly[pointIdx].y() ) ;
+    float dot = edgeVec.first.x() * ( x - _poly[pointIdx].x() ) + edgeVec.first.y() * ( y - _poly[pointIdx].y() ) ;
 
-    // float dot = Anki::DotProduct( _perpendicularEdgeVectors[i].first, testPoint - _poly[pointIdx] );
+    // float dot = Anki::DotProduct( edgeVec.first, testPoint - _poly[pointIdx] );
 
+#ifndef NDEBUG
     _numDotProducts++;
+#endif
 
     if( dot > 0.0f ) {
       // was inside circle, but outside of an edge
@@ -145,6 +148,11 @@ void FastPolygon::ComputeCenter()
   // TODO:(bn) something smarter to get a better set of circles
 
   _circleCenter = _poly.ComputeCentroid();
+
+  _minX = _poly.GetMinX();
+  _maxX = _poly.GetMaxX();
+  _minY = _poly.GetMinY();
+  _maxY = _poly.GetMaxY();
 }
 
 void FastPolygon::ComputeCircles()
@@ -281,6 +289,13 @@ unsigned int FastPolygon::CheckTestPoints(std::vector< std::pair< bool, Point2f 
       // already used this point
       continue;
     }
+
+    if( testEntry.second.x() < _minX || testEntry.second.x() > _maxX || 
+        testEntry.second.y() < _minY || testEntry.second.y() > _maxY ) {
+      // skip points that will be caught be the bounding box check
+      continue;
+    }
+
 
     size_t pointIdx = _perpendicularEdgeVectors[edgeIdx].second;
     float dot = Anki::DotProduct( _perpendicularEdgeVectors[edgeIdx].first, testEntry.second - _poly[pointIdx] );

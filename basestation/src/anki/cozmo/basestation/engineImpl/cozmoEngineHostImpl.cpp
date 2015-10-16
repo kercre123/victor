@@ -11,6 +11,7 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineHostImpl.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -26,7 +27,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _isListeningForRobots(false)
 , _robotAdvertisementService("RobotAdvertisementService")
 , _robotMgr(externalInterface, dataPlatform)
-, _robotMsgHandler(dataPlatform)
+, _robotMsgHandler(*(new RobotInterface::MessageHandler()))
 , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
 {
@@ -55,18 +56,19 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
 {
+  delete(&_robotMsgHandler);
   delete _keywordRecognizer;
   _keywordRecognizer = nullptr;
 }
+
 Result CozmoEngineHostImpl::InitInternal()
 {
   std::string hmmFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/en-us");
   std::string keywordFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "config/basestation/config/cozmoPhrases.txt");
   std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
   _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
-  Result lastResult = _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
-
-  return lastResult;
+  _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
+  return RESULT_OK;
 }
 
 void CozmoEngineHostImpl::ForceAddRobot(AdvertisingRobot robotID,
@@ -307,7 +309,7 @@ void CozmoEngineHostImpl::SetImageSendMode(RobotID_t robotID, ImageSendMode newM
     return robot->SetImageSendMode(newMode);
   }
 }
-void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, CameraResolutionClad resolution)
+void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution)
 {
   Robot* robot = GetRobotByID(robotID);
 
@@ -319,8 +321,7 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
       robot->GetBlockWorld().EnableDraw(true);
     }
 
-    robot->RequestImage((ImageSendMode_t)newMode,
-      (Vision::CameraResolution)resolution);
+    robot->RequestImage(newMode, resolution);
   }
 
 }

@@ -3,7 +3,7 @@
 
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
-#include "anki/vision/CameraSettings.h"
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -22,7 +22,7 @@ namespace Anki {
 
     
     // Resolution of images that are streamed to basestation (dev purposes)
-    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;
+    const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
     
     /***************************************************************************
@@ -73,6 +73,12 @@ namespace Anki {
     // A common angle threshold for pose equality comparison
     // If two poses are this close in terms of angle, they are considered equal.
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
+
+    // Default maximum amount of time to let the planner run
+    const f32 DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S = 4.f;
+
+    // A different default used for replanning (while we are already following a path)
+    const f32 DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S = 1.f;
     
     // Default distance from marker for predock pose
     const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
