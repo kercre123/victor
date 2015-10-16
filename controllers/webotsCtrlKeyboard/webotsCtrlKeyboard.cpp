@@ -838,6 +838,7 @@ namespace Anki {
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                
+                  static bool isDemoMode = true;
                   // Send whatever animation is specified in the animationToSendName field
                   webots::Field* behaviorNameField = root_->getField("behaviorName");
                   if (behaviorNameField == nullptr) {
@@ -850,7 +851,25 @@ namespace Anki {
                     break;
                   }
                   
-                  SendExecuteBehavior(behaviorName);
+                  if (behaviorName == "DISABLED")
+                  {
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(false)));
+                  }
+                  else
+                  {
+                    if (behaviorName == "AUTO" && !isDemoMode)
+                    {
+                      isDemoMode = true;
+                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser("DemoBehaviorChooser")));
+                    }
+                    else if (behaviorName != "AUTO" && isDemoMode)
+                    {
+                      isDemoMode = false;
+                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser("SelectionBehaviorChooser")));
+                    }
+                    SendExecuteBehavior(behaviorName);
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(true)));
+                  }
                   
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
