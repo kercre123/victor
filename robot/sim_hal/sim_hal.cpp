@@ -1068,7 +1068,7 @@ namespace Anki {
     {
       return &idCard_;
     }
-
+   
 
     void HAL::GetProximity(ProximityValues *prox)
     {
@@ -1092,13 +1092,18 @@ namespace Anki {
           prox->latest = IRright;
           proxID = IRforward;
           break;
-
+          
         default:
           AnkiAssert(false);
       }
 
       return;
     } // GetProximity_INT()
+    
+    bool HAL::IsCliffDetected()
+    {
+      return cliffSensor_->getValue() < 220;
+    }
 
     namespace HAL {
       int UARTGetFreeSpace()

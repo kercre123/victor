@@ -9,6 +9,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
+#include "clad/types/proxMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 
 namespace Anki {
@@ -109,6 +110,7 @@ union RobotToEngine {
   BridgeTraverseComplete     bridgeTraverseCompleted= 0x0F,
   TimeProfileStat            timeProfStat           = 0x10,
   IMUDataChunk               imuDataChunk           = 0x11,
+  CliffEvent                 cliffEvent             = 0x12,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

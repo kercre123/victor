@@ -315,6 +315,7 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, IMU);
         IMUFilter::Update();
+        ProxSensors::Update();
 
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates

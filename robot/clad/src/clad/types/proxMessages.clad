@@ -1,0 +1,18 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+// If detected, (x_mm, y_mm) represent the location the cliff was detected
+message CliffEvent {
+  float_32 x_mm,
+  float_32 y_mm,
+  bool   detected
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

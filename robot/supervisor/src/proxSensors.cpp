@@ -1,10 +1,14 @@
 #include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/errorHandling.h"
 #include "proxSensors.h"
+#include "localization.h"
 #include "headController.h"
 #include "liftController.h"
+#include "animationController.h"
+#include "pickAndPlaceController.h"
+#include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
-
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
 
 namespace Anki {
@@ -12,18 +16,20 @@ namespace Anki {
     namespace ProxSensors {
       
       namespace {
-        f32 _proxLeft, _proxFwd, _proxRight;
-        bool _prevBlockedSides = true, _prevBlockedFwd = false;
+        //f32 _proxLeft, _proxFwd, _proxRight;
+        //bool _prevBlockedSides = true, _prevBlockedFwd = false;
         bool _blockedSides, _blockedFwd;
         
-        const f32 FILT_COEFF = 0.05f;
+        //const f32 FILT_COEFF = 0.05f;
         
         // The amount of time to consider a sensor blocked or unblocked
         // after it has moved into a blocked region. This delay is to
         // account for filtering time.
-        const TimeStamp_t BLOCKED_TIMEOUT = 1000; //ms
-        TimeStamp_t _fwdBlockedTransitionTime = 0;
-        TimeStamp_t _sidesBlockedTransitionTime = 0;
+        //const TimeStamp_t BLOCKED_TIMEOUT = 1000; //ms
+        //TimeStamp_t _fwdBlockedTransitionTime = 0;
+        //TimeStamp_t _sidesBlockedTransitionTime = 0;
+        
+        bool _wasCliffDetected = false;
         
       } // "private" namespace
       
@@ -31,7 +37,7 @@ namespace Anki {
       Result Update()
       {
         Result retVal = RESULT_OK;
-        
+/*
         // Get current readings and filter
         HAL::ProximityValues currProxVals;
         HAL::GetProximity(&currProxVals);
@@ -132,7 +138,37 @@ namespace Anki {
         // Update prevBlocked state
         _prevBlockedFwd = currBlockedFwd;
         _prevBlockedSides = currBlockedSides;
-
+ */
+        
+        
+        /////// Cliff detect reaction ///////
+        if ((HAL::IsCliffDetected() && !IMUFilter::IsPickedUp()) && !_wasCliffDetected) {
+          
+          // TODO (maybe): Check for cases where cliff detect should not stop motors
+          // 1) Turning in place
+          // 2) Driving over something (i.e. pitch is higher than some degrees).
+          
+          
+          // Stop all motors and animations
+          PickAndPlaceController::Reset();
+          AnimationController::Clear();
+          
+          // Send cliff detected message to engine
+          CliffEvent msg;
+          Radians junk;
+          Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, junk);
+          msg.detected = true;
+          RobotInterface::SendMessage(msg);
+          
+          _wasCliffDetected = true;
+        } else if ((!HAL::IsCliffDetected() || IMUFilter::IsPickedUp()) && _wasCliffDetected) {
+          CliffEvent msg;
+          msg.detected = false;
+          RobotInterface::SendMessage(msg);
+          
+          _wasCliffDetected = false;
+        }
+        
         
         return retVal;
         
