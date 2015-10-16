@@ -17,23 +17,30 @@
 #define ANKI_COZMO_ANIMATION_STREAMER_H
 
 #include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/utils/hasSettableParameters.h"
+#include "clad/types/liveIdleAnimationParameters.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
   
   // Forward declaration
   class Robot;
- 
-  class AnimationStreamer
+  
+  class IExternalInterface;
+  namespace ExternalInterface {
+    class MessageGameToEngine;
+  }
+  
+  class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
   public:
     static const std::string LiveAnimation;
     static const std::string AnimToolAnimation;
     static const u8          IdleAnimationTag = 255;
     
-    AnimationStreamer(CannedAnimationContainer& container);
+    AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container);
     
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
@@ -54,6 +61,9 @@ namespace Cozmo {
     bool IsIdleAnimating() const;
     
     const std::string GetStreamingAnimationName() const;
+    
+    // Required by HasSettableParameters:
+    virtual void SetDefaultParams() override;
     
   private:
     

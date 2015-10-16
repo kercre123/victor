@@ -22,10 +22,9 @@ class DubbinsPlanner : public IPathPlanner
 {
 public:
   DubbinsPlanner();
-      
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const Pose3d& targetPose) override;
+
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) override;
       
 };
 

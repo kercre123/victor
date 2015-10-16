@@ -184,7 +184,15 @@ namespace Anki {
     InitFromPointContainer<std::array<Point<2,T>,NumPoints> >(points);
   }
   
-  
+  template<typename T>
+  Rectangle<T> Rectangle<T>::Scale(const f32 scaleFactor) const
+  {
+    return Rectangle<T>(x + static_cast<T>(static_cast<f32>(width)*.5f * (1.f - scaleFactor)),
+                        y + static_cast<T>(static_cast<f32>(height)*.5f * (1.f - scaleFactor)),
+                        static_cast<T>(scaleFactor*static_cast<f32>(width)),
+                        static_cast<T>(scaleFactor*static_cast<f32>(height)));
+  }
+
   template<typename T>
   Rectangle<T> Rectangle<T>::Intersect(const Rectangle<T>& other) const
   {

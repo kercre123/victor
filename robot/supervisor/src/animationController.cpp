@@ -1,11 +1,10 @@
-#include "animationController.h"
 #include "anki/cozmo/robot/hal.h"
+#include "animationController.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 
-#include "eyeController.h"
 #include "headController.h"
 #include "liftController.h"
 #include "localization.h"
@@ -349,50 +348,13 @@ namespace AnimationController {
     _currentTime_ms = 0;
 #   endif
   }
- 
 
-  
-  static void CopyIntoBuffer(const u8* data, s32 numBytes)
+  static inline RobotInterface::EngineToRobot::Tag PeekBufferTag()
   {
-    assert(numBytes < sizeof(_keyFrameBuffer));
-    
-    if(_lastBufferPos + numBytes < sizeof(_keyFrameBuffer)) {
-      // There's enough room from current end position to end of buffer to just
-      // copy directly
-      memcpy(_keyFrameBuffer + _lastBufferPos, data, numBytes);
-      _lastBufferPos += numBytes;
-    } else {
-      // Copy the first chunk into whatever fits from current position to end of
-      // the buffer
-      const s32 firstChunk = sizeof(_keyFrameBuffer) - _lastBufferPos;
-      memcpy(_keyFrameBuffer + _lastBufferPos, data, firstChunk);
-      
-      // Copy the remaining data starting at the beginning of the buffer
-      memcpy(_keyFrameBuffer, data+firstChunk, numBytes - firstChunk);
-      _lastBufferPos = numBytes-firstChunk;
-     }
-    
-    assert(_lastBufferPos >= 0 && _lastBufferPos < sizeof(_keyFrameBuffer));
+    return _keyFrameBuffer[_currentBufferPos];
   }
   
-  static void RewindBufferOneType()
-  {
-    _currentBufferPos -= sizeof(Messages::ID);
-    if(_currentBufferPos < 0) {
-      _currentBufferPos += sizeof(_keyFrameBuffer);
-    }
-    
-    _numBytesPlayed -= sizeof(Messages::ID);
-    //PRINT("MINUS NumBytesPlayed %d (%d)\n", _numBytesPlayed, sizeof(Messages::ID));
-    
-  }
-  
-  static inline void SetTypeIndicator(Messages::ID msgType)
-  {
-    CopyIntoBuffer((u8*)&msgType, sizeof(msgType));
-  }
-  
-  static void GetFromBuffer(u8* data, s32 numBytes)
+  static s32 GetFromBuffer(u8* data, s32 numBytes)
   {
     assert(numBytes < sizeof(_keyFrameBuffer));
     
@@ -417,20 +379,24 @@ namespace AnimationController {
     //PRINT("NumBytesPlayed %d (%d) (%d)\n", _numBytesPlayed, numBytes, *((u32*)data));
     
     assert(_currentBufferPos >= 0 && _currentBufferPos < sizeof(_keyFrameBuffer));
+    
+    return numBytes;
   }
   
-  static inline Messages::ID GetTypeIndicator()
+  static s32 GetFromBuffer(RobotInterface::EngineToRobot* msg)
   {
-    Messages::ID msgID;
-    GetFromBuffer((u8*)&msgID, sizeof(Messages::ID));
-    return msgID;
+    s32 readSoFar;
+    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0, presumably sets all size fields to 0
+    readSoFar  = GetFromBuffer(msg->GetBuffer(), RobotInterface::EngineToRobot::MIN_SIZE); // Read in enough to know what it is
+    readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in the minimum size for the type to get length fields
+    readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in anything left now that we know how big minimum fields are
+    return readSoFar;
   }
   
-  template<typename MSG_TYPE>
-  static inline Result BufferKeyFrameHelper(const MSG_TYPE& msg, Messages::ID msgID)
+  Result BufferKeyFrame(const RobotInterface::EngineToRobot& msg)
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
-    const s32 numBytesNeeded = Messages::GetSize(msgID) + sizeof(Messages::ID);
+    const s32 numBytesNeeded = msg.Size();
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -442,141 +408,42 @@ namespace AnimationController {
       }
       return RESULT_FAIL;
     }
-    SetTypeIndicator(msgID);
-    CopyIntoBuffer((u8*)&msg, Messages::GetSize(msgID));
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_StartOfAnimation& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_StartOfAnimation));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering StartOfAnimation KeyFrame with Tag=%d\n", msg.tag);
-#   endif
-    return RESULT_OK;
-}
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_EndOfAnimation& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_EndOfAnimation));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
+    
+    s32 numBytes = msg.Size();
+    
+    assert(numBytes < sizeof(_keyFrameBuffer));
+    
+    if(_lastBufferPos + numBytes < sizeof(_keyFrameBuffer)) {
+      // There's enough room from current end position to end of buffer to just
+      // copy directly
+      memcpy(_keyFrameBuffer + _lastBufferPos, msg.GetBuffer(), numBytes);
+      _lastBufferPos += numBytes;
+    } else {
+      // Copy the first chunk into whatever fits from current position to end of
+      // the buffer
+      const s32 firstChunk = sizeof(_keyFrameBuffer) - _lastBufferPos;
+      memcpy(_keyFrameBuffer + _lastBufferPos, msg.GetBuffer(), firstChunk);
+      
+      // Copy the remaining data starting at the beginning of the buffer
+      memcpy(_keyFrameBuffer, msg.GetBuffer()+firstChunk, numBytes - firstChunk);
+      _lastBufferPos = numBytes-firstChunk;
+     }
+    switch(msg.tag) {
+      case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
+        _haveReceivedTerminationFrame = true;
+      case RobotInterface::EngineToRobot::Tag_animAudioSample:
+      case RobotInterface::EngineToRobot::Tag_animAudioSilence:
+        ++_numAudioFramesBuffered;
+        break;
+        default:
+        break;
     }
     
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering EndOfAnimation KeyFrame\n");
-#   endif
-    _haveReceivedTerminationFrame = true;
-    ++_numAudioFramesBuffered;
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSample& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_AudioSample));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
+    assert(_lastBufferPos >= 0 && _lastBufferPos < sizeof(_keyFrameBuffer));
     
-    //PRINT("Buffering AudioSample KeyFrame\n");
-    ++_numAudioFramesBuffered;
     return RESULT_OK;
   }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_AudioSilence& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_AudioSilence));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
     
-    //PRINT("Buffering AudioSilence KeyFrame\n");
-    ++_numAudioFramesBuffered;
-    return RESULT_OK;
-  }
-
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_HeadAngle& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_HeadAngle));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering HeadAngle KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_LiftHeight& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_LiftHeight));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering LiftHeight KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_FaceImage& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_FaceImage));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering FaceImage KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_FacePosition& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_FacePosition));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering FacePosition KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_BackpackLights& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_BackpackLights));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering BackpackLights KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_BodyMotion& msg) {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_BodyMotion));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering BodyMotion KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  Result BufferKeyFrame(const Messages::AnimKeyFrame_Blink& msg)
-  {
-    Result lastResult = BufferKeyFrameHelper(msg, GET_MESSAGE_ID(Messages::AnimKeyFrame_Blink));
-    if(RESULT_OK != lastResult) {
-      return lastResult;
-    }
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Buffering Blink KeyFrame\n");
-#   endif
-    return RESULT_OK;
-  }
-  
-  
   bool IsBufferFull()
   {
     return GetNumBytesAvailable() > 0;
@@ -627,15 +494,7 @@ namespace AnimationController {
     return ready;
   } // IsReadyToPlay()
   
-  
-#define DUMP_NEXT_MESSAGE_CASE(msgName)  \
-  case Messages::AnimKeyFrame_##msgName##_ID: { \
-    Messages::AnimKeyFrame_##msgName msg; \
-    GetFromBuffer((u8*)&msg, Messages::GetSize(Messages::AnimKeyFrame_##msgName##_ID)); \
-  } \
-  break;
 
-  
   Result Update()
   {
     if(IsReadyToPlay()) {
@@ -643,52 +502,33 @@ namespace AnimationController {
       // If AudioReady() returns true, we are ready to move to the next keyframe
       if(HAL::AudioReady())
       {
-        START_TIME_PROFILE(Anim, AUDIOPLAY);
+        START_TIME_PROFILE(Anim, AUDIOPLAY);        
         
-        Messages::ID msgID = GetTypeIndicator();
+        // Next thing in the buffer should be audio or silence:
+        RobotInterface::EngineToRobot::Tag msgID = PeekBufferTag();
+        RobotInterface::EngineToRobot msg;
         
-        // Next thing should be audio sample or silence.
         // If the next message is not audio, then delete it until it is.
-        while(msgID != Messages::AnimKeyFrame_AudioSilence_ID &&
-              msgID != Messages::AnimKeyFrame_AudioSample_ID)
-        {
-          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, Messages::AnimKeyFrame_AudioSample_ID);
-          
-          switch (msgID) {
-            DUMP_NEXT_MESSAGE_CASE(StartOfAnimation)
-            DUMP_NEXT_MESSAGE_CASE(HeadAngle)
-            DUMP_NEXT_MESSAGE_CASE(LiftHeight)
-            DUMP_NEXT_MESSAGE_CASE(FacePosition)
-            DUMP_NEXT_MESSAGE_CASE(Blink)
-            DUMP_NEXT_MESSAGE_CASE(FaceImage)
-            DUMP_NEXT_MESSAGE_CASE(BackpackLights)
-            DUMP_NEXT_MESSAGE_CASE(BodyMotion)
-            DUMP_NEXT_MESSAGE_CASE(EndOfAnimation)
- 
-            default:
-              PRINT("Unknown message %d in animation buffer. Probably comms corruption! Clearing buffer.\n", msgID);
-              Clear();
-              return RESULT_FAIL;
-          }
-          msgID = GetTypeIndicator();
+        while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
+              msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
+          GetFromBuffer(&msg);
+          msgID = PeekBufferTag();
         }
         
+        GetFromBuffer(&msg);
         
-        switch(msgID)
+        switch(msg.tag)
         {
-          case Messages::AnimKeyFrame_AudioSilence_ID:
+          case RobotInterface::EngineToRobot::Tag_animAudioSilence:
           {
-            Messages::AnimKeyFrame_AudioSilence msg;
-            GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
             HAL::AudioPlaySilence();
             break;
           }
-          case Messages::AnimKeyFrame_AudioSample_ID:
+          case RobotInterface::EngineToRobot::Tag_animAudioSample:
           {
-            Messages::AnimKeyFrame_AudioSample msg;
-            GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
             if(_tracksToPlay & AUDIO_TRACK) {
-              HAL::AudioPlayFrame(&msg);
+              HAL::AudioPlayFrame(&msg.animAudioSample);
             } else {
               HAL::AudioPlaySilence();
             }
@@ -705,8 +545,7 @@ namespace AnimationController {
         
         MARK_NEXT_TIME_PROFILE(Anim, WHILE);
         
-        // Keep reading until we hit another audio type, then rewind one
-        // (The rewind is a little icky, but I'm leaving it for now)
+        // Keep reading until we hit another audio type
         bool nextAudioFrameFound = false;
         bool terminatorFound = false;
         while(!nextAudioFrameFound && !terminatorFound)
@@ -721,86 +560,78 @@ namespace AnimationController {
             return RESULT_FAIL;
           }
           
-          const Messages::ID msgID = GetTypeIndicator();
+          msgID = PeekBufferTag();
+          
           switch(msgID)
           {
-            case Messages::AnimKeyFrame_AudioSample_ID:
+            case RobotInterface::EngineToRobot::Tag_animAudioSample:
+            {
               _tracksInUse |= BACKPACK_LIGHTS_TRACK;
               // Fall through to below...
-            case Messages::AnimKeyFrame_AudioSilence_ID:
-              
-              // Rewind so we re-see this type again on next update (a little icky, yes...)
-              RewindBufferOneType();
-              
+            }
+            case RobotInterface::EngineToRobot::Tag_animAudioSilence:
+            {
               nextAudioFrameFound = true;
               break;
-              
-            case Messages::AnimKeyFrame_StartOfAnimation_ID:
+            }
+            case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
             {
-              Messages::AnimKeyFrame_StartOfAnimation msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
-              _currentTag = msg.tag;
+              GetFromBuffer(&msg);
+              _currentTag = msg.animStartOfAnimation.tag;
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
 #             endif
               break;
-            }
-              
-            case Messages::AnimKeyFrame_EndOfAnimation_ID:
+            }  
+            case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
             {
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] hit EndOfAnimation\n",
                     _currentTime_ms, HAL::GetTimeStamp());
 #             endif
-              Messages::AnimKeyFrame_EndOfAnimation msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID)); // just pull it out of the buffer
+              GetFromBuffer(&msg);
               terminatorFound = true;
               _tracksInUse = 0;
               break;
             }
               
-            case Messages::AnimKeyFrame_HeadAngle_ID:
+            case RobotInterface::EngineToRobot::Tag_animHeadAngle:
             {
-              Messages::AnimKeyFrame_HeadAngle msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
-              
+              GetFromBuffer(&msg);
               if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
                       _currentTime_ms, HAL::GetTimeStamp(),
-                      msg.angle_deg, static_cast<f32>(msg.time_ms)*.001f);
+                      msg.animHeadAngle.angle_deg, static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
 #               endif
                 
-                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.angle_deg)), 0.1f, 0.1f,
-                                                static_cast<f32>(msg.time_ms)*.001f);
+                HeadController::SetDesiredAngle(DEG_TO_RAD(static_cast<f32>(msg.animHeadAngle.angle_deg)), 0.1f, 0.1f,
+                                                static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
                 _tracksInUse |= HEAD_TRACK;
               }
               break;
             }
               
-            case Messages::AnimKeyFrame_LiftHeight_ID:
+            case RobotInterface::EngineToRobot::Tag_animLiftHeight:
             {
-              Messages::AnimKeyFrame_LiftHeight msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
-              
+              GetFromBuffer(&msg);              
               if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
                       _currentTime_ms, HAL::GetTimeStamp(),
-                      msg.height_mm, static_cast<f32>(msg.time_ms)*.001f);
+                      msg.animLiftHeight.height_mm, static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
 #               endif
                 
-                LiftController::SetDesiredHeight(static_cast<f32>(msg.height_mm), 0.1f, 0.1f,
-                                                 static_cast<f32>(msg.time_ms)*.001f);
+                LiftController::SetDesiredHeight(static_cast<f32>(msg.animLiftHeight.height_mm), 0.1f, 0.1f,
+                                                 static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
                 _tracksInUse |= LIFT_TRACK;
               }
               break;
             }
               
-            case Messages::AnimKeyFrame_BackpackLights_ID:
+            case RobotInterface::EngineToRobot::Tag_animBackpackLights:
             {
-              Messages::AnimKeyFrame_BackpackLights msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
+              GetFromBuffer(&msg);
               
               if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -809,17 +640,16 @@ namespace AnimationController {
 #               endif
                 
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
-                  HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
+                  HAL::SetLED(static_cast<LEDId>(iLED), msg.animBackpackLights.colors[iLED]);
                 }
                 _tracksInUse |= BACKPACK_LIGHTS_TRACK;
               }
               break;
             }
               
-            case Messages::AnimKeyFrame_FaceImage_ID:
+            case RobotInterface::EngineToRobot::Tag_animFaceImage:
             {
-              Messages::AnimKeyFrame_FaceImage msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
+              GetFromBuffer(&msg);
               
               if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -827,35 +657,33 @@ namespace AnimationController {
                       _currentTime_ms, HAL::GetTimeStamp());
 #               endif
                 
-                HAL::FaceAnimate(msg.image);
+                HAL::FaceAnimate(msg.animFaceImage.image);
                 
                 _tracksInUse |= FACE_IMAGE_TRACK;
               }
               break;
             }
               
-            case Messages::AnimKeyFrame_FacePosition_ID:
+            case RobotInterface::EngineToRobot::Tag_animFacePosition:
             {
-              Messages::AnimKeyFrame_FacePosition msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
+              GetFromBuffer(&msg);
               
               if(_tracksToPlay & FACE_POS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
-                      _currentTime_ms, HAL::GetTimeStamp(), msg.xCen, msg.yCen);
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.animFacePosition.xCen, msg.animFacePosition.yCen);
 #               endif
                 
-                HAL::FaceMove(msg.xCen, msg.yCen);
+                HAL::FaceMove(msg.animFacePosition.xCen, msg.animFacePosition.yCen);
                 
                 _tracksInUse |= FACE_POS_TRACK;
               }
               break;
             }
               
-            case Messages::AnimKeyFrame_Blink_ID:
+            case RobotInterface::EngineToRobot::Tag_animBlink:
             {
-              Messages::AnimKeyFrame_Blink msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
+              GetFromBuffer(&msg);
               
               if(_tracksToPlay & BLINK_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
@@ -863,13 +691,13 @@ namespace AnimationController {
                       _currentTime_ms, HAL::GetTimeStamp());
 #               endif
                 
-                if(msg.blinkNow) {
+                if(msg.animBlink.blinkNow) {
                   HAL::FaceBlink();
                 } else {
-                  if(msg.enable) {
-                    EyeController::Enable();
+                  if(msg.animBlink.enable) {
+                    //EyeController::Enable();
                   } else {
-                    EyeController::Disable();
+                    //EyeController::Disable();
                   }
                 }
                 _tracksInUse |= BLINK_TRACK;
@@ -877,30 +705,31 @@ namespace AnimationController {
               break;
             }
               
-            case Messages::AnimKeyFrame_BodyMotion_ID:
+            case RobotInterface::EngineToRobot::Tag_animBodyMotion:
             {
-              Messages::AnimKeyFrame_BodyMotion msg;
-              GetFromBuffer((u8*)&msg, Messages::GetSize(msgID));
+              GetFromBuffer(&msg);
               
               if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
                 PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
-                      _currentTime_ms, HAL::GetTimeStamp(), msg.curvatureRadius_mm, msg.speed);
+                      _currentTime_ms, HAL::GetTimeStamp(), msg.animBodyMotion.curvatureRadius_mm,
+                      msg.animBodyMotion.speed);
 #               endif
 
                 _tracksInUse |= BODY_TRACK;
                 
                 f32 leftSpeed=0, rightSpeed=0;
-                if(msg.speed == 0) {
+                if(msg.animBodyMotion.speed == 0) {
                   // Stop
                   leftSpeed = 0.f;
                   rightSpeed = 0.f;
-                } else if(msg.curvatureRadius_mm == s16_MAX || msg.curvatureRadius_mm == s16_MIN) {
+                } else if(msg.animBodyMotion.curvatureRadius_mm == s16_MAX || 
+                          msg.animBodyMotion.curvatureRadius_mm == s16_MIN) {
                   // Drive straight
-                  leftSpeed  = static_cast<f32>(msg.speed);
-                  rightSpeed = static_cast<f32>(msg.speed);
-                } else if(msg.curvatureRadius_mm == 0) {
-                  SteeringController::ExecutePointTurn(DEG_TO_RAD_F32(msg.speed), 50);
+                  leftSpeed  = static_cast<f32>(msg.animBodyMotion.speed);
+                  rightSpeed = static_cast<f32>(msg.animBodyMotion.speed);
+                } else if(msg.animBodyMotion.curvatureRadius_mm == 0) {
+                  SteeringController::ExecutePointTurn(DEG_TO_RAD_F32(msg.animBodyMotion.speed), 50);
                   break;
                   
                 } else {
@@ -908,11 +737,11 @@ namespace AnimationController {
                   
                   //if speed is positive, the left wheel should turn slower, so
                   // it becomes the INNER wheel
-                  leftSpeed = static_cast<f32>(msg.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                  leftSpeed = static_cast<f32>(msg.animBodyMotion.speed) * (1.0f - WHEEL_DIST_HALF_MM / static_cast<f32>(msg.animBodyMotion.curvatureRadius_mm));
                   
                   //if speed is positive, the right wheel should turn faster, so
                   // it becomes the OUTER wheel
-                  rightSpeed = static_cast<f32>(msg.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.curvatureRadius_mm));
+                  rightSpeed = static_cast<f32>(msg.animBodyMotion.speed) * (1.0f + WHEEL_DIST_HALF_MM / static_cast<f32>(msg.animBodyMotion.curvatureRadius_mm));
                 }
                 
                 SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
@@ -926,7 +755,7 @@ namespace AnimationController {
               return RESULT_FAIL;
             }
               
-          } // switch(GetTypeIndicator())
+          } // switch
         } // while(!nextAudioFrameFound && !terminatorFound)
 
         --_numAudioFramesBuffered;

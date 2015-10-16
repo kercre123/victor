@@ -13,10 +13,10 @@
 #ifndef _ANKICORETECH_PLANNING_STATE_TABLE_H_
 #define _ANKICORETECH_PLANNING_STATE_TABLE_H_
 
-#include<map>
+// TODO:(bn) pull out basic defined from environment, so we don't need the whole thing
 #include "anki/planning/basestation/xythetaEnvironment.h"
 #include "openList.h"
-// TODO:(bn) pull out basic defined from environment, so we don't need the whole thing
+#include <unordered_map>
 
 namespace Anki
 {
@@ -90,8 +90,8 @@ struct StateEntry
 class StateTable
 {
 public:
-  typedef std::map<StateID, StateEntry>::iterator iterator;
-  typedef std::map<StateID, StateEntry>::const_iterator const_iterator;
+  typedef std::unordered_map<u32, StateEntry>::iterator iterator;
+  typedef std::unordered_map<u32, StateEntry>::const_iterator const_iterator;
 
   StateTable();
 
@@ -112,7 +112,7 @@ public:
                Cost g);
 
 private:
-  std::map<StateID, StateEntry> table_;
+  std::unordered_map<u32, StateEntry> table_;
 };
 
 

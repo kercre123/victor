@@ -7,7 +7,7 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/errorHandling.h"
-
+#include "messages.h"
 
 #define DEBUG_LIFT_CONTROLLER 0
 
@@ -63,28 +63,7 @@ namespace Anki {
         const f32 LIFT_FINGER_HEIGHT = 3.8f;
         
         // Calibration offset
-        const f32 LIFT_CAL_OFFSET = 0; //mm
-        
-#elif defined(COZMO_ROBOT_V40)
-        // Cozmo 4.0
-        f32 Kp_ = 2.5;    // proportional control constant
-        f32 Kd_ = 400.f;  // derivative gain
-        f32 Ki_ = 0.1f; //0.05f;   // integral control constant
-        f32 angleErrorSum_ = 0.f;
-        f32 MAX_ERROR_SUM = 4.f;
-        
-        // Open loop gain
-        // power_open_loop = SPEED_TO_POWER_OL_GAIN * desiredSpeed + BASE_POWER
-        const f32 SPEED_TO_POWER_OL_GAIN_UP = 0.0517f;
-        const f32 BASE_POWER_UP[NUM_CARRY_STATES] = {0.2312f, 0.3082f, 0.37f}; // 0.37f is a guesstimate
-        const f32 SPEED_TO_POWER_OL_GAIN_DOWN = 0.0521f;
-        const f32 BASE_POWER_DOWN[NUM_CARRY_STATES] = {0.1389f, 0.05f, 0.f};
-
-        // Constant power bias to counter gravity
-        const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
-
-        // Calibration offset
-        const f32 LIFT_CAL_OFFSET = -3;
+        const f32 LIFT_CAL_OFFSET = 0; //mm        
 #else
         // Cozmo 4.1 - smooth gearbox
         f32 Kp_ = 2.5f;    // proportional control constant
@@ -104,7 +83,7 @@ namespace Anki {
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
         
         // Calibration offset
-        const f32 LIFT_CAL_OFFSET = -8; //mm
+        const f32 LIFT_CAL_OFFSET = 0; //mm
 #endif
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
@@ -315,7 +294,7 @@ namespace Anki {
 #ifdef SIMULATOR
         power = desired_speed_rad_per_sec * 0.05;
 #else
-        CarryState_t cs = PickAndPlaceController::GetCarryState();
+        CarryState cs = PickAndPlaceController::GetCarryState();
         if (desired_speed_rad_per_sec > 0) {
           power = desired_speed_rad_per_sec * SPEED_TO_POWER_OL_GAIN_UP + BASE_POWER_UP[cs];
         } else {

@@ -108,6 +108,7 @@ IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToPickAndPlaceObjectAction(selectedObjectID,
+                                               robot.IsCarryingObject(),
                                                msg.useManualSpeed,
                                                msg.placementOffsetX_mm,
                                                msg.placementOffsetY_mm,
@@ -115,6 +116,7 @@ IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface
                                                msg.placeOnGroundIfCarrying);
   } else {
     PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID,
+                                                                    robot.IsCarryingObject(),
                                                                     msg.useManualSpeed,
                                                                     msg.placementOffsetX_mm,
                                                                     msg.placementOffsetY_mm,
@@ -317,6 +319,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     }
     case ExternalInterface::MessageGameToEngineTag::GotoPose:
     {
+      numRetries = 2;
       newAction = GetDriveToPoseActionHelper(robot, event.GetData().Get_GotoPose());
       break;
     }

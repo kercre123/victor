@@ -29,7 +29,7 @@ extern GlobalDataToBody g_dataToBody;
 
 #ifdef RADIO_TIMING_TEST
   #error "Fix this"
-#elif defined(ROBOT41)
+#else
   const uint8_t     cubePipe[] = {1,2,3,4};
 
   /* Robot #2 - C blocks
