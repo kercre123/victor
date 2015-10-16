@@ -81,6 +81,7 @@ typedef enum {
 #else
 #define ICACHE_FLASH_ATTR
 #define ICACHE_RODATA_ATTR
+#error "ICACHE_FLASH not defined"
 #endif /* ICACHE_FLASH */
 
 #define IRAM_ATTR __attribute__((section(".iram1.text")))
