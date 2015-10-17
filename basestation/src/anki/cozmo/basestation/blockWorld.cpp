@@ -2102,6 +2102,7 @@ namespace Anki
           _robot->DisableTrackToObject();
         }
         
+        bool emitSignal = true;
         if(object->IsActive())
         {
           if(ActiveIdentityState::Identified == object->GetIdentityState()) {
@@ -2113,6 +2114,9 @@ namespace Anki
           if(_unidentifiedActiveObjects.count(object->GetID()) != 0) {
             // Make sure to remove from the unidentified list
             _unidentifiedActiveObjects.erase(object->GetID());
+            // If it was still in the unidentified list, don't emit a deletion
+            // signal because we didn't broadcast it's observation yet
+            emitSignal = false;
           }
         }
         
@@ -2120,8 +2124,7 @@ namespace Anki
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
-           _unidentifiedActiveObjects.count(object->GetID()) == 0)
+        if(emitSignal && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
         {
           _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
             _robot->GetID(), object->GetID().GetValue()
