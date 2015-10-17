@@ -43,8 +43,8 @@ namespace Cozmo {
     
   protected:
     
-    ObjectFamily  _family;
-    ObjectType    _type;
+    ObjectFamily  _family = ObjectFamily::Unknown;
+    ObjectType    _type   = ObjectType::Unknown;
     
     ActiveIdentityState _identityState = ActiveIdentityState::Unidentified;
     
