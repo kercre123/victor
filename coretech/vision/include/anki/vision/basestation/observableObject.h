@@ -84,14 +84,8 @@ namespace Anki {
       
       
       // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
-      enum class IdentityState : u8 {
-        Unidentified,
-        WaitingForIdentity,
-        Identified
-      };
       virtual bool IsActive() const { return false; }
       virtual void Identify() { /* no-op */ }
-      IdentityState GetIdentityState() const { return _identityState; }
       
       // Override for objects that can be used for localization (e.g., mats
       // or active blocks that have not moved since last localization)
@@ -212,8 +206,6 @@ namespace Anki {
       TimeStamp_t  _lastObservedTime = 0;
       u32          _numTimesObserved = 0;
       ColorRGBA    _color;
-      
-      IdentityState _identityState = IdentityState::Unidentified;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers

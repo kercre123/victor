@@ -1651,7 +1651,7 @@ namespace Anki {
       // Compute the new "current" pose from history which uses the
       // past vision-based "ground truth" pose we just computed.
       if(UpdateCurrPoseFromHistory(existingObject->GetPose()) == false) {
-        PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedUpdateCurrPoseFromHistory", "\n");
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedUpdateCurrPoseFromHistory", "");
         return RESULT_FAIL;
       }
       
@@ -1660,7 +1660,7 @@ namespace Anki {
       //    that function checks whether the robot is already localized
       lastResult = SetLocalizedTo(existingObject);
       if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetLocalizedToFail", "\n");
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetLocalizedToFail", "");
         return lastResult;
       }
       
@@ -2944,7 +2944,7 @@ namespace Anki {
         return nullptr;
       }
       
-      if(object->GetIdentityState() != ObservableObject::IdentityState::Identified) {
+      if(object->GetIdentityState() != ActiveIdentityState::Identified) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",
                           "Object %d is active but has not been identified.",
                           objectID.GetValue());

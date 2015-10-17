@@ -25,6 +25,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
+
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
 
@@ -41,6 +42,8 @@
 #define ONLY_ALLOW_ONE_OBJECT_PER_TYPE 0
 
 #define ENABLE_BLOCK_BASED_LOCALIZATION 1
+
+#define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
@@ -478,7 +481,7 @@ namespace Anki
           
           if(matchingObject->IsActive())
           {
-            if(ObservableObject::IdentityState::Identified == matchingObject->GetIdentityState())
+            if(ActiveIdentityState::Identified == matchingObject->GetIdentityState())
             {
               if(_unidentifiedActiveObjects.count(matchingObject->GetID()) > 0)
               {
@@ -496,8 +499,9 @@ namespace Anki
                      candidateObject->GetActiveID() == matchingObject->GetActiveID())
                   {
                     PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObject.FoundDuplicateActiveID",
-                                     "Will use pre-existing active ID %d",
-                                     matchingObject->GetActiveID());
+                                     "Found duplicate active ID %d: will use %d and delete %d.",
+                                     matchingObject->GetActiveID(),
+                                     candidateObject->GetID().GetValue(), matchingObject->GetID().GetValue());
                     ClearObject(matchingObject->GetID());
                     matchingObject = candidateObject;
                     break;
@@ -505,8 +509,10 @@ namespace Anki
                 }
               }
             } else {
-              // "Tick" the fake identification process forward
-                // TODO: Shouldn't need to do this once we have real block identification
+              // Tick the fake identification process for any as-yet-unidentified active
+              // objects. This is to simulate the fact that identification is not instantaneous
+              // and is asynchronous.
+              // TODO: Shouldn't need to do this once we have real block identification
               matchingObject->Identify();
             }
           } // if(matchingObject->IsActive())
@@ -551,6 +557,7 @@ namespace Anki
           // Initial conditions that must be met before we even consider localizing
           // to this object
           bool useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
+                                          _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 && // didn't _just_ get identified: we still need to check if it's pre-existing active ID
                                           matchingObject->CanBeUsedForLocalization() &&
                                           (_robot->IsLocalized() == false ||
                                            _robot->HasMovedSinceBeingLocalized()));
@@ -658,16 +665,6 @@ namespace Anki
      
         CORETECH_ASSERT(observedObject != nullptr);
         
-        // If this is an active object and has not been identified yet, identify
-        // it now.
-        if(observedObject->IsActive() &&
-           observedObject->GetIdentityState() != ObservableObject::IdentityState::Identified)
-        {
-          // TODO: Need to do more here probably...
-          PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObject.IdentifyingActiveObject", "");
-          observedObject->Identify();
-        }
-        
         const ObjectID obsID = observedObject->GetID();
         const ObjectType obsType = observedObject->GetType();
         
@@ -696,7 +693,7 @@ namespace Anki
         // Don't broadcast this object until we've seen it enough times and it is
         // through identifying
         if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
-           observedObject->GetIdentityState() != ObservableObject::IdentityState::WaitingForIdentity)
+           _unidentifiedActiveObjects.count(observedObject->GetID())==0)
         {
           // Use the projected corners to add an occluder and to keep track of the
           // bounding quads of all the observed objects in this Update
@@ -877,12 +874,27 @@ namespace Anki
                                  object->GetID().GetValue(),
                                  object->GetNumTimesObserved());
                 objectIter = ClearObject(objectIter, objectsByType.first, objectFamily.first);
+              } else if(object->IsActive() &&
+                        ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
+                        object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS)
+              {
+                
+                PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
+                                 "Removing unobserved %s active object %d that has "
+                                 "not completed identification in %dms",
+                                 EnumToString(object->GetType()),
+                                 object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
+                
+                objectIter = ClearObject(objectIter, objectsByType.first, objectFamily.first);
+
               } else {
                 // Otherwise, add it to the list for further checks below to see if
                 // we "should" have seen the object
-                
-                //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
-                unobservedObjects.emplace_back(objectFamily.first, objectsByType.first, objectIter->second);
+
+                if(_unidentifiedActiveObjects.count(object->GetID()) == 0) {
+                  //AddToOcclusionMaps(object, robotMgr_); // TODO: Used to do this too, put it back?
+                  unobservedObjects.emplace_back(objectFamily.first, objectsByType.first, objectIter->second);
+                }
                 ++objectIter;
                 
               }
@@ -911,9 +923,10 @@ namespace Anki
                                             xBorderPad, yBorderPad) &&
            (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
         {
-          // We "should" have seen the object! Delete it or mark it somehow
-          CoreTechPrint("Removing object %d, which should have been seen, "
-                        "but wasn't.\n", unobserved.object->GetID().GetValue());
+          // We "should" have seen the object! Delete it.
+          PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.RemoveUnobservedObject",
+                           "Removing object %d, which should have been seen, "
+                           "but wasn't.\n", unobserved.object->GetID().GetValue());
           
           ClearObject(unobserved.object, unobserved.type, unobserved.family);
         } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
@@ -2089,15 +2102,27 @@ namespace Anki
           _robot->DisableTrackToObject();
         }
         
-        if(object->IsActive()) {
-          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
-                           "Sending message to turn off active object %d's lights because "
-                           "it is being deleted.\n", object->GetID().GetValue());
-          _robot->TurnOffObjectLights(object->GetID());
+        if(object->IsActive())
+        {
+          if(ActiveIdentityState::Identified == object->GetIdentityState()) {
+            PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
+                             "Sending message to turn off active object %d's lights because "
+                             "it is being deleted.\n", object->GetID().GetValue());
+            _robot->TurnOffObjectLights(object->GetID());
+          }
+          if(_unidentifiedActiveObjects.count(object->GetID()) != 0) {
+            // Make sure to remove from the unidentified list
+            _unidentifiedActiveObjects.erase(object->GetID());
+          }
         }
         
         // Notify any listeners that this object is being deleted
-        if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+        // (Only notify for objects that were broadcast in the first place, meaning
+        //  they must have been seen the minimum number of times and not be in the
+        //  process of being identified)
+        if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
+           _unidentifiedActiveObjects.count(object->GetID()) == 0)
+        {
           _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
             _robot->GetID(), object->GetID().GetValue()
           )));

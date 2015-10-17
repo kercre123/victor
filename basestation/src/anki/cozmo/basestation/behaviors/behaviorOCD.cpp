@@ -1287,6 +1287,13 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
+    if(oObject->IsActive() && oObject->GetIdentityState() != ActiveIdentityState::Identified) {
+      PRINT_NAMED_WARNING("BehaviorOCD.HandleObservedObject.UnidentifiedActiveObject",
+                          "How'd this happen? (ObjectID %d, idState=%s)",
+                          objectID.GetValue(), EnumToString(oObject->GetIdentityState()));
+      return RESULT_OK;
+    }
+    
     // Only care about blocks and light cubes
     if ((oObject->GetFamily() != ObjectFamily::LightCube) &&
         (oObject->GetFamily() != ObjectFamily::Block)) {

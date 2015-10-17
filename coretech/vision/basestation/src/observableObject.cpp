@@ -41,7 +41,6 @@ namespace Vision {
   {
     PRINT_NAMED_INFO("ObservableObject.DeLocalize", "Delocalizing object %d.", GetID().GetValue());
     _isLocalized = false;
-    _identityState = IdentityState::Unidentified;
   }
 
   

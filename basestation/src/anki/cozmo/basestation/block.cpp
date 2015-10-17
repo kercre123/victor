@@ -691,7 +691,7 @@ namespace Anki {
     
     bool ActiveCube::CanBeUsedForLocalization() const
     {
-      return IsLocalized() && GetIdentityState() == IdentityState::Identified;
+      return IsLocalized() && GetIdentityState() == ActiveIdentityState::Identified;
     }
     
     void ActiveCube::Identify()
@@ -700,7 +700,10 @@ namespace Anki {
 
       if(timeCtr > 0) {
         timeCtr -= BS_TIME_STEP;
-        _identityState = IdentityState::WaitingForIdentity;
+        _identityState = ActiveIdentityState::WaitingForIdentity;
+        PRINT_NAMED_INFO("ActiveCube.Identify.Waiting",
+                         "Faking identification time for object %d",
+                         GetID().GetValue());
       } else {
         // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
         switch(_markers.front().GetCode())
@@ -708,28 +711,28 @@ namespace Anki {
           case Vision::MARKER_1:
           case Vision::MARKER_LIGHTNINGBOLT_01:
             _activeID = 0;
-            _identityState = IdentityState::Identified;
+            _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_1:
           case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
             _activeID = 1;
-            _identityState = IdentityState::Identified;
+            _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
             _activeID = 2;
-            _identityState = IdentityState::Identified;
+            _identityState = ActiveIdentityState::Identified;
             break;
             
           case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
             _activeID = 3;
-            _identityState = IdentityState::Identified;
+            _identityState = ActiveIdentityState::Identified;
             break;
             
           default:
             _activeID = -1;
-            _identityState = IdentityState::Unidentified;
+            _identityState = ActiveIdentityState::Unidentified;
             PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
                               "ActiveID not defined for block with front marker = %d\n",
                               _markers.front().GetCode());

@@ -4,6 +4,7 @@
 #include "anki/vision/basestation/observableObject.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
+#include "clad/types/activeObjectTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,6 +25,8 @@ namespace Cozmo {
     ObjectFamily  GetFamily()  const { return _family; }
     ObjectType    GetType()    const { return _type; }
     
+    ActiveIdentityState GetIdentityState() const { return _identityState; }
+    
     // Overload base IsSameAs() to first compare type and family
     // (Note that we have to overload all if we overload one)
     bool IsSameAs(const ObservableObject& otherObject,
@@ -40,9 +43,10 @@ namespace Cozmo {
     
   protected:
     
-    ObjectFamily _family;
-    ObjectType   _type;
+    ObjectFamily  _family;
+    ObjectType    _type;
     
+    ActiveIdentityState _identityState = ActiveIdentityState::Unidentified;
     
   }; // class ObservableObject
   
@@ -78,7 +82,6 @@ namespace Cozmo {
     return IsSameAs(otherObject, distThreshold, angleThreshold,
                     Tdiff, angleDiff);
   }
-  
   
 } // namespace Cozmo
 } // namespace Anki
