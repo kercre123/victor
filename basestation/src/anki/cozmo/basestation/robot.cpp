@@ -350,7 +350,7 @@ namespace Anki {
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
-      _hasMovedSinceLocalization = _isMoving || _isPickedUp;
+      _hasMovedSinceLocalization |= _isMoving || _isPickedUp;
       
       Pose3d newPose;
       
@@ -1538,16 +1538,6 @@ namespace Anki {
       // will work correctly
       Pose3d robotPoseAtObsTime = posePtr->GetPose();
       robotPoseAtObsTime.SetParent(_worldOrigin);
-      
-      /*
-       // Get computed Robot pose at the time the mat was observed (note that this
-       // also makes the pose have the robot's current world origin as its parent
-       Pose3d robotPoseAtObsTime;
-       if(robot->GetComputedPoseAt(matSeen->GetLastObservedTime(), robotPoseAtObsTime) != RESULT_OK) {
-       PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.CouldNotComputeHistoricalPose", "Time %d\n", matSeen->GetLastObservedTime());
-       return false;
-       }
-       */
       
       // Get the pose of the robot with respect to the observed mat piece
       Pose3d robotPoseWrtObject;
