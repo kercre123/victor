@@ -4,96 +4,104 @@
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }
   ], 
@@ -102,96 +110,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }
   ], 
@@ -200,96 +216,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }
   ], 
@@ -298,96 +322,104 @@
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }
   ], 
@@ -396,96 +428,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }
   ], 
@@ -494,96 +534,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": false
     }
   ], 
@@ -592,96 +640,104 @@
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }
   ], 
@@ -690,96 +746,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }
   ], 
@@ -788,96 +852,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": false, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": false, 
       "vertical": true
     }
   ], 
@@ -886,96 +958,104 @@
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }
   ], 
@@ -984,96 +1064,104 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": ""
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }
   ], 
@@ -1082,96 +1170,210 @@
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "G", 
           "right": ""
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": true, 
       "vertical": true
     }, 
     {
       "blocks": [
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }, 
         {
           "back": "G", 
+          "facing_cozmo": true, 
           "front": "", 
           "left": "G", 
           "right": "G"
         }
       ], 
-      "facing_cozmo": true, 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 013": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
       "vertical": true
     }
   ]
