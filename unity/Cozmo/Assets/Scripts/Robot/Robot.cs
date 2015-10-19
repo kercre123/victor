@@ -443,7 +443,7 @@ public class Robot : IDisposable {
     }
   }
 
-  public void ClearSeenObjects() {
+  public void ClearVisibleObjects() {
     for (int i = 0; i < visibleObjects.Count; ++i) {
       if (visibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
         visibleObjects.RemoveAt(i--);
@@ -451,7 +451,6 @@ public class Robot : IDisposable {
     }
   }
 
-  //bool wasLoc = false;
   public void UpdateInfo(G2U.RobotState message) {
     headAngle_rad = message.headAngle_rad;
     poseAngle_rad = message.poseAngle_rad;
@@ -511,11 +510,10 @@ public class Robot : IDisposable {
 
       AddObservedObject(knownObject, message);
     }
-      
-    // HACK: This is to solve an edge case where there is a partially observed object but no
-    // actual observed object so the markersVisible list is not being properly cleared since
-    // ObservedNothing is not being sent from engine.
-    ClearSeenObjects();
+
+    // check to see if we haven't seen some visible objects in a while
+    // and clear them out if we haven't.
+    ClearVisibleObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {

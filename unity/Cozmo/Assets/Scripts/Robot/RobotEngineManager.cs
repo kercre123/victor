@@ -423,7 +423,7 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     
     if (current.seenObjects.Count == 0 && !current.isBusy) {
-      current.ClearSeenObjects();
+      current.ClearVisibleObjects();
     }
   }
 
@@ -702,7 +702,7 @@ public class RobotEngineManager : MonoBehaviour {
       }
 
       texture.LoadImage(jpegArray);
-      current.ClearSeenObjects();
+      current.ClearVisibleObjects();
 
       if (RobotImage != null) {
         RobotImage(sprite);
@@ -784,7 +784,7 @@ public class RobotEngineManager : MonoBehaviour {
 
       texture.SetPixels32(color32Array);
       texture.Apply(false);
-      current.ClearSeenObjects();
+      current.ClearVisibleObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
       }
@@ -815,7 +815,7 @@ public class RobotEngineManager : MonoBehaviour {
       ResetTexture(dim.width, dim.height, TextureFormat.RGB24);
 
       texture.LoadImage(jpegArray);
-      current.ClearSeenObjects();
+      current.ClearVisibleObjects();
       if (RobotImage != null) {
         RobotImage(sprite);
       }
