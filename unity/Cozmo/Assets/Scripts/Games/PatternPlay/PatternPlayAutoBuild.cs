@@ -11,7 +11,7 @@ public class PatternPlayAutoBuild {
   float idealViewAngle = 0.0f;
 
   // the index 0 object should always be the anchor object.
-  public List<ObservedObject> neatList = new List<ObservedObject>();
+  List<ObservedObject> neatList = new List<ObservedObject>();
 
   public void PickNewTargetPattern() {
 
@@ -72,6 +72,20 @@ public class PatternPlayAutoBuild {
     return objectHeld;
   }
 
+  public Vector3 FindPlaceTarget() {
+    if (neatList.Count == 0) {
+      return controller.GetRobot().WorldPosition + controller.GetRobot().Forward * 40.0f;
+    }
+    else if (neatList.Count == 1) {
+      // there is an anchor block. let's put it to the right of the block.
+      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
+    }
+    else {
+      // there are two blocks. let's put it to the left of the anchor (first) block.
+      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
+    }
+  }
+
   public void PlaceBlockSuccess() {
     neatList.Add(objectHeld);
     if (neatList.Count == 1) {
@@ -93,12 +107,16 @@ public class PatternPlayAutoBuild {
     }
   }
 
+  public void ClearNeatList() {
+    neatList.Clear();
+  }
+
   public void SetBlockLightsToPattern(int blockID) {
     controller.SetPatternOnBlock(blockID, targetPattern.blocks[0].NumberOfLightsOn());
   }
 
   private void ComputeIdealViewPose() {
     idealViewPosition = neatList[0].WorldPosition + neatList[0].Forward * 130.0f;
-
+    idealViewAngle = Mathf.PI;
   }
 }

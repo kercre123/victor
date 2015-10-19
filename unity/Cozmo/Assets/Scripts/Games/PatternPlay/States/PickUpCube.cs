@@ -14,6 +14,9 @@ public class PickUpCube : State {
 
     ObservedObject targetObject = patternPlayAutoBuild.GetClosestAvailableBlock();
 
+    // it is possible that since we thought there were seenBlocks that they
+    // have been dirtied since then. If there are no available blocks
+    // anymore then we should go look for more.
     if (targetObject == null) {
       stateMachine.SetNextState(new LookForCubes());
       patternPlayAutoBuild.SetObjectHeld(null);

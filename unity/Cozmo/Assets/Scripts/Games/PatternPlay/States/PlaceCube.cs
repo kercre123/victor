@@ -12,13 +12,9 @@ public class PlaceCube : State {
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
 
-    Vector3 placeTarget = FindPlaceTarget();
+    Vector3 placeTarget = patternPlayAutoBuild.FindPlaceTarget();
 
     robot.PlaceObjectOnGround(placeTarget, 0.0f, false, false, PlaceDone);
-  }
-
-  Vector3 FindPlaceTarget() {
-    return Vector3.zero;
   }
 
   void PlaceDone(bool success) {

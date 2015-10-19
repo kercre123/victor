@@ -7,13 +7,15 @@ public class LookAtPatternConstruction : State {
   float arrivedPoseTime = 0.0f;
 
   PatternPlayController patternPlayController = null;
+  PatternPlayAutoBuild patternPlayAutoBuild = null;
 
   public override void Enter() {
     base.Enter();
 
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
-
-    robot.GotoPose(0.0f, 0.0f, 0.0f, ArrivedPose, false, false);
+    patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+    Vector3 idealViewPos = patternPlayAutoBuild.IdealViewPosition();
+    robot.GotoPose(idealViewPos.x, idealViewPos.y, patternPlayAutoBuild.IdealViewAngle(), ArrivedPose, false, false);
   }
 
   public override void Update() {
@@ -25,10 +27,10 @@ public class LookAtPatternConstruction : State {
         }
       }
       else {
-        // check to see if blocks are in the right place
-
+        // this is not the right pattern... reset the neat list
+        patternPlayAutoBuild.ClearNeatList();
+        stateMachine.SetNextState(new LookForCubes());
       }
-
     }
   }
 
