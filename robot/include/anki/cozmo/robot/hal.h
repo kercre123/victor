@@ -417,7 +417,7 @@ namespace Anki
       void SetHeadlights(bool state);
 
       // Check cliff sensor status
-      bool GetCliffStatus();
+      bool IsCliffDetected();
 
 // #pragma mark --- Face ---
       /////////////////////////////////////////////////////////////////////
