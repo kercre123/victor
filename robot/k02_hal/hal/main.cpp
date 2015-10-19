@@ -65,7 +65,9 @@ int main (void)
 
   TimerInit();
   PowerInit();
-  I2CInit();
+
+  i2c_init();
+  //I2CInit();
 
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i)

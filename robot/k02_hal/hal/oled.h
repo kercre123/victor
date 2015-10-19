@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #ifndef OLED_H
 #define OLED_H
 
@@ -47,6 +49,17 @@
 #define VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29
 #define VERTICAL_AND_LEFT_HORIZONTAL_SCROLL 0x2A
 
+static const int MAX_QUEUE = 16;
+
+typedef void (*i2c_callback)(const void *data, int count);
+
+enum I2C_Mode {
+  I2C_DIR_READ  = 0,
+  I2C_DIR_WRITE = 1,
+  I2C_SEND_STOP = 2
+};
+
 void i2c_init(void);
+bool i2c_cmd(int mode, uint8_t *bytes, int len, i2c_callback cb);
 
 #endif
