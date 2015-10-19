@@ -25,6 +25,7 @@ SUBDIRS=    \
 	hal    \
 	driver  \
   transport \
+  clad \
   application
 endif # } PDIR
 
@@ -49,6 +50,7 @@ COMPONENTS_eagle.app.v6 = \
 	hal/libuserhal.a  \
 	driver/libdriver.a \
   transport/libtransport.a \
+  clad/libclad.a \
   application/libapplication.a
 
 LINKFLAGS_eagle.app.v6 = \
