@@ -81,6 +81,7 @@ public class PatternPlayAutoBuild {
       return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
     }
     else {
+      // there are two blocks. let's put it to the left of the anchor (first) block.
       return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
     }
   }
@@ -104,6 +105,10 @@ public class PatternPlayAutoBuild {
     if (movedIndex != -1) {
       neatList.RemoveAt(movedIndex);
     }
+  }
+
+  public void ClearNeatList() {
+    neatList.Clear();
   }
 
   public void SetBlockLightsToPattern(int blockID) {

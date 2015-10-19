@@ -27,10 +27,10 @@ public class LookAtPatternConstruction : State {
         }
       }
       else {
-        // check to see if blocks are in the right place
-
+        // this is not the right pattern... reset the neat list
+        patternPlayAutoBuild.ClearNeatList();
+        stateMachine.SetNextState(new LookForCubes());
       }
-
     }
   }
 
