@@ -183,8 +183,17 @@ public class PatternPlayController : GameController {
 
   }
 
+  private void DebugObjectTracking() {
+    Debug.Log("visible: " + robot.visibleObjects.Count);
+    Debug.Log("seen:    " + robot.seenObjects.Count);
+    Debug.Log("dirty:   " + robot.dirtyObjects.Count);
+    Debug.Log("------------------------------");
+  }
+
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
+
+    //DebugObjectTracking();
 
     // inputs for setting block lights
     KeyboardBlockCycle();
