@@ -6,149 +6,146 @@
 #include "hal/i2c.h"
 #include "MK02F12810.h"
 
+// Internal Settings
+typedef struct {
+  int flags;
+  i2c_callback cb;
+  
+  void* data;
+  int count;
+} I2C_Queue;
+
+static int _fifo_start;
+static int _fifo_end;
+static int _fifo_count;
+
+static I2C_Queue i2c_queue[MAX_QUEUE];
+
+static bool _active;
+
+// HAL
 namespace Anki
 {
   namespace Cozmo
   {
     namespace HAL
     {
-      // I2C pins
-      GPIO_PIN_SOURCE(SDA, PTB, 1);
-      GPIO_PIN_SOURCE(SCL, PTE, 24);
+      // Start I2C bus stuff
+      static inline uint8_t *next_byte(bool dequeue = true) {
+        I2C_Queue *active = &i2c_queue[_fifo_end];
 
-      // Set up I2C hardware and stack
-      void I2CInit(void)
-      {
-        // Set up pins
-        GPIO_SET(GPIO_SCL, PIN_SCL);        
-        GPIO_OUT(GPIO_SCL, PIN_SCL);
-        SOURCE_SETUP(GPIO_SCL, SOURCE_SCL, SourceGPIO | SourceOpenDrain | SourcePullUp);
-
-        GPIO_SET(GPIO_SDA, PIN_SDA);
-        GPIO_OUT(GPIO_SDA, PIN_SDA);
-        SOURCE_SETUP(GPIO_SDA, SOURCE_SDA, SourceGPIO | SourceOpenDrain | SourcePullUp);
+        uint8_t *data = (uint8_t*)active->data;
+        active->data = data+1;
+        if (dequeue) active->count--;
+        return data;
       }
 
-      // Soft I2C stack, borrowed from Arduino (BSD license)
-      static void DriveSCL(u8 bit)
-      {
-        if (bit)
-          GPIO_SET(GPIO_SCL, PIN_SCL);
-        else
-          GPIO_RESET(GPIO_SCL, PIN_SCL);
+      static inline void do_transaction(bool dequeue) {
+        I2C_Queue *active = &i2c_queue[_fifo_end];
 
-        MicroWait(2);
+        if (active->flags & I2C_DIR_WRITE) {
+          I2C0_C1 |= I2C_C1_TX_MASK | I2C_C1_MST_MASK ;
+          I2C0_D = *next_byte();
+        } else {
+          I2C0_C1 = (I2C0_C1 & ~I2C_C1_TX_MASK) | I2C_C1_MST_MASK;
+          *next_byte(dequeue) = I2C0_D;
+        }
+        _active = true;
       }
 
-      static void DriveSDA(u8 bit)
-      {
-        if (bit)
-          GPIO_SET(GPIO_SDA, PIN_SDA);
-        else
-          GPIO_RESET(GPIO_SDA, PIN_SDA);
-
-        MicroWait(2);
-      }
-
-      // Read SDA bit by allowing it to float for a while
-      // Make sure to start reading the bit before the clock edge that needs it
-      static u8 ReadSDA(void)
-      {
-        GPIO_SET(GPIO_SDA, PIN_SDA);
-        MicroWait(2);
-        return !!(GPIO_READ(GPIO_SDA) & PIN_SDA);
-      }
-
-      static u8 Read(u8 last)
-      {
-        u8 b = 0, i;
-
-        for (i = 0; i < 8; i++)
-        {
-          b <<= 1;
-          ReadSDA();
-          DriveSCL(1);
-          b |= ReadSDA();
-          DriveSCL(0);
+      // I2C calls
+      bool I2CCmd(int mode, uint8_t *bytes, int len, i2c_callback cb) {
+        // Queue is full.  Sorry 'bout it.
+        if (_fifo_count >= MAX_QUEUE) {
+          return false;
         }
 
-        // send Ack or Nak
-        if (last)
-          DriveSDA(1);
-        else
-          DriveSDA(0);
+        NVIC_DisableIRQ(I2C0_IRQn);
+        I2C_Queue *active = &i2c_queue[_fifo_start++];
+        if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
+        _fifo_count++;
+        
+        active->cb = cb;
+        active->count = len;
+        active->data = bytes;
+        active->flags = mode;
 
-        DriveSCL(1);
-        DriveSCL(0);
-        DriveSDA(1);
-
-        return b;
-      }
-
-      // Issue a Stop condition
-      static void Stop(void)
-      {
-        DriveSDA(0);
-        DriveSCL(1);
-        DriveSDA(1);
-      }
-
-      // Write byte and return true for Ack or false for Nak
-      static u8 Write(u8 b)
-      {
-        u8 m;
-        // Write byte
-        for (m = 0x80; m != 0; m >>= 1)
-        {
-          DriveSDA(m & b);
-
-          DriveSCL(1);
-          //if (m == 1)
-          //  ReadSDA();  // Let SDA fall prior to last bit
-          DriveSCL(0);
+        if (!_active) {
+          do_transaction(false);
         }
 
-        DriveSCL(1);
-        b = ReadSDA();
-        DriveSCL(0);
-
-        return b;
+        NVIC_EnableIRQ(I2C0_IRQn);
+        
+        return true;
       }
 
-      // Issue a Start condition for I2C address with Read/Write bit
-      static u8 Start(u8 addressRW)
-      {
-        DriveSDA(0);
-        DriveSCL(0);
-
-        return Write(addressRW);
+      void I2CRestart(void) {
+        // THIS WILL FLAG LOOP FOR SAFE TO RUN
       }
 
-      // Read a register - wait for completion
-      // @param addr 7-bit I2C address (not shifted left)
-      // @param reg 8-bit register
-      int I2CRead(u8 addr, u8 reg)
+      void I2CInit()
       {
-        int val;
-        Start(addr << 1);       // Base address is Write (for writing address)
-        Write(reg);
-        Stop();
-        Start((addr << 1) + 1); // Base address + 1 is Read (for Reading address)
-        val = Read(1);          // 1 for 'last Read'
-        Stop();
-        return val;
-      }
+        // Clear our FIFO
+        _fifo_start = 0;
+        _fifo_end = 0;
+        _fifo_count = 0;
 
-      // Write a register - wait for completion
-      // @param addr 7-bit I2C address (not shifted left)
-      // @param reg 8-bit register
-      void I2CWrite(u8 addr, u8 reg, u8 val)
-      {
-        Start(addr << 1);    // Base address is Write
-        Write(reg);
-        Write(val);
-        Stop();
+        _active = false;
+       
+        // Enable clocking on I2C, PortB, PortE, and DMA
+        SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK;
+        SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTE_MASK;
+
+        // Configure port mux for i2c
+        PORTB_PCR1 = PORT_PCR_MUX(2);   //I2C0_SDA
+        PORTE_PCR24 = PORT_PCR_MUX(5);  //I2C0_SCL
+
+        // Configure i2c
+        I2C0_F  = I2C_F_ICR(0x0D) | I2C_F_MULT(1);
+        I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK;
+        
+        // Enable IRQs
+        NVIC_SetPriority(I2C0_IRQn, 3);
+        NVIC_EnableIRQ(I2C0_IRQn);
       }
     }
+  }
+}
+
+extern "C"
+void I2C0_IRQHandler(void) {
+  using namespace Anki::Cozmo::HAL;
+  
+  // Clear interrupt
+  I2C0_S |= I2C_S_IICIF_MASK;  
+  I2C_Queue *active = &i2c_queue[_fifo_end];
+
+  if (!_active) { return ; }
+  
+  // Continue down current chain
+  if (active->count > 0) {
+    do_transaction(true);
+    return ;
+  }
+  
+  // Dequeue FIFO
+  if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
+
+  // Tell HAL we completed
+  if (active->cb) {
+    active->cb(active->data);
+  }
+
+  // Send stop
+  if (active->flags & I2C_SEND_STOP) {
+    I2C0_C1 = I2C0_C1 & ~(I2C_C1_TX_MASK | I2C_C1_MST_MASK);
+    Anki::Cozmo::HAL::MicroWait(1);
+  }
+
+  // Dequeue transaction when available
+  if (--_fifo_count <= 0) {
+    _active = false;
+  } else {
+    do_transaction(false);
   }
 }

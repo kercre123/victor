@@ -43,35 +43,28 @@ namespace Anki
   }
 }
 
-void hardware_init(void)
+int main (void)
 {
+  using namespace Anki::Cozmo::HAL;
+  
+  // Power up all ports
   SIM_SCGC5 |= 
     SIM_SCGC5_PORTA_MASK |
     SIM_SCGC5_PORTB_MASK |
     SIM_SCGC5_PORTC_MASK |
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
-}
 
-int main (void)
-{
-  using namespace Anki::Cozmo::HAL;
-  
-  hardware_init();
   DebugInit();
-
-  // UART is at 800kbps until we sync - why bother?
-  //DebugPrintf("\r\nHeadboard 4.1 is booting.\n\n\r");
-
   TimerInit();
   PowerInit();
-
-  i2c_init();
-  //I2CInit();
-
+  I2CInit();
+  //OLEDInit();
+  
   // Wait for Espressif to boot
-  for (int i=0; i<2; ++i)
-    Anki::Cozmo::HAL::MicroWait(1000000);
+  for (int i=0; i<2; ++i) {
+    //Anki::Cozmo::HAL::MicroWait(1000000);
+  }
 
   // Switch to 10MHz external reference to enable 100MHz clock
   MCG_C1 &= ~MCG_C1_IREFS_MASK;
@@ -80,9 +73,9 @@ int main (void)
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
+  //OLEDFlip();
   SPIInit();
   //DacInit();
-  //i2c_init();
   //UartInit();
 
   CameraInit();

@@ -136,6 +136,36 @@ namespace Anki
       int JPEGCompress(u8* out, u8* in, int pitch);
       int JPEGEnd(u8* out);
 #endif
+
+      static const uint8_t CAMERA_READ_CMD_1[] = {I2C_ADDR, 0xf0};
+      static const uint8_t CAMERA_READ_CMD_2[] = {I2C_ADDR, 0xf1};
+      static uint8_t init_value_1, init_value_2;
+
+      static void InitDMA();
+      static void initI2C(void* last) {
+        static uint8_t writeCmd[3] = { I2C_ADDR };
+        static uint8_t* initCode;
+        
+        if (last != writeCmd) {
+          initCode = (uint8_t*) CAM_SCRIPT;
+        }
+        
+        if (initCode == CAM_SCRIPT + sizeof(CAM_SCRIPT)) {
+          // TODO: Check that the GPIOs are okay
+          //for (u8 i = 1; i; i <<= 1)
+          //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
+          
+          // TODO: COMMENT THIS SHIT OUT WHEN IT IS NESSESARY
+          //InitDMA();
+          return ;
+        }
+        
+        // Read ID regs to get I2C state machine into proper state
+        writeCmd[1] = *(initCode++);
+        writeCmd[2] = *(initCode++);
+        initCode += 2;
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, writeCmd, sizeof(writeCmd), initI2C);
+      }
       
       // Set up camera 
       static void InitCam()
@@ -149,21 +179,11 @@ namespace Anki
         GPIO_RESET(GPIO_PWDN, PIN_PWDN);
         MicroWait(50);
         GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
-
-        // Read ID regs to get I2C state machine into proper state
-        I2CRead(I2C_ADDR, 0xf0);
-        I2CRead(I2C_ADDR, 0xf1);
-        
-        // Write the configuration registers            
-        const u8* p = CAM_SCRIPT;
-        while (*p) {
-          I2CWrite(I2C_ADDR, p[0], p[1]);
-          p += 2;
-        }
-        
-        // TODO: Check that the GPIOs are okay
-        //for (u8 i = 1; i; i <<= 1)
-        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));           
+          
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)CAMERA_READ_CMD_1, sizeof(CAMERA_READ_CMD_1), NULL);
+        I2CCmd(I2C_DIR_READ | I2C_SEND_STOP, &init_value_1, sizeof(init_value_1), NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)CAMERA_READ_CMD_2, sizeof(CAMERA_READ_CMD_2), NULL);
+        I2CCmd(I2C_DIR_READ | I2C_SEND_STOP, &init_value_2, sizeof(init_value_2), initI2C);
       }
       
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
@@ -206,7 +226,6 @@ namespace Anki
         
         InitIO();
         InitCam();
-        InitDMA();
         
         // Wait for everything to sync
         while (!timingSynced_)
