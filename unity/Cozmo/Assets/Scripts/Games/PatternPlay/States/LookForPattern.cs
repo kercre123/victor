@@ -38,7 +38,7 @@ public class LookForPattern : State {
     }
 
     if (hasVerticalBlock && !lastFrameHasVerticalBlock) {
-      robot.SetHeadAngle(0.2f);
+      robot.SetHeadAngle(0.3f);
     }
 
     if (!hasVerticalBlock && lastFrameHasVerticalBlock) {

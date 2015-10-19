@@ -92,7 +92,7 @@ public class PatternPlayController : GameController {
   public bool HasVerticalBlock() {
     for (int i = 0; i < robot.visibleObjects.Count; ++i) {
       Vector3 rel = robot.visibleObjects[i].WorldPosition - robot.WorldPosition;
-      if (rel.z > 20.0f) {
+      if (rel.z > 35.0f) {
         return true;
       }
     }
