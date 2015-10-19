@@ -749,7 +749,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
+  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
     PickAndPlaceObjectMessage.objectID = selectedObject;
     PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -760,6 +760,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
+    }
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
