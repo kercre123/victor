@@ -495,11 +495,10 @@ public class Robot : IDisposable {
     }
   }
 
-  public void UpdateDirtyObject(ObservedObject dirty) {
-    if (dirtyObjects.Contains(dirty)) {
-      return;
-    }
-    else {
+  public void UpdateDirtyList(ObservedObject dirty) {
+    seenObjects.Remove(dirty);
+
+    if (!dirtyObjects.Contains(dirty)) {
       dirtyObjects.Add(dirty);
     }
   }
@@ -551,6 +550,9 @@ public class Robot : IDisposable {
       
       seenObjects.Add(knownObject);
       newBlock = true;
+    }
+    else {
+      dirtyObjects.Remove(knownObject);
     }
 
     Vector3 oldPos = knownObject.WorldPosition;
