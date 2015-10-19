@@ -257,39 +257,6 @@ public class Robot : IDisposable {
   private readonly Predicate<ObservedObject> IsNotInZRange_callback;
   private readonly Comparison<ObservedObject> SortByDistance_callback;
   private const float Z_RANGE_LIMIT = 2f * CozmoUtil.BLOCK_LENGTH_MM;
-  
-  // Note: Instantiating delegates and List<T>.FindAll both allocate memory.
-  // May want to change before releasing in production.
-  // It's fine for prototyping.
-  public List<ObservedObject> pertinentObjects {
-    get {
-      if (pertinenceStamp == Time.frameCount)
-        return _pertinentObjects;
-      pertinenceStamp = Time.frameCount;
-      
-      _pertinentObjects.Clear();
-      
-      switch (observedObjectListType) {
-      case ObservedObjectListType.MARKERS_SEEN: 
-        _pertinentObjects.AddRange(visibleObjects);
-        break;
-      case ObservedObjectListType.OBSERVED_RECENTLY: 
-        _pertinentObjects.AddRange(seenObjects);
-        break;
-      case ObservedObjectListType.KNOWN: 
-        _pertinentObjects.AddRange(seenObjects);
-        break;
-      case ObservedObjectListType.KNOWN_IN_RANGE: 
-        _pertinentObjects.AddRange(seenObjects);
-        _pertinentObjects.RemoveAll(IsNotInRange_callback);
-        break;
-      }
-
-      _pertinentObjects.RemoveAll(IsNotInZRange_callback);
-      _pertinentObjects.Sort(SortByDistance_callback);
-      return _pertinentObjects;
-    }
-  }
 
   // er, should be 5?
   private const float MaxVoltage = 5.0f;

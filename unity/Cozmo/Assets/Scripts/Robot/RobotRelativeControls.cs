@@ -534,10 +534,10 @@ public class RobotRelativeControls : MonoBehaviour {
   void CheckSwapTargetLock(Vector2 direction) {
     if (direction.sqrMagnitude == 0f)
       return; 
-    if (robot != null && robot.pertinentObjects.Count <= 1)
+    if (robot != null && robot.seenObjects.Count <= 1)
       return;
 
-    List<ObservedObject> pertinentObjects = robot.pertinentObjects;
+    List<ObservedObject> pertinentObjects = robot.seenObjects;
     ObservedObject oldLock = robot.targetLockedObject;
     Vector3 targetPos = oldLock.WorldPosition;
     Vector3 atTarget = (targetPos - robot.WorldPosition).normalized;
