@@ -155,9 +155,10 @@ namespace Anki {
           
           // Send cliff detected message to engine
           CliffEvent msg;
-          Radians junk;
-          Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, junk);
+          Radians angle;
+          Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, angle);
           msg.detected = true;
+          msg.angle_rad = angle.ToFloat();
           RobotInterface::SendMessage(msg);
           
           _wasCliffDetected = true;

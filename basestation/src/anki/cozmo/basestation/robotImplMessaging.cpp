@@ -291,16 +291,17 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
 
 void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  if (message.GetData().Get_cliffEvent().detected) {
+  CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
+  if (cliffEvent.detected) {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
-                     message.GetData().Get_cliffEvent().x_mm, message.GetData().Get_cliffEvent().y_mm);
+                     cliffEvent.x_mm, cliffEvent.y_mm);
     
-    // Stop whatever we were doing and add a cliff obstacle to the world
+    // Stop whatever we were doing
     GetActionList().Cancel();
     
-    // TODO: Add cliff obstacle
-    // ...
-    
+    // Add cliff obstacle
+    Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, GetWorldOrigin());
+    _blockWorld.AddProxObstacle(cliffPose);
     
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
