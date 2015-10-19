@@ -10,10 +10,29 @@ public class PatternMemory {
   public void Initialize() {
 
     // Load the pattern from the text asset
-    TextAsset patternMemoryJSONStr = Resources.Load("Data/BlockPatterns", typeof(TextAsset)) as TextAsset;
-    Debug.Assert(patternMemoryJSONStr != null);
-    JSONObject patternMemoryObj = new JSONObject(patternMemoryJSONStr.text);
-    Debug.Log(patternMemoryJSONStr);
+    TextAsset patternMemoryAsset = Resources.Load("Data/BlockPatterns", typeof(TextAsset)) as TextAsset;
+    memoryBanks = LoadPatterns(patternMemoryAsset);
+
+    // adding key patterns.
+
+  }
+
+  // Pattern Attributes
+  private static string kPatternAttribVertical = "vertical";
+  private static string kPatternAttribBlocks = "blocks";
+
+  //Block Attributes
+  private static string kBlockAttribFront = "front";
+  private static string kBlockAttribBack = "back";
+  private static string kBlockAttribLeft = "left";
+  private static string kBlockAttribRight = "right";
+  private static string kBlockAttribFacingCozmo = "facing_cozmo";
+
+  private List<MemoryBank> LoadPatterns(TextAsset asset) {
+    List<MemoryBank> result = new List<MemoryBank>();
+    Debug.Assert(asset != null);
+    JSONObject patternMemoryObj = new JSONObject(asset.text);
+    Debug.Log(asset);
     // Unpack the patterns
     Debug.Assert(patternMemoryObj.IsObject);
     foreach (string key in patternMemoryObj.keys) {
@@ -22,28 +41,25 @@ public class PatternMemory {
       Debug.Assert(bankObj.IsArray);
       foreach (JSONObject pattern in bankObj.list) {
         BlockPattern curPattern = new BlockPattern();
-        curPattern.verticalStack = pattern["vertical"].b;
-        curPattern.facingCozmo = pattern["facing_cozmo"].b;
-        Debug.Assert(pattern["blocks"].IsArray);
-        foreach (JSONObject blockData in pattern["blocks"].list) {
+        curPattern.verticalStack = pattern[kPatternAttribVertical].b;
+        curPattern.facingCozmo = pattern[kPatternAttribBlocks].b;
+        Debug.Assert(pattern[kPatternAttribBlocks].IsArray);
+        foreach (JSONObject blockData in pattern[kPatternAttribBlocks].list) {
           Debug.Assert(blockData.IsObject);
           BlockLights curBlock = new BlockLights();
-          curBlock.front = (blockData["front"].str != "");
-          curBlock.back = (blockData["back"].str != "");
-          curBlock.left = (blockData["left"].str != "");
-          curBlock.right = (blockData["right"].str != "");
+          curBlock.front = (blockData[kBlockAttribFront].str != "");
+          curBlock.back = (blockData[kBlockAttribBack].str != "");
+          curBlock.left = (blockData[kBlockAttribLeft].str != "");
+          curBlock.right = (blockData[kBlockAttribRight].str != "");
+          curBlock.facing_cozmo = blockData[kBlockAttribFacingCozmo].b;
           curPattern.blocks.Add(curBlock);
         }
         bank.Add(curPattern);
-        // currently these two are required at the pattern memory layer.
-        bank.verticalStack = curPattern.verticalStack;
-        bank.facingCozmo = curPattern.facingCozmo;
+        DAS.Info("PatternMemory.Init", "Pattern Added for bank: " + key + " hash = " + curPattern.GetHashCode());
       }
-      memoryBanks.Add(bank);
+      result.Add(bank);
     }
-
-    // adding key patterns.
-
+    return result;
   }
 
   public List<MemoryBank> GetMemoryBanks() {
@@ -52,6 +68,7 @@ public class PatternMemory {
 
   public void AddSeen(BlockPattern pattern) {
     // Seems like this would be a good point to return (Seen/ New / Not_A_Pattern)
+    DAS.Info("PatternMemory.AddSeen", "Seen pattern " + pattern.GetHashCode());
     for (int i = 0; i < memoryBanks.Count; ++i) {
       if (memoryBanks[i].Contains(pattern)) {
         if (memoryBanks[i].TryAddSeen(pattern)) {
@@ -75,6 +92,16 @@ public class PatternMemory {
       }
     }
     return false;
+  }
+
+  // Returns: null if no bank has a given pattern.
+  public MemoryBank GetBankForPattern(BlockPattern pattern) {
+    for (int i = 0; i < memoryBanks.Count; ++i) {
+      if (memoryBanks[i].Contains(pattern)) {
+        return memoryBanks[i];
+      }
+    }
+    return null;
   }
 
 }
