@@ -495,6 +495,15 @@ public class Robot : IDisposable {
     }
   }
 
+  public void UpdateDirtyObject(ObservedObject dirty) {
+    if (dirtyObjects.Contains(dirty)) {
+      return;
+    }
+    else {
+      dirtyObjects.Add(dirty);
+    }
+  }
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
@@ -543,8 +552,7 @@ public class Robot : IDisposable {
       seenObjects.Add(knownObject);
       newBlock = true;
     }
-    
-    
+
     Vector3 oldPos = knownObject.WorldPosition;
 
     knownObject.UpdateInfo(message);
@@ -575,19 +583,12 @@ public class Robot : IDisposable {
     bool newFace = false;
     if (faceObject == null) {
       faceObject = new Face(message);
-
-      //activeBlocks.Add(activeBlock, activeBlock);
       faceObjects.Add(faceObject);
       newFace = true;
     }
     else {
       faceObject.UpdateInfo(message);
     }
-
-
-    //foreach (Face face in faceObjects) {
-    //	DAS.Debug ("Robot", "face spotted at " + face.WorldPosition.ToString ());
-    //}
 
     if (newFace) {
       if (ObservedObject.SignificantChangeDetected != null)

@@ -377,6 +377,7 @@ public class RobotEngineManager : MonoBehaviour {
       ActiveBlock activeBlock = current.activeBlocks[ID];
 
       activeBlock.Moving(message);
+
     }
   }
 

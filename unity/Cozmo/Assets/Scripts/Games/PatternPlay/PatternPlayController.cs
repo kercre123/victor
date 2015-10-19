@@ -315,13 +315,6 @@ public class PatternPlayController : GameController {
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
- 
-      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
-        if (robot.visibleObjects[i].ID == blockConfig.Key) {
-          enabledColor = Color.white;
-          break;
-        }
-      }
 
       if (blockConfig.Key == currentInputID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {
         enabledColor = Color.green;

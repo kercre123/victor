@@ -40,7 +40,7 @@ public class PatternPlayAutoBuild {
   }
 
   public int AvailableBlocks() {
-    return 0;
+    return controller.GetRobot().seenObjects.Count;
   }
 
   public ObservedObject GetClosestAvailableBlock() {
