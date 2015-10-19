@@ -495,6 +495,14 @@ public class Robot : IDisposable {
     }
   }
 
+  public void UpdateDirtyList(ObservedObject dirty) {
+    seenObjects.Remove(dirty);
+
+    if (!dirtyObjects.Contains(dirty)) {
+      dirtyObjects.Add(dirty);
+    }
+  }
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
@@ -543,8 +551,10 @@ public class Robot : IDisposable {
       seenObjects.Add(knownObject);
       newBlock = true;
     }
-    
-    
+    else {
+      dirtyObjects.Remove(knownObject);
+    }
+
     Vector3 oldPos = knownObject.WorldPosition;
 
     knownObject.UpdateInfo(message);
@@ -575,19 +585,12 @@ public class Robot : IDisposable {
     bool newFace = false;
     if (faceObject == null) {
       faceObject = new Face(message);
-
-      //activeBlocks.Add(activeBlock, activeBlock);
       faceObjects.Add(faceObject);
       newFace = true;
     }
     else {
       faceObject.UpdateInfo(message);
     }
-
-
-    //foreach (Face face in faceObjects) {
-    //	DAS.Debug ("Robot", "face spotted at " + face.WorldPosition.ToString ());
-    //}
 
     if (newFace) {
       if (ObservedObject.SignificantChangeDetected != null)
@@ -748,7 +751,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
+  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
     PickAndPlaceObjectMessage.objectID = selectedObject;
     PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -759,6 +762,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
+    }
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {

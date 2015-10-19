@@ -40,7 +40,7 @@ public class PatternPlayAutoBuild {
   }
 
   public int AvailableBlocks() {
-    return 0;
+    return controller.GetRobot().seenObjects.Count;
   }
 
   public ObservedObject GetClosestAvailableBlock() {
@@ -50,6 +50,7 @@ public class PatternPlayAutoBuild {
     ObservedObject closest = null;
 
     for (int i = 0; i < robot.seenObjects.Count; ++i) {
+      // object is already part of the pattern so skip it.
       if (neatList.Contains(robot.seenObjects[i])) {
         continue;
       }

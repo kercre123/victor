@@ -183,8 +183,17 @@ public class PatternPlayController : GameController {
 
   }
 
+  private void DebugObjectTracking() {
+    Debug.Log("visible: " + robot.visibleObjects.Count);
+    Debug.Log("seen:    " + robot.seenObjects.Count);
+    Debug.Log("dirty:   " + robot.dirtyObjects.Count);
+    Debug.Log("------------------------------");
+  }
+
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
+
+    //DebugObjectTracking();
 
     // inputs for setting block lights
     KeyboardBlockCycle();
@@ -314,13 +323,6 @@ public class PatternPlayController : GameController {
 
       for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
         robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
-      }
- 
-      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
-        if (robot.visibleObjects[i].ID == blockConfig.Key) {
-          enabledColor = Color.white;
-          break;
-        }
       }
 
       if (blockConfig.Key == currentInputID && blockPatternData[blockConfig.Key].moving && Time.time - lastSetTime > 5.0f) {

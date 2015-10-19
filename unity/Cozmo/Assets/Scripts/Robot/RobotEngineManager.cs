@@ -377,6 +377,7 @@ public class RobotEngineManager : MonoBehaviour {
       ActiveBlock activeBlock = current.activeBlocks[ID];
 
       activeBlock.Moving(message);
+      current.UpdateDirtyList(activeBlock);
     }
   }
 
@@ -475,8 +476,7 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotCompletedAction message) {
     if (current == null)
       return;
-
-
+    
     RobotActionType action_type = (RobotActionType)message.actionType;
     bool success = (message.result == ActionResult.SUCCESS) || ((action_type == RobotActionType.PLAY_ANIMATION || action_type == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
     current.seenObjects.Clear();
@@ -484,9 +484,6 @@ public class RobotEngineManager : MonoBehaviour {
 
     current.localBusyTimer = 0f;
 
-  
-    //current.SetHeadAngle();
-    
     if (SuccessOrFailure != null) {
       SuccessOrFailure(success, action_type);
     }

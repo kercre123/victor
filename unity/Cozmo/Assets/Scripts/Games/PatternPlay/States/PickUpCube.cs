@@ -20,7 +20,7 @@ public class PickUpCube : State {
       return;
     }
 
-    robot.PickAndPlaceObject(targetObject);
+    robot.PickAndPlaceObject(targetObject, true, false, PickUpDone);
     patternPlayAutoBuild.SetObjectHeld(targetObject);
   }
 
