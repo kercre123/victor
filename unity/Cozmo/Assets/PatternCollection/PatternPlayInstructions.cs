@@ -18,6 +18,7 @@ public class PatternPlayInstructions : MonoBehaviour {
 
   public void Initialize()
   {
+    _currentInstructionIndex = 0;
     _instructionDisplays.SetScreenIndex (_currentInstructionIndex);
   }
 
