@@ -48,7 +48,7 @@ private:
     };
   
   State _currentState;
-  bool _isInAir = false;
+  bool _cliffDetected = false;
   bool _waitingForAnimComplete = false;
   u32 _animTagToWaitFor = 0;
   

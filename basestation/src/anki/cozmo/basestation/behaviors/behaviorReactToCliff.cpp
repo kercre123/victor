@@ -83,7 +83,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
   {
     case State::Inactive:
     {
-      if (_isInAir)
+      if (_cliffDetected)
       {
         _currentState = State::CliffDetected;
         return Status::Running;
@@ -93,7 +93,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
     case State::CliffDetected:
     {
       static u32 animIndex = 0;
-      // For now we simply rotate through the animations we want to play when picked up
+      // For now we simply rotate through the animations we want to play when cliff detected
       if (!_animReactions.empty())
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
@@ -110,7 +110,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
       if (!_waitingForAnimComplete)
       {
         // If our animation is done and we're not in the air, we're done
-        if (!_isInAir)
+        if (!_cliffDetected)
         {
           _currentState = State::Inactive;
           break; // Jump down to Status::Complete
@@ -152,7 +152,7 @@ void BehaviorReactToCliff::HandleCliffEvent(const AnkiEvent<MessageEngineToGame>
   {
     case MessageEngineToGameTag::CliffEvent:
     {
-      _isInAir = event.GetData().Get_CliffEvent().detected;
+      _cliffDetected = event.GetData().Get_CliffEvent().detected;
       break;
     }
     case MessageEngineToGameTag::RobotCompletedAction:
