@@ -7,13 +7,15 @@ public class LookAtPatternConstruction : State {
   float arrivedPoseTime = 0.0f;
 
   PatternPlayController patternPlayController = null;
+  PatternPlayAutoBuild patternPlayAutoBuild = null;
 
   public override void Enter() {
     base.Enter();
 
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
-
-    robot.GotoPose(0.0f, 0.0f, 0.0f, ArrivedPose, false, false);
+    patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+    Vector3 idealViewPos = patternPlayAutoBuild.IdealViewPosition();
+    robot.GotoPose(idealViewPos.x, idealViewPos.y, patternPlayAutoBuild.IdealViewAngle(), ArrivedPose, false, false);
   }
 
   public override void Update() {
