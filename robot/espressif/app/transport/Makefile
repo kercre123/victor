@@ -36,11 +36,8 @@ endif
 # Required for each makefile to inherit from the parent
 #
 
-ANKI_UTIL := ../../../../tools/anki-util/source/anki
-UTIL_EMBEDDED_TRANSPORT=$(ANKI_UTIL)/utilEmbedded/transport
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
-INCLUDES += -I $(ANKI_UTIL)
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
