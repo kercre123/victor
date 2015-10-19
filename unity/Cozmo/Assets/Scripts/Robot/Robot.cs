@@ -257,39 +257,6 @@ public class Robot : IDisposable {
   private readonly Predicate<ObservedObject> IsNotInZRange_callback;
   private readonly Comparison<ObservedObject> SortByDistance_callback;
   private const float Z_RANGE_LIMIT = 2f * CozmoUtil.BLOCK_LENGTH_MM;
-  
-  // Note: Instantiating delegates and List<T>.FindAll both allocate memory.
-  // May want to change before releasing in production.
-  // It's fine for prototyping.
-  public List<ObservedObject> pertinentObjects {
-    get {
-      if (pertinenceStamp == Time.frameCount)
-        return _pertinentObjects;
-      pertinenceStamp = Time.frameCount;
-      
-      _pertinentObjects.Clear();
-      
-      switch (observedObjectListType) {
-      case ObservedObjectListType.MARKERS_SEEN: 
-        _pertinentObjects.AddRange(visibleObjects);
-        break;
-      case ObservedObjectListType.OBSERVED_RECENTLY: 
-        _pertinentObjects.AddRange(seenObjects);
-        break;
-      case ObservedObjectListType.KNOWN: 
-        _pertinentObjects.AddRange(seenObjects);
-        break;
-      case ObservedObjectListType.KNOWN_IN_RANGE: 
-        _pertinentObjects.AddRange(seenObjects);
-        _pertinentObjects.RemoveAll(IsNotInRange_callback);
-        break;
-      }
-
-      _pertinentObjects.RemoveAll(IsNotInZRange_callback);
-      _pertinentObjects.Sort(SortByDistance_callback);
-      return _pertinentObjects;
-    }
-  }
 
   // er, should be 5?
   private const float MaxVoltage = 5.0f;
@@ -476,7 +443,7 @@ public class Robot : IDisposable {
     }
   }
 
-  public void ClearSeenObjects() {
+  public void ClearVisibleObjects() {
     for (int i = 0; i < visibleObjects.Count; ++i) {
       if (visibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
         visibleObjects.RemoveAt(i--);
@@ -484,7 +451,6 @@ public class Robot : IDisposable {
     }
   }
 
-  //bool wasLoc = false;
   public void UpdateInfo(G2U.RobotState message) {
     headAngle_rad = message.headAngle_rad;
     poseAngle_rad = message.poseAngle_rad;
@@ -544,11 +510,10 @@ public class Robot : IDisposable {
 
       AddObservedObject(knownObject, message);
     }
-      
-    // HACK: This is to solve an edge case where there is a partially observed object but no
-    // actual observed object so the markersVisible list is not being properly cleared since
-    // ObservedNothing is not being sent from engine.
-    ClearSeenObjects();
+
+    // check to see if we haven't seen some visible objects in a while
+    // and clear them out if we haven't.
+    ClearVisibleObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {

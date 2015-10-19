@@ -425,6 +425,8 @@ public class PatternPlayController : GameController {
 
   private void KeyboardBlockCycle() {
     int blockIndex = -1;
+
+    // figure out which block to set
     if (Input.GetKeyDown(KeyCode.Alpha1)) {
       blockIndex = 0;
     }

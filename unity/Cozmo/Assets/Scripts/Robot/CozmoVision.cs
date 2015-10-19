@@ -115,11 +115,11 @@ public class CozmoVision : MonoBehaviour {
   }
 
   protected void UnselectNonObservedObjects() {
-    if (robot == null || robot.pertinentObjects == null)
+    if (robot == null || robot.seenObjects == null)
       return;
 
     for (int i = 0; i < robot.seenObjects.Count; ++i) {
-      if (robot.pertinentObjects.Find(x => x == robot.seenObjects[i]) == null) {
+      if (robot.seenObjects.Find(x => x == robot.seenObjects[i]) == null) {
         robot.seenObjects.RemoveAt(i--);
       }
     }
@@ -133,12 +133,12 @@ public class CozmoVision : MonoBehaviour {
     if (!image.enabled)
       return;
 
-    if (robot == null || robot.pertinentObjects == null)
+    if (robot == null || robot.seenObjects == null)
       return;
     
     for (int i = 0; i < observedObjectBoxes.Count; ++i) {
-      if (robot.pertinentObjects.Count > i) {
-        ObservedObjectSeen(observedObjectBoxes[i], robot.pertinentObjects[i]);
+      if (robot.seenObjects.Count > i) {
+        ObservedObjectSeen(observedObjectBoxes[i], robot.seenObjects[i]);
       }
       else {
         observedObjectBoxes[i].gameObject.SetActive(false);
@@ -356,7 +356,7 @@ public class CozmoVision : MonoBehaviour {
     if (robot == null || robot.isBusy || robot.seenObjects.Count > 0)
       return;
       
-    if (robot.pertinentObjects.Count > 0/*lastObservedObjects.Count*/) {
+    if (robot.seenObjects.Count > 0/*lastObservedObjects.Count*/) {
       Ding(true);
     }
     /*else if( robot.observedObjects.Count < lastObservedObjects.Count )
