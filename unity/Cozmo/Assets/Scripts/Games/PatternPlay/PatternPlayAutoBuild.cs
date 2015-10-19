@@ -72,6 +72,18 @@ public class PatternPlayAutoBuild {
     return objectHeld;
   }
 
+  public Vector3 FindPlaceTarget() {
+    if (neatList.Count == 0) {
+      return controller.GetRobot().WorldPosition + controller.GetRobot().Forward * 40.0f;
+    }
+    else if (neatList.Count == 1) {
+      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
+    }
+    else {
+      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
+    }
+  }
+
   public void PlaceBlockSuccess() {
     neatList.Add(objectHeld);
     if (neatList.Count == 1) {
