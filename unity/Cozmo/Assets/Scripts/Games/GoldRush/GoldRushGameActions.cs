@@ -37,8 +37,8 @@ public class GoldRushGameActions : GameActions {
 
     if (robot.Status(Anki.Cozmo.RobotStatusFlag.IS_CARRYING_BLOCK)) {
       if (goldController.state == GameController.GameState.PRE_GAME) {
-        if (robot.selectedObjects.Count > 0 && buttons.Length > 1)
-          buttons[1].SetMode(ActionButton.Mode.STACK, robot.selectedObjects[0]);
+        if (robot.seenObjects.Count > 0 && buttons.Length > 1)
+          buttons[1].SetMode(ActionButton.Mode.STACK, robot.seenObjects[0]);
       }
 
       if (goldController.inDepositRange || goldController.inExtractRange) {
@@ -52,13 +52,13 @@ public class GoldRushGameActions : GameActions {
     }
     else {
       if (goldController.state == GameController.GameState.PRE_GAME) {
-        if (robot.selectedObjects.Count == 1 && robot.selectedObjects[0].isActive) {
-          buttons[2].SetMode(ActionButton.Mode.PICK_UP, robot.selectedObjects[0], " Extractor", true);
+        if (robot.seenObjects.Count == 1 && robot.seenObjects[0].isActive) {
+          buttons[2].SetMode(ActionButton.Mode.PICK_UP, robot.seenObjects[0], " Extractor", true);
         }
         else {
-          for (int i = 0; i < robot.selectedObjects.Count && i < 2 && i < buttons.Length; ++i) {
-            if (robot.selectedObjects[i].isActive) {
-              buttons[2].SetMode(ActionButton.Mode.PICK_UP, robot.selectedObjects[i], " Extractor", true);
+          for (int i = 0; i < robot.seenObjects.Count && i < 2 && i < buttons.Length; ++i) {
+            if (robot.seenObjects[i].isActive) {
+              buttons[2].SetMode(ActionButton.Mode.PICK_UP, robot.seenObjects[i], " Extractor", true);
             }
           }
         }
@@ -72,7 +72,7 @@ public class GoldRushGameActions : GameActions {
           buttons[2].SetMode(ActionButton.Mode.DROP, null, null, true);
         }
       }
-      else if (robot.selectedObjects.Count > 0) {
+      else if (robot.seenObjects.Count > 0) {
         buttons[2].SetMode(ActionButton.Mode.CANCEL, null);
       }
     }

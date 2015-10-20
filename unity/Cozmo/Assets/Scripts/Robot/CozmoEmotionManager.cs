@@ -17,6 +17,7 @@ public class CozmoEmotionManager : MonoBehaviour {
   private U2G.PlayAnimation PlayAnimationMessage;
   private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
+  private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.GotoPose GotoPoseMessage;
   private U2G.TurnInPlace TurnInPlaceMessage;
   private U2G.FacePose FacePoseMessage;
@@ -79,6 +80,7 @@ public class CozmoEmotionManager : MonoBehaviour {
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
+    SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
     GotoPoseMessage = new U2G.GotoPose();
     TurnInPlaceMessage = new U2G.TurnInPlace();
     FacePoseMessage = new U2G.FacePose();
@@ -190,9 +192,6 @@ public class CozmoEmotionManager : MonoBehaviour {
       QueueSingleAction.position = Anki.Cozmo.QueueActionPosition.NEXT;
     }
 
-
-
-
     RobotEngineManager.instance.Message.QueueSingleAction = QueueSingleAction;
     RobotEngineManager.instance.SendMessage();
   }
@@ -240,6 +239,19 @@ public class CozmoEmotionManager : MonoBehaviour {
       RobotEngineManager.instance.Message.SetIdleAnimation = SetIdleAnimationMessage;
       RobotEngineManager.instance.SendMessage();
     }
+  }
+
+  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues) {
+    if (robot == null)
+      return;
+
+    SetLiveIdleAnimationParametersMessage.paramNames = paramNames;
+    SetLiveIdleAnimationParametersMessage.paramValues = paramValues;
+    SetLiveIdleAnimationParametersMessage.robotID = 1;
+
+    RobotEngineManager.instance.Message.SetLiveIdleAnimationParameters = SetLiveIdleAnimationParametersMessage;
+    RobotEngineManager.instance.SendMessage();
+    
   }
 
   public void SetEmotionReturnToPose(string emotion_state, float x_mm, float y_mm, float rad, bool stopPreviousAnim = false, bool reverse_order = false) {

@@ -13,11 +13,11 @@ public class RobotPleaseLookAtFace : MonoBehaviour {
   public void FaceFace() {
     if (robot != null) {
       
-      for (int i = 0; i < robot.knownObjects.Count; i++) {
-        if (!robot.knownObjects[i].isFace)
+      for (int i = 0; i < robot.  seenObjects.Count; i++) {
+        if (!robot.  seenObjects[i].isFace)
           continue;
         
-        humanHead = robot.knownObjects[i];
+        humanHead = robot.  seenObjects[i];
 
         break;
       }

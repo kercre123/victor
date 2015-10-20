@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.277597 0.119765 -0.953203 0.850039
-  position 0.259241 0.611955 2.26648
+  orientation 0.217326 -0.126546 -0.967861 1.08324
+  position -0.440602 -0.154155 1.93816
 }
 Background {
   skyColor [
@@ -26,32 +26,28 @@ DirectionalLight {
   intensity 0.5
 }
 CozmoMat {
+  showMarkers FALSE
   xSize 2
   ySize 1.5
 }
 LightCube {
-  translation 0 0.135 0.0219969
-  rotation 0 1 0 0
+  translation 0.16 0.135 0.0219934
+  rotation 1 -1.89539e-17 -1.08163e-11 3.67408e-06
 }
 LightCube {
-  translation 0.26 0.295 0.0219969
-  rotation 0 1 0 0
-  ID 1
-}
-LightCube {
-  translation 0.178767 0.228711 0.0219969
-  rotation 0 1 0 0
+  translation 0.238767 -0.001289 0.021993
+  rotation -1 2.14763e-13 2.12e-11 -3.67408e-06
   ID 2
 }
 LightCube {
-  translation 0.15468 0.058776 0.0219969
-  rotation 0 1 0 0
+  translation 0.09468 0.0587759 0.0219932
+  rotation -1 4.29436e-13 -6.22182e-12 -3.67408e-06
   ID 3
 }
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  rotation 0 0 1 1.5708
+  rotation 0 1 0 0
   name "CozmoBot_1"
   usbChannel 10
 }

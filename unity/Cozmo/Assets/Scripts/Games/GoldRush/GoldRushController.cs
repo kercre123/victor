@@ -252,8 +252,8 @@ public class GoldRushController : GameController {
     PlayCountdownAudio(secondsLeft);
 
     if (robot != null) {
-      for (int i = 0; i < robot.knownObjects.Count; i++) {
-        ObservedObject obj = robot.knownObjects[i];
+      for (int i = 0; i < robot.seenObjects.Count; i++) {
+        ObservedObject obj = robot.seenObjects[i];
         if (!obj.isActive)
           goldCollectingObject = obj;
       }
@@ -354,8 +354,8 @@ public class GoldRushController : GameController {
   void RefreshGameProps() {
     if (robot == null)
       return;
-    for (int i = 0; i < robot.knownObjects.Count; i++) {
-      ObservedObject obj = robot.knownObjects[i];
+    for (int i = 0; i < robot.seenObjects.Count; i++) {
+      ObservedObject obj = robot.seenObjects[i];
       if (obj.isActive && goldExtractingObject == null) {
         goldExtractingObject = obj as ActiveBlock;
         //goldExtractingObject.SetLEDs(EXTRACTOR_COLOR, 0, 0xFF, 150, 150); 
@@ -637,8 +637,8 @@ public class GoldRushController : GameController {
   void UpdateReturning(bool auto_returning = false) {
     robot.SetHeadAngle();
     Vector2 home_base_pos = Vector2.zero;
-    if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null) {
-      home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
+    if (goldCollectingObject != null && robot.seenObjects.Find(x => x == goldCollectingObject) != null) {
+      home_base_pos = robot.seenObjects.Find(x => x == goldCollectingObject).WorldPosition;
     }
     Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;
     float distance = (home_base_pos - collector_pos).magnitude;
@@ -658,8 +658,8 @@ public class GoldRushController : GameController {
 
   void UpdateReturned() {
     Vector2 home_base_pos = Vector2.zero;
-    if (goldCollectingObject != null && robot.knownObjects.Find(x => x == goldCollectingObject) != null) {
-      home_base_pos = robot.knownObjects.Find(x => x == goldCollectingObject).WorldPosition;
+    if (goldCollectingObject != null && robot.seenObjects.Find(x => x == goldCollectingObject) != null) {
+      home_base_pos = robot.seenObjects.Find(x => x == goldCollectingObject).WorldPosition;
       DAS.Debug("GoldRushController", "home_base_pos: " + home_base_pos.ToString());
     }
     Vector2 collector_pos = (Vector2)robot.WorldPosition + (Vector2)robot.Forward * CozmoUtil.CARRIED_OBJECT_HORIZONTAL_OFFSET;

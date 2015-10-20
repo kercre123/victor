@@ -3,15 +3,35 @@ using System.Collections;
 
 public class HaveIdeaForPattern : State {
 
+  PatternPlayController patternPlayController = null;
+
+  bool hasTargetToBuild = false;
+
   public override void Enter() {
     base.Enter();
-    // TODO: pick a pattern to build.
-    // TODO: Have idea animation
+
+    DAS.Info("PatternPlayState", "HaveIdeaForPattern");
+
+    // pick a pattern to build
+    patternPlayController = (PatternPlayController)stateMachine.GetGameController();
+    hasTargetToBuild = patternPlayController.GetAutoBuild().PickNewTargetPattern();
+    if (hasTargetToBuild == false) {
+      DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");
+      return;
+    }
+
+    // TODO: Use "have idea" animation
     robot.SendAnimation("shocked", AnimationDone);
   }
 
+  public override void Update() {
+    base.Update();
+    if (!hasTargetToBuild) {
+      stateMachine.SetNextState(new LookForPattern());
+    }
+  }
+
   private void AnimationDone(bool success) {
-    // TODO: go to look for cubes state.
     stateMachine.SetNextState(new LookForCubes());
   }
 }

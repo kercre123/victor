@@ -118,13 +118,13 @@ public class ShakeShakeController : GameController {
 
     // process blue blocks
     if (resettingBlueBlock == false) {
-      for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-        if (blockData.ContainsKey(robot.markersVisibleObjects[i].ID) == false)
+      for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+        if (blockData.ContainsKey(robot.visibleObjects[i].ID) == false)
           continue;
-        if (blockData[robot.markersVisibleObjects[i].ID].currentColor == Color.blue) {
+        if (blockData[robot.visibleObjects[i].ID].currentColor == Color.blue) {
           resettingBlueBlock = true;
-          robot.PickAndPlaceObject(robot.markersVisibleObjects[i]);
-          resettingBlockID = robot.markersVisibleObjects[i].ID;
+          robot.PickAndPlaceObject(robot.visibleObjects[i]);
+          resettingBlockID = robot.visibleObjects[i].ID;
           break;
         }
       }

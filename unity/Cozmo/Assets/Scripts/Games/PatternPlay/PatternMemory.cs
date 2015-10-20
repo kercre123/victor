@@ -9,59 +9,83 @@ public class PatternMemory {
 
   public void Initialize() {
 
-    // adding bank signatures.
-    AddMemoryBankSignature(BankRequirementFlag.FALSE, BankRequirementFlag.FALSE, 1);
-    AddMemoryBankSignature(BankRequirementFlag.FALSE, BankRequirementFlag.FALSE, 2);
-    AddMemoryBankSignature(BankRequirementFlag.FALSE, BankRequirementFlag.FALSE, 3);
-
-    AddMemoryBankSignature(BankRequirementFlag.TRUE, BankRequirementFlag.FALSE, 1);
-    AddMemoryBankSignature(BankRequirementFlag.TRUE, BankRequirementFlag.FALSE, 2);
-    AddMemoryBankSignature(BankRequirementFlag.TRUE, BankRequirementFlag.FALSE, 3);
-
-    AddMemoryBankSignature(BankRequirementFlag.FALSE, BankRequirementFlag.TRUE, 1);
-    AddMemoryBankSignature(BankRequirementFlag.FALSE, BankRequirementFlag.TRUE, 2);
-    AddMemoryBankSignature(BankRequirementFlag.FALSE, BankRequirementFlag.TRUE, 3);
-
-    AddMemoryBankSignature(BankRequirementFlag.TRUE, BankRequirementFlag.TRUE, 1);
-    AddMemoryBankSignature(BankRequirementFlag.TRUE, BankRequirementFlag.TRUE, 2);
-    AddMemoryBankSignature(BankRequirementFlag.TRUE, BankRequirementFlag.TRUE, 3);
-
-    AddMemoryBankSignature(BankRequirementFlag.NOT_REQUIRED, BankRequirementFlag.NOT_REQUIRED, 4);
+    // Load the pattern from the text asset
+    TextAsset patternMemoryAsset = Resources.Load("Data/BlockPatterns", typeof(TextAsset)) as TextAsset;
+    memoryBanks = LoadPatterns(patternMemoryAsset);
 
     // adding key patterns.
 
   }
 
-  private void AddMemoryBankSignature(BankRequirementFlag facingCozmo, BankRequirementFlag verticalStack, int lightCount) {
-    MemoryBankSignature newSignature = new MemoryBankSignature(facingCozmo, verticalStack, lightCount);
-    memoryBanks.Add(new MemoryBank(newSignature));
+  // Pattern Attributes
+  private static string kPatternAttribVertical = "vertical";
+  private static string kPatternAttribBlocks = "blocks";
+
+  //Block Attributes
+  private static string kBlockAttribFront = "front";
+  private static string kBlockAttribBack = "back";
+  private static string kBlockAttribLeft = "left";
+  private static string kBlockAttribRight = "right";
+  private static string kBlockAttribFacingCozmo = "facing_cozmo";
+
+  private List<MemoryBank> LoadPatterns(TextAsset asset) {
+    List<MemoryBank> result = new List<MemoryBank>();
+    Debug.Assert(asset != null);
+    JSONObject patternMemoryObj = new JSONObject(asset.text);
+    Debug.Log(asset);
+    // Unpack the patterns
+    Debug.Assert(patternMemoryObj.IsObject);
+    foreach (string key in patternMemoryObj.keys) {
+      MemoryBank bank = new MemoryBank(key);
+      JSONObject bankObj = patternMemoryObj[key];
+      Debug.Assert(bankObj.IsArray);
+      foreach (JSONObject pattern in bankObj.list) {
+        BlockPattern curPattern = new BlockPattern();
+        curPattern.verticalStack = pattern[kPatternAttribVertical].b;
+        curPattern.facingCozmo = pattern[kPatternAttribBlocks].b;
+        Debug.Assert(pattern[kPatternAttribBlocks].IsArray);
+        foreach (JSONObject blockData in pattern[kPatternAttribBlocks].list) {
+          Debug.Assert(blockData.IsObject);
+          BlockLights curBlock = new BlockLights();
+          curBlock.front = (blockData[kBlockAttribFront].str != "");
+          curBlock.back = (blockData[kBlockAttribBack].str != "");
+          curBlock.left = (blockData[kBlockAttribLeft].str != "");
+          curBlock.right = (blockData[kBlockAttribRight].str != "");
+          curBlock.facing_cozmo = blockData[kBlockAttribFacingCozmo].b;
+          curPattern.blocks.Add(curBlock);
+        }
+        bank.Add(curPattern);
+        DAS.Info("PatternMemory.Init", "Pattern Added for bank: " + key + " hash = " + curPattern.GetHashCode());
+      }
+      result.Add(bank);
+    }
+    return result;
   }
 
   public List<MemoryBank> GetMemoryBanks() {
     return memoryBanks;
   }
 
-  public void Add(BlockPattern pattern) {
-    MemoryBankSignature bankSignature = new MemoryBankSignature(
-                                          RequirementFlagUtil.FromBool(pattern.facingCozmo),
-                                          RequirementFlagUtil.FromBool(pattern.verticalStack), 
-                                          pattern.blocks[0].NumberOfLightsOn());
-
+  public void AddSeen(BlockPattern pattern) {
+    // Seems like this would be a good point to return (Seen/ New / Not_A_Pattern)
+    DAS.Info("PatternMemory.AddSeen", "Seen pattern " + pattern.GetHashCode());
     for (int i = 0; i < memoryBanks.Count; ++i) {
-      
-      if (memoryBanks[i].TryAdd(pattern)) {
-        DAS.Info("MemoryBank", "Pattern Added with signature: " + bankSignature.facingCozmo + " " + bankSignature.verticalStack + " " + bankSignature.lightCount);
-        DAS.Info("MemoryBank", "There are now " + memoryBanks[i].GetSeenPatterns().Count + " patterns in that bank");
+      if (memoryBanks[i].Contains(pattern)) {
+        if (memoryBanks[i].TryAddSeen(pattern)) {
+          DAS.Info("PatternMemory.Add", "Pattern Added for bank: " + memoryBanks[i].name);
+        }
+        else {
+          DAS.Info("PatternMemory.Add", "Pattern already exists in bank: " + memoryBanks[i].name);
+        }
+        DAS.Info("PatternMemory.Add", "There are now " + memoryBanks[i].GetSeenPatterns().Count + " patterns in that bank");
         return;
       }
-
     }
 
-    DAS.Error("PatternPlayController", "Invalid pattern signature in memory bank");
-
+    DAS.Info("PatternMemory.Add.InvalidPattern", "pattern does not match any registered in PatternMemory");
   }
 
-  public bool Contains(BlockPattern pattern) {
+  public bool ContainsSeen(BlockPattern pattern) {
     for (int i = 0; i < memoryBanks.Count; ++i) {
       if (memoryBanks[i].GetSeenPatterns().Contains(pattern)) {
         return true;
@@ -69,5 +93,64 @@ public class PatternMemory {
     }
     return false;
   }
+
+  // Returns: null if no bank has a given pattern.
+  public MemoryBank GetBankForPattern(BlockPattern pattern) {
+    for (int i = 0; i < memoryBanks.Count; ++i) {
+      if (memoryBanks[i].Contains(pattern)) {
+        return memoryBanks[i];
+      }
+    }
+    return null;
+  }
+
+  public HashSet<BlockPattern> GetAllPatterns() {
+    HashSet<BlockPattern> allPatterns = new HashSet<BlockPattern>();
+    for (int i = 0; i < memoryBanks.Count; i++) {
+      allPatterns.UnionWith(memoryBanks[i].patterns);
+    }
+    return allPatterns;
+  }
+
+  public HashSet<BlockPattern> GetAllSeenPatterns() {
+    HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
+    for (int i = 0; i < memoryBanks.Count; i++) {
+      seenPatterns.UnionWith(memoryBanks[i].GetSeenPatterns());
+    }
+    return seenPatterns;
+  }
+
+  public HashSet<BlockPattern> GetAllUnseenPatterns() {
+    HashSet<BlockPattern> seenPatterns = GetAllSeenPatterns();
+    HashSet<BlockPattern> result = GetAllPatterns();
+    result.ExceptWith(seenPatterns);
+    return result;
+  }
+
+  public BlockPattern GetAnUnseenPattern() {
+    HashSet<BlockPattern> allUnseenPatterns = GetAllUnseenPatterns();
+    int i = Random.Range(0, allUnseenPatterns.Count);
+    HashSet<BlockPattern>.Enumerator e = allUnseenPatterns.GetEnumerator();
+    while (i > 0) {
+      // these will be in a random order.
+      // and we'll also walk a random number forward, so it should be pretty random.
+      e.MoveNext();
+      --i;
+    }
+    return e.Current;
+  }
+
+  public BlockPattern GetAnUnseenPattern(System.Predicate<BlockPattern> filter) {
+    HashSet<BlockPattern> unseenPatterns = GetAllUnseenPatterns();
+    unseenPatterns.RemoveWhere(p => !filter(p));
+    int i = Random.Range(0, unseenPatterns.Count);
+    HashSet<BlockPattern>.Enumerator e = unseenPatterns.GetEnumerator();
+    while (i > 0) {
+      e.MoveNext();
+      --i;
+    }
+    return e.Current;
+  }
+
 
 }

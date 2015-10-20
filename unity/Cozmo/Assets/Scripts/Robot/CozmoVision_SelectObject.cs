@@ -72,12 +72,12 @@ public class CozmoVision_SelectObject : CozmoVision {
   //  }
 
   protected override void ShowObservedObjects() {
-    if (robot == null || robot.pertinentObjects == null)
+    if (robot == null || robot.seenObjects == null)
       return;
 
     for (int i = 0; i < observedObjectBoxes.Count; ++i) {
-      if (robot.pertinentObjects.Count > i && !robot.isBusy) {
-        ObservedObjectSeen(observedObjectBoxes[i], robot.pertinentObjects[i]);
+      if (robot.seenObjects.Count > i && !robot.isBusy) {
+        ObservedObjectSeen(observedObjectBoxes[i], robot.seenObjects[i]);
       }
       else {
         observedObjectBoxes[i].gameObject.SetActive(false);

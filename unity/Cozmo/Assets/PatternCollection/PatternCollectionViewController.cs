@@ -1,0 +1,95 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+
+// Temp class for testing dialog functionality. Should have PatternCollectionDialog
+// hook up to PatternPlayUIController later
+public class PatternCollectionViewController : MonoBehaviour {
+ 
+  [SerializeField]
+  private PatternCollectionDialog _patternCollectionDialog;
+
+  private PatternMemory _testPatternMemory;
+  
+  // Use this for initialization
+  void Start () {
+  	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
+    _testPatternMemory = CreateTestPatternMemory ();
+
+  	// Populate dialog with cards using memory
+    _patternCollectionDialog.Initialize (_testPatternMemory);
+  }
+
+
+	private PatternMemory CreateTestPatternMemory()
+	{
+		PatternMemory patternMemory = new PatternMemory ();
+		patternMemory.Initialize ();
+
+		// Add fake seen patterns to memory
+    BlockPattern newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true },
+      new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true },
+      new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true }
+    };
+    newPattern.verticalStack = true;
+    patternMemory.AddSeen (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
+      new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
+      new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true }
+    };
+    newPattern.verticalStack = true;
+    patternMemory.AddSeen (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false },
+      new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false },
+      new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false }
+    };
+    newPattern.verticalStack = false;
+    patternMemory.AddSeen (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true },
+      new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true },
+      new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true }
+    };
+    newPattern.verticalStack = false;
+    patternMemory.AddSeen (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false },
+      new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false },
+      new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false }
+    };
+    newPattern.verticalStack = true;
+    patternMemory.AddSeen (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true },
+      new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true },
+      new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true }
+    };
+    newPattern.verticalStack = true;
+    patternMemory.AddSeen (newPattern);
+
+    newPattern = new BlockPattern ();
+    newPattern.blocks = new List<BlockLights> {
+      new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false },
+      new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false },
+      new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false }
+    };
+    newPattern.verticalStack = false;
+    patternMemory.AddSeen (newPattern);
+
+		return patternMemory;
+	}
+}
