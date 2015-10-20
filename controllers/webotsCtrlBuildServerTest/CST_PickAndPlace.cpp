@@ -118,10 +118,7 @@ namespace Cozmo {
       }
       case TestState::PlaceBlock:
       {
-        static double startTime = GetSupervisor()->getTime();
-        double currentTime = GetSupervisor()->getTime();
-        if (currentTime - startTime > 15) {
-        //IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK) && _lastActionSucceeded, 15) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_CARRYING_BLOCK) && _lastActionSucceeded, 15) {
           _testState = TestState::TestDone;
         }
         break;
