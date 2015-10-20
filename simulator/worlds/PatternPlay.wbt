@@ -31,7 +31,7 @@ CozmoMat {
   ySize 1.5
 }
 LightCube {
-  translation 0.14 0.135 0.0219934
+  translation 0.16 0.135 0.0219934
   rotation 1 -1.89539e-17 -1.08163e-11 3.67408e-06
 }
 LightCube {
@@ -40,7 +40,7 @@ LightCube {
   ID 2
 }
 LightCube {
-  translation 0.07468 0.0587759 0.0219932
+  translation 0.09468 0.0587759 0.0219932
   rotation -1 4.29436e-13 -6.22182e-12 -3.67408e-06
   ID 3
 }

@@ -12,6 +12,8 @@ public class LookAtPatternConstruction : State {
   public override void Enter() {
     base.Enter();
 
+    DAS.Info("PatternPlayState", "LookAtPatternConstruction");
+
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
     Vector3 idealViewPos = patternPlayAutoBuild.IdealViewPosition();
@@ -27,8 +29,6 @@ public class LookAtPatternConstruction : State {
         }
       }
       else {
-        // this is not the right pattern... reset the neat list
-        patternPlayAutoBuild.ClearNeatList();
         stateMachine.SetNextState(new LookForCubes());
       }
     }
