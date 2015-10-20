@@ -34,7 +34,7 @@ public:
   void Update();
   void Draw(int pass, const char *view);
   void Cleanup();
-
+  
 private:
 
   void ProcessMessage(VizInterface::MessageViz&& message);
@@ -53,6 +53,7 @@ private:
   void ProcessVizErasePathMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizDefineColorMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizShowObjectsMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
 
   void DrawTextAtOffset(std::string s, float x_off, float y_off, float z_off);
   void DrawCuboid(float x_dim, float y_dim, float z_dim);
@@ -112,6 +113,9 @@ private:
   // Default angular resolution of arc path segments (radians)
   float _arcRes_rad = 0.2;
 
+  // Global offset
+  float _globalRotation[4] = {0,0,0,0};    // angle, axis_x, axis_y, axis_z
+  float _globalTranslation[3] = {0, 0, 0}; // x,y,z
 
 };
 

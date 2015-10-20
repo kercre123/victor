@@ -7,6 +7,7 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/vizTypes.clad"
+#include "clad/types/globalVizOrigin.clad"
 
 namespace Anki {
 namespace Cozmo {

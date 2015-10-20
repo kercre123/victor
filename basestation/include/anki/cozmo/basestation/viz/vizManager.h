@@ -341,6 +341,8 @@ namespace Anki {
                           const s32 numAnimBytesFree,
                           const u8 videoFramefateHz, const u8 animTag);
       
+      void SetOrigin(const SetVizOrigin& msg);
+      
     protected:
       
       // Protected default constructor for singleton.
