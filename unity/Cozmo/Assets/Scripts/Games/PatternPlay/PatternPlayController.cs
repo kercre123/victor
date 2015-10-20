@@ -10,9 +10,10 @@ public class PatternPlayController : GameController {
 
   private int previousInputID = -1;
   private bool seenPattern = false;
-  private bool lastSeenPatternNew = false;
+  private bool shouldCelebrateNew = false;
   private int lastSetID = -1;
   private float lastSetTime = -100.0f;
+  private BlockPattern lastSeenPattern;
 
   // variables for autonomous pattern building
   PatternPlayAutoBuild patternPlayAutoBuild = new PatternPlayAutoBuild();
@@ -79,8 +80,12 @@ public class PatternPlayController : GameController {
     return seenPattern;
   }
 
-  public bool LastSeenPatternNew() {
-    return lastSeenPatternNew;
+  public bool ShouldCelebrateNew() {
+    return shouldCelebrateNew;
+  }
+
+  public void SetShouldCelebrateNew(bool shouldCelebrateNew_) {
+    shouldCelebrateNew = shouldCelebrateNew_;
   }
 
   public int SeenBlocksOverThreshold(float threshold) {
@@ -248,7 +253,6 @@ public class PatternPlayController : GameController {
         return;
       }
     }
-
     CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 
@@ -258,18 +262,9 @@ public class PatternPlayController : GameController {
     seenPattern = false;
 
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
-      if (!memoryBank.ContainsSeen(currentPattern)) {
-
-        DAS.Info("PatternPlayController", "New Pattern: " + " vertical: " + currentPattern.verticalStack +
-        " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
-
-        seenPattern = true;
-        lastSeenPatternNew = true;
-        memoryBank.AddSeen(currentPattern);
-      }
-      else {
-        seenPattern = true;
-        lastSeenPatternNew = false;
+      seenPattern = true;
+      if (memoryBank.AddSeen(currentPattern)) {
+        shouldCelebrateNew = true;
       }
     }
   }

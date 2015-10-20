@@ -66,23 +66,26 @@ public class PatternMemory {
     return memoryBanks;
   }
 
-  public void AddSeen(BlockPattern pattern) {
-    // Seems like this would be a good point to return (Seen/ New / Not_A_Pattern)
+  public bool AddSeen(BlockPattern pattern) {
+    bool newPattern = false;
     DAS.Info("PatternMemory.AddSeen", "Seen pattern " + pattern.GetHashCode());
     for (int i = 0; i < memoryBanks.Count; ++i) {
       if (memoryBanks[i].Contains(pattern)) {
         if (memoryBanks[i].TryAddSeen(pattern)) {
           DAS.Info("PatternMemory.Add", "Pattern Added for bank: " + memoryBanks[i].name);
+          newPattern = true;
         }
         else {
           DAS.Info("PatternMemory.Add", "Pattern already exists in bank: " + memoryBanks[i].name);
+          newPattern = false;
         }
         DAS.Info("PatternMemory.Add", "There are now " + memoryBanks[i].GetSeenPatterns().Count + " patterns in that bank");
-        return;
+        return newPattern;
       }
     }
 
     DAS.Info("PatternMemory.Add.InvalidPattern", "pattern does not match any registered in PatternMemory");
+    return false;
   }
 
   public bool ContainsSeen(BlockPattern pattern) {
