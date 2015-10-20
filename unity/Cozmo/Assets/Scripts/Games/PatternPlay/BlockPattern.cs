@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -8,8 +8,23 @@ public class BlockPattern {
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
   public List<BlockLights> blocks = new List<BlockLights>();
-  public bool facingCozmo;
   public bool verticalStack;
+
+  public bool facingCozmo {
+    set {
+      for (int i = 0; i < blocks.Count; i++) {
+        blocks[i].facing_cozmo = value;
+      }
+    }
+    get {
+      for (int i = 0; i < blocks.Count; i++) {
+        if (!blocks[i].facing_cozmo) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
 
   public override bool Equals(System.Object obj) {
     if (obj == null) {
@@ -30,9 +45,6 @@ public class BlockPattern {
     if (pattern.blocks.Count != blocks.Count)
       return false;
 
-    if (pattern.facingCozmo != facingCozmo)
-      return false;
-
     if (pattern.verticalStack != verticalStack)
       return false;
 
@@ -40,7 +52,9 @@ public class BlockPattern {
       if (pattern.blocks[i].back != blocks[i].back ||
           pattern.blocks[i].front != blocks[i].front ||
           pattern.blocks[i].left != blocks[i].left ||
-          pattern.blocks[i].right != blocks[i].right) {
+          pattern.blocks[i].right != blocks[i].right ||
+          pattern.blocks[i].facing_cozmo != blocks[i].facing_cozmo
+          ) {
         return false;
       }
     }
@@ -49,10 +63,12 @@ public class BlockPattern {
   }
 
   public override int GetHashCode() {
-    int x = 0;
+    int x = System.Convert.ToInt32(verticalStack);
     for (int i = 0; i < blocks.Count; ++i) {
-      x ^= System.Convert.ToInt32(blocks[i].back) ^ System.Convert.ToInt32(blocks[i].front) ^
-      System.Convert.ToInt32(blocks[i].left) ^ System.Convert.ToInt32(blocks[i].right);
+      // If more attribs are added, please increase this radix value.
+      x = (x * 64) + (System.Convert.ToInt32(blocks[i].back) | System.Convert.ToInt32(blocks[i].front) << 1 |
+                      System.Convert.ToInt32(blocks[i].left) << 2 | System.Convert.ToInt32(blocks[i].right) << 3 |
+                      System.Convert.ToInt32(blocks[i].facing_cozmo) << 4);
     }
     return x;
   }
@@ -91,10 +107,11 @@ public class BlockPattern {
     patternSeen = new BlockPattern();
 
     // 3 to a pattern
-    if (robot.markersVisibleObjects.Count < 3)
+    if (robot.visibleObjects.Count < 3)
       return false;
 
-    patternSeen.facingCozmo = CheckFacingCozmo(robot);
+    bool facingCozmo = CheckFacingCozmo(robot);
+    patternSeen.facingCozmo = facingCozmo;
     patternSeen.verticalStack = CheckVerticalStack(robot);
 
     bool rowAlignment = CheckRowAlignment(robot);
@@ -104,8 +121,8 @@ public class BlockPattern {
     }
 
     // check rotation alignment
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Forward;
       relativeForward.Normalize();
 
       if (Mathf.Abs(relativeForward.x) < 0.92f && Mathf.Abs(relativeForward.y) < 0.92f && Mathf.Abs(relativeForward.z) < 0.92f) {
@@ -115,9 +132,9 @@ public class BlockPattern {
     }
 
     // convert get block lights in cozmo space. build out pattern seen.
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.markersVisibleObjects[i].ID].blockLightsLocalSpace, relativeForward, patternSeen.facingCozmo);
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Forward;
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace, relativeForward, facingCozmo);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
 
@@ -132,7 +149,7 @@ public class BlockPattern {
     }
 
     // if all of the patterns match but no lights are on don't match.
-    if (patternSeen.blocks[0].LightsOff()) {
+    if (patternSeen.blocks[0].AreLightsOff()) {
       return false;
     }
 
@@ -140,8 +157,8 @@ public class BlockPattern {
   }
 
   static bool CheckFacingCozmo(Robot robot) {
-    for (int i = 0; i < robot.markersVisibleObjects.Count; ++i) {
-      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.markersVisibleObjects[i].ID].Up;
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.activeBlocks[robot.visibleObjects[i].ID].Up;
       if (relativeUp.x > -0.9f) {
         return false;
       }
@@ -151,9 +168,9 @@ public class BlockPattern {
 
   static bool CheckVerticalStack(Robot robot) {
 
-    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector2 flatPos0 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition);
-      Vector2 flatPos1 = (Vector2)(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition);
+    for (int i = 0; i < robot.visibleObjects.Count - 1; ++i) {
+      Vector2 flatPos0 = (Vector2)(robot.activeBlocks[robot.visibleObjects[i].ID].WorldPosition);
+      Vector2 flatPos1 = (Vector2)(robot.activeBlocks[robot.visibleObjects[i + 1].ID].WorldPosition);
 
       if (Vector2.Distance(flatPos0, flatPos1) > 5.0f) {
         return false;
@@ -163,24 +180,10 @@ public class BlockPattern {
   }
 
   static bool CheckRowAlignment(Robot robot) {
-    for (int i = 0; i < robot.markersVisibleObjects.Count - 1; ++i) {
-      Vector3 robotSpaceLocation0 = robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation0 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation0;
-
-      Vector3 robotSpaceLocation1 = robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition - robot.WorldPosition;
-      robotSpaceLocation1 = Quaternion.Inverse(robot.Rotation) * robotSpaceLocation1;
-
-      float block0 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition, robot.Forward);
-      float block1 = Vector3.Dot(robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition, robot.Forward);
-
-      if (Mathf.Abs(block0 - block1) > 25.0f) {
-        return false;
-      }
-
-      float diffZ = (robot.activeBlocks[robot.markersVisibleObjects[i].ID].WorldPosition - robot.activeBlocks[robot.markersVisibleObjects[i + 1].ID].WorldPosition).z;
-
-      // enforce horizontal rule
-      if (Mathf.Abs(diffZ) > 1.0f) {
+    for (int i = 0; i < robot.visibleObjects.Count - 1; ++i) {
+      Vector3 obj0to1 = robot.visibleObjects[i + 1].WorldPosition - robot.visibleObjects[i].WorldPosition;
+      obj0to1.Normalize();
+      if (Vector3.Dot(obj0to1, robot.Forward) > 0.1f) {
         return false;
       }
     }
@@ -238,8 +241,6 @@ public class BlockPattern {
         blockLightCozmoSpace = blockLocalSpace;
       }
     }
-
-
 
     return blockLightCozmoSpace;
   }

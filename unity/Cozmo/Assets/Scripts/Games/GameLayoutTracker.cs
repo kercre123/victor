@@ -674,8 +674,8 @@ public class GameLayoutTracker : MonoBehaviour {
       
       validPredictedPlacement = PredictDropValidation(robot.carryingObject, out error, out errorType, out shouldBeStackedInstedOfDropped);
       
-      if (shouldBeStackedInstedOfDropped && robot.selectedObjects.Count > 0) {
-        validPredictedPlacement = PredictStackValidation(robot.carryingObject, robot.selectedObjects[0], out error, out errorType, true);
+      if (shouldBeStackedInstedOfDropped && robot.seenObjects.Count > 0) {
+        validPredictedPlacement = PredictStackValidation(robot.carryingObject, robot.seenObjects[0], out error, out errorType, true);
       }
 
       if (lastValidPredictedPlacement != validPredictedPlacement) {
@@ -686,7 +686,7 @@ public class GameLayoutTracker : MonoBehaviour {
     if (validPredictedPlacement) {
       colorCode = CozmoPalette.ColorToUInt(Color.green);
     }
-    else if (shouldBeStackedInstedOfDropped && robot.selectedObjects.Count > 0) {
+    else if (shouldBeStackedInstedOfDropped && robot.seenObjects.Count > 0) {
       colorCode = CozmoPalette.ColorToUInt(Color.red);
     }
 
@@ -813,10 +813,10 @@ public class GameLayoutTracker : MonoBehaviour {
     
     potentialObservedObjects.Clear();
     
-    if (robot.knownObjects.Count == 0)
+    if (robot.seenObjects.Count == 0)
       return;
     
-    potentialObservedObjects.AddRange(robot.knownObjects);
+    potentialObservedObjects.AddRange(robot.seenObjects);
 
     //first loop through and clear our old assignments
     for (int layoutBlockIndex = 0; layoutBlockIndex < layout.Blocks.Count; layoutBlockIndex++) {
@@ -947,9 +947,9 @@ public class GameLayoutTracker : MonoBehaviour {
       return null;
     
     int count = 0;
-    for (int i = 0; i < robot.knownObjects.Count; i++) {
+    for (int i = 0; i < robot.seenObjects.Count; i++) {
       
-      ObservedObject obj = robot.knownObjects[i];
+      ObservedObject obj = robot.seenObjects[i];
       
       if (obj.cubeType != block.cubeType)
         continue;
@@ -968,9 +968,9 @@ public class GameLayoutTracker : MonoBehaviour {
 
     int count = 0;
 
-    for (int i = 0; i < robot.knownObjects.Count; i++) {
+    for (int i = 0; i < robot.seenObjects.Count; i++) {
 
-      ObservedObject obj = robot.knownObjects[i];
+      ObservedObject obj = robot.seenObjects[i];
 
       if (obj.cubeType != block.cubeType)
         continue;
@@ -988,7 +988,7 @@ public class GameLayoutTracker : MonoBehaviour {
       return null;
     
     unplacedObjects.Clear();
-    unplacedObjects.AddRange(robot.knownObjects);
+    unplacedObjects.AddRange(robot.seenObjects);
     
     if (unplacedObjects.Count == 0)
       return null;
@@ -1307,7 +1307,7 @@ public class GameLayoutTracker : MonoBehaviour {
     pos = bestBlock.GetCozmoSpacePose(out facing_rad); 
     string description = null;
     CozmoBusyPanel.instance.SetDescription("drop\n", robot.carryingObject, ref description);
-    robot.DropObjectAtPose(pos, facing_rad);
+    robot.PlaceObjectOnGround(pos, facing_rad);
     
     return true;
   }
@@ -1327,13 +1327,13 @@ public class GameLayoutTracker : MonoBehaviour {
     BuildInstructionsCube layoutBlockToStack = potentiallyStackable[0];
     ObservedObject objectToStackUpon = potentiallyStackedUpon[0].AssignedObject;
     if (objectToStackUpon == null) {
-      objectToStackUpon = robot.knownObjects.Find(x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[0], x, true));
+      objectToStackUpon = robot.seenObjects.Find(x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[0], x, true));
     }
 
     for (int i = 0; i < potentiallyStackedUpon.Count; i++) {
       ObservedObject obj = potentiallyStackedUpon[i].AssignedObject;
       if (obj == null) {
-        obj = robot.knownObjects.Find(x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[i], x, true));
+        obj = robot.seenObjects.Find(x => IsUnvalidatedMatchingGroundBlock(potentiallyStackedUpon[i], x, true));
       }
       if (obj == null)
         continue;

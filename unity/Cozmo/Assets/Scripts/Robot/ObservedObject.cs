@@ -102,7 +102,7 @@ public class ObservedObject {
 
   public bool canBeStackedOn {
     get {
-      if (robot.selectedObjects.Count > 1)
+      if (robot.seenObjects.Count > 1)
         return false; // if blocks stacked on each other
 
       //float distance = ( (Vector2)WorldPosition - (Vector2)robot.WorldPosition ).magnitude;
@@ -112,7 +112,7 @@ public class ObservedObject {
     }
   }
 
-  public const float RemoveDelay = 0.15f;
+  public const float RemoveDelay = 0.33f;
 
   public string InfoString { get; private set; }
 

@@ -65,7 +65,7 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
 
     if (!robot.searching) {
       targetLockTimer = 0f;
-      robot.selectedObjects.Clear();
+      robot.seenObjects.Clear();
 
       robot.targetLockedObject = null;
 
@@ -99,50 +99,50 @@ public class CozmoVision_TargetLockSlider : CozmoVision {
   }
 
   public void AcquireTarget() {
-    bool targetingPropInHand = robot.selectedObjects.Count > 0 && robot.carryingObject != null &&
-                               robot.selectedObjects.Find(x => x == robot.carryingObject) != null;
-    bool alreadyHasTarget = robot.pertinentObjects.Count > 0 && robot.targetLockedObject != null &&
-                            robot.pertinentObjects.Find(x => x == robot.targetLockedObject) != null;
+    bool targetingPropInHand = robot.seenObjects.Count > 0 && robot.carryingObject != null &&
+                               robot.seenObjects.Find(x => x == robot.carryingObject) != null;
+    bool alreadyHasTarget = robot.seenObjects.Count > 0 && robot.targetLockedObject != null &&
+                            robot.seenObjects.Find(x => x == robot.targetLockedObject) != null;
     
     if (targetingPropInHand || !alreadyHasTarget) {
-      robot.selectedObjects.Clear();
+      robot.seenObjects.Clear();
       robot.targetLockedObject = null;
     }
     
     ObservedObject best = robot.targetLockedObject;
     
-    if (robot.selectedObjects.Count == 0) {
-      for (int i = 0; i < robot.pertinentObjects.Count; i++) {
-        float targetScore = robot.pertinentObjects[i].targetingScore;
+    if (robot.seenObjects.Count == 0) {
+      for (int i = 0; i < robot.seenObjects.Count; i++) {
+        float targetScore = robot.seenObjects[i].targetingScore;
         if (targetScore > -1 && (best == null || best.targetingScore < targetScore))
-          best = robot.pertinentObjects[i];
+          best = robot.seenObjects[i];
       }
     }
 
-    robot.selectedObjects.Clear();
+    robot.seenObjects.Clear();
     
     if (best != null) {
-      robot.selectedObjects.Add(best);
+      robot.seenObjects.Add(best);
       //find any other objects in a 'stack' with our selected
-      for (int i = 0; i < robot.pertinentObjects.Count; i++) {
-        if (best == robot.pertinentObjects[i] || robot.carryingObject == robot.pertinentObjects[i])
+      for (int i = 0; i < robot.seenObjects.Count; i++) {
+        if (best == robot.seenObjects[i] || robot.carryingObject == robot.seenObjects[i])
           continue;
 
-        float dist = Vector2.Distance((Vector2)robot.pertinentObjects[i].WorldPosition, (Vector2)best.WorldPosition);
+        float dist = Vector2.Distance((Vector2)robot.seenObjects[i].WorldPosition, (Vector2)best.WorldPosition);
         if (dist > best.Size.x * 0.5f) {
           continue;
         }
         
-        robot.selectedObjects.Add(robot.pertinentObjects[i]);
+        robot.seenObjects.Add(robot.seenObjects[i]);
       }
       
       //sort selected from ground up
-      robot.selectedObjects.Sort(( obj1, obj2) => {
+      robot.seenObjects.Sort(( obj1, obj2) => {
         return obj1.WorldPosition.z.CompareTo(obj2.WorldPosition.z);   
       });
       
       if (robot.targetLockedObject == null)
-        robot.targetLockedObject = robot.selectedObjects[0];
+        robot.targetLockedObject = robot.seenObjects[0];
     }
   }
 }

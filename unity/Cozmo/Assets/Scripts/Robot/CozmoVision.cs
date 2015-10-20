@@ -101,7 +101,7 @@ public class CozmoVision : MonoBehaviour {
     box.rectTransform.sizeDelta = new Vector2(boxW, boxH);
     box.rectTransform.anchoredPosition = new Vector2(boxX, -boxY);
     
-    if (robot.selectedObjects.Find(x => x == observedObject) != null) {
+    if (robot.seenObjects.Find(x => x == observedObject) != null) {
       box.SetColor(selected);
       box.text.text = observedObject.InfoString;
     }
@@ -115,16 +115,16 @@ public class CozmoVision : MonoBehaviour {
   }
 
   protected void UnselectNonObservedObjects() {
-    if (robot == null || robot.pertinentObjects == null)
+    if (robot == null || robot.seenObjects == null)
       return;
 
-    for (int i = 0; i < robot.selectedObjects.Count; ++i) {
-      if (robot.pertinentObjects.Find(x => x == robot.selectedObjects[i]) == null) {
-        robot.selectedObjects.RemoveAt(i--);
+    for (int i = 0; i < robot.seenObjects.Count; ++i) {
+      if (robot.seenObjects.Find(x => x == robot.seenObjects[i]) == null) {
+        robot.seenObjects.RemoveAt(i--);
       }
     }
 
-    /*if(robot.selectedObjects.Count == 0) {
+    /*if(robot.seenObjects.Count == 0) {
       robot.SetHeadAngle();
     }*/
   }
@@ -133,12 +133,12 @@ public class CozmoVision : MonoBehaviour {
     if (!image.enabled)
       return;
 
-    if (robot == null || robot.pertinentObjects == null)
+    if (robot == null || robot.seenObjects == null)
       return;
     
     for (int i = 0; i < observedObjectBoxes.Count; ++i) {
-      if (robot.pertinentObjects.Count > i) {
-        ObservedObjectSeen(observedObjectBoxes[i], robot.pertinentObjects[i]);
+      if (robot.seenObjects.Count > i) {
+        ObservedObjectSeen(observedObjectBoxes[i], robot.seenObjects[i]);
       }
       else {
         observedObjectBoxes[i].gameObject.SetActive(false);
@@ -172,7 +172,7 @@ public class CozmoVision : MonoBehaviour {
       RobotEngineManager.instance.DisconnectedFromClient += Reset;
 
       if (robot != null)
-        robot.selectedObjects.Clear();
+        robot.seenObjects.Clear();
     }
     
     RequestImage();
@@ -313,7 +313,7 @@ public class CozmoVision : MonoBehaviour {
 
   protected void PlayVisionActivateSound() {
     if (AudioManager.CozmoVisionLoop == null || visionActivateSound == null || AudioManager.CozmoVisionLoop.clip == visionActiveLoop ||
-        actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.selectedObjects.Count == 0)
+        actionPanel == null || !actionPanel.nonSearchActionAvailable || robot == null || robot.seenObjects.Count == 0)
       return;
 
     AudioManager.PlayOneShot(visionActivateSound, 0f, 1f, maxVisionStartVol);
@@ -353,10 +353,10 @@ public class CozmoVision : MonoBehaviour {
   }
 
   protected virtual void Dings() {
-    if (robot == null || robot.isBusy || robot.selectedObjects.Count > 0)
+    if (robot == null || robot.isBusy || robot.seenObjects.Count > 0)
       return;
       
-    if (robot.pertinentObjects.Count > 0/*lastObservedObjects.Count*/) {
+    if (robot.seenObjects.Count > 0/*lastObservedObjects.Count*/) {
       Ding(true);
     }
     /*else if( robot.observedObjects.Count < lastObservedObjects.Count )
@@ -376,20 +376,6 @@ public class CozmoVision : MonoBehaviour {
         
           dingTimes[0] = Time.time;
         }
-      }
-    }
-  }
-
-  protected virtual void LateUpdate() {
-    if (robot != null) {
-      robot.lastObservedObjects.Clear();
-      robot.lastSelectedObjects.Clear();
-      robot.lastMarkersVisibleObjects.Clear();
-      
-      if (!robot.isBusy) {
-        robot.lastObservedObjects.AddRange(robot.observedObjects);
-        robot.lastSelectedObjects.AddRange(robot.selectedObjects);
-        robot.lastMarkersVisibleObjects.AddRange(robot.markersVisibleObjects);
       }
     }
   }
@@ -421,8 +407,8 @@ public class CozmoVision : MonoBehaviour {
 
   public void Selection(ObservedObject obj) {
     if (robot != null) {
-      robot.selectedObjects.Clear();
-      robot.selectedObjects.Add(obj);
+      robot.seenObjects.Clear();
+      robot.seenObjects.Add(obj);
       robot.TrackToObject(obj);
     }
     

@@ -139,19 +139,11 @@ public class Robot : IDisposable {
 
   public float batteryPercent { get; private set; }
 
-  public List<ObservedObject> markersVisibleObjects { get; private set; }
+  public List<ObservedObject> visibleObjects { get; private set; }
 
-  public List<ObservedObject> observedObjects { get; private set; }
+  public List<ObservedObject> seenObjects { get; private set; }
 
-  public List<ObservedObject> knownObjects { get; private set; }
-
-  public List<ObservedObject> selectedObjects { get; private set; }
-
-  public List<ObservedObject> lastSelectedObjects { get; private set; }
-
-  public List<ObservedObject> lastObservedObjects { get; private set; }
-
-  public List<ObservedObject> lastMarkersVisibleObjects { get; private set; }
+  public List<ObservedObject> dirtyObjects { get; private set; }
 
   public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
 
@@ -227,7 +219,7 @@ public class Robot : IDisposable {
   public ObservedObject carryingObject {
     get {
       if (_carryingObject != carryingObjectID)
-        _carryingObject = knownObjects.Find(x => x == carryingObjectID);
+        _carryingObject = seenObjects.Find(x => x == carryingObjectID);
 
       return _carryingObject;
     }
@@ -238,7 +230,7 @@ public class Robot : IDisposable {
   public ObservedObject headTrackingObject {
     get {
       if (_headTrackingObject != headTrackingObjectID)
-        _headTrackingObject = knownObjects.Find(x => x == headTrackingObjectID);
+        _headTrackingObject = seenObjects.Find(x => x == headTrackingObjectID);
       
       return _headTrackingObject;
     }
@@ -265,39 +257,6 @@ public class Robot : IDisposable {
   private readonly Predicate<ObservedObject> IsNotInZRange_callback;
   private readonly Comparison<ObservedObject> SortByDistance_callback;
   private const float Z_RANGE_LIMIT = 2f * CozmoUtil.BLOCK_LENGTH_MM;
-  
-  // Note: Instantiating delegates and List<T>.FindAll both allocate memory.
-  // May want to change before releasing in production.
-  // It's fine for prototyping.
-  public List<ObservedObject> pertinentObjects {
-    get {
-      if (pertinenceStamp == Time.frameCount)
-        return _pertinentObjects;
-      pertinenceStamp = Time.frameCount;
-      
-      _pertinentObjects.Clear();
-      
-      switch (observedObjectListType) {
-      case ObservedObjectListType.MARKERS_SEEN: 
-        _pertinentObjects.AddRange(markersVisibleObjects);
-        break;
-      case ObservedObjectListType.OBSERVED_RECENTLY: 
-        _pertinentObjects.AddRange(observedObjects);
-        break;
-      case ObservedObjectListType.KNOWN: 
-        _pertinentObjects.AddRange(knownObjects);
-        break;
-      case ObservedObjectListType.KNOWN_IN_RANGE: 
-        _pertinentObjects.AddRange(knownObjects);
-        _pertinentObjects.RemoveAll(IsNotInRange_callback);
-        break;
-      }
-
-      _pertinentObjects.RemoveAll(IsNotInZRange_callback);
-      _pertinentObjects.Sort(SortByDistance_callback);
-      return _pertinentObjects;
-    }
-  }
 
   // er, should be 5?
   private const float MaxVoltage = 5.0f;
@@ -340,14 +299,10 @@ public class Robot : IDisposable {
   public Robot(byte robotID)
     : this() {
     ID = robotID;
-    const int initialSize = 64;
-    selectedObjects = new List<ObservedObject>(3);
-    lastSelectedObjects = new List<ObservedObject>(3);
-    observedObjects = new List<ObservedObject>(initialSize);
-    lastObservedObjects = new List<ObservedObject>(initialSize);
-    markersVisibleObjects = new List<ObservedObject>(initialSize);
-    lastMarkersVisibleObjects = new List<ObservedObject>(initialSize);
-    knownObjects = new List<ObservedObject>(initialSize);
+    const int initialSize = 8;
+    seenObjects = new List<ObservedObject>(initialSize);
+    visibleObjects = new List<ObservedObject>(initialSize);
+    dirtyObjects = new List<ObservedObject>(initialSize);
     activeBlocks = new Dictionary<int, ActiveBlock>();
     faceObjects = new List< global::Face>();
 
@@ -454,13 +409,8 @@ public class Robot : IDisposable {
       DAS.Debug("Robot", "Robot data cleared");
     }
 
-    selectedObjects.Clear();
-    lastSelectedObjects.Clear();
-    observedObjects.Clear();
-    lastObservedObjects.Clear();
-    markersVisibleObjects.Clear();
-    lastMarkersVisibleObjects.Clear();
-    knownObjects.Clear();
+    seenObjects.Clear();
+    visibleObjects.Clear();
     activeBlocks.Clear();
     status = RobotStatusFlag.NoneRobotStatusFlag;
     gameStatus = GameStatusFlag.Nothing;
@@ -493,21 +443,14 @@ public class Robot : IDisposable {
     }
   }
 
-  public void ClearObservedObjects() {
-    for (int i = 0; i < observedObjects.Count; ++i) {
-      if (observedObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
-        observedObjects.RemoveAt(i--);
-      }
-    }
-
-    for (int i = 0; i < markersVisibleObjects.Count; ++i) {
-      if (markersVisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
-        markersVisibleObjects.RemoveAt(i--);
+  public void ClearVisibleObjects() {
+    for (int i = 0; i < visibleObjects.Count; ++i) {
+      if (visibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
+        visibleObjects.RemoveAt(i--);
       }
     }
   }
 
-  //bool wasLoc = false;
   public void UpdateInfo(G2U.RobotState message) {
     headAngle_rad = message.headAngle_rad;
     poseAngle_rad = message.poseAngle_rad;
@@ -552,6 +495,14 @@ public class Robot : IDisposable {
     }
   }
 
+  public void UpdateDirtyList(ObservedObject dirty) {
+    seenObjects.Remove(dirty);
+
+    if (!dirtyObjects.Contains(dirty)) {
+      dirtyObjects.Add(dirty);
+    }
+  }
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
@@ -563,15 +514,14 @@ public class Robot : IDisposable {
       AddActiveBlock(activeBlocks.ContainsKey(message.objectID) ? activeBlocks[message.objectID] : null, message);
     }
     else {
-      ObservedObject knownObject = knownObjects.Find(x => x == message.objectID);
+      ObservedObject knownObject = seenObjects.Find(x => x == message.objectID);
 
       AddObservedObject(knownObject, message);
     }
-      
-    // HACK: This is to solve an edge case where there is a partially observed object but no
-    // actual observed object so the markersVisible list is not being properly cleared since
-    // ObservedNothing is not being sent from engine.
-    ClearObservedObjects();
+
+    // check to see if we haven't seen some visible objects in a while
+    // and clear them out if we haven't.
+    ClearVisibleObjects();
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
@@ -580,7 +530,7 @@ public class Robot : IDisposable {
       activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
 
       activeBlocks.Add(activeBlock, activeBlock);
-      knownObjects.Add(activeBlock);
+      seenObjects.Add(activeBlock);
       newBlock = true;
     }
 
@@ -598,21 +548,23 @@ public class Robot : IDisposable {
     if (knownObject == null) {
       knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
       
-      knownObjects.Add(knownObject);
+      seenObjects.Add(knownObject);
       newBlock = true;
     }
-    
-    
+    else {
+      dirtyObjects.Remove(knownObject);
+    }
+
     Vector3 oldPos = knownObject.WorldPosition;
 
     knownObject.UpdateInfo(message);
     
-    if (observedObjects.Find(x => x == message.objectID) == null) {
-      observedObjects.Add(knownObject);
+    if (seenObjects.Find(x => x == message.objectID) == null) {
+      seenObjects.Add(knownObject);
     }
     
-    if (knownObject.MarkersVisible && markersVisibleObjects.Find(x => x == message.objectID) == null) {
-      markersVisibleObjects.Add(knownObject);
+    if (knownObject.MarkersVisible && visibleObjects.Find(x => x == message.objectID) == null) {
+      visibleObjects.Add(knownObject);
     }
 
     //if block new or moved a lot since last time we saw it
@@ -633,19 +585,12 @@ public class Robot : IDisposable {
     bool newFace = false;
     if (faceObject == null) {
       faceObject = new Face(message);
-
-      //activeBlocks.Add(activeBlock, activeBlock);
       faceObjects.Add(faceObject);
       newFace = true;
     }
     else {
       faceObject.UpdateInfo(message);
     }
-
-
-    //foreach (Face face in faceObjects) {
-    //	DAS.Debug ("Robot", "face spotted at " + face.WorldPosition.ToString ());
-    //}
 
     if (newFace) {
       if (ObservedObject.SignificantChangeDetected != null)
@@ -806,7 +751,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false) {
+  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
     PickAndPlaceObjectMessage.objectID = selectedObject;
     PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
     PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
@@ -817,6 +762,13 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_INCOMPLETE, callback));
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_HIGH, callback));
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_OBJECT, callback));
+    }
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
@@ -843,7 +795,7 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  public void DropObjectAtPose(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false) {
+  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null) {
     PlaceObjectOnGroundMessage.x_mm = position.x;
     PlaceObjectOnGroundMessage.y_mm = position.y;
     PlaceObjectOnGroundMessage.rad = facing_rad;
@@ -857,6 +809,10 @@ public class Robot : IDisposable {
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+    }
+
   }
 
   public Vector3 NudgePositionOutOfObjects(Vector3 position) {
@@ -866,8 +822,8 @@ public class Robot : IDisposable {
     while (attempts++ < 3) {
       Vector3 nudge = Vector3.zero;
       float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
-      for (int i = 0; i < knownObjects.Count; i++) {
-        Vector3 fromObject = position - knownObjects[i].WorldPosition;
+      for (int i = 0; i < seenObjects.Count; i++) {
+        Vector3 fromObject = position - seenObjects[i].WorldPosition;
         if (fromObject.magnitude > padding)
           continue;
         nudge += fromObject.normalized * padding;
@@ -881,7 +837,7 @@ public class Robot : IDisposable {
     return position;
   }
 
-  public void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false) {
+  public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
     GotoPoseMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
     GotoPoseMessage.x_mm = x_mm;
@@ -894,6 +850,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
+    }
   }
 
   public void GotoObject(ObservedObject obj, float distance_mm) {
@@ -939,7 +899,7 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetRobotCarryingObject = SetRobotCarryingObjectMessage;
     RobotEngineManager.instance.SendMessage();
-    selectedObjects.Clear();
+    seenObjects.Clear();
     targetLockedObject = null;
     
     SetLiftHeight(0f);
