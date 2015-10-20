@@ -44,6 +44,10 @@ public class PickUpCube : State {
     else {
       DAS.Info("PatternPlay", "PickUp Failed!");
       stateMachine.SetNextState(new LookForCubes());
+      if (patternPlayAutoBuild.GetHeldObject() != null) {
+        robot.UpdateDirtyList(patternPlayAutoBuild.GetHeldObject());
+      }
+
       patternPlayAutoBuild.SetObjectHeld(null);
     }
 

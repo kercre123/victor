@@ -70,11 +70,19 @@ public class PatternPlayAutoBuild {
     else if (neatList.Count == 1) {
       // there is an anchor block. let's put it to the right of the block.
       Debug.Log("anchor block: " + neatList[0].WorldPosition);
-      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.4f;
+      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
     }
     else {
-      // there are two blocks. let's put it to the left of the anchor (first) block.
-      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.4f;
+      // there are two blocks. we need to figure out where to put the third block
+      Vector3 relPos = neatList[1].WorldPosition - neatList[0].WorldPosition;
+      if (Vector3.Dot(relPos, neatList[0].Right) > 0.0f) {
+        // place on the left of anchor block.
+        return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+      }
+      else {
+        // place on right of anchor block.
+        return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+      }
     }
   }
 
