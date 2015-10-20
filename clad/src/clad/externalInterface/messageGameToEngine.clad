@@ -8,6 +8,8 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
 #include "clad/types/demoBehaviorState.clad"
+#include "clad/types/behaviorType.clad"
+#include "clad/types/behaviorChooserType.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
@@ -264,11 +266,19 @@ message VisionWhileMoving {
     uint_8 enable // True or false
 }
 
+// SetBehaviorSystemEnabled
+message SetBehaviorSystemEnabled {
+  bool enabled
+}
+
+// ActivateBehaviorChooser
+message ActivateBehaviorChooser {
+  BehaviorChooserType behaviorChooserType
+}
+
 // ExecuteBehavior
-// Use "NONE" to disable behaviors.
-// Use "AUTO" to enable automatic behavior selection.
 message ExecuteBehavior {
-    string behaviorName
+  BehaviorType behaviorType
 }
 
 // AbortPath

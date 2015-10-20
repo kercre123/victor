@@ -832,13 +832,22 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendExecuteBehavior(const std::string& behaviorName)
+    BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {
-      ExternalInterface::ExecuteBehavior m;
-      m.behaviorName = behaviorName;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ExecuteBehavior(m);
-      SendMessage(message);
+      if (behaviorName == "LookAround")
+      {
+        return BehaviorType::LookAround;
+      }
+      else if (behaviorName == "OCD")
+      {
+        return BehaviorType::OCD;
+      }
+      else if (behaviorName == "InteractWithFaces")
+      {
+        return BehaviorType::InteractWithFaces;
+      }
+      
+      return BehaviorType::NoneBehavior;
     }
     
     void UiGameController::SendAbortPath()

@@ -126,7 +126,6 @@ protected:
   void SendClearAllBlocks();
   void SendClearAllObjects();
   void SendSelectNextObject();
-  void SendExecuteBehavior(const std::string& behaviorName);
   void SendAbortPath();
   void SendAbortAll();
   void SendDrawPoseMarker(const Pose3d& p);
@@ -184,6 +183,7 @@ protected:
   const std::unordered_set<std::string>& GetAvailableAnimations() const;
   u32 GetNumAvailableAnimations() const;
   bool IsAvailableAnimation(std::string anim) const;
+  BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
