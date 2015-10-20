@@ -899,7 +899,7 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetRobotCarryingObject = SetRobotCarryingObjectMessage;
     RobotEngineManager.instance.SendMessage();
-    seenObjects.Clear();
+
     targetLockedObject = null;
     
     SetLiftHeight(0f);
