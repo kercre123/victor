@@ -98,8 +98,12 @@ public class PatternPlayAutoBuild {
     return neatList.Contains(observedObj);
   }
 
+  public int BlocksInNeatList() {
+    return neatList.Count;
+  }
+
   public void ObjectMoved(int blockID) {
-    int movedIndex = -1;
+    /*int movedIndex = -1;
     for (int i = 0; i < neatList.Count; ++i) {
       if (neatList[i].ID == blockID) {
         // we found a block in the neat list that was moved.
@@ -108,11 +112,7 @@ public class PatternPlayAutoBuild {
     }
     if (movedIndex != -1) {
       neatList.RemoveAt(movedIndex);
-    }
-  }
-
-  public void ClearNeatList() {
-    neatList.Clear();
+    }*/
   }
 
   public void SetBlockLightsToPattern(int blockID) {

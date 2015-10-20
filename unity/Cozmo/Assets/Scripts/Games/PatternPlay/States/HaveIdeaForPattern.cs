@@ -31,6 +31,12 @@ public class HaveIdeaForPattern : State {
 
   public override void Update() {
     base.Update();
+
+    if (patternPlayController.SeenPattern()) {
+      stateMachine.SetNextState(new CelebratePattern());
+      return;
+    }
+
     if (!hasTargetToBuild) {
       stateMachine.SetNextState(new LookForPattern());
     }

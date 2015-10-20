@@ -35,6 +35,10 @@ public class PickUpCube : State {
       stateMachine.SetNextState(new LookForCubes());
       patternPlayAutoBuild.SetObjectHeld(null);
     }
+    if (patternPlayController.SeenPattern()) {
+      stateMachine.SetNextState(new CelebratePattern());
+      return;
+    }
   }
 
   void PickUpDone(bool success) {

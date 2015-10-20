@@ -15,6 +15,12 @@ public class LookForCubes : State {
 
   public override void Update() {
     base.Update();
+
+    if (patternPlayController.SeenPattern()) {
+      stateMachine.SetNextState(new CelebratePattern());
+      return;
+    }
+
     if (patternPlayAutoBuild.AvailableBlocks() > 0) {
       stateMachine.SetNextState(new PickUpCube());
     }
