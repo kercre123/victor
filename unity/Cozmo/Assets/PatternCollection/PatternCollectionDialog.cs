@@ -31,20 +31,24 @@ public class PatternCollectionDialog : MonoBehaviour {
     GameObject newBankCard;
     PatternCollectionBankCard bankCardScript;
     foreach (MemoryBank bank in memoryBanks) {
-      // Create a card
-      newBankCard = Instantiate(_memoryBankCardPrefab.gameObject) as GameObject;
+      // Only show cards if the player has seen at least one pattern
+      if (bank.GetSeenPatterns().Count > 0)
+      {
+        // Create a card
+        newBankCard = Instantiate(_memoryBankCardPrefab.gameObject) as GameObject;
 
-      // Layout the card into the scrollable panel
-      // The layout will modify the position, so make sure that FALSE is 
-      // there so that the world position will update.
-      newBankCard.transform.SetParent(_memoryBankCardContentPanel, false);
+        // Layout the card into the scrollable panel
+        // The layout will modify the position, so make sure that FALSE is 
+        // there so that the world position will update.
+        newBankCard.transform.SetParent(_memoryBankCardContentPanel, false);
 
-      // Initialize the card with the bank
-      bankCardScript = newBankCard.GetComponent<PatternCollectionBankCard>();
-      bankCardScript.Initialize(bank);
+        // Initialize the card with the bank
+        bankCardScript = newBankCard.GetComponent<PatternCollectionBankCard>();
+        bankCardScript.Initialize(bank);
 
-      // Add the card to the dictionary
-      memoryBankCards.Add ( bank, bankCardScript );
+        // Add the card to the dictionary
+        memoryBankCards.Add ( bank, bankCardScript );
+      }
     }
 
     return memoryBankCards;
