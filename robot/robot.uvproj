@@ -763,6 +763,11 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
             </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1730,6 +1735,11 @@
               <FileName>blockLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
           </Files>
         </Group>

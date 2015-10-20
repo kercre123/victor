@@ -5,11 +5,12 @@ PROTO CozmoMat [
   field SFBool showMarkers TRUE
   field SFFloat xSize 1.000
   field SFFloat ySize 1.000
+  field SFFloat wallHeight 0.0
 ]
 {
 Solid {
   rotation 0 1 0 0
-  translation 0 0 -0.0025
+  translation 0 0 -0.0025  
   children [
     Shape {
       appearance Appearance {
@@ -269,8 +270,9 @@ Solid {
 
 %{ end }% # hide markers or not
 
+%{ if fields.wallHeight.value > 0 then }%
 DEF WALL_1 Solid {
-    translation %{=fields.xSize.value/2+.01}% 0 0.025
+    translation %{=fields.xSize.value/2+.01}% 0 %{=fields.wallHeight.value/2}%
   children [
     DEF WALL_SHAPE_Y Shape {
       appearance Appearance {
@@ -279,7 +281,7 @@ DEF WALL_1 Solid {
         }
       }
       geometry Box {
-        size 0.02 %{=fields.ySize.value}% 0.05
+        size 0.02 %{=fields.ySize.value}% %{=fields.wallHeight.value}%
       }
     }
   ]
@@ -287,7 +289,7 @@ DEF WALL_1 Solid {
 }
 
 DEF WALL_2 Solid {
-    translation %{=-(fields.xSize.value/2+.01)}% 0 0.025
+    translation %{=-(fields.xSize.value/2+.01)}% 0 %{=fields.wallHeight.value/2}%
   children [
     USE WALL_SHAPE_Y
   ]
@@ -295,7 +297,7 @@ DEF WALL_2 Solid {
 }
 
 DEF WALL_3 Solid {
-  translation 0 %{=-(fields.ySize.value/2+.01)}% 0.025
+  translation 0 %{=-(fields.ySize.value/2+.01)}% %{=fields.wallHeight.value/2}%
   rotation 0 0 1 1.5708
   children [
     DEF WALL_SHAPE_X Shape {
@@ -305,7 +307,7 @@ DEF WALL_3 Solid {
         }
       }
       geometry Box {
-        size 0.02 %{=fields.xSize.value}% 0.05
+        size 0.02 %{=fields.xSize.value}% %{=fields.wallHeight.value}%
       }
     }
   ]
@@ -313,13 +315,15 @@ DEF WALL_3 Solid {
 }
 
 DEF WALL_4 Solid {
-    translation 0 %{=fields.ySize.value/2+.01}% 0.025
+    translation 0 %{=fields.ySize.value/2+.01}% %{=fields.wallHeight.value/2}%
   rotation 0 0 1 1.5708
   children [
     USE WALL_SHAPE_X
   ]
   boundingObject USE WALL_SHAPE_X
 }
+
+%{ end }%  # if wallHeight > 0
 
   ] # Solid children
 

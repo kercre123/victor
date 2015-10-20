@@ -9,6 +9,7 @@ namespace Anki
   {
     namespace HAL
     {
+      static const uint32_t DROP_LEVEL = 20;
 
       extern volatile GlobalDataToBody g_dataToBody;
       char const backpackLightLUT[5] = {3, 2, 1, 0, 0};
@@ -50,6 +51,12 @@ namespace Anki
           GPIO_SET(GPIO_IRLED, PIN_IRLED);
         else
           GPIO_RESET(GPIO_IRLED, PIN_IRLED);
+      }
+      
+      extern volatile GlobalDataToHead g_dataToHead;      
+      bool IsCliffDetected()
+      {
+        return g_dataToHead.cliffLevel < DROP_LEVEL;
       }
     }
   }

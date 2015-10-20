@@ -46,6 +46,10 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleActiveObjectTapped, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::goalPose,
     std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cliffEvent,
+    std::bind(&Robot::HandleCliffEvent, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerEvent,
+   std::bind(&Robot::HandleChargerEvent, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::image,
     std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
@@ -283,6 +287,50 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
   }
 }
 
+  
+
+void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
+  if (cliffEvent.detected) {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
+                     cliffEvent.x_mm, cliffEvent.y_mm);
+    
+    // Stop whatever we were doing
+    GetActionList().Cancel();
+    
+    // Add cliff obstacle
+    Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, GetWorldOrigin());
+    _blockWorld.AddProxObstacle(cliffPose);
+    
+  } else {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
+  }
+  
+  // Forward on with EngineToGame event
+  CliffEvent payload = message.GetData().Get_cliffEvent();
+  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
+  
+}
+  
+void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  ChargerEvent chargerEvent = message.GetData().Get_chargerEvent();
+  if (chargerEvent.onCharger) {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OnCharger", "");
+    
+    // Stop whatever we were doing
+    GetActionList().Cancel();
+    
+  } else {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OffCharger", "");
+  }
+  
+  // Forward on with EngineToGame event
+  ChargerEvent payload = message.GetData().Get_chargerEvent();
+  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
+}
+  
 
 // For processing image chunks arriving from robot.
 // Sends complete images to VizManager for visualization (and possible saving).
