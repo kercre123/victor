@@ -17,11 +17,15 @@ public class LookForCubes : State {
     base.Update();
     if (patternPlayAutoBuild.AvailableBlocks() > 0) {
       stateMachine.SetNextState(new PickUpCube());
-      // robot.ExecuteBehavior("NONE");
     }
     else {
       SearchForAvailableBlock();
     }
+  }
+
+  public override void Exit() {
+    base.Exit();
+    // robot.ExecuteBehavior("NONE");
   }
 
   void SearchForAvailableBlock() {

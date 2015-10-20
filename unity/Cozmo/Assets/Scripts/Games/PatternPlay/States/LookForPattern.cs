@@ -4,6 +4,7 @@ using System.Collections;
 public class LookForPattern : State {
 
   PatternPlayController patternPlayController = null;
+  PatternPlayAutoBuild patternPlayAutoBuild = null;
 
   bool animationPlaying = false;
 
@@ -17,6 +18,8 @@ public class LookForPattern : State {
     DAS.Info("State", "LookForPattern");
     // TODO: Set eyes to scan.
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
+    patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+    patternPlayAutoBuild.autoBuilding = false;
   }
 
   public override void Update() {
@@ -68,7 +71,7 @@ public class LookForPattern : State {
     }
     else if (NoBlocksMoved()) {
       // nobody has moved blocks for a while... ima make my own pattern.
-      // stateMachine.SetNextState(new HaveIdeaForPattern());
+      stateMachine.SetNextState(new HaveIdeaForPattern());
     }
 
     lastFrameVisibleCount = robot.visibleObjects.Count;

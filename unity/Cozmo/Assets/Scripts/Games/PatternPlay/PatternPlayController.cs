@@ -353,6 +353,19 @@ public class PatternPlayController : GameController {
       if (blockConfig.Value.blockLightsLocalSpace.right) {
         robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
+
+      // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
+      // in a pattern yet to white.
+      if (patternPlayAutoBuild.autoBuilding &&
+          robot.seenObjects.Contains(robot.activeBlocks[blockConfig.Key]) &&
+          patternPlayAutoBuild.NeatListContains(robot.activeBlocks[blockConfig.Key]) == false) {
+
+        for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
+          robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
+        }
+
+      }
+
     }
 
     previousInputID = currentInputID;

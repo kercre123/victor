@@ -9,6 +9,7 @@ public class PatternPlayAutoBuild {
   ObservedObject objectHeld = null;
   Vector3 idealViewPosition;
   float idealViewAngle = 0.0f;
+  public bool autoBuilding = false;
 
   // the index 0 object should always be the anchor object.
   List<ObservedObject> neatList = new List<ObservedObject>();
@@ -69,11 +70,11 @@ public class PatternPlayAutoBuild {
     else if (neatList.Count == 1) {
       // there is an anchor block. let's put it to the right of the block.
       Debug.Log("anchor block: " + neatList[0].WorldPosition);
-      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.4f;
     }
     else {
       // there are two blocks. let's put it to the left of the anchor (first) block.
-      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.4f;
     }
   }
 
@@ -83,6 +84,10 @@ public class PatternPlayAutoBuild {
       ComputeIdealViewPose();
     }
     objectHeld = null;
+  }
+
+  public bool NeatListContains(ObservedObject observedObj) {
+    return neatList.Contains(observedObj);
   }
 
   public void ObjectMoved(int blockID) {
