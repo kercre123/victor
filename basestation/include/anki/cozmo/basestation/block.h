@@ -77,6 +77,15 @@ namespace Anki {
         NUM_CORNERS       =  8
       };
       
+      enum PreActionOrientation {
+        NONE  = 0x0,
+        UP    = 0x01,
+        LEFT  = 0x02,
+        DOWN  = 0x04,
+        RIGHT = 0x08,
+        ALL   = UP | LEFT | DOWN | RIGHT
+      };
+      
       virtual ~Block();
       
       // Accessors:
@@ -89,7 +98,9 @@ namespace Anki {
       
       void AddFace(const FaceName whichFace,
                    const Vision::MarkerType& code,
-                   const float markerSize_mm);
+                   const float markerSize_mm,
+                   const u8 dockOrientations = PreActionOrientation::ALL,
+                   const u8 rollOrientations = PreActionOrientation::ALL);
             
       // Return a reference to the marker on a particular face of the block.
       // Symmetry convention: if no marker was set for the requested face, the
@@ -157,6 +168,8 @@ namespace Anki {
         FaceName             whichFace;
         Vision::MarkerType   code;
         f32                  size;
+        u8                   dockOrientations; // See PreActionOrientation
+        u8                   rollOrientations; // See PreActionOrientation
       } BlockFaceDef_t;
       
       typedef struct {

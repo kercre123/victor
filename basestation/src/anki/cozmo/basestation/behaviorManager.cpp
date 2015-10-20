@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
+#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
@@ -19,10 +20,13 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+
+#include "clad/types/behaviorChooserType.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -52,6 +56,29 @@ namespace Cozmo {
     
     SetupBehaviorChooser(config);
     
+    if (_robot.HasExternalInterface())
+    {
+      IExternalInterface* externalInterface = _robot.GetExternalInterface();
+      _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
+       [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+       {
+         switch (event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType)
+         {
+           case BehaviorChooserType::Demo:
+           {
+             SetupBehaviorChooser(config);
+             break;
+           }
+           case BehaviorChooserType::Selection:
+           {
+             SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+             break;
+           }
+           default:
+             break;
+         }
+       }));
+    }
     _isInitialized = true;
     
     _lastSwitchTime_sec = 0.f;
@@ -62,9 +89,10 @@ namespace Cozmo {
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
     DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot, config);
-    _behaviorChooser = newDemoChooser;
+    SetBehaviorChooser(newDemoChooser);
     
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
+    AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -278,7 +306,10 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
+    // These behavior pointers are going to be invalidated, so clear them
+    _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
     Util::SafeDelete(_behaviorChooser);
+    
     _behaviorChooser = newChooser;
   }
   

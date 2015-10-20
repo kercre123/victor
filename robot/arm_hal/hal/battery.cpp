@@ -22,7 +22,8 @@ namespace Anki
 
       bool BatteryIsOnCharger()
       {
-        return false; // XXX On Cozmo 3, head is off if robot is charging
+        // Let's say we consider it to be on charger if 0.2V is detected. 
+        return (g_dataToHead.VExt * 10)/65535 > 2; 
       }
     }
   }

@@ -204,6 +204,8 @@ _blinkTrack.__METHOD__()
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
     // This prevents us from replaying the same keyframe
     _playedRobotAudio_ms = 0;
+    _onDeviceRobotAudioKeyFrameQueue.clear();
+    _lastPlayedOnDeviceRobotAudioKeyFrame = nullptr;
 #   endif
     
     ALL_TRACKS(Init, ;);
@@ -363,6 +365,17 @@ _blinkTrack.__METHOD__()
       if(_robotAudioTrack.HasFramesLeft() &&
          _robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
       {
+        
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
+        // Queue up audio frame for playing locally if
+        // it's not already in the queued and it wasn't already played.
+        const RobotAudioKeyFrame* audioKF = &_robotAudioTrack.GetCurrentKeyFrame();
+        if ((audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
+            (_onDeviceRobotAudioKeyFrameQueue.empty() || audioKF != _onDeviceRobotAudioKeyFrameQueue.back())) {
+          _onDeviceRobotAudioKeyFrameQueue.push_back(audioKF);
+        }
+#   endif
+        
         if(!BufferMessageToSend(_robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage()))
         {
           // No samples left to send for this keyframe. Move to next keyframe,
@@ -478,15 +491,18 @@ _blinkTrack.__METHOD__()
     } // while(buffering frames)
     
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-    if(_robotAudioTrack.HasFramesLeft())
+    for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
     {
-      const RobotAudioKeyFrame& audioKF = _robotAudioTrack.GetCurrentKeyFrame();
-      if((_playedRobotAudio_ms < _startTime_ms + audioKF.GetTriggerTime()) &&
-         audioKF.IsTimeToPlay(_startTime_ms,  currTime_ms))
+      if(AllTracksBuffered() ||   // If all tracks buffered already, then play this now.
+         ((_playedRobotAudio_ms < _startTime_ms + audioKF->GetTriggerTime()) &&
+         audioKF->IsTimeToPlay(_startTime_ms,  currTime_ms)))
       {
         // TODO: Insert some kind of small delay to simulate latency?
-        SoundManager::getInstance()->Play(audioKF.GetSoundName());
+        SoundManager::getInstance()->Play(audioKF->GetSoundName());
         _playedRobotAudio_ms = currTime_ms;
+        
+        _lastPlayedOnDeviceRobotAudioKeyFrame = audioKF;
+        _onDeviceRobotAudioKeyFrameQueue.pop_front();
       }
     }
 #   endif

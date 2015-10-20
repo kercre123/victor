@@ -97,7 +97,7 @@ namespace Cozmo {
     void AddReactionaryBehavior(IReactionaryBehavior* behavior);
     
     // How we store and choose next behavior
-    IBehaviorChooser* _behaviorChooser;
+    IBehaviorChooser* _behaviorChooser = nullptr;
     
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;

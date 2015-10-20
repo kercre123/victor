@@ -58,6 +58,14 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   }
 }
   
+BehaviorLookAround::~BehaviorLookAround()
+{
+  if (_currentState != State::Inactive)
+  {
+    ResetBehavior(0);
+  }
+}
+  
 bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
 {
   switch (_currentState)

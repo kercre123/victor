@@ -63,6 +63,10 @@ namespace Anki
       
       Result QueueObservedMarker(HistPoseKey& poseKey, Vision::ObservedMarker& marker);
 
+      // Adds a proximity obstacle (like cliffs and random objects detected in front of the robot with
+      // the IR sensor) at the given pose.
+      Result AddProxObstacle(const Pose3d& p);
+      
       //
       // Object Access
       //

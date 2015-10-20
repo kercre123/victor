@@ -14,6 +14,8 @@
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaPlannerContext.h"
 #include "json/json.h"
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
 #include <fstream>
 #include <getopt.h>
 #include <iomanip>
@@ -22,6 +24,8 @@
 
 using namespace Anki::Planning;
 using namespace std;
+
+Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
 
 void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan& plan)
 {
@@ -42,6 +46,10 @@ void usage()
 int main(int argc, char *argv[])
 {
   cout<<"Welcome to xythetaPlanner.\n";
+
+  loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  loggerProvider->SetMinLogLevel(0);
+  Anki::Util::gLoggerProvider = loggerProvider;
 
   bool gotMprim = false;
   xythetaPlannerContext context;
@@ -115,11 +123,16 @@ int main(int argc, char *argv[])
       return -1;
     }
 
+    context.env.PrepareForPlanning();
+
     xythetaPlanner planner(context);
     planner.Replan();
 
+    printf("complete. Path: \n");
+    context.env.PrintPlan(planner.GetPlan());
+
     writePath("path.txt", context.env, planner.GetPlan());
-    cout<<"done! check path.txt\n";
+    cout<<"check path.txt\n";
   }
 
   if( doManualPlanner ) {

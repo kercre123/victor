@@ -4,6 +4,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h" // simulated or real!
 #include "clad/types/imageTypes.h"
+#include "clad/types/powerMessages.h"
 #include "anki/cozmo/robot/debug.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -315,7 +316,28 @@ namespace Anki {
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, IMU);
         IMUFilter::Update();
+        ProxSensors::Update();
 
+        
+        //////////////////////////////////////////////////////////////
+        // Power management
+        //////////////////////////////////////////////////////////////
+        static bool _wasCharging = false;
+        if (HAL::BatteryIsOnCharger() && !_wasCharging) {
+          ChargerEvent msg;
+          msg.onCharger = _wasCharging = true;
+          RobotInterface::SendMessage(msg);
+          
+          // Stop whatever we were doing
+          AnimationController::Clear();
+          PickAndPlaceController::Reset();
+          
+        } else if (!HAL::BatteryIsOnCharger() && _wasCharging) {
+          ChargerEvent msg;
+          msg.onCharger = _wasCharging = false;
+          RobotInterface::SendMessage(msg);
+        }
+        
         //////////////////////////////////////////////////////////////
         // Head & Lift Position Updates
         //////////////////////////////////////////////////////////////

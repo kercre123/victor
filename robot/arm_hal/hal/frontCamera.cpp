@@ -22,7 +22,7 @@ namespace Anki
   namespace Cozmo
   {
     
-#ifdef COZMO_ROBOT_V40
+#ifdef COZMO_ROBOT_3A99
     // Calibration values from August 11, 2015 - on headboard with SSID 3a99
     const u16 HEAD_CAM_CALIB_WIDTH  = 400;
     const u16 HEAD_CAM_CALIB_HEIGHT = 296;
@@ -36,6 +36,20 @@ namespace Anki
       0.00044f,
       0.00188f
     };
+#elif defined(COZMO_ROBOT_3AA0)
+    // Calibration values from Oct 14, 2015 - on headboard with SSID 3aa0
+    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 274.291991607f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 276.143080182f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 191.448668019f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 150.948649329f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      0.21464833f,
+      -0.92671181f,
+      0.00176247f,
+      -0.00123075f
+    };    
 #else
     // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
     const u16 HEAD_CAM_CALIB_WIDTH  = 400;

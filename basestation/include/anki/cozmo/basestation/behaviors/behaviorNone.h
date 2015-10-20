@@ -21,7 +21,7 @@ namespace Cozmo {
 class BehaviorNone: public IBehavior
 {
 public:
-  BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { _name = "None"; }
+  BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { _name = "NoneBehavior"; }
   virtual ~BehaviorNone() { }
   
   //
