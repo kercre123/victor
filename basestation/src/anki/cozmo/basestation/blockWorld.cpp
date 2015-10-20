@@ -43,7 +43,9 @@
 
 #define ENABLE_BLOCK_BASED_LOCALIZATION 1
 
+// TODO: Expose these as parameters
 #define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
+#define MAX_BLOCK_LOCALIZATION_DISTANCE_MM 200.f
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
@@ -547,22 +549,30 @@ namespace Anki
           matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
           matchingObject->UpdateMarkerObservationTimes(*objSeen);
 
-          // Decide whehter we will be updating the robot's pose relative to this
-          // object or updating the object's pose w.r.t. the robot. We only do this
-          // if we haven't already done it, if the object can offer localization
-          // info, and if the robot isn't already localized to an object or if
-          // this object has been seen more recently than the one the robot is
-          // localized to.
-#         if ENABLE_BLOCK_BASED_LOCALIZATION
-          // Initial conditions that must be met before we even consider localizing
-          // to this object
-          bool useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
-                                          _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 && // didn't _just_ get identified: we still need to check if it's pre-existing active ID
-                                          matchingObject->CanBeUsedForLocalization() &&
-                                          (_robot->IsLocalized() == false ||
-                                           _robot->HasMovedSinceBeingLocalized()));
-#         else 
+          const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
+
           bool useThisObjectToLocalize = false;
+          
+#         if ENABLE_BLOCK_BASED_LOCALIZATION
+          // Decide whether we will be updating the robot's pose relative to this
+          // object or updating the object's pose w.r.t. the robot. We only localize
+          // to the object if:
+          //  - we haven't already done so this tick (to another object),
+          //  - the object is close enough,
+          //  - the object didn't _just_ get identified (since we still need to check if
+          //     its active ID matches a pre-existing one (on the next Update)
+          //  - if the object is *currently* being observed as flat
+          //  - if the object can offer localization info (which it last being
+          //     observed as flat)
+          //  - if the robot isn't already localized to an object or it has moved
+          //     since the last time it got localized to an object.
+          useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
+                                     distToObj <= MAX_BLOCK_LOCALIZATION_DISTANCE_MM &&
+                                     _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
+                                     objSeen->IsRestingFlat() &&
+                                     matchingObject->CanBeUsedForLocalization() &&
+                                     (_robot->IsLocalized() == false ||
+                                      _robot->HasMovedSinceBeingLocalized()) );
 #         endif
           
           // If we're about to use this object for localization and it's a different
@@ -622,17 +632,27 @@ namespace Anki
             haveLocalizedRobotToObject = true;
             
           } else {
-            /* Very verbose, but useful for debugging
-            PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.UpdateObjectPose",
-                             "Updating object %d's pose to (%.1f,%.1f,%.1f), %.1fdeg\n",
-                             matchingObject->GetID().GetValue(),
-                             objSeen->GetPose().GetTranslation().x(),
-                             objSeen->GetPose().GetTranslation().y(),
-                             objSeen->GetPose().GetTranslation().z(),
-                             objSeen->GetPose().GetRotationAngle<'Z'>().getDegrees());
-             */
-                        
-            matchingObject->SetPose( objSeen->GetPose() );
+            
+//            // Only update the object's pose if we're seeing it from closer
+//            // (Assuming the closer we are, the more accurate the pose estimate)
+            
+//            const f32 lastDistToObj = matchingObject->GetLastPoseUpdateDistance();
+//            if(/*matchingObject->CanBeUsedForLocalization() == false ||*/
+//               lastDistToObj < 0.f || distToObj < lastDistToObj)
+//            {
+            
+              /* Very verbose, but useful for debugging
+               PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.UpdateObjectPose",
+               "Updating object %d's pose to (%.1f,%.1f,%.1f), %.1fdeg\n",
+               matchingObject->GetID().GetValue(),
+               objSeen->GetPose().GetTranslation().x(),
+               objSeen->GetPose().GetTranslation().y(),
+               objSeen->GetPose().GetTranslation().z(),
+               objSeen->GetPose().GetRotationAngle<'Z'>().getDegrees());
+               */
+              
+              matchingObject->SetPose( objSeen->GetPose(), distToObj );
+//            }
           }
           
           observedObject = matchingObject;
@@ -648,7 +668,7 @@ namespace Anki
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          _robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
+          //_robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
           // Add all observed markers of this object as occluders:
           std::vector<const Vision::KnownMarker *> observedMarkers;
@@ -698,6 +718,9 @@ namespace Anki
           // Use the projected corners to add an occluder and to keep track of the
           // bounding quads of all the observed objects in this Update
           //_robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
+          
+          // Project the observed object into the robot's camera, using its new pose
+          _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
           
           Rectangle<f32> boundingBox(projectedCorners);
           //_obsProjectedObjects.emplace_back(obsID, boundingBox);

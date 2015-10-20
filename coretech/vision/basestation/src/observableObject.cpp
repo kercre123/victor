@@ -360,6 +360,14 @@ namespace Vision {
     return boundingQuad;
   } // GetBoundingQuadXY()
   
+  bool ObservableObject::IsRestingFlat(const Radians& angleTol) const
+  {
+    bool isFlat = (NEAR(GetPose().GetRotationAngle<'X'>(), 0, angleTol) &&
+                   NEAR(GetPose().GetRotationAngle<'Y'>(), 0, angleTol));
+    
+    return isFlat;
+  }
+  
 } // namespace Vision
 } // namespace Anki
 

@@ -691,7 +691,9 @@ namespace Anki {
     
     bool ActiveCube::CanBeUsedForLocalization() const
     {
-      return IsLocalized() && GetIdentityState() == ActiveIdentityState::Identified;
+      return (IsLocalized() &&
+              GetIdentityState() == ActiveIdentityState::Identified &&
+              IsRestingFlat());
     }
     
     void ActiveCube::Identify()

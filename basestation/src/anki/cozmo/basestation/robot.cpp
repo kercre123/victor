@@ -1590,6 +1590,37 @@ namespace Anki {
       // the pose w.r.t. the origin for storing poses in history.
       Pose3d robotPoseWrtOrigin = robotPoseWrtObject.GetWithRespectToOrigin();
       
+      // Filter Z so it doesn't change too fast (unless we are switching from
+      // delocalized to localized)
+      static f32 zPrev = 0.0;
+      static const f32 zUpdateWeight = 0.1f;
+      if(IsLocalized()) {
+        Vec3f T = robotPoseWrtOrigin.GetTranslation();
+        T.z() *= zUpdateWeight;
+        T.z() += (1.f - zUpdateWeight) * GetPose().GetTranslation().z();
+        robotPoseWrtOrigin.SetTranslation(T);
+      }
+      zPrev = robotPoseWrtOrigin.GetTranslation().z();
+      
+//      // If we're moving or not close enough, then ignore the Z estimate:
+//      const f32 ObjectLocalizationDistThresh_mm = 150.f;
+//      if(IsMoving() || ComputeDistanceBetween(seenObject->GetPose(), GetPose()) > ObjectLocalizationDistThresh_mm)
+//      {
+////      // Only use x,y, and theta (angle around z). Ignore the rest of the DOF estimated
+////      // by the vision system and use what is already in the robot's pose
+//      Vec3f T = robotPoseWrtOrigin.GetTranslation();
+////      if(std::abs(T.z() - GetPose().GetTranslation().z()) < 10.f) {
+//        T.z() = GetPose().GetTranslation().z();
+////        /*
+////        Radians angleX = GetPose().GetRotation().GetAngleAroundXaxis();
+////        Radians angleY = GetPose().GetRotation().GetAngleAroundYaxis();
+////        Radians angleZ = robotPoseWrtOrigin.GetRotation().GetAngleAroundZaxis();
+////        RotationMatrix3d R(angleX, angleY, angleZ);
+////        robotPoseWrtOrigin.SetRotation(R);
+////         */
+//        robotPoseWrtOrigin.SetTranslation(T);
+//      }
+      
       if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
                                                   robotPoseWrtOrigin.GetTranslation().x(),
                                                   robotPoseWrtOrigin.GetTranslation().y(),

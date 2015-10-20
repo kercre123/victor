@@ -1287,6 +1287,13 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
+    if(&oObject->GetPose().FindOrigin() != _robot.GetWorldOrigin()) {
+      PRINT_NAMED_WARNING("BehaviorOCD.HandleObservedObject.OriginMismatch",
+                          "Ignoring object %d because it does not share an origin "
+                          "with the robot.", oObject->GetID().GetValue());
+      return RESULT_OK;
+    }
+    
     if(oObject->IsActive() && oObject->GetIdentityState() != ActiveIdentityState::Identified) {
       PRINT_NAMED_WARNING("BehaviorOCD.HandleObservedObject.UnidentifiedActiveObject",
                           "How'd this happen? (ObjectID %d, idState=%s)",

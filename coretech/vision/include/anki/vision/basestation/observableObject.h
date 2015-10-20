@@ -138,8 +138,11 @@ namespace Anki {
       
       void SetID();
       void SetColor(const ColorRGBA& color);
-      void SetPose(const Pose3d& newPose);
+      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f);
       void SetPoseParent(const Pose3d* newParent);
+      
+      // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.
+      f32 GetLastPoseUpdateDistance() const;
       
       void SetLastObservedTime(TimeStamp_t t);
       const TimeStamp_t GetLastObservedTime() const;
@@ -196,6 +199,12 @@ namespace Anki {
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
       
+      // Check whether the object's current pose is resting flat on one of its
+      // sides (within the given tolerance). This means it is allowed to have any
+      // orientation around the Z axis (w.r.t. its parent), but no rotation about the
+      // X and Y axes.
+      bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(5)) const;
+      
     protected:
       
       // Canonical corners are properties of each derived class and define the
@@ -221,6 +230,7 @@ namespace Anki {
     private:
       // Force setting of pose through SetPose() to keep pose name updated
       Pose3d _pose;
+      f32    _lastSetPoseDistance = -1.f;
       
       // Pose has been set
       bool   _isLocalized = false;
@@ -252,13 +262,21 @@ namespace Anki {
       _ID.Set();
     }
   
-    inline void ObservableObject::SetPose(const Pose3d& newPose) {
+    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance) {
       _pose = newPose;
       _isLocalized = true;
       
       std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());
       _pose.SetName(poseName);
+      
+      if(fromDistance >= 0.f) {
+        _lastSetPoseDistance = fromDistance;
+      }
+    }
+    
+    inline f32 ObservableObject::GetLastPoseUpdateDistance() const {
+      return _lastSetPoseDistance;
     }
     
     inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
