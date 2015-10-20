@@ -38,11 +38,4 @@ void clientUpdate(void);
 /// Check if client is connected.
 bool clientConnected(void);
 
-/** Cross link function for queuing image Data
- * @param imgData A pointer to the image data to queue
- * @param len     The number of bytes to take from imgData
- * @param eof     True if this is the end of an image
- */
-void clientQueueImageData(uint8_t* imgData, uint8_t len, bool eof);
-
 #endif

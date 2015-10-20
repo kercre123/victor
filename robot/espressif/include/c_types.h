@@ -84,7 +84,6 @@ typedef enum {
 #error "ICACHE_FLASH not defined"
 #endif /* ICACHE_FLASH */
 
-#define IRAM_ATTR __attribute__((section(".iram1.text")))
 #define likely(x)      __builtin_expect(!!(x), 1)
 #define unlikely(x)    __builtin_expect(!!(x), 0)
 

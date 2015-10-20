@@ -17,32 +17,6 @@
 #include "upgrade_controller.h"
 #include "user_config.h"
 
-#define USER_TASK_INTERVAL_MS 1000
-
-/** User "idle" task
- * Called by OS with lowest priority.
- */
-/*LOCAL bool userTask(uint32_t param)
-{
-  return false;
-}*/
-
-inline uint32_t IRAM_ATTR GetTimeStamp(void)
-{
-  return system_get_time()/1000; // Convert us counter to ms
-}
-
-static ETSTimer userTimer;
-
-LOCAL void userIntervalTask(void *timer_arg)
-{
-  static int32 tick = 0;
-  int32 tock = system_get_time();
-  telnetPrintf("%d\t%dus\r\n", tock, tock-tick-(USER_TASK_INTERVAL_MS*1000));
-  tick = tock;
-}
-
-
 /** Handle wifi events passed by the OS
  */
 void wifi_event_callback(System_Event_t *evt)
@@ -130,7 +104,7 @@ static void system_init_done(void)
   telnetInit();
 
   // Enable upgrade controller
-  //upgradeControllerInit();
+  upgradeControllerInit();
 
   // Setup Basestation client
   clientInit();
@@ -138,21 +112,11 @@ static void system_init_done(void)
   // Initalize i2SPI interface
   i2spiInit();
 
-  // Enable UART0 RX interrupt
-  // Only after clientInit
-  uart_start();
-  // Enable I2SPI start only after clientInit
-  i2spiStart();
-
   // Set up shared background tasks
   backgroundTaskInit();
   
   // Set up shared foreground tasks
   foregroundTaskInit();
-
-  os_timer_disarm(&userTimer);
-  os_timer_setfn(&userTimer, userIntervalTask, NULL);
-  //os_timer_arm(&userTimer, USER_TASK_INTERVAL_MS, true);
 
   // Enable I2SPI start only after clientInit
   i2spiStart();

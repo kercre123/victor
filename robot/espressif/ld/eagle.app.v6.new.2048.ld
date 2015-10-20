@@ -188,7 +188,7 @@ SECTIONS
     *(.gnu.version)
     _text_end = ABSOLUTE(.);
     _etext = .;
-  } >irom0_0_seg :irom0_0_phdr
+  } >iram1_0_seg :iram1_0_phdr
 
   .lit4 : ALIGN(4)
   {
@@ -199,12 +199,12 @@ SECTIONS
     _lit4_end = ABSOLUTE(.);
   } >iram1_0_seg :iram1_0_phdr
 
-  .iram1.text : ALIGN(4)
+  .irom0.text : ALIGN(4)
   {
-    _iram1_text_start = ABSOLUTE(.);
-    *(.iram1.literal .irom.literal .irom.text.literal .iram1.text .irom.text)
-    _iram1_text_end = ABSOLUTE(.);
-  } >iram1_0_seg :iram1_0_phdr
+    _irom0_text_start = ABSOLUTE(.);
+    *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)
+    _irom0_text_end = ABSOLUTE(.);
+  } >irom0_0_seg :irom0_0_phdr
 }
 
 /* get ROM code address */

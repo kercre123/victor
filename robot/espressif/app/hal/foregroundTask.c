@@ -13,7 +13,7 @@ static os_event_t foregroundTaskQueue[foregroundTaskQueueLen]; ///< Memory for t
 
 /** The OS task which dispatches subtasks.
 */
-LOCAL void foregroundTaskTask(os_event_t *event)
+void foregroundTaskTask(os_event_t *event)
 {
   const foregroundTask subTask = (foregroundTask)(event->sig);
   if (subTask == NULL)

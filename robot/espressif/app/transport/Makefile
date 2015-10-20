@@ -41,3 +41,5 @@ INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
+
+CCFLAGS += -Os

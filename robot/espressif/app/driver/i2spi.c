@@ -14,7 +14,7 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
-#include "client.h"
+#include "imageSender.h"
 
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
@@ -63,7 +63,7 @@ static int16_t screenReadIndex;
 static int16_t screenDataAvailable;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
-static IRAM_ATTR void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
+void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
 {
   desc->owner     = 1;
   desc->eof       = eof;
@@ -73,14 +73,26 @@ static IRAM_ATTR void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
   desc->unused    = 0;
 }
 
+/** 16-bit half word wise copy function
+ * Copies num words from src to dest
+ */
+void halfWordCopy(uint16_t* dest, uint16_t* src, int num)
+{
+  int w;
+  for (w=0; w<num; ++w)
+  {
+    dest[w] = src[w];
+  }
+}
+
 /** Processes an incomming drop from the RTIP to the WiFi
  * @param drop A pointer to a complete drop
  * @warning Call from a task not an ISR.
  */
-static IRAM_ATTR void processDrop(DropToWiFi* drop)
+void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
-  if (rxJpegLen > 0) clientQueueImageData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
+  if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
   // XXX do stuff with the rest of the payload
 }
 
@@ -89,7 +101,7 @@ static IRAM_ATTR void processDrop(DropToWiFi* drop)
  * @param payload A pointer to the payload data to fill the drop with or NULL
  * @param length The number of bytes of payload to be put into this drop
  */
-static IRAM_ATTR void makeDrop(uint8_t* payload, uint8_t length)
+void makeDrop(uint8_t* payload, uint8_t length)
 {
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   DropToRTIP drop;
@@ -116,7 +128,7 @@ static IRAM_ATTR void makeDrop(uint8_t* payload, uint8_t length)
   // Copy into the DMA buffer
   if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
   {
-    os_memcpy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE);
+    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
     outgoingPhase += DROP_SPACING/2;
     if (outgoingPhase > DMA_BUF_SIZE/2) // Have rolled over into next buffer
     {
@@ -130,12 +142,12 @@ static IRAM_ATTR void makeDrop(uint8_t* payload, uint8_t length)
   else // Split across two buffers
   {
     const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
-    os_memcpy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten*2);
+    halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
     /// XXX NEED TO HANDLE OVERFLOW
     nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
     txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
     os_memset(txBuf, 0, DMA_BUF_SIZE);
-    os_memcpy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, (DROP_TO_RTIP_SIZE/2 - halfWordsWritten)*2);
+    halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
 }
@@ -143,7 +155,7 @@ static IRAM_ATTR void makeDrop(uint8_t* payload, uint8_t length)
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
-static IRAM_ATTR void i2spiTask(os_event_t *event)
+void i2spiTask(os_event_t *event)
 {
   struct sdio_queue* desc = asDesc(event->par);
 
@@ -188,7 +200,7 @@ static IRAM_ATTR void i2spiTask(os_event_t *event)
         if (dropPhase < DMA_BUF_SIZE/2) // If we found a header
         {
           const int8 halfWordsToRead = min(DROP_TO_WIFI_SIZE-(dropWrInd*2), DMA_BUF_SIZE - (dropPhase*2))/2;
-          os_memcpy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead*2);
+          halfWordCopy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead);
           dropWrInd += halfWordsToRead;
           if (dropWrInd*2 == DROP_TO_WIFI_SIZE) // The end of the drop was in this buffer
           {
@@ -237,7 +249,7 @@ static IRAM_ATTR void i2spiTask(os_event_t *event)
  * Everything is passed off to tasks to be handled
  * @warnings ISRs cannot call printf or any radio related functions and must return in under 10us
  */
-static IRAM_ATTR void dmaisr(void* arg) {
+void dmaisr(void* arg) {
 	//Grab int status
 	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
 	//clear all intr flags
@@ -264,7 +276,7 @@ static IRAM_ATTR void dmaisr(void* arg) {
 
 
 //Initialize I2S subsystem for DMA circular buffer use
-int8_t i2spiInit() {
+int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
   outgoingPhase = UNINITALIZED_PHASE; // Not established yet
@@ -399,13 +411,13 @@ int8_t i2spiInit() {
   return 0;
 }
 
-void i2spiStart(void)
+void ICACHE_FLASH_ATTR i2spiStart(void)
 {
   //Start i2s start and receive
   SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START | I2S_I2S_RX_START);
 }
 
-void i2spiStop(void)
+void ICACHE_FLASH_ATTR i2spiStop(void)
 {
   // Disable interrupts
   CLEAR_PERI_REG_MASK(SLC_INT_ENA, SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);
@@ -422,17 +434,17 @@ bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
   return false;
 }
 
-bool i2spiReadyForAudioData(void)
+bool ICACHE_FLASH_ATTR i2spiReadyForAudioData(void)
 {
   return audioReadIndex >= AUDIO_BUFFER_SIZE;
 }
 
-void i2spiPushAudioData(uint8_t* audioData)
+void ICACHE_FLASH_ATTR i2spiPushAudioData(uint8_t* audioData)
 {
   os_memcpy(audioStorage, audioData, AUDIO_BUFFER_SIZE);
 }
 
-uint8_t* i2spiGetScreenDataBuffer(void)
+uint8_t* ICACHE_FLASH_ATTR i2spiGetScreenDataBuffer(void)
 {
   if (screenReadIndex >= screenDataAvailable)
   {
@@ -446,7 +458,7 @@ uint8_t* i2spiGetScreenDataBuffer(void)
   }
 }
 
-void i2spiSetScreenDataLength(uint16_t length)
+void ICACHE_FLASH_ATTR i2spiSetScreenDataLength(uint16_t length)
 {
   screenDataAvailable = length;
 }

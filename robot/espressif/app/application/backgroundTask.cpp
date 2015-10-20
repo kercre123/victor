@@ -19,12 +19,16 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 
 /** The OS task which dispatches subtasks.
 */
-LOCAL void ICACHE_FLASH_ATTR backgroundTaskExec(os_event_t *event)
+LOCAL void backgroundTaskExec(os_event_t *event)
 {
   static u32 lastBTT = system_get_time();
+  static u8 periodicPrint = 0;
   const u32 btStart  = system_get_time();
   const u32 btInterval = btStart - lastBTT;
-  if (btInterval > EXPECTED_BT_INTERVAL_US*2) os_printf("Background task interval too long: %dus!\r\n", btInterval);
+  if ((btInterval > EXPECTED_BT_INTERVAL_US*2) && (periodicPrint++ == 0))
+  {
+    os_printf("Background task interval too long: %dus!\r\n", btInterval);
+  }
   
   switch (event->sig)
   {
@@ -41,12 +45,16 @@ LOCAL void ICACHE_FLASH_ATTR backgroundTaskExec(os_event_t *event)
   }
   
   const u32 btRunTime = system_get_time() - btStart;
-  if (btRunTime > BT_MAX_RUN_TIME_US) os_printf("Background task run time too long: %dus!\r\n", btRunTime);
+  if ((btRunTime > BT_MAX_RUN_TIME_US) && (periodicPrint++ == 0))
+  {
+    os_printf("Background task run time too long: %dus!\r\n", btRunTime);
+  }
+  lastBTT = btStart;
   // Always repost so we'll execute again.
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
-extern "C" int8_t ICACHE_FLASH_ATTR backgroundTaskInit(void)
+extern "C" int8_t backgroundTaskInit(void)
 {
   os_printf("backgroundTask init\r\n");
   if (system_os_task(backgroundTaskExec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)

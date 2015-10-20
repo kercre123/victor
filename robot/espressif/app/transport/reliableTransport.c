@@ -8,9 +8,11 @@
 #if defined(TARGET_ESPRESSIF)
 #include "osapi.h"
 #include "ets_sys.h"
+#include "user_interface.h"
 #define printf os_printf
 #define memcpy os_memcpy
 #define strncmp os_strncmp
+#define GetMicroCounter system_get_time
 #else
 #include <string.h>
 #include <stdio.h>
@@ -29,13 +31,10 @@ void FacePrintf(const char *format, ...);
 #define printClear() (void)0
 #endif
 
-// Forward declaration. We are counting on this function being implemented somewhere.
-uint32_t GetTimeStamp(void);
-
 /// Utility function to print the state of a connection object
-void ReliableConnection_printState(ReliableConnection* connection)
+void ICACHE_FLASH_ATTR ReliableConnection_printState(ReliableConnection* connection)
 {
-  printf("nO %u nI %u\nlUmst %u\nlrt   %u\r\ntxq %u\nprb %u prm %u",
+  printf("nO %u nI %u\r\nlUmst %u\r\nlrt   %u\r\ntxq %u\r\nprb %u prm %u\r\n",
              connection->nextOutSequenceId,
              connection->nextInSequenceId,
              (unsigned int)connection->latestUnackedMessageSentTime,
@@ -55,17 +54,17 @@ static void resetTxQueue(ReliableConnection* self)
   self->txQueued = sizeof(AnkiReliablePacketHeader);
 }
 
-static IRAM_ATTR bool haveDataToSend(ReliableConnection* self)
+bool haveDataToSend(ReliableConnection* self)
 {
   return self->txQueued > sizeof(AnkiReliablePacketHeader);
 }
 
-void ReliableTransport_Init()
+void ICACHE_FLASH_ATTR ReliableTransport_Init()
 {
   //printf("ReliableTransport Initalizing\n");
 }
 
-void ReliableConnection_Init(ReliableConnection* self, void* dest)
+void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* dest)
 {
   uint8_t i;
 
@@ -73,7 +72,7 @@ void ReliableConnection_Init(ReliableConnection* self, void* dest)
   self->nextOutSequenceId    = k_MinReliableSeqId;
   self->nextInSequenceId     = k_MinReliableSeqId;
   self->latestUnackedMessageSentTime = 0;
-  self->latestRecvTime = GetTimeStamp();
+  self->latestRecvTime = GetMicroCounter();
   memcpy(self->txBuf, RELIABLE_PACKET_HEADER_PREFIX, RELIABLE_PACKET_HEADER_PREFIX_LENGTH);
   resetTxQueue(self);
   for (i=0; i<ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH; ++i)
@@ -94,12 +93,12 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
 {
   if (bufferSize > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)
   {
-    printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
+    printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
     return false;
   }
   else if (connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH)
   {
-    printf("WARN: No slots left for pending reliable messages\n");
+    printf("WARN: No slots left for pending reliable messages\r\n");
     return false;
   }
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */
@@ -112,32 +111,26 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
   {
     uint8_t* msg = &(connection->pendingMessages[connection->pendingReliableBytes]);
     PendingReliableMessageMetaData* meta = &(connection->pendingMsgMeta[connection->numPendingReliableMessages]);
-    uint16_t* msgSubHeaderSizeField = NULL;
+    uint16_t msgSubHeaderSizeField = bufferSize;
 
     // Update the connection status
-    connection->pendingReliableBytes += ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + bufferSize;
+    connection->pendingReliableBytes += ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
     connection->numPendingReliableMessages += 1;
 
     // Store the meta data
     meta->sequenceNumber = connection->nextOutSequenceId;
     connection->nextOutSequenceId = NextSequenceId(connection->nextOutSequenceId);
-    meta->messageSize = bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH; // Number of bytes committed to this message
+    meta->messageSize = bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1*(tag != GLOBAL_INVALID_TAG); // Number of bytes committed to this message
     meta->messageType = messageType;
 
     // Add the sub message header to the buffer
-    *msg = messageType;
-    msg += 1;
-    msgSubHeaderSizeField = (uint16_t*)msg;
-    *msgSubHeaderSizeField = bufferSize;
-    msg += 2;
+    *msg = messageType; msg++;
+    *msg = msgSubHeaderSizeField & 0xff; msg++; // Have to do two writes here because unaligned write isn't supported on espressif
+    *msg = msgSubHeaderSizeField >> 8;   msg++;
     // Add tag if specified
     if (tag != GLOBAL_INVALID_TAG)
     {
-      *msg = tag;
-      msg += 1;
-      connection->pendingReliableBytes += 1;
-      meta->messageSize += 1;
-      *msgSubHeaderSizeField += 1;
+      *msg = tag; msg ++;
     }
 
     // Copy in the message
@@ -155,12 +148,12 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
  * @param newestFirst If true (default), the pending message queue will be fifo, otherwise lifo
  * @return The number of messages which were appended
  */
-static IRAM_ATTR uint8_t AppendPendingMessages(ReliableConnection* connection, bool newestFirst)
+uint8_t AppendPendingMessages(ReliableConnection* connection, bool newestFirst)
 {
   int16_t i; // Loop variable
   if (connection->numPendingReliableMessages == 0) // Nothing to append
   {
-    connection->latestUnackedMessageSentTime = GetTimeStamp();
+    connection->latestUnackedMessageSentTime = GetMicroCounter();
     return 0;
   }
   else
@@ -206,7 +199,7 @@ static IRAM_ATTR uint8_t AppendPendingMessages(ReliableConnection* connection, b
       connection->txQueued += numBytesToSend;
       if (firstToSend == 0)
       {
-	       connection->latestUnackedMessageSentTime = GetTimeStamp();
+	       connection->latestUnackedMessageSentTime = GetMicroCounter();
       }
       return numMessagesToSend;
     }
@@ -214,7 +207,7 @@ static IRAM_ATTR uint8_t AppendPendingMessages(ReliableConnection* connection, b
 }
 
 /// Send the contents of the TxBuf if possible
-static IRAM_ATTR bool SendTxBuf(ReliableConnection* connection)
+bool SendTxBuf(ReliableConnection* connection)
 {
   AnkiReliablePacketHeader* header = (AnkiReliablePacketHeader*)connection->txBuf;
   // Last thing we've received is one previous to the next thing we're expecting by definition
@@ -235,7 +228,7 @@ static IRAM_ATTR bool SendTxBuf(ReliableConnection* connection)
 }
 
 /// Trigger sending reliable messages
-static IRAM_ATTR bool SendPendingMessages(ReliableConnection* connection, bool newestFirst)
+bool SendPendingMessages(ReliableConnection* connection, bool newestFirst)
 {
   AppendPendingMessages(connection, newestFirst);
   if (haveDataToSend(connection))
@@ -293,7 +286,7 @@ bool ReliableTransport_Disconnect(ReliableConnection* connection)
  * @param seqId The highest sequence number which has been ACKed
  * @return The number of messages which were just acked.
  */
-uint8_t UpdateLastAckedMessage(ReliableConnection* connection, ReliableSequenceId seqId)
+uint8_t ICACHE_FLASH_ATTR UpdateLastAckedMessage(ReliableConnection* connection, ReliableSequenceId seqId)
 {
   uint8_t updated = 0;
   if (seqId != k_InvalidReliableSeqId && connection->numPendingReliableMessages > 0)
@@ -323,19 +316,19 @@ uint8_t UpdateLastAckedMessage(ReliableConnection* connection, ReliableSequenceI
       memcpy((void*)(connection->pendingMsgMeta),  (void*)(connection->pendingMsgMeta  + updated),       (connection->numPendingReliableMessages * sizeof(PendingReliableMessageMetaData)));
     }
   }
-  connection->latestRecvTime = GetTimeStamp();
+  connection->latestRecvTime = GetMicroCounter();
   return updated;
 }
 
 /// Process and respond to a ping message
-static void ReceivePing(uint8_t* msg, uint16_t msgLen, ReliableConnection* connection)
+void ICACHE_FLASH_ATTR ReceivePing(uint8_t* msg, uint16_t msgLen, ReliableConnection* connection)
 {
   // Just echo the ping back for now
   ReliableTransport_SendMessage(msg, msgLen, connection, eRMT_Ping, false, false);
 }
 
 /// Process one message
-static void HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliableMessageType msgType,
+void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliableMessageType msgType,
                       ReliableSequenceId seqId, ReliableConnection* connection)
 {
   if (!IsMessageTypeAlwaysSentUnreliably(msgType)) // If is reliable message type, handle order and duplication
@@ -403,7 +396,7 @@ static void HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliableMessageType
   }
 }
 
-bool IRAM_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const bool hot, const uint8_t tag)
+bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferSize, ReliableConnection* connection, const EReliableMessageType messageType, const bool hot, const uint8_t tag)
 {
   if (bufferSize > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)
   {
@@ -431,7 +424,7 @@ bool IRAM_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, const uint16
   }
   else // Unreliable message
   {
-    uint16_t* msgSubHeaderSizeField = NULL;
+    uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
     if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > // + 1 for tag byte. Easier to assume it's there than check
         (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->txQueued))
     { // No room in the current packet
@@ -449,16 +442,17 @@ bool IRAM_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, const uint16
     // Add submessage header
     connection->txBuf[connection->txQueued] = messageType;
     connection->txQueued += 1;
-    msgSubHeaderSizeField = (uint16_t*)(connection->txBuf + connection->txQueued);
-    *msgSubHeaderSizeField = bufferSize;
-    connection->txQueued += 2;
+    // Need to do two writes because unaligned write is not supported
+    connection->txBuf[connection->txQueued] = msgSubHeaderSizeField & 0xff;
+    connection->txQueued += 1;
+    connection->txBuf[connection->txQueued] = msgSubHeaderSizeField >> 8;
+    connection->txQueued += 1;
 
     // Add tag if specified
     if (tag != GLOBAL_INVALID_TAG)
     {
       connection->txBuf[connection->txQueued] = tag;
-      connection->txQueued  += 1;
-      *msgSubHeaderSizeField += 1;
+      connection->txQueued += 1;
     }
     memcpy(connection->txBuf + connection->txQueued, buffer, bufferSize);
     connection->txQueued += bufferSize;
@@ -472,7 +466,7 @@ bool IRAM_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, const uint16
   }
 }
 
-int16_t ReliableTransport_ReceiveData(ReliableConnection* connection, uint8_t* buffer, uint16_t bufferSize) {
+int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* connection, uint8_t* buffer, uint16_t bufferSize) {
   if (bufferSize < sizeof(AnkiReliablePacketHeader))
   {
     //printf("WARN: RealiableTransport RX data too small (%d) for header\n", bufferSize);
@@ -485,22 +479,26 @@ int16_t ReliableTransport_ReceiveData(ReliableConnection* connection, uint8_t* b
   }
   else
   {
-    AnkiReliablePacketHeader* header = (AnkiReliablePacketHeader*)buffer;
+    AnkiReliablePacketHeader header;
+    memcpy(&header, buffer, sizeof(AnkiReliablePacketHeader));
     uint8_t* msg = buffer + sizeof(AnkiReliablePacketHeader);
     uint16_t bytesProcessed = sizeof(AnkiReliablePacketHeader);
 
     //printf("Recv: siz=%d typ=%d seq=%d..%d ack=%d\n", connection->txQueued,
-    //  header->type, header->seqIdMin, header->seqIdMax, header->lastReceivedId);
+    //  header.type, header.seqIdMin, header.seqIdMax, header.lastReceivedId);
 
     // Unpack the message
-    if (IsMutlipleMessagesType(header->type))
+    if (IsMutlipleMessagesType(header.type))
     { // Unpack submessages
-      ReliableSequenceId seqId = header->seqIdMin;
-      uint16_t msgLen;
+      ReliableSequenceId seqId = header.seqIdMin;
       while (bytesProcessed < bufferSize)
       {
-        EReliableMessageType msgType = *((EReliableMessageType*)msg); msg += 1;
-        msgLen                       = *((uint16_t*)msg);             msg += 2;
+        uint16_t msgLen;
+        EReliableMessageType msgType;
+        msgType = (EReliableMessageType)(*msg); msg++;
+        // Two byte read for alighment
+        msgLen  = (*msg);      msg++;
+        msgLen |= (*msg) << 8; msg++;
         if (msgLen > (bufferSize - bytesProcessed))
         {
           //printf("ERROR ReliableTransport not enough data for submessage %d < %d-%d\n", msgLen, bufferSize, bytesProcessed);
@@ -517,29 +515,29 @@ int16_t ReliableTransport_ReceiveData(ReliableConnection* connection, uint8_t* b
     }
     else // Single message
     {
-      if (header->seqIdMax != header->seqIdMin)
+      if (header.seqIdMax != header.seqIdMin)
       {
-        //printf("ERROR: ReliableTransport seqIds don't match %d %d %d\n", header->seqIdMin, header->seqIdMax, header->type);
+        //printf("ERROR: ReliableTransport seqIds don't match %d %d %d\n", header.seqIdMin, header.seqIdMax, header.type);
         return -4;
       }
       else
       {
         HandleSubMessage(buffer + sizeof(AnkiReliablePacketHeader), bufferSize - sizeof(AnkiReliablePacketHeader),
-                         header->type, header->seqIdMin, connection);
+                         header.type, header.seqIdMin, connection);
       }
     }
 
     // Update the acks we've received
-    UpdateLastAckedMessage(connection, header->lastReceivedId);
+    UpdateLastAckedMessage(connection, header.lastReceivedId);
     // Acking messages is automatically taken care of
 
     return 0;
   }
 }
 
-bool ReliableTransport_Update(ReliableConnection* connection)
+bool ICACHE_FLASH_ATTR ReliableTransport_Update(ReliableConnection* connection)
 {
-  uint32_t currentTime = GetTimeStamp();
+  uint32_t currentTime = GetMicroCounter();
   //printState(connection);
   if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_PRETIMEOUT)
   {

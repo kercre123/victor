@@ -60,12 +60,12 @@ typedef struct _AnkiReliablePacketHeader
 /// How much we can send in one packet
 #define ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE (UnreliableTransport_MAX_BYTES_PER_PACKET - sizeof(AnkiReliablePacketHeader) - ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH)
 
-/// Unacked message retransmit interval in units of whatever GetCurrentTime returns
-#define ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME 33
+/// Unacked message retransmit interval in microseconds returns
+#define ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME 33000
 /// Maximum time without receiving a message before we consider it dead
-#define ReliableConnection_CONNECTION_TIMEOUT 5000
+#define ReliableConnection_CONNECTION_TIMEOUT 5000000
 /// A warning time before actual timeout
-#define ReliableConnection_CONNECTION_PRETIMEOUT 1000
+#define ReliableConnection_CONNECTION_PRETIMEOUT 1000000
 
 /** Structure for pending reliable messages in the queue
  * This is inserted as a header in between messages in the reliable message queue buffers
@@ -95,9 +95,9 @@ typedef struct _ReliableConnection
   uint32_t latestRecvTime; ///< latestRecvTime
   uint16_t txQueued; ///< The number of bytes of data queued up in txBuf
   uint16_t pendingReliableBytes; ///< The number of bytes of pending reliable messages stored
-  uint8_t  numPendingReliableMessages; ///< The number of reliable messages currently queued
   uint8_t  txBuf[UnreliableTransport_MAX_BYTES_PER_PACKET]; ///< Buffer for forming packets
   uint8_t  canary1; ///< Here to die if somebody overruns txBuf.
+  uint8_t  numPendingReliableMessages; ///< The number of reliable messages currently queued
   uint8_t  pendingMessages[ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE]; ///< Data storage for buffered reliable messages
   uint8_t  canary2;
   PendingReliableMessageMetaData pendingMsgMeta[ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH]; ///< Queue of pending messages
