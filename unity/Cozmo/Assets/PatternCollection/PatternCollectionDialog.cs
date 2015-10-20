@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -10,6 +11,9 @@ public class PatternCollectionDialog : MonoBehaviour {
   [SerializeField]
   private RectTransform _memoryBankCardContentPanel;
 
+  [SerializeField]
+  private Text _percentCompleteLabel;
+
   private Dictionary<MemoryBank, PatternCollectionBankCard> _signatureToCardDict;
 
 	public void Initialize(PatternMemory patternMemory){
@@ -19,7 +23,7 @@ public class PatternCollectionDialog : MonoBehaviour {
     // TODO: Listen for added patterns and update dialog - shouldn't update every frame
     // We'll need to cache the cards for easy access later
 
-    // TODO: Set up other buttons? (Key pattern filter, back button)
+    SetCompletionText (patternMemory.GetNumSeenPatterns (), patternMemory.GetNumTotalPatterns ());
   }
   
   private Dictionary<MemoryBank, PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
@@ -57,5 +61,12 @@ public class PatternCollectionDialog : MonoBehaviour {
   public void OnCloseButtonTap()
   {
     UIManager.CloseDialog (this.gameObject);
+  }
+
+  private void SetCompletionText(int numSeenPatterns, int numTotalPatterns)
+  {
+    float percentComplete = numSeenPatterns / (float)numTotalPatterns;
+    percentComplete *= 100;
+    _percentCompleteLabel.text = string.Format ("{0:N1}% Complete", percentComplete);
   }
 }
