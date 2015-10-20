@@ -10,9 +10,9 @@ static const int MAX_QUEUE = 16;
 typedef void (*i2c_callback)(void *data);
 
 enum I2C_Mode {
-  I2C_DIR_READ  = 0,
-  I2C_DIR_WRITE = 1,
-  I2C_SEND_STOP = 2
+  I2C_DIR_READ  = 1,
+  I2C_DIR_WRITE = 2,
+  I2C_SEND_STOP = 4
 };
 
 

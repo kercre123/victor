@@ -23,8 +23,7 @@ static I2C_Queue i2c_queue[MAX_QUEUE];
 
 static bool _active;
 
-extern "C"
-void I2C0_IRQHandler(void);
+static inline void start_transaction();
 
 // HAL
 namespace Anki
@@ -52,7 +51,7 @@ namespace Anki
 
         if (!_active) {
           _active = true;
-          I2C0_IRQHandler();
+          start_transaction();
         }
 
         NVIC_EnableIRQ(I2C0_IRQn);
@@ -93,42 +92,28 @@ namespace Anki
   }
 }
 
-static inline void set_read(bool read) {
-  using namespace Anki::Cozmo::HAL;
-
-  if (read) {
-    I2C0_C1 = (I2C0_C1 & ~I2C_C1_TX_MASK) | I2C_C1_MST_MASK;
-  }
-  
-  else  {
-    I2C0_C1 = I2C0_C1 | I2C_C1_TX_MASK | I2C_C1_MST_MASK;
-    MicroWait(1);
-  } 
-}
-
-static inline void do_transaction(bool dequeue) {
-  using namespace Anki::Cozmo::HAL;
-
-  I2C0_C1 |= I2C_C1_MST_MASK;
-
+static inline uint8_t* next_byte() {
   I2C_Queue *active = &i2c_queue[_fifo_end];
   uint8_t *data = (uint8_t*)active->data;
+  active->data = data + 1;
+  active->count--;
+  return data;
+}
 
-  active->data = data+1;
-  if (dequeue) {
-    active->data
-  }
-  if (dequeue) active->count--;
+static inline void start_transaction() {
+  using namespace Anki::Cozmo::HAL;
+  
+  I2C_Queue *active = &i2c_queue[_fifo_end];
+  bool write = active->flags & I2C_DIR_WRITE;
 
-  if (active->flags & I2C_DIR_WRITE) {
-    I2C0_C1 |= I2C_C1_TX_MASK | I2C_C1_MST_MASK ;
-    MicroWait(1);
-    I2C0_D = *data;
+  if (write) {
+    I2C0_C1 = I2C0_C1 | I2C_C1_TX_MASK | I2C_C1_MST_MASK;
+    I2C0_D = *next_byte();
   } else {
-    
-    *next_byte(dequeue) = I2C0_D;
-  }
-  _active = true;
+    I2C0_C1 = (I2C0_C1 & ~I2C_C1_TX_MASK) | I2C_C1_MST_MASK;
+    MicroWait(1);
+    int throwaway = I2C0_D;
+  } 
 }
 
 extern "C"
@@ -143,8 +128,22 @@ void I2C0_IRQHandler(void) {
   
   // Continue down current chain
   if (active->count > 0) {
-    do_transaction(true);
-    return ;
+    bool write = active->flags & I2C_DIR_WRITE;
+
+    if (write) {
+      I2C0_D = *next_byte();
+
+    } else {
+      // Prevent extra transactions
+      if (active->count == 1) {
+        I2C0_C1 |= I2C_C1_TX_MASK;
+        MicroWait(1);
+        *next_byte() = I2C0_D;
+      } else {
+        *next_byte() = I2C0_D;
+        return ;
+      }
+    } 
   }
 
   // Dequeue FIFO
@@ -165,6 +164,6 @@ void I2C0_IRQHandler(void) {
   if (--_fifo_count <= 0) {
     _active = false;
   } else {
-    do_transaction(false);
+    start_transaction();
   }
 }

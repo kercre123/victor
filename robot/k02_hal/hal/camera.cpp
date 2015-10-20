@@ -181,9 +181,9 @@ namespace Anki
         GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
           
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)CAMERA_READ_CMD_1, sizeof(CAMERA_READ_CMD_1), NULL);
-        I2CCmd(I2C_DIR_READ | I2C_SEND_STOP, &init_value_1, sizeof(init_value_1), NULL);
+        I2CCmd( I2C_DIR_READ | I2C_SEND_STOP, &init_value_1, sizeof(init_value_1), NULL);
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)CAMERA_READ_CMD_2, sizeof(CAMERA_READ_CMD_2), NULL);
-        I2CCmd(I2C_DIR_READ | I2C_SEND_STOP, &init_value_2, sizeof(init_value_2), initI2C);
+        I2CCmd( I2C_DIR_READ | I2C_SEND_STOP, &init_value_2, sizeof(init_value_2), initI2C);
       }
       
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
