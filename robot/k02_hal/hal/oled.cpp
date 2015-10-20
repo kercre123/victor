@@ -71,7 +71,7 @@ namespace Anki
   {
     namespace HAL
     {
-      static void invert(void *data) {
+      static void invert(void *data, int count) {
         uint8_t *px = (uint8_t*) FrameBuffer;
         int length = FrameBufferLength;
         while(length--) *(px++) ^= 0xFF;

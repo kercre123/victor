@@ -12,7 +12,9 @@ typedef struct {
   i2c_callback cb;
   
   void* data;
+  void* buffer;
   int count;
+  int size;
 } I2C_Queue;
 
 static int _fifo_start;
@@ -45,8 +47,8 @@ namespace Anki
         _fifo_count++;
         
         active->cb = cb;
-        active->count = len;
-        active->data = bytes;
+        active->size = active->count = len;
+        active->buffer = active->data = bytes;
         active->flags = mode;
 
         if (!_active) {
@@ -132,15 +134,17 @@ void I2C0_IRQHandler(void) {
 
     if (write) {
       I2C0_D = *next_byte();
-
+      return ;
     } else {
       // Prevent extra transactions
       if (active->count == 1) {
         I2C0_C1 |= I2C_C1_TX_MASK;
         MicroWait(1);
-        *next_byte() = I2C0_D;
-      } else {
-        *next_byte() = I2C0_D;
+      }
+
+      *(next_byte()) = I2C0_D;
+
+      if (active->count) {
         return ;
       }
     } 
@@ -151,7 +155,7 @@ void I2C0_IRQHandler(void) {
 
   // Tell HAL we completed
   if (active->cb) {
-    active->cb(active->data);
+    active->cb(active->buffer, active->size);
   }
 
   // Send stop
