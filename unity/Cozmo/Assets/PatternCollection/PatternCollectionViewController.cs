@@ -1,16 +1,21 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
 // Temp class for testing dialog functionality. Should have PatternCollectionDialog
 // hook up to PatternPlayUIController later
 public class PatternCollectionViewController : MonoBehaviour {
+
+  [SerializeField]
+  private Button _openPatternCollectionDialogButtonPrefab;
  
   [SerializeField]
-  private PatternCollectionDialog _patternCollectionDialog;
+  private PatternCollectionDialog _patternCollectionDialogPrefab;
   
   [SerializeField]
-  private PatternPlayInstructions _patternPlayInstructions;
+  private PatternPlayInstructions _patternPlayInstructionsPrefab;
 
   private PatternMemory _testPatternMemory;
   
@@ -19,24 +24,51 @@ public class PatternCollectionViewController : MonoBehaviour {
   	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
     _testPatternMemory = CreateTestPatternMemory ();
 
-    // Show instructions
-    _patternPlayInstructions.gameObject.SetActive (true);
-    _patternPlayInstructions.Initialize ();
-    _patternPlayInstructions.InstructionsFinished += OnInstructionsFinished;
-
-  	// Populate dialog with cards using memory
-    _patternCollectionDialog.Initialize (_testPatternMemory);
-    
-    // Hide collection of patterns
-    _patternCollectionDialog.gameObject.SetActive (false);
-
+    CreateDialogButton ();
   }
 
   private void OnDestroy()
   {
-    _patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
+    //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
   }
 
+  private void CreateDialogButton()
+  {
+    GameObject newButton = UIManager.CreateUI (_openPatternCollectionDialogButtonPrefab.gameObject);
+    Button buttonScript = newButton.GetComponent<Button> ();
+    buttonScript.enabled = false;
+    buttonScript.enabled = true;
+    buttonScript.onClick.AddListener (OnDialogButtonTap);
+  }
+
+  public void OnDialogButtonTap()
+  {
+    ShowCollectionDialog ();
+  }
+
+  private void ShowCollectionDialog()
+  {
+    GameObject newDialog = UIManager.OpenDialog (_patternCollectionDialogPrefab.gameObject);
+    PatternCollectionDialog patternCollectionDialog = newDialog.GetComponent<PatternCollectionDialog> ();
+
+    // Populate dialog with cards using memory
+    patternCollectionDialog.Initialize (_testPatternMemory);
+  }
+
+  private void ShowInstructionsDialog()
+  {
+    // Show instructions
+    // TODO: Instantiate instructions
+    // _patternPlayInstructions.gameObject.SetActive (true);
+    // _patternPlayInstructions.Initialize ();
+    // _patternPlayInstructions.InstructionsFinished += OnInstructionsFinished;
+  }
+  
+  private void OnInstructionsFinished()
+  {
+    // Destroy instructions dialog
+    // Create button?
+  }
 
 	private PatternMemory CreateTestPatternMemory()
 	{
@@ -109,10 +141,4 @@ public class PatternCollectionViewController : MonoBehaviour {
 
 		return patternMemory;
 	}
-
-  private void OnInstructionsFinished()
-  {
-    _patternCollectionDialog.gameObject.SetActive (true);
-    _patternPlayInstructions.gameObject.SetActive (false);
-  }
 }
