@@ -714,6 +714,11 @@ namespace Cozmo {
     VizManager::getInstance()->DrawGenericQuad(msg.quadID, quad, msg.color);
   }
   
+  void CozmoGameImpl::Process_SetVizOrigin(SetVizOrigin const& msg)
+  {
+    VizManager::getInstance()->SetOrigin(msg);
+  }
+  
   void CozmoGameImpl::Process_EraseQuad(ExternalInterface::EraseQuad const& msg)
   {
     VizManager::getInstance()->EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);

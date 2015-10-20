@@ -448,6 +448,8 @@ namespace Cozmo {
                 
                 msg.headTrackingObjectID = robot->GetTrackToObject();
                 
+                msg.localizedToObjectID = robot->GetLocalizedTo();
+                
                 // TODO: Add proximity sensor data to state message
                 
                 msg.batteryVoltage = robot->GetBatteryVoltage();
