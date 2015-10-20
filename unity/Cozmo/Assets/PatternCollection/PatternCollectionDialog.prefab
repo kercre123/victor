@@ -236,6 +236,7 @@ MonoBehaviour:
     type: 2}
   _memoryBankCardContentPanel: {fileID: 22453032}
   _percentCompleteLabel: {fileID: 11425318}
+  _memoryBankScrollRect: {fileID: 11401160}
 --- !u!114 &11467954
 MonoBehaviour:
   m_ObjectHideFlags: 1

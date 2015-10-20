@@ -46,21 +46,19 @@ public class UIManager : MonoBehaviour {
     return newUi;
   }
 
-  public static GameObject OpenDialog(GameObject dialogPrefab)
+  public static BaseDialog OpenDialog(BaseDialog dialogPrefab)
   {
-    GameObject newDialog = GameObject.Instantiate (dialogPrefab);
+    GameObject newDialog = GameObject.Instantiate (dialogPrefab.gameObject);
     newDialog.transform.SetParent (Instance._sceneCanvas.transform, false);
 
-    // TODO: Make some sort of interface so that we can play open/close animations
+    BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog> ();
+    baseDialogScript.OpenDialog ();
 
-    return newDialog;
+    return baseDialogScript;
   }
 
-  public static void CloseDialog(GameObject dialogObject)
+  public static void CloseDialog(BaseDialog dialogObject)
   {
-    GameObject.Destroy (dialogObject);
-    
-    // TODO: Make some sort of interface so that we can play open/close animations
-
+    dialogObject.CloseDialog ();
   }
 }

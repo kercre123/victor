@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class PatternCollectionDialog : MonoBehaviour {
+public class PatternCollectionDialog : BaseDialog {
 
   [SerializeField]
   private PatternCollectionBankCard _memoryBankCardPrefab;
@@ -13,6 +13,9 @@ public class PatternCollectionDialog : MonoBehaviour {
 
   [SerializeField]
   private Text _percentCompleteLabel;
+
+  [SerializeField]
+  private ScrollRect _memoryBankScrollRect;
 
   private Dictionary<MemoryBank, PatternCollectionBankCard> _signatureToCardDict;
 
@@ -60,7 +63,7 @@ public class PatternCollectionDialog : MonoBehaviour {
 
   public void OnCloseButtonTap()
   {
-    UIManager.CloseDialog (this.gameObject);
+    UIManager.CloseDialog (this);
   }
 
   private void SetCompletionText(int numSeenPatterns, int numTotalPatterns)
@@ -68,5 +71,16 @@ public class PatternCollectionDialog : MonoBehaviour {
     float percentComplete = numSeenPatterns / (float)numTotalPatterns;
     percentComplete *= 100;
     _percentCompleteLabel.text = string.Format ("{0:N1}% Complete", percentComplete);
+  }
+
+  public void SetScrollValue(float scrollValue)
+  {
+    float clampValue = Mathf.Clamp (scrollValue, 0, 1);
+    _memoryBankScrollRect.horizontalNormalizedPosition = clampValue;
+  }
+
+  public float GetScrollValue()
+  {
+    return _memoryBankScrollRect.horizontalNormalizedPosition;
   }
 }

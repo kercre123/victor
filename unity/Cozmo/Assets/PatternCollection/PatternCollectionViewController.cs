@@ -13,6 +13,10 @@ public class PatternCollectionViewController : MonoBehaviour {
  
   [SerializeField]
   private PatternCollectionDialog _patternCollectionDialogPrefab;
+
+  private PatternCollectionDialog _patternCollectionDialog;
+
+  private float _lastOpenedScrollValue = 0;
   
   [SerializeField]
   private PatternPlayInstructions _patternPlayInstructionsPrefab;
@@ -30,6 +34,10 @@ public class PatternCollectionViewController : MonoBehaviour {
   private void OnDestroy()
   {
     //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
+
+    if (_patternCollectionDialog != null) {
+      _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
+    }
   }
 
   private void CreateDialogButton()
@@ -48,11 +56,19 @@ public class PatternCollectionViewController : MonoBehaviour {
 
   private void ShowCollectionDialog()
   {
-    GameObject newDialog = UIManager.OpenDialog (_patternCollectionDialogPrefab.gameObject);
-    PatternCollectionDialog patternCollectionDialog = newDialog.GetComponent<PatternCollectionDialog> ();
+    BaseDialog newDialog = UIManager.OpenDialog (_patternCollectionDialogPrefab);
+    _patternCollectionDialog = newDialog as PatternCollectionDialog;
 
     // Populate dialog with cards using memory
-    patternCollectionDialog.Initialize (_testPatternMemory);
+    _patternCollectionDialog.Initialize (_testPatternMemory);
+    _patternCollectionDialog.SetScrollValue (_lastOpenedScrollValue);
+    _patternCollectionDialog.DialogClosed += OnCollectionDialogClose;
+  }
+
+  private void OnCollectionDialogClose()
+  {
+    _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
+    _lastOpenedScrollValue = _patternCollectionDialog.GetScrollValue ();
   }
 
   private void ShowInstructionsDialog()
