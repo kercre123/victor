@@ -55,4 +55,12 @@ public class UIManager : MonoBehaviour {
 
     return newDialog;
   }
+
+  public static void CloseDialog(GameObject dialogObject)
+  {
+    GameObject.Destroy (dialogObject);
+    
+    // TODO: Make some sort of interface so that we can play open/close animations
+
+  }
 }

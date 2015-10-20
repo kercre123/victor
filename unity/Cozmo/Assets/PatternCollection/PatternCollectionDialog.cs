@@ -49,4 +49,9 @@ public class PatternCollectionDialog : MonoBehaviour {
 
     return memoryBankCards;
   }
+
+  public void OnCloseButtonTap()
+  {
+    UIManager.CloseDialog (this.gameObject);
+  }
 }
