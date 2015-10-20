@@ -632,27 +632,7 @@ namespace Anki
             haveLocalizedRobotToObject = true;
             
           } else {
-            
-//            // Only update the object's pose if we're seeing it from closer
-//            // (Assuming the closer we are, the more accurate the pose estimate)
-            
-//            const f32 lastDistToObj = matchingObject->GetLastPoseUpdateDistance();
-//            if(/*matchingObject->CanBeUsedForLocalization() == false ||*/
-//               lastDistToObj < 0.f || distToObj < lastDistToObj)
-//            {
-            
-              /* Very verbose, but useful for debugging
-               PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.UpdateObjectPose",
-               "Updating object %d's pose to (%.1f,%.1f,%.1f), %.1fdeg\n",
-               matchingObject->GetID().GetValue(),
-               objSeen->GetPose().GetTranslation().x(),
-               objSeen->GetPose().GetTranslation().y(),
-               objSeen->GetPose().GetTranslation().z(),
-               objSeen->GetPose().GetRotationAngle<'Z'>().getDegrees());
-               */
-              
-              matchingObject->SetPose( objSeen->GetPose(), distToObj );
-//            }
+            matchingObject->SetPose( objSeen->GetPose(), distToObj );
           }
           
           observedObject = matchingObject;
