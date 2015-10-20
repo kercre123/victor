@@ -387,6 +387,11 @@ namespace Anki {
       // indicator of whether or not we've seen each yet.
       static std::map<s32,bool>& GetAvailableIDs();
       
+      // Temporary timer for faking duration of identification process
+      // TODO: Remove once real identification is implemented
+      static const s32 ID_TIME_MS = 300;
+      s32 _identificationTimer = ID_TIME_MS;
+      
     }; // class ActiveCube
     
 

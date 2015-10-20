@@ -692,20 +692,25 @@ namespace Anki {
     bool ActiveCube::CanBeUsedForLocalization() const
     {
       return (IsLocalized() &&
+              GetLastPoseUpdateDistance() >= 0.f &&
+              GetLastPoseUpdateDistance() <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
               GetIdentityState() == ActiveIdentityState::Identified &&
               IsRestingFlat());
     }
     
     void ActiveCube::Identify()
     {
-      static s32 timeCtr = 300; // timer for faking duration of identification process
-
-      if(timeCtr > 0) {
-        timeCtr -= BS_TIME_STEP;
+      if(_identificationTimer > 0) {
+        _identificationTimer -= BS_TIME_STEP;
         _identityState = ActiveIdentityState::WaitingForIdentity;
         PRINT_NAMED_INFO("ActiveCube.Identify.Waiting",
                          "Faking identification time for object %d",
                          GetID().GetValue());
+      } else if(GetLastPoseUpdateDistance() > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
+        PRINT_NAMED_INFO("ActiveCube.Identify.TooFar",
+                         "Too far to identify object %d (%.1fmm > %.1fmm)",
+                         GetID().GetValue(), GetLastPoseUpdateDistance(),
+                         MAX_LOCALIZATION_AND_ID_DISTANCE_MM);
       } else {
         // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
         switch(_markers.front().GetCode())
@@ -740,7 +745,7 @@ namespace Anki {
                               _markers.front().GetCode());
         }
         
-        timeCtr = 300;
+        _identificationTimer = ID_TIME_MS;
       }
     } // Identify()
     

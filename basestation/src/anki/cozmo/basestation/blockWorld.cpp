@@ -45,7 +45,6 @@
 
 // TODO: Expose these as parameters
 #define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
-#define MAX_BLOCK_LOCALIZATION_DISTANCE_MM 200.f
 
 #define DEBUG_ROBOT_POSE_UPDATES 0
 #if DEBUG_ROBOT_POSE_UPDATES
@@ -552,7 +551,6 @@ namespace Anki
           const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
 
           bool useThisObjectToLocalize = false;
-          
 #         if ENABLE_BLOCK_BASED_LOCALIZATION
           // Decide whether we will be updating the robot's pose relative to this
           // object or updating the object's pose w.r.t. the robot. We only localize
@@ -567,7 +565,7 @@ namespace Anki
           //  - if the robot isn't already localized to an object or it has moved
           //     since the last time it got localized to an object.
           useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
-                                     distToObj <= MAX_BLOCK_LOCALIZATION_DISTANCE_MM &&
+                                     distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      objSeen->IsRestingFlat() &&
                                      matchingObject->CanBeUsedForLocalization() &&

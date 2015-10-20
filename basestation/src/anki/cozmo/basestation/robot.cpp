@@ -1590,17 +1590,17 @@ namespace Anki {
       // the pose w.r.t. the origin for storing poses in history.
       Pose3d robotPoseWrtOrigin = robotPoseWrtObject.GetWithRespectToOrigin();
       
-      // Filter Z so it doesn't change too fast (unless we are switching from
-      // delocalized to localized)
-      static f32 zPrev = 0.0;
-      static const f32 zUpdateWeight = 0.1f;
       if(IsLocalized()) {
-        // Make z a convex combination of current and
-        Vec3f T = ((zUpdateWeight*robotPoseWrtOrigin.GetTranslation()) +
-                   (1.f - zUpdateWeight) * GetPose().GetTranslation().z());
+        // Filter Z so it doesn't change too fast (unless we are switching from
+        // delocalized to localized)
+        
+        // Make z a convex combination of new and previous value
+        static const f32 zUpdateWeight = 0.1f; // weight of new value (previous gets weight of 1 - this)
+        Vec3f T = robotPoseWrtOrigin.GetTranslation();
+        T.z() = (zUpdateWeight*robotPoseWrtOrigin.GetTranslation().z() +
+                 (1.f - zUpdateWeight) * GetPose().GetTranslation().z());
         robotPoseWrtOrigin.SetTranslation(T);
       }
-      zPrev = robotPoseWrtOrigin.GetTranslation().z();
       
       if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
                                                   robotPoseWrtOrigin.GetTranslation().x(),
