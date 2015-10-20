@@ -13,9 +13,12 @@ public class PatternPlayAutoBuild {
   // the index 0 object should always be the anchor object.
   List<ObservedObject> neatList = new List<ObservedObject>();
 
-  public void PickNewTargetPattern() {
-    targetPattern = controller.GetPatternMemory().GetAnUnseenPattern( p => (!p.facingCozmo && !p.verticalStack));
-
+  public bool PickNewTargetPattern() {
+    targetPattern = controller.GetPatternMemory().GetAnUnseenPattern(p => (!p.facingCozmo && !p.verticalStack));
+    if (targetPattern == null)
+      return false;
+    else
+      return true;
   }
 
   public Vector3 IdealViewPosition() {
