@@ -23,6 +23,9 @@ static I2C_Queue i2c_queue[MAX_QUEUE];
 
 static bool _active;
 
+extern "C"
+void I2C0_IRQHandler(void);
+
 // HAL
 namespace Anki
 {
@@ -30,29 +33,6 @@ namespace Anki
   {
     namespace HAL
     {
-      // Start I2C bus stuff
-      static inline uint8_t *next_byte(bool dequeue = true) {
-        I2C_Queue *active = &i2c_queue[_fifo_end];
-
-        uint8_t *data = (uint8_t*)active->data;
-        active->data = data+1;
-        if (dequeue) active->count--;
-        return data;
-      }
-
-      static inline void do_transaction(bool dequeue) {
-        I2C_Queue *active = &i2c_queue[_fifo_end];
-
-        if (active->flags & I2C_DIR_WRITE) {
-          I2C0_C1 |= I2C_C1_TX_MASK | I2C_C1_MST_MASK ;
-          I2C0_D = *next_byte();
-        } else {
-          I2C0_C1 = (I2C0_C1 & ~I2C_C1_TX_MASK) | I2C_C1_MST_MASK;
-          *next_byte(dequeue) = I2C0_D;
-        }
-        _active = true;
-      }
-
       // I2C calls
       bool I2CCmd(int mode, uint8_t *bytes, int len, i2c_callback cb) {
         // Queue is full.  Sorry 'bout it.
@@ -71,7 +51,8 @@ namespace Anki
         active->flags = mode;
 
         if (!_active) {
-          do_transaction(false);
+          _active = true;
+          I2C0_IRQHandler();
         }
 
         NVIC_EnableIRQ(I2C0_IRQn);
@@ -112,6 +93,44 @@ namespace Anki
   }
 }
 
+static inline void set_read(bool read) {
+  using namespace Anki::Cozmo::HAL;
+
+  if (read) {
+    I2C0_C1 = (I2C0_C1 & ~I2C_C1_TX_MASK) | I2C_C1_MST_MASK;
+  }
+  
+  else  {
+    I2C0_C1 = I2C0_C1 | I2C_C1_TX_MASK | I2C_C1_MST_MASK;
+    MicroWait(1);
+  } 
+}
+
+static inline void do_transaction(bool dequeue) {
+  using namespace Anki::Cozmo::HAL;
+
+  I2C0_C1 |= I2C_C1_MST_MASK;
+
+  I2C_Queue *active = &i2c_queue[_fifo_end];
+  uint8_t *data = (uint8_t*)active->data;
+
+  active->data = data+1;
+  if (dequeue) {
+    active->data
+  }
+  if (dequeue) active->count--;
+
+  if (active->flags & I2C_DIR_WRITE) {
+    I2C0_C1 |= I2C_C1_TX_MASK | I2C_C1_MST_MASK ;
+    MicroWait(1);
+    I2C0_D = *data;
+  } else {
+    
+    *next_byte(dequeue) = I2C0_D;
+  }
+  _active = true;
+}
+
 extern "C"
 void I2C0_IRQHandler(void) {
   using namespace Anki::Cozmo::HAL;
@@ -127,7 +146,7 @@ void I2C0_IRQHandler(void) {
     do_transaction(true);
     return ;
   }
-  
+
   // Dequeue FIFO
   if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
 
@@ -138,8 +157,8 @@ void I2C0_IRQHandler(void) {
 
   // Send stop
   if (active->flags & I2C_SEND_STOP) {
-    I2C0_C1 = I2C0_C1 & ~(I2C_C1_TX_MASK | I2C_C1_MST_MASK);
-    Anki::Cozmo::HAL::MicroWait(1);
+    I2C0_C1 &= ~(I2C_C1_TX_MASK | I2C_C1_MST_MASK);
+    MicroWait(1);
   }
 
   // Dequeue transaction when available
