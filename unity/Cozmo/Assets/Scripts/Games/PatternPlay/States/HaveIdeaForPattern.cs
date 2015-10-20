@@ -5,6 +5,8 @@ public class HaveIdeaForPattern : State {
 
   PatternPlayController patternPlayController = null;
 
+  bool hasTargetToBuild = false;
+
   public override void Enter() {
     base.Enter();
 
@@ -12,10 +14,21 @@ public class HaveIdeaForPattern : State {
 
     // pick a pattern to build
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
-    patternPlayController.GetAutoBuild().PickNewTargetPattern();
+    hasTargetToBuild = patternPlayController.GetAutoBuild().PickNewTargetPattern();
+    if (hasTargetToBuild == false) {
+      DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");
+      return;
+    }
 
     // TODO: Use "have idea" animation
     robot.SendAnimation("shocked", AnimationDone);
+  }
+
+  public override void Update() {
+    base.Update();
+    if (!hasTargetToBuild) {
+      stateMachine.SetNextState(new LookForPattern());
+    }
   }
 
   private void AnimationDone(bool success) {

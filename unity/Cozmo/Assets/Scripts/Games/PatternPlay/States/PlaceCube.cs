@@ -9,6 +9,8 @@ public class PlaceCube : State {
   public override void Enter() {
     base.Enter();
 
+    DAS.Info("PatternPlayState", "PlaceCube");
+
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
 

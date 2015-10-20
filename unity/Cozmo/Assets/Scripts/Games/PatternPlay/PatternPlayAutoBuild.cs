@@ -13,9 +13,12 @@ public class PatternPlayAutoBuild {
   // the index 0 object should always be the anchor object.
   List<ObservedObject> neatList = new List<ObservedObject>();
 
-  public void PickNewTargetPattern() {
-    targetPattern = controller.GetPatternMemory().GetAnUnseenPattern( p => (!p.facingCozmo && !p.verticalStack));
-
+  public bool PickNewTargetPattern() {
+    targetPattern = controller.GetPatternMemory().GetAnUnseenPattern(p => (!p.facingCozmo && !p.verticalStack));
+    if (targetPattern == null)
+      return false;
+    else
+      return true;
   }
 
   public Vector3 IdealViewPosition() {
@@ -65,11 +68,12 @@ public class PatternPlayAutoBuild {
     }
     else if (neatList.Count == 1) {
       // there is an anchor block. let's put it to the right of the block.
-      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
+      Debug.Log("anchor block: " + neatList[0].WorldPosition);
+      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
     }
     else {
       // there are two blocks. let's put it to the left of the anchor (first) block.
-      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 0.55f;
+      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
     }
   }
 

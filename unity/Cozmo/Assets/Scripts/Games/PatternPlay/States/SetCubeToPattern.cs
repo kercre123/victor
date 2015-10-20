@@ -13,7 +13,10 @@ public class SetCubeToPattern : State {
 
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+  }
 
+  public override void Update() {
+    base.Update();
     SetPattern();
     stateMachine.SetNextState(new PlaceCube());
   }

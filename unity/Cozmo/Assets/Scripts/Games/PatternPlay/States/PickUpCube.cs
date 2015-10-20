@@ -6,6 +6,8 @@ public class PickUpCube : State {
   PatternPlayController patternPlayController = null;
   PatternPlayAutoBuild patternPlayAutoBuild = null;
 
+  bool hasTarget = true;
+
   public override void Enter() {
     base.Enter();
     DAS.Info("PatternPlayState", "PickUpCube");
@@ -18,13 +20,20 @@ public class PickUpCube : State {
     // have been dirtied since then. If there are no available blocks
     // anymore then we should go look for more.
     if (targetObject == null) {
-      stateMachine.SetNextState(new LookForCubes());
-      patternPlayAutoBuild.SetObjectHeld(null);
+      hasTarget = false;
       return;
     }
 
     robot.PickAndPlaceObject(targetObject, true, false, PickUpDone);
     patternPlayAutoBuild.SetObjectHeld(targetObject);
+  }
+
+  public override void Update() {
+    base.Update();
+    if (hasTarget == false) {
+      stateMachine.SetNextState(new LookForCubes());
+      patternPlayAutoBuild.SetObjectHeld(null);
+    }
   }
 
   void PickUpDone(bool success) {

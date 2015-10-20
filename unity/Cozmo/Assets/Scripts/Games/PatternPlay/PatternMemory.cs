@@ -145,7 +145,7 @@ public class PatternMemory {
     unseenPatterns.RemoveWhere(p => !filter(p));
     int i = Random.Range(0, unseenPatterns.Count);
     HashSet<BlockPattern>.Enumerator e = unseenPatterns.GetEnumerator();
-    while (i < 0) {
+    while (i > 0) {
       e.MoveNext();
       --i;
     }
