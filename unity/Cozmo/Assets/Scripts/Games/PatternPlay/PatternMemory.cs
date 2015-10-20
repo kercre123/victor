@@ -104,4 +104,53 @@ public class PatternMemory {
     return null;
   }
 
+  public HashSet<BlockPattern> GetAllPatterns() {
+    HashSet<BlockPattern> allPatterns = new HashSet<BlockPattern>();
+    for (int i = 0; i < memoryBanks.Count; i++) {
+      allPatterns.UnionWith(memoryBanks[i].patterns);
+    }
+    return allPatterns;
+  }
+
+  public HashSet<BlockPattern> GetAllSeenPatterns() {
+    HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
+    for (int i = 0; i < memoryBanks.Count; i++) {
+      seenPatterns.UnionWith(memoryBanks[i].GetSeenPatterns());
+    }
+    return seenPatterns;
+  }
+
+  public HashSet<BlockPattern> GetAllUnseenPatterns() {
+    HashSet<BlockPattern> seenPatterns = GetAllSeenPatterns();
+    HashSet<BlockPattern> result = GetAllPatterns();
+    result.ExceptWith(seenPatterns);
+    return result;
+  }
+
+  public BlockPattern GetAnUnseenPattern() {
+    HashSet<BlockPattern> allUnseenPatterns = GetAllUnseenPatterns();
+    int i = Random.Range(0, allUnseenPatterns.Count);
+    HashSet<BlockPattern>.Enumerator e = allUnseenPatterns.GetEnumerator();
+    while (i > 0) {
+      // these will be in a random order.
+      // and we'll also walk a random number forward, so it should be pretty random.
+      e.MoveNext();
+      --i;
+    }
+    return e.Current;
+  }
+
+  public BlockPattern GetAnUnseenPattern(System.Predicate<BlockPattern> filter) {
+    HashSet<BlockPattern> unseenPatterns = GetAllUnseenPatterns();
+    unseenPatterns.RemoveWhere(p => !filter(p));
+    int i = Random.Range(0, unseenPatterns.Count);
+    HashSet<BlockPattern>.Enumerator e = unseenPatterns.GetEnumerator();
+    while (i < 0) {
+      e.MoveNext();
+      --i;
+    }
+    return e.Current;
+  }
+
+
 }

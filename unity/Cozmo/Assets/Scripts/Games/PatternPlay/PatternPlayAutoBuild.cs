@@ -14,21 +14,8 @@ public class PatternPlayAutoBuild {
   public List<ObservedObject> neatList = new List<ObservedObject>();
 
   public void PickNewTargetPattern() {
+    targetPattern = controller.GetPatternMemory().GetAnUnseenPattern( p => (!p.facingCozmo && !p.verticalStack));
 
-    targetPattern = new BlockPattern();
-    targetPattern.facingCozmo = false;
-    targetPattern.verticalStack = false;
-
-    // Right now this is hard-coded. Replace with not-seen pattern once
-    // pauley gets his stuff in.
-    for (int i = 0; i < 3; ++i) {
-      BlockLights lightPattern = new BlockLights();
-      lightPattern.front = true;
-      lightPattern.right = false;
-      lightPattern.left = false;
-      lightPattern.back = false;
-      targetPattern.blocks.Add(lightPattern);
-    }
   }
 
   public Vector3 IdealViewPosition() {

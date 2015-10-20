@@ -16,6 +16,14 @@ public class BlockPattern {
         blocks[i].facing_cozmo = value;
       }
     }
+    get {
+      for (int i = 0; i < blocks.Count; i++) {
+        if (!blocks[i].facing_cozmo) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   public override bool Equals(System.Object obj) {

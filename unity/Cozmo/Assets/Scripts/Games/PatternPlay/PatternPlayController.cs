@@ -65,6 +65,10 @@ public class PatternPlayController : GameController {
     return patternPlayAutoBuild;
   }
 
+  public PatternMemory GetPatternMemory() {
+    return memoryBank;
+  }
+
   public void ClearBlockLights() {
     foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData) {
       kvp.Value.blockLightsLocalSpace.TurnOffLights();
