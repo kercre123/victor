@@ -15,6 +15,8 @@ enum I2C_Mode {
   I2C_SEND_STOP = 4
 };
 
+#define I2CEnable() NVIC_EnableIRQ(I2C0_IRQn)
+#define I2CDisable() NVIC_DisableIRQ(I2C0_IRQn);
 
 namespace Anki
 {

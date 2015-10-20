@@ -40,8 +40,9 @@ namespace Anki
         if (_fifo_count >= MAX_QUEUE) {
           return false;
         }
+        
+        I2CDisable();
 
-        NVIC_DisableIRQ(I2C0_IRQn);
         I2C_Queue *active = &i2c_queue[_fifo_start++];
         if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
         _fifo_count++;
@@ -56,13 +57,9 @@ namespace Anki
           start_transaction();
         }
 
-        NVIC_EnableIRQ(I2C0_IRQn);
+        I2CEnable();
         
         return true;
-      }
-
-      void I2CRestart(void) {
-        // THIS WILL FLAG LOOP FOR SAFE TO RUN
       }
 
       void I2CInit()
@@ -83,12 +80,12 @@ namespace Anki
         PORTE_PCR24 = PORT_PCR_MUX(5);  //I2C0_SCL
 
         // Configure i2c
-        I2C0_F  = I2C_F_ICR(0x0D) | I2C_F_MULT(1);
+        I2C0_F  = I2C_F_ICR(0x0E) | I2C_F_MULT(1);
         I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK;
         
         // Enable IRQs
-        NVIC_SetPriority(I2C0_IRQn, 3);
-        NVIC_EnableIRQ(I2C0_IRQn);
+        NVIC_SetPriority(I2C0_IRQn, 0);
+        I2CEnable();
       }
     }
   }
@@ -126,7 +123,9 @@ void I2C0_IRQHandler(void) {
   I2C0_S |= I2C_S_IICIF_MASK;  
   I2C_Queue *active = &i2c_queue[_fifo_end];
 
-  if (!_active) { return ; }
+  if (!_active) {
+    return ;
+  }
   
   // Continue down current chain
   if (active->count > 0) {

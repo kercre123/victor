@@ -163,7 +163,6 @@ namespace Anki
           //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
           
           InitDMA();
-          return ;
         }
       }
       
@@ -277,6 +276,14 @@ void DMA0_IRQHandler(void)
 
   // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+
+  FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
+  FTM2_C0SC = FTM_CnSC_CHIE_MASK |
+              FTM_CnSC_ELSA_MASK |
+              FTM_CnSC_ELSB_MASK |
+              //FTM_CnSC_MSA_MASK |
+              FTM_CnSC_MSB_MASK ;
+
   FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
   FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
   FTM2_CNTIN = 0;
@@ -292,6 +299,7 @@ void DMA0_IRQHandler(void)
 
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
+  NVIC_SetPriority(FTM2_IRQn, 1);
 }
 
 extern "C"
@@ -299,14 +307,13 @@ void FTM2_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  static u8 countdown = 10;
-  if (countdown)
-  {
-    countdown--;
-    return;
+  if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
+    I2CDisable();
   }
   
   // Enable SPI DMA, Clear flag
+  if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
+
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 
