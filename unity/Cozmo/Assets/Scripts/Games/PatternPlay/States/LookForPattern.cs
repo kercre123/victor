@@ -71,7 +71,7 @@ public class LookForPattern : State {
     if (patternPlayController.SeenPattern()) {
       stateMachine.SetNextState(new CelebratePattern());
     }
-    else if (NoBlocksMoved()) {
+    else if (ShouldAutoBuildPattern()) {
       // nobody has moved blocks for a while... ima make my own pattern.
       stateMachine.SetNextState(new HaveIdeaForPattern());
     }
@@ -81,8 +81,10 @@ public class LookForPattern : State {
     lastFrameHasVerticalBlock = hasVerticalBlock;
   }
 
-  bool NoBlocksMoved() {
-    return Time.time - patternPlayController.GetMostRecentMovedTime() > 5.0f;
+  bool ShouldAutoBuildPattern() {
+    bool blocksNotTouched = Time.time - patternPlayController.GetMostRecentMovedTime() > 5.0f;
+    bool patternNotSeen = Time.time - patternPlayController.LastPatternSeenTime() > 20.0f;
+    return blocksNotTouched && patternNotSeen;
   }
 
   public override void Exit() {

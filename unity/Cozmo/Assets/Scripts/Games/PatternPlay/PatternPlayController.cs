@@ -13,6 +13,7 @@ public class PatternPlayController : GameController {
   private bool shouldCelebrateNew = false;
   private int lastSetID = -1;
   private float lastSetTime = -100.0f;
+  private float lastPatternSeen = 0.0f;
   private BlockPattern lastSeenPattern;
 
   // variables for autonomous pattern building
@@ -86,6 +87,10 @@ public class PatternPlayController : GameController {
 
   public void SetShouldCelebrateNew(bool shouldCelebrateNew_) {
     shouldCelebrateNew = shouldCelebrateNew_;
+  }
+
+  public float LastPatternSeenTime() {
+    return lastPatternSeen;
   }
 
   public int SeenBlocksOverThreshold(float threshold) {
@@ -258,6 +263,7 @@ public class PatternPlayController : GameController {
 
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
       seenPattern = true;
+      lastPatternSeen = Time.time;
       if (memoryBank.AddSeen(currentPattern)) {
         shouldCelebrateNew = true;
       }
