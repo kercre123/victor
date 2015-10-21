@@ -7,6 +7,9 @@ public class PatternDisplay : MonoBehaviour {
 
   [SerializeField]
   private RectTransform _notFoundDisplay;
+  
+  [SerializeField]
+  private BadgeDisplay _newBadgeDisplay;
 
   private BlockPattern _pattern;
   public BlockPattern pattern {
@@ -32,6 +35,8 @@ public class PatternDisplay : MonoBehaviour {
           // Update the cube's orientation depending on if the cube is facing cozmo
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
         }
+
+        _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
       }
       else {
         // Hide all the cubes
@@ -39,7 +44,10 @@ public class PatternDisplay : MonoBehaviour {
         {
           cubes[i].gameObject.SetActive(false);
         }
+
+        _newBadgeDisplay.HideDisplay();
       }
     }
   }
+
 }

@@ -3,7 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class PatternMemory {
-  
+
+  public const string PATTERN_MEMORY_BADGE_TAG = "PatternMemory";
+
+  public delegate void PatternHandler(BlockPattern patternAdded, MemoryBank bankParent);
+  public event PatternHandler PatternAdded;
+  public void RaisePatternAdded(BlockPattern pattern, MemoryBank bank){
+    if (PatternAdded != null) {
+      PatternAdded (pattern, bank);
+    }
+  }
+
   private List<MemoryBank> memoryBanks = new List<MemoryBank>();
   private HashSet<BlockPattern> keyPatterns = new HashSet<BlockPattern>();
 
@@ -73,7 +83,14 @@ public class PatternMemory {
       if (memoryBanks[i].Contains(pattern)) {
         if (memoryBanks[i].TryAddSeen(pattern)) {
           DAS.Info("PatternMemory.Add", "Pattern Added for bank: " + memoryBanks[i].name);
+
           newPattern = true;
+
+          List<string> tags = new List<string>();
+          tags.Add(PATTERN_MEMORY_BADGE_TAG);
+          tags.Add(memoryBanks[i].name);
+          BadgeManager.TryAddBadge(pattern, tags);
+          RaisePatternAdded(pattern, memoryBanks[i]);
         }
         else {
           DAS.Info("PatternMemory.Add", "Pattern already exists in bank: " + memoryBanks[i].name);

@@ -25,6 +25,9 @@ public class PatternCollectionBankCard : MonoBehaviour {
 
   [SerializeField]
   private Text _headerText;
+  
+  [SerializeField]
+  private BadgeDisplay _newBadgeDisplay;
 
   public void Initialize(MemoryBank memoryBank) {
     // Depending on the signature, we need to use a particular layout
@@ -44,11 +47,18 @@ public class PatternCollectionBankCard : MonoBehaviour {
     }
 
     SetHeaderText (memoryBank);
+
+    SetupBadge (memoryBank.name);
   }
 
   private void SetHeaderText(MemoryBank memoryBank) {
     // TODO: Localize this?
     _headerText.text = memoryBank.name;
+  }
+
+  private void SetupBadge(string tagName)
+  {
+    _newBadgeDisplay.UpdateDisplayWithTag (tagName);
   }
 
   private void ShowRowPatterns(MemoryBank memoryBank)

@@ -376,7 +376,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1cc5214f734c4d29a7ee58dcdd70795, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _openPatternCollectionDialogButtonPrefab: {fileID: 11414436, guid: 9d90f5a6060b94ed5a5ec1718a1bd3a7,
+  _openPatternCollectionDialogButtonPrefab: {fileID: 11412590, guid: 9d90f5a6060b94ed5a5ec1718a1bd3a7,
     type: 2}
   _patternCollectionDialogPrefab: {fileID: 11448498, guid: abab7cda4de7b428fa17f9b115fddb81,
     type: 2}
