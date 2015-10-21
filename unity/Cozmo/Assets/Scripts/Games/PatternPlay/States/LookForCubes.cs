@@ -15,16 +15,26 @@ public class LookForCubes : State {
 
   public override void Update() {
     base.Update();
+
+    if (patternPlayController.SeenPattern()) {
+      stateMachine.SetNextState(new CelebratePattern());
+      return;
+    }
+
     if (patternPlayAutoBuild.AvailableBlocks() > 0) {
       stateMachine.SetNextState(new PickUpCube());
-      // robot.ExecuteBehavior("NONE");
     }
     else {
       SearchForAvailableBlock();
     }
   }
 
+  public override void Exit() {
+    base.Exit();
+    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+  }
+
   void SearchForAvailableBlock() {
-    // robot.ExecuteBehavior("LOOK_AROUND");
+    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
   }
 }

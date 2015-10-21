@@ -28,6 +28,9 @@ public class LookAtPatternConstruction : State {
           stateMachine.SetNextState(new CelebratePattern());
         }
       }
+      else if (patternPlayAutoBuild.BlocksInNeatList() == 3) {
+        stateMachine.SetNextState(new LookForPattern());
+      }
       else {
         stateMachine.SetNextState(new LookForCubes());
       }

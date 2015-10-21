@@ -4,6 +4,7 @@ using System.Collections;
 public class LookForPattern : State {
 
   PatternPlayController patternPlayController = null;
+  PatternPlayAutoBuild patternPlayAutoBuild = null;
 
   bool animationPlaying = false;
 
@@ -17,6 +18,8 @@ public class LookForPattern : State {
     DAS.Info("State", "LookForPattern");
     // TODO: Set eyes to scan.
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
+    patternPlayAutoBuild = patternPlayController.GetAutoBuild();
+    patternPlayAutoBuild.autoBuilding = false;
   }
 
   public override void Update() {

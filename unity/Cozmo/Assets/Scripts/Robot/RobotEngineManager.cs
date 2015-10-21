@@ -479,7 +479,6 @@ public class RobotEngineManager : MonoBehaviour {
     
     RobotActionType action_type = (RobotActionType)message.actionType;
     bool success = (message.result == ActionResult.SUCCESS) || ((action_type == RobotActionType.PLAY_ANIMATION || action_type == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
-    current.seenObjects.Clear();
     current.targetLockedObject = null;
 
     current.localBusyTimer = 0f;

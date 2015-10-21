@@ -25,7 +25,11 @@ public class PlaceCube : State {
       stateMachine.SetNextState(new LookAtPatternConstruction());
     }
     else {
-      stateMachine.SetNextState(new LookForCubes());
+      robot.PlaceObjectOnGroundHere(PlaceGroundHere);
     }
+  }
+
+  void PlaceGroundHere(bool success) {
+    stateMachine.SetNextState(new LookForCubes());
   }
 }
