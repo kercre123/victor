@@ -145,40 +145,7 @@
           <Name>-X"Keil ULINK2 CMSIS-DAP" -UV0066REE -O206 -S0 -C0 -P00 -N00("ARM CoreSight SW-DP") -D00(2BA01477) -L00(0) -FO7 -FD20000000 -FC800 -FN1 -FF0MK_P128_50MHZ -FS00 -FL020000</Name>
         </SetRegEntry>
       </TargetDriverDllRegistry>
-      <Breakpoint>
-        <Bp>
-          <Number>0</Number>
-          <Type>0</Type>
-          <LineNumber>77</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>4090</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>k02_hal/hal/main.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\robot\k02_hal/hal/main.cpp\77</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>160</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>2554</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\k02_hal\hal\camera.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\robot\k02_hal/hal/camera.cpp\160</Expression>
-        </Bp>
-      </Breakpoint>
+      <Breakpoint/>
       <WatchWindow1>
         <Ww>
           <count>0</count>
