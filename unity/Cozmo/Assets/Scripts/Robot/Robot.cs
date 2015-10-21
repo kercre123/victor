@@ -213,6 +213,8 @@ public class Robot : IDisposable {
   private U2G.StartFaceTracking StartFaceTrackingMessage;
   private U2G.StopFaceTracking StopFaceTrackingMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
+  private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
+  private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
 
   private ObservedObject _carryingObject;
 
@@ -334,6 +336,8 @@ public class Robot : IDisposable {
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
     StopFaceTrackingMessage = new U2G.StopFaceTracking();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
+    SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
+    ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -1073,6 +1077,20 @@ public class Robot : IDisposable {
     DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorType);
 
     RobotEngineManager.instance.Message.ExecuteBehavior = ExecuteBehaviorMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void SetBehaviorSystem(bool enable) {
+    SetBehaviorSystemEnabledMessage.enabled = enable;
+
+    RobotEngineManager.instance.Message.SetBehaviorSystemEnabled = SetBehaviorSystemEnabledMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
+    ActivateBehaviorChooserMessage.behaviorChooserType = behaviorChooserType;
+
+    RobotEngineManager.instance.Message.ActivateBehaviorChooser = ActivateBehaviorChooserMessage;
     RobotEngineManager.instance.SendMessage();
   }
 }

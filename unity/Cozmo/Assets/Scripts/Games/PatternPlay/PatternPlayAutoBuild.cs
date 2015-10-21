@@ -34,6 +34,10 @@ public class PatternPlayAutoBuild {
     return controller.GetRobot().seenObjects.Count;
   }
 
+  public void ClearNeatList() {
+    neatList.Clear();
+  }
+
   public ObservedObject GetClosestAvailableBlock() {
     Robot robot = controller.GetRobot();
 

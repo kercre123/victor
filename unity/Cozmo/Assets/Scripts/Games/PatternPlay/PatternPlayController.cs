@@ -117,6 +117,9 @@ public class PatternPlayController : GameController {
     robot.StopFaceAwareness();
     memoryBank.Initialize();
     patternPlayAutoBuild.controller = this;
+    robot.SetBehaviorSystem(true);
+    robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
+    robot.ExecuteBehavior(BehaviorType.NoneBehavior);
   }
 
   protected override void OnDisable() {
@@ -208,8 +211,6 @@ public class PatternPlayController : GameController {
     KeyboardBlockCycle();
     PhoneCycle();
 
-    CheckShouldPlayIdle();
-
     // actually set the lights on the physical blocks.
     SetBlockLights();
 
@@ -246,14 +247,8 @@ public class PatternPlayController : GameController {
 
   }
 
-  private void CheckShouldPlayIdle() {
-    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
-      if (blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
-        CozmoEmotionManager.instance.SetIdleAnimation("NONE");
-        return;
-      }
-    }
-    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
+  public BlockPatternData GetBlockPatternData(int blockID) {
+    return blockPatternData[blockID];
   }
 
   private void DetectPatterns() {

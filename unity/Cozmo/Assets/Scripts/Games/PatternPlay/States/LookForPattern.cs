@@ -29,6 +29,8 @@ public class LookForPattern : State {
       return;
     }
 
+    CheckShouldPlayIdle();
+
     float closestD = ClosestsObject();
     int seenThreshold = patternPlayController.SeenBlocksOverThreshold(0.5f);
 
@@ -71,7 +73,7 @@ public class LookForPattern : State {
     }
     else if (NoBlocksMoved()) {
       // nobody has moved blocks for a while... ima make my own pattern.
-      // stateMachine.SetNextState(new HaveIdeaForPattern());
+      stateMachine.SetNextState(new HaveIdeaForPattern());
     }
 
     lastFrameVisibleCount = robot.visibleObjects.Count;
@@ -81,6 +83,11 @@ public class LookForPattern : State {
 
   bool NoBlocksMoved() {
     return Time.time - patternPlayController.GetMostRecentMovedTime() > 5.0f;
+  }
+
+  public override void Exit() {
+    base.Exit();
+    CozmoEmotionManager.instance.SetIdleAnimation("NONE");
   }
 
   float ClosestsObject() {
@@ -96,5 +103,15 @@ public class LookForPattern : State {
 
   void AnimationDone(bool success) {
     animationPlaying = false;
+  }
+
+  private void CheckShouldPlayIdle() {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      if (patternPlayController.GetBlockPatternData(robot.visibleObjects[i].ID).blockLightsLocalSpace.AreLightsOff() == false) {
+        CozmoEmotionManager.instance.SetIdleAnimation("NONE");
+        return;
+      }
+    }
+    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 }
