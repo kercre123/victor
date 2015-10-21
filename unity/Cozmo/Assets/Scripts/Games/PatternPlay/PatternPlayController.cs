@@ -346,14 +346,15 @@ public class PatternPlayController : GameController {
 
       // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
       // in a pattern yet to white.
-      if (patternPlayAutoBuild.autoBuilding &&
-          robot.seenObjects.Contains(robot.activeBlocks[blockConfig.Key]) &&
-          patternPlayAutoBuild.NeatListContains(robot.activeBlocks[blockConfig.Key]) == false) {
+      bool autoBuilding = patternPlayAutoBuild.autoBuilding;
+      bool nonDirtySeen = robot.seenObjects.Contains(robot.activeBlocks[blockConfig.Key]);
+      bool notInNeatList = patternPlayAutoBuild.NeatListContains(robot.activeBlocks[blockConfig.Key]) == false;
+      bool notCarrying = blockConfig.Key != patternPlayAutoBuild.GetHeldObject().ID;
 
+      if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
         for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
           robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
         }
-
       }
 
     }
