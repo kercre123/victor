@@ -75,4 +75,8 @@ public class GameObjectSelector : MonoBehaviour {
     set = true;
   }
 
+  public int GetNumGameObjects()
+  {
+    return (gameObjects != null) ? gameObjects.Length : 0;
+  }
 }

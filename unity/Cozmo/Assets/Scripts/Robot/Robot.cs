@@ -1067,10 +1067,10 @@ public class Robot : IDisposable {
       UpdateLightMessages(now);
   }
 
-  public void ExecuteBehavior(string behaviorName) {
-    ExecuteBehaviorMessage.behaviorName = behaviorName;
+  public void ExecuteBehavior(BehaviorType type) {
+    ExecuteBehaviorMessage.behaviorType = type;
     
-    DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorName);
+    DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorType);
 
     RobotEngineManager.instance.Message.ExecuteBehavior = ExecuteBehaviorMessage;
     RobotEngineManager.instance.SendMessage();

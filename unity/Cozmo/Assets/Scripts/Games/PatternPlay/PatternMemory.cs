@@ -155,5 +155,21 @@ public class PatternMemory {
     return e.Current;
   }
 
+  public int GetNumTotalPatterns()
+  {
+    int numTotalPatterns = 0;
+    foreach (MemoryBank bank in memoryBanks) {
+      numTotalPatterns += bank.GetNumTotalPatterns();
+    }
+    return numTotalPatterns;
+  }
 
+  public int GetNumSeenPatterns()
+  {
+    int numSeenPatterns = 0;
+    foreach (MemoryBank bank in memoryBanks) {
+      numSeenPatterns += bank.GetNumSeenPatterns();
+    }
+    return numSeenPatterns;
+  }
 }

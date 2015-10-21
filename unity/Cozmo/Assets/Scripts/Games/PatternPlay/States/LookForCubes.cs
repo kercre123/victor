@@ -31,10 +31,10 @@ public class LookForCubes : State {
 
   public override void Exit() {
     base.Exit();
-    // robot.ExecuteBehavior("NONE");
+    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
   }
 
   void SearchForAvailableBlock() {
-    // robot.ExecuteBehavior("LOOK_AROUND");
+    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
   }
 }
