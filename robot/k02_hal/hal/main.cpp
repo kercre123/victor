@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "dac.h"
 #include "hal/i2c.h"
+#include "hal/imu.h"
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -60,11 +61,10 @@ int main (void)
   TimerInit();
   PowerInit();
   I2CInit();
-  //OLEDInit();
   
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i) {
-    //Anki::Cozmo::HAL::MicroWait(1000000);
+    Anki::Cozmo::HAL::MicroWait(1000000);
   }
 
   // Switch to 10MHz external reference to enable 100MHz clock
@@ -74,7 +74,8 @@ int main (void)
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
-  //OLEDFlip();
+  //IMUInit();
+  //OLEDInit();
   SPIInit();
   //DacInit();
   //UartInit();

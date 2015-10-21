@@ -36,7 +36,7 @@ namespace Anki
       GPIO_PIN_SOURCE(PWDN,    PTA, 1);
 
       // Configuration for GC0329 camera chip
-      const u8 I2C_ADDR = 0x31; 
+      const u8 I2C_ADDR = 0x31;
       const u8 CAM_SCRIPT[] =
       {
         #include "gc0329.h"
@@ -137,34 +137,7 @@ namespace Anki
       int JPEGEnd(u8* out);
 #endif
 
-      static const uint8_t CAMERA_READ_CMD_1[] = {I2C_ADDR, 0xf0};
-      static const uint8_t CAMERA_READ_CMD_2[] = {I2C_ADDR, 0xf1};
-      static uint8_t init_value_1 = 0, init_value_2 = 0;
-
       static void InitDMA();
-      static void initI2C(void* last, int size) {
-        static uint8_t writeCmd[3] = { I2C_ADDR };
-        static uint8_t* initCode;
-        
-        if (last != writeCmd) {
-          initCode = (uint8_t*) CAM_SCRIPT;
-        }
-
-        uint8_t p1 = *(initCode++), p2 = *(initCode++);
-        
-        if (p1 || p2) {
-          // Send command array to camera
-          writeCmd[1] = p1;
-          writeCmd[2] = p2;
-          I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, writeCmd, sizeof(writeCmd), initI2C);
-        } else {
-          // TODO: Check that the GPIOs are okay
-          //for (u8 i = 1; i; i <<= 1)
-          //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
-          
-          InitDMA();
-        }
-      }
       
       // Set up camera 
       static void InitCam()
@@ -179,12 +152,28 @@ namespace Anki
         MicroWait(50);
         GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
           
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)CAMERA_READ_CMD_1, sizeof(CAMERA_READ_CMD_1), NULL);
-        I2CCmd( I2C_DIR_READ | I2C_SEND_STOP, &init_value_1, sizeof(init_value_1), NULL);
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)CAMERA_READ_CMD_2, sizeof(CAMERA_READ_CMD_2), NULL);
-        I2CCmd( I2C_DIR_READ | I2C_SEND_STOP, &init_value_2, sizeof(init_value_2), initI2C);
+        I2CReadReg(I2C_ADDR, 0xF0);
+        I2CReadReg(I2C_ADDR, 0xF1);
+        uint8_t id = I2CReadReg(I2C_ADDR, 0xFB);
+
+        // Send command array to camera
+        uint8_t* initCode = (uint8_t*) CAM_SCRIPT;
+
+        for(;;) {
+          uint8_t p1 = *(initCode++), p2 = *(initCode++);
+          
+          if (!p1 && !p2) break ;
+          
+          I2CWriteReg(I2C_ADDR, p1, p2);
+        }
+        
+        // TODO: Check that the GPIOs are okay
+        //for (u8 i = 1; i; i <<= 1)
+        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
+          
+        InitDMA();
       }
-      
+
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
       static void InitDMA()
       {
@@ -279,8 +268,8 @@ void DMA0_IRQHandler(void)
 
   FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
   FTM2_C0SC = FTM_CnSC_CHIE_MASK |
-              FTM_CnSC_ELSA_MASK |
-              FTM_CnSC_ELSB_MASK |
+              //FTM_CnSC_ELSA_MASK |
+              //FTM_CnSC_ELSB_MASK |
               //FTM_CnSC_MSA_MASK |
               FTM_CnSC_MSB_MASK ;
 
@@ -308,6 +297,7 @@ void FTM2_IRQHandler(void)
   using namespace Anki::Cozmo::HAL;
   
   if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
+    FTM2_C0SC &= ~FTM_CnSC_CHF_MASK;
     I2CDisable();
   }
   
