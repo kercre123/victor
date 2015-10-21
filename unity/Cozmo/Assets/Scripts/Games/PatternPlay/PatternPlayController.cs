@@ -210,8 +210,10 @@ public class PatternPlayController : GameController {
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
 
-    //DebugObjectTracking();
-
+    if (Input.GetKey(KeyCode.Space)) {
+      DebugObjectTracking();
+    }
+   
     // inputs for setting block lights
     KeyboardBlockCycle();
     PhoneCycle();
@@ -355,7 +357,12 @@ public class PatternPlayController : GameController {
       bool autoBuilding = patternPlayAutoBuild.autoBuilding;
       bool nonDirtySeen = robot.seenObjects.Contains(robot.activeBlocks[blockConfig.Key]);
       bool notInNeatList = patternPlayAutoBuild.NeatListContains(robot.activeBlocks[blockConfig.Key]) == false;
-      bool notCarrying = blockConfig.Key != patternPlayAutoBuild.GetHeldObject().ID;
+      bool notCarrying = true;
+      if (patternPlayAutoBuild.GetHeldObject() != null) {
+        if (blockConfig.Key != patternPlayAutoBuild.GetHeldObject().ID) {
+          notCarrying = false;
+        }
+      }
 
       if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
         for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
