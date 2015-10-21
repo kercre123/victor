@@ -1,3 +1,4 @@
+// Based on Drive Testfix, updated for Cozmo EP1 Testfix
 #ifndef __BOARD_H
 #define __BOARD_H
 

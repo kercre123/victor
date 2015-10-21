@@ -1,3 +1,5 @@
+// Based on Drive Testfix, updated for Cozmo EP1 Testfix
+
 // #define SWD_DEBUG
 
 #include "hal/console.h"

@@ -1,3 +1,5 @@
+// Based on Drive Testfix, updated for Cozmo EP1 Testfix
+
 // Basic operation of the testport:
 //  The testport is a 500kbaud half-duplex connection using the charge contacts
 //    The protocol is binary little-endian, with an 8-bit message ID, and a fixed-length per message

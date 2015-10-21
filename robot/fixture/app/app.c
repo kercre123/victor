@@ -1,7 +1,6 @@
 /**
   ******************************************************************************
-  */ 
-#include "hal/aci.h"
+  */
 #include "hal/board.h"
 #include "hal/display.h"
 #include "hal/flash.h"
@@ -17,7 +16,7 @@
 #include <stdio.h>
 #include <string.h>
 
-u8 g_fixtureReleaseVersion = 29;
+u8 g_fixtureReleaseVersion = 1;
 
 BOOL g_isVehiclePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -712,11 +711,7 @@ int main(void)
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();
-  
-  SlowPutString("Initializing Radio...\r\n");
-  InitACI();
-  SendReceiveRadioBuf();
-  
+
   SlowPutString("Ready...\r\n");
   
   STM_EVAL_LEDOn(LEDRED);
