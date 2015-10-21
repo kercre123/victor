@@ -4,7 +4,7 @@ using System.Collections;
 public class BaseDialog : MonoBehaviour {
   
   public delegate void SimpleBaseDialogHandler();
-  public delegate void BaseDialogHandler(BaseDialog dialog);
+  public delegate void BaseDialogHandler(string dialogId, BaseDialog dialog);
 
   public event SimpleBaseDialogHandler DialogOpened;
   public static event BaseDialogHandler BaseDialogOpened;
@@ -13,7 +13,7 @@ public class BaseDialog : MonoBehaviour {
       dialog.DialogOpened ();
     }
     if (BaseDialogOpened != null) {
-      BaseDialogOpened (dialog);
+      BaseDialogOpened (dialog.Id, dialog);
     }
   }
 
@@ -24,8 +24,15 @@ public class BaseDialog : MonoBehaviour {
       dialog.DialogClosed ();
     }
     if (BaseDialogClosed != null) {
-      BaseDialogClosed(dialog);
+      BaseDialogClosed(dialog.Id, dialog);
     }
+  }
+
+  [SerializeField]
+  private string _dialogId = "Dialog";
+  public string Id {
+    get { return _dialogId; }
+    private set { _dialogId = value; }
   }
 
   public void OpenDialog()
