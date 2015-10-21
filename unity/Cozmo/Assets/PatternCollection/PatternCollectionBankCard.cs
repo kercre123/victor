@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class PatternCollectionBankCard : MonoBehaviour {
-  
+
   // TODO: Remove magic numbers! Assume 4 matches per memory bank
   private const int PATTERN_PER_BANK_COUNT = 4;
 
@@ -29,7 +29,11 @@ public class PatternCollectionBankCard : MonoBehaviour {
   [SerializeField]
   private BadgeDisplay _newBadgeDisplay;
 
+  List<PatternDisplay> _patternsShown;
+
   public void Initialize(MemoryBank memoryBank) {
+    _patternsShown = new List<PatternDisplay> ();
+
     // Depending on the signature, we need to use a particular layout
     switch (memoryBank.BankOrientation) {
     case MemoryBank.PatternOrientation.Horizontal:
@@ -49,6 +53,13 @@ public class PatternCollectionBankCard : MonoBehaviour {
     SetHeaderText (memoryBank);
 
     SetupBadge (memoryBank.name);
+  }
+
+  public void RemoveBadgeIfSeen()
+  {
+    foreach (PatternDisplay display in _patternsShown) {
+      display.RemoveBadgeIfSeen();
+    }
   }
 
   private void SetHeaderText(MemoryBank memoryBank) {
@@ -99,6 +110,10 @@ public class PatternCollectionBankCard : MonoBehaviour {
     // Update the card's display using the pattern
     PatternDisplay patternDisplay = newCard.GetComponent<PatternDisplay> ();
     patternDisplay.pattern = pattern;
+
+    if (pattern != null) {
+      _patternsShown.Add (patternDisplay);
+    }
   }
 
   private void ShowSpecialPatterns(MemoryBank memoryBank)

@@ -2,7 +2,6 @@
 using System.Collections;
 
 public class PatternDisplay : MonoBehaviour {
-
   public CozmoCube[] cubes;
 
   [SerializeField]
@@ -50,4 +49,30 @@ public class PatternDisplay : MonoBehaviour {
     }
   }
 
+  public void RemoveBadgeIfSeen()
+  {
+    if (_pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
+      return;
+    }
+
+    Vector3[] worldCorners = new Vector3[4];
+    RectTransform rectTransform = transform as RectTransform;
+    rectTransform.GetWorldCorners(worldCorners);
+
+    Rect viewportRect = new Rect(0f, 0f, 1f, 1f);
+    bool isObjectOffscreen = false;
+    foreach (Vector3 worldPos in worldCorners)
+    {
+      Vector3 screenPos = Camera.main.WorldToViewportPoint(worldPos);
+      if (!viewportRect.Contains(screenPos))
+      {
+        isObjectOffscreen = true;
+        break;
+      }
+    }
+    
+    if (!isObjectOffscreen) {
+      BadgeManager.TryRemoveBadge(_pattern);
+    }
+  }
 }

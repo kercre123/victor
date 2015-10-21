@@ -82,6 +82,7 @@ public class PatternCollectionViewController : MonoBehaviour {
 
   private void OnCollectionDialogClose()
   {
+    _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
     _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     _lastOpenedScrollValue = _patternCollectionDialog.GetScrollValue ();
   }

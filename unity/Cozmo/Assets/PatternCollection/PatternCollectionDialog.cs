@@ -19,6 +19,9 @@ public class PatternCollectionDialog : BaseDialog {
 
   private List<PatternCollectionBankCard> _memoryBankCards;
 
+  [SerializeField]
+  private float _slowDragSpeedThreshold = 30f;
+
 	public void Initialize(PatternMemory patternMemory){
     // Create all the memory bank cards
     _memoryBankCards = CreateMemoryBankCards (patternMemory);
@@ -29,9 +32,29 @@ public class PatternCollectionDialog : BaseDialog {
     SetCompletionText (patternMemory.GetNumSeenPatterns (), patternMemory.GetNumTotalPatterns ());
   }
 
+  public void OnDrag()
+  {
+    // The player could be dragging the scrollview slowly while 
+    // looking at the cards at the same time. We want to remove the badge
+    // if the player has seen it.
+    float scrollXSpeed = Mathf.Abs(_memoryBankScrollRect.velocity.x);
+    if (scrollXSpeed < _slowDragSpeedThreshold) {
+      RemoveBadgesIfSeen();
+    }
+  }
+
   public void OnDragEnd()
   {
-    Debug.LogError ("Drag ended");
+    // We want to remove the badge if the player has seen it, 
+    // which is generally when they stop scrolling.
+    RemoveBadgesIfSeen ();
+  }
+
+  private void RemoveBadgesIfSeen()
+  {
+    foreach (PatternCollectionBankCard card in _memoryBankCards) {
+      card.RemoveBadgeIfSeen();
+    }
   }
   
   private List<PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
@@ -67,6 +90,7 @@ public class PatternCollectionDialog : BaseDialog {
 
   public void OnCloseButtonTap()
   {
+    RemoveBadgesIfSeen ();
     UIManager.CloseDialog (this);
   }
 

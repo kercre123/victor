@@ -358,6 +358,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 1097518195}
   - 114: {fileID: 1097518194}
+  - 114: {fileID: 1097518196}
   m_Layer: 0
   m_Name: PatternCollectionViewController
   m_TagString: Untagged
@@ -394,6 +395,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
+--- !u!114 &1097518196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1097518193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bfbb67da94ce4e0ba48c9c86474f753, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1501309219
 GameObject:
   m_ObjectHideFlags: 0
