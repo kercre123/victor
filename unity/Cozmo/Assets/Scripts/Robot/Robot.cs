@@ -606,13 +606,17 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PlaceObjectOnGroundHere() {
+  public void PlaceObjectOnGroundHere(RobotCallback callback = null) {
     DAS.Debug("Robot", "Place Object " + carryingObject + " On Ground Here");
 
     RobotEngineManager.instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
+    }
   }
 
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
@@ -899,7 +903,7 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.SetRobotCarryingObject = SetRobotCarryingObjectMessage;
     RobotEngineManager.instance.SendMessage();
-    seenObjects.Clear();
+
     targetLockedObject = null;
     
     SetLiftHeight(0f);
@@ -1063,10 +1067,10 @@ public class Robot : IDisposable {
       UpdateLightMessages(now);
   }
 
-  public void ExecuteBehavior(string behaviorName) {
-    ExecuteBehaviorMessage.behaviorName = behaviorName;
+  public void ExecuteBehavior(BehaviorType type) {
+    ExecuteBehaviorMessage.behaviorType = type;
     
-    DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorName);
+    DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorType);
 
     RobotEngineManager.instance.Message.ExecuteBehavior = ExecuteBehaviorMessage;
     RobotEngineManager.instance.SendMessage();

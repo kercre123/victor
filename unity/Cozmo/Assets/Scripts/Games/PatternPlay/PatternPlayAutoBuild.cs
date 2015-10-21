@@ -9,6 +9,7 @@ public class PatternPlayAutoBuild {
   ObservedObject objectHeld = null;
   Vector3 idealViewPosition;
   float idealViewAngle = 0.0f;
+  public bool autoBuilding = false;
 
   // the index 0 object should always be the anchor object.
   List<ObservedObject> neatList = new List<ObservedObject>();
@@ -69,11 +70,19 @@ public class PatternPlayAutoBuild {
     else if (neatList.Count == 1) {
       // there is an anchor block. let's put it to the right of the block.
       Debug.Log("anchor block: " + neatList[0].WorldPosition);
-      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
     }
     else {
-      // there are two blocks. let's put it to the left of the anchor (first) block.
-      return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+      // there are two blocks. we need to figure out where to put the third block
+      Vector3 relPos = neatList[1].WorldPosition - neatList[0].WorldPosition;
+      if (Vector3.Dot(relPos, neatList[0].Right) > 0.0f) {
+        // place on the left of anchor block.
+        return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+      }
+      else {
+        // place on right of anchor block.
+        return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+      }
     }
   }
 
@@ -85,8 +94,16 @@ public class PatternPlayAutoBuild {
     objectHeld = null;
   }
 
+  public bool NeatListContains(ObservedObject observedObj) {
+    return neatList.Contains(observedObj);
+  }
+
+  public int BlocksInNeatList() {
+    return neatList.Count;
+  }
+
   public void ObjectMoved(int blockID) {
-    int movedIndex = -1;
+    /*int movedIndex = -1;
     for (int i = 0; i < neatList.Count; ++i) {
       if (neatList[i].ID == blockID) {
         // we found a block in the neat list that was moved.
@@ -95,11 +112,7 @@ public class PatternPlayAutoBuild {
     }
     if (movedIndex != -1) {
       neatList.RemoveAt(movedIndex);
-    }
-  }
-
-  public void ClearNeatList() {
-    neatList.Clear();
+    }*/
   }
 
   public void SetBlockLightsToPattern(int blockID) {
@@ -107,7 +120,7 @@ public class PatternPlayAutoBuild {
   }
 
   private void ComputeIdealViewPose() {
-    idealViewPosition = neatList[0].WorldPosition + neatList[0].Forward * 130.0f;
+    idealViewPosition = neatList[0].WorldPosition + neatList[0].Forward * 150.0f;
     idealViewAngle = Mathf.PI;
   }
 }

@@ -29,13 +29,13 @@ public class DebugButton : MonoBehaviour {
 
   public void EnableBehaviors() {
     if (robot != null) {
-      robot.ExecuteBehavior("AUTO");
+      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.Fidget);
     }
   }
 
   public void DisableBehaviors() {
     if (robot != null) {
-      robot.ExecuteBehavior("NONE");
+      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     }
   }
 }

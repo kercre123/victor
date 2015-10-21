@@ -10,8 +10,11 @@ public class CelebratePattern : State {
     DAS.Info("State", "CelebratePattern");
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
 
-    if (patternPlayController.LastSeenPatternNew()) {
+    patternPlayController.ClearBlockLights();
+
+    if (patternPlayController.ShouldCelebrateNew()) {
       robot.SendAnimation("enjoyPattern", AnimationDone);
+      patternPlayController.SetShouldCelebrateNew(false);
     }
     else {
       robot.SendAnimation("seeOldPattern", AnimationDone);
@@ -21,6 +24,5 @@ public class CelebratePattern : State {
   void AnimationDone(bool success) {
     patternPlayController.ResetLookHeadForkLift();
     stateMachine.SetNextState(new LookForPattern());
-    patternPlayController.ClearBlockLights();
   }
 }

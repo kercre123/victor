@@ -31,8 +31,13 @@ public class PickUpCube : State {
   public override void Update() {
     base.Update();
     if (hasTarget == false) {
+      DAS.Info("PatternPlayPickUpCube", "No Cubes To Pickup");
       stateMachine.SetNextState(new LookForCubes());
       patternPlayAutoBuild.SetObjectHeld(null);
+    }
+    if (patternPlayController.SeenPattern()) {
+      stateMachine.SetNextState(new CelebratePattern());
+      return;
     }
   }
 
@@ -41,7 +46,12 @@ public class PickUpCube : State {
       stateMachine.SetNextState(new SetCubeToPattern());
     }
     else {
+      DAS.Info("PatternPlay", "PickUp Failed!");
       stateMachine.SetNextState(new LookForCubes());
+      if (patternPlayAutoBuild.GetHeldObject() != null) {
+        robot.UpdateDirtyList(patternPlayAutoBuild.GetHeldObject());
+      }
+
       patternPlayAutoBuild.SetObjectHeld(null);
     }
 
