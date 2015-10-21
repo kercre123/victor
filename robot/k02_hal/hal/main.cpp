@@ -74,9 +74,9 @@ int main (void)
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
-  //IMUInit();
-  //OLEDInit();
-  SPIInit();
+  IMUInit();
+  OLEDInit();
+  //SPIInit();
   //DacInit();
   //UartInit();
 

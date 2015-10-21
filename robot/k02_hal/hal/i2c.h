@@ -10,10 +10,11 @@ static const int MAX_QUEUE = 16;
 typedef void (*i2c_callback)(void *data, int count);
 
 enum I2C_Mode {
-  I2C_DIR_READ  = 1,
-  I2C_DIR_WRITE = 2,
-  I2C_SEND_STOP = 4,
-  I2C_SEND_NACK = 8
+  I2C_DIR_READ   = 1,
+  I2C_DIR_WRITE  = 2,
+  I2C_SEND_START = 4,
+  I2C_SEND_NACK  = 8,
+  I2C_SEND_STOP  = 16
 };
 
 #define I2CEnable() NVIC_EnableIRQ(I2C0_IRQn)

@@ -44,7 +44,7 @@ namespace Anki
         uint8_t cmd[3] = { slave << 1, addr, data };
         i2c_data_active = true;
 
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, cmd, 3, i2cRegCallback);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, cmd, 3, i2cRegCallback);
         
         while(i2c_data_active) __asm { WFI } ;
       }
@@ -56,8 +56,8 @@ namespace Anki
 
         i2c_data_active = true;
         
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, cmd, 2, NULL);
-        I2CCmd(I2C_DIR_WRITE, &data, sizeof(data), NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, cmd, 2, NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, &data, sizeof(data), NULL);
         I2CCmd(I2C_DIR_READ | I2C_SEND_NACK | I2C_SEND_STOP, &resp, sizeof(resp), i2cRegCallback);
 
         while(i2c_data_active) __asm { WFI } ;
@@ -70,9 +70,7 @@ namespace Anki
         I2CWriteReg(slave, addr, data);
         resp = I2CReadReg(slave, addr);
         
-        if (resp != data) {
-          // assert("Value does not match);
-        }
+        // assert(resp != data);
       }
       
       void I2CInit()
@@ -98,8 +96,8 @@ namespace Anki
                       PORT_PCR_DSE_MASK;  //I2C0_SCL
 
         // Configure i2c
-        I2C0_F  = I2C_F_ICR(0x19);
-        I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK;
+        I2C0_F  = I2C_F_ICR(0x1B);
+        I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_MST_MASK;
         
         // Enable IRQs
         NVIC_SetPriority(I2C0_IRQn, 0);
@@ -151,13 +149,31 @@ static inline void start_transaction() {
   I2C_Queue *active = &i2c_queue[_fifo_end];
   bool write = active->flags & I2C_DIR_WRITE;
   bool nack = active->flags & I2C_SEND_NACK;
+  bool start = active->flags & I2C_SEND_START;
+    
+  if (~I2C0_C1 & I2C_C1_MST_MASK) {
+    I2C0_C1 |= I2C_C1_MST_MASK;
+    MicroWait(10);
+  } else {
+    if (start) {
+      I2C0_C1 |= I2C_C1_RSTA_MASK;
+    } else {
+      I2C0_C1 &= ~I2C_C1_RSTA_MASK;
+    }
+  }
+  
+  if (nack) {
+    I2C0_C1 |= I2C_C1_TXAK_MASK;
+  } else {
+    I2C0_C1 &= ~I2C_C1_TXAK_MASK;
+  }
   
   if (write) {
-    I2C0_C1 = I2C0_C1 | I2C_C1_TX_MASK | I2C_C1_MST_MASK;
+    I2C0_C1 |= I2C_C1_TX_MASK;
     I2C0_D = *next_byte();
   } else {
-    I2C0_C1 = (I2C0_C1 & ~I2C_C1_TX_MASK) | I2C_C1_MST_MASK | (nack ? I2C_C1_TXAK_MASK : 0);
-    MicroWait(1);
+    I2C0_C1 &= ~I2C_C1_TX_MASK;
+    MicroWait(10);
     int throwaway = I2C0_D;
   } 
 }
@@ -168,10 +184,6 @@ void I2C0_IRQHandler(void) {
   
   // Clear interrupt
   I2C0_S |= I2C_S_IICIF_MASK;  
-
-  if (!_active) {
-    return ;
-  }
 
   I2C_Queue *active = &i2c_queue[_fifo_end];
   
@@ -200,21 +212,21 @@ void I2C0_IRQHandler(void) {
   // Dequeue FIFO
   if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
 
-  // Send stop
-  if (active->flags & I2C_SEND_STOP) {
-    I2C0_C1 &= ~(I2C_C1_TX_MASK | I2C_C1_MST_MASK);
-    MicroWait(1);
-  }
-
   // Tell HAL we completed
   if (active->cb) {
     active->cb(active->buffer, active->size);
   }
 
+  // Send Stop it's 100% nessessary
+  if (active->flags & I2C_SEND_STOP) {
+    I2C0_C1 &= ~I2C_C1_MST_MASK;
+    MicroWait(10);
+  }
+  
   // Dequeue transaction when available
-  if (--_fifo_count <= 0) {
-    _active = false;
-  } else {
+  if (--_fifo_count > 0) {
     start_transaction();
+  } else {
+    _active = false;
   }
 }

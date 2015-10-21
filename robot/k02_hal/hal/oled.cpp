@@ -79,7 +79,7 @@ namespace Anki
       }
 
       void OLEDFlip(void) {
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, ResetCursor, sizeof(ResetCursor), invert);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, ResetCursor, sizeof(ResetCursor), invert);
       }
 
       void OLEDInit(void) {
@@ -92,7 +92,7 @@ namespace Anki
         Anki::Cozmo::HAL::MicroWait(80);
         GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
 
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, (uint8_t*)InitDisplay, sizeof(InitDisplay), NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)InitDisplay, sizeof(InitDisplay), NULL);
       }
     }
   }
