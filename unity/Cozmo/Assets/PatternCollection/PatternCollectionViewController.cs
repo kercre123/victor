@@ -9,7 +9,9 @@ using System.Collections.Generic;
 public class PatternCollectionViewController : MonoBehaviour {
 
   [SerializeField]
-  private Button _openPatternCollectionDialogButtonPrefab;
+  private BadgeDisplay _openPatternCollectionDialogButtonPrefab;
+
+  private BadgeDisplay _buttonBadgeDisplay;
  
   [SerializeField]
   private PatternCollectionDialog _patternCollectionDialogPrefab;
@@ -21,32 +23,45 @@ public class PatternCollectionViewController : MonoBehaviour {
   [SerializeField]
   private PatternPlayInstructions _patternPlayInstructionsPrefab;
 
-  private PatternMemory _testPatternMemory;
+  private PatternMemory _patternMemory;
   
   // Use this for initialization
   private void Start () {
   	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
-    _testPatternMemory = CreateTestPatternMemory ();
+    PatternMemory patternMemory = CreateTestPatternMemory ();
+    OnPatternMemoryLoaded (patternMemory);
 
     CreateDialogButton ();
   }
-
+  
   private void OnDestroy()
   {
     //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
-
+    
     if (_patternCollectionDialog != null) {
       _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     }
+    
+    _patternMemory.PatternAdded -= OnPatternAdded;
+  }
+
+  public void OnPatternMemoryLoaded(PatternMemory patternMemory)
+  {
+    _patternMemory = patternMemory;
+    _patternMemory.PatternAdded += OnPatternAdded;
   }
 
   private void CreateDialogButton()
   {
     GameObject newButton = UIManager.CreateUI (_openPatternCollectionDialogButtonPrefab.gameObject);
+
     Button buttonScript = newButton.GetComponent<Button> ();
     buttonScript.enabled = false;
     buttonScript.enabled = true;
     buttonScript.onClick.AddListener (OnDialogButtonTap);
+
+    _buttonBadgeDisplay = newButton.GetComponent<BadgeDisplay> ();
+    _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
   }
 
   public void OnDialogButtonTap()
@@ -60,15 +75,38 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternCollectionDialog = newDialog as PatternCollectionDialog;
 
     // Populate dialog with cards using memory
-    _patternCollectionDialog.Initialize (_testPatternMemory);
+    _patternCollectionDialog.Initialize (_patternMemory);
     _patternCollectionDialog.SetScrollValue (_lastOpenedScrollValue);
     _patternCollectionDialog.DialogClosed += OnCollectionDialogClose;
   }
 
   private void OnCollectionDialogClose()
   {
+    _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
     _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     _lastOpenedScrollValue = _patternCollectionDialog.GetScrollValue ();
+  }
+
+  private void OnPatternAdded(BlockPattern pattern, MemoryBank bank)
+  {
+    ShowUnlockMomentDialog (pattern);
+  }
+
+  private void ShowUnlockMomentDialog(BlockPattern pattern) {
+    // TODO: Show dialog; hook up to close button
+    OnUnlockMomentDialogClosed ();
+  }
+
+  private void OnUnlockMomentDialogClosed() {
+    PlayAddPatternToBankAnimation ();
+  }
+
+  private void PlayAddPatternToBankAnimation() {
+    // TODO: Play animation
+  }
+
+  private void OnAddPatternToBankAnimationFinished() {
+    // TODO: Update badge visuals
   }
 
   private void ShowInstructionsDialog()
@@ -101,6 +139,8 @@ public class PatternCollectionViewController : MonoBehaviour {
     newPattern.verticalStack = true;
     patternMemory.AddSeen (newPattern);
 
+    BadgeManager.TryRemoveBadge (newPattern);
+
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
@@ -109,6 +149,8 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.verticalStack = true;
     patternMemory.AddSeen (newPattern);
+    
+    BadgeManager.TryRemoveBadge (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
