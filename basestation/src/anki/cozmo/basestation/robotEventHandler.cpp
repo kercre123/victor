@@ -80,8 +80,9 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
   // Create an action to drive to specied pose and then put down the carried
   // object.
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
-  Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  return new PlaceObjectOnGroundAtPoseAction(robot, targetPose, msg.useManualSpeed);
+  Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
+  Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
+  return new PlaceObjectOnGroundAtPoseAction(robot, targetPose, msg.useExactRotation, msg.useManualSpeed);
 }
 
 IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)

@@ -113,8 +113,14 @@ namespace Anki {
     class DriveToObjectAction : public IAction 
     {
     public:
-      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm = 0, const bool useManualSpeed = false);
-      DriveToObjectAction(const ObjectID& objectID, const f32 distance_mm, const bool useManualSpeed = false);
+      DriveToObjectAction(const ObjectID& objectID,
+                          const PreActionPose::ActionType& actionType,
+                          const f32 predockOffsetDistX_mm = 0,
+                          const bool useManualSpeed = false);
+      
+      DriveToObjectAction(const ObjectID& objectID,
+                          const f32 distance_mm,
+                          const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -123,6 +129,10 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+      
+      // If set, instead of driving to the nearest preActionPose, only the preActionPose
+      // that is most closely aligned with the approach angle is considered.
+      void SetApproachAngle(const f32 angle_rad);
       
     protected:
       
@@ -145,13 +155,19 @@ namespace Anki {
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
+      bool                       _useApproachAngle;
+      Radians                    _approachAngle_rad;
+      
     }; // DriveToObjectAction
     
     
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
+      DriveToPlaceCarriedObjectAction(const Robot& robot,
+                                      const Pose3d& placementPose,
+                                      const bool useExactRotation = false,
+                                      const bool useManualSpeed = false);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT; }
@@ -161,6 +177,8 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override; // Simplified version from DriveToObjectAction
       Pose3d _placementPose;
+      
+      bool   _useExactRotation;
       
     }; // DriveToPlaceCarriedObjectAction()
     
@@ -385,10 +403,10 @@ namespace Anki {
     public:
       IDockAction(ObjectID objectID,
                   const bool useManualSpeed = false,
-                  const f32 placeObjectOnGround = false,
                   const f32 placementOffsetX_mm = 0,
                   const f32 placementOffsetY_mm = 0,
-                  const f32 placementOffsetAngle_rad = 0);
+                  const f32 placementOffsetAngle_rad = 0,
+                  const bool placeObjectOnGround = false);
       
       virtual ~IDockAction();
       
@@ -540,8 +558,17 @@ namespace Anki {
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeObjectOnGroundIfCarrying = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
-        new PickAndPlaceObjectAction(objectID, doPlacement, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
+        new DriveToObjectAction(objectID,
+                                doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING,
+                                placementOffsetX_mm,
+                                useManualSpeed),
+        new PickAndPlaceObjectAction(objectID,
+                                     doPlacement,
+                                     useManualSpeed,
+                                     placementOffsetX_mm,
+                                     placementOffsetY_mm,
+                                     placementOffsetAngle_rad,
+                                     placeObjectOnGroundIfCarrying)})
       {
 
       }
@@ -616,14 +643,17 @@ namespace Anki {
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed = false)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+                                      const Pose3d& placementPose,
+                                      const bool useExactRotation = false,
+                                      const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
+        new DriveToPlaceCarriedObjectAction(robot, placementPose, useExactRotation, useManualSpeed),
         new PlaceObjectOnGroundAction()})
       {
         
       }
-      
+
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
     };
     

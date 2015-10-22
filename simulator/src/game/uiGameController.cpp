@@ -67,7 +67,7 @@ namespace Anki {
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
       _robotPose.SetTranslation({msg.pose_x, msg.pose_y, msg.pose_z});
-      _robotPose.SetRotation(msg.headAngle_rad, Z_AXIS_3D());
+      _robotPose.SetRotation(msg.poseAngle_rad, Z_AXIS_3D());
       
       _robotStateMsg = msg;
       
@@ -721,14 +721,19 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed)
+    void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useExactRotation, const bool useManualSpeed)
     {
       ExternalInterface::PlaceObjectOnGround m;
       m.x_mm = p.GetTranslation().x();
       m.y_mm = p.GetTranslation().y();
-      m.rad = p.GetRotationAngle<'Z'>().ToFloat();
       m.level = 0;
       m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      UnitQuaternion<f32> q(p.GetRotation().GetQuaternion());
+      m.qw = q.w();
+      m.qx = q.x();
+      m.qy = q.y();
+      m.qz = q.z();
+      m.useExactRotation = useExactRotation;
       ExternalInterface::MessageGameToEngine message;
       message.Set_PlaceObjectOnGround(m);
       SendMessage(message);

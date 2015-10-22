@@ -364,22 +364,29 @@ namespace Anki {
     
 #pragma mark ---- DriveToObjectAction ----
     
-    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm, const bool useManualSpeed)
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
+                                             const PreActionPose::ActionType& actionType,
+                                             const f32 predockOffsetDistX_mm,
+                                             const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(actionType)
     , _distance_mm(-1.f)
     , _predockOffsetDistX_mm(predockOffsetDistX_mm)
     , _useManualSpeed(useManualSpeed)
+    , _useApproachAngle(false)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
-    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID, const f32 distance, const bool useManualSpeed)
+    DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
+                                             const f32 distance,
+                                             const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
     , _distance_mm(distance)
     , _predockOffsetDistX_mm(0)
     , _useManualSpeed(useManualSpeed)
+    , _useApproachAngle(false)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -394,6 +401,13 @@ namespace Anki {
     {
       static const std::string name("DriveToObjectAction");
       return name;
+    }
+    
+    void DriveToObjectAction::SetApproachAngle(const f32 angle_rad)
+    {
+      PRINT_NAMED_INFO("DriveToObjectAction.SetApproachingAngle", "%f rad", angle_rad);
+      _useApproachAngle = true;
+      _approachAngle_rad = angle_rad;
     }
     
     ActionResult DriveToObjectAction::GetPossiblePoses(const Robot& robot, ActionableObject* object,
@@ -413,6 +427,29 @@ namespace Anki {
                                        obstacles,
                                        &robot.GetPose(),
                                        _predockOffsetDistX_mm);
+      
+      // Filter out all but the preActionPose that is closest to the specified approachAngle
+      if (_useApproachAngle) {
+        bool bestPreActionPoseFound = false;
+        for(auto & preActionPose : possiblePreActionPoses)
+        {
+          Radians headingDiff = preActionPose.GetPose().GetRotationAngle<'Z'>() - _approachAngle_rad;
+          if (std::abs(headingDiff.ToFloat()) < 0.5f * PIDIV2_F) {
+            // Found the preAction pose that is most aligned with the desired approach angle
+            PreActionPose p(preActionPose);
+            possiblePreActionPoses.clear();
+            possiblePreActionPoses.push_back(p);
+            bestPreActionPoseFound = true;
+            break;
+          }
+        }
+        
+        if (!bestPreActionPoseFound) {
+          PRINT_NAMED_INFO("DriveToObjectAction.GetPossiblePoses.NoPreActionPosesAtApproachAngleExist", "");
+          return ActionResult::FAILURE_ABORT;
+        }
+      }
+      
       
       if(possiblePreActionPoses.empty()) {
         PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.NoPreActionPoses",
@@ -638,11 +675,65 @@ namespace Anki {
             
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
-    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed)
-    : DriveToObjectAction(robot.GetCarryingObject(), PreActionPose::PLACE_ON_GROUND, 0, useManualSpeed)
-    , _placementPose(placementPose)
+    
+    // Computes that angle (wrt world) at which the robot would have to approach the given pose
+    // such that it places the carried object at the given pose
+    Result ComputePlacementApproachAngle(const Robot& robot, const Pose3d& placementPose, f32& approachAngle_rad)
     {
+      // Get carried object
+      ObjectID objectID = robot.GetCarryingObject();
+      ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
 
+      
+      // Check that up axis of carried object and the desired placementPose are the same.
+      // Otherwise, it's impossible for the robot to place it there!
+      int targetUpAxis = placementPose.GetAxisClosestToParentZAxis();
+      int currentUpAxis = object->GetPose().GetAxisClosestToParentZAxis();
+      if (currentUpAxis != targetUpAxis) {
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes", "Carried up axis: %d, target up axis: %d", currentUpAxis, targetUpAxis);
+        return RESULT_FAIL;
+      }
+
+      
+      // Get pose of carried object wrt robot
+      Pose3d poseObjectWrtRobot;
+      if (!object->GetPose().GetWithRespectTo(robot.GetPose(), poseObjectWrtRobot)) {
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.FailedToComputeObjectWrtRobotPose", "");
+        return RESULT_FAIL;
+      }
+      
+      
+      // Get pose of carried object wrt desired placement pose
+      Pose3d poseObjectWrtPlacementPose;
+      if (!object->GetPose().GetWithRespectTo(placementPose, poseObjectWrtPlacementPose)) {
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.FailedToComputeObjectWrtPlacementPose", "");
+        return RESULT_FAIL;
+      }
+      
+      
+      // Get pose of robot if the carried object were aligned with the placementPose and the robot was still carrying it
+      Pose3d poseRobotIfPlacingObject(poseObjectWrtRobot.Invert());
+      poseRobotIfPlacingObject.PreComposeWith(poseObjectWrtPlacementPose);
+      poseRobotIfPlacingObject.PreComposeWith(placementPose);
+      
+      
+      approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
+      
+      return RESULT_OK;
+    }
+    
+    
+    DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
+                                                                     const Pose3d& placementPose,
+                                                                     const bool useExactRotation,
+                                                                     const bool useManualSpeed)
+    : DriveToObjectAction(robot.GetCarryingObject(),
+                          PreActionPose::PLACE_ON_GROUND,
+                          0,
+                          useManualSpeed)
+    , _placementPose(placementPose)
+    , _useExactRotation(useExactRotation)
+    {
     }
     
     const std::string& DriveToPlaceCarriedObjectAction::GetName() const
@@ -654,7 +745,7 @@ namespace Anki {
     ActionResult DriveToPlaceCarriedObjectAction::Init(Robot& robot)
     {
       ActionResult result = ActionResult::SUCCESS;
-      
+
       if(robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("DriveToPlaceCarriedObjectAction.CheckPreconditions.NotCarryingObject",
                           "Robot %d cannot place an object because it is not carrying anything.",
@@ -672,6 +763,16 @@ namespace Anki {
           
           result = ActionResult::FAILURE_ABORT;
         } else {
+          
+          // Compute the approach angle given the desired placement pose of the carried block
+          if (_useExactRotation) {
+            f32 approachAngle_rad;
+            if (ComputePlacementApproachAngle(robot, _placementPose, approachAngle_rad) != RESULT_OK) {
+              PRINT_NAMED_WARNING("DriveToPlaceCarriedObjectAction.Init.FailedToComputeApproachAngle", "");
+              return ActionResult::FAILURE_ABORT;
+            }
+            SetApproachAngle(approachAngle_rad);
+          }
           
           // Temporarily move object to desired pose so we can get placement poses
           // at that position
@@ -1411,7 +1512,7 @@ namespace Anki {
                              const f32 placementOffsetX_mm,
                              const f32 placementOffsetY_mm,
                              const f32 placementOffsetAngle_rad,
-                             const f32 placeObjectOnGroundIfCarrying)
+                             const bool placeObjectOnGroundIfCarrying)
     : _dockObjectID(objectID)
     , _dockMarker(nullptr)
     , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
