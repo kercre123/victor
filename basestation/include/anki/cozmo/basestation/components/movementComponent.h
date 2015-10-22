@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include <list>
 
@@ -28,7 +29,7 @@ namespace ExternalInterface { class MessageEngineToGame; }
 class Robot;
 class IExternalInterface;
   
-class MovementComponent
+class MovementComponent : private Util::noncopyable
 {
 public:
   MovementComponent(Robot& robot);
