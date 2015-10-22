@@ -13,19 +13,8 @@
 #ifndef __Util_Transport_ReliableMessageTypes_H__
 #define __Util_Transport_ReliableMessageTypes_H__
 
-#ifdef __cplusplus
-namespace Anki {
-namespace Util {
-extern "C" {
-#else
 #include "c_types.h"
-#endif
-
-#ifdef __APPLE__
-typedef enum __attribute__ ((__packed__))
-#else
-typedef enum
-#endif
+enum
 {
   eRMT_Invalid = 0,
   eRMT_ConnectionRequest,
@@ -40,8 +29,9 @@ typedef enum
   eRMT_ACK,
   eRMT_Ping,
   eRMT_Count
-} EReliableMessageType;
+};
 
+typedef uint8_t EReliableMessageType;
 
 // ReliableTransport layer can still send things unreliably - some message types are always unreliable
 bool IsMessageTypeAlwaysSentUnreliably(EReliableMessageType messageType);
@@ -52,10 +42,5 @@ const char* ReliableMessageTypeToString(EReliableMessageType messageType);
   
 bool IsValidMessageType(EReliableMessageType messageType);
 
-#ifdef __cplusplus
-} // end extern "C"
-} // end namespace Util
-} // end namespace Anki
-#endif
 
 #endif // __Util_Transport_ReliableMessageTypes_H__

@@ -73,7 +73,7 @@ class ImageChunk(struct.Struct):
         self.frameTimeStamp, self.imageId, self.imageEncoding, self.imageResolution, self.imageChunkCount, \
             self.chunkId, length = self.unpack(buffer[1:self.size+1])
         self.data = buffer[self.size+1:]
-        assert(len(self.data == length))
+        assert(len(self.data) == length)
 
 class CozmoReceiver(IDataReceiver):
     "ReliableTransport receiver class"
@@ -81,7 +81,7 @@ class CozmoReceiver(IDataReceiver):
     def __init__(self, robotAddress=("172.31.1.1", 5551)):
         sys.stdout.write("Connecting to robot at {}:{}\r\n".format(*robotAddress))
         self.robot = robotAddress
-        ut = UDPTransport()
+        ut = UDPTransport(logInPackets="rxPackets.bin")
         ut.OpenSocket()
         self.transport = ReliableTransport(ut, self)
         self.transport.Connect(self.robot)

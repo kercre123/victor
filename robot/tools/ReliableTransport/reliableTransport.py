@@ -93,12 +93,10 @@ class ReliableTransport(threading.Thread):
         self.lock = threading.Lock()
         self._continue = True
         self.connections = {}
-        self.pktLog = open('rx-packet-log.txt', 'w')
 
     def __del__(self):
         self.KillThread()
         self.ClearConnections()
-        self.pktLog.close()
 
     def run(self):
         while self._continue:
@@ -213,8 +211,6 @@ class ReliableTransport(threading.Thread):
         if buffer is None:
             return
         handledMessageType = False
-        self.pktLog.write(" ".join(["%02x" % b for b in buffer]) + "\n")
-        self.pktLog.flush()
         if (len(buffer) < AnkiReliablePacketHeader.LENGTH):
             sys.stderr.write("ReceiveData too small %d\r\n" % len(buffer))
         else:
