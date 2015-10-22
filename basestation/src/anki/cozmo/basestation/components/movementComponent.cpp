@@ -39,8 +39,8 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   {
     const struct DriveWheels& msg = event.GetData().Get_DriveWheels();
     if(AreWheelsLocked()) {
-      PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
-                       "Ignoring ExternalInterface::DriveWheels while wheels are locked.\n");
+      PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
+                       "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
     } else {
       DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
     }
@@ -60,7 +60,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   {
     const struct MoveHead& msg = event.GetData().Get_MoveHead();
     if(IsHeadLocked()) {
-      PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveHead.HeadLocked",
+      PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                        "Ignoring ExternalInterface::MoveHead while head is locked.");
     } else {
       MoveHead(msg.speed_rad_per_sec);
@@ -73,7 +73,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   {
     const struct MoveLift& msg = event.GetData().Get_MoveLift();
     if(IsLiftLocked()) {
-      PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveLift.LiftLocked",
+      PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                        "Ignoring ExternalInterface::MoveLift while lift is locked.");
     } else {
       MoveLift(msg.speed_rad_per_sec);
@@ -86,8 +86,8 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   {
     const struct SetHeadAngle& msg = event.GetData().Get_SetHeadAngle();
     if(IsHeadLocked()) {
-      PRINT_NAMED_INFO("CozmoGameImpl.Process_SetHeadAngle.HeadLocked",
-                       "Ignoring ExternalInterface::SetHeadAngle while head is locked.\n");
+      PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
+                       "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
     } else {
       DisableTrackToObject();
       MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
@@ -100,8 +100,8 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   {
     const struct TrackToObject& msg = event.GetData().Get_TrackToObject();
     if(IsHeadLocked()) {
-      PRINT_NAMED_INFO("CozmoGameImpl.Process_TrackHeadToObject.HeadLocked",
-                       "Ignoring ExternalInterface::TrackHeadToObject while head is locked.\n");
+      PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.HeadLocked",
+                       "Ignoring ExternalInterface::TrackHeadToObject while head is locked.");
     } else {
       if(msg.objectID == u32_MAX) {
         DisableTrackToObject();
@@ -197,8 +197,8 @@ Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
     
     return RESULT_OK;
   } else {
-    PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
-                      "Cannot track to object ID=%d, which does not exist.\n",
+    PRINT_NAMED_ERROR("MovementComponent.EnableTrackToObject.UnknownObject",
+                      "Cannot track to object ID=%d, which does not exist.",
                       objectID);
     _trackToObjectID.UnSet();
     return RESULT_FAIL;
@@ -225,7 +225,7 @@ Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bo
     
     return RESULT_OK;
   } else {
-    PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
+    PRINT_NAMED_ERROR("MovementComponent.EnableTrackToFace.UnknownFace",
                       "Cannot track to face ID=%lld, which does not exist.",
                       faceID);
     _trackToFaceID = Vision::TrackedFace::UnknownFace;
