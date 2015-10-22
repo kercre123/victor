@@ -23,7 +23,7 @@ public class PatternPlayController : GameController {
   private PatternPlayAudio patternPlayAudio;
 
   [SerializeField]
-  private PatternPlayUIController patternPlayUIController;
+  private PatternCollectionViewController patternPlayUIController;
 
   private StateMachineManager stateMachineManager = new StateMachineManager();
 
@@ -228,9 +228,6 @@ public class PatternPlayController : GameController {
 
     // update cozmo's behavioral state machine for pattern play.
     stateMachineManager.UpdateAllMachines();
-
-    // this may need to be moved to include other states if we want UI for them.
-    patternPlayUIController.UpdateUI(memoryBank);
 
   }
 

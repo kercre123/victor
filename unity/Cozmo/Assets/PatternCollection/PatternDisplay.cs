@@ -26,10 +26,11 @@ public class PatternDisplay : MonoBehaviour {
           cubes[i].gameObject.SetActive(true);
 
           // Set up the colors
-          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? Color.blue : Color.gray;
-          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? Color.blue : Color.gray;
-          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? Color.blue : Color.gray;
-          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? Color.blue : Color.gray;
+          Color patternColor = new Color(0.2f, 0.5f, 1f);
+          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.white;
+          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.white;
+          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.white;
+          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.white;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
@@ -59,7 +60,7 @@ public class PatternDisplay : MonoBehaviour {
     Rect viewportRect = new Rect(0f, 0f, 1f, 1f);
     bool isObjectOffscreen = false;
     foreach (Vector3 worldPos in worldCorners) {
-      Vector3 screenPos = Camera.main.WorldToViewportPoint(worldPos);
+      Vector3 screenPos = UIManager.GetUICamera().WorldToViewportPoint(worldPos);
       if (!viewportRect.Contains(screenPos)) {
         isObjectOffscreen = true;
         break;

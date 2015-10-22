@@ -52,4 +52,8 @@ public class UIManager : MonoBehaviour {
   public static void CloseDialog(BaseDialog dialogObject) {
     dialogObject.CloseDialog ();
   }
+
+  public static Camera GetUICamera() {
+    return _instance._sceneCanvas.worldCamera;
+  }
 }

@@ -20,7 +20,7 @@ RenderSettings:
   m_FogDensity: .00999999978
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
+  m_AmbientSkyColor: {r: .691176474, g: .691176474, b: .691176474, a: 1}
   m_AmbientEquatorColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
   m_AmbientGroundColor: {r: .200000003, g: .200000003, b: .200000003, a: 1}
   m_AmbientIntensity: 1
@@ -1482,19 +1482,19 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMin.x
-      value: 1
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: .5
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchoredPosition.x
-      value: 4
+      value: 310
       objectReference: {fileID: 0}
     - target: {fileID: 22450396, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
       propertyPath: m_AnchoredPosition.y
-      value: 4
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 5ea1fe1891c074bdcacd5e19f21f7586, type: 2}
