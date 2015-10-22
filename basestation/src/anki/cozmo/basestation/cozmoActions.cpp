@@ -1180,7 +1180,6 @@ namespace Anki {
         }
         
         if(!markerWithCodeSeen) {
-          // TODO: Find causes of this and turn it back into an error/failure (COZMO-140)
           
           std::string observedMarkerNames;
           for(auto marker : observedMarkers) {
@@ -1191,7 +1190,7 @@ namespace Anki {
           PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.MarkerCodeNotSeen",
                               "Object %d observed, but not expected marker: %s. Instead saw: %s",
                               _objectID.GetValue(), Vision::MarkerTypeStrings[_whichCode], observedMarkerNames.c_str());
-          //return ActionResult::FAILURE_ABORT;
+          return ActionResult::FAILURE_ABORT;
         }
       }
 
@@ -1994,6 +1993,7 @@ namespace Anki {
     
     RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
+    , _expectedMarkerPostRoll(nullptr)
     , _rollVerifyAction(nullptr)
     {
       
@@ -2077,6 +2077,17 @@ namespace Anki {
       const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
       _dockAction = DockAction::DA_ROLL_LOW;
       
+      
+      // Get the top marker as this will be what needs to be seen for verification
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
+      if (activeCube == nullptr) {
+        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.NonActiveCube", "Only active cubes can be rolled");
+        return RESULT_FAIL;
+      }
+      Pose3d junk;
+      _expectedMarkerPostRoll = &(activeCube->GetTopMarker(junk));
+      
+      
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.
       //       Do them later.
@@ -2108,10 +2119,9 @@ namespace Anki {
               return ActionResult::FAILURE_ABORT;
             }
             
-            // If the physical robot thinks it succeeded, move the lift out of the
-            // way, and attempt to visually verify
+            // If the physical robot thinks it succeeded, verify that the expected marker is being seen
             if(_rollVerifyAction == nullptr) {
-              _rollVerifyAction = new FaceObjectAction(_dockObjectID, Radians(0), Radians(0), true, false);
+              _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
               
               // Disable completion signals since this is inside another action
               _rollVerifyAction->SetIsPartOfCompoundAction(true);
@@ -2126,18 +2136,9 @@ namespace Anki {
               _rollVerifyAction = nullptr;
               
               if(result != ActionResult::SUCCESS) {
-                PRINT_NAMED_ERROR("RollObjectAction.Verify",
-                                  "Robot thinks it rolled the object, but verification failed. "
-                                  "Not sure where rolled object %d is, so deleting it.",
-                                  _dockObjectID.GetValue());
-                
-                robot.GetBlockWorld().ClearObject(_dockObjectID);
-              } else {
-                // TODO: Need to verify whether or not block is actually in the place and orientation
-                //       that is expected. Use _dockObjectOrigPose?
-                PRINT_NAMED_WARNING("RollObjectAction.Verify.Todo",
-                                    "TODO: Need to verify rolled block orientation is correct. Currently just visually verifying existence");
-                
+                PRINT_NAMED_INFO("RollObjectAction.Verify",
+                                 "Robot thinks it rolled the object, but verification failed. ");
+                result = ActionResult::FAILURE_RETRY;
               }
             } // if(result != ActionResult::RUNNING)
             
