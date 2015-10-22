@@ -69,9 +69,7 @@ namespace Anki {
 #   if !ASYNC_VISION_PROCESSING
     , _haveNewImage(false)
 #   endif
-    , _wheelsLocked(false)
-    , _headLocked(false)
-    , _liftLocked(false)
+    , _movementComponent(*this)
     , _plannerSelectedPoseIndexPtr(nullptr)
     , _numPlansStarted(0)
     , _numPlansFinished(0)
@@ -106,7 +104,6 @@ namespace Anki {
     , _imageSendMode(ImageSendMode::Off)
     , _carryingMarker(nullptr)
     , _lastPickOrPlaceSucceeded(false)
-    , _trackToFaceID(Vision::TrackedFace::UnknownFace)
     , _stateSaveMode(SAVE_OFF)
     , _imageSaveMode(SAVE_OFF)
     , _imgFramePeriod(0)
@@ -1299,140 +1296,6 @@ namespace Anki {
     {
       return _driveToPoseStatus;
     }
-
-    // =========== Motor commands ============
-    
-    // Sends message to move lift at specified speed
-    Result Robot::MoveLift(const f32 speed_rad_per_sec)
-    {
-      return SendMoveLift(speed_rad_per_sec);
-    }
-    
-    // Sends message to move head at specified speed
-    Result Robot::MoveHead(const f32 speed_rad_per_sec)
-    {
-      return SendMoveHead(speed_rad_per_sec);
-    }
-    
-    // Sends a message to the robot to move the lift to the specified height
-    Result Robot::MoveLiftToHeight(const f32 height_mm,
-                                   const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2,
-                                   const f32 duration_sec)
-    {
-      return SendSetLiftHeight(height_mm, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
-    }
-    
-    // Sends a message to the robot to move the head to the specified angle
-    Result Robot::MoveHeadToAngle(const f32 angle_rad,
-                                  const f32 max_speed_rad_per_sec,
-                                  const f32 accel_rad_per_sec2,
-                                  const f32 duration_sec)
-    {
-      return SendSetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec);
-    }
-
-    Result Robot::TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
-                                     const f32 accel_rad_per_sec2)
-    {
-      return SendTurnInPlaceAtSpeed(speed_rad_per_sec, accel_rad_per_sec2);
-    }
-    
-    
-    
-    Result Robot::TapBlockOnGround(const u8 numTaps)
-    {
-      return SendTapBlockOnGround(numTaps);
-    }
-      
-    Result Robot::EnableTrackToObject(const u32 objectID, bool headOnly)
-    {
-      _trackToObjectID = objectID;
-      
-      if(_blockWorld.GetObjectByID(_trackToObjectID) != nullptr) {
-        _trackWithHeadOnly = headOnly;
-        _trackToFaceID = Vision::TrackedFace::UnknownFace;
-
-        // Store whether head/wheels were locked before tracking so we can
-        // return them to this state when we disable tracking
-        _headLockedBeforeTracking = IsHeadLocked();
-        _wheelsLockedBeforeTracking = AreWheelsLocked();
-
-        LockHead(true);
-        if(!headOnly) {
-          LockWheels(true);
-        }
-        
-        return RESULT_OK;
-      } else {
-        PRINT_NAMED_ERROR("Robot.EnableTrackToObject.UnknownObject",
-                          "Cannot track to object ID=%d, which does not exist.\n",
-                          objectID);
-        _trackToObjectID.UnSet();
-        return RESULT_FAIL;
-      }
-    }
-    
-    Result Robot::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bool headOnly)
-    {
-      _trackToFaceID = faceID;
-      if(_faceWorld.GetFace(_trackToFaceID) != nullptr) {
-        _trackWithHeadOnly = headOnly;
-        _trackToObjectID.UnSet();
-        
-        // Store whether head/wheels were locked before tracking so we can
-        // return them to this state when we disable tracking        // Store whether head/wheels were locked before tracking so we can
-        // return them to this state when we disable tracking
-        _headLockedBeforeTracking = IsHeadLocked();
-        _wheelsLockedBeforeTracking = AreWheelsLocked();
-        
-        LockHead(true);
-        if(!headOnly) {
-          LockWheels(true);
-        }
-        
-        return RESULT_OK;
-      } else {
-        PRINT_NAMED_ERROR("Robot.EnableTrackToFace.UnknownFace",
-                          "Cannot track to face ID=%lld, which does not exist.",
-                          faceID);
-        _trackToFaceID = Vision::TrackedFace::UnknownFace;
-        return RESULT_FAIL;
-      }
-    }
-    
-    Result Robot::DisableTrackToObject()
-    {
-      if(_trackToObjectID.IsSet()) {
-        _trackToObjectID.UnSet();
-        // Restore lock state to whatever it was when we enabled tracking
-        LockHead(_headLockedBeforeTracking);
-        LockWheels(_wheelsLockedBeforeTracking);
-      }
-      return RESULT_OK;
-    }
-    
-    Result Robot::DisableTrackToFace()
-    {
-      if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
-        _trackToFaceID = Vision::TrackedFace::UnknownFace;
-        // Restore lock state to whatever it was when we enabled tracking
-        LockHead(_headLockedBeforeTracking);
-        LockWheels(_wheelsLockedBeforeTracking);
-      }
-      return RESULT_OK;
-    }
-      
-    Result Robot::DriveWheels(const f32 lwheel_speed_mmps,
-                              const f32 rwheel_speed_mmps)
-    {
-      return SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
-    }
-    
-    Result Robot::StopAllMotors()
-    {
-      return SendStopAllMotors();
-    }
     
     Result Robot::PlaceObjectOnGround(const bool useManualSpeed)
     {
@@ -2294,64 +2157,6 @@ namespace Anki {
     {
       return SendMessage(RobotInterface::EngineToRobot(
         Anki::Cozmo::PlaceObjectOnGround(rel_x, rel_y, rel_angle, useManualSpeed)));
-    }
-    
-    Result Robot::SendMoveLift(const f32 speed_rad_per_sec) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::MoveLift(speed_rad_per_sec)));
-    }
-    
-    Result Robot::SendMoveHead(const f32 speed_rad_per_sec) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(RobotInterface::MoveHead(speed_rad_per_sec)));
-    }
-
-    Result Robot::SendSetLiftHeight(const f32 height_mm,
-                                    const f32 max_speed_rad_per_sec,
-                                    const f32 accel_rad_per_sec2,
-                                    const f32 duration_sec) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::SetLiftHeight(height_mm,max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec)));
-    }
-    
-    Result Robot::SendSetHeadAngle(const f32 angle_rad,
-                                   const f32 max_speed_rad_per_sec,
-                                   const f32 accel_rad_per_sec2,
-                                   const f32 duration_sec) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::SetHeadAngle(angle_rad, max_speed_rad_per_sec, accel_rad_per_sec2, duration_sec)));
-    }
-
-    Result Robot::SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
-                                         const f32 accel_rad_per_sec2) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::TurnInPlaceAtSpeed(speed_rad_per_sec, accel_rad_per_sec2)));
-    }
-    
-    Result Robot::SendTapBlockOnGround(const u8 numTaps) const
-    {
-      /*
-      MessageTapBlockOnGround m;
-      m.numTaps = numTaps;
-      
-      return _msgHandler->SendMessage(_ID,m);
-      */
-      return Result::RESULT_OK;
-    }
-    
-    Result Robot::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::DriveWheels(lwheel_speed_mmps, rwheel_speed_mmps)));
-    }
-    
-    Result Robot::SendStopAllMotors() const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::StopAllMotors()));
     }
     
     Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,

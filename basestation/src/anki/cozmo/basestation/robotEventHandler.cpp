@@ -455,7 +455,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->IsLiftLocked()) {
+  if(robot->GetMoveComponent().IsLiftLocked()) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {
@@ -470,7 +470,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
     else {
       // In the normal case directly set the lift height
-      robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
+      robot->GetMoveComponent().MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
     }
   }
 }
