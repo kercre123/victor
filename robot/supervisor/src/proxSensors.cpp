@@ -29,6 +29,7 @@ namespace Anki {
         //TimeStamp_t _fwdBlockedTransitionTime = 0;
         //TimeStamp_t _sidesBlockedTransitionTime = 0;
         
+        bool _enableCliffDetect = true;
         bool _wasCliffDetected = false;
         
       } // "private" namespace
@@ -142,40 +143,45 @@ namespace Anki {
         
         
         /////// Cliff detect reaction ///////
-        if ((HAL::IsCliffDetected() && !IMUFilter::IsPickedUp()) && !_wasCliffDetected) {
-          
-          // TODO (maybe): Check for cases where cliff detect should not stop motors
-          // 1) Turning in place
-          // 2) Driving over something (i.e. pitch is higher than some degrees).
-          
-          
-          // Stop all motors and animations
-          PickAndPlaceController::Reset();
-          AnimationController::Clear();
-          
-          // Send cliff detected message to engine
-          CliffEvent msg;
-          Radians angle;
-          Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, angle);
-          msg.detected = true;
-          msg.angle_rad = angle.ToFloat();
-          RobotInterface::SendMessage(msg);
-          
-          _wasCliffDetected = true;
-        } else if ((!HAL::IsCliffDetected() || IMUFilter::IsPickedUp()) && _wasCliffDetected) {
-          CliffEvent msg;
-          msg.detected = false;
-          RobotInterface::SendMessage(msg);
-          
-          _wasCliffDetected = false;
+        if (_enableCliffDetect) {
+          if ((HAL::IsCliffDetected() && !IMUFilter::IsPickedUp()) && !_wasCliffDetected) {
+            
+            // TODO (maybe): Check for cases where cliff detect should not stop motors
+            // 1) Turning in place
+            // 2) Driving over something (i.e. pitch is higher than some degrees).
+            
+            
+            // Stop all motors and animations
+            PickAndPlaceController::Reset();
+            AnimationController::Clear();
+            
+            // Send cliff detected message to engine
+            CliffEvent msg;
+            Radians angle;
+            Localization::GetCurrentMatPose(msg.x_mm, msg.y_mm, angle);
+            msg.detected = true;
+            msg.angle_rad = angle.ToFloat();
+            RobotInterface::SendMessage(msg);
+            
+            _wasCliffDetected = true;
+          } else if ((!HAL::IsCliffDetected() || IMUFilter::IsPickedUp()) && _wasCliffDetected) {
+            CliffEvent msg;
+            msg.detected = false;
+            RobotInterface::SendMessage(msg);
+            
+            _wasCliffDetected = false;
+          }
         }
-        
         
         return retVal;
         
       } // Update()
       
     
+      void EnableCliffDetector(bool enable) {
+        _enableCliffDetect = enable;
+      }
+      
       
       // Returns the proximity sensor values
       void GetValues(u8 &left, u8 &forward, u8 &right)

@@ -17,7 +17,6 @@
 #include "testModeController.h"
 #include "anki/cozmo/simulator/robot/keyboardController.h"
 #include "anki/cozmo/simulator/robot/sim_overlayDisplay.h"
-#include "anki/cozmo/simulator/robot/sim_viz.h"
 #include "anki/cozmo/robot/hal.h"
 
 // If this is enabled here, it should be disabled in the basestation. (See ENABLE_BS_KEYBOARD_CONTROL.)
@@ -43,7 +42,6 @@ int main(int argc, char **argv)
 #endif
   
   Sim::OverlayDisplay::Init();
-  Sim::Viz::Init();
   
   while(Robot::step_MainExecution() == Anki::RESULT_OK)
   {

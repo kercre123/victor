@@ -559,11 +559,6 @@
               <FilePath>.\hal\console.c</FilePath>
             </File>
             <File>
-              <FileName>aci.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\aci.c</FilePath>
-            </File>
-            <File>
               <FileName>monitor.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\monitor.c</FilePath>

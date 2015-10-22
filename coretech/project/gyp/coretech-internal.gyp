@@ -192,6 +192,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
+            'LIBRARY_SEARCH_PATHS': [
+                '<@(opencv_lib_search_path_mac_release)',
+            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -204,6 +207,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -216,6 +222,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
+            ],
            },
           'defines': [
             'NDEBUG=1',
