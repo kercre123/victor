@@ -757,14 +757,20 @@ namespace Cozmo {
     // Handled directly by AnimationStreamer
   }
 
-void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
-{
-  // ignored here..
-}
-void CozmoGameImpl::Process_KeyWordRecognitionEnabled(const ExternalInterface::KeyWordRecognitionEnabled& msg)
-{
-  // ignored here..
-}
+  void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
+  {
+    // ignored here..
+  }
 
-}
-}
+  void CozmoGameImpl::Process_KeyWordRecognitionEnabled(const ExternalInterface::KeyWordRecognitionEnabled& msg)
+  {
+    // ignored here..
+  }
+  
+  void CozmoGameImpl::Process_ForceDelocalizeRobot(const Anki::Cozmo::ExternalInterface::ForceDelocalizeRobot &msg)
+  {
+    // Handled directly by RobotEventHandler
+  }
+
+} // namespace Cozmo
+} // namspace Anki
