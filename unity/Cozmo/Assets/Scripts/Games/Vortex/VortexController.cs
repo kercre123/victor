@@ -532,9 +532,6 @@ public class VortexController : GameController {
         }
       }
       else if (!robot.isBusy && !playerMockBlocks[cozmoIndex].Validated) {
-        //robot.TapBlockOnGround(1);
-        //Debug.Log("should be sending goto pose");
-
         CozmoEmotionManager.instance.SetEmotionReturnToPose("TAP_ONE", markx_mm, marky_mm, mark_rad, true, true);
         robot.isBusy = true;
 
@@ -1367,7 +1364,6 @@ public class VortexController : GameController {
           cozmoTapsSubmitted = 0;
   
           if (robot != null) {
-            //robot.TapBlockOnGround(predictedNum);
             switch (predictedNum) {
             case 1:
               CozmoEmotionManager.SetEmotion("TAP_ONE", true);
