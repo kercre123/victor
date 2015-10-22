@@ -20,6 +20,10 @@ namespace Anki {
     // Resolution of images that are streamed to basestation (dev purposes)
     const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
+    // Minimum number of times we need to observe an object to keep it and signal
+    // that we saw it.
+    const s32 MIN_TIMES_TO_OBSERVE_OBJECT = 2;
+    
     /***************************************************************************
      *
      *                          Localization

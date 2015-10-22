@@ -53,17 +53,9 @@
 #  define PRINT_LOCALIZATION_INFO(...)
 #endif
 
-namespace Anki
-{
+namespace Anki {
+namespace Cozmo {
 
-  namespace Cozmo
-  {
-    
-    // Minimum number of times we need to observe an object to keep it and signal
-    // that we saw it.
-    // TODO: Move this to some config/parameters file somewhere
-    const int MIN_TIMES_TO_OBSERVE_OBJECT = 2;
-    
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
     , _didObjectsChange(false)
@@ -295,6 +287,97 @@ namespace Anki
     } // FindIntersectingObjects()
 
 
+  Result BlockWorld::BroadcastObjectObservation(const ObservableObject* observedObject,
+                                                bool markersVisible)
+  {
+    if(_robot->HasExternalInterface())
+    {
+      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+      {
+        // Project the observed object into the robot's camera, using its new pose
+        std::vector<Point2f> projectedCorners;
+        f32 observationDistance = 0;
+        _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+        
+        Rectangle<f32> boundingBox(projectedCorners);
+        
+        Radians topMarkerOrientation(0);
+        if(observedObject->IsActive()) {
+          const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
+          if(activeCube == nullptr) {
+            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                              "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
+                              observedObject->GetID().GetValue());
+            return RESULT_FAIL;
+          } else {
+            topMarkerOrientation = activeCube->GetTopMarkerOrientation();
+            
+            //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
+            //           topMarkerOrientation.getDegrees());
+          }
+        }
+        
+        const Vec3f& T = observedObject->GetPose().GetTranslation();
+        const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
+        
+        using namespace ExternalInterface;
+        _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedObject(            _robot->GetID(), observedObject->GetFamily(), observedObject->GetType(),           observedObject->GetID(), boundingBox.GetX(), boundingBox.GetY(),                                                                                                                                 boundingBox.GetWidth(),                                                                                                                                boundingBox.GetHeight(),                                                                                                                                T.x(), T.y(), T.z(),                                                                                                                                q.w(), q.x(), q.y(), q.z(),                                                                                                                                topMarkerOrientation.ToFloat(),                                                                                                                                markersVisible,                                                                                                                                observedObject->IsActive())));
+      } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
+    } // if(_robot->HasExternalInterface())
+    
+    return RESULT_OK;
+    
+  } // BroadcastObjectObservation()
+  
+  Result BlockWorld::UpdateObjectOrigins(const Pose3d *oldOrigin,
+                                         const Pose3d *newOrigin)
+  {
+    Result result = RESULT_OK;
+    
+    if(nullptr == oldOrigin || nullptr == newOrigin) {
+      PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.OriginFail",
+                        "Old and new origin must not be NULL");
+      
+      return RESULT_FAIL;
+    }
+    
+    for(auto & objectsByFamily : _existingObjects)
+    {
+      for(auto & objectsByType : objectsByFamily.second)
+      {
+        for(auto & objectsByID : objectsByType.second)
+        {
+          ObservableObject* object = objectsByID.second;
+          if(object->GetPose().GetParent() == oldOrigin)
+          {
+            
+            Pose3d newPose;
+            if(false == object->GetPose().GetWithRespectTo(*newOrigin, newPose)) {
+              PRINT_NAMED_ERROR("BlockWorld.UpdateObjectOrigins.OriginFail",
+                                "Could not get object %d w.r.t new origin %s",
+                                object->GetID().GetValue(),
+                                newOrigin->GetName().c_str());
+              
+              result = RESULT_FAIL;
+            } else {
+              PRINT_NAMED_INFO("BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
+                               "Updating object %d's origin from %s to %s",
+                               object->GetID().GetValue(),
+                               oldOrigin->GetName().c_str(),
+                               newOrigin->GetName().c_str());
+              
+              object->SetPose(newPose);
+              
+              BroadcastObjectObservation(object, false);
+            }
+          }
+        }
+      }
+    }
+    
+    return result;
+  }
+  
     Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
                                            const ObjectFamily& inFamily,
                                            const TimeStamp_t atTimestamp)
@@ -350,7 +433,6 @@ namespace Anki
         }
         
         std::vector<Point2f> projectedCorners;
-        f32 observationDistance = 0;
         ObservableObject* observedObject = nullptr;
 
         if(matchingObject == nullptr) {
@@ -664,7 +746,6 @@ namespace Anki
         CORETECH_ASSERT(observedObject != nullptr);
         
         const ObjectID obsID = observedObject->GetID();
-        const ObjectType obsType = observedObject->GetType();
         
         // Sanity check: this should not happen, but we're seeing situations where
         // objects think they are being carried when the robot doesn't think it
@@ -688,60 +769,11 @@ namespace Anki
           return RESULT_FAIL;
         }
         
-        // Don't broadcast this object until we've seen it enough times and it is
-        // through identifying
-        if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
-           _unidentifiedActiveObjects.count(observedObject->GetID())==0)
+        // Don't broadcast this object until it is through identifying
+        if(_unidentifiedActiveObjects.count(observedObject->GetID())==0)
         {
-          // Use the projected corners to add an occluder and to keep track of the
-          // bounding quads of all the observed objects in this Update
-          //_robot->GetCamera().AddOccluder(projectedCorners, observationDistance);
-          
-          // Project the observed object into the robot's camera, using its new pose
-          _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
-          
-          Rectangle<f32> boundingBox(projectedCorners);
-          //_obsProjectedObjects.emplace_back(obsID, boundingBox);
-          _currentObservedObjectIDs.push_back(obsID);
-          
-          // Signal the observation of this object, with its bounding box:
-          const Vec3f& obsObjTrans = observedObject->GetPose().GetTranslation();
-          const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
-          Radians topMarkerOrientation(0);
-          if(observedObject->IsActive()) {
-            ActiveCube* activeCube = dynamic_cast<ActiveCube*>(observedObject);
-            if(activeCube == nullptr) {
-              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
-                                "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
-                                obsID.GetValue());
-              return RESULT_FAIL;
-            } else {
-              topMarkerOrientation = activeCube->GetTopMarkerOrientation();
-              
-              //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
-              //           topMarkerOrientation.getDegrees());
-            }
-          }
-          
-          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
-                                                                                        _robot->GetID(),
-                                                                                        inFamily,
-                                                                                        obsType,
-                                                                                        obsID,
-                                                                                        boundingBox.GetX(),
-                                                                                        boundingBox.GetY(),
-                                                                                        boundingBox.GetWidth(),
-                                                                                        boundingBox.GetHeight(),
-                                                                                        obsObjTrans.x(),
-                                                                                        obsObjTrans.y(),
-                                                                                        obsObjTrans.z(),
-                                                                                        q.w(), q.x(), q.y(), q.z(),
-                                                                                        topMarkerOrientation.ToFloat(),
-                                                                                        true, // markers are visible
-                                                                                        observedObject->IsActive()
-                                                                                                                                  )));
-          
-        } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
+          BroadcastObjectObservation(observedObject, true);
+        }
         
         if(_robot->GetTrackToObject().IsSet() &&
            obsID == _robot->GetTrackToObject() &&
@@ -1004,54 +1036,19 @@ namespace Anki
           {
             // First three checks for object passed, now see if any of the object's
             // corners are in our FOV
+            // TODO: Avoid ProjectObject here because it also happens inside BroadcastObjectObservation
             f32 distance;
             std::vector<Point2f> projectedCorners;
             _robot->GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
+            
             if(distance > 0.f) { // in front of camera?
               for(auto & corner : projectedCorners) {
                 
                 if(camera.IsWithinFieldOfView(corner)) {
                   
-                  Rectangle<f32> boundingBox(projectedCorners);
-                  //_obsProjectedObjects.emplace_back(obsID, boundingBox);
-                  _currentObservedObjectIDs.push_back(unobserved.object->GetID());
-                  
-                  // Signal the observation of this object, with its bounding box:
-                  const Vec3f& obsObjTrans = unobserved.object->GetPose().GetTranslation();
-                  const UnitQuaternion<float>& q = unobserved.object->GetPose().GetRotation().GetQuaternion();
-                  Radians topMarkerOrientation(0);
-                  if(unobserved.object->IsActive()) {
-                    ActiveCube* activeCube = dynamic_cast<ActiveCube*>(unobserved.object);
-                    if(activeCube == nullptr) {
-                      PRINT_NAMED_ERROR("BlockWorld.CheckForUnobservedObjects",
-                                        "UnobservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
-                                        unobserved.object->GetID().GetValue());
-                    } else {
-                      topMarkerOrientation = activeCube->GetTopMarkerOrientation();
-                      
-//                      PRINT_INFO("Unobserved object %d's rotation around Z = %.1fdeg\n",
-//                                 unobserved.object->GetID().GetValue(),
-//                                 topMarkerOrientation.getDegrees());
-                    }
-                  }
-                  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedObject(
-                    _robot->GetID(),
-                    unobserved.family,
-                    unobserved.type,
-                    unobserved.object->GetID(),
-                    boundingBox.GetX(),
-                    boundingBox.GetY(),
-                    boundingBox.GetWidth(),
-                    boundingBox.GetHeight(),
-                    obsObjTrans.x(),
-                    obsObjTrans.y(),
-                    obsObjTrans.z(),
-                    q.w(), q.x(), q.y(), q.z(),
-                    topMarkerOrientation.ToFloat(),
-                    false, // marker not visible
-                    unobserved.object->IsActive()
-                  )));
+                  BroadcastObjectObservation(unobserved.object, false);
                   ++numVisibleObjects;
+                  
                 } // if(IsWithinFieldOfView)
               } // for(each projectedCorner)
             } // if(distance > 0)
@@ -1801,7 +1798,7 @@ namespace Anki
       
       // New timestep, clear list of observed object bounding boxes
       //_obsProjectedObjects.clear();
-      _currentObservedObjectIDs.clear();
+      //_currentObservedObjectIDs.clear();
       
       static TimeStamp_t lastObsMarkerTime = 0;
       
@@ -2648,5 +2645,5 @@ namespace Anki
       
     } // DrawAllObjects()
     
-  } // namespace Cozmo
+} // namespace Cozmo
 } // namespace Anki

@@ -664,6 +664,7 @@ namespace Anki {
       ExternalInterface::TurnInPlace m;
       m.robotID = 1;
       m.angle_rad = angle_rad;
+      m.isAbsolute = false;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TurnInPlace(m);
       SendMessage(message);
@@ -1351,5 +1352,34 @@ namespace Anki {
       return _availableAnimations.find(anim) != _availableAnimations.end();
     }
     
+    void UiGameController::SetActualRobotPose(const Pose3d& newPose)
+    {
+      webots::Field* rotField = _robotNode->getField("rotation");
+      assert(rotField != nullptr);
+      
+      webots::Field* transField = _robotNode->getField("translation");
+      assert(transField != nullptr);
+      
+      const RotationVector3d Rvec = newPose.GetRotationVector();
+      const double rotation[4] = {
+        Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+        Rvec.GetAngle().ToFloat()
+      };
+      rotField->setSFRotation(rotation);
+      
+      const double translation[3] = {
+        MM_TO_M(newPose.GetTranslation().x()),
+        MM_TO_M(newPose.GetTranslation().y()),
+        MM_TO_M(newPose.GetTranslation().z())
+      };
+      transField->setSFVec3f(translation);
+      
+    }
+    
+    void SetActualObjectPose(const std::string& name, const Pose3d& newPose)
+    {
+      // TODO: Implement!
+    }
+
   } // namespace Cozmo
 } // namespace Anki

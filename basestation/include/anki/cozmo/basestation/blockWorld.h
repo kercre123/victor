@@ -178,8 +178,8 @@ namespace Anki
       /*
       using ObservedObjectBoundingBoxes = std::vector<std::pair<ObjectID, Rectangle<f32> > >;
       const ObservedObjectBoundingBoxes& GetProjectedObservedObjects() const;
-       */
       const std::vector<ObjectID>& GetObservedObjectIDs() const;
+      */
       
       // Returns true if any blocks were moved, added, or deleted on the
       // last call to Update().
@@ -195,6 +195,12 @@ namespace Anki
       
       void EnableObjectDeletion(bool enable);
       void EnableObjectAddition(bool enable);
+      
+      // Find all objects with the given parent and update them to have flatten
+      // their objects w.r.t. the origin. Call this when the robot rejiggers
+      // origins.
+      Result UpdateObjectOrigins(const Pose3d* oldOrigin,
+                                 const Pose3d* newOrigin);
       
       //
       // Visualization
@@ -288,6 +294,8 @@ namespace Anki
       
       void UpdateTrackToObject(const ObservableObject* observedObject);
       
+      Result BroadcastObjectObservation(const ObservableObject* observedObject,
+                                        bool markersVisible);
       //
       // Member Variables
       //
@@ -299,7 +307,7 @@ namespace Anki
       // A place to keep up with all objects' IDs and bounding boxes observed
       // in a single call to Update()
       //ObservedObjectBoundingBoxes _obsProjectedObjects;
-      std::vector<ObjectID> _currentObservedObjectIDs;
+      //std::vector<ObjectID> _currentObservedObjectIDs;
       
       // Store all known observable objects (these are everything we know about,
       // separated by class of object, not necessarily what we've actually seen
@@ -438,9 +446,12 @@ namespace Anki
       return _obsProjectedObjects;
     }
      */
+    
+    /*
     inline const std::vector<ObjectID>& BlockWorld::GetObservedObjectIDs() const {
       return _currentObservedObjectIDs;
     }
+     */
     
     inline void BlockWorld::EnableObjectAddition(bool enable) {
       _canAddObjects = enable;

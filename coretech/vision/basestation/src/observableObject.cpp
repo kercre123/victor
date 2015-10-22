@@ -360,10 +360,61 @@ namespace Vision {
     return boundingQuad;
   } // GetBoundingQuadXY()
   
+  static inline bool IsAxisAligned(const Radians& angle, const Radians& tol) {
+    return (NEAR(angle,  0,       tol) ||
+            NEAR(angle,  M_PI_2,  tol) ||
+            NEAR(angle,  M_PI,    tol) ||
+            NEAR(angle, -M_PI_2,  tol) ||
+            NEAR(angle, -M_PI,    tol));
+  }
+    
+  // TODO: Move this to be a member of the RotationMatrix3d class
+  template<char parentAxis>
+  static Radians GetRotationAngleAroundParentAxis(const RotationMatrix3d& Rmat)
+  {
+    // Figure out which axis in the rotated frame corresponds to the given
+    // axis in the parent frame
+    const Point3f row = Rmat.GetRow(AxisToIndex<parentAxis>());
+    char rotatedAxis = 'X'; // assume X axis to start
+    f32 maxVal = std::abs(row.x());
+    if(std::abs(row.y()) > maxVal) {
+      maxVal = std::abs(row.y());
+      rotatedAxis = 'Y';
+    }
+    if(std::abs(row.z()) > maxVal) {
+      rotatedAxis = 'Z';
+    }
+    
+    Radians angle;
+    switch(rotatedAxis)
+    {
+      case 'X':
+        angle = Rmat.GetAngleAroundXaxis();
+        break;
+      case 'Y':
+        angle = Rmat.GetAngleAroundYaxis();
+        break;
+      case 'Z':
+        angle = Rmat.GetAngleAroundZaxis();
+        break;
+      default:
+        assert(false);
+    }
+    
+    return angle;
+  }
+  
   bool ObservableObject::IsRestingFlat(const Radians& angleTol) const
   {
-    bool isFlat = (NEAR(GetPose().GetRotationAngle<'X'>(), 0, angleTol) &&
-                   NEAR(GetPose().GetRotationAngle<'Y'>(), 0, angleTol));
+    Pose3d poseWrtOrigin = GetPose().GetWithRespectToOrigin();
+    
+    // TODO: Switch to new GetRotationAngleParent<>() methods
+    const RotationMatrix3d Rmat = poseWrtOrigin.GetRotationMatrix();
+    
+    Radians angleX = GetRotationAngleAroundParentAxis<'X'>(Rmat);
+    Radians angleY = GetRotationAngleAroundParentAxis<'Y'>(Rmat);
+    
+    bool isFlat = IsAxisAligned(angleX, angleTol) && IsAxisAligned(angleY, angleTol);
     
     return isFlat;
   }

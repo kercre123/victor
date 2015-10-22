@@ -1743,6 +1743,10 @@ namespace Anki {
                          _worldOrigin->GetName().c_str(),
                          existingObject->GetPose().FindOrigin().GetName().c_str());
         
+        // Store the current origin we are about to change so that we can
+        // find objects that are using it below
+        const Pose3d* oldOrigin = _worldOrigin;
+        
         // Update the origin to which _worldOrigin currently points to contain
         // the transformation from its current pose to what is about to be the
         // robot's new origin.
@@ -1758,7 +1762,12 @@ namespace Anki {
         // Now that the previous origin is hooked up to the new one (which is
         // now the old one's parent), point the worldOrigin at the new one.
         _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
-      }
+        
+        // Now we need to go through all objects whose poses have been adjusted
+        // by this origin switch and notify the outside world of the change.
+        _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
+        
+      } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
       
       // Update the computed historical pose as well so that subsequent block
@@ -1769,7 +1778,9 @@ namespace Anki {
       
       // Compute the new "current" pose from history which uses the
       // past vision-based "ground truth" pose we just computed.
-      if(UpdateCurrPoseFromHistory(existingObject->GetPose()) == false) {
+      assert(&existingObject->GetPose().FindOrigin() == _worldOrigin);
+      assert(_worldOrigin != nullptr);
+      if(UpdateCurrPoseFromHistory(*_worldOrigin) == false) {
         PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedUpdateCurrPoseFromHistory", "");
         return RESULT_FAIL;
       }

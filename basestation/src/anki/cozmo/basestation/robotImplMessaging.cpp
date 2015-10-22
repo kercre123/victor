@@ -106,7 +106,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
       FormatBytesAsHex((char *)payload.data.data(), (int)payload.data.size(), buf, (int)sizeof(buf));
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageDataDump", "ID: %d, size: %zd, data: %s", GetID(), payload.data.size(), buf);
     }));
-
 }
 
 
