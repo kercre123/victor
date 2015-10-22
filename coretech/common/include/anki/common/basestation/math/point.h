@@ -171,6 +171,16 @@ namespace Anki {
   const Vec3f& Y_AXIS_3D();
   const Vec3f& Z_AXIS_3D();
   
+
+  // Helper for compile-time conversion from character axis ('X', 'Y', or 'Z')
+  // to index (0, 1, or 2, respectively). Any other character for AXIS will fail
+  // to compile.
+  template<char AXIS> s32 AxisToIndex();
+  
+  template<> inline s32 AxisToIndex<'X'>() { return 0; }
+  template<> inline s32 AxisToIndex<'Y'>() { return 1; }
+  template<> inline s32 AxisToIndex<'Z'>() { return 2; }
+
   /*
   template<PointDimType N, typename T>
   class UnitVector : public Point<N,T>
