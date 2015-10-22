@@ -17,6 +17,8 @@ namespace HeadController {
       // TODO: Ideally, this value should be calibrated
 #ifdef SIMULATOR
       const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(0);
+#elif defined(COZMO_ROBOT_3AA0)
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
 #else
       const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(2);
 #endif

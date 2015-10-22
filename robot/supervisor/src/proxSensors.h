@@ -32,6 +32,8 @@ namespace Anki {
       // blocked by the lift.
       bool IsSideBlocked();
       bool IsForwardBlocked();
+
+      void EnableCliffDetector(bool enable);
       
     } // namespace ProxSensors
   } // namespace Cozmo

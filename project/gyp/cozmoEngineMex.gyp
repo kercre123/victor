@@ -111,7 +111,8 @@
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
-              '<(matlabRootDir)/bin/maci64'
+              '<@(opencv_lib_search_path_mac_debug)',
+              '<(matlabRootDir)/bin/maci64',
             ],
            },
           'defines': [
@@ -126,6 +127,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
               '<(matlabRootDir)/bin/maci64'
             ],
            },
@@ -141,6 +143,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
               '<(matlabRootDir)/bin/maci64'
             ],
            },

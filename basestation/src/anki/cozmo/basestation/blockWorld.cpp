@@ -1541,6 +1541,67 @@ namespace Anki
     */
 
     
+    Result BlockWorld::AddProxObstacle(const Pose3d& p)
+    {
+      TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+  
+      // Create an instance of the detected object
+      MarkerlessObject *m = new MarkerlessObject(ObjectType::ProxObstacle);
+      
+
+      // Raise origin of object above ground.
+      // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
+      Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
+      Pose3d obsPose = p * raiseObject;
+      m->SetPose(obsPose);
+      m->SetPoseParent(_robot->GetPose().GetParent());
+      
+      // Check if this prox obstacle already exists
+      std::vector<ObservableObject*> existingObjects;
+      FindOverlappingObjects(m, _existingObjects[ObjectFamily::MarkerlessObject], existingObjects);
+      
+      // Update the last observed time of existing overlapping obstacles
+      for(auto obj : existingObjects) {
+        obj->SetLastObservedTime(lastTimestamp);
+      }
+      
+      // No need to add the obstacle again if it already exists
+      if (!existingObjects.empty()) {
+        delete m;
+        return RESULT_OK;
+      }
+      
+      
+      // Check if the obstacle intersects with any other existing objects in the scene.
+      std::set<ObjectFamily> ignoreFamilies;
+      std::set<ObjectType> ignoreTypes;
+      std::set<ObjectID> ignoreIDs;
+      if(_robot->IsLocalized()) {
+        // Ignore the mat object that the robot is localized to (?)
+        ignoreIDs.insert(_robot->GetLocalizedTo());
+      }
+      FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
+      if (!existingObjects.empty()) {
+        delete m;
+        return RESULT_OK;
+      }
+
+      // HACK: to make it think it was observed enough times so as not to get immediately deleted.
+      //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
+      for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
+        m->SetLastObservedTime(lastTimestamp);
+      }
+
+      AddNewObject(ObjectFamily::MarkerlessObject, m);
+      _didObjectsChange = true;
+      
+      
+      return RESULT_OK;
+    }
+
+
+    
+    
     Result BlockWorld::Update(uint32_t& numObjectsObserved)
     {
       numObjectsObserved = 0;

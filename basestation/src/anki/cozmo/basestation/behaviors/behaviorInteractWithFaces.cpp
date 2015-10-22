@@ -70,6 +70,19 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
+  BehaviorInteractWithFaces::~BehaviorInteractWithFaces()
+  {
+    if (_currentState != State::Interrupted)
+    {
+      _robot.DisableTrackToFace();
+      ProceduralFace resetFace;
+      auto oldTimeStamp = _robot.GetProceduralFace().GetTimeStamp();
+      oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
+      resetFace.SetTimeStamp(oldTimeStamp);
+      _robot.SetProceduralFace(resetFace);
+    }
+  }
+  
   bool BehaviorInteractWithFaces::IsRunnable(double currentTime_sec) const
   {
     return !_interestingFacesOrder.empty();

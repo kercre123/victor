@@ -490,9 +490,6 @@ public:
     // Tell the robot to start a given test mode
     Result StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
 
-    // Start a Behavior in BehaviorManager
-    void StartBehavior(const std::string& name);
-         
     // For debugging robot parameters:
     Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
                                    const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
@@ -829,6 +826,8 @@ public:
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
     void HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message);

@@ -32,6 +32,7 @@ namespace Cozmo {
   public:
     
     BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
+    virtual ~BehaviorInteractWithFaces() override;
     
     virtual Result Init(double currentTime_sec) override;
     
@@ -40,11 +41,6 @@ namespace Cozmo {
     virtual Status Update(double currentTime_sec) override;
     
     virtual Result Interrupt(double currentTime_sec) override;
-    
-    virtual const std::string& GetName() const override {
-      static const std::string name("InteractWithFaces");
-      return name;
-    }
     
     virtual bool GetRewardBid(Reward& reward) override;
     
