@@ -4,8 +4,6 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
-// Temp class for testing dialog functionality. Should have PatternCollectionDialog
-// hook up to PatternPlayUIController later
 public class PatternCollectionViewController : MonoBehaviour {
 
   [SerializeField]
