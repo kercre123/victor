@@ -92,7 +92,7 @@ void wifi_event_callback(System_Event_t *evt)
 void user_rf_pre_init(void)
 {
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
-  system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
+  //system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
 
 /** Callback after all the chip system initalization is done.
@@ -240,8 +240,8 @@ void user_init(void)
       wifi_softap_set_config(&ap_config);
       wifi_set_phy_mode(PHY_MODE_11G);
       // Disable radio sleep
-      wifi_set_sleep_type(NONE_SLEEP_T);
-      wifi_set_user_fixed_rate(PHY_RATE_24);
+      //wifi_set_sleep_type(NONE_SLEEP_T);
+      wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
     }
     else // Cozmo as station
     {
