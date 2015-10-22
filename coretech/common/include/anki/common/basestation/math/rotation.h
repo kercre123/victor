@@ -192,6 +192,11 @@ namespace Anki {
   private:
     UnitQuaternion<float> _q;
     
+    // Get a specific entry in the corresponding rotation matrix
+    // i and j must be one of [0,1,2]; otherwise compilation will fail.
+    template<s32 i, s32 j>
+    f32 GetRmatEntry() const;
+    
   }; // Rotation3d
   
   bool IsNearlyEqual(const Rotation3d& R1, const Rotation3d& R2, const f32 tolerance);
@@ -231,6 +236,11 @@ namespace Anki {
     Radians GetAngleAroundXaxis() const;
     Radians GetAngleAroundYaxis() const;
     Radians GetAngleAroundZaxis() const;
+    
+    // Templated wrapper for calling one of the above GetAngleAround methods.
+    // AXIS can by 'X', 'Y', or 'Z'
+    template<char AXIS>
+    Radians GetAngleAroundAxis() const;
     
   }; // class RotationMatrix3d
   
