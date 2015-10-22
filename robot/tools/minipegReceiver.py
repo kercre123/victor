@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 
-import sys, socket
+import sys, socket, struct, time
+from ReliableTransport import *
+
+if sys.version_info.major < 3:
+    sys.exit("minipegReceiver only works with python3+")
 
 def mini2jpeg(minipeg):
     header = [
@@ -34,6 +38,80 @@ def mini2jpeg(minipeg):
     out.append(0xff)
     out.append(0xd9)
     return bytes(out)
+
+class ImageChunk(struct.Struct):
+    """A one off python implementation of the ImageChunk CLAD message
+    This should be replaced ASAP by importing CLAD generated python code.
+    See messageRobotToEngine.clad for the definition"""
+    
+    ID = 0x82
+    
+    def __init__(self, buffer=None):
+        struct.Struct.__init__(self, "IIBBBBH")
+        self.frameTimeStamp = 0
+        self.imageId = 0
+        self.imageEncoding = 0
+        self.imageResolution = 0
+        self.imageChunkCount = 0
+        self.chunkId = 0
+        self.data = bytes()
+        if buffer is not None:
+            self.deserialize(buffer)
+
+    def __repr__(self):
+        return "ImageChunk({:d}, {:d}, {:d}, {:d}, {:d}, {:d}, {:d})".format(self.frameTimeStamp, self.imageId, \
+                        self.imageEncoding, self.imageResolution, self.imageChunkCount, self.chunkId, len(self.data))
+
+    def serialize(self):
+        "Convert python struct into CLAD wire format"
+        return bytes([self.ID]) + self.pack(self.frameTimeStamp, self.imageId, self.imageEncoding, self.imageResolution,
+                                            self.imageChunkCount, self.chunkId, len(self.data)) + self.data
+
+    def deserialize(self, buffer):
+        "Load the ImageChunk from a bytestream"
+        assert(buffer[0] == self.ID) # Check the ID
+        self.frameTimeStamp, self.imageId, self.imageEncoding, self.imageResolution, self.imageChunkCount, \
+            self.chunkId, length = self.unpack(buffer[1:self.size+1])
+        self.data = buffer[self.size+1:]
+        assert(len(self.data == length))
+
+class CozmoReceiver(IDataReceiver):
+    "ReliableTransport receiver class"
+    
+    def __init__(self, robotAddress=("172.31.1.1", 5551)):
+        sys.stdout.write("Connecting to robot at {}:{}\r\n".format(*robotAddress))
+        self.robot = robotAddress
+        ut = UDPTransport()
+        ut.OpenSocket()
+        self.transport = ReliableTransport(ut, self)
+        self.transport.Connect(self.robot)
+        self.transport.start()
+        
+    def __del__(self):
+        self.transport.KillThread()
+        
+    def OnConnectionRequest(self, sourceAddress):
+        raise Exception("CozmoReceiver wasn't expecing a connection request")
+
+    def OnConnected(self, sourceAddress):
+        sys.stdout.write("Connected to robot at {}\r\n".format(repr(sourceAddress)))
+
+    def OnDisconnected(self, sourceAddress):
+        sys.stdout.write("Lost connection to robot at {}\r\n".format(repr(sourceAddress)))
+
+    def ReceiveData(self, buffer, sourceAddress):
+        if sourceAddress != self.robot:
+            sys.stderr.write("Received data from unexpected address {}\r\n".format(repr(sourceAddress)))
+        elif buffer[0] != ImageChunk.ID:
+            sys.stderr.write("Received unexpected message {:02x}[{:d}]\r\n".format(buffer[0], len(buffer)))
+        else:
+            chunk = ImageChunk(buffer)
+            sys.stdout.write(repr(chunk) + "\r\n")
+
+    def SendData(self, buffer):
+        return self.transport.SendData(True, False, self.robot, buffer)
+    
+    
 
 def saveJpegs(numFrames=1, countTest=False):
     s = socket.socket(type=socket.SOCK_DGRAM)
@@ -71,12 +149,5 @@ def saveJpegs(numFrames=1, countTest=False):
             frame += 1
         
 if __name__ == '__main__':
-    try:
-        nFrames = int(sys.argv[1])
-    except:
-        if "cnt" in sys.argv:
-            saveJpegs(countTest=True)
-        else:
-            saveJpegs()
-    else:
-        saveJpegs(nFrames)
+    c = CozmoReceiver()
+    time.sleep(5)

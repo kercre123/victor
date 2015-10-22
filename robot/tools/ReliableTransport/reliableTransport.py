@@ -22,6 +22,8 @@ class IDataReceiver:
 class IUnreliableTransport:
     PACKET_HEADER = b'COZ\x03'
 
+    def __init__(self):
+        pass
     def OpenSocket(self, port, interface):
         return True # Optional to implement
     def CloseSocket(self):
@@ -84,7 +86,7 @@ class ReliableTransport(threading.Thread):
 
     def __init__(self, unreliable, receiver):
         "Set up a new reliable transport manager given an unreliable transport layer and a receiver callback object"
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.unreliable = unreliable
         self.receiver   = receiver
         self.queue = []
