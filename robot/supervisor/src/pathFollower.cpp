@@ -16,16 +16,6 @@
 
 #define DEBUG_PATH_FOLLOWER 0
 
-
-#ifndef SIMULATOR
-#define ENABLE_PATH_VIZ 0  // This must always be 0!
-#else
-#include "anki/cozmo/simulator/robot/sim_viz.h"
-using namespace Anki::Cozmo::Sim;
-#define ENABLE_PATH_VIZ 0  // To enable visualization of paths from robot
-                           // (Default is 0. Normally this is done from basestation.)
-#endif
-
 // The number of tics desired in between debug prints
 #define DBG_PERIOD 200
 
@@ -92,39 +82,8 @@ namespace Anki
         manualPathSpeed_ = false;
         pointTurnStarted_ = false;
         realPathSegment_ = -1;
-#if(ENABLE_PATH_VIZ)
-        Viz::ErasePath(0);
-#endif
       } // Update()
       
-      
-      void SetPathForViz() {
-#if(ENABLE_PATH_VIZ)
-        Viz::ErasePath(0);
-        for (u8 i=0; i<path_.GetNumSegments(); ++i) {
-          const Planning::PathSegmentDef& ps = path_[i].GetDef();
-          switch(path_[i].GetType()) {
-            case Planning::PST_LINE:
-              Viz::AppendPathSegmentLine(0,
-                                         ps.line.startPt_x,
-                                         ps.line.startPt_y,
-                                         ps.line.endPt_x,
-                                         ps.line.endPt_y);
-              break;
-            case Planning::PST_ARC:
-              Viz::AppendPathSegmentArc(0,
-                                        ps.arc.centerPt_x,
-                                        ps.arc.centerPt_y,
-                                        ps.arc.radius,
-                                        ps.arc.startRad,
-                                        ps.arc.sweepRad);
-              break;
-            default:
-              break;
-          }
-        }
-#endif
-      }
       
       // Trims off segments that have already been traversed
       void TrimPath() {
@@ -286,9 +245,6 @@ namespace Anki
           SteeringController::SetPathFollowMode();
         }
         
-        // Visualize path
-        SetPathForViz();
-        
         // Set id of path
         if (path_id != 0) {
           lastPathID_ = path_id;
@@ -415,9 +371,6 @@ namespace Anki
         
 #if(DEBUG_PATH_FOLLOWER)
         PRINT("*** PATH COMPLETE ***\n");
-#endif
-#if(ENABLE_PATH_VIZ)
-        Viz::ErasePath(0);
 #endif
       }
       
