@@ -34,8 +34,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     CreateDialogButton ();
   }
   
-  private void OnDestroy()
-  {
+  private void OnDestroy() {
     //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
     
     if (_patternCollectionDialog != null) {
@@ -45,14 +44,12 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternMemory.PatternAdded -= OnPatternAdded;
   }
 
-  public void OnPatternMemoryLoaded(PatternMemory patternMemory)
-  {
+  public void OnPatternMemoryLoaded(PatternMemory patternMemory) {
     _patternMemory = patternMemory;
     _patternMemory.PatternAdded += OnPatternAdded;
   }
 
-  private void CreateDialogButton()
-  {
+  private void CreateDialogButton() {
     GameObject newButton = UIManager.CreateUI (_openPatternCollectionDialogButtonPrefab.gameObject);
 
     Button buttonScript = newButton.GetComponent<Button> ();
@@ -64,13 +61,11 @@ public class PatternCollectionViewController : MonoBehaviour {
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
   }
 
-  public void OnDialogButtonTap()
-  {
+  public void OnDialogButtonTap() {
     ShowCollectionDialog ();
   }
 
-  private void ShowCollectionDialog()
-  {
+  private void ShowCollectionDialog() {
     BaseDialog newDialog = UIManager.OpenDialog (_patternCollectionDialogPrefab);
     _patternCollectionDialog = newDialog as PatternCollectionDialog;
 
@@ -79,7 +74,7 @@ public class PatternCollectionViewController : MonoBehaviour {
 
     if (BadgeManager.NumBadgesWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG) > 0) {
       bool scrollSuccess = _patternCollectionDialog.ScrollToFirstNewPattern();
-      if (!scrollSuccess){
+      if (!scrollSuccess) {
         _patternCollectionDialog.SetScrollValue(_lastOpenedScrollValue);
       }
     } else {
@@ -89,15 +84,13 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternCollectionDialog.DialogClosed += OnCollectionDialogClose;
   }
 
-  private void OnCollectionDialogClose()
-  {
+  private void OnCollectionDialogClose() {
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
     _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     _lastOpenedScrollValue = _patternCollectionDialog.GetScrollValue ();
   }
 
-  private void OnPatternAdded(BlockPattern pattern, MemoryBank bank)
-  {
+  private void OnPatternAdded(BlockPattern pattern, MemoryBank bank) {
     ShowUnlockMomentDialog (pattern);
   }
 
@@ -118,8 +111,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     // TODO: Update badge visuals
   }
 
-  private void ShowInstructionsDialog()
-  {
+  private void ShowInstructionsDialog() {
     // Show instructions
     // TODO: Instantiate instructions
     // _patternPlayInstructions.gameObject.SetActive (true);
@@ -127,14 +119,12 @@ public class PatternCollectionViewController : MonoBehaviour {
     // _patternPlayInstructions.InstructionsFinished += OnInstructionsFinished;
   }
   
-  private void OnInstructionsFinished()
-  {
+  private void OnInstructionsFinished() {
     // Destroy instructions dialog
     // Create button?
   }
 
-	private PatternMemory CreateTestPatternMemory()
-	{
+	private PatternMemory CreateTestPatternMemory()	{
 		PatternMemory patternMemory = new PatternMemory ();
 		patternMemory.Initialize ();
 

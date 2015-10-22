@@ -6,8 +6,9 @@ public class PatternPlayInstructions : MonoBehaviour {
   public delegate void PatternPlayInstructionsHandler();
   public event PatternPlayInstructionsHandler InstructionsFinished;
   private void RaiseInstructionsFinished() {
-    if (InstructionsFinished != null)
+    if (InstructionsFinished != null) {
       InstructionsFinished ();
+    }
   }
 
   // TODO: Make this persist
@@ -16,19 +17,16 @@ public class PatternPlayInstructions : MonoBehaviour {
   [SerializeField]
   private GameObjectSelector _instructionDisplays;
 
-  public void Initialize()
-  {
+  public void Initialize() {
     _currentInstructionIndex = 0;
     _instructionDisplays.SetScreenIndex (_currentInstructionIndex);
   }
 
-  public void OnNextButtonClick()
-  {
+  public void OnNextButtonClick() {
     ContinueToNextInstruction ();
   }
 
-  public void ContinueToNextInstruction()
-  {
+  public void ContinueToNextInstruction() {
     _currentInstructionIndex++;
     if (_currentInstructionIndex >= _instructionDisplays.GetNumGameObjects ()) {
       RaiseInstructionsFinished ();

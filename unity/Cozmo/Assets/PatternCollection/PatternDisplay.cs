@@ -36,11 +36,9 @@ public class PatternDisplay : MonoBehaviour {
         }
 
         _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
-      }
-      else {
+      } else {
         // Hide all the cubes
-        for (int i = 0; i < cubes.Length; i++)
-        {
+        for (int i = 0; i < cubes.Length; i++) {
           cubes[i].gameObject.SetActive(false);
         }
 
@@ -49,8 +47,7 @@ public class PatternDisplay : MonoBehaviour {
     }
   }
 
-  public void RemoveBadgeIfSeen()
-  {
+  public void RemoveBadgeIfSeen() {
     if (_pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
       return;
     }
@@ -61,11 +58,9 @@ public class PatternDisplay : MonoBehaviour {
 
     Rect viewportRect = new Rect(0f, 0f, 1f, 1f);
     bool isObjectOffscreen = false;
-    foreach (Vector3 worldPos in worldCorners)
-    {
+    foreach (Vector3 worldPos in worldCorners) {
       Vector3 screenPos = Camera.main.WorldToViewportPoint(worldPos);
-      if (!viewportRect.Contains(screenPos))
-      {
+      if (!viewportRect.Contains(screenPos)) {
         isObjectOffscreen = true;
         break;
       }

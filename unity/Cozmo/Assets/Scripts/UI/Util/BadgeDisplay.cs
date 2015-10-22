@@ -12,8 +12,7 @@ public class BadgeDisplay : MonoBehaviour {
   private object _currentKey = null;
   private string _currentTag = null;
 
-  public bool IsShowing()
-  {
+  public bool IsShowing() {
     return _toggleBadgeDisplay.gameObject.activeSelf;
   }
 
@@ -33,13 +32,11 @@ public class BadgeDisplay : MonoBehaviour {
     UpdateDisplay (showBadge, count);
   }
 
-  public void HideDisplay()
-  {
+  public void HideDisplay() {
     UpdateDisplay (false, 0);
   }
 
-  private void UpdateDisplay(bool show, int count)
-  {
+  private void UpdateDisplay(bool show, int count) {
     _toggleBadgeDisplay.gameObject.SetActive (show);
     
     if (_countLabel != null) {
