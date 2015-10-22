@@ -5,9 +5,6 @@ using System.Collections.Generic;
 
 public class PatternCollectionBankCard : MonoBehaviour {
 
-  // TODO: Remove magic numbers! Assume 4 matches per memory bank
-  private const int PATTERN_PER_BANK_COUNT = 4;
-
   [SerializeField]
   private RectTransform _verticalLayoutForRowPatterns;
 
@@ -28,10 +25,13 @@ public class PatternCollectionBankCard : MonoBehaviour {
   
   [SerializeField]
   private BadgeDisplay _newBadgeDisplay;
+  
+  [SerializeField]
+  private LayoutElement _layoutElement;
 
   List<PatternDisplay> _patternsShown;
 
-  public void Initialize(MemoryBank memoryBank) {
+  public void Initialize(MemoryBank memoryBank, float cardWidth) {
     _patternsShown = new List<PatternDisplay> ();
 
     // Depending on the signature, we need to use a particular layout
@@ -51,6 +51,7 @@ public class PatternCollectionBankCard : MonoBehaviour {
     }
 
     SetHeaderText (memoryBank);
+    SetCardWidth (cardWidth);
 
     SetupBadge (memoryBank.name);
   }
@@ -60,6 +61,27 @@ public class PatternCollectionBankCard : MonoBehaviour {
     foreach (PatternDisplay display in _patternsShown) {
       display.RemoveBadgeIfSeen();
     }
+  }
+
+  public bool HasAnyNewPatterns()
+  {
+    bool anyNewPatterns = false;
+    foreach (PatternDisplay display in _patternsShown) {
+      if (display.pattern != null && BadgeManager.DoesBadgeExistForKey(display.pattern)){
+        anyNewPatterns = true;
+        break;
+      }
+    }
+    return anyNewPatterns;
+  }
+
+  public bool IsBadged()
+  {
+    return _newBadgeDisplay.IsShowing ();
+  }
+
+  private void SetCardWidth(float newWidth) {
+    _layoutElement.minWidth = newWidth;
   }
 
   private void SetHeaderText(MemoryBank memoryBank) {
@@ -74,28 +96,30 @@ public class PatternCollectionBankCard : MonoBehaviour {
 
   private void ShowRowPatterns(MemoryBank memoryBank)
   {
-    ShowPatterns (memoryBank.GetSeenPatterns (), _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
+    ShowPatterns (memoryBank, _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
   }
 
   private void ShowStackPatterns(MemoryBank memoryBank)
   {
-    ShowPatterns (memoryBank.GetSeenPatterns (), _horizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
+    ShowPatterns (memoryBank, _horizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
   }
 
-  private void ShowPatterns(IEnumerable<BlockPattern> patterns, RectTransform layoutContainer, PatternDisplay patternCardPrefab)
+  private void ShowPatterns(MemoryBank memoryBank, RectTransform layoutContainer, PatternDisplay patternCardPrefab)
   {
     // Foreach seen pattern create a card
-    int createdCards = 0;
+    HashSet<BlockPattern> patterns = memoryBank.patterns;
+    HashSet<BlockPattern> seenPatterns = memoryBank.GetSeenPatterns ();
     if (patterns != null) {
       foreach (BlockPattern pattern in patterns) {
-        CreatePatternCard(pattern, layoutContainer, patternCardPrefab);
-        createdCards++;
+        if (seenPatterns != null && seenPatterns.Contains(pattern))
+        {
+          CreatePatternCard(pattern, layoutContainer, patternCardPrefab);
+        }
+        else
+        {
+          CreatePatternCard(null, layoutContainer, patternCardPrefab);
+        }
       }
-    }
-
-    // Fill out the rest of the layout with empty cards
-    for (int i = 0; i < PATTERN_PER_BANK_COUNT - createdCards; i++) {
-      CreatePatternCard(null, layoutContainer, patternCardPrefab);
     }
   }
 
@@ -118,29 +142,30 @@ public class PatternCollectionBankCard : MonoBehaviour {
 
   private void ShowSpecialPatterns(MemoryBank memoryBank)
   {
-    IEnumerable<BlockPattern> patterns = memoryBank.GetSeenPatterns ();
-    int createdStacks = 0;
-    int createdRows = 0;
-
+    // Foreach seen pattern create a card
+    HashSet<BlockPattern> patterns = memoryBank.patterns;
+    HashSet<BlockPattern> seenPatterns = memoryBank.GetSeenPatterns ();
+    RectTransform layoutContainer;
+    PatternDisplay patternCardPrefab;
     if (patterns != null) {
       foreach (BlockPattern pattern in patterns) {
         if (pattern.verticalStack) {
-          CreatePatternCard(pattern, _halfHorizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
-          createdStacks++;
+          layoutContainer = _halfHorizontalLayoutForStackPatterns;
+          patternCardPrefab = _stackPatternDisplayPrefab;
         }
         else {
-          CreatePatternCard(pattern, _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
-          createdRows++;
+          layoutContainer = _verticalLayoutForRowPatterns;
+          patternCardPrefab = _rowPatternDisplayPrefab;
+        }
+        if (seenPatterns != null && seenPatterns.Contains(pattern))
+        {
+          CreatePatternCard(pattern, layoutContainer, patternCardPrefab);
+        }
+        else
+        {
+          CreatePatternCard(null, layoutContainer, patternCardPrefab);
         }
       }
-    }
-
-    // Fill out the rest of the layout with empty cards
-    for (int i = 0; i < 2 - createdRows; i++) {
-      CreatePatternCard(null, _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
-    }
-    for (int i = 0; i < 2 - createdStacks; i++) {
-      CreatePatternCard(null, _halfHorizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
     }
   }
 }

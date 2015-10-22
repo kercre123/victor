@@ -76,7 +76,16 @@ public class PatternCollectionViewController : MonoBehaviour {
 
     // Populate dialog with cards using memory
     _patternCollectionDialog.Initialize (_patternMemory);
-    _patternCollectionDialog.SetScrollValue (_lastOpenedScrollValue);
+
+    if (BadgeManager.NumBadgesWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG) > 0) {
+      bool scrollSuccess = _patternCollectionDialog.ScrollToFirstNewPattern();
+      if (!scrollSuccess){
+        _patternCollectionDialog.SetScrollValue(_lastOpenedScrollValue);
+      }
+    } else {
+      _patternCollectionDialog.SetScrollValue (_lastOpenedScrollValue);
+    }
+
     _patternCollectionDialog.DialogClosed += OnCollectionDialogClose;
   }
 
@@ -160,6 +169,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.verticalStack = false;
     patternMemory.AddSeen (newPattern);
+    BadgeManager.TryRemoveBadge (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -169,6 +179,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.verticalStack = false;
     patternMemory.AddSeen (newPattern);
+    BadgeManager.TryRemoveBadge (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {
@@ -178,6 +189,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     };
     newPattern.verticalStack = true;
     patternMemory.AddSeen (newPattern);
+    BadgeManager.TryRemoveBadge (newPattern);
 
     newPattern = new BlockPattern ();
     newPattern.blocks = new List<BlockLights> {

@@ -286,6 +286,9 @@ MonoBehaviour:
   _memoryBankCardContentPanel: {fileID: 22453032}
   _percentCompleteLabel: {fileID: 11425318}
   _memoryBankScrollRect: {fileID: 11401160}
+  _slowDragSpeedThreshold: 30
+  _cardLayoutGroup: {fileID: 11474354}
+  _cardWidth: 600
 --- !u!114 &11467954
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -552,7 +555,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _cardWidth
+      value: 600
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 140772}
