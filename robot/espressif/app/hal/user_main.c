@@ -11,36 +11,15 @@
 #include "driver/i2spi.h"
 #include "gpio.h"
 #include "nv_params.h"
-#include "task0.h"
-#include "task1.h"
+#include "backgroundTask.h"
+#include "foregroundTask.h"
 #include "telnet.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
 
-#define USER_TASK_INTERVAL_MS 1000
-
-/** User "idle" task
- * Called by OS with lowest priority.
- */
-/*LOCAL bool ICACHE_FLASH_ATTR userTask(uint32_t param)
-{
-  return false;
-}*/
-
-static ETSTimer userTimer;
-
-LOCAL void ICACHE_FLASH_ATTR userIntervalTask(void *timer_arg)
-{
-  static int32 tick = 0;
-  int32 tock = system_get_time();
-  telnetPrintf("%d\t%dus\r\n", tock, tock-tick-(USER_TASK_INTERVAL_MS*1000));
-  tick = tock;
-}
-
-
 /** Handle wifi events passed by the OS
  */
-void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
+void wifi_event_callback(System_Event_t *evt)
 {
   switch (evt->event)
   {
@@ -110,22 +89,22 @@ void ICACHE_FLASH_ATTR wifi_event_callback(System_Event_t *evt)
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
  * I think everything else should still happen in user_init and system_init_done
  */
-void ICACHE_FLASH_ATTR user_rf_pre_init(void)
+void user_rf_pre_init(void)
 {
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
-  system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
+  //system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
 }
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
  */
-static void ICACHE_FLASH_ATTR system_init_done(void)
+static void system_init_done(void)
 {
   // Set up the remote debugging port
   telnetInit();
 
   // Enable upgrade controller
-  //upgradeControllerInit();
+  upgradeControllerInit();
 
   // Setup Basestation client
   clientInit();
@@ -134,18 +113,11 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
   i2spiInit();
 
   // Set up shared background tasks
-  //task0Init();
+  backgroundTaskInit();
   
   // Set up shared foreground tasks
-  //task1Init();
+  foregroundTaskInit();
 
-  os_timer_disarm(&userTimer);
-  os_timer_setfn(&userTimer, userIntervalTask, NULL);
-  //os_timer_arm(&userTimer, USER_TASK_INTERVAL_MS, true);
-
-  // Enable UART0 RX interrupt
-  // Only after clientInit
-  uart_start();
   // Enable I2SPI start only after clientInit
   i2spiStart();
 
@@ -159,8 +131,7 @@ static void ICACHE_FLASH_ATTR system_init_done(void)
  * Setting up any user application code to run on the espressif.
  * It is called automatically from the os main function.
  */
-void ICACHE_FLASH_ATTR
-user_init(void)
+void user_init(void)
 {
     NVParams* nvpars;
     int8 err;
@@ -269,8 +240,8 @@ user_init(void)
       wifi_softap_set_config(&ap_config);
       wifi_set_phy_mode(PHY_MODE_11G);
       // Disable radio sleep
-      wifi_set_sleep_type(NONE_SLEEP_T);
-      wifi_set_user_fixed_rate(PHY_RATE_24);
+      //wifi_set_sleep_type(NONE_SLEEP_T);
+      wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
     }
     else // Cozmo as station
     {

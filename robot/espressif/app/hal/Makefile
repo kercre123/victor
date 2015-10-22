@@ -12,8 +12,9 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libtransport.a
+GEN_LIBS = libuserhal.a
 endif
+
 
 #############################################################
 # Configuration i.e. compile options etc.
@@ -22,7 +23,7 @@ endif
 #   makefile at its root level - these are then overridden
 #   for a subtree within the makefile rooted therein
 #
-#DEFINES += 
+#DEFINES +=
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -39,6 +40,8 @@ endif
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
+INCLUDES += -I ../../../../tools/anki-util/source/anki
+INCLUDES += -I ../../../generated/clad/robot
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

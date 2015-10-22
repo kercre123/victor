@@ -14,10 +14,8 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
-#include "client.h"
+#include "imageSender.h"
 
-#define likely(x)      __builtin_expect(!!(x), 1)
-#define unlikely(x)    __builtin_expect(!!(x), 0)
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
 
@@ -65,7 +63,7 @@ static int16_t screenReadIndex;
 static int16_t screenDataAvailable;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
-static void inline prepSdioQueue(struct sdio_queue* desc, uint8 eof)
+void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
 {
   desc->owner     = 1;
   desc->eof       = eof;
@@ -91,21 +89,11 @@ void halfWordCopy(uint16_t* dest, uint16_t* src, int num)
  * @param drop A pointer to a complete drop
  * @warning Call from a task not an ISR.
  */
-static void processDrop(DropToWiFi* drop)
+void processDrop(DropToWiFi* drop)
 {
-#define PACKET_SIZE 1420
-  static uint8  packet[PACKET_SIZE];
-  static uint16 len = 0;
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
-
-  os_memcpy(packet + len, drop->payload, rxJpegLen);
-  len += rxJpegLen;
-  if (((PACKET_SIZE - len) < DROP_TO_WIFI_MAX_PAYLOAD) || // Couldn't handle another drop to send the packet
-      (drop->droplet & jpegEOF)) // Or end of frame
-  {
-    clientQueuePacket(packet, len);
-    len = 0;
-  }
+  if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
+  // XXX do stuff with the rest of the payload
 }
 
 /** Fills a drop into the outgoing DMA buffers
@@ -113,7 +101,7 @@ static void processDrop(DropToWiFi* drop)
  * @param payload A pointer to the payload data to fill the drop with or NULL
  * @param length The number of bytes of payload to be put into this drop
  */
-static void makeDrop(uint8_t* payload, uint8_t length)
+void makeDrop(uint8_t* payload, uint8_t length)
 {
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   DropToRTIP drop;
@@ -167,7 +155,7 @@ static void makeDrop(uint8_t* payload, uint8_t length)
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
-LOCAL void i2spiTask(os_event_t *event)
+void i2spiTask(os_event_t *event)
 {
   struct sdio_queue* desc = asDesc(event->par);
 
@@ -261,7 +249,7 @@ LOCAL void i2spiTask(os_event_t *event)
  * Everything is passed off to tasks to be handled
  * @warnings ISRs cannot call printf or any radio related functions and must return in under 10us
  */
-LOCAL void dmaisr(void* arg) {
+void dmaisr(void* arg) {
 	//Grab int status
 	const uint32 slc_intr_status = READ_PERI_REG(SLC_INT_STATUS);
 	//clear all intr flags
@@ -446,17 +434,17 @@ bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
   return false;
 }
 
-bool i2spiReadyForAudioData(void)
+bool ICACHE_FLASH_ATTR i2spiReadyForAudioData(void)
 {
   return audioReadIndex >= AUDIO_BUFFER_SIZE;
 }
 
-void i2spiPushAudioData(uint8_t* audioData)
+void ICACHE_FLASH_ATTR i2spiPushAudioData(uint8_t* audioData)
 {
   os_memcpy(audioStorage, audioData, AUDIO_BUFFER_SIZE);
 }
 
-uint8_t* i2spiGetScreenDataBuffer(void)
+uint8_t* ICACHE_FLASH_ATTR i2spiGetScreenDataBuffer(void)
 {
   if (screenReadIndex >= screenDataAvailable)
   {
@@ -470,7 +458,7 @@ uint8_t* i2spiGetScreenDataBuffer(void)
   }
 }
 
-void i2spiSetScreenDataLength(uint16_t length)
+void ICACHE_FLASH_ATTR i2spiSetScreenDataLength(uint16_t length)
 {
   screenDataAvailable = length;
 }

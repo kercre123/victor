@@ -17,17 +17,17 @@ static struct espconn* telnetServer;
 /// The active connection (if any)
 static struct espconn* telnetConnection;
 
-LOCAL void ICACHE_FLASH_ATTR telnetReceiveCallback(void *arg, char *usrdata, unsigned short length)
+LOCAL void telnetReceiveCallback(void *arg, char *usrdata, unsigned short length)
 {
   os_printf("Telnet received %d bytes of data:\r\n\t\"%s\"\r\n", length, usrdata);
 }
 
-LOCAL void ICACHE_FLASH_ATTR telnetSentCallback(void *arg)
+LOCAL void telnetSentCallback(void *arg)
 {
   //struct espconn *conn = arg;
 }
 
-LOCAL void ICACHE_FLASH_ATTR telnetConnectCallback(void *arg)
+LOCAL void telnetConnectCallback(void *arg)
 {
   struct espconn* conn = (struct espconn*)arg;
   uint8 err;
@@ -56,19 +56,19 @@ LOCAL void ICACHE_FLASH_ATTR telnetConnectCallback(void *arg)
   }
 }
 
-LOCAL void ICACHE_FLASH_ATTR telnetDisconectCallback(void *arg)
+LOCAL void telnetDisconectCallback(void *arg)
 {
   os_printf("Telnet client disconnected\r\n");
   telnetConnection = NULL;
 }
 
-LOCAL void ICACHE_FLASH_ATTR telnetReconnectCallback(void *arg, sint8 err)
+LOCAL void telnetReconnectCallback(void *arg, sint8 err)
 {
   os_printf("Telnet server error: %d\r\n", err);
   telnetDisconectCallback(arg);
 }
 
-int8_t ICACHE_FLASH_ATTR telnetInit(void)
+int8_t telnetInit(void)
 {
   int8_t err;
   os_printf("Telnet init\r\n");
@@ -122,12 +122,12 @@ int8_t ICACHE_FLASH_ATTR telnetInit(void)
   return 0;
 }
 
-inline bool ICACHE_FLASH_ATTR telnetIsConnected(void)
+inline bool telnetIsConnected(void)
 {
   return telnetConnection == NULL ? false : true;
 }
 
-bool ICACHE_FLASH_ATTR telnetPrintf(const char *format, ...)
+bool telnetPrintf(const char *format, ...)
 {
   va_list argptr;
   uint16 len = 0;

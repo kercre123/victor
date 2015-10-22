@@ -22,6 +22,8 @@ class IDataReceiver:
 class IUnreliableTransport:
     PACKET_HEADER = b'COZ\x03'
 
+    def __init__(self):
+        pass
     def OpenSocket(self, port, interface):
         return True # Optional to implement
     def CloseSocket(self):
@@ -84,19 +86,17 @@ class ReliableTransport(threading.Thread):
 
     def __init__(self, unreliable, receiver):
         "Set up a new reliable transport manager given an unreliable transport layer and a receiver callback object"
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, daemon=True)
         self.unreliable = unreliable
         self.receiver   = receiver
         self.queue = []
         self.lock = threading.Lock()
         self._continue = True
         self.connections = {}
-        self.pktLog = open('rx-packet-log.txt', 'w')
 
     def __del__(self):
         self.KillThread()
         self.ClearConnections()
-        self.pktLog.close()
 
     def run(self):
         while self._continue:
@@ -211,8 +211,6 @@ class ReliableTransport(threading.Thread):
         if buffer is None:
             return
         handledMessageType = False
-        self.pktLog.write(" ".join(["%02x" % b for b in buffer]) + "\n")
-        self.pktLog.flush()
         if (len(buffer) < AnkiReliablePacketHeader.LENGTH):
             sys.stderr.write("ReceiveData too small %d\r\n" % len(buffer))
         else:

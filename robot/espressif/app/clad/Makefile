@@ -12,9 +12,11 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-GEN_LIBS = libuser.a
+GEN_LIBS = libclad.a
 endif
 
+CLAD_DIR=../../../clad
+GENERATED_DIR=../../../generated/clad/robot
 
 #############################################################
 # Configuration i.e. compile options etc.
@@ -23,7 +25,21 @@ endif
 #   makefile at its root level - these are then overridden
 #   for a subtree within the makefile rooted therein
 #
-#DEFINES += 
+#DEFINES +=
+
+CXXSRCS := $(shell find $(GENERATED_DIR)/clad/ -type f -iname '*.cpp')
+
+
+define MakeLibrary
+DEP_LIBS_$(1) = $$(foreach lib,$$(filter %.a,$$(COMPONENTS_$(1))),$$(dir $$(lib))$$(LIBODIR)/$$(notdir $$(lib)))
+DEP_OBJS_$(1) = $$(foreach obj,$$(filter %.o,$$(COMPONENTS_$(1))),$$(dir $$(obj))$$(OBJODIR)/$$(notdir $$(obj)))
+$$(LIBODIR)/$(1).a: $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1)) $$(DEPENDS_$(1))
+	@mkdir -p $$(LIBODIR)
+	$$(if $$(filter %.a,$$?),mkdir -p $$(EXTRACT_DIR)_$(1))
+	$$(if $$(filter %.a,$$?),cd $$(EXTRACT_DIR)_$(1); $$(foreach lib,$$(filter %.a,$$?),$$(AR) xo $$(UP_EXTRACT_DIR)/$$(lib);))
+	$$(AR) ru $$@  $$(OBJODIR)/*.o
+	$$(if $$(filter %.a,$$?),$$(RM) -r $$(EXTRACT_DIR)_$(1))
+endef
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -40,6 +56,8 @@ endif
 INCLUDES := $(INCLUDES) -I $(PDIR)include
 INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
+INCLUDES += -I ../../../../tools/anki-util/source/anki
+INCLUDES += -I $(GENERATED_DIR)
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

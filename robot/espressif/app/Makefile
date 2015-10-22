@@ -22,8 +22,11 @@ GEN_IMAGES= eagle.app.v6.out
 GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
-	user    \
-	driver
+	hal    \
+	driver  \
+  transport \
+  clad \
+  application
 endif # } PDIR
 
 APPDIR = .
@@ -44,8 +47,11 @@ ifeq ($(FLAVOR),release)
 endif
 
 COMPONENTS_eagle.app.v6 = \
-	user/libuser.a  \
-	driver/libdriver.a
+	hal/libuserhal.a  \
+	driver/libdriver.a \
+  transport/libtransport.a \
+  clad/libclad.a \
+  application/libapplication.a
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \
@@ -57,7 +63,7 @@ LINKFLAGS_eagle.app.v6 = \
 	-Wl,-static						\
 	-Wl,--start-group					\
 	-lc					\
-	-lgcc					\
+  -lgcc					\
 	-lhal					\
 	-lphy	\
 	-lpp	\
@@ -96,7 +102,8 @@ CONFIGURATION_DEFINES =	-DICACHE_FLASH
 
 DEFINES +=				\
 	$(UNIVERSAL_TARGET_DEFINES)	\
-	$(CONFIGURATION_DEFINES)
+	$(CONFIGURATION_DEFINES) \
+  -DTARGET_ESPRESSIF
 
 DDEFINES +=				\
 	$(UNIVERSAL_TARGET_DEFINES)	\
@@ -114,7 +121,7 @@ DDEFINES +=				\
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(ESPDIR)/../include
+INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(ESPDIR)/../include $(INCLUDE)
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

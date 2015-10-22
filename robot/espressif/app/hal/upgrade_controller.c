@@ -9,7 +9,7 @@
 #include "mem.h"
 #include "espconn.h"
 #include "upgrade.h"
-#include "task1.h"
+#include "foregroundTask.h"
 #include "nv_params.h"
 #include "upgrade_controller.h"
 #include "driver/i2spi.h"
@@ -52,7 +52,7 @@ static uint16 flashEraseEnd    = 0;
 static uint16 retryCount = 0;
 
 /// Resets the upgrade state
-LOCAL void ICACHE_FLASH_ATTR resetUpgradeState(void)
+LOCAL void resetUpgradeState(void)
 {
   system_upgrade_flag_set(UPGRADE_FLAG_IDLE);
   fwWriteAddress = INVALID_FLASH_ADDRESS;
@@ -67,7 +67,7 @@ LOCAL void ICACHE_FLASH_ATTR resetUpgradeState(void)
   upccConn = NULL;
 }
 
-LOCAL void ICACHE_FLASH_ATTR printUpgradeState(void)
+LOCAL void printUpgradeState(void)
 {
   os_printf("Upgrade state: fww = %08x, bytesE = %d, bytesR = %d, bytesW = %d, flags = %d, ts= %d, esp = %d\r\n", fwWriteAddress, bytesExpected, bytesReceived, bytesWritten, flags, taskState, system_upgrade_flag_check());
 }
@@ -270,7 +270,7 @@ LOCAL bool upgradeTask(uint32_t param)
   }
 }
 
-LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsigned short length)
+LOCAL void upccReceiveCallback(void *arg, char *usrdata, unsigned short length)
 {
   struct espconn* conn = (struct espconn*)arg;
   uint8 err;
@@ -331,7 +331,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
           os_printf("fwWriteAddr = %08x [%x], Erase sectors: %d..%d\r\n", fwWriteAddress, bytesExpected, flashEraseSector, flashEraseEnd);
           system_upgrade_flag_set(UPGRADE_FLAG_START);
           taskState = UPGRADE_TASK_ERASE;
-          if (task1Post(upgradeTask, 0) == false)
+          if (foregroundTaskPost(upgradeTask, 0) == false)
           {
             os_printf("ERROR: Couldn't queue upgrade task\r\n");
             resetUpgradeState();
@@ -393,7 +393,7 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
     os_memcpy((void*)fwd->data, (void*)usrdata, length);
     fwd->length = length;
     bytesReceived += length;
-    if (task1Post(upgradeTask, (uint32)fwd) == false)
+    if (foregroundTaskPost(upgradeTask, (uint32)fwd) == false)
     {
       os_printf("ERROR: Couldn't post upgrade task\r\n");
       resetUpgradeState();
@@ -402,13 +402,13 @@ LOCAL void ICACHE_FLASH_ATTR upccReceiveCallback(void *arg, char *usrdata, unsig
   }
 }
 
-LOCAL void ICACHE_FLASH_ATTR upccSentCallback(void *arg)
+LOCAL void upccSentCallback(void *arg)
 {
   //struct espconn *conn = arg;
   //os_printf("INFO: UPCC sent cb\r\n");
 }
 
-LOCAL void ICACHE_FLASH_ATTR upccConnectCallback(void *arg)
+LOCAL void upccConnectCallback(void *arg)
 {
   struct espconn* conn = (struct espconn*)arg;
   uint8 err;
@@ -438,7 +438,7 @@ LOCAL void ICACHE_FLASH_ATTR upccConnectCallback(void *arg)
 }
 
 /// Called after successful disconnect from host
-LOCAL void ICACHE_FLASH_ATTR upccDisconectCallback(void *arg)
+LOCAL void upccDisconectCallback(void *arg)
 {
   if (bytesReceived != bytesExpected)
   {
@@ -457,14 +457,14 @@ LOCAL void ICACHE_FLASH_ATTR upccDisconectCallback(void *arg)
 }
 
 /// "Reconnect callback is really generic socket error callback"
-LOCAL void ICACHE_FLASH_ATTR upccReconnectCallback(void *arg, sint8 err)
+LOCAL void upccReconnectCallback(void *arg, sint8 err)
 {
   os_printf("ERROR UPCC error %d\r\n\t", err);
   printUpgradeState();
   resetUpgradeState();
 }
 
-int8_t ICACHE_FLASH_ATTR upgradeControllerInit(void)
+int8_t upgradeControllerInit(void)
 {
   int8_t err;
 

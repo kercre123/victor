@@ -179,8 +179,8 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  uart_tx_one_char_no_wait(UART0, c);
-  //uart_tx_one_char(UART0, c);
+  //uart_tx_one_char_no_wait(UART0, c);
+  uart_tx_one_char(UART0, c);
 }
 
 void os_put_hex(unsigned int i, unsigned short nibbles)
@@ -481,7 +481,7 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
     }
     else // Packet data is contiguous in memory
     {
-      clientQueuePacket(pktStart, pktLen);
+      //clientQueuePacket(pktStart, pktLen);
     }
     if (pktStart == rxBuf) // This was a packet placed at the beginning rather than wrapping
     {
