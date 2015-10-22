@@ -6,149 +6,227 @@
 #include "hal/i2c.h"
 #include "MK02F12810.h"
 
+// Internal Settings
+typedef struct {
+  int flags;
+  i2c_callback cb;
+  
+  void* data;
+  void* buffer;
+  int count;
+  int size;
+} I2C_Queue;
+
+static int _fifo_start;
+static int _fifo_end;
+static int _fifo_count;
+
+static I2C_Queue i2c_queue[MAX_QUEUE];
+
+static bool _active;
+
+static inline void start_transaction();
+
+// HAL
 namespace Anki
 {
   namespace Cozmo
   {
     namespace HAL
     {
-      // I2C pins
-      GPIO_PIN_SOURCE(SDA, PTB, 1);
-      GPIO_PIN_SOURCE(SCL, PTE, 24);
-
-      // Set up I2C hardware and stack
-      void I2CInit(void)
-      {
-        // Set up pins
-        GPIO_SET(GPIO_SCL, PIN_SCL);        
-        GPIO_OUT(GPIO_SCL, PIN_SCL);
-        SOURCE_SETUP(GPIO_SCL, SOURCE_SCL, SourceGPIO | SourceOpenDrain | SourcePullUp);
-
-        GPIO_SET(GPIO_SDA, PIN_SDA);
-        GPIO_OUT(GPIO_SDA, PIN_SDA);
-        SOURCE_SETUP(GPIO_SDA, SOURCE_SDA, SourceGPIO | SourceOpenDrain | SourcePullUp);
+      static volatile bool i2c_data_active;
+      
+      static void i2cRegCallback(void* data, int size) {
+        i2c_data_active = false;
       }
 
-      // Soft I2C stack, borrowed from Arduino (BSD license)
-      static void DriveSCL(u8 bit)
-      {
-        if (bit)
-          GPIO_SET(GPIO_SCL, PIN_SCL);
-        else
-          GPIO_RESET(GPIO_SCL, PIN_SCL);
+      void I2CWriteReg(uint8_t slave, uint8_t addr, uint8_t data) {
+        uint8_t cmd[3] = { slave << 1, addr, data };
+        i2c_data_active = true;
 
-        MicroWait(2);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, cmd, 3, i2cRegCallback);
+        
+        while(i2c_data_active) __asm { WFI } ;
       }
 
-      static void DriveSDA(u8 bit)
-      {
-        if (bit)
-          GPIO_SET(GPIO_SDA, PIN_SDA);
-        else
-          GPIO_RESET(GPIO_SDA, PIN_SDA);
+      uint8_t I2CReadReg(uint8_t slave, uint8_t addr) {
+        uint8_t cmd[3] = { slave << 1, addr };
+        uint8_t data = (slave << 1) | 1;
+        uint8_t resp;
 
-        MicroWait(2);
+        i2c_data_active = true;
+        
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, cmd, 2, NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, &data, sizeof(data), NULL);
+        I2CCmd(I2C_DIR_READ | I2C_SEND_NACK | I2C_SEND_STOP, &resp, sizeof(resp), i2cRegCallback);
+
+        while(i2c_data_active) __asm { WFI } ;
+        
+        return resp;
+      }
+      
+      void I2CWriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data) {
+        uint8_t resp;
+        I2CWriteReg(slave, addr, data);
+        resp = I2CReadReg(slave, addr);
+        
+        // assert(resp != data);
+      }
+      
+      void I2CInit()
+      {
+        // Clear our FIFO
+        _fifo_start = 0;
+        _fifo_end = 0;
+        _fifo_count = 0;
+
+        _active = false;
+       
+        // Enable clocking on I2C, PortB, PortE, and DMA
+        SIM_SCGC4 |= SIM_SCGC4_I2C0_MASK;
+        SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTE_MASK;
+
+        // Configure port mux for i2c
+        PORTB_PCR1 = PORT_PCR_MUX(2) | 
+                     PORT_PCR_ODE_MASK | 
+                     PORT_PCR_DSE_MASK |
+                     PORT_PCR_PE_MASK |
+                     PORT_PCR_PS_MASK;   //I2C0_SDA
+        PORTE_PCR24 = PORT_PCR_MUX(5) |
+                      PORT_PCR_DSE_MASK;  //I2C0_SCL
+
+        // Configure i2c
+        I2C0_F  = I2C_F_ICR(0x1B);
+        I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_MST_MASK;
+        
+        // Enable IRQs
+        NVIC_SetPriority(I2C0_IRQn, 0);
+        I2CEnable();
       }
 
-      // Read SDA bit by allowing it to float for a while
-      // Make sure to start reading the bit before the clock edge that needs it
-      static u8 ReadSDA(void)
-      {
-        GPIO_SET(GPIO_SDA, PIN_SDA);
-        MicroWait(2);
-        return !!(GPIO_READ(GPIO_SDA) & PIN_SDA);
-      }
+      // I2C calls
+      bool I2CCmd(int mode, uint8_t *bytes, int len, i2c_callback cb) {
+        // Queue is full.  Sorry 'bout it.
+        if (_fifo_count >= MAX_QUEUE) {
+          return false;
+        }
+        
+        I2CDisable();
 
-      static u8 Read(u8 last)
-      {
-        u8 b = 0, i;
+        I2C_Queue *active = &i2c_queue[_fifo_start++];
+        if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
+        _fifo_count++;
+        
+        active->cb = cb;
+        active->size = active->count = len;
+        active->buffer = active->data = bytes;
+        active->flags = mode;
 
-        for (i = 0; i < 8; i++)
-        {
-          b <<= 1;
-          ReadSDA();
-          DriveSCL(1);
-          b |= ReadSDA();
-          DriveSCL(0);
+        if (!_active) {
+          _active = true;
+          start_transaction();
         }
 
-        // send Ack or Nak
-        if (last)
-          DriveSDA(1);
-        else
-          DriveSDA(0);
-
-        DriveSCL(1);
-        DriveSCL(0);
-        DriveSDA(1);
-
-        return b;
-      }
-
-      // Issue a Stop condition
-      static void Stop(void)
-      {
-        DriveSDA(0);
-        DriveSCL(1);
-        DriveSDA(1);
-      }
-
-      // Write byte and return true for Ack or false for Nak
-      static u8 Write(u8 b)
-      {
-        u8 m;
-        // Write byte
-        for (m = 0x80; m != 0; m >>= 1)
-        {
-          DriveSDA(m & b);
-
-          DriveSCL(1);
-          //if (m == 1)
-          //  ReadSDA();  // Let SDA fall prior to last bit
-          DriveSCL(0);
-        }
-
-        DriveSCL(1);
-        b = ReadSDA();
-        DriveSCL(0);
-
-        return b;
-      }
-
-      // Issue a Start condition for I2C address with Read/Write bit
-      static u8 Start(u8 addressRW)
-      {
-        DriveSDA(0);
-        DriveSCL(0);
-
-        return Write(addressRW);
-      }
-
-      // Read a register - wait for completion
-      // @param addr 7-bit I2C address (not shifted left)
-      // @param reg 8-bit register
-      int I2CRead(u8 addr, u8 reg)
-      {
-        int val;
-        Start(addr << 1);       // Base address is Write (for writing address)
-        Write(reg);
-        Stop();
-        Start((addr << 1) + 1); // Base address + 1 is Read (for Reading address)
-        val = Read(1);          // 1 for 'last Read'
-        Stop();
-        return val;
-      }
-
-      // Write a register - wait for completion
-      // @param addr 7-bit I2C address (not shifted left)
-      // @param reg 8-bit register
-      void I2CWrite(u8 addr, u8 reg, u8 val)
-      {
-        Start(addr << 1);    // Base address is Write
-        Write(reg);
-        Write(val);
-        Stop();
+        I2CEnable();
+        
+        return true;
       }
     }
+  }
+}
+
+static inline uint8_t* next_byte() {
+  I2C_Queue *active = &i2c_queue[_fifo_end];
+  uint8_t *data = (uint8_t*)active->data;
+  active->data = data + 1;
+  active->count--;
+  return data;
+}
+
+static inline void start_transaction() {
+  using namespace Anki::Cozmo::HAL;
+  
+  I2C_Queue *active = &i2c_queue[_fifo_end];
+  bool write = active->flags & I2C_DIR_WRITE;
+  bool nack = active->flags & I2C_SEND_NACK;
+  bool start = active->flags & I2C_SEND_START;
+    
+  if (~I2C0_C1 & I2C_C1_MST_MASK) {
+    I2C0_C1 |= I2C_C1_MST_MASK;
+    MicroWait(10);
+  } else {
+    if (start) {
+      I2C0_C1 |= I2C_C1_RSTA_MASK;
+    } else {
+      I2C0_C1 &= ~I2C_C1_RSTA_MASK;
+    }
+  }
+  
+  if (nack) {
+    I2C0_C1 |= I2C_C1_TXAK_MASK;
+  } else {
+    I2C0_C1 &= ~I2C_C1_TXAK_MASK;
+  }
+  
+  if (write) {
+    I2C0_C1 |= I2C_C1_TX_MASK;
+    I2C0_D = *next_byte();
+  } else {
+    I2C0_C1 &= ~I2C_C1_TX_MASK;
+    MicroWait(10);
+    int throwaway = I2C0_D;
+  } 
+}
+
+extern "C"
+void I2C0_IRQHandler(void) {
+  using namespace Anki::Cozmo::HAL;
+  
+  // Clear interrupt
+  I2C0_S |= I2C_S_IICIF_MASK;  
+
+  I2C_Queue *active = &i2c_queue[_fifo_end];
+  
+  // Continue down current chain
+  if (active->count > 0) {
+    bool write = active->flags & I2C_DIR_WRITE;
+
+    if (write) {
+      I2C0_D = *next_byte();
+      return ;
+    } else {
+      // Prevent extra transactions
+      if (active->count == 1) {
+        I2C0_C1 |= I2C_C1_TX_MASK;
+        MicroWait(1);
+      }
+
+      *(next_byte()) = I2C0_D;
+
+      if (active->count) {
+        return ;
+      }
+    } 
+  }
+
+  // Dequeue FIFO
+  if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
+
+  // Tell HAL we completed
+  if (active->cb) {
+    active->cb(active->buffer, active->size);
+  }
+
+  // Send Stop it's 100% nessessary
+  if (active->flags & I2C_SEND_STOP) {
+    I2C0_C1 &= ~I2C_C1_MST_MASK;
+    MicroWait(10);
+  }
+  
+  // Dequeue transaction when available
+  if (--_fifo_count > 0) {
+    start_transaction();
+  } else {
+    _active = false;
   }
 }

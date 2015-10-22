@@ -36,7 +36,7 @@ namespace Anki
       GPIO_PIN_SOURCE(PWDN,    PTA, 1);
 
       // Configuration for GC0329 camera chip
-      const u8 I2C_ADDR = 0x31; 
+      const u8 I2C_ADDR = 0x31;
       const u8 CAM_SCRIPT[] =
       {
         #include "gc0329.h"
@@ -136,6 +136,8 @@ namespace Anki
       int JPEGCompress(u8* out, u8* in, int pitch);
       int JPEGEnd(u8* out);
 #endif
+
+      static void InitDMA();
       
       // Set up camera 
       static void InitCam()
@@ -149,23 +151,29 @@ namespace Anki
         GPIO_RESET(GPIO_PWDN, PIN_PWDN);
         MicroWait(50);
         GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
+          
+        I2CReadReg(I2C_ADDR, 0xF0);
+        I2CReadReg(I2C_ADDR, 0xF1);
+        uint8_t id = I2CReadReg(I2C_ADDR, 0xFB);
 
-        // Read ID regs to get I2C state machine into proper state
-        I2CRead(I2C_ADDR, 0xf0);
-        I2CRead(I2C_ADDR, 0xf1);
-        
-        // Write the configuration registers            
-        const u8* p = CAM_SCRIPT;
-        while (*p) {
-          I2CWrite(I2C_ADDR, p[0], p[1]);
-          p += 2;
+        // Send command array to camera
+        uint8_t* initCode = (uint8_t*) CAM_SCRIPT;
+
+        for(;;) {
+          uint8_t p1 = *(initCode++), p2 = *(initCode++);
+          
+          if (!p1 && !p2) break ;
+          
+          I2CWriteReg(I2C_ADDR, p1, p2);
         }
         
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
-        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));           
+        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
+          
+        InitDMA();
       }
-      
+
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
       static void InitDMA()
       {
@@ -206,7 +214,6 @@ namespace Anki
         
         InitIO();
         InitCam();
-        InitDMA();
         
         // Wait for everything to sync
         while (!timingSynced_)
@@ -258,6 +265,14 @@ void DMA0_IRQHandler(void)
 
   // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+
+  FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
+  FTM2_C0SC = FTM_CnSC_CHIE_MASK |
+              //FTM_CnSC_ELSA_MASK |
+              //FTM_CnSC_ELSB_MASK |
+              //FTM_CnSC_MSA_MASK |
+              FTM_CnSC_MSB_MASK ;
+
   FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
   FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
   FTM2_CNTIN = 0;
@@ -273,6 +288,7 @@ void DMA0_IRQHandler(void)
 
   timingSynced_ = true;
   NVIC_EnableIRQ(FTM2_IRQn);
+  NVIC_SetPriority(FTM2_IRQn, 1);
 }
 
 extern "C"
@@ -280,14 +296,14 @@ void FTM2_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  static u8 countdown = 10;
-  if (countdown)
-  {
-    countdown--;
-    return;
+  if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
+    FTM2_C0SC &= ~FTM_CnSC_CHF_MASK;
+    I2CDisable();
   }
   
   // Enable SPI DMA, Clear flag
+  if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
+
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 

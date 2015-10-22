@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #ifndef OLED_H
 #define OLED_H
 
@@ -47,6 +49,16 @@
 #define VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29
 #define VERTICAL_AND_LEFT_HORIZONTAL_SCROLL 0x2A
 
-void i2c_init(void);
+namespace Anki
+{
+  namespace Cozmo
+  {
+    namespace HAL
+    {
+      void OLEDFlip(void);
+      void OLEDInit(void);
+    }
+  }
+}
 
 #endif

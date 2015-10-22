@@ -13,6 +13,7 @@
 #include "spi.h"
 #include "dac.h"
 #include "hal/i2c.h"
+#include "hal/imu.h"
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -33,7 +34,8 @@ namespace Anki
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
-      {       
+      {
+        I2CEnable();
         //UartTransmit();
         TransmitDrop(buf, buflen, eof);
 
@@ -43,33 +45,27 @@ namespace Anki
   }
 }
 
-void hardware_init(void)
+int main (void)
 {
+  using namespace Anki::Cozmo::HAL;
+  
+  // Power up all ports
   SIM_SCGC5 |= 
     SIM_SCGC5_PORTA_MASK |
     SIM_SCGC5_PORTB_MASK |
     SIM_SCGC5_PORTC_MASK |
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
-}
 
-int main (void)
-{
-  using namespace Anki::Cozmo::HAL;
-  
-  hardware_init();
   DebugInit();
-
-  // UART is at 800kbps until we sync - why bother?
-  //DebugPrintf("\r\nHeadboard 4.1 is booting.\n\n\r");
-
   TimerInit();
   PowerInit();
   I2CInit();
-
+  
   // Wait for Espressif to boot
-  for (int i=0; i<2; ++i)
+  for (int i=0; i<2; ++i) {
     Anki::Cozmo::HAL::MicroWait(1000000);
+  }
 
   // Switch to 10MHz external reference to enable 100MHz clock
   MCG_C1 &= ~MCG_C1_IREFS_MASK;
@@ -78,9 +74,10 @@ int main (void)
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
-  SPIInit();
+  IMUInit();
+  OLEDInit();
+  //SPIInit();
   //DacInit();
-  //i2c_init();
   //UartInit();
 
   CameraInit();
