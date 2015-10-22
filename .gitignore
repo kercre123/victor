@@ -156,9 +156,14 @@ uImage
 robot/som/ov2686/ov2686_code_timestamp.h
 robot/som/*.jpg
 
+# Ban .safe files, unless they're in the proper place (releases)
 *.safe
 !robot/releases/*.safe
 !makesafe*.exe
+
+robot/fixture/ankilog/Release
+robot/fixture/ankilog/Debug
+robot/fixture/ankilog/obj
 
 buildMakefile
 
