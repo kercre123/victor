@@ -95,11 +95,7 @@ void GetSequence(void)
 
 void SetFixtureText(void)
 {
-  DisplayClear(0x0000);
-  
-  // Red text with black background
-  DisplayTextForegroundColor(DisplayGetRGB565(255, 0, 0));
-  DisplayTextBackgroundColor(0x0000);
+  DisplayClear();
   
   if (g_fixtureType == FIXTURE_BODY_TEST) {    
     DisplayMoveCursor(3, 1);
@@ -115,7 +111,6 @@ void SetFixtureText(void)
   
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-  DisplayTextForegroundColor(DisplayGetRGB565(0x00, 0x00, 0xFF));
   DisplayMoveCursor(7, 1);
   DisplayPutChar('R');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
@@ -125,12 +120,9 @@ void SetFixtureText(void)
 void SetTestCounterText(u32 current, u32 count)
 {
   // Clear the display and print (index / count)
-  DisplayClear(0x0000);
   DisplayMoveCursor(3, 1);
   DisplayTextWidthMultiplier(2);
   DisplayTextHeightMultiplier(2);
-  DisplayTextForegroundColor(DisplayGetRGB565(255, 255, 0));  // Yellow
-  DisplayTextBackgroundColor(0x0000);
   
   DisplayPutChar('0' + ((current % 100) / 10));
   DisplayPutChar('0' + (current % 10));
@@ -145,16 +137,12 @@ void SetErrorText(u16 error)
 {
   STM_EVAL_LEDOn(LEDRED);  // Red
   
-  DisplayClear(0x0000);
+  DisplayClear();
   DisplayMoveCursor(3, 2);
   DisplayTextWidthMultiplier(3);
   DisplayTextHeightMultiplier(3);
-  DisplayTextForegroundColor(DisplayGetRGB565(255, 0, 0));  // Red
-  DisplayTextBackgroundColor(0x0000);
   
-  DisplayPutChar('0' + ((error % 1000) / 100));
-  DisplayPutChar('0' + ((error % 100) / 10));
-  DisplayPutChar('0' + (error % 10));
+  DisplayPrintf("%3i", error % 1000);
   
   // We want to force the red light to be seen for at least a second
   MicroWait(1000000);
@@ -164,12 +152,10 @@ void SetOKText(void)
 {
   STM_EVAL_LEDOn(LEDGREEN);  // Green
   
-  DisplayClear(0x0000);
+  DisplayClear();
   DisplayMoveCursor(3, 3);
   DisplayTextWidthMultiplier(3);
   DisplayTextHeightMultiplier(3);
-  DisplayTextForegroundColor(DisplayGetRGB565(0, 255, 0));  // Green
-  DisplayTextBackgroundColor(0x0000);
   
   DisplayPutString("OK");
 }
@@ -188,12 +174,10 @@ void SetOKText(void)
 
 void SetChargeText(void)
 {
-  DisplayClear(0x0000);
+  DisplayClear();
   DisplayMoveCursor(3, 1);
   DisplayTextWidthMultiplier(2);
   DisplayTextHeightMultiplier(2);
-  DisplayTextForegroundColor(DisplayGetRGB565(255, 255, 0));  // Yellow
-  DisplayTextBackgroundColor(0x0000);
   
   DisplayPutString("CHARGE");
 }
@@ -660,7 +644,7 @@ int main(void)
   /* Initialize LEDs */
   STM_EVAL_LEDInit(LEDRED);
   STM_EVAL_LEDInit(LEDGREEN);
-  
+
   STM_EVAL_LEDOff(LEDRED);
   STM_EVAL_LEDOff(LEDGREEN);
   
@@ -685,7 +669,7 @@ int main(void)
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  
+
   // Wait for lines to initialize and not float
   // 2 us was not long enough, just being safe...
   MicroWait(100);
