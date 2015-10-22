@@ -218,7 +218,7 @@ namespace Anki {
           if(_driveWithHeadDown) {
             // Now put the head at the right angle for following paths
             // TODO: Make it possible to set the speed/accel somewhere?
-            if(robot.MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
+            if(robot.GetMoveComponent().MoveHeadToAngle(HEAD_ANGLE_WHILE_FOLLOWING_PATH, 2.f, 5.f) != RESULT_OK) {
               PRINT_NAMED_ERROR("DriveToPoseAction.Init", "Failed to move head to path-following angle.");
               result = ActionResult::FAILURE_ABORT;
             }
@@ -1011,7 +1011,7 @@ namespace Anki {
       }
       
       // Can't track head to an object and face it
-      robot.DisableTrackToObject();
+      robot.GetMoveComponent().DisableTrackToObject();
       
       // Disable completion signals since this is inside another action
       _visuallyVerifyAction.SetIsPartOfCompoundAction(true);
@@ -1052,7 +1052,7 @@ namespace Anki {
       }
 
       if(_headTrackWhenDone) {
-        if(robot.EnableTrackToObject(_objectID, true) == RESULT_OK) {
+        if(robot.GetMoveComponent().EnableTrackToObject(_objectID, true) == RESULT_OK) {
           return ActionResult::SUCCESS;
         } else {
           PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.HeadTracKFail",
@@ -1248,7 +1248,7 @@ namespace Anki {
       
       if(!_inPosition) {
         // TODO: Add ability to specify speed/accel
-        if(robot.MoveHeadToAngle(_headAngle.ToFloat(), 15, 20) != RESULT_OK) {
+        if(robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(), 15, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -1365,7 +1365,7 @@ namespace Anki {
       
       if(!_inPosition) {
         // TODO: Add ability to specify speed/accel
-        if(robot.MoveLiftToHeight(_heightWithVariation, 10, 20) != RESULT_OK) {
+        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation, 10, 20) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -1643,7 +1643,7 @@ namespace Anki {
       robot.StopDocking();
       
       // Also return the robot's head to level
-      robot.MoveHeadToAngle(0, 2.f, 6.f);
+      robot.GetMoveComponent().MoveHeadToAngle(0, 2.f, 6.f);
       
       // Abort anything that shouldn't still be running
       if(robot.IsTraversingPath()) {
@@ -2226,7 +2226,7 @@ namespace Anki {
       } // if/else IsCarryingObject()
       
       // If we were moving, stop moving.
-      robot.StopAllMotors();
+      robot.GetMoveComponent().StopAllMotors();
       
       return result;
       

@@ -449,10 +449,6 @@ message SetBackpackLEDs {
   uint_8   robotID
 }
 
-message TapBlockOnGround {
-  uint_8   numTaps
-}
-
 // DisplayProceduralFace
 message DisplayProceduralFace {
   float_32 faceAngle,        // Degrees

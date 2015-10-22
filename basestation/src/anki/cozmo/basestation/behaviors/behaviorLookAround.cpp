@@ -306,7 +306,7 @@ void BehaviorLookAround::ResetBehavior(float currentTime_sec)
 {
   _lastLookAroundTime = currentTime_sec;
   _currentState = State::Inactive;
-  _robot.StopAllMotors();
+  _robot.GetMoveComponent().StopAllMotors();
   _robot.GetActionList().Cancel();
   _recentObjects.clear();
   _oldBoringObjects.clear();

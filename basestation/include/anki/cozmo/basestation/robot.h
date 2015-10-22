@@ -50,6 +50,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/components/movementComponent.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -364,64 +365,6 @@ public:
     // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
     ActionList& GetActionList() { return _actionList; }
     
-    // These are methods to lock/unlock subsystems of the robot to prevent
-    // MoveHead/MoveLift/DriveWheels/etc commands from having any effect.
-    
-    void LockHead(bool tf) { _headLocked = tf; }
-    void LockLift(bool tf) { _liftLocked = tf; }
-    void LockWheels(bool tf) { _wheelsLocked = tf; }
-    
-    bool IsHeadLocked() const { return _headLocked; }
-    bool IsLiftLocked() const { return _liftLocked; }
-    bool AreWheelsLocked() const { return _wheelsLocked; }
-    
-    // Below are low-level actions to tell the robot to do something "now"
-    // without using the ActionList system:
-    
-    // Sends message to move lift at specified speed
-    Result MoveLift(const f32 speed_rad_per_sec);
-    
-    // Sends message to move head at specified speed
-    Result MoveHead(const f32 speed_rad_per_sec);
-    
-    // Sends a message to the robot to move the lift to the specified height
-    Result MoveLiftToHeight(const f32 height_mm,
-                            const f32 max_speed_rad_per_sec,
-                            const f32 accel_rad_per_sec2,
-                            const f32 duration_sec = 0.f);
-    
-    // Sends a message to the robot to move the head to the specified angle
-    Result MoveHeadToAngle(const f32 angle_rad,
-                           const f32 max_speed_rad_per_sec,
-                           const f32 accel_rad_per_sec2,
-                           const f32 duration_sec = 0.f);
-    
-    Result TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
-                              const f32 accel_rad_per_sec2);
-    
-    // Sends a message to robot to tap the carried block on the ground the
-    // specified number of times
-    Result TapBlockOnGround(const u8 numTaps);
-    
-    // If robot observes the given object ID, it will tilt its head and rotate its
-    // body to keep looking at the last-observed marker. Fails if objectID doesn't exist.
-    // If "headOnly" is true, then body rotation is not performed.
-    Result EnableTrackToObject(const u32 objectID, bool headOnly);
-    Result DisableTrackToObject();
-    
-    
-    
-    Result EnableTrackToFace(const Vision::TrackedFace::ID_t, bool headOnly);
-    Result DisableTrackToFace();
-    const ObjectID& GetTrackToObject() const { return _trackToObjectID; }
-    const Vision::TrackedFace::ID_t GetTrackToFace() const { return _trackToFaceID; }
-    bool  IsTrackingWithHeadOnly() const { return _trackWithHeadOnly; }
-    
-    Result DriveWheels(const f32 lwheel_speed_mmps,
-                       const f32 rwheel_speed_mmps);
-    
-    Result StopAllMotors();
-    
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
     // anything.
@@ -605,6 +548,9 @@ public:
     inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
     
     inline EmotionManager& GetEmotionManager() { return _emotionMgr; }
+  
+    inline MovementComponent& GetMoveComponent() { return _movementComponent; }
+    inline const MovementComponent& GetMoveComponent() const { return _movementComponent; }
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -638,9 +584,8 @@ public:
     
     //ActionQueue      _actionQueue;
     ActionList       _actionList;
-    bool             _wheelsLocked;
-    bool             _headLocked;
-    bool             _liftLocked;
+  
+  MovementComponent _movementComponent;
         
 
     // Path Following. There are two planners, only one of which can
@@ -749,13 +694,6 @@ public:
     const Vision::KnownMarker*  _carryingMarker;
     bool                        _lastPickOrPlaceSucceeded;
     
-    // Object/Face to track head to whenever it is observed
-    ObjectID                    _trackToObjectID;
-    Vision::TrackedFace::ID_t   _trackToFaceID;
-    bool                        _trackWithHeadOnly;
-    bool                        _headLockedBeforeTracking;
-    bool                        _wheelsLockedBeforeTracking;
-    
     /*
      // Plan a path to the pre-ascent/descent pose (depending on current
      // height of the robot) and then go up or down the ramp.
@@ -840,34 +778,6 @@ public:
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,
                                      const PoseFrameID_t& frameId) const;
-    
-    // Sends message to move lift at specified speed
-    Result SendMoveLift(const f32 speed_rad_per_sec) const;
-    
-    // Sends message to move head at specified speed
-    Result SendMoveHead(const f32 speed_rad_per_sec) const;
-    
-    // Sends a message to the robot to move the lift to the specified height
-    Result SendSetLiftHeight(const f32 height_mm,
-                             const f32 max_speed_rad_per_sec,
-                             const f32 accel_rad_per_sec2,
-                             const f32 duration_sec) const;
-    
-    // Sends a message to the robot to move the head to the specified angle
-    Result SendSetHeadAngle(const f32 angle_rad,
-                            const f32 max_speed_rad_per_sec,
-                            const f32 accel_rad_per_sec2,
-                            const f32 duration_sec) const;
-
-    Result SendTurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
-                                  const f32 accel_rad_per_sec2) const;
-    
-    Result SendTapBlockOnGround(const u8 numTaps) const;
-    
-    Result SendDriveWheels(const f32 lwheel_speed_mmps,
-                           const f32 rwheel_speed_mmps) const;
-    
-    Result SendStopAllMotors() const;
 
     Result ClearPath();
 
