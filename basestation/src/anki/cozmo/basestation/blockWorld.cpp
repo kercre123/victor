@@ -9,6 +9,7 @@
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"

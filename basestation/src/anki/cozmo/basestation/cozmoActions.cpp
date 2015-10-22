@@ -2079,14 +2079,13 @@ namespace Anki {
       
       
       // Get the top marker as this will be what needs to be seen for verification
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
-      if (activeCube == nullptr) {
-        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.NonActiveCube", "Only active cubes can be rolled");
+      Block* block = dynamic_cast<Block*>(object);
+      if (block == nullptr) {
+        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.NonBlock", "Only blocks can be rolled");
         return RESULT_FAIL;
       }
       Pose3d junk;
-      _expectedMarkerPostRoll = &(activeCube->GetTopMarker(junk));
-      
+      _expectedMarkerPostRoll = &(block->GetTopMarker(junk));
       
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.

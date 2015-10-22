@@ -40,6 +40,7 @@ namespace Anki
     class Robot;
     class RobotManager;
     class RobotMessageHandler;
+    class ActiveCube;
     
     class BlockWorld
     {

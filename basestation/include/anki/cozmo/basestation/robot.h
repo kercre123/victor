@@ -96,6 +96,7 @@ class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
+class ActiveCube;
 
 namespace RobotInterface {
 class MessageHandler;

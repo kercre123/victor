@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -3112,12 +3113,13 @@ namespace Anki {
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          lights[i].onColor = activeCube->_ledState[i].onColor;
-          lights[i].offColor = activeCube->_ledState[i].offColor;
-          lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
-          lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
-          lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
-          lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          lights[i].onColor = ledState.onColor;
+          lights[i].offColor = ledState.offColor;
+          lights[i].onPeriod_ms = ledState.onPeriod_ms;
+          lights[i].offPeriod_ms = ledState.offPeriod_ms;
+          lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
+          lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
         }
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
@@ -3308,12 +3310,13 @@ namespace Anki {
       std::array<Anki::Cozmo::LightState, 4> lights;
       ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
       for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-        lights[i].onColor = activeCube->_ledState[i].onColor;
-        lights[i].offColor = activeCube->_ledState[i].offColor;
-        lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
-        lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+        const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+        lights[i].onColor = ledState.onColor;
+        lights[i].offColor = ledState.offColor;
+        lights[i].onPeriod_ms = ledState.onPeriod_ms;
+        lights[i].offPeriod_ms = ledState.offPeriod_ms;
+        lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
+        lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }
