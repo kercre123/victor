@@ -26,8 +26,8 @@ public class PatternCollectionViewController : MonoBehaviour {
   // Use this for initialization
   private void Start () {
   	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
-    PatternMemory patternMemory = CreateTestPatternMemory ();
-    OnPatternMemoryLoaded (patternMemory);
+    //PatternMemory patternMemory = CreateTestPatternMemory ();
+    //OnPatternMemoryLoaded (patternMemory);
 
     CreateDialogButton ();
   }
@@ -103,10 +103,12 @@ public class PatternCollectionViewController : MonoBehaviour {
 
   private void PlayAddPatternToBankAnimation() {
     // TODO: Play animation
+    OnAddPatternToBankAnimationFinished ();
   }
 
   private void OnAddPatternToBankAnimationFinished() {
     // TODO: Update badge visuals
+    _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
   }
 
   private void ShowInstructionsDialog() {

@@ -125,6 +125,8 @@ public class PatternPlayController : GameController {
     robot.SetBehaviorSystem(true);
     robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
     robot.ExecuteBehavior(BehaviorType.NoneBehavior);
+
+    patternPlayUIController.OnPatternMemoryLoaded (memoryBank);
   }
 
   protected override void OnDisable() {
