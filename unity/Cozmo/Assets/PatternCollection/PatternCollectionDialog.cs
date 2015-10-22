@@ -17,21 +17,48 @@ public class PatternCollectionDialog : BaseDialog {
   [SerializeField]
   private ScrollRect _memoryBankScrollRect;
 
-  private Dictionary<MemoryBank, PatternCollectionBankCard> _signatureToCardDict;
+  private List<PatternCollectionBankCard> _memoryBankCards;
+
+  [SerializeField]
+  private float _slowDragSpeedThreshold = 30f;
 
 	public void Initialize(PatternMemory patternMemory){
     // Create all the memory bank cards
-    _signatureToCardDict = CreateMemoryBankCards (patternMemory);
+    _memoryBankCards = CreateMemoryBankCards (patternMemory);
 
     // TODO: Listen for added patterns and update dialog - shouldn't update every frame
     // We'll need to cache the cards for easy access later
 
     SetCompletionText (patternMemory.GetNumSeenPatterns (), patternMemory.GetNumTotalPatterns ());
   }
+
+  public void OnDrag()
+  {
+    // The player could be dragging the scrollview slowly while 
+    // looking at the cards at the same time. We want to remove the badge
+    // if the player has seen it.
+    float scrollXSpeed = Mathf.Abs(_memoryBankScrollRect.velocity.x);
+    if (scrollXSpeed < _slowDragSpeedThreshold) {
+      RemoveBadgesIfSeen();
+    }
+  }
+
+  public void OnDragEnd()
+  {
+    // We want to remove the badge if the player has seen it, 
+    // which is generally when they stop scrolling.
+    RemoveBadgesIfSeen ();
+  }
+
+  private void RemoveBadgesIfSeen()
+  {
+    foreach (PatternCollectionBankCard card in _memoryBankCards) {
+      card.RemoveBadgeIfSeen();
+    }
+  }
   
-  private Dictionary<MemoryBank, PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
-    Dictionary<MemoryBank, PatternCollectionBankCard> memoryBankCards 
-    = new Dictionary<MemoryBank, PatternCollectionBankCard>();
+  private List<PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
+    List<PatternCollectionBankCard> memoryBankCards = new List<PatternCollectionBankCard>();
 
     // Foreach memory bank...
     List<MemoryBank> memoryBanks = patternMemory.GetMemoryBanks ();
@@ -53,8 +80,8 @@ public class PatternCollectionDialog : BaseDialog {
         bankCardScript = newBankCard.GetComponent<PatternCollectionBankCard>();
         bankCardScript.Initialize(bank);
 
-        // Add the card to the dictionary
-        memoryBankCards.Add ( bank, bankCardScript );
+        // Add the card to the list
+        memoryBankCards.Add ( bankCardScript );
       }
     }
 
@@ -63,6 +90,7 @@ public class PatternCollectionDialog : BaseDialog {
 
   public void OnCloseButtonTap()
   {
+    RemoveBadgesIfSeen ();
     UIManager.CloseDialog (this);
   }
 

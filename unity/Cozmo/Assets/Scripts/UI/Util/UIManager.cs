@@ -2,7 +2,6 @@
 using UnityEngine.UI;
 using System.Collections;
 
-// In the future we can use this to drive opening and closing dialogs.
 public class UIManager : MonoBehaviour {
 
   private static UIManager _instance;

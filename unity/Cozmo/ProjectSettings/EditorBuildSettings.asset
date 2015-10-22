@@ -26,4 +26,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/ShakeShake.unity
   - enabled: 1
+    path: Assets/Scenes/SpeedTap.unity
+  - enabled: 1
     path: Assets/Scenes/PatternPlay.unity
