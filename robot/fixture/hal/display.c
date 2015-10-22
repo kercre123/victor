@@ -63,14 +63,14 @@ static void DisplayWrite(bool cmd, const u8* p, int count)
     GPIO_SET(CMD_PORT, CMD_SOURCE);
   }
   
-  //GPIO_RESET(CS_PORT, CS_SOURCE);
+  GPIO_RESET(CS_PORT, CS_SOURCE);
 
   while (count-- > 0) {
-    while (~SPI1->SR & SPI_SR_BSY) ;
+    while (SPI1->SR & SPI_SR_BSY) ;
     SPI1->DR = *(p++);
   }
 
-  //GPIO_SET(CS_PORT, CS_SOURCE);
+  GPIO_SET(CS_PORT, CS_SOURCE);
 }
 
 // Initialize the display on power up
@@ -113,7 +113,7 @@ void InitDisplay(void)
   SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
   SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
   SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;//SPI_BaudRatePrescaler_8;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
   SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
   SPI_InitStructure.SPI_CRCPolynomial = 7;
   SPI_Init(SPI1, &SPI_InitStructure);
@@ -125,7 +125,6 @@ void InitDisplay(void)
   SPI1->SR = 0;
 
   DisplayWrite(true, InitDisplayCmd, sizeof(InitDisplayCmd));
-  DisplayInvert(true);
 }
 
 // Display a bitmap
