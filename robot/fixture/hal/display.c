@@ -63,14 +63,14 @@ static void DisplayWrite(bool cmd, const u8* p, int count)
     GPIO_SET(CMD_PORT, CMD_SOURCE);
   }
   
-  GPIO_RESET(CS_PORT, CS_SOURCE);
+  //GPIO_RESET(CS_PORT, CS_SOURCE);
 
   while (count-- > 0) {
     while (~SPI1->SR & SPI_SR_BSY) ;
     SPI1->DR = *(p++);
   }
 
-  GPIO_SET(CS_PORT, CS_SOURCE);
+  //GPIO_SET(CS_PORT, CS_SOURCE);
 }
 
 // Initialize the display on power up
@@ -140,7 +140,7 @@ void DisplayClear()
 
 void DisplayInvert(bool invert)
 {
-  u8 command[] = { invert ? 0xA6 : 0xA7 };
+  u8 command[] = { invert ? 0xA7 : 0xA6 };
   DisplayWrite(true, command, sizeof(command));
 }
 
