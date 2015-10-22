@@ -197,6 +197,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_debug)',
+                  '<@(opencv_lib_search_path_ios_debug)',
                   '<(webots_path)/lib/',
                 ],
               },
@@ -205,6 +206,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_debug)',
+                  '<@(opencv_lib_search_path_mac_debug)',
                   '<(webots_path)/lib/',
                 ],
               },
@@ -228,6 +230,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
+                  '<@(opencv_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
                 ],
               },
@@ -236,6 +239,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
+                  '<@(opencv_lib_search_path_mac_release)',
                   '<(webots_path)/lib/',
                 ],
               },
@@ -259,6 +263,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
+                  '<@(opencv_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
                 ],
               },
@@ -267,6 +272,7 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
+                  '<@(opencv_lib_search_path_mac_release)',
                   '<(webots_path)/lib/',
                 ],
               },
@@ -406,12 +412,14 @@
             'mac_target_archs': [ '$(ARCHS_STANDARD)' ]
           },
           'xcode_settings': {
-            'ARCHS': [ '>@(mac_target_archs)' ],
-            'SDKROOT': 'macosx',
-            # 'MACOSX_DEPLOYMENT_TARGET': '10.9', # latest
-          },
+              'ARCHS': [ '>@(mac_target_archs)' ],
+              'SDKROOT': 'macosx',
+              # 'MACOSX_DEPLOYMENT_TARGET': '10.9', # latest
+              'LIBRARY_SEARCH_PATHS': [
+                '<(face_library_lib_path)',
+               ],
+            },
         },
-
 
         'targets': [
           {
@@ -443,6 +451,8 @@
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
+
+              
             'actions': [
               {
                 'action_name': 'create_symlink_webotsCtrlEnginefaceLibraryLibs',
