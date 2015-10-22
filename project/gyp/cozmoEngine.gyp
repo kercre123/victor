@@ -196,12 +196,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_debug)',
+                    '<@(opencv_lib_search_path_ios_debug)',
+                    '<(webots_path)/lib/',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_debug)',
+                    '<@(opencv_lib_search_path_mac_debug)',
+                    '<(webots_path)/lib/',
+                ],
               },
             }],
           ],
@@ -221,12 +229,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_ios_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_mac_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
           ],
@@ -246,12 +262,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_ios_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_mac_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
           ],
