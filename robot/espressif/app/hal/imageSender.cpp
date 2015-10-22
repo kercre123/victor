@@ -17,7 +17,7 @@ void sendImgChunk(ImageChunk& msg, bool eof)
   {
     msg.frameTimeStamp  = system_get_time(); //XXX Need to replace with GetTimeStamp() as soon as we have it
     msg.imageId++;
-    msg.imageChunkCount = msg.chunkId;
+    msg.imageChunkCount = msg.chunkId + 1;
   }
   clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof);
   msg.chunkId = eof ? 0 : msg.chunkId + 1;

@@ -107,46 +107,11 @@ class CozmoReceiver(IDataReceiver):
         else:
             chunk = ImageChunk(buffer)
             sys.stdout.write(repr(chunk) + "\r\n")
+            if chunk.imageChunkCount != 0:
+                open("img{:05d}.minipeg".format(chunk.imageId), 'wb').write(chunk.data)
 
     def SendData(self, buffer):
         return self.transport.SendData(True, False, self.robot, buffer)
-    
-    
-
-def saveJpegs(numFrames=1, countTest=False):
-    s = socket.socket(type=socket.SOCK_DGRAM)
-    s.sendto(b"0", ("172.31.1.1", 5551))
-    if countTest:
-        countReference = bytes(range(0x60))
-        while True:
-            d = s.recv(1500)
-            if d != countReference:
-                sys.stdout.write("Bad packet:\r\n\t")
-                for i in range(0, len(d), 16):
-                    sys.stdout.write(" ".join(["{:02x}".format(b) for b in d[i:i+16]]))
-                    sys.stdout.write("\r\n\t")
-            else:
-                sys.stdout.write('.')
-            sys.stdout.flush()
-    else:
-        frame = 0
-        while frame <= numFrames:
-            buf = b""
-            while True:
-                d = s.recv(1500)
-                buf += d
-                print(len(d))
-                if len(d) < (1000):
-                    if frame > 0:
-                        fh = open("i2spi_{:02d}.minipeg".format(frame), "wb")
-                        fh.write(buf)
-                        fh.close()
-                        fh = open("i2spi_{:02}.jpg".format(frame), "wb")
-                        fh.write(mini2jpeg(buf))
-                        fh.close()
-                    buf = b""
-                    break
-            frame += 1
         
 if __name__ == '__main__':
     c = CozmoReceiver()
