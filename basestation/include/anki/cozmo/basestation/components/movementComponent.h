@@ -24,8 +24,6 @@ namespace Anki {
 namespace Cozmo {
   
 // declarations
-template<typename> class AnkiEvent;
-namespace ExternalInterface { class MessageEngineToGame; }
 class Robot;
 class IExternalInterface;
   
