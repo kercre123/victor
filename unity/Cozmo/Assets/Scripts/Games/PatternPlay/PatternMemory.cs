@@ -3,7 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class PatternMemory {
-  
+
+  public const string PATTERN_MEMORY_BADGE_TAG = "PatternMemory";
+
+  public delegate void PatternHandler(BlockPattern patternAdded, MemoryBank bankParent);
+  public event PatternHandler PatternAdded;
+  public void RaisePatternAdded(BlockPattern pattern, MemoryBank bank){
+    if (PatternAdded != null) {
+      PatternAdded (pattern, bank);
+    }
+  }
+
   private List<MemoryBank> memoryBanks = new List<MemoryBank>();
   private HashSet<BlockPattern> keyPatterns = new HashSet<BlockPattern>();
 
@@ -66,23 +76,33 @@ public class PatternMemory {
     return memoryBanks;
   }
 
-  public void AddSeen(BlockPattern pattern) {
-    // Seems like this would be a good point to return (Seen/ New / Not_A_Pattern)
+  public bool AddSeen(BlockPattern pattern) {
+    bool newPattern = false;
     DAS.Info("PatternMemory.AddSeen", "Seen pattern " + pattern.GetHashCode());
     for (int i = 0; i < memoryBanks.Count; ++i) {
       if (memoryBanks[i].Contains(pattern)) {
         if (memoryBanks[i].TryAddSeen(pattern)) {
           DAS.Info("PatternMemory.Add", "Pattern Added for bank: " + memoryBanks[i].name);
+
+          newPattern = true;
+
+          List<string> tags = new List<string>();
+          tags.Add(PATTERN_MEMORY_BADGE_TAG);
+          tags.Add(memoryBanks[i].name);
+          BadgeManager.TryAddBadge(pattern, tags);
+          RaisePatternAdded(pattern, memoryBanks[i]);
         }
         else {
           DAS.Info("PatternMemory.Add", "Pattern already exists in bank: " + memoryBanks[i].name);
+          newPattern = false;
         }
         DAS.Info("PatternMemory.Add", "There are now " + memoryBanks[i].GetSeenPatterns().Count + " patterns in that bank");
-        return;
+        return newPattern;
       }
     }
 
     DAS.Info("PatternMemory.Add.InvalidPattern", "pattern does not match any registered in PatternMemory");
+    return false;
   }
 
   public bool ContainsSeen(BlockPattern pattern) {
@@ -152,5 +172,21 @@ public class PatternMemory {
     return e.Current;
   }
 
+  public int GetNumTotalPatterns()
+  {
+    int numTotalPatterns = 0;
+    foreach (MemoryBank bank in memoryBanks) {
+      numTotalPatterns += bank.GetNumTotalPatterns();
+    }
+    return numTotalPatterns;
+  }
 
+  public int GetNumSeenPatterns()
+  {
+    int numSeenPatterns = 0;
+    foreach (MemoryBank bank in memoryBanks) {
+      numSeenPatterns += bank.GetNumSeenPatterns();
+    }
+    return numSeenPatterns;
+  }
 }

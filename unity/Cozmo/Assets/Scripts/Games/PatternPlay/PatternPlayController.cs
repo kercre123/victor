@@ -10,9 +10,11 @@ public class PatternPlayController : GameController {
 
   private int previousInputID = -1;
   private bool seenPattern = false;
-  private bool lastSeenPatternNew = false;
+  private bool shouldCelebrateNew = false;
   private int lastSetID = -1;
   private float lastSetTime = -100.0f;
+  private float lastPatternSeen = 0.0f;
+  private BlockPattern lastSeenPattern;
 
   // variables for autonomous pattern building
   PatternPlayAutoBuild patternPlayAutoBuild = new PatternPlayAutoBuild();
@@ -79,8 +81,16 @@ public class PatternPlayController : GameController {
     return seenPattern;
   }
 
-  public bool LastSeenPatternNew() {
-    return lastSeenPatternNew;
+  public bool ShouldCelebrateNew() {
+    return shouldCelebrateNew;
+  }
+
+  public void SetShouldCelebrateNew(bool shouldCelebrateNew_) {
+    shouldCelebrateNew = shouldCelebrateNew_;
+  }
+
+  public float LastPatternSeenTime() {
+    return lastPatternSeen;
   }
 
   public int SeenBlocksOverThreshold(float threshold) {
@@ -112,6 +122,9 @@ public class PatternPlayController : GameController {
     robot.StopFaceAwareness();
     memoryBank.Initialize();
     patternPlayAutoBuild.controller = this;
+    robot.SetBehaviorSystem(true);
+    robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
+    robot.ExecuteBehavior(BehaviorType.NoneBehavior);
   }
 
   protected override void OnDisable() {
@@ -197,13 +210,13 @@ public class PatternPlayController : GameController {
   protected override void Update_PLAYING() {
     base.Update_PLAYING();
 
-    //DebugObjectTracking();
-
+    if (Input.GetKey(KeyCode.Space)) {
+      DebugObjectTracking();
+    }
+   
     // inputs for setting block lights
     KeyboardBlockCycle();
     PhoneCycle();
-
-    CheckShouldPlayIdle();
 
     // actually set the lights on the physical blocks.
     SetBlockLights();
@@ -241,15 +254,8 @@ public class PatternPlayController : GameController {
 
   }
 
-  private void CheckShouldPlayIdle() {
-    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
-      if (blockPatternData[robot.visibleObjects[i].ID].blockLightsLocalSpace.AreLightsOff() == false) {
-        CozmoEmotionManager.instance.SetIdleAnimation("NONE");
-        return;
-      }
-    }
-
-    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
+  public BlockPatternData GetBlockPatternData(int blockID) {
+    return blockPatternData[blockID];
   }
 
   private void DetectPatterns() {
@@ -258,18 +264,10 @@ public class PatternPlayController : GameController {
     seenPattern = false;
 
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData)) {
-      if (!memoryBank.ContainsSeen(currentPattern)) {
-
-        DAS.Info("PatternPlayController", "New Pattern: " + " vertical: " + currentPattern.verticalStack +
-        " lights: " + currentPattern.blocks[0].back + " " + currentPattern.blocks[0].front + " " + currentPattern.blocks[0].left + " " + currentPattern.blocks[0].right);
-
-        seenPattern = true;
-        lastSeenPatternNew = true;
-        memoryBank.AddSeen(currentPattern);
-      }
-      else {
-        seenPattern = true;
-        lastSeenPatternNew = false;
+      seenPattern = true;
+      lastPatternSeen = Time.time;
+      if (memoryBank.AddSeen(currentPattern)) {
+        shouldCelebrateNew = true;
       }
     }
   }
@@ -353,6 +351,25 @@ public class PatternPlayController : GameController {
       if (blockConfig.Value.blockLightsLocalSpace.right) {
         robot.activeBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
+
+      // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
+      // in a pattern yet to white.
+      bool autoBuilding = patternPlayAutoBuild.autoBuilding;
+      bool nonDirtySeen = robot.seenObjects.Contains(robot.activeBlocks[blockConfig.Key]);
+      bool notInNeatList = patternPlayAutoBuild.NeatListContains(robot.activeBlocks[blockConfig.Key]) == false;
+      bool notCarrying = true;
+      if (patternPlayAutoBuild.GetHeldObject() != null) {
+        if (blockConfig.Key != patternPlayAutoBuild.GetHeldObject().ID) {
+          notCarrying = false;
+        }
+      }
+
+      if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
+        for (int i = 0; i < robot.activeBlocks[blockConfig.Key].lights.Length; ++i) {
+          robot.activeBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
+        }
+      }
+
     }
 
     previousInputID = currentInputID;

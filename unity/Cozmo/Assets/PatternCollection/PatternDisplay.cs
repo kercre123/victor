@@ -2,11 +2,13 @@
 using System.Collections;
 
 public class PatternDisplay : MonoBehaviour {
-
   public CozmoCube[] cubes;
 
   [SerializeField]
   private RectTransform _notFoundDisplay;
+  
+  [SerializeField]
+  private BadgeDisplay _newBadgeDisplay;
 
   private BlockPattern _pattern;
   public BlockPattern pattern {
@@ -32,6 +34,8 @@ public class PatternDisplay : MonoBehaviour {
           // Update the cube's orientation depending on if the cube is facing cozmo
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
         }
+
+        _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
       }
       else {
         // Hide all the cubes
@@ -39,7 +43,36 @@ public class PatternDisplay : MonoBehaviour {
         {
           cubes[i].gameObject.SetActive(false);
         }
+
+        _newBadgeDisplay.HideDisplay();
       }
+    }
+  }
+
+  public void RemoveBadgeIfSeen()
+  {
+    if (_pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
+      return;
+    }
+
+    Vector3[] worldCorners = new Vector3[4];
+    RectTransform rectTransform = transform as RectTransform;
+    rectTransform.GetWorldCorners(worldCorners);
+
+    Rect viewportRect = new Rect(0f, 0f, 1f, 1f);
+    bool isObjectOffscreen = false;
+    foreach (Vector3 worldPos in worldCorners)
+    {
+      Vector3 screenPos = Camera.main.WorldToViewportPoint(worldPos);
+      if (!viewportRect.Contains(screenPos))
+      {
+        isObjectOffscreen = true;
+        break;
+      }
+    }
+    
+    if (!isObjectOffscreen) {
+      BadgeManager.TryRemoveBadge(_pattern);
     }
   }
 }

@@ -93,4 +93,13 @@ public class MemoryBank {
   // seen patterns stored in cozmo space that fit the signature
   private HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
 
+  public int GetNumTotalPatterns()
+  {
+    return patterns.Count;
+  }
+
+  public int GetNumSeenPatterns()
+  {
+    return seenPatterns.Count;
+  }
 }
