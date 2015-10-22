@@ -78,11 +78,12 @@ class ImageChunk(struct.Struct):
 class CozmoReceiver(IDataReceiver):
     "ReliableTransport receiver class"
     
-    def __init__(self, robotAddress=("172.31.1.1", 5551)):
-        sys.stdout.write("Connecting to robot at {}:{}\r\n".format(*robotAddress))
+    def __init__(self, saveImages=False, robotAddress=("172.31.1.1", 5551)):
         self.robot = robotAddress
+        self.saveImages = False
         ut = UDPTransport(logInPackets="rxPackets.bin")
         ut.OpenSocket()
+        sys.stdout.write("Connecting to robot at {}:{} from {}:{}\r\n".format(*robotAddress, *ut.getsockname()))
         self.transport = ReliableTransport(ut, self)
         self.transport.Connect(self.robot)
         self.transport.start()
@@ -107,7 +108,7 @@ class CozmoReceiver(IDataReceiver):
         else:
             chunk = ImageChunk(buffer)
             sys.stdout.write(repr(chunk) + "\r\n")
-            if chunk.imageChunkCount != 0:
+            if self.saveImages and chunk.imageChunkCount != 0:
                 open("img{:05d}.minipeg".format(chunk.imageId), 'wb').write(chunk.data)
 
     def SendData(self, buffer):

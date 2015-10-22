@@ -61,7 +61,7 @@ bool haveDataToSend(ReliableConnection* self)
 
 void ICACHE_FLASH_ATTR ReliableTransport_Init()
 {
-  //printf("ReliableTransport Initalizing\n");
+  //printf("ReliableTransport Initalizing\r\n");
 }
 
 void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* dest)
@@ -104,7 +104,7 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */
            (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->pendingReliableBytes))
   {
-    printf("WARN: No room for pending reliable message data. %d bytes, %d messages queued\n", connection->pendingReliableBytes, connection->numPendingReliableMessages);
+    printf("WARN: No room for pending reliable message data. %d bytes, %d messages queued\r\n", connection->pendingReliableBytes, connection->numPendingReliableMessages);
     return false;
   }
   else
@@ -215,12 +215,12 @@ bool SendTxBuf(ReliableConnection* connection)
 
   if (UnreliableTransport_SendPacket(connection->txBuf, connection->txQueued) == false)
   {
-    //printf("WARN: ReliableTransport could't send pending messages\n");
+    //printf("WARN: ReliableTransport could't send pending messages\r\n");
     return false;
   }
   else
   {
-    //printf("  Sent: siz=%d typ=%d seq=%d..%d ack=%d\n", connection->txQueued,
+    //printf("  Sent: siz=%d typ=%d seq=%d..%d ack=%d\r\n", connection->txQueued,
     //  header->type, header->seqIdMin, header->seqIdMax, header->lastReceivedId);
     resetTxQueue(connection);
     return true;
@@ -245,7 +245,7 @@ bool ReliableTransport_Connect(ReliableConnection* connection)
 {
   if (QueueMessage(NULL, 0, connection, eRMT_ConnectionRequest, GLOBAL_INVALID_TAG) == false)
   {
-    //printf("ERROR: couldn't queue connect message on new connection\n");
+    //printf("ERROR: couldn't queue connect message on new connection\r\n");
     return false;
   }
   else
@@ -258,7 +258,7 @@ bool ReliableTransport_FinishConnection(ReliableConnection* connection)
 {
   if (QueueMessage(NULL, 0, connection, eRMT_ConnectionResponse, GLOBAL_INVALID_TAG) == false)
   {
-    //printf("ERROR: couldn't queue finish message on new connection\n");
+    //printf("ERROR: couldn't queue finish message on new connection\r\n");
     return false;
   }
   else
@@ -271,7 +271,7 @@ bool ReliableTransport_Disconnect(ReliableConnection* connection)
 {
   if (QueueMessage(NULL, 0, connection, eRMT_DisconnectRequest, GLOBAL_INVALID_TAG) == false)
   {
-    //printf("ERROR: couldn't queue disconnect message\n");
+    //printf("ERROR: couldn't queue disconnect message\r\n");
     return false;
   }
   else
@@ -339,7 +339,7 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
     }
     else // A duplicate (or out of order) reliable message
     {
-      //printf("INFO: Duplicate / out of order message seqID %d (expecting %d) type %d\n", seqId, connection->nextInSequenceId, msgType);
+      //printf("INFO: Duplicate / out of order message seqID %d (expecting %d) type %d\r\n", seqId, connection->nextInSequenceId, msgType);
       return;
     }
   }
@@ -369,14 +369,14 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
     }
     case eRMT_MultiPartMessage:
     {
-      printf("ERROR: Embedded reliable transport doesn't implement Multi part messages\n");
+      printf("ERROR: Embedded reliable transport doesn't implement Multi part messages\r\n");
       break;
     }
     case eRMT_MultipleReliableMessages:
     case eRMT_MultipleUnreliableMessages:
     case eRMT_MultipleMixedMessages:
     {
-      printf("ERROR: MultipleMessages should have been handled before here\n");
+      printf("ERROR: MultipleMessages should have been handled before here\r\n");
       break;
     }
     case eRMT_ACK:
@@ -391,7 +391,7 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
     }
     default:
     {
-      printf("ERROR: ReliableTransport unhandled message type %d\n", msgType);
+      printf("ERROR: ReliableTransport unhandled message type %d\r\n", msgType);
     }
   }
 }
@@ -400,14 +400,14 @@ bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferS
 {
   if (bufferSize > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)
   {
-    //printf("ERROR: ReliableTransport send message, %d is above MTU %d\n", bufferSize, (int)ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE);
+    //printf("ERROR: ReliableTransport send message, %d is above MTU %d\r\n", bufferSize, (int)ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE);
     return false;
   }
   else if (!IsMessageTypeAlwaysSentUnreliably(messageType)) // Is reliable
   {
     if (QueueMessage(buffer, bufferSize, connection, messageType, tag) == false)
     {
-      //printf("ERROR: Couldn't queue reliable message %d[%d]\n", buffer[0], bufferSize);
+      //printf("ERROR: Couldn't queue reliable message %d[%d]\r\n", buffer[0], bufferSize);
       return false;
     }
     else
@@ -474,7 +474,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
   }
   else if (strncmp((char*)buffer, RELIABLE_PACKET_HEADER_PREFIX, RELIABLE_PACKET_HEADER_PREFIX_LENGTH) != 0)
   {
-    //printf("WARN: ReliableTransport RX header didn't match %d[%d]\n", buffer[0], bufferSize);
+    //printf("WARN: ReliableTransport RX header didn't match %d[%d]\r\n", buffer[0], bufferSize);
     return -2;
   }
   else
@@ -484,7 +484,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
     uint8_t* msg = buffer + sizeof(AnkiReliablePacketHeader);
     uint16_t bytesProcessed = sizeof(AnkiReliablePacketHeader);
 
-    //printf("Recv: siz=%d typ=%d seq=%d..%d ack=%d\n", connection->txQueued,
+    //printf("Recv: siz=%d typ=%d seq=%d..%d ack=%d\r\n", connection->txQueued,
     //  header.type, header.seqIdMin, header.seqIdMax, header.lastReceivedId);
 
     // Unpack the message
@@ -501,7 +501,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
         msgLen |= (*msg) << 8; msg++;
         if (msgLen > (bufferSize - bytesProcessed))
         {
-          //printf("ERROR ReliableTransport not enough data for submessage %d < %d-%d\n", msgLen, bufferSize, bytesProcessed);
+          //printf("ERROR ReliableTransport not enough data for submessage %d < %d-%d\r\n", msgLen, bufferSize, bytesProcessed);
           return -3;
         }
         bytesProcessed += msgLen + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH;
@@ -517,7 +517,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
     {
       if (header.seqIdMax != header.seqIdMin)
       {
-        //printf("ERROR: ReliableTransport seqIds don't match %d %d %d\n", header.seqIdMin, header.seqIdMax, header.type);
+        //printf("ERROR: ReliableTransport seqIds don't match %d %d %d\r\n", header.seqIdMin, header.seqIdMax, header.type);
         return -4;
       }
       else
@@ -538,11 +538,6 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
 bool ICACHE_FLASH_ATTR ReliableTransport_Update(ReliableConnection* connection)
 {
   uint32_t currentTime = GetMicroCounter();
-  //printState(connection);
-  if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_PRETIMEOUT)
-  {
-    printf("Transport time since\nlast receive:\n %u ms\n", (unsigned int)(currentTime - connection->latestRecvTime));
-  }
   if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_TIMEOUT)
   {
     return false;

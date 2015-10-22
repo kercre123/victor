@@ -20,6 +20,7 @@
 
 static struct espconn* socket;
 static ReliableConnection* clientConnection;
+static uint32_t clientConnectionId;
 
 bool clientConnected(void)
 {
@@ -79,6 +80,7 @@ sint8 clientInit()
   printf("clientInit\r\n");
 
   clientConnection = NULL;
+  clientConnectionId = 0;
 
   socket = (struct espconn *)os_zalloc(sizeof(struct espconn));
   os_memset( socket, 0, sizeof( struct espconn ) );
@@ -138,13 +140,14 @@ bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const b
 bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 {
 #ifdef DEBUG_CLIENT
-  printf("clientQueuePacket\n");
+  printf("clientQueuePacket to %d.%d.%d.%d:%d\r\n", socket->proto.udp->remote_ip[0], socket->proto.udp->remote_ip[1],
+                    socket->proto.udp->remote_ip[2], socket->proto.udp->remote_ip[3], socket->proto.udp->remote_port);
 #endif
 
   const int8 err = espconn_send(socket, data, len);
   if (err < 0) // I think a negative number is an error. 0 is OK, I don't know what positive numbers are
   {
-    printf("Failed to queue UDP packet %d\n", err);
+    printf("Failed to queue UDP packet %d\r\n", err);
     return false;
   }
   else
@@ -156,12 +159,21 @@ bool UnreliableTransport_SendPacket(uint8* data, uint16 len)
 void Receiver_OnConnectionRequest(ReliableConnection* conn)
 {
   printf("New Reliable transport connection request\r\n");
-  ReliableTransport_FinishConnection(conn); // Accept the connection
+  if (clientConnectionId == 0) // Not connected yet
+  {
+    ReliableTransport_FinishConnection(conn); // Accept the connection
+  }
+  else // The engine is trying to reconnect
+  {
+    printf("\tlooks like a new engine, clearing current connection\r\n");
+    Receiver_OnDisconnect(conn); // Kill our connection instance so we can make a new one with the new engine instance
+  }
 }
 
 void Receiver_OnConnected(ReliableConnection* conn)
 {
   printf("Reliable transport connection completed\r\n");
+  clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
 }
 
 void Receiver_OnDisconnect(ReliableConnection* conn)
@@ -173,8 +185,10 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
+    os_free(clientConnection->dest);
     os_free(clientConnection);
     clientConnection = NULL;
+    clientConnectionId = 0;
   }
 }
 
