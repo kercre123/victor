@@ -99,6 +99,7 @@ public class PatternCollectionViewController : MonoBehaviour {
   private void ShowUnlockMomentDialog(BlockPattern pattern) {
     BaseDialog newDialog = UIManager.OpenDialog (_patternDiscoveredDialogPrefab);
     _patternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
+    _patternDiscoveredDialog.Initialize (pattern);
     
     _patternDiscoveredDialog.DialogClosed += OnDiscoveryDialogClosed;
   }

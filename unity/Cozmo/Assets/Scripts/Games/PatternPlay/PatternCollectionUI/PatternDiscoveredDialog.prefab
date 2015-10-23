@@ -2634,6 +2634,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _facingCozmoAngle: -90
+  _awayCozmoAngle: 0
   leftColor: {fileID: 11435494}
   rightColor: {fileID: 11400822}
   frontColor: {fileID: 11449570}
@@ -2674,6 +2676,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: PatternDiscoveredDialog
+  _stackPatternDisplay: {fileID: 11477148}
+  _horizontalPatternDisplay: {fileID: 11464070}
 --- !u!114 &11441750
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2709,6 +2713,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _facingCozmoAngle: -90
+  _awayCozmoAngle: 0
   leftColor: {fileID: 11476060}
   rightColor: {fileID: 11497436}
   frontColor: {fileID: 11457478}
@@ -2772,6 +2778,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _facingCozmoAngle: -90
+  _awayCozmoAngle: 0
   leftColor: {fileID: 11495678}
   rightColor: {fileID: 11453588}
   frontColor: {fileID: 11458350}
@@ -2799,7 +2807,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f2795d0a1a8945a996dfaa14d6d8c1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubes: []
+  cubes:
+  - {fileID: 11444508}
+  - {fileID: 11481058}
+  - {fileID: 11491600}
   _notFoundDisplay: {fileID: 0}
   _newBadgeDisplay: {fileID: 0}
 --- !u!114 &11467038
@@ -2813,6 +2824,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _facingCozmoAngle: -90
+  _awayCozmoAngle: 0
   leftColor: {fileID: 11486718}
   rightColor: {fileID: 11493250}
   frontColor: {fileID: 11493382}
@@ -2852,7 +2865,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f2795d0a1a8945a996dfaa14d6d8c1f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  cubes: []
+  cubes:
+  - {fileID: 11434740}
+  - {fileID: 11461586}
+  - {fileID: 11467038}
   _notFoundDisplay: {fileID: 0}
   _newBadgeDisplay: {fileID: 0}
 --- !u!114 &11480004
@@ -2878,6 +2894,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _facingCozmoAngle: -90
+  _awayCozmoAngle: 0
   leftColor: {fileID: 11441750}
   rightColor: {fileID: 11416308}
   frontColor: {fileID: 11411256}
@@ -2964,6 +2982,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _facingCozmoAngle: -90
+  _awayCozmoAngle: 0
   leftColor: {fileID: 11476456}
   rightColor: {fileID: 11441752}
   frontColor: {fileID: 11411684}

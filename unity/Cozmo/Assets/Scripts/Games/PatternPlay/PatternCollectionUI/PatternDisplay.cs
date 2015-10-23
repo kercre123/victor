@@ -18,7 +18,9 @@ public class PatternDisplay : MonoBehaviour {
     set {
       _pattern = value;
 
-      _notFoundDisplay.gameObject.SetActive(_pattern == null);
+      if (_notFoundDisplay != null) {
+        _notFoundDisplay.gameObject.SetActive(_pattern == null);
+      }
 
       if (_pattern != null){
         for (int i = 0; i < cubes.Length && i < pattern.blocks.Count; i++) {
@@ -36,20 +38,24 @@ public class PatternDisplay : MonoBehaviour {
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
         }
 
-        _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
+        if (_newBadgeDisplay != null) {
+          _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
+        }
       } else {
         // Hide all the cubes
         for (int i = 0; i < cubes.Length; i++) {
           cubes[i].gameObject.SetActive(false);
         }
-
-        _newBadgeDisplay.HideDisplay();
+        
+        if (_newBadgeDisplay != null) {
+          _newBadgeDisplay.HideDisplay();
+        }
       }
     }
   }
 
   public void RemoveBadgeIfSeen() {
-    if (_pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
+    if (_newBadgeDisplay  == null || _pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
       return;
     }
 
