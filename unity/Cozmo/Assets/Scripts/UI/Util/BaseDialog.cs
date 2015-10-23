@@ -8,7 +8,7 @@ public class BaseDialog : MonoBehaviour {
 
   public event SimpleBaseDialogHandler DialogOpened;
   public static event BaseDialogHandler BaseDialogOpened;
-  public static void RaiseDialogOpened(BaseDialog dialog){
+  public static void RaiseDialogOpened(BaseDialog dialog) {
     if (dialog.DialogOpened != null) {
       dialog.DialogOpened ();
     }
@@ -19,7 +19,7 @@ public class BaseDialog : MonoBehaviour {
 
   public event SimpleBaseDialogHandler DialogClosed;
   public static event BaseDialogHandler BaseDialogClosed;
-  public static void RaiseDialogClosed(BaseDialog dialog){
+  public static void RaiseDialogClosed(BaseDialog dialog) {
     if (dialog.DialogClosed != null) {
       dialog.DialogClosed ();
     }
@@ -35,37 +35,31 @@ public class BaseDialog : MonoBehaviour {
     private set { _dialogId = value; }
   }
 
-  public void OpenDialog()
-  {
+  public void OpenDialog() {
     RaiseDialogOpened (this);
     PlayOpenAnimations ();
   }
 
-  public void CloseDialog()
-  {
+  public void CloseDialog() {
     RaiseDialogClosed (this);
     PlayCloseAnimations ();
   }
 
-  private void PlayOpenAnimations()
-  {
+  private void PlayOpenAnimations() {
     // TODO: Play some animations
     OnOpenAnimationsFinished ();
   }
 
-  private void OnOpenAnimationsFinished()
-  {
+  private void OnOpenAnimationsFinished() {
     // TODO: Raise event
   }
 
-  private void PlayCloseAnimations()
-  {
+  private void PlayCloseAnimations() {
     // TODO: Play some animations
     OnCloseAnimationsFinished ();
   }
 
-  private void OnCloseAnimationsFinished()
-  {
+  private void OnCloseAnimationsFinished() {
     // TODO: Raise event
     GameObject.Destroy (gameObject);
   }

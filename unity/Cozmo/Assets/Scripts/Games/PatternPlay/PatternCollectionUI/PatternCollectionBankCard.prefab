@@ -139,6 +139,7 @@ MonoBehaviour:
     type: 2}
   _headerText: {fileID: 11456622}
   _newBadgeDisplay: {fileID: 11488880}
+  _layoutElement: {fileID: 11427520}
 --- !u!114 &11427520
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -490,6 +491,10 @@ Prefab:
       propertyPath: _headerText
       value: 
       objectReference: {fileID: 11456622}
+    - target: {fileID: 0}
+      propertyPath: _layoutElement
+      value: 
+      objectReference: {fileID: 11427520}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 132270}
