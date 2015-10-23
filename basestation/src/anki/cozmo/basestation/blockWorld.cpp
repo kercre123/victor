@@ -776,9 +776,9 @@ namespace Cozmo {
           BroadcastObjectObservation(observedObject, true);
         }
         
-        if(_robot->GetTrackToObject().IsSet() &&
-           obsID == _robot->GetTrackToObject() &&
-           !_robot->IsHeadLocked())
+        if(_robot->GetMoveComponent().GetTrackToObject().IsSet() &&
+           obsID == _robot->GetMoveComponent().GetTrackToObject() &&
+           !_robot->GetMoveComponent().IsHeadLocked())
         {
           UpdateTrackToObject(observedObject);
         }
@@ -848,7 +848,7 @@ namespace Cozmo {
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
-          if(false == _robot->IsTrackingWithHeadOnly()) {
+          if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
             // Also rotate ("pan") body:
             const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
             msg.bodyPanAngle_rad = panAngle.ToFloat();
@@ -2153,13 +2153,13 @@ namespace Cozmo {
           _selectedObject.UnSet();
         }
         
-        if(_robot->GetTrackToObject() == object->GetID()) {
+        if(_robot->GetMoveComponent().GetTrackToObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
                            "Clearing %s object %d which robot %d is currently tracking its head to.\n",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
-          _robot->DisableTrackToObject();
+          _robot->GetMoveComponent().DisableTrackToObject();
         }
         
         bool emitSignal = true;
