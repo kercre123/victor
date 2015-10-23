@@ -72,12 +72,12 @@ bool BehaviorReactToCliff::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorReactToCliff::Init(double currentTime_sec)
+Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec)
 {
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
+IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   switch (_currentState)
   {
@@ -98,7 +98,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        _robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(0, newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
@@ -130,7 +130,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
   return Status::Complete;
 }
 
-Result BehaviorReactToCliff::Interrupt(double currentTime_sec)
+Result BehaviorReactToCliff::Interrupt(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

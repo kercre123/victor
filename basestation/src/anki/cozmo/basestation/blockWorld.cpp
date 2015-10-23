@@ -2376,7 +2376,7 @@ namespace Anki
       }
     }
     
-    void BlockWorld::DrawAllObjects() const
+    void BlockWorld::DrawAllObjects()
     {
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {

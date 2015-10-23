@@ -261,7 +261,7 @@ namespace Cozmo {
         // Interrupt the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
-        initResult = _currentBehavior->Interrupt(currentTime_sec);
+        initResult = _currentBehavior->Interrupt(_robot, currentTime_sec);
         
         if (nullptr != _nextBehavior)
         {

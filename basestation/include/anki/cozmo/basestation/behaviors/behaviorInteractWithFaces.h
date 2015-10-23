@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/vision/basestation/trackedFace.h"
-#include "util/signals/simpleSignal_fwd.h"
+
 #include "clad/externalInterface/messageEngineToGame.h"
 #include <list>
 
@@ -34,27 +34,31 @@ namespace Cozmo {
     BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
     virtual ~BehaviorInteractWithFaces() override;
     
-    virtual Result Init(double currentTime_sec) override;
-    
     virtual bool IsRunnable(double currentTime_sec) const override;
     
-    virtual Status Update(double currentTime_sec) override;
-    
-    virtual Result Interrupt(double currentTime_sec) override;
+    virtual Result Interrupt(Robot& robot, double currentTime_sec) override;
     
     virtual bool GetRewardBid(Reward& reward) override;
     
+  protected:
+    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
+    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+    
+
   private:
     using Face = Vision::TrackedFace;
     
-    void HandleRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
-    void HandleRobotDeletedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
-    void HandleRobotCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+    virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     
-    void UpdateBaselineFace(const Face* face);
+    void HandleRobotObservedFace(const Robot& robot, const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    void HandleRobotDeletedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    void HandleRobotCompletedAction(Robot& robot, const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    
+    void UpdateBaselineFace(Robot& robot, const Face* face);
     void RemoveFaceID(Face::ID_t faceID);
-    void UpdateProceduralFace(ProceduralFace& proceduralFace, const Face& face) const;
-    void PlayAnimation(const std::string& animName);
+    void UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const;
+    void PlayAnimation(Robot& robot, const std::string& animName);
     
     enum class State {
       Inactive,
@@ -77,8 +81,6 @@ namespace Cozmo {
     bool _isActing = false;
     double _lastGlanceTime = 0;
     double _lastTooCloseScaredTime = 0;
-    
-    std::vector<::Signal::SmartHandle> _eventHandles;
     
     struct FaceData
     {

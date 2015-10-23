@@ -32,14 +32,14 @@ public:
   
   virtual bool IsRunnable(double currentTime_sec) const override;
   
-  virtual Result Init(double currentTime_sec) override;
-  
-  virtual Status Update(double currentTime_sec) override;
-  
   // Finish placing current object if there is one, otherwise good to go
-  virtual Result Interrupt(double currentTime_sec) override;
+  virtual Result Interrupt(Robot& robot, double currentTime_sec) override;
   
   virtual bool GetRewardBid(Reward& reward) override;
+  
+protected:
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   
 private:
   enum class State {
@@ -55,7 +55,8 @@ private:
   
   std::vector<Signal::SmartHandle> _eventHandles;
   
-  void HandleMovedEvent(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+  virtual void AlwaysHandle(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) override;
+  
 }; // class BehaviorReactToPickup
   
 

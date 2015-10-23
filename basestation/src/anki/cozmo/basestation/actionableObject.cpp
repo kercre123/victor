@@ -186,7 +186,7 @@ namespace Anki {
                                                     const std::set<Vision::Marker::Code>& withCode,
                                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
                                                     const Pose3d* reachableFromPose,
-                                                    const f32 offset_mm)
+                                                    const f32 offset_mm) const
     {
       const Pose3d& relToObjectPose = GetPose();
       

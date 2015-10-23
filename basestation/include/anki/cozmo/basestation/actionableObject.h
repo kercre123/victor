@@ -55,7 +55,7 @@ namespace Anki {
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
                                     const Pose3d* reachableFromPose = nullptr,
-                                    const f32 offset_mm = 0);
+                                    const f32 offset_mm = 0) const;
       
       // If the object is selected, draws it using the "selected" color.
       // Otherwise draws it in the object's defined color.

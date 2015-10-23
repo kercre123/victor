@@ -100,7 +100,8 @@ namespace Anki
       // Return a pointer to an object with the specified ID. If that object
       // does not exist, nullptr is returned.  Be sure to ALWAYS check
       // for the return being null!
-      ObservableObject* GetObjectByID(const ObjectID objectID) const;
+      ObservableObject* GetObjectByID(const ObjectID objectID);
+      const ObservableObject* GetObjectByID(const ObjectID objectID) const;
       
       // Same as above, but only searches a given family of objects
       ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
@@ -207,7 +208,7 @@ namespace Anki
       
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
-      void DrawAllObjects() const;
+      void DrawAllObjects();
       
     protected:
       
@@ -364,7 +365,7 @@ namespace Anki
       return EmptyObjectMapByID;
     }
     
-    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
+    inline const ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
       
@@ -379,6 +380,13 @@ namespace Anki
       
       // ID not found!
       return nullptr;
+    }
+    
+    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID)
+    {
+      // Rather than duplicating the same nested loop that's in the const version
+      // of this method, just use const_cast(). Is that too disgusting?
+      return const_cast<BlockWorld*>(this)->GetObjectByID(objectID);
     }
     
     inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
