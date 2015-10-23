@@ -37,6 +37,11 @@ StateTable::iterator StateTable::find(StateID sid)
   return table_.find(sid);
 }
 
+StateTable::const_iterator StateTable::begin() const
+{
+  return table_.begin();
+}
+
 StateTable::const_iterator StateTable::end() const
 {
   return table_.end();

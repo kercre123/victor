@@ -98,6 +98,7 @@ public:
   void Clear();
 
   iterator find(StateID sid);
+  const_iterator begin() const;
   const_iterator end() const;
 
   StateEntry& operator[](const StateID& sid);
