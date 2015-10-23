@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class UIManager : MonoBehaviour {
 
@@ -23,8 +24,11 @@ public class UIManager : MonoBehaviour {
   [SerializeField]
   private Canvas _sceneCanvas;
 
+  private List<BaseDialog> _openDialogs;
+
   void Awake() {
     _instance = this;
+    _openDialogs = new List<BaseDialog>();
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
@@ -45,12 +49,21 @@ public class UIManager : MonoBehaviour {
 
     BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog> ();
     baseDialogScript.OpenDialog ();
+    Instance._openDialogs.Add (baseDialogScript);
 
     return baseDialogScript;
   }
 
   public static void CloseDialog(BaseDialog dialogObject) {
+    Instance._openDialogs.Remove (dialogObject);
     dialogObject.CloseDialog ();
+  }
+
+  public static void CloseAllDialogs() {
+    foreach (BaseDialog dialog in Instance._openDialogs) {
+      dialog.CloseDialog();
+    }
+    Instance._openDialogs.Clear ();
   }
 
   public static Camera GetUICamera() {

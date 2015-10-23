@@ -16,21 +16,17 @@ public class PatternCollectionViewController : MonoBehaviour {
 
   private PatternCollectionDialog _patternCollectionDialog;
 
+  [SerializeField]
+  private PatternDiscoveredDialog _patternDiscoveredDialogPrefab;
+  
+  private PatternDiscoveredDialog _patternDiscoveredDialog;
+
   private float _lastOpenedScrollValue = 0;
   
   [SerializeField]
   private PatternPlayInstructions _patternPlayInstructionsPrefab;
 
   private PatternMemory _patternMemory;
-  
-  // Use this for initialization
-  private void Start () {
-  	// Set up a test PatternMemory object to mimic data from PatternPlayUIController
-    //PatternMemory patternMemory = CreateTestPatternMemory ();
-    //OnPatternMemoryLoaded (patternMemory);
-
-    CreateDialogButton ();
-  }
   
   private void OnDestroy() {
     //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
@@ -42,11 +38,16 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternMemory.PatternAdded -= OnPatternAdded;
   }
 
-  public void OnPatternMemoryLoaded(PatternMemory patternMemory) {
+  #region Initialization
+  public void Initialize(PatternMemory patternMemory) {
     _patternMemory = patternMemory;
     _patternMemory.PatternAdded += OnPatternAdded;
-  }
 
+    CreateDialogButton ();
+  }
+  #endregion
+
+  #region Memory Bank Dialog
   private void CreateDialogButton() {
     GameObject newButton = UIManager.CreateUI (_openPatternCollectionDialogButtonPrefab.gameObject);
 
@@ -87,17 +88,22 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     _lastOpenedScrollValue = _patternCollectionDialog.GetScrollValue ();
   }
+  #endregion
 
+  #region Pattern Unlock Moment
   private void OnPatternAdded(BlockPattern pattern, MemoryBank bank) {
+    UIManager.CloseAllDialogs ();
     ShowUnlockMomentDialog (pattern);
   }
 
   private void ShowUnlockMomentDialog(BlockPattern pattern) {
-    // TODO: Show dialog; hook up to close button
-    OnUnlockMomentDialogClosed ();
+    BaseDialog newDialog = UIManager.OpenDialog (_patternDiscoveredDialogPrefab);
+    _patternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
+    
+    _patternDiscoveredDialog.DialogClosed += OnDiscoveryDialogClosed;
   }
 
-  private void OnUnlockMomentDialogClosed() {
+  private void OnDiscoveryDialogClosed() {
     PlayAddPatternToBankAnimation ();
   }
 
@@ -107,10 +113,12 @@ public class PatternCollectionViewController : MonoBehaviour {
   }
 
   private void OnAddPatternToBankAnimationFinished() {
-    // TODO: Update badge visuals
+    // Update badge visuals
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
   }
+  #endregion
 
+  #region Instructions dialog
   private void ShowInstructionsDialog() {
     // Show instructions
     // TODO: Instantiate instructions
@@ -123,8 +131,36 @@ public class PatternCollectionViewController : MonoBehaviour {
     // Destroy instructions dialog
     // Create button?
   }
+  #endregion
 
-	private PatternMemory CreateTestPatternMemory()	{
+  #region UI Testing Helpers
+  public void AddRandomPattern() {
+    bool addedPattern = false;
+    do {
+      bool randFront = FlipCoin ();
+      bool randBack = FlipCoin ();
+      bool randLeft = FlipCoin ();
+      bool randRight = FlipCoin ();
+      bool randFacing = FlipCoin ();
+      bool randStack = FlipCoin ();
+
+      BlockPattern newPattern = new BlockPattern ();
+      newPattern.blocks = new List<BlockLights> {
+        new BlockLights{ front = randFront, back = randBack, left = randLeft, right = randRight, facing_cozmo = randFacing },
+        new BlockLights{ front = randFront, back = randBack, left = randLeft, right = randRight, facing_cozmo = randFacing },
+        new BlockLights{ front = randFront, back = randBack, left = randLeft, right = randRight, facing_cozmo = randFacing }
+      };
+      newPattern.verticalStack = randStack;
+      addedPattern = _patternMemory.AddSeen (newPattern);
+    } while (!addedPattern);
+  }
+
+  private bool FlipCoin()
+  {
+    return Random.Range (0f, 1f) > 0.5f;
+  }
+
+	public void CreateTestPatternMemory()	{
 		PatternMemory patternMemory = new PatternMemory ();
 		patternMemory.Initialize ();
 
@@ -199,6 +235,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     newPattern.verticalStack = false;
     patternMemory.AddSeen (newPattern);
 
-		return patternMemory;
+    Initialize (patternMemory);
 	}
+  #endregion
 }
