@@ -18,6 +18,8 @@ void DisplayPutChar(char character);
 
 void DisplayPutString(const char* string);
 
+void DisplaySetScroll(u8 line);
+  
 // Display a string
 void DisplayPrintf(const char* format, ...);
 

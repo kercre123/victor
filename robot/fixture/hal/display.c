@@ -125,6 +125,7 @@ void InitDisplay(void)
   SPI1->SR = 0;
 
   DisplayWrite(true, InitDisplayCmd, sizeof(InitDisplayCmd));
+  DisplayInvert(true);
 }
 
 // Display a bitmap
@@ -132,7 +133,7 @@ void DisplayBitmap(u8 x, u8 y, u8 width, u8 height, u8* pic)
 {
 }
 
-// Clears the screen to the specified 16-bit color
+// Clears the screen
 void DisplayClear()
 {
 }
@@ -163,6 +164,12 @@ void DisplayPrintf(const char* format, ...)
   vsnprintf(dest, 64, format, argptr);
   va_end(argptr);  
   DisplayPutString(dest);
+}
+
+void DisplaySetScroll(u8 line)
+{
+  u8 command[] = { 0x40 | (line & 0x3F) };
+  DisplayWrite(true, command, sizeof(command));
 }
 
 // Move the current cursor location
