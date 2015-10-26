@@ -577,6 +577,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\monitor.c</FilePath>
             </File>
+            <File>
+              <FileName>espressif.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\espressif.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -6,9 +6,6 @@
 // Initialize the display on power up
 void InitDisplay(void);
 
-// Display a bitmap
-//void DisplayBitmap(u8 x, u8 y, u8 width, u8 height, u8* pic);
-
 // Clears the screen to the specified 16-bit color
 void DisplayClear();
 
@@ -18,7 +15,7 @@ void DisplayPutChar(char character);
 
 void DisplayPutString(const char* string);
 
-void DisplaySetScroll(u8 line);
+void DisplaySetScroll(bool enable);
   
 // Display a string
 void DisplayPrintf(const char* format, ...);

@@ -10,6 +10,7 @@
 #include "hal/testport.h"
 #include "hal/uart.h"
 #include "hal/console.h"
+#include "hal/espressif.h"
 #include "app/pcbTest.h"
 #include "app/fixture.h"
 #include <stdarg.h>
@@ -496,7 +497,7 @@ static BOOL TryToRunTests(void)
 static void MainExecution()
 {
   int i;
-  
+    
   switch (g_fixtureType)
   {
     case FIXTURE_BODY_TEST:
@@ -640,6 +641,9 @@ int main(void)
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+  InitEspressif();
+  ProgramEspressif();
   
   /* Initialize LEDs */
   STM_EVAL_LEDInit(LEDRED);
