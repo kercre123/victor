@@ -113,12 +113,51 @@ protected:
                               const f32 placementOffsetAngle_rad = 0,
                               const bool placeOnGroundIfCarrying = false,
                               const bool useManualSpeed = 0);
+  
+  void SendPickupObject(const s32 objectID,
+                        const bool usePreDockPose,
+                        const bool useApproachAngle,
+                        const f32 approachAngle_rad,
+                        const bool useManualSpeed = false);
+  
+  void SendPlaceOnObject(const s32 objectID,
+                         const bool usePreDockPose,
+                         const bool useExactRotation = false,
+                         const Rotation3d rot = Rotation3d(0, Z_AXIS_3D()),
+                         const bool useManualSpeed = false);
+
+  void SendPlaceRelObject(const s32 objectID,
+                          const bool usePreDockPose,
+                          const f32 placementOffsetX_mm,
+                          const bool useApproachAngle = false,
+                          const f32 approachAngle_rad = 0,
+                          const bool useManualSpeed = false);
+
   void SendPickAndPlaceSelectedObject(const bool usePreDockPose,
                                       const f32 placementOffsetX_mm = 0,
                                       const f32 placementOffsetY_mm = 0,
                                       const f32 placementOffsetAngle_rad = 0,
                                       const bool placeOnGroundIfCarrying = false,
                                       const bool useManualSpeed = false);
+  
+  void SendPickupSelectedObject(const bool usePreDockPose,
+                                const bool useApproachAngle,
+                                const f32 approachAngle_rad,
+                                const bool useManualSpeed = false);
+  
+  
+  void SendPlaceOnSelectedObject(const bool usePreDockPose,
+                                 const bool useExactRotation = false,
+                                 const Rotation3d rot = Rotation3d(0, Z_AXIS_3D()),
+                                 const bool useManualSpeed = false);
+
+  void SendPlaceRelSelectedObject(const bool usePreDockPose,
+                                  const f32 placementOffsetX_mm,
+                                  const bool useApproachAngle = false,
+                                  const f32 approachAngle_rad = 0,
+                                  const bool useManualSpeed = false);
+
+  
   void SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed);
   void SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
   void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
@@ -159,8 +198,8 @@ protected:
   f32           GetRobotHeadAngle_rad() const;
   f32           GetLiftHeight_mm() const;
   void          GetWheelSpeeds_mmps(f32& left, f32& right) const;
-  u32           GetCarryingObjectID() const;
-  u32           GetCarryingObjectOnTopID() const;
+  s32           GetCarryingObjectID() const;
+  s32           GetCarryingObjectOnTopID() const;
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
   std::vector<s32> GetAllObjectIDs() const;
