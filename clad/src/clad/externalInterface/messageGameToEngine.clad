@@ -224,6 +224,47 @@ message PickAndPlaceObject {
     uint_8 useManualSpeed
 }
 
+// PickupObject
+// If useApproachAngle == true, then only the preAction pose that results in a robot
+// approach angle of approachAngle_rad is considered.
+message PickupObject {
+    int_32 objectID, // negative value means "currently selected object"
+    float_32 approachAngle_rad,
+    bool   useApproachAngle,
+    uint_8 usePreDockPose,
+    uint_8 useManualSpeed,
+}
+
+// PlaceOnObject
+// Places the carried object on top of objectID.
+// The quaterion is only used if useExactRotation is true,
+// in which case the closest aligned rotation wrt to objectID is computed and the corresponding
+// preAction pose is selected. If the up-axis is invalid according to orientation of the currently
+// carried object then this action fails.
+message PlaceOnObject {
+    int_32 objectID, // negative value means "currently selected object"
+    float_32 qw,
+    float_32 qx,
+    float_32 qy,
+    float_32 qz,
+    float_32 useExactRotation,
+    uint_8 usePreDockPose,
+    uint_8 useManualSpeed,
+}
+
+// PlaceRelObject
+// Places the carried object on the ground at placementOffsetX_mm from objectID.
+// If useApproachAngle == true, then only the preAction pose that results in a robot
+// approach angle of approachAngle_rad is considered.
+message PlaceRelObject {
+    int_32 objectID, // negative value means "currently selected object"
+    float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
+    float_32 approachAngle_rad,
+    bool   useApproachAngle,
+    uint_8 usePreDockPose,
+    uint_8 useManualSpeed,
+}
+
 // RollObject
 message RollObject {
   int_32 objectID, // negative value means "currently selected object"
@@ -506,6 +547,9 @@ structure RobotActionUnion {
   GotoObject         goToObject,
   PlayAnimation      playAnimation,
   PickAndPlaceObject pickAndPlaceObject,
+  PickupObject       pickupObject,
+  PlaceOnObject      placeOnObject,
+  PlaceRelObject     placeRelObject,
   RollObject         rollObject,
   SetLiftHeight      setLiftHeight,
   SetHeadAngle       setHeadAngle,

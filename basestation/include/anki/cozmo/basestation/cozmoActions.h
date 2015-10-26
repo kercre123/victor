@@ -116,6 +116,8 @@ namespace Anki {
       DriveToObjectAction(const ObjectID& objectID,
                           const PreActionPose::ActionType& actionType,
                           const f32 predockOffsetDistX_mm = 0,
+                          const bool useApproachAngle = false,
+                          const f32 approachAngle_rad = 0,
                           const bool useManualSpeed = false);
       
       DriveToObjectAction(const ObjectID& objectID,
@@ -166,6 +168,7 @@ namespace Anki {
     public:
       DriveToPlaceCarriedObjectAction(const Robot& robot,
                                       const Pose3d& placementPose,
+                                      const bool placeOnGround,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false);
       
@@ -510,6 +513,81 @@ namespace Anki {
     }; // class PickAndPlaceObjectAction
 
     
+    
+    // Picks up the specified object.
+    class PickupObjectAction : public IDockAction
+    {
+    public:
+      PickupObjectAction(ObjectID objectID,
+                         const bool useManualSpeed = false);
+      virtual ~PickupObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      // Override to determine type (pick/place, low/high) dynamically depending
+      // on what we were doing.
+      virtual RobotActionType GetType() const override;
+      
+    protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
+      
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
+      
+      // For verifying if we successfully picked up the object
+      Pose3d _dockObjectOrigPose;
+      
+    }; // class PickupObjectAction
+    
+
+    // If carrying an object, places it on or relative to the specified object.
+    class PlaceRelObjectAction : public IDockAction
+    {
+    public:
+      PlaceRelObjectAction(ObjectID objectID,
+                           const bool placeOnGround = false,                           
+                           const f32 placementOffsetX_mm = 0,
+                           const bool useManualSpeed = false);
+      virtual ~PlaceRelObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      // Override to determine type (pick/place, low/high) dynamically depending
+      // on what we were doing.
+      virtual RobotActionType GetType() const override;
+      
+    protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
+      
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
+      
+      // For verifying if we successfully picked up the object
+      //Pose3d _dockObjectOrigPose;
+      
+      // If placing an object, we need a place to store what robot was
+      // carrying, for verification.
+      ObjectID                   _carryObjectID;
+      const Vision::KnownMarker* _carryObjectMarker;
+      
+      IActionRunner*             _placementVerifyAction;
+      bool                       _verifyComplete; // used in PLACE modes
+      
+    }; // class PlaceRelObjectAction
+    
+    
     // If not carrying anything, rolls the specified object.
     // If carrying an object, fails.
     class RollObjectAction : public IDockAction
@@ -561,6 +639,8 @@ namespace Anki {
         new DriveToObjectAction(objectID,
                                 doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING,
                                 placementOffsetX_mm,
+                                false,
+                                0,
                                 useManualSpeed),
         new PickAndPlaceObjectAction(objectID,
                                      doPlacement,
@@ -586,13 +666,96 @@ namespace Anki {
     
     
     // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then picking it up.
+    class DriveToPickupObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToPickupObjectAction(const ObjectID& objectID,
+                                      const bool useApproachAngle = false,
+                                      const f32 approachAngle_rad = 0,
+                                      const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID,
+                                PreActionPose::DOCKING,
+                                0,
+                                useApproachAngle,
+                                approachAngle_rad,
+                                useManualSpeed),
+        new PickupObjectAction(objectID)})
+      {
+        
+      }
+      
+      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PickAndPlaceObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
+    
+    
+    
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then placing an object relative to it.
+    class DriveToPlaceRelObjectAction : public CompoundActionSequential
+    {
+    public:
+      // Place carried object on ground at specified placementOffset from objectID,
+      // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
+      DriveToPlaceRelObjectAction(const ObjectID& objectID,
+                                  const f32 placementOffsetX_mm = 0,
+                                  const bool useApproachAngle = false,
+                                  const f32 approachAngle_rad = 0,
+                                  const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID,
+                                PreActionPose::PLACE_RELATIVE,
+                                placementOffsetX_mm,
+                                useApproachAngle,
+                                approachAngle_rad,
+                                useManualSpeed),
+        new PlaceRelObjectAction(objectID,
+                                 true,
+                                 placementOffsetX_mm,
+                                 useManualSpeed)})
+      {
+        
+      }
+      
+      // Places carried object on top of objectID
+      DriveToPlaceRelObjectAction(const Robot& robot,
+                                  const ObjectID& objectID,
+                                  const bool useExactRotation = false,
+                                  const Rotation3d& rotation = Rotation3d(0, Z_AXIS_3D()),
+                                  const bool useManualSpeed = false);
+
+      
+      
+      
+      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PickAndPlaceObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
+    
+    
+    // Common compound action for driving to an object, visually verifying we
     // can still see it, and then rolling it.
     class DriveToRollObjectAction : public CompoundActionSequential
     {
     public:
       DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, false, 0, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
@@ -648,7 +811,7 @@ namespace Anki {
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot, placementPose, useExactRotation, useManualSpeed),
+        new DriveToPlaceCarriedObjectAction(robot, placementPose, true, useExactRotation, useManualSpeed),
         new PlaceObjectOnGroundAction()})
       {
         
@@ -763,7 +926,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, false, 0, useManualSpeed),
         new TraverseObjectAction(objectID, useManualSpeed)})
       {
         

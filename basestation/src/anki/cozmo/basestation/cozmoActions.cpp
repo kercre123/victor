@@ -68,6 +68,46 @@ namespace Anki {
       }
     }
     
+    
+    
+    // Computes that angle (wrt world) at which the robot would have to approach the given pose
+    // such that it places the carried object at the given pose
+    Result ComputePlacementApproachAngle(const Robot& robot, const Pose3d& placementPose, f32& approachAngle_rad)
+    {
+      // Get carried object
+      ObjectID objectID = robot.GetCarryingObject();
+      ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
+      
+      
+      // Check that up axis of carried object and the desired placementPose are the same.
+      // Otherwise, it's impossible for the robot to place it there!
+      int targetUpAxis = placementPose.GetAxisClosestToParentZAxis();
+      int currentUpAxis = object->GetPose().GetAxisClosestToParentZAxis();
+      if (currentUpAxis != targetUpAxis) {
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes", "Carried up axis: %d, target up axis: %d", currentUpAxis, targetUpAxis);
+        return RESULT_FAIL;
+      }
+      
+      
+      // Get pose of carried object wrt robot
+      Pose3d poseObjectWrtRobot;
+      if (!object->GetPose().GetWithRespectTo(robot.GetPose(), poseObjectWrtRobot)) {
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.FailedToComputeObjectWrtRobotPose", "");
+        return RESULT_FAIL;
+      }
+      
+      // Get pose of robot if the carried object were aligned with the placementPose and the robot was still carrying it
+      Pose3d poseRobotIfPlacingObject(poseObjectWrtRobot.Invert());
+      poseRobotIfPlacingObject.PreComposeWith(placementPose);
+      
+      assert(poseRobotIfPlacingObject.GetAxisClosestToParentZAxis() == currentUpAxis);
+      
+      approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
+      
+      return RESULT_OK;
+    }
+
+    
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
@@ -367,13 +407,16 @@ namespace Anki {
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
                                              const f32 predockOffsetDistX_mm,
+                                             const bool useApproachAngle,
+                                             const f32 approachAngle_rad,
                                              const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(actionType)
     , _distance_mm(-1.f)
     , _predockOffsetDistX_mm(predockOffsetDistX_mm)
     , _useManualSpeed(useManualSpeed)
-    , _useApproachAngle(false)
+    , _useApproachAngle(useApproachAngle)
+    , _approachAngle_rad(approachAngle_rad)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -387,6 +430,7 @@ namespace Anki {
     , _predockOffsetDistX_mm(0)
     , _useManualSpeed(useManualSpeed)
     , _useApproachAngle(false)
+    , _approachAngle_rad(0)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -675,60 +719,15 @@ namespace Anki {
             
 #pragma mark ---- DriveToPlaceCarriedObjectAction ----
     
-    
-    // Computes that angle (wrt world) at which the robot would have to approach the given pose
-    // such that it places the carried object at the given pose
-    Result ComputePlacementApproachAngle(const Robot& robot, const Pose3d& placementPose, f32& approachAngle_rad)
-    {
-      // Get carried object
-      ObjectID objectID = robot.GetCarryingObject();
-      ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
-
-      
-      // Check that up axis of carried object and the desired placementPose are the same.
-      // Otherwise, it's impossible for the robot to place it there!
-      int targetUpAxis = placementPose.GetAxisClosestToParentZAxis();
-      int currentUpAxis = object->GetPose().GetAxisClosestToParentZAxis();
-      if (currentUpAxis != targetUpAxis) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes", "Carried up axis: %d, target up axis: %d", currentUpAxis, targetUpAxis);
-        return RESULT_FAIL;
-      }
-
-      
-      // Get pose of carried object wrt robot
-      Pose3d poseObjectWrtRobot;
-      if (!object->GetPose().GetWithRespectTo(robot.GetPose(), poseObjectWrtRobot)) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.FailedToComputeObjectWrtRobotPose", "");
-        return RESULT_FAIL;
-      }
-      
-      
-      // Get pose of carried object wrt desired placement pose
-      Pose3d poseObjectWrtPlacementPose;
-      if (!object->GetPose().GetWithRespectTo(placementPose, poseObjectWrtPlacementPose)) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.FailedToComputeObjectWrtPlacementPose", "");
-        return RESULT_FAIL;
-      }
-      
-      
-      // Get pose of robot if the carried object were aligned with the placementPose and the robot was still carrying it
-      Pose3d poseRobotIfPlacingObject(poseObjectWrtRobot.Invert());
-      poseRobotIfPlacingObject.PreComposeWith(poseObjectWrtPlacementPose);
-      poseRobotIfPlacingObject.PreComposeWith(placementPose);
-      
-      
-      approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
-      
-      return RESULT_OK;
-    }
-    
-    
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
                                                                      const Pose3d& placementPose,
+                                                                     const bool placeOnGround,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : DriveToObjectAction(robot.GetCarryingObject(),
-                          PreActionPose::PLACE_ON_GROUND,
+                          placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
+                          0,
+                          false,
                           0,
                           useManualSpeed)
     , _placementPose(placementPose)
@@ -804,6 +803,35 @@ namespace Anki {
       return result;
     } // DriveToPlaceCarriedObjectAction::CheckIfDone()
 
+    
+    
+    
+#pragma mark ---- DriveToPlaceRelObjectAction ----
+    
+    // Places carried object on top of objectID
+    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(const Robot& robot,
+                                                             const ObjectID& objectID,
+                                                             const bool useExactRotation,
+                                                             const Rotation3d& rotation,
+                                                             const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToPlaceCarriedObjectAction(robot,
+                                          Pose3d(rotation,
+                                                 robot.GetBlockWorld().GetObjectByID(objectID)->GetPose().GetTranslation(),
+                                                 robot.GetBlockWorld().GetObjectByID(objectID)->GetPose().GetParent() ),
+                                          false,
+                                          useExactRotation,
+                                          useManualSpeed),
+      new PlaceRelObjectAction(objectID,
+                               false,
+                               0,
+                               useManualSpeed)})
+    {
+      
+    }
+    
+
+    
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
@@ -2089,6 +2117,413 @@ namespace Anki {
       
     } // Verify()
        
+
+#pragma mark ---- PickupObjectAction ----
+    
+    PickupObjectAction::PickupObjectAction(ObjectID objectID,
+                                           const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
+    {
+      
+    }
+    
+    PickupObjectAction::~PickupObjectAction()
+    {
+
+    }
+    
+    void PickupObjectAction::Reset()
+    {
+      IDockAction::Reset();
+    }
+    
+    const std::string& PickupObjectAction::GetName() const
+    {
+      static const std::string name("PickupObjectAction");
+      return name;
+    }
+    
+    RobotActionType PickupObjectAction::GetType() const
+    {
+      switch(_dockAction)
+      {
+        case DockAction::DA_PICKUP_HIGH:
+          return RobotActionType::PICKUP_OBJECT_HIGH;
+          
+        case DockAction::DA_PICKUP_LOW:
+          return RobotActionType::PICKUP_OBJECT_LOW;
+
+        default:
+          PRINT_NAMED_WARNING("PickupObjectAction.GetType",
+                              "Dock action not set before determining action type.");
+          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
+      }
+    }
+    
+    void PickupObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    {
+      switch(_dockAction)
+      {
+        case DockAction::DA_PICKUP_HIGH:
+        case DockAction::DA_PICKUP_LOW:
+        {
+          if(!robot.IsCarryingObject()) {
+            PRINT_NAMED_ERROR("PickupObjectAction.EmitCompletionSignal",
+                              "Expecting robot to think it's carrying object for pickup action.");
+          } else {
+            
+            const std::set<ObjectID> carriedObjects = robot.GetCarryingObjects();
+            completionInfo.numObjects = carriedObjects.size();
+            completionInfo.objectIDs.fill(-1);
+            u8 objectCnt = 0;
+            for (auto& objID : carriedObjects) {
+              completionInfo.objectIDs[objectCnt++] = objID.GetValue();
+            }
+            
+            return;
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_ERROR("PickupObjectAction.EmitCompletionSignal",
+                            "Dock action not set before filling completion signal.");
+      }
+      
+      IDockAction::GetCompletionStruct(robot, completionInfo);
+    }
+    
+    Result PickupObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      // Record the object's original pose (before picking it up) so we can
+      // verify later whether we succeeded.
+      // Make it w.r.t. robot's parent so we can compare heights fairly.
+      if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
+        PRINT_NAMED_ERROR("PickupObjectAction.SelectDockAction.PoseWrtFailed",
+                          "Could not get pose of dock object w.r.t. robot parent.");
+        return RESULT_FAIL;
+      }
+      
+      // Choose docking action based on block's position and whether we are
+      // carrying a block
+      const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
+      _dockAction = DockAction::DA_PICKUP_LOW;
+      
+      if (robot.IsCarryingObject()) {
+        PRINT_STREAM_INFO("PickupObjectAction.SelectDockAction", "Already carrying object. Can't pickup object. Aborting.");
+        return RESULT_FAIL;
+      } else if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { // TODO: Stop using constant ROBOT_BOUNDING_Z for this
+        _dockAction = DockAction::DA_PICKUP_HIGH;
+      }
+      
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    
+    ActionResult PickupObjectAction::Verify(Robot& robot)
+    {
+      ActionResult result = ActionResult::FAILURE_ABORT;
+      
+      switch(_dockAction)
+      {
+        case DockAction::DA_PICKUP_LOW:
+        case DockAction::DA_PICKUP_HIGH:
+        {
+          if(robot.IsCarryingObject() == false) {
+            PRINT_NAMED_ERROR("PickupObjectAction.Verify.RobotNotCarryingObject",
+                              "Expecting robot to think it's carrying an object at this point.");
+            result = ActionResult::FAILURE_RETRY;
+            break;
+          }
+          
+          BlockWorld& blockWorld = robot.GetBlockWorld();
+          
+          // We should _not_ still see a object with the
+          // same type as the one we were supposed to pick up in that
+          // block's original position because we should now be carrying it.
+          ObservableObject* carryObject = blockWorld.GetObjectByID(robot.GetCarryingObject());
+          if(carryObject == nullptr) {
+            PRINT_NAMED_ERROR("PickupObjectAction.Verify.CarryObjectNoLongerExists",
+                              "Object %d we were carrying no longer exists in the world.",
+                              robot.GetCarryingObject().GetValue());
+            result = ActionResult::FAILURE_ABORT;
+            break;
+          }
+          
+          const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
+          
+          Vec3f Tdiff;
+          Radians angleDiff;
+          ObservableObject* objectInOriginalPose = nullptr;
+          for(auto object : objectsWithType) {
+            // TODO: is it safe to always have useAbsRotation=true here?
+            Vec3f Tdiff;
+            Radians angleDiff;
+            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
+                                                               carryObject->GetRotationAmbiguities(),
+                                                               carryObject->GetSameDistanceTolerance()*0.5f,
+                                                               carryObject->GetSameAngleTolerance(), true,
+                                                               Tdiff, angleDiff))
+            {
+              PRINT_STREAM_INFO("PickupObjectAction.Verify", std::setprecision(3) << "Seeing object " << object.first.GetValue() << " in original pose. (Tdiff = (" << Tdiff.x() << "," << Tdiff.y() << "," << Tdiff.z() << "), AngleDiff=" << angleDiff.getDegrees() << "deg");
+              objectInOriginalPose = object.second;
+              break;
+            }
+          }
+          
+          if(objectInOriginalPose != nullptr)
+          {
+            // Must not actually be carrying the object I thought I was!
+            // Put the object I thought I was carrying in the position of the
+            // object I matched to it above, and then delete that object.
+            // (This prevents a new object with different ID being created.)
+            if(carryObject->GetID() != objectInOriginalPose->GetID()) {
+              PRINT_STREAM_INFO("PickupObjectAction.Verify", "Moving carried object to object seen in original pose and clearing that object.");
+              carryObject->SetPose(objectInOriginalPose->GetPose());
+              blockWorld.ClearObject(objectInOriginalPose->GetID());
+            }
+            robot.UnSetCarryingObjects();
+            
+            PRINT_STREAM_INFO("PickupObjectAction.Verify", "Object pick-up FAILED! (Still seeing object in same place.)");
+            result = ActionResult::FAILURE_RETRY;
+          } else {
+            PRINT_STREAM_INFO("PickupObjectAction.Verify", "Object pick-up SUCCEEDED!");
+            result = ActionResult::SUCCESS;
+          }
+          break;
+        } // PICKUP
+          
+        default:
+          PRINT_NAMED_ERROR("PickupObjectAction.Verify.ReachedDefaultCase",
+                            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          result = ActionResult::FAILURE_ABORT;
+          break;
+          
+      } // switch(_dockAction)
+      
+      return result;
+      
+    } // Verify()
+    
+    
+    
+#pragma mark ---- PlaceRelObjectAction ----
+    
+    PlaceRelObjectAction::PlaceRelObjectAction(ObjectID objectID,
+                                               const bool placeOnGround,                                               
+                                               const f32 placementOffsetX_mm,
+                                               const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, 0, 0, placeOnGround)
+    , _placementVerifyAction(nullptr)
+    , _verifyComplete(false)
+    {
+      
+    }
+    
+    PlaceRelObjectAction::~PlaceRelObjectAction()
+    {
+      if(_placementVerifyAction != nullptr) {
+        delete _placementVerifyAction;
+      }
+    }
+    
+    void PlaceRelObjectAction::Reset()
+    {
+      IDockAction::Reset();
+      
+      if(_placementVerifyAction != nullptr) {
+        delete _placementVerifyAction;
+        _placementVerifyAction = nullptr;
+      }
+    }
+    
+    const std::string& PlaceRelObjectAction::GetName() const
+    {
+      static const std::string name("PlaceRelObjectAction");
+      return name;
+    }
+    
+    RobotActionType PlaceRelObjectAction::GetType() const
+    {
+      switch(_dockAction)
+      {
+        case DockAction::DA_PLACE_HIGH:
+          return RobotActionType::PLACE_OBJECT_HIGH;
+          
+        case DockAction::DA_PLACE_LOW:
+          return RobotActionType::PLACE_OBJECT_LOW;
+          
+        default:
+          PRINT_NAMED_WARNING("PlaceRelObjectAction.GetType",
+                              "Dock action not set before determining action type.");
+          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
+      }
+    }
+    
+    void PlaceRelObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    {
+      switch(_dockAction)
+      {
+        case DockAction::DA_PLACE_HIGH:
+        case DockAction::DA_PLACE_LOW:
+        {
+          // TODO: Be able to fill in more objects in the stack
+          ObservableObject* object = robot.GetBlockWorld().GetObjectByID(_dockObjectID);
+          if(object == nullptr) {
+            PRINT_NAMED_ERROR("PlaceRelObjectAction.EmitCompletionSignal",
+                              "Docking object %d not found in world after placing.",
+                              _dockObjectID.GetValue());
+          } else {
+            
+            ActionCompletedStruct completionInfo;
+            
+            auto objectStackIter = completionInfo.objectIDs.begin();
+            completionInfo.objectIDs.fill(-1);
+            completionInfo.numObjects = 0;
+            while(object != nullptr &&
+                  completionInfo.numObjects < completionInfo.objectIDs.size())
+            {
+              *objectStackIter = object->GetID().GetValue();
+              ++objectStackIter;
+              ++completionInfo.numObjects;
+              object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
+            }
+            return;
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_ERROR("PlaceRelObjectAction.EmitCompletionSignal",
+                            "Dock action not set before filling completion signal.");
+      }
+      
+      IDockAction::GetCompletionStruct(robot, completionInfo);
+    }
+    
+    Result PlaceRelObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      if (!robot.IsCarryingObject()) {
+        PRINT_STREAM_INFO("PlaceRelObjectAction.SelectDockAction", "Can't place if not carrying an object. Aborting.");
+        return RESULT_FAIL;
+      }
+      
+      _dockAction = _placeObjectOnGroundIfCarrying ? DockAction::DA_PLACE_LOW : DockAction::DA_PLACE_HIGH;
+        
+      // Need to record the object we are currently carrying because it
+      // will get unset when the robot unattaches it during placement, and
+      // we want to be able to verify that we're seeing what we just placed.
+      _carryObjectID     = robot.GetCarryingObject();
+      _carryObjectMarker = robot.GetCarryingMarker();
+      
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    
+    ActionResult PlaceRelObjectAction::Verify(Robot& robot)
+    {
+      
+      robot.GetBlockWorld().GetObjectByID(0)->GetPose().GetTranslation();
+      robot.GetBlockWorld().GetObjectByID(0)->GetPose().GetParent();
+      
+      ActionResult result = ActionResult::FAILURE_ABORT;
+      
+      switch(_dockAction)
+      {
+        case DockAction::DA_PLACE_LOW:
+        case DockAction::DA_PLACE_HIGH:
+        {
+          if(robot.GetLastPickOrPlaceSucceeded()) {
+            
+            if(robot.IsCarryingObject() == true) {
+              PRINT_NAMED_ERROR("PickAndPlaceObjectAction::Verify",
+                                "Expecting robot to think it's NOT carrying an object at this point.");
+              return ActionResult::FAILURE_ABORT;
+            }
+            
+            // If the physical robot thinks it succeeded, move the lift out of the
+            // way, and attempt to visually verify
+            if(_placementVerifyAction == nullptr) {
+              _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
+              
+              // Disable completion signals since this is inside another action
+              _placementVerifyAction->SetIsPartOfCompoundAction(true);
+              
+              // Go ahead do the first update of the FaceObjectAction to get the
+              // init "out of the way" rather than wasting a tick here
+              result = _placementVerifyAction->Update(robot);
+              if(ActionResult::SUCCESS != result && ActionResult::RUNNING != result) {
+                return result;
+              }
+            }
+            
+            result = _placementVerifyAction->Update(robot);
+            
+            if(result != ActionResult::RUNNING) {
+              
+              // Visual verification is done
+              delete _placementVerifyAction;
+              _placementVerifyAction = nullptr;
+              
+              if(result != ActionResult::SUCCESS) {
+                if(_dockAction == DockAction::DA_PLACE_LOW) {
+                  PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                                    "Robot thinks it placed the object low, but verification of placement "
+                                    "failed. Not sure where carry object %d is, so deleting it.",
+                                    _carryObjectID.GetValue());
+                  
+                  robot.GetBlockWorld().ClearObject(_carryObjectID);
+                } else {
+                  assert(_dockAction == DockAction::DA_PLACE_HIGH);
+                  PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                                    "Robot thinks it placed the object high, but verification of placement "
+                                    "failed. Assuming we are still carying object %d.",
+                                    _carryObjectID.GetValue());
+                  
+                  robot.SetObjectAsAttachedToLift(_carryObjectID, _carryObjectMarker);
+                }
+                
+              }
+              else if(_dockAction == DockAction::DA_PLACE_HIGH && !_verifyComplete) {
+                
+                // If we are placing high and verification succeeded, lower the lift
+                _verifyComplete = true;
+                
+                if(result == ActionResult::SUCCESS) {
+                  // Visual verification succeeded, drop lift (otherwise, just
+                  // leave it up, since we are assuming we are still carrying the object)
+                  _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+                  
+                  // Disable completion signals since this is inside another action
+                  _placementVerifyAction->SetIsPartOfCompoundAction(true);
+                  
+                  result = ActionResult::RUNNING;
+                }
+                
+              }
+            } // if(result != ActionResult::RUNNING)
+            
+          } else {
+            // If the robot thinks it failed last pick-and-place, it is because it
+            // failed to dock/track, so we are probably still holding the block
+            PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify",
+                              "Robot reported placement failure. Assuming docking failed "
+                              "and robot is still holding same block.");
+            result = ActionResult::FAILURE_RETRY;
+          }
+          
+          break;
+        } // PLACE
+          
+        default:
+          PRINT_NAMED_ERROR("PickAndPlaceObjectAction.Verify.ReachedDefaultCase",
+                            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          result = ActionResult::FAILURE_ABORT;
+          break;
+          
+      } // switch(_dockAction)
+      
+      return result;
+      
+    } // Verify()
     
     
 #pragma mark ---- RollObjectAction ----
