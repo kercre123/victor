@@ -39,11 +39,11 @@ namespace Cozmo {
     _name = "OCD";
   
     SubscribeToTags({
-      ExternalInterface::MessageEngineToGameTag::RobotCompletedAction,
-      ExternalInterface::MessageEngineToGameTag::RobotObservedObject,
-      ExternalInterface::MessageEngineToGameTag::RobotDeletedObject,
-      ExternalInterface::MessageEngineToGameTag::ObjectMoved,
-      ExternalInterface::MessageEngineToGameTag::BlockPlaced
+      EngineToGameTag::RobotCompletedAction,
+      EngineToGameTag::RobotObservedObject,
+      EngineToGameTag::RobotDeletedObject,
+      EngineToGameTag::ObjectMoved,
+      EngineToGameTag::BlockPlaced
     });
     
   }
@@ -168,7 +168,7 @@ namespace Cozmo {
     return Status::Running;
   }
 
-  Result BehaviorOCD::Interrupt(Robot& robot, double currentTime_sec)
+  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec)
   {
     _interrupted = true;
     return RESULT_OK;
@@ -186,21 +186,21 @@ namespace Cozmo {
   {
     switch(event.GetData().GetTag())
     {
-      case ExternalInterface::MessageEngineToGameTag::RobotCompletedAction:
-      case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
-      case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+      case EngineToGameTag::RobotCompletedAction:
+      case EngineToGameTag::RobotObservedObject:
+      case EngineToGameTag::ObjectMoved:
         // Handled by other WhileRunning / WhileNotRunning
         break;
         
       
         
-      case ExternalInterface::MessageEngineToGameTag::RobotDeletedObject:
+      case EngineToGameTag::RobotDeletedObject:
         _lastHandlerResult= HandleDeletedObject(event.GetData().Get_RobotDeletedObject(), event.GetCurrentTime());
         break;
         
       
         
-      case ExternalInterface::MessageEngineToGameTag::BlockPlaced:
+      case EngineToGameTag::BlockPlaced:
         _lastHandlerResult= HandleBlockPlaced(event.GetData().Get_BlockPlaced(), event.GetCurrentTime());
         break;
         
@@ -216,21 +216,21 @@ namespace Cozmo {
   {
     switch(event.GetData().GetTag())
     {
-      case ExternalInterface::MessageEngineToGameTag::RobotDeletedObject:
-      case ExternalInterface::MessageEngineToGameTag::BlockPlaced:
+      case EngineToGameTag::RobotDeletedObject:
+      case EngineToGameTag::BlockPlaced:
         // Handled by AlwaysHandle()
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::RobotCompletedAction:
+      case EngineToGameTag::RobotCompletedAction:
         _lastHandlerResult= HandleActionCompleted(robot, event.GetData().Get_RobotCompletedAction(),
                                                   event.GetCurrentTime());
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+      case EngineToGameTag::ObjectMoved:
         _lastHandlerResult= HandleObjectMovedWhileRunning(robot, event.GetData().Get_ObjectMoved(), event.GetCurrentTime());
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
+      case EngineToGameTag::RobotObservedObject:
         _lastHandlerResult= HandleObservedObjectWhileRunning(robot, event.GetData().Get_RobotObservedObject(), event.GetCurrentTime());
         break;
         
@@ -246,17 +246,17 @@ namespace Cozmo {
   {
     switch(event.GetData().GetTag())
     {
-      case ExternalInterface::MessageEngineToGameTag::RobotCompletedAction:
-      case ExternalInterface::MessageEngineToGameTag::RobotDeletedObject:
-      case ExternalInterface::MessageEngineToGameTag::BlockPlaced:
+      case EngineToGameTag::RobotCompletedAction:
+      case EngineToGameTag::RobotDeletedObject:
+      case EngineToGameTag::BlockPlaced:
         // Handled by AlwaysHandle() / HandleWhileRunning
         break;
         
-      case ExternalInterface::MessageEngineToGameTag::ObjectMoved:
+      case EngineToGameTag::ObjectMoved:
         _lastHandlerResult= HandleObjectMovedWhileNotRunning(robot, event.GetData().Get_ObjectMoved(), event.GetCurrentTime());
         break;
 
-      case ExternalInterface::MessageEngineToGameTag::RobotObservedObject:
+      case EngineToGameTag::RobotObservedObject:
         _lastHandlerResult= HandleObservedObjectWhileNotRunning(robot, event.GetData().Get_RobotObservedObject(), event.GetCurrentTime());
         break;
         

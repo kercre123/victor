@@ -50,9 +50,6 @@ namespace Cozmo {
       Complete
     };
     
-    using EngineToGameTag = ExternalInterface::MessageEngineToGameTag;
-    using GameToEngineTag = ExternalInterface::MessageGameToEngineTag;
-    
     virtual ~IBehavior() { }
     
     // BehaviorManager uses SetIsRunning() when it starts or stops a behavior.
@@ -82,7 +79,7 @@ namespace Cozmo {
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
     // as quickly as possible.
-    virtual Result Interrupt(Robot& robot, double currentTime_sec) = 0;
+    Result Interrupt(double currentTime_sec);
     
     // Figure out the reward this behavior will offer, given the robot's current
     // state. Returns true if the Behavior is runnable, false if not. (In the
@@ -99,25 +96,29 @@ namespace Cozmo {
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) = 0;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) = 0;
     
     // Can't create a public IBehavior, but derived classes must pass a robot
     // reference into this protected constructor.
     IBehavior(Robot& robot, const Json::Value& config);
+    
+    // Convenience aliases
+    using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+    using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
+    using EngineToGameTag   = ExternalInterface::MessageEngineToGameTag;
+    using GameToEngineTag   = ExternalInterface::MessageGameToEngineTag;
     
     // Derived classes should use these methods to subscribe to any tags they
     // are interested in handling.
     void SubscribeToTags(std::vector<GameToEngineTag>&& tags);
     void SubscribeToTags(std::vector<EngineToGameTag>&& tags);
     
-    using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
-    using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
-    
     // Derived classes must override this method to handle events that come in
-    // even with the behavior isn't running. Note that the Robot reference is const
-    // to prevent the behavior from modifying the robot when it is not running.
-    // If the behavior is subscribed to multiple tags, the presumption is that it
-    // will handle switching based on tag internally.
-    // NOTE: AlwaysHandle is called before HandleWhileRunning!
+    // irrespective of whether the behavior is running or not. Note that the Robot
+    // reference is const to prevent the behavior from modifying the robot when it
+    // is not running. If the behavior is subscribed to multiple tags, the presumption
+    // is that this will handle switching based on tag internally.
+    // NOTE: AlwaysHandle is called before HandleWhileRunning and HandleWhielNotRunning!
     virtual void AlwaysHandle(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) { }
     
@@ -126,10 +127,16 @@ namespace Cozmo {
     // modify the robot and thus receives a non-const reference to it.
     // If the behavior is subscribed to multiple tags, the presumption is that it
     // will handle switching based on tag internally.
-    // NOTE: AlwaysHandle is called before HandleWhileRunning!
+    // NOTE: AlwaysHandle is called first!
     virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) { }
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) { }
     
+    // Derived classes must override this method to handle events that come in
+    // only while the behavior is NOT running. If it doesn't matter whether the
+    // the behavior is running or not, consider using AlwaysHandle above instead.
+    // If the behavior is subscribed to multiple tags, the presumption is that it
+    // will handle switching based on tag internally.
+    // NOTE: AlwaysHandle is called first!
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
 
@@ -160,6 +167,11 @@ namespace Cozmo {
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
   {
     return UpdateInternal(_robot, currentTime_sec);
+  }
+  
+  inline Result IBehavior::Interrupt(double currentTime_sec)
+  {
+    return InterruptInternal(_robot, currentTime_sec);
   }
   
   template<class EventType>

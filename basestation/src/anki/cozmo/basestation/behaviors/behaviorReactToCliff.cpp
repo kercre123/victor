@@ -130,7 +130,7 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
   return Status::Complete;
 }
 
-Result BehaviorReactToCliff::Interrupt(Robot& robot, double currentTime_sec)
+Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

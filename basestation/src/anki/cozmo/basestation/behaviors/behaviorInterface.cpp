@@ -29,7 +29,7 @@ namespace Cozmo {
   
   }
   
-  void IBehavior::SubscribeToTags(std::vector<ExternalInterface::MessageGameToEngineTag> &&tags)
+  void IBehavior::SubscribeToTags(std::vector<GameToEngineTag> &&tags)
   {
     if(_robot.HasExternalInterface()) {
       auto handlerCallback = [this](const GameToEngineEvent& event) {
@@ -42,7 +42,7 @@ namespace Cozmo {
     }
   }
   
-  void IBehavior::SubscribeToTags(std::vector<ExternalInterface::MessageEngineToGameTag> &&tags)
+  void IBehavior::SubscribeToTags(std::vector<EngineToGameTag> &&tags)
   {
     if(_robot.HasExternalInterface()) {
       auto handlerCallback = [this](const EngineToGameEvent& event) {

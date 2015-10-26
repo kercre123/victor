@@ -123,7 +123,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::Interrupt(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

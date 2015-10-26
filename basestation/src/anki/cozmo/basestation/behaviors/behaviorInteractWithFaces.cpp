@@ -319,7 +319,7 @@ namespace Cozmo {
     _isActing = true;
   }
   
-  Result BehaviorInteractWithFaces::Interrupt(Robot& robot, double currentTime_sec)
+  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec)
   {
     robot.GetMoveComponent().DisableTrackToFace();
     _currentState = State::Interrupted;

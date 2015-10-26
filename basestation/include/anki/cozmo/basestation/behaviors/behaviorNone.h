@@ -29,11 +29,6 @@ public:
   //
   virtual bool IsRunnable(double currentTime_sec) const override { return true; }
   
-  virtual Result Interrupt(Robot& robot, double currentTime_sec) override
-  {
-    _isInterrupted = true; return Result::RESULT_OK;
-  }
-  
   virtual bool GetRewardBid(Reward& reward) override { return true; }
   
 protected:
@@ -49,6 +44,10 @@ protected:
     return retval;
   }
 
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override
+  {
+    _isInterrupted = true; return Result::RESULT_OK;
+  }
   
   bool _isInterrupted = false;
 };

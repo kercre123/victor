@@ -36,13 +36,13 @@ namespace Cozmo {
     
     virtual bool IsRunnable(double currentTime_sec) const override;
     
-    virtual Result Interrupt(Robot& robot, double currentTime_sec) override;
-    
     virtual bool GetRewardBid(Reward& reward) override;
     
   protected:
+    
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
     
 
   private:

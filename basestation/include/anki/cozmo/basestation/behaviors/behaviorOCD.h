@@ -35,16 +35,16 @@ namespace Cozmo {
     virtual ~BehaviorOCD() { }
     
     virtual bool IsRunnable(double currentTime_sec) const override;
-  
-    // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt(Robot& robot, double currentTime_sec) override;
-    
+   
     virtual bool GetRewardBid(Reward& reward) override;
     
   private:
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+   
+    // Finish placing current object if there is one, otherwise good to go
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
     
     // Offset at which low block should be placed wrt
     // another low block. (Twice block width)

@@ -121,7 +121,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorFidget::Interrupt(Robot& robot, double currentTime_sec)
+  Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec)
   {
     // Mark the behavior as interrupted so it will return COMPLETE on next update
     _interrupted = true;

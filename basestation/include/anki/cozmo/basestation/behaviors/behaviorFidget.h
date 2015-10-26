@@ -26,9 +26,6 @@ namespace Cozmo {
     virtual ~BehaviorFidget();
     
     virtual bool IsRunnable(double currentTime_sec) const override { return true; }
-  
-    // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt(Robot& robot, double currentTime_sec) override;
     
     virtual bool GetRewardBid(Reward& reward) override;
 
@@ -36,6 +33,7 @@ namespace Cozmo {
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
     
   private:
     
