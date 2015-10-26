@@ -657,7 +657,7 @@ int main(void)
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  //GPIO_Init(GPIOA, &GPIO_InitStructure);
   
   // Initialize PB13-PB15 as the ID inputs with pullups
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
@@ -684,6 +684,7 @@ int main(void)
   SlowPrintf("fixture: %i\r\n", g_fixtureType);
   
   InitBAT();
+  EnableBAT();
   
   SlowPutString("Initializing Display...\r\n");
   InitDisplay();

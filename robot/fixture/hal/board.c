@@ -65,16 +65,33 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led)
 
 void InitBAT(void)
 {
-  // Not sure what this does, but something related to powering bare PCBs via battery power
+  GPIO_InitTypeDef  GPIO_InitStructure;
+  GPIO_SetBits(GPIOA, GPIO_Pin_9);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  
+  MicroWait(400);
+  
+  // ENBAT
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  
+  DisableBAT();
 }
 
 void EnableBAT(void)
 {  
-  // Not sure what this does, but something related to powering bare PCBs via battery power
+  GPIO_ResetBits(GPIOC, GPIO_Pin_2);
 }
 
 void DisableBAT(void)
 {
-  // Not sure what this does, but something related to powering bare PCBs via battery power
+  GPIO_SetBits(GPIOC, GPIO_Pin_2);
 }
-
