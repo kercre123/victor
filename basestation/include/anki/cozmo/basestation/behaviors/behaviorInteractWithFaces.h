@@ -16,16 +16,10 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "anki/vision/basestation/trackedFace.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
 #include <list>
 
 namespace Anki {
 namespace Cozmo {
-  
-  template<typename> class AnkiEvent;
-  namespace ExternalInterface {
-    class MessageEngineToGame;
-  }
   
   class BehaviorInteractWithFaces : public IBehavior
   {

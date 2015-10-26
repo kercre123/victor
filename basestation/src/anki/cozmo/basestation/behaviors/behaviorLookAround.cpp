@@ -332,7 +332,7 @@ bool BehaviorLookAround::GetRewardBid(Reward& reward)
   return true;
 }
   
-void BehaviorLookAround::HandleObjectObserved(const AnkiEvent<MessageEngineToGame>& event, Robot& robot)
+void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Robot& robot)
 {
   assert(IsRunning());
   
@@ -377,7 +377,7 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
   }
 }
   
-void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGame>& event)
+void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
 {
   assert(IsRunning());
   

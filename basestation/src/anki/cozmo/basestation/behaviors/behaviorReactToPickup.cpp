@@ -27,8 +27,7 @@ static std::vector<std::string> _animReactions = {
 };
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
-  : IReactionaryBehavior(robot, config)
-  , _currentState(State::Inactive)
+: IReactionaryBehavior(robot, config)
 {
   _name = "ReactToPickup";
   
@@ -138,7 +137,7 @@ bool BehaviorReactToPickup::GetRewardBid(Reward& reward)
   return true;
 }
 
-void BehaviorReactToPickup::AlwaysHandle(const AnkiEvent<MessageEngineToGame>& event,
+void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
   // We want to get these messages, even when not running

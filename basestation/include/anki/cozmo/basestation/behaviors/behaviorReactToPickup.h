@@ -15,16 +15,11 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
-// Forward declaration
-template<typename TYPE> class AnkiEvent;
-namespace ExternalInterface { class MessageEngineToGame; }
-  
 class BehaviorReactToPickup : public IReactionaryBehavior
 {
 public:
@@ -47,14 +42,12 @@ private:
     PlayingAnimation
   };
   
-  State _currentState;
+  State _currentState = State::Inactive;
   bool _isInAir = false;
   bool _waitingForAnimComplete = false;
   u32 _animTagToWaitFor = 0;
   
-  std::vector<Signal::SmartHandle> _eventHandles;
-  
-  virtual void AlwaysHandle(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event, const Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 }; // class BehaviorReactToPickup
   

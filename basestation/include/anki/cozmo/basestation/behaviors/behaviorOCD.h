@@ -16,8 +16,6 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "util/signals/simpleSignal_fwd.h"
-
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include <set>
