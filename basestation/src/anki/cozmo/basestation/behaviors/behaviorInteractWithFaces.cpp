@@ -396,7 +396,7 @@ namespace Cozmo {
     _baselineIntraEyeDistance = face->GetIntraEyeDistance();
   }
   
-  void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
+  void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event)
   {
     assert(event.GetData().GetTag() == EngineToGameTag::RobotObservedFace);
     
@@ -468,7 +468,7 @@ namespace Cozmo {
     }
   }
   
-  void BehaviorInteractWithFaces::HandleRobotDeletedFace(const AnkiEvent<MessageEngineToGame>& event)
+  void BehaviorInteractWithFaces::HandleRobotDeletedFace(const EngineToGameEvent& event)
   {
     const RobotDeletedFace& msg = event.GetData().Get_RobotDeletedFace();
     
@@ -584,7 +584,7 @@ namespace Cozmo {
     robot.SetProceduralFace(proceduralFace);
   }
   
-  void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const AnkiEvent<MessageEngineToGame>& event)
+  void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event)
   {
     const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
     
