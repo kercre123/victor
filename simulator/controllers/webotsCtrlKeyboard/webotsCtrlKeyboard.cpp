@@ -339,6 +339,9 @@ namespace Anki {
           bool useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
           f32 approachAngle_rad = DEG_TO_RAD_F32(root_->getField("approachAngle_deg")->getSFFloat());
           
+          // For placeOn and placeOnGround, specify whether or not to use the exactRotation specified
+          bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
+          
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
           
@@ -690,7 +693,6 @@ namespace Anki {
                   
                   // Indicate whether or not to place object at the exact rotation specified or
                   // just use the nearest preActionPose so that it's merely aligned with the specified pose.
-                  bool useExactRotation = false;
                   printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
                   
                   SendPlaceObjectOnGroundSequence(poseMarkerPose_, useExactRotation, useManualSpeed);
@@ -836,8 +838,7 @@ namespace Anki {
                   placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
                 }
                 
-                // For placeOn, specify whether or not to use the exactRotation specified
-                bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
+                // Exact rotation to use if useExactRotation == true
                 const double* rotVals = root_->getField("exactPlacementRotation")->getSFRotation();
                 Rotation3d rot(rotVals[3], {static_cast<f32>(rotVals[0]), static_cast<f32>(rotVals[1]), static_cast<f32>(rotVals[2])} );
                 printf("Rotation %f\n", rot.GetAngleAroundZaxis().ToFloat());
