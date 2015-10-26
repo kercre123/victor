@@ -241,7 +241,7 @@ MeshRenderer:
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: d5cc95daf761f4c83bab308db1293d13, type: 2}
   m_SubsetIndices: 
   m_StaticBatchRoot: {fileID: 0}
   m_UseLightProbes: 1
@@ -385,7 +385,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: .0482757092, b: 1, a: 0}
+  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11415860
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -397,7 +397,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 1, b: .0896549225, a: 0}
+  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11439324
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -409,7 +409,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 1, g: .972413778, b: 0, a: 0}
+  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11463460
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -421,7 +421,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 1, g: 0, b: 0, a: 0}
+  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11493634
 MonoBehaviour:
   m_ObjectHideFlags: 1

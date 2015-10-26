@@ -6,6 +6,8 @@ public class LookForCubes : State {
   PatternPlayController patternPlayController = null;
   PatternPlayAutoBuild patternPlayAutoBuild = null;
 
+  bool lookingAround = false;
+
   public override void Enter() {
     base.Enter();
     DAS.Info("PatternPlayState", "LookForCubes");
@@ -32,9 +34,13 @@ public class LookForCubes : State {
   public override void Exit() {
     base.Exit();
     robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    lookingAround = false;
   }
 
   void SearchForAvailableBlock() {
-    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+    if (lookingAround == false) {
+      lookingAround = true;
+      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+    }
   }
 }

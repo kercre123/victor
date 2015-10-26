@@ -485,13 +485,8 @@ namespace Anki {
                 
               case (s32)'Z':
               {
-                if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
-                  // Tap carried block on the ground
-                  SendTapBlockOnGround(1);
-                } else {
-                  commandedLiftSpeed -= liftSpeed;
-                  movingLift = true;
-                }
+                commandedLiftSpeed -= liftSpeed;
+                movingLift = true;
                 break;
               }
                 

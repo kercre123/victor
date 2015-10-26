@@ -192,9 +192,8 @@ public class Robot : IDisposable {
   private U2G.TrackToObject TrackToObjectMessage;
   private U2G.FaceObject FaceObjectMessage;
   private U2G.FacePose FacePoseMessage;
-  private U2G.PickAndPlaceObject PickAndPlaceObjectMessage;
+  private U2G.PickupObject PickupObjectMessage;
   private U2G.RollObject RollObjectMessage;
-  private U2G.TapBlockOnGround TapBlockMessage;
   private U2G.PlaceObjectOnGround PlaceObjectOnGroundMessage;
   private U2G.GotoPose GotoPoseMessage;
   private U2G.GotoObject GotoObjectMessage;
@@ -213,6 +212,8 @@ public class Robot : IDisposable {
   private U2G.StartFaceTracking StartFaceTrackingMessage;
   private U2G.StopFaceTracking StopFaceTrackingMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
+  private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
+  private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
 
   private ObservedObject _carryingObject;
 
@@ -313,9 +314,8 @@ public class Robot : IDisposable {
     TrackToObjectMessage = new U2G.TrackToObject();
     FaceObjectMessage = new U2G.FaceObject();
     FacePoseMessage = new G2U.FacePose();
-    PickAndPlaceObjectMessage = new U2G.PickAndPlaceObject();
+    PickupObjectMessage = new U2G.PickupObject();
     RollObjectMessage = new U2G.RollObject();
-    TapBlockMessage = new U2G.TapBlockOnGround();
     PlaceObjectOnGroundMessage = new U2G.PlaceObjectOnGround();
     GotoPoseMessage = new U2G.GotoPose();
     GotoObjectMessage = new U2G.GotoObject();
@@ -334,6 +334,8 @@ public class Robot : IDisposable {
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
     StopFaceTrackingMessage = new U2G.StopFaceTracking();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
+    SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
+    ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -756,13 +758,13 @@ public class Robot : IDisposable {
   }
 
   public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
-    PickAndPlaceObjectMessage.objectID = selectedObject;
-    PickAndPlaceObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
-    PickAndPlaceObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
+    PickupObjectMessage.objectID = selectedObject;
+    PickupObjectMessage.usePreDockPose = usePreDockPose;
+    PickupObjectMessage.useManualSpeed = useManualSpeed;
     
-    DAS.Debug("Robot", "Pick And Place Object " + PickAndPlaceObjectMessage.objectID + " usePreDockPose " + PickAndPlaceObjectMessage.usePreDockPose + " useManualSpeed " + PickAndPlaceObjectMessage.useManualSpeed);
+    DAS.Debug("Robot", "Pick And Place Object " + PickupObjectMessage.objectID + " usePreDockPose " + PickupObjectMessage.usePreDockPose + " useManualSpeed " + PickupObjectMessage.useManualSpeed);
 
-    RobotEngineManager.instance.Message.PickAndPlaceObject = PickAndPlaceObjectMessage;
+    RobotEngineManager.instance.Message.PickupObject = PickupObjectMessage;
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
@@ -771,14 +773,13 @@ public class Robot : IDisposable {
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_INCOMPLETE, callback));
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_HIGH, callback));
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_OBJECT, callback));
     }
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
     RollObjectMessage.objectID = selectedObject;
-    RollObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
-    RollObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
+    RollObjectMessage.usePreDockPose = usePreDockPose;
+    RollObjectMessage.useManualSpeed = useManualSpeed;
 
     DAS.Debug("Robot", "Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed);
     
@@ -791,20 +792,15 @@ public class Robot : IDisposable {
     }
   }
 
-  public void TapBlockOnGround(int taps) {
-    TapBlockMessage.numTaps = System.Convert.ToByte(taps);
-    RobotEngineManager.instance.Message.TapBlockOnGround = TapBlockMessage;
-    RobotEngineManager.instance.SendMessage();
-    
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
-  }
-
-  public void PlaceObjectOnGround(Vector3 position, float facing_rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null) {
+  public void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null) {
     PlaceObjectOnGroundMessage.x_mm = position.x;
     PlaceObjectOnGroundMessage.y_mm = position.y;
-    PlaceObjectOnGroundMessage.rad = facing_rad;
+    PlaceObjectOnGroundMessage.qx = rotation.x;
+    PlaceObjectOnGroundMessage.qy = rotation.y;
+    PlaceObjectOnGroundMessage.qz = rotation.z;
+    PlaceObjectOnGroundMessage.qw = rotation.w;
     PlaceObjectOnGroundMessage.level = System.Convert.ToByte(level);
-    PlaceObjectOnGroundMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
+    PlaceObjectOnGroundMessage.useManualSpeed = useManualSpeed;
     
     DAS.Debug("Robot", "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
     
@@ -843,7 +839,7 @@ public class Robot : IDisposable {
 
   public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
-    GotoPoseMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
+    GotoPoseMessage.useManualSpeed = useManualSpeed;
     GotoPoseMessage.x_mm = x_mm;
     GotoPoseMessage.y_mm = y_mm;
     GotoPoseMessage.rad = rad;
@@ -863,7 +859,7 @@ public class Robot : IDisposable {
   public void GotoObject(ObservedObject obj, float distance_mm) {
     GotoObjectMessage.objectID = obj;
     GotoObjectMessage.distance_mm = distance_mm;
-    GotoObjectMessage.useManualSpeed = System.Convert.ToByte(false);
+    GotoObjectMessage.useManualSpeed = false;
 
     RobotEngineManager.instance.Message.GotoObject = GotoObjectMessage;
 
@@ -970,8 +966,8 @@ public class Robot : IDisposable {
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
     DAS.Debug("Robot", "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
 
-    TraverseObjectMessage.useManualSpeed = System.Convert.ToByte(useManualSpeed);
-    TraverseObjectMessage.usePreDockPose = System.Convert.ToByte(usePreDockPose);
+    TraverseObjectMessage.useManualSpeed = useManualSpeed;
+    TraverseObjectMessage.usePreDockPose = usePreDockPose;
 
     RobotEngineManager.instance.Message.TraverseObject = TraverseObjectMessage;
     RobotEngineManager.instance.SendMessage();
@@ -1073,6 +1069,20 @@ public class Robot : IDisposable {
     DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorType);
 
     RobotEngineManager.instance.Message.ExecuteBehavior = ExecuteBehaviorMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void SetBehaviorSystem(bool enable) {
+    SetBehaviorSystemEnabledMessage.enabled = enable;
+
+    RobotEngineManager.instance.Message.SetBehaviorSystemEnabled = SetBehaviorSystemEnabledMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
+    ActivateBehaviorChooserMessage.behaviorChooserType = behaviorChooserType;
+
+    RobotEngineManager.instance.Message.ActivateBehaviorChooser = ActivateBehaviorChooserMessage;
     RobotEngineManager.instance.SendMessage();
   }
 }

@@ -13,21 +13,23 @@ public class LookForPattern : State {
 
   bool lastFrameHasVerticalBlock = false;
 
-  public override void Enter() {
+  public override void Enter() { 
     base.Enter();
     DAS.Info("State", "LookForPattern");
-    // TODO: Set eyes to scan.
+    // TODO: Set eyes to scan. 
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
     patternPlayAutoBuild.autoBuilding = false;
   }
 
   public override void Update() {
-    base.Update();
+    base.Update(); 
 
-    if (animationPlaying) {
+    if (animationPlaying) { 
       return;
     }
+
+    CheckShouldPlayIdle();
 
     float closestD = ClosestsObject();
     int seenThreshold = patternPlayController.SeenBlocksOverThreshold(0.5f);
@@ -69,7 +71,7 @@ public class LookForPattern : State {
     if (patternPlayController.SeenPattern()) {
       stateMachine.SetNextState(new CelebratePattern());
     }
-    else if (NoBlocksMoved()) {
+    else if (ShouldAutoBuildPattern()) {
       // nobody has moved blocks for a while... ima make my own pattern.
       // stateMachine.SetNextState(new HaveIdeaForPattern());
     }
@@ -79,8 +81,15 @@ public class LookForPattern : State {
     lastFrameHasVerticalBlock = hasVerticalBlock;
   }
 
-  bool NoBlocksMoved() {
-    return Time.time - patternPlayController.GetMostRecentMovedTime() > 5.0f;
+  bool ShouldAutoBuildPattern() {
+    bool blocksNotTouched = Time.time - patternPlayController.GetMostRecentMovedTime() > 5.0f;
+    bool patternNotSeen = Time.time - patternPlayController.LastPatternSeenTime() > 20.0f;
+    return blocksNotTouched && patternNotSeen;
+  }
+
+  public override void Exit() {
+    base.Exit();
+    CozmoEmotionManager.instance.SetIdleAnimation("NONE");
   }
 
   float ClosestsObject() {
@@ -96,5 +105,15 @@ public class LookForPattern : State {
 
   void AnimationDone(bool success) {
     animationPlaying = false;
+  }
+
+  private void CheckShouldPlayIdle() {
+    for (int i = 0; i < robot.visibleObjects.Count; ++i) {
+      if (patternPlayController.GetBlockPatternData(robot.visibleObjects[i].ID).blockLightsLocalSpace.AreLightsOff() == false) {
+        CozmoEmotionManager.instance.SetIdleAnimation("NONE");
+        return;
+      }
+    }
+    CozmoEmotionManager.instance.SetIdleAnimation("_LIVE_");
   }
 }
