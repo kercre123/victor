@@ -132,18 +132,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_DriveWheels(ExternalInterface::DriveWheels const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      if(robot->AreWheelsLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_DriveWheels.WheelsLocked",
-                         "Ignoring ExternalInterface::DriveWheels while wheels are locked.\n");
-      } else {
-        robot->DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
-      }
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_TurnInPlace(ExternalInterface::TurnInPlace const& msg)
@@ -153,79 +142,27 @@ namespace Cozmo {
 
   void CozmoGameImpl::Process_TurnInPlaceAtSpeed(ExternalInterface::TurnInPlaceAtSpeed const& msg)
   {
-    Robot* robot = GetRobotByID(msg.robotID);
-    
-    if(robot != nullptr) {
-        robot->TurnInPlaceAtSpeed(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_MoveHead(ExternalInterface::MoveHead const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      if(robot->IsHeadLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveHead.HeadLocked",
-                         "Ignoring ExternalInterface::MoveHead while head is locked.\n");
-      } else {
-        robot->MoveHead(msg.speed_rad_per_sec);
-      }
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_MoveLift(ExternalInterface::MoveLift const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      if(robot->IsLiftLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_MoveLift.LiftLocked",
-                         "Ignoring ExternalInterface::MoveLift while lift is locked.\n");
-      } else {
-        robot->MoveLift(msg.speed_rad_per_sec);
-      }
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_SetHeadAngle(ExternalInterface::SetHeadAngle const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      if(robot->IsHeadLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_SetHeadAngle.HeadLocked",
-                         "Ignoring ExternalInterface::SetHeadAngle while head is locked.\n");
-      } else {
-        robot->DisableTrackToObject();
-        robot->MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
-      }
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_TrackToObject(ExternalInterface::TrackToObject const& msg)
   {
-    Robot* robot = GetRobotByID(msg.robotID);
-    
-    if(robot != nullptr) {
-      if(robot->IsHeadLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_TrackHeadToObject.HeadLocked",
-                         "Ignoring ExternalInterface::TrackHeadToObject while head is locked.\n");
-      } else {
-        
-        if(msg.objectID == u32_MAX) {
-          robot->DisableTrackToObject();
-        } else {
-          robot->EnableTrackToObject(msg.objectID, msg.headOnly);
-        }
-      }
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_FaceObject(ExternalInterface::FaceObject const& msg)
@@ -245,35 +182,12 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_StopAllMotors(ExternalInterface::StopAllMotors const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StopAllMotors();
-    }
+    // Handled in MoveComponent
   }
   
   void CozmoGameImpl::Process_SetLiftHeight(ExternalInterface::SetLiftHeight const& msg)
   {
     // Handled in RobotEventHandler::HandleSetLiftHeight
-  }
-
-  void CozmoGameImpl::Process_TapBlockOnGround(ExternalInterface::TapBlockOnGround const& msg)
-  {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      
-      if(robot->IsLiftLocked()) {
-        PRINT_NAMED_INFO("CozmoGameImpl.Process_TapBlockOnGround.LiftLocked",
-                         "Ignoring ExternalInterface::TapBlockOnGround while lift is locked.\n");
-      } else {
-        robot->TapBlockOnGround(msg.numTaps);
-      }
-    }
   }
   
   void CozmoGameImpl::Process_SetRobotImageSendMode(ExternalInterface::SetRobotImageSendMode const& msg)
