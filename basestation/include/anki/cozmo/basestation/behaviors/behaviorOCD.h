@@ -33,8 +33,6 @@ namespace Cozmo {
     virtual ~BehaviorOCD() { }
     
     virtual bool IsRunnable(double currentTime_sec) const override;
-   
-    virtual bool GetRewardBid(Reward& reward) override;
     
   private:
     

@@ -37,7 +37,7 @@ namespace Cozmo {
   , _inactionStartTime(0)
   {
     _name = "OCD";
-  
+    
     SubscribeToTags({
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -46,6 +46,9 @@ namespace Cozmo {
       EngineToGameTag::BlockPlaced
     });
     
+    // Boredom and loneliness -> OCD
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
   }
   
 #pragma mark -
@@ -172,14 +175,6 @@ namespace Cozmo {
   {
     _interrupted = true;
     return RESULT_OK;
-  }
-  
-  bool BehaviorOCD::GetRewardBid(Reward& reward)
-  {
-    
-    // TODO: Fill in reward
-    
-    return true;
   }
   
   void BehaviorOCD::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
