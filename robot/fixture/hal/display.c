@@ -1,194 +1,261 @@
 // Originally from Drive Testfix, using a serial-driven color OLED
-// Needs to be updated to DMA OLED for Cozmo EP1 Testfix
+// Updated to DMA OLED for Cozmo EP1 Testfix
 
+#include <stdio.h>
+#include <stdarg.h>
+#include <string.h>
+
+#include "hal/board.h"
 #include "hal/display.h"
 #include "hal/portable.h"
 #include "hal/timers.h"
 #include "../app/fixture.h"
+#include "hal/oled.h"
 
-static BOOL m_alreadyTryingToInitialize = FALSE;
-static BOOL m_displayMissing = FALSE;
+static const u8 InitDisplayCmd[] = {
+  DISPLAYOFF,
+  SETDISPLAYCLOCKDIV, 0xF0,
+  SETMULTIPLEX, 0x3F,
+  SETDISPLAYOFFSET, 0x0,
+  SETSTARTLINE | 0x0,
+  CHARGEPUMP, 0x14,
+  MEMORYMODE, 0x01,
+  SEGREMAP | 0x1,
+  COMSCANDEC,
+  SETCOMPINS, 0x12,
+  SETCONTRAST, 0xCF,
+  SETPRECHARGE, 0xF1,
+  SETVCOMDETECT, 0x40,
+  DISPLAYALLON_RESUME,
+  NORMALDISPLAY,
+  DISPLAYON
+};
+static const u8 ResetCursorCmd[] = {
+  COLUMNADDR, 0, DISPLAY_WIDTH-1,
+  PAGEADDR, 0, (DISPLAY_HEIGHT / 8) - 1
+};
 
-extern FixtureType g_fixtureType;
-static BOOL IsDisplayAvailable(void)
-{
-  return !m_displayMissing; // && (g_fixtureType & FIXTURE_MASK) != FIXTURE_PCB_TEST;
-}
+static GPIO_TypeDef* MOSI_PORT = GPIOA;
+static GPIO_TypeDef* MISO_PORT = GPIOA;
+static GPIO_TypeDef* SCK_PORT = GPIOA;
+
+static const uint32_t MOSI_PIN = GPIO_Pin_7;
+static const uint32_t MISO_PIN = GPIO_Pin_6;
+static const uint32_t SCK_PIN = GPIO_Pin_5;
+
+static const uint32_t MOSI_SOURCE = GPIO_PinSource7;
+static const uint32_t MISO_SOURCE = GPIO_PinSource6;
+static const uint32_t SCK_SOURCE = GPIO_PinSource5;
+
+static GPIO_TypeDef* CS_PORT = GPIOB;
+static GPIO_TypeDef* CMD_PORT = GPIOB;
+static GPIO_TypeDef* RES_PORT = GPIOB;
+
+static const uint32_t CS_SOURCE = GPIO_PinSource11;
+static const uint32_t CMD_SOURCE = GPIO_PinSource10;
+static const uint32_t RES_SOURCE = GPIO_PinSource15;
 
 // Write a command to the display
-static void DisplayWrite(u8* p, int count)
+static void DisplayWrite(bool cmd, const u8* p, int count)
 {
-}
-
-// Wait for the display to Ack the command
-static void DisplayWait(void)
-{
-  if (!IsDisplayAvailable())
-    return;
-}
-
-// Display a bitmap
-void DisplayBitmap(u8 x, u8 y, u8 width, u8 height, u8* pic)
-{
-  if (!IsDisplayAvailable())
-    return;
+  if (cmd) {
+    GPIO_RESET(CMD_PORT, CMD_SOURCE);
+  } else {
+    GPIO_SET(CMD_PORT, CMD_SOURCE);
+  }
+  MicroWait(1);
   
-  u8 bytes[] = { 0,0xA, 0,x, 0,y, 0,width, 0,height };
-  DisplayWrite(bytes, sizeof(bytes));
-  MicroWait(5000);  // Avoid stupid Goldelox bug - it is not ready for the data for a bit
-  DisplayWrite(pic, width*height*2);
-  DisplayWait();
-}
+  GPIO_RESET(CS_PORT, CS_SOURCE);
+  MicroWait(1);
 
-// Clears the screen to the specified 16-bit color
-void DisplayClear(u16 color)
-{
-  if (!IsDisplayAvailable())
-    return;
+  while (count-- > 0) {
+    while (!(SPI1->SR & SPI_FLAG_TXE)) ;
+    SPI1->DR = *(p++);
+  }
   
-  u8 bytesColor[] = {0xFF, 0x6E, color, color >>  8};
-  DisplayWrite(bytesColor, sizeof(bytesColor));
-  DisplayWait();
-  
-  u8 bytesClear[] = {0xFF, 0xD7};
-  DisplayWrite(bytesClear, sizeof(bytesClear));
-  DisplayWait();
-}
+  // Make sure SPI is totally drained
+  while (!(SPI1->SR & SPI_FLAG_TXE)) ;
+  while (SPI1->SR & SPI_FLAG_BSY) ;
 
-// Display a string
-void DisplayPutString(const char* string)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  const char* p = string;
-  int length = 0;
-  while (*p++)
-    length++;
-  
-  u8 bytes[] = {0x00, 0x06};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWrite((u8*)string, length + 1);
-  DisplayWait();
-}
-
-// Display a character
-void DisplayPutChar(u16 character)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  u8 bytes[] = {0xFF, 0xFE, 0x00, character};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWait();
-}
-
-// Display a hexadecimal number
-void DisplayPutHex8(u8 data)
-{
-  DisplayPutChar(g_hex[(data >> 4) & 0x0F]);
-  DisplayPutChar(g_hex[data & 0x0F]);
-}
-
-void DisplayPutHex16(u16 data)
-{
-  DisplayPutHex8(data >> 8);
-  DisplayPutHex8(data & 0xFF);
-}
-
-void DisplayPutHex32(u32 data)
-{
-  DisplayPutHex16(data >> 16);
-  DisplayPutHex16(data & 0xFFFF);
-}
-
-// Move the current cursor location
-void DisplayMoveCursor(u16 line, u16 column)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  u8 bytes[] = {0xFF, 0xE4, line >> 8, line & 0xFF, column >> 8, column & 0xFF};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWait();
-}
-
-// Set the text foreground color
-void DisplayTextForegroundColor(Color_t color)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  u8 bytes[] = {0xFF, 0x7F, color, color >> 8};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWait();
-}
-
-// Set the text background color
-void DisplayTextBackgroundColor(Color_t color)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  u8 bytes[] = {0xFF, 0x7E, color, color >> 8};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWait();
-}
-
-// Set the text width multiplier
-void DisplayTextWidthMultiplier(u16 multiplier)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  // Enforce the bounds
-  if (multiplier < 1)
-    multiplier = 1;
-  if (multiplier > 16)
-    multiplier = 16;
-  
-  u8 bytes[] = {0xFF, 0x7C, multiplier >> 8, multiplier & 0xFF};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWait();
-}
-
-// Set the text height multiplier
-void DisplayTextHeightMultiplier(u16 multiplier)
-{
-  if (!IsDisplayAvailable())
-    return;
-  
-  // Enforce the bounds
-  if (multiplier < 1)
-    multiplier = 1;
-  if (multiplier > 16)
-    multiplier = 16;
-  
-  u8 bytes[] = {0xFF, 0x7B, multiplier >> 8, multiplier & 0xFF};
-  DisplayWrite(bytes, sizeof(bytes));
-  DisplayWait();
+  GPIO_SET(CS_PORT, CS_SOURCE);
+  MicroWait(1);
 }
 
 // Initialize the display on power up
 void InitDisplay(void)
 {
-  if (!IsDisplayAvailable())
-    return;
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+
+  // Configure the pins for SPI in AF mode
+  GPIO_PinAFConfig(MOSI_PORT, MOSI_SOURCE, GPIO_AF_SPI1);
+  GPIO_PinAFConfig(MISO_PORT, MISO_SOURCE, GPIO_AF_SPI1);
+  GPIO_PinAFConfig(SCK_PORT, SCK_SOURCE, GPIO_AF_SPI1);
+
+  // Configure the SPI pins
+  GPIO_InitStructure.GPIO_Pin = MOSI_PIN | MISO_PIN | SCK_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_Init(SCK_PORT, &GPIO_InitStructure);
+  
+  PIN_OUT(CMD_PORT, CMD_SOURCE);  
+  
+  GPIO_SET(CS_PORT, CS_SOURCE);  // Force CS high
+  PIN_OUT(CS_PORT, CS_SOURCE);
+
+  GPIO_RESET(RES_PORT, RES_SOURCE);  // Force RESET low
+  PIN_OUT(RES_PORT, RES_SOURCE);
+
+  // Initialize SPI in master mode
+  SPI_I2S_DeInit(SPI1);
+  SPI_InitTypeDef SPI_InitStructure;
+  SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+  SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+  SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+  SPI_InitStructure.SPI_CPOL = SPI_CPOL_High;
+  SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+  SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_8;
+  SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+  SPI_InitStructure.SPI_CRCPolynomial = 7;
+  SPI_Init(SPI1, &SPI_InitStructure);
+  SPI_Cmd(SPI1, ENABLE);
+
+  MicroWait(10000);
+  GPIO_SET(RES_PORT, RES_SOURCE);
+
+  SPI1->SR = 0;
+
+  DisplayWrite(true, InitDisplayCmd, sizeof(InitDisplayCmd));
+  DisplayPrintf("Starting up...");
 }
 
-// Get the native display color from RGB8
-Color_t DisplayGetRGB565(u8 red, u8 green, u8 blue)
+// Display a bitmap
+void DisplayBitmap(u8 x, u8 y, u8 width, u8 height, u8* pic)
 {
-  u16 r, g, b;
-  r = red >> 3;
-  g = green >> 2;
-  b = blue >> 3;
+}
+
+// Clears the screen to the specified 16-bit color
+void DisplayClear()
+{
+}
+
+void DisplayInvert(bool invert)
+{
+  u8 command[] = { invert ? 0xA7 : 0xA6 };
+  DisplayWrite(true, command, sizeof(command));
+}
+
+// Display a character
+void DisplayPutChar(char character)
+{
+}
+
+void DisplayPutString(const char* string)
+{
+  while(*string) {
+    DisplayPutChar(*(string++));
+  }
+}
+
+// Move the current cursor location
+void DisplayMoveCursor(u16 line, u16 column)
+{
+  // TODO
+}
+
+// Set the text width multiplier
+void DisplayTextWidthMultiplier(u16 multiplier)
+{
+}
+
+// Set the text height multiplier
+void DisplayTextHeightMultiplier(u16 multiplier)
+{
+}
+
+// 96 characters from ASCII 32 to 127, each 5x8 pixels in 5 bytes oriented vertically
+const int CHAR_WIDTH = 5, CHAR_HEIGHT = 8, CHAR_START = 32, CHAR_END = 127;
+static const u8 FONT[] = {
+   0x00,0x00,0x00,0x00,0x00, 0x00,0x00,0x5F,0x00,0x00, 0x00,0x07,0x00,0x07,0x00, 0x14,0x7F,0x14,0x7F,0x14,
+   0x24,0x2A,0x7F,0x2A,0x12, 0x23,0x13,0x08,0x64,0x62, 0x36,0x49,0x56,0x20,0x50, 0x00,0x08,0x07,0x03,0x00,
+   0x00,0x1C,0x22,0x41,0x00, 0x00,0x41,0x22,0x1C,0x00, 0x2A,0x1C,0x7F,0x1C,0x2A, 0x08,0x08,0x3E,0x08,0x08,
+   0x00,0x80,0x70,0x30,0x00, 0x08,0x08,0x08,0x08,0x08, 0x00,0x00,0x60,0x60,0x00, 0x20,0x10,0x08,0x04,0x02,
+   0x3E,0x51,0x49,0x45,0x3E, 0x00,0x42,0x7F,0x40,0x00, 0x72,0x49,0x49,0x49,0x46, 0x21,0x41,0x49,0x4D,0x33,
+   0x18,0x14,0x12,0x7F,0x10, 0x27,0x45,0x45,0x45,0x39, 0x3C,0x4A,0x49,0x49,0x31, 0x41,0x21,0x11,0x09,0x07,
+   0x36,0x49,0x49,0x49,0x36, 0x46,0x49,0x49,0x29,0x1E, 0x00,0x00,0x14,0x00,0x00, 0x00,0x40,0x34,0x00,0x00,
+   0x00,0x08,0x14,0x22,0x41, 0x14,0x14,0x14,0x14,0x14, 0x00,0x41,0x22,0x14,0x08, 0x02,0x01,0x59,0x09,0x06,
+   0x3E,0x41,0x5D,0x59,0x4E, 0x7C,0x12,0x11,0x12,0x7C, 0x7F,0x49,0x49,0x49,0x36, 0x3E,0x41,0x41,0x41,0x22,
+   0x7F,0x41,0x41,0x41,0x3E, 0x7F,0x49,0x49,0x49,0x41, 0x7F,0x09,0x09,0x09,0x01, 0x3E,0x41,0x41,0x51,0x73,
+   0x7F,0x08,0x08,0x08,0x7F, 0x00,0x41,0x7F,0x41,0x00, 0x20,0x40,0x41,0x3F,0x01, 0x7F,0x08,0x14,0x22,0x41,
+   0x7F,0x40,0x40,0x40,0x40, 0x7F,0x02,0x1C,0x02,0x7F, 0x7F,0x04,0x08,0x10,0x7F, 0x3E,0x41,0x41,0x41,0x3E,
+   0x7F,0x09,0x09,0x09,0x06, 0x3E,0x41,0x51,0x21,0x5E, 0x7F,0x09,0x19,0x29,0x46, 0x26,0x49,0x49,0x49,0x32,
+   0x03,0x01,0x7F,0x01,0x03, 0x3F,0x40,0x40,0x40,0x3F, 0x1F,0x20,0x40,0x20,0x1F, 0x3F,0x40,0x38,0x40,0x3F,
+   0x63,0x14,0x08,0x14,0x63, 0x03,0x04,0x78,0x04,0x03, 0x61,0x59,0x49,0x4D,0x43, 0x00,0x7F,0x41,0x41,0x41,
+   0x02,0x04,0x08,0x10,0x20, 0x00,0x41,0x41,0x41,0x7F, 0x04,0x02,0x01,0x02,0x04, 0x40,0x40,0x40,0x40,0x40,
+   0x00,0x03,0x07,0x08,0x00, 0x20,0x54,0x54,0x78,0x40, 0x7F,0x28,0x44,0x44,0x38, 0x38,0x44,0x44,0x44,0x28,
+   0x38,0x44,0x44,0x28,0x7F, 0x38,0x54,0x54,0x54,0x18, 0x00,0x08,0x7E,0x09,0x02, 0x18,0xA4,0xA4,0x9C,0x78,
+   0x7F,0x08,0x04,0x04,0x78, 0x00,0x44,0x7D,0x40,0x00, 0x20,0x40,0x40,0x3D,0x00, 0x7F,0x10,0x28,0x44,0x00,
+   0x00,0x41,0x7F,0x40,0x00, 0x7C,0x04,0x78,0x04,0x78, 0x7C,0x08,0x04,0x04,0x78, 0x38,0x44,0x44,0x44,0x38,
+   0xFC,0x18,0x24,0x24,0x18, 0x18,0x24,0x24,0x18,0xFC, 0x7C,0x08,0x04,0x04,0x08, 0x48,0x54,0x54,0x54,0x24,
+   0x04,0x04,0x3F,0x44,0x24, 0x3C,0x40,0x40,0x20,0x7C, 0x1C,0x20,0x40,0x20,0x1C, 0x3C,0x40,0x30,0x40,0x3C,
+   0x44,0x28,0x10,0x28,0x44, 0x4C,0x90,0x90,0x90,0x7C, 0x44,0x64,0x54,0x4C,0x44, 0x00,0x08,0x36,0x41,0x00,
+   0x00,0x00,0x77,0x00,0x00, 0x00,0x41,0x36,0x08,0x00, 0x02,0x01,0x02,0x04,0x02, 0x3C,0x26,0x23,0x26,0x3C
+};
+
+// Print a message to the face - this will permanently replace the face
+void DisplayPrintf(const char *format, ...)
+{
+  // Build the printf into a local buffer and zero-terminate it
+  char buffer[256];
+  va_list argptr;
+  va_start(argptr, format);
+  vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+  va_end(argptr);
+  buffer[sizeof(buffer)-1] = '\0';
   
-  // Get rid of weird keil warning of possible usage before 
-  u8 data[2] = {0};
-  data[0] = ((r << 3) | (g >> 3));
-  data[1] = ((g << 5) | b);
-  
-  // Byte swap
-  return (data[1] << 8) | data[0];
+  u8 frame[DISPLAY_WIDTH*DISPLAY_HEIGHT/8];  // 1 bit per pixel
+
+  // Build the result into the framebuffer
+  int x = 0, y = 0;
+  char* cptr = buffer;
+  memset(frame, 0, sizeof(frame));
+
+  // Go character by character until we hit the end
+  while (*cptr)
+  {
+    // Wrap to next row, and bail out past bottom row
+    int c = *cptr++;
+    if (c == '\n' || x >= DISPLAY_WIDTH / (CHAR_WIDTH+1))
+    {
+      x = 0;
+      y++;
+    }
+    if (y >= DISPLAY_HEIGHT / CHAR_HEIGHT)
+      break;
+
+    // Skip unrecognized chars
+    if (c < CHAR_START || c > CHAR_END)
+      continue;
+
+    // Copy the character from the font buffer to the display buffer
+    const u8* fptr = FONT + (c - CHAR_START) * CHAR_WIDTH;
+    u8* gptr = frame + y + x * (CHAR_WIDTH + 1) * (DISPLAY_HEIGHT / CHAR_HEIGHT);
+    for (int i = 0; i < CHAR_WIDTH; i++)
+    {
+      *gptr = *fptr++;
+      gptr += DISPLAY_HEIGHT / CHAR_HEIGHT;
+    }
+    x++;
+  }
+
+  // Display it
+  DisplayWrite(true, ResetCursorCmd, sizeof(ResetCursorCmd));
+  DisplayWrite(false, frame, sizeof(frame));
 }

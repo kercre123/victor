@@ -173,6 +173,36 @@ namespace Cozmo {
       
     } // ~BlockWorld() Destructor
     
+    ObservableObject* BlockWorld::GetObjectByIdHelper(const ObjectID objectID) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          auto objectsByIdIter = objectsByType.second.find(objectID);
+          if(objectsByIdIter != objectsByType.second.end()) {
+            return objectsByIdIter->second;
+          }
+        }
+      }
+      
+      return nullptr;
+    }
+    
+    ObservableObject* BlockWorld::GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByType : GetExistingObjectsByFamily(inFamily)) {
+        auto objectsByIdIter = objectsByType.second.find(objectID);
+        if(objectsByIdIter != objectsByType.second.end()) {
+          return objectsByIdIter->second;
+        }
+      }
+      
+      // ID not found!
+      return nullptr;
+    }
     
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
@@ -1095,7 +1125,7 @@ namespace Cozmo {
       // and localizes to it because it hasn't seen a marker on the flat mat
       // it is driving on.)
       if(_robot->IsLocalized()) {
-        MatPiece* mat = dynamic_cast<MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
+        const MatPiece* mat = dynamic_cast<const MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
         if(mat != nullptr) {
           if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
             // Ignore the ID of the mat we're on
@@ -2620,7 +2650,7 @@ namespace Cozmo {
       // (Re)Draw the selected object separately so we can get its pre-action poses
       if(GetSelectedObject().IsSet())
       {
-        ActionableObject* selectedObject = dynamic_cast<ActionableObject*>(GetObjectByID(GetSelectedObject()));
+        const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetObjectByID(GetSelectedObject()));
         if(selectedObject == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
                             "Selected object ID = %d, but it came back null.\n",
@@ -2640,7 +2670,7 @@ namespace Cozmo {
       
       // (Re)Draw the localization object separately so we can show it in a different color
       if(_robot->IsLocalized()) {
-        Vision::ObservableObject* locObject = GetObjectByID(_robot->GetLocalizedTo());
+        const Vision::ObservableObject* locObject = GetObjectByID(_robot->GetLocalizedTo());
         locObject->Visualize(NamedColors::LOCALIZATION_OBJECT);
       }
       

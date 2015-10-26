@@ -192,9 +192,9 @@ namespace Anki {
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const;
       
-      virtual void Visualize(); // using internal ColorRGBA
-      virtual void Visualize(const ColorRGBA& color) = 0; // using specified color
-      virtual void EraseVisualization() = 0;
+      virtual void Visualize() const; // using internal ColorRGBA
+      virtual void Visualize(const ColorRGBA& color) const = 0; // using specified color
+      virtual void EraseVisualization() const = 0;
       
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
@@ -291,7 +291,7 @@ namespace Anki {
       _color = color;
     }
     
-    inline void ObservableObject::Visualize() {
+    inline void ObservableObject::Visualize() const {
       Visualize(_color);
     }
     

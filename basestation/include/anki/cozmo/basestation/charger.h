@@ -85,8 +85,8 @@ namespace Anki {
       virtual ~Charger();
       
       virtual Charger*   CloneType() const override;
-      virtual void    Visualize(const ColorRGBA& color) override;
-      virtual void    EraseVisualization() override;
+      virtual void    Visualize(const ColorRGBA& color) const override;
+      virtual void    EraseVisualization() const override;
       
 
       virtual Point3f GetSameDistanceTolerance()  const override;
@@ -115,7 +115,7 @@ namespace Anki {
       Pose3d _preAscentPose;
       Pose3d _preDescentPose;
       
-      VizManager::Handle_t _vizHandle;
+      mutable VizManager::Handle_t _vizHandle;
       
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
                                         const Pose3d* reachableFromPose,

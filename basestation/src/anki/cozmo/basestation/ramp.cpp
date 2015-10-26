@@ -157,7 +157,7 @@ namespace Anki {
       return new Ramp();
     }
     
-    void Ramp::Visualize(const ColorRGBA& color)
+    void Ramp::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawRamp(GetID().GetValue(), Ramp::PlatformLength,
@@ -166,7 +166,7 @@ namespace Anki {
     } // Visualize()
     
     
-    void Ramp::EraseVisualization()
+    void Ramp::EraseVisualization() const
     {
       // Erase the ramp
       if(_vizHandle != VizManager::INVALID_HANDLE) {

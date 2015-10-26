@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
-#include "util/signals/simpleSignal_fwd.h"
+
 #include <vector>
 #include <set>
 
@@ -35,14 +35,15 @@ public:
   
   virtual bool IsRunnable(double currentTime_sec) const override;
   
-  virtual Result Init(double currentTime_sec) override;
-  
-  virtual Status Update(double currentTime_sec) override;
-  
-  // Finish placing current object if there is one, otherwise good to go
-  virtual Result Interrupt(double currentTime_sec) override;
-  
   virtual bool GetRewardBid(Reward& reward) override;
+  
+protected:
+  
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   
 private:
   enum class State {
@@ -80,21 +81,20 @@ private:
   u32 _currentDriveActionID = 0;
   u32 _numDestinationsLeft = kDestinationsToReach;
   
-  std::vector<Signal::SmartHandle> _eventHandles;
   std::set<ObjectID> _recentObjects;
   std::set<ObjectID> _oldBoringObjects;
   u32 _numObjectsToLookAt = 0;
   
-  Result StartMoving();
+  Result StartMoving(Robot& robot);
   Pose3d GetDestinationPose(Destination destination);
-  void ResetBehavior(float currentTime_sec);
+  void ResetBehavior(Robot& robot, float currentTime_sec);
   Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
-  void ResetSafeRegion();
+  void ResetSafeRegion(Robot& robot);
   
-  void HandleObjectObserved(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
-  void HandleCompletedAction(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
-  void HandleRobotPutDown(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+  void HandleObjectObserved(const EngineToGameEvent& event, Robot& robot);
+  void HandleCompletedAction(const EngineToGameEvent& event);
+  void HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot);
 };
   
 

@@ -62,6 +62,9 @@ public:
   virtual EPlannerStatus CheckPlanningStatus() const override;
 
 protected:
+  EComputePathStatus ComputePathHelper(const Pose3d& startPose,
+                                       const Pose3d& targetPose);
+  
   LatticePlannerImpl* _impl;
 };
 

@@ -89,14 +89,14 @@ namespace Cozmo {
   }
   
   
-  void HumanHead::Visualize(const ColorRGBA& color)
+  void HumanHead::Visualize(const ColorRGBA& color) const
   {
     // TODO: How to visualize without a (cozmo-specific) VizManager?
     Pose3d vizPose = GetPose().GetWithRespectToOrigin();
     _vizHandle = VizManager::getInstance()->DrawHumanHead(GetID().GetValue(), _size, vizPose, color);
   }
   
-  void HumanHead::EraseVisualization()
+  void HumanHead::EraseVisualization() const
   {
     // Erase the main object
     if(_vizHandle != VizManager::INVALID_HANDLE) {
