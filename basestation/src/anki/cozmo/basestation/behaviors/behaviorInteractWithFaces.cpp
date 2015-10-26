@@ -502,32 +502,34 @@ namespace Cozmo {
     ProceduralFace prevProcFace(proceduralFace);
     
     const Radians& faceAngle = face.GetHeadRoll();
-    
-    // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
-    const Face::Feature& leftEyeBrow  = face.GetFeature(Face::FeatureName::LeftEyebrow);
-    const Face::Feature& rightEyeBrow = face.GetFeature(Face::FeatureName::RightEyebrow);
-    
-    const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face.GetLeftEyeCenter(), faceAngle);
-    const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face.GetRightEyeCenter(), faceAngle);
-    
     const f32 distanceNorm =  face.GetIntraEyeDistance() / _baselineIntraEyeDistance;
     
-    // Get expected height based on intra-eye distance
-    const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
-    const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
-    
-    // Compare measured distance to expected
-    const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
-    const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
-    
-    // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-    proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                     ProceduralFace::Parameter::BrowCenY,
-                                     leftEyebrowHeightScale);
-    
-    proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                     ProceduralFace::Parameter::BrowCenY,
-                                     rightEyebrowHeightScale);
+    if(_baselineLeftEyebrowHeight != 0.f && _baselineRightEyebrowHeight != 0.f)
+    {
+      // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
+      const Face::Feature& leftEyeBrow  = face.GetFeature(Face::FeatureName::LeftEyebrow);
+      const Face::Feature& rightEyeBrow = face.GetFeature(Face::FeatureName::RightEyebrow);
+      
+      const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face.GetLeftEyeCenter(), faceAngle);
+      const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face.GetRightEyeCenter(), faceAngle);
+      
+      // Get expected height based on intra-eye distance
+      const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
+      const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
+      
+      // Compare measured distance to expected
+      const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
+      const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
+      
+      // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
+      proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
+                                  ProceduralFace::Parameter::BrowCenY,
+                                  leftEyebrowHeightScale);
+      
+      proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
+                                  ProceduralFace::Parameter::BrowCenY,
+                                  rightEyebrowHeightScale);
+    }
     
     const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
     const f32 eyeHeightFraction = (GetEyeHeight(&face) - expectedEyeHeight)/expectedEyeHeight + .1f; // bias a little larger
@@ -547,10 +549,12 @@ namespace Cozmo {
     newPupilPos *= .75f;
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-      proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
-                                  std::max(-.8f, std::min(.8f, eyeHeightFraction)));
-      proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                  std::max(-.75f, std::min(.75f, eyeHeightFraction)));
+      if(_baselineEyeHeight != 0.f) {
+        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                    std::max(-.8f, std::min(.8f, eyeHeightFraction)));
+        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                    std::max(-.75f, std::min(.75f, eyeHeightFraction)));
+      }
       
       // To get saccade-like movement, only update the pupils if they new position is
       // different enough
