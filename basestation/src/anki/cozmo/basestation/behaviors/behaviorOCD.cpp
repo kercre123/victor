@@ -1365,7 +1365,7 @@ namespace Cozmo {
       UpdateBlockLights(robot);
     }
     
-    bool foundMessyToNeat, foundNeatToMessy, needToCancelLastActionTag;
+    bool foundMessyToNeat=false, foundNeatToMessy=false, needToCancelLastActionTag=false;
     VerifyNeatness(robot, foundMessyToNeat, foundNeatToMessy, needToCancelLastActionTag);
     
     if (foundMessyToNeat || foundNeatToMessy) {
@@ -1400,7 +1400,7 @@ namespace Cozmo {
     
     HandleObservedObjectHelper(robot, objectID, currentTime_sec);
     
-    bool dummy1, dummy2, dummy3;
+    bool dummy1=false, dummy2=false, dummy3=false;
     VerifyNeatness(robot, dummy1, dummy2, dummy3);
     
     return RESULT_OK;

@@ -334,8 +334,7 @@ bool BehaviorLookAround::GetRewardBid(Reward& reward)
   
 void BehaviorLookAround::HandleObjectObserved(const AnkiEvent<MessageEngineToGame>& event, Robot& robot)
 {
-  // Ignore messages while not running
-  assert(!IsRunning());
+  assert(IsRunning());
   
   const RobotObservedObject& msg = event.GetData().Get_RobotObservedObject();
   
@@ -380,14 +379,15 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
   
 void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGame>& event)
 {
-  assert(!IsRunning());
+  assert(IsRunning());
   
   const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
   if (RobotActionType::FACE_OBJECT == msg.actionType)
   {
     if (0 == _numObjectsToLookAt)
     {
-      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction", "Getting unexpected FaceObjectAction completion messages");
+      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction",
+                          "Getting unexpected FaceObjectAction completion messages");
     }
     else
     {
