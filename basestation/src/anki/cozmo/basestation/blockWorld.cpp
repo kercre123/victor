@@ -322,7 +322,19 @@ namespace Cozmo {
         const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
         
         using namespace ExternalInterface;
-        _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedObject(            _robot->GetID(), observedObject->GetFamily(), observedObject->GetType(),           observedObject->GetID(), boundingBox.GetX(), boundingBox.GetY(),                                                                                                                                 boundingBox.GetWidth(),                                                                                                                                boundingBox.GetHeight(),                                                                                                                                T.x(), T.y(), T.z(),                                                                                                                                q.w(), q.x(), q.y(), q.z(),                                                                                                                                topMarkerOrientation.ToFloat(),                                                                                                                                markersVisible,                                                                                                                                observedObject->IsActive())));
+        _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedObject(_robot->GetID(),
+                                                                                          observedObject->GetFamily(),
+                                                                                          observedObject->GetType(),
+                                                                                          observedObject->GetID(),
+                                                                                          boundingBox.GetX(),
+                                                                                          boundingBox.GetY(),
+                                                                                          boundingBox.GetWidth(),
+                                                                                          boundingBox.GetHeight(),
+                                                                                          T.x(), T.y(), T.z(),
+                                                                                          q.w(), q.x(), q.y(), q.z(),
+                                                                                          topMarkerOrientation.ToFloat(),
+                                                                                          markersVisible,
+                                                                                          observedObject->IsActive())));
       } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
     } // if(_robot->HasExternalInterface())
     
@@ -2000,7 +2012,8 @@ namespace Cozmo {
                   // entirely if the block isn't in the same coordinate tree as the
                   // robot.
                   Pose3d objectPoseWrtRobotOrigin;
-                  if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true)
+                  if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true
+                     && object->GetPoseState() != ActionableObject::PoseState::Unknown)
                   {
                     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                     const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -2162,37 +2175,18 @@ namespace Cozmo {
           _robot->GetMoveComponent().DisableTrackToObject();
         }
         
-        bool emitSignal = true;
-        if(object->IsActive())
-        {
-          if(ActiveIdentityState::Identified == object->GetIdentityState()) {
-            PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
-                             "Sending message to turn off active object %d's lights because "
-                             "it is being deleted.\n", object->GetID().GetValue());
-            _robot->TurnOffObjectLights(object->GetID());
-          }
-          if(_unidentifiedActiveObjects.count(object->GetID()) != 0) {
-            // Make sure to remove from the unidentified list
-            _unidentifiedActiveObjects.erase(object->GetID());
-            // If it was still in the unidentified list, don't emit a deletion
-            // signal because we didn't broadcast it's observation yet
-            emitSignal = false;
-          }
-        }
-        
         // Notify any listeners that this object is being deleted
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(emitSignal && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+        if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
         {
           _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
         
-        // NOTE: The object should erase its own visualization upon destruction
-        delete object;
+        object->SetPoseState(ObservableObject::PoseState::Unknown);
         
         // Flag that we removed an object
         _didObjectsChange = true;

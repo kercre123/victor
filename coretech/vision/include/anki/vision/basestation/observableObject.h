@@ -93,11 +93,6 @@ namespace Anki {
       
       virtual bool IsMoveable() const { return true; }
       
-      // Mark this object as delocalized (and thus not usable by a robot for
-      // localization).
-      bool IsLocalized() const { return _isLocalized; } 
-      void Delocalize();
-      
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
       // object from which it was computed.
@@ -204,6 +199,16 @@ namespace Anki {
       // orientation around the Z axis (w.r.t. its parent), but no rotation about the
       // X and Y axes.
       bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(5)) const;
+
+      enum class PoseState
+      {
+        Known,
+        Dirty,
+        Unknown
+      };
+      
+      PoseState GetPoseState() const { return _poseState; }
+      void SetPoseState(PoseState newState) { _poseState = newState; }
       
     protected:
       
@@ -215,6 +220,7 @@ namespace Anki {
       TimeStamp_t  _lastObservedTime = 0;
       u32          _numTimesObserved = 0;
       ColorRGBA    _color;
+      PoseState    _poseState = PoseState::Unknown;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -231,9 +237,6 @@ namespace Anki {
       // Force setting of pose through SetPose() to keep pose name updated
       Pose3d _pose;
       f32    _lastSetPoseDistance = -1.f;
-      
-      // Pose has been set
-      bool   _isLocalized = false;
       
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
@@ -264,7 +267,7 @@ namespace Anki {
   
     inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance) {
       _pose = newPose;
-      _isLocalized = true;
+      _poseState = PoseState::Known;
       
       std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());
