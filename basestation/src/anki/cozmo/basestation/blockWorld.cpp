@@ -2175,18 +2175,18 @@ namespace Cozmo {
           _robot->GetMoveComponent().DisableTrackToObject();
         }
         
-        // Notify any listeners that this object is being deleted
+        object->SetPoseState(ObservableObject::PoseState::Unknown);
+        
+        // Notify any listeners that this object no longer has a valid Pose
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
         if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
         {
-          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
+          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
-        
-        object->SetPoseState(ObservableObject::PoseState::Unknown);
         
         // Flag that we removed an object
         _didObjectsChange = true;
