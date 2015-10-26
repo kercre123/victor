@@ -214,6 +214,7 @@ public class Robot : IDisposable {
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
+  private U2G.PlaceRelObject PlaceRelObjectMessage;
 
   private ObservedObject _carryingObject;
 
@@ -336,6 +337,7 @@ public class Robot : IDisposable {
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
+    PlaceRelObjectMessage = new U2G.PlaceRelObject();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -619,6 +621,17 @@ public class Robot : IDisposable {
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
     }
+  }
+
+  public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle) {
+    DAS.Debug("Robot", "PlaceObjectRel" + carryingObject + " On Ground Here");
+
+    PlaceRelObjectMessage.approachAngle_rad = approachAngle;
+    PlaceRelObjectMessage.placementOffsetX_mm = offsetFromMarker;
+    PlaceRelObjectMessage.objectID = target.ID;
+
+    RobotEngineManager.instance.Message.PlaceRelObject = PlaceRelObjectMessage;
+
   }
 
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
