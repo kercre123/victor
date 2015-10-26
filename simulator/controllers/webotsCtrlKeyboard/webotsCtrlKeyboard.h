@@ -20,7 +20,6 @@ public:
 
 protected:
   void ProcessKeystroke();
-  void ProcessJoystick();
   void PrintHelp();
   
   void TestLightCube();
