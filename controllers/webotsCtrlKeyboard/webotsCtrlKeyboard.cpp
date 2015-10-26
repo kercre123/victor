@@ -334,6 +334,10 @@ namespace Anki {
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
+          // For pickup or placeRel, specify whether or not you want to use the
+          // given approach angle for pickup, placeRel, or roll actions
+          bool useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
+          f32 approachAngle_rad = DEG_TO_RAD_F32(root_->getField("approachAngle_deg")->getSFFloat());
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
@@ -832,11 +836,6 @@ namespace Anki {
                   placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
                 }
                 
-                // For pickup or placeRel, specify whether or not you want to use the
-                // given approach angle.
-                bool useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
-                f32 approachAngle_rad = DEG_TO_RAD_F32(root_->getField("approachAngle_deg")->getSFFloat());
-                
                 // For placeOn, specify whether or not to use the exactRotation specified
                 bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
                 const double* rotVals = root_->getField("exactPlacementRotation")->getSFRotation();
@@ -872,7 +871,10 @@ namespace Anki {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
                 
-                SendRollSelectedObject(usePreDockPose, useManualSpeed);
+                SendRollSelectedObject(usePreDockPose,
+                                       useApproachAngle,
+                                       approachAngle_rad,
+                                       useManualSpeed);
                 break;
               }
 
