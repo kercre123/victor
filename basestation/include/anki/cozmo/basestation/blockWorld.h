@@ -209,7 +209,7 @@ namespace Anki
       
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
-      void DrawAllObjects();
+      void DrawAllObjects() const;
       
     protected:
       

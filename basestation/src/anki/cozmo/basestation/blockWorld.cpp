@@ -2406,7 +2406,7 @@ namespace Anki
       }
     }
     
-    void BlockWorld::DrawAllObjects()
+    void BlockWorld::DrawAllObjects() const
     {
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
@@ -2420,7 +2420,7 @@ namespace Anki
       // (Re)Draw the selected object separately so we can get its pre-action poses
       if(GetSelectedObject().IsSet())
       {
-        ActionableObject* selectedObject = dynamic_cast<ActionableObject*>(GetObjectByID(GetSelectedObject()));
+        const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetObjectByID(GetSelectedObject()));
         if(selectedObject == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
                             "Selected object ID = %d, but it came back null.\n",
