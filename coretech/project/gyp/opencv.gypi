@@ -30,69 +30,26 @@
       'libopencv_video.a',
       'libopencv_features2d.a',
     ],
+
+    'opencv_lib_search_path_mac_debug': [
+        '<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
+        '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
+    ],
+
+    'opencv_lib_search_path_mac_release': [
+        '<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
+        '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
+    ],
+
+    'opencv_lib_search_path_ios_debug': [
+        '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
+    ],
+
+    'opencv_lib_search_path_ios_release': [
+        '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
+    ],
     
   }, # variables
   
-  'target_defaults': {
-    'configurations': {
-      'Debug': {
-        'conditions': [
-          ['OS=="ios"', {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
-              ],
-            },
-          }],
-          ['OS=="mac"', {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(coretech_external_path)/build/opencv-2.4.8/lib/Debug',
-                '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Debug',
-              ],
-            },
-          }],
-        ],
-      },
-      'Profile': {
-        'conditions': [
-          ['OS=="ios"', {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(coretech_external_path)/build/opencv-ios/multiArchLibs',              
-              ],
-            },
-          }],
-          ['OS=="mac"', {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-                '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-              ],
-            },
-          }],
-        ],
-      },
-      'Release': {
-        'conditions': [
-          ['OS=="ios"', {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(coretech_external_path)/build/opencv-ios/multiArchLibs',
-              ],
-            },
-          }],
-          ['OS=="mac"', {
-            'xcode_settings': {
-              'LIBRARY_SEARCH_PATHS': [
-                '<(coretech_external_path)/build/opencv-2.4.8/lib/Release',
-                '<(coretech_external_path)/build/opencv-2.4.8/3rdparty/lib/Release',
-              ],
-            },
-          }],
-        ],
-      },
-    }, # configurations  
-  } # target_defaults
-  
 }
+

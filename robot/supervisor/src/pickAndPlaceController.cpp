@@ -5,6 +5,7 @@
 #include "liftController.h"
 #include "localization.h"
 #include "imuFilter.h"
+#include "proxSensors.h"
 
 #include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -161,6 +162,7 @@ namespace Anki {
         switch(mode_)
         {
           case IDLE:
+            ProxSensors::EnableCliffDetector(true);
             break;
             
           case SET_LIFT_PREDOCK:
@@ -632,6 +634,10 @@ namespace Anki {
         
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
+        
+        if (action_ == DA_ROLL_LOW) {
+          ProxSensors::EnableCliffDetector(false);
+        }
       }
 
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)

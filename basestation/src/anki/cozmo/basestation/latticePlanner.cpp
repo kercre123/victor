@@ -99,15 +99,6 @@ public:
                         "LatticePlanner requires data platform to operate!");
     }
     else {
-
-      double halfWheelBase = WHEEL_BASE_MM * 0.5f;
-      // magic numbers from xythetaEnvironment.cpp
-      const double maxVelocity = 60.0;
-      const double maxReverseVelocity = 25.0;
-      _context.env.SetRobotActionParams(halfWheelBase,
-                                        maxVelocity,
-                                        maxReverseVelocity);
-
       Json::Value mprims;
       const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources,
                                                     "config/basestation/config/cozmo_mprim.json",

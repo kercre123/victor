@@ -569,6 +569,8 @@ namespace Anki {
       // For verifying if we successfully rolled the object
       Pose3d _dockObjectOrigPose;
       
+      const Vision::KnownMarker* _expectedMarkerPostRoll;
+      
       IActionRunner*             _rollVerifyAction;
       
     }; // class RollObjectAction
