@@ -213,17 +213,6 @@ message ExecuteTestPlan {
 message SelectNextObject {
 }
 
-// PickAndPlaceObject
-message PickAndPlaceObject {
-    int_32 objectID, // negative value means "currently selected object"
-    float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
-    float_32 placementOffsetY_mm,  // Y-axis offset for object placement (where +y extends out towards the left if you are facing the marker)
-    float_32 placementOffsetAngle_rad, // Angular offset for object placement (right of marker normal if you are facing marker is +ve)
-    uint_8 usePreDockPose,
-    uint_8 placeOnGroundIfCarrying,  // Does PLACE_HIGH if false, otherwise places at placementOffsetX_mm from objectID
-    uint_8 useManualSpeed
-}
-
 // PickupObject
 // If useApproachAngle == true, then only the preAction pose that results in a robot
 // approach angle of approachAngle_rad is considered.
@@ -546,7 +535,6 @@ structure RobotActionUnion {
   GotoPose           goToPose,
   GotoObject         goToObject,
   PlayAnimation      playAnimation,
-  PickAndPlaceObject pickAndPlaceObject,
   PickupObject       pickupObject,
   PlaceOnObject      placeOnObject,
   PlaceRelObject     placeRelObject,

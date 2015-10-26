@@ -42,7 +42,6 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
       ExternalInterface::MessageGameToEngineTag::GotoPose,
       ExternalInterface::MessageGameToEngineTag::GotoObject,
-      ExternalInterface::MessageGameToEngineTag::PickAndPlaceObject,
       ExternalInterface::MessageGameToEngineTag::PickupObject,
       ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
       ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
@@ -99,36 +98,6 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   // (For now it is hard-coded to true)
   const bool driveWithHeadDown = true;
   return new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed);
-}
-  
-IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface::PickAndPlaceObject& msg)
-{
-  ObjectID selectedObjectID;
-  if(msg.objectID < 0) {
-    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
-  } else {
-    selectedObjectID = msg.objectID;
-  }
-  
-  if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickAndPlaceObjectAction(selectedObjectID,
-                                               robot.IsCarryingObject(),
-                                               msg.useManualSpeed,
-                                               msg.placementOffsetX_mm,
-                                               msg.placementOffsetY_mm,
-                                               msg.placementOffsetAngle_rad,
-                                               msg.placeOnGroundIfCarrying);
-  } else {
-    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID,
-                                                                    robot.IsCarryingObject(),
-                                                                    msg.useManualSpeed,
-                                                                    msg.placementOffsetX_mm,
-                                                                    msg.placementOffsetY_mm,
-                                                                    msg.placementOffsetAngle_rad,
-                                                                    msg.placeOnGroundIfCarrying);
-    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
-    return action;
-  }
 }
   
   
@@ -288,18 +257,15 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionType::PLAY_ANIMATION:
       return new PlayAnimationAction(actionUnion.playAnimation.animationName, actionUnion.playAnimation.numLoops);
       
-    case RobotActionType::PICK_AND_PLACE_OBJECT:
-      return GetPickAndPlaceActionHelper(robot, actionUnion.pickAndPlaceObject);
-      
     case RobotActionType::PICKUP_OBJECT_HIGH:
     case RobotActionType::PICKUP_OBJECT_LOW:
       return GetPickupActionHelper(robot, actionUnion.pickupObject);
       
     case RobotActionType::PLACE_OBJECT_HIGH:
-      return GetPlaceRelActionHelper(robot, actionUnion.placeRelObject);
+      return GetPlaceOnActionHelper(robot, actionUnion.placeOnObject);
       
     case RobotActionType::PLACE_OBJECT_LOW:
-      return GetPlaceOnActionHelper(robot, actionUnion.placeOnObject);
+      return GetPlaceRelActionHelper(robot, actionUnion.placeRelObject);
       
       
       
@@ -418,12 +384,6 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::GotoObject:
     {
       newAction = GetDriveToObjectActionHelper(robot, event.GetData().Get_GotoObject());
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::PickAndPlaceObject:
-    {
-      numRetries = 1;
-      newAction = GetPickAndPlaceActionHelper(robot, event.GetData().Get_PickAndPlaceObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::PickupObject:

@@ -116,8 +116,8 @@ protected:
   
   void SendPickupObject(const s32 objectID,
                         const bool usePreDockPose,
-                        const bool useApproachAngle,
-                        const f32 approachAngle_rad,
+                        const bool useApproachAngle = false,
+                        const f32 approachAngle_rad = false,
                         const bool useManualSpeed = false);
   
   void SendPlaceOnObject(const s32 objectID,
@@ -132,13 +132,6 @@ protected:
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
                           const bool useManualSpeed = false);
-
-  void SendPickAndPlaceSelectedObject(const bool usePreDockPose,
-                                      const f32 placementOffsetX_mm = 0,
-                                      const f32 placementOffsetY_mm = 0,
-                                      const f32 placementOffsetAngle_rad = 0,
-                                      const bool placeOnGroundIfCarrying = false,
-                                      const bool useManualSpeed = false);
   
   void SendPickupSelectedObject(const bool usePreDockPose,
                                 const bool useApproachAngle,

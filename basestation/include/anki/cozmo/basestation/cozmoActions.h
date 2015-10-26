@@ -465,55 +465,6 @@ namespace Anki {
     }; // class IDockAction
 
     
-    // If not carrying anything, picks up the specified object.
-    // If carrying an object, places it on the specified object.
-    class PickAndPlaceObjectAction : public IDockAction
-    {
-    public:
-      PickAndPlaceObjectAction(ObjectID objectID,
-                               const bool doPlacement,
-                               const bool useManualSpeed = false,
-                               const f32 placementOffsetX_mm = 0,
-                               const f32 placementOffsetY_mm = 0,
-                               const f32 placementOffsetAngle_rad = 0,
-                               const bool placeObjectOnGroundIfCarrying = false);
-      virtual ~PickAndPlaceObjectAction();
-      
-      virtual const std::string& GetName() const override;
-      
-      // Override to determine type (pick/place, low/high) dynamically depending
-      // on what we were doing.
-      virtual RobotActionType GetType() const override;
-      
-    protected:
-      
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
-      
-      virtual PreActionPose::ActionType GetPreActionType() override { return _actionType; }
-      
-      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
-      
-      virtual ActionResult Verify(Robot& robot) override;
-      
-      virtual void Reset() override;
-      
-      // For verifying if we successfully picked up the object
-      Pose3d _dockObjectOrigPose;
-      
-      // If placing an object, we need a place to store what robot was
-      // carrying, for verification.
-      ObjectID                   _carryObjectID;
-      const Vision::KnownMarker* _carryObjectMarker;
-      
-      IActionRunner*             _placementVerifyAction;
-      bool                       _verifyComplete; // used in PLACE modes
-      
-      PreActionPose::ActionType  _actionType;
-      
-    }; // class PickAndPlaceObjectAction
-
-    
-    
     // Picks up the specified object.
     class PickupObjectAction : public IDockAction
     {
@@ -623,47 +574,6 @@ namespace Anki {
     }; // class RollObjectAction
     
     
-    // Common compound action for driving to an object, visually verifying we
-    // can still see it, and then picking/placing it.
-    class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
-    {
-    public:
-      DriveToPickAndPlaceObjectAction(const ObjectID& objectID,
-                                      const bool doPlacement,  // True if placing something on top of this object
-                                      const bool useManualSpeed = false,
-                                      const f32 placementOffsetX_mm = 0,
-                                      const f32 placementOffsetY_mm = 0,
-                                      const f32 placementOffsetAngle_rad = 0,
-                                      const bool placeObjectOnGroundIfCarrying = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                doPlacement ? PreActionPose::PLACE_RELATIVE : PreActionPose::DOCKING,
-                                placementOffsetX_mm,
-                                false,
-                                0,
-                                useManualSpeed),
-        new PickAndPlaceObjectAction(objectID,
-                                     doPlacement,
-                                     useManualSpeed,
-                                     placementOffsetX_mm,
-                                     placementOffsetY_mm,
-                                     placementOffsetAngle_rad,
-                                     placeObjectOnGroundIfCarrying)})
-      {
-
-      }
-      
-      // GetType returns the type from the PickAndPlaceObjectAction, which is
-      // determined dynamically
-      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
-      
-      // Use PickAndPlaceObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
-      }
-      
-    };
-    
     
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then picking it up.
@@ -686,11 +596,11 @@ namespace Anki {
         
       }
       
-      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // GetType returns the type from the PickupObjectAction, which is
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
-      // Use PickAndPlaceObjectAction's completion info
+      // Use PickupObjectAction's completion info
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
         _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
@@ -736,11 +646,11 @@ namespace Anki {
       
       
       
-      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
-      // Use PickAndPlaceObjectAction's completion info
+      // Use PlaceRelObjectAction's completion info
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
         _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
@@ -761,7 +671,7 @@ namespace Anki {
         
       }
       
-      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
