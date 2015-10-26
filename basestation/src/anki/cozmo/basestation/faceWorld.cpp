@@ -58,7 +58,7 @@ namespace Cozmo {
     
     const Radians currentBodyAngle = _robot.GetPose().GetRotationAngle<'Z'>();
     msg.bodyPanAngle_rad = currentBodyAngle.ToFloat();
-    if(false == _robot.IsTrackingWithHeadOnly()) {
+    if(false == _robot.GetMoveComponent().IsTrackingWithHeadOnly()) {
       // Also rotate ("pan") body, if the angle is large enough:
       const Radians panAngle = std::atan2(yDist, xDist);
       if((panAngle - currentBodyAngle).getAbsoluteVal() > minBodyAngle) {
@@ -153,8 +153,8 @@ namespace Cozmo {
                                                                    knownFace->face.GetHeadPose(),
                                                                    ::Anki::NamedColors::GREEN);
     
-    if((_robot.GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
-       (_robot.GetTrackToFace() == knownFace->face.GetID()))
+    if((_robot.GetMoveComponent().GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
+       (_robot.GetMoveComponent().GetTrackToFace() == knownFace->face.GetID()))
     {
       UpdateFaceTracking(knownFace->face);
     }

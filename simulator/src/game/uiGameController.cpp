@@ -645,15 +645,6 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTapBlockOnGround(const u8 numTaps)
-    {
-      ExternalInterface::TapBlockOnGround m;
-      m.numTaps = numTaps;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_TapBlockOnGround(m);
-      SendMessage(message);
-    }
-    
     void UiGameController::SendStopAllMotors()
     {
       ExternalInterface::StopAllMotors m;
