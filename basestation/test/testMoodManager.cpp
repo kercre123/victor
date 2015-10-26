@@ -337,17 +337,12 @@ public:
   {
     _name = name;
   }
-  
+
   virtual bool IsRunnable(double currentTime_sec) const override { return true; }
-  virtual Anki::Result Init(double currentTime_sec) override { return Anki::RESULT_OK; }
-  
-  // Step through the behavior and deliver rewards to the robot along the way
-  virtual Status Update(double currentTime_sec) override { return Status::Running; }
-  
-  // Tell this behavior to finish up ASAP so we can switch to a new one.
-  // This should trigger any cleanup and get Update() to return COMPLETE
-  // as quickly as possible.
-  virtual Anki::Result Interrupt(double currentTime_sec) override { return Anki::RESULT_OK; }
+
+  virtual Anki::Result InitInternal(Robot& robot, double currentTime_sec) override { return Anki::RESULT_OK; }
+  virtual Status       UpdateInternal(Robot& robot, double currentTime_sec) override { return Status::Running; }
+  virtual Anki::Result InterruptInternal(Robot& robot, double currentTime_sec) override { return Anki::RESULT_OK; }
 };
 
 
