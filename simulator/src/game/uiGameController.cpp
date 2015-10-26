@@ -715,7 +715,7 @@ namespace Anki {
       m.y_mm = p.GetTranslation().y();
       m.rad = p.GetRotationAngle<'Z'>().ToFloat();
       m.level = 0;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_GotoPose(m);
       SendMessage(message);
@@ -727,7 +727,7 @@ namespace Anki {
       m.x_mm = p.GetTranslation().x();
       m.y_mm = p.GetTranslation().y();
       m.level = 0;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.useManualSpeed = useManualSpeed;
       UnitQuaternion<f32> q(p.GetRotation().GetQuaternion());
       m.qw = q.w();
       m.qx = q.x();
@@ -874,28 +874,41 @@ namespace Anki {
     
     
     
-    void UiGameController::SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendRollObject(const s32 objectID,
+                                          const bool usePreDockPose,
+                                          const bool useApproachAngle,
+                                          const f32 approachAngle_rad,
+                                          const bool useManualSpeed)
     {
       ExternalInterface::RollObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
       m.objectID = -1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_RollObject(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendRollSelectedObject(const bool usePreDockPose,
+                                                  const bool useApproachAngle,
+                                                  const f32 approachAngle_rad,
+                                                  const bool useManualSpeed)
     {
-      SendRollObject(-1, usePreDockPose, useManualSpeed);
+      SendRollObject(-1,
+                     usePreDockPose,
+                     useApproachAngle,
+                     approachAngle_rad,
+                     useManualSpeed);
     }
 
     
     void UiGameController::SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
     {
       ExternalInterface::TraverseObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.usePreDockPose = usePreDockPose;
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TraverseObject(m);
       SendMessage(message);

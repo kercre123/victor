@@ -202,7 +202,10 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed);
+    return new DriveToRollObjectAction(selectedObjectID,
+                                       msg.useApproachAngle,
+                                       msg.approachAngle_rad,
+                                       msg.useManualSpeed);
   } else {
     RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check

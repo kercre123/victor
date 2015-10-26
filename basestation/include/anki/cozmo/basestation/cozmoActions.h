@@ -642,8 +642,6 @@ namespace Anki {
                                   const bool useExactRotation = false,
                                   const Rotation3d& rotation = Rotation3d(0, Z_AXIS_3D()),
                                   const bool useManualSpeed = false);
-
-      
       
       
       // GetType returns the type from the PlaceRelObjectAction, which is
@@ -663,9 +661,12 @@ namespace Anki {
     class DriveToRollObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
+      DriveToRollObjectAction(const ObjectID& objectID,
+                              const bool useApproachAngle = false,
+                              const f32 approachAngle_rad = 0,
+                              const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, false, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, useApproachAngle, approachAngle_rad, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
