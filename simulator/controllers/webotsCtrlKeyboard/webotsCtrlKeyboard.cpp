@@ -220,7 +220,7 @@ namespace Anki {
         cozmoCam_->drawText(dispStr,
                             msg.img_topLeft_x + msg.img_width/4,
                             msg.img_topLeft_y + msg.img_height/2);
-        
+
       }
       
     }
@@ -755,7 +755,13 @@ namespace Anki {
                   SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
                   SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
-                  SendPlaceObjectOnGroundSequence(poseMarkerPose_, useManualSpeed);
+                  
+                  // Indicate whether or not to place object at the exact rotation specified or
+                  // just use the nearest preActionPose so that it's merely aligned with the specified pose.
+                  bool useExactRotation = false;
+                  printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
+                  
+                  SendPlaceObjectOnGroundSequence(poseMarkerPose_, useExactRotation, useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
                   SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
@@ -898,10 +904,29 @@ namespace Anki {
                   placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
                 }
                 
-                SendPickAndPlaceSelectedObject(usePreDockPose,
-                                               placementOffsetX_mm, 0, 0,
-                                               placeOnGroundAtOffset,
-                                               useManualSpeed);
+                // For pickup or placeRel, specify whether or not you want to use the
+                // given approach angle.
+                bool useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
+                f32 approachAngle_rad = DEG_TO_RAD_F32(root_->getField("approachAngle_deg")->getSFFloat());
+                
+                // For placeOn, specify whether or not to use the exactRotation specified
+                bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
+                const double* rotVals = root_->getField("exactPlacementRotation")->getSFRotation();
+                Rotation3d rot(rotVals[3], {static_cast<f32>(rotVals[0]), static_cast<f32>(rotVals[1]), static_cast<f32>(rotVals[2])} );
+                printf("Rotation %f\n", rot.GetAngleAroundZaxis().ToFloat());
+                
+                if (GetCarryingObjectID() < 0) {
+                  // Not carrying anything so pick up!
+                  SendPickupSelectedObject(usePreDockPose, useApproachAngle, approachAngle_rad, useManualSpeed);
+                } else {
+                  if (placeOnGroundAtOffset) {
+                    SendPlaceRelSelectedObject(usePreDockPose, placementOffsetX_mm, useApproachAngle, approachAngle_rad, useManualSpeed);
+                  } else {
+                    SendPlaceOnSelectedObject(usePreDockPose, useExactRotation, rot, useManualSpeed);
+                  }
+                }
+                
+                
                 break;
               }
                 
