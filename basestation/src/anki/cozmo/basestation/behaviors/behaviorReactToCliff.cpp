@@ -27,8 +27,7 @@ static std::vector<std::string> _animReactions = {
 };
 
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
-  : IReactionaryBehavior(robot, config)
-  , _currentState(State::Inactive)
+: IReactionaryBehavior(robot, config)
 {
   _name = "ReactToCliff";
   
@@ -43,14 +42,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
     MessageEngineToGameTag::RobotCompletedAction,
   });
   
-  // We might not have an external interface pointer (e.g. Unit tests)
-  if (robot.HasExternalInterface()) {
-    // Register for EngineToGameEvents
-    for (auto tag : subscribedEvents)
-    {
-      _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(tag, std::bind(&BehaviorReactToCliff::HandleCliffEvent, this, std::placeholders::_1)));
-    }
-  }
+  SubscribeToTags(std::move(subscribedEvents));
 }
 
 bool BehaviorReactToCliff::IsRunnable(double currentTime_sec) const
@@ -72,12 +64,12 @@ bool BehaviorReactToCliff::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorReactToCliff::Init(double currentTime_sec)
+Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec)
 {
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
+IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   switch (_currentState)
   {
@@ -98,7 +90,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        _robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(0, newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
@@ -130,7 +122,7 @@ IBehavior::Status BehaviorReactToCliff::Update(double currentTime_sec)
   return Status::Complete;
 }
 
-Result BehaviorReactToCliff::Interrupt(double currentTime_sec)
+Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -145,7 +137,7 @@ bool BehaviorReactToCliff::GetRewardBid(Reward& reward)
   return true;
 }
 
-void BehaviorReactToCliff::HandleCliffEvent(const AnkiEvent<MessageEngineToGame>& event)
+void BehaviorReactToCliff::HandleCliffEvent(const EngineToGameEvent& event)
 {
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())

@@ -27,15 +27,14 @@ namespace Cozmo {
     
     virtual bool IsRunnable(double currentTime_sec) const override { return true; }
     
-    virtual Result Init(double currentTime_sec) override;
-    
-    virtual Status Update(double currentTime_sec) override;
-    
-    // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt(double currentTime_sec) override;
-    
     virtual bool GetRewardBid(Reward& reward) override;
 
+  protected:
+    
+    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
+    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+    
   private:
     
     enum class FidgetType {

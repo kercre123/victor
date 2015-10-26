@@ -39,8 +39,8 @@ namespace Cozmo {
     
     virtual HumanHead* CloneType() const override;
     
-    virtual void Visualize(const ColorRGBA& color) override;
-    virtual void EraseVisualization() override;
+    virtual void Visualize(const ColorRGBA& color) const override;
+    virtual void EraseVisualization() const override;
     
     virtual const Point3f& GetSize() const override { return _size; }
     
@@ -52,7 +52,7 @@ namespace Cozmo {
     
     std::vector<Point3f> _canonicalCorners;
     
-    VizManager::Handle_t _vizHandle;
+    mutable VizManager::Handle_t _vizHandle;
     
   }; // class HumanHead
 

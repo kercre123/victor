@@ -55,22 +55,22 @@ namespace Anki {
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
                                     const Pose3d* reachableFromPose = nullptr,
-                                    const f32 offset_mm = 0);
+                                    const f32 offset_mm = 0) const;
       
       // If the object is selected, draws it using the "selected" color.
       // Otherwise draws it in the object's defined color.
-      virtual void Visualize() override;
-      virtual void Visualize(const ColorRGBA& color) override = 0;
+      virtual void Visualize() const override;
+      virtual void Visualize(const ColorRGBA& color) const override = 0;
       
       // Draws just the pre-action poses. The reachableFrom pose (e.g. the
       // current pose of the robot) is passed along to GetCurrenPreActionsPoses()
       // (see above).
       void VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
-                                   const Pose3d* reachableFrom = nullptr);
+                                   const Pose3d* reachableFrom = nullptr) const;
       
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.
-      virtual void EraseVisualization() override;
+      virtual void EraseVisualization() const override;
       
       // Keep track of whether this object (has been docked with and) is being
       // carried. (Should this be here? Should we have an IsCarryable() virtual
@@ -117,7 +117,7 @@ namespace Anki {
       
       std::vector<PreActionPose> _preActionPoses;
       
-      std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;
+      mutable std::vector<VizManager::Handle_t> _vizPreActionPoseHandles;
       
       bool _isBeingCarried;
       bool _isSelected;
