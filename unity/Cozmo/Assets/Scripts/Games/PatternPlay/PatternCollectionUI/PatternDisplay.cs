@@ -26,21 +26,20 @@ public class PatternDisplay : MonoBehaviour {
           cubes[i].gameObject.SetActive(true);
 
           // Set up the colors
-          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? Color.green : Color.black;
-          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? Color.green : Color.black;
-          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? Color.green : Color.black;
-          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? Color.green : Color.black;
+          Color patternColor = new Color(0.2f, 0.5f, 1f);
+          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.white;
+          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.white;
+          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.white;
+          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.white;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
         }
 
         _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
-      }
-      else {
+      } else {
         // Hide all the cubes
-        for (int i = 0; i < cubes.Length; i++)
-        {
+        for (int i = 0; i < cubes.Length; i++) {
           cubes[i].gameObject.SetActive(false);
         }
 
@@ -49,8 +48,7 @@ public class PatternDisplay : MonoBehaviour {
     }
   }
 
-  public void RemoveBadgeIfSeen()
-  {
+  public void RemoveBadgeIfSeen() {
     if (_pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
       return;
     }
@@ -61,11 +59,9 @@ public class PatternDisplay : MonoBehaviour {
 
     Rect viewportRect = new Rect(0f, 0f, 1f, 1f);
     bool isObjectOffscreen = false;
-    foreach (Vector3 worldPos in worldCorners)
-    {
-      Vector3 screenPos = Camera.main.WorldToViewportPoint(worldPos);
-      if (!viewportRect.Contains(screenPos))
-      {
+    foreach (Vector3 worldPos in worldCorners) {
+      Vector3 screenPos = UIManager.GetUICamera().WorldToViewportPoint(worldPos);
+      if (!viewportRect.Contains(screenPos)) {
         isObjectOffscreen = true;
         break;
       }

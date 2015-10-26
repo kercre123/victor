@@ -2,8 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class BadgeData
-{
+public class BadgeData {
   public object key;
   public List<string> tags;
 }
@@ -11,18 +10,15 @@ public class BadgeData
 public class BadgeManager : MonoBehaviour {
 
   private static BadgeManager _instance;
-  public static BadgeManager Instance
-  {
+  public static BadgeManager Instance {
     get {
-      if (_instance == null)
-      {
+      if (_instance == null) {
         Debug.LogError("Don't access this until Start!");
       }
       return _instance;
     }
     private set {
-      if (_instance != null)
-      {
+      if (_instance != null) {
         Debug.LogError("There shouldn't be more than one UIManager");
       }
       _instance = value;
@@ -48,8 +44,7 @@ public class BadgeManager : MonoBehaviour {
   private Dictionary<object, List<string>> _currentBadges;
   private Dictionary<string, int> _numBadgesByTag;
   
-  private void Awake()
-  {
+  private void Awake() {
     _instance = this;
     _currentBadges = new Dictionary<object, List<string>> ();
     _numBadgesByTag = new Dictionary<string, int> ();
@@ -78,12 +73,10 @@ public class BadgeManager : MonoBehaviour {
     bool badgeRemoved = false;
     if (_currentBadges.ContainsKey (badgeKey)) {
       // Update the number of alerts per tag
-      foreach(string tag in _currentBadges[badgeKey])
-      {
-        if(_numBadgesByTag.ContainsKey(tag)){
+      foreach(string tag in _currentBadges[badgeKey]) {
+        if(_numBadgesByTag.ContainsKey(tag)) {
           _numBadgesByTag[tag]--;
-          if(_numBadgesByTag[tag] <= 0)
-          {
+          if(_numBadgesByTag[tag] <= 0) {
             _numBadgesByTag.Remove(tag);
           }
         } else {
