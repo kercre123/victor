@@ -607,6 +607,31 @@ namespace Anki {
       
     };
     
+
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then placing an object on it.
+    class DriveToPlaceOnObjectAction : public CompoundActionSequential
+    {
+    public:
+     
+      // Places carried object on top of objectID
+      DriveToPlaceOnObjectAction(const Robot& robot,
+                                  const ObjectID& objectID,
+                                  const bool useExactRotation = false,
+                                  const Rotation3d& rotation = Rotation3d(0, Z_AXIS_3D()),
+                                  const bool useManualSpeed = false);
+
+      // GetType returns the type from the PlaceRelObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PlaceRelObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
+
     
     
     // Common compound action for driving to an object, visually verifying we
@@ -635,13 +660,6 @@ namespace Anki {
       {
         
       }
-      
-      // Places carried object on top of objectID
-      DriveToPlaceRelObjectAction(const Robot& robot,
-                                  const ObjectID& objectID,
-                                  const bool useExactRotation = false,
-                                  const Rotation3d& rotation = Rotation3d(0, Z_AXIS_3D()),
-                                  const bool useManualSpeed = false);
       
       
       // GetType returns the type from the PlaceRelObjectAction, which is

@@ -519,7 +519,7 @@ namespace Cozmo {
         
         if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new DriveToPlaceRelObjectAction(_robot, _objectToPlaceOn);
+          placementAction = new DriveToPlaceOnObjectAction(_robot, _objectToPlaceOn);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.",
                            _objectToPlaceOn.GetValue());
         } else {

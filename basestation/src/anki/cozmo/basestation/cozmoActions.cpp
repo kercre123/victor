@@ -806,14 +806,14 @@ namespace Anki {
     
     
     
-#pragma mark ---- DriveToPlaceRelObjectAction ----
+#pragma mark ---- DriveToPlaceOnObjectAction ----
     
     // Places carried object on top of objectID
-    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(const Robot& robot,
-                                                             const ObjectID& objectID,
-                                                             const bool useExactRotation,
-                                                             const Rotation3d& rotation,
-                                                             const bool useManualSpeed)
+    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
+                                                           const ObjectID& objectID,
+                                                           const bool useExactRotation,
+                                                           const Rotation3d& rotation,
+                                                           const bool useManualSpeed)
     : CompoundActionSequential({
       new DriveToPlaceCarriedObjectAction(robot,
                                           Pose3d(rotation,

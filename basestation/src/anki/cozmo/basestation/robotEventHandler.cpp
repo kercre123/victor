@@ -163,11 +163,11 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
     // Compute rotation
     Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
     
-    return new DriveToPlaceRelObjectAction(robot,
-                                           selectedObjectID,
-                                           msg.useExactRotation,
-                                           rot,
-                                           msg.useManualSpeed);
+    return new DriveToPlaceOnObjectAction(robot,
+                                          selectedObjectID,
+                                          msg.useExactRotation,
+                                          rot,
+                                          msg.useManualSpeed);
   } else {
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
                                                             false,
