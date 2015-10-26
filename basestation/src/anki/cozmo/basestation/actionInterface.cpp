@@ -41,9 +41,9 @@ namespace Anki {
     {
       if(!_isRunning && !_isPartOfCompoundAction) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.LockHead( ShouldLockHead() );
-        robot.LockLift( ShouldLockLift() );
-        robot.LockWheels( ShouldLockWheels() );
+        robot.GetMoveComponent().LockHead( ShouldLockHead() );
+        robot.GetMoveComponent().LockLift( ShouldLockLift() );
+        robot.GetMoveComponent().LockWheels( ShouldLockWheels() );
         robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(GetAnimTracksToDisable())));
         _isRunning = true;
       }
@@ -74,9 +74,9 @@ namespace Anki {
           EmitCompletionSignal(robot, result);
           
           // Action is done, always completely unlock the robot
-          robot.LockHead(false);
-          robot.LockLift(false);
-          robot.LockWheels(false);
+          robot.GetMoveComponent().LockHead(false);
+          robot.GetMoveComponent().LockLift(false);
+          robot.GetMoveComponent().LockWheels(false);
           // Re-enable any animation tracks that were disabled
           robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(GetAnimTracksToDisable())));
         }

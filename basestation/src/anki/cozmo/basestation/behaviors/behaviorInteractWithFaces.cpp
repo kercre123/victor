@@ -107,7 +107,7 @@ namespace Cozmo {
   
   void ResetFaceToNeutral(Robot& robot)
   {
-    robot.DisableTrackToFace();
+    robot.GetMoveComponent().DisableTrackToFace();
     ProceduralFace resetFace;
     auto oldTimeStamp = robot.GetProceduralFace().GetTimeStamp();
     oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
@@ -203,12 +203,12 @@ namespace Cozmo {
         
       case State::TrackingFace:
       {
-        auto faceID = robot.GetTrackToFace();
+        auto faceID = robot.GetMoveComponent().GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
         if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
         {
           // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
-          robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _currentState = State::Inactive;
           break;
         }
@@ -217,7 +217,7 @@ namespace Cozmo {
         auto lastSeen = _interestingFacesData[faceID]._lastSeen_sec;
         if(currentTime_sec - lastSeen > _trackingTimeout_sec)
         {
-          robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           
@@ -233,7 +233,7 @@ namespace Cozmo {
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
         if (watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
-          robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration_sec;
@@ -251,7 +251,7 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
-          robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _currentState = State::Inactive;
           break;
         }
@@ -282,7 +282,7 @@ namespace Cozmo {
                              headWrtRobot.GetTranslation().Length());
             
             // Relinquish control over head/wheels so animation plays correctly,
-            robot.DisableTrackToFace();
+            robot.GetMoveComponent().DisableTrackToFace();
             
             PlayAnimation(robot, "Demo_Face_Interaction_ShockedScared_A");
             robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
@@ -321,7 +321,7 @@ namespace Cozmo {
   
   Result BehaviorInteractWithFaces::Interrupt(Robot& robot, double currentTime_sec)
   {
-    robot.DisableTrackToFace();
+    robot.GetMoveComponent().DisableTrackToFace();
     _currentState = State::Interrupted;
     
     return RESULT_OK;
@@ -378,7 +378,7 @@ namespace Cozmo {
   
   void BehaviorInteractWithFaces::UpdateBaselineFace(Robot& robot, const Vision::TrackedFace* face)
   {
-    robot.EnableTrackToFace(face->GetID(), false);
+    robot.GetMoveComponent().EnableTrackToFace(face->GetID(), false);
     
     const Radians& faceAngle = face->GetHeadRoll();
     
