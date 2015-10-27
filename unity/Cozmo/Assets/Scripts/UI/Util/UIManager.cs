@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class UIManager : MonoBehaviour {
 
@@ -36,6 +37,7 @@ public class UIManager : MonoBehaviour {
   void Awake() {
     _instance = this;
     _openDialogs = new List<BaseDialog>();
+    DOTween.Init ();
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
