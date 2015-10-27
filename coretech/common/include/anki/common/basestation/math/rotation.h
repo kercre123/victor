@@ -242,15 +242,15 @@ namespace Anki {
     template<char AXIS>
     Radians GetAngleAroundAxis() const;
     
-    // Get the angular difference between the given parent axis ('X', 'Y', or 'Z')
-    // and its rotated version
+    // Get the angular difference between the given parent axis and its rotated version.
+    // AXIS can by 'X', 'Y', or 'Z'
     template<char AXIS>
     Radians GetAngularDeviationFromParentAxis() const;
 
-    // Get the angle of rotation _around_ the given axis in the parent frame.
+    // Get the angle of rotation _around_ the given axis in the _parent_ frame.
     // AXIS can be 'X', 'Y', or 'Z'
     template<char AXIS>
-    Radians GetRotationAngleAroundParentAxis() const;
+    Radians GetAngleAroundParentAxis() const;
     
   private:
     
@@ -318,7 +318,7 @@ namespace Anki {
   }
   
   template<char parentAxis>
-  inline Radians RotationMatrix3d::GetRotationAngleAroundParentAxis() const
+  inline Radians RotationMatrix3d::GetAngleAroundParentAxis() const
   {
     std::pair<char, f32> result = GetRotatedParentAxis<parentAxis>();
     
