@@ -36,6 +36,10 @@ public class SpeedTapController : GameController {
     ActiveBlock.StoppedAction += BlockStopped;
     robot.StopFaceAwareness();
     robot.SetBehaviorSystem(false);
+
+    foreach (KeyValuePair<int, ActiveBlock> curBlock in robot.activeBlocks) {
+      curBlock.Value.SetLEDs(0, 0, 0xFF);
+    }
   }
 
   void Start() {
@@ -44,8 +48,10 @@ public class SpeedTapController : GameController {
 
   private void BlockTapped(int blockID, int tappedTimes) {
     Debug.Log("Ima tapped:" + blockID);
-    if (PlayerTappedBlockEvent != null) {
-      PlayerTappedBlockEvent();
+    if (playerBlock != null && playerBlock.ID == blockID) {
+      if (PlayerTappedBlockEvent != null) {
+        PlayerTappedBlockEvent();
+      }
     }
   }
 
@@ -107,7 +113,12 @@ public class SpeedTapController : GameController {
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
-        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
+        if (activeBlock.Value.MarkersVisible) {
+          activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
+        }
+        else {
+          activeBlock.Value.lights[j].onColor = 0;
+        }
       }
     }
 

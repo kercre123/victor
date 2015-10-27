@@ -8,7 +8,7 @@ public class SpeedTapStatePlayNewHand : State {
   float onDelayTimeMillis = 2000.0f;
   float offDelayTimeMillis = 2000.0f;
   float cozmoTapDelayTimeMillis = 100.0f;
-  float matchProbability = 0.25f;
+  float matchProbability = 0.35f;
 
 
   bool lightsOn = false;
@@ -33,7 +33,7 @@ public class SpeedTapStatePlayNewHand : State {
     speedTapController.playerBlock.SetLEDs(0, 0, 0xFF);
     lightsOn = false;
 
-    ActiveBlock.TappedAction += BlockTapped;
+    //ActiveBlock.TappedAction += BlockTapped;
     speedTapController.PlayerTappedBlockEvent += PlayerDidTap;
   }
 
@@ -72,7 +72,7 @@ public class SpeedTapStatePlayNewHand : State {
 
   public override void Exit() {
     base.Exit();
-    ActiveBlock.TappedAction -= BlockTapped;
+    //ActiveBlock.TappedAction -= BlockTapped;
     RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
     speedTapController.PlayerTappedBlockEvent -= PlayerDidTap;
   }
@@ -133,7 +133,7 @@ public class SpeedTapStatePlayNewHand : State {
         speedTapController.UpdateUI();
       }
     }
-    else {
+    else if (curWinState == WinState.Neutral) {
       curWinState = WinState.CozmoWins;
       speedTapController.playerScore--;
       speedTapController.UpdateUI();
