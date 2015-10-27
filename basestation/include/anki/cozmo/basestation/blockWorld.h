@@ -100,10 +100,12 @@ namespace Anki
       // Return a pointer to an object with the specified ID. If that object
       // does not exist, nullptr is returned.  Be sure to ALWAYS check
       // for the return being null!
-      ObservableObject* GetObjectByID(const ObjectID objectID) const;
+      ObservableObject* GetObjectByID(const ObjectID objectID);
+      const ObservableObject* GetObjectByID(const ObjectID objectID) const;
       
       // Same as above, but only searches a given family of objects
-      ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
+      ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily);
+      const ObservableObject* GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const;
       
       // Store your own objects, with a handle you can use to refer to them.
       // The BlockWorld ObjectID is returned.
@@ -220,6 +222,10 @@ namespace Anki
       //
       // Member Methods
       //
+      
+      // Note these are marked const but return non-const pointers.
+      ObservableObject* GetObjectByIdHelper(const ObjectID objectID) const;
+      ObservableObject* GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
@@ -364,36 +370,20 @@ namespace Anki
       return EmptyObjectMapByID;
     }
     
-    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const
-    {
-      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
-      
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          auto objectsByIdIter = objectsByType.second.find(objectID);
-          if(objectsByIdIter != objectsByType.second.end()) {
-            return objectsByIdIter->second;
-          }
-        }
-      }
-      
-      // ID not found!
-      return nullptr;
+    inline ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) {
+      return GetObjectByIdHelper(objectID); // returns non-const*
     }
     
-    inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const
-    {
-      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
-      
-      for(auto & objectsByType : GetExistingObjectsByFamily(inFamily)) {
-        auto objectsByIdIter = objectsByType.second.find(objectID);
-        if(objectsByIdIter != objectsByType.second.end()) {
-          return objectsByIdIter->second;
-        }
-      }
-      
-      // ID not found!
-      return nullptr;
+    inline const ObservableObject* BlockWorld::GetObjectByID(const ObjectID objectID) const {
+      return GetObjectByIdHelper(objectID); // returns const*
+    }
+    
+    inline const ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) const {
+      return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns const*
+    }
+    
+    inline ObservableObject* BlockWorld::GetObjectByIDandFamily(const ObjectID objectID, const ObjectFamily inFamily) {
+      return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns non-const*
     }
     
     inline void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)

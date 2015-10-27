@@ -142,7 +142,7 @@ namespace Anki {
       return new Charger();
     }
     
-    void Charger::Visualize(const ColorRGBA& color)
+    void Charger::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawCharger(GetID().GetValue(), Charger::PlatformLength,
@@ -151,7 +151,7 @@ namespace Anki {
     } // Visualize()
     
     
-    void Charger::EraseVisualization()
+    void Charger::EraseVisualization() const
     {
       // Erase the Charger
       if(_vizHandle != VizManager::INVALID_HANDLE) {
