@@ -123,6 +123,8 @@ namespace Anki {
     inline T y() const { return this->operator[](2); }
     inline T z() const { return this->operator[](3); }
     
+    // Note: if you use these accessors to set an individual element of the
+    // quaternion, it is YOUR responsibility to renormalize!
     inline T& w() { return this->operator[](0); }
     inline T& x() { return this->operator[](1); }
     inline T& y() { return this->operator[](2); }
@@ -143,10 +145,6 @@ namespace Anki {
     // Conjugate
     UnitQuaternion<T>& Conj(); // in place
     UnitQuaternion<T>  GetConj() const;
-    
-    // How far from unit length the quaternion needs to get in order to trigger
-    // a renormalization
-    static T NormalizationTolerance;
     
   }; // class UnitQuaternion
   
