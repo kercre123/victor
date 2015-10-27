@@ -623,14 +623,22 @@ public class Robot : IDisposable {
     }
   }
 
-  public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle) {
-    DAS.Debug("Robot", "PlaceObjectRel" + carryingObject + " On Ground Here");
+  public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null) {
+    DAS.Debug("Robot", "PlaceObjectRel" + target.ID);
 
     PlaceRelObjectMessage.approachAngle_rad = approachAngle;
     PlaceRelObjectMessage.placementOffsetX_mm = offsetFromMarker;
     PlaceRelObjectMessage.objectID = target.ID;
+    PlaceRelObjectMessage.useApproachAngle = true;
+    PlaceRelObjectMessage.usePreDockPose = true;
+    PlaceRelObjectMessage.useManualSpeed = false;
 
     RobotEngineManager.instance.Message.PlaceRelObject = PlaceRelObjectMessage;
+    RobotEngineManager.instance.SendMessage();
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+    }
 
   }
 
