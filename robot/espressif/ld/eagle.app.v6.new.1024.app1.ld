@@ -157,6 +157,7 @@ SECTIONS
     application/.output/eagle/release/lib/libapplication.a(.literal .text .literal.* .text.* .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     clad/.output/eagle/release/lib/libclad.a(.literal .text .literal.* .text.* .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     hal/.output/eagle/release/lib/libuserhal.a(.literal .text .literal.* .text.* .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
+    supervisor/.output/eagle/release/lib/libsupervisor.a(.literal .text .literal.* .text.* .stub .gnu.warning .gnu.linkonce.literal.* .gnu.linkonce.t.*.literal .gnu.linkonce.t.*)
     *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)
     _irom0_text_end = ABSOLUTE(.);
   } >irom0_0_seg :irom0_0_phdr

@@ -42,13 +42,13 @@
 /// Preamble for drops from RTIP to WiFi
 
 /// Number of samples of audio data delivered to the RTIP each drop.
-#define AUDIO_BYTES_PER_DROP 4
+#define MAX_AUDIO_BYTES_PER_DROP 4
 /// Number of bytes of SCREEN data to the RTIP each drop
-#define SCREEN_BYTES_PER_DROP 4
+#define MAX_SCREEN_BYTES_PER_DROP 4
 
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - AUDIO_BYTES_PER_DROP - SCREEN_BYTES_PER_DROP - 1)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - MAX_AUDIO_BYTES_PER_DROP - MAX_SCREEN_BYTES_PER_DROP - 1)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
@@ -61,8 +61,8 @@ typedef uint16_t preambleType;
 typedef struct
 {
   preambleType preamble; ///< Synchronization Preamble indicating drop destination
-  uint8_t  audioData[AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
-  uint8_t  screenData[SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
+  uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
+  uint8_t  screenData[MAX_SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
   uint8_t  droplet; ///< Drop flags
 } DropToRTIP;
@@ -95,9 +95,9 @@ typedef enum
   jpegEOF     = 1<<5,       ///< Flags this drop as containing the end of a JPEG frame
   DRPLT_RSRVD = 1<<6,       ///< Reserved for future use
 // To RTIP drop fields
-  audioDataValid  = 1<<0,    ///< Bytes in the iscochronous audio field are valid
-  screenDataValid = 1<<1,    ///< Bytes in the iscochronous screen field are valid
-  payloadValid    = 1<<2,    ///< Bytes in the payload field are valid
+  audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
+  screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
+  payloadCLAD       = 1<<2,    ///< Bytes in the payload field are valid and contain CLAD messages
 // Shared fields
   ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi
 } Droplet;

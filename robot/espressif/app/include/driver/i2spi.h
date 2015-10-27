@@ -16,9 +16,6 @@
 /// Task priority level for processing I2SPI data
 #define I2SPI_PRIO USER_TASK_PRIO_2
 
-/// Buffer size for audio Data
-#define AUDIO_BUFFER_SIZE (800)
-
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
  * @return 0 on success or non-0 on an error
  */
@@ -39,28 +36,7 @@ void i2spiStop(void);
  * @param msgLen the number of bytes of message data pointed to by msgData
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen);
-
-/** Test if the i2spi buffer is ready to accept audio data
- * @return true if i2spiPushAudioData may be called.
- */
-bool i2spiReadyForAudioData(void);
-
-/** Pushes audio data into the I2SPI system to send out isochronously
- * Accepts AUDIO_BUFFER_SIZE bytes of audio data and copies it into i2spi module memory
- * @param audioData A pointer to audio data.
- */
-void i2spiPushAudioData(uint8_t* audioData);
-
-/** Tests if the I2SPI subsystem is ready for screen data and if so returns a pointer to write screen data into.
- * @return NULL if not ready to receive screen data. A pointer to write screen data into if available.
- */
-uint8_t* i2spiGetScreenDataBuffer(void);
-
-/** Sets the number of bytes of screen data that have been written into the buffer supplied by i2spiGetScreenDataBuffer
- * @param length the number of bytes written in.
- */
-void i2spiSetScreenDataLength(uint16_t length);
+bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen);
 
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;

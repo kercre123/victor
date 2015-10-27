@@ -16,6 +16,10 @@
 #include "driver/i2s_ets.h"
 #include "imageSender.h"
 
+// Forward declaration
+uint32 PumpAudioData(void);
+uint32 PumpScreenData(void);
+
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
 
@@ -51,16 +55,6 @@ static struct sdio_queue* nextOutgoingDesc;
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
-/// Audio data storage
-static uint8_t audioStorage[AUDIO_BUFFER_SIZE];
-/// Read index in audio storage
-static int16_t audioReadIndex;
-/// Screen data storage
-static uint8_t screenStorage[128*96/8];
-/// Read index for screen storage
-static int16_t screenReadIndex;
-/// Number of bytes available in screenStorage
-static int16_t screenDataAvailable;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -101,29 +95,23 @@ void processDrop(DropToWiFi* drop)
  * @param payload A pointer to the payload data to fill the drop with or NULL
  * @param length The number of bytes of payload to be put into this drop
  */
-void makeDrop(uint8_t* payload, uint8_t length)
+bool makeDrop(uint8_t* payload, uint8_t length)
 {
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   DropToRTIP drop;
+  uint32 isocData;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
-  if (AUDIO_BUFFER_SIZE - audioReadIndex > 0)
-  {
-    os_memcpy(&(drop.audioData), audioStorage + audioReadIndex, AUDIO_BYTES_PER_DROP);
-    drop.droplet |= audioDataValid;
-    audioReadIndex += AUDIO_BYTES_PER_DROP;
-  }
-  if (screenDataAvailable - screenReadIndex > 0)
-  {
-    os_memcpy(&drop.screenData, screenStorage + screenReadIndex, SCREEN_BYTES_PER_DROP);
-    screenReadIndex += SCREEN_BYTES_PER_DROP;
-    drop.droplet |= screenDataValid;
-  }
+  isocData = PumpAudioData();
+  os_memcpy(&(drop.audioData), &isocData, MAX_AUDIO_BYTES_PER_DROP);
+  isocData = PumpScreenData();
+  os_memcpy(&drop.screenData, &isocData, MAX_SCREEN_BYTES_PER_DROP);
+  drop.droplet = screenDataValid | audioDataValid;
   if (length > 0)
   {
     os_memcpy(&(drop.payload), payload, length);
-    drop.droplet |= payloadValid;
+    drop.droplet |= payloadCLAD;
   }
   // Copy into the DMA buffer
   if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
@@ -150,6 +138,7 @@ void makeDrop(uint8_t* payload, uint8_t length)
     halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
+  return true;
 }
 
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
@@ -285,9 +274,6 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   i2spiRxOverflowCount  = 0;
   i2spiPhaseErrorCount  = 0;
   i2spiIntegralDrift    = 0;
-  audioReadIndex        = AUDIO_BUFFER_SIZE;
-  screenDataAvailable   = 0;
-  screenReadIndex       = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
@@ -428,37 +414,18 @@ void ICACHE_FLASH_ATTR i2spiStop(void)
   SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_STOP);
 }
 
-bool i2spiQueueMessage(uint8_t* msgData, uint8_t msgLen)
+bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
 {
-  //XXX Implement queing message data
-  return false;
-}
-
-bool ICACHE_FLASH_ATTR i2spiReadyForAudioData(void)
-{
-  return audioReadIndex >= AUDIO_BUFFER_SIZE;
-}
-
-void ICACHE_FLASH_ATTR i2spiPushAudioData(uint8_t* audioData)
-{
-  os_memcpy(audioStorage, audioData, AUDIO_BUFFER_SIZE);
-}
-
-uint8_t* ICACHE_FLASH_ATTR i2spiGetScreenDataBuffer(void)
-{
-  if (screenReadIndex >= screenDataAvailable)
+  uint16_t queued = 0;
+  while (queued < msgLen)
   {
-    screenDataAvailable = 0;
-    screenReadIndex     = 0;
-    return screenStorage;
+    uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+    if (makeDrop(msgData + queued, payloadLen) == false)
+    {
+      os_printf("FATAL: Couldn't queue message to RTIP\r\n");
+      return false;
+    }
+    queued += payloadLen;
   }
-  else
-  {
-    return NULL;
-  }
-}
-
-void ICACHE_FLASH_ATTR i2spiSetScreenDataLength(uint16_t length)
-{
-  screenDataAvailable = length;
+  return true;
 }

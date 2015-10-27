@@ -26,7 +26,8 @@ SUBDIRS=    \
 	driver  \
   transport \
   clad \
-  application
+  application \
+  supervisor
 endif # } PDIR
 
 APPDIR = .
@@ -51,7 +52,8 @@ COMPONENTS_eagle.app.v6 = \
 	driver/libdriver.a \
   transport/libtransport.a \
   clad/libclad.a \
-  application/libapplication.a
+  application/libapplication.a \
+  supervisor/libsupervisor.a
 
 LINKFLAGS_eagle.app.v6 = \
 	-L../lib        \

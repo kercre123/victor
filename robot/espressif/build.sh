@@ -7,7 +7,7 @@ export ESPDIR=`pwd`
 clear
 
 # Generate clad source 
-cd ../../clad
+cd ../clad
 make
 cd -
 

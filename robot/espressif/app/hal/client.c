@@ -192,7 +192,10 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
 }
 
+// Forward declaration of externally defined function
+void ProcessMessage(u8* buffer, u16 bufferSize);
+
 void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* conn)
 {
-  //XXX  cross link to message dispatch
+  ProcessMessage(buffer, bufferSize);
 }

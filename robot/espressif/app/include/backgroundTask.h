@@ -1,4 +1,4 @@
-/** @ file Header file for backgroundTask (lowest priority / background / whatever) task
+/** @file Header file for backgroundTask (lowest priority / background / whatever) task
  * @author Daniel Casner <daniel@anki.com>
  * The Espressif OS only suports 3 tasks 0, 1, 2. We have reserved 1 and 2 for specific time critical functions.
  * Task 0 is used for background structures.

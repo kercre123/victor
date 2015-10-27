@@ -12,7 +12,10 @@
  *   Updating to support streaming animations from Basestation instead of a set of static, 
  *   canned animations stored on the Robot.
  *
- * Copyright: Anki, Inc. 2014
+ * Update: Daniel Casner, 10/23/2015
+ *   Refactoring to run buffer and spooling on the Espressif with most of the execution happening on the K02
+ *
+ * Copyright: Anki, Inc. 2015
  *
  **/
 
@@ -20,8 +23,7 @@
 #ifndef COZMO_ANIMATION_CONTROLLER_H_
 #define COZMO_ANIMATION_CONTROLLER_H_
 
-#include "anki/common/types.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "messages.h"
 
 namespace Anki {
@@ -36,7 +38,11 @@ namespace Anki {
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation
       // that's currently playing.
-      Result Update();
+      extern "C" bool Update(unsigned int param);
+      
+      // Retrieves one drop worth of audio data to pass along to RTIP
+      // When an audio frame is finished, a call to Update is posted
+      extern "C" u32 PumpAudioData();
       
       // Clears any remaining buffered keyframes and thus immediately stops
       // animation from playing
