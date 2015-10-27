@@ -552,7 +552,7 @@ public class GameLayoutTracker : MonoBehaviour {
         if (nextObjectToPlace != null) {
           string description = null;
           CozmoBusyPanel.instance.SetDescription("pick-up\n", nextObjectToPlace, ref description);
-          robot.PickAndPlaceObject(nextObjectToPlace);
+          robot.PickupObject(nextObjectToPlace);
         }
         else {
           DAS.Warn("GameLayoutTracker", "frame(" + Time.frameCount + ") GetObservedObjectForNextLayoutBlock could not find an apt nextObject to place.");
@@ -1393,7 +1393,7 @@ public class GameLayoutTracker : MonoBehaviour {
       }
     }
 
-    robot.PickAndPlaceObject(objectToStackUpon);
+    robot.PickupObject(objectToStackUpon);
 
     return true;
   }
