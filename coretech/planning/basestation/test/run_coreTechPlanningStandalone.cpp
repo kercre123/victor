@@ -131,8 +131,12 @@ int main(int argc, char *argv[])
     printf("complete. Path: \n");
     context.env.PrintPlan(planner.GetPlan());
 
+    char* cwd=NULL;
+    size_t size = 0;
+    cwd = getcwd(cwd,size);
+
     writePath("path.txt", context.env, planner.GetPlan());
-    cout<<"check path.txt\n";
+    cout<<"check "<<cwd<<"/path.txt\n";
   }
 
   if( doManualPlanner ) {

@@ -81,13 +81,13 @@ namespace Anki {
       return _size*.5f;
     }
     
-    void MarkerlessObject::Visualize(const ColorRGBA& color)
+    void MarkerlessObject::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
-    void MarkerlessObject::EraseVisualization()
+    void MarkerlessObject::EraseVisualization() const
     {
       // Erase the main object
       if(_vizHandle != VizManager::INVALID_HANDLE) {

@@ -86,8 +86,8 @@ namespace Anki {
       virtual ~Ramp();
       
       virtual Ramp*   CloneType() const override;
-      virtual void    Visualize(const ColorRGBA& color) override;
-      virtual void    EraseVisualization() override;
+      virtual void    Visualize(const ColorRGBA& color) const override;
+      virtual void    EraseVisualization() const override;
       
 
       
@@ -127,7 +127,7 @@ namespace Anki {
       Pose3d _preAscentPose;
       Pose3d _preDescentPose;
       
-      VizManager::Handle_t _vizHandle;
+      mutable VizManager::Handle_t _vizHandle;
       //std::array<VizManager::Handle_t,3> _vizHandle;
       
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,

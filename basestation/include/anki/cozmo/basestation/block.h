@@ -152,8 +152,8 @@ namespace Anki {
       Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
       
       // Visualize using VizManager.
-      virtual void Visualize(const ColorRGBA& color) override;
-      virtual void EraseVisualization() override;
+      virtual void Visualize(const ColorRGBA& color) const override;
+      virtual void EraseVisualization() const override;
       
     protected:
       
@@ -198,7 +198,7 @@ namespace Anki {
       Point3f     _size;
       std::string _name;
       
-      VizManager::Handle_t _vizHandle;
+      mutable VizManager::Handle_t _vizHandle;
       
       //std::vector<Point3f> blockCorners_;
       
