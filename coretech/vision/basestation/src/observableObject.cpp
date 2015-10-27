@@ -360,31 +360,10 @@ namespace Vision {
     return boundingQuad;
   } // GetBoundingQuadXY()
 
-  // TODO: Move this to be a member of the RotationMatrix3d class
-  template<char parentAxis>
-  static Radians GetAngularDeviationFromParentAxis(const RotationMatrix3d& Rmat)
-  {
-    // Figure out which axis in the rotated frame corresponds to the given
-    // axis in the parent frame
-    const Point3f row = Rmat.GetRow(AxisToIndex<parentAxis>());
-    char rotatedAxis = 'X'; // assume X axis to start
-    f32 maxVal = std::abs(row.x());
-    if(std::abs(row.y()) > maxVal) {
-      maxVal = std::abs(row.y());
-      rotatedAxis = 'Y';
-    }
-    if(std::abs(row.z()) > maxVal) {
-      maxVal = std::abs(row.z());
-      rotatedAxis = 'Z';
-    }
-    
-    return std::acos(maxVal);
-  }
-
   bool ObservableObject::IsRestingFlat(const Radians& angleTol) const
   {
     const RotationMatrix3d Rmat = GetPose().GetWithRespectToOrigin().GetRotationMatrix();
-    bool isFlat = (GetAngularDeviationFromParentAxis<'Z'>(Rmat) < angleTol);
+    const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < angleTol);
     return isFlat;
   }
   
