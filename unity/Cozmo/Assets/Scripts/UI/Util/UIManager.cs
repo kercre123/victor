@@ -40,7 +40,7 @@ public class UIManager : MonoBehaviour {
     return newUi;
   }
 
-  private static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
+  public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
     GameObject newUi = GameObject.Instantiate (uiPrefab);
     newUi.transform.SetParent (Instance._perspUiCanvas.transform, false);
     newUi.layer = LayerMask.NameToLayer ("3DUI");

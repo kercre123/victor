@@ -4,23 +4,17 @@ using System.Collections;
 public class PatternDiscoveredDialog : BaseDialog {
 
   [SerializeField]
-  private PatternDisplay _stackPatternDisplay;
-
-  [SerializeField]
-  private PatternDisplay _horizontalPatternDisplay;
+  private PatternDiscoveryDisplay _patternDiscoveryDisplayPrefab;
+  private PatternDiscoveryDisplay _patternDiscoveryDisplayInstance;
 
   public void Initialize(BlockPattern discoveredPattern) {
-    if (discoveredPattern.verticalStack) {
-      _stackPatternDisplay.pattern = discoveredPattern;
-      _horizontalPatternDisplay.pattern = null;
-    } else {
-      _stackPatternDisplay.pattern = null;
-      _horizontalPatternDisplay.pattern = discoveredPattern;
-    }
+    GameObject display = UIManager.CreatePerspectiveUI (_patternDiscoveryDisplayPrefab.gameObject);
+    _patternDiscoveryDisplayInstance = display.GetComponent<PatternDiscoveryDisplay> ();
+    _patternDiscoveryDisplayInstance.Initialize (discoveredPattern);
   }
 
   public void OnCloseButtonTap() {
+    GameObject.Destroy (_patternDiscoveryDisplayInstance.gameObject);
     UIManager.CloseDialog (this);
-
   }
 }

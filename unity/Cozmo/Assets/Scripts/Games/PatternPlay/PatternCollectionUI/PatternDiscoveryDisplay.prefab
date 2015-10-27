@@ -616,7 +616,7 @@ GameObject:
   - 4: {fileID: 456068}
   - 114: {fileID: 11460476}
   m_Layer: 10
-  m_Name: HorizontalContainer
+  m_Name: HorizontalPatternDisplay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1128,7 +1128,7 @@ GameObject:
   - 4: {fileID: 434848}
   - 114: {fileID: 11401146}
   m_Layer: 10
-  m_Name: VerticalContainer
+  m_Name: StackPatternDisplay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4476,6 +4476,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edfb52f82995a40f282678668f785616, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _stackPatternDisplay: {fileID: 11401146}
+  _horizontalPatternDisplay: {fileID: 11460476}
 --- !u!114 &11419394
 MonoBehaviour:
   m_ObjectHideFlags: 1

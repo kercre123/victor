@@ -257,8 +257,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: PatternDiscoveredDialog
-  _stackPatternDisplay: {fileID: 0}
-  _horizontalPatternDisplay: {fileID: 0}
+  _patternDiscoveryDisplayPrefab: {fileID: 11419336, guid: cee9aa1e0cda0472393280aff0993f5f,
+    type: 2}
 --- !u!114 &11483582
 MonoBehaviour:
   m_ObjectHideFlags: 1
