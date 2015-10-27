@@ -162,8 +162,6 @@ void ConsoleWriteHex(u8* buffer, u32 numberOfBytes)
       ConsolePrintf("%c", c);
     }
     ConsoleWrite("\r\n");
-    
-    MicroWait(10000);
   }
 }
 
@@ -226,6 +224,9 @@ void InitConsole(void)
   
   SlowPutString("Console Initialized\r\n");
 }
+
+// The fixture bootloader uses just the hardware driver above, not the command parser below
+#ifndef FIXBOOT
 
 static char* GetArgument(u32 index)
 {
@@ -557,3 +558,4 @@ void ConsoleUpdate(void)
     }
   }
 }
+#endif
