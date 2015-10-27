@@ -701,8 +701,6 @@ int main(void)
   
   STM_EVAL_LEDOn(LEDRED);
 
-  InitEspressif();
-
   while (1)
   {  
     MainExecution();
