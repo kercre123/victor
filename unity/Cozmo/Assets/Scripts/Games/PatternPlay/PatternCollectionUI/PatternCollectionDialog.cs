@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class PatternCollectionDialog : BaseDialog {
 
@@ -52,6 +53,9 @@ public class PatternCollectionDialog : BaseDialog {
     // We want to remove the badge if the player has seen it, 
     // which is generally when they stop scrolling.
     RemoveBadgesIfSeen ();
+  }
+
+  protected override void ConstructCloseAnimation(Sequence closeAnimation) {
   }
 
   private void RemoveBadgesIfSeen() {

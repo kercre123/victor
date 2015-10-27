@@ -1,14 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
+using DG.Tweening;
 
-public class BaseDialog : MonoBehaviour {
+public abstract class BaseDialog : MonoBehaviour {
   
   public delegate void SimpleBaseDialogHandler();
   public delegate void BaseDialogHandler(string dialogId, BaseDialog dialog);
 
   public event SimpleBaseDialogHandler DialogOpened;
   public static event BaseDialogHandler BaseDialogOpened;
-  public static void RaiseDialogOpened(BaseDialog dialog) {
+  private static void RaiseDialogOpened(BaseDialog dialog) {
     if (dialog.DialogOpened != null) {
       dialog.DialogOpened ();
     }
@@ -19,12 +20,23 @@ public class BaseDialog : MonoBehaviour {
 
   public event SimpleBaseDialogHandler DialogClosed;
   public static event BaseDialogHandler BaseDialogClosed;
-  public static void RaiseDialogClosed(BaseDialog dialog) {
+  private static void RaiseDialogClosed(BaseDialog dialog) {
     if (dialog.DialogClosed != null) {
       dialog.DialogClosed ();
     }
     if (BaseDialogClosed != null) {
       BaseDialogClosed(dialog.Id, dialog);
+    }
+  }
+
+  public event SimpleBaseDialogHandler DialogCloseAnimationFinished;
+  public static event BaseDialogHandler BaseDialogCloseAnimationFinished;
+  private static void RaiseDialogCloseAnimationFinished(BaseDialog dialog) {
+    if (dialog.DialogCloseAnimationFinished != null) {
+      dialog.DialogCloseAnimationFinished ();
+    }
+    if (BaseDialogCloseAnimationFinished != null) {
+      BaseDialogCloseAnimationFinished(dialog.Id, dialog);
     }
   }
 
@@ -49,6 +61,7 @@ public class BaseDialog : MonoBehaviour {
     UIManager.DisableTouchEvents ();
 
     // TODO: Play some animations
+
     OnOpenAnimationsFinished ();
   }
 
@@ -62,13 +75,18 @@ public class BaseDialog : MonoBehaviour {
     UIManager.DisableTouchEvents ();
 
     // TODO: Play some animations
-    OnCloseAnimationsFinished ();
+    Sequence closeAnimation = DOTween.Sequence ();
+    ConstructCloseAnimation (closeAnimation);
+    closeAnimation.AppendCallback(OnCloseAnimationsFinished);
+
   }
+
+  protected abstract void ConstructCloseAnimation (Sequence closeAnimation);
 
   private void OnCloseAnimationsFinished() {
     UIManager.EnableTouchEvents ();
+    RaiseDialogCloseAnimationFinished (this);
 
-    // TODO: Raise event
     GameObject.Destroy (gameObject);
   }
 }

@@ -101,19 +101,10 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
     _patternDiscoveredDialog.Initialize (pattern);
     
-    _patternDiscoveredDialog.DialogClosed += OnDiscoveryDialogClosed;
+    _patternDiscoveredDialog.DialogCloseAnimationFinished += OnDiscoveryDialogClosed;
   }
 
   private void OnDiscoveryDialogClosed() {
-    PlayAddPatternToBankAnimation ();
-  }
-
-  private void PlayAddPatternToBankAnimation() {
-    // TODO: Play animation
-    OnAddPatternToBankAnimationFinished ();
-  }
-
-  private void OnAddPatternToBankAnimationFinished() {
     // Update badge visuals
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
   }
