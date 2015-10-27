@@ -391,11 +391,16 @@ namespace Cozmo {
               
               result = RESULT_FAIL;
             } else {
+              const Vec3f& T_old = object->GetPose().GetTranslation();
+              const Vec3f& T_new = newPose.GetTranslation();
               PRINT_NAMED_INFO("BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
-                               "Updating object %d's origin from %s to %s",
+                               "Updating object %d's origin from %s to %s. "
+                               "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
                                object->GetID().GetValue(),
                                oldOrigin->GetName().c_str(),
-                               newOrigin->GetName().c_str());
+                               newOrigin->GetName().c_str(),
+                               T_old.x(), T_old.y(), T_old.z(),
+                               T_new.x(), T_new.y(), T_new.z());
               
               object->SetPose(newPose);
               
@@ -730,6 +735,7 @@ namespace Cozmo {
           // update the object's pose.
           if(useThisObjectToLocalize)
           {
+            assert(ActiveIdentityState::Identified == matchingObject->GetIdentityState());
             Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
             if(localizeResult != RESULT_OK) {
               PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
