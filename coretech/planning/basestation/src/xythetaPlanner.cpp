@@ -29,7 +29,7 @@ namespace Planning {
 
 // When doing the soft obstacle goal heuristic expansion, keep expanding until this many states "escape" the
 // penalty zone
-#define COLLISION_GOAL_HEURISTIC_NUM_ESCAPES 20
+#define COLLISION_GOAL_HEURISTIC_NUM_ESCAPES 1
   
 xythetaPlanner::xythetaPlanner(const xythetaPlannerContext& context)
 {
@@ -244,6 +244,10 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
     Cost c = q.topF();
     curr = q.pop();
 
+    if( _heurMap.find(curr) == _heurMap.end()) {
+      _heurMap.insert( std::make_pair( curr, c ) );
+    }
+
     if(!_context.env.IsInSoftCollision(curr)) {
       if( numEscapes == 0 ) {
         minCostOutside = c;
@@ -260,9 +264,9 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
                          _heurMap.size());
         return minCostOutside;
       }
-      else {
-        continue;
-      }
+
+      // NOTE: need more testing to prove to myself that allowing any COLLISION_GOAL_HEURISTIC_NUM_ESCAPES > 1
+      // actually works, and is helpful at all.
     }
 
     // this logic is almost identical to ExpandState, but using reverse successors
@@ -276,19 +280,10 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
       StateID nextID = it.Front().stateID;
       float newC = it.Front().g;
 
-      // returns FLT_MAX if nextID isn't present
-      float oldFval = q.fVal(nextID);
-      if(oldFval > newC) {
+      // simplified best-first expansion backwards from the goal
 
-        // if this is a state we haven't expanded yet, store the heuristic and insert it for further
-        // expansion. Also store it in the heurMap, using the actual cost, so we'll have a perfect heuristic
-        // value for this state later
-
-        if(_heurMap.count(nextID) == 0) {
-          _heurMap.insert(std::make_pair(nextID, newC));
-          q.insert(nextID, newC);
-        }
-      }
+      // this might repeat work (no closed list), but who cares, this is a short bit of code
+      q.insert(nextID, newC);
 
       it.Next(_context.env);
     }
@@ -397,6 +392,11 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
       break;
     }
 
+    #ifndef NDEBUG
+    // set iterator to null for an assert check later
+    _table[sid].openIt_ = _open.nullIterator();
+    #endif
+
     ExpandState(sid);
     _expansions++;
     if(_expansions > maxExpansions) {
@@ -453,7 +453,12 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
 void xythetaPlannerImpl::ExpandState(StateID currID)
 {
   // hold iterator to current table entry
-  auto currTableEntry = _table[currID];
+  auto& currTableEntry = _table[currID];
+
+  if( currTableEntry.closedIter_ == _searchNum ) {
+    PRINT_NAMED_ERROR("xythetaPlanner.ExpandingClosedState", "This is a planner bug! Tell Brad immediately!");
+    return;
+  }
 
   Cost currG = currTableEntry.g_;
   
@@ -465,7 +470,7 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
   while(!it.Done( _context.env )) {
     _considerations++;
 
-    StateID nextID = it.Front().stateID;
+    const StateID nextID = it.Front().stateID;
     float newG = it.Front().g;
 
     if(_context.allowFreeTurnInPlaceAtGoal && currID.s.x == _goalID.s.x && currID.s.y == _goalID.s.y) {
@@ -486,12 +491,20 @@ void xythetaPlannerImpl::ExpandState(StateID currID)
                      it.Front().penalty,
                      newG);
     }
+    // TODO:(bn) opt: delay computing the cost. If the node is closed, don't need to compute it. As I'm
+    // computing it, pass in the oldEntry g value, because as soon as we hit that, we could bail out early
     else if(!oldEntry->second.IsClosed(_searchNum)) {
       // only update if g value is lower
       if(newG < oldEntry->second.g_) {
         Cost h = heur(nextID);
         Cost f = newG + h;
+
+        // if the states are in the table, then they were in the open list at some point. Since they aren't
+        // closed now, they must still be in Open, so remove the old entry to insert the new one
+        assert( oldEntry->second.openIt_ != _open.nullIterator() );
+        _open.remove(oldEntry->second.openIt_);
         oldEntry->second.openIt_ = _open.insert(nextID, f);
+
         oldEntry->second.closedIter_ = -1;
         oldEntry->second.backpointer_ = currID;
         oldEntry->second.backpointerAction_ = it.Front().actionID;
@@ -534,12 +547,11 @@ void xythetaPlannerImpl::BuildPlan()
   StateID curr = _goalID;
   BOUNDED_WHILE(1000, !(curr == _startID)) {
     auto it = _table.find(curr);
-
     assert(it != _table.end());
 
     _plan.Push(it->second.backpointerAction_, it->second.penaltyIntoState_);
     curr = it->second.backpointer_;
-  }
+  }  
 
   std::reverse(_plan.actions_.begin(), _plan.actions_.end());
   std::reverse(_plan.penalties_.begin(), _plan.penalties_.end());

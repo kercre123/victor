@@ -15,16 +15,11 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectIDs.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include <vector>
 
 namespace Anki {
 namespace Cozmo {
 
-// Forward declaration
-template<typename TYPE> class AnkiEvent;
-namespace ExternalInterface { class MessageEngineToGame; }
-  
 class BehaviorReactToPickup : public IReactionaryBehavior
 {
 public:
@@ -32,14 +27,13 @@ public:
   
   virtual bool IsRunnable(double currentTime_sec) const override;
   
-  virtual Result Init(double currentTime_sec) override;
-  
-  virtual Status Update(double currentTime_sec) override;
-  
-  // Finish placing current object if there is one, otherwise good to go
-  virtual Result Interrupt(double currentTime_sec) override;
-  
   virtual bool GetRewardBid(Reward& reward) override;
+  
+protected:
+  
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
   
 private:
   enum class State {
@@ -48,14 +42,13 @@ private:
     PlayingAnimation
   };
   
-  State _currentState;
+  State _currentState = State::Inactive;
   bool _isInAir = false;
   bool _waitingForAnimComplete = false;
   u32 _animTagToWaitFor = 0;
   
-  std::vector<Signal::SmartHandle> _eventHandles;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
-  void HandleMovedEvent(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
 }; // class BehaviorReactToPickup
   
 

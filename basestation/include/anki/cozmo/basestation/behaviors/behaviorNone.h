@@ -28,16 +28,27 @@ public:
   // Abstract methods to be overloaded:
   //
   virtual bool IsRunnable(double currentTime_sec) const override { return true; }
-  virtual Result Init(double currentTime_sec) override { _isInterrupted = false; return Result::RESULT_OK; }
-  virtual Status Update(double currentTime_sec) override
+  
+  virtual bool GetRewardBid(Reward& reward) override { return true; }
+  
+protected:
+  
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override
+  {
+    _isInterrupted = false; return Result::RESULT_OK;
+  }
+  
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override
   {
     Status retval = _isInterrupted ? Status::Complete : Status::Running;
     return retval;
   }
-  virtual Result Interrupt(double currentTime_sec) override { _isInterrupted = true; return Result::RESULT_OK; }
-  virtual bool GetRewardBid(Reward& reward) override { return true; }
+
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override
+  {
+    _isInterrupted = true; return Result::RESULT_OK;
+  }
   
-protected:
   bool _isInterrupted = false;
 };
   

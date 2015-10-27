@@ -186,7 +186,7 @@ namespace Anki {
                                                     const std::set<Vision::Marker::Code>& withCode,
                                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
                                                     const Pose3d* reachableFromPose,
-                                                    const f32 offset_mm)
+                                                    const f32 offset_mm) const
     {
       const Pose3d& relToObjectPose = GetPose();
       
@@ -208,7 +208,7 @@ namespace Anki {
     } // GetCurrentPreActionPoses()
     
     
-    void ActionableObject::Visualize()
+    void ActionableObject::Visualize() const
     {
       if(IsSelected()) {
         static const ColorRGBA SELECTED_COLOR(0.f,1.f,0.f,1.f);
@@ -220,7 +220,7 @@ namespace Anki {
     }
     
     void ActionableObject::VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
-                                                   const Pose3d* reachableFrom)
+                                                   const Pose3d* reachableFrom) const
     {
       // Draw the main object:
       //Visualize();
@@ -249,7 +249,7 @@ namespace Anki {
     } // VisualizeWithPreActionPoses()
     
     
-    void ActionableObject::EraseVisualization()
+    void ActionableObject::EraseVisualization() const
     {
       for(auto & preActionPoseHandle : _vizPreActionPoseHandles) {
         if(preActionPoseHandle != VizManager::INVALID_HANDLE) {

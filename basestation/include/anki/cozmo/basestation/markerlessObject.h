@@ -46,8 +46,8 @@ namespace Anki {
       
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
       
-      virtual void Visualize(const ColorRGBA& color) override;
-      virtual void EraseVisualization() override;
+      virtual void Visualize(const ColorRGBA& color) const override;
+      virtual void EraseVisualization() const override;
       
       virtual Point3f GetSameDistanceTolerance() const override;      
       
@@ -62,7 +62,7 @@ namespace Anki {
       
       std::vector<Point3f> _canonicalCorners;
       
-      VizManager::Handle_t _vizHandle;
+      mutable VizManager::Handle_t _vizHandle;
       
     }; // class MarkerlessObject
     

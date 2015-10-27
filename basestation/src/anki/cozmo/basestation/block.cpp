@@ -430,13 +430,13 @@ namespace Cozmo {
     return angle;
   }
   
-  void Block::Visualize(const ColorRGBA& color)
+  void Block::Visualize(const ColorRGBA& color) const
   {
     Pose3d vizPose = GetPose().GetWithRespectToOrigin();
     _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
   }
   
-  void Block::EraseVisualization()
+  void Block::EraseVisualization() const
   {
     // Erase the main object
     if(_vizHandle != VizManager::INVALID_HANDLE) {

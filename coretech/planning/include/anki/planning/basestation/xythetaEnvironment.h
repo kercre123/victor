@@ -497,10 +497,6 @@ public:
   double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
   double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
 
-  void SetRobotActionParams(double halfWheelBase_mm,
-                            double maxVelocity_mmps,
-                            double maxReverseVelocity_mmps);
-
   float GetResolution_mm() const { return resolution_mm_; }
 
 private:
@@ -566,7 +562,7 @@ private:
   std::vector< Bounds > obstacleBounds_;
 
   // TODO:(bn) this won't support multiple different robots!
-  RobotActionParams _robotParams;
+  const RobotActionParams _robotParams;
 };
 
 bool xythetaEnvironment::GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const
