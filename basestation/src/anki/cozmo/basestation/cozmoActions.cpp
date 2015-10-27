@@ -22,6 +22,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/random/randomGenerator.h"
+#include "util/helpers/templateHelpers.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include <iomanip>
 
@@ -76,6 +77,11 @@ namespace Anki {
     {
       // Get carried object
       ObjectID objectID = robot.GetCarryingObject();
+      if (objectID.GetValue() < 0) {
+        PRINT_NAMED_INFO("ComputePlacementApproachAngle.NoCarriedObject", "");
+        return RESULT_FAIL;
+      }
+      
       const ActionableObject* object = dynamic_cast<const ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
       
       
@@ -1556,18 +1562,13 @@ namespace Anki {
     
     IDockAction::~IDockAction()
     {
-      if(_faceAndVerifyAction != nullptr) {
-        delete _faceAndVerifyAction;
-      }
+      Reset();
     }
     
     void IDockAction::Reset()
     {
       IAction::Reset();
-      if(_faceAndVerifyAction != nullptr) {
-        delete _faceAndVerifyAction;
-        _faceAndVerifyAction = nullptr;
-      }
+      Util::SafeDelete(_faceAndVerifyAction);
     }
     
     void IDockAction::SetPreActionPoseAngleTolerance(Radians angleTolerance)
@@ -1696,8 +1697,7 @@ namespace Anki {
         } else {
           if(actionResult == ActionResult::SUCCESS) {
             // Finished with visual verification:
-            delete _faceAndVerifyAction;
-            _faceAndVerifyAction = nullptr;
+            Util::SafeDelete(_faceAndVerifyAction);
             actionResult = ActionResult::RUNNING;
             
             PRINT_NAMED_INFO("IDockAction.DockWithObjectHelper.BeginDocking", "Docking with marker %d (%s) using action %s.",
@@ -1986,19 +1986,13 @@ namespace Anki {
     
     PlaceRelObjectAction::~PlaceRelObjectAction()
     {
-      if(_placementVerifyAction != nullptr) {
-        delete _placementVerifyAction;
-      }
+      Reset();
     }
     
     void PlaceRelObjectAction::Reset()
     {
       IDockAction::Reset();
-      
-      if(_placementVerifyAction != nullptr) {
-        delete _placementVerifyAction;
-        _placementVerifyAction = nullptr;
-      }
+      Util::SafeDelete(_placementVerifyAction);
     }
     
     const std::string& PlaceRelObjectAction::GetName() const
@@ -2085,10 +2079,6 @@ namespace Anki {
     
     ActionResult PlaceRelObjectAction::Verify(Robot& robot)
     {
-      
-      robot.GetBlockWorld().GetObjectByID(0)->GetPose().GetTranslation();
-      robot.GetBlockWorld().GetObjectByID(0)->GetPose().GetParent();
-      
       ActionResult result = ActionResult::FAILURE_ABORT;
       
       switch(_dockAction)
@@ -2125,8 +2115,7 @@ namespace Anki {
             if(result != ActionResult::RUNNING) {
               
               // Visual verification is done
-              delete _placementVerifyAction;
-              _placementVerifyAction = nullptr;
+              Util::SafeDelete(_placementVerifyAction);
               
               if(result != ActionResult::SUCCESS) {
                 if(_dockAction == DockAction::DA_PLACE_LOW) {
@@ -2203,19 +2192,13 @@ namespace Anki {
     
     RollObjectAction::~RollObjectAction()
     {
-      if(_rollVerifyAction != nullptr) {
-        delete _rollVerifyAction;
-      }
+      Reset();
     }
     
     void RollObjectAction::Reset()
     {
       IDockAction::Reset();
-      
-      if(_rollVerifyAction != nullptr) {
-        delete _rollVerifyAction;
-        _rollVerifyAction = nullptr;
-      }
+      Util::SafeDelete(_rollVerifyAction);
     }
     
     const std::string& RollObjectAction::GetName() const
@@ -2334,8 +2317,7 @@ namespace Anki {
             if(result != ActionResult::RUNNING) {
               
               // Visual verification is done
-              delete _rollVerifyAction;
-              _rollVerifyAction = nullptr;
+              Util::SafeDelete(_rollVerifyAction);
               
               if(result != ActionResult::SUCCESS) {
                 PRINT_NAMED_INFO("RollObjectAction.Verify",
@@ -2379,19 +2361,13 @@ namespace Anki {
     
     PlaceObjectOnGroundAction::~PlaceObjectOnGroundAction()
     {
-      if(_faceAndVerifyAction != nullptr) {
-        delete _faceAndVerifyAction;
-      }
+      Reset();
     }
     
     void PlaceObjectOnGroundAction::Reset()
     {
       IAction::Reset();
-      
-      if(_faceAndVerifyAction != nullptr) {
-        delete _faceAndVerifyAction;
-        _faceAndVerifyAction = nullptr;
-      }
+      Util::SafeDelete(_faceAndVerifyAction);
     }
     
     const std::string& PlaceObjectOnGroundAction::GetName() const
@@ -2625,10 +2601,7 @@ namespace Anki {
     
     TraverseObjectAction::~TraverseObjectAction()
     {
-      if(_chosenAction != nullptr) {
-        delete _chosenAction;
-        _chosenAction = nullptr;
-      }
+      Reset();
     }
     
     const std::string& TraverseObjectAction::GetName() const
@@ -2639,9 +2612,7 @@ namespace Anki {
     
     void TraverseObjectAction::Reset()
     {
-      if(_chosenAction != nullptr) {
-        _chosenAction->Reset();
-      }
+      Util::SafeDelete(_chosenAction);
     }
     
     ActionResult TraverseObjectAction::UpdateInternal(Robot& robot)

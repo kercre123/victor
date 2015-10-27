@@ -579,6 +579,9 @@ namespace Anki {
     
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then picking it up.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
     class DriveToPickupObjectAction : public CompoundActionSequential
     {
     public:
@@ -612,6 +615,12 @@ namespace Anki {
 
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then placing an object on it.
+    // @param objectID         - object to place carried object on
+    // @param useExactRotation - If true, then only the preAction pose that results in the carried object
+    //                           being placed in alignment with objectID that is closest to the specified
+    //                           rotation is considered.
+    //                           If the up-axis of the current rotation is not the same as that of the
+    //                           currently carried object, the action fails.
     class DriveToPlaceOnObjectAction : public CompoundActionSequential
     {
     public:
@@ -638,6 +647,12 @@ namespace Anki {
     
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then placing an object relative to it.
+    // @param placementOffsetX_mm - The desired distance between the center of the docking marker
+    //                              and the center of the object that is being placed, along the
+    //                              direction of the docking marker's normal.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
     class DriveToPlaceRelObjectAction : public CompoundActionSequential
     {
     public:
@@ -678,6 +693,9 @@ namespace Anki {
     
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then rolling it.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
     class DriveToRollObjectAction : public CompoundActionSequential
     {
     public:
@@ -734,6 +752,11 @@ namespace Anki {
     
     
     // Common compound action
+    // @param placementPose    - The pose in which the carried object should be placed.
+    // @param useExactRotation - If true, then the carried object is placed in the exact
+    //                           6D pose represented by placement pose. Otherwise,
+    //                           x,y and general axis alignment with placementPose rotation
+    //                           are the only constraints.
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:

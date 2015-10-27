@@ -214,8 +214,9 @@ message SelectNextObject {
 }
 
 // PickupObject
-// If useApproachAngle == true, then only the preAction pose that results in a robot
-// approach angle of approachAngle_rad is considered.
+// @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+//                            approach angle closest to approachAngle_rad is considered.
+// @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
 message PickupObject {
     int_32 objectID, // negative value means "currently selected object"
     float_32 approachAngle_rad,
@@ -226,10 +227,11 @@ message PickupObject {
 
 // PlaceOnObject
 // Places the carried object on top of objectID.
-// The quaterion is only used if useExactRotation is true,
-// in which case the closest aligned rotation wrt to objectID is computed and the corresponding
-// preAction pose is selected. If the up-axis is invalid according to orientation of the currently
-// carried object then this action fails.
+// @param useExactRotation - If true, then only the preAction pose that results in the carried object
+//                           being placed in alignment with objectID that is closest to the specified
+//                           quaternion rotation is considered.
+//                           If the up-axis of the current rotation is not the same as that of the
+//                           currently carried object, the action fails.
 message PlaceOnObject {
     int_32 objectID, // negative value means "currently selected object"
     float_32 qw,
@@ -242,9 +244,12 @@ message PlaceOnObject {
 }
 
 // PlaceRelObject
-// Places the carried object on the ground at placementOffsetX_mm from objectID.
-// If useApproachAngle == true, then only the preAction pose that results in a robot
-// approach angle of approachAngle_rad is considered.
+// @param placementOffsetX_mm - The desired distance between the center of the docking marker
+//                              and the center of the object that is being placed, along the
+//                              direction of the docking marker's normal.
+// @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+//                            approach angle closest to approachAngle_rad is considered.
+// @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
 message PlaceRelObject {
     int_32 objectID, // negative value means "currently selected object"
     float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
