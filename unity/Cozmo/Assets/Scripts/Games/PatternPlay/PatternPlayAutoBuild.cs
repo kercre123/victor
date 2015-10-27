@@ -67,6 +67,25 @@ public class PatternPlayAutoBuild {
     return objectHeld;
   }
 
+  public float FindApproachAngle() {
+    float dockAngleRad = 0.0f;
+    if (neatList.Count == 1) {
+      dockAngleRad = 3.0f * Mathf.PI / 2.0f;
+    }
+    else if (neatList.Count == 2) {
+      Vector3 relPos = neatList[1].WorldPosition - neatList[0].WorldPosition;
+      if (Vector3.Dot(relPos, neatList[0].Right) < 0.0f) {
+        // place on the left of anchor block.
+        dockAngleRad = Mathf.PI / 2.0f;
+      }
+      else {
+        // place on right of anchor block.
+        dockAngleRad = 3.0f * Mathf.PI / 2.0f;
+      }
+    }
+    return dockAngleRad;
+  }
+
   public void FindPlaceTarget(out Vector3 position, out int dockID, out float offset, out float dockAngleRad) {
     if (neatList.Count == 0) {
       position = controller.GetRobot().WorldPosition + controller.GetRobot().Forward * 40.0f;
@@ -79,7 +98,6 @@ public class PatternPlayAutoBuild {
       position = neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
       dockID = neatList[0].ID;
       offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
-      dockAngleRad = 3.0f * Mathf.PI / 2.0f;
     }
     else {
       // there are two blocks. we need to figure out where to put the third block
@@ -89,16 +107,15 @@ public class PatternPlayAutoBuild {
         position = neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
         dockID = neatList[0].ID;
         offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
-        dockAngleRad = Mathf.PI / 2.0f;
       }
       else {
         // place on right of anchor block.
         position = neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
         dockID = neatList[0].ID;
         offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
-        dockAngleRad = 3.0f * Mathf.PI / 2.0f;
       }
     }
+    dockAngleRad = FindApproachAngle();
   }
 
   public void PlaceBlockSuccess() {

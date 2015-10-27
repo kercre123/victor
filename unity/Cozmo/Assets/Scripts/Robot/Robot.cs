@@ -778,10 +778,12 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
+  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null) {
     PickupObjectMessage.objectID = selectedObject;
     PickupObjectMessage.usePreDockPose = usePreDockPose;
     PickupObjectMessage.useManualSpeed = useManualSpeed;
+    PickupObjectMessage.useApproachAngle = useApproachAngle;
+    PickupObjectMessage.approachAngle_rad = approachAngleRad;
     
     DAS.Debug("Robot", "Pick And Place Object " + PickupObjectMessage.objectID + " usePreDockPose " + PickupObjectMessage.usePreDockPose + " useManualSpeed " + PickupObjectMessage.useManualSpeed);
 
