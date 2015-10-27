@@ -16,7 +16,7 @@ public class PlaceCube : State {
 
     Vector3 placeTarget = patternPlayAutoBuild.FindPlaceTarget();
 
-    robot.PlaceObjectOnGround(placeTarget, 0.0f, false, false, PlaceDone);
+    robot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
   }
 
   void PlaceDone(bool success) {

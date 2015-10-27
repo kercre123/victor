@@ -230,8 +230,7 @@ public class ShakeShakeController : GameController {
     DAS.Debug("ShakeShakeController", "RobotEngineMessage: " + action_type);
 
     if (success) {
-      if (action_type == RobotActionType.PICK_AND_PLACE_OBJECT ||
-          action_type == RobotActionType.PICKUP_OBJECT_LOW ||
+      if (action_type == RobotActionType.PICKUP_OBJECT_LOW ||
           action_type == RobotActionType.PICKUP_OBJECT_HIGH) {
         resettingBlueBlock = false;
         currentScore += 10;
@@ -243,8 +242,7 @@ public class ShakeShakeController : GameController {
     }
 
     if (!success) {
-      if (action_type == RobotActionType.PICK_AND_PLACE_OBJECT ||
-          action_type == RobotActionType.PICKUP_OBJECT_LOW ||
+      if (action_type == RobotActionType.PICKUP_OBJECT_LOW ||
           action_type == RobotActionType.PICKUP_OBJECT_HIGH ||
           action_type == RobotActionType.PICK_AND_PLACE_INCOMPLETE) {
         DAS.Warn("ShakeShakeController", "Failed to pick up and place object");

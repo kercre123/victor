@@ -1307,7 +1307,8 @@ public class GameLayoutTracker : MonoBehaviour {
     pos = bestBlock.GetCozmoSpacePose(out facing_rad); 
     string description = null;
     CozmoBusyPanel.instance.SetDescription("drop\n", robot.carryingObject, ref description);
-    robot.PlaceObjectOnGround(pos, facing_rad);
+    // TODO: compute correct quaternion.
+    robot.PlaceObjectOnGround(pos, Quaternion.identity);
     
     return true;
   }
