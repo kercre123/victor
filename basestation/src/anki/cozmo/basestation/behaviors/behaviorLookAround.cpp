@@ -295,7 +295,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   if (shouldRotate)
   {
     // Our destination regions are 90 degrees, so we randomly pick up to 90 degrees to vary our destination
-    s32 randAngleMod = _rng.RandInt(90);
+    s32 randAngleMod = GetRNG().RandInt(90);
     destPose.SetRotation(destPose.GetRotation() * Rotation3d(DEG_TO_RAD(baseAngleDegrees + randAngleMod), Z_AXIS_3D()));
   }
   
@@ -303,7 +303,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   {
     // The multiplier amount of change we want to vary the radius by (-0.25 means from 75% to 100% of radius)
     static const f32 radiusVariation = -0.25f;
-    f32 distMod = _rng.RandDbl() * radiusVariation * _safeRadius;
+    f32 distMod = GetRNG().RandDbl() * radiusVariation * _safeRadius;
     destPose.SetTranslation(destPose.GetTranslation() + destPose.GetRotation() * Point3f(_safeRadius + distMod, 0, 0));
   }
   
@@ -443,7 +443,7 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   previous = current;
   
   // Pick a random destination from the remaining options
-  s32 randIndex = _rng.RandInt(static_cast<s32>(all.size()));
+  s32 randIndex = GetRNG().RandInt(static_cast<s32>(all.size()));
   auto newDestIter = all.begin();
   while (randIndex-- > 0) { newDestIter++; }
   

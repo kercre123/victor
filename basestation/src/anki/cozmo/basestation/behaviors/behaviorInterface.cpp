@@ -20,8 +20,10 @@
 namespace Anki {
 namespace Cozmo {
 
+  // Static initializations
   const ActionList::SlotHandle IBehavior::sActionSlot = 0;
-
+  Util::RandomGenerator IBehavior::sRNG;
+  
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _robot(robot)
   , _isRunning(false)
