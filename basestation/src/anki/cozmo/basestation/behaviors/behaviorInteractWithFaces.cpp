@@ -24,6 +24,8 @@
 
 #include <opencv2/highgui/highgui.hpp>
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 namespace Anki {
 namespace Cozmo {
   
