@@ -641,9 +641,6 @@ int main(void)
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
-  InitEspressif();
-  ProgramEspressif();
   
   /* Initialize LEDs */
   STM_EVAL_LEDInit(LEDRED);
@@ -704,7 +701,9 @@ int main(void)
   SlowPutString("Ready...\r\n");
   
   STM_EVAL_LEDOn(LEDRED);
-  
+
+  InitEspressif();
+
   while (1)
   {  
     MainExecution();

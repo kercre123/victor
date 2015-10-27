@@ -1,9 +1,11 @@
+#include <string.h>
 #include "hal/board.h"
 #include "hal/portable.h"
 
 #include "hal/display.h"
 #include "hal/timers.h"
 #include "../app/fixture.h"
+#include "../app/binaries.h"
 
 #include "hal/espressif.h"
 
@@ -15,6 +17,8 @@
 #define GPIOC_TX          (1 << PINC_TX)
 #define PINC_RX           10
 #define GPIOC_RX          (1 << PINC_RX)
+
+static const int MAX_TIMEOUT = 1000000; // 1sec
 
 // These are the currently known commands supported by the ROM
 static const uint8_t ESP_FLASH_BEGIN = 0x02;
@@ -52,23 +56,48 @@ static const uint8_t SFLASH_STUB[]    = {
     0xf5,0xff,0xc0,0x04,0x00,0x0b,0xcc,0x56,0xec,0xfd,0x06,0xff,0xff,0x00,0x00
 };
 
+enum ESP_SOURCE {
+  ESP_FIXTURE = 0,
+  ESP_TARGET = 1
+};
+
+struct ESPHeader {
+  uint8_t   source;
+  uint8_t   opcode;
+  uint16_t  length;
+  uint32_t  checksum;
+};
+
+struct FlashLoadLocation {
+  const unsigned char* name;
+  uint32_t addr;
+  int length;
+  const uint8_t* data;
+};
+  
+static const FlashLoadLocation ESPRESSIF_ROMS[] = {
+  { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
+  // { "USER",  0x001000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
+  { "BLANK", 0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
+  { 0, 0, NULL }
+};
+
 void InitEspressif(void) {
   // Clock configuration
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
-  
 
   // Pull PB7 (CS#) low.  This MUST happen before 
   GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_SetBits(GPIOB, GPIO_Pin_7);
+  GPIO_ResetBits(GPIOB, GPIO_Pin_7);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
 
   USART_InitTypeDef USART_InitStructure;
   
@@ -108,7 +137,12 @@ void InitEspressif(void) {
 
   // TEMPORARY CODE
   ProgramEspressif();
+  for(;;) ;
 }
+
+static inline int BlockCount(int length) {
+  return (length + ESP_FLASH_BLOCK - 1) / ESP_FLASH_BLOCK;
+};
 
 // Send a character over the test port
 static inline void ESPPutChar(u8 c)
@@ -117,19 +151,20 @@ static inline void ESPPutChar(u8 c)
   TESTPORT_TX->DR = c;
 }
 
-static inline bool ESPSentData(void) {
-  return TESTPORT_RX->SR & USART_SR_RXNE;
-}
-
-static inline u8 ESPGetChar(void)
+static inline int ESPGetChar(int timeout = -1)
 {
-  while (!ESPSentData()) ;
-  return TESTPORT_RX->DR & 0xFF;
+  int countdown = timeout + getMicroCounter();
+  
+  while (timeout < 0 || countdown < getMicroCounter()) {
+    if (TESTPORT_RX->SR & USART_SR_RXNE) {
+      return TESTPORT_RX->DR & 0xFF;
+    }
+  }
+
+  return -1;
 }
 
-static void ESPWrite(const u8 *data, int length) {
-  ESPPutChar(0xC0);
-  
+static void ESPWrite(const u8 *data, int length) { 
   while (length-- > 0) {
     u8 out = *(data++);
     
@@ -147,8 +182,52 @@ static void ESPWrite(const u8 *data, int length) {
         break ;
     }
   }
+}
+
+static int ESPRead(u8 *target, int length, int timeout = -1) {
+  int read = 0;
+
+  for(;;) {
+    int ch = ESPGetChar(timeout);
+    if (ch < 0) return -1;  // Timeout
+    if (ch == 0xC0) break ;
+  }
+
+  while (length-- > 0) {
+    int ch = ESPGetChar(timeout);
+    if (ch < 0) return -1;  // Timeout
+
+    if (ch == 0xC0) {
+      if (read <= 0) continue ;
+      return read;
+    } else if (ch == 0xDB) {
+      int ch = ESPGetChar(timeout);
+      if (ch < 0) return -1;  // Timeout
+      
+      if (ch == 0xDC) {
+        *(target++) = 0xC0;
+      } else if (ch == 0xDD) {
+        *(target++) = 0xDB;
+      } else {
+        return -2;  // Escape error
+      }
+    } else {
+      *(target++) = ch;
+    }
+    
+    read++;
+  }
   
-  ESPPutChar(0xC0);  
+  return -3; // Buffer overflow
+}
+
+static inline void ESPCommand(uint8_t command, const uint8_t* data, int length) {
+  ESPHeader header = { ESP_FIXTURE, command, length, 0 } ;
+  
+  ESPPutChar(0xC0);
+  ESPWrite((u8*)&header, sizeof(header));
+  ESPWrite(data, length);
+  ESPPutChar(0xC0);
 }
 
 static uint8_t checksum(const uint8_t *data, int length, uint8_t state = ESP_CHECKSUM_MAGIC) {
@@ -157,44 +236,9 @@ static uint8_t checksum(const uint8_t *data, int length, uint8_t state = ESP_CHE
   }
   return state;
 }
- 
-static bool ESPRead(u8 *target, int length, int timeout = -1) {
-  u32 targetTime = getMicroCounter() + timeout;
-  bool shift = false;
-
-  while (length > 0 && (timeout < 0 || targetTime < getMicroCounter())) {
-    if (ESPSentData()) {
-      int ch = ESPGetChar() | (shift ? 0x100 : 0);
-
-      switch (ch) {
-        case 0x0DB:
-          shift = true;
-          break ;
-        case 0x1DC:
-          *(target++) = 0xC0;
-          shift = false;
-          break ;
-        case 0x1DD:
-          *(target++) = 0xDB;
-          shift = false;
-          break ;
-        default:
-          *(target++) = ch;
-          shift = false;
-          break ;
-      }
-      
-      length--;
-    }
-  }
-  
-  return length > 0;
-}
 
 bool ESPSync(void) {
   static const uint8_t SYNC_DATA[] = {
-    0x00, ESP_SYNC, 36, 0, 0, 0, 0, 0,
-    
     0x07, 0x07, 0x12, 0x20,
     0x55, 0x55, 0x55, 0x55,
     0x55, 0x55, 0x55, 0x55,
@@ -205,27 +249,100 @@ bool ESPSync(void) {
     0x55, 0x55, 0x55, 0x55,
     0x55, 0x55, 0x55, 0x55,
   };
-  
+  uint8_t read[256];
+
   // Attempt 16 times to get sync
   for (int i = 0; i < 0x10; i++) {
-    ESPWrite(SYNC_DATA, sizeof(SYNC_DATA));
+    ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA));
+    int size = ESPRead(read, sizeof(read), 1000); // 1000 microseconds
     
-    
-    for(;;) {
-      if (!ESPSentData()) continue ;
-      
-      DisplayClear();
-      DisplayPrintf("%2x", ESPGetChar());
+    if (size > 0) {
+      // Flush ESP buffer
+      while (ESPGetChar(1000) != -1);
+
+      return true ;
     }
+    
+    MicroWait(10000);
   }
+  
+  return false;
 }
 
-void ProgramEspressif(void) {
-  DisplayPrintf("Programming espressif...");
+static int Command(uint8_t cmd, const uint8_t* data, int length, uint8_t *reply, int max, int timeout = -1) {
+  ESPCommand(cmd, data, length);
+  return ESPRead(reply, max, timeout);
+}
 
-  ;
+static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
+  // Settings: QIO, 16m 20m
+  const uint16_t flash_mode = 0x3200;
+  
+  union {
+    uint8_t reply_buffer[0x100];
+  };
 
-  if (ESPSync()) DisplayPrintf("Synced...");
-  else DisplayPrintf("Could not sync...");
-  for (;;) ;
+  struct FlashBegin {
+    uint32_t size;
+    uint32_t blocks;
+    uint32_t blocksize;
+    uint32_t address;
+  };
+
+  struct FlashWrite {
+    uint32_t len;
+    uint32_t seq;
+    uint32_t _[2];
+    uint32_t data[ESP_FLASH_BLOCK];
+  };
+
+  struct FlashEnd {
+    uint32_t not_reboot;
+  };
+  
+  const FlashBegin begin = { length, BlockCount(length), ESP_FLASH_BLOCK, address };
+  const FlashEnd finish = { 1 };
+  FlashWrite block = { ESP_FLASH_BLOCK, 0, 0, 0 };
+
+  // Write BEGIN command (erase, wait 1 second for flash to blank)
+  DisplayPrintf("\nErasing");
+  int replySize = Command(ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  
+  while (length > 0) {
+    int copyLength = (length > ESP_FLASH_BLOCK) ? ESP_FLASH_BLOCK : length;
+    if (copyLength < ESP_FLASH_BLOCK) {
+      memset(block.data, 0xFF, ESP_FLASH_BLOCK);
+    }
+    memcpy(block.data, data, copyLength);
+
+    DisplayPrintf("\nBlock %i", block.seq);
+    int replySize = Command(ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+
+    block.seq++;
+  }
+
+  // Write FINISH command
+  DisplayPrintf("\nFinishing", block.seq);
+  replySize = Command(ESP_FLASH_END, (uint8_t*) &finish, sizeof(finish), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  
+  return true;
+}
+
+ESP_PROGRAM_ERROR ProgramEspressif(void) {
+  DisplayPrintf("ESP Syncronizing...");
+
+  if (!ESPSync()) { 
+    DisplayPrintf("\nSync Failed.");
+    return ESP_ERROR_NO_COMMUNICATION;
+  }
+
+  for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
+    DisplayClear();
+    DisplayPrintf("Load ROM %s", rom->name);
+    if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
+      return ESP_ERROR_BLOCK_FAILED;
+    }
+  }
+  
+  return ESP_ERROR_NONE;
 }
