@@ -214,6 +214,7 @@ public class Robot : IDisposable {
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
+  private U2G.PlaceRelObject PlaceRelObjectMessage;
 
   private ObservedObject _carryingObject;
 
@@ -336,6 +337,7 @@ public class Robot : IDisposable {
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
+    PlaceRelObjectMessage = new U2G.PlaceRelObject();
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -621,6 +623,25 @@ public class Robot : IDisposable {
     }
   }
 
+  public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null) {
+    DAS.Debug("Robot", "PlaceObjectRel" + target.ID);
+
+    PlaceRelObjectMessage.approachAngle_rad = approachAngle;
+    PlaceRelObjectMessage.placementOffsetX_mm = offsetFromMarker;
+    PlaceRelObjectMessage.objectID = target.ID;
+    PlaceRelObjectMessage.useApproachAngle = true;
+    PlaceRelObjectMessage.usePreDockPose = true;
+    PlaceRelObjectMessage.useManualSpeed = false;
+
+    RobotEngineManager.instance.Message.PlaceRelObject = PlaceRelObjectMessage;
+    RobotEngineManager.instance.SendMessage();
+
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+    }
+
+  }
+
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
     CancelActionMessage.robotID = ID;
     CancelActionMessage.actionType = actionType;
@@ -757,10 +778,12 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
+  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null) {
     PickupObjectMessage.objectID = selectedObject;
     PickupObjectMessage.usePreDockPose = usePreDockPose;
     PickupObjectMessage.useManualSpeed = useManualSpeed;
+    PickupObjectMessage.useApproachAngle = useApproachAngle;
+    PickupObjectMessage.approachAngle_rad = approachAngleRad;
     
     DAS.Debug("Robot", "Pick And Place Object " + PickupObjectMessage.objectID + " usePreDockPose " + PickupObjectMessage.usePreDockPose + " useManualSpeed " + PickupObjectMessage.useManualSpeed);
 

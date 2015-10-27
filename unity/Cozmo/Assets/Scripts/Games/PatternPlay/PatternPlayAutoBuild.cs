@@ -67,27 +67,55 @@ public class PatternPlayAutoBuild {
     return objectHeld;
   }
 
-  public Vector3 FindPlaceTarget() {
+  public float FindApproachAngle() {
+    float dockAngleRad = 0.0f;
+    if (neatList.Count == 1) {
+      dockAngleRad = 0.0f;
+    }
+    else if (neatList.Count == 2) {
+      Vector3 relPos = neatList[1].WorldPosition - neatList[0].WorldPosition;
+      if (Vector3.Dot(relPos, new Vector3(1.0f, 0.0f, 0.0f)) < 0.0f) {
+        // place on the left of anchor block (relative to ideal viewing pose)
+        dockAngleRad = Mathf.PI;
+      }
+      else {
+        // place on right of anchor block (relative to ideal viewing pose)
+        dockAngleRad = 0;
+      }
+    }
+    return dockAngleRad;
+  }
+
+  public void FindPlaceTarget(out Vector3 position, out int dockID, out float offset, out float dockAngleRad) {
     if (neatList.Count == 0) {
-      return controller.GetRobot().WorldPosition + controller.GetRobot().Forward * 40.0f;
+      position = controller.GetRobot().WorldPosition + controller.GetRobot().Forward * 40.0f;
+      dockID = -1;
+      offset = 0.0f;
+      dockAngleRad = 0.0f;
     }
     else if (neatList.Count == 1) {
       // there is an anchor block. let's put it to the right of the block.
-      Debug.Log("anchor block: " + neatList[0].WorldPosition);
-      return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+      position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+      dockID = neatList[0].ID;
+      offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
     }
     else {
       // there are two blocks. we need to figure out where to put the third block
       Vector3 relPos = neatList[1].WorldPosition - neatList[0].WorldPosition;
-      if (Vector3.Dot(relPos, neatList[0].Right) > 0.0f) {
+      if (Vector3.Dot(relPos, new Vector3(1.0f, 0.0f, 0.0f)) > 0.0f) {
         // place on the left of anchor block.
-        return neatList[0].WorldPosition - neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+        position = neatList[0].WorldPosition + new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+        dockID = neatList[0].ID;
+        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
       }
       else {
         // place on right of anchor block.
-        return neatList[0].WorldPosition + neatList[0].Right * CozmoUtil.BLOCK_LENGTH_MM * 2f;
+        position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+        dockID = neatList[0].ID;
+        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
       }
     }
+    dockAngleRad = FindApproachAngle();
   }
 
   public void PlaceBlockSuccess() {
@@ -124,7 +152,8 @@ public class PatternPlayAutoBuild {
   }
 
   private void ComputeIdealViewPose() {
-    idealViewPosition = neatList[0].WorldPosition + neatList[0].Forward * 190.0f;
-    idealViewAngle = Mathf.PI;
+    idealViewPosition = neatList[0].WorldPosition + new Vector3(0.0f, 1.0f, 0.0f) * 190.0f;
+    Debug.Log("ideal view fwd: " + neatList[0].Forward);
+    idealViewAngle = 3.0f * Mathf.PI / 2.0f;
   }
 }

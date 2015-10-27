@@ -24,7 +24,7 @@ public class PickUpCube : State {
       return;
     }
 
-    robot.PickAndPlaceObject(targetObject, true, false, PickUpDone);
+    robot.PickAndPlaceObject(targetObject, true, false, true, patternPlayAutoBuild.FindApproachAngle(), PickUpDone);
     patternPlayAutoBuild.SetObjectHeld(targetObject);
   }
 
