@@ -254,7 +254,7 @@ bool ESPSync(void) {
   // Attempt 16 times to get sync
   for (int i = 0; i < 0x10; i++) {
     ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA));
-    int size = ESPRead(read, sizeof(read), 1000); // 1000 microseconds
+    int size = ESPRead(read, sizeof(read), MAX_TIMEOUT); // 1000 microseconds
     
     if (size > 0) {
       // Flush ESP buffer
@@ -263,7 +263,7 @@ bool ESPSync(void) {
       return true ;
     }
     
-    MicroWait(10000);
+    MicroWait(1000);
   }
   
   return false;
@@ -331,6 +331,8 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
 ESP_PROGRAM_ERROR ProgramEspressif(void) {
   DisplayPrintf("ESP Syncronizing...");
 
+  EnableBAT();
+  
   if (!ESPSync()) { 
     DisplayPrintf("\nSync Failed.");
     return ESP_ERROR_NO_COMMUNICATION;

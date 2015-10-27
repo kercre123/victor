@@ -685,7 +685,6 @@ int main(void)
   SlowPrintf("fixture: %i\r\n", g_fixtureType);
   
   InitBAT();
-  EnableBAT();
   
   SlowPutString("Initializing Display...\r\n");
   InitDisplay();
