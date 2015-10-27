@@ -221,9 +221,12 @@ namespace Anki {
   , _axis(axisIn)
   {
     f32 axisLength = _axis.MakeUnitLength();
-    if(axisLength != 1.f) {
+    if(_angle == 0 && axisLength == 0) {
+      // If angle is zero and axis is unspecified, then the axis is arbitrary
+      _axis = X_AXIS_3D();
+    } else if(!NEAR(axisLength, 1.f, 1e-6)) {
       PRINT_NAMED_WARNING("RotationVector3d.Constructor.AxisNotUnitLength",
-                          "Provided axis was not unit length (norm=%f). Normalized.",
+                          "Provided axis was not unit length (norm=%f).",
                           axisLength);
     }
   }

@@ -427,11 +427,14 @@ namespace Anki {
   template<PointDimType N, typename T>
   T Point<N,T>::MakeUnitLength(void)
   {
-    const T length = this->Length();
-    if(length > 0) {
+    const T lengthSq = this->LengthSq();
+    if(lengthSq > 0) {
+      const T length = std::sqrt(lengthSq);
       (*this) *= T(1)/length;
+      return length;
+    } else {
+      return T(0);
     }
-    return length;
   }
   
   template<PointDimType N, typename T>
