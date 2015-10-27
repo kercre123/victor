@@ -14,7 +14,7 @@
 #ifndef COZMO_LIFT_CONTROLLER_H_
 #define COZMO_LIFT_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 namespace Anki {
   namespace Cozmo {

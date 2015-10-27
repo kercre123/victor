@@ -22,7 +22,7 @@
 #ifndef COZMO_MESSAGE_ROBOT_H
 #define COZMO_MESSAGE_ROBOT_H
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/common/robot/array2d_declarations.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"

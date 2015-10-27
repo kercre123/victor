@@ -13,7 +13,7 @@
 *
 **/
 #include "anki/common/robot/config.h"
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/robot/trig_fast.h"
 #include "anki/common/robot/errorHandling.h"

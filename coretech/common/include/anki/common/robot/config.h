@@ -174,7 +174,7 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
 
 #ifdef __cplusplus

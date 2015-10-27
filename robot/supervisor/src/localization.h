@@ -2,7 +2,7 @@
 #define LOCALIZATION_H
 
 #include "anki/common/shared/radians.h"
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/common/robot/geometry.h"
 
 namespace Anki {

@@ -24,13 +24,27 @@ static const int uart_chunk_size = 8;
 
 enum SPISource
 {
+#ifdef COZMO_ROBOT_V41
   SPI_SOURCE_HEAD = 'HEAD',
   SPI_SOURCE_BODY = 'BODY'
+#else
+	SPI_SOURCE_HEAD = 'H',
+	SPI_SOURCE_BODY = 'B',
+	SPI_SOURCE_CLEAR = 0
+#endif
 };
 
 union GlobalCommon
 {
+#ifdef COZMO_ROBOT_V41
   uint32_t source;
+#else
+	struct {
+		SPISource source;
+		uint8_t SYNC[3];
+	};
+	uint32_t common;
+#endif
 };
 
 struct AcceleratorPacket {

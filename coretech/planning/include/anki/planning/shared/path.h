@@ -1,7 +1,7 @@
 #ifndef PATH_H_
 #define PATH_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 
 // The robot has limited memory for paths, so hold fewer segments at a

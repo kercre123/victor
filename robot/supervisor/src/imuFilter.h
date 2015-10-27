@@ -16,7 +16,7 @@
 #define IMU_FILTER_H_
 
 #include "anki/common/shared/radians.h"
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/cozmo/robot/hal.h"
 
 namespace Anki {

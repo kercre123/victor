@@ -367,7 +367,7 @@
             <v6LangP>0</v6LangP>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,COZMO_ROBOT_V41</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;.\generated\clad\robot</IncludePath>
             </VariousControls>
@@ -776,6 +776,11 @@
               <FileName>timeProfiler.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1738,6 +1743,11 @@
               <FileName>timeProfiler.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>proxSensors.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
             </File>
           </Files>
         </Group>

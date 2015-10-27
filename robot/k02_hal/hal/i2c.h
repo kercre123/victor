@@ -3,7 +3,7 @@
 #ifndef I2C_H
 #define I2C_H
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 static const int MAX_QUEUE = 16;
 
