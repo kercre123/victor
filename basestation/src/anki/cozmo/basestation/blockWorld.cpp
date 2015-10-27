@@ -650,7 +650,6 @@ namespace Cozmo {
           useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
-                                     objSeen->IsRestingFlat() &&
                                      matchingObject->CanBeUsedForLocalization() &&
                                      (_robot->IsLocalized() == false ||
                                       _robot->HasMovedSinceBeingLocalized()) );
@@ -700,17 +699,23 @@ namespace Cozmo {
           // update the object's pose.
           if(useThisObjectToLocalize)
           {
-            Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
-            if(localizeResult != RESULT_OK) {
-              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                                "Failed to localize to %s object %d.\n",
-                                ObjectTypeToString(matchingObject->GetType()),
-                                matchingObject->GetID().GetValue());
-              return localizeResult;
+            if (objSeen->IsRestingFlat()) {
+              Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
+              if(localizeResult != RESULT_OK) {
+                PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                                  "Failed to localize to %s object %d.\n",
+                                  ObjectTypeToString(matchingObject->GetType()),
+                                  matchingObject->GetID().GetValue());
+                return localizeResult;
+              }
+              
+              // So we don't do this again with a more distant object
+              haveLocalizedRobotToObject = true;
+            } else {
+              PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                               "Not localizing to object %d because it is not observed to be flat\n",
+                               matchingObject->GetID().GetValue());
             }
-            
-            // So we don't do this again with a more distant object
-            haveLocalizedRobotToObject = true;
             
           } else {
             matchingObject->SetPose( objSeen->GetPose(), distToObj );

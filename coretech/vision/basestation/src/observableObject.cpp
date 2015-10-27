@@ -359,18 +359,10 @@ namespace Vision {
     
     return boundingQuad;
   } // GetBoundingQuadXY()
-  
-  static inline bool IsAxisAligned(const Radians& angle, const Radians& tol) {
-    return (NEAR(angle,  0,       tol) ||
-            NEAR(angle,  M_PI_2,  tol) ||
-            NEAR(angle,  M_PI,    tol) ||
-            NEAR(angle, -M_PI_2,  tol) ||
-            NEAR(angle, -M_PI,    tol));
-  }
-    
+
   // TODO: Move this to be a member of the RotationMatrix3d class
   template<char parentAxis>
-  static Radians GetRotationAngleAroundParentAxis(const RotationMatrix3d& Rmat)
+  static Radians GetAngularDeviationFromParentAxis(const RotationMatrix3d& Rmat)
   {
     // Figure out which axis in the rotated frame corresponds to the given
     // axis in the parent frame
@@ -382,40 +374,17 @@ namespace Vision {
       rotatedAxis = 'Y';
     }
     if(std::abs(row.z()) > maxVal) {
+      maxVal = std::abs(row.z());
       rotatedAxis = 'Z';
     }
     
-    Radians angle;
-    switch(rotatedAxis)
-    {
-      case 'X':
-        angle = Rmat.GetAngleAroundXaxis();
-        break;
-      case 'Y':
-        angle = Rmat.GetAngleAroundYaxis();
-        break;
-      case 'Z':
-        angle = Rmat.GetAngleAroundZaxis();
-        break;
-      default:
-        assert(false);
-    }
-    
-    return angle;
+    return std::acos(maxVal);
   }
-  
+
   bool ObservableObject::IsRestingFlat(const Radians& angleTol) const
   {
-    Pose3d poseWrtOrigin = GetPose().GetWithRespectToOrigin();
-    
-    // TODO: Switch to new GetRotationAngleParent<>() methods
-    const RotationMatrix3d Rmat = poseWrtOrigin.GetRotationMatrix();
-    
-    Radians angleX = GetRotationAngleAroundParentAxis<'X'>(Rmat);
-    Radians angleY = GetRotationAngleAroundParentAxis<'Y'>(Rmat);
-    
-    bool isFlat = IsAxisAligned(angleX, angleTol) && IsAxisAligned(angleY, angleTol);
-    
+    const RotationMatrix3d Rmat = GetPose().GetWithRespectToOrigin().GetRotationMatrix();
+    bool isFlat = (GetAngularDeviationFromParentAxis<'Z'>(Rmat) < angleTol);
     return isFlat;
   }
   
