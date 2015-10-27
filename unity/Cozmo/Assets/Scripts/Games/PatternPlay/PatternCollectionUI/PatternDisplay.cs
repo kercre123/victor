@@ -28,11 +28,11 @@ public class PatternDisplay : MonoBehaviour {
           cubes[i].gameObject.SetActive(true);
 
           // Set up the colors
-          Color patternColor = new Color(0.2f, 0.5f, 1f);
-          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.white;
-          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.white;
-          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.white;
-          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.white;
+          Color patternColor = new Color(0.2f, 0.8f, 1f);
+          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.gray;
+          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.gray;
+          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.gray;
+          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.gray;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);

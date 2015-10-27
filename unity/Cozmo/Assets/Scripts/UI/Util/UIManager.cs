@@ -22,7 +22,10 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private Canvas _sceneCanvas;
+  private Canvas _orthoUiCanvas;
+  
+  [SerializeField]
+  private Canvas _perspUiCanvas;
 
   private List<BaseDialog> _openDialogs;
 
@@ -33,7 +36,14 @@ public class UIManager : MonoBehaviour {
 
   public static GameObject CreateUI(GameObject uiPrefab) {
     GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (Instance._sceneCanvas.transform, false);
+    newUi.transform.SetParent (Instance._orthoUiCanvas.transform, false);
+    return newUi;
+  }
+
+  private static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
+    GameObject newUi = GameObject.Instantiate (uiPrefab);
+    newUi.transform.SetParent (Instance._perspUiCanvas.transform, false);
+    newUi.layer = LayerMask.NameToLayer ("3DUI");
     return newUi;
   }
 
@@ -45,7 +55,7 @@ public class UIManager : MonoBehaviour {
 
   public static BaseDialog OpenDialog(BaseDialog dialogPrefab) {
     GameObject newDialog = GameObject.Instantiate (dialogPrefab.gameObject);
-    newDialog.transform.SetParent (Instance._sceneCanvas.transform, false);
+    newDialog.transform.SetParent (Instance._orthoUiCanvas.transform, false);
 
     BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog> ();
     baseDialogScript.OpenDialog ();
@@ -67,6 +77,6 @@ public class UIManager : MonoBehaviour {
   }
 
   public static Camera GetUICamera() {
-    return _instance._sceneCanvas.worldCamera;
+    return _instance._orthoUiCanvas.worldCamera;
   }
 }

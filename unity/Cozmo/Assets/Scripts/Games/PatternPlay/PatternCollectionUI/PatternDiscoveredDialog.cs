@@ -21,5 +21,6 @@ public class PatternDiscoveredDialog : BaseDialog {
 
   public void OnCloseButtonTap() {
     UIManager.CloseDialog (this);
+
   }
 }
