@@ -132,7 +132,7 @@ void InitEspressif(void) {
   USART_Init(TESTPORT_RX, &USART_InitStructure);  
   USART_Cmd(TESTPORT_RX, ENABLE);
 
-  PIN_AF(GPIOC, PINC_TX);
+PIN_AF(GPIOC, PINC_TX);
   PIN_AF(GPIOC, PINC_RX);
 
   // TEMPORARY CODE
@@ -155,7 +155,9 @@ static inline int ESPGetChar(int timeout = -1)
 {
   int countdown = timeout + getMicroCounter();
   
-  while (timeout < 0 || countdown < getMicroCounter()) {
+  TESTPORT_RX->SR = 0;
+
+  while (timeout < 0 || countdown > getMicroCounter()) {
     if (TESTPORT_RX->SR & USART_SR_RXNE) {
       return TESTPORT_RX->DR & 0xFF;
     }
@@ -254,7 +256,7 @@ bool ESPSync(void) {
   // Attempt 16 times to get sync
   for (int i = 0; i < 0x10; i++) {
     ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA));
-    int size = ESPRead(read, sizeof(read), MAX_TIMEOUT); // 1000 microseconds
+    int size = ESPRead(read, sizeof(read), MAX_TIMEOUT);
     
     if (size > 0) {
       // Flush ESP buffer
@@ -318,6 +320,8 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     DisplayPrintf("\nBlock %i", block.seq);
     int replySize = Command(ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
 
+    data += ESP_FLASH_BLOCK;
+    length -= ESP_FLASH_BLOCK;
     block.seq++;
   }
 
