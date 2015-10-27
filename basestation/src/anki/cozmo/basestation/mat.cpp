@@ -68,7 +68,7 @@ namespace Anki {
     }
 
     
-    void MatPiece::Visualize(const ColorRGBA& color)
+    void MatPiece::Visualize(const ColorRGBA& color) const
     {
       // VizManager's cuboids are drawn around their center, so adjust the
       // vizPose to account for the fact that MatPieces' origins are on the top surface.
@@ -77,7 +77,7 @@ namespace Anki {
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
-    void MatPiece::EraseVisualization()
+    void MatPiece::EraseVisualization() const
     {
       // Erase the main object
       if(_vizHandle != VizManager::INVALID_HANDLE) {
