@@ -24,5 +24,6 @@ public class SetCubeToPattern : State {
   void SetPattern() {
     int heldObjectID = patternPlayAutoBuild.GetHeldObject().ID;
     patternPlayAutoBuild.SetBlockLightsToPattern(heldObjectID);
+    patternPlayAutoBuild.PlaceBlockSuccess();
   }
 }
