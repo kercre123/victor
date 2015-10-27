@@ -483,7 +483,10 @@ namespace Anki {
         bool bestPreActionPoseFound = false;
         for(auto & preActionPose : possiblePreActionPoses)
         {
-          Radians headingDiff = preActionPose.GetPose().GetRotationAngle<'Z'>() - _approachAngle_rad;
+          Pose3d preActionPoseWrtWorld;
+          preActionPose.GetPose().GetWithRespectTo(*robot.GetWorldOrigin(), preActionPoseWrtWorld);
+          
+          Radians headingDiff = preActionPoseWrtWorld.GetRotationAngle<'Z'>() - _approachAngle_rad;
           if (std::abs(headingDiff.ToFloat()) < 0.5f * PIDIV2_F) {
             // Found the preAction pose that is most aligned with the desired approach angle
             PreActionPose p(preActionPose);
