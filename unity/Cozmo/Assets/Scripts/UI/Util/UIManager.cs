@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System.Collections.Generic;
 
 public class UIManager : MonoBehaviour {
 
@@ -21,15 +22,28 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private Canvas _sceneCanvas;
+  private Canvas _orthoUiCanvas;
+  
+  [SerializeField]
+  private Canvas _perspUiCanvas;
+
+  private List<BaseDialog> _openDialogs;
 
   void Awake() {
     _instance = this;
+    _openDialogs = new List<BaseDialog>();
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
     GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (Instance._sceneCanvas.transform, false);
+    newUi.transform.SetParent (Instance._orthoUiCanvas.transform, false);
+    return newUi;
+  }
+
+  public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
+    GameObject newUi = GameObject.Instantiate (uiPrefab);
+    newUi.transform.SetParent (Instance._perspUiCanvas.transform, false);
+    newUi.layer = LayerMask.NameToLayer ("3DUI");
     return newUi;
   }
 
@@ -41,19 +55,28 @@ public class UIManager : MonoBehaviour {
 
   public static BaseDialog OpenDialog(BaseDialog dialogPrefab) {
     GameObject newDialog = GameObject.Instantiate (dialogPrefab.gameObject);
-    newDialog.transform.SetParent (Instance._sceneCanvas.transform, false);
+    newDialog.transform.SetParent (Instance._orthoUiCanvas.transform, false);
 
     BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog> ();
     baseDialogScript.OpenDialog ();
+    Instance._openDialogs.Add (baseDialogScript);
 
     return baseDialogScript;
   }
 
   public static void CloseDialog(BaseDialog dialogObject) {
+    Instance._openDialogs.Remove (dialogObject);
     dialogObject.CloseDialog ();
   }
 
+  public static void CloseAllDialogs() {
+    foreach (BaseDialog dialog in Instance._openDialogs) {
+      dialog.CloseDialog();
+    }
+    Instance._openDialogs.Clear ();
+  }
+
   public static Camera GetUICamera() {
-    return _instance._sceneCanvas.worldCamera;
+    return _instance._orthoUiCanvas.worldCamera;
   }
 }

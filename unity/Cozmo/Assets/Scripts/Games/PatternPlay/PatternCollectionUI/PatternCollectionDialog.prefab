@@ -280,7 +280,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d29b10a7bdb9b415f8965d1b77d0750f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dialogId: Dialog
+  _dialogId: PatternCollectionDialog
   _memoryBankCardPrefab: {fileID: 11402378, guid: c9f5369cdc6734c8e9ab0fa74c47495e,
     type: 2}
   _memoryBankCardContentPanel: {fileID: 22453032}
@@ -579,6 +579,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: m_Material
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _dialogId
+      value: PatternCollectionDialog
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
