@@ -190,6 +190,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 11
       objectReference: {fileID: 0}
+    - target: {fileID: 11491764, guid: 4c907f46693e946a28129e509372244a, type: 2}
+      propertyPath: _eventSystemScript
+      value: 
+      objectReference: {fileID: 728711172}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 4c907f46693e946a28129e509372244a, type: 2}
   m_IsPrefabParent: 0

@@ -46,20 +46,28 @@ public class BaseDialog : MonoBehaviour {
   }
 
   private void PlayOpenAnimations() {
+    UIManager.DisableTouchEvents ();
+
     // TODO: Play some animations
     OnOpenAnimationsFinished ();
   }
 
   private void OnOpenAnimationsFinished() {
+    UIManager.EnableTouchEvents ();
+
     // TODO: Raise event
   }
 
   private void PlayCloseAnimations() {
+    UIManager.DisableTouchEvents ();
+
     // TODO: Play some animations
     OnCloseAnimationsFinished ();
   }
 
   private void OnCloseAnimationsFinished() {
+    UIManager.EnableTouchEvents ();
+
     // TODO: Raise event
     GameObject.Destroy (gameObject);
   }

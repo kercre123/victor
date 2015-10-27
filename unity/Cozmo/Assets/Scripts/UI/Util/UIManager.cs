@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -26,6 +27,9 @@ public class UIManager : MonoBehaviour {
   
   [SerializeField]
   private Canvas _perspUiCanvas;
+  
+  [SerializeField]
+  private EventSystem _eventSystemScript;
 
   private List<BaseDialog> _openDialogs;
 
@@ -78,5 +82,13 @@ public class UIManager : MonoBehaviour {
 
   public static Camera GetUICamera() {
     return _instance._orthoUiCanvas.worldCamera;
+  }
+
+  public static void DisableTouchEvents() {
+    _instance._eventSystemScript.gameObject.SetActive (false);
+  }
+
+  public static void EnableTouchEvents() {
+    _instance._eventSystemScript.gameObject.SetActive (true);
   }
 }
