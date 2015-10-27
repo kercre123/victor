@@ -76,7 +76,7 @@ namespace Anki {
     {
       // Get carried object
       ObjectID objectID = robot.GetCarryingObject();
-      ActionableObject* object = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
+      const ActionableObject* object = dynamic_cast<const ActionableObject*>(robot.GetBlockWorld().GetObjectByID(objectID));
       
       
       // Check that up axis of carried object and the desired placementPose are the same.

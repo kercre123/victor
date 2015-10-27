@@ -105,7 +105,9 @@ protected:
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
-  void SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useExactRotation, const bool useManualSpeed);
+  void SendPlaceObjectOnGroundSequence(const Pose3d& p,
+                                       const bool useExactRotation = false,
+                                       const bool useManualSpeed = false);
   
   void SendPickupObject(const s32 objectID,
                         const bool usePreDockPose,
