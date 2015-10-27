@@ -37,7 +37,7 @@ class SelectionBehaviorChooser : public SimpleBehaviorChooser
 public:
   SelectionBehaviorChooser(Robot& robot, const Json::Value& config);
   
-  virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const override;
+  virtual IBehavior* ChooseNextBehavior(const MoodManager& moodManager, double currentTime_sec) const override;
   
 protected:
   Robot& _robot;

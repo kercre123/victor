@@ -132,11 +132,6 @@ Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime
   return Result::RESULT_OK;
 }
 
-bool BehaviorReactToPickup::GetRewardBid(Reward& reward)
-{
-  return true;
-}
-
 void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
