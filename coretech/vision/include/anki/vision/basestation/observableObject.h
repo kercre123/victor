@@ -133,7 +133,7 @@ namespace Anki {
       
       void SetID();
       void SetColor(const ColorRGBA& color);
-      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f);
+      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f, bool skipStateUpdate = false);
       void SetPoseParent(const Pose3d* newParent);
       
       // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.
@@ -209,6 +209,7 @@ namespace Anki {
       
       PoseState GetPoseState() const { return _poseState; }
       void SetPoseState(PoseState newState) { _poseState = newState; }
+      bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
       
     protected:
       
@@ -265,9 +266,13 @@ namespace Anki {
       _ID.Set();
     }
   
-    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance) {
+    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, bool skipStateUpdate) {
       _pose = newPose;
-      _poseState = PoseState::Known;
+      
+      if (!skipStateUpdate)
+      {
+        _poseState = PoseState::Known;
+      }
       
       std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());

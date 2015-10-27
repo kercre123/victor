@@ -302,6 +302,12 @@ namespace Cozmo {
                 if(useID) {
                   ObservableObject* objExist = objectAndId.second;
                   
+                  // If the pose is no longer valid for this object, don't consider it for intersection
+                  if (objExist->IsPoseStateUnknown())
+                  {
+                    continue;
+                  }
+                  
                   // Get quad of object and check for intersection
                   Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
                   
@@ -323,7 +329,7 @@ namespace Cozmo {
   {
     if(_robot->HasExternalInterface())
     {
-      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT && !observedObject->IsPoseStateUnknown())
       {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
@@ -409,7 +415,7 @@ namespace Cozmo {
                                oldOrigin->GetName().c_str(),
                                newOrigin->GetName().c_str());
               
-              object->SetPose(newPose);
+              object->SetPose(newPose, true);
               
               BroadcastObjectObservation(object, false);
             }
@@ -1193,7 +1199,8 @@ namespace Cozmo {
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
                                         "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
                                         objectAndId.first.GetValue());
-                  } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+                  } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT
+                            && !object->IsPoseStateUnknown()) {
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
@@ -2029,7 +2036,8 @@ namespace Cozmo {
               
               bool didErase = false;
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
-                 !object->IsBeingCarried())
+                 !object->IsBeingCarried() &&
+                 !object->IsPoseStateUnknown())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
@@ -2043,7 +2051,7 @@ namespace Cozmo {
                   // robot.
                   Pose3d objectPoseWrtRobotOrigin;
                   if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true
-                     && object->GetPoseState() != ActionableObject::PoseState::Unknown)
+                     && !object->IsPoseStateUnknown())
                   {
                     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                     const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -2150,10 +2158,6 @@ namespace Cozmo {
             }
           }
         }
-        
-        _existingObjects.clear();
-        
-        ObjectID::Reset();
       }  else {
         PRINT_NAMED_WARNING("BlockWorld.ClearAllExistingObjects.DeleteDisabled",
                             "Will not clear all objects because object deletion is disabled.");
@@ -2243,7 +2247,8 @@ namespace Cozmo {
           for(auto & objectsByID : objectsByType.second) {
             ObservableObject* candidateObject = objectsByID.second;
             
-            if(candidateObject->GetID() != objectOnBottom.GetID()) {
+            if(candidateObject->GetID() != objectOnBottom.GetID()
+               && !candidateObject->IsPoseStateUnknown()) {
               // Find the point at bottom middle of the object we're checking to be on top
               Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
               Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
@@ -2282,8 +2287,10 @@ namespace Cozmo {
           for(auto & objectsByType : objectsByFamily.second) {
             if(ignoreTypes.find(objectsByType.first) == ignoreTypes.end()) {
               for(auto & objectsByID : objectsByType.second) {
-                if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
-                  Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
+                ObservableObject* candidateObject = objectsByID.second;
+                if(!candidateObject->IsPoseStateUnknown()
+                   && ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
+                  Vec3f dist = ComputeVectorBetween(pose, candidateObject->GetPose());
                   dist.Abs();
                   if(dist.Length() < closestDist.Length()) {
                     closestDist = dist;
@@ -2315,7 +2322,7 @@ namespace Cozmo {
           for(auto & objectsByID : objectsByType.second) {
             ObservableObject* candidateObject = objectsByID.second;
             
-            if(candidateObject->GetID() != object.GetID())
+            if(candidateObject->GetID() != object.GetID() && !candidateObject->IsPoseStateUnknown())
             {
               // Check to see if this candidate matches (has same type and is in roughly
               // the same pose as) the given object. If so, update the thresholds
@@ -2346,8 +2353,6 @@ namespace Cozmo {
               ClearObjectHelper(objectsByID.second);
             }
           }
-          
-          _existingObjects.erase(family);
         }
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.DeleteDisabled",
@@ -2365,8 +2370,6 @@ namespace Cozmo {
             for(auto & objectsByID : objectsWithType->second) {
               ClearObjectHelper(objectsByID.second);
             }
-            
-            objectsByFamily.second.erase(objectsWithType);
             
             // Types are unique.  No need to keep looking
             return;
@@ -2395,7 +2398,6 @@ namespace Cozmo {
             {
               // Remove the object from the world
               ClearObjectHelper(objectWithIdIter->second);
-              objectsByType.second.erase(objectWithIdIter);
               
               // IDs are unique, so we can return as soon as the ID is found and cleared
               return true;
@@ -2444,12 +2446,7 @@ namespace Cozmo {
                                  const ObjectFamily& fromFamily)
     {
       if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
-        ObjectID objID = object->GetID();
         ClearObjectHelper(object);
-        
-        // Actually erase the object from blockWorld's container of
-        // existing objects
-        _existingObjects[fromFamily][withType].erase(objID);
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
                             "Will not delete object %d because object deletion is disabled.",
