@@ -2277,7 +2277,7 @@ namespace Cozmo {
   }
   
     ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                            f32 zTolerance) const
+                                                    f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
       sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
@@ -2291,32 +2291,30 @@ namespace Cozmo {
       Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
       topOfObjectOnBottom.z() += 0.5f*std::abs(rotatedBtmSize.z());
       
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          for(auto & objectsByID : objectsByType.second) {
-            ObservableObject* candidateObject = objectsByID.second;
-            
-            if(candidateObject->GetID() != objectOnBottom.GetID()) {
-              // Find the point at bottom middle of the object we're checking to be on top
-              Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
-              Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-              bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
-              
-              // If the top of the bottom object and the bottom the candidate top object are
-              // close enough together, return this as the object on top
-              Point3f dist(topOfObjectOnBottom);
-              dist -= bottomOfCandidateObject;
-              dist.Abs();
-              
-              if(dist < sameDistTol) {
-                return candidateObject;
-              }
-            } // IF not object on bottom (by ID)
-          }
-        }
-      }
+      BlockWorldFilter filter;
+      filter.AddIgnoreID(objectOnBottom.GetID());
       
-      return nullptr;
+      FindFcn findLambda = [&topOfObjectOnBottom, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
+      {
+        // Find the point at bottom middle of the object we're checking to be on top
+        Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+        Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
+        bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
+        
+        // If the top of the bottom object and the bottom the candidate top object are
+        // close enough together, return this as the object on top
+        Point3f dist(topOfObjectOnBottom);
+        dist -= bottomOfCandidateObject;
+        dist.Abs();
+        
+        if(dist < sameDistTol) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter, true);
     }
     
     ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
@@ -2392,6 +2390,7 @@ namespace Cozmo {
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
+      // Don't check the object we're using as the comparison
       BlockWorldFilter filter;
       filter.AddIgnoreID(object.GetID());
       
@@ -2400,7 +2399,6 @@ namespace Cozmo {
         Vec3f Tdiff;
         Radians angleDiff;
         if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
-          best = current;
           closestDist = Tdiff.GetAbs();
           closestAngle = angleDiff.getAbsoluteVal();
           return true;
