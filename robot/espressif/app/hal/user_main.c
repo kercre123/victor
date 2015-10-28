@@ -13,7 +13,6 @@
 #include "nv_params.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
-#include "telnet.h"
 #include "upgrade_controller.h"
 #include "user_config.h"
 
@@ -100,9 +99,6 @@ void user_rf_pre_init(void)
  */
 static void system_init_done(void)
 {
-  // Set up the remote debugging port
-  telnetInit();
-
   // Enable upgrade controller
   upgradeControllerInit();
 

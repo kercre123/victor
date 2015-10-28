@@ -40,6 +40,8 @@ bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen);
 
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;
+/// Count how many tx overruns we've had
+extern uint32_t i2spiTxOverflowCount;
 /// Count how many RX overruns we've had
 extern uint32_t i2spiRxOverflowCount;
 /// Count how many times the drop phase has jumped more than we expected it to

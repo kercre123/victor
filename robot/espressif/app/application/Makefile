@@ -42,6 +42,7 @@ INCLUDES += -I ./
 INCLUDES += -I ../../include/ets
 INCLUDES += -I ../../../../tools/anki-util/source/anki
 INCLUDES += -I ../../../generated/clad/robot
+INCLUDES += -I ../../../supervisor/esp_src
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

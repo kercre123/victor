@@ -26,6 +26,7 @@ uint32 PumpScreenData(void);
 #define UNINITALIZED_PHASE (-32768)
 
 uint32_t i2spiTxUnderflowCount;
+uint32_t i2spiTxOverflowCount;
 uint32_t i2spiRxOverflowCount;
 uint32_t i2spiPhaseErrorCount;
 int32_t  i2spiIntegralDrift;
@@ -45,6 +46,8 @@ os_event_t i2spiTaskQ[I2SPI_TASK_QUEUE_LEN];
 static unsigned int txBufs[DMA_BUF_COUNT][DMA_BUF_SIZE/4];
 /// DMA transmit queue control structure
 static struct sdio_queue txQueue[DMA_BUF_COUNT];
+/// Number of TX DMA buffers we've filled but not yet transmitted
+static uint8_t txFillCount;
 /// DMA I2SPI transmit buffers
 static unsigned int rxBufs[DMA_BUF_COUNT][DMA_BUF_SIZE/4];
 /// DMA transmit queue control structure
@@ -53,7 +56,7 @@ static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
-/// Phase relationship between incoming drops and outgoing drops
+/// Phase relationship between incoming drops and outgoing drops, determined through experimentation
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
@@ -97,6 +100,14 @@ void processDrop(DropToWiFi* drop)
  */
 bool makeDrop(uint8_t* payload, uint8_t length)
 {
+  if (DMA_BUF_SIZE/2 - outgoingPhase < DROP_TO_RTIP_SIZE/2) // Don't have room for the whole drop in this buffer
+  {
+    if (txFillCount > (DMA_BUF_COUNT-2)) // Leave room for the one the I2S peripheral owns
+    {
+      i2spiTxOverflowCount++;
+      return false;
+    }
+  }
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   DropToRTIP drop;
   uint32 isocData;
@@ -120,7 +131,7 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     outgoingPhase += DROP_SPACING/2;
     if (outgoingPhase > DMA_BUF_SIZE/2) // Have rolled over into next buffer
     {
-      // XXX NEED TO HANDLE OVERFLOW
+      txFillCount++;
       nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
       txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
       os_memset(txBuf, 0, DMA_BUF_SIZE);
@@ -131,7 +142,7 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   {
     const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
     halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
-    /// XXX NEED TO HANDLE OVERFLOW
+    txFillCount++;
     nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
     txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
     os_memset(txBuf, 0, DMA_BUF_SIZE);
@@ -169,7 +180,11 @@ void i2spiTask(os_event_t *event)
         {
           if (buf[dropPhase] == TO_WIFI_PREAMBLE)
           {
-            if (unlikely(drift > DRIFT_MARGIN)) os_printf("!I2SPI too much drift: %d", drift);
+            if (unlikely(drift > DRIFT_MARGIN)) 
+            {
+              i2spiRxOverflowCount++;
+              os_printf("!I2SPI too much drift: %d, RX overflow count: %d\r\n", drift, i2spiRxOverflowCount);
+            }
             if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
             {
               // Going past the end is OKAY as that will be used to increment the buffer
@@ -215,6 +230,7 @@ void i2spiTask(os_event_t *event)
       }
       else // When running
       {
+        if (txFillCount > 0) txFillCount--; // We just transmitted one 
         struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
         while (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
         {
@@ -271,9 +287,11 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   outgoingPhase = UNINITALIZED_PHASE; // Not established yet
   nextOutgoingDesc = &txQueue[2]; // 0th entry will imeediately be going out and we want to stay one ahead
   i2spiTxUnderflowCount = 0;
+  i2spiTxOverflowCount  = 0;
   i2spiRxOverflowCount  = 0;
   i2spiPhaseErrorCount  = 0;
   i2spiIntegralDrift    = 0;
+  txFillCount           = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 

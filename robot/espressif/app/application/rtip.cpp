@@ -10,6 +10,7 @@ extern "C" {
 #include "driver/i2spi.h"
 }
 #include "rtip.h"
+#include "anki/cozmo/robot/esp.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -17,7 +18,15 @@ namespace RTIP {
 
 bool SendMessage(RobotInterface::EngineToRobot& msg)
 {
-  return i2spiQueueMessage(msg.GetBuffer(), msg.Size());
+  if (i2spiQueueMessage(msg.GetBuffer(), msg.Size()))
+  {
+    return true;
+  }
+  else
+  {
+    PRINT("Couldn't forward message to RTIP\r\n");
+    return false;
+  }
 }
 
 } // RTIP
