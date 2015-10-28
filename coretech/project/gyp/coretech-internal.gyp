@@ -300,6 +300,7 @@
               '../../common/basestation/test',
               '../../planning/basestation/test',
               '../../vision/basestation/test',
+              '../../../robot/include',
               '<@(opencv_includes)',
             ],
             'defines': [
