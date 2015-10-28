@@ -489,7 +489,7 @@
             'type': 'executable',
             'include_dirs': [
               '../../basestation/test',
-              '../../robot/include'
+              '../../robot/include',
               '<@(opencv_includes)',
             ],
             'dependencies': [
