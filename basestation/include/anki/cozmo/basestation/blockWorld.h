@@ -85,7 +85,8 @@ namespace Anki
                                              const ObjectFamily&  fromFamily);
       
       // Clear an object when you have just the pointer and its family
-      void ClearObject(ObservableObject* object,
+      // Returns true if the object was cleared.
+      bool ClearObject(ObservableObject* object,
                        const ObjectType&    withType,
                        const ObjectFamily&  fromFamily);
       
@@ -291,6 +292,10 @@ namespace Anki
       
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
+      
+      using FindFcn = std::function<bool(ObservableObject* current, ObservableObject* best)>;
+      
+      ObservableObject* FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       //
       // Member Variables

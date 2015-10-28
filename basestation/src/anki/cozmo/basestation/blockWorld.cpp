@@ -2248,7 +2248,31 @@ namespace Cozmo {
         _didObjectsChange = true;
       }
     }
+  
+  ObservableObject* BlockWorld::FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter) const
+  {
+    ObservableObject* matchingObject = nullptr;
     
+    for(auto & objectsByFamily : _existingObjects) {
+      if(filter.ConsiderFamily(objectsByFamily.first)) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          if(filter.ConsiderType(objectsByType.first)) {
+            for(auto & objectsByID : objectsByType.second) {
+              if(filter.ConsiderObject(objectsByID.second))
+              {
+                if(findFcn(objectsByID.second, matchingObject)) {
+                  matchingObject = objectsByID.second;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return matchingObject;
+  }
+  
     ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
                                                             f32 zTolerance) const
     {
@@ -2298,9 +2322,24 @@ namespace Cozmo {
     {
       // TODO: Keep some kind of OctTree data structure to make these queries faster?
       
-      Vec3f closestDist(std::numeric_limits<f32>::max());
-      ObservableObject* matchingObject = nullptr;
+      Vec3f closestDist(distThreshold);
+      //ObservableObject* matchingObject = nullptr;
       
+      FindFcn findLambda = [&pose, &closestDist](ObservableObject* current, ObservableObject* best)
+      {
+        Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
+        dist.Abs();
+        if(dist.Length() < closestDist.Length()) {
+          closestDist = dist;
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter);
+      
+      /*
       for(auto & objectsByFamily : _existingObjects) {
         if(filter.ConsiderFamily(objectsByFamily.first)) {
           for(auto & objectsByType : objectsByFamily.second) {
@@ -2308,12 +2347,7 @@ namespace Cozmo {
               for(auto & objectsByID : objectsByType.second) {
                 if(filter.ConsiderObject(objectsByID.second))
                 {
-                  Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
-                  dist.Abs();
-                  if(dist.Length() < closestDist.Length()) {
-                    closestDist = dist;
-                    matchingObject = objectsByID.second;
-                  }
+                  
                 } // ignoreIDs & filterFcn
               }
             } // ignoreTypes
@@ -2325,10 +2359,24 @@ namespace Cozmo {
         matchingObject = nullptr;
       }
       return matchingObject;
+       */
     }
+  
+  
   
     ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filter) const
     {
+      FindFcn findLambda = [](ObservableObject* current, ObservableObject* best)
+      {
+        if(best == nullptr || current->GetLastObservedTime() < best->GetLastObservedTime()) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter);
+  /*
       TimeStamp_t mostRecentObsTime = std::numeric_limits<TimeStamp_t>::max();
       ObservableObject* matchingObject = nullptr;
       
@@ -2352,16 +2400,36 @@ namespace Cozmo {
       }
 
       return matchingObject;
+   */
     }
   
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                             const Vec3f& distThreshold,
                                                             const Radians& angleThreshold)
     {
-      ObservableObject* closestObject = nullptr;
+      //ObservableObject* closestObject = nullptr;
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
+      BlockWorldFilter filter;
+      filter.AddIgnoreID(object.GetID());
+      
+      FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
+      {
+        Vec3f Tdiff;
+        Radians angleDiff;
+        if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
+          best = current;
+          closestDist = Tdiff.GetAbs();
+          closestAngle = angleDiff.getAbsoluteVal();
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
+      /*
       for(auto & objectsByFamily : _existingObjects) {
         for(auto & objectsByType : objectsByFamily.second) {
           for(auto & objectsByID : objectsByType.second) {
@@ -2384,7 +2452,7 @@ namespace Cozmo {
           }
         }
       }
-      
+      */
       return closestObject;
     }
     
@@ -2435,34 +2503,10 @@ namespace Cozmo {
 
     bool BlockWorld::ClearObject(const ObjectID withID)
     {
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          auto objectWithIdIter = objectsByType.second.find(withID);
-          if(objectWithIdIter != objectsByType.second.end()) {
-            
-            // Allow deletion of specific object ID iff deletion is enable OR if
-            // this object is being deleted because it wasn't observed enought times
-            if(_canDeleteObjects ||
-               objectWithIdIter->second->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
-            {
-              // Remove the object from the world
-              ClearObjectHelper(objectWithIdIter->second);
-              objectsByType.second.erase(objectWithIdIter);
-              
-              // IDs are unique, so we can return as soon as the ID is found and cleared
-              return true;
-            } else {
-              PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
-                                  "Will not delete object %d because object deletion is disabled.",
-                                  withID.GetValue());
-              return false;
-            }
-          }
-        }
-      }
+
+      ObservableObject* object = GetObjectByID(withID);
+      return ClearObject(object, object->GetType(), object->GetFamily());
       
-      // Never found the specified ID
-      return false;
     } // ClearObject()
     
     
@@ -2491,21 +2535,25 @@ namespace Cozmo {
       return ClearObject(objIter, _existingObjects[fromFamily][withType]);
     }
     
-    void BlockWorld::ClearObject(ObservableObject* object,
+    bool BlockWorld::ClearObject(ObservableObject* object,
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+      if(nullptr == object) {
+        return false;
+      } else if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ObjectID objID = object->GetID();
         ClearObjectHelper(object);
         
         // Actually erase the object from blockWorld's container of
         // existing objects
         _existingObjects[fromFamily][withType].erase(objID);
+        return true;
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
                             "Will not delete object %d because object deletion is disabled.",
                             object->GetID().GetValue());
+        return false;
       }
     }
     
