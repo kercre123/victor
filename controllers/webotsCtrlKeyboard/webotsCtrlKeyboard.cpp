@@ -35,14 +35,6 @@
 #include <webots/Compass.hpp>
 
 
-// SDL for gamepad control (specifically Logitech Rumblepad F510)
-// Gamepad should be in Direct mode (switch on back)
-#define ENABLE_GAMEPAD_SUPPORT 0
-#if(ENABLE_GAMEPAD_SUPPORT)
-#include <SDL.h>
-#define DEBUG_GAMEPAD 0
-#endif
-
 namespace Anki {
   namespace Cozmo {
       
@@ -70,55 +62,6 @@ namespace Anki {
         };
         
         double lastKeyPressTime_;
-        
-        #if(ENABLE_GAMEPAD_SUPPORT)
-        SDL_GameController* js_;
-        
-        //Event handler
-        SDL_Event sdlEvent_;
-        
-        //Normalized direction
-        typedef enum {
-          GC_ANALOG_LEFT_X,
-          GC_ANALOG_LEFT_Y,
-          GC_ANALOG_RIGHT_X,
-          GC_ANALOG_RIGHT_Y,
-          GC_LT_BUTTON,
-          GC_RT_BUTTON,
-          GC_NUM_AXES
-        } GameControllerAxis_t;
-        
-        s16 gc_axisValues_[GC_NUM_AXES] = {0};
-        
-        typedef enum {
-          GC_BUTTON_A = 0,
-          GC_BUTTON_B,
-          GC_BUTTON_X,
-          GC_BUTTON_Y,
-          GC_BUTTON_BACK,
-          
-          GC_BUTTON_START = 6,
-          GC_BUTTON_ANALOG_LEFT,
-          GC_BUTTON_ANALOG_RIGHT,
-          
-          GC_BUTTON_LB = 9,
-          GC_BUTTON_RB,
-          
-          GC_BUTTON_DIR_UP = 11,
-          GC_BUTTON_DIR_DOWN,
-          GC_BUTTON_DIR_LEFT,
-          GC_BUTTON_DIR_RIGHT,
-          
-          GC_NUM_BUTTONS
-        } GameControllerButton_t;
-        
-        bool gc_buttonPressed_[GC_NUM_BUTTONS];
-        
-        const s16 ANALOG_INPUT_DEAD_ZONE_THRESH = 1000;
-        const f32 ANALOG_INPUT_MAX_DRIVE_SPEED = 100; // mm/s
-        const f32 MAX_ANALOG_RADIUS = 300;
-        #endif // ENABLE_GAMEPAD_SUPPORT
-        
         
         
         // For displaying cozmo's POV:
@@ -220,7 +163,7 @@ namespace Anki {
         cozmoCam_->drawText(dispStr,
                             msg.img_topLeft_x + msg.img_width/4,
                             msg.img_topLeft_y + msg.img_height/2);
-        
+
       }
       
     }
@@ -250,21 +193,6 @@ namespace Anki {
         poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
         cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
-        
-        #if(ENABLE_GAMEPAD_SUPPORT)
-        // Look for gamepad
-        if (SDL_Init(SDL_INIT_GAMECONTROLLER) < 0) {
-          printf("ERROR: Failed to init SDL\n");
-          return;
-        }
-        if (SDL_NumJoysticks() > 0) {
-          // Open first joystick. Assuming it's the Logitech Rumble Gamepad F510.
-          js_ = SDL_GameControllerOpen(0);
-          if (js_ == NULL) {
-            printf("ERROR: Unable to open gamepad\n");
-          }
-        }
-        #endif
 
       }
     
@@ -406,6 +334,13 @@ namespace Anki {
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
+          // For pickup or placeRel, specify whether or not you want to use the
+          // given approach angle for pickup, placeRel, or roll actions
+          bool useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
+          f32 approachAngle_rad = DEG_TO_RAD_F32(root_->getField("approachAngle_deg")->getSFFloat());
+          
+          // For placeOn and placeOnGround, specify whether or not to use the exactRotation specified
+          bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
@@ -750,7 +685,12 @@ namespace Anki {
                   SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
                   SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
-                  SendPlaceObjectOnGroundSequence(poseMarkerPose_, useManualSpeed);
+                  
+                  // Indicate whether or not to place object at the exact rotation specified or
+                  // just use the nearest preActionPose so that it's merely aligned with the specified pose.
+                  printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
+                  
+                  SendPlaceObjectOnGroundSequence(poseMarkerPose_, useExactRotation, useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
                   SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
@@ -893,10 +833,23 @@ namespace Anki {
                   placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
                 }
                 
-                SendPickAndPlaceSelectedObject(usePreDockPose,
-                                               placementOffsetX_mm, 0, 0,
-                                               placeOnGroundAtOffset,
-                                               useManualSpeed);
+                // Exact rotation to use if useExactRotation == true
+                const double* rotVals = root_->getField("exactPlacementRotation")->getSFRotation();
+                Rotation3d rot(rotVals[3], {static_cast<f32>(rotVals[0]), static_cast<f32>(rotVals[1]), static_cast<f32>(rotVals[2])} );
+                printf("Rotation %f\n", rot.GetAngleAroundZaxis().ToFloat());
+                
+                if (GetCarryingObjectID() < 0) {
+                  // Not carrying anything so pick up!
+                  SendPickupSelectedObject(usePreDockPose, useApproachAngle, approachAngle_rad, useManualSpeed);
+                } else {
+                  if (placeOnGroundAtOffset) {
+                    SendPlaceRelSelectedObject(usePreDockPose, placementOffsetX_mm, useApproachAngle, approachAngle_rad, useManualSpeed);
+                  } else {
+                    SendPlaceOnSelectedObject(usePreDockPose, useExactRotation, rot, useManualSpeed);
+                  }
+                }
+                
+                
                 break;
               }
                 
@@ -914,7 +867,10 @@ namespace Anki {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
                 
-                SendRollSelectedObject(usePreDockPose, useManualSpeed);
+                SendRollSelectedObject(usePreDockPose,
+                                       useApproachAngle,
+                                       approachAngle_rad,
+                                       useManualSpeed);
                 break;
               }
 
@@ -1365,259 +1321,7 @@ namespace Anki {
         
       } // BSKeyboardController::ProcessKeyStroke()
       
-      void WebotsKeyboardController::ProcessJoystick()
-      {
-#if(ENABLE_GAMEPAD_SUPPORT)
-        //Handle events on queue
-        while( SDL_PollEvent( &sdlEvent_ ) != 0 )
-        {
-          switch(sdlEvent_.type) {
-              
-            case SDL_CONTROLLERAXISMOTION:
-              
-              if (sdlEvent_.caxis.which == 0) {
-              
-                if (sdlEvent_.caxis.which >= GC_NUM_AXES) {
-                  printf("WARN: Invalid GameController axis event detected\n");
-                  break;
-                }
-
-                // Update value
-                gc_axisValues_[sdlEvent_.caxis.axis] = sdlEvent_.caxis.value;
-
-                // Send message depending on axis that was activated
-                switch(sdlEvent_.caxis.axis)
-                {
-                  case GC_ANALOG_LEFT_X:
-                  case GC_ANALOG_LEFT_Y:
-                  {
-                    #if(DEBUG_GAMEPAD)
-                    printf("AnalogLeft X %d  Y %d\n", gc_axisValues_[GC_ANALOG_LEFT_X], gc_axisValues_[GC_ANALOG_LEFT_Y]);
-                    #endif
-                    
-                    if (ABS(gc_axisValues_[GC_ANALOG_LEFT_X]) < ANALOG_INPUT_DEAD_ZONE_THRESH) {
-                      gc_axisValues_[GC_ANALOG_LEFT_X] = 0;
-                    }
-                    if (ABS(gc_axisValues_[GC_ANALOG_LEFT_Y]) < ANALOG_INPUT_DEAD_ZONE_THRESH) {
-                      gc_axisValues_[GC_ANALOG_LEFT_Y] = 0;
-                    }
-                    
-                    // Compute speed
-                    f32 xyMag = MIN(1.0,
-                                    sqrtf( gc_axisValues_[GC_ANALOG_LEFT_X]*gc_axisValues_[GC_ANALOG_LEFT_X] + gc_axisValues_[GC_ANALOG_LEFT_Y]*gc_axisValues_[GC_ANALOG_LEFT_Y]) / (f32)s16_MAX
-                                    );
-                    
-                    // Stop wheels if magnitude of input is low
-                    if (xyMag < 0.01f) {
-                      SendDriveWheels(0,0);
-                      break;
-                    }
-                    
-                    // Driving forward?
-                    f32 fwd = gc_axisValues_[GC_ANALOG_LEFT_Y] < 0 ? 1 : -1;
-                    
-                    // Curving right?
-                    f32 right = gc_axisValues_[GC_ANALOG_LEFT_X] > 0 ? 1 : -1;
-                  
-                    // Base wheel speed based on magnitude of input and whether or not robot is driving forward
-                    f32 baseWheelSpeed = ANALOG_INPUT_MAX_DRIVE_SPEED * xyMag * fwd;
-                  
-            
-                    // Angle of xy input used to determine curvature
-                    f32 xyAngle = fabsf(atanf(-(f32)gc_axisValues_[GC_ANALOG_LEFT_Y] / (f32)gc_axisValues_[GC_ANALOG_LEFT_X])) * (right);
-                    
-                    // Compute radius of curvature
-                    f32 roc = (xyAngle / PIDIV2_F) * MAX_ANALOG_RADIUS;
-                    
-                    
-                    // Compute individual wheel speeds
-                    f32 lwheel_speed_mmps = 0;
-                    f32 rwheel_speed_mmps = 0;
-                    if (fabsf(xyAngle) > PIDIV2_F - 0.1f) {
-                      // Straight fwd/back
-                      lwheel_speed_mmps = baseWheelSpeed;
-                      rwheel_speed_mmps = baseWheelSpeed;
-                    } else if (fabsf(xyAngle) < 0.1f) {
-                      // Turn in place
-                      lwheel_speed_mmps = right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
-                      rwheel_speed_mmps = -right * xyMag * ANALOG_INPUT_MAX_DRIVE_SPEED;
-                    } else {
-                      
-                      lwheel_speed_mmps = baseWheelSpeed * (roc + (right * WHEEL_DIST_HALF_MM)) / roc;
-                      rwheel_speed_mmps = baseWheelSpeed * (roc - (right * WHEEL_DIST_HALF_MM)) / roc;
-                      
-                      // Swap wheel speeds
-                      if (fwd * right < 0) {
-                        f32 temp = lwheel_speed_mmps;
-                        lwheel_speed_mmps = rwheel_speed_mmps;
-                        rwheel_speed_mmps = temp;
-                      }
-                    }
-                    
-                    
-                    // Cap wheel speed at max
-                    if (fabsf(lwheel_speed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
-                      f32 correction = lwheel_speed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (lwheel_speed_mmps >= 0 ? 1 : -1));
-                      f32 correctionFactor = 1.f - fabsf(correction / lwheel_speed_mmps);
-                      lwheel_speed_mmps *= correctionFactor;
-                      rwheel_speed_mmps *= correctionFactor;
-                      //printf("lcorrectionFactor: %f\n", correctionFactor);
-                    }
-                    if (fabsf(rwheel_speed_mmps) > ANALOG_INPUT_MAX_DRIVE_SPEED) {
-                      f32 correction = rwheel_speed_mmps - (ANALOG_INPUT_MAX_DRIVE_SPEED * (rwheel_speed_mmps >= 0 ? 1 : -1));
-                      f32 correctionFactor = 1.f - fabsf(correction / rwheel_speed_mmps);
-                      lwheel_speed_mmps *= correctionFactor;
-                      rwheel_speed_mmps *= correctionFactor;
-                      //printf("rcorrectionFactor: %f\n", correctionFactor);
-                    }
-                    
-                    #if(DEBUG_GAMEPAD)
-                    printf("AnalogLeft: xyMag %f, xyAngle %f, radius %f, fwd %f, right %f, lwheel %f, rwheel %f\n", xyMag, xyAngle, roc, fwd, right, lwheel_speed_mmps, rwheel_speed_mmps );
-                    #endif
-                    
-                    SendDriveWheels(lwheel_speed_mmps, rwheel_speed_mmps);
-                    
-                    break;
-                  }
-                  case GC_ANALOG_RIGHT_X:
-                  case GC_ANALOG_RIGHT_Y:
-                  {
-                    #if(DEBUG_GAMEPAD)
-                    printf("AnalogRight X %d  Y %d\n", gc_axisValues_[GC_ANALOG_RIGHT_X], gc_axisValues_[GC_ANALOG_RIGHT_Y]);
-                    #endif
-                    
-                    // Compute head speed
-                    f32 speed_rad_per_s = headSpeed * (-(f32)gc_axisValues_[GC_ANALOG_RIGHT_Y] / s16_MAX);
-                    
-                    SendMoveHead(speed_rad_per_s);
-                    
-                    break;
-                  }
-                  case GC_LT_BUTTON:
-                  case GC_RT_BUTTON:
-                    #if(DEBUG_GAMEPAD)
-                    printf("Top buttons: LT %d  RT %d\n", gc_axisValues_[GC_LT_BUTTON], gc_axisValues_[GC_RT_BUTTON]);
-                    #endif
-                    break;
-                  default:
-                    printf("WARNING: Unrecognized axis %d\n", sdlEvent_.caxis.axis);
-                    break;
-                }
-                
-              } else {
-                printf("WARNING: Unrecognized source of SDL event (%d)\n", sdlEvent_.caxis.which);
-              }
-              break;
-              
-            case SDL_CONTROLLERBUTTONDOWN:
-            case SDL_CONTROLLERBUTTONUP:
-            {
-              u8 buttonID = sdlEvent_.jbutton.button;
-              gc_buttonPressed_[sdlEvent_.jbutton.button] = sdlEvent_.jbutton.state;
-              
-              bool pressed = sdlEvent_.jbutton.state; // If false, then this is a release event
-              
-              bool LT_held = gc_axisValues_[GC_LT_BUTTON];
-              //bool RT_held = gc_axisValues_[GC_RT_BUTTON];
-              
-              // Process buttons that matter only when pressed
-              if (pressed) {
-                switch(buttonID) {
-                  case GC_BUTTON_A:
-                    SendSetNextBehaviorState(LT_held ? BehaviorManager::DANCE_WITH_BLOCK : BehaviorManager::EXCITABLE_CHASE);
-                    break;
-                  case GC_BUTTON_B:
-                    SendSetNextBehaviorState(BehaviorManager::SCARED_FLEE);
-                    break;
-                  case GC_BUTTON_X:
-                    SendSetNextBehaviorState(LT_held ? BehaviorManager::SCAN : BehaviorManager::IDLE);
-                    break;
-                  case GC_BUTTON_Y:
-                    SendSetNextBehaviorState(LT_held ? BehaviorManager::WHAT_NEXT : BehaviorManager::HELP_ME_STATE);
-                    break;
-                  case GC_BUTTON_BACK:
-                    break;
-                    
-                  case GC_BUTTON_START:
-                    // Toggle CREEP mode
-                    if(BehaviorManager::CREEP == behaviorMode_) {
-                      behaviorMode_ = BehaviorManager::None;
-                    } else {
-                      behaviorMode_ = BehaviorManager::CREEP;
-                    }
-                    SendExecuteBehavior(behaviorMode_);
-                    break;
-                  default:
-                    break;
-                }
-              }
-              
-              // Process buttons that matter both when pressed and released.
-              switch(buttonID) {
-                      
-                case GC_BUTTON_ANALOG_LEFT:
-                  break;
-                case GC_BUTTON_ANALOG_RIGHT:
-                  break;
-                  
-                case GC_BUTTON_LB:
-                  if (LT_held) {
-                    SendClearAllBlocks();
-                  } else {
-                    SendSelectNextObject();
-                  }
-                  break;
-                case GC_BUTTON_RB:
-                {
-                  bool usePreDockPose = !LT_held;
-                  SendPickAndPlaceSelectedObject(usePreDockPose);
-                  break;
-                }
-                case GC_BUTTON_DIR_UP:
-                case GC_BUTTON_DIR_DOWN:
-                {
-                  // Move lift up/down. Open-loop velocity commands.
-                  f32 speed_rad_per_sec = 0;
-                  if (pressed) {
-                    speed_rad_per_sec = (LT_held ? 0.4f : 1) * (buttonID == GC_BUTTON_DIR_UP ? 1 : -1) * liftSpeed;
-                  }
-                  SendMoveLift(speed_rad_per_sec);
-                  break;
-                }
-                case GC_BUTTON_DIR_LEFT:
-                case GC_BUTTON_DIR_RIGHT:
-                {
-                  // Move lift to fixed position.
-                  if (pressed) {
-                    
-                    // Figure out appropriate fixed position
-                    f32 height_mm = LIFT_HEIGHT_LOWDOCK;
-                    if (buttonID == GC_BUTTON_DIR_RIGHT) {
-                      height_mm = LT_held ? LIFT_HEIGHT_HIGHDOCK : LIFT_HEIGHT_CARRY;
-                    }
-                    
-                    SendMoveLiftToHeight(height_mm, liftSpeed, headAccel);
-                  }
-                  break;
-                }
-                default:
-                  //printf("WARNING: Unrecognized button %d\n", sdlEvent_.jbutton.button);
-                  break;
-              }
-              
-              #if(DEBUG_GAMEPAD)
-              printf("Button: %d  State %d, button %d, padding %d %d\n", sdlEvent_.jbutton.type, sdlEvent_.jbutton.state, sdlEvent_.jbutton.button, sdlEvent_.jbutton.padding1, sdlEvent_.jbutton.padding2);
-              #endif
-              break;
-            }
-            default:
-              break;
-          } // end switch
-        } // end while
-#endif
-      }
-      
-      
+    
     void WebotsKeyboardController::TestLightCube()
       {
         static std::vector<ColorRGBA> colors = {{
@@ -1695,7 +1399,6 @@ namespace Anki {
 
         
         ProcessKeystroke();
-        ProcessJoystick();
         
         return 0;
       }
