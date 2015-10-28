@@ -122,13 +122,7 @@ namespace Anki
       // heights off the ground (z dimension, relative to world origin!) and
       // returns a vector of quads of their outlines on the ground plane (z=0).
       // Can also pad the bounding boxes by a specified amount.
-      // If ignoreIDs is not empty, then bounding boxes of blocks with an ID
-      // present in the set will not be returned. Analogous behavior for
-      // ignoreTypes/ignoreFamilies.
-      // Can also optionally take a std::function (e.g. a lambda) that checks the
-      // given ObservableObject and returns true/false. Objects for which the
-      // given function returns false will be excluded analogously to the "ignore"
-      // lists described above.
+      // Optionally, will filter according to given BlockWorldFilter.
       void GetObjectBoundingBoxesXY(const f32 minHeight,
                                     const f32 maxHeight,
                                     const f32 padding,

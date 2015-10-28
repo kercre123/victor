@@ -2338,28 +2338,6 @@ namespace Cozmo {
       };
       
       return FindObjectHelper(findLambda, filter);
-      
-      /*
-      for(auto & objectsByFamily : _existingObjects) {
-        if(filter.ConsiderFamily(objectsByFamily.first)) {
-          for(auto & objectsByType : objectsByFamily.second) {
-            if(filter.ConsiderType(objectsByType.first)) {
-              for(auto & objectsByID : objectsByType.second) {
-                if(filter.ConsiderObject(objectsByID.second))
-                {
-                  
-                } // ignoreIDs & filterFcn
-              }
-            } // ignoreTypes
-          }
-        } // ignoreFamiles
-      }
-      
-      if(matchingObject != nullptr && !(closestDist < distThreshold)) {
-        matchingObject = nullptr;
-      }
-      return matchingObject;
-       */
     }
   
   
@@ -2376,38 +2354,12 @@ namespace Cozmo {
       };
       
       return FindObjectHelper(findLambda, filter);
-  /*
-      TimeStamp_t mostRecentObsTime = std::numeric_limits<TimeStamp_t>::max();
-      ObservableObject* matchingObject = nullptr;
-      
-      for(auto & objectsByFamily : _existingObjects) {
-        if(filter.ConsiderFamily(objectsByFamily.first)) {
-          for(auto & objectsByType : objectsByFamily.second) {
-            if(filter.ConsiderType(objectsByType.first)) {
-              for(auto & objectsByID : objectsByType.second) {
-                if(filter.ConsiderObject(objectsByID.second))
-                {
-                  const TimeStamp_t t = objectsByID.second->GetLastObservedTime();
-                  if(t < mostRecentObsTime) {
-                    mostRecentObsTime = t;
-                    matchingObject = objectsByID.second;
-                  }
-                } // ignoreIDs & filterFcn
-              }
-            } // ignoreTypes
-          }
-        } // ignoreFamiles
-      }
-
-      return matchingObject;
-   */
     }
   
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                             const Vec3f& distThreshold,
                                                             const Radians& angleThreshold)
     {
-      //ObservableObject* closestObject = nullptr;
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
@@ -2429,30 +2381,6 @@ namespace Cozmo {
       };
       
       ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
-      /*
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          for(auto & objectsByID : objectsByType.second) {
-            ObservableObject* candidateObject = objectsByID.second;
-            
-            if(candidateObject->GetID() != object.GetID())
-            {
-              // Check to see if this candidate matches (has same type and is in roughly
-              // the same pose as) the given object. If so, update the thresholds
-              // so that we only find matching objects even closer than this one
-              // from now on.
-              Vec3f Tdiff;
-              Radians angleDiff;
-              if(candidateObject->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
-                closestObject = candidateObject;
-                closestDist = Tdiff.GetAbs();
-                closestAngle = angleDiff.getAbsoluteVal();
-              }
-            } // IF not object on bottom (by ID)
-          }
-        }
-      }
-      */
       return closestObject;
     }
     
