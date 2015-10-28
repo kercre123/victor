@@ -53,7 +53,7 @@ Schema:
 
 PatternMemory = {}
 
-side_names = ["front", "back", "left", "right"]
+side_names = ["back", "left", "front", "right"]
 
 # Returns a bank
 def generate_simple_lights(num_blocks, num_lights_on, vertical=False, facing_cozmo=False):

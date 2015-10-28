@@ -247,5 +247,17 @@ public class PatternCollectionViewController : MonoBehaviour {
 
     Initialize (patternMemory);
 	}
+
+  public void CreateFullPatternMemory() {
+    PatternMemory patternMemory = new PatternMemory ();
+    patternMemory.Initialize ();
+
+    HashSet<BlockPattern> unseenPatterns = patternMemory.GetAllUnseenPatterns ();
+    foreach (BlockPattern pattern in unseenPatterns) {
+      patternMemory.AddSeen(pattern);
+    }
+    
+    Initialize (patternMemory);
+  }
   #endregion
 }
