@@ -305,7 +305,7 @@ public class GoldRushController : GameController {
     if (robot.carryingObject == null || (int)robot.carryingObject != goldExtractingObject) {
       //PlayNotificationAudio (pickupEnergyScanner);
 
-      robot.PickAndPlaceObject(goldExtractingObject);
+      robot.PickupObject(goldExtractingObject);
       if (CozmoBusyPanel.instance != null) {
         string desc = "Cozmo is attempting to pick-up\n the extractor.";
         CozmoBusyPanel.instance.SetDescription(desc);

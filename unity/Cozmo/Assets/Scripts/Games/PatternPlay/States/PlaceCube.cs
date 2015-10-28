@@ -30,8 +30,7 @@ public class PlaceCube : State {
 
   void PlaceDone(bool success) {
     if (success) {
-      patternPlayAutoBuild.PlaceBlockSuccess();
-      stateMachine.SetNextState(new LookAtPatternConstruction());
+      stateMachine.SetNextState(new SetCubeToPattern());
     }
     else {
       Debug.LogError("place failed");

@@ -525,7 +525,7 @@ public class VortexController : GameController {
     if (cozmoIndex >= 0 && robot != null) {
 
       if (robot.carryingObject == null && !robot.isBusy) {
-        robot.PickAndPlaceObject(playerInputBlocks[cozmoIndex]);
+        robot.PickupObject(playerInputBlocks[cozmoIndex]);
         if (CozmoBusyPanel.instance != null) {
           string desc = "Cozmo is attempting to pick-up\n a game cube.";
           CozmoBusyPanel.instance.SetDescription(desc);
