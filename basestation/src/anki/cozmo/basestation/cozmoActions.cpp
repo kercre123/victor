@@ -87,10 +87,12 @@ namespace Anki {
       
       // Check that up axis of carried object and the desired placementPose are the same.
       // Otherwise, it's impossible for the robot to place it there!
-      int targetUpAxis = placementPose.GetAxisClosestToParentZAxis();
-      int currentUpAxis = object->GetPose().GetAxisClosestToParentZAxis();
+      Axis targetUpAxis = placementPose.GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+      Axis currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
       if (currentUpAxis != targetUpAxis) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes", "Carried up axis: %d, target up axis: %d", currentUpAxis, targetUpAxis);
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes",
+                            "Carried up axis: %d , target up axis: %d",
+                            currentUpAxis, targetUpAxis);
         return RESULT_FAIL;
       }
       
@@ -106,7 +108,8 @@ namespace Anki {
       Pose3d poseRobotIfPlacingObject(poseObjectWrtRobot.Invert());
       poseRobotIfPlacingObject.PreComposeWith(placementPose);
       
-      assert(poseRobotIfPlacingObject.GetAxisClosestToParentZAxis() == currentUpAxis);
+      // Extra confirmation that the robot is upright in this pose
+      assert(poseRobotIfPlacingObject.GetRotationMatrix().GetRotatedParentAxis<'Z'>() == Z_AXIS_POS);
       
       approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
       
