@@ -181,8 +181,20 @@ namespace Anki {
         }
       }
       else if (true == _isPickedUp && false == t) {
-        
+        // Robot just got put back down
         _visionProcessor.Pause(false);
+        
+        ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
+        
+        // If we are not localized and there is nothing else left in the world that
+        // we could localize to, then go ahead and mark us as localized (via
+        // odometry alone)
+        if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
+          PRINT_NAMED_INFO("Robot.SetPickedUp.NoMoreRemainingLocalizableObjects",
+                           "Marking previously-unlocalized robot %d as localized to odometry because "
+                           "there are no more objects to localize to in the world.", GetID());
+          SetLocalizedTo(nullptr); // marks us as localized to odometry only
+        }
         
         if (_externalInterface != nullptr) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
@@ -235,6 +247,7 @@ namespace Anki {
         VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                            "LocalizedTo: Odometry");
         _localizedToID.UnSet();
+        _isLocalized = true;
         return RESULT_OK;
       }
       

@@ -158,6 +158,10 @@ namespace Anki
                                    f32 padding,
                                    const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
+      // Returns true if there are remaining objects that the robot could potentially
+      // localize to
+      bool AnyRemainingLocalizableObjects() const;
+      
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
       // candidate objects on top. Returns nullptr if no object is found.
@@ -289,7 +293,8 @@ namespace Anki
       
       using FindFcn = std::function<bool(ObservableObject* current, ObservableObject* best)>;
       
-      ObservableObject* FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      ObservableObject* FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter = BlockWorldFilter(),
+                                         bool returnFirstFound = false) const;
       
       //
       // Member Variables

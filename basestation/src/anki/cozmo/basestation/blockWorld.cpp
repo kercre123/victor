@@ -717,7 +717,7 @@ namespace Cozmo {
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&
-                                     (_robot->IsLocalized() == false ||
+                                     (_robot->GetLocalizedTo().IsUnknown() ||
                                       _robot->HasMovedSinceBeingLocalized()) );
 #         endif
           
@@ -2247,7 +2247,7 @@ namespace Cozmo {
       }
     }
   
-  ObservableObject* BlockWorld::FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter) const
+  ObservableObject* BlockWorld::FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter, bool returnFirstFound) const
   {
     ObservableObject* matchingObject = nullptr;
     
@@ -2260,6 +2260,9 @@ namespace Cozmo {
               {
                 if(findFcn(objectsByID.second, matchingObject)) {
                   matchingObject = objectsByID.second;
+                  if(returnFirstFound) {
+                    return matchingObject;
+                  }
                 }
               }
             }
@@ -2272,7 +2275,7 @@ namespace Cozmo {
   }
   
     ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                            f32 zTolerance) const
+                                                    f32 zTolerance) const
     {
       Point3f sameDistTol(objectOnBottom.GetSize());
       sameDistTol.x() *= 0.5f;  // An object should only be considered to be on top if it's midpoint is actually on top of the bottom object's top surface.
@@ -2286,33 +2289,34 @@ namespace Cozmo {
       Point3f topOfObjectOnBottom(objectOnBottom.GetPose().GetTranslation());
       topOfObjectOnBottom.z() += 0.5f*std::abs(rotatedBtmSize.z());
       
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          for(auto & objectsByID : objectsByType.second) {
-            ObservableObject* candidateObject = objectsByID.second;
-            
-            if(candidateObject->GetID() != objectOnBottom.GetID()
-               && !candidateObject->IsPoseStateUnknown()) {
-              // Find the point at bottom middle of the object we're checking to be on top
-              Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
-              Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
-              bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
-              
-              // If the top of the bottom object and the bottom the candidate top object are
-              // close enough together, return this as the object on top
-              Point3f dist(topOfObjectOnBottom);
-              dist -= bottomOfCandidateObject;
-              dist.Abs();
-              
-              if(dist < sameDistTol) {
-                return candidateObject;
-              }
-            } // IF not object on bottom (by ID)
-          }
-        }
-      }
+      BlockWorldFilter filter;
+      filter.AddIgnoreID(objectOnBottom.GetID());
       
-      return nullptr;
+      FindFcn findLambda = [&topOfObjectOnBottom, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
+      {
+        if (candidateObject->IsPoseStateUnknown())
+        {
+          return false;
+        }
+        // Find the point at bottom middle of the object we're checking to be on top
+        Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
+        Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
+        bottomOfCandidateObject.z() -= 0.5f*std::abs(rotatedTopSize.z());
+        
+        // If the top of the bottom object and the bottom the candidate top object are
+        // close enough together, return this as the object on top
+        Point3f dist(topOfObjectOnBottom);
+        dist -= bottomOfCandidateObject;
+        dist.Abs();
+        
+        if(dist < sameDistTol) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter, true);
     }
     
     ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
@@ -2343,7 +2347,33 @@ namespace Cozmo {
       return FindObjectHelper(findLambda, filter);
     }
   
-  
+    bool BlockWorld::AnyRemainingLocalizableObjects() const
+    {
+      // There's no real find: we're relying entirely on the filter function here
+      FindFcn findLambda = [](ObservableObject*, ObservableObject*) {
+        return true;
+      };
+      
+      // Filter out anything that can't be used for localization
+      BlockWorldFilter::FilterFcn filterLambda = [](ObservableObject* obj) {
+        return obj->CanBeUsedForLocalization();
+      };
+      
+      BlockWorldFilter filter;
+      filter.SetFilterFcn(filterLambda);
+      filter.SetIgnoreFamilies({
+        ObjectFamily::Block,
+        ObjectFamily::Charger,
+        ObjectFamily::MarkerlessObject,
+        ObjectFamily::Ramp,
+      });
+      
+      if(nullptr != FindObjectHelper(findLambda, filter, true)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
   
     ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filter) const
     {
@@ -2366,6 +2396,7 @@ namespace Cozmo {
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
+      // Don't check the object we're using as the comparison
       BlockWorldFilter filter;
       filter.AddIgnoreID(object.GetID());
       
@@ -2378,7 +2409,6 @@ namespace Cozmo {
         Vec3f Tdiff;
         Radians angleDiff;
         if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
-          best = current;
           closestDist = Tdiff.GetAbs();
           closestAngle = angleDiff.getAbsoluteVal();
           return true;

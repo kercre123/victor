@@ -211,11 +211,23 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
       // If this is the object we were localized to, unset our localizedToID.
       // Note we are still "localized" by odometry, however.
       if(GetLocalizedTo() == object->GetID()) {
+        ASSERT_NAMED(IsLocalized(), "Robot should think it is localized if GetLocalizedTo is set to something.");
         PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.UnsetLocalzedToID",
                          "Unsetting %s %d, which moved, as robot %d's localization object.",
                          ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
         SetLocalizedTo(nullptr);
+      } else if(!IsLocalized()) {
+        // If we are not localized and there is nothing else left in the world that
+        // we could localize to, then go ahead and mark us as localized (via
+        // odometry alone)
+        if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
+          PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.NoMoreRemainingLocalizableObjects",
+                           "Marking previously-unlocalized robot %d as localized to odometry because "
+                           "there are no more objects to localize to in the world.", GetID());
+          SetLocalizedTo(nullptr);
+        }
       }
+      
     }
     
     // Don't notify game about moving objects that are being carried
@@ -263,10 +275,21 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
       // If this is the object we were localized to, unset our localizedToID.
       // Note we are still "localized" by odometry, however.
       if(GetLocalizedTo() == object->GetID()) {
+        ASSERT_NAMED(IsLocalized(), "Robot should think it is localized if GetLocalizedTo is set to something.");
         PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnsetLocalzedToID",
                          "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
                          ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
         SetLocalizedTo(nullptr);
+      } else if(!IsLocalized()) {
+        // If we are not localized and there is nothing else left in the world that
+        // we could localize to, then go ahead and mark us as localized (via
+        // odometry alone)
+        if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
+          PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.NoMoreRemainingLocalizableObjects",
+                           "Marking previously-unlocalized robot %d as localized to odometry because "
+                           "there are no more objects to localize to in the world.", GetID());
+          SetLocalizedTo(nullptr);
+        }
       }
     }
     
