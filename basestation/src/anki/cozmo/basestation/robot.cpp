@@ -75,6 +75,7 @@ namespace Anki {
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _animationStreamer(_externalInterface, _cannedAnimations)
+    , _moodManager()
     , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
