@@ -11,6 +11,7 @@ public class PatternCollectionViewController : MonoBehaviour {
   private BadgeDisplay _openPatternCollectionDialogButtonPrefab;
 
   private BadgeDisplay _buttonBadgeDisplay;
+  private Tweener _buttonBadgeDisplayTweener;
  
   [SerializeField]
   private PatternCollectionDialog _patternCollectionDialogPrefab;
@@ -35,8 +36,14 @@ public class PatternCollectionViewController : MonoBehaviour {
     if (_patternCollectionDialog != null) {
       _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     }
-    
-    _patternMemory.PatternAdded -= OnPatternAdded;
+
+    if (_patternMemory != null) {
+      _patternMemory.PatternAdded -= OnPatternAdded;
+    }
+
+    if (_buttonBadgeDisplayTweener != null) {
+      _buttonBadgeDisplayTweener.Kill();
+    }
   }
 
   #region Initialization
@@ -110,10 +117,14 @@ public class PatternCollectionViewController : MonoBehaviour {
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
 
     float targetScale = 0.2f;
-    Tweener buttonTweener = _buttonBadgeDisplay.gameObject.transform.DOPunchScale(new Vector3(targetScale, targetScale, targetScale),
+    if (_buttonBadgeDisplayTweener == null) {
+      _buttonBadgeDisplayTweener = _buttonBadgeDisplay.gameObject.transform.DOPunchScale (new Vector3 (targetScale, targetScale, targetScale),
                                                                              0.5f,
-                                                                             15);
-    buttonTweener.Play ();
+                                                                             15)
+        .SetAutoKill(false); // Let the tween stick around in memory
+    }
+    _buttonBadgeDisplayTweener.Restart ();
+    _buttonBadgeDisplayTweener.Play ();
   }
   #endregion
 

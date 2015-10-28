@@ -21,7 +21,7 @@ public class PatternDiscoveredDialog : BaseDialog {
     _patternDiscoveryDisplayInstance.Initialize (discoveredPattern);
   }
 
-  private void OnDestroy() {
+  protected override void CleanUp() {
     GameObject.Destroy (_patternDiscoveryDisplayInstance.gameObject);
   }
 

@@ -47,6 +47,18 @@ public abstract class BaseDialog : MonoBehaviour {
     private set { _dialogId = value; }
   }
 
+  private Sequence _closeAnimation;
+
+  public void OnDestroy() {
+    if (_closeAnimation != null) {
+      _closeAnimation.Kill();
+    }
+
+    CleanUp ();
+  }
+
+  protected abstract void CleanUp ();
+
   public void OpenDialog() {
     RaiseDialogOpened (this);
     PlayOpenAnimations ();
@@ -74,10 +86,10 @@ public abstract class BaseDialog : MonoBehaviour {
   private void PlayCloseAnimations() {
     UIManager.DisableTouchEvents ();
 
-    // TODO: Play some animations
-    Sequence closeAnimation = DOTween.Sequence ();
-    ConstructCloseAnimation (closeAnimation);
-    closeAnimation.AppendCallback(OnCloseAnimationsFinished);
+    // Play some animations
+    _closeAnimation = DOTween.Sequence ();
+    ConstructCloseAnimation (_closeAnimation);
+    _closeAnimation.AppendCallback(OnCloseAnimationsFinished);
 
   }
 

@@ -39,6 +39,9 @@ public class PatternCollectionDialog : BaseDialog {
     SetCompletionText (patternMemory.GetNumSeenPatterns (), patternMemory.GetNumTotalPatterns ());
   }
 
+  protected override void CleanUp() {
+  }
+
   public void OnDrag() {
     // The player could be dragging the scrollview slowly while 
     // looking at the cards at the same time. We want to remove the badge
