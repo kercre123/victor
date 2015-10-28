@@ -14,6 +14,7 @@
 #ifndef __Anki_Cozmo_CozmoAPI_h__
 #define __Anki_Cozmo_CozmoAPI_h__
 
+#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/game/cozmoGame.h"
 #include "json/json.h"
 #include "util/helpers/noncopyable.h"
