@@ -309,7 +309,17 @@ namespace Cozmo {
     }
   }
   
-  void CozmoGameImpl::Process_PickAndPlaceObject(ExternalInterface::PickAndPlaceObject const& msg)
+  void CozmoGameImpl::Process_PickupObject(ExternalInterface::PickupObject const& msg)
+  {
+    // Handled in RobotEventHandler::HandleActionEvents
+  }
+
+  void CozmoGameImpl::Process_PlaceOnObject(ExternalInterface::PlaceOnObject const& msg)
+  {
+    // Handled in RobotEventHandler::HandleActionEvents
+  }
+
+  void CozmoGameImpl::Process_PlaceRelObject(ExternalInterface::PlaceRelObject const& msg)
   {
     // Handled in RobotEventHandler::HandleActionEvents
   }

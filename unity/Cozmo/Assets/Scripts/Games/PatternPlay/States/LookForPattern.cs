@@ -13,19 +13,19 @@ public class LookForPattern : State {
 
   bool lastFrameHasVerticalBlock = false;
 
-  public override void Enter() {
+  public override void Enter() { 
     base.Enter();
     DAS.Info("State", "LookForPattern");
-    // TODO: Set eyes to scan.
+    // TODO: Set eyes to scan. 
     patternPlayController = (PatternPlayController)stateMachine.GetGameController();
     patternPlayAutoBuild = patternPlayController.GetAutoBuild();
     patternPlayAutoBuild.autoBuilding = false;
   }
 
   public override void Update() {
-    base.Update();
+    base.Update(); 
 
-    if (animationPlaying) {
+    if (animationPlaying) { 
       return;
     }
 
@@ -73,7 +73,7 @@ public class LookForPattern : State {
     }
     else if (ShouldAutoBuildPattern()) {
       // nobody has moved blocks for a while... ima make my own pattern.
-      // stateMachine.SetNextState(new HaveIdeaForPattern());
+      stateMachine.SetNextState(new HaveIdeaForPattern());
     }
 
     lastFrameVisibleCount = robot.visibleObjects.Count;

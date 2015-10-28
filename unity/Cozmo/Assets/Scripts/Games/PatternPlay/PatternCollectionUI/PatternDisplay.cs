@@ -18,7 +18,9 @@ public class PatternDisplay : MonoBehaviour {
     set {
       _pattern = value;
 
-      _notFoundDisplay.gameObject.SetActive(_pattern == null);
+      if (_notFoundDisplay != null) {
+        _notFoundDisplay.gameObject.SetActive(_pattern == null);
+      }
 
       if (_pattern != null){
         for (int i = 0; i < cubes.Length && i < pattern.blocks.Count; i++) {
@@ -26,30 +28,34 @@ public class PatternDisplay : MonoBehaviour {
           cubes[i].gameObject.SetActive(true);
 
           // Set up the colors
-          Color patternColor = new Color(0.2f, 0.5f, 1f);
-          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.white;
-          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.white;
-          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.white;
-          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.white;
+          Color patternColor = new Color(0.2f, 0.8f, 1f);
+          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.gray;
+          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.gray;
+          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.gray;
+          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.gray;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
           cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
         }
 
-        _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
+        if (_newBadgeDisplay != null) {
+          _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
+        }
       } else {
         // Hide all the cubes
         for (int i = 0; i < cubes.Length; i++) {
           cubes[i].gameObject.SetActive(false);
         }
-
-        _newBadgeDisplay.HideDisplay();
+        
+        if (_newBadgeDisplay != null) {
+          _newBadgeDisplay.HideDisplay();
+        }
       }
     }
   }
 
   public void RemoveBadgeIfSeen() {
-    if (_pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
+    if (_newBadgeDisplay  == null || _pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
       return;
     }
 
