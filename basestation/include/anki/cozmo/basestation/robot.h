@@ -139,7 +139,9 @@ public:
     // Get the ID of the object we are localized to
     const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       
-    // Set the object we are localized to. Use nullptr to UnSet the localizedTo object.
+    // Set the object we are localized to.
+    // Use nullptr to UnSet the localizedTo object but still mark the robot
+    // as localized (i.e. to "odometry").
     Result                 SetLocalizedTo(const ObservableObject* object);
   
     // Has the robot moved since it was last localized

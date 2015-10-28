@@ -699,7 +699,7 @@ namespace Cozmo {
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&
-                                     (_robot->IsLocalized() == false ||
+                                     (_robot->GetLocalizedTo().IsUnknown() ||
                                       _robot->HasMovedSinceBeingLocalized()) );
 #         endif
           
@@ -2249,7 +2249,7 @@ namespace Cozmo {
       }
     }
   
-  ObservableObject* BlockWorld::FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter) const
+  ObservableObject* BlockWorld::FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter, bool returnFirstFound) const
   {
     ObservableObject* matchingObject = nullptr;
     
@@ -2262,6 +2262,9 @@ namespace Cozmo {
               {
                 if(findFcn(objectsByID.second, matchingObject)) {
                   matchingObject = objectsByID.second;
+                  if(returnFirstFound) {
+                    return matchingObject;
+                  }
                 }
               }
             }
@@ -2340,7 +2343,33 @@ namespace Cozmo {
       return FindObjectHelper(findLambda, filter);
     }
   
-  
+    bool BlockWorld::AnyRemainingLocalizableObjects() const
+    {
+      // There's no real find: we're relying entirely on the filter function here
+      FindFcn findLambda = [](ObservableObject*, ObservableObject*) {
+        return true;
+      };
+      
+      // Filter out anything that can't be used for localization
+      BlockWorldFilter::FilterFcn filterLambda = [](ObservableObject* obj) {
+        return obj->CanBeUsedForLocalization();
+      };
+      
+      BlockWorldFilter filter;
+      filter.SetFilterFcn(filterLambda);
+      filter.SetIgnoreFamilies({
+        ObjectFamily::Block,
+        ObjectFamily::Charger,
+        ObjectFamily::MarkerlessObject,
+        ObjectFamily::Ramp,
+      });
+      
+      if(nullptr != FindObjectHelper(findLambda, filter, true)) {
+        return true;
+      } else {
+        return false;
+      }
+    }
   
     ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filter) const
     {
