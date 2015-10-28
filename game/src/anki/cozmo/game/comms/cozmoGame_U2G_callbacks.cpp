@@ -202,24 +202,12 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_SaveImages(ExternalInterface::SaveImages const& msg)
   {
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      printf("Saving image mode %d\n", msg.mode);
-      robot->SetSaveImageMode((SaveMode_t)msg.mode);
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_SaveRobotState(ExternalInterface::SaveRobotState const& msg)
   {
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-    printf("Saving robot state: %d\n", msg.mode);
-      robot->SetSaveStateMode((SaveMode_t)msg.mode);
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_EnableDisplay(ExternalInterface::EnableDisplay const& msg)
@@ -244,13 +232,7 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_ExecuteTestPlan(ExternalInterface::ExecuteTestPlan const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->ExecuteTestPath();
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_SetRobotCarryingObject(ExternalInterface::SetRobotCarryingObject const& msg)
@@ -406,48 +388,22 @@ namespace Cozmo {
 
   void CozmoGameImpl::Process_SetWheelControllerGains(ExternalInterface::SetWheelControllerGains const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetWheelControllerGains(msg.kpLeft, msg.kiLeft, msg.maxIntegralErrorLeft,
-                                     msg.kpRight, msg.kiRight, msg.maxIntegralErrorRight);
-    }
+    // Handled in Robot
   }
-
   
   void CozmoGameImpl::Process_SetHeadControllerGains(ExternalInterface::SetHeadControllerGains const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetHeadControllerGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_SetLiftControllerGains(ExternalInterface::SetLiftControllerGains const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetLiftControllerGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
-    }
+    // Handled in Robot
   }
 
   void CozmoGameImpl::Process_SetSteeringControllerGains(ExternalInterface::SetSteeringControllerGains const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->SetSteeringControllerGains(msg.k1, msg.k2);
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_SetRobotVolume(ExternalInterface::SetRobotVolume const& msg)
@@ -478,20 +434,12 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_SetIdleAnimation(ExternalInterface::SetIdleAnimation const& msg)
   {
-    Robot* robot = GetRobotByID(msg.robotID);
-    
-    if(robot != nullptr) {
-      robot->SetIdleAnimation(msg.animationName);
-    }
+    // Handled in Robot
   }
 
   void CozmoGameImpl::Process_ReplayLastAnimation(ExternalInterface::ReplayLastAnimation const& msg)
   {
-    PRINT_NAMED_INFO("CozmoGame.ReadAnimationFile", "replaying last animation");
-    Robot* robot = GetRobotByID(msg.robotID);
-    if (robot != nullptr) {
-      robot->ReplayLastAnimation(msg.numLoops);
-    }
+    // Handled in Robot
   }
 
   void CozmoGameImpl::Process_ReadAnimationFile(ExternalInterface::ReadAnimationFile const& msg)
@@ -501,46 +449,22 @@ namespace Cozmo {
   
   void CozmoGameImpl::Process_StartFaceTracking(ExternalInterface::StartFaceTracking const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StartFaceTracking(msg.timeout_sec);
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_StopFaceTracking(ExternalInterface::StopFaceTracking const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StopFaceTracking();
-    }
+    // Handled in Robot
   }
 
   void CozmoGameImpl::Process_StartLookingForMarkers(ExternalInterface::StartLookingForMarkers const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StartLookingForMarkers();
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_StopLookingForMarkers(ExternalInterface::StopLookingForMarkers const& msg)
   {
-    // TODO: Get robot ID from message or the one corresponding to the UI that sent the message?
-    const RobotID_t robotID = 1;
-    Robot* robot = GetRobotByID(robotID);
-    
-    if(robot != nullptr) {
-      robot->StopLookingForMarkers();
-    }
+    // Handled in Robot
   }
   
   
@@ -595,40 +519,12 @@ namespace Cozmo {
 
   void CozmoGameImpl::Process_VisionWhileMoving(ExternalInterface::VisionWhileMoving const& msg)
   {
-    if(_isHost) {
-      CozmoEngineHost* cozmoEngineHost = reinterpret_cast<CozmoEngineHost*>(_cozmoEngine);
-      
-      if(cozmoEngineHost == nullptr) {
-        PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage",
-                          "Could not reinterpret cozmoEngine as a cozmoEngineHost.\n");
-      }
-      
-      const std::vector<RobotID_t>& robotIDs = cozmoEngineHost->GetRobotIDList();
-      
-      for(auto robotID : robotIDs) {
-        Robot* robot = cozmoEngineHost->GetRobotByID(robotID);
-        if(robot == nullptr) {
-          PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage",
-                            "No robot with ID=%d found, even though it is in the ID list.\n", robotID);
-        } else {
-          robot->EnableVisionWhileMoving(msg.enable);
-        }
-      }
-    } else {
-      PRINT_NAMED_ERROR("CozmoGameImpl.ProcessMessage.VisionWhileMoving",
-                        "Cannot process VisionWhileMoving message on a client engine.\n");
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_SetBackpackLEDs(ExternalInterface::SetBackpackLEDs const& msg)
   {
-    Robot* robot = GetRobotByID(msg.robotID);
-    
-    if(robot != nullptr) {
-      robot->SetBackpackLights(msg.onColor, msg.offColor,
-                               msg.onPeriod_ms, msg.offPeriod_ms,
-                               msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-    }
+    // Handled in Robot
   }
   
   void CozmoGameImpl::Process_VisualizeQuad(ExternalInterface::VisualizeQuad const& msg)
