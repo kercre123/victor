@@ -700,6 +700,9 @@ int main(void)
 
   SlowPutString("Ready...\r\n");
 
+  //InitCube();
+  //ProgramCube();
+
   STM_EVAL_LEDOn(LEDRED);
 
   while (1)

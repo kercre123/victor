@@ -67,7 +67,7 @@ static inline void CubeAssert(bool assert) {
   MicroWait(10);
 }
 
-static inline void CubeSend(uint8_t *arg, int arg_size) {
+static inline void CubeSend(const uint8_t *arg, int arg_size) {
   while(arg_size-- > 0) {
     CubeWrite(*(arg++));
   }
@@ -109,7 +109,7 @@ static void CubeErasePage(uint8_t page) {
   CubeBlockBusy(); // Wait for page to be erased
 }
 
-static inline void CubeProgram(int address, uint8_t *data, int length) {
+static inline void CubeProgram(int address, const uint8_t *data, int length) {
   CubeAssert(true);
   CubeWrite(CUBE_PROGRAM);
   CubeWrite(address >> 8);
@@ -129,7 +129,7 @@ static inline void CubeRead(int address, uint8_t *data, int length) {
   CubeAssert(false);
 }
 
-CUBE_PROGRAM_ERROR LoadRom(uint8_t *rom, int length) {
+CUBE_PROGRAM_ERROR LoadRom(const uint8_t *rom, int length) {
   DisplayClear();
   DisplayPrintf("Programming Cube");
 
@@ -146,7 +146,7 @@ CUBE_PROGRAM_ERROR LoadRom(uint8_t *rom, int length) {
     CubeErasePage(i);
   }
 
-  uint8_t *mem = rom;
+  const uint8_t *mem = rom;
   for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
     int left =  length - addr;
     DisplayPrintf("\nWritting %i", addr / CUBE_PAGE_SIZE);
@@ -160,12 +160,14 @@ CUBE_PROGRAM_ERROR LoadRom(uint8_t *rom, int length) {
   mem = rom;
   for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
     int left =  length - addr;
+    int send = (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left;
+      
     DisplayPrintf("\nVerifying %i", addr / CUBE_PAGE_SIZE);
 
     uint8_t verify[CUBE_PAGE_SIZE];
-    CubeRead(addr, verify, (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left);
+    CubeRead(addr, verify, send);
     
-    for (int i = 0; i < CUBE_PAGE_SIZE; i++) {
+    for (int i = 0; i < send; i++) {
       if (verify[i] != mem[i]) {
         return CUBE_ERROR_VERIFY_FAILED;
       }
@@ -188,18 +190,7 @@ CUBE_PROGRAM_ERROR ProgramCube(void) {
   GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(100000);
 
-  // ==============================================
-  // TODO: REPLACE THIS WITH AN ACTUAL BINARY
-  uint8_t rom[0x4000];
-
-  uint16_t crc = 0xFFFF;
-  for(int i = 0; i < sizeof(rom); i++) {
-    rom[i] = crc;
-    crc = (crc >> 1) ^ ((crc & 1) ? 0x8001 : 0);
-  }
-
-  CUBE_PROGRAM_ERROR result = LoadRom(rom, sizeof(rom));
-  // ==============================================
+  CUBE_PROGRAM_ERROR result = LoadRom(g_Block, g_BlockEnd - g_Block);
 
   if (result != CUBE_ERROR_NONE) {
     DisplayPrintf("\nFailed      ");
