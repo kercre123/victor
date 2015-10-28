@@ -21,23 +21,38 @@ namespace Cozmo {
 class BehaviorNone: public IBehavior
 {
 public:
-  BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config) { _name = "NoneBehavior"; }
+  BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
+  {
+    _name = "NoneBehavior";
+    
+    // Baseline emotion score so this behavior gets a non-zero score regardless of mood
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{0.0f, 0.1f}}), false));
+  }
   virtual ~BehaviorNone() { }
   
   //
   // Abstract methods to be overloaded:
   //
   virtual bool IsRunnable(double currentTime_sec) const override { return true; }
-  virtual Result Init(double currentTime_sec) override { _isInterrupted = false; return Result::RESULT_OK; }
-  virtual Status Update(double currentTime_sec) override
+  
+protected:
+  
+  virtual Result InitInternal(Robot& robot, double currentTime_sec) override
+  {
+    _isInterrupted = false; return Result::RESULT_OK;
+  }
+  
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override
   {
     Status retval = _isInterrupted ? Status::Complete : Status::Running;
     return retval;
   }
-  virtual Result Interrupt(double currentTime_sec) override { _isInterrupted = true; return Result::RESULT_OK; }
-  virtual bool GetRewardBid(Reward& reward) override { return true; }
+
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override
+  {
+    _isInterrupted = true; return Result::RESULT_OK;
+  }
   
-protected:
   bool _isInterrupted = false;
 };
   

@@ -250,7 +250,8 @@ Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
              start_x + prim->intermediatePositions[point].position.x_mm,
              start_y + prim->intermediatePositions[point].position.y_mm ) ) {
 
-          penalty += obstaclesPerAngle_[angle][obs].second;
+          penalty += obstaclesPerAngle_[angle][obs].second *
+            prim->intermediatePositions[point].oneOverDistanceFromLastPosition;
           if( penalty >= MAX_OBSTACLE_COST) {
             return penalty;
           }
@@ -439,6 +440,18 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
       }
     }
 
+    State_c primtiveOffset = start_c_;
+
+    State result(start_);
+    result.x += prim->endStateOffset.x;
+    result.y += prim->endStateOffset.y;
+    result.theta = prim->endStateOffset.theta;
+
+
+    if( reverse_ ) {
+      primtiveOffset = env.State2State_c(result);
+    }
+
     if( possibleObstacle ) {
 
       // two collision check cases. If the angle is changing, then we'll need to potentially switch which
@@ -458,8 +471,8 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
           }
 
           for( const auto& pt : prim->intermediatePositions ) {
-            if( obs.first.Contains(start_c_.x_mm + pt.position.x_mm,
-                                   start_c_.y_mm + pt.position.y_mm ) ) {
+            if( obs.first.Contains(primtiveOffset.x_mm + pt.position.x_mm,
+                                   primtiveOffset.y_mm + pt.position.y_mm ) ) {
 
               if(obs.second >= MAX_OBSTACLE_COST) {
                 collision = true;
@@ -486,8 +499,8 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
           for( const auto& obs : env.obstaclesPerAngle_[angle] ) {
 
             if( obs.first.Contains(
-                  start_c_.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
-                  start_c_.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
+                  primtiveOffset.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
+                  primtiveOffset.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
 
               if(obs.second >= MAX_OBSTACLE_COST) {
                 collision = true;
@@ -495,7 +508,7 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
               }
               else {
                 // apply soft penalty, but allow the action
-                penalty += obs.second * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
+                penalty += obs.second  * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition;
 
                 assert(!isinf(penalty));
                 assert(!isnan(penalty));
@@ -512,11 +525,6 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
     nextSucc_.g += penalty;
 
     if(!collision) {
-      State result(start_);
-      result.x += prim->endStateOffset.x;
-      result.y += prim->endStateOffset.y;
-      result.theta = prim->endStateOffset.theta;
-
       nextSucc_.stateID = result.GetStateID();
       nextSucc_.g += startG_ + prim->cost;
 
@@ -642,7 +650,10 @@ RobotActionParams::RobotActionParams()
 
 void RobotActionParams::Reset()
 {
-  halfWheelBase_mm = 25.0;
+  // TODO:(bn) get this passed in somehow during a constructor somehweres. its in common config
+  const f32 WHEEL_BASE_MM = 48.f;
+
+  halfWheelBase_mm = WHEEL_BASE_MM * 0.5f;
   maxVelocity_mmps = 60.0;
   maxReverseVelocity_mmps = 25.0;
   oneOverMaxVelocity = 1.0 / maxVelocity_mmps; 
@@ -767,14 +778,15 @@ bool xythetaEnvironment::Import(const Json::Value& config)
       }
     }
 
-    if( ! config["robotParams"].isNull() ) {
-      if( ! _robotParams.Import(config["robotParams"]) ) {
-        return false;
-      }
-    }
-    else {
-      _robotParams.Reset();
-    }
+    // params are currently fixed, so ignore this
+    // if( ! config["robotParams"].isNull() ) {
+    //   if( ! _robotParams.Import(config["robotParams"]) ) {
+    //     return false;
+    //   }
+    // }
+    // else {
+    //   _robotParams.Reset();
+    // }
   }
   catch( const std::exception&  e ) {
     PRINT_NAMED_ERROR("xythetaEnvironment.Import.Exception",
@@ -1622,15 +1634,15 @@ void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path, int numActi
   }
 }
 
-void xythetaEnvironment::SetRobotActionParams(double halfWheelBase_mm,
-                                              double maxVelocity_mmps,
-                                              double maxReverseVelocity_mmps)
-{
-  _robotParams.halfWheelBase_mm = halfWheelBase_mm;
-  _robotParams.maxVelocity_mmps = maxVelocity_mmps;
-  _robotParams.maxReverseVelocity_mmps = maxReverseVelocity_mmps;
-  _robotParams.oneOverMaxVelocity = 1.0 / _robotParams.maxVelocity_mmps; 
-}
+// void xythetaEnvironment::SetRobotActionParams(double halfWheelBase_mm,
+//                                               double maxVelocity_mmps,
+//                                               double maxReverseVelocity_mmps)
+// {
+//   _robotParams.halfWheelBase_mm = halfWheelBase_mm;
+//   _robotParams.maxVelocity_mmps = maxVelocity_mmps;
+//   _robotParams.maxReverseVelocity_mmps = maxReverseVelocity_mmps;
+//   _robotParams.oneOverMaxVelocity = 1.0 / _robotParams.maxVelocity_mmps; 
+// }
 
 void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
 {

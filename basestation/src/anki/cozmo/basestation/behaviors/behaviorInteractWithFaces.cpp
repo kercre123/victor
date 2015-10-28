@@ -13,7 +13,6 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
@@ -24,6 +23,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include <opencv2/highgui/highgui.hpp>
+
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -36,35 +37,23 @@ namespace Cozmo {
     _name = "InteractWithFaces";
 
     // TODO: Init timeouts, etc, from Json config
+
+    SubscribeToTags({
+      EngineToGameTag::RobotObservedFace,
+      EngineToGameTag::RobotDeletedFace,
+      EngineToGameTag::RobotCompletedAction
+    });
     
-    // Set up signal handlers for while we are running
-    if (_robot.HasExternalInterface())
-    {
-      IExternalInterface* interface = _robot.GetExternalInterface();
-
-      _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotObservedFace,
-                                                  std::bind(&BehaviorInteractWithFaces::HandleRobotObservedFace,
-                                                            this,
-                                                            std::placeholders::_1)));
-      
-      _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotDeletedFace,
-                                                   std::bind(&BehaviorInteractWithFaces::HandleRobotDeletedFace,
-                                                             this,
-                                                             std::placeholders::_1)));
-      
-      _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotCompletedAction,
-                                                   std::bind(&BehaviorInteractWithFaces::HandleRobotCompletedAction,
-                                                             this,
-                                                             std::placeholders::_1)));
-    }
-
+    // Boredom and loneliness -> InteractWithFaces
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
   }
   
-  Result BehaviorInteractWithFaces::Init(double currentTime_sec)
+  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec)
   {
     // Make sure the robot's idle animation is set to use Live, since we are
     // going to stream live face mimicking
-    _robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+    robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
     _currentState = State::Inactive;
     
     return RESULT_OK;
@@ -72,15 +61,62 @@ namespace Cozmo {
   
   BehaviorInteractWithFaces::~BehaviorInteractWithFaces()
   {
-    if (_currentState != State::Interrupted)
+
+  }
+  
+  void BehaviorInteractWithFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+  {
+    switch(event.GetData().GetTag())
     {
-      _robot.DisableTrackToFace();
-      ProceduralFace resetFace;
-      auto oldTimeStamp = _robot.GetProceduralFace().GetTimeStamp();
-      oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
-      resetFace.SetTimeStamp(oldTimeStamp);
-      _robot.SetProceduralFace(resetFace);
+      case EngineToGameTag::RobotObservedFace:
+        HandleRobotObservedFace(robot, event);
+        break;
+        
+      case EngineToGameTag::RobotDeletedFace:
+        HandleRobotDeletedFace(event);
+        break;
+        
+      case EngineToGameTag::RobotCompletedAction:
+        // handled by WhileRunning handler
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorInteractWithFaces.AlwaysHandle.InvalidTag",
+                          "Received event with unhandled tag %hhu.",
+                          event.GetData().GetTag());
+        break;
     }
+  }
+  
+  void BehaviorInteractWithFaces::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+  {
+    switch(event.GetData().GetTag())
+    {
+      case EngineToGameTag::RobotObservedFace:
+      case EngineToGameTag::RobotDeletedFace:
+        // Handled by AlwaysHandle
+        break;
+        
+      case EngineToGameTag::RobotCompletedAction:
+        HandleRobotCompletedAction(robot, event);
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorInteractWithFaces.AlwaysHandle.InvalidTag",
+                          "Received event with unhandled tag %hhu.",
+                          event.GetData().GetTag());
+        break;
+    }
+  }
+  
+  void ResetFaceToNeutral(Robot& robot)
+  {
+    robot.GetMoveComponent().DisableTrackToFace();
+    ProceduralFace resetFace;
+    auto oldTimeStamp = robot.GetProceduralFace().GetTimeStamp();
+    oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
+    resetFace.SetTimeStamp(oldTimeStamp);
+    robot.SetProceduralFace(resetFace);
   }
   
   bool BehaviorInteractWithFaces::IsRunnable(double currentTime_sec) const
@@ -88,8 +124,10 @@ namespace Cozmo {
     return !_interestingFacesOrder.empty();
   }
   
-  IBehavior::Status BehaviorInteractWithFaces::Update(double currentTime_sec)
+  IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot, double currentTime_sec)
   {
+    Status status = Status::Running;
+    
     switch(_currentState)
     {
       case State::Inactive:
@@ -103,16 +141,16 @@ namespace Cozmo {
         // If enough time has passed since we looked down toward the ground, do that now
         if (currentTime_sec - _lastGlanceTime >= kGlanceDownInterval_sec)
         {
-          float headAngle = _robot.GetHeadAngle();
+          float headAngle = robot.GetHeadAngle();
           
           // Move head down to check for a block
           MoveHeadToAngleAction* moveHeadAction = new MoveHeadToAngleAction(0);
-          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
           
           // Now move the head back up to the angle it was previously at
           moveHeadAction = new MoveHeadToAngleAction(headAngle);
           
-          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
           _lastActionTag = moveHeadAction->GetTag();
           _isActing = true;
           _lastGlanceTime = currentTime_sec;
@@ -128,7 +166,7 @@ namespace Cozmo {
         }
         
         auto faceID = *iterFirst;
-        const Face* face = _robot.GetFaceWorld().GetFace(faceID);
+        const Face* face = robot.GetFaceWorld().GetFace(faceID);
         if(face == nullptr)
         {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
@@ -149,8 +187,8 @@ namespace Cozmo {
         // If we haven't played our init anim yet for this face and it's been awhile since we did so, do so and break early
         if (!dataIter->second._playedInitAnim && currentTime_sec >= newFaceAnimCooldownTime)
         {
-          _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
-          PlayAnimation("Demo_Look_Around_See_Something_A");
+          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
+          PlayAnimation(robot, "Demo_Look_Around_See_Something_A");
           dataIter->second._playedInitAnim = true;
           newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
           break;
@@ -159,7 +197,7 @@ namespace Cozmo {
         dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
-        UpdateBaselineFace(face);
+        UpdateBaselineFace(robot, face);
         
         PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchToTracking",
                          "Observed face %llu while looking around, switching to tracking.", faceID);
@@ -169,12 +207,12 @@ namespace Cozmo {
         
       case State::TrackingFace:
       {
-        auto faceID = _robot.GetTrackToFace();
+        auto faceID = robot.GetMoveComponent().GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
         if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
         {
           // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
-          _robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _currentState = State::Inactive;
           break;
         }
@@ -183,7 +221,7 @@ namespace Cozmo {
         auto lastSeen = _interestingFacesData[faceID]._lastSeen_sec;
         if(currentTime_sec - lastSeen > _trackingTimeout_sec)
         {
-          _robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           
@@ -199,7 +237,7 @@ namespace Cozmo {
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
         if (watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
-          _robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration_sec;
@@ -211,25 +249,25 @@ namespace Cozmo {
         }
         
         // We need a face to work with
-        const Face* face = _robot.GetFaceWorld().GetFace(faceID);
+        const Face* face = robot.GetFaceWorld().GetFace(faceID);
         if(face == nullptr)
         {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
-          _robot.DisableTrackToFace();
+          robot.GetMoveComponent().DisableTrackToFace();
           _currentState = State::Inactive;
           break;
         }
         
         // Update cozmo's face based on our currently focused face
-        UpdateProceduralFace(_crntProceduralFace, *face);
+        UpdateProceduralFace(robot, _crntProceduralFace, *face);
         
         if(!_isActing &&
            (currentTime_sec - _lastTooCloseScaredTime) > kTooCloseScaredInterval_sec)
         {
           Pose3d headWrtRobot;
-          bool headPoseRetrieveSuccess = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headWrtRobot);
+          bool headPoseRetrieveSuccess = face->GetHeadPose().GetWithRespectTo(robot.GetPose(), headWrtRobot);
           if(!headPoseRetrieveSuccess)
           {
             PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.PoseWrtFail","");
@@ -248,54 +286,49 @@ namespace Cozmo {
                              headWrtRobot.GetTranslation().Length());
             
             // Relinquish control over head/wheels so animation plays correctly,
-            _robot.DisableTrackToFace();
+            robot.GetMoveComponent().DisableTrackToFace();
             
-            PlayAnimation("Demo_Face_Interaction_ShockedScared_A");
-            _robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
+            PlayAnimation(robot, "Demo_Face_Interaction_ShockedScared_A");
+            robot.GetMoodManager().AddToEmotion(EmotionType::Courage, -kEmotionChangeMedium, "CloseFace");
             _lastTooCloseScaredTime = currentTime_sec;
           }
         }
         
         break;
       }
+        
       case State::Interrupted:
       {
-        // Since we're ending being in InteractWithFaces, set our procedural face to be neutral
-        ProceduralFace resetFace;
-        auto oldTimeStamp = _robot.GetProceduralFace().GetTimeStamp();
-        oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
-        resetFace.SetTimeStamp(oldTimeStamp);
-        _robot.SetProceduralFace(resetFace);
-        return Status::Complete;
+        status = Status::Complete;
+        break;
       }
-      default:
         
-        return Status::Failure;
+      default:
+        status = Status::Failure;
+        
     } // switch(_currentState)
     
-    return Status::Running;
+    if(Status::Running != status || _currentState == State::Inactive) {
+      ResetFaceToNeutral(robot);
+    }
+    
+    return status;
   } // Update()
   
-  void BehaviorInteractWithFaces::PlayAnimation(const std::string& animName)
+  void BehaviorInteractWithFaces::PlayAnimation(Robot& robot, const std::string& animName)
   {
     PlayAnimationAction* animAction = new PlayAnimationAction(animName);
-    _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
+    robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
     _lastActionTag = animAction->GetTag();
     _isActing = true;
   }
   
-  Result BehaviorInteractWithFaces::Interrupt(double currentTime_sec)
+  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec)
   {
-    _robot.DisableTrackToFace();
+    robot.GetMoveComponent().DisableTrackToFace();
     _currentState = State::Interrupted;
     
     return RESULT_OK;
-  }
-  
-  bool BehaviorInteractWithFaces::GetRewardBid(Reward& reward)
-  {
-    // TODO: Fill reward  in...
-    return true;
   }
   
 #pragma mark -
@@ -341,9 +374,9 @@ namespace Cozmo {
     return avgEyeHeight;
   }
   
-  void BehaviorInteractWithFaces::UpdateBaselineFace(const Vision::TrackedFace* face)
+  void BehaviorInteractWithFaces::UpdateBaselineFace(Robot& robot, const Vision::TrackedFace* face)
   {
-    _robot.EnableTrackToFace(face->GetID(), false);
+    robot.GetMoveComponent().EnableTrackToFace(face->GetID(), false);
     
     const Radians& faceAngle = face->GetHeadRoll();
     
@@ -361,14 +394,16 @@ namespace Cozmo {
     _baselineIntraEyeDistance = face->GetIntraEyeDistance();
   }
   
-  void BehaviorInteractWithFaces::HandleRobotObservedFace(const AnkiEvent<MessageEngineToGame>& event)
+  void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event)
   {
+    assert(event.GetData().GetTag() == EngineToGameTag::RobotObservedFace);
+    
     const RobotObservedFace& msg = event.GetData().Get_RobotObservedFace();
     
     Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
     
     // We need a face to work with
-    const Face* face = _robot.GetFaceWorld().GetFace(faceID);
+    const Face* face = robot.GetFaceWorld().GetFace(faceID);
     if(face == nullptr)
     {
       PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.InvalidFaceID",
@@ -391,7 +426,7 @@ namespace Cozmo {
     }
     
     Pose3d headPose;
-    bool gotPose = face->GetHeadPose().GetWithRespectTo(_robot.GetPose(), headPose);
+    bool gotPose = face->GetHeadPose().GetWithRespectTo(robot.GetPose(), headPose);
     if (!gotPose)
     {
       PRINT_NAMED_ERROR("BehaviorInteractWithFaces.HandleRobotObservedFace.InvalidFacePose",
@@ -431,7 +466,7 @@ namespace Cozmo {
     }
   }
   
-  void BehaviorInteractWithFaces::HandleRobotDeletedFace(const AnkiEvent<MessageEngineToGame>& event)
+  void BehaviorInteractWithFaces::HandleRobotDeletedFace(const EngineToGameEvent& event)
   {
     const RobotDeletedFace& msg = event.GetData().Get_RobotDeletedFace();
     
@@ -460,37 +495,39 @@ namespace Cozmo {
     }
   }
   
-  void BehaviorInteractWithFaces::UpdateProceduralFace(ProceduralFace& proceduralFace, const Face& face) const
+  void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const
   {
     ProceduralFace prevProcFace(proceduralFace);
     
     const Radians& faceAngle = face.GetHeadRoll();
-    
-    // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
-    const Face::Feature& leftEyeBrow  = face.GetFeature(Face::FeatureName::LeftEyebrow);
-    const Face::Feature& rightEyeBrow = face.GetFeature(Face::FeatureName::RightEyebrow);
-    
-    const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face.GetLeftEyeCenter(), faceAngle);
-    const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face.GetRightEyeCenter(), faceAngle);
-    
     const f32 distanceNorm =  face.GetIntraEyeDistance() / _baselineIntraEyeDistance;
     
-    // Get expected height based on intra-eye distance
-    const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
-    const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
-    
-    // Compare measured distance to expected
-    const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
-    const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
-    
-    // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-    proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                     ProceduralFace::Parameter::BrowCenY,
-                                     leftEyebrowHeightScale);
-    
-    proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                     ProceduralFace::Parameter::BrowCenY,
-                                     rightEyebrowHeightScale);
+    if(_baselineLeftEyebrowHeight != 0.f && _baselineRightEyebrowHeight != 0.f)
+    {
+      // If eyebrows have raised/lowered (based on distance from eyes), mimic their position:
+      const Face::Feature& leftEyeBrow  = face.GetFeature(Face::FeatureName::LeftEyebrow);
+      const Face::Feature& rightEyeBrow = face.GetFeature(Face::FeatureName::RightEyebrow);
+      
+      const f32 leftEyebrowHeight  = GetAverageHeight(leftEyeBrow, face.GetLeftEyeCenter(), faceAngle);
+      const f32 rightEyebrowHeight = GetAverageHeight(rightEyeBrow, face.GetRightEyeCenter(), faceAngle);
+      
+      // Get expected height based on intra-eye distance
+      const f32 expectedLeftEyebrowHeight = distanceNorm * _baselineLeftEyebrowHeight;
+      const f32 expectedRightEyebrowHeight = distanceNorm * _baselineRightEyebrowHeight;
+      
+      // Compare measured distance to expected
+      const f32 leftEyebrowHeightScale = (leftEyebrowHeight - expectedLeftEyebrowHeight)/expectedLeftEyebrowHeight;
+      const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
+      
+      // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
+      proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
+                                  ProceduralFace::Parameter::BrowCenY,
+                                  leftEyebrowHeightScale);
+      
+      proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
+                                  ProceduralFace::Parameter::BrowCenY,
+                                  rightEyebrowHeightScale);
+    }
     
     const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
     const f32 eyeHeightFraction = (GetEyeHeight(&face) - expectedEyeHeight)/expectedEyeHeight + .1f; // bias a little larger
@@ -500,8 +537,8 @@ namespace Cozmo {
     newPupilPos += face.GetRightEyeCenter();
     newPupilPos *= 0.5f;
     
-    Point2f imageHalfSize(_robot.GetCamera().GetCalibration().GetNcols()/2,
-                          _robot.GetCamera().GetCalibration().GetNrows()/2);
+    Point2f imageHalfSize(robot.GetCamera().GetCalibration().GetNcols()/2,
+                          robot.GetCamera().GetCalibration().GetNrows()/2);
     newPupilPos -= imageHalfSize; // make relative to image center
     newPupilPos /= imageHalfSize; // scale to be between -1 and 1
 
@@ -510,10 +547,12 @@ namespace Cozmo {
     newPupilPos *= .75f;
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-      proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
-                                  std::max(-.8f, std::min(.8f, eyeHeightFraction)));
-      proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                  std::max(-.75f, std::min(.75f, eyeHeightFraction)));
+      if(_baselineEyeHeight != 0.f) {
+        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                                    std::max(-.8f, std::min(.8f, eyeHeightFraction)));
+        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+                                    std::max(-.75f, std::min(.75f, eyeHeightFraction)));
+      }
       
       // To get saccade-like movement, only update the pupils if they new position is
       // different enough
@@ -540,16 +579,16 @@ namespace Cozmo {
     
     proceduralFace.SetTimeStamp(face.GetTimeStamp());
     proceduralFace.MarkAsSentToRobot(false);
-    _robot.SetProceduralFace(proceduralFace);
+    robot.SetProceduralFace(proceduralFace);
   }
   
-  void BehaviorInteractWithFaces::HandleRobotCompletedAction(const AnkiEvent<MessageEngineToGame>& event)
+  void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event)
   {
     const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
     
     if(msg.idTag == _lastActionTag)
     {
-      _robot.SetProceduralFace(_crntProceduralFace);
+      robot.SetProceduralFace(_crntProceduralFace);
       _isActing = false;
     }
   }

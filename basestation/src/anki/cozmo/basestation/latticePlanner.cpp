@@ -99,15 +99,6 @@ public:
                         "LatticePlanner requires data platform to operate!");
     }
     else {
-
-      double halfWheelBase = WHEEL_BASE_MM * 0.5f;
-      // magic numbers from xythetaEnvironment.cpp
-      const double maxVelocity = 60.0;
-      const double maxReverseVelocity = 25.0;
-      _context.env.SetRobotActionParams(halfWheelBase,
-                                        maxVelocity,
-                                        maxReverseVelocity);
-
       Json::Value mprims;
       const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources,
                                                     "config/basestation/config/cozmo_mprim.json",
@@ -229,8 +220,8 @@ void LatticePlanner::StopPlanning()
   _impl->StopPlanning();
 }
 
-EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
-                                               const Pose3d& targetPose)
+EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
+                                                     const Pose3d& targetPose)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
 
@@ -285,9 +276,14 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
     return EComputePathStatus::Error;
   }
 
-  _selectedTargetIdx = 0;
-
   return ComputeNewPathIfNeeded(startPose, true);
+}
+
+EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
+                                                     const Pose3d& targetPose)
+{
+  _selectedTargetIdx = 0;
+  return ComputePathHelper(startPose, targetPose);
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
@@ -357,7 +353,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 
   if(found) {
     _selectedTargetIdx = bestTargetIdx;
-    return ComputePath(startPose, targetPoses[bestTargetIdx]);
+    return ComputePathHelper(startPose, targetPoses[bestTargetIdx]);
   }
   else {
     PRINT_NAMED_INFO("LatticePlanner.ComputePath.NoValidTarget",

@@ -41,7 +41,7 @@ class DemoBehaviorChooser : public ReactionaryBehaviorChooser
 public:
   DemoBehaviorChooser(Robot& robot, const Json::Value& config);
   
-  virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const override;
+  virtual IBehavior* ChooseNextBehavior(const MoodManager& moodManager, double currentTime_sec) const override;
   virtual Result Update(double currentTime_sec) override;
   virtual Result AddBehavior(IBehavior* newBehavior) override;
   

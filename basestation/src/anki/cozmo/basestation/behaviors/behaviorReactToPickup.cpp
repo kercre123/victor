@@ -27,8 +27,7 @@ static std::vector<std::string> _animReactions = {
 };
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
-  : IReactionaryBehavior(robot, config)
-  , _currentState(State::Inactive)
+: IReactionaryBehavior(robot, config)
 {
   _name = "ReactToPickup";
   
@@ -43,14 +42,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
     MessageEngineToGameTag::RobotCompletedAction,
   });
   
-  // We might not have an external interface pointer (e.g. Unit tests)
-  if (robot.HasExternalInterface()) {
-    // Register for EngineToGameEvents
-    for (auto tag : subscribedEvents)
-    {
-      _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(tag, std::bind(&BehaviorReactToPickup::HandleMovedEvent, this, std::placeholders::_1)));
-    }
-  }
+  SubscribeToTags(std::move(subscribedEvents));
 }
 
 bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
@@ -72,12 +64,12 @@ bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorReactToPickup::Init(double currentTime_sec)
+Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec)
 {
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToPickup::Update(double currentTime_sec)
+IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   switch (_currentState)
   {
@@ -98,7 +90,7 @@ IBehavior::Status BehaviorReactToPickup::Update(double currentTime_sec)
       {
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
-        _robot.GetActionList().QueueActionNow(0, newAction);
+        robot.GetActionList().QueueActionNow(0, newAction);
         animIndex = ++animIndex % _animReactions.size();
       }
       _waitingForAnimComplete = true;
@@ -130,7 +122,7 @@ IBehavior::Status BehaviorReactToPickup::Update(double currentTime_sec)
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::Interrupt(double currentTime_sec)
+Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -140,12 +132,8 @@ Result BehaviorReactToPickup::Interrupt(double currentTime_sec)
   return Result::RESULT_OK;
 }
 
-bool BehaviorReactToPickup::GetRewardBid(Reward& reward)
-{
-  return true;
-}
-
-void BehaviorReactToPickup::HandleMovedEvent(const AnkiEvent<MessageEngineToGame>& event)
+void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
+                                         const Robot& robot)
 {
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())

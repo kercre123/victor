@@ -39,31 +39,25 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
 {
   _name = "LookAround";
   
-  // We might not have an external interface pointer (e.g. Unit tests)
-  if (robot.HasExternalInterface()) {
-    // Register for the RobotObservedObject event
-    IExternalInterface* interface = robot.GetExternalInterface();
-    _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotObservedObject,
-                                                 std::bind(&BehaviorLookAround::HandleObjectObserved, this, std::placeholders::_1)));
-    
-    // Register for RobotCompletedAction Event
-    _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotCompletedAction,
-                                                 std::bind(&BehaviorLookAround::HandleCompletedAction, this, std::placeholders::_1)));
-    
-    // Register for RobotPutDown Event
-    _eventHandles.push_back(interface->Subscribe(MessageEngineToGameTag::RobotPutDown,
-                                                 std::bind(&BehaviorLookAround::HandleRobotPutDown, this, std::placeholders::_1)));
-    
-    
-  }
+  SubscribeToTags({
+    EngineToGameTag::RobotObservedObject,
+    EngineToGameTag::RobotCompletedAction,
+    EngineToGameTag::RobotPutDown
+  });
+
+   // Boredom and loneliness -> LookAround
+  AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+  AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
 }
   
 BehaviorLookAround::~BehaviorLookAround()
 {
+  /* Necessary? (We have no robot available in the destructor!)
   if (_currentState != State::Inactive)
   {
     ResetBehavior(0);
   }
+   */
 }
   
 bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
@@ -94,20 +88,44 @@ bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
   return false;
 }
 
-Result BehaviorLookAround::Init(double currentTime_sec)
+void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotObservedObject:
+      HandleObjectObserved(event, robot);
+      break;
+      
+    case EngineToGameTag::RobotCompletedAction:
+      HandleCompletedAction(event);
+      break;
+      
+    case EngineToGameTag::RobotPutDown:
+      HandleRobotPutDown(event, robot);
+      break;
+      
+    default:
+      PRINT_NAMED_ERROR("BehaviorLookAround.HandleWhileRunning.InvalidTag",
+                        "Received event with unhandled tag %hhu.",
+                        event.GetData().GetTag());
+      break;
+  }
+}
+  
+Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
 {
   // Update explorable area center to current robot pose
-  ResetSafeRegion();
+  ResetSafeRegion(robot);
   
   _currentState = State::StartLooking;
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
+IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double currentTime_sec)
 {
 #if SAFE_ZONE_VIZ
   Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-  VizManager::getInstance()->DrawXYCircle(_robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+  VizManager::getInstance()->DrawXYCircle(robot.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
 #endif
   switch (_currentState)
   {
@@ -124,10 +142,10 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
     case State::StartLooking:
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
-      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+      robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
-      _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
-      if (StartMoving() == RESULT_OK) {
+      robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
+      if (StartMoving(robot) == RESULT_OK) {
         _currentState = State::LookingForObject;
       }
     }
@@ -142,7 +160,7 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
     }
     case State::ExamineFoundObject:
     {
-      _robot.GetActionList().Cancel();
+      robot.GetActionList().Cancel();
       bool queuedFaceObjectAction = false;
       while (!_recentObjects.empty())
       {
@@ -150,8 +168,8 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
         ObjectID objID = *iter;
         IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
         
-        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
-        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
+        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
+        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
         queuedFaceObjectAction = true;
         
         ++_numObjectsToLookAt;
@@ -163,7 +181,7 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
       if (queuedFaceObjectAction)
       {
         IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
-        _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       }
       _currentState = State::WaitToFinishExamining;
       
@@ -185,13 +203,13 @@ IBehavior::Status BehaviorLookAround::Update(double currentTime_sec)
   }
   
 #if SAFE_ZONE_VIZ
-  VizManager::getInstance()->EraseCircle(_robot.GetID());
+  VizManager::getInstance()->EraseCircle(robot.GetID());
 #endif
   
   return Status::Complete;
 }
   
-Result BehaviorLookAround::StartMoving()
+Result BehaviorLookAround::StartMoving(Robot& robot)
 {
   // Check for a collision-free pose
   Pose3d destPose;
@@ -200,10 +218,10 @@ Result BehaviorLookAround::StartMoving()
     destPose = GetDestinationPose(_currentDestination);
     
     // Get robot bounding box at destPose
-    Quad2f robotQuad = _robot.GetBoundingQuadXY(destPose);
+    Quad2f robotQuad = robot.GetBoundingQuadXY(destPose);
     
     std::vector<ObservableObject*> existingObjects;
-    _robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
+    robot.GetBlockWorld().FindIntersectingObjects(robotQuad,
                                                    existingObjects,
                                                    10);
     
@@ -231,7 +249,7 @@ Result BehaviorLookAround::StartMoving()
   
   IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
   _currentDriveActionID = goToPoseAction->GetTag();
-  _robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
+  robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
   return RESULT_OK;
 }
   
@@ -296,35 +314,26 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::Interrupt(double currentTime_sec)
+Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
 {
-  ResetBehavior(currentTime_sec);
+  ResetBehavior(robot, currentTime_sec);
   return Result::RESULT_OK;
 }
   
-void BehaviorLookAround::ResetBehavior(float currentTime_sec)
+void BehaviorLookAround::ResetBehavior(Robot& robot, float currentTime_sec)
 {
   _lastLookAroundTime = currentTime_sec;
   _currentState = State::Inactive;
-  _robot.StopAllMotors();
-  _robot.GetActionList().Cancel();
+  robot.GetMoveComponent().StopAllMotors();
+  robot.GetActionList().Cancel();
   _recentObjects.clear();
   _oldBoringObjects.clear();
   _numObjectsToLookAt = 0;
 }
-
-bool BehaviorLookAround::GetRewardBid(Reward& reward)
-{
-  return true;
-}
   
-void BehaviorLookAround::HandleObjectObserved(const AnkiEvent<MessageEngineToGame>& event)
+void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Robot& robot)
 {
-  // Ignore messages while not running
-  if(!IsRunning())
-  {
-    return;
-  }
+  assert(IsRunning());
   
   const RobotObservedObject& msg = event.GetData().Get_RobotObservedObject();
   
@@ -335,7 +344,7 @@ void BehaviorLookAround::HandleObjectObserved(const AnkiEvent<MessageEngineToGam
   {
     _recentObjects.insert(msg.objectID);
     
-    ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(msg.objectID);
+    ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);
     if (nullptr != object)
     {
       UpdateSafeRegion(object->GetPose().GetTranslation());
@@ -367,20 +376,17 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
   }
 }
   
-void BehaviorLookAround::HandleCompletedAction(const AnkiEvent<MessageEngineToGame>& event)
+void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
 {
-  if(!IsRunning())
-  {
-    // Ignore messages while not running
-    return;
-  }
+  assert(IsRunning());
   
   const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
   if (RobotActionType::FACE_OBJECT == msg.actionType)
   {
     if (0 == _numObjectsToLookAt)
     {
-      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction", "Getting unexpected FaceObjectAction completion messages");
+      PRINT_NAMED_WARNING("BehaviorLookAround.HandleCompletedAction",
+                          "Getting unexpected FaceObjectAction completion messages");
     }
     else
     {
@@ -443,18 +449,18 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   return *newDestIter;
 }
   
-void BehaviorLookAround::HandleRobotPutDown(const AnkiEvent<MessageEngineToGame>& event)
+void BehaviorLookAround::HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot)
 {
   const RobotPutDown& msg = event.GetData().Get_RobotPutDown();
-  if (_robot.GetID() == msg.robotID)
+  if (robot.GetID() == msg.robotID)
   {
-    ResetSafeRegion();
+    ResetSafeRegion(robot);
   }
 }
   
-void BehaviorLookAround::ResetSafeRegion()
+void BehaviorLookAround::ResetSafeRegion(Robot& robot)
 {
-  _moveAreaCenter = _robot.GetPose();
+  _moveAreaCenter = robot.GetPose();
   _safeRadius = kDefaultSafeRadius;
 }
 

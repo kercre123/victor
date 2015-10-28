@@ -42,7 +42,9 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
       ExternalInterface::MessageGameToEngineTag::GotoPose,
       ExternalInterface::MessageGameToEngineTag::GotoObject,
-      ExternalInterface::MessageGameToEngineTag::PickAndPlaceObject,
+      ExternalInterface::MessageGameToEngineTag::PickupObject,
+      ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
+      ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
       ExternalInterface::MessageGameToEngineTag::RollObject,
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
@@ -80,8 +82,9 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
   // Create an action to drive to specied pose and then put down the carried
   // object.
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
-  Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  return new PlaceObjectOnGroundAtPoseAction(robot, targetPose, msg.useManualSpeed);
+  Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
+  Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
+  return new PlaceObjectOnGroundAtPoseAction(robot, targetPose, msg.useExactRotation, msg.useManualSpeed);
 }
 
 IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)
@@ -97,7 +100,8 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   return new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed);
 }
   
-IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface::PickAndPlaceObject& msg)
+  
+IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::PickupObject& msg)
 {
   ObjectID selectedObjectID;
   if(msg.objectID < 0) {
@@ -107,25 +111,74 @@ IActionRunner* GetPickAndPlaceActionHelper(Robot& robot, const ExternalInterface
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickAndPlaceObjectAction(selectedObjectID,
-                                               robot.IsCarryingObject(),
-                                               msg.useManualSpeed,
-                                               msg.placementOffsetX_mm,
-                                               msg.placementOffsetY_mm,
-                                               msg.placementOffsetAngle_rad,
-                                               msg.placeOnGroundIfCarrying);
+    return new DriveToPickupObjectAction(selectedObjectID,
+                                         msg.useApproachAngle,
+                                         msg.approachAngle_rad,
+                                         msg.useManualSpeed);
   } else {
-    PickAndPlaceObjectAction* action = new PickAndPlaceObjectAction(selectedObjectID,
-                                                                    robot.IsCarryingObject(),
-                                                                    msg.useManualSpeed,
-                                                                    msg.placementOffsetX_mm,
-                                                                    msg.placementOffsetY_mm,
-                                                                    msg.placementOffsetAngle_rad,
-                                                                    msg.placeOnGroundIfCarrying);
+    PickupObjectAction* action = new PickupObjectAction(selectedObjectID, msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
 }
+
+
+IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::PlaceRelObject& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    return new DriveToPlaceRelObjectAction(selectedObjectID,
+                                           msg.placementOffsetX_mm,
+                                           msg.useApproachAngle,
+                                           msg.approachAngle_rad,
+                                           msg.useManualSpeed);
+  } else {
+    PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
+                                                            true,
+                                                            msg.placementOffsetX_mm,
+                                                            msg.useManualSpeed);
+    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    return action;
+  }
+}
+
+
+IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::PlaceOnObject& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  if(static_cast<bool>(msg.usePreDockPose)) {
+
+    // Compute rotation
+    Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
+    
+    return new DriveToPlaceOnObjectAction(robot,
+                                          selectedObjectID,
+                                          msg.useExactRotation,
+                                          rot,
+                                          msg.useManualSpeed);
+  } else {
+    PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
+                                                            false,
+                                                            0,
+                                                            msg.useManualSpeed);
+    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    return action;
+  }
+}
+  
+  
   
 IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterface::GotoObject& msg)
 {
@@ -149,7 +202,10 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToRollObjectAction(selectedObjectID, msg.useManualSpeed);
+    return new DriveToRollObjectAction(selectedObjectID,
+                                       msg.useApproachAngle,
+                                       msg.approachAngle_rad,
+                                       msg.useManualSpeed);
   } else {
     RollObjectAction* action = new RollObjectAction(selectedObjectID, msg.useManualSpeed);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
@@ -204,12 +260,17 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionType::PLAY_ANIMATION:
       return new PlayAnimationAction(actionUnion.playAnimation.animationName, actionUnion.playAnimation.numLoops);
       
-    case RobotActionType::PICK_AND_PLACE_OBJECT:
     case RobotActionType::PICKUP_OBJECT_HIGH:
     case RobotActionType::PICKUP_OBJECT_LOW:
+      return GetPickupActionHelper(robot, actionUnion.pickupObject);
+      
     case RobotActionType::PLACE_OBJECT_HIGH:
+      return GetPlaceOnActionHelper(robot, actionUnion.placeOnObject);
+      
     case RobotActionType::PLACE_OBJECT_LOW:
-      return GetPickAndPlaceActionHelper(robot, actionUnion.pickAndPlaceObject);
+      return GetPlaceRelActionHelper(robot, actionUnion.placeRelObject);
+      
+      
       
     case RobotActionType::MOVE_HEAD_TO_ANGLE:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
@@ -328,10 +389,22 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = GetDriveToObjectActionHelper(robot, event.GetData().Get_GotoObject());
       break;
     }
-    case ExternalInterface::MessageGameToEngineTag::PickAndPlaceObject:
+    case ExternalInterface::MessageGameToEngineTag::PickupObject:
     {
       numRetries = 1;
-      newAction = GetPickAndPlaceActionHelper(robot, event.GetData().Get_PickAndPlaceObject());
+      newAction = GetPickupActionHelper(robot, event.GetData().Get_PickupObject());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::PlaceOnObject:
+    {
+      numRetries = 1;
+      newAction = GetPlaceOnActionHelper(robot, event.GetData().Get_PlaceOnObject());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::PlaceRelObject:
+    {
+      numRetries = 1;
+      newAction = GetPlaceRelActionHelper(robot, event.GetData().Get_PlaceRelObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::RollObject:
@@ -455,7 +528,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->IsLiftLocked()) {
+  if(robot->GetMoveComponent().IsLiftLocked()) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {
@@ -470,7 +543,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     }
     else {
       // In the normal case directly set the lift height
-      robot->MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
+      robot->GetMoveComponent().MoveLiftToHeight(msg.height_mm, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
     }
   }
 }

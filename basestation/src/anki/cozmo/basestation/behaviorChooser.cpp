@@ -47,16 +47,29 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   return Result::RESULT_OK;
 }
   
-IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
+IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const MoodManager& moodManager, double currentTime_sec) const
 {
-  for (auto behavior : _behaviorList)
+  const float kRandomFactor = 0.1f;
+  
+  Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
+  
+  IBehavior* bestBehavior = nullptr;
+  float bestScore = 0.0f;
+  for (IBehavior* behavior : _behaviorList)
   {
-    if (behavior->IsRunnable(currentTime_sec))
+    float score = behavior->EvaluateScore(moodManager, currentTime_sec);
+    if (score > 0.0f)
     {
-      return behavior;
+      score += rng.RandDbl(kRandomFactor);
+      
+      if (score > bestScore)
+      {
+        bestBehavior = behavior;
+        bestScore    = score;
+      }
     }
   }
-  return nullptr;
+  return bestBehavior;
 }
   
 IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) const

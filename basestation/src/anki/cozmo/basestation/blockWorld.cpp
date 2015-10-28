@@ -174,6 +174,36 @@ namespace Anki
       
     } // ~BlockWorld() Destructor
     
+    ObservableObject* BlockWorld::GetObjectByIdHelper(const ObjectID objectID) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          auto objectsByIdIter = objectsByType.second.find(objectID);
+          if(objectsByIdIter != objectsByType.second.end()) {
+            return objectsByIdIter->second;
+          }
+        }
+      }
+      
+      return nullptr;
+    }
+    
+    ObservableObject* BlockWorld::GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const
+    {
+      // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
+      
+      for(auto & objectsByType : GetExistingObjectsByFamily(inFamily)) {
+        auto objectsByIdIter = objectsByType.second.find(objectID);
+        if(objectsByIdIter != objectsByType.second.end()) {
+          return objectsByIdIter->second;
+        }
+      }
+      
+      // ID not found!
+      return nullptr;
+    }
     
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
@@ -596,9 +626,9 @@ namespace Anki
           
         } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
         
-        if(_robot->GetTrackToObject().IsSet() &&
-           obsID == _robot->GetTrackToObject() &&
-           !_robot->IsHeadLocked())
+        if(_robot->GetMoveComponent().GetTrackToObject().IsSet() &&
+           obsID == _robot->GetMoveComponent().GetTrackToObject() &&
+           !_robot->GetMoveComponent().IsHeadLocked())
         {
           UpdateTrackToObject(observedObject);
         }
@@ -666,7 +696,7 @@ namespace Anki
           msg.headTiltAngle_rad = headAngle;
           msg.bodyPanAngle_rad = 0.f;
           
-          if(false == _robot->IsTrackingWithHeadOnly()) {
+          if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
             // Also rotate ("pan") body:
             const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
             msg.bodyPanAngle_rad = panAngle.ToFloat();
@@ -924,7 +954,7 @@ namespace Anki
       // and localizes to it because it hasn't seen a marker on the flat mat
       // it is driving on.)
       if(_robot->IsLocalized()) {
-        MatPiece* mat = dynamic_cast<MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
+        const MatPiece* mat = dynamic_cast<const MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
         if(mat != nullptr) {
           if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
             // Ignore the ID of the mat we're on
@@ -1942,13 +1972,13 @@ namespace Anki
           _selectedObject.UnSet();
         }
         
-        if(_robot->GetTrackToObject() == object->GetID()) {
+        if(_robot->GetMoveComponent().GetTrackToObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
                            "Clearing %s object %d which robot %d is currently tracking its head to.\n",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
-          _robot->DisableTrackToObject();
+          _robot->GetMoveComponent().DisableTrackToObject();
         }
         
         if(object->IsActive()) {
@@ -2390,7 +2420,7 @@ namespace Anki
       // (Re)Draw the selected object separately so we can get its pre-action poses
       if(GetSelectedObject().IsSet())
       {
-        ActionableObject* selectedObject = dynamic_cast<ActionableObject*>(GetObjectByID(GetSelectedObject()));
+        const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetObjectByID(GetSelectedObject()));
         if(selectedObject == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
                             "Selected object ID = %d, but it came back null.\n",

@@ -15,7 +15,6 @@ enum int_32 RobotActionType {
     DRIVE_TO_PLACE_CARRIED_OBJECT,
     TURN_IN_PLACE,
     MOVE_HEAD_TO_ANGLE,
-    PICK_AND_PLACE_OBJECT,
     PICKUP_OBJECT_LOW,         // Possible sub-type of PickAndPlaceAction
     PICKUP_OBJECT_HIGH,        //   "
     PLACE_OBJECT_LOW,          //   "

@@ -67,7 +67,7 @@ namespace Anki {
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
       _robotPose.SetTranslation({msg.pose_x, msg.pose_y, msg.pose_z});
-      _robotPose.SetRotation(msg.headAngle_rad, Z_AXIS_3D());
+      _robotPose.SetRotation(msg.poseAngle_rad, Z_AXIS_3D());
       
       _robotStateMsg = msg;
       
@@ -645,15 +645,6 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTapBlockOnGround(const u8 numTaps)
-    {
-      ExternalInterface::TapBlockOnGround m;
-      m.numTaps = numTaps;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_TapBlockOnGround(m);
-      SendMessage(message);
-    }
-    
     void UiGameController::SendStopAllMotors()
     {
       ExternalInterface::StopAllMotors m;
@@ -715,20 +706,25 @@ namespace Anki {
       m.y_mm = p.GetTranslation().y();
       m.rad = p.GetRotationAngle<'Z'>().ToFloat();
       m.level = 0;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_GotoPose(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed)
+    void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useExactRotation, const bool useManualSpeed)
     {
       ExternalInterface::PlaceObjectOnGround m;
       m.x_mm = p.GetTranslation().x();
       m.y_mm = p.GetTranslation().y();
-      m.rad = p.GetRotationAngle<'Z'>().ToFloat();
       m.level = 0;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.useManualSpeed = useManualSpeed;
+      UnitQuaternion<f32> q(p.GetRotation().GetQuaternion());
+      m.qw = q.w();
+      m.qx = q.x();
+      m.qy = q.y();
+      m.qz = q.z();
+      m.useExactRotation = useExactRotation;
       ExternalInterface::MessageGameToEngine message;
       message.Set_PlaceObjectOnGround(m);
       SendMessage(message);
@@ -768,65 +764,142 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendPickAndPlaceObject(const s32 objectID,
-                                                  const bool usePreDockPose,
-                                                  const f32 placementOffsetX_mm,
-                                                  const f32 placementOffsetY_mm,
-                                                  const f32 placementOffsetAngle_rad,
-                                                  const bool placeOnGroundIfCarrying,
-                                                  const bool useManualSpeed)
+    void UiGameController::SendPickupObject(const s32 objectID,
+                                            const bool usePreDockPose,
+                                            const bool useApproachAngle,
+                                            const f32 approachAngle_rad,
+                                            const bool useManualSpeed)
     {
-      ExternalInterface::PickAndPlaceObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.placeOnGroundIfCarrying = static_cast<u8>(placeOnGroundIfCarrying);
-      m.placementOffsetX_mm = placementOffsetX_mm;
-      m.placementOffsetY_mm = placementOffsetY_mm;
-      m.placementOffsetAngle_rad = placementOffsetAngle_rad;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
-      m.objectID = objectID;
+      ExternalInterface::PickupObject m;
+      m.objectID = objectID,
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle;
+      m.approachAngle_rad = approachAngle_rad;
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
-      message.Set_PickAndPlaceObject(m);
+      message.Set_PickupObject(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendPickAndPlaceSelectedObject(const bool usePreDockPose,
-                                                          const f32 placementOffsetX_mm,
-                                                          const f32 placementOffsetY_mm,
-                                                          const f32 placementOffsetAngle_rad,
-                                                          const bool placeOnGroundIfCarrying,
-                                                          const bool useManualSpeed)
+    
+    void UiGameController::SendPlaceOnObject(const s32 objectID,
+                                   const bool usePreDockPose,
+                                   const bool useExactRotation,
+                                   const Rotation3d rot,
+                                   const bool useManualSpeed)
     {
-      SendPickAndPlaceObject(-1,
-                             usePreDockPose,
-                             placementOffsetX_mm,
-                             placementOffsetY_mm,
-                             placementOffsetAngle_rad,
-                             placeOnGroundIfCarrying,
-                             useManualSpeed);
+      ExternalInterface::PlaceOnObject m;
+      m.objectID = objectID,
+      m.usePreDockPose = usePreDockPose;
+      m.useExactRotation = useExactRotation;
+      
+      UnitQuaternion<f32> q(rot.GetQuaternion());
+      m.qw = q.w();
+      m.qx = q.x();
+      m.qy = q.y();
+      m.qz = q.z();
+      
+      m.useManualSpeed = useManualSpeed;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PlaceOnObject(m);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendPlaceRelObject(const s32 objectID,
+                                    const bool usePreDockPose,
+                                    const f32 placementOffsetX_mm,
+                                    const bool useApproachAngle,
+                                    const f32 approachAngle_rad,
+                                    const bool useManualSpeed)
+    {
+      ExternalInterface::PlaceRelObject m;
+      m.objectID = objectID,
+      m.usePreDockPose = usePreDockPose;
+      m.placementOffsetX_mm = placementOffsetX_mm;
+      m.useApproachAngle = useApproachAngle;
+      m.approachAngle_rad = approachAngle_rad;
+      m.useManualSpeed = useManualSpeed;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PlaceRelObject(m);
+      SendMessage(message);
     }
 
-    void UiGameController::SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendPickupSelectedObject(const bool usePreDockPose,
+                                                    const bool useApproachAngle,
+                                                    const f32 approachAngle_rad,
+                                                    const bool useManualSpeed)
+    {
+      SendPickupObject(-1,
+                       usePreDockPose,
+                       useApproachAngle,
+                       approachAngle_rad,
+                       useManualSpeed);
+    }
+    
+    
+    void UiGameController::SendPlaceOnSelectedObject(const bool usePreDockPose,
+                                                     const bool useExactRotation,
+                                                     const Rotation3d rot,
+                                                     const bool useManualSpeed)
+    {
+      SendPlaceOnObject(-1,
+                        usePreDockPose,
+                        useExactRotation,
+                        rot,
+                        useManualSpeed);
+    }
+    
+    void UiGameController::SendPlaceRelSelectedObject(const bool usePreDockPose,
+                                                      const f32 placementOffsetX_mm,
+                                                      const bool useApproachAngle,
+                                                      const f32 approachAngle_rad,
+                                                      const bool useManualSpeed)
+    {
+      SendPlaceRelObject(-1,
+                         usePreDockPose,
+                         placementOffsetX_mm,
+                         useApproachAngle,
+                         approachAngle_rad,
+                         useManualSpeed);
+    }
+    
+    
+    
+    void UiGameController::SendRollObject(const s32 objectID,
+                                          const bool usePreDockPose,
+                                          const bool useApproachAngle,
+                                          const f32 approachAngle_rad,
+                                          const bool useManualSpeed)
     {
       ExternalInterface::RollObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
       m.objectID = -1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_RollObject(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendRollSelectedObject(const bool usePreDockPose,
+                                                  const bool useApproachAngle,
+                                                  const f32 approachAngle_rad,
+                                                  const bool useManualSpeed)
     {
-      SendRollObject(-1, usePreDockPose, useManualSpeed);
+      SendRollObject(-1,
+                     usePreDockPose,
+                     useApproachAngle,
+                     approachAngle_rad,
+                     useManualSpeed);
     }
 
     
     void UiGameController::SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
     {
       ExternalInterface::TraverseObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.usePreDockPose = usePreDockPose;
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TraverseObject(m);
       SendMessage(message);
@@ -1137,12 +1210,12 @@ namespace Anki {
       right = _robotStateMsg.rightWheelSpeed_mmps;
     }
     
-    u32 UiGameController::GetCarryingObjectID() const
+    s32 UiGameController::GetCarryingObjectID() const
     {
       return _robotStateMsg.carryingObjectID;
     }
     
-    u32 UiGameController::GetCarryingObjectOnTopID() const
+    s32 UiGameController::GetCarryingObjectOnTopID() const
     {
       return _robotStateMsg.carryingObjectOnTopID;
     }
