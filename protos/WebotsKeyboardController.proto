@@ -24,6 +24,14 @@ PROTO WebotsKeyboardController [
   # At 0, it won't turn at all.
   field SFFloat steeringCurvature 1.0
 
+  # Whether or not to use the specified approachAngle
+  field SFBool useApproachAngle FALSE
+  field SFFloat approachAngle_deg 0
+
+  # Whether or not to use the exact rotation as specified in exactPlacementRotation
+  field SFBool useExactPlacementRotation FALSE
+  field SFRotation exactPlacementRotation 0 0 1 0
+
   # Offset at which to place an object on the ground
   # when performing pickAndPlace on an object with placeObjectOnGroundIfCarrying enabled.
   # Only works if actually carrying an object!
