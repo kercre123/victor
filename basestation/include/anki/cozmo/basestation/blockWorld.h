@@ -124,13 +124,19 @@ namespace Anki
       // If ignoreIDs is not empty, then bounding boxes of blocks with an ID
       // present in the set will not be returned. Analogous behavior for
       // ignoreTypes/ignoreFamilies.
+      // Can also optionally take a std::function (e.g. a lambda) that checks the
+      // given ObservableObject and returns true/false. Objects for which the
+      // given function returns false will be excluded analogously to the "ignore"
+      // lists described above.
+      using FilterFunction = std::function<bool(ObservableObject*)>;
       void GetObjectBoundingBoxesXY(const f32 minHeight,
                                     const f32 maxHeight,
                                     const f32 padding,
                                     std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
                                     const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::Mat},
                                     const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                    const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>()) const;
+                                    const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
+                                    FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
 
       // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
       // of the given pose. Returns nullptr if no objects match. Returns closest
@@ -139,7 +145,8 @@ namespace Anki
                                             const Vec3f&  distThreshold,
                                             const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
                                             const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                            const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>()) const;
+                                            const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>(),
+                                            FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
       
       // Finds a matching object (one with the same type) that is closest to the
       // given object, within the specified distance and angle thresholds.
@@ -156,14 +163,16 @@ namespace Anki
                                    f32 padding_mm,
                                    const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::Mat},
                                    const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                   const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>()) const;
+                                   const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
+                                   FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
       
       void FindIntersectingObjects(const Quad2f& quad,
                                    std::vector<ObservableObject *> &intersectingExistingObjects,
                                    f32 padding,
                                    const std::set<ObjectFamily> &ignoreFamiles = {ObjectFamily::Mat},
                                    const std::set<ObjectType> &ignoreTypes = std::set<ObjectType>(),
-                                   const std::set<ObjectID> &ignoreIDs = std::set<ObjectID>()) const;
+                                   const std::set<ObjectID> &ignoreIDs = std::set<ObjectID>(),
+                                   FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
       
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
@@ -259,17 +268,7 @@ namespace Anki
       void FindOverlappingObjects(const ObservableObject* objectExisting,
                                   const std::multimap<f32, ObservableObject*>& objectsSeen,
                                   std::vector<ObservableObject*>& overlappingSeenObjects) const;
-      
-      // Finds existing objects whose XY bounding boxes intersect with objectSeen's
-      // XY bounding box, with the exception of those that are of ignoreFamilies or
-      // ignoreTypes.
-      void FindIntersectingObjects(const ObservableObject* objectSeen,
-                                   const std::set<ObjectFamily>& ignoreFamilies,
-                                   const std::set<ObjectType>& ignoreTypes,
-                                   const std::set<ObjectID>& ignoreIDs,
-                                   std::vector<ObservableObject*>& intersectingExistingObjects,
-                                   f32 padding_mm) const;
-      
+            
       // 1. Looks for objects that should have been seen (markers should have been visible
       //    but something was seen through/behind their last known location) and delete
       //    them.
@@ -303,6 +302,10 @@ namespace Anki
       
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
+      
+      // Default filtering function for public Find* calls
+      static bool DefaultFilterFcn(ObservableObject*) { return true; }
+
       //
       // Member Variables
       //

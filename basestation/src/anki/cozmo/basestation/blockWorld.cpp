@@ -267,7 +267,8 @@ namespace Cozmo {
                                              f32 padding_mm,
                                              const std::set<ObjectFamily>& ignoreFamiles,
                                              const std::set<ObjectType>& ignoreTypes,
-                                             const std::set<ObjectID>& ignoreIDs) const
+                                             const std::set<ObjectID>& ignoreIDs,
+                                             FilterFunction filterFcn) const
     {
       Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
       
@@ -276,7 +277,8 @@ namespace Cozmo {
                               padding_mm,
                               ignoreFamiles,
                               ignoreTypes,
-                              ignoreIDs);
+                              ignoreIDs,
+                              filterFcn);
       
     } // FindIntersectingObjects()
     
@@ -286,7 +288,8 @@ namespace Cozmo {
                                              f32 padding_mm,
                                              const std::set<ObjectFamily> &ignoreFamiles,
                                              const std::set<ObjectType> &ignoreTypes,
-                                             const std::set<ObjectID> &ignoreIDs) const
+                                             const std::set<ObjectID> &ignoreIDs,
+                                             FilterFunction filterFcn) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
@@ -299,7 +302,7 @@ namespace Cozmo {
               for(auto & objectAndId : objectsByType.second)
               {
                 const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                if(useID) {
+                if(useID && filterFcn(objectAndId.second)) {
                   ObservableObject* objExist = objectAndId.second;
                   
                   // Get quad of object and check for intersection
@@ -1172,7 +1175,8 @@ namespace Cozmo {
                                               std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
                                               const std::set<ObjectFamily>& ignoreFamiles,
                                               const std::set<ObjectType>& ignoreTypes,
-                                              const std::set<ObjectID>& ignoreIDs) const
+                                              const std::set<ObjectID>& ignoreIDs,
+                                              FilterFunction filterFcn) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
@@ -1185,7 +1189,7 @@ namespace Cozmo {
               for(auto & objectAndId : objectsByType.second)
               {
                 const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                if(useID)
+                if(useID && filterFcn(objectAndId.second))
                 {
                   ObservableObject* object = objectAndId.second;
                   if(object == nullptr) {
@@ -2284,10 +2288,11 @@ namespace Cozmo {
     }
     
     ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
-                                                              const Vec3f&  distThreshold,
-                                                              const std::set<ObjectID>& ignoreIDs,
-                                                              const std::set<ObjectType>& ignoreTypes,
-                                                              const std::set<ObjectFamily>& ignoreFamilies) const
+                                                      const Vec3f&  distThreshold,
+                                                      const std::set<ObjectID>& ignoreIDs,
+                                                      const std::set<ObjectType>& ignoreTypes,
+                                                      const std::set<ObjectFamily>& ignoreFamilies,
+                                                      FilterFunction filterFcn) const
     {
       // TODO: Keep some kind of OctTree data structure to make these queries faster?
       
@@ -2299,14 +2304,16 @@ namespace Cozmo {
           for(auto & objectsByType : objectsByFamily.second) {
             if(ignoreTypes.find(objectsByType.first) == ignoreTypes.end()) {
               for(auto & objectsByID : objectsByType.second) {
-                if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
+                if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end() &&
+                   filterFcn(objectsByID.second))
+                {
                   Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
                   dist.Abs();
                   if(dist.Length() < closestDist.Length()) {
                     closestDist = dist;
                     matchingObject = objectsByID.second;
                   }
-                } // ignoreIDs
+                } // ignoreIDs & filterFcn
               }
             } // ignoreTypes
           }
