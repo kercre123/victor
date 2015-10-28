@@ -200,7 +200,7 @@ public class GameActions : MonoBehaviour {
 
     DAS.Debug("GameActions", "PickUp");
 
-    robot.PickAndPlaceObject(selectedObject);
+    robot.PickupObject(selectedObject);
 
     if (CozmoBusyPanel.instance != null) {
       string desc = null;
@@ -232,7 +232,7 @@ public class GameActions : MonoBehaviour {
 
     DAS.Debug("GameActions", "Stack");
 
-    robot.PickAndPlaceObject(selectedObject);
+    robot.PickupObject(selectedObject);
 
     if (CozmoBusyPanel.instance != null) {
       string desc = null;

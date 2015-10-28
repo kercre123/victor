@@ -273,7 +273,7 @@ public class CozmoEmotionManager : MonoBehaviour {
         PlayAnimationMessage.robotID = robot.ID;
 
         GotoPoseMessage.level = 0;
-        GotoPoseMessage.useManualSpeed = 0;
+        GotoPoseMessage.useManualSpeed = false;
         GotoPoseMessage.x_mm = x_mm;
         GotoPoseMessage.y_mm = y_mm;
         GotoPoseMessage.rad = rad;
