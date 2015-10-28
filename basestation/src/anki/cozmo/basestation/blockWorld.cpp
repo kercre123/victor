@@ -2235,7 +2235,7 @@ namespace Cozmo {
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+        if(_robot->HasExternalInterface() && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
         {
           _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
             _robot->GetID(), object->GetID().GetValue()
