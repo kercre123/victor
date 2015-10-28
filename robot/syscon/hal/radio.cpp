@@ -33,16 +33,16 @@ extern GlobalDataToBody g_dataToBody;
   const uint8_t     cubePipe[] = {1,2,3,4};
 
   /* Robot #2 - C blocks
-   */
   #define CUBE_BASE_ADDR 0xC2
   #define ROBOT_ADDR 0xE7
   #define RADIO_CHANNEL 82
+   */
 
-  /* Robot #4 - A blocks
-  #define CUBE_BASE_ADDR 0xA2
-  #define ROBOT_ADDR 0xE6
-  #define RADIO_CHANNEL 84
+  /* Robot #5 - A blocks
   */  
+  #define CUBE_BASE_ADDR 0xA2
+  #define ROBOT_ADDR 0xE7
+  #define RADIO_CHANNEL 84
 #endif
 
 #define MAX_CUBES sizeof(cubePipe)
@@ -90,6 +90,7 @@ extern "C" void uesb_event_handler(void)
     UART::print("\r\nRx %x %2x: ", (uint8_t)addr, uesb_config.rx_address_prefix[addr+1]);
     UART::dump(rx_payload.length, (char*)rx_payload.data);
     #endif
+    // cubeTx[addr].ledStatus[0] ^= 0xFF;   // Blink when a packet is received
   }
   #ifdef RADIO_TIMING_TEST
   else

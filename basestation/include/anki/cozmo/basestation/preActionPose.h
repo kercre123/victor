@@ -64,6 +64,9 @@ namespace Anki {
       PreActionPose(const PreActionPose& canonicalPose,
                     const Pose3d& markerParentPose,
                     const f32 offset_mm = 0);
+
+      // Copy constructor
+      PreActionPose(const PreActionPose& other);
       
       // Get the type of action associated with this PreActionPose
       ActionType GetActionType() const;

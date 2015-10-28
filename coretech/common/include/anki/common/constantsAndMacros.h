@@ -130,18 +130,28 @@
 // UNIT CONVERSION MACROS
 //////////////////////////////////////////////////////////////////////////////
 
+#ifndef DEG_TO_RAD
 #define DEG_TO_RAD(deg) (((f64)deg)*0.017453292519943295474)
+#endif
+#ifndef DEG_TO_RAD_F32
 #define DEG_TO_RAD_F32(deg) (((f32)deg)*0.017453292519943295474f)
+#endif
 
+#ifndef RAD_TO_DEG
 #define RAD_TO_DEG(rad) (((f64)rad)*57.295779513082322865)
+#endif
 #define RAD_TO_DEG_F32(rad) (((f32)rad)*57.295779513082322865f)
 
 #define NANOS_TO_SEC(nanos) ((nanos) / 1000000000.0f)
 #define SEC_TO_NANOS(sec) ((sec) * 1000000000.0f)
 
 // Convert between millimeters and meters
+#ifndef M_TO_MM
 #define M_TO_MM(x) ( ((double)(x)) * 1000.0 )
+#endif
+#ifndef MM_TO_M
 #define MM_TO_M(x) ( ((double)(x)) / 1000.0 )
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // COMPARISON MACROS
@@ -152,34 +162,48 @@
 #define FLOATING_POINT_COMPARISON_TOLERANCE 1e-5f
 
 // TRUE if x is near y by the amount epsilon, else FALSE
+#ifndef FLT_NEAR
 #define FLT_NEAR(x,y) ( ((x)==(y)) || (((x) > (y)-(FLOATING_POINT_COMPARISON_TOLERANCE))      && ((x) < (y)+(FLOATING_POINT_COMPARISON_TOLERANCE))) )
+#endif
+#ifndef DBL_NEAR
 #define DBL_NEAR(x,y) ( ((x)==(y)) || (((x) > (y)-((f64)FLOATING_POINT_COMPARISON_TOLERANCE)) && ((x) < (y)+((f64)FLOATING_POINT_COMPARISON_TOLERANCE))) )
+#endif
 
 #ifndef NEAR
 #define NEAR(x,y,epsilon) ((x) == (y) || (((x) > (y)-(epsilon)) && ((x) < (y)+(epsilon))))
 #endif
 
 // TRUE if x is within FLOATING_POINT_COMPARISON_TOLERANCE of 0.0
+#ifndef NEAR_ZERO
 #define NEAR_ZERO(x) (NEAR(x, 0.0f, FLOATING_POINT_COMPARISON_TOLERANCE))
+#endif
 
 // TRUE if greater than the negative of the tolerance
 #define FLT_GTR_ZERO(x) ((x) >= -FLOATING_POINT_COMPARISON_TOLERANCE)
 
 // TRUE if x >= y - tolerance
+#ifndef FLT_GE
 #define FLT_GE(x,y) ((x) >= (y) || (((x) >= (y)-(FLOATING_POINT_COMPARISON_TOLERANCE))))
+#endif
 
 // TRUE if x - tolerance <= y
+#ifndef FLT_LE
 #define FLT_LE(x,y) ((x) >= (y) || (((x)-(FLOATING_POINT_COMPARISON_TOLERANCE) <= (y))))
+#endif
 
 // TRUE if val is within the range [minVal, maxVal], else FALSE
+#ifndef IN_RANGE
 #define IN_RANGE(val,minVal,maxVal) ((val) >= (minVal) && (val) <= (maxVal))
+#endif
 
 ///////////////////////////////////////////////////////////////////
 // MATH MACROS
 //////////////////////////////////////////////////////////////////
 
 // Returns the closest value within [lo, hi] to val
+#ifndef CLIP
 #define CLIP(val,lo,hi) (MIN(MAX((val),(lo)),(hi)))
+#endif
 
 // Max, min of two numbers and absolute value
 #ifndef MAX
@@ -193,7 +217,9 @@
 #endif
 
 // Square of a number
+#ifndef SQUARE
 #define SQUARE(x) ((x) * (x))
+#endif
 
 ///////////////////////////////////////////////////////////////////
 // OTHER MACROS (e.g. for more complex code generation)

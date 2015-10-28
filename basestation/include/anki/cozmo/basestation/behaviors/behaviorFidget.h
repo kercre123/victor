@@ -27,8 +27,6 @@ namespace Cozmo {
     
     virtual bool IsRunnable(double currentTime_sec) const override { return true; }
     
-    virtual bool GetRewardBid(Reward& reward) override;
-
   protected:
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
