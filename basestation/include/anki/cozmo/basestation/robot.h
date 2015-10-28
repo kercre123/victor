@@ -57,6 +57,7 @@
 #include <queue>
 #include <unordered_map>
 #include <time.h>
+#include <utility>
 
 #define ASYNC_VISION_PROCESSING 1
 
@@ -245,10 +246,7 @@ public:
     Result StartDrivingToPose(const std::vector<Pose3d>& poses,
                               size_t* selectedPoseIndex = nullptr,
                               bool useManualSpeed = false);
-    
-    // Executes a test path defined in latticePlanner
-    void ExecuteTestPath();
-
+  
     // This function checks the planning / path following status of the robot. See the enum definition for
     // details
     ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
@@ -344,10 +342,9 @@ public:
     // Vision
     //
     Result ProcessImage(const Vision::Image& image);
-    Result StartFaceTracking(u8 timeout_sec);
-    Result StopFaceTracking();
     Result StartLookingForMarkers();
     Result StopLookingForMarkers();
+    void SetupVisionHandlers(IExternalInterface& externalInterface);
 
     // Set how to save incoming robot state messages
     void SetSaveStateMode(const SaveMode_t mode);
@@ -405,8 +402,6 @@ public:
     
     Result StopAnimation();
 
-    void ReplayLastAnimation(const s32 loopCount);
-
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
 
@@ -425,20 +420,11 @@ public:
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
-
-    Result RequestImage(const ImageSendMode mode, const ImageResolution resolution) const;
     
     Result RequestIMU(const u32 length_ms) const;
 
-    // Tell the robot to start a given test mode
-    Result StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
-
     // For debugging robot parameters:
-    Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
-                                   const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
-    Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
-    Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
-    Result SetSteeringControllerGains(const f32 k1, const f32 k2);
+    void SetupGainsHandlers(IExternalInterface& externalInterface);
 
     // =========== Pose history =============
     
@@ -533,7 +519,13 @@ public:
     Result AbortAnimation();
     Result AbortDocking(); // a.k.a. PickAndPlace
     Result AbortDrivingToPose(); // stops planning and path following
-    
+  
+    template<typename T, typename... Args>
+    Result SendRobotMessage(Args&&... args)
+    {
+      return SendMessage(RobotInterface::EngineToRobot(T(std::forward<Args>(args)...)));
+    }
+  
     // Send a message to the physical robot
     Result SendMessage(const RobotInterface::EngineToRobot& message,
                        bool reliable = true, bool hot = false) const;
@@ -804,12 +796,7 @@ public:
 
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
-    
-    Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
 
-    Result SendDockWithObject(const DockAction dockAction,
-                              const bool useManualSpeed);
-    
     Result SendAbortDocking();
     Result SendAbortAnimation();
     

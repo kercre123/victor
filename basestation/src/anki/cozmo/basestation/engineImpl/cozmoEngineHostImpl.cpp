@@ -321,7 +321,7 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
       robot->GetBlockWorld().EnableDraw(true);
     }
 
-    robot->RequestImage(newMode, resolution);
+    robot->SendRobotMessage<RobotInterface::ImageRequest>(newMode, resolution);
   }
 
 }
@@ -381,7 +381,7 @@ void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::Me
       const ExternalInterface::StartTestMode& msg = event.GetData().Get_StartTestMode();
       Robot* robot = GetRobotByID(msg.robotID);
       if(robot != nullptr) {
-        robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
+        robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
       }
       break;
     }

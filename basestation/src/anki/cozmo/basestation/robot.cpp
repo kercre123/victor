@@ -127,11 +127,67 @@ namespace Anki {
       
       if (HasExternalInterface())
       {
+        SetupGainsHandlers(*_externalInterface);
+        SetupVisionHandlers(*_externalInterface);
+        
+        // Handle SetBehaviorSystemEnabled
         _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetBehaviorSystemEnabled,
-                                                               [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          _isBehaviorMgrEnabled = event.GetData().Get_SetBehaviorSystemEnabled().enabled;
-        }));
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            _isBehaviorMgrEnabled = event.GetData().Get_SetBehaviorSystemEnabled().enabled;
+          }));
+        
+        // Handle SetBackpackLights
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetBackpackLEDs,
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            const ExternalInterface::SetBackpackLEDs& msg = event.GetData().Get_SetBackpackLEDs();
+            SetBackpackLights(msg.onColor, msg.offColor,
+                              msg.onPeriod_ms, msg.offPeriod_ms,
+                              msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+          }));
+        
+        // Handle SetIdleAnimation
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetIdleAnimation,
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            const ExternalInterface::SetIdleAnimation& msg = event.GetData().Get_SetIdleAnimation();
+            _animationStreamer.SetIdleAnimation(msg.animationName);
+          }));
+        
+        // Handle ReplayLastAnimation
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReplayLastAnimation,
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            const ExternalInterface::ReplayLastAnimation& msg = event.GetData().Get_ReplayLastAnimation();
+            _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+          }));
+        
+        // Handle ExecuteTestPlan
+        // Executes a test path defined in latticePlanner
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ExecuteTestPlan,
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            Planning::Path p;
+            _longPathPlanner->GetTestPath(GetPose(), p);
+            ExecutePath(p);
+          }));
+        
+        // Handle SaveImages
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveImages,
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            const ExternalInterface::SaveImages& msg = event.GetData().Get_SaveImages();
+            _imageSaveMode = (SaveMode_t)msg.mode;
+          }));
+        
+        // Handle SaveRobotState
+        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveRobotState,
+          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+          {
+            const ExternalInterface::SaveRobotState& msg = event.GetData().Get_SaveRobotState();
+            _stateSaveMode = (SaveMode_t)msg.mode;
+          }));
       }
       
       _proceduralFace.MarkAsSentToRobot(false);
@@ -1276,13 +1332,6 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    void Robot::ExecuteTestPath()
-    {
-      Planning::Path p;
-      _longPathPlanner->GetTestPath(GetPose(), p);
-      ExecutePath(p);
-    }
-
     ERobotDriveToPoseStatus Robot::CheckDriveToPoseStatus() const
     {
       return _driveToPoseStatus;
@@ -1299,7 +1348,7 @@ namespace Anki {
       _usingManualPathSpeed = useManualSpeed;
       _lastPickOrPlaceSucceeded = false;
       
-      return SendPlaceObjectOnGround(0, 0, 0, useManualSpeed);
+      return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0, useManualSpeed);
     }
     
     u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
@@ -1364,11 +1413,6 @@ namespace Anki {
     Result Robot::StopAnimation()
     {
       return SendAbortAnimation();
-    }
-
-    void Robot::ReplayLastAnimation(const s32 loopCount)
-    {
-      _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, loopCount);
     }
 
     // Read the animations in a dir
@@ -1843,7 +1887,13 @@ namespace Anki {
       _usingManualPathSpeed = useManualSpeed;
       _lastPickOrPlaceSucceeded = false;
       
-      Result sendResult = SendDockWithObject(dockAction, useManualSpeed);
+      // Sends a message to the robot to dock with the specified marker
+      // that it should currently be seeing. If pixel_radius == u8_MAX,
+      // the marker can be seen anywhere in the image (same as above function), otherwise the
+      // marker's center must be seen at the specified image coordinates
+      // with pixel_radius pixels.
+      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, dockAction, useManualSpeed);
+      
       
       if(sendResult == RESULT_OK) {
         
@@ -1862,17 +1912,6 @@ namespace Anki {
       return sendResult;
     }
     
-    
-    // Sends a message to the robot to dock with the specified marker
-    // that it should currently be seeing. If pixel_radius == u8_MAX,
-    // the marker can be seen anywhere in the image (same as above function), otherwise the
-    // marker's center must be seen at the specified image coordinates
-    // with pixel_radius pixels.
-    Result Robot::SendDockWithObject(const DockAction dockAction,
-                                     const bool useManualSpeed)
-    {
-      return SendMessage(RobotInterface::EngineToRobot(::Anki::Cozmo::DockWithObject(0.0f, dockAction, useManualSpeed)));
-    }
     
     const std::set<ObjectID> Robot::GetCarryingObjects() const
     {
@@ -2146,12 +2185,6 @@ namespace Anki {
       return SendMessage(RobotInterface::EngineToRobot(RobotInterface::ExecutePath(_lastSentPathID, useManualSpeed)));
     }
     
-    Result Robot::SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        Anki::Cozmo::PlaceObjectOnGround(rel_x, rel_y, rel_angle, useManualSpeed)));
-    }
-    
     Result Robot::SendAbsLocalizationUpdate(const Pose3d&        pose,
                                             const TimeStamp_t&   t,
                                             const PoseFrameID_t& frameId) const
@@ -2284,18 +2317,6 @@ namespace Anki {
       return lastResult;
     }
     
-    Result Robot::StartFaceTracking(u8 timeout_sec)
-    {
-      _visionProcessor.EnableFaceDetection(true);
-      return RESULT_OK;
-    }
-    
-    Result Robot::StopFaceTracking()
-    {
-      _visionProcessor.EnableFaceDetection(false);
-      return RESULT_OK;
-    }
-    
     Result Robot::StartLookingForMarkers()
     {
       _visionProcessor.EnableMarkerDetection(true);
@@ -2307,7 +2328,46 @@ namespace Anki {
       _visionProcessor.EnableMarkerDetection(false);
       return RESULT_OK;
     }
+    
+    void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
+    {
+      // StartFaceTracking
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          _visionProcessor.EnableFaceDetection(true);
+        }));
       
+      // StopFaceTracking
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          _visionProcessor.EnableFaceDetection(false);
+        }));
+      
+      // StartLookingForMarkers
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartLookingForMarkers,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          StartLookingForMarkers();
+        }));
+      
+      // StopLookingForMarkers
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopLookingForMarkers,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          StopLookingForMarkers();
+        }));
+      
+      // VisionWhileMoving
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionWhileMoving,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
+          EnableVisionWhileMoving(msg.enable);
+        }));
+    }
+    
     /*
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D(), Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
@@ -2363,50 +2423,48 @@ namespace Anki {
     {
       return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
     }
-
-    Result Robot::SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
-                                          const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight)
+    
+    void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
     {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::ControllerGains(kpLeft, kiLeft, 0.0f, maxIntegralErrorLeft,
-          Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel
-        )));
-    }
+      // SetWheelControllerGains
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
+          
+          SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
+                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
+        }));
       
-    Result Robot::SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::ControllerGains(kp, ki, kd, maxIntegralError,
-          Anki::Cozmo::RobotInterface::ControllerChannel::controller_head
-        )));
-    }
-    
-    Result Robot::SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError)
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::ControllerGains(kp, ki, kd, maxIntegralError,
-          Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift
-        )));
-    }
-    
-    Result Robot::SetSteeringControllerGains(const f32 k1, const f32 k2)
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::ControllerGains(k1, k2, 0.0f, 0.0f,
-          Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing
-        )));
-    }
-
-    Result Robot::StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        StartControllerTestMode(p1, p2, p3, mode)));
-    }
-    
-    Result Robot::RequestImage(const ImageSendMode mode, const ImageResolution resolution) const
-    {
-      return SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::ImageRequest(mode, resolution)));
+      // SetHeadControllerGains
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
+          
+          SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
+                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
+        }));
+      
+      // SetLiftControllerGains
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
+          
+          SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
+                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
+        }));
+      
+      // SetSteeringControllerGains
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
+        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+        {
+          const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
+          
+          SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, 0.0f, 0.0f,
+                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing);
+        }));
     }
     
     Result Robot::RequestIMU(const u32 length_ms) const
