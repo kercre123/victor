@@ -257,7 +257,7 @@ MonoBehaviour:
   playButton: {fileID: 0}
   playAgainButton: {fileID: 0}
   resultsPanel: {fileID: 1370583926}
-  instructionsSound: {fileID: 8300000, guid: 8a00506d8b6b24bf2aaafa4692c7d712, type: 3}
+  instructionsSound: {fileID: 8300000, guid: 4e0ef8bd58053429f98cf3a18fad3589, type: 3}
   gameStartSound: {fileID: 8300000, guid: 8a00506d8b6b24bf2aaafa4692c7d712, type: 3}
   playerScoreSound: {fileID: 8300000, guid: 8a00506d8b6b24bf2aaafa4692c7d712, type: 3}
   playingLoopSound: {fileID: 8300000, guid: 8a00506d8b6b24bf2aaafa4692c7d712, type: 3}

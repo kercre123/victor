@@ -22,6 +22,10 @@ public class SpeedTapController : GameController {
 
   public event Action PlayerTappedBlockEvent;
 
+  public void RollingBlocks() {
+    AudioManager.PlayAudioClip(instructionsSound);
+  }
+
   public void PlayerTappedButton() {
     Debug.Log("Ima button tapped");
     if (PlayerTappedBlockEvent != null) {

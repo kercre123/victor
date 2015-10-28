@@ -141,6 +141,8 @@ public class SpeedTapStatePlayNewHand : State {
   }
 
   private void RollForLights() {
+    speedTapController.RollingBlocks();
+
     float matchExperiment = UnityEngine.Random.value;
     if (matchExperiment <= matchProbability) {
       // Do match
