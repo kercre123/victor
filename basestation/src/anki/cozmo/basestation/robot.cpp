@@ -44,6 +44,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 
 #include <fstream>
+#include <regex>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -1392,11 +1393,12 @@ namespace Anki {
 
     }
 
-
+    
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
       if (_dataPlatform == nullptr) { return; }
+      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
@@ -1408,7 +1410,8 @@ namespace Anki {
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
+          
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
             std::string fullFileName = animationFolder + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullFileName.c_str(), &attrib);
