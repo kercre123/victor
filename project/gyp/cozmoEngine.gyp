@@ -672,6 +672,7 @@
         'include_dirs': [
           '../../basestation/include',
           '../../include',
+          '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
         ],
