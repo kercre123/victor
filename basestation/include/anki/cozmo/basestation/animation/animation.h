@@ -17,7 +17,6 @@
 #ifndef ANKI_COZMO_CANNED_ANIMATION_H
 #define ANKI_COZMO_CANNED_ANIMATION_H
 
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/proceduralFace.h"

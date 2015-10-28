@@ -12,7 +12,6 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/vision/basestation/camera.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 
 namespace Anki {
   namespace Cozmo {

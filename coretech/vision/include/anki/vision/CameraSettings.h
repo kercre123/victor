@@ -9,7 +9,7 @@
 #ifndef ANKI_CAMERA_SETTINGS_H
 #define ANKI_CAMERA_SETTINGS_H
 
-#include "anki/types.h"
+#include "anki/common/types.h"
 
 namespace Anki {
   namespace Vision {

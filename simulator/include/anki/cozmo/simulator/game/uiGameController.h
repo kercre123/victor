@@ -9,7 +9,7 @@
 #ifndef __UI_GAME_CONTROLLER_H__
 #define __UI_GAME_CONTROLLER_H__
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "clad/externalInterface/messageEngineToGame.h"

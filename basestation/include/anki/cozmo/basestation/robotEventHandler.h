@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_RobotEventHandler_H__
 #define __Cozmo_Basestation_RobotEventHandler_H__
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 

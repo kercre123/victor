@@ -12,7 +12,7 @@
 #ifndef SOUND_MANAGER_H
 #define SOUND_MANAGER_H
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "clad/types/animationKeyFrames.h"
 
 #include <string>

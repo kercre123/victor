@@ -16,7 +16,6 @@
 
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"

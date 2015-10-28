@@ -1,4 +1,4 @@
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "clad/robotInterface/lightCubeMessage.h"
 #include "BlockMessages.h"
 #include <stdio.h>

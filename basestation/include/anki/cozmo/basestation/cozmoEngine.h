@@ -36,7 +36,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "json/json.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {

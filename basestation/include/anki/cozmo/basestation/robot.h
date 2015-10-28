@@ -33,7 +33,6 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/planning/shared/path.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
@@ -97,6 +96,12 @@ class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 
+typedef enum {
+  SAVE_OFF = 0,
+  SAVE_ONE_SHOT,
+  SAVE_CONTINUOUS
+} SaveMode_t;
+    
 namespace RobotInterface {
 class MessageHandler;
 class EngineToRobot;
