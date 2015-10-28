@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 #include "anki/cozmo/basestation/actionContainers.h"
+#include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
 #include "util/random/randomGenerator.h"
 #include "json/json.h"
 #include <set>
@@ -32,6 +33,7 @@ namespace Anki {
 namespace Cozmo {
   
   // Forward declarations
+  class MoodManager;
   class Robot;
   class Reward;
   namespace ExternalInterface {
@@ -81,13 +83,17 @@ namespace Cozmo {
     // as quickly as possible.
     Result Interrupt(double currentTime_sec);
     
-    // Figure out the reward this behavior will offer, given the robot's current
-    // state. Returns true if the Behavior is runnable, false if not. (In the
-    // latter case, the returned reward is not populated.)
-    virtual bool GetRewardBid(Reward& reward) = 0;
-    
     virtual const std::string& GetName() const { return _name; }
     virtual const std::string& GetStateName() const { return _stateName; }
+    
+    // EvaluateEmotionScore is a score directly based on the given emotion rules
+    float EvaluateEmotionScore(const MoodManager& moodManager) const;
+    
+    // EvaluateScore is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
+    virtual float EvaluateScore(const MoodManager& moodManager, double currentTime_sec) const { return IsRunnable(currentTime_sec) ? EvaluateEmotionScore(moodManager) : 0.0f; }
+
+    void ClearEmotionScorers()                         { _emotionScorers.clear(); }
+    void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
     
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
@@ -144,6 +150,8 @@ namespace Cozmo {
     
     std::string _name = "no_name";
     std::string _stateName = "";
+    
+    std::vector<EmotionScorer> _emotionScorers;
     
   private:
     

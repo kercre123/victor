@@ -38,7 +38,6 @@
 #include "clad/types/ledTypes.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
-#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
@@ -51,6 +50,7 @@
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -574,11 +574,13 @@ public:
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
     inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
-    
-    inline EmotionManager& GetEmotionManager() { return _emotionMgr; }
   
     inline MovementComponent& GetMoveComponent() { return _movementComponent; }
     inline const MovementComponent& GetMoveComponent() const { return _movementComponent; }
+
+    inline const MoodManager& GetMoodManager() const { return _moodManager; }
+    inline MoodManager& GetMoodManager() { return _moodManager; }
+  
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -606,7 +608,7 @@ public:
     MessageRobotState _robotStateForImage;
     bool              _haveNewImage = false;
 #   endif
-    
+  
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
@@ -773,8 +775,8 @@ public:
     s32 _numAnimationBytesStreamed = 0;
     u8  _animationTag              = 0;
     
-    ///////// Emotion ////////
-    EmotionManager _emotionMgr;
+    ///////// Mood/Emotions ////////
+    MoodManager      _moodManager;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending

@@ -10,6 +10,8 @@
 #include "hal/testport.h"
 #include "hal/uart.h"
 #include "hal/console.h"
+#include "hal/espressif.h"
+#include "hal/cube.h"
 #include "app/pcbTest.h"
 #include "app/fixture.h"
 #include <stdarg.h>
@@ -496,7 +498,7 @@ static BOOL TryToRunTests(void)
 static void MainExecution()
 {
   int i;
-  
+    
   switch (g_fixtureType)
   {
     case FIXTURE_BODY_TEST:
@@ -657,7 +659,7 @@ int main(void)
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  //GPIO_Init(GPIOA, &GPIO_InitStructure);
   
   // Initialize PB13-PB15 as the ID inputs with pullups
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
@@ -697,9 +699,12 @@ int main(void)
   InitMonitor();
 
   SlowPutString("Ready...\r\n");
-  
+
+  //InitCube();
+  //ProgramCube();
+
   STM_EVAL_LEDOn(LEDRED);
-  
+
   while (1)
   {  
     MainExecution();

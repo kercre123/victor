@@ -108,7 +108,7 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   return Result::RESULT_OK;
 }
   
-IBehavior* DemoBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
+IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const MoodManager& moodManager, double currentTime_sec) const
 {
   auto runnable = [currentTime_sec](const IBehavior* behavior)
   {

@@ -13,7 +13,6 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/emotionManager.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
@@ -24,6 +23,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include <opencv2/highgui/highgui.hpp>
+
+#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -43,6 +44,9 @@ namespace Cozmo {
       EngineToGameTag::RobotCompletedAction
     });
     
+    // Boredom and loneliness -> InteractWithFaces
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec)
@@ -285,7 +289,7 @@ namespace Cozmo {
             robot.GetMoveComponent().DisableTrackToFace();
             
             PlayAnimation(robot, "Demo_Face_Interaction_ShockedScared_A");
-            robot.GetEmotionManager().HandleEmotionalMoment(EmotionManager::EmotionEvent::CloseFace);
+            robot.GetMoodManager().AddToEmotion(EmotionType::Courage, -kEmotionChangeMedium, "CloseFace");
             _lastTooCloseScaredTime = currentTime_sec;
           }
         }
@@ -325,12 +329,6 @@ namespace Cozmo {
     _currentState = State::Interrupted;
     
     return RESULT_OK;
-  }
-  
-  bool BehaviorInteractWithFaces::GetRewardBid(Reward& reward)
-  {
-    // TODO: Fill reward  in...
-    return true;
   }
   
 #pragma mark -

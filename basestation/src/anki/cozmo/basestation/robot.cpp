@@ -46,6 +46,7 @@
 #include "util/helpers/templateHelpers.h"
 
 #include <fstream>
+#include <regex>
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -74,7 +75,7 @@ namespace Anki {
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _animationStreamer(_externalInterface, _cannedAnimations)
-    , _emotionMgr(*this)
+    , _moodManager()
     , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
@@ -112,8 +113,7 @@ namespace Anki {
 
       ReadAnimationDir();
       
-      // Read in emotion and behavior manager Json
-      Json::Value emotionConfig;
+      // Read in behavior manager Json
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
       {
@@ -125,17 +125,8 @@ namespace Anki {
                             "Behavior Json config file %s not found.",
                             jsonFilename.c_str());
         }
-        
-        jsonFilename = "config/basestation/config/emotion_config.json";
-        success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, emotionConfig);
-        if (!success)
-        {
-          PRINT_NAMED_ERROR("Robot.EmotionConfigJsonNotFound",
-                            "Emotion Json config file %s not found.",
-                            jsonFilename.c_str());
-        }
       }
-      _emotionMgr.Init(emotionConfig);
+      //_moodManager.Init(moodConfig); // [MarkW:TODO] Replace emotion_config.json, also, wouldn't this be the same config for each robot? Load once earlier?
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
@@ -978,7 +969,7 @@ namespace Anki {
       
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
-      _emotionMgr.Update(currentTime);
+      _moodManager.Update(currentTime);
       
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
@@ -1441,11 +1432,12 @@ namespace Anki {
 
     }
 
-
+    
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
     {
       if (_dataPlatform == nullptr) { return; }
+      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
       SoundManager::getInstance()->LoadSounds(_dataPlatform);
       FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_dataPlatform);
       
@@ -1457,7 +1449,8 @@ namespace Anki {
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
+          
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
             std::string fullFileName = animationFolder + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullFileName.c_str(), &attrib);

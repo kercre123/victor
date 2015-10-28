@@ -52,6 +52,8 @@ namespace Cozmo {
     AddFidget("Stretch", [](){return new PlayAnimationAction("Stretch");}, 0);
     AddFidget("Sneeze", [](){return new PlayAnimationAction("Sneeze");}, 0);
     
+    // Bored -> Fidget
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.1f}}), false));
   }
   
   void BehaviorFidget::AddFidget(const std::string& name, MakeFidgetAction fcn,
@@ -129,14 +131,6 @@ namespace Cozmo {
     // TODO: Is there any cleanup that needs to happen?
     
     return RESULT_OK;
-  }
-  
-  bool BehaviorFidget::GetRewardBid(Reward& reward)
-  {
-    
-    // TODO: Fill in reward value
-    
-    return true;
   }
   
   

@@ -37,7 +37,7 @@ namespace Cozmo {
   , _inactionStartTime(0)
   {
     _name = "OCD";
-  
+    
     SubscribeToTags({
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -46,6 +46,9 @@ namespace Cozmo {
       EngineToGameTag::BlockPlaced
     });
     
+    // Boredom and loneliness -> OCD
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
   }
   
 #pragma mark -
@@ -172,14 +175,6 @@ namespace Cozmo {
   {
     _interrupted = true;
     return RESULT_OK;
-  }
-  
-  bool BehaviorOCD::GetRewardBid(Reward& reward)
-  {
-    
-    // TODO: Fill in reward
-    
-    return true;
   }
   
   void BehaviorOCD::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
@@ -429,7 +424,7 @@ namespace Cozmo {
     }
     
     robot.GetActionList().Cancel(_lastActionTag);
-    IActionRunner* pickupAction = new DriveToPickAndPlaceObjectAction(_objectToPickUp, false);
+    IActionRunner* pickupAction = new DriveToPickupObjectAction(_objectToPickUp);
     _lastActionTag = pickupAction->GetTag();
     robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupAction);
     
@@ -562,7 +557,7 @@ namespace Cozmo {
         
         if(_objectToPlaceOn.IsSet()) {
           // Found a neat object with nothing on top. Stack on top of it:
-          placementAction = new DriveToPickAndPlaceObjectAction(_objectToPlaceOn, true);
+          placementAction = new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn);
           BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO", "Chose to place on top of object %d.",
                            _objectToPlaceOn.GetValue());
         } else {
@@ -586,13 +581,7 @@ namespace Cozmo {
             }
 
             // Place block at specified offset from lastObjectPlacedOnGround.
-            placementAction = new DriveToPickAndPlaceObjectAction(_lastObjectPlacedOnGround,
-                                                                  true,
-                                                                  false,
-                                                                  kLowPlacementOffsetMM,
-                                                                  0,
-                                                                  0,
-                                                                  true);
+            placementAction = new DriveToPlaceRelObjectAction(_lastObjectPlacedOnGround, kLowPlacementOffsetMM);
 
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
                              "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)",
