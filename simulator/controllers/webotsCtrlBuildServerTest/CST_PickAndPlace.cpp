@@ -81,7 +81,7 @@ namespace Cozmo {
           CST_ASSERT(_pickupBlockID >= 0, "Failed to find closest object to robot");
           
           PRINT_NAMED_INFO("CST_PickAndPlace.VerifyBlocks.PickingUpBlock", "%d", _pickupBlockID);
-          SendPickAndPlaceObject(_pickupBlockID, true);
+          SendPickupObject(_pickupBlockID, true);
           
           _observedNewObject = false;
           _lastActionSucceeded = false;
@@ -109,7 +109,7 @@ namespace Cozmo {
           CST_ASSERT(_placeBlockID >= 0, "Failed to find closest object to robot");
           
           PRINT_NAMED_INFO("CST_PickAndPlace.PickupBlock.PlacingBlock", "%d", _placeBlockID);
-          SendPickAndPlaceObject(_placeBlockID, true);
+          SendPlaceOnObject(_placeBlockID, true);
           
           _lastActionSucceeded = false;
           _testState = TestState::PlaceBlock;

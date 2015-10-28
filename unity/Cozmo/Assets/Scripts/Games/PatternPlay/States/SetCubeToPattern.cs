@@ -18,11 +18,12 @@ public class SetCubeToPattern : State {
   public override void Update() {
     base.Update();
     SetPattern();
-    stateMachine.SetNextState(new PlaceCube());
+    stateMachine.SetNextState(new LookAtPatternConstruction());
   }
 
   void SetPattern() {
     int heldObjectID = patternPlayAutoBuild.GetHeldObject().ID;
     patternPlayAutoBuild.SetBlockLightsToPattern(heldObjectID);
+    patternPlayAutoBuild.PlaceBlockSuccess();
   }
 }

@@ -57,6 +57,20 @@ public class PatternPlayController : GameController {
       lightCount--;
     }
 
+    if (robot.activeBlocks[blockID].Rotation.eulerAngles.z > 80.0f) {
+      blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData[blockID].blockLightsLocalSpace);
+    }
+
+    if (robot.activeBlocks[blockID].Rotation.eulerAngles.z > 170.0f) {
+      blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData[blockID].blockLightsLocalSpace);
+    }
+
+    if (robot.activeBlocks[blockID].Rotation.eulerAngles.z > 260.0f) {
+      blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData[blockID].blockLightsLocalSpace);
+    }
+
+    Debug.Log(robot.activeBlocks[blockID].Rotation.eulerAngles.z);
+
   }
 
   public Robot GetRobot() {
@@ -126,7 +140,7 @@ public class PatternPlayController : GameController {
     robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
     robot.ExecuteBehavior(BehaviorType.NoneBehavior);
 
-    patternPlayUIController.OnPatternMemoryLoaded (memoryBank);
+    patternPlayUIController.Initialize(memoryBank);
   }
 
   protected override void OnDisable() {
@@ -372,15 +386,6 @@ public class PatternPlayController : GameController {
     }
 
     previousInputID = currentInputID;
-  }
-
-  private bool NextBlockConfig(ActiveBlock activeBlock) {
-    if (blockPatternData[activeBlock.ID].lastFrameZAccel < -2.0f && activeBlock.zAccel > 2.0f) {
-      blockPatternData[activeBlock.ID].lastFrameZAccel = activeBlock.zAccel;
-      return true;
-    }
-    blockPatternData[activeBlock.ID].lastFrameZAccel = activeBlock.zAccel;
-    return false;
   }
 
   private void BlockTapped(int blockID, int tappedTimes) {

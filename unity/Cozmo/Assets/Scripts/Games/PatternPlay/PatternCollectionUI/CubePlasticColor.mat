@@ -19,7 +19,7 @@ Material:
         first:
           name: _MainTex
         second:
-          m_Texture: {fileID: 0}
+          m_Texture: {fileID: 2800000, guid: dc59a930cb18e435bb1f7e8578b61ef7, type: 3}
           m_Scale: {x: 1, y: 1}
           m_Offset: {x: 0, y: 0}
       data:
@@ -93,6 +93,10 @@ Material:
         second: .5
       data:
         first:
+          name: PixelSnap
+        second: 0
+      data:
+        first:
           name: _Parallax
         second: .0199999996
       data:
@@ -127,6 +131,38 @@ Material:
         first:
           name: _Metallic
         second: 0
+      data:
+        first:
+          name: _Stencil
+        second: 0
+      data:
+        first:
+          name: _StencilComp
+        second: 8
+      data:
+        first:
+          name: _StencilOp
+        second: 0
+      data:
+        first:
+          name: _StencilReadMask
+        second: 255
+      data:
+        first:
+          name: _StencilWriteMask
+        second: 255
+      data:
+        first:
+          name: _ColorMask
+        second: 15
+      data:
+        first:
+          name: _Opacity
+        second: 1
+      data:
+        first:
+          name: _Desaturation
+        second: 1
     m_Colors:
       data:
         first:
