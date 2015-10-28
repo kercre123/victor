@@ -1149,7 +1149,7 @@ namespace Cozmo {
       // yet seen the mat it is on. (For example, robot see side of platform
       // and localizes to it because it hasn't seen a marker on the flat mat
       // it is driving on.)
-      if(_robot->IsLocalized())
+      if(_robot->GetLocalizedTo().IsSet())
       {
         const ObservableObject* object = GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat);
         if(nullptr != object) // If the object localized to exists in the Mat family
@@ -1305,7 +1305,7 @@ namespace Cozmo {
         else {
           // If the robot is NOT "on" any of the mats it is seeing...
           
-          if(_robot->IsLocalized()) {
+          if(_robot->GetLocalizedTo().IsSet()) {
             // ... and the robot is already localized, then see if it is
             // localized to one of the mats it is seeing (but not "on")
             // Note that we must match seen and existing objects by their pose
@@ -1813,7 +1813,7 @@ namespace Cozmo {
       
       // Check if the obstacle intersects with any other existing objects in the scene.
       BlockWorldFilter filter;
-      if(_robot->IsLocalized()) {
+      if(_robot->GetLocalizedTo().IsSet()) {
         // Ignore the mat object that the robot is localized to (?)
         filter.AddIgnoreID(_robot->GetLocalizedTo());
       }
@@ -2691,7 +2691,7 @@ namespace Cozmo {
       } // if selected object is set
       
       // (Re)Draw the localization object separately so we can show it in a different color
-      if(_robot->IsLocalized()) {
+      if(_robot->GetLocalizedTo().IsSet()) {
         const Vision::ObservableObject* locObject = GetObjectByID(_robot->GetLocalizedTo());
         locObject->Visualize(NamedColors::LOCALIZATION_OBJECT);
       }

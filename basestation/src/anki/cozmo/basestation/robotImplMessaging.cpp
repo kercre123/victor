@@ -208,13 +208,13 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
       // again.
       object->Delocalize();
       
-      // If this is the object we were localized to, we are now delocalized
+      // If this is the object we were localized to, unset our localizedToID.
+      // Note we are still "localized" by odometry, however.
       if(GetLocalizedTo() == object->GetID()) {
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingRobot",
-                         "Delocalizing robot %d, which is currently localized %s "
-                         "%d, which reported being moved.",
-                         GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-        Delocalize();
+        PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.UnsetLocalzedToID",
+                         "Unsetting %s %d, which moved, as robot %d's localization object.",
+                         ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
+        SetLocalizedTo(nullptr);
       }
     }
     
@@ -260,13 +260,13 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
       // that we've gotten the stopped-moving message.
       object->Delocalize();
       
-      // If this is the object we were localized to, we are now delocalized
+      // If this is the object we were localized to, unset our localizedToID.
+      // Note we are still "localized" by odometry, however.
       if(GetLocalizedTo() == object->GetID()) {
-        PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.DelocalizingRobot",
-                         "Delocalizing robot %d, which is currently localized %s "
-                         "%d, which reported stopping moving.",
-                         GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-        Delocalize();
+        PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnsetLocalzedToID",
+                         "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
+                         ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
+        SetLocalizedTo(nullptr);
       }
     }
     

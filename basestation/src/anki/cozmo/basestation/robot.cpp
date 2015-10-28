@@ -85,6 +85,12 @@ namespace Anki {
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
+      
+      // Delocalize will mark isLocalized as false, but we are going to consider
+      // the robot localized (by odometry alone) to start, until he gets picked up.
+      _isLocalized = true;
+      SetLocalizedTo(nullptr);
+      
       InitRobotMessageComponent(_msgHandler,robotID);
       
       if (HasExternalInterface())
@@ -189,6 +195,7 @@ namespace Anki {
     {
       PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
       
+      _isLocalized = false;
       _localizedToID.UnSet();
       _localizedToFixedObject = false;
       _localizedMarkerDistToCameraSq = -1.f;
@@ -221,13 +228,13 @@ namespace Anki {
                                          _poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
     } // Delocalize()
-
+    
     Result Robot::SetLocalizedTo(const ObservableObject* object)
     {
       if(object == nullptr) {
-        PRINT_NAMED_WARNING("Robot.SetLocalizedTo.NullPtr",
-                            "SetLocalizedTo called with nullptr object, delocalizing!\n");
-        Delocalize();
+        VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                           "LocalizedTo: Odometry");
+        _localizedToID.UnSet();
         return RESULT_OK;
       }
       
@@ -258,6 +265,7 @@ namespace Anki {
       
       _localizedToID = object->GetID();
       _hasMovedSinceLocalization = false;
+      _isLocalized = true;
       
       // Update VizText
       VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
@@ -2170,41 +2178,9 @@ namespace Anki {
           // Don't remain localized to an object if we are now carrying it
           if(_carryingObjectID == GetLocalizedTo())
           {
-            // See if there's another object we can switch our localization to.
-            // We will find the object closest to our pose that's active and
-            // can be used for localization.
-            BlockWorldFilter filter;
-            filter.AddIgnoreID(_carryingObjectID);
-            filter.SetIgnoreFamilies({ // Ignore objects we can't localize to
-              ObjectFamily::Block,
-              ObjectFamily::Charger, // If the charger ends up getting an accelerometer, we *could* use it...
-              ObjectFamily::Invalid,
-              ObjectFamily::MarkerlessObject,
-              ObjectFamily::Ramp,
-              ObjectFamily::Unknown
-            });
-            filter.SetFilterFcn([](ObservableObject* obj) { return obj->CanBeUsedForLocalization(); });
-            //ObservableObject* nearbyObject = _blockWorld.FindObjectClosestTo(GetPose(), 1000.f, filter);
-            ObservableObject* locObject = _blockWorld.FindMostRecentlyObservedObject(filter);
-            
-            if(nullptr != locObject &&
-               RESULT_OK == LocalizeToObject(nullptr, locObject))
-            {
-              assert(locObject->IsActive());
-              
-              PRINT_NAMED_INFO("Robot.SetCarryingObject.Delocalize",
-                               "Switching robot %d's localization from object %d, "
-                               "which is now being carried, to object %d.",
-                               GetID(), _carryingObjectID.GetValue(),
-                               locObject->GetID().GetValue());
-              
-            } else {
-              // If not, just delocalize
-              PRINT_NAMED_INFO("Robot.SetCarryingObject.Delocalize",
-                               "Delocalizing robot %d from object %d, which it is now carrying.",
-                               GetID(), _carryingObjectID.GetValue());
-              Delocalize();
-            }
+            // Note that the robot may still remaing localized (based on its
+            // odometry), but just not *to an object*
+            SetLocalizedTo(nullptr);
           } // if(_carryingObjectID == GetLocalizedTo())
           
           // Tell the robot it's carrying something

@@ -133,13 +133,13 @@ public:
     //
     // Localization
     //
-    bool                   IsLocalized()     const {return _localizedToID.IsSet();}
+    bool                   IsLocalized()     const;
     void                   Delocalize();
       
     // Get the ID of the object we are localized to
     const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
       
-    // Set the object we are localized to
+    // Set the object we are localized to. Use nullptr to UnSet the localizedTo object.
     Result                 SetLocalizedTo(const ObservableObject* object);
   
     // Has the robot moved since it was last localized
@@ -656,6 +656,7 @@ public:
     PoseFrameID_t     _frameId = 0;
     ObjectID          _localizedToID;       // ID of mat object robot is localized to
     bool              _hasMovedSinceLocalization = false;
+    bool              _isLocalized = true;  // May be true even if not localized to an object, if robot has not been picked up
     bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
     f32               _localizedMarkerDistToCameraSq; // Stores (squared) distance to the closest observed marker of the object we're localized to
 
@@ -949,7 +950,14 @@ inline bool Robot::HasMovedSinceBeingLocalized() const {
   return _hasMovedSinceLocalization;
 }
   
+inline bool Robot::IsLocalized() const {
   
+  ASSERT_NAMED(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
+               "Robot can't think it is localized and have localizedToID set!");
+  
+  return _isLocalized;
+}
+
 } // namespace Cozmo
 } // namespace Anki
 
