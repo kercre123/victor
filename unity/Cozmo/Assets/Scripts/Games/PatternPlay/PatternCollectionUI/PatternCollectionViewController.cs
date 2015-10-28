@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class PatternCollectionViewController : MonoBehaviour {
 
@@ -107,6 +108,12 @@ public class PatternCollectionViewController : MonoBehaviour {
   private void OnDiscoveryDialogClosed() {
     // Update badge visuals
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+
+    float targetScale = 0.2f;
+    Tweener buttonTweener = _buttonBadgeDisplay.gameObject.transform.DOPunchScale(new Vector3(targetScale, targetScale, targetScale),
+                                                                             0.5f,
+                                                                             15);
+    buttonTweener.Play ();
   }
   #endregion
 
