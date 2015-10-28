@@ -169,6 +169,7 @@ void SelfTest()
 // Run tests
 void RunTests()
 {
+#ifndef DISABLE_PINWHEEL
   // Do startup light sequence //
   u8 i;
   for(i = 0; i<12; i++)
@@ -176,6 +177,7 @@ void RunTests()
     LightOn(i);
     delay_ms(50);
   }
+#endif  
   LightsOff();
   SelfTest();
   StreamAccelerometer();

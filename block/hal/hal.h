@@ -9,10 +9,13 @@
 
 // XXX: if timeout, don't send data back
 
+// A2-A5 = channel 84
+// C2-C5 = channel 82
 #define BLOCK_ID 0xC3
 #define COMM_CHANNEL 82
 #define TAP_THRESH 10
 
+#define DISABLE_PINWHEEL
 //#define DO_SIMPLE_LED_TEST
 //#define DO_LED_TEST
 //#define DO_TAPS_TEST

@@ -147,7 +147,9 @@ void main(void)
 
 
   #ifndef DO_MISSED_PACKET_TEST
+#ifndef DISABLE_PINWHEEL
   LightOn(3); // No sync light
+#endif
   // Initalize Radio Sync Timer 
   InitTimer0();
   TR0 = 0; // Turn timer off
