@@ -13,6 +13,8 @@
 
 #include "anki/common/shared/utilities_shared.h"
 
+#include "util/logging/logging.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -41,7 +43,6 @@ namespace Anki {
   void RenormalizeHelper(RotationMatrixBase<3>& R)
   {
     // Convert to and from a rotation vector to get a valid orthogonal matrix
-    // TODO: consider using Quaternions instead?
 #if ANKICORETECH_USE_OPENCV
     cv::Vec3f cvRvec;
     cv::Rodrigues(R.get_CvMatx_(), cvRvec); // to rotation vector
@@ -220,8 +221,13 @@ namespace Anki {
   , _axis(axisIn)
   {
     f32 axisLength = _axis.MakeUnitLength();
-    if(axisLength != 1.f) {
-      // TODO: Issue a warning that axis provided was not unit length?
+    if(_angle == 0 && axisLength == 0) {
+      // If angle is zero and axis is unspecified, then the axis is arbitrary
+      _axis = X_AXIS_3D();
+    } else if(!NEAR(axisLength, 1.f, 1e-6)) {
+      PRINT_NAMED_WARNING("RotationVector3d.Constructor.AxisNotUnitLength",
+                          "Provided axis was not unit length (norm=%f).",
+                          axisLength);
     }
   }
   
@@ -502,9 +508,6 @@ namespace Anki {
 #endif
   
   template<typename T>
-  T UnitQuaternion<T>::NormalizationTolerance = 1000.f * std::numeric_limits<T>::epsilon();
-  
-  template<typename T>
   UnitQuaternion<T>::UnitQuaternion()
   : Point<4,T>(1,0,0,0)
   {
@@ -528,8 +531,19 @@ namespace Anki {
   template<typename T>
   UnitQuaternion<T>& UnitQuaternion<T>::Normalize()
   {
-    if(Point<4,T>::MakeUnitLength() == 0) {
-      CORETECH_THROW("Tried to normalize an all-zero UnitQuaternion.\n");
+    const double qmagsq = Point<4,T>::LengthSq();
+    
+    ASSERT_NAMED(qmagsq != 0, "Tried to normalize an all-zero UnitQuaternion.\n");
+    
+    if (std::abs(1.0 - qmagsq) < 2.107342e-08) {
+      // This is an approximation of dividing by the square root, when the
+      // squared magnitude of the quaternion is small enough.
+      // See: http://stackoverflow.com/questions/11667783/quaternion-and-normalization
+      Point<4,T>::operator*=(2.0 / (1.0 + qmagsq));
+    }
+    else {
+      // Otherwise, divide by the square root.
+      Point<4,T>::operator/=(std::sqrt(qmagsq));
     }
     
     return *this;
@@ -575,13 +589,6 @@ namespace Anki {
     this->z() = zNew;
     
     Normalize();
-    /*
-     // TODO: Only normalize when things get outside some tolerance?
-    const T newLength = Point<4,T>::Length();
-    if(!NEAR(newLength, 1.f, UnitQuaternion<T>::NormalizationTolerance)) {
-      Point<4,T>::operator/=(newLength);
-    }
-     */
     
     return *this;
   }
@@ -686,18 +693,12 @@ namespace Anki {
     // See also:
     // "Metrics for 3D Rotations: Comparison and Analysis", Du Q. Huynh
     //
-    // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
-    //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
-    //
-    // const Radians angleDiff( 2.f*std::acos(std::abs(DotProduct(qThis, qOther))) );
-    //
     
     // R = R_this * R_other^T
     RotationMatrix3d R;
     other.GetTranspose(R);
     R.PreMultiplyBy(*this);
     
-    //const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
     return R.GetAngle();
   }
   
@@ -869,9 +870,8 @@ namespace Anki {
     cvRvec *= Rvec_in.GetAngle().ToFloat();
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
-    
     assert(false);
-    // TODO: implement our own version?
+    // TODO: implement our own version of Rodrigues formula?
 #endif
     
   } // Rodrigues(Rvec, Rmat)
@@ -888,9 +888,7 @@ namespace Anki {
     Rvec_out = RotationVector3d(tempVec);
 #else
     assert(false);
-    
-    // TODO: implement our own version?
-    
+    // TODO: implement our own version of Rodrigues formula?
 #endif
     
   } // Rodrigues(Rmat, Rvec)

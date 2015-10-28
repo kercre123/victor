@@ -33,6 +33,9 @@ namespace Anki {
 #pragma mark -
 #pragma mark IKeyFrame
     
+    // Static initialization
+    Util::RandomGenerator IKeyFrame::sRNG;
+    
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
     , _isValid(false)
@@ -111,7 +114,7 @@ return RESULT_FAIL; \
       
       // Add variability:
       if(_angleVariability_deg > 0) {
-        _streamHeadMsg.angle_deg = static_cast<s8>(_rng.RandIntInRange(_angle_deg - _angleVariability_deg,
+        _streamHeadMsg.angle_deg = static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
                                                                        _angle_deg + _angleVariability_deg));
       } else {
         _streamHeadMsg.angle_deg = _angle_deg;
@@ -149,8 +152,8 @@ return RESULT_FAIL; \
       
       // Add variability:
       if(_heightVariability_mm > 0) {
-        _streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(_rng.RandIntInRange(_height_mm - _heightVariability_mm,
-                                                                       _height_mm + _heightVariability_mm));
+        _streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(GetRNG().RandIntInRange(_height_mm - _heightVariability_mm,
+                                                                                    _height_mm + _heightVariability_mm));
       } else {
         _streamLiftMsg.height_mm = _height_mm;
       }
@@ -503,7 +506,7 @@ return RESULT_FAIL; \
           // Special case: there's only one audio option 
           _selectedAudioIndex = 0;
         } else {
-          _selectedAudioIndex = _rng.RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+          _selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
         }
       }
       

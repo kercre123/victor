@@ -123,6 +123,8 @@ namespace Anki {
     inline T y() const { return this->operator[](2); }
     inline T z() const { return this->operator[](3); }
     
+    // Note: if you use these accessors to set an individual element of the
+    // quaternion, it is YOUR responsibility to renormalize!
     inline T& w() { return this->operator[](0); }
     inline T& x() { return this->operator[](1); }
     inline T& y() { return this->operator[](2); }
@@ -143,10 +145,6 @@ namespace Anki {
     // Conjugate
     UnitQuaternion<T>& Conj(); // in place
     UnitQuaternion<T>  GetConj() const;
-    
-    // How far from unit length the quaternion needs to get in order to trigger
-    // a renormalization
-    static T NormalizationTolerance;
     
   }; // class UnitQuaternion
   
@@ -242,6 +240,21 @@ namespace Anki {
     template<char AXIS>
     Radians GetAngleAroundAxis() const;
     
+    // Get the angular difference between the given parent axis and its rotated version.
+    // AXIS can by 'X', 'Y', or 'Z'
+    template<char AXIS>
+    Radians GetAngularDeviationFromParentAxis() const;
+
+    // Get the angle of rotation _around_ the given axis in the _parent_ frame.
+    // AXIS can be 'X', 'Y', or 'Z'
+    template<char AXIS>
+    Radians GetAngleAroundParentAxis() const;
+    
+  private:
+    
+    template<char AXIS>
+    std::pair<char, f32> GetRotatedParentAxis() const;
+    
   }; // class RotationMatrix3d
   
   // Rodrigues' formula for converting between angle+axis representation and 3x3
@@ -253,18 +266,7 @@ namespace Anki {
                        RotationVector3d &Rvec_out);
 
   
-#pragma mark --- Inline Implementations ---
-  /*
-  inline Radians RotationMatrix3d::GetAngle(void) const
-  {
-    return this->rotationVector.GetAngle();
-  }
-  
-  inline Vec3f RotationMatrix3d::get_axis(void) const
-  {
-    return this->rotationVector.get_axis();
-  }
-   */
+#pragma mark --- Inlined / Templated Implementations ---
   
   inline Radians RotationVector3d::GetAngle(void) const {
     return _angle;
@@ -286,6 +288,55 @@ namespace Anki {
     angle = _angle;
   }
   
+  template<char parentAxis>
+  std::pair<char, f32> RotationMatrix3d::GetRotatedParentAxis() const
+  {
+    // Figure out which axis in the rotated frame corresponds to the given
+    // axis in the parent frame
+    const Point3f row = GetRow(AxisToIndex<parentAxis>());
+    char rotatedAxis = 'X'; // assume X axis to start
+    f32 maxVal = std::abs(row.x());
+    if(std::abs(row.y()) > maxVal) {
+      maxVal = std::abs(row.y());
+      rotatedAxis = 'Y';
+    }
+    if(std::abs(row.z()) > maxVal) {
+      maxVal = std::abs(row.z());
+      rotatedAxis = 'Z';
+    }
+    
+    return std::move(std::make_pair(rotatedAxis, maxVal));
+  }
+
+  template<char parentAxis>
+  inline Radians RotationMatrix3d::GetAngularDeviationFromParentAxis() const
+  {
+    std::pair<char, f32> result = GetRotatedParentAxis<parentAxis>();
+    return std::acos(result.second);
+  }
+  
+  template<char parentAxis>
+  inline Radians RotationMatrix3d::GetAngleAroundParentAxis() const
+  {
+    std::pair<char, f32> result = GetRotatedParentAxis<parentAxis>();
+    
+    switch(result.first)
+    {
+      case 'X':
+        return GetAngleAroundXaxis();
+
+      case 'Y':
+        return GetAngleAroundYaxis();
+
+      case 'Z':
+        return GetAngleAroundZaxis();
+
+      default:
+        assert(false);
+    }
+    
+    return 0.f; // Should not get here
+  }
 
 
 } // namespace Anki

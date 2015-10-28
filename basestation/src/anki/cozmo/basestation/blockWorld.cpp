@@ -265,18 +265,14 @@ namespace Cozmo {
     void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
                                              std::vector<ObservableObject*>& intersectingExistingObjects,
                                              f32 padding_mm,
-                                             const std::set<ObjectFamily>& ignoreFamiles,
-                                             const std::set<ObjectType>& ignoreTypes,
-                                             const std::set<ObjectID>& ignoreIDs) const
+                                             const BlockWorldFilter& filter) const
     {
       Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
       
       FindIntersectingObjects(quadSeen,
                               intersectingExistingObjects,
                               padding_mm,
-                              ignoreFamiles,
-                              ignoreTypes,
-                              ignoreIDs);
+                              filter);
       
     } // FindIntersectingObjects()
     
@@ -284,22 +280,20 @@ namespace Cozmo {
     void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
                                              std::vector<ObservableObject *> &intersectingExistingObjects,
                                              f32 padding_mm,
-                                             const std::set<ObjectFamily> &ignoreFamiles,
-                                             const std::set<ObjectType> &ignoreTypes,
-                                             const std::set<ObjectID> &ignoreIDs) const
+                                             const BlockWorldFilter& filter) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
-        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
-        if(useFamily) {
+        if(filter.ConsiderFamily(objectsByFamily.first))
+        {
           for(auto & objectsByType : objectsByFamily.second)
           {
-            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
-            if(useType) {
+            if(filter.ConsiderType(objectsByType.first))
+            {
               for(auto & objectAndId : objectsByType.second)
               {
-                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                if(useID) {
+                if(filter.ConsiderObject(objectAndId.second))
+                {
                   ObservableObject* objExist = objectAndId.second;
                   
                   // If the pose is no longer valid for this object, don't consider it for intersection
@@ -409,11 +403,16 @@ namespace Cozmo {
               
               result = RESULT_FAIL;
             } else {
+              const Vec3f& T_old = object->GetPose().GetTranslation();
+              const Vec3f& T_new = newPose.GetTranslation();
               PRINT_NAMED_INFO("BlockWorld.UpdateObjectOrigins.ObjectOriginChanged",
-                               "Updating object %d's origin from %s to %s",
+                               "Updating object %d's origin from %s to %s. "
+                               "T_old=(%.1f,%.1f,%.1f), T_new=(%.1f,%.1f,%.1f)",
                                object->GetID().GetValue(),
                                oldOrigin->GetName().c_str(),
-                               newOrigin->GetName().c_str());
+                               newOrigin->GetName().c_str(),
+                               T_old.x(), T_old.y(), T_old.z(),
+                               T_new.x(), T_new.y(), T_new.z());
               
               object->SetPose(newPose, true);
               
@@ -425,6 +424,24 @@ namespace Cozmo {
     }
     
     return result;
+  }
+  
+  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
+  {
+    if(!object->GetID().IsSet()) {
+      object->SetID();
+    }
+    
+    // If this is a new active object, trigger an identification procedure
+    if(object->IsActive()) {
+      _unidentifiedActiveObjects.insert(object->GetID());
+      // Don't trigger identification while picking / placing
+      if(!_robot->IsPickingOrPlacing()) {
+        object->Identify();
+      }
+    }
+    
+    existingFamily[object->GetType()][object->GetID()] = object;
   }
   
     Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
@@ -640,11 +657,12 @@ namespace Cozmo {
                   }
                 }
               }
-            } else {
+            } else if(!_robot->IsPickingOrPlacing()) { // Don't do identification if picking and placing
               // Tick the fake identification process for any as-yet-unidentified active
               // objects. This is to simulate the fact that identification is not instantaneous
               // and is asynchronous.
               // TODO: Shouldn't need to do this once we have real block identification
+
               matchingObject->Identify();
             }
           } // if(matchingObject->IsActive())
@@ -698,7 +716,6 @@ namespace Cozmo {
           useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
-                                     objSeen->IsRestingFlat() &&
                                      matchingObject->CanBeUsedForLocalization() &&
                                      (_robot->IsLocalized() == false ||
                                       _robot->HasMovedSinceBeingLocalized()) );
@@ -748,17 +765,24 @@ namespace Cozmo {
           // update the object's pose.
           if(useThisObjectToLocalize)
           {
-            Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
-            if(localizeResult != RESULT_OK) {
-              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                                "Failed to localize to %s object %d.\n",
-                                ObjectTypeToString(matchingObject->GetType()),
-                                matchingObject->GetID().GetValue());
-              return localizeResult;
+            if (objSeen->IsRestingFlat()) {
+              assert(ActiveIdentityState::Identified == matchingObject->GetIdentityState());
+              Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
+              if(localizeResult != RESULT_OK) {
+                 PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                                   "Failed to localize to %s object %d.\n",
+                                   ObjectTypeToString(matchingObject->GetType()),
+                                   matchingObject->GetID().GetValue());
+                 return localizeResult;
+              }
+              
+              // So we don't do this again with a more distant object
+             haveLocalizedRobotToObject = true;
+            } else {
+              PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                               "Not localizing to object %d because it is not observed to be flat\n",
+                               matchingObject->GetID().GetValue());
             }
-            
-            // So we don't do this again with a more distant object
-            haveLocalizedRobotToObject = true;
             
           } else {
             matchingObject->SetPose( objSeen->GetPose(), distToObj );
@@ -1133,7 +1157,8 @@ namespace Cozmo {
 
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
-      std::set<ObjectID> ignoreIDs = _robot->GetCarryingObjects();
+      BlockWorldFilter filter;
+      filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingObjects()));
       
       // If the robot is localized, check to see if it is "on" the mat it is
       // localized to. If so, ignore the mat as an obstacle.
@@ -1142,21 +1167,25 @@ namespace Cozmo {
       // yet seen the mat it is on. (For example, robot see side of platform
       // and localizes to it because it hasn't seen a marker on the flat mat
       // it is driving on.)
-      if(_robot->IsLocalized()) {
-        const MatPiece* mat = dynamic_cast<const MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
-        if(mat != nullptr) {
-          if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
-            // Ignore the ID of the mat we're on
-            ignoreIDs.insert(_robot->GetLocalizedTo());
-            
-            // Add any "unsafe" regions this mat has
-            mat->GetUnsafeRegions(boundingBoxes, padding);
+      if(_robot->GetLocalizedTo().IsSet())
+      {
+        const ObservableObject* object = GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat);
+        if(nullptr != object) // If the object localized to exists in the Mat family
+        {
+          const MatPiece* mat = dynamic_cast<const MatPiece*>(object);
+          if(mat != nullptr) {
+            if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
+              // Ignore the ID of the mat we're on
+              filter.AddIgnoreID(_robot->GetLocalizedTo());
+              
+              // Add any "unsafe" regions this mat has
+              mat->GetUnsafeRegions(boundingBoxes, padding);
+            }
+          } else {
+            PRINT_NAMED_WARNING("BlockWorld.GetObstacles.DynamicCastFail",
+                                "Could not dynamic cast localization object %d to a Mat",
+                                _robot->GetLocalizedTo().GetValue());
           }
-        } else {
-          PRINT_NAMED_WARNING("BlockWorld.GetObstacles.LocalizedToNullMat",
-                              "Robot %d is localized to object ID=%d, but "
-                              "that object returned a NULL MatPiece pointer.\n",
-                              _robot->GetID(), _robot->GetLocalizedTo().GetValue());
         }
       }
       
@@ -1166,10 +1195,8 @@ namespace Cozmo {
       const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
       const f32 maxHeight = minHeight + _robot->GetHeight();
       
-      GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes,
-                               std::set<ObjectFamily>(),
-                               std::set<ObjectType>(),
-                               ignoreIDs);
+      GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes, filter);
+      
     } // GetObstacles()
     
     
@@ -1177,22 +1204,17 @@ namespace Cozmo {
                                               const f32 maxHeight,
                                               const f32 padding,
                                               std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
-                                              const std::set<ObjectFamily>& ignoreFamiles,
-                                              const std::set<ObjectType>& ignoreTypes,
-                                              const std::set<ObjectID>& ignoreIDs) const
+                                              const BlockWorldFilter& filter) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
-        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
-        if(useFamily) {
+        if(filter.ConsiderFamily(objectsByFamily.first)) {
           for(auto & objectsByType : objectsByFamily.second)
           {
-            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
-            if(useType) {
+            if(filter.ConsiderType(objectsByType.first)) {
               for(auto & objectAndId : objectsByType.second)
               {
-                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                if(useID)
+                if(filter.ConsiderObject(objectAndId.second))
                 {
                   ObservableObject* object = objectAndId.second;
                   if(object == nullptr) {
@@ -1302,7 +1324,7 @@ namespace Cozmo {
         else {
           // If the robot is NOT "on" any of the mats it is seeing...
           
-          if(_robot->IsLocalized()) {
+          if(_robot->GetLocalizedTo().IsSet()) {
             // ... and the robot is already localized, then see if it is
             // localized to one of the mats it is seeing (but not "on")
             // Note that we must match seen and existing objects by their pose
@@ -1809,14 +1831,12 @@ namespace Cozmo {
       
       
       // Check if the obstacle intersects with any other existing objects in the scene.
-      std::set<ObjectFamily> ignoreFamilies;
-      std::set<ObjectType> ignoreTypes;
-      std::set<ObjectID> ignoreIDs;
-      if(_robot->IsLocalized()) {
+      BlockWorldFilter filter;
+      if(_robot->GetLocalizedTo().IsSet()) {
         // Ignore the mat object that the robot is localized to (?)
-        ignoreIDs.insert(_robot->GetLocalizedTo());
+        filter.AddIgnoreID(_robot->GetLocalizedTo());
       }
-      FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
+      FindIntersectingObjects(m, existingObjects, 0, filter);
       if (!existingObjects.empty()) {
         delete m;
         return RESULT_OK;
@@ -2226,7 +2246,31 @@ namespace Cozmo {
         _didObjectsChange = true;
       }
     }
+  
+  ObservableObject* BlockWorld::FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter) const
+  {
+    ObservableObject* matchingObject = nullptr;
     
+    for(auto & objectsByFamily : _existingObjects) {
+      if(filter.ConsiderFamily(objectsByFamily.first)) {
+        for(auto & objectsByType : objectsByFamily.second) {
+          if(filter.ConsiderType(objectsByType.first)) {
+            for(auto & objectsByID : objectsByType.second) {
+              if(filter.ConsiderObject(objectsByID.second))
+              {
+                if(findFcn(objectsByID.second, matchingObject)) {
+                  matchingObject = objectsByID.second;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    return matchingObject;
+  }
+  
     ObservableObject* BlockWorld::FindObjectOnTopOf(const ObservableObject& objectOnBottom,
                                                             f32 zTolerance) const
     {
@@ -2272,74 +2316,78 @@ namespace Cozmo {
     }
     
     ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
-                                                              const Vec3f&  distThreshold,
-                                                              const std::set<ObjectID>& ignoreIDs,
-                                                              const std::set<ObjectType>& ignoreTypes,
-                                                              const std::set<ObjectFamily>& ignoreFamilies) const
+                                                      const Vec3f&  distThreshold,
+                                                      const BlockWorldFilter& filter) const
     {
       // TODO: Keep some kind of OctTree data structure to make these queries faster?
       
-      Vec3f closestDist(std::numeric_limits<f32>::max());
-      ObservableObject* matchingObject = nullptr;
+      Vec3f closestDist(distThreshold);
+      //ObservableObject* matchingObject = nullptr;
       
-      for(auto & objectsByFamily : _existingObjects) {
-        if(ignoreFamilies.find(objectsByFamily.first) == ignoreFamilies.end() ) {
-          for(auto & objectsByType : objectsByFamily.second) {
-            if(ignoreTypes.find(objectsByType.first) == ignoreTypes.end()) {
-              for(auto & objectsByID : objectsByType.second) {
-                ObservableObject* candidateObject = objectsByID.second;
-                if(!candidateObject->IsPoseStateUnknown()
-                   && ignoreIDs.find(objectsByID.first) == ignoreIDs.end()) {
-                  Vec3f dist = ComputeVectorBetween(pose, candidateObject->GetPose());
-                  dist.Abs();
-                  if(dist.Length() < closestDist.Length()) {
-                    closestDist = dist;
-                    matchingObject = objectsByID.second;
-                  }
-                } // ignoreIDs
-              }
-            } // ignoreTypes
-          }
-        } // ignoreFamiles
-      }
+      FindFcn findLambda = [&pose, &closestDist](ObservableObject* current, ObservableObject* best)
+      {
+        if (current->IsPoseStateUnknown())
+        {
+          return false;
+        }
+        Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
+        dist.Abs();
+        if(dist.Length() < closestDist.Length()) {
+          closestDist = dist;
+          return true;
+        } else {
+          return false;
+        }
+      };
       
-      if(matchingObject != nullptr && !(closestDist < distThreshold)) {
-        matchingObject = nullptr;
-      }
-      return matchingObject;
+      return FindObjectHelper(findLambda, filter);
     }
-    
+  
+  
+  
+    ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filter) const
+    {
+      FindFcn findLambda = [](ObservableObject* current, ObservableObject* best)
+      {
+        if(best == nullptr || current->GetLastObservedTime() < best->GetLastObservedTime()) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      return FindObjectHelper(findLambda, filter);
+    }
+  
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                             const Vec3f& distThreshold,
                                                             const Radians& angleThreshold)
     {
-      ObservableObject* closestObject = nullptr;
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          for(auto & objectsByID : objectsByType.second) {
-            ObservableObject* candidateObject = objectsByID.second;
-            
-            if(candidateObject->GetID() != object.GetID() && !candidateObject->IsPoseStateUnknown())
-            {
-              // Check to see if this candidate matches (has same type and is in roughly
-              // the same pose as) the given object. If so, update the thresholds
-              // so that we only find matching objects even closer than this one
-              // from now on.
-              Vec3f Tdiff;
-              Radians angleDiff;
-              if(candidateObject->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
-                closestObject = candidateObject;
-                closestDist = Tdiff.GetAbs();
-                closestAngle = angleDiff.getAbsoluteVal();
-              }
-            } // IF not object on bottom (by ID)
-          }
-        }
-      }
+      BlockWorldFilter filter;
+      filter.AddIgnoreID(object.GetID());
       
+      FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
+      {
+        if (current->IsPoseStateUnknown())
+        {
+          return false;
+        }
+        Vec3f Tdiff;
+        Radians angleDiff;
+        if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {
+          best = current;
+          closestDist = Tdiff.GetAbs();
+          closestAngle = angleDiff.getAbsoluteVal();
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
       return closestObject;
     }
     
@@ -2386,33 +2434,9 @@ namespace Cozmo {
 
     bool BlockWorld::ClearObject(const ObjectID withID)
     {
-      for(auto & objectsByFamily : _existingObjects) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          auto objectWithIdIter = objectsByType.second.find(withID);
-          if(objectWithIdIter != objectsByType.second.end()) {
-            
-            // Allow deletion of specific object ID iff deletion is enable OR if
-            // this object is being deleted because it wasn't observed enought times
-            if(_canDeleteObjects ||
-               objectWithIdIter->second->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
-            {
-              // Remove the object from the world
-              ClearObjectHelper(objectWithIdIter->second);
-              
-              // IDs are unique, so we can return as soon as the ID is found and cleared
-              return true;
-            } else {
-              PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
-                                  "Will not delete object %d because object deletion is disabled.",
-                                  withID.GetValue());
-              return false;
-            }
-          }
-        }
-      }
+      ObservableObject* object = GetObjectByID(withID);
+      return ClearObject(object, object->GetType(), object->GetFamily());
       
-      // Never found the specified ID
-      return false;
     } // ClearObject()
     
     
@@ -2441,16 +2465,20 @@ namespace Cozmo {
       return ClearObject(objIter, _existingObjects[fromFamily][withType]);
     }
     
-    void BlockWorld::ClearObject(ObservableObject* object,
+    bool BlockWorld::ClearObject(ObservableObject* object,
                                  const ObjectType&   withType,
                                  const ObjectFamily& fromFamily)
     {
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+      if(nullptr == object) {
+        return false;
+      } else if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
         ClearObjectHelper(object);
+        return true;
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
                             "Will not delete object %d because object deletion is disabled.",
                             object->GetID().GetValue());
+        return false;
       }
     }
     
@@ -2660,7 +2688,7 @@ namespace Cozmo {
       } // if selected object is set
       
       // (Re)Draw the localization object separately so we can show it in a different color
-      if(_robot->IsLocalized()) {
+      if(_robot->GetLocalizedTo().IsSet()) {
         const Vision::ObservableObject* locObject = GetObjectByID(_robot->GetLocalizedTo());
         locObject->Visualize(NamedColors::LOCALIZATION_OBJECT);
       }
