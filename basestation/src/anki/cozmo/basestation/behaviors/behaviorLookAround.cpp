@@ -44,6 +44,10 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     EngineToGameTag::RobotCompletedAction,
     EngineToGameTag::RobotPutDown
   });
+
+   // Boredom and loneliness -> LookAround
+  AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+  AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
 }
   
 BehaviorLookAround::~BehaviorLookAround()
@@ -325,11 +329,6 @@ void BehaviorLookAround::ResetBehavior(Robot& robot, float currentTime_sec)
   _recentObjects.clear();
   _oldBoringObjects.clear();
   _numObjectsToLookAt = 0;
-}
-
-bool BehaviorLookAround::GetRewardBid(Reward& reward)
-{
-  return true;
 }
   
 void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Robot& robot)

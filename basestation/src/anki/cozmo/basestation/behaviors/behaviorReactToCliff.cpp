@@ -132,11 +132,6 @@ Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_
   return Result::RESULT_OK;
 }
 
-bool BehaviorReactToCliff::GetRewardBid(Reward& reward)
-{
-  return true;
-}
-
 void BehaviorReactToCliff::HandleCliffEvent(const EngineToGameEvent& event)
 {
   // We want to get these messages, even when not running

@@ -112,7 +112,7 @@ namespace Anki {
     , _numAnimationBytesPlayed(0)
     , _numAnimationBytesStreamed(0)
     , _animationTag(0)
-    , _emotionMgr(*this)
+    , _moodManager()
     , _imageDeChunker(*(new ImageDeChunker()))
     {
       _poseHistory = new RobotPoseHistory();
@@ -143,8 +143,7 @@ namespace Anki {
 
       ReadAnimationDir();
       
-      // Read in emotion and behavior manager Json
-      Json::Value emotionConfig;
+      // Read in behavior manager Json
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
       {
@@ -156,17 +155,8 @@ namespace Anki {
                             "Behavior Json config file %s not found.",
                             jsonFilename.c_str());
         }
-        
-        jsonFilename = "config/basestation/config/emotion_config.json";
-        success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, emotionConfig);
-        if (!success)
-        {
-          PRINT_NAMED_ERROR("Robot.EmotionConfigJsonNotFound",
-                            "Emotion Json config file %s not found.",
-                            jsonFilename.c_str());
-        }
       }
-      _emotionMgr.Init(emotionConfig);
+      //_moodManager.Init(moodConfig); // [MarkW:TODO] Replace emotion_config.json, also, wouldn't this be the same config for each robot? Load once earlier?
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
@@ -940,7 +930,7 @@ namespace Anki {
       
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
-      _emotionMgr.Update(currentTime);
+      _moodManager.Update(currentTime);
       
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {

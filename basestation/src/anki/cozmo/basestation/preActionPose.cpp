@@ -121,6 +121,15 @@ namespace Anki {
       SetHeightTolerance();
     }
     
+    PreActionPose::PreActionPose(const PreActionPose& other)
+    : _type(other._type)
+    , _marker(other._marker)
+    , _poseWrtMarkerParent(other._poseWrtMarkerParent)
+    , _heightTolerance(other._heightTolerance)
+    {
+      
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki
