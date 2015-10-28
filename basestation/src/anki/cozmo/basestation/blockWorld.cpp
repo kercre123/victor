@@ -265,20 +265,14 @@ namespace Cozmo {
     void BlockWorld::FindIntersectingObjects(const ObservableObject* objectSeen,
                                              std::vector<ObservableObject*>& intersectingExistingObjects,
                                              f32 padding_mm,
-                                             const std::set<ObjectFamily>& ignoreFamiles,
-                                             const std::set<ObjectType>& ignoreTypes,
-                                             const std::set<ObjectID>& ignoreIDs,
-                                             FilterFunction filterFcn) const
+                                             const BlockWorldFilter& filter) const
     {
       Quad2f quadSeen = objectSeen->GetBoundingQuadXY(objectSeen->GetPose(), padding_mm);
       
       FindIntersectingObjects(quadSeen,
                               intersectingExistingObjects,
                               padding_mm,
-                              ignoreFamiles,
-                              ignoreTypes,
-                              ignoreIDs,
-                              filterFcn);
+                              filter);
       
     } // FindIntersectingObjects()
     
@@ -286,23 +280,20 @@ namespace Cozmo {
     void BlockWorld::FindIntersectingObjects(const Quad2f& quad,
                                              std::vector<ObservableObject *> &intersectingExistingObjects,
                                              f32 padding_mm,
-                                             const std::set<ObjectFamily> &ignoreFamiles,
-                                             const std::set<ObjectType> &ignoreTypes,
-                                             const std::set<ObjectID> &ignoreIDs,
-                                             FilterFunction filterFcn) const
+                                             const BlockWorldFilter& filter) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
-        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
-        if(useFamily) {
+        if(filter.ConsiderFamily(objectsByFamily.first))
+        {
           for(auto & objectsByType : objectsByFamily.second)
           {
-            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
-            if(useType) {
+            if(filter.ConsiderType(objectsByType.first))
+            {
               for(auto & objectAndId : objectsByType.second)
               {
-                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                if(useID && filterFcn(objectAndId.second)) {
+                if(filter.ConsiderObject(objectAndId.second))
+                {
                   ObservableObject* objExist = objectAndId.second;
                   
                   // Get quad of object and check for intersection
@@ -1129,7 +1120,8 @@ namespace Cozmo {
 
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
-      std::set<ObjectID> ignoreIDs = _robot->GetCarryingObjects();
+      BlockWorldFilter filter;
+      filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingObjects()));
       
       // If the robot is localized, check to see if it is "on" the mat it is
       // localized to. If so, ignore the mat as an obstacle.
@@ -1162,10 +1154,8 @@ namespace Cozmo {
       const f32 minHeight = robotPoseWrtOrigin.GetTranslation().z();
       const f32 maxHeight = minHeight + _robot->GetHeight();
       
-      GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes,
-                               std::set<ObjectFamily>(),
-                               std::set<ObjectType>(),
-                               ignoreIDs);
+      GetObjectBoundingBoxesXY(minHeight, maxHeight, padding, boundingBoxes, filter);
+      
     } // GetObstacles()
     
     
@@ -1173,23 +1163,17 @@ namespace Cozmo {
                                               const f32 maxHeight,
                                               const f32 padding,
                                               std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
-                                              const std::set<ObjectFamily>& ignoreFamiles,
-                                              const std::set<ObjectType>& ignoreTypes,
-                                              const std::set<ObjectID>& ignoreIDs,
-                                              FilterFunction filterFcn) const
+                                              const BlockWorldFilter& filter) const
     {
       for(auto & objectsByFamily : _existingObjects)
       {
-        const bool useFamily = ignoreFamiles.find(objectsByFamily.first) == ignoreFamiles.end();
-        if(useFamily) {
+        if(filter.ConsiderFamily(objectsByFamily.first)) {
           for(auto & objectsByType : objectsByFamily.second)
           {
-            const bool useType = ignoreTypes.find(objectsByType.first) == ignoreTypes.end();
-            if(useType) {
+            if(filter.ConsiderType(objectsByType.first)) {
               for(auto & objectAndId : objectsByType.second)
               {
-                const bool useID = ignoreIDs.find(objectAndId.first) == ignoreIDs.end();
-                if(useID && filterFcn(objectAndId.second))
+                if(filter.ConsiderObject(objectAndId.second))
                 {
                   ObservableObject* object = objectAndId.second;
                   if(object == nullptr) {
@@ -1805,14 +1789,12 @@ namespace Cozmo {
       
       
       // Check if the obstacle intersects with any other existing objects in the scene.
-      std::set<ObjectFamily> ignoreFamilies;
-      std::set<ObjectType> ignoreTypes;
-      std::set<ObjectID> ignoreIDs;
+      BlockWorldFilter filter;
       if(_robot->IsLocalized()) {
         // Ignore the mat object that the robot is localized to (?)
-        ignoreIDs.insert(_robot->GetLocalizedTo());
+        filter.AddIgnoreID(_robot->GetLocalizedTo());
       }
-      FindIntersectingObjects(m, existingObjects, 0, ignoreFamilies, ignoreTypes, ignoreIDs);
+      FindIntersectingObjects(m, existingObjects, 0, filter);
       if (!existingObjects.empty()) {
         delete m;
         return RESULT_OK;
@@ -2289,10 +2271,7 @@ namespace Cozmo {
     
     ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
                                                       const Vec3f&  distThreshold,
-                                                      const std::set<ObjectID>& ignoreIDs,
-                                                      const std::set<ObjectType>& ignoreTypes,
-                                                      const std::set<ObjectFamily>& ignoreFamilies,
-                                                      FilterFunction filterFcn) const
+                                                      const BlockWorldFilter& filter) const
     {
       // TODO: Keep some kind of OctTree data structure to make these queries faster?
       
@@ -2300,12 +2279,11 @@ namespace Cozmo {
       ObservableObject* matchingObject = nullptr;
       
       for(auto & objectsByFamily : _existingObjects) {
-        if(ignoreFamilies.find(objectsByFamily.first) == ignoreFamilies.end() ) {
+        if(filter.ConsiderFamily(objectsByFamily.first)) {
           for(auto & objectsByType : objectsByFamily.second) {
-            if(ignoreTypes.find(objectsByType.first) == ignoreTypes.end()) {
+            if(filter.ConsiderType(objectsByType.first)) {
               for(auto & objectsByID : objectsByType.second) {
-                if(ignoreIDs.find(objectsByID.first) == ignoreIDs.end() &&
-                   filterFcn(objectsByID.second))
+                if(filter.ConsiderObject(objectsByID.second))
                 {
                   Vec3f dist = ComputeVectorBetween(pose, objectsByID.second->GetPose());
                   dist.Abs();
@@ -2325,7 +2303,34 @@ namespace Cozmo {
       }
       return matchingObject;
     }
-    
+  
+    ObservableObject* BlockWorld::FindMostRecentlyObservedObject(const BlockWorldFilter& filter) const
+    {
+      TimeStamp_t mostRecentObsTime = std::numeric_limits<TimeStamp_t>::max();
+      ObservableObject* matchingObject = nullptr;
+      
+      for(auto & objectsByFamily : _existingObjects) {
+        if(filter.ConsiderFamily(objectsByFamily.first)) {
+          for(auto & objectsByType : objectsByFamily.second) {
+            if(filter.ConsiderType(objectsByType.first)) {
+              for(auto & objectsByID : objectsByType.second) {
+                if(filter.ConsiderObject(objectsByID.second))
+                {
+                  const TimeStamp_t t = objectsByID.second->GetLastObservedTime();
+                  if(t < mostRecentObsTime) {
+                    mostRecentObsTime = t;
+                    matchingObject = objectsByID.second;
+                  }
+                } // ignoreIDs & filterFcn
+              }
+            } // ignoreTypes
+          }
+        } // ignoreFamiles
+      }
+
+      return matchingObject;
+    }
+  
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                             const Vec3f& distThreshold,
                                                             const Radians& angleThreshold)

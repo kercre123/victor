@@ -502,8 +502,10 @@ namespace Cozmo {
     
     // Find closest empty pose
     f32 closestDistToRobot = std::numeric_limits<f32>::max();
+    BlockWorldFilter filter;
     for (auto& testPose : alignedPoses) {
-      if(nullptr == robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), robot.GetCarryingObjects())) {
+      filter.SetIgnoreIDs(std::set<ObjectID>(robot.GetCarryingObjects()));
+      if(nullptr == robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), filter)) {
         f32 distToRobot = ComputeDistanceBetween(robot.GetPose(), testPose);
         if ( distToRobot < closestDistToRobot) {
           closestDistToRobot = distToRobot;
@@ -901,9 +903,9 @@ namespace Cozmo {
                 Vec3f distThresh(0.5f * oObject->GetSize().x(),
                                  0.5f * oObject->GetSize().y(),
                                  1.5f * oObject->GetSize().z());
-                std::set<ObjectID> ignoreIDs;
-                ignoreIDs.insert(*objID);
-                ObservableObject* objBelow = blockWorld.FindObjectClosestTo(oObject->GetPose(), distThresh, ignoreIDs);
+                BlockWorldFilter filter;
+                filter.AddIgnoreID(*objID);
+                ObservableObject* objBelow = blockWorld.FindObjectClosestTo(oObject->GetPose(), distThresh, filter);
                 if (objBelow == nullptr) {
                   continue;
                 }

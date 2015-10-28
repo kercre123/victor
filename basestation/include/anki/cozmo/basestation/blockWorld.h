@@ -30,7 +30,7 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/shared/cozmoTypes.h"
-
+#include "anki/cozmo/basestation/blockWorldFilter.h"
 
 namespace Anki
 {
@@ -128,25 +128,18 @@ namespace Anki
       // given ObservableObject and returns true/false. Objects for which the
       // given function returns false will be excluded analogously to the "ignore"
       // lists described above.
-      using FilterFunction = std::function<bool(ObservableObject*)>;
       void GetObjectBoundingBoxesXY(const f32 minHeight,
                                     const f32 maxHeight,
                                     const f32 padding,
                                     std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
-                                    const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::Mat},
-                                    const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                    const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
-                                    FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
+                                    const BlockWorldFilter& filter = BlockWorldFilter()) const;
 
       // Finds an object nearest the specified distance (and optionally, rotation -- not implemented yet)
       // of the given pose. Returns nullptr if no objects match. Returns closest
       // if multiple matches are found.
       ObservableObject* FindObjectClosestTo(const Pose3d& pose,
                                             const Vec3f&  distThreshold,
-                                            const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
-                                            const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                            const std::set<ObjectFamily>& ignoreFamilies = std::set<ObjectFamily>(),
-                                            FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
+                                            const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       // Finds a matching object (one with the same type) that is closest to the
       // given object, within the specified distance and angle thresholds.
@@ -155,24 +148,20 @@ namespace Anki
                                                   const Vec3f& distThreshold,
                                                   const Radians& angleThreshold);
       
+      ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's
       // XY bounding box, with the exception of those that are of ignoreFamilies or
       // ignoreTypes.
       void FindIntersectingObjects(const ObservableObject* objectSeen,
                                    std::vector<ObservableObject*>& intersectingExistingObjects,
                                    f32 padding_mm,
-                                   const std::set<ObjectFamily>& ignoreFamilies = {ObjectFamily::Mat},
-                                   const std::set<ObjectType>& ignoreTypes = std::set<ObjectType>(),
-                                   const std::set<ObjectID>& ignoreIDs = std::set<ObjectID>(),
-                                   FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
+                                   const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       void FindIntersectingObjects(const Quad2f& quad,
                                    std::vector<ObservableObject *> &intersectingExistingObjects,
                                    f32 padding,
-                                   const std::set<ObjectFamily> &ignoreFamiles = {ObjectFamily::Mat},
-                                   const std::set<ObjectType> &ignoreTypes = std::set<ObjectType>(),
-                                   const std::set<ObjectID> &ignoreIDs = std::set<ObjectID>(),
-                                   FilterFunction filterFcn = &BlockWorld::DefaultFilterFcn) const;
+                                   const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       // Find an object on top of the given object, using a given height tolerance
       // between the top of the given object on bottom and the bottom of existing
@@ -303,9 +292,6 @@ namespace Anki
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
       
-      // Default filtering function for public Find* calls
-      static bool DefaultFilterFcn(ObservableObject*) { return true; }
-
       //
       // Member Variables
       //
