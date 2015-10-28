@@ -132,14 +132,6 @@ Supervisor {
   rotation IS rotation
   
   children [
-
-    GPS {
-      name "gps"
-      translation 0 0 0
-    }    
-    Compass {
-      name "compass"
-    }
     
     Transform {
       translation -0.015 0 0
