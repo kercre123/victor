@@ -422,13 +422,18 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
+  char animLabel[16] = {0};
   if(payload.animTag == 255) {
-    sprintf(txt, "   ANIM_IDLE");
+    sprintf(animLabel, "ANIM_IDLE");
   } else if(payload.animTag != 0) {
-    sprintf(txt, "   ANIM[%d]", payload.animTag);
-  } else {
-    sprintf(txt, "");
+    sprintf(animLabel, "ANIM[%d]", payload.animTag);
   }
+  
+  sprintf(txt, "    %10s %10s",
+          animLabel,
+          payload.state.status & (uint32_t)RobotStatusFlag::IS_CHARGING ? "CHARGING" :
+          (payload.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER ? "ON_CHARGER" : ""));
+  
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_2, Anki::NamedColors::GREEN, txt);
   
   sprintf(txt, "        %7s %7s %6s",
