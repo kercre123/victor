@@ -400,21 +400,6 @@ namespace Anki
       return GetObjectByIDandFamilyHelper(objectID, inFamily); // returns non-const*
     }
     
-    inline void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
-    {
-      if(!object->GetID().IsSet()) {
-        object->SetID();
-      }
-      
-      // If this is a new active object, trigger an identification procedure
-      if(object->IsActive()) {
-        _unidentifiedActiveObjects.insert(object->GetID());
-        object->Identify();
-      }
-      
-      existingFamily[object->GetType()][object->GetID()] = object;
-    }
-    
     inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object)
     {
       AddNewObject(_existingObjects[toFamily], object);

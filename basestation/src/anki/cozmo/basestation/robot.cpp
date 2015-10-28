@@ -1487,10 +1487,7 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
       
-      if(seenObject == nullptr) {
-        PRINT_NAMED_ERROR("Robot.LocalizeToObject.SeenObjectNullPointer", "\n");
-        return RESULT_FAIL;
-      } else if(existingObject == nullptr) {
+      if(existingObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "\n");
         return RESULT_FAIL;
       }
@@ -1510,26 +1507,43 @@ namespace Anki {
        "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
        */
       
-      // Get computed RobotPoseStamp at the time the object was observed.
       RobotPoseStamp* posePtr = nullptr;
-      if ((lastResult = GetComputedPoseAt(seenObject->GetLastObservedTime(), &posePtr)) != RESULT_OK) {
-        PRINT_NAMED_ERROR("Robot.LocalizeToObject.CouldNotFindHistoricalPose",
-                          "Time %d\n", seenObject->GetLastObservedTime());
-        return lastResult;
-      }
-      
-      // The computed historical pose is always stored w.r.t. the robot's world
-      // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
-      // will work correctly
-      Pose3d robotPoseAtObsTime = posePtr->GetPose();
-      robotPoseAtObsTime.SetParent(_worldOrigin);
-      
-      // Get the pose of the robot with respect to the observed mat piece
       Pose3d robotPoseWrtObject;
-      if(robotPoseAtObsTime.GetWithRespectTo(seenObject->GetPose(), robotPoseWrtObject) == false) {
-        PRINT_NAMED_ERROR("Robot.LocalizeToObject.ObjectPoseOriginMisMatch",
-                          "Could not get RobotPoseStamp w.r.t. seen object pose.\n");
-        return RESULT_FAIL;
+      float  headAngle;
+      float  liftAngle;
+      if(nullptr == seenObject)
+      {
+        if(false == GetPose().GetWithRespectTo(existingObject->GetPose(), robotPoseWrtObject)) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectOriginMismatch",
+                            "Could not get robot pose w.r.t. to existing object %d.",
+                            existingObject->GetID().GetValue());
+          return RESULT_FAIL;
+        }
+        liftAngle = GetLiftAngle();
+        headAngle = GetHeadAngle();
+      } else {
+        // Get computed RobotPoseStamp at the time the object was observed.
+        if ((lastResult = GetComputedPoseAt(seenObject->GetLastObservedTime(), &posePtr)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.CouldNotFindHistoricalPose",
+                            "Time %d\n", seenObject->GetLastObservedTime());
+          return lastResult;
+        }
+        
+        // The computed historical pose is always stored w.r.t. the robot's world
+        // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
+        // will work correctly
+        Pose3d robotPoseAtObsTime = posePtr->GetPose();
+        robotPoseAtObsTime.SetParent(_worldOrigin);
+        
+        // Get the pose of the robot with respect to the observed object
+        if(robotPoseAtObsTime.GetWithRespectTo(seenObject->GetPose(), robotPoseWrtObject) == false) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.ObjectPoseOriginMisMatch",
+                            "Could not get RobotPoseStamp w.r.t. seen object pose.\n");
+          return RESULT_FAIL;
+        }
+        
+        liftAngle = posePtr->GetLiftAngle();
+        headAngle = posePtr->GetHeadAngle();
       }
       
       // Make the computed robot pose use the existing mat piece as its parent
@@ -1587,16 +1601,19 @@ namespace Anki {
         robotPoseWrtOrigin.SetTranslation(T);
       }
       
-      if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
-                                                  robotPoseWrtOrigin.GetTranslation().x(),
-                                                  robotPoseWrtOrigin.GetTranslation().y(),
-                                                  robotPoseWrtOrigin.GetTranslation().z(),
-                                                  robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
-                                                  posePtr->GetHeadAngle(),
-                                                  posePtr->GetLiftAngle())) != RESULT_OK)
+      if(nullptr != seenObject)
       {
-        PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedAddingVisionOnlyPoseToHistory", "\n");
-        return lastResult;
+        //
+        if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
+                                                    robotPoseWrtOrigin.GetTranslation().x(),
+                                                    robotPoseWrtOrigin.GetTranslation().y(),
+                                                    robotPoseWrtOrigin.GetTranslation().z(),
+                                                    robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
+                                                    headAngle, liftAngle)) != RESULT_OK)
+        {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedAddingVisionOnlyPoseToHistory", "\n");
+          return lastResult;
+        }
       }
       
       // If the robot's world origin is about to change by virtue of being localized
@@ -1638,11 +1655,14 @@ namespace Anki {
       } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
       
-      // Update the computed historical pose as well so that subsequent block
-      // pose updates use obsMarkers whose camera's parent pose is correct.
-      // Note again that we store the pose w.r.t. the origin in history.
-      // TODO: Should SetPose() do the flattening w.r.t. origin?
-      posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, posePtr->GetHeadAngle(), posePtr->GetLiftAngle());
+      if(nullptr != posePtr)
+      {
+        // Update the computed historical pose as well so that subsequent block
+        // pose updates use obsMarkers whose camera's parent pose is correct.
+        // Note again that we store the pose w.r.t. the origin in history.
+        // TODO: Should SetPose() do the flattening w.r.t. origin?
+        posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle);
+      }
       
       // Compute the new "current" pose from history which uses the
       // past vision-based "ground truth" pose we just computed.
@@ -2147,6 +2167,46 @@ namespace Anki {
           carriedObject->SetBeingCarried(true);
           _carryingObjectID = carryObjectID;
           
+          // Don't remain localized to an object if we are now carrying it
+          if(_carryingObjectID == GetLocalizedTo())
+          {
+            // See if there's another object we can switch our localization to.
+            // We will find the object closest to our pose that's active and
+            // can be used for localization.
+            BlockWorldFilter filter;
+            filter.AddIgnoreID(_carryingObjectID);
+            filter.SetIgnoreFamilies({ // Ignore objects we can't localize to
+              ObjectFamily::Block,
+              ObjectFamily::Charger, // If the charger ends up getting an accelerometer, we *could* use it...
+              ObjectFamily::Invalid,
+              ObjectFamily::MarkerlessObject,
+              ObjectFamily::Ramp,
+              ObjectFamily::Unknown
+            });
+            filter.SetFilterFcn([](ObservableObject* obj) { return obj->CanBeUsedForLocalization(); });
+            //ObservableObject* nearbyObject = _blockWorld.FindObjectClosestTo(GetPose(), 1000.f, filter);
+            ObservableObject* locObject = _blockWorld.FindMostRecentlyObservedObject(filter);
+            
+            if(nullptr != locObject &&
+               RESULT_OK == LocalizeToObject(nullptr, locObject))
+            {
+              assert(locObject->IsActive());
+              
+              PRINT_NAMED_INFO("Robot.SetCarryingObject.Delocalize",
+                               "Switching robot %d's localization from object %d, "
+                               "which is now being carried, to object %d.",
+                               GetID(), _carryingObjectID.GetValue(),
+                               locObject->GetID().GetValue());
+              
+            } else {
+              // If not, just delocalize
+              PRINT_NAMED_INFO("Robot.SetCarryingObject.Delocalize",
+                               "Delocalizing robot %d from object %d, which it is now carrying.",
+                               GetID(), _carryingObjectID.GetValue());
+              Delocalize();
+            }
+          } // if(_carryingObjectID == GetLocalizedTo())
+          
           // Tell the robot it's carrying something
           // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
           if(_carryingObjectOnTopID.IsSet()) {
@@ -2154,7 +2214,7 @@ namespace Anki {
           } else {
             SendSetCarryState(CarryState::CARRY_1_BLOCK);
           }
-        }
+        } // if/else (carriedObject == nullptr)
       }
     }
     

@@ -189,26 +189,33 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   {
     PRINT_NAMED_WARNING("Robot.HandleActiveObjectMoved.UnknownActiveID",
                         "Could not find match for active object ID %d", payload.objectID);
-  } else {
-    assert(object->IsActive());
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ActiveObjectMoved",
-                     "Received message that %s %d (Active ID %d) moved. Delocalizing it.",
-                     EnumToString(object->GetType()),
-                     object->GetID().GetValue(), object->GetActiveID());
+  }
+  // Ignore move messages for objects we are docking to, since we expect to bump them
+  else if(object->GetID() != GetDockObject())
+  {
+    ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
     
-    // Once an object moves, we can no longer use it for localization because
-    // we don't know where it is anymore. Next time we see it, relocalize it
-    // relative to robot's pose estimate. Then we can use it for localization
-    // again.
-    object->Delocalize();
-    
-    // If this is the object we were localized to, we are now delocalized
-    if(GetLocalizedTo() == object->GetID()) {
-      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingRobot",
-                       "Delocalizing robot %d, which is currently localized %s "
-                       "%d, which reported being moved.",
-                       GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-      Delocalize();
+    if(object->IsLocalized()) // TODO: Change this to checking PoseState once Lee's stuff gets merged in
+    {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ActiveObjectMoved",
+                       "Received message that %s %d (Active ID %d) moved. Delocalizing it.",
+                       EnumToString(object->GetType()),
+                       object->GetID().GetValue(), object->GetActiveID());
+      
+      // Once an object moves, we can no longer use it for localization because
+      // we don't know where it is anymore. Next time we see it, relocalize it
+      // relative to robot's pose estimate. Then we can use it for localization
+      // again.
+      object->Delocalize();
+      
+      // If this is the object we were localized to, we are now delocalized
+      if(GetLocalizedTo() == object->GetID()) {
+        PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.DelocalizingRobot",
+                         "Delocalizing robot %d, which is currently localized %s "
+                         "%d, which reported being moved.",
+                         GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+        Delocalize();
+      }
     }
     
     // Don't notify game about moving objects that are being carried
@@ -236,8 +243,11 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   {
     PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnknownActiveID",
                      "Could not find match for active object ID %d", payload.objectID);
-  } else {
-    assert(object->IsActive());
+  }
+  // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them
+  else if(object->GetID() != GetDockObject())
+  {
+    ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
 
     PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.MessageActiveObjectStoppedMoving",
                      "Received message that %s %d (Active ID %d) stopped moving.",
@@ -248,7 +258,16 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
       // Not sure how an object could get localized before it stopped moving,
       // but just to be safe, re-delocalize and force a re-localization now
       // that we've gotten the stopped-moving message.
-      Delocalize();
+      object->Delocalize();
+      
+      // If this is the object we were localized to, we are now delocalized
+      if(GetLocalizedTo() == object->GetID()) {
+        PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.DelocalizingRobot",
+                         "Delocalizing robot %d, which is currently localized %s "
+                         "%d, which reported stopping moving.",
+                         GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+        Delocalize();
+      }
     }
     
     // Update the ID to be the blockworld ID before broadcasting

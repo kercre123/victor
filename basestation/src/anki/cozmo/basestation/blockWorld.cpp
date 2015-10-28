@@ -408,6 +408,24 @@ namespace Cozmo {
     return result;
   }
   
+  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
+  {
+    if(!object->GetID().IsSet()) {
+      object->SetID();
+    }
+    
+    // If this is a new active object, trigger an identification procedure
+    if(object->IsActive()) {
+      _unidentifiedActiveObjects.insert(object->GetID());
+      // Don't trigger identification while picking / placing
+      if(!_robot->IsPickingOrPlacing()) {
+        object->Identify();
+      }
+    }
+    
+    existingFamily[object->GetType()][object->GetID()] = object;
+  }
+  
     Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
                                            const ObjectFamily& inFamily,
                                            const TimeStamp_t atTimestamp)
@@ -621,11 +639,12 @@ namespace Cozmo {
                   }
                 }
               }
-            } else {
+            } else if(!_robot->IsPickingOrPlacing()) { // Don't do identification if picking and placing
               // Tick the fake identification process for any as-yet-unidentified active
               // objects. This is to simulate the fact that identification is not instantaneous
               // and is asynchronous.
               // TODO: Shouldn't need to do this once we have real block identification
+
               matchingObject->Identify();
             }
           } // if(matchingObject->IsActive())
@@ -1130,21 +1149,25 @@ namespace Cozmo {
       // yet seen the mat it is on. (For example, robot see side of platform
       // and localizes to it because it hasn't seen a marker on the flat mat
       // it is driving on.)
-      if(_robot->IsLocalized()) {
-        const MatPiece* mat = dynamic_cast<const MatPiece*>(GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat));
-        if(mat != nullptr) {
-          if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
-            // Ignore the ID of the mat we're on
-            ignoreIDs.insert(_robot->GetLocalizedTo());
-            
-            // Add any "unsafe" regions this mat has
-            mat->GetUnsafeRegions(boundingBoxes, padding);
+      if(_robot->IsLocalized())
+      {
+        const ObservableObject* object = GetObjectByIDandFamily(_robot->GetLocalizedTo(), ObjectFamily::Mat);
+        if(nullptr != object) // If the object localized to exists in the Mat family
+        {
+          const MatPiece* mat = dynamic_cast<const MatPiece*>(object);
+          if(mat != nullptr) {
+            if(mat->IsPoseOn(_robot->GetPose(), 0.f, .25*ROBOT_BOUNDING_Z)) {
+              // Ignore the ID of the mat we're on
+              filter.AddIgnoreID(_robot->GetLocalizedTo());
+              
+              // Add any "unsafe" regions this mat has
+              mat->GetUnsafeRegions(boundingBoxes, padding);
+            }
+          } else {
+            PRINT_NAMED_WARNING("BlockWorld.GetObstacles.DynamicCastFail",
+                                "Could not dynamic cast localization object %d to a Mat",
+                                _robot->GetLocalizedTo().GetValue());
           }
-        } else {
-          PRINT_NAMED_WARNING("BlockWorld.GetObstacles.LocalizedToNullMat",
-                              "Robot %d is localized to object ID=%d, but "
-                              "that object returned a NULL MatPiece pointer.\n",
-                              _robot->GetID(), _robot->GetLocalizedTo().GetValue());
         }
       }
       
