@@ -129,7 +129,7 @@ namespace Cozmo {
     }
     
     // Completion trigger is when all (?) blocks make it to his "neat" list
-    if (!IsRunnable(currentTime_sec)) {
+    if (!IsRunnable(robot, currentTime_sec)) {
       return Status::Complete;
     }
     
