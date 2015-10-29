@@ -7,10 +7,6 @@
 
 namespace Anki {
   namespace Cozmo {
-   
-    // Suppresses marker-based localization (FOR PHYSICAL ROBOT ONLY)
-    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
-    
     
     // Camera pose correction (APPLIES TO PHYSICAL ROBOT ONLY)
     // TODO: The headCamPose is eventually to be calibrated
@@ -24,6 +20,21 @@ namespace Anki {
     // Resolution of images that are streamed to basestation (dev purposes)
     const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
+    // Minimum number of times we need to observe an object to keep it and signal
+    // that we saw it.
+    const s32 MIN_TIMES_TO_OBSERVE_OBJECT = 2;
+    
+    /***************************************************************************
+     *
+     *                          Localization
+     *
+     **************************************************************************/
+    
+    // Suppresses marker-based localization (FOR PHYSICAL ROBOT ONLY)
+    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
+    
+    // Only localize to / identify active objects within this distance
+    const f32 MAX_LOCALIZATION_AND_ID_DISTANCE_MM = 250.f;
     
     /***************************************************************************
      *

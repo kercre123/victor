@@ -145,9 +145,8 @@ namespace Cozmo {
     // NOTE: AlwaysHandle is called first!
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
-
-    // A random number generator for all behaviors to share
-    Util::RandomGenerator _rng;
+    
+    Util::RandomGenerator& GetRNG();
     
     std::string _name = "no_name";
     std::string _stateName = "";
@@ -160,6 +159,9 @@ namespace Cozmo {
     
     bool _isRunning;
     
+    // A random number generator for all behaviors to share
+    static Util::RandomGenerator sRNG;
+
     std::vector<::Signal::SmartHandle> _eventHandles;
     
     template<class EventType>
@@ -180,6 +182,10 @@ namespace Cozmo {
   inline Result IBehavior::Interrupt(double currentTime_sec)
   {
     return InterruptInternal(_robot, currentTime_sec);
+  }
+  
+  inline Util::RandomGenerator& IBehavior::GetRNG() {
+    return sRNG;
   }
   
   template<class EventType>

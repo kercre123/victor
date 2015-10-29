@@ -30,6 +30,8 @@ namespace Anki {
       FlatMat(Type type);
       
       virtual FlatMat* CloneType() const override;
+
+      virtual bool IsMoveable() const override { return false; }
       
     protected:
       

@@ -755,6 +755,11 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }
     
+    void VizManager::SetOrigin(const SetVizOrigin& msg)
+    {
+      SetVizOrigin v(msg);
+      SendMessage(VizInterface::MessageViz(std::move(v)));
+    }
     
   } // namespace Cozmo
 } // namespace Anki

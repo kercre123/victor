@@ -208,6 +208,9 @@ namespace Anki {
       if (!poses_.empty()) {
         TimeStamp_t newestTime = poses_.rbegin()->first;
         if (newestTime > windowSize_ && t < newestTime - windowSize_) {
+          PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.TooOld",
+                            "Pose at t=%d too old to add. Newest time=%d, windowSize=%d.\n",
+                            t, newestTime, windowSize_);
           return RESULT_FAIL;
         }
       }
@@ -224,6 +227,9 @@ namespace Anki {
                                 std::make_tuple(p.GetFrameId(), p.GetPose(), p.GetHeadAngle(), p.GetLiftAngle()));
       
         if (!res.second) {
+          PRINT_NAMED_ERROR("RobotPoseHistory.AddVisionOnlyPose.EmplaceFailed",
+                            "Emplace of pose with t=%d, frameID=%d failed.\n",
+                            t, p.GetFrameId());
           return RESULT_FAIL;
         }
         
@@ -572,24 +578,56 @@ namespace Anki {
     Result RobotPoseHistory::GetLastPoseWithFrameID(const PoseFrameID_t frameID, RobotPoseStamp& p) const
     {
       // Start from end and work backward until we find a pose stamp with the
-      // specied ID. Fail if we get back to the beginning without finding it.
+      // specified ID. Fail if we get back to the beginning without finding it.
       if(poses_.empty()) {
         PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.EmptyHistory",
                           "Looking for last pose with frame ID=%d, but pose history is empty.\n", frameID);
         return RESULT_FAIL;
       }
       
-      auto poseIter = poses_.rbegin();
-      while(poseIter->second.GetFrameId() != frameID) {
-        ++poseIter;
-        if(poseIter == poses_.rend()) {
-          return RESULT_FAIL;
+      // First look through "raw" poses for the frame ID. We don't need to look
+      // any further once the frameID drops below the one we are looking for,
+      // because they are ordered
+      bool found = false;
+      auto poseIter = poses_.rend();
+      for(poseIter = poses_.rbegin();
+          poseIter != poses_.rend() && !found && poseIter->second.GetFrameId() >= frameID; ++poseIter )
+      {
+        if(poseIter->second.GetFrameId() == frameID) {
+          found = true; // break out of the loop
         }
       }
       
-      p = poseIter->second;
+      // NOTE: this second loop over vision poses will only occur if found is still false,
+      // meaning we didn't find a pose already in the first loop.
+      if(!found) {
+        for(poseIter = visPoses_.rbegin();
+            poseIter != visPoses_.rend() && !found && poseIter->second.GetFrameId() >= frameID; ++poseIter)
+        {
+          if(poseIter->second.GetFrameId() == frameID) {
+            found = true;
+          }
+        }
+      }
       
-      return RESULT_OK;
+      if(found) {
+        // Success!
+        assert(poseIter != poses_.rend());
+        p = poseIter->second;
+        return RESULT_OK;
+        
+      } else {
+        PRINT_NAMED_ERROR("RobotPoseHistory.GetLastPoseWithFrameID.FrameIdNotFound",
+                          "Could not frame ID=%d in pose history. "
+                          "(First frameID in pose history is %d, last is %d. "
+                          "First frameID in vis pose history is %d, last is %d.\n", frameID,
+                          poses_.begin()->second.GetFrameId(),
+                          poses_.rbegin()->second.GetFrameId(),
+                          visPoses_.begin()->second.GetFrameId(),
+                          visPoses_.rbegin()->second.GetFrameId());
+        return RESULT_FAIL;
+
+      }
       
     } // GetLastPoseWithFrameID()
     

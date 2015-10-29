@@ -43,7 +43,7 @@ namespace Cozmo {
       new MoveLiftToHeightAction(32, 2, 5)});},
               1);
     
-    AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", this->_rng.RandIntInRange(1, 3));}, 1);
+    AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", GetRNG().RandIntInRange(1, 3));}, 1);
     
     AddFidget("TurnInPlace", [](){return new TurnInPlaceAction(0, false, DEG_TO_RAD(90));}, 2);
     
@@ -89,7 +89,7 @@ namespace Cozmo {
     if(currentTime_sec > _lastFidgetTime_sec + _nextFidgetWait_sec) {
     
       // Pick another random fidget action
-      s32 prob = _rng.RandIntInRange(0, _totalProb);
+      s32 prob = GetRNG().RandIntInRange(0, _totalProb);
 
       auto fidgetIter = _fidgets.begin();
       while(prob > fidgetIter->first) {
@@ -111,7 +111,7 @@ namespace Cozmo {
       // Set next time to fidget
       // TODO: Get min/max wait times from Json config
       _lastFidgetTime_sec = currentTime_sec;
-      _nextFidgetWait_sec += _rng.RandDblInRange(_minWait_sec, _maxWait_sec);
+      _nextFidgetWait_sec += GetRNG().RandDblInRange(_minWait_sec, _maxWait_sec);
       
 #     if DEBUG_FIDGET_BEHAVIOR
       PRINT_NAMED_INFO("BehaviorFidget.Update.Times",

@@ -98,6 +98,7 @@ class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
+class ActiveCube;
 
 namespace RobotInterface {
 class MessageHandler;
@@ -133,12 +134,29 @@ public:
     //
     // Localization
     //
-    bool                   IsLocalized()     const {return _localizedToID.IsSet();}
-    const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
-    void                   SetLocalizedTo(const ObjectID& toID);
+    bool                   IsLocalized()     const;
     void                   Delocalize();
-    
+      
+    // Get the ID of the object we are localized to
+    const ObjectID&        GetLocalizedTo()  const {return _localizedToID;}
+      
+    // Set the object we are localized to.
+    // Use nullptr to UnSet the localizedTo object but still mark the robot
+    // as localized (i.e. to "odometry").
+    Result                 SetLocalizedTo(const ObservableObject* object);
+  
+    // Has the robot moved since it was last localized
+    bool                   HasMovedSinceBeingLocalized() const;
+  
+    // Get the squared distance to the closest, most recently observed marker
+    // on the object we are localized to
+    f32                    GetLocalizedToDistanceSq() const;
+  
+    // TODO: Can this be removed in favor of the more general LocalizeToObject() below?
     Result LocalizeToMat(const MatPiece* matSeen, MatPiece* existinMatPiece);
+      
+    Result LocalizeToObject(const ObservableObject* seenObject,
+                            ObservableObject* existingObject);
     
     // Returns true if robot is not traversing a path and has no actions in its queue.
     bool   IsIdle() const { return !IsTraversingPath() && _actionList.IsEmpty(); }
@@ -202,6 +220,10 @@ public:
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
     
+    // Get 3D bounding box of the robot at its current pose or a given pose
+    void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+    void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
+
     // Get the bounding quad of the robot at its current or a given pose
     Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const; // at current pose
     Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 paddingScale = 0.f) const; // at specific pose
@@ -479,10 +501,16 @@ public:
    
     
     // =========  Block messages  ============
-    
+  
+    // Dynamically cast the given object ID into the templated active object type
     // Return nullptr on failure to find ActiveObject
-    ActiveCube* GetActiveObject(const ObjectID objectID);
-    
+    ObservableObject* GetActiveObject(const ObjectID objectID,
+                                      const ObjectFamily inFamily = ObjectFamily::Unknown);
+  
+    // Same as above, but search by active ID instead of (BlockWorld-assigned) object ID.
+    ObservableObject* GetActiveObjectByActiveID(const s32 activeID,
+                                                const ObjectFamily inFamily = ObjectFamily::Unknown);
+  
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
                            const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
@@ -551,10 +579,10 @@ public:
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
     // The robot's identifier
     RobotID_t         _ID;
-    bool              _isPhysical;
+    bool              _isPhysical = false;
     
     // Flag indicating whether a robotStateMessage was ever received
-    bool              _newStateMsgAvailable;
+    bool              _newStateMsgAvailable = false;
     
     // A reference to the MessageHandler that the robot uses for outgoing comms
     RobotInterface::MessageHandler* _msgHandler;
@@ -570,33 +598,31 @@ public:
 #   if !ASYNC_VISION_PROCESSING
     Vision::Image     _image;
     MessageRobotState _robotStateForImage;
-    bool              _haveNewImage;
+    bool              _haveNewImage = false;
 #   endif
   
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled;
+    bool             _isBehaviorMgrEnabled = false;
     
     //ActionQueue      _actionQueue;
     ActionList       _actionList;
-  
   MovementComponent _movementComponent;
-        
 
     // Path Following. There are two planners, only one of which can
     // be selected at a time
-    IPathPlanner*            _selectedPathPlanner;
-    IPathPlanner*            _longPathPlanner;
-    IPathPlanner*            _shortPathPlanner;
-    size_t*                  _plannerSelectedPoseIndexPtr;
-    int                      _numPlansStarted;
-    int                      _numPlansFinished;
-    ERobotDriveToPoseStatus  _driveToPoseStatus;
-    s8                       _currPathSegment;
-    u8                       _numFreeSegmentSlots;
-    u16                      _lastSentPathID;
-    u16                      _lastRecvdPathID;
-    bool                     _usingManualPathSpeed;
-    PathDolerOuter*          _pdo;
+    IPathPlanner*            _selectedPathPlanner          = nullptr;
+    IPathPlanner*            _longPathPlanner              = nullptr;
+    IPathPlanner*            _shortPathPlanner             = nullptr;
+    size_t*                  _plannerSelectedPoseIndexPtr  = nullptr;
+    int                      _numPlansStarted              = 0;
+    int                      _numPlansFinished             = 0;
+    ERobotDriveToPoseStatus  _driveToPoseStatus            = ERobotDriveToPoseStatus::Waiting;
+    s8                       _currPathSegment              = -1;
+    u8                       _numFreeSegmentSlots          = 0;
+    u16                      _lastSentPathID               = 0;
+    u16                      _lastRecvdPathID              = 0;
+    bool                     _usingManualPathSpeed         = false;
+    PathDolerOuter*          _pdo                          = nullptr;
     
     // This functions sets _selectedPathPlanner to the appropriate
     // planner
@@ -610,7 +636,7 @@ public:
     // cameras (e.g. those stored inside the pose history)
     Vision::CameraCalibration _cameraCalibration;
     Vision::Camera            _camera;
-    bool                      _visionWhileMovingEnabled;
+    bool                      _visionWhileMovingEnabled = false;
 
     /*
     // Proximity sensors
@@ -619,13 +645,17 @@ public:
     */
 
     // Geometry / Pose
-    std::list<Pose3d>_poseOrigins; // placeholder origin poses while robot isn't localized
-    Pose3d*          _worldOrigin;
-    Pose3d           _pose;
-    Pose3d           _driveCenterPose;
-    PoseFrameID_t    _frameId;
-    ObjectID         _localizedToID;       // ID of mat object robot is localized to
-    bool             _localizedToFixedMat; // false until robot sees a _fixed_ mat
+    std::list<Pose3d> _poseOrigins; // placeholder origin poses while robot isn't localized
+    Pose3d*           _worldOrigin;
+    Pose3d            _pose;
+    Pose3d            _driveCenterPose;
+    PoseFrameID_t     _frameId = 0;
+    ObjectID          _localizedToID;       // ID of mat object robot is localized to
+    bool              _hasMovedSinceLocalization = false;
+    bool              _isLocalized = true;  // May be true even if not localized to an object, if robot has not been picked up
+    bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
+    f32               _localizedMarkerDistToCameraSq; // Stores (squared) distance to the closest observed marker of the object we're localized to
+
     
     Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
     
@@ -635,26 +665,27 @@ public:
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
     f32              _currentHeadAngle;
-    f32              _currentLiftAngle;
+    f32              _currentLiftAngle = 0;
     
     f32              _leftWheelSpeed_mmps;
     f32              _rightWheelSpeed_mmps;
     
     // Ramping
-    bool             _onRamp;
+    bool             _onRamp = false;
     ObjectID         _rampID;
     Point2f          _rampStartPosition;
     f32              _rampStartHeight;
     Ramp::TraversalDirection _rampDirection;
     
     // State
-    bool             _isPickingOrPlacing;
-    bool             _isPickedUp;
-    bool             _isMoving;
-    bool             _isHeadMoving;
-    bool             _isLiftMoving;
-    f32              _battVoltage;
-    ImageSendMode _imageSendMode;
+    bool             _isPickingOrPlacing = false;
+    bool             _isPickedUp         = false;
+    bool             _isMoving           = false;
+    bool             _isHeadMoving       = false;
+    bool             _isLiftMoving       = false;
+    f32              _battVoltage        = 5;
+    ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+  
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                            TimeStamp_t& t, RobotPoseStamp** p,
@@ -682,12 +713,12 @@ public:
     // exists and is still valid (since, therefore, the marker must
     // be as well)
     ObjectID                    _dockObjectID;
-    const Vision::KnownMarker*  _dockMarker;
+    const Vision::KnownMarker*  _dockMarker               = nullptr;
     ObjectID                    _carryingObjectID;
     ObjectID                    _carryingObjectOnTopID;
-    const Vision::KnownMarker*  _carryingMarker;
-    bool                        _lastPickOrPlaceSucceeded;
-    
+    const Vision::KnownMarker*  _carryingMarker           = nullptr;
+    bool                        _lastPickOrPlaceSucceeded = false;
+  
     /*
      // Plan a path to the pre-ascent/descent pose (depending on current
      // height of the robot) and then go up or down the ramp.
@@ -703,14 +734,14 @@ public:
     std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
     
     // Save mode for robot state
-    SaveMode_t _stateSaveMode;
+    SaveMode_t _stateSaveMode = SAVE_OFF;
     
     // Save mode for robot images
-    SaveMode_t _imageSaveMode;
+    SaveMode_t _imageSaveMode = SAVE_OFF;
     
     // Maintains an average period of incoming robot images
-    u32 _imgFramePeriod;
-    TimeStamp_t _lastImgTimeStamp;
+    u32         _imgFramePeriod        = 0;
+    TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
 
     std::unordered_map<std::string, time_t> _loadedAnimationFiles;
@@ -732,9 +763,9 @@ public:
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed;
-    s32 _numAnimationBytesStreamed;
-    u8  _animationTag;
+    s32 _numAnimationBytesPlayed   = 0;
+    s32 _numAnimationBytesStreamed = 0;
+    u8  _animationTag              = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager      _moodManager;
@@ -743,7 +774,7 @@ public:
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
     std::vector<Signal::SmartHandle> _signalHandles;
-    ImageDeChunker& _imageDeChunker;
+    ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
     uint32_t _imuDataSize = 0;
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
@@ -834,9 +865,6 @@ inline const Vision::Camera& Robot::GetCamera(void) const
 inline Vision::Camera& Robot::GetCamera(void)
 { return _camera; }
 
-inline void Robot::SetLocalizedTo(const ObjectID& toID)
-{ _localizedToID = toID;}
-
 inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
 {
   if (_cameraCalibration != calib) {
@@ -904,7 +932,23 @@ inline s32 Robot::GetNumAnimationBytesStreamed() {
 inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
   _numAnimationBytesStreamed += num;
 }
+
+inline f32 Robot::GetLocalizedToDistanceSq() const {
+  return _localizedMarkerDistToCameraSq;
+}
   
+inline bool Robot::HasMovedSinceBeingLocalized() const {
+  return _hasMovedSinceLocalization;
+}
+  
+inline bool Robot::IsLocalized() const {
+  
+  ASSERT_NAMED(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
+               "Robot can't think it is localized and have localizedToID set!");
+  
+  return _isLocalized;
+}
+
 } // namespace Cozmo
 } // namespace Anki
 
