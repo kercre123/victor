@@ -54,14 +54,14 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorOCD::IsRunnable(double currentTime_sec) const
+  bool BehaviorOCD::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
     // We can only run this behavior when there are at least two "messy" blocks present,
     // or when there is at least one messy block while we've got any neat blocks
-    return (_messyObjects.size() >= 2) ||
-           (!_neatObjects.empty() && !_messyObjects.empty()) ||
-           (_currentState == State::PlacingBlock) ||
-           (!_animActionTags.empty());
+    return robot.IsLocalized() && ((_messyObjects.size() >= 2) ||
+                                   (!_neatObjects.empty() && !_messyObjects.empty()) ||
+                                   (_currentState == State::PlacingBlock) ||
+                                   (!_animActionTags.empty()));
   }
   
   Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec)
@@ -129,7 +129,7 @@ namespace Cozmo {
     }
     
     // Completion trigger is when all (?) blocks make it to his "neat" list
-    if (!IsRunnable(currentTime_sec)) {
+    if (!IsRunnable(robot, currentTime_sec)) {
       return Status::Complete;
     }
     
@@ -497,8 +497,10 @@ namespace Cozmo {
     
     // Find closest empty pose
     f32 closestDistToRobot = std::numeric_limits<f32>::max();
+    BlockWorldFilter filter;
     for (auto& testPose : alignedPoses) {
-      if(nullptr == robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), robot.GetCarryingObjects())) {
+      filter.SetIgnoreIDs(std::set<ObjectID>(robot.GetCarryingObjects()));
+      if(nullptr == robot.GetBlockWorld().FindObjectClosestTo(testPose, nearObject->GetSize(), filter)) {
         f32 distToRobot = ComputeDistanceBetween(robot.GetPose(), testPose);
         if ( distToRobot < closestDistToRobot) {
           closestDistToRobot = distToRobot;
@@ -890,9 +892,9 @@ namespace Cozmo {
                 Vec3f distThresh(0.5f * oObject->GetSize().x(),
                                  0.5f * oObject->GetSize().y(),
                                  1.5f * oObject->GetSize().z());
-                std::set<ObjectID> ignoreIDs;
-                ignoreIDs.insert(*objID);
-                ObservableObject* objBelow = blockWorld.FindObjectClosestTo(oObject->GetPose(), distThresh, ignoreIDs);
+                BlockWorldFilter filter;
+                filter.AddIgnoreID(*objID);
+                ObservableObject* objBelow = blockWorld.FindObjectClosestTo(oObject->GetPose(), distThresh, filter);
                 if (objBelow == nullptr) {
                   continue;
                 }
@@ -1319,6 +1321,20 @@ namespace Cozmo {
     const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
     if (nullptr == oObject) {
       PRINT_NAMED_WARNING("BehaviorOCD.HandeObservedObject.InvalidObject", "How'd this happen? (ObjectID %d)", objectID.GetValue());
+      return RESULT_OK;
+    }
+    
+    if(&oObject->GetPose().FindOrigin() != robot.GetWorldOrigin()) {
+      PRINT_NAMED_WARNING("BehaviorOCD.HandleObservedObject.OriginMismatch",
+                          "Ignoring object %d because it does not share an origin "
+                          "with the robot.", oObject->GetID().GetValue());
+      return RESULT_OK;
+    }
+    
+    if(oObject->IsActive() && oObject->GetIdentityState() != ActiveIdentityState::Identified) {
+      PRINT_NAMED_WARNING("BehaviorOCD.HandleObservedObject.UnidentifiedActiveObject",
+                          "How'd this happen? (ObjectID %d, idState=%s)",
+                          objectID.GetValue(), EnumToString(oObject->GetIdentityState()));
       return RESULT_OK;
     }
     

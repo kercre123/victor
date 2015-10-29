@@ -480,46 +480,6 @@ namespace Anki {
   {
     PoseBase<Pose3d>::PrintNamedPathToOrigin(*this, showTranslations);
   }
-
-  
-  int Pose3d::GetAxisClosestToParentZAxis() const
-  {
-    // Figure out the axis that's pointing in the direction most similar to the parent's z-axis
-    auto lastRow = _rotation.GetRotationMatrix().GetRow(2);
-    int axisIdx = 0;
-    f32 maxVal = std::abs(lastRow[0]);
-    for (auto i = 1; i<3; ++i) {
-      if (std::abs(lastRow[i]) > maxVal) {
-        maxVal = std::abs(lastRow[i]);
-        axisIdx = lastRow[i] > 0 ? i : -i;
-      }
-    }
-    
-    return axisIdx;
-  }
-  
-  Radians Pose3d::GetAngleAroundParentZAxis() const
-  {
-    int axisIdx = GetAxisClosestToParentZAxis();
-    
-    Radians ang;
-    switch (std::abs(axisIdx)) {
-      case 0:
-        ang = GetRotationAngle<'X'>();
-        break;
-      case 1:
-        ang = GetRotationAngle<'Y'>();
-        break;
-      case 2:
-        ang = GetRotationAngle<'Z'>();
-        break;
-      default:
-        break;
-    }
-    
-    return ang;
-  }
-  
   
   void Pose3d::Print() const
   {
@@ -539,17 +499,21 @@ namespace Anki {
   Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
     // Make sure the two poses share a common parent:
-    Pose3d pose2mod(pose2);
+    
     if(pose1.GetParent() != pose2.GetParent()) {
-      if(pose1.GetParent() == nullptr || false == pose2.GetWithRespectTo(*pose1.GetParent(), pose2mod)) {
-        CORETECH_THROW("ComputeVectorBetween.NoCommonParent: Could not get pose2 w.r.t. pose1's parent.");
+      Pose3d pose1wrt2;
+      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
+        PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent",
+                          "Could not get pose1 w.r.t. pose2.");
+        return Vec3f(0.f,0.f,0.f);
       }
+      return pose1wrt2.GetTranslation();
     }
     
     // Compute distance between the two poses' translation vectors
     // TODO: take rotation into account?
     Vec3f distVec(pose1.GetTranslation());
-    distVec -= pose2mod.GetTranslation();
+    distVec -= pose2.GetTranslation();
     return distVec;
   }
 

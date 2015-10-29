@@ -66,6 +66,8 @@ public:
   void QuitWebots(s32 status);
   void QuitController(s32 status);
   
+  void UpdateVizOrigin();
+  
 protected:
   
   virtual void InitInternal() {}
@@ -220,6 +222,11 @@ protected:
   bool IsAvailableAnimation(std::string anim) const;
   BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
+  
+  // Actually move objects in the simulated world
+  void SetActualRobotPose(const Pose3d& newPose);
+  void SetActualObjectPose(const std::string& name, const Pose3d& newPose);
+  
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);

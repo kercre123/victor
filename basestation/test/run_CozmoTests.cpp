@@ -145,7 +145,8 @@ TEST(BlockWorld, AddAndRemoveObject)
   // Now try deleting the object, and make sure we can't still get it using the old ID
   blockWorld.ClearObject(objID);
   object = blockWorld.GetObjectByID(objID);
-  ASSERT_EQ(object, nullptr);
+  ASSERT_NE(object, nullptr);
+  ASSERT_EQ(object->GetPoseState(), ObservableObject::PoseState::Unknown);
   
 } // BlockWorld.AddAndRemoveObject
 

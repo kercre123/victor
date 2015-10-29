@@ -14,6 +14,7 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
+#include "clad/types/globalVizOrigin.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -572,6 +573,10 @@ message QueueCompoundAction {
 
 message SetDemoState {
   DemoBehaviorState demoState
+}
+
+message ForceDelocalizeRobot {
+  uint_8 robotID
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

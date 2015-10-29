@@ -32,14 +32,11 @@
 namespace Anki {
 namespace Vision {
   
-  
   ObservableObject::ObservableObject()
-  : _lastObservedTime(0)
-  , _numTimesObserved(0)
   {
     
   }
-  
+
   
   bool ObservableObject::IsVisibleFrom(const Camera &camera,
                                        const f32 maxFaceNormalAngle,
@@ -56,7 +53,7 @@ namespace Vision {
         return true;
       }
     }
-    
+  
     return false;
     
   } // ObservableObject::IsObservableBy()
@@ -123,8 +120,13 @@ namespace Vision {
     // Otherwise, attempt to make the two poses have the same parent so they
     // are comparable
     else if(otherObject.GetPose().GetWithRespectTo(*_pose.GetParent(), otherPose) == false) {
-      PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
-                          "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+      // If this fails, the objects must not have the same origin, so we cannot
+      // determine sameness based only on pose.
+      
+      // No need to warn: this can easily happen after the robot gets kidnapped
+      //  PRINT_NAMED_WARNING("ObservableObject.IsSameAs.ObjectsHaveDifferentOrigins",
+      //                      "Could not get other object w.r.t. this object's parent. Returning isSame == false.\n");
+      
       isSame = false;
     }
     
@@ -351,6 +353,13 @@ namespace Vision {
     
     return boundingQuad;
   } // GetBoundingQuadXY()
+
+  bool ObservableObject::IsRestingFlat(const Radians& angleTol) const
+  {
+    const RotationMatrix3d Rmat = GetPose().GetWithRespectToOrigin().GetRotationMatrix();
+    const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < angleTol);
+    return isFlat;
+  }
   
 } // namespace Vision
 } // namespace Anki

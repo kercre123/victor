@@ -13,6 +13,8 @@
 
 #include "anki/common/shared/utilities_shared.h"
 
+#include "util/logging/logging.h"
+
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"
 #endif
@@ -41,7 +43,6 @@ namespace Anki {
   void RenormalizeHelper(RotationMatrixBase<3>& R)
   {
     // Convert to and from a rotation vector to get a valid orthogonal matrix
-    // TODO: consider using Quaternions instead?
 #if ANKICORETECH_USE_OPENCV
     cv::Vec3f cvRvec;
     cv::Rodrigues(R.get_CvMatx_(), cvRvec); // to rotation vector
@@ -220,8 +221,13 @@ namespace Anki {
   , _axis(axisIn)
   {
     f32 axisLength = _axis.MakeUnitLength();
-    if(axisLength != 1.f) {
-      // TODO: Issue a warning that axis provided was not unit length?
+    if(_angle == 0 && axisLength == 0) {
+      // If angle is zero and axis is unspecified, then the axis is arbitrary
+      _axis = X_AXIS_3D();
+    } else if(!NEAR(axisLength, 1.f, 1e-6)) {
+      PRINT_NAMED_WARNING("RotationVector3d.Constructor.AxisNotUnitLength",
+                          "Provided axis was not unit length (norm=%f).",
+                          axisLength);
     }
   }
   
@@ -307,60 +313,116 @@ namespace Anki {
     return angleDiff;
   }
   
+  // First row of Rmat
+  template<> f32 Rotation3d::GetRmatEntry<0,0>() const
+  {
+    return 1.f - 2.f*(_q.y()*_q.y() + _q.z()*_q.z());
+  }
+  
+  template<> f32 Rotation3d::GetRmatEntry<0,1>() const
+  {
+    return 2.f*(_q.x()*_q.y() - _q.z()*_q.w());
+  }
+  
+  template<> f32 Rotation3d::GetRmatEntry<0,2>() const
+  {
+    return 2.f*(_q.x()*_q.z() + _q.y()*_q.w());
+  }
+  
+  // Second row of Rmat
+  template<> f32 Rotation3d::GetRmatEntry<1,0>() const
+  {
+    return 2.f*(_q.x()*_q.y() + _q.z()*_q.w());
+  }
+  
+  template<> f32 Rotation3d::GetRmatEntry<1,1>() const
+  {
+    return 1.f - 2.f*(_q.x()*_q.x() + _q.z()*_q.z());
+  }
+  
+  template<> f32 Rotation3d::GetRmatEntry<1,2>() const
+  {
+    return 2.f*(_q.y()*_q.z() - _q.x()*_q.w());
+  }
+  
+  // Third row of Rmat
+  template<> f32 Rotation3d::GetRmatEntry<2,0>() const
+  {
+    return 2.f*(_q.x()*_q.z() - _q.y()*_q.w());
+  }
+  
+  template<> f32 Rotation3d::GetRmatEntry<2,1>() const
+  {
+    return 2.f*(_q.y()*_q.z() + _q.x()*_q.w());
+  }
+  
+  template<> f32 Rotation3d::GetRmatEntry<2,2>() const
+  {
+    return 1.f - 2.f*(_q.x()*_q.x() + _q.y()*_q.y());
+  }
+  
   Radians Rotation3d::GetAngleAroundXaxis() const
   {
     // Apply the quaternion to the Y axis and see where its (y,z) coordinates
     // end up.
-    const float w2 = _q.w()*_q.w();
-    const float x2 = _q.x()*_q.x();
-    const float y2 = _q.y()*_q.y();
-    const float z2 = _q.z()*_q.z();
-    const float yz = _q.y()*_q.z();
-    const float wx = _q.w()*_q.x();
+    const float R21 = GetRmatEntry<2,1>();
+    const float R11 = GetRmatEntry<1,1>();
+    const float magY = R21*R21 + R11*R11;
     
-    const float Ynew = w2-x2+y2-z2;
-    const float Znew = 2*yz+2*wx;
+    // Apply to Z axis
+    const float R12 = GetRmatEntry<1,2>();
+    const float R22 = GetRmatEntry<2,2>();
+    const float magZ = R12*R12 + R22*R22;
     
-    return Radians(atan2f(Znew, Ynew));
+    // Choose vector with largest magnitude for numerical stability
+    if(magY > magZ) {
+      return Radians(atan2f(R21, R11));
+    } else {
+      return Radians(atan2f(-R12,R22));
+    }
   }
   
   Radians Rotation3d::GetAngleAroundYaxis() const
   {
     // Apply the matrix to the X axis and see where its (x,z) coordinates
     // end up.
-    const float w2 = _q.w()*_q.w();
-    const float x2 = _q.x()*_q.x();
-    const float y2 = _q.y()*_q.y();
-    const float z2 = _q.z()*_q.z();
-    const float xz = _q.x()*_q.z();
-    const float wy = _q.w()*_q.y();
+    const float R20 = GetRmatEntry<2,0>();
+    const float R00 = GetRmatEntry<0,0>();
+    const float magX = R20*R20 + R00*R00;
     
-    const float Xnew = w2+x2-y2-z2;
-    const float Znew = 2*xz-2*wy;
-
-    return Radians(atan2f(-Znew, Xnew));
+    // Apply to Z axis
+    const float R02 = GetRmatEntry<0,2>();
+    const float R22 = GetRmatEntry<2,2>();
+    const float magZ = R02*R02 + R22*R22;
+    
+    // Choose vector with largest magnitude for numerical stability
+    if(magX > magZ) {
+      return Radians(atan2f(-R20, R00));
+    } else {
+      return Radians(atan2f(R02, R22));
+    }
   }
-  
-
   
   Radians Rotation3d::GetAngleAroundZaxis() const
   {
     // Apply the quaternion to the X axis and see where its (x,y) coordinates
     // end up.
-    const float w2 = _q.w()*_q.w();
-    const float x2 = _q.x()*_q.x();
-    const float y2 = _q.y()*_q.y();
-    const float z2 = _q.z()*_q.z();
-    const float xy = _q.x()*_q.y();
-    const float wz = _q.w()*_q.z();
+    const float R10 = GetRmatEntry<1,0>();
+    const float R00 = GetRmatEntry<0,0>();
+    const float magX = R10*R10 + R00*R00;
     
-    const float Xnew = w2+x2-y2-z2;
-    const float Ynew = 2*xy+2*wz;
+    // Apply to Y axis
+    const float R01 = GetRmatEntry<0,1>();
+    const float R11 = GetRmatEntry<1,1>();
+    const float magY = R01*R01 + R11*R11;
     
-    return Radians(atan2f(Ynew, Xnew));
+    // Choose vector with largest magnitude for numerical stability
+    if(magX > magY) {
+      return Radians(atan2f(R10, R00));
+    } else {
+      return Radians(atan2f(-R01,R11));
+    }
   }
-  
-  
   
   const Vec3f Rotation3d::GetAxis() const
   {
@@ -371,7 +433,22 @@ namespace Anki {
   
   const RotationMatrix3d Rotation3d::GetRotationMatrix() const
   {
-    return RotationMatrix3d(GetAngle(), GetAxis());
+    // Precompute some reused values
+    const f32 x2 = _q.x() * _q.x();
+    const f32 y2 = _q.y() * _q.y();
+    const f32 z2 = _q.z() * _q.z();
+    const f32 xw = _q.x() * _q.w();
+    const f32 xy = _q.x() * _q.y();
+    const f32 xz = _q.x() * _q.z();
+    const f32 yw = _q.y() * _q.w();
+    const f32 yz = _q.y() * _q.z();
+    const f32 zw = _q.z() * _q.w();
+    
+    return RotationMatrix3d({
+      1.f - 2.f*(y2 + z2),  2.f*(xy - zw),         2.f*(xz + yw),       // Row 1
+      2.f*(xy + zw),        1.f - 2.f*(x2 + z2),   2.f*(yz - xw),       // Row 2
+      2.f*(xz - yw),        2.f*(yz + xw),         1.f - 2.f*(x2 + y2), // Row 3
+    });
   }
   
   const RotationVector3d Rotation3d::GetRotationVector() const
@@ -431,9 +508,6 @@ namespace Anki {
 #endif
   
   template<typename T>
-  T UnitQuaternion<T>::NormalizationTolerance = 1000.f * std::numeric_limits<T>::epsilon();
-  
-  template<typename T>
   UnitQuaternion<T>::UnitQuaternion()
   : Point<4,T>(1,0,0,0)
   {
@@ -457,8 +531,19 @@ namespace Anki {
   template<typename T>
   UnitQuaternion<T>& UnitQuaternion<T>::Normalize()
   {
-    if(Point<4,T>::MakeUnitLength() == 0) {
-      CORETECH_THROW("Tried to normalize an all-zero UnitQuaternion.\n");
+    const double qmagsq = Point<4,T>::LengthSq();
+    
+    ASSERT_NAMED(qmagsq != 0, "Tried to normalize an all-zero UnitQuaternion.\n");
+    
+    if (std::abs(1.0 - qmagsq) < 2.107342e-08) {
+      // This is an approximation of dividing by the square root, when the
+      // squared magnitude of the quaternion is small enough.
+      // See: http://stackoverflow.com/questions/11667783/quaternion-and-normalization
+      Point<4,T>::operator*=(2.0 / (1.0 + qmagsq));
+    }
+    else {
+      // Otherwise, divide by the square root.
+      Point<4,T>::operator/=(std::sqrt(qmagsq));
     }
     
     return *this;
@@ -504,13 +589,6 @@ namespace Anki {
     this->z() = zNew;
     
     Normalize();
-    /*
-     // TODO: Only normalize when things get outside some tolerance?
-    const T newLength = Point<4,T>::Length();
-    if(!NEAR(newLength, 1.f, UnitQuaternion<T>::NormalizationTolerance)) {
-      Point<4,T>::operator/=(newLength);
-    }
-     */
     
     return *this;
   }
@@ -615,18 +693,12 @@ namespace Anki {
     // See also:
     // "Metrics for 3D Rotations: Comparison and Analysis", Du Q. Huynh
     //
-    // TODO: use quaternion difference?  Might be cheaper than the matrix multiplication below
-    //     UnitQuaternion qThis(this->rotationVector), qOther(otherPose.rotationVector);
-    //
-    // const Radians angleDiff( 2.f*std::acos(std::abs(DotProduct(qThis, qOther))) );
-    //
     
     // R = R_this * R_other^T
     RotationMatrix3d R;
     other.GetTranspose(R);
     R.PreMultiplyBy(*this);
     
-    //const Radians angleDiff( std::acos(0.5f*(R.Trace() - 1.f)) );
     return R.GetAngle();
   }
   
@@ -705,36 +777,86 @@ namespace Anki {
 
   Radians RotationMatrix3d::GetAngleAroundXaxis() const
   {
-    // Apply the matrix to the Y axis and see where its (y,z) coordinates
-    // end up.
+    // Apply the matrix to the Y axis and see where its (y,z) coordinates end up
     const f32 R11 = (*this)(1,1);
     const f32 R21 = (*this)(2,1);
-    return Radians( atan2f(R21, R11));
+    const f32 magY = R11*R11 + R21*R21;
+    
+    // Apply the matrix to the Z axis and see where its (y,z) coordinates end up
+    const f32 R12 = (*this)(1,2);
+    const f32 R22 = (*this)(2,2);
+    const f32 magZ = R12*R12 + R22*R22;
+    
+    // See which vector has larger magnitude and thus should result in a more
+    // numerically stable result
+    if(magY > magZ) {
+      return Radians(atan2f(R21, R11));
+    } else {
+      return Radians(atan2f(-R12, R22));
+    }
     
   } // RotationMatrix3d::GetAngleAroundYaxis()
   
   
   Radians RotationMatrix3d::GetAngleAroundYaxis() const
   {
-    // Apply the matrix to the X axis and see where its (x,z) coordinates
-    // end up.
+    // Apply the matrix to the X axis and see where its (x,z) coordinates end up
     const f32 R20 = (*this)(2,0);
     const f32 R00 = (*this)(0,0);
-    return Radians( atan2f(-R20, R00));
+    const f32 magX = R20*R20 + R00*R00;
+    
+    // Apply the matrix to the Z axis and see where its (x,z) coordinates end up
+    const f32 R02 = (*this)(0,2);
+    const f32 R22 = (*this)(2,2);
+    const f32 magZ = R02*R02 + R22*R22;
+    
+    // See which vector has larger magnitude and thus should result in a more
+    // numerically stable result
+    if(magX > magZ) {
+      return Radians(atan2f(-R20, R00));
+    } else {
+      return Radians(atan2f(R02,R22));
+    }
     
   } // RotationMatrix3d::GetAngleAroundYaxis()
   
   
   Radians RotationMatrix3d::GetAngleAroundZaxis() const
   {
-    // Apply the matrix to the X axis and see where its (x,y) coordinates
-    // end up.
+    // Apply the matrix to the X axis and see where its (x,y) coordinates end up
     const f32 R10 = (*this)(1,0);
     const f32 R00 = (*this)(0,0);
-    return Radians( atan2f(R10, R00));
+    const f32 magX = R10*R10 + R00*R00;
+    
+    // Apply the matrix to the Y axis and see where its (x,y) coordinates end up
+    const f32 R01 = (*this)(0,1);
+    const f32 R11 = (*this)(1,1);
+    const f32 magY = R01*R01 + R11*R11;
+    
+    // See which vector has larger magnitude and thus should result in a more
+    // numerically stable result
+    if(magX > magY) {
+      return Radians(atan2f(R10, R00));
+    } else {
+      return Radians(atan2f(-R01, R11));
+    }
     
   } // RotationMatrix3d::GetAngleAroundZaxis()
   
+  template<> Radians RotationMatrix3d::GetAngleAroundAxis<'X'>() const
+  {
+    return GetAngleAroundXaxis();
+  }
+  
+  template<> Radians RotationMatrix3d::GetAngleAroundAxis<'Y'>() const
+  {
+    return GetAngleAroundYaxis();
+  }
+  
+  template<> Radians RotationMatrix3d::GetAngleAroundAxis<'Z'>() const
+  {
+    return GetAngleAroundZaxis();
+  }
   
 #if 0
 #pragma mark --- Rodrigues Functions ---
@@ -748,9 +870,8 @@ namespace Anki {
     cvRvec *= Rvec_in.GetAngle().ToFloat();
     cv::Rodrigues(cvRvec, Rmat_out.get_CvMatx_());    
 #else
-    
     assert(false);
-    // TODO: implement our own version?
+    // TODO: implement our own version of Rodrigues formula?
 #endif
     
   } // Rodrigues(Rvec, Rmat)
@@ -767,9 +888,7 @@ namespace Anki {
     Rvec_out = RotationVector3d(tempVec);
 #else
     assert(false);
-    
-    // TODO: implement our own version?
-    
+    // TODO: implement our own version of Rodrigues formula?
 #endif
     
   } // Rodrigues(Rmat, Rvec)

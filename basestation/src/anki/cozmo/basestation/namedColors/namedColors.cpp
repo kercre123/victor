@@ -15,7 +15,6 @@
 
 
 namespace Anki {
-namespace Cozmo {
 namespace NamedColors {
 
 // Add some BlockWorld-specific named colors:
@@ -35,7 +34,9 @@ const ColorRGBA ROBOT_BOUNDING_QUAD
   (0.f, 0.8f, 0.0f, 0.75f);
 const ColorRGBA REPLAN_BLOCK_BOUNDING_QUAD
   (1.f, 0.1f, 1.0f, 0.75f);
+const ColorRGBA LOCALIZATION_OBJECT
+  (1.0, 0.0f, 1.0f, 1.0f);
+
 
 } // end namespace NamedColors
-} // end namespace Cozmo
 } // end namespace Anki

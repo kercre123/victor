@@ -29,8 +29,9 @@ namespace Anki {
         s32 _stepTimeMS;
         webots::Supervisor _supervisor;
         
-        const double* _robotTransActual;
-        const double* _robotOrientationActual;
+        webots::Node* _robotNode = nullptr;
+        std::vector<std::pair<webots::Node*, Pose3d> > _lightCubes;
+        auto _lightCubeOriginIter = _lightCubes.end();
         
         Pose3d _robotPose;
         Pose3d _robotPoseActual;
@@ -264,8 +265,7 @@ namespace Anki {
     UiGameController::UiGameController(s32 step_time_ms)
     {
       _stepTimeMS = step_time_ms;
-      _robotTransActual = nullptr;
-      _robotOrientationActual = nullptr;
+      _robotNode = nullptr;
       _robotPose.SetTranslation({0.f, 0.f, 0.f});
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
@@ -498,8 +498,9 @@ namespace Anki {
     
     void UiGameController::UpdateActualObjectPoses()
     {
-      if (_robotTransActual == nullptr) {
-      
+      // Only look for the robot node once at the beginning
+      if (_robotNode == nullptr)
+      {
         webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
         int numRootChildren = rootChildren->getCount();
         for (int n = 0 ; n<numRootChildren; ++n) {
@@ -518,30 +519,106 @@ namespace Anki {
           if (nd->getTypeName().find("Supervisor") != std::string::npos &&
               nodeName.find("CozmoBot") != std::string::npos) {
 
-            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", "Found robot with name %s", nodeName.c_str());
+            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                             "Found robot with name %s", nodeName.c_str());
             
-            _robotTransActual = nd->getPosition();
-            _robotOrientationActual = nd->getOrientation();
+            _robotNode = nd;
             
             break;
           }
+          else if(nodeName.find("LightCube") != std::string::npos) {
+            _lightCubes.emplace_back(std::make_pair(nd, Pose3d()));
+            _lightCubeOriginIter = _lightCubes.begin();
+            
+            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                             "Found LightCube with name %s", nodeName.c_str());
+
+          }
+          
         }
       }
       
-      _robotPoseActual.SetTranslation( {static_cast<f32>(_robotTransActual[0]),
-                                        static_cast<f32>(_robotTransActual[1]),
-                                        static_cast<f32>(_robotTransActual[2])} );
+      const double* transActual = _robotNode->getPosition();
+      _robotPoseActual.SetTranslation( {static_cast<f32>(M_TO_MM(transActual[0])),
+                                        static_cast<f32>(M_TO_MM(transActual[1])),
+                                        static_cast<f32>(M_TO_MM(transActual[2]))} );
       
-      _robotPoseActual.SetRotation({static_cast<f32>(_robotOrientationActual[0]),
-                                    static_cast<f32>(_robotOrientationActual[1]),
-                                    static_cast<f32>(_robotOrientationActual[2]),
-                                    static_cast<f32>(_robotOrientationActual[3]),
-                                    static_cast<f32>(_robotOrientationActual[4]),
-                                    static_cast<f32>(_robotOrientationActual[5]),
-                                    static_cast<f32>(_robotOrientationActual[6]),
-                                    static_cast<f32>(_robotOrientationActual[7]),
-                                    static_cast<f32>(_robotOrientationActual[8])} );
+      const double *orientationActual = _robotNode->getOrientation();
+      _robotPoseActual.SetRotation({static_cast<f32>(orientationActual[0]),
+                                    static_cast<f32>(orientationActual[1]),
+                                    static_cast<f32>(orientationActual[2]),
+                                    static_cast<f32>(orientationActual[3]),
+                                    static_cast<f32>(orientationActual[4]),
+                                    static_cast<f32>(orientationActual[5]),
+                                    static_cast<f32>(orientationActual[6]),
+                                    static_cast<f32>(orientationActual[7]),
+                                    static_cast<f32>(orientationActual[8])} );
       
+      
+      for(auto & lightCube : _lightCubes)
+      {
+        transActual = lightCube.first->getPosition();
+        orientationActual = lightCube.first->getOrientation();
+        
+        lightCube.second.SetTranslation({static_cast<f32>(M_TO_MM(transActual[0])),
+          static_cast<f32>(M_TO_MM(transActual[1])),
+          static_cast<f32>(M_TO_MM(transActual[2]))} );
+
+        lightCube.second.SetRotation({static_cast<f32>(orientationActual[0]),
+          static_cast<f32>(orientationActual[1]),
+          static_cast<f32>(orientationActual[2]),
+          static_cast<f32>(orientationActual[3]),
+          static_cast<f32>(orientationActual[4]),
+          static_cast<f32>(orientationActual[5]),
+          static_cast<f32>(orientationActual[6]),
+          static_cast<f32>(orientationActual[7]),
+          static_cast<f32>(orientationActual[8])} );
+      }
+      
+    }
+    
+    void UiGameController::UpdateVizOrigin()
+    {
+      SetVizOrigin msg;
+      
+      Pose3d correctionPose;
+      if(_robotStateMsg.localizedToObjectID >= 0)
+      {
+        // Align the pose of the object to which the robot is localized to the
+        // the next actual light cube in the world
+        ++_lightCubeOriginIter;
+        if(_lightCubeOriginIter == _lightCubes.end()) {
+          _lightCubeOriginIter = _lightCubes.begin();
+        }
+       
+        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                         "Aligning viz to match next known LightCube to object %d",
+                         _robotStateMsg.localizedToObjectID);
+        
+        correctionPose = _lightCubeOriginIter->second * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+      } else {
+        // Robot is not localized to any object, so align the robot's estimated
+        // pose to its actual pose in the world
+
+        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                         "Aligning viz to match robot's pose.");
+                         
+        correctionPose = _robotPoseActual * _robotPose.GetInverse();
+      }
+      
+      
+      const RotationVector3d Rvec(correctionPose.GetRotationVector());
+      
+      msg.rot_rad = Rvec.GetAngle().ToFloat();
+      msg.rot_axis_x = Rvec.GetAxis().x();
+      msg.rot_axis_y = Rvec.GetAxis().y();
+      msg.rot_axis_z = Rvec.GetAxis().z();
+      
+      msg.trans_x = correctionPose.GetTranslation().x();
+      msg.trans_y = correctionPose.GetTranslation().y();
+      msg.trans_z = correctionPose.GetTranslation().z();
+      
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
 
     
@@ -587,6 +664,7 @@ namespace Anki {
       ExternalInterface::TurnInPlace m;
       m.robotID = 1;
       m.angle_rad = angle_rad;
+      m.isAbsolute = false;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TurnInPlace(m);
       SendMessage(message);
@@ -1347,5 +1425,34 @@ namespace Anki {
       return _availableAnimations.find(anim) != _availableAnimations.end();
     }
     
+    void UiGameController::SetActualRobotPose(const Pose3d& newPose)
+    {
+      webots::Field* rotField = _robotNode->getField("rotation");
+      assert(rotField != nullptr);
+      
+      webots::Field* transField = _robotNode->getField("translation");
+      assert(transField != nullptr);
+      
+      const RotationVector3d Rvec = newPose.GetRotationVector();
+      const double rotation[4] = {
+        Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+        Rvec.GetAngle().ToFloat()
+      };
+      rotField->setSFRotation(rotation);
+      
+      const double translation[3] = {
+        MM_TO_M(newPose.GetTranslation().x()),
+        MM_TO_M(newPose.GetTranslation().y()),
+        MM_TO_M(newPose.GetTranslation().z())
+      };
+      transField->setSFVec3f(translation);
+      
+    }
+    
+    void SetActualObjectPose(const std::string& name, const Pose3d& newPose)
+    {
+      // TODO: Implement!
+    }
+
   } // namespace Cozmo
 } // namespace Anki

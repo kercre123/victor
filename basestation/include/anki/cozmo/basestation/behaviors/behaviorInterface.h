@@ -76,7 +76,7 @@ namespace Cozmo {
     
     // Returns true iff the state of the world/robot is sufficient for this
     // behavior to be executed
-    virtual bool IsRunnable(double currentTime_sec) const = 0;
+    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const = 0;
     
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
@@ -90,7 +90,7 @@ namespace Cozmo {
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
     
     // EvaluateScore is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
-    virtual float EvaluateScore(const MoodManager& moodManager, double currentTime_sec) const { return IsRunnable(currentTime_sec) ? EvaluateEmotionScore(moodManager) : 0.0f; }
+    virtual float EvaluateScore(const Robot& robot, double currentTime_sec) const;
 
     void ClearEmotionScorers()                         { _emotionScorers.clear(); }
     void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
@@ -145,9 +145,8 @@ namespace Cozmo {
     // NOTE: AlwaysHandle is called first!
     virtual void HandleWhileNotRunning(const GameToEngineEvent& event, const Robot& robot) { }
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) { }
-
-    // A random number generator for all behaviors to share
-    Util::RandomGenerator _rng;
+    
+    Util::RandomGenerator& GetRNG();
     
     std::string _name = "no_name";
     std::string _stateName = "";
@@ -160,6 +159,9 @@ namespace Cozmo {
     
     bool _isRunning;
     
+    // A random number generator for all behaviors to share
+    static Util::RandomGenerator sRNG;
+
     std::vector<::Signal::SmartHandle> _eventHandles;
     
     template<class EventType>
@@ -180,6 +182,10 @@ namespace Cozmo {
   inline Result IBehavior::Interrupt(double currentTime_sec)
   {
     return InterruptInternal(_robot, currentTime_sec);
+  }
+  
+  inline Util::RandomGenerator& IBehavior::GetRNG() {
+    return sRNG;
   }
   
   template<class EventType>

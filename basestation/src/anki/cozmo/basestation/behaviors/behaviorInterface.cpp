@@ -21,8 +21,10 @@
 namespace Anki {
 namespace Cozmo {
 
+  // Static initializations
   const ActionList::SlotHandle IBehavior::sActionSlot = 0;
-
+  Util::RandomGenerator IBehavior::sRNG;
+  
   IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _robot(robot)
   , _isRunning(false)
@@ -83,6 +85,12 @@ namespace Cozmo {
     const float averageScore = (numEmotionsScored > 0) ? (totalScore / float(numEmotionsScored)) : 0.0f;
     return averageScore;
   }
+  
+  float IBehavior::EvaluateScore(const Robot& robot, double currentTime_sec) const
+  {
+    return IsRunnable(robot, currentTime_sec) ? EvaluateEmotionScore(robot.GetMoodManager()) : 0.0f;
+  }
+
   
 } // namespace Cozmo
 } // namespace Anki

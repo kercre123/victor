@@ -18,6 +18,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "clad/vizInterface/messageViz.h"
 #include <OpenGL/OpenGL.h>
+#include <plugins/physics.h>
 #include <GLUT/GLUT.h>
 
 #if DEBUG_COZMO_PHYSICS
@@ -54,6 +55,8 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizDefineColorMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ShowObjects,
     std::bind(&PhysVizController::ProcessVizShowObjectsMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SetVizOrigin,
+            std::bind(&PhysVizController::ProcessVizSetOriginMessage, this, std::placeholders::_1));
 
   _server.StartListening((uint16_t)VizConstants::PHYSICS_PLUGIN_SERVER_PORT);
 
@@ -90,6 +93,11 @@ void PhysVizController::Draw(int pass, const char *view)
       ::Anki::NamedColors::DEFAULT.g(),
       ::Anki::NamedColors::DEFAULT.b(),
       ::Anki::NamedColors::DEFAULT.alpha());
+    
+    // Set global offset
+    glPushMatrix();
+    glTranslatef(_globalTranslation[0], _globalTranslation[1], _globalTranslation[2]);
+    glRotatef(_globalRotation[0], _globalRotation[1], _globalRotation[2], _globalRotation[3]);
 
     // Draw path
     for (auto pathMapIt = _pathMap.begin(); pathMapIt != _pathMap.end(); pathMapIt++) {
@@ -255,8 +263,10 @@ void PhysVizController::Draw(int pass, const char *view)
       } // for each quad
     } // for each quad type
 
-  }
-}
+    glPopMatrix(); // global viz transform
+    
+  } // if (pass == 1 && view == NULL)
+} // Draw()
 
 
 void PhysVizController::Cleanup()
@@ -447,6 +457,24 @@ void PhysVizController::ProcessVizShowObjectsMessage(const AnkiEvent<VizInterfac
   _drawEnabled = payload.show > 0;
 }
 
+void PhysVizController::ProcessVizSetOriginMessage(const AnkiEvent<VizInterface::MessageViz> &msg)
+{
+  const auto& payload = msg.GetData().Get_SetVizOrigin();
+  
+  _globalRotation[0] = RAD_TO_DEG(payload.rot_rad); // Note that global rotation angle is in degrees!
+  _globalRotation[1] = payload.rot_axis_x;
+  _globalRotation[2] = payload.rot_axis_y;
+  _globalRotation[3] = payload.rot_axis_z;
+  
+  _globalTranslation[0] = MM_TO_M(payload.trans_x);
+  _globalTranslation[1] = MM_TO_M(payload.trans_y);
+  _globalTranslation[2] = MM_TO_M(payload.trans_z);
+  
+  PRINT("Processing SetVizOrigin: %.1fdeg @(%.1f %.1f %.1f), (%.1f %.1f %.1f)\n",
+        RAD_TO_DEG(_globalRotation[0]), _globalRotation[1], _globalRotation[2], _globalRotation[3],
+        _globalTranslation[0], _globalTranslation[1], _globalTranslation[2]);
+}
+  
 void PhysVizController::DrawTextAtOffset(std::string s, float x_off, float y_off, float z_off)
 {
   glPushMatrix();

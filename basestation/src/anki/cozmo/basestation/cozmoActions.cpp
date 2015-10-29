@@ -87,10 +87,12 @@ namespace Anki {
       
       // Check that up axis of carried object and the desired placementPose are the same.
       // Otherwise, it's impossible for the robot to place it there!
-      int targetUpAxis = placementPose.GetAxisClosestToParentZAxis();
-      int currentUpAxis = object->GetPose().GetAxisClosestToParentZAxis();
+      AxisName targetUpAxis = placementPose.GetRotationMatrix().GetRotatedParentAxis<'Z'>();
+      AxisName currentUpAxis = object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
       if (currentUpAxis != targetUpAxis) {
-        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes", "Carried up axis: %d, target up axis: %d", currentUpAxis, targetUpAxis);
+        PRINT_NAMED_WARNING("ComputePlacementApproachAngle.MismatchedUpAxes",
+                            "Carried up axis: %d , target up axis: %d",
+                            currentUpAxis, targetUpAxis);
         return RESULT_FAIL;
       }
       
@@ -106,7 +108,8 @@ namespace Anki {
       Pose3d poseRobotIfPlacingObject(poseObjectWrtRobot.Invert());
       poseRobotIfPlacingObject.PreComposeWith(placementPose);
       
-      assert(poseRobotIfPlacingObject.GetAxisClosestToParentZAxis() == currentUpAxis);
+      // Extra confirmation that the robot is upright in this pose
+      assert(poseRobotIfPlacingObject.GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
       
       approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
       
@@ -1919,23 +1922,35 @@ namespace Anki {
           
           const BlockWorld::ObjectsMapByID_t& objectsWithType = blockWorld.GetExistingObjectsByType(carryObject->GetType());
           
+          // Robot's pose parent could have changed due to delocalization.
+          // Assume it's actual pose is relatively accurate w.r.t. that original
+          // pose (when dockObjectOrigPose was stored) and update the parent so
+          // that we can do IsSameAs checks below.
+          _dockObjectOrigPose.SetParent(robot.GetPose().GetParent());
+          
           Vec3f Tdiff;
           Radians angleDiff;
           ObservableObject* objectInOriginalPose = nullptr;
-          for(auto object : objectsWithType) {
+          for(auto object : objectsWithType)
+          {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;
             Radians angleDiff;
-            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose,
+            if(object.second->GetPose().IsSameAs_WithAmbiguity(_dockObjectOrigPose, // dock obj orig pose is w.r.t. robot
                                                                carryObject->GetRotationAmbiguities(),
                                                                carryObject->GetSameDistanceTolerance()*0.5f,
                                                                carryObject->GetSameAngleTolerance(), true,
                                                                Tdiff, angleDiff))
             {
-              PRINT_STREAM_INFO("PickupObjectAction.Verify", std::setprecision(3) << "Seeing object " << object.first.GetValue() << " in original pose. (Tdiff = (" << Tdiff.x() << "," << Tdiff.y() << "," << Tdiff.z() << "), AngleDiff=" << angleDiff.getDegrees() << "deg");
+              PRINT_NAMED_INFO("PickupObjectAction.Verify.ObjectInOrigPose",
+                               "Seeing object %d in original pose. (Tdiff = (%.1f,%.1f,%.1f), "
+                               "AngleDiff=%.1fdeg",
+                               object.first.GetValue(),
+                               Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
               objectInOriginalPose = object.second;
               break;
             }
+
           }
           
           if(objectInOriginalPose != nullptr)
@@ -1945,13 +1960,15 @@ namespace Anki {
             // object I matched to it above, and then delete that object.
             // (This prevents a new object with different ID being created.)
             if(carryObject->GetID() != objectInOriginalPose->GetID()) {
-              PRINT_STREAM_INFO("PickupObjectAction.Verify", "Moving carried object to object seen in original pose and clearing that object.");
+              PRINT_STREAM_INFO("PickupObjectAction.Verify",
+                                "Moving carried object to object seen in original pose and clearing that object.");
               carryObject->SetPose(objectInOriginalPose->GetPose());
               blockWorld.ClearObject(objectInOriginalPose->GetID());
             }
             robot.UnSetCarryingObjects();
             
-            PRINT_STREAM_INFO("PickupObjectAction.Verify", "Object pick-up FAILED! (Still seeing object in same place.)");
+            PRINT_STREAM_INFO("PickupObjectAction.Verify",
+                              "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
           } else {
             PRINT_STREAM_INFO("PickupObjectAction.Verify", "Object pick-up SUCCEEDED!");
@@ -2132,7 +2149,7 @@ namespace Anki {
                   assert(_dockAction == DockAction::DA_PLACE_HIGH);
                   PRINT_NAMED_ERROR("PlaceRelObjectAction.Verify",
                                     "Robot thinks it placed the object high, but verification of placement "
-                                    "failed. Assuming we are still carying object %d.",
+                                    "failed. Assuming we are still carrying object %d.",
                                     _carryObjectID.GetValue());
                   
                   robot.SetObjectAsAttachedToLift(_carryObjectID, _carryObjectMarker);
@@ -2253,10 +2270,10 @@ namespace Anki {
     {
       // Record the object's original pose (before picking it up) so we can
       // verify later whether we succeeded.
-      // Make it w.r.t. robot's parent so we can compare heights fairly.
+      // Make it w.r.t. robot's parent so we don't have to worry about differing origins later.
       if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
         PRINT_NAMED_ERROR("RollObjectAction.SelectDockAction.PoseWrtFailed",
-                          "Could not get pose of dock object w.r.t. robot parent.");
+                          "Could not get pose of dock object w.r.t. robot's parent.");
         return RESULT_FAIL;
       }
       
@@ -2267,14 +2284,13 @@ namespace Anki {
       
       
       // Get the top marker as this will be what needs to be seen for verification
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
-      if (activeCube == nullptr) {
-        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.NonActiveCube", "Only active cubes can be rolled");
+      Block* block = dynamic_cast<Block*>(object);
+      if (block == nullptr) {
+        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.NonBlock", "Only blocks can be rolled");
         return RESULT_FAIL;
       }
       Pose3d junk;
-      _expectedMarkerPostRoll = &(activeCube->GetTopMarker(junk));
-      
+      _expectedMarkerPostRoll = &(block->GetTopMarker(junk));
       
       // TODO: Stop using constant ROBOT_BOUNDING_Z for this
       // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.

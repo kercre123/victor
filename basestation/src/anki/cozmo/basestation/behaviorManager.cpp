@@ -276,7 +276,7 @@ namespace Cozmo {
   Result BehaviorManager::SelectNextBehavior(double currentTime_sec)
   {
     
-    _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot.GetMoodManager(), currentTime_sec);
+    _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot, currentTime_sec);
     if(nullptr == _nextBehavior) {
       PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoneRunnable", "");
       return RESULT_FAIL;
@@ -295,7 +295,7 @@ namespace Cozmo {
                         "No behavior named '%s'", name.c_str());
       return RESULT_FAIL;
     }
-    else if(_nextBehavior->IsRunnable(currentTime_sec) == false) {
+    else if(_nextBehavior->IsRunnable(_robot, currentTime_sec) == false) {
       PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NotRunnable",
                         "Behavior '%s' is not runnable.", name.c_str());
       return RESULT_FAIL;

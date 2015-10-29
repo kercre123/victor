@@ -36,6 +36,20 @@ namespace Anki
       0.00044f,
       0.00188f
     };
+#elif defined(COZMO_ROBOT_3A94)
+    // Calibration values from Oct 26, 2015 - on headboard with SSID 3a94
+    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.116827643f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.911858028f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 192.335473712f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 159.149178809f;
+    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
+      0.09793295f,
+      -0.32495782f,
+      0.00181705f,
+      -0.00264056f
+    };
 #elif defined(COZMO_ROBOT_3AA0)
     // Calibration values from Oct 14, 2015 - on headboard with SSID 3aa0
     const u16 HEAD_CAM_CALIB_WIDTH  = 400;
@@ -50,7 +64,7 @@ namespace Anki
       0.00176247f,
       -0.00123075f
     };    
-#else
+#elif defined(COZMO_ROBOT_3A97)
     // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
     const u16 HEAD_CAM_CALIB_WIDTH  = 400;
     const u16 HEAD_CAM_CALIB_HEIGHT = 296;
@@ -64,6 +78,8 @@ namespace Anki
       -0.00226334f,
       0.00200109f
     };
+#else
+#error Need to define which robot. (e.g. COZMO_ROBOT_3A94)
 #endif
     
     

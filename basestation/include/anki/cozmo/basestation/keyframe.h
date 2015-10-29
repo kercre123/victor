@@ -82,16 +82,22 @@ namespace Anki {
       
       //void SetIsValid(bool isValid) { _isValid = isValid; }
       
-      // A random number generator for all keyframes to share (for adding variability)
-      Util::RandomGenerator _rng;
+      Util::RandomGenerator& GetRNG();
       
     private:
       
+      // A random number generator for all keyframes to share (for adding variability)
+      static Util::RandomGenerator sRNG;
+
       TimeStamp_t   _triggerTime_ms;
       bool          _isValid;
       bool          _isLive;
       
     }; // class IKeyFrame
+    
+    inline Util::RandomGenerator& IKeyFrame::GetRNG() {
+      return sRNG;
+    }
     
     
     // A HeadAngleKeyFrame specifies the time to _start_ moving the head towards

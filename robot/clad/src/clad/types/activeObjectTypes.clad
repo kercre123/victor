@@ -74,5 +74,11 @@ enum uint_8 UpAxis {
   Unknown
 }
 
+enum uint_8 ActiveIdentityState {
+  Unidentified,
+  WaitingForIdentity,
+  Identified
+}
+
 } // namespace Cozmo
 } // namespace Anki
