@@ -63,10 +63,10 @@ message RobotState {
     float_32 pose_y,
     float_32 pose_z,
     float_32 poseAngle_rad,    // heading in X-Y plane
-    float_32 pose_quaternion0, // full 3d rotation as a quaternion
-    float_32 pose_quaternion1, //  "
-    float_32 pose_quaternion2, //  "
-    float_32 pose_quaternion3, //  "
+    float_32 pose_qw,          // full 3d rotation as a quaternion
+    float_32 pose_qx,          //  "
+    float_32 pose_qy,          //  "
+    float_32 pose_qz,          //  "
     float_32 leftWheelSpeed_mmps,
     float_32 rightWheelSpeed_mmps,
     float_32 headAngle_rad,
@@ -122,10 +122,10 @@ message RobotObservedObject {
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
     float_32 world_z,        //     "
-    float_32 quaternion0,    // quaternion for 3D rotation (4 elements)
-    float_32 quaternion1,    //     "
-    float_32 quaternion2,    //     "
-    float_32 quaternion3,    //     "
+    float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
+    float_32 quaternion_x,   //     "
+    float_32 quaternion_y,   //     "
+    float_32 quaternion_z,   //     "
     float_32 topFaceOrientation_rad, // absolute orienation of top face, iff isActive==true
     uint_8   markersVisible, // Observed via markers vs. "should" be visible based on previous observation
     uint_8   isActive
@@ -138,10 +138,10 @@ message RobotObservedFace {
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
     float_32 world_z,        //     "
-    float_32 quaternion0,    // quaternion for 3D rotation (4 elements)
-    float_32 quaternion1,    //     "
-    float_32 quaternion2,    //     "
-    float_32 quaternion3     //     "
+    float_32 quaternion_w,   // quaternion for 3D rotation (4 elements)
+    float_32 quaternion_x,   //     "
+    float_32 quaternion_y,   //     "
+    float_32 quaternion_z    //     "
 // TODO: Add expression / landmark locations
 }
 

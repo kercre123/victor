@@ -81,7 +81,7 @@ namespace Anki {
       s32 objID = msg.objectID;
       ObjectFamily objFamily = msg.objectFamily;
       ObjectType objType = msg.objectType;
-      UnitQuaternion<float> q(msg.quaternion0, msg.quaternion1, msg.quaternion2, msg.quaternion3);
+      UnitQuaternion<float> q(msg.quaternion_w, msg.quaternion_x, msg.quaternion_y, msg.quaternion_z);
       Vec3f trans(msg.world_x, msg.world_y, msg.world_z);
       
       // If an object with the same ID already exists in the map, make sure that it's type hasn't changed
