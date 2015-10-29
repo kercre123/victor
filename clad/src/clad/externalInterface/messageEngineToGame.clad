@@ -75,6 +75,7 @@ message RobotState {
     int_32   carryingObjectID,      // will be -1 if not carrying object
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
+    int_32   localizedToObjectID,   // Will be -1 if not localized to any object
     uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
     uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
     uint_8   robotID
@@ -172,6 +173,12 @@ message DeviceDetectedVisionMarker {
     float_32 y_upperRight,
     float_32 x_lowerRight,
     float_32 y_lowerRight
+}
+
+// RobotMarkedObjectPoseUnknown
+message RobotMarkedObjectPoseUnknown {
+    uint_32 robotID,
+    uint_32 objectID
 }
 
 ///////////////////////////////////////////////////////////////////////////////

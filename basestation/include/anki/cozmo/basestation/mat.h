@@ -63,8 +63,6 @@ namespace Anki {
       
       //void SetOrigin(const Pose3d* newOrigin);
       
-      virtual bool IsMoveable() const { return false; }
-      
       // Like GetBoundingQuadXY, but returns quads indicating unsafe regions to
       // drive on or around this mat, such as the regions around a platform
       // (so robot doesn't drive off) or some kind of 3D obstacle built into the

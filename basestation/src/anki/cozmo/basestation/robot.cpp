@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -42,6 +43,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/helpers/templateHelpers.h"
 
 #include <fstream>
 #include <regex>
@@ -59,70 +61,37 @@ namespace Anki {
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _ID(robotID)
-    , _isPhysical(false)
-    , _newStateMsgAvailable(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
     , _visionProcessor(dataPlatform)
     , _behaviorMgr(*this)
-    , _isBehaviorMgrEnabled(false)
-#   if !ASYNC_VISION_PROCESSING
-    , _haveNewImage(false)
-#   endif
     , _movementComponent(*this)
-    , _plannerSelectedPoseIndexPtr(nullptr)
-    , _numPlansStarted(0)
-    , _numPlansFinished(0)
-    , _driveToPoseStatus(ERobotDriveToPoseStatus::Waiting)
-    , _currPathSegment(-1)
-    , _lastSentPathID(0)
-    , _lastRecvdPathID(0)
-    , _usingManualPathSpeed(false)
     , _camera(robotID)
-    , _visionWhileMovingEnabled(false)
-    /*
-    , _proxVals{{0}}
-    , _proxBlocked{{false}}
-    */
-    , _poseOrigins(1)
-    , _worldOrigin(&_poseOrigins.front())
-    , _pose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
-    , _driveCenterPose(-M_PI_2, Z_AXIS_3D(), {{0.f, 0.f, 0.f}}, _worldOrigin, "Robot_" + std::to_string(_ID))
-    , _frameId(0)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
-    , _currentLiftAngle(0)
-    , _onRamp(false)
-    , _isPickingOrPlacing(false)
-    , _isPickedUp(false)
-    , _isMoving(false)
-    , _battVoltage(5)
-    , _imageSendMode(ImageSendMode::Off)
-    , _carryingMarker(nullptr)
-    , _lastPickOrPlaceSucceeded(false)
-    , _stateSaveMode(SAVE_OFF)
-    , _imageSaveMode(SAVE_OFF)
-    , _imgFramePeriod(0)
-    , _lastImgTimeStamp(0)
     , _animationStreamer(_externalInterface, _cannedAnimations)
-    , _numAnimationBytesPlayed(0)
-    , _numAnimationBytesStreamed(0)
-    , _animationTag(0)
     , _moodManager()
-    , _imageDeChunker(*(new ImageDeChunker()))
+    , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
+      
       _pose.SetName("Robot_" + std::to_string(_ID));
       _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
       
       // Initializes _pose, _poseOrigins, and _worldOrigin:
       Delocalize();
+      
+      // Delocalize will mark isLocalized as false, but we are going to consider
+      // the robot localized (by odometry alone) to start, until he gets picked up.
+      _isLocalized = true;
+      SetLocalizedTo(nullptr);
+      
       InitRobotMessageComponent(_msgHandler,robotID);
       
       if (HasExternalInterface())
@@ -176,24 +145,15 @@ namespace Anki {
       _shortPathPlanner = new FaceAndApproachPlanner;
       _selectedPathPlanner = _longPathPlanner;
       
-      _poseOrigins.front().SetName("Robot" + std::to_string(_ID) + "_PoseOrigin0");
-      
     } // Constructor: Robot
 
     Robot::~Robot()
     {
-      delete &_imageDeChunker;
-      delete _poseHistory;
-      _poseHistory = nullptr;
-      
-      delete _pdo;
-      _pdo = nullptr;
-
-      delete _longPathPlanner;
-      _longPathPlanner = nullptr;
-      
-      delete _shortPathPlanner;
-      _shortPathPlanner = nullptr;
+      Util::SafeDelete(_imageDeChunker);
+      Util::SafeDelete(_poseHistory);
+      Util::SafeDelete(_pdo);
+      Util::SafeDelete(_longPathPlanner);
+      Util::SafeDelete(_shortPathPlanner);
       
       _selectedPathPlanner = nullptr;
       
@@ -202,15 +162,31 @@ namespace Anki {
     void Robot::SetPickedUp(bool t)
     {
       if(_isPickedUp == false && t == true) {
-        // Robot is being picked up: de-localize it and clear all known objects
+        // Robot is being picked up: de-localize it
         Delocalize();
-        _blockWorld.ClearAllExistingObjects();
+        
+        _visionProcessor.Pause(true);
         
         if (_externalInterface != nullptr) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
         }
       }
       else if (true == _isPickedUp && false == t) {
+        // Robot just got put back down
+        _visionProcessor.Pause(false);
+        
+        ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
+        
+        // If we are not localized and there is nothing else left in the world that
+        // we could localize to, then go ahead and mark us as localized (via
+        // odometry alone)
+        if(false == _blockWorld.AnyRemainingLocalizableObjects()) {
+          PRINT_NAMED_INFO("Robot.SetPickedUp.NoMoreRemainingLocalizableObjects",
+                           "Marking previously-unlocalized robot %d as localized to odometry because "
+                           "there are no more objects to localize to in the world.", GetID());
+          SetLocalizedTo(nullptr); // marks us as localized to odometry only
+        }
+        
         if (_externalInterface != nullptr) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
         }
@@ -222,8 +198,10 @@ namespace Anki {
     {
       PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d.\n", GetID());
       
+      _isLocalized = false;
       _localizedToID.UnSet();
-      _localizedToFixedMat = false;
+      _localizedToFixedObject = false;
+      _localizedMarkerDistToCameraSq = -1.f;
 
       // NOTE: no longer doing this here because Delocalize() can be called by
       //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -246,10 +224,67 @@ namespace Anki {
       //++_frameId;
      
       // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, ::Anki::NamedColors::YELLOW,
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
                                          "LocalizedTo: <nothing>");
-    }
-
+      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+                                         "WorldOrigin[%lu]: %s",
+                                         _poseOrigins.size(),
+                                         _worldOrigin->GetName().c_str());
+    } // Delocalize()
+    
+    Result Robot::SetLocalizedTo(const ObservableObject* object)
+    {
+      if(object == nullptr) {
+        VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                           "LocalizedTo: Odometry");
+        _localizedToID.UnSet();
+        _isLocalized = true;
+        return RESULT_OK;
+      }
+      
+      if(object->GetID().IsUnknown()) {
+        PRINT_NAMED_ERROR("Robot.SetLocalizedTo.IdNotSet",
+                          "Cannot localize to an object with no ID set.\n");
+        return RESULT_FAIL;
+      }
+      
+      // Find the closest, most recently observed marker on the object
+      TimeStamp_t mostRecentObsTime = 0;
+      for(auto marker : object->GetMarkers()) {
+        if(marker.GetLastObservedTime() >= mostRecentObsTime) {
+          Pose3d markerPoseWrtCamera;
+          if(false == marker.GetPose().GetWithRespectTo(_camera.GetPose(), markerPoseWrtCamera)) {
+            PRINT_NAMED_ERROR("Robot.SetLocalizedTo.MarkerOriginProblem",
+                              "Could not get pose of marker w.r.t. robot camera.\n");
+            return RESULT_FAIL;
+          }
+          const f32 distToMarkerSq = markerPoseWrtCamera.GetTranslation().LengthSq();
+          if(_localizedMarkerDistToCameraSq < 0.f || distToMarkerSq < _localizedMarkerDistToCameraSq) {
+            _localizedMarkerDistToCameraSq = distToMarkerSq;
+            mostRecentObsTime = marker.GetLastObservedTime();
+          }
+        }
+      }
+      assert(_localizedMarkerDistToCameraSq >= 0.f);
+      
+      _localizedToID = object->GetID();
+      _hasMovedSinceLocalization = false;
+      _isLocalized = true;
+      
+      // Update VizText
+      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, NamedColors::YELLOW,
+                                         "LocalizedTo: %s_%d",
+                                         ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
+      VizManager::getInstance()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
+                                         "WorldOrigin[%lu]: %s",
+                                         _poseOrigins.size(),
+                                         _worldOrigin->GetName().c_str());
+      
+      return RESULT_OK;
+      
+    } // SetLocalizedTo()
+    
+    
     Result Robot::UpdateFullRobotState(const RobotState& msg)
     {
       Result lastResult = RESULT_OK;
@@ -348,6 +383,8 @@ namespace Anki {
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
+      _hasMovedSinceLocalization |= _isMoving || _isPickedUp;
+      
       Pose3d newPose;
       
       if(IsOnRamp()) {
@@ -423,7 +460,8 @@ namespace Anki {
           lastResult = _poseHistory->GetLastPoseWithFrameID(msg.pose_frame_id, p);
           if(lastResult != RESULT_OK) {
             PRINT_NAMED_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                              "Failed to get last pose from history with frame ID=%d.\n", msg.pose_frame_id);
+                              "Failed to get last pose from history with frame ID=%d.\n",
+                              msg.pose_frame_id);
             return lastResult;
           }
           pose_z = p.GetPose().GetTranslation().z();
@@ -708,7 +746,7 @@ namespace Anki {
                                   "Could not estimate pose of mat marker. Not visualizing.\n");
             } else {
               if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), ::Anki::NamedColors::RED);
+                VizManager::getInstance()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
               } else {
                 PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                     "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -845,7 +883,7 @@ namespace Anki {
           }
           
           VizManager::getInstance()->DrawCameraFace(faceDetection,
-            faceDetection.IsBeingTracked() ? ::Anki::NamedColors::GREEN : ::Anki::NamedColors::RED);
+            faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
 
         }
         
@@ -948,7 +986,7 @@ namespace Anki {
         }
       }
       
-      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, ::Anki::NamedColors::MAGENTA,
+      VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
                                          "Behavior: %s", behaviorName.c_str());
 
       
@@ -1078,17 +1116,28 @@ namespace Anki {
       VizManager::getInstance()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
       
       // Robot bounding box
+      static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+      
       using namespace Quad;
       Quad2f quadOnGround2d = GetBoundingQuadXY(robotPoseWrtOrigin);
-      const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + 0.5f;
+      const f32 zHeight = robotPoseWrtOrigin.GetTranslation().z() + WHEEL_RAD_TO_MM;
       Quad3f quadOnGround3d(Point3f(quadOnGround2d[TopLeft].x(),     quadOnGround2d[TopLeft].y(),     zHeight),
                             Point3f(quadOnGround2d[BottomLeft].x(),  quadOnGround2d[BottomLeft].y(),  zHeight),
                             Point3f(quadOnGround2d[TopRight].x(),    quadOnGround2d[TopRight].y(),    zHeight),
                             Point3f(quadOnGround2d[BottomRight].x(), quadOnGround2d[BottomRight].y(), zHeight));
-      
-      static const ColorRGBA ROBOT_BOUNDING_QUAD_COLOR(0.0f, 0.8f, 0.0f, 0.75f);
+    
       VizManager::getInstance()->DrawRobotBoundingBox(GetID(), quadOnGround3d, ROBOT_BOUNDING_QUAD_COLOR);
-
+      
+      /*
+      // Draw 3d bounding box
+      Vec3f vizTranslation = GetPose().GetTranslation();
+      vizTranslation.z() += 0.5f*ROBOT_BOUNDING_Z;
+      Pose3d vizPose(GetPose().GetRotation(), vizTranslation);
+      
+      VizManager::getInstance()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
+                                            vizPose, ROBOT_BOUNDING_QUAD_COLOR);
+      */
+      
       return RESULT_OK;
       
     } // Update()
@@ -1446,7 +1495,232 @@ namespace Anki {
     {
       return SendSyncTime();
     }
+    
+    Result Robot::LocalizeToObject(const ObservableObject* seenObject,
+                                   ObservableObject* existingObject)
+    {
+      Result lastResult = RESULT_OK;
+      
+      if(existingObject == nullptr) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "\n");
+        return RESULT_FAIL;
+      }
+      
+      if(!existingObject->CanBeUsedForLocalization()) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.UnlocalizedObject",
+                          "Refusing to localize to object %d, which claims not to be localizable.\n",
+                          existingObject->GetID().GetValue());
+        return RESULT_FAIL;
+      }
+      
+      /* Useful for Debug:
+       PRINT_NAMED_INFO("Robot.LocalizeToMat.MatSeenChain",
+       "%s\n", matSeen->GetPose().GetNamedPathToOrigin(true).c_str());
+       
+       PRINT_NAMED_INFO("Robot.LocalizeToMat.ExistingMatChain",
+       "%s\n", existingMatPiece->GetPose().GetNamedPathToOrigin(true).c_str());
+       */
+      
+      RobotPoseStamp* posePtr = nullptr;
+      Pose3d robotPoseWrtObject;
+      float  headAngle;
+      float  liftAngle;
+      if(nullptr == seenObject)
+      {
+        if(false == GetPose().GetWithRespectTo(existingObject->GetPose(), robotPoseWrtObject)) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.ExistingObjectOriginMismatch",
+                            "Could not get robot pose w.r.t. to existing object %d.",
+                            existingObject->GetID().GetValue());
+          return RESULT_FAIL;
+        }
+        liftAngle = GetLiftAngle();
+        headAngle = GetHeadAngle();
+      } else {
+        // Get computed RobotPoseStamp at the time the object was observed.
+        if ((lastResult = GetComputedPoseAt(seenObject->GetLastObservedTime(), &posePtr)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.CouldNotFindHistoricalPose",
+                            "Time %d\n", seenObject->GetLastObservedTime());
+          return lastResult;
+        }
         
+        // The computed historical pose is always stored w.r.t. the robot's world
+        // origin and parent chains are lost. Re-connect here so that GetWithRespectTo
+        // will work correctly
+        Pose3d robotPoseAtObsTime = posePtr->GetPose();
+        robotPoseAtObsTime.SetParent(_worldOrigin);
+        
+        // Get the pose of the robot with respect to the observed object
+        if(robotPoseAtObsTime.GetWithRespectTo(seenObject->GetPose(), robotPoseWrtObject) == false) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.ObjectPoseOriginMisMatch",
+                            "Could not get RobotPoseStamp w.r.t. seen object pose.\n");
+          return RESULT_FAIL;
+        }
+        
+        liftAngle = posePtr->GetLiftAngle();
+        headAngle = posePtr->GetHeadAngle();
+      }
+      
+      // Make the computed robot pose use the existing mat piece as its parent
+      robotPoseWrtObject.SetParent(&existingObject->GetPose());
+      //robotPoseWrtMat.SetName(std::string("Robot_") + std::to_string(robot->GetID()));
+      
+#     if 0
+      // Don't snap to horizontal or discrete Z levels when we see a mat marker
+      // while on a ramp
+      if(IsOnRamp() == false)
+      {
+        // If there is any significant rotation, make sure that it is roughly
+        // around the Z axis
+        Radians rotAngle;
+        Vec3f rotAxis;
+        robotPoseWrtObject.GetRotationVector().GetAngleAndAxis(rotAngle, rotAxis);
+        
+        if(std::abs(rotAngle.ToFloat()) > DEG_TO_RAD(5) && !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(15))) {
+          PRINT_NAMED_WARNING("Robot.LocalizeToObject.OutOfPlaneRotation",
+                              "Refusing to localize to %s because "
+                              "Robot %d's Z axis would not be well aligned with the world Z axis. "
+                              "(angle=%.1fdeg, axis=(%.3f,%.3f,%.3f)\n",
+                              existingObject->GetType().GetName().c_str(), GetID(),
+                              rotAngle.getDegrees(), rotAxis.x(), rotAxis.y(), rotAxis.z());
+          return RESULT_FAIL;
+        }
+        
+        // Snap to purely horizontal rotation
+        // TODO: Snap to surface of mat?
+        /*
+        if(existingMatPiece->IsPoseOn(robotPoseWrtObject, 0, 10.f)) {
+          Vec3f robotPoseWrtObject_trans = robotPoseWrtObject.GetTranslation();
+          robotPoseWrtObject_trans.z() = existingObject->GetDrivingSurfaceHeight();
+          robotPoseWrtObject.SetTranslation(robotPoseWrtObject_trans);
+        }
+         */
+        robotPoseWrtObject.SetRotation( robotPoseWrtObject.GetRotationAngle<'Z'>(), Z_AXIS_3D() );
+        
+      } // if robot is on ramp
+#     endif
+      
+      // Add the new vision-based pose to the robot's history. Note that we use
+      // the pose w.r.t. the origin for storing poses in history.
+      Pose3d robotPoseWrtOrigin = robotPoseWrtObject.GetWithRespectToOrigin();
+      
+      if(IsLocalized()) {
+        // Filter Z so it doesn't change too fast (unless we are switching from
+        // delocalized to localized)
+        
+        // Make z a convex combination of new and previous value
+        static const f32 zUpdateWeight = 0.1f; // weight of new value (previous gets weight of 1 - this)
+        Vec3f T = robotPoseWrtOrigin.GetTranslation();
+        T.z() = (zUpdateWeight*robotPoseWrtOrigin.GetTranslation().z() +
+                 (1.f - zUpdateWeight) * GetPose().GetTranslation().z());
+        robotPoseWrtOrigin.SetTranslation(T);
+      }
+      
+      if(nullptr != seenObject)
+      {
+        //
+        if((lastResult = AddVisionOnlyPoseToHistory(existingObject->GetLastObservedTime(),
+                                                    robotPoseWrtOrigin.GetTranslation().x(),
+                                                    robotPoseWrtOrigin.GetTranslation().y(),
+                                                    robotPoseWrtOrigin.GetTranslation().z(),
+                                                    robotPoseWrtOrigin.GetRotationAngle<'Z'>().ToFloat(),
+                                                    headAngle, liftAngle)) != RESULT_OK)
+        {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedAddingVisionOnlyPoseToHistory", "\n");
+          return lastResult;
+        }
+      }
+      
+      // If the robot's world origin is about to change by virtue of being localized
+      // to existingObject, rejigger things so anything seen while the robot was
+      // rooted to this world origin will get updated to be w.r.t. the new origin.
+      if(_worldOrigin != &existingObject->GetPose().FindOrigin())
+      {
+        PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
+                         "Robot %d's current world origin is %s, about to "
+                         "localize to world origin %s.",
+                         GetID(),
+                         _worldOrigin->GetName().c_str(),
+                         existingObject->GetPose().FindOrigin().GetName().c_str());
+        
+        // Store the current origin we are about to change so that we can
+        // find objects that are using it below
+        const Pose3d* oldOrigin = _worldOrigin;
+        
+        // Update the origin to which _worldOrigin currently points to contain
+        // the transformation from its current pose to what is about to be the
+        // robot's new origin.
+        _worldOrigin->SetRotation(GetPose().GetRotation());
+        _worldOrigin->SetTranslation(GetPose().GetTranslation());
+        _worldOrigin->Invert();
+        _worldOrigin->PreComposeWith(robotPoseWrtOrigin);
+        _worldOrigin->SetParent(&robotPoseWrtObject.FindOrigin());
+        _worldOrigin->SetName("RejiggeredOrigin");
+        
+        assert(_worldOrigin->IsOrigin() == false);
+        
+        // Now that the previous origin is hooked up to the new one (which is
+        // now the old one's parent), point the worldOrigin at the new one.
+        _worldOrigin = const_cast<Pose3d*>(_worldOrigin->GetParent()); // TODO: Avoid const cast?
+        
+        // Now we need to go through all objects whose poses have been adjusted
+        // by this origin switch and notify the outside world of the change.
+        _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
+        
+      } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
+      
+      
+      if(nullptr != posePtr)
+      {
+        // Update the computed historical pose as well so that subsequent block
+        // pose updates use obsMarkers whose camera's parent pose is correct.
+        // Note again that we store the pose w.r.t. the origin in history.
+        // TODO: Should SetPose() do the flattening w.r.t. origin?
+        posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle);
+      }
+      
+      // Compute the new "current" pose from history which uses the
+      // past vision-based "ground truth" pose we just computed.
+      assert(&existingObject->GetPose().FindOrigin() == _worldOrigin);
+      assert(_worldOrigin != nullptr);
+      if(UpdateCurrPoseFromHistory(*_worldOrigin) == false) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.FailedUpdateCurrPoseFromHistory", "");
+        return RESULT_FAIL;
+      }
+      
+      // Mark the robot as now being localized to this object
+      // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
+      //    that function checks whether the robot is already localized
+      lastResult = SetLocalizedTo(existingObject);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToObject.SetLocalizedToFail", "");
+        return lastResult;
+      }
+      
+      // Overly-verbose. Use for debugging localization issues
+      /*
+       PRINT_NAMED_INFO("Robot.LocalizeToObject",
+                        "Using %s object %d to localize robot %d at (%.3f,%.3f,%.3f), %.1fdeg@(%.2f,%.2f,%.2f), frameID=%d\n",
+                        ObjectTypeToString(existingObject->GetType()),
+                        existingObject->GetID().GetValue(), GetID(),
+                        GetPose().GetTranslation().x(),
+                        GetPose().GetTranslation().y(),
+                        GetPose().GetTranslation().z(),
+                        GetPose().GetRotationAngle<'Z'>().getDegrees(),
+                        GetPose().GetRotationAxis().x(),
+                        GetPose().GetRotationAxis().y(),
+                        GetPose().GetRotationAxis().z(),
+                        GetPoseFrameID());
+      */
+      
+      // Send the ground truth pose that was computed instead of the new current
+      // pose and let the robot deal with updating its current pose based on the
+      // history that it keeps.
+      SendAbsLocalizationUpdate();
+      
+      return RESULT_OK;
+    } // LocalizeToObject()
+    
+    
     Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
     {
       Result lastResult;
@@ -1532,7 +1806,7 @@ namespace Anki {
         
       } // if robot is on ramp
       
-      if(!_localizedToFixedMat && !existingMatPiece->IsMoveable()) {
+      if(!_localizedToFixedObject && !existingMatPiece->IsMoveable()) {
         // If we have not yet seen a fixed mat, and this is a fixed mat, rejigger
         // the origins so that we use it as the world origin
         PRINT_NAMED_INFO("Robot.LocalizeToMat.LocalizingToFirstFixedMat",
@@ -1545,7 +1819,7 @@ namespace Anki {
           return lastResult;
         }
         
-        _localizedToFixedMat = true;
+        _localizedToFixedObject = true;
       }
       else if(IsLocalized() == false) {
         // If the robot is not yet localized, it is about to be, so we need to
@@ -1564,7 +1838,7 @@ namespace Anki {
         if(!existingMatPiece->IsMoveable()) {
           // If this also happens to be a fixed mat, then we have now localized
           // to a fixed mat
-          _localizedToFixedMat = true;
+          _localizedToFixedObject = true;
         }
       }
       
@@ -1632,7 +1906,11 @@ namespace Anki {
       // Mark the robot as now being localized to this mat
       // NOTE: this should be _after_ calling AddVisionOnlyPoseToHistory, since
       //    that function checks whether the robot is already localized
-      SetLocalizedTo(existingMatPiece->GetID());
+      lastResult = SetLocalizedTo(existingMatPiece);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("Robot.LocalizeToMat.SetLocalizedToFail", "\n");
+        return lastResult;
+      }
       
       // Overly-verbose. Use for debugging localization issues
       /*
@@ -1652,10 +1930,6 @@ namespace Anki {
       // pose and let the robot deal with updating its current pose based on the
       // history that it keeps.
       SendAbsLocalizationUpdate();
-      
-      // Update VizText
-      VizManager::getInstance()->SetText(VizManager::LOCALIZED_TO, ::Anki::NamedColors::YELLOW,
-                                         "LocalizedTo: %s", existingMatPiece->GetPose().GetName().c_str());
       
       return RESULT_OK;
       
@@ -1907,6 +2181,14 @@ namespace Anki {
           carriedObject->SetBeingCarried(true);
           _carryingObjectID = carryObjectID;
           
+          // Don't remain localized to an object if we are now carrying it
+          if(_carryingObjectID == GetLocalizedTo())
+          {
+            // Note that the robot may still remaing localized (based on its
+            // odometry), but just not *to an object*
+            SetLocalizedTo(nullptr);
+          } // if(_carryingObjectID == GetLocalizedTo())
+          
           // Tell the robot it's carrying something
           // TODO: This is probably not the right way/place to do this (should we pass in carryObjectOnTopID?)
           if(_carryingObjectOnTopID.IsSet()) {
@@ -1914,7 +2196,7 @@ namespace Anki {
           } else {
             SendSetCarryState(CarryState::CARRY_1_BLOCK);
           }
-        }
+        } // if/else (carriedObject == nullptr)
       }
     }
     
@@ -2353,6 +2635,8 @@ namespace Anki {
       
     } // GetBoundingBoxXY()
     
+  
+    
     
     f32 Robot::GetHeight() const
     {
@@ -2592,45 +2876,67 @@ namespace Anki {
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
     }
     
-
-    
-      
-    ActiveCube* Robot::GetActiveObject(const ObjectID objectID)
+    ObservableObject* Robot::GetActiveObject(const ObjectID     objectID,
+                                             const ObjectFamily inFamily)
     {
-      ObservableObject* object = GetBlockWorld().GetObjectByIDandFamily(objectID,ObjectFamily::LightCube);
-     
+      ObservableObject* object = nullptr;
+      const char* familyStr = nullptr;
+      if(inFamily == ObjectFamily::Unknown) {
+        object = GetBlockWorld().GetObjectByID(objectID);
+        familyStr = EnumToString(inFamily);
+      } else {
+        object = GetBlockWorld().GetObjectByIDandFamily(objectID, inFamily);
+        familyStr = "any";
+      }
+      
       if(object == nullptr) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d does not exist in the ACTIVE_OBJECT family in the world.\n",
-                          objectID.GetValue());
+                          "Object %d does not exist in %s family.",
+                          objectID.GetValue(), EnumToString(inFamily));
         return nullptr;
       }
       
       if(!object->IsActive()) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d does not appear to be an active object.\n",
+                          "Object %d does not appear to be an active object.",
                           objectID.GetValue());
         return nullptr;
       }
       
-      if(!object->IsIdentified()) {
+      if(object->GetIdentityState() != ActiveIdentityState::Identified) {
         PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d is active but has not been identified.\n",
+                          "Object %d is active but has not been identified.",
                           objectID.GetValue());
         return nullptr;
       }
       
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(object);
-      if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.GetActiveObject",
-                          "Object %d could not be cast to an ActiveCube.\n",
-                          objectID.GetValue());
-        return nullptr;
-      }
-      
-      return activeCube;
+      return object;
     } // GetActiveObject()
+    
+    ObservableObject* Robot::GetActiveObjectByActiveID(const s32 activeID, const ObjectFamily inFamily)
+    {
+      for(auto objectsByType : GetBlockWorld().GetAllExistingObjects())
+      {
+        if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first)
+        {
+          for(auto objectsByID : objectsByType.second)
+          {
+            for(auto objectWithID : objectsByID.second)
+            {
+              ObservableObject* object = objectWithID.second;
+              if(object->IsActive() && object->GetActiveID() == activeID)
+              {
+                return object;
+              }
+            }
+          }
+        } // if(inFamily == ObjectFamily::Unknown || inFamily == objectsByFamily.first)
+      } // for each family
       
+      return nullptr;
+    } // GetActiveObjectByActiveID()
+    
+    
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichCubeLEDs whichLEDs,
                                   const u32 onColor, const u32 offColor,
@@ -2640,9 +2946,9 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = GetActiveObject(objectID);
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetActiveObject(objectID, ObjectFamily::LightCube));
       if(activeCube == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
+        PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
         
@@ -2658,12 +2964,13 @@ namespace Anki {
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          lights[i].onColor = activeCube->_ledState[i].onColor;
-          lights[i].offColor = activeCube->_ledState[i].offColor;
-          lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
-          lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
-          lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
-          lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          lights[i].onColor = ledState.onColor;
+          lights[i].offColor = ledState.offColor;
+          lights[i].onPeriod_ms = ledState.onPeriod_ms;
+          lights[i].offPeriod_ms = ledState.offPeriod_ms;
+          lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
+          lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
         }
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
       }
@@ -2679,7 +2986,7 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = GetActiveObject(objectID);
+      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetActiveObject(objectID, ObjectFamily::LightCube));
       if(activeCube == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
@@ -2854,12 +3161,13 @@ namespace Anki {
       std::array<Anki::Cozmo::LightState, 4> lights;
       ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
       for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-        lights[i].onColor = activeCube->_ledState[i].onColor;
-        lights[i].offColor = activeCube->_ledState[i].offColor;
-        lights[i].onPeriod_ms = activeCube->_ledState[i].onPeriod_ms;
-        lights[i].offPeriod_ms = activeCube->_ledState[i].offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = activeCube->_ledState[i].transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = activeCube->_ledState[i].transitionOffPeriod_ms;
+        const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+        lights[i].onColor = ledState.onColor;
+        lights[i].offColor = ledState.offColor;
+        lights[i].onPeriod_ms = ledState.onPeriod_ms;
+        lights[i].offPeriod_ms = ledState.offPeriod_ms;
+        lights[i].transitionOnPeriod_ms = ledState.transitionOnPeriod_ms;
+        lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }

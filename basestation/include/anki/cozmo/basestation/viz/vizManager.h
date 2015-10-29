@@ -51,6 +51,7 @@ namespace Anki {
       typedef enum : u8 {
         ACTION,
         LOCALIZED_TO,
+        WORLD_ORIGIN,
         VISION_MODE,
         BEHAVIOR_STATE
       } TextLabelType;
@@ -339,6 +340,8 @@ namespace Anki {
       void SendRobotState(const RobotState &msg,
                           const s32 numAnimBytesFree,
                           const u8 videoFramefateHz, const u8 animTag);
+      
+      void SetOrigin(const SetVizOrigin& msg);
       
     protected:
       

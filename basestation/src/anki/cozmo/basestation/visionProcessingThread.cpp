@@ -31,9 +31,6 @@ namespace Anki {
 namespace Cozmo {
   
   VisionProcessingThread::VisionProcessingThread(Util::Data::DataPlatform* dataPlatform)
-  : _visionSystem(nullptr)
-  , _isCamCalibSet(false)
-  , _running(false)
   {
     std::string dataPath("");
     if(dataPlatform != nullptr) {
@@ -72,6 +69,7 @@ namespace Cozmo {
     }
     
     _running = true;
+    _paused = false;
     
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
@@ -245,11 +243,13 @@ namespace Cozmo {
         }
       }
       
-      _visionSystem->Update(robotState, image);
-      _lastImg = image;
-      
-      VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
-                                         "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      if(!_paused) {
+        _visionSystem->Update(robotState, image);
+        _lastImg = image;
+        
+        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                           "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      }
       
     } else {
       PRINT_NAMED_ERROR("VisionProcessingThread.Update.NoCamCalib",
@@ -271,6 +271,11 @@ namespace Cozmo {
     }
     
     while (_running) {
+      
+      if(_paused) {
+        usleep(100);
+        continue;
+      }
       
       //if(_currentImg != nullptr) {
       if(!_currentImg.IsEmpty()) {
