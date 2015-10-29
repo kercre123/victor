@@ -219,14 +219,14 @@ union EngineToRobot
   DockingErrorSignal            dockingErrorSignal          = 0x17,
   CarryState                    setCarryState               = 0x18,
   ImuRequest                    imuRequest                  = 0x19,
+  SyncTime                      syncTime                    = 0x1A,
+  ImageRequest                  imageRequest                = 0x1B,
+  BackpackLights                setBackpackLights           = 0x1C,
+  CubeLights                    setCubeLights               = 0x1D,
+  FlashObjectIDs                flashObjectIDs              = 0x1E,
+  ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
   
   // To WiFi 0x80 to 0xFE
-  SyncTime                      syncTime                    = 0x80,
-  ImageRequest                  imageRequest                = 0x81,
-  BackpackLights                setBackpackLights           = 0x82,
-  CubeLights                    setCubeLights               = 0x83,
-  FlashObjectIDs                flashObjectIDs              = 0x84,
-  ObjectBeingCarried            setObjectBeingCarried       = 0x85,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
@@ -239,9 +239,9 @@ union EngineToRobot
   AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,
   AnimKeyFrame::EndOfAnimation  animEndOfAnimation          = 0x9A,
   AnimKeyFrame::StartOfAnimation animStartOfAnimation       = 0x9B,
-  AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9C,
+  // Anim future expansion                                  = 0x9C,
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
-
+  AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
 }
 
 } // namespace Robot Interface

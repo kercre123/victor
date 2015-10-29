@@ -190,7 +190,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>1</AdsALst>
+            <AdsALst>0</AdsALst>
             <AdsACrf>0</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -203,7 +203,7 @@
             <AdsLsun>1</AdsLsun>
             <AdsLven>1</AdsLven>
             <AdsLsxf>1</AdsLsxf>
-            <RvctClst>1</RvctClst>
+            <RvctClst>0</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M4"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
@@ -354,12 +354,10 @@
             <uThumb>0</uThumb>
             <uSurpInc>1</uSurpInc>
             <VariousControls>
-              <MiscControls>  --library_type=standardlib --diag_suppress=1296,186 
- --library_interface=armcc  
-</MiscControls>
+              <MiscControls></MiscControls>
               <Define>COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;../coretech/common/include;../coretech/vision/include;../include;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal</IncludePath>
+              <IncludePath>.;supervisor/src;../coretech/common/include;../coretech/vision/include;../include;include;k02_hal/lib;k02_hal/;k02_hal/startup</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -372,8 +370,8 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <VariousControls>
-              <MiscControls>--cpreproc --diag_suppress=1609,1581 </MiscControls>
-              <Define>DEBUG</Define>
+              <MiscControls></MiscControls>
+              <Define></Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
@@ -427,193 +425,72 @@
               <FileName>enjpeg.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>2</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>4</Optim>
+                    <oTime>1</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>lib</GroupName>
-          <GroupOption>
-            <CommonProperty>
-              <UseCPPCompiler>0</UseCPPCompiler>
-              <RVCTCodeConst>0</RVCTCodeConst>
-              <RVCTZI>0</RVCTZI>
-              <RVCTOtherData>0</RVCTOtherData>
-              <ModuleSelection>0</ModuleSelection>
-              <IncludeInBuild>2</IncludeInBuild>
-              <AlwaysBuild>2</AlwaysBuild>
-              <GenerateAssemblyFile>2</GenerateAssemblyFile>
-              <AssembleAssemblyFile>2</AssembleAssemblyFile>
-              <PublicsOnly>2</PublicsOnly>
-              <StopOnExitCode>11</StopOnExitCode>
-              <CustomArgument></CustomArgument>
-              <IncludeLibraryModules></IncludeLibraryModules>
-              <ComprImg>1</ComprImg>
-            </CommonProperty>
-            <GroupArmAds>
-              <Cads>
-                <interw>2</interw>
-                <Optim>0</Optim>
-                <oTime>2</oTime>
-                <SplitLS>2</SplitLS>
-                <OneElfS>2</OneElfS>
-                <Strict>2</Strict>
-                <EnumInt>2</EnumInt>
-                <PlainCh>2</PlainCh>
-                <Ropi>2</Ropi>
-                <Rwpi>2</Rwpi>
-                <wLevel>0</wLevel>
-                <uThumb>2</uThumb>
-                <uSurpInc>2</uSurpInc>
-                <VariousControls>
-                  <MiscControls>--c99</MiscControls>
-                  <Define></Define>
-                  <Undefine></Undefine>
-                  <IncludePath></IncludePath>
-                </VariousControls>
-              </Cads>
-              <Aads>
-                <interw>2</interw>
-                <Ropi>2</Ropi>
-                <Rwpi>2</Rwpi>
-                <thumb>2</thumb>
-                <SplitLS>2</SplitLS>
-                <SwStkChk>2</SwStkChk>
-                <NoWarn>2</NoWarn>
-                <uSurpInc>2</uSurpInc>
-                <VariousControls>
-                  <MiscControls></MiscControls>
-                  <Define></Define>
-                  <Undefine></Undefine>
-                  <IncludePath></IncludePath>
-                </VariousControls>
-              </Aads>
-            </GroupArmAds>
-          </GroupOption>
-          <Files>
             <File>
-              <FileName>fsl_misc_utilities.c</FileName>
+              <FileName>power.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>k02_hal/lib/fsl_misc_utilities.c</FilePath>
+              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
             </File>
             <File>
-              <FileName>fsl_debug_console.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>k02_hal/lib/fsl_debug_console.c</FilePath>
-            </File>
-            <File>
-              <FileName>print_scan.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>k02_hal/lib/print_scan.c</FilePath>
-            </File>
-            <File>
-              <FileName>gpio_pins.c</FileName>
+              <FileName>debug.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>k02_hal/lib/gpio_pins.c</FilePath>
+              <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
             </File>
             <File>
-              <FileName>pin_mux.c</FileName>
+              <FileName>dac.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>k02_hal/lib/pin_mux.c</FilePath>
+              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
             </File>
             <File>
-              <FileName>hardware_init.c</FileName>
+              <FileName>uart.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>k02_hal/lib/hardware_init.c</FilePath>
+              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>fsl_gpio_common.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_gpio_common.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_gpio_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_gpio_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_gpio_irq.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_gpio_irq.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_common.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_uart_common.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_driver.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_uart_driver.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_irq.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\drivers\fsl_uart_irq.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_clock_MK02F12810.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_clock_MK02F12810.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_gpio_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_gpio_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_osc_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_osc_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_pmc_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_pmc_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_port_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_port_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_rcm_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_rcm_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_sim_hal_MK02F12810.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_sim_hal_MK02F12810.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_smc_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_smc_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_uart_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_uart_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_mcg_hal.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_mcg_hal.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_mcg_hal_modes.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_mcg_hal_modes.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_clock_manager.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_clock_manager.c</FilePath>
-            </File>
-            <File>
-              <FileName>fsl_clock_manager_common.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\k02_hal\lib\hal\fsl_clock_manager_common.c</FilePath>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
             </File>
           </Files>
         </Group>

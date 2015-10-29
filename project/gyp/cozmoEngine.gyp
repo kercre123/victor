@@ -407,6 +407,7 @@
             'type': 'executable',
             'include_dirs': [
               '../../include',
+              '../../robot/include',
               '<@(webots_includes)',
               '<@(opencv_includes)',
             ],
@@ -488,6 +489,7 @@
             'type': 'executable',
             'include_dirs': [
               '../../basestation/test',
+              '../../robot/include',
               '<@(opencv_includes)',
             ],
             'dependencies': [
@@ -661,6 +663,7 @@
         '../../basestation/src',
         '../../basestation/include',
         '../../include',
+        '../../robot/include',
         '../../generated/clad/engine',
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
@@ -669,6 +672,7 @@
         'include_dirs': [
           '../../basestation/include',
           '../../include',
+          '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
         ],

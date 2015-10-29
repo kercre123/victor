@@ -2,7 +2,7 @@
 #define COZMO_CONFIG_H
 
 #include "anki/common/constantsAndMacros.h"
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 namespace Anki {
 namespace Cozmo {

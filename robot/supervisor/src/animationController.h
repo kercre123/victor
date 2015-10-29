@@ -20,8 +20,7 @@
 #ifndef COZMO_ANIMATION_CONTROLLER_H_
 #define COZMO_ANIMATION_CONTROLLER_H_
 
-#include "anki/common/types.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "messages.h"
 
 namespace Anki {

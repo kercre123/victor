@@ -31,7 +31,7 @@ typedef enum {
   UPCMD_FLAGS_NONE = 0x00, // No special actions
   UPCMD_WIFI_FW    = 0x01, // Upgrade the wifi (Espressif firmware)
   UPCMD_CTRL_FW    = 0x02, // Upgrade the robot supervisor firmware
-  UPCMD_FPGA_FW    = 0x04, // Upgrade the FPGA image
+  UPCMD_RTIP_FW    = 0x04, // Upgrade the real time image processor
   UPCMD_BODY_FW    = 0x08, // Upgrade the body board firmware
   UPCMD_CONFIG     = 0x10, // Configuration information
   UPCMD_ASK_WHICH  = 0x80, // Ask the espressif which firmware it wants

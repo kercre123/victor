@@ -57,8 +57,7 @@ message TimeProfileStat
 
 message PrintText
 {
-  int_8  logLevel,
-  string text,
+  string text
 }
 
 message AnimationState

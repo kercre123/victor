@@ -1,5 +1,4 @@
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 
 #include "anki/common/robot/array2d.h"
@@ -604,7 +603,6 @@ namespace Anki {
       {
         RobotInterface::PrintText m;
         int len;
-        m.logLevel = 0;
                 
         #define MAX_SEND_TEXT_LENGTH 255 // uint_8 definition in messageRobotToEngine.clad
         memset(m.text, 0, MAX_SEND_TEXT_LENGTH);

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/noncopyable.h"

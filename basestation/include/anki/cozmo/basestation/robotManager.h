@@ -12,7 +12,6 @@
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
 #include "anki/cozmo/basestation/robotEventHandler.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal.hpp"
 #include <map>
 #include <vector>

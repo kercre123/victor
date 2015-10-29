@@ -1,7 +1,7 @@
 #ifndef ANKI_COZMO_ROBOT_LED_CONTROLLER_H
 #define ANKI_COZMO_ROBOT_LED_CONTROLLER_H
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "clad/types/ledTypes.h"
 
 namespace Anki {

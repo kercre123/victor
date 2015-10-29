@@ -8,6 +8,8 @@
  *
  * Copyright: Anki, Inc. 2015
  **/
+#ifndef __image_dechunker_h_
+#define __image_dechunker_h_
 
 #include <opencv2/core/core.hpp>
 #include "anki/common/types.h"
@@ -53,3 +55,5 @@ private:
 
 } // namespace Cozmo
 } // namespace Anki
+
+#endif

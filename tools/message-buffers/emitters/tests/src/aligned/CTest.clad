@@ -1,0 +1,48 @@
+// A sample .adef file
+// ( by Mark Pauley for Anki, Inc 01/26/2015)
+
+enum int_8 AnkiEnum {
+  e1 = 0x0f,
+  e2,
+  e3,
+  myReallySilly_EnumVal,
+  d1 = 5,
+  d2,
+  d3
+}
+
+message Void {
+}
+
+message Foo {
+  bool isFoo,
+  int_8 myByte,
+  int_16 myShort,
+  float_32 myFloat,
+  uint_32 myNormal,
+  AnkiEnum myFoo,
+}
+
+message Bar {
+  bool     boolBuff[8],
+  int_8    byteBuff[2],
+  int_16   shortBuff[3],
+  int_64   longlong,
+  float_64 doubleBuff[3],
+  AnkiEnum enumBuff[4],
+  //string[uint_16] myLongerString,
+  int_16   fixedBuff[20]
+}
+
+union MyMessage {
+  Foo foo,
+  Void v,
+  Bar bar,
+}
+
+/*union MetaUnion {
+  Foo foo,
+  Void v2,
+  MyMessage subunion,
+  MyMessage subunion2
+}*/

@@ -12,11 +12,11 @@
 #ifndef ANKI_COZMO_FACE_ANIMATION_MANAGER_H
 #define ANKI_COZMO_FACE_ANIMATION_MANAGER_H
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
 #include <string>
 #include <vector>
 #include <unordered_map>
+
+#include "anki/common/types.h"
 
 // Forward declaration
 namespace cv {

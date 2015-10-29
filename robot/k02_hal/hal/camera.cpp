@@ -1,16 +1,18 @@
 #include "anki/cozmo/robot/hal.h"
+#include "MK02F12810.h"
 
 #include "anki/common/robot/trig_fast.h"
 #include "hal/portable.h"
-
-#include "board.h"
-#include "fsl_debug_console.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h" // for calibration parameters
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/benchmarking.h"
 
 #include "hal/i2c.h"
+#include "uart.h"
+
+//#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
+#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 
 namespace Anki
 {
@@ -34,7 +36,7 @@ namespace Anki
       GPIO_PIN_SOURCE(PWDN,    PTA, 1);
 
       // Configuration for GC0329 camera chip
-      const u8 I2C_ADDR = 0x31; 
+      const u8 I2C_ADDR = 0x31;
       const u8 CAM_SCRIPT[] =
       {
         #include "gc0329.h"
@@ -47,7 +49,8 @@ namespace Anki
 
       // Camera exposure value
       u32 exposure_;
-      
+      volatile bool timingSynced_ = false;
+
       // For self-test purposes only.
       // XXX - restore this code for EP1
 #if 0
@@ -126,41 +129,51 @@ namespace Anki
       
       volatile u8 eof_ = 0;
       
+      void HALExec(u8* buf, int buflen, int eof);
+      
+#ifdef ENABLE_JPEG
       int JPEGStart(int quality);
       int JPEGCompress(u8* out, u8* in, int pitch);
       int JPEGEnd(u8* out);
+#endif
+
+      static void InitDMA();
       
       // Set up camera 
       static void InitCam()
       {
+#ifdef ENABLE_JPEG
         JPEGStart(50);
+#endif
         
         // Power-up/reset the camera
         MicroWait(50);
         GPIO_RESET(GPIO_PWDN, PIN_PWDN);
         MicroWait(50);
         GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
+          
+        I2CReadReg(I2C_ADDR, 0xF0);
+        I2CReadReg(I2C_ADDR, 0xF1);
+        uint8_t id = I2CReadReg(I2C_ADDR, 0xFB);
 
-        // Read ID regs to get I2C state machine into proper state
-        I2CRead(I2C_ADDR, 0xf0);
-        I2CRead(I2C_ADDR, 0xf1);
-        
-        // Write the configuration registers            
-        const u8* p = CAM_SCRIPT;
-        while (*p) {
-          I2CWrite(I2C_ADDR, p[0], p[1]);
-          p += 2;
+        // Send command array to camera
+        uint8_t* initCode = (uint8_t*) CAM_SCRIPT;
+
+        for(;;) {
+          uint8_t p1 = *(initCode++), p2 = *(initCode++);
+          
+          if (!p1 && !p2) break ;
+          
+          I2CWriteReg(I2C_ADDR, p1, p2);
         }
         
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
-        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));    
-   
-        while (1)
-        {
-        }        
+        //  printf("\r\nCam dbus: set %x, got %x", i, CamReadDB(i));
+          
+        InitDMA();
       }
-      
+
       // Initialize DMA to row buffer, and fire an interrupt at end of each transfer
       static void InitDMA()
       {
@@ -188,32 +201,23 @@ namespace Anki
         DMA_TCD0_BITER_ELINKNO = 1; // Beginning major loop iteration (1 per interrupt)
         DMA_TCD0_DLASTSGA = -sizeof(dmaBuff_);    // Point back at start of buffer after each loop
 
-        // Set up DMA for UART1 transmit (5)
-        UART1_C2 = 0x88;  // DMA on transmit, transmit enabled
-        UART1_C5 = 0x80;
-        DMAMUX_CHCFG1 = DMAMUX_CHCFG_ENBL_MASK | 5;
-        
-        DMA_TCD1_NBYTES_MLNO = 1;        // Number of transfers in minor loop
-        DMA_TCD1_ATTR = DMA_ATTR_SSIZE(0)|DMA_ATTR_DSIZE(0);  // Source 8-bit, dest 8-bit
-        DMA_TCD1_SOFF = 1;          // Source (buffer) increments
-        DMA_TCD1_DOFF = 0;          // Destination (register) doesn't increment
-        DMA_TCD1_DADDR = (uint32_t)&UART1_D;
-
         // Hook DMA request 0 to HSYNC
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
         DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_HSYNC));     
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
-
-        //DMA_TCD0_CSR = 0; // DMA_CSR_START_MASK;
-
       }
 
       // Initialize camera
       void CameraInit()
       {
+        timingSynced_ = false;
+        
         InitIO();
-        InitDMA();
         InitCam();
+        
+        // Wait for everything to sync
+        while (!timingSynced_)
+        {}
       }
         
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
@@ -234,33 +238,75 @@ namespace Anki
         
         // Set exposure - let it get picked up during next vblank
       }
-
-      // XXX: Don't need in HAL anymore
-      const CameraInfo* GetHeadCamInfo(void)
-      {
-        static CameraInfo s_headCamInfo = {
-          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
-          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-          HEAD_CAM_CALIB_CENTER_X,
-          HEAD_CAM_CALIB_CENTER_Y,
-          0.f,
-          HEAD_CAM_CALIB_HEIGHT,
-          HEAD_CAM_CALIB_WIDTH
-        };
-
-        return &s_headCamInfo;
-      }
     }
   }
 }
 
-static int STRIPSIZE = 80;
-
+// This is triggered on camera DMA complete - but does not trigger during vblank
+// So, we setup an FTM to trigger repeatedly at just the right time
 extern "C"
 void DMA0_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
+  DMA_CDNE = DMA_CDNE_CDNE(0); // Clear done channel 0
+  DMA_CINT = 0;   // Clear interrupt channel 0
+  
+  // XXX: Allow DMA0 to stabilize
+  static u8 countdown = 10;
+  if (countdown)
+  {
+    countdown--;
+    return;
+  }
+
+  // Shut off DMA IRQ - we'll use FTM IRQ from now on
+  DMA_TCD0_CSR = 0;   
+
+  // Set up FTM IRQ to match hsync - must match gc0329.h timing!
+  SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
+
+  FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
+  FTM2_C0SC = FTM_CnSC_CHIE_MASK |
+              //FTM_CnSC_ELSA_MASK |
+              //FTM_CnSC_ELSB_MASK |
+              //FTM_CnSC_MSA_MASK |
+              FTM_CnSC_MSB_MASK ;
+
+  FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
+  FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
+  FTM2_CNTIN = 0;
+  
+  // Sync to falling edge
+  while(~GPIOD_PDIR & (1 << 4)) ;
+  while( GPIOD_PDIR & (1 << 4)) ;
+
+  FTM2_SC = FTM_SC_TOF_MASK |
+            FTM_SC_TOIE_MASK |
+            FTM_SC_CLKS(1) | // BUS_CLOCK
+            FTM_SC_PS(0);
+
+  timingSynced_ = true;
+  NVIC_EnableIRQ(FTM2_IRQn);
+  NVIC_SetPriority(FTM2_IRQn, 1);
+}
+
+extern "C"
+void FTM2_IRQHandler(void)
+{
+  using namespace Anki::Cozmo::HAL;
+  
+  if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
+    FTM2_C0SC &= ~FTM_CnSC_CHF_MASK;
+    I2CDisable();
+  }
+  
+  // Enable SPI DMA, Clear flag
+  if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
+
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
+  FTM2_SC &= ~FTM_SC_TOF_MASK;
+
   static u16 line = 0;
   static int last = 0;
   
@@ -268,39 +314,48 @@ void DMA0_IRQHandler(void)
   static u8 whichbuf = 0;
   static u8 buflen = 0;
   static u8 whichpitch = 0;    // Swizzle pitch (80 or 640)
+  static u8 eof = 0;
   
-  // Kludgey look for start of frame
-  int now = SysTick->VAL;
-  int diff = last-now;
-  last = now;
-  if (diff < 0)
-    diff += 6291456;
-  if (diff > 100000) {
-    line = 232;       // Swizzle buffer delays us by 8 lines
-  }
+  // Cheesy way to check if camera DMA buffer was updated - if it wasn't, this is a vblank line
+  static u8 vblank = 0;
+  if (1 == dmaBuff_[0])
+    vblank++;
+  else
+    vblank = 0;
+  if (vblank > 3)
+    line = 956 + vblank;   // Set to start of vblank (adjusted for QVGA rate)
+  dmaBuff_[0] = 1;
   
-  // Send data, if we have any
-  if (buflen && buflen < 120)
+  HALExec(&buf[whichbuf][4], buflen, eof);
+
+#ifdef SERIAL_IMAGE
+  static int pclkoffset = 0;
+  int hline = line >> 1;
+  if (!(line & 1))
   {
-    // Temporarily disable current transfer
-    DMA_ERQ = 0;
+    // At 3mbaud, during 60% time, can send about 20 bytes per line, or 160x60
+    if (hline < 480)
+      for (int i = 0; i < 20; i++)
+        DebugPutc(dmaBuff_[((hline & 7) * 20 + i) * 16 + 3 + (pclkoffset >> 4)]);
     
-    // Kick off DMA transfer
-    DMA_TCD1_SADDR = (uint32_t)&buf[whichbuf][2]; // Offset 2 to make alignment work
-    DMA_TCD1_CITER_ELINKNO = buflen;// Current major loop iteration
-    DMA_TCD1_BITER_ELINKNO = buflen;// Beginning major loop iteration
-    DMA_TCD1_CSR = BM_DMA_TCDn_CSR_DREQ;  // Stop channel and set to end on last major loop iteration
-
-    DMA_ERQ = DMA_ERQ_ERQ1_MASK | DMA_ERQ_ERQ0_MASK;
+    // Write header for start of next frame
+    if (hline == 480)
+    {
+      DebugPutc(0xBE);
+      DebugPutc(0xEF);
+      DebugPutc(0xF0);
+      DebugPutc(0xFF);
+      DebugPutc(0xBD);
+      // pclkoffset++;
+    }
   }
+#endif
 
+#ifdef ENABLE_JPEG
   // Fill next buffer
   whichbuf ^= 1;
-  u8* p = &buf[whichbuf][2];  // Offset 2 chars to make alignment work
-  
-  // Prepare header (length gets inserted after encoding)
-  p[0] = 0xA5;
-  buflen = 2;
+  u8* p = &buf[whichbuf][4];  // Offset 4 chars to leave room for a UART header
+  buflen = 0;
   
   // Compute swizzle buffer address - this rolling buffer holds exactly 8 lines of video, the minimum for JPEG
   // Addressing the rolling buffer is complicated since we write linearly (640x1) but read macroblocks (80x8)
@@ -308,33 +363,24 @@ void DMA0_IRQHandler(void)
     whichpitch ^= 1;
   int pitch = whichpitch ? 80 : 640;
   u8* swizz = swizzle_ + (line & 7) * (whichpitch ? 640 : 80);
-  
+
   // Encode 10 macroblocks (one strip)
   buflen += JPEGCompress(p + buflen, swizz, pitch);
   if (line == 239) {
     buflen += JPEGEnd(p + buflen);
-    p[1] = (buflen-2) | 0x80;       // Set length, plus flag indicating end of frame
+    eof = 1;
   } else {
-    p[1] = (buflen-2);
+    eof = 0;
   }
-  
-  // Add cheesy checksum
-  int check = 0;
-  for (int i = 2; i < buflen; i++)
-    check += p[i];
-  p[buflen++] = check;
   
   // Copy YUYV data from DMA buffer into swizzle buffer
   for (int y = 0; y < 8; y++)
     for (int x = 0; x < 80; x++)
       swizz[x + y*pitch] = dmaBuff_[(y * 80 + x) * 4 + 3];
-    
-  // Advance through image a line at a time
+#endif
+  
+  // Advance through the lines
   line++;
-  if (line >= 240) {
+  if (line >= 1000)
     line = 0;
-  }
-
-  DMA_CDNE = 0;   // Clear done channel 0
-  DMA_CINT = 0;   // Clear interrupt channel 0
 }

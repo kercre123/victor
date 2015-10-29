@@ -18,10 +18,9 @@
 #ifndef COZMO_PICK_AND_PLACE_CONTROLLER_H_
 #define COZMO_PICK_AND_PLACE_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/robot/geometry_declarations.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "clad/types/dockingSignals.h"
 
 namespace Anki {

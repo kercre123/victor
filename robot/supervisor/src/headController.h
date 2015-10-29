@@ -22,7 +22,7 @@
 #ifndef COZMO_HEAD_CONTROLLER_H_
 #define COZMO_HEAD_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 namespace Anki {
   namespace Cozmo {

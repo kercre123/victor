@@ -18,15 +18,24 @@ enum uint_8 AnimTrackFlag {
   ENABLE_ALL_TRACKS = 0xFF
 }
 
+enum int_32 AnimConstants
+{
+  AUDIO_SAMPLE_SIZE     = 800,
+  AUDIO_BYTES_PER_DROP  = 4,
+  SCREEN_BYTES_PER_DROP = 4,
+  MAX_FACE_FRAME_SIZE   = 1024,
+  KEYFRAME_BUFFER_SIZE  = 16384,
+}
+
 namespace AnimKeyFrame {
 
-  message AudioSample
+  message AudioSample // Don't touch this definition, AudioSample messages are processed as raw bytes on the robot
   {
-    uint_8 sample[800]
+    uint_8 sample[800] // AUDIO_SAMPLE_SIZE above
   }
 
   message AudioSilence
-  {
+  { // Must not contain any members
   }
 
   message HeadAngle
@@ -55,7 +64,7 @@ namespace AnimKeyFrame {
   
   message FaceImage
   {
-    uint_8 image[uint_16:1024],
+    uint_8 image[uint_16:1024], // MAX_FACE_FRAME_SIZE above
   }
   
   message BackpackLights
