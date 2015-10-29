@@ -141,8 +141,6 @@ public class PatternPlayController : GameController {
     robot.SetBehaviorSystem(true);
     robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
     robot.ExecuteBehavior(BehaviorType.NoneBehavior);
-
-    patternPlayUIController.Initialize(memoryBank);
   }
 
   protected override void OnDisable() {
@@ -188,6 +186,8 @@ public class PatternPlayController : GameController {
 
   protected override void Enter_PLAYING() {
     base.Enter_PLAYING();
+
+    patternPlayUIController.Initialize(memoryBank);
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.activeBlocks) {
       blockPatternData.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
