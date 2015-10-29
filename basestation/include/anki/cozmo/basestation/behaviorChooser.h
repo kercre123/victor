@@ -38,7 +38,7 @@ class IBehaviorChooser : private Util::noncopyable
 {
 public:
   virtual Result AddBehavior(IBehavior *newBehavior) = 0;
-  virtual IBehavior* ChooseNextBehavior(const Robot& robot, const MoodManager& moodManager, double currentTime_sec) const = 0;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const = 0;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const = 0;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) = 0;
@@ -58,7 +58,7 @@ class SimpleBehaviorChooser : public IBehaviorChooser
 public:
   // For IBehaviorChooser
   virtual Result AddBehavior(IBehavior *newBehavior) override;
-  virtual IBehavior* ChooseNextBehavior(const Robot& robot, const MoodManager& moodManager, double currentTime_sec) const override;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const override;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const override;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override { }

@@ -276,7 +276,7 @@ namespace Cozmo {
   Result BehaviorManager::SelectNextBehavior(double currentTime_sec)
   {
     
-    _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot, _robot.GetMoodManager(), currentTime_sec);
+    _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot, currentTime_sec);
     if(nullptr == _nextBehavior) {
       PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoneRunnable", "");
       return RESULT_FAIL;

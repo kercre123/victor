@@ -90,8 +90,7 @@ namespace Cozmo {
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
     
     // EvaluateScore is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
-    virtual float EvaluateScore(const Robot& robot, const MoodManager& moodManager, double currentTime_sec) const {
-      return IsRunnable(robot, currentTime_sec) ? EvaluateEmotionScore(moodManager) : 0.0f; }
+    virtual float EvaluateScore(const Robot& robot, double currentTime_sec) const;
 
     void ClearEmotionScorers()                         { _emotionScorers.clear(); }
     void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }

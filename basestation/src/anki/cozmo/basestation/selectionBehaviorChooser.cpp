@@ -48,7 +48,7 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
   }
 }
   
-IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(const Robot& robot, const MoodManager& moodManager, double currentTime_sec) const
+IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
   auto runnable = [&robot,currentTime_sec](const IBehavior* behavior)
   {

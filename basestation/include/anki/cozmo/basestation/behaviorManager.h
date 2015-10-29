@@ -91,10 +91,10 @@ namespace Cozmo {
     
     Robot& _robot;
     
-    void SwitchToNextBehavior(double currentTime_sec);
+    void   SwitchToNextBehavior(double currentTime_sec);
     Result InitNextBehaviorHelper(float currentTime_sec);
-    void SetupBehaviorChooser(const Json::Value &config);
-    void AddReactionaryBehavior(IReactionaryBehavior* behavior);
+    void   SetupBehaviorChooser(const Json::Value &config);
+    void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
     
     // How we store and choose next behavior
     IBehaviorChooser* _behaviorChooser = nullptr;
