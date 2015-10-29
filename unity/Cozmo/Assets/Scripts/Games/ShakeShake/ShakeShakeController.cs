@@ -123,7 +123,7 @@ public class ShakeShakeController : GameController {
           continue;
         if (blockData[robot.visibleObjects[i].ID].currentColor == Color.blue) {
           resettingBlueBlock = true;
-          robot.PickAndPlaceObject(robot.visibleObjects[i]);
+          robot.PickupObject(robot.visibleObjects[i]);
           resettingBlockID = robot.visibleObjects[i].ID;
           break;
         }

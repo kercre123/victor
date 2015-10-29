@@ -313,6 +313,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotDeletedObject:
       ReceivedSpecificMessage(message.RobotDeletedObject);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotMarkedObjectPoseUnknown:
+      ReceivedSpecificMessage(message.RobotMarkedObjectPoseUnknown);
+      break;
     case G2U.MessageEngineToGame.Tag.ObjectMoved:
       ReceivedSpecificMessage(message.ObjectMoved);
       break;
@@ -458,6 +461,24 @@ public class RobotEngineManager : MonoBehaviour {
 
     if (current.activeBlocks.ContainsKey((int)message.objectID))
       current.activeBlocks.Remove((int)message.objectID);
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
+    ObservedObject deleted = current.seenObjects.Find(x => x == message.objectID);
+
+    if (deleted != null) {
+      current.seenObjects.Remove(deleted);
+    }
+
+    deleted = current.visibleObjects.Find(x => x == message.objectID);
+    if (deleted != null) {
+      current.visibleObjects.Remove(deleted);
+    }
+
+    deleted = current.dirtyObjects.Find(x => x == message.objectID);
+    if (deleted != null) {
+      current.dirtyObjects.Remove(deleted);
+    }
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {

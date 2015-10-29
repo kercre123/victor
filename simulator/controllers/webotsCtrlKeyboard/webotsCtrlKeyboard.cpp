@@ -233,6 +233,7 @@ namespace Anki {
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
+        printf("     Update Viz origin alignment:  ` <backtick>\n");
         printf("                      Print help:  ?\n");
         printf("\n");
       }
@@ -1102,6 +1103,13 @@ namespace Anki {
                 } else {
                   SendIMURequest(2000);
                 }
+                break;
+              }
+                
+              case (s32)'`':
+              {
+                printf("Updating viz origin\n");
+                UpdateVizOrigin();
                 break;
               }
 

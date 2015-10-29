@@ -365,6 +365,7 @@ public class Robot : IDisposable {
   }
 
   private void RobotEngineMessages(bool success, RobotActionType messageType) {
+    DAS.Info("Robot.ActionCallback", "Type = " + messageType + " success = " + success);
     for (int i = 0; i < robotCallbacks.Count; ++i) {
       if (messageType == robotCallbacks[i].Key) {
         robotCallbacks[i].Value(success);
@@ -778,7 +779,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
-  public void PickAndPlaceObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null) {
+  public void PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null) {
     PickupObjectMessage.objectID = selectedObject;
     PickupObjectMessage.usePreDockPose = usePreDockPose;
     PickupObjectMessage.useManualSpeed = useManualSpeed;
@@ -879,7 +880,7 @@ public class Robot : IDisposable {
     }
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm) {
+  public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null) {
     GotoObjectMessage.objectID = obj;
     GotoObjectMessage.distance_mm = distance_mm;
     GotoObjectMessage.useManualSpeed = false;
@@ -889,6 +890,9 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
     
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
+    }
   }
 
   public float GetLiftHeightFactor() {

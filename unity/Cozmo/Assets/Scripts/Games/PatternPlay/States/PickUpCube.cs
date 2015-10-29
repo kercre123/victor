@@ -24,7 +24,7 @@ public class PickUpCube : State {
       return;
     }
 
-    robot.PickAndPlaceObject(targetObject, true, false, true, patternPlayAutoBuild.FindApproachAngle(), PickUpDone);
+    robot.PickupObject(targetObject, true, false, false, 0.0f, PickUpDone);
     patternPlayAutoBuild.SetObjectHeld(targetObject);
   }
 
@@ -43,7 +43,7 @@ public class PickUpCube : State {
 
   void PickUpDone(bool success) {
     if (success) {
-      stateMachine.SetNextState(new SetCubeToPattern());
+      stateMachine.SetNextState(new PlaceCube());
     }
     else {
       DAS.Info("PatternPlay", "PickUp Failed!");

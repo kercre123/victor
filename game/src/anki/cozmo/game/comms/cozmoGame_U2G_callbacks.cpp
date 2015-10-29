@@ -641,6 +641,11 @@ namespace Cozmo {
     VizManager::getInstance()->DrawGenericQuad(msg.quadID, quad, msg.color);
   }
   
+  void CozmoGameImpl::Process_SetVizOrigin(SetVizOrigin const& msg)
+  {
+    VizManager::getInstance()->SetOrigin(msg);
+  }
+  
   void CozmoGameImpl::Process_EraseQuad(ExternalInterface::EraseQuad const& msg)
   {
     VizManager::getInstance()->EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
@@ -676,14 +681,20 @@ namespace Cozmo {
     // Handled directly by AnimationStreamer
   }
 
-void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
-{
-  // ignored here..
-}
-void CozmoGameImpl::Process_KeyWordRecognitionEnabled(const ExternalInterface::KeyWordRecognitionEnabled& msg)
-{
-  // ignored here..
-}
+  void CozmoGameImpl::Process_KeyWordRecognitionDisabled(const ExternalInterface::KeyWordRecognitionDisabled& msg)
+  {
+    // ignored here..
+  }
 
-}
-}
+  void CozmoGameImpl::Process_KeyWordRecognitionEnabled(const ExternalInterface::KeyWordRecognitionEnabled& msg)
+  {
+    // ignored here..
+  }
+  
+  void CozmoGameImpl::Process_ForceDelocalizeRobot(const Anki::Cozmo::ExternalInterface::ForceDelocalizeRobot &msg)
+  {
+    // Handled directly by RobotEventHandler
+  }
+
+} // namespace Cozmo
+} // namspace Anki
