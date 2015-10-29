@@ -252,7 +252,7 @@ namespace Anki {
 
     // Returns the axis that is most aligned with the specified axis of the parent pose.
     template<char AXIS>
-    Axis GetRotatedParentAxis(f32* maxVal = nullptr) const;
+    AxisName GetRotatedParentAxis(f32* maxVal = nullptr) const;
     
   }; // class RotationMatrix3d
   
@@ -288,7 +288,7 @@ namespace Anki {
   }
   
   template<char parentAxis>
-  Axis RotationMatrix3d::GetRotatedParentAxis(f32 *maxVal) const
+  AxisName RotationMatrix3d::GetRotatedParentAxis(f32 *maxVal) const
   {
     // Figure out which axis in the rotated frame corresponds to the given
     // axis in the parent frame
@@ -296,15 +296,15 @@ namespace Anki {
     
     // assume X axis to start
     f32 max_val = row.x();
-    Axis rotatedAxis = max_val > 0 ? X_AXIS_POS : X_AXIS_NEG;
+    AxisName rotatedAxis = max_val > 0 ? AxisName::X_POS : AxisName::X_NEG;
     
     if(std::abs(row.y()) > std::abs(max_val)) {
       max_val = row.y();
-      rotatedAxis = max_val > 0 ? Y_AXIS_POS : Y_AXIS_NEG;
+      rotatedAxis = max_val > 0 ? AxisName::Y_POS : AxisName::Y_NEG;
     }
     if(std::abs(row.z()) > std::abs(max_val)) {
       max_val = row.z();
-      rotatedAxis = max_val > 0 ? Z_AXIS_POS : Z_AXIS_NEG;
+      rotatedAxis = max_val > 0 ? AxisName::Z_POS : AxisName::Z_NEG;
     }
 
     if (maxVal != nullptr) {
@@ -325,21 +325,21 @@ namespace Anki {
   template<char parentAxis>
   inline Radians RotationMatrix3d::GetAngleAroundParentAxis() const
   {
-    Axis axis = GetRotatedParentAxis<parentAxis>();
+    AxisName axis = GetRotatedParentAxis<parentAxis>();
     
     switch(axis)
     {
-      case X_AXIS_POS:
+      case AxisName::X_POS:
         return GetAngleAroundXaxis();
-      case X_AXIS_NEG:
+      case AxisName::X_NEG:
         return -GetAngleAroundXaxis();
-      case Y_AXIS_POS:
+      case AxisName::Y_POS:
         return GetAngleAroundYaxis();
-      case Y_AXIS_NEG:
+      case AxisName::Y_NEG:
         return -GetAngleAroundYaxis();
-      case Z_AXIS_POS:
+      case AxisName::Z_POS:
         return GetAngleAroundZaxis();
-      case Z_AXIS_NEG:
+      case AxisName::Z_NEG:
         return -GetAngleAroundZaxis();
       default:
         assert(false);
