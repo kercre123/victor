@@ -45,7 +45,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
   SubscribeToTags(std::move(subscribedEvents));
 }
 
-bool BehaviorReactToPickup::IsRunnable(double currentTime_sec) const
+bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   switch (_currentState)
   {

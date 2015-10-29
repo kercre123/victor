@@ -76,7 +76,7 @@ namespace Cozmo {
     
     // Returns true iff the state of the world/robot is sufficient for this
     // behavior to be executed
-    virtual bool IsRunnable(double currentTime_sec) const = 0;
+    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const = 0;
     
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
@@ -90,7 +90,8 @@ namespace Cozmo {
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
     
     // EvaluateScore is used to score each behavior for behavior selection - by default it just uses EvaluateEmotionScore
-    virtual float EvaluateScore(const MoodManager& moodManager, double currentTime_sec) const { return IsRunnable(currentTime_sec) ? EvaluateEmotionScore(moodManager) : 0.0f; }
+    virtual float EvaluateScore(const Robot& robot, const MoodManager& moodManager, double currentTime_sec) const {
+      return IsRunnable(robot, currentTime_sec) ? EvaluateEmotionScore(moodManager) : 0.0f; }
 
     void ClearEmotionScorers()                         { _emotionScorers.clear(); }
     void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }

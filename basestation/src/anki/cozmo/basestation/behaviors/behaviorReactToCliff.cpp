@@ -45,7 +45,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
   SubscribeToTags(std::move(subscribedEvents));
 }
 
-bool BehaviorReactToCliff::IsRunnable(double currentTime_sec) const
+bool BehaviorReactToCliff::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   switch (_currentState)
   {

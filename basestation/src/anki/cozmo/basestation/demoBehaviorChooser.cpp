@@ -108,11 +108,11 @@ Result DemoBehaviorChooser::Update(double currentTime_sec)
   return Result::RESULT_OK;
 }
   
-IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const MoodManager& moodManager, double currentTime_sec) const
+IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, const MoodManager& moodManager, double currentTime_sec) const
 {
-  auto runnable = [currentTime_sec](const IBehavior* behavior)
+  auto runnable = [&robot,currentTime_sec](const IBehavior* behavior)
   {
-    return (nullptr != behavior && behavior->IsRunnable(currentTime_sec));
+    return (nullptr != behavior && behavior->IsRunnable(robot, currentTime_sec));
   };
   
   switch (_demoState)

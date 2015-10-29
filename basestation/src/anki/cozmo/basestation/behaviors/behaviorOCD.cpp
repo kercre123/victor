@@ -54,14 +54,14 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorOCD::IsRunnable(double currentTime_sec) const
+  bool BehaviorOCD::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
     // We can only run this behavior when there are at least two "messy" blocks present,
     // or when there is at least one messy block while we've got any neat blocks
-    return (_messyObjects.size() >= 2) ||
-           (!_neatObjects.empty() && !_messyObjects.empty()) ||
-           (_currentState == State::PlacingBlock) ||
-           (!_animActionTags.empty());
+    return robot.IsLocalized() && ((_messyObjects.size() >= 2) ||
+                                   (!_neatObjects.empty() && !_messyObjects.empty()) ||
+                                   (_currentState == State::PlacingBlock) ||
+                                   (!_animActionTags.empty()));
   }
   
   Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec)
