@@ -414,7 +414,7 @@ namespace Cozmo {
                                T_old.x(), T_old.y(), T_old.z(),
                                T_new.x(), T_new.y(), T_new.z());
               
-              object->SetPose(newPose, true);
+              object->SetPose(newPose, -1.f, true);
               
               BroadcastObjectObservation(object, false);
             }
@@ -2070,8 +2070,7 @@ namespace Cozmo {
                   // entirely if the block isn't in the same coordinate tree as the
                   // robot.
                   Pose3d objectPoseWrtRobotOrigin;
-                  if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true
-                     && !object->IsPoseStateUnknown())
+                  if(object->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin) == true)
                   {
                     const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
                     const f32    objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
@@ -2294,10 +2293,6 @@ namespace Cozmo {
       
       FindFcn findLambda = [&topOfObjectOnBottom, &sameDistTol](ObservableObject* candidateObject, ObservableObject* best)
       {
-        if (candidateObject->IsPoseStateUnknown())
-        {
-          return false;
-        }
         // Find the point at bottom middle of the object we're checking to be on top
         Point3f rotatedTopSize(candidateObject->GetPose().GetRotation() * candidateObject->GetSize());
         Point3f bottomOfCandidateObject(candidateObject->GetPose().GetTranslation());
@@ -2330,10 +2325,6 @@ namespace Cozmo {
       
       FindFcn findLambda = [&pose, &closestDist](ObservableObject* current, ObservableObject* best)
       {
-        if (current->IsPoseStateUnknown())
-        {
-          return false;
-        }
         Vec3f dist = ComputeVectorBetween(pose, current->GetPose());
         dist.Abs();
         if(dist.Length() < closestDist.Length()) {
@@ -2400,12 +2391,11 @@ namespace Cozmo {
       BlockWorldFilter filter;
       filter.AddIgnoreID(object.GetID());
       
+      // We override the default filter function to intentionally consider objects that are unknown here
+      filter.SetFilterFcn([] (ObservableObject*) { return true; });
+      
       FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
       {
-        if (current->IsPoseStateUnknown())
-        {
-          return false;
-        }
         Vec3f Tdiff;
         Radians angleDiff;
         if(current->IsSameAs(object, closestDist, closestAngle, Tdiff, angleDiff)) {

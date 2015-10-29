@@ -23,6 +23,7 @@
 #include "anki/common/basestation/objectIDs.h"
 
 #include <set>
+#include <assert.h>
 
 
 namespace Anki {
@@ -64,7 +65,8 @@ namespace Cozmo {
     
     FilterFcn _filterFcn = &BlockWorldFilter::DefaultFilterFcn;
     
-    static bool DefaultFilterFcn(ObservableObject*) { return true; }
+    // The default filter function should be overriden if the poseState will be unknown or other functionality is desired
+    static bool DefaultFilterFcn(ObservableObject* object) { assert(nullptr != object); return !object->IsPoseStateUnknown(); }
     
   }; // class BlockWorldFilter
   
