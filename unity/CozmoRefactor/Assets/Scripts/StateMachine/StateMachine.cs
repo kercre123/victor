@@ -19,8 +19,8 @@ public class StateMachine {
     game_ = game;
   }
 
-  public void SetNextState(State nextState_) {
-    nextState_ = nextState_;
+  public void SetNextState(State nextState) {
+    nextState_ = nextState;
     nextState_.SetStateMachine(this);
   }
 
