@@ -5,9 +5,9 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-COUNT=10
+COUNT=3
 
-CONF=Debug
+CONF=Release
 
 GIT=`which git`
 if [ -z $GIT ];then
@@ -25,7 +25,7 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 # echo "Entering directory \`${TOPLEVEL}'"
 cd $TOPLEVEL
 
-pwd
+# pwd
 
 DERIVED_DATA_BASE=./build/mac/derived-data
 
@@ -48,9 +48,14 @@ if [ ! -f ${EXE} ]; then
     exit 1
 fi
 
-echo "found: $EXE"
+# echo "found: $EXE"
 
-find $DIR/env/context/ -type f -exec $EXE -p $DIR/env/mprim.json --context {} -s \;
+# turn the results into a json list
+echo "["
+for ((i=0; i<$COUNT; i++)); do
+    find $DIR/env/context/ -iname '*.json' -exec $EXE -p $DIR/env/mprim.json --context {} -s \; -exec echo "," \;
+done
+echo "]"
 
 
 
