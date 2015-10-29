@@ -61,6 +61,7 @@ bool xythetaPlanner::Replan(unsigned int maxExpansions, bool* runPlan)
 
   duration<double> time_d = duration_cast<duration<double>>(end - start);
   double time = time_d.count();
+  _impl->_lastPlanTime = time;
 
   PRINT_NAMED_INFO("xythetaPlanner.ReplanComplete", 
                    "planning took %f seconds. (%f exps/sec, %f cons/sec, %f checks/sec)",
@@ -87,6 +88,21 @@ Cost xythetaPlanner::GetFinalCost() const
   return _impl->_finalCost;
 }
 
+float xythetaPlanner::GetLastPlanTime() const
+{
+  return _impl->_lastPlanTime;
+}
+
+int xythetaPlanner::GetLastNumEpansions() const
+{
+  return _impl->_expansions;
+}
+
+int xythetaPlanner::GetLastNumConsiderations() const
+{
+  return _impl->_considerations;
+}
+
 void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
 {
   _impl->GetTestPlan(plan);
@@ -105,6 +121,7 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaPlannerContext& context)
   , _goalChanged(false)
   , _searchNum(0)
   , _runPlan(nullptr)
+  , _lastPlanTime(-1.0)
 {
   _startID = _start.GetStateID();
   Reset();
@@ -423,11 +440,12 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
 
     // TODO:(bn) make this a dev option / parameter
     if(_expansions % 10000 == 0) {
-      printf("PLANDEBUG: %8d %8.5f = %8.5f + %8.5f\n",
-             _expansions,
-             _open.topF(),
-             _table[_open.top()].g_,
-             _open.topF() - _table[_open.top()].g_);
+      PRINT_NAMED_INFO("xythetaPlanner.PLANDEBUG",
+                       "%8d %8.5f = %8.5f + %8.5f\n",
+                       _expansions,
+                       _open.topF(),
+                       _table[_open.top()].g_,
+                       _open.topF() - _table[_open.top()].g_);
     }
   }
 

@@ -897,7 +897,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
       return false;
     }
 
-    printf("adeded %d motion primitives\n", numPrims);
+    PRINT_NAMED_INFO("ParseMotionPrims.Added", "added %d motion primitives\n", numPrims);
   }
   catch( const std::exception&  e ) {
     PRINT_NAMED_ERROR("ParseMotionPrims.Exception",
