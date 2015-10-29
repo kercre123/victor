@@ -3,23 +3,23 @@
     {
       "blocks": [
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }
@@ -57,22 +57,22 @@
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }
       ], 
@@ -81,24 +81,24 @@
     {
       "blocks": [
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }
       ], 
@@ -111,23 +111,49 @@
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
         }
       ], 
       "vertical": false
@@ -163,47 +189,21 @@
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": false
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }
@@ -243,6 +243,32 @@
         {
           "back": "G", 
           "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
@@ -284,32 +310,6 @@
           "back": "", 
           "facing_cozmo": false, 
           "front": "G", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": false
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
           "left": "G", 
           "right": "G"
         }
@@ -321,23 +321,23 @@
     {
       "blocks": [
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }
@@ -375,22 +375,22 @@
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }
       ], 
@@ -399,24 +399,24 @@
     {
       "blocks": [
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }
       ], 
@@ -429,23 +429,49 @@
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
         }
       ], 
       "vertical": false
@@ -481,47 +507,21 @@
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": false
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }
@@ -561,6 +561,32 @@
         {
           "back": "G", 
           "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
@@ -602,32 +628,6 @@
           "back": "", 
           "facing_cozmo": false, 
           "front": "G", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": false
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
           "left": "G", 
           "right": "G"
         }
@@ -639,23 +639,23 @@
     {
       "blocks": [
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }
@@ -693,22 +693,22 @@
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }
       ], 
@@ -717,24 +717,24 @@
     {
       "blocks": [
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }
       ], 
@@ -747,23 +747,49 @@
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": false, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
         }
       ], 
       "vertical": true
@@ -799,47 +825,21 @@
         {
           "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": true
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": false, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }
@@ -879,6 +879,32 @@
         {
           "back": "G", 
           "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
           "front": "G", 
           "left": "", 
           "right": "G"
@@ -920,32 +946,6 @@
           "back": "", 
           "facing_cozmo": false, 
           "front": "G", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": true
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": false, 
-          "front": "", 
           "left": "G", 
           "right": "G"
         }
@@ -957,23 +957,23 @@
     {
       "blocks": [
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": true, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": true, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }, 
         {
-          "back": "", 
+          "back": "G", 
           "facing_cozmo": true, 
-          "front": "G", 
+          "front": "", 
           "left": "", 
           "right": ""
         }
@@ -1011,22 +1011,22 @@
         {
           "back": "", 
           "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }, 
         {
           "back": "", 
           "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
+          "front": "G", 
+          "left": "", 
           "right": ""
         }
       ], 
@@ -1035,24 +1035,24 @@
     {
       "blocks": [
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": true, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": true, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": true, 
           "front": "", 
-          "left": "", 
+          "left": "G", 
           "right": ""
         }
       ], 
@@ -1065,23 +1065,49 @@
         {
           "back": "G", 
           "facing_cozmo": true, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": true, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
         }, 
         {
           "back": "G", 
           "facing_cozmo": true, 
-          "front": "G", 
-          "left": "", 
+          "front": "", 
+          "left": "G", 
           "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
         }
       ], 
       "vertical": true
@@ -1117,47 +1143,21 @@
         {
           "back": "", 
           "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "", 
-          "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": true
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": true, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": true, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }, 
         {
-          "back": "G", 
+          "back": "", 
           "facing_cozmo": true, 
-          "front": "", 
+          "front": "G", 
           "left": "G", 
           "right": ""
         }
@@ -1197,6 +1197,32 @@
         {
           "back": "G", 
           "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
           "front": "G", 
           "left": "", 
           "right": "G"
@@ -1238,32 +1264,6 @@
           "back": "", 
           "facing_cozmo": true, 
           "front": "G", 
-          "left": "G", 
-          "right": "G"
-        }
-      ], 
-      "vertical": true
-    }, 
-    {
-      "blocks": [
-        {
-          "back": "G", 
-          "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": true, 
-          "front": "", 
-          "left": "G", 
-          "right": "G"
-        }, 
-        {
-          "back": "G", 
-          "facing_cozmo": true, 
-          "front": "", 
           "left": "G", 
           "right": "G"
         }
