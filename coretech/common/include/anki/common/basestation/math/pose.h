@@ -231,6 +231,10 @@ namespace Anki {
     void ApplyTo(const std::vector<Point<3,T> > &pointsIn,
                  std::vector<Point<3,T> >       &pointsOut) const;
 
+    template<typename T, size_t N>
+    void ApplyTo(const std::array<Point<3,T>, N> &pointsIn,
+                 std::array<Point<3,T>, N>       &pointsOut) const;
+    
     template<typename T>
     void ApplyTo(const Quadrilateral<3,T> &quadIn,
                  Quadrilateral<3,T>       &quadOut) const;
@@ -307,8 +311,11 @@ namespace Anki {
     
   }; // class Pose3d
   
-  // Compute distance between the two poses' translation vectors
+
+  // Compute vector from pose2's translation to pose1's translation
   Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2);
+  
+  // Compute distance between the two poses' translations
   inline f32 ComputeDistanceBetween(const Pose3d& pose1, const Pose3d& pose2) {
     return ComputeVectorBetween(pose1, pose2).Length();
   }
@@ -561,6 +568,16 @@ namespace Anki {
       {
         pointsOut.emplace_back( (*this) * x );
       }
+    }
+  } // ApplyTo()
+  
+  template<typename T, size_t N>
+  void Pose3d::ApplyTo(const std::array<Point<3,T>, N> &pointsIn,
+                       std::array<Point<3,T>, N>       &pointsOut) const
+  {
+    for(size_t i=0; i<N; ++i)
+    {
+      pointsOut[i] = (*this) * pointsIn[i];
     }
   } // ApplyTo()
   

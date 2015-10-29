@@ -10,6 +10,8 @@
   EXPORT g_EspBootEnd
   EXPORT g_EspInit
   EXPORT g_EspInitEnd
+  EXPORT g_Block
+  EXPORT g_BlockEnd
 
 g_EspBlank
   INCBIN ..\\bin\\esp.blank.bin
@@ -23,5 +25,8 @@ g_EspBootEnd
 g_EspInit
   INCBIN ..\\bin\\esp.init.bin
 g_EspInitEnd
+g_Block
+  INCBIN ..\\bin\\block.bin
+g_BlockEnd
 
   END

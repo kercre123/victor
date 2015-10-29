@@ -11,6 +11,7 @@
 #include "hal/uart.h"
 #include "hal/console.h"
 #include "hal/espressif.h"
+#include "hal/cube.h"
 #include "app/pcbTest.h"
 #include "app/fixture.h"
 #include <stdarg.h>
@@ -698,10 +699,11 @@ int main(void)
   InitMonitor();
 
   SlowPutString("Ready...\r\n");
-  
-  STM_EVAL_LEDOn(LEDRED);
 
-  InitEspressif();
+  //InitCube();
+  //ProgramCube();
+
+  STM_EVAL_LEDOn(LEDRED);
 
   while (1)
   {  

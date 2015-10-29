@@ -132,12 +132,8 @@ void InitEspressif(void) {
   USART_Init(TESTPORT_RX, &USART_InitStructure);  
   USART_Cmd(TESTPORT_RX, ENABLE);
 
-PIN_AF(GPIOC, PINC_TX);
+  PIN_AF(GPIOC, PINC_TX);
   PIN_AF(GPIOC, PINC_RX);
-
-  // TEMPORARY CODE
-  ProgramEspressif();
-  for(;;) ;
 }
 
 static inline int BlockCount(int length) {

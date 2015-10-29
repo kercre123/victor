@@ -69,6 +69,9 @@ class VisionProcessingThread
     void Start(const Vision::CameraCalibration& camCalib);
     void Stop();
     
+    void Pause(); // toggle paused state
+    void Pause(bool isPaused); // set pause state
+    
     void SetNextImage(const Vision::Image& image,
                       const RobotState& robotState);
     
@@ -117,12 +120,13 @@ class VisionProcessingThread
     
   protected:
     
-    VisionSystem* _visionSystem;
+    VisionSystem* _visionSystem = nullptr;
     
     Vision::CameraCalibration _camCalib;
-    bool   _isCamCalibSet;
+    bool   _isCamCalibSet = false;
     
-    bool   _running;
+    bool   _running = false;
+    bool   _paused  = false;
     std::mutex _lock;
     
     Vision::Image _currentImg;
@@ -142,6 +146,14 @@ class VisionProcessingThread
     
   }; // class VisionProcessingThread
 
+  inline void VisionProcessingThread::Pause() {
+    _paused = !_paused;
+  }
+  
+  inline void VisionProcessingThread::Pause(bool isPaused) {
+    _paused = isPaused;
+  }
+  
 
 } // namespace Cozmo
 } // namespace Anki

@@ -12,6 +12,8 @@ extern "C" {
   extern const uint8_t g_EspBootEnd[];
   extern const uint8_t g_EspInit[];
   extern const uint8_t g_EspInitEnd[];
+  extern const uint8_t g_Block[];
+  extern const uint8_t g_BlockEnd[];
 }
 
 #endif

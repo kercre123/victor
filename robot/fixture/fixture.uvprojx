@@ -586,6 +586,11 @@
               <FileName>espressif.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\espressif.c</FilePath>
+            </File>
+            <File>
+              <FileName>cube.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\cube.c</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>

@@ -74,6 +74,10 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // Custom handler for DisplayProceduralFace
     auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
+    
+    // Custom handler for ForceDelocalizeRobot
+    auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
+    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
   }
 }
   
@@ -580,6 +584,26 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   
   robot->SetProceduralFace(procFace);
 }
+  
+  void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    RobotID_t robotID = event.GetData().Get_ForceDelocalizeRobot().robotID;
+
+    Robot* robot = _robotManager.GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot) {
+      PRINT_NAMED_ERROR("RobotEventHandler.HandleForceDelocalizeRobot.InvalidRobotID",
+                        "Failed to find robot %d to delocalize.", robotID);
+      
+      
+    } else {
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
+                       "Forcibly delocalizing robot %d", robotID);
+      
+      robot->Delocalize();
+    }
+  }
 
 } // namespace Cozmo
 } // namespace Anki
