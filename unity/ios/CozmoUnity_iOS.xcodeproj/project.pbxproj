@@ -104,6 +104,12 @@
 		ADED221A1B9A2E7900B5D289 /* libpocketSphinx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */; };
 		ADED221B1B9A2E7900B5D289 /* libsphinxad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22181B9A2E7900B5D289 /* libsphinxad.a */; };
 		ADED221C1B9A2E7900B5D289 /* libsphinxBase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22191B9A2E7900B5D289 /* libsphinxBase.a */; };
+		E71A19BB1BE2941B00299C46 /* DemiLib.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E71A19B51BE2941B00299C46 /* DemiLib.dll.s */; };
+		E71A19BC1BE2941B00299C46 /* DOTween.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E71A19B61BE2941B00299C46 /* DOTween.dll.s */; };
+		E71A19BD1BE2941B00299C46 /* DOTween43.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E71A19B71BE2941B00299C46 /* DOTween43.dll.s */; };
+		E71A19BE1BE2941B00299C46 /* DOTween46.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E71A19B81BE2941B00299C46 /* DOTween46.dll.s */; };
+		E71A19BF1BE2941B00299C46 /* DOTween50.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E71A19B91BE2941B00299C46 /* DOTween50.dll.s */; };
+		E71A19C01BE2941B00299C46 /* DOTweenPro.dll.s in Sources */ = {isa = PBXBuildFile; fileRef = E71A19BA1BE2941B00299C46 /* DOTweenPro.dll.s */; };
 		E7D710111BDEE9020019F47C /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = 46D2C2DD1B4F9E5100FC7553 /* LaunchScreen-iPhoneLandscape.png */; };
 		E7D710121BDEE9020019F47C /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = 46D2C2DE1B4F9E5100FC7553 /* LaunchScreen-iPhonePortrait.png */; };
 		F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */; };
@@ -278,6 +284,12 @@
 		ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpocketSphinx.a; path = sphinx/libpocketSphinx.a; sourceTree = "<group>"; };
 		ADED22181B9A2E7900B5D289 /* libsphinxad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxad.a; path = sphinx/libsphinxad.a; sourceTree = "<group>"; };
 		ADED22191B9A2E7900B5D289 /* libsphinxBase.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxBase.a; path = sphinx/libsphinxBase.a; sourceTree = "<group>"; };
+		E71A19B51BE2941B00299C46 /* DemiLib.dll.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; name = DemiLib.dll.s; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/DemiLib.dll.s"; sourceTree = "<group>"; };
+		E71A19B61BE2941B00299C46 /* DOTween.dll.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; name = DOTween.dll.s; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/DOTween.dll.s"; sourceTree = "<group>"; };
+		E71A19B71BE2941B00299C46 /* DOTween43.dll.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; name = DOTween43.dll.s; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/DOTween43.dll.s"; sourceTree = "<group>"; };
+		E71A19B81BE2941B00299C46 /* DOTween46.dll.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; name = DOTween46.dll.s; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/DOTween46.dll.s"; sourceTree = "<group>"; };
+		E71A19B91BE2941B00299C46 /* DOTween50.dll.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; name = DOTween50.dll.s; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/DOTween50.dll.s"; sourceTree = "<group>"; };
+		E71A19BA1BE2941B00299C46 /* DOTweenPro.dll.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; name = DOTweenPro.dll.s; path = "../../build/ios/unity-ios/Debug-iphoneos/Libraries/DOTweenPro.dll.s"; sourceTree = "<group>"; };
 		F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = ios.xcconfig; path = generated/ios.xcconfig; sourceTree = "<group>"; };
 		F8BD0CF91B5EB38D00F71EA3 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = System/Library/Frameworks/CoreText.framework; sourceTree = SDKROOT; };
 		F8BD0CFB1B5ED7DF00F71EA3 /* UnityEngine.Analytics.dll.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = UnityEngine.Analytics.dll.s; sourceTree = "<group>"; };
@@ -363,6 +375,12 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				E71A19B51BE2941B00299C46 /* DemiLib.dll.s */,
+				E71A19B61BE2941B00299C46 /* DOTween.dll.s */,
+				E71A19B71BE2941B00299C46 /* DOTween43.dll.s */,
+				E71A19B81BE2941B00299C46 /* DOTween46.dll.s */,
+				E71A19B91BE2941B00299C46 /* DOTween50.dll.s */,
+				E71A19BA1BE2941B00299C46 /* DOTweenPro.dll.s */,
 				49109E061B8BAFB400827BBF /* intraface.framework */,
 				465B5F2C1A9817AB00AB809E /* Config */,
 				29B97323FDCFA39411CA2CEA /* Frameworks */,
@@ -651,7 +669,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -811,6 +829,12 @@
 				46D2C2D11B4F9E3E00FC7553 /* Mono.Security.dll.s in Sources */,
 				46D2C2B81B4F9E3E00FC7553 /* UnityAppController+ViewHandling.mm in Sources */,
 				46D2C2BE1B4F9E3E00FC7553 /* CVTextureCache.mm in Sources */,
+				E71A19BB1BE2941B00299C46 /* DemiLib.dll.s in Sources */,
+				E71A19BC1BE2941B00299C46 /* DOTween.dll.s in Sources */,
+				E71A19BD1BE2941B00299C46 /* DOTween43.dll.s in Sources */,
+				E71A19BE1BE2941B00299C46 /* DOTween46.dll.s in Sources */,
+				E71A19BF1BE2941B00299C46 /* DOTween50.dll.s in Sources */,
+				E71A19C01BE2941B00299C46 /* DOTweenPro.dll.s in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1107,7 +1131,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,
