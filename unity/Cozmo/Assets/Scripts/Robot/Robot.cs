@@ -475,7 +475,7 @@ public class Robot : IDisposable {
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
 
     LastRotation = Rotation;
-    Rotation = new Quaternion(message.pose_quaternion1, message.pose_quaternion2, message.pose_quaternion3, message.pose_quaternion0);
+    Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
 
   }
 
