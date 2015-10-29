@@ -202,16 +202,6 @@ namespace Anki {
     // rotation angle around that axis is returned.
     template<char AXIS = ' '>
     Radians GetRotationAngle() const;
-
-    // ==== TODO: Andrew made better versions of these in another branch so replace these ===
-    // Returns the axis index (0 == x-axis, 1 == y-axis, 2 == z-axis)
-    // that is most aligned with the parent pose's z-axis
-    int GetAxisClosestToParentZAxis() const;
-    
-    // Returns the angle of the object around the parent pose's z-axis,
-    // i.e. angular diff between the x-axis and the parent's x-axis.
-    Radians GetAngleAroundParentZAxis() const;
-    // ===================================================
     
     void SetRotation(const Rotation3d       &R);
     void SetRotation(const RotationMatrix3d &Rmat);

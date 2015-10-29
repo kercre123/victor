@@ -170,7 +170,16 @@ namespace Anki {
   const Vec3f& X_AXIS_3D();
   const Vec3f& Y_AXIS_3D();
   const Vec3f& Z_AXIS_3D();
+
   
+  enum class AxisName {
+    Z_NEG = -3,
+    Y_NEG = -2,
+    X_NEG = -1,
+    X_POS =  1,
+    Y_POS =  2,
+    Z_POS =  3
+  };
 
   // Helper for compile-time conversion from character axis ('X', 'Y', or 'Z')
   // to index (0, 1, or 2, respectively). Any other character for AXIS will fail

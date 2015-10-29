@@ -249,11 +249,10 @@ namespace Anki {
     // AXIS can be 'X', 'Y', or 'Z'
     template<char AXIS>
     Radians GetAngleAroundParentAxis() const;
-    
-  private:
-    
+
+    // Returns the axis that is most aligned with the specified axis of the parent pose.
     template<char AXIS>
-    std::pair<char, f32> GetRotatedParentAxis() const;
+    AxisName GetRotatedParentAxis(f32* maxVal = nullptr) const;
     
   }; // class RotationMatrix3d
   
@@ -289,48 +288,59 @@ namespace Anki {
   }
   
   template<char parentAxis>
-  std::pair<char, f32> RotationMatrix3d::GetRotatedParentAxis() const
+  AxisName RotationMatrix3d::GetRotatedParentAxis(f32 *maxVal) const
   {
     // Figure out which axis in the rotated frame corresponds to the given
     // axis in the parent frame
     const Point3f row = GetRow(AxisToIndex<parentAxis>());
-    char rotatedAxis = 'X'; // assume X axis to start
-    f32 maxVal = std::abs(row.x());
-    if(std::abs(row.y()) > maxVal) {
-      maxVal = std::abs(row.y());
-      rotatedAxis = 'Y';
+    
+    // assume X axis to start
+    f32 max_val = row.x();
+    AxisName rotatedAxis = max_val > 0 ? AxisName::X_POS : AxisName::X_NEG;
+    
+    if(std::abs(row.y()) > std::abs(max_val)) {
+      max_val = row.y();
+      rotatedAxis = max_val > 0 ? AxisName::Y_POS : AxisName::Y_NEG;
     }
-    if(std::abs(row.z()) > maxVal) {
-      maxVal = std::abs(row.z());
-      rotatedAxis = 'Z';
+    if(std::abs(row.z()) > std::abs(max_val)) {
+      max_val = row.z();
+      rotatedAxis = max_val > 0 ? AxisName::Z_POS : AxisName::Z_NEG;
+    }
+
+    if (maxVal != nullptr) {
+      *maxVal = max_val;
     }
     
-    return std::move(std::make_pair(rotatedAxis, maxVal));
+    return rotatedAxis;
   }
 
   template<char parentAxis>
   inline Radians RotationMatrix3d::GetAngularDeviationFromParentAxis() const
   {
-    std::pair<char, f32> result = GetRotatedParentAxis<parentAxis>();
-    return std::acos(result.second);
+    f32 maxVal;
+    GetRotatedParentAxis<parentAxis>(&maxVal);
+    return std::acos(maxVal);
   }
   
   template<char parentAxis>
   inline Radians RotationMatrix3d::GetAngleAroundParentAxis() const
   {
-    std::pair<char, f32> result = GetRotatedParentAxis<parentAxis>();
+    AxisName axis = GetRotatedParentAxis<parentAxis>();
     
-    switch(result.first)
+    switch(axis)
     {
-      case 'X':
+      case AxisName::X_POS:
         return GetAngleAroundXaxis();
-
-      case 'Y':
+      case AxisName::X_NEG:
+        return -GetAngleAroundXaxis();
+      case AxisName::Y_POS:
         return GetAngleAroundYaxis();
-
-      case 'Z':
+      case AxisName::Y_NEG:
+        return -GetAngleAroundYaxis();
+      case AxisName::Z_POS:
         return GetAngleAroundZaxis();
-
+      case AxisName::Z_NEG:
+        return -GetAngleAroundZaxis();
       default:
         assert(false);
     }

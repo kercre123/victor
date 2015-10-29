@@ -480,46 +480,6 @@ namespace Anki {
   {
     PoseBase<Pose3d>::PrintNamedPathToOrigin(*this, showTranslations);
   }
-
-  
-  int Pose3d::GetAxisClosestToParentZAxis() const
-  {
-    // Figure out the axis that's pointing in the direction most similar to the parent's z-axis
-    auto lastRow = _rotation.GetRotationMatrix().GetRow(2);
-    int axisIdx = 0;
-    f32 maxVal = std::abs(lastRow[0]);
-    for (auto i = 1; i<3; ++i) {
-      if (std::abs(lastRow[i]) > maxVal) {
-        maxVal = std::abs(lastRow[i]);
-        axisIdx = lastRow[i] > 0 ? i : -i;
-      }
-    }
-    
-    return axisIdx;
-  }
-  
-  Radians Pose3d::GetAngleAroundParentZAxis() const
-  {
-    int axisIdx = GetAxisClosestToParentZAxis();
-    
-    Radians ang;
-    switch (std::abs(axisIdx)) {
-      case 0:
-        ang = GetRotationAngle<'X'>();
-        break;
-      case 1:
-        ang = GetRotationAngle<'Y'>();
-        break;
-      case 2:
-        ang = GetRotationAngle<'Z'>();
-        break;
-      default:
-        break;
-    }
-    
-    return ang;
-  }
-  
   
   void Pose3d::Print() const
   {
