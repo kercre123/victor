@@ -4478,6 +4478,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stackPatternDisplay: {fileID: 11401146}
   _horizontalPatternDisplay: {fileID: 11460476}
+  _animationAnchorPrefab: {fileID: 158364, guid: 8f3f4d7636b4241eaa8734eec85c7ad2,
+    type: 2}
 --- !u!114 &11419394
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4855,7 +4857,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _animationAnchorPrefab
+      value: 
+      objectReference: {fileID: 158364, guid: 8f3f4d7636b4241eaa8734eec85c7ad2, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 157164}

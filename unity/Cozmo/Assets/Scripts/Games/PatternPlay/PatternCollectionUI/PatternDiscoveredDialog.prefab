@@ -137,7 +137,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: .252999991}
+  m_Color: {r: 1, g: 1, b: 1, a: .246999994}
   m_Sprite: {fileID: 21300000, guid: 6212f3a9221784fd9bd72420bfc79b15, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
@@ -259,6 +259,14 @@ MonoBehaviour:
   _dialogId: PatternDiscoveredDialog
   _patternDiscoveryDisplayPrefab: {fileID: 11419336, guid: cee9aa1e0cda0472393280aff0993f5f,
     type: 2}
+  _imagesToFadeOnClose:
+  - {fileID: 11416280}
+  - {fileID: 11421306}
+  - {fileID: 11411656}
+  - {fileID: 11487072}
+  _textToFadeOnClose:
+  - {fileID: 11427704}
+  - {fileID: 11483582}
 --- !u!114 &11483582
 MonoBehaviour:
   m_ObjectHideFlags: 1

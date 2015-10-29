@@ -57,20 +57,22 @@ public class PatternPlayController : GameController {
       lightCount--;
     }
 
-    if (robot.activeBlocks[blockID].Rotation.eulerAngles.z > 80.0f) {
+    float blockAngleWorldSpace = robot.activeBlocks[blockID].Rotation.eulerAngles.z;
+    if (blockAngleWorldSpace < 0.0f) {
+      blockAngleWorldSpace += 360.0f;
+    }
+
+    if (blockAngleWorldSpace > 75.0f) {
       blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData[blockID].blockLightsLocalSpace);
     }
 
-    if (robot.activeBlocks[blockID].Rotation.eulerAngles.z > 170.0f) {
+    if (blockAngleWorldSpace > 165.0f) {
       blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData[blockID].blockLightsLocalSpace);
     }
 
-    if (robot.activeBlocks[blockID].Rotation.eulerAngles.z > 260.0f) {
+    if (blockAngleWorldSpace > 255.0f) {
       blockPatternData[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData[blockID].blockLightsLocalSpace);
     }
-
-    Debug.Log(robot.activeBlocks[blockID].Rotation.eulerAngles.z);
-
   }
 
   public Robot GetRobot() {

@@ -97,7 +97,7 @@ public class PatternPlayAutoBuild {
       // there is an anchor block. let's put it to the right of the block.
       position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
       dockID = neatList[0].ID;
-      offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
+      offset = CozmoUtil.BLOCK_LENGTH_MM * 1.25f;
     }
     else {
       // there are two blocks. we need to figure out where to put the third block
@@ -106,13 +106,13 @@ public class PatternPlayAutoBuild {
         // place on the left of anchor block.
         position = neatList[0].WorldPosition + new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
         dockID = neatList[0].ID;
-        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
+        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.25f;
       }
       else {
         // place on right of anchor block.
         position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
         dockID = neatList[0].ID;
-        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.05f;
+        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.25f;
       }
     }
     dockAngleRad = FindApproachAngle();

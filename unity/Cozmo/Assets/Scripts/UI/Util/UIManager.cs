@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class UIManager : MonoBehaviour {
 
@@ -26,12 +28,16 @@ public class UIManager : MonoBehaviour {
   
   [SerializeField]
   private Canvas _perspUiCanvas;
+  
+  [SerializeField]
+  private EventSystem _eventSystemScript;
 
   private List<BaseDialog> _openDialogs;
 
   void Awake() {
     _instance = this;
     _openDialogs = new List<BaseDialog>();
+    DOTween.Init ();
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
@@ -78,5 +84,13 @@ public class UIManager : MonoBehaviour {
 
   public static Camera GetUICamera() {
     return _instance._orthoUiCanvas.worldCamera;
+  }
+
+  public static void DisableTouchEvents() {
+    _instance._eventSystemScript.gameObject.SetActive (false);
+  }
+
+  public static void EnableTouchEvents() {
+    _instance._eventSystemScript.gameObject.SetActive (true);
   }
 }
