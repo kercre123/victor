@@ -128,7 +128,7 @@ void MoodManager::Update(double currentTime)
   if (timeDelta < kMinTimeStep)
   {
     PRINT_NAMED_ERROR("MoodManager.BadTimeStep", "TimeStep %f (%f-%f) is < %f - clamping!", timeDelta, currentTime, _lastUpdateTime, kMinTimeStep);
-    assert(0); // TEMP
+    //assert(0); // TEMP
     timeDelta = kMinTimeStep;
   }
   
