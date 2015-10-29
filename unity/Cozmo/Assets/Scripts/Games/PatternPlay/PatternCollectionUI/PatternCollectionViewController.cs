@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class PatternCollectionViewController : MonoBehaviour {
 
@@ -10,6 +11,7 @@ public class PatternCollectionViewController : MonoBehaviour {
   private BadgeDisplay _openPatternCollectionDialogButtonPrefab;
 
   private BadgeDisplay _buttonBadgeDisplay;
+  private Tweener _buttonBadgeDisplayTweener;
  
   [SerializeField]
   private PatternCollectionDialog _patternCollectionDialogPrefab;
@@ -34,8 +36,14 @@ public class PatternCollectionViewController : MonoBehaviour {
     if (_patternCollectionDialog != null) {
       _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
     }
-    
-    _patternMemory.PatternAdded -= OnPatternAdded;
+
+    if (_patternMemory != null) {
+      _patternMemory.PatternAdded -= OnPatternAdded;
+    }
+
+    if (_buttonBadgeDisplayTweener != null) {
+      _buttonBadgeDisplayTweener.Kill();
+    }
   }
 
   #region Initialization
@@ -101,21 +109,22 @@ public class PatternCollectionViewController : MonoBehaviour {
     _patternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
     _patternDiscoveredDialog.Initialize (pattern);
     
-    _patternDiscoveredDialog.DialogClosed += OnDiscoveryDialogClosed;
+    _patternDiscoveredDialog.DialogCloseAnimationFinished += OnDiscoveryDialogClosed;
   }
 
   private void OnDiscoveryDialogClosed() {
-    PlayAddPatternToBankAnimation ();
-  }
-
-  private void PlayAddPatternToBankAnimation() {
-    // TODO: Play animation
-    OnAddPatternToBankAnimationFinished ();
-  }
-
-  private void OnAddPatternToBankAnimationFinished() {
     // Update badge visuals
     _buttonBadgeDisplay.UpdateDisplayWithTag (PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+
+    float targetScale = 0.2f;
+    if (_buttonBadgeDisplayTweener == null) {
+      _buttonBadgeDisplayTweener = _buttonBadgeDisplay.gameObject.transform.DOPunchScale (new Vector3 (targetScale, targetScale, targetScale),
+                                                                             0.5f,
+                                                                             15)
+        .SetAutoKill(false); // Let the tween stick around in memory
+    }
+    _buttonBadgeDisplayTweener.Restart ();
+    _buttonBadgeDisplayTweener.Play ();
   }
   #endregion
 
@@ -238,5 +247,17 @@ public class PatternCollectionViewController : MonoBehaviour {
 
     Initialize (patternMemory);
 	}
+
+  public void CreateFullPatternMemory() {
+    PatternMemory patternMemory = new PatternMemory ();
+    patternMemory.Initialize ();
+
+    HashSet<BlockPattern> unseenPatterns = patternMemory.GetAllUnseenPatterns ();
+    foreach (BlockPattern pattern in unseenPatterns) {
+      patternMemory.AddSeen(pattern);
+    }
+    
+    Initialize (patternMemory);
+  }
   #endregion
 }
