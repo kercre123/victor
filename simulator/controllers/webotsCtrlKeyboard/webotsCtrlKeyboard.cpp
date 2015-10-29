@@ -11,9 +11,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
@@ -707,11 +707,11 @@ namespace Anki {
                 }
                 
                 if(!backpackLightsOn) {
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_RIGHT]  = NamedColors::GREEN;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_LEFT]   = NamedColors::RED;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK]   = NamedColors::BLUE;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = NamedColors::CYAN;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT]  = NamedColors::YELLOW;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_RIGHT]  = ::Anki::NamedColors::GREEN;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_LEFT]   = ::Anki::NamedColors::RED;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK]   = ::Anki::NamedColors::BLUE;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = ::Anki::NamedColors::CYAN;
+                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT]  = ::Anki::NamedColors::YELLOW;
                 }
                 
                 ExternalInterface::MessageGameToEngine msgWrapper;
@@ -883,7 +883,7 @@ namespace Anki {
                 msg.yUpperRight = 250.f;
                 msg.zUpperRight = 10.f*static_cast<f32>(std::rand())/static_cast<f32>(RAND_MAX) + 10.f;
                 msg.quadID = 998;
-                msg.color = NamedColors::ORANGE;
+                msg.color = ::Anki::NamedColors::ORANGE;
                 
                 ExternalInterface::MessageGameToEngine msgWrapper;
                 msgWrapper.Set_VisualizeQuad(msg);
@@ -1008,8 +1008,8 @@ namespace Anki {
                   // Proof of concept: cycle colors
                   const s32 NUM_COLORS = 4;
                   const ColorRGBA colorList[NUM_COLORS] = {
-                    NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
-                    NamedColors::BLACK
+                    ::Anki::NamedColors::RED, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::BLUE,
+                    ::Anki::NamedColors::BLACK
                   };
 
                   static s32 colorIndex = 0;
@@ -1024,8 +1024,8 @@ namespace Anki {
                   msg.turnOffUnspecifiedLEDs = 1;
                   if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                     printf("Updating active block edge\n");
-                    msg.onColor = NamedColors::RED;
-                    msg.offColor = NamedColors::BLACK;
+                    msg.onColor = ::Anki::NamedColors::RED;
+                    msg.offColor = ::Anki::NamedColors::BLACK;
                     msg.whichLEDs = static_cast<u8>(WhichCubeLEDs::FRONT);
                     msg.makeRelative = 2;
                     msg.relativeToX = GetRobotPose().GetTranslation().x();
@@ -1061,7 +1061,7 @@ namespace Anki {
                            colorList[colorIndex].g(),
                            colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
-                    msg.offColor = NamedColors::BLACK;
+                    msg.offColor = ::Anki::NamedColors::BLACK;
                     msg.whichLEDs = static_cast<u8>(WhichCubeLEDs::FRONT);
                     msg.makeRelative = 0;
                     msg.turnOffUnspecifiedLEDs = 1;
@@ -1324,8 +1324,8 @@ namespace Anki {
     void WebotsKeyboardController::TestLightCube()
       {
         static std::vector<ColorRGBA> colors = {{
-          NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
-          NamedColors::CYAN, NamedColors::ORANGE, NamedColors::YELLOW
+          ::Anki::NamedColors::RED, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::BLUE,
+          ::Anki::NamedColors::CYAN, ::Anki::NamedColors::ORANGE, ::Anki::NamedColors::YELLOW
         }};
         static std::vector<WhichCubeLEDs> leds = {{
           WhichCubeLEDs::BACK,
