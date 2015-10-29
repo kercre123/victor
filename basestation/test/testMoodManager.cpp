@@ -338,7 +338,7 @@ public:
     _name = name;
   }
 
-  virtual bool IsRunnable(double currentTime_sec) const override { return true; }
+  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
 
   virtual Anki::Result InitInternal(Robot& robot, double currentTime_sec) override { return Anki::RESULT_OK; }
   virtual Status       UpdateInternal(Robot& robot, double currentTime_sec) override { return Status::Running; }
@@ -348,14 +348,14 @@ public:
 
 TEST(MoodManager, BehaviorScoring)
 {
-  MoodManager moodManager;
+  RobotInterface::MessageHandler messageHandler;
+  Robot testRobot(RobotID_t(0), &messageHandler, nullptr, nullptr);
+
+  MoodManager& moodManager = testRobot.GetMoodManager();
   TickMoodManager(moodManager, 1, kTickTimestep);
 
   MoodManager::SetDecayGraph(EmotionType::Happiness, kTestDecayGraph);
   
-  RobotInterface::MessageHandler messageHandler;
-  Robot testRobot(RobotID_t(0), &messageHandler, nullptr, nullptr);
-
   Json::Value config;
   // have to alloc the behaviors - they're freed by the chooser
   TestBehavior* testBehaviorReqHappy = new TestBehavior(testRobot, config, "TestHappy");
@@ -367,49 +367,49 @@ TEST(MoodManager, BehaviorScoring)
   testBehaviorReqHappy->AddEmotionScorer(EmotionScorer(EmotionType::Happiness, Anki::Util::GraphEvaluator2d({{-1.0f, 0.0f}, {0.5f, 1.0f}, {1.0f, 0.6f}}), false));
   testBehaviorReqCalm->AddEmotionScorer( EmotionScorer(EmotionType::Calmness,  Anki::Util::GraphEvaluator2d({{-1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}}), false));
   
-  float score1 = testBehaviorReqHappy->EvaluateScore(moodManager, gCurrentTime);
-  float score2 = testBehaviorReqCalm->EvaluateScore(moodManager, gCurrentTime);
+  float score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
+  float score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
   
   EXPECT_FLOAT_EQ(score1, 0.6666666666f);
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(moodManager, gCurrentTime);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
   moodManager.AddToEmotion(EmotionType::Happiness, 0.25f, "Test1");
   moodManager.AddToEmotion(EmotionType::Calmness,  0.5f, "Test1");
   
-  score1 = testBehaviorReqHappy->EvaluateScore(moodManager, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(moodManager, gCurrentTime);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
   
   EXPECT_FLOAT_EQ(score1, 0.83333331f);
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(moodManager, gCurrentTime);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
   moodManager.AddToEmotion(EmotionType::Happiness, -2.0f, "Test1");
   moodManager.AddToEmotion(EmotionType::Calmness,  -2.0f, "Test1");
   
-  score1 = testBehaviorReqHappy->EvaluateScore(moodManager, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(moodManager, gCurrentTime);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
   
   EXPECT_FLOAT_EQ(score1, 0.0f);
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(moodManager, gCurrentTime);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
   moodManager.AddToEmotion(EmotionType::Happiness, 0.75f, "Test1");
   
-  score1 = testBehaviorReqHappy->EvaluateScore(moodManager, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(moodManager, gCurrentTime);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
   
   EXPECT_FLOAT_EQ(score1, 0.5f);
   EXPECT_FLOAT_EQ(score2, 0.5f);
@@ -422,7 +422,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(moodManager, gCurrentTime);
+      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;

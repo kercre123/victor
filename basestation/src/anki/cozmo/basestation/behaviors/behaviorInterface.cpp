@@ -86,5 +86,11 @@ namespace Cozmo {
     return averageScore;
   }
   
+  float IBehavior::EvaluateScore(const Robot& robot, double currentTime_sec) const
+  {
+    return IsRunnable(robot, currentTime_sec) ? EvaluateEmotionScore(robot.GetMoodManager()) : 0.0f;
+  }
+
+  
 } // namespace Cozmo
 } // namespace Anki

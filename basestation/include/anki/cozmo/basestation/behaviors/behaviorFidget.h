@@ -25,7 +25,7 @@ namespace Cozmo {
     BehaviorFidget(Robot& robot, const Json::Value& config);
     virtual ~BehaviorFidget();
     
-    virtual bool IsRunnable(double currentTime_sec) const override { return true; }
+    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
     
   protected:
     
