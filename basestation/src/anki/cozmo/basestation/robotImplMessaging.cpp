@@ -195,7 +195,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   {
     ASSERT_NAMED(object->IsActive(), "Got movement message from non-active object?");
     
-    if(object->IsLocalized()) // TODO: Change this to checking PoseState once Lee's stuff gets merged in
+    if(object->GetPoseState() == ObservableObject::PoseState::Known)
     {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectMoved.ActiveObjectMoved",
                        "Received message that %s %d (Active ID %d) moved. Delocalizing it.",
@@ -206,7 +206,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
-      object->Delocalize();
+      object->SetPoseState(ObservableObject::PoseState::Dirty);
       
       // If this is the object we were localized to, unset our localizedToID.
       // Note we are still "localized" by odometry, however.
@@ -266,11 +266,11 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
                      EnumToString(object->GetType()),
                      object->GetID().GetValue(), payload.objectID);
     
-    if(object->IsLocalized()) {
-      // Not sure how an object could get localized before it stopped moving,
+    if(object->GetPoseState() == ObservableObject::PoseState::Known) {
+      // Not sure how an object could have a known pose before it stopped moving,
       // but just to be safe, re-delocalize and force a re-localization now
       // that we've gotten the stopped-moving message.
-      object->Delocalize();
+      object->SetPoseState(ObservableObject::PoseState::Dirty);
       
       // If this is the object we were localized to, unset our localizedToID.
       // Note we are still "localized" by odometry, however.

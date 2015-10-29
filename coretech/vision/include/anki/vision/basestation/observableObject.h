@@ -93,11 +93,6 @@ namespace Anki {
       
       virtual bool IsMoveable() const { return true; }
       
-      // Mark this object as delocalized (and thus not usable by a robot for
-      // localization).
-      bool IsLocalized() const { return _isLocalized; } 
-      void Delocalize();
-      
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
       // object from which it was computed.
@@ -138,7 +133,7 @@ namespace Anki {
       
       void SetID();
       void SetColor(const ColorRGBA& color);
-      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f);
+      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f, bool skipStateUpdate = false);
       void SetPoseParent(const Pose3d* newParent);
       
       // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.
@@ -204,6 +199,17 @@ namespace Anki {
       // orientation around the Z axis (w.r.t. its parent), but no rotation about the
       // X and Y axes.
       bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(5)) const;
+
+      enum class PoseState
+      {
+        Known,
+        Dirty,
+        Unknown
+      };
+      
+      PoseState GetPoseState() const { return _poseState; }
+      void SetPoseState(PoseState newState) { _poseState = newState; }
+      bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
       
     protected:
       
@@ -215,6 +221,7 @@ namespace Anki {
       TimeStamp_t  _lastObservedTime = 0;
       u32          _numTimesObserved = 0;
       ColorRGBA    _color;
+      PoseState    _poseState = PoseState::Unknown;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -231,9 +238,6 @@ namespace Anki {
       // Force setting of pose through SetPose() to keep pose name updated
       Pose3d _pose;
       f32    _lastSetPoseDistance = -1.f;
-      
-      // Pose has been set
-      bool   _isLocalized = false;
       
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
@@ -262,9 +266,13 @@ namespace Anki {
       _ID.Set();
     }
   
-    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance) {
+    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, bool skipStateUpdate) {
       _pose = newPose;
-      _isLocalized = true;
+      
+      if (!skipStateUpdate)
+      {
+        _poseState = PoseState::Known;
+      }
       
       std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());

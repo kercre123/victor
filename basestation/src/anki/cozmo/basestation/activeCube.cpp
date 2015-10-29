@@ -271,7 +271,7 @@ namespace Anki {
     
     bool ActiveCube::CanBeUsedForLocalization() const
     {
-      return (IsLocalized() &&
+      return (GetPoseState() == ObservableObject::PoseState::Known &&
               GetLastPoseUpdateDistance() >= 0.f &&
               GetLastPoseUpdateDistance() <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
               GetIdentityState() == ActiveIdentityState::Identified &&

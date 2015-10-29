@@ -36,12 +36,6 @@ namespace Vision {
   {
     
   }
-  
-  void ObservableObject::Delocalize()
-  {
-    PRINT_NAMED_INFO("ObservableObject.DeLocalize", "Delocalizing object %d.", GetID().GetValue());
-    _isLocalized = false;
-  }
 
   
   bool ObservableObject::IsVisibleFrom(const Camera &camera,

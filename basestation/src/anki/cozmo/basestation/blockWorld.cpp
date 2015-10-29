@@ -296,6 +296,12 @@ namespace Cozmo {
                 {
                   ObservableObject* objExist = objectAndId.second;
                   
+                  // If the pose is no longer valid for this object, don't consider it for intersection
+                  if (objExist->IsPoseStateUnknown())
+                  {
+                    continue;
+                  }
+                  
                   // Get quad of object and check for intersection
                   Quad2f quadExist = objExist->GetBoundingQuadXY(objExist->GetPose(), padding_mm);
                   
@@ -317,7 +323,7 @@ namespace Cozmo {
   {
     if(_robot->HasExternalInterface())
     {
-      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT && !observedObject->IsPoseStateUnknown())
       {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
@@ -346,7 +352,19 @@ namespace Cozmo {
         const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
         
         using namespace ExternalInterface;
-        _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedObject(            _robot->GetID(), observedObject->GetFamily(), observedObject->GetType(),           observedObject->GetID(), boundingBox.GetX(), boundingBox.GetY(),                                                                                                                                 boundingBox.GetWidth(),                                                                                                                                boundingBox.GetHeight(),                                                                                                                                T.x(), T.y(), T.z(),                                                                                                                                q.w(), q.x(), q.y(), q.z(),                                                                                                                                topMarkerOrientation.ToFloat(),                                                                                                                                markersVisible,                                                                                                                                observedObject->IsActive())));
+        _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedObject(_robot->GetID(),
+                                                                                          observedObject->GetFamily(),
+                                                                                          observedObject->GetType(),
+                                                                                          observedObject->GetID(),
+                                                                                          boundingBox.GetX(),
+                                                                                          boundingBox.GetY(),
+                                                                                          boundingBox.GetWidth(),
+                                                                                          boundingBox.GetHeight(),
+                                                                                          T.x(), T.y(), T.z(),
+                                                                                          q.w(), q.x(), q.y(), q.z(),
+                                                                                          topMarkerOrientation.ToFloat(),
+                                                                                          markersVisible,
+                                                                                          observedObject->IsActive())));
       } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
     } // if(_robot->HasExternalInterface())
     
@@ -396,7 +414,7 @@ namespace Cozmo {
                                T_old.x(), T_old.y(), T_old.z(),
                                T_new.x(), T_new.y(), T_new.z());
               
-              object->SetPose(newPose);
+              object->SetPose(newPose, -1.f, true);
               
               BroadcastObjectObservation(object, false);
             }
@@ -1203,7 +1221,8 @@ namespace Cozmo {
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
                                         "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
                                         objectAndId.first.GetValue());
-                  } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT) {
+                  } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT
+                            && !object->IsPoseStateUnknown()) {
                     const f32 objectHeight = objectAndId.second->GetPose().GetWithRespectToOrigin().GetTranslation().z();
                     if( (objectHeight >= minHeight) && (objectHeight <= maxHeight) )
                     {
@@ -2037,7 +2056,8 @@ namespace Cozmo {
               
               bool didErase = false;
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
-                 !object->IsBeingCarried())
+                 !object->IsBeingCarried() &&
+                 !object->IsPoseStateUnknown())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
@@ -2157,10 +2177,6 @@ namespace Cozmo {
             }
           }
         }
-        
-        _existingObjects.clear();
-        
-        ObjectID::Reset();
       }  else {
         PRINT_NAMED_WARNING("BlockWorld.ClearAllExistingObjects.DeleteDisabled",
                             "Will not clear all objects because object deletion is disabled.");
@@ -2212,37 +2228,18 @@ namespace Cozmo {
           _robot->GetMoveComponent().DisableTrackToObject();
         }
         
-        bool emitSignal = true;
-        if(object->IsActive())
-        {
-          if(ActiveIdentityState::Identified == object->GetIdentityState()) {
-            PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.TurningOffLights",
-                             "Sending message to turn off active object %d's lights because "
-                             "it is being deleted.\n", object->GetID().GetValue());
-            _robot->TurnOffObjectLights(object->GetID());
-          }
-          if(_unidentifiedActiveObjects.count(object->GetID()) != 0) {
-            // Make sure to remove from the unidentified list
-            _unidentifiedActiveObjects.erase(object->GetID());
-            // If it was still in the unidentified list, don't emit a deletion
-            // signal because we didn't broadcast it's observation yet
-            emitSignal = false;
-          }
-        }
+        object->SetPoseState(ObservableObject::PoseState::Unknown);
         
-        // Notify any listeners that this object is being deleted
+        // Notify any listeners that this object no longer has a valid Pose
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(emitSignal && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT && _robot->HasExternalInterface())
+        if(_robot->HasExternalInterface() && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
         {
-          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDeletedObject(
+          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
-        
-        // NOTE: The object should erase its own visualization upon destruction
-        delete object;
         
         // Flag that we removed an object
         _didObjectsChange = true;
@@ -2394,6 +2391,9 @@ namespace Cozmo {
       BlockWorldFilter filter;
       filter.AddIgnoreID(object.GetID());
       
+      // We override the default filter function to intentionally consider objects that are unknown here
+      filter.SetFilterFcn([] (ObservableObject*) { return true; });
+      
       FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
       {
         Vec3f Tdiff;
@@ -2421,8 +2421,6 @@ namespace Cozmo {
               ClearObjectHelper(objectsByID.second);
             }
           }
-          
-          _existingObjects.erase(family);
         }
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.DeleteDisabled",
@@ -2441,8 +2439,6 @@ namespace Cozmo {
               ClearObjectHelper(objectsByID.second);
             }
             
-            objectsByFamily.second.erase(objectsWithType);
-            
             // Types are unique.  No need to keep looking
             return;
           }
@@ -2458,7 +2454,6 @@ namespace Cozmo {
 
     bool BlockWorld::ClearObject(const ObjectID withID)
     {
-
       ObservableObject* object = GetObjectByID(withID);
       return ClearObject(object, object->GetType(), object->GetFamily());
       
@@ -2497,12 +2492,7 @@ namespace Cozmo {
       if(nullptr == object) {
         return false;
       } else if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
-        ObjectID objID = object->GetID();
         ClearObjectHelper(object);
-        
-        // Actually erase the object from blockWorld's container of
-        // existing objects
-        _existingObjects[fromFamily][withType].erase(objID);
         return true;
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
