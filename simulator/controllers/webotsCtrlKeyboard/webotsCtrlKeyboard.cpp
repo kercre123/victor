@@ -48,9 +48,6 @@ namespace Anki {
         bool wasMovingHead_   = false;
         bool wasMovingLift_   = false;
         
-        webots::GPS* gps_;
-        webots::Compass* compass_;
-        
         webots::Node* root_ = nullptr;
         
         u8 poseMarkerMode_ = 0;
@@ -183,12 +180,6 @@ namespace Anki {
         root_ = GetSupervisor()->getSelf();
         
         GetSupervisor()->keyboardEnable(GetStepTimeMS());
-        
-        gps_ = GetSupervisor()->getGPS("gps");
-        compass_ = GetSupervisor()->getCompass("compass");
-        
-        gps_->enable(BS_TIME_STEP);
-        compass_->enable(BS_TIME_STEP);
         
         poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
         
@@ -1381,21 +1372,15 @@ namespace Anki {
             
       s32 WebotsKeyboardController::UpdateInternal()
       {
-        // Update poseMarker pose
-        const double* trans = gps_->getValues();
-        const double* northVec = compass_->getValues();
-        
-        // Convert to mm
-        Vec3f transVec;
-        transVec.x() = trans[0] * 1000;
-        transVec.y() = trans[1] * 1000;
-        transVec.z() = trans[2] * 1000;
-        
-        // Compute orientation from north vector
-        f32 angle = atan2f(-northVec[1], northVec[0]);
-        
-        poseMarkerPose_.SetTranslation(transVec);
-        poseMarkerPose_.SetRotation(angle, Z_AXIS_3D());
+        // Get poseMarker pose
+        const double* trans = root_->getPosition();
+        const double* rot = root_->getOrientation();
+        poseMarkerPose_.SetTranslation({1000*static_cast<f32>(trans[0]),
+                                        1000*static_cast<f32>(trans[1]),
+                                        1000*static_cast<f32>(trans[2])});
+        poseMarkerPose_.SetRotation({static_cast<f32>(rot[0]), static_cast<f32>(rot[1]), static_cast<f32>(rot[2]),
+                                     static_cast<f32>(rot[3]), static_cast<f32>(rot[4]), static_cast<f32>(rot[5]),
+                                     static_cast<f32>(rot[6]), static_cast<f32>(rot[7]), static_cast<f32>(rot[8])} );
         
         // Update pose marker if different from last time
         if (!(prevPoseMarkerPose_ == poseMarkerPose_)) {
