@@ -80,20 +80,9 @@ namespace Cozmo {
 
   protected:
     
-    Robot* GetRobotByID(const RobotID_t robotID);
-    
     Result UpdateAsHost(const float currentTime_sec);
     Result UpdateAsClient(const float currentTime_sec);
 
-    //
-    // U2G Message Handling
-    //
-    //   NOTE: Implemented in cozmoGame_U2G_callbacks.cpp
-    
-    void RegisterCallbacksU2G();
-    void ProcessBadTag_MessageGameToEngine(ExternalInterface::MessageGameToEngine::Tag tag);
-#include "clad/externalInterface/messageGameToEngine_declarations.def"
-    
     void SetupSubscriptions();
     void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
     void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
