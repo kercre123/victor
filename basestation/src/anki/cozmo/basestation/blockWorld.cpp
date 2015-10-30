@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -157,8 +158,52 @@ namespace Cozmo {
       //
       _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
+      if(_robot->HasExternalInterface())
+      {
+        SetupEventHandlers(*_robot->GetExternalInterface());
+      }
+      
       
     } // BlockWorld() Constructor
+  
+    void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
+    {
+      using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+      
+      // ClearAllBlocks
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllBlocks,
+        [this] (const EventType& event)
+        {
+          VizManager::getInstance()->EraseAllVizObjects();
+          ClearObjectsByFamily(ObjectFamily::Block);
+          ClearObjectsByFamily(ObjectFamily::LightCube);
+        }));
+      
+      // ClearAllObjects
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllObjects,
+        [this] (const EventType& event)
+        {
+          VizManager::getInstance()->EraseAllVizObjects();
+          ClearAllExistingObjects();
+        }));
+      
+      // SetObjectAdditionAndDeletion
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetObjectAdditionAndDeletion,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SetObjectAdditionAndDeletion& msg = event.GetData().Get_SetObjectAdditionAndDeletion();
+          
+          EnableObjectAddition(msg.enableAddition);
+          EnableObjectDeletion(msg.enableDeletion);
+        }));
+      
+      // SelectNextObject
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SelectNextObject,
+        [this] (const EventType& event)
+        {
+          CycleSelectedObject();
+        }));
+    }
     
     BlockWorld::~BlockWorld()
     {

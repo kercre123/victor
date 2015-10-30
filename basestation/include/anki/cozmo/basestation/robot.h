@@ -573,6 +573,10 @@ public:
     inline const MoodManager& GetMoodManager() const { return _moodManager; }
     inline MoodManager& GetMoodManager() { return _moodManager; }
   
+    // Handle various message types
+    template<typename T>
+    void HandleMessage(const T& msg);
+  
   protected:
     IExternalInterface* _externalInterface;
     Util::Data::DataPlatform* _dataPlatform;
@@ -799,6 +803,8 @@ public:
     // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
+    void SetupMiscHandlers(IExternalInterface& externalInterface);
 
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,

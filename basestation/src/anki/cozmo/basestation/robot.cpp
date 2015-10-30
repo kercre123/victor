@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
@@ -98,65 +99,7 @@ namespace Anki {
       {
         SetupGainsHandlers(*_externalInterface);
         SetupVisionHandlers(*_externalInterface);
-        
-        // Handle SetBehaviorSystemEnabled
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetBehaviorSystemEnabled,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            _isBehaviorMgrEnabled = event.GetData().Get_SetBehaviorSystemEnabled().enabled;
-          }));
-        
-        // Handle SetBackpackLights
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetBackpackLEDs,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            const ExternalInterface::SetBackpackLEDs& msg = event.GetData().Get_SetBackpackLEDs();
-            SetBackpackLights(msg.onColor, msg.offColor,
-                              msg.onPeriod_ms, msg.offPeriod_ms,
-                              msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-          }));
-        
-        // Handle SetIdleAnimation
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetIdleAnimation,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            const ExternalInterface::SetIdleAnimation& msg = event.GetData().Get_SetIdleAnimation();
-            _animationStreamer.SetIdleAnimation(msg.animationName);
-          }));
-        
-        // Handle ReplayLastAnimation
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReplayLastAnimation,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            const ExternalInterface::ReplayLastAnimation& msg = event.GetData().Get_ReplayLastAnimation();
-            _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
-          }));
-        
-        // Handle ExecuteTestPlan
-        // Executes a test path defined in latticePlanner
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ExecuteTestPlan,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            Planning::Path p;
-            _longPathPlanner->GetTestPath(GetPose(), p);
-            ExecutePath(p);
-          }));
-        
-        // Handle SaveImages
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveImages,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            const ExternalInterface::SaveImages& msg = event.GetData().Get_SaveImages();
-            _imageSaveMode = (SaveMode_t)msg.mode;
-          }));
-        
-        // Handle SaveRobotState
-        _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveRobotState,
-          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-          {
-            const ExternalInterface::SaveRobotState& msg = event.GetData().Get_SaveRobotState();
-            _stateSaveMode = (SaveMode_t)msg.mode;
-          }));
+        SetupMiscHandlers(*_externalInterface);
       }
       
       _proceduralFace.MarkAsSentToRobot(false);
@@ -202,7 +145,158 @@ namespace Anki {
       _selectedPathPlanner = _longPathPlanner;
       
     } // Constructor: Robot
-
+    
+#pragma mark --- Message Handling ---
+    
+    void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
+    {
+      using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+      
+      // Handle SetBackpackLights
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetBackpackLEDs,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SetBackpackLEDs& msg = event.GetData().Get_SetBackpackLEDs();
+          SetBackpackLights(msg.onColor, msg.offColor,
+                            msg.onPeriod_ms, msg.offPeriod_ms,
+                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+        }));
+      
+      // Handle SetIdleAnimation
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetIdleAnimation,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SetIdleAnimation& msg = event.GetData().Get_SetIdleAnimation();
+          _animationStreamer.SetIdleAnimation(msg.animationName);
+        }));
+      
+      // Handle ReplayLastAnimation
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ReplayLastAnimation,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::ReplayLastAnimation& msg = event.GetData().Get_ReplayLastAnimation();
+          _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+        }));
+      
+      // Handle ExecuteTestPlan
+      // Executes a test path defined in latticePlanner
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ExecuteTestPlan,
+        [this] (const EventType& event)
+        {
+          Planning::Path p;
+          _longPathPlanner->GetTestPath(GetPose(), p);
+          ExecutePath(p);
+        }));
+      
+      // Handle SaveImages
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SaveImages,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SaveImages& msg = event.GetData().Get_SaveImages();
+          _imageSaveMode = (SaveMode_t)msg.mode;
+        }));
+      
+      // Handle SaveRobotState
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SaveRobotState,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SaveRobotState& msg = event.GetData().Get_SaveRobotState();
+          _stateSaveMode = (SaveMode_t)msg.mode;
+        }));
+    
+      // SetRobotCarryingObject
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotCarryingObject,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SetRobotCarryingObject& msg = event.GetData().Get_SetRobotCarryingObject();
+          if(msg.objectID < 0) {
+            UnSetCarryingObjects();
+          } else {
+            SetCarryingObject(msg.objectID);
+          }
+        }));
+    
+      // AbortPath
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::AbortPath,
+        [this] (const EventType& event)
+        {
+          AbortDrivingToPose();
+        }));
+    
+      // AbortAll
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::AbortAll,
+        [this] (const EventType& event)
+        {
+          AbortAll();
+        }));
+    
+      // CancelAction
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::CancelAction,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::CancelAction& msg = event.GetData().Get_CancelAction();
+          GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
+        }));
+    
+      // DrawPoseMarker
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::DrawPoseMarker,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::DrawPoseMarker& msg = event.GetData().Get_DrawPoseMarker();
+          
+          if(IsCarryingObject()) {
+            Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
+            Quad2f objectFootprint = GetBlockWorld().GetObjectByID(GetCarryingObject())->GetBoundingQuadXY(targetPose);
+            VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
+          }
+        }));
+    
+      // IMURequest
+      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::IMURequest,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::IMURequest& msg = event.GetData().Get_IMURequest();
+          RequestIMU(msg.length_ms);
+        }));
+      
+      using namespace ExternalInterface;
+      
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>(*_externalInterface, this, _signalHandles);
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>(*_externalInterface, this, _signalHandles);
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>(*_externalInterface, this, _signalHandles);
+    }
+    
+    template<>
+    void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg)
+    {
+      _isBehaviorMgrEnabled = msg.enabled;
+    }
+    
+    template<>
+    void Robot::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
+    {
+      assert(msg.objectID <= s32_MAX);
+      SetObjectLights(msg.objectID,
+                      msg.whichLEDs,
+                      msg.onColor, msg.offColor,
+                      msg.onPeriod_ms, msg.offPeriod_ms,
+                      msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                      msg.turnOffUnspecifiedLEDs,
+                      msg.makeRelative,
+                      Point2f(msg.relativeToX, msg.relativeToY));
+    }
+    
+    template<>
+    void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
+    {
+      assert(msg.objectID <= s32_MAX);
+      SetObjectLights(msg.objectID,
+                      msg.onColor, msg.offColor,
+                      msg.onPeriod_ms, msg.offPeriod_ms,
+                      msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                      msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+    }
+    
     Robot::~Robot()
     {
       Util::SafeDelete(_imageDeChunker);

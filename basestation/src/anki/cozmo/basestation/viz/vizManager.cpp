@@ -20,6 +20,8 @@
 #include "anki/vision/basestation/imageIO.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/vizInterface/messageViz.h"
 #include <fstream>
 
@@ -760,6 +762,54 @@ namespace Anki {
       SetVizOrigin v(msg);
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }
+    
+    
+    void VizManager::SubscribeToEngineEvents(IExternalInterface& externalInterface)
+    {
+      using namespace ExternalInterface;
+      
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::EnableDisplay>(externalInterface, this, _eventHandlers);
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::ErasePoseMarker>(externalInterface, this, _eventHandlers);
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::VisualizeQuad>(externalInterface, this, _eventHandlers);
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetVizOrigin>(externalInterface, this, _eventHandlers);
+      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::EraseQuad>(externalInterface, this, _eventHandlers);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::EnableDisplay& msg)
+    {
+      ShowObjects(msg.enable);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::ErasePoseMarker& msg)
+    {
+      EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_POSE_MARKER);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::VisualizeQuad& msg)
+    {
+      const Quad3f quad({msg.xUpperLeft,  msg.yUpperLeft,  msg.zUpperLeft},
+                        {msg.xUpperRight, msg.yUpperRight, msg.zUpperRight},
+                        {msg.xLowerLeft,  msg.yLowerLeft,  msg.zLowerLeft},
+                        {msg.xLowerRight, msg.yLowerRight, msg.zLowerRight});
+      
+      DrawGenericQuad(msg.quadID, quad, msg.color);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const SetVizOrigin& msg)
+    {
+      SetOrigin(msg);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::EraseQuad& msg)
+    {
+      EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki
