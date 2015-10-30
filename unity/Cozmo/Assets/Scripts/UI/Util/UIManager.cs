@@ -8,6 +8,7 @@ using DG.Tweening;
 public class UIManager : MonoBehaviour {
 
   private static UIManager _instance;
+
   public static UIManager Instance {
     get {
       if (_instance == null) {
@@ -37,49 +38,49 @@ public class UIManager : MonoBehaviour {
   void Awake() {
     _instance = this;
     _openDialogs = new List<BaseDialog>();
-    DOTween.Init ();
+    DOTween.Init();
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (Instance._orthoUiCanvas.transform, false);
+    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    newUi.transform.SetParent(Instance._orthoUiCanvas.transform, false); 
     return newUi;
   }
 
   public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (Instance._perspUiCanvas.transform, false);
-    newUi.layer = LayerMask.NameToLayer ("3DUI");
+    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    newUi.transform.SetParent(Instance._perspUiCanvas.transform, false);
+    newUi.layer = LayerMask.NameToLayer("3DUI");
     return newUi;
   }
 
   public static GameObject CreateUI(GameObject uiPrefab, Transform parentTransform) {
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (parentTransform, false);
+    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    newUi.transform.SetParent(parentTransform, false);
     return newUi;
   }
 
   public static BaseDialog OpenDialog(BaseDialog dialogPrefab) {
-    GameObject newDialog = GameObject.Instantiate (dialogPrefab.gameObject);
-    newDialog.transform.SetParent (Instance._orthoUiCanvas.transform, false);
+    GameObject newDialog = GameObject.Instantiate(dialogPrefab.gameObject);
+    newDialog.transform.SetParent(Instance._orthoUiCanvas.transform, false);
 
-    BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog> ();
-    baseDialogScript.OpenDialog ();
-    Instance._openDialogs.Add (baseDialogScript);
+    BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog>();
+    baseDialogScript.OpenDialog();
+    Instance._openDialogs.Add(baseDialogScript);
 
     return baseDialogScript;
   }
 
   public static void CloseDialog(BaseDialog dialogObject) {
-    Instance._openDialogs.Remove (dialogObject);
-    dialogObject.CloseDialog ();
+    Instance._openDialogs.Remove(dialogObject);
+    dialogObject.CloseDialog();
   }
 
   public static void CloseAllDialogs() {
     foreach (BaseDialog dialog in Instance._openDialogs) {
       dialog.CloseDialog();
     }
-    Instance._openDialogs.Clear ();
+    Instance._openDialogs.Clear();
   }
 
   public static Camera GetUICamera() {
@@ -87,10 +88,10 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void DisableTouchEvents() {
-    _instance._eventSystemScript.gameObject.SetActive (false);
+    _instance._eventSystemScript.gameObject.SetActive(false);
   }
 
   public static void EnableTouchEvents() {
-    _instance._eventSystemScript.gameObject.SetActive (true);
+    _instance._eventSystemScript.gameObject.SetActive(true);
   }
 }
