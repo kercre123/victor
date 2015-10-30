@@ -14,7 +14,6 @@
 
 #include "anki/common/types.h"
 #include "json/json.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -108,4 +107,3 @@ namespace Cozmo {
 } // namespace Anki
 
 #endif // ANKI_COZMO_GAME_HOST_H
-
