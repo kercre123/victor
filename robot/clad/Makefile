@@ -9,8 +9,8 @@ CLAD_CPP=$(CLAD_EMITTER_DIR)/CPP_emitter.py
 CLAD_CPPLITE=$(CLAD_EMITTER_DIR)/CPPLite_emitter.py
 CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
-CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPPLite_switch_emitter.py
-CLAD_CPPLITE_SEND_HELPER=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPPLite_send_helper_emitter.py
+CLAD_CPP_SWITCH=./cozmo_CPPLite_switch_emitter.py
+CLAD_CPPLITE_SEND_HELPER=./cozmo_CPPLite_send_helper_emitter.py
 
 INPUT_DIR=./src/
 OUTPUT_DIR:=../generated/clad/

@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/logging/logging.h"
@@ -326,7 +325,7 @@ _blinkTrack.__METHOD__()
     bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
     assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
     
-    s32 minBytesFreeInRobotBuffer = KEYFRAME_BUFFER_SIZE - (totalNumBytesStreamed - totalNumBytesPlayed);
+      s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
     if (overflow) {
       // Computation for minBytesFreeInRobotBuffer still works out in overflow case
       PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow", "free %d (streamed = %d, played %d)", minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);

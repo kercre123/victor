@@ -33,11 +33,10 @@
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities_c.h"
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"
@@ -477,6 +476,9 @@ namespace Anki
        * @return True if sucessfully queued, false otherwise
        */
       bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable=true, const bool hot=false);
+
+// Work around until we get out of 4.0 / 4.1 coexistance
+#define clientSendMessage HAL::RadioSendMessage
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS

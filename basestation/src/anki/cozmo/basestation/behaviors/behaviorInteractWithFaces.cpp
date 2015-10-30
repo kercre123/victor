@@ -119,7 +119,7 @@ namespace Cozmo {
     robot.SetProceduralFace(resetFace);
   }
   
-  bool BehaviorInteractWithFaces::IsRunnable(double currentTime_sec) const
+  bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
     return !_interestingFacesOrder.empty();
   }

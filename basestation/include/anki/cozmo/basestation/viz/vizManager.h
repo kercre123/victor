@@ -22,7 +22,6 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
 #include "clad/types/objectTypes.h"

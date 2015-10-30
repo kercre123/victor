@@ -9,7 +9,7 @@
 
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/faceDisplayDecode.h"
+#include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "messages.h"
 #include "wheelController.h"
 

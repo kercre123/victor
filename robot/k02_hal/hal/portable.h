@@ -11,6 +11,16 @@
 #define GPIO_IN(gp, pin)                 (gp)->PDDR &= ~(pin)
 #define GPIO_OUT(gp, pin)                (gp)->PDDR |= (pin)
 
+#include <stdint.h>
+typedef int8_t s8;
+typedef int16_t s16;
+typedef int32_t s32;
+typedef int64_t s64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
 // This sets up everything about the pin in one call - pull-up/pull-down, open-drain, altmux, etc
 // OR together the bits you want from enum SourceSetup_t into setup
 #define SOURCE_SETUP(gp, src, setup)    ((PORT_Type *)(PORTA_BASE + PORT_INDEX(gp)*0x1000))->PCR[(src)] = (setup)
@@ -44,9 +54,11 @@ typedef enum {
 // This gets the port index of the GPIO, where A=0, B=1, etc
 #define PORT_INDEX(gp) ((((int)gp)-PTA_BASE) >> 6)
 
-// 32KHz input clock (internal) with 96 MHz output, 48MHz peripheral (bus) clock
-#define CORE_CLOCK (96000000)
-#define BUS_CLOCK (CORE_CLOCK >> 1)
+// 100MHz core clock, /2 peripheral (bus) clock, /4 CAM_CLOCK, /10 I2SPI_CLOCK 
+#define CORE_CLOCK (100000000)
+#define BUS_CLOCK (CORE_CLOCK / 2)
+#define CAM_CLOCK (CORE_CLOCK / 4)
+#define I2SPI_CLOCK (CORE_CLOCK / 10)
 
 // Consistent naming scheme for GPIO, pins, and source variables
 // Set name to the name of the pin, ptx to the GPIO unit (PTA/PTB/etc), and index to the pin number
@@ -67,5 +79,8 @@ typedef enum {
 // This section can only be used by either CPU or DMA, not both at once
 // Thus, the RAM is only useful at the start of HALExec() or with careful timing in camera.c
 #define CAMRAM __attribute__((section("CAMRAM")))
-    
+
+// RAM for block 1 - generally usable for executing code
+#define CODERAM __attribute__((section("CODERAM")))
+
 #endif

@@ -17,7 +17,7 @@
 #ifndef COZMO_DOCKING_CONTROLLER_H_
 #define COZMO_DOCKING_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/robot/geometry_declarations.h"
 #include "clad/types/dockingSignals.h"

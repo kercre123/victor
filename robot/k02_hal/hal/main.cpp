@@ -1,12 +1,22 @@
-// SDK Included Files - Please delete me!
 #include <stdio.h>
 #include <stdlib.h>
-#include "board.h"
-#include "fsl_debug_console.h"
+#include <stdint.h>
 
-#include "hal/i2c.h"
+#include "MK02F12810.h"
+
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
+#include "anki/cozmo/robot/spineData.h"
+
+#include "uart.h"
+#include "oled.h"
+#include "spi.h"
+#include "dac.h"
+#include "hal/i2c.h"
+#include "hal/imu.h"
+
+GlobalDataToHead g_dataToHead;
+GlobalDataToBody g_dataToBody;
 
 namespace Anki
 {
@@ -14,52 +24,66 @@ namespace Anki
   {
     namespace HAL
     {
+      // Import init functions from all HAL components
       void CameraInit(void);
       void TimerInit(void);
       void I2CInit(void);
+      void PowerInit(void);
+      
+      // This method is called at 7.5KHz (once per scan line)
+      // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
+      // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
+      void HALExec(u8* buf, int buflen, int eof)
+      {
+        I2CEnable();
+        //UartTransmit();
+        TransmitDrop(buf, buflen, eof);
+
+        //UartReceive(); // This should be done last
+      }
     }
   }
-}
-
-// This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
-void PowerInit()
-{
-  // I/Os used during startup
-  GPIO_PIN_SOURCE(POWEREN, PTA, 2);
-  GPIO_PIN_SOURCE(SCK, PTE, 17);
-  GPIO_PIN_SOURCE(MOSI, PTE, 18);
-  
-  // Pull-down SCK during ESP8266 boot
-  GPIO_IN(GPIO_SCK, PIN_SCK);
-  SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO | SourcePullDown);    
-  
-  // Pull MOSI low to put ESP8266 into bootloader mode
-  // XXX: Normally, you should drive this high and rely on the cable to enter debug mode!
-  GPIO_IN(GPIO_MOSI, PIN_MOSI);
-  SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullDown);  
-  
-  // Turn on 2v8 and 3v3 rails
-  GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
-  GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
-  SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);    
 }
 
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
   
-  // Initialize standard SDK demo application pins
-  hardware_init();
-  dbg_uart_init();
-  
-  PRINTF("\r\nTesting self-contained project file.\r\n");
-  
+  // Power up all ports
+  SIM_SCGC5 |= 
+    SIM_SCGC5_PORTA_MASK |
+    SIM_SCGC5_PORTB_MASK |
+    SIM_SCGC5_PORTC_MASK |
+    SIM_SCGC5_PORTD_MASK |
+    SIM_SCGC5_PORTE_MASK;
+
+  DebugInit();
   TimerInit();
   PowerInit();
-  //I2CInit();
-  //CameraInit();
+  I2CInit();
   
-  while (1)
-  {
+  // Wait for Espressif to boot
+  for (int i=0; i<2; ++i) {
+    Anki::Cozmo::HAL::MicroWait(1000000);
   }
+
+  // Switch to 10MHz external reference to enable 100MHz clock
+  MCG_C1 &= ~MCG_C1_IREFS_MASK;
+  // Wait for IREF to turn off
+  while((MCG->S & MCG_S_IREFST_MASK)) ;
+  // Wait for FLL to lock
+  while((MCG->S & MCG_S_CLKST_MASK)) ;
+
+  IMUInit();
+  OLEDInit();
+  //SPIInit();
+  //DacInit();
+  //UartInit();
+
+  CameraInit();
+  
+  // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
+  // So, we just loop around for now
+  for(;;)
+    ;
 }

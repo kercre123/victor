@@ -11,7 +11,7 @@
 
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
-#include "anki/cozmo/shared/faceDisplayDecode.h"
+#include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "util/logging/logging.h"
 #include "opencv2/highgui/highgui.hpp"
 #include <sys/stat.h>

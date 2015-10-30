@@ -7,7 +7,6 @@
 #include "imuFilter.h"
 #include "proxSensors.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"

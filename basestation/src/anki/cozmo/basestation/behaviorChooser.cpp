@@ -47,7 +47,7 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   return Result::RESULT_OK;
 }
   
-IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const MoodManager& moodManager, double currentTime_sec) const
+IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
   const float kRandomFactor = 0.1f;
   
@@ -57,7 +57,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const MoodManager& moodMana
   float bestScore = 0.0f;
   for (IBehavior* behavior : _behaviorList)
   {
-    float score = behavior->EvaluateScore(moodManager, currentTime_sec);
+    float score = behavior->EvaluateScore(robot, currentTime_sec);
     if (score > 0.0f)
     {
       score += rng.RandDbl(kRandomFactor);

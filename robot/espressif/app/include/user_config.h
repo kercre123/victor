@@ -41,9 +41,14 @@ enum FIXED_RATE {
           PHY_RATE_18    =    0xE,
           PHY_RATE_9     =    0xF,
 };
+#define FIXED_RATE_MASK_NONE (0x00)
+#define FIXED_RATE_MASK_STA (0x01)
+#define FIXED_RATE_MASK_AP  (0x02)
+#define FIXED_RATE_MASK_ALL (0x03)
+
 /** Set the WiFi to operate at a fixed rate rather than negotiating
  * @param A value from FIXED_RATE enum.
  */
-void wifi_set_user_fixed_rate(u8 rate);
+int wifi_set_user_fixed_rate(uint8 enable_mask, uint8 rate);
 
 #endif

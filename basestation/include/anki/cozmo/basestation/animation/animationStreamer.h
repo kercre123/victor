@@ -16,7 +16,7 @@
 #ifndef ANKI_COZMO_ANIMATION_STREAMER_H
 #define ANKI_COZMO_ANIMATION_STREAMER_H
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters.h"
 #include "clad/types/liveIdleAnimationParameters.h"

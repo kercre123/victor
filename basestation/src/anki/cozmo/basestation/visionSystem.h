@@ -41,8 +41,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"

@@ -120,12 +120,9 @@ namespace BlueCode
                     m_recvstate++;
                 }
                 // At end of chunklet, return to waiting - optionally display what we've got
-                else
+                if (m_recvstate == m_chunkLen) 
                 {
                     m_imageLen += m_chunkLen;
-
-                    if ((m_check & 255) != c)
-                        Console.WriteLine("My check = " + (m_check & 255) + " vs " + c);
                     m_bigcheck += m_check;
 
                     if (m_lastChunk)
@@ -158,48 +155,35 @@ namespace BlueCode
                 }
             }
         }
- 
-#if false
-        private static readonly byte [] HEADER = { 0xBE, 0xEF, 0xF0, 0xFF };
+
+        // This is the length of the Reliable Transport header - which we skip completely
+        private const int RT_PREFIX = 18;
+
+        // This is the IMAGE_CHUNK message header definition
         private const int HEADERLEN = 14, CHUNKLEN = 1300, PACKETLEN = HEADERLEN + CHUNKLEN;
 
         private const int MAX_CHUNKS = 16;
         private byte[] m_header = new byte[HEADERLEN];
         
+        // Daniel:  This is where the UDP packets are parsed
         private Object m_receiveLock = new Object();
         private bool m_eof;
-        private void receive(byte[] buf, int count, bool skipheader)
+        private void receive(byte[] buf, int count)
         {
             int idx = 0;
 
             lock (m_receiveLock)
             {
-                if (skipheader)
-                {
-                    m_recvstate = 0;
-                    idx = 18;
-                    count -= 18;
-                }
+                m_recvstate = 0;
+                idx = RT_PREFIX;          
+                count -= RT_PREFIX;
 
                 while (count-- > 0)
                 {
                     byte c = buf[idx++];
 
-                    // Wait for header
-                    if (m_recvstate < 0)
-                    {
-                        // Test that byte is part of the header
-                        if (c == HEADER[-WAITING + m_recvstate])
-                            m_recvstate++;
-                        else
-                        {
-                            m_skipped++;
-                            m_recvstate = WAITING;  // Bad byte, back to waiting
-                        }
-
-                        // Fill in header
-                    }
-                    else if (m_recvstate < HEADERLEN)
+                    // Process the header bytes
+                    if (m_recvstate < HEADERLEN)
                     {
                         m_header[m_recvstate++] = c;
 
@@ -265,7 +249,32 @@ namespace BlueCode
                 }
             }
         }
-#endif
+
+        private void receiveNoHeader(byte[] buf)
+        {
+            for (int i = 0; i < buf.Length; i++)
+                m_image[i + m_imageLen] = buf[i];
+
+            m_imageLen += buf.Length;
+            System.Console.WriteLine(buf.Length + "/" + m_imageLen);
+
+            if (buf.Length < 1300)
+            {
+                m_readyImage = m_image;
+                m_readyLen = m_imageLen;
+                this.scanPicBox.BeginInvoke(
+                (MethodInvoker)delegate()
+                {
+                    scanPicBox.Refresh();
+                });
+                System.Console.WriteLine("Frame: " + m_frame + "  ms: " + DateTime.Now.Millisecond);
+
+                m_image = new byte[MAXLEN];
+                m_imageLen = 0;
+            }
+        }
+
+
         // Turn a fully assembled MINIPEG_GRAY image into a JPEG with header and footer
         private byte[] miniGrayToJpeg(byte[] bin, int len)
         {
@@ -419,17 +428,7 @@ namespace BlueCode
             try
             {
                 Byte[] buf = m_udp.EndReceive(ar, ref m_ep);
-
-                if (buf.Length == 0x534)
-                {
-                    //receive(buf, buf.Length, true);
-                }
-                else
-                {
-                    ; // Console.WriteLine(System.Text.Encoding.Default.GetString(buf));
-                    if (buf.Length > 0x534)
-                        Console.WriteLine("WTF buffer is " + buf.Length);
-                }
+                receiveNoHeader(buf);
             }
             catch (Exception x)
             {

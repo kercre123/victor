@@ -30,7 +30,7 @@
  *
  **/
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 
 namespace Anki {
 namespace Cozmo {

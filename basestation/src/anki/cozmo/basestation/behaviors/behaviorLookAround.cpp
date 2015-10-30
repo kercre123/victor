@@ -60,7 +60,7 @@ BehaviorLookAround::~BehaviorLookAround()
    */
 }
   
-bool BehaviorLookAround::IsRunnable(double currentTime_sec) const
+bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   switch (_currentState)
   {

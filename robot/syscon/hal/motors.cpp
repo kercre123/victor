@@ -135,10 +135,10 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   timer->MODE = TIMER_MODE_MODE_Timer;
   timer->BITMODE = TIMER_BITMODE_BITMODE_16Bit << TIMER_BITMODE_BITMODE_Pos;
   timer->PRESCALER = 0;
-  
+
   // Clear the timer to 0
   timer->TASKS_CLEAR = 1;
-  
+
   // XXX: 0 and 799 are invalid
   // for 0, use GPIO to disable / cut power to motor (don't waste current)
   // for 799, just clamp to 798
@@ -146,12 +146,12 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   timer->CC[1] = 0;  // PWM n + 1
   timer->CC[2] = TIMER_TICKS_END;    // Trigger on timer wrap-around at 800
   timer->CC[3] = TIMER_TICKS_END;    // Trigger on timer wrap-around at 800
-  
+
   // Configure the timer to reset the count when it hits the period defined in compare[3]
   timer->SHORTS = 
     (1 << TIMER_SHORTS_COMPARE3_CLEAR_Pos) |
     (1 << TIMER_SHORTS_COMPARE2_CLEAR_Pos);
-  
+
   // TODO: Verify PAN 33: TIMER: One CC register is not able to generate an 
   // event for the second of two subsequent counter/ timer values.
   
@@ -588,56 +588,3 @@ void GPIOTE_IRQHandler()
     }       
   }
 }
-
-// XXX: The below hack job can be deleted once encoders are proven sound
-#if 1
-static u16 m_log[4096];
-void encoderAnalyzer(void)
-{
-  u32 now, start = GetCounter() >> 3;
-  u32 end = start + ((250 * COUNT_PER_MS) >> 3);
-  s16 lastPins = 0xff;
-  s16 logLen = 0;
-  static s32 s_pos = 0;
-  
-  do {
-    now = NRF_RTC1->COUNTER << 5;
-    s16 pins = (NRF_GPIO->IN >> 16) & 0x11;  // Neck encoder pins 16 and 20
-    if (pins != lastPins)
-    {
-      m_log[logLen++] = pins | now;
-      lastPins = pins;
-    }
-  } while (now < end);
-  
-  // Print the log
-  u16 last = start;
-  for (int i = 0; 0 && i < logLen; i++)
-  {
-    UART::print("%2x %i\n", (uint8_t)(m_log[i] & 0x11), (u16)((m_log[i] & 0xffe0) - last));
-    last = m_log[i] & 0xffe0;
-  }
-  // Scan the log to compute how many ticks (up + down)
-  // 00, 01, 11, 10, 00
-  const s8 dir[] = {  0, 1,-1, 0,     // 00 -> 00, 01, 10, 11
-                     -1, 0, 0, 1,     // 01 -> 00, 01, 10, 11
-                      1, 0, 0,-1,     // 10 -> 00, 01, 10, 11
-                      0,-1, 1, 0};    // 11 -> 00, 01, 10, 11               
-  int up = 0, down = 0, error = 0;
-  for (int i = 1; i < logLen; i++)
-  {
-    int fromto = (m_log[i-1] & 1) | ((m_log[i-1] & 0x10) >> 3) |
-                 ((m_log[i] & 1) << 2) | ((m_log[i] & 0x10) >> 1);
-    if (dir[fromto] > 0)
-      down++;
-    else if (dir[fromto] < 0)
-      up++;
-    else
-      error++;
-  }
-  
-  s_pos += (down - up);
-  UART::print("\nUp: %i  Down: %i Error: %i Entries: %i Pos: %i IRQ Pos: %i\n\n", 
-    up, down, error, logLen, s_pos, m_motors[3].position);
-}
-#endif

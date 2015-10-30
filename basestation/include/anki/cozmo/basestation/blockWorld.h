@@ -29,7 +29,6 @@
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
