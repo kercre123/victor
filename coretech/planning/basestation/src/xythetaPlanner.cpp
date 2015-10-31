@@ -261,10 +261,6 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
     Cost c = q.topF();
     curr = q.pop();
 
-    if( _heurMap.find(curr) == _heurMap.end()) {
-      _heurMap.insert( std::make_pair( curr, c ) );
-    }
-
     if(!_context.env.IsInSoftCollision(curr)) {
       if( numEscapes == 0 ) {
         minCostOutside = c;
@@ -285,6 +281,11 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
       // NOTE: need more testing to prove to myself that allowing any COLLISION_GOAL_HEURISTIC_NUM_ESCAPES > 1
       // actually works, and is helpful at all.
     }
+    else {
+      if( _heurMap.find(curr) == _heurMap.end()) {
+        _heurMap.insert( std::make_pair( curr, c ) );
+      }
+    }
 
     // this logic is almost identical to ExpandState, but using reverse successors
     SuccessorIterator it = _context.env.GetSuccessors(curr, c, true);
@@ -297,12 +298,16 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
       StateID nextID = it.Front().stateID;
       float newC = it.Front().g;
 
+      it.Next(_context.env);
+
+      if( _heurMap.find(nextID) != _heurMap.end() ) {
+        continue;
+      }
+
       // simplified best-first expansion backwards from the goal
 
       // this might repeat work (no closed list), but who cares, this is a short bit of code
       q.insert(nextID, newC);
-
-      it.Next(_context.env);
     }
 
     heurExpansions++;
@@ -548,11 +553,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
 
 Cost xythetaPlannerImpl::heur_internal(StateID sid)
 {
-  State s(sid);
-
-  // TODO:(bn) opt: consider squaring the entire damn thing so we don't have to sqrt here (within
-  // GetDistanceBetween). I.e. heur() would return squared value, and then f = g^2 + h. First, do a profile
-  // and see if the sqrt is taking up any significant amount of time
+  State s(sid);  
 
   return _context.env.GetDistanceBetween(_goal_c, s) * _context.env.GetOneOverMaxVelocity();
 }

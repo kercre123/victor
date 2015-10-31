@@ -1600,6 +1600,20 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
   return sqrtf(distSq);
 }
 
+float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const State& end) const
+{
+  const float diff1 = std::abs(GetTheta_c(end.theta) - start.theta);
+  const float diff2 = std::abs( std::abs(GetTheta_c(end.theta) - start.theta) - M_PI );
+  return std::min( diff1, diff2 );
+}
+
+float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const State_c& end)
+{
+  const float diff1 = std::abs(end.theta - start.theta);
+  const float diff2 = std::abs( std::abs(end.theta - start.theta) - M_PI );
+  return std::min( diff1, diff2 );
+}
+
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG, bool reverse) const
 {
   return SuccessorIterator(this, startID, currG, reverse);
