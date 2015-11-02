@@ -32,6 +32,8 @@ public class PatternPlayGame : GameBase {
     robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
     robot.ExecuteBehavior(BehaviorType.NoneBehavior);
     robot.StopFaceAwareness();
+
+    memoryBank_.Initialize();
   }
 
   void Update() {
@@ -84,6 +86,29 @@ public class PatternPlayGame : GameBase {
 
   public void InitialCubesDone() {
     initialCubesDone_ = true;
+
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.ActiveBlocks) {
+      blockPatternData_.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
+    }
+    ResetLookHeadForkLift();
+
+
+    // set idle parameters
+    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+      Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
+      Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementStraightFraction,
+      Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+      Anki.Cozmo.LiveIdleAnimationParameter.LiftHeightVariability_mm
+    };
+
+    float[] paramValues = {
+      3.0f,
+      0.2f,
+      5.0f,
+      0.0f
+    };
+
+    robot.SetLiveIdleAnimationParameters(paramNames, paramValues);
   }
 
   public float LastPatternSeenTime() {
@@ -316,7 +341,14 @@ public class PatternPlayGame : GameBase {
     }
 
     if (blockIndex != -1) {
-      blockPatternData_[blockIndex].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData_[blockIndex].blockLightsLocalSpace);
+      int i = 0;
+      foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
+        if (i == blockIndex) {
+          kvp.Value.blockLightsLocalSpace = BlockLights.GetNextConfig(kvp.Value.blockLightsLocalSpace);
+          break;
+        }
+        ++i;
+      }
       LightSet(blockIndex);
     }
   }

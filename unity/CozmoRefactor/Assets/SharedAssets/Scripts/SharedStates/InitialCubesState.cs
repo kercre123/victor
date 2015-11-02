@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class InitialCubesState : State {
 
@@ -22,6 +23,13 @@ public class InitialCubesState : State {
 
   public override void Update() {
     base.Update();
+
+    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.ActiveBlocks) {
+      for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
+        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
+      }
+    }
+
     if (stateMachine_.GetGame().robot.ActiveBlocks.Count >= cubesRequired_) {
       stateMachine_.SetNextState(nextState_);
     }

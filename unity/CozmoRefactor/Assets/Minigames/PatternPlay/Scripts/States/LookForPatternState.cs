@@ -109,6 +109,7 @@ public class LookForPatternState : State {
         return;
       }
     }
+
     robot.SetIdleAnimation("_LIVE_");
   }
 

@@ -1,0 +1,1380 @@
+{
+  "Memory Bank 001": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }
+  ], 
+  "Memory Bank 002": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }
+  ], 
+  "Memory Bank 003": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }
+  ], 
+  "Memory Bank 004": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }
+  ], 
+  "Memory Bank 005": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }
+  ], 
+  "Memory Bank 006": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }
+  ], 
+  "Memory Bank 007": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 008": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 009": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 010": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 011": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 012": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": ""
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }
+  ], 
+  "Memory Bank 013": [
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": false
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": false, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }, 
+    {
+      "blocks": [
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }, 
+        {
+          "back": "G", 
+          "facing_cozmo": true, 
+          "front": "G", 
+          "left": "G", 
+          "right": "G"
+        }
+      ], 
+      "vertical": true
+    }
+  ]
+}
