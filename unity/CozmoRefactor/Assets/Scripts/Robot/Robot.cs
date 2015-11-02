@@ -431,6 +431,8 @@ public class Robot : IDisposable {
     }
   }
 
+  // Object moved, so remove it from the seen list
+  // and add it into the dirty list.
   public void UpdateDirtyList(ObservedObject dirty) {
     SeenObjects.Remove(dirty);
 
