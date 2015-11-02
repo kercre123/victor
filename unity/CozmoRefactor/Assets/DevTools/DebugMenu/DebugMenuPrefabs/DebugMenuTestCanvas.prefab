@@ -135,7 +135,7 @@ GameObject:
   - 114: {fileID: 11423486}
   - 114: {fileID: 11415268}
   m_Layer: 5
-  m_Name: DebugTestCanvas
+  m_Name: DebugMenuTestCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

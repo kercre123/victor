@@ -41,9 +41,7 @@ public class UIManager : MonoBehaviour {
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (Instance._orthoUiCanvas.transform, false);
-    return newUi;
+    return CreateUI(uiPrefab, Instance._orthoUiCanvas.transform);
   }
 
   public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {

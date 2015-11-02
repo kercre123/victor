@@ -10,6 +10,8 @@ public class DebugMenuManager : MonoBehaviour {
   [SerializeField]
   private Canvas debugMenuCanvas_;
 
+  private int lastOpenedDebugTab_ = 0;
+
   void Start(){
     // TODO: Destroy self if not production
   }
@@ -25,6 +27,7 @@ public class DebugMenuManager : MonoBehaviour {
     dialogTransform.SetParent(debugMenuCanvas_.transform, false);
     dialogTransform.localPosition = Vector3.zero;
     debugMenuDialogInstance_ = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
+    debugMenuDialogInstance_.Initialize(lastOpenedDebugTab_);
   }
 
   private void OnAddInfo(string eventName, string eventValue){
