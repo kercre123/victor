@@ -7,10 +7,10 @@ public class MiniGameCreator : MonoBehaviour {
   GameBase gamePrefab_;
 
   void Start() {
-    RobotEngineManager.instance.ConnectedToClient += Connected;
+    RobotEngineManager.instance.RobotConnected += Connected;
   }
 
-  void Connected(string connectionIdentifier) {
+  void Connected(int robotID) {
     GameObject.Instantiate(gamePrefab_);
   }
 

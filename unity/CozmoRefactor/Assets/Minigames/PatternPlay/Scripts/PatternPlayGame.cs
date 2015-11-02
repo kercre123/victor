@@ -22,6 +22,7 @@ public class PatternPlayGame : GameBase {
   private PatternPlayAutoBuild patternPlayAutoBuild_ = new PatternPlayAutoBuild();
 
   void Start() {
+    DAS.Info("PatternPlayGame", "Game Created");
     patternPlayStateMachine_.SetGameRef(this);
     patternPlayStateMachineManager_.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine_);
     InitialCubesState initCubeState = new InitialCubesState();
