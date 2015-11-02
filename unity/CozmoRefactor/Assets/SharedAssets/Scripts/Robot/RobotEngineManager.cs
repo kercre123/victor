@@ -114,6 +114,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  void Update() {
+    if (channel != null) {
+      channel.Update();
+    }
+  }
+
   public void LateUpdate() {
     if (current == null)
       return;
