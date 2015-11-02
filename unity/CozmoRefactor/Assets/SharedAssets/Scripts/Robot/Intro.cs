@@ -154,7 +154,7 @@ public class Intro : MonoBehaviour {
 
     if (simulated && robot != null) {
       robot.VisionWhileMoving(true);    
-      robot.StartFaceAwareness();    
+      robot.StartFaceAwareness();
     }
 
     error.text = "";
