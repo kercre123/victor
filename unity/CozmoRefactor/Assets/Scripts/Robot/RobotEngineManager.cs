@@ -16,13 +16,11 @@ public class RobotEngineManager : MonoBehaviour {
   
   public static RobotEngineManager instance = null;
 
-  public Dictionary<int, Robot> robots { get; private set; }
+  public Dictionary<int, Robot> Robots { get; private set; }
 
-  public List<Robot> robotList = new List<Robot>();
+  public int CurrentRobotID { get; private set; }
 
-  public int currentRobotID { get; private set; }
-
-  public Robot current { get { return robots.ContainsKey(currentRobotID) ? robots[currentRobotID] : null; } }
+  public Robot current { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
 
   public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
 
@@ -96,7 +94,7 @@ public class RobotEngineManager : MonoBehaviour {
     channel.DisconnectedFromClient += Disconnected;
     channel.MessageReceived += ReceivedMessage;
 
-    robots = new Dictionary<int, Robot>();
+    Robots = new Dictionary<int, Robot>();
   }
 
   private void OnDisable() {
@@ -123,20 +121,17 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void AddRobot(byte robotID) {
-    if (robots.ContainsKey(robotID)) {
-      Robot oldRobot = robots[robotID];
+    if (Robots.ContainsKey(robotID)) {
+      Robot oldRobot = Robots[robotID];
       if (oldRobot != null) {
         oldRobot.Dispose();
       }
-      robotList.RemoveAll(x => x.ID == robotID);
-      robots.Remove(robotID);
+      Robots.Remove(robotID);
     }
     
-    
     Robot robot = new Robot(robotID);
-    robots.Add(robotID, robot);
-    robotList.Add(robot);
-    currentRobotID = robotID;
+    Robots.Add(robotID, robot);
+    CurrentRobotID = robotID;
   }
 
   public void Connect(string engineIP) {
@@ -494,13 +489,13 @@ public class RobotEngineManager : MonoBehaviour {
       }
     }
 
-    if (!robots.ContainsKey(message.robotID)) {
+    if (!Robots.ContainsKey(message.robotID)) {
       DAS.Debug("RobotEngineManager", "adding robot with ID: " + message.robotID);
       
       AddRobot(message.robotID);
     }
     
-    robots[message.robotID].UpdateInfo(message);
+    Robots[message.robotID].UpdateInfo(message);
   }
 
   public void StartEngine(string vizHostIP) {

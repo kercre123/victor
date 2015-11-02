@@ -13,59 +13,10 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class ActiveBlock : ObservedObject {
   public class Light : Robot.Light {
-    [System.FlagsAttribute]
-    public new enum PositionFlag {
-      NONE = 0,
-      BACK_EAST = 0x01,
-      LEFT_NORTH = 0x02,
-      FRONT_WEST = 0x04,
-      RIGHT_SOUTH = 0x08,
-      ALL = 0xff
-    }
-
-    public static PositionFlag IndexToPosition(int i) {
-      switch (i) {
-      case 0:
-        return PositionFlag.BACK_EAST;
-      case 1:
-        return PositionFlag.LEFT_NORTH;
-      case 2:
-        return PositionFlag.FRONT_WEST;
-      case 3:
-        return PositionFlag.RIGHT_SOUTH;
-      }
-      
-      return PositionFlag.NONE;
-    }
-
-    public static int GetIndexForEdgeClosestToAngle(float angleFromNorth) {
-      if (angleFromNorth >= -45f && angleFromNorth < 45f)
-        return 1; //LEFT_NORTH
-      if (angleFromNorth >= 45f && angleFromNorth < 135f)
-        return 2; //FRONT_WEST
-      if (angleFromNorth >= 135f || angleFromNorth < -135f)
-        return 3; //RIGHT_SOUTH
-      if (angleFromNorth >= -135f && angleFromNorth < -45f)
-        return 0; //BACK_EAST
-
-      return 0;
-    }
-
-    private PositionFlag position;
-
-    public Light(int position) {
-      this.position = IndexToPosition(position);
-    }
-
-    public bool Position(PositionFlag s) {
-      return (position | s) == s;
-    }
-
     public static new float messageDelay = 0f;
 
     public override void ClearData() {
       base.ClearData();
-      
       messageDelay = 0f;
     }
   }
@@ -140,7 +91,7 @@ public class ActiveBlock : ObservedObject {
     lights = new Light[SetAllActiveObjectLEDsMessage.onColor.Length];
 
     for (int i = 0; i < lights.Length; ++i) {
-      lights[i] = new Light(i);
+      lights[i] = new Light();
     }
 
   }
@@ -209,26 +160,16 @@ public class ActiveBlock : ObservedObject {
     }
   }
 
-  public void SetLEDs(uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+  public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
 
     for (int i = 0; i < lights.Length; ++i) {
-      if (lights[i].Position((Light.PositionFlag)whichLEDs)) {
-        lights[i].onColor = onColor;
-        lights[i].offColor = offColor;
-        lights[i].onPeriod_ms = onPeriod_ms;
-        lights[i].offPeriod_ms = offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
-      }
-      else if (turnOffUnspecifiedLEDs > 0) {
-        lights[i].onColor = 0;
-        lights[i].offColor = 0;
-        lights[i].onPeriod_ms = Light.FOREVER;
-        lights[i].offPeriod_ms = 0;
-        lights[i].transitionOnPeriod_ms = 0;
-        lights[i].transitionOffPeriod_ms = 0;
-      }
+      lights[i].onColor = onColor;
+      lights[i].offColor = offColor;
+      lights[i].onPeriod_ms = onPeriod_ms;
+      lights[i].offPeriod_ms = offPeriod_ms;
+      lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+      lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
     }
 
     relativeMode = 0;
@@ -236,14 +177,14 @@ public class ActiveBlock : ObservedObject {
     relativeToY = 0;
   }
 
-  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
+  public void SetLEDsRelative(Vector2 relativeTo, uint onColor = 0, uint offColor = 0, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
                               uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {  
-    SetLEDsRelative(relativeTo.x, relativeTo.y, onColor, offColor, whichLEDs, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
+    SetLEDsRelative(relativeTo.x, relativeTo.y, onColor, offColor, relativeMode, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
   }
 
-  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
+  public void SetLEDsRelative(float relativeToX, float relativeToY, uint onColor = 0, uint offColor = 0, MakeRelativeMode relativeMode = MakeRelativeMode.RELATIVE_LED_MODE_BY_CORNER,
                               uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
-    SetLEDs(onColor, offColor, whichLEDs, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
+    SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms, turnOffUnspecifiedLEDs);
 
     this.relativeMode = relativeMode;
     this.relativeToX = relativeToX;

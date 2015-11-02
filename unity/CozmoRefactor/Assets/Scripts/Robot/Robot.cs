@@ -12,44 +12,6 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class Robot : IDisposable {
   public class Light {
-    [System.FlagsAttribute]
-    public enum PositionFlag {
-      NONE = 0x00,
-      ONE = 0x01,
-      TWO = 0x02,
-      THREE = 0x04,
-      FOUR = 0x08,
-      ALL = 0xff
-    }
-
-    private PositionFlag IndexToPosition(int i) {
-      switch (i) {
-      case 0:
-        return PositionFlag.ONE;
-      case 1:
-        return PositionFlag.TWO;
-      case 2:
-        return PositionFlag.THREE;
-      case 3:
-        return PositionFlag.FOUR;
-      }
-      
-      return PositionFlag.NONE;
-    }
-
-    private PositionFlag position;
-
-    public Light() {
-    }
-
-    public Light(int position) {
-      this.position = IndexToPosition(position);
-    }
-
-    public bool Position(PositionFlag s) {
-      return (position | s) == s;
-    }
-
     private uint lastOnColor;
     public uint onColor;
     private uint lastOffColor;
@@ -108,17 +70,22 @@ public class Robot : IDisposable {
 
   public byte ID { get; private set; }
 
-  public float headAngle_rad { get; private set; }
+  // in radians
+  public float HeadAngle { get; private set; }
 
-  public float poseAngle_rad { get; private set; }
+  // in radians
+  public float PoseAngle { get; private set; }
 
-  public float leftWheelSpeed_mmps { get; private set; }
+  // in mm/s
+  public float LeftWheelSpeed { get; private set; }
 
-  public float rightWheelSpeed_mmps { get; private set; }
+  // in mm/s
+  public float RightWheelSpeed { get; private set; }
 
-  public float liftHeight_mm { get; private set; }
+  // in mm
+  public float LiftHeight { get; private set; }
 
-  public float liftHeight_factor { get { return (liftHeight_mm - CozmoUtil.MIN_LIFT_HEIGHT_MM) / (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM); } }
+  public float LiftHeightFactor { get { return (LiftHeight - CozmoUtil.MIN_LIFT_HEIGHT_MM) / (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM); } }
 
   public Vector3 WorldPosition { get; private set; }
 
@@ -132,28 +99,28 @@ public class Robot : IDisposable {
 
   public Vector3 Right { get { return Rotation * -Vector3.up; } }
 
-  public RobotStatusFlag status { get; private set; }
+  public RobotStatusFlag RobotStatus { get; private set; }
 
-  public GameStatusFlag gameStatus { get; private set; }
+  public GameStatusFlag GameStatus { get; private set; }
 
-  public float batteryPercent { get; private set; }
+  public float BatteryPercent { get; private set; }
 
-  public List<ObservedObject> visibleObjects { get; private set; }
+  public List<ObservedObject> VisibleObjects { get; private set; }
 
-  public List<ObservedObject> seenObjects { get; private set; }
+  public List<ObservedObject> SeenObjects { get; private set; }
 
-  public List<ObservedObject> dirtyObjects { get; private set; }
+  public List<ObservedObject> DirtyObjects { get; private set; }
 
-  public Dictionary<int, ActiveBlock> activeBlocks { get; private set; }
+  public Dictionary<int, ActiveBlock> ActiveBlocks { get; private set; }
 
-  public List<Face> faceObjects { get; private set; }
+  public List<Face> Faces { get; private set; }
 
-  public Light[] lights { get; private set; }
+  public Light[] Lights { get; private set; }
 
   private bool lightsChanged {
     get {
-      for (int i = 0; i < lights.Length; ++i) {
-        if (lights[i].changed)
+      for (int i = 0; i < Lights.Length; ++i) {
+        if (Lights[i].changed)
           return true;
       }
 
@@ -219,10 +186,10 @@ public class Robot : IDisposable {
 
   private ObservedObject _carryingObject;
 
-  public ObservedObject carryingObject {
+  public ObservedObject CarryingObject {
     get {
       if (_carryingObject != carryingObjectID)
-        _carryingObject = seenObjects.Find(x => x == carryingObjectID);
+        _carryingObject = SeenObjects.Find(x => x == carryingObjectID);
 
       return _carryingObject;
     }
@@ -230,10 +197,10 @@ public class Robot : IDisposable {
 
   private ObservedObject _headTrackingObject;
 
-  public ObservedObject headTrackingObject {
+  public ObservedObject HeadTrackingObject {
     get {
       if (_headTrackingObject != headTrackingObjectID)
-        _headTrackingObject = seenObjects.Find(x => x == headTrackingObjectID);
+        _headTrackingObject = SeenObjects.Find(x => x == headTrackingObjectID);
       
       return _headTrackingObject;
     }
@@ -273,22 +240,22 @@ public class Robot : IDisposable {
   }
 
   public bool Status(RobotStatusFlag s) {
-    return (status & s) == s;
+    return (RobotStatus & s) == s;
   }
 
   public bool IsLocalized() {
-    return (gameStatus & GameStatusFlag.IsLocalized) == GameStatusFlag.IsLocalized;
+    return (GameStatus & GameStatusFlag.IsLocalized) == GameStatusFlag.IsLocalized;
   }
 
 
   public Robot(byte robotID) : base() {
     ID = robotID;
     const int initialSize = 8;
-    seenObjects = new List<ObservedObject>(initialSize);
-    visibleObjects = new List<ObservedObject>(initialSize);
-    dirtyObjects = new List<ObservedObject>(initialSize);
-    activeBlocks = new Dictionary<int, ActiveBlock>();
-    faceObjects = new List< global::Face>();
+    SeenObjects = new List<ObservedObject>(initialSize);
+    VisibleObjects = new List<ObservedObject>(initialSize);
+    DirtyObjects = new List<ObservedObject>(initialSize);
+    ActiveBlocks = new Dictionary<int, ActiveBlock>();
+    Faces = new List< global::Face>();
 
     DriveWheelsMessage = new U2G.DriveWheels();
     PlaceObjectOnGroundHereMessage = new U2G.PlaceObjectOnGroundHere();
@@ -331,10 +298,10 @@ public class Robot : IDisposable {
 
     QueueCompoundActionsMessage.actionTypes = new Anki.Cozmo.RobotActionType[2];
 
-    lights = new Light[SetBackpackLEDsMessage.onColor.Length];
+    Lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    for (int i = 0; i < lights.Length; ++i) {
-      lights[i] = new Light(i);
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i] = new Light();
     }
 
     ClearData(true);
@@ -383,11 +350,11 @@ public class Robot : IDisposable {
       DAS.Debug("Robot", "Robot data cleared");
     }
 
-    seenObjects.Clear();
-    visibleObjects.Clear();
-    activeBlocks.Clear();
-    status = RobotStatusFlag.NoneRobotStatusFlag;
-    gameStatus = GameStatusFlag.Nothing;
+    SeenObjects.Clear();
+    VisibleObjects.Clear();
+    ActiveBlocks.Clear();
+    RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
+    GameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
     carryingObjectID = -1;
@@ -400,40 +367,40 @@ public class Robot : IDisposable {
     lastActionRequested = RobotActionType.UNKNOWN;
     headAngleRequested = float.MaxValue;
     liftHeightRequested = float.MaxValue;
-    headAngle_rad = float.MaxValue;
-    poseAngle_rad = float.MaxValue;
-    leftWheelSpeed_mmps = float.MaxValue;
-    rightWheelSpeed_mmps = float.MaxValue;
-    liftHeight_mm = float.MaxValue;
-    batteryPercent = float.MaxValue;
+    HeadAngle = float.MaxValue;
+    PoseAngle = float.MaxValue;
+    LeftWheelSpeed = float.MaxValue;
+    RightWheelSpeed = float.MaxValue;
+    LiftHeight = float.MaxValue;
+    BatteryPercent = float.MaxValue;
     LastWorldPosition = Vector3.zero;
     WorldPosition = Vector3.zero;
     LastRotation = Quaternion.identity;
     Rotation = Quaternion.identity;
     localBusyTimer = 0f;
 
-    for (int i = 0; i < lights.Length; ++i) {
-      lights[i].ClearData();
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i].ClearData();
     }
   }
 
   public void ClearVisibleObjects() {
-    for (int i = 0; i < visibleObjects.Count; ++i) {
-      if (visibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
-        visibleObjects.RemoveAt(i--);
+    for (int i = 0; i < VisibleObjects.Count; ++i) {
+      if (VisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
+        VisibleObjects.RemoveAt(i--);
       }
     }
   }
 
   public void UpdateInfo(G2U.RobotState message) {
-    headAngle_rad = message.headAngle_rad;
-    poseAngle_rad = message.poseAngle_rad;
-    leftWheelSpeed_mmps = message.leftWheelSpeed_mmps;
-    rightWheelSpeed_mmps = message.rightWheelSpeed_mmps;
-    liftHeight_mm = message.liftHeight_mm;
-    status = (RobotStatusFlag)message.status;
-    gameStatus = (GameStatusFlag)message.gameStatus;
-    batteryPercent = (message.batteryVoltage / MaxVoltage);
+    HeadAngle = message.headAngle_rad;
+    PoseAngle = message.poseAngle_rad;
+    LeftWheelSpeed = message.leftWheelSpeed_mmps;
+    RightWheelSpeed = message.rightWheelSpeed_mmps;
+    LiftHeight = message.liftHeight_mm;
+    RobotStatus = (RobotStatusFlag)message.status;
+    GameStatus = (GameStatusFlag)message.gameStatus;
+    BatteryPercent = (message.batteryVoltage / MaxVoltage);
     carryingObjectID = message.carryingObjectID;
     headTrackingObjectID = message.headTrackingObjectID;
 
@@ -453,7 +420,7 @@ public class Robot : IDisposable {
       return;
 
     if (Time.time > ActiveBlock.Light.messageDelay || now) {
-      var enumerator = activeBlocks.GetEnumerator();
+      var enumerator = ActiveBlocks.GetEnumerator();
 
       while (enumerator.MoveNext()) {
         ActiveBlock activeBlock = enumerator.Current.Value;
@@ -470,10 +437,10 @@ public class Robot : IDisposable {
   }
 
   public void UpdateDirtyList(ObservedObject dirty) {
-    seenObjects.Remove(dirty);
+    SeenObjects.Remove(dirty);
 
-    if (!dirtyObjects.Contains(dirty)) {
-      dirtyObjects.Add(dirty);
+    if (!DirtyObjects.Contains(dirty)) {
+      DirtyObjects.Add(dirty);
     }
   }
 
@@ -485,10 +452,10 @@ public class Robot : IDisposable {
     }
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.LightCube) {
-      AddActiveBlock(activeBlocks.ContainsKey(message.objectID) ? activeBlocks[message.objectID] : null, message);
+      AddActiveBlock(ActiveBlocks.ContainsKey(message.objectID) ? ActiveBlocks[message.objectID] : null, message);
     }
     else {
-      ObservedObject knownObject = seenObjects.Find(x => x == message.objectID);
+      ObservedObject knownObject = SeenObjects.Find(x => x == message.objectID);
 
       AddObservedObject(knownObject, message);
     }
@@ -503,8 +470,8 @@ public class Robot : IDisposable {
     if (activeBlock == null) {
       activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
 
-      activeBlocks.Add(activeBlock, activeBlock);
-      seenObjects.Add(activeBlock);
+      ActiveBlocks.Add(activeBlock, activeBlock);
+      SeenObjects.Add(activeBlock);
       newBlock = true;
     }
 
@@ -522,27 +489,27 @@ public class Robot : IDisposable {
     if (knownObject == null) {
       knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
       
-      seenObjects.Add(knownObject);
+      SeenObjects.Add(knownObject);
       newBlock = true;
     }
     else {
-      dirtyObjects.Remove(knownObject);
+      DirtyObjects.Remove(knownObject);
     }
 
     Vector3 oldPos = knownObject.WorldPosition;
 
     knownObject.UpdateInfo(message);
     
-    if (seenObjects.Find(x => x == message.objectID) == null) {
-      seenObjects.Add(knownObject);
+    if (SeenObjects.Find(x => x == message.objectID) == null) {
+      SeenObjects.Add(knownObject);
     }
     
-    if (knownObject.MarkersVisible && visibleObjects.Find(x => x == message.objectID) == null) {
-      visibleObjects.Add(knownObject);
+    if (knownObject.MarkersVisible && VisibleObjects.Find(x => x == message.objectID) == null) {
+      VisibleObjects.Add(knownObject);
     }
 
     //if block new or moved a lot since last time we saw it
-    if (newBlock || (carryingObject != knownObject && (oldPos - knownObject.WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM)) {
+    if (newBlock || (CarryingObject != knownObject && (oldPos - knownObject.WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM)) {
       if (ObservedObject.SignificantChangeDetected != null)
         ObservedObject.SignificantChangeDetected();
     }
@@ -550,7 +517,7 @@ public class Robot : IDisposable {
 
   public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
     //DAS.Debug ("Robot", "saw a face at " + message.faceID);
-    Face face = faceObjects.Find(x => x.ID == message.faceID);
+    Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
   }
 
@@ -559,7 +526,7 @@ public class Robot : IDisposable {
     bool newFace = false;
     if (faceObject == null) {
       faceObject = new Face(message);
-      faceObjects.Add(faceObject);
+      Faces.Add(faceObject);
       newFace = true;
     }
     else {
@@ -581,7 +548,7 @@ public class Robot : IDisposable {
   }
 
   public void PlaceObjectOnGroundHere(RobotCallback callback = null) {
-    DAS.Debug("Robot", "Place Object " + carryingObject + " On Ground Here");
+    DAS.Debug("Robot", "Place Object " + CarryingObject + " On Ground Here");
 
     RobotEngineManager.instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.instance.SendMessage();
@@ -656,7 +623,7 @@ public class Robot : IDisposable {
 
   public float GetHeadAngleFactor() {
 
-    float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : headAngle_rad;
+    float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : HeadAngle;
 
     if (angle >= 0f) {
       angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad));
@@ -697,7 +664,7 @@ public class Robot : IDisposable {
 
     if (IsHeadAngleRequestUnderway() && Mathf.Abs(headAngleRequested - radians) < 0.001f)
       return;
-    if (headTrackingObject == -1 && Mathf.Abs(radians - headAngle_rad) < 0.001f)
+    if (HeadTrackingObject == -1 && Mathf.Abs(radians - HeadAngle) < 0.001f)
       return;
 
     headAngleRequested = radians;
@@ -836,8 +803,8 @@ public class Robot : IDisposable {
     while (attempts++ < 3) {
       Vector3 nudge = Vector3.zero;
       float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
-      for (int i = 0; i < seenObjects.Count; i++) {
-        Vector3 fromObject = position - seenObjects[i].WorldPosition;
+      for (int i = 0; i < SeenObjects.Count; i++) {
+        Vector3 fromObject = position - SeenObjects[i].WorldPosition;
         if (fromObject.magnitude > padding)
           continue;
         nudge += fromObject.normalized * padding;
@@ -886,11 +853,11 @@ public class Robot : IDisposable {
   }
 
   public float GetLiftHeightFactor() {
-    return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : liftHeight_factor;
+    return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : LiftHeightFactor;
   }
 
   public void SetLiftHeight(float height_factor, RobotCallback callback = null) {
-    if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || liftHeight_factor == height_factor)
+    if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || LiftHeightFactor == height_factor)
       return;
 
     liftHeightRequested = height_factor;
@@ -977,30 +944,20 @@ public class Robot : IDisposable {
   }
 
   private void SetLastLEDs() {
-    for (int i = 0; i < lights.Length; ++i) {
-      lights[i].SetLastInfo();
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i].SetLastInfo();
     }
   }
 
-  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, byte whichLEDs = byte.MaxValue, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
-    for (int i = 0; i < lights.Length; ++i) {
-      if (lights[i].Position((Light.PositionFlag)whichLEDs)) {
-        lights[i].onColor = onColor;
-        lights[i].offColor = offColor;
-        lights[i].onPeriod_ms = onPeriod_ms;
-        lights[i].offPeriod_ms = offPeriod_ms;
-        lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
-        lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
-      }
-      else if (turnOffUnspecifiedLEDs > 0) {
-        lights[i].onColor = 0;
-        lights[i].offColor = 0;
-        lights[i].onPeriod_ms = 0;
-        lights[i].offPeriod_ms = 0;
-        lights[i].transitionOnPeriod_ms = 0;
-        lights[i].transitionOffPeriod_ms = 0;
-      }
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i].onColor = onColor;
+      Lights[i].offColor = offColor;
+      Lights[i].onPeriod_ms = onPeriod_ms;
+      Lights[i].offPeriod_ms = offPeriod_ms;
+      Lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+      Lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
     }
   }
 
@@ -1009,13 +966,13 @@ public class Robot : IDisposable {
 
     SetBackpackLEDsMessage.robotID = ID;
 
-    for (int i = 0; i < lights.Length; ++i) {
-      SetBackpackLEDsMessage.onColor[i] = lights[i].onColor;
-      SetBackpackLEDsMessage.offColor[i] = lights[i].offColor;
-      SetBackpackLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
-      SetBackpackLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
-      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
-      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
+    for (int i = 0; i < Lights.Length; ++i) {
+      SetBackpackLEDsMessage.onColor[i] = Lights[i].onColor;
+      SetBackpackLEDsMessage.offColor[i] = Lights[i].offColor;
+      SetBackpackLEDsMessage.onPeriod_ms[i] = Lights[i].onPeriod_ms;
+      SetBackpackLEDsMessage.offPeriod_ms[i] = Lights[i].offPeriod_ms;
+      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].transitionOnPeriod_ms;
+      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].transitionOffPeriod_ms;
     }
     
     RobotEngineManager.instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
@@ -1049,7 +1006,7 @@ public class Robot : IDisposable {
   }
 
   public void TurnOffAllLights(bool now = false) {
-    var enumerator = activeBlocks.GetEnumerator();
+    var enumerator = ActiveBlocks.GetEnumerator();
     
     while (enumerator.MoveNext()) {
       ActiveBlock activeBlock = enumerator.Current.Value;

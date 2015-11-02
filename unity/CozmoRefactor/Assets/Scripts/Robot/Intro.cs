@@ -147,7 +147,7 @@ public class Intro : MonoBehaviour {
   }
 
   private void RobotConnected(int robotID) {
-    if (!RobotEngineManager.instance.robots.ContainsKey(robotID)) {
+    if (!RobotEngineManager.instance.Robots.ContainsKey(robotID)) {
       DAS.Error("Intro", "Unknown robot connected: " + robotID.ToString());
       return;
     }
