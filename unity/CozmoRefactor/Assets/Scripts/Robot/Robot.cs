@@ -137,12 +137,9 @@ public class Robot : IDisposable {
     }
   }
 
-  public RobotActionType lastActionRequested;
-  public bool searching;
-
   private int carryingObjectID;
 
-  public int headTrackingObjectID { get; private set; }
+  public int HeadTrackingObjectID { get; private set; }
 
   private int lastHeadTrackingObjectID;
 
@@ -199,8 +196,8 @@ public class Robot : IDisposable {
 
   public ObservedObject HeadTrackingObject {
     get {
-      if (_headTrackingObject != headTrackingObjectID)
-        _headTrackingObject = SeenObjects.Find(x => x == headTrackingObjectID);
+      if (_headTrackingObject != HeadTrackingObjectID)
+        _headTrackingObject = SeenObjects.Find(x => x == HeadTrackingObjectID);
       
       return _headTrackingObject;
     }
@@ -358,13 +355,11 @@ public class Robot : IDisposable {
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
     carryingObjectID = -1;
-    headTrackingObjectID = -1;
+    HeadTrackingObjectID = -1;
     lastHeadTrackingObjectID = -1;
     targetLockedObject = null;
     _carryingObject = null;
     _headTrackingObject = null;
-    searching = false;
-    lastActionRequested = RobotActionType.UNKNOWN;
     headAngleRequested = float.MaxValue;
     liftHeightRequested = float.MaxValue;
     HeadAngle = float.MaxValue;
@@ -402,9 +397,9 @@ public class Robot : IDisposable {
     GameStatus = (GameStatusFlag)message.gameStatus;
     BatteryPercent = (message.batteryVoltage / MaxVoltage);
     carryingObjectID = message.carryingObjectID;
-    headTrackingObjectID = message.headTrackingObjectID;
+    HeadTrackingObjectID = message.headTrackingObjectID;
 
-    if (headTrackingObjectID == lastHeadTrackingObjectID)
+    if (HeadTrackingObjectID == lastHeadTrackingObjectID)
       lastHeadTrackingObjectID = -1;
 
     LastWorldPosition = WorldPosition;
@@ -684,7 +679,7 @@ public class Robot : IDisposable {
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
-    if (headTrackingObjectID == observedObject) {
+    if (HeadTrackingObjectID == observedObject) {
       lastHeadTrackingObjectID = -1;
       return;
     }
