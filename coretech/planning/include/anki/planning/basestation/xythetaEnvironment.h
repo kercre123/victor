@@ -474,6 +474,9 @@ public:
   float GetDistanceBetween(const State_c& start, const State& end) const;
   static float GetDistanceBetween(const State_c& start, const State_c& end);
 
+  float GetMinAngleBetween(const State_c& start, const State& end) const;
+  static float GetMinAngleBetween(const State_c& start, const State_c& end);
+
   // Get a motion primitive. Returns true if the action is retrieved,
   // false otherwise. Returns primitive in arguments
   inline bool GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const;
@@ -496,6 +499,7 @@ public:
   double GetMaxVelocity_mmps() const {return _robotParams.maxVelocity_mmps;}
   double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
   double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
+  double GetHalfWheelBase_mm() const {return _robotParams.halfWheelBase_mm;}
 
   float GetResolution_mm() const { return resolution_mm_; }
 

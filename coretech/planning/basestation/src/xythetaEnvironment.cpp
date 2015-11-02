@@ -897,7 +897,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
       return false;
     }
 
-    printf("adeded %d motion primitives\n", numPrims);
+    PRINT_NAMED_INFO("ParseMotionPrims.Added", "added %d motion primitives\n", numPrims);
   }
   catch( const std::exception&  e ) {
     PRINT_NAMED_ERROR("ParseMotionPrims.Exception",
@@ -1598,6 +1598,20 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
     + pow(end.y_mm - start.y_mm, 2);
 
   return sqrtf(distSq);
+}
+
+float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const State& end) const
+{
+  const float diff1 = std::abs(GetTheta_c(end.theta) - start.theta);
+  const float diff2 = std::abs( std::abs(GetTheta_c(end.theta) - start.theta) - M_PI );
+  return std::min( diff1, diff2 );
+}
+
+float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const State_c& end)
+{
+  const float diff1 = std::abs(end.theta - start.theta);
+  const float diff2 = std::abs( std::abs(end.theta - start.theta) - M_PI );
+  return std::min( diff1, diff2 );
 }
 
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG, bool reverse) const
