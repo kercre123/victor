@@ -22,15 +22,16 @@ public class RobotEngineManager : MonoBehaviour {
 
   public Robot current { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
 
-  public bool IsConnected { get { return (channel != null && channel.IsConnected); } }
+  public bool IsConnected { get { return (channel_ != null && channel_.IsConnected); } }
 
   public List<string> RobotAnimationNames = new List<string>();
 
-  [SerializeField] private TextAsset configuration;
-  [SerializeField] private TextAsset alternateConfiguration;
+  [SerializeField] 
+  private TextAsset configuration_;
 
   [SerializeField]
-  [HideInInspector]
+  private TextAsset alternateConfiguration_;
+
   private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
 
   public event Action<string> ConnectedToClient;
@@ -41,21 +42,21 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
 
-  private bool cozmoBindingStarted = false;
-  private ChannelBase channel = null;
-  private bool isRobotConnected = false;
+  private bool cozmoBindingStarted_ = false;
+  private ChannelBase channel_ = null;
+  private bool isRobotConnected_ = false;
 
-  private const int UIDeviceID = 1;
-  private const int UIAdvertisingRegistrationPort = 5103;
+  private const int UIDeviceID_ = 1;
+  private const int UIAdvertisingRegistrationPort_ = 5103;
   // 0 means random unused port
   // Used to be 5106
-  private const int UILocalPort = 0;
+  private const int UILocalPort_ = 0;
 
   public bool AllowImageSaving { get; private set; }
 
-  private U2G.MessageGameToEngine message = new G2U.MessageGameToEngine();
+  private U2G.MessageGameToEngine message_ = new G2U.MessageGameToEngine();
 
-  public U2G.MessageGameToEngine Message { get { return message; } }
+  public U2G.MessageGameToEngine Message { get { return message_; } }
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
   private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
@@ -74,10 +75,10 @@ public class RobotEngineManager : MonoBehaviour {
       DontDestroyOnLoad(gameObject);
     }
 
-    TextAsset config = configuration;
+    TextAsset config = configuration_;
 
     if (PlayerPrefs.GetInt("DebugUseAltConfig", 0) == 1) {
-      config = alternateConfiguration;
+      config = alternateConfiguration_;
     }
 
     if (config == null) {
@@ -85,38 +86,38 @@ public class RobotEngineManager : MonoBehaviour {
     }
     else {
       CozmoBinding.Startup(config.text);
-      cozmoBindingStarted = true;
+      cozmoBindingStarted_ = true;
     }
 
     Application.runInBackground = true;
 
-    channel = new UdpChannel();
-    channel.ConnectedToClient += Connected;
-    channel.DisconnectedFromClient += Disconnected;
-    channel.MessageReceived += ReceivedMessage;
+    channel_ = new UdpChannel();
+    channel_.ConnectedToClient += Connected;
+    channel_.DisconnectedFromClient += Disconnected;
+    channel_.MessageReceived += ReceivedMessage;
 
     Robots = new Dictionary<int, Robot>();
   }
 
   private void OnDisable() {
     
-    if (channel != null) {
-      if (channel.IsActive) {
+    if (channel_ != null) {
+      if (channel_.IsActive) {
         Disconnect();
         Disconnected(DisconnectionReason.UnityReloaded);
       }
 
-      channel = null;
+      channel_ = null;
     }
 
-    if (cozmoBindingStarted) {
+    if (cozmoBindingStarted_) {
       CozmoBinding.Shutdown();
     }
   }
 
   void Update() {
-    if (channel != null) {
-      channel.Update();
+    if (channel_ != null) {
+      channel_.Update();
     }
   }
 
@@ -142,18 +143,18 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void Connect(string engineIP) {
-    channel.Connect(UIDeviceID, UILocalPort, engineIP, UIAdvertisingRegistrationPort);
+    channel_.Connect(UIDeviceID_, UILocalPort_, engineIP, UIAdvertisingRegistrationPort_);
   }
 
   public void Disconnect() {
-    isRobotConnected = false;
-    if (channel != null) {
-      channel.Disconnect();
+    isRobotConnected_ = false;
+    if (channel_ != null) {
+      channel_.Disconnect();
 
       // only really needed in editor in case unhitting play
 #if UNITY_EDITOR
       float limit = Time.realtimeSinceStartup + 2.0f;
-      while (channel.HasPendingOperations) {
+      while (channel_.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
           DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
           break;
@@ -180,7 +181,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void Disconnected(DisconnectionReason reason) {
     DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
-    isRobotConnected = false;
+    isRobotConnected_ = false;
     Application.LoadLevel("Dev");
 
     lastDisconnectionReason = reason;
@@ -196,7 +197,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     //Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
-    channel.Send(Message);
+    channel_.Send(Message);
   }
 
   private void ReceivedMessage(G2U.MessageEngineToGame message) {
@@ -459,9 +460,9 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
-    if (!isRobotConnected) {
+    if (!isRobotConnected_) {
       DAS.Debug("RobotEngineManager", "Robot " + message.robotID.ToString() + " sent first state message.");
-      isRobotConnected = true;
+      isRobotConnected_ = true;
 
       AddRobot(message.robotID);
 
