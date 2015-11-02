@@ -64,6 +64,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.SetRobotVolume SetRobotVolumeMessage = new G2U.SetRobotVolume();
 
   private void OnEnable() {
+    DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
     if (instance != null && instance != this) {
       Destroy(gameObject);
       return;
