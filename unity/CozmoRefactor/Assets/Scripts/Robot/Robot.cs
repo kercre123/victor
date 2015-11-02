@@ -201,8 +201,6 @@ public class Robot : IDisposable {
   private U2G.ClearAllBlocks ClearAllBlocksMessage;
   private U2G.ClearAllObjects ClearAllObjectsMessage;
   private U2G.VisionWhileMoving VisionWhileMovingMessage;
-  private U2G.SetRobotImageSendMode SetRobotImageSendModeMessage;
-  private U2G.ImageRequest ImageRequestMessage;
   private U2G.TurnInPlace TurnInPlaceMessage;
   private U2G.TraverseObject TraverseObjectMessage;
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
@@ -213,6 +211,11 @@ public class Robot : IDisposable {
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
   private U2G.PlaceRelObject PlaceRelObjectMessage;
+  private U2G.QueueCompoundAction QueueCompoundActionsMessage;
+  private U2G.PlayAnimation PlayAnimationMessage;
+  private U2G.PlayAnimation[] PlayAnimationMessages;
+  private U2G.SetIdleAnimation SetIdleAnimationMessage;
+  private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
 
   private ObservedObject _carryingObject;
 
@@ -304,8 +307,6 @@ public class Robot : IDisposable {
     ClearAllBlocksMessage = new U2G.ClearAllBlocks();
     ClearAllObjectsMessage = new U2G.ClearAllObjects();
     VisionWhileMovingMessage = new U2G.VisionWhileMoving();
-    SetRobotImageSendModeMessage = new U2G.SetRobotImageSendMode();
-    ImageRequestMessage = new U2G.ImageRequest();
     TurnInPlaceMessage = new U2G.TurnInPlace();
     TraverseObjectMessage = new U2G.TraverseObject();
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
@@ -316,6 +317,19 @@ public class Robot : IDisposable {
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
     PlaceRelObjectMessage = new U2G.PlaceRelObject();
+    PlayAnimationMessage = new U2G.PlayAnimation();
+    PlayAnimationMessages = new U2G.PlayAnimation[2];
+    PlayAnimationMessages[0] = new U2G.PlayAnimation();
+    PlayAnimationMessages[1] = new U2G.PlayAnimation();
+
+    SetIdleAnimationMessage = new U2G.SetIdleAnimation();
+    SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
+    QueueCompoundActionsMessage = new U2G.QueueCompoundAction();
+    QueueCompoundActionsMessage.actions = new U2G.RobotActionUnion[2];
+    QueueCompoundActionsMessage.actions[0] = new U2G.RobotActionUnion();
+    QueueCompoundActionsMessage.actions[1] = new U2G.RobotActionUnion();
+
+    QueueCompoundActionsMessage.actionTypes = new Anki.Cozmo.RobotActionType[2];
 
     lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -609,14 +623,35 @@ public class Robot : IDisposable {
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null) {
-    CozmoAnimation newAnimation = new CozmoAnimation();
-    newAnimation.animName = animName;
-    newAnimation.numLoops = 1;
-    CozmoEmotionManager.instance.SendAnimation(newAnimation);
+
+    DAS.Debug("CozmoEmotionManager", "Sending " + animName + " with " + 1 + " loop");
+    PlayAnimationMessage.animationName = animName;
+    PlayAnimationMessage.numLoops = 1;
+    PlayAnimationMessage.robotID = this.ID;
+
+    RobotEngineManager.instance.SendMessage();
 
     if (callback != null) {
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLAY_ANIMATION, callback));
     }
+  }
+
+  public void SetIdleAnimation(string default_anim) {
+    SetIdleAnimationMessage.animationName = default_anim;
+    SetIdleAnimationMessage.robotID = this.ID;
+    RobotEngineManager.instance.Message.SetIdleAnimation = SetIdleAnimationMessage;
+    RobotEngineManager.instance.SendMessage();
+  }
+
+  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues) {
+
+    SetLiveIdleAnimationParametersMessage.paramNames = paramNames;
+    SetLiveIdleAnimationParametersMessage.paramValues = paramValues;
+    SetLiveIdleAnimationParametersMessage.robotID = 1;
+
+    RobotEngineManager.instance.Message.SetLiveIdleAnimationParameters = SetLiveIdleAnimationParametersMessage;
+    RobotEngineManager.instance.SendMessage();
+
   }
 
   public float GetHeadAngleFactor() {
@@ -915,22 +950,6 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.Message.VisionWhileMoving = VisionWhileMovingMessage;
     RobotEngineManager.instance.SendMessage();
-  }
-
-  public void RequestImage(ImageResolution resolution, ImageSendMode mode) {
-    SetRobotImageSendModeMessage.resolution = resolution;
-    SetRobotImageSendModeMessage.mode = mode;
-
-    RobotEngineManager.instance.Message.SetRobotImageSendMode = SetRobotImageSendModeMessage;
-    RobotEngineManager.instance.SendMessage();
-
-    ImageRequestMessage.robotID = ID;
-    ImageRequestMessage.mode = mode;
-
-    RobotEngineManager.instance.Message.ImageRequest = ImageRequestMessage;
-    RobotEngineManager.instance.SendMessage();
-    
-    DAS.Debug("Robot", "image request message sent with " + mode + " at " + resolution);
   }
 
   public void StopAllMotors() {
