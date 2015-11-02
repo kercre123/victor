@@ -158,7 +158,7 @@ public class Intro : MonoBehaviour {
     }
 
     error.text = "";
-    Application.LoadLevel("GameMenu");
+    DAS.Info("Intro", "Robot Connected!");
   }
 
 }
