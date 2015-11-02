@@ -363,29 +363,42 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
     ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
+    bool deleteCallbackCalled = false;
 
     if (deleted != null) {
       deleted.Delete();
+      deleteCallbackCalled = true;
       current.SeenObjects.Remove(deleted);
     }
 
-    deleted = current.SeenObjects.Find(x => x == message.objectID);
-
-    if (deleted != null)
-      current.SeenObjects.Remove(deleted);
-
-    deleted = current.SeenObjects.Find(x => x == message.objectID);
-    
-    if (deleted != null)
-      current.SeenObjects.Remove(deleted);
-
     deleted = current.VisibleObjects.Find(x => x == message.objectID);
     
-    if (deleted != null)
+    if (deleted != null) {
+      if (!deleteCallbackCalled) {
+        deleted.Delete();
+        deleteCallbackCalled = true;
+      }
       current.VisibleObjects.Remove(deleted);
+    }
 
-    if (current.ActiveBlocks.ContainsKey((int)message.objectID))
+    deleted = current.DirtyObjects.Find(x => x == message.objectID);
+
+    if (deleted != null) {
+      if (!deleteCallbackCalled) {
+        deleted.Delete();
+        deleteCallbackCalled = true;
+      }
+      current.DirtyObjects.Remove(deleted);
+    }
+
+    if (current.ActiveBlocks.TryGetValue(message.objectID, out deleted)) {
+      if (!deleteCallbackCalled) {
+        deleted.Delete();
+        deleteCallbackCalled = true;
+      }
       current.ActiveBlocks.Remove((int)message.objectID);
+    }
+
   }
 
   private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
