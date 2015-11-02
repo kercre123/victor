@@ -70,10 +70,6 @@ public class ObservedObject {
 
   public bool isFace { get { return cubeType == CubeType.FACE; } }
 
-  public event Action<ObservedObject> OnDelete;
-
-  public static Action SignificantChangeDetected = null;
-
   public const float RemoveDelay = 0.33f;
 
   public string InfoString { get; private set; }
@@ -149,13 +145,6 @@ public class ObservedObject {
 
     if (message.markersVisible > 0)
       TimeLastSeen = Time.time;
-  }
-
-  public virtual void Delete() {
-    if (OnDelete != null)
-      OnDelete(this);
-    if (SignificantChangeDetected != null)
-      SignificantChangeDetected();
   }
 
   public Vector2 GetBestFaceVector(Vector3 initialVector) {

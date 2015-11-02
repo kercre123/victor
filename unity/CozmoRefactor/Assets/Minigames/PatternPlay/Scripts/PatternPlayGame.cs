@@ -64,7 +64,6 @@ public class PatternPlayGame : GameBase {
 
   }
 
-
   public void SetShouldCelebrateNew(bool shouldCelebrateNew) {
     shouldCelebrateNew_ = shouldCelebrateNew;
   }

@@ -463,37 +463,24 @@ public class Robot : IDisposable {
   }
 
   private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
-    bool newBlock = false;
     if (activeBlock == null) {
       activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
 
       ActiveBlocks.Add(activeBlock, activeBlock);
       SeenObjects.Add(activeBlock);
-      newBlock = true;
     }
 
     AddObservedObject(activeBlock, message);
-
-    if (newBlock) {
-      if (ObservedObject.SignificantChangeDetected != null)
-        ObservedObject.SignificantChangeDetected();
-    }
   }
 
   private void AddObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message) {
-
-    bool newBlock = false;
     if (knownObject == null) {
       knownObject = new ObservedObject(message.objectID, message.objectFamily, message.objectType);
-      
       SeenObjects.Add(knownObject);
-      newBlock = true;
     }
     else {
       DirtyObjects.Remove(knownObject);
     }
-
-    Vector3 oldPos = knownObject.WorldPosition;
 
     knownObject.UpdateInfo(message);
     
@@ -504,12 +491,6 @@ public class Robot : IDisposable {
     if (knownObject.MarkersVisible && VisibleObjects.Find(x => x == message.objectID) == null) {
       VisibleObjects.Add(knownObject);
     }
-
-    //if block new or moved a lot since last time we saw it
-    if (newBlock || (CarryingObject != knownObject && (oldPos - knownObject.WorldPosition).magnitude > CozmoUtil.BLOCK_LENGTH_MM)) {
-      if (ObservedObject.SignificantChangeDetected != null)
-        ObservedObject.SignificantChangeDetected();
-    }
   }
 
   public void UpdateObservedFaceInfo(G2U.RobotObservedFace message) {
@@ -519,20 +500,12 @@ public class Robot : IDisposable {
   }
 
   private void AddObservedFace(Face faceObject, G2U.RobotObservedFace message) {
-
-    bool newFace = false;
     if (faceObject == null) {
       faceObject = new Face(message);
       Faces.Add(faceObject);
-      newFace = true;
     }
     else {
       faceObject.UpdateInfo(message);
-    }
-
-    if (newFace) {
-      if (ObservedObject.SignificantChangeDetected != null)
-        ObservedObject.SignificantChangeDetected();
     }
   }
 

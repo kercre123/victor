@@ -7,10 +7,10 @@ public class LookForPatternState : State {
 
   bool animationPlaying_ = false;
 
-  int lastFrameVisibleCount = 0;
-  int lastSeenThresholdCount = 0;
+  int lastFrameVisibleCount_ = 0;
+  int lastSeenThresholdCount_ = 0;
 
-  bool lastFrameHasVerticalBlock = false;
+  bool lastFrameHasVerticalBlock_ = false;
 
   public override void Enter() { 
     base.Enter();
@@ -35,17 +35,17 @@ public class LookForPatternState : State {
 
     bool hasVerticalBlock = patternPlayGameRef_.HasVerticalStack();
 
-    if (seenThreshold > lastSeenThresholdCount) {
+    if (seenThreshold > lastSeenThresholdCount_) {
       robot.SendAnimation("enjoyLight", AnimationDone);
       animationPlaying_ = true;
       robot.DriveWheels(0.0f, 0.0f);
     }
 
-    if (hasVerticalBlock && !lastFrameHasVerticalBlock) {
+    if (hasVerticalBlock && !lastFrameHasVerticalBlock_) {
       robot.SetHeadAngle(0.3f);
     }
 
-    if (!hasVerticalBlock && lastFrameHasVerticalBlock) {
+    if (!hasVerticalBlock && lastFrameHasVerticalBlock_) {
       robot.SetHeadAngle(-0.1f);
     }
 
@@ -63,7 +63,7 @@ public class LookForPatternState : State {
 
     // last frame visible count flag is used to prevent locking up the
     // wheels on the idle animation.
-    if (lastFrameVisibleCount > 0 && robot.VisibleObjects.Count == 0) {
+    if (lastFrameVisibleCount_ > 0 && robot.VisibleObjects.Count == 0) {
       robot.DriveWheels(0.0f, 0.0f);
     }
 
@@ -75,9 +75,9 @@ public class LookForPatternState : State {
       //stateMachine.SetNextState(new HaveIdeaForPattern());
     }
 
-    lastFrameVisibleCount = robot.VisibleObjects.Count;
-    lastSeenThresholdCount = seenThreshold;
-    lastFrameHasVerticalBlock = hasVerticalBlock;
+    lastFrameVisibleCount_ = robot.VisibleObjects.Count;
+    lastSeenThresholdCount_ = seenThreshold;
+    lastFrameHasVerticalBlock_ = hasVerticalBlock;
   }
 
   bool ShouldAutoBuildPattern() {

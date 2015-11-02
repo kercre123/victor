@@ -370,61 +370,21 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
     ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
-    bool deleteCallbackCalled = false;
 
-    if (deleted != null) {
-      deleted.Delete();
-      deleteCallbackCalled = true;
-      current.SeenObjects.Remove(deleted);
-    }
-
-    deleted = current.VisibleObjects.Find(x => x == message.objectID);
-    
-    if (deleted != null) {
-      if (!deleteCallbackCalled) {
-        deleted.Delete();
-        deleteCallbackCalled = true;
-      }
-      current.VisibleObjects.Remove(deleted);
-    }
-
-    deleted = current.DirtyObjects.Find(x => x == message.objectID);
-
-    if (deleted != null) {
-      if (!deleteCallbackCalled) {
-        deleted.Delete();
-        deleteCallbackCalled = true;
-      }
-      current.DirtyObjects.Remove(deleted);
-    }
-
-    ActiveBlock activeBlock = null;
-    if (current.ActiveBlocks.TryGetValue((int)message.objectID, out activeBlock)) {
-      if (!deleteCallbackCalled) {
-        activeBlock.Delete();
-        deleteCallbackCalled = true;
-      }
-      current.ActiveBlocks.Remove((int)message.objectID);
-    }
+    current.SeenObjects.Remove(deleted);
+    current.VisibleObjects.Remove(deleted);
+    current.DirtyObjects.Remove(deleted);
+    current.ActiveBlocks.Remove((int)message.objectID);
 
   }
 
   private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
     ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
 
-    if (deleted != null) {
-      current.SeenObjects.Remove(deleted);
-    }
+    current.SeenObjects.Remove(deleted);
+    current.VisibleObjects.Remove(deleted);
+    current.DirtyObjects.Remove(deleted);
 
-    deleted = current.VisibleObjects.Find(x => x == message.objectID);
-    if (deleted != null) {
-      current.VisibleObjects.Remove(deleted);
-    }
-
-    deleted = current.DirtyObjects.Find(x => x == message.objectID);
-    if (deleted != null) {
-      current.DirtyObjects.Remove(deleted);
-    }
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
