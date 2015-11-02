@@ -391,9 +391,10 @@ public class RobotEngineManager : MonoBehaviour {
       current.DirtyObjects.Remove(deleted);
     }
 
-    if (current.ActiveBlocks.TryGetValue(message.objectID, out deleted)) {
+    ActiveBlock activeBlock = null;
+    if (current.ActiveBlocks.TryGetValue((int)message.objectID, out activeBlock)) {
       if (!deleteCallbackCalled) {
-        deleted.Delete();
+        activeBlock.Delete();
         deleteCallbackCalled = true;
       }
       current.ActiveBlocks.Remove((int)message.objectID);
