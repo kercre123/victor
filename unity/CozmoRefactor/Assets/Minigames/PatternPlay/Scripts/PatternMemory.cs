@@ -7,15 +7,16 @@ public class PatternMemory {
   public const string PATTERN_MEMORY_BADGE_TAG = "PatternMemory";
 
   public delegate void PatternHandler(BlockPattern patternAdded, MemoryBank bankParent);
+
   public event PatternHandler PatternAdded;
-  public void RaisePatternAdded(BlockPattern pattern, MemoryBank bank){
+
+  public void RaisePatternAdded(BlockPattern pattern, MemoryBank bank) {
     if (PatternAdded != null) {
-      PatternAdded (pattern, bank);
+      PatternAdded(pattern, bank);
     }
   }
 
   private List<MemoryBank> memoryBanks = new List<MemoryBank>();
-  private HashSet<BlockPattern> keyPatterns = new HashSet<BlockPattern>();
 
   public void Initialize() {
 
@@ -172,8 +173,7 @@ public class PatternMemory {
     return e.Current;
   }
 
-  public int GetNumTotalPatterns()
-  {
+  public int GetNumTotalPatterns() {
     int numTotalPatterns = 0;
     foreach (MemoryBank bank in memoryBanks) {
       numTotalPatterns += bank.GetNumTotalPatterns();
@@ -181,8 +181,7 @@ public class PatternMemory {
     return numTotalPatterns;
   }
 
-  public int GetNumSeenPatterns()
-  {
+  public int GetNumSeenPatterns() {
     int numSeenPatterns = 0;
     foreach (MemoryBank bank in memoryBanks) {
       numSeenPatterns += bank.GetNumSeenPatterns();

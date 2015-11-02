@@ -11,7 +11,6 @@ public class PatternPlayGame : GameBase {
   private Dictionary<int, BlockPatternData> blockPatternData_ = new Dictionary<int, BlockPatternData>();
   private PatternMemory memoryBank_ = new PatternMemory();
   private bool initialCubesDone_ = false;
-  private int lastSetID_ = -1;
   private float lastSetTime_ = -100.0f;
   private int previousInputID_ = -1;
   private bool seenPattern_ = false;
@@ -63,8 +62,60 @@ public class PatternPlayGame : GameBase {
 
   }
 
+
+  public void SetShouldCelebrateNew(bool shouldCelebrateNew) {
+    shouldCelebrateNew_ = shouldCelebrateNew;
+  }
+
+  public bool ShouldCelebrateNew() {
+    return shouldCelebrateNew_;
+  }
+
+  public void ClearBlockLights() {
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
+      kvp.Value.blockLightsLocalSpace.TurnOffLights();
+    }
+  }
+
+  public void ResetLookHeadForkLift() {
+    robot.SetHeadAngle(-0.1f);
+    robot.SetLiftHeight(0.0f);
+  }
+
   public void InitialCubesDone() {
     initialCubesDone_ = true;
+  }
+
+  public float LastPatternSeenTime() {
+    return lastPatternSeen_;
+  }
+
+  public float GetMostRecentMovedTime() {
+    float minTime = 0.0f;
+    foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData_) {
+      if (block.Value.lastTimeTouched > minTime) {
+        minTime = block.Value.lastTimeTouched;
+      }
+    }
+    return minTime;
+  }
+
+  public BlockPatternData GetBlockPatternData(int blockID) {
+    return blockPatternData_[blockID];
+  }
+
+  public int SeenBlocksOverThreshold(float threshold) {
+    int count = 0;
+    foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
+      if (kvp.Value.seenAccumulator > threshold && kvp.Value.blockLightsLocalSpace.AreLightsOff() == false) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  public bool SeenPattern() {
+    return seenPattern_;
   }
 
   public bool HasVerticalStack() {
@@ -79,6 +130,10 @@ public class PatternPlayGame : GameBase {
 
   public PatternMemory GetPatternMemory() {
     return memoryBank_;
+  }
+
+  public PatternPlayAutoBuild GetAutoBuild() {
+    return patternPlayAutoBuild_;
   }
 
   public void SetPatternOnBlock(int blockID, int lightCount) {
@@ -267,7 +322,6 @@ public class PatternPlayGame : GameBase {
   }
 
   private void LightSet(int blockID) {
-    lastSetID_ = blockID;
     lastSetTime_ = Time.time;
   }
 }
