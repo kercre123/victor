@@ -28,6 +28,12 @@ public class DebugMenuManager : MonoBehaviour {
     dialogTransform.localPosition = Vector3.zero;
     debugMenuDialogInstance_ = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
     debugMenuDialogInstance_.Initialize(lastOpenedDebugTab_);
+    debugMenuDialogInstance_.OnDebugMenuClosed += OnDebugMenuDialogClose;
+  }
+
+  private void OnDebugMenuDialogClose(int lastOpenTab){
+    debugMenuDialogInstance_.OnDebugMenuClosed -= OnDebugMenuDialogClose;
+    lastOpenedDebugTab_ = lastOpenTab;
   }
 
   private void OnAddInfo(string eventName, string eventValue){

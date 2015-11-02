@@ -12,6 +12,7 @@ GameObject:
   - 114: {fileID: 11407134}
   - 114: {fileID: 11405352}
   - 114: {fileID: 11412982}
+  - 114: {fileID: 11405442}
   m_Layer: 5
   m_Name: DebugMenuTab
   m_TagString: Untagged
@@ -74,9 +75,32 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 11407134}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 11405442}
+        m_MethodName: OnTabButtonTapped
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
       Culture=neutral, PublicKeyToken=null
+--- !u!114 &11405442
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 110760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c481004a123b44ff9b4a3893c9b5714, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonLabel_: {fileID: 11412766}
 --- !u!114 &11407134
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -195,7 +219,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: buttonLabel_
+      value: 
+      objectReference: {fileID: 11412766}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 110760}
