@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class InitializeCubes : State {
+public class InitialCubesState : State {
 
   State nextState_;
   int cubesRequired_;

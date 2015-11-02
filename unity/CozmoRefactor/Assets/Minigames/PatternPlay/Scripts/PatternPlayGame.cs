@@ -9,6 +9,9 @@ public class PatternPlayGame : GameBase {
   void Start() {
     patternPlayStateMachine_.SetGameRef(this);
     patternPlayStateMachineManager_.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine_);
+    InitialCubesState initCubeState = new InitialCubesState();
+    initCubeState.InitialCubeRequirements(new LookForPatternState(), 3);
+    patternPlayStateMachine_.SetNextState(initCubeState);
   }
 
   void Update() {
