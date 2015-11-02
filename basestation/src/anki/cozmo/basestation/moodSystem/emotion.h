@@ -50,7 +50,7 @@ public:
   
   struct HistorySample
   {
-    explicit HistorySample(float value, float timeDelta) : _value(value), _timeDelta(timeDelta) {}
+    explicit HistorySample(float value=0.0f, float timeDelta=0.0f) : _value(value), _timeDelta(timeDelta) {}
     float _value;
     float _timeDelta;
   };
