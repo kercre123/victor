@@ -34,7 +34,6 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
@@ -145,157 +144,6 @@ namespace Anki {
       _selectedPathPlanner = _longPathPlanner;
       
     } // Constructor: Robot
-    
-#pragma mark --- Message Handling ---
-    
-    void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
-    {
-      using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
-      
-      // Handle SetBackpackLights
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetBackpackLEDs,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::SetBackpackLEDs& msg = event.GetData().Get_SetBackpackLEDs();
-          SetBackpackLights(msg.onColor, msg.offColor,
-                            msg.onPeriod_ms, msg.offPeriod_ms,
-                            msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-        }));
-      
-      // Handle SetIdleAnimation
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetIdleAnimation,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::SetIdleAnimation& msg = event.GetData().Get_SetIdleAnimation();
-          _animationStreamer.SetIdleAnimation(msg.animationName);
-        }));
-      
-      // Handle ReplayLastAnimation
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ReplayLastAnimation,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::ReplayLastAnimation& msg = event.GetData().Get_ReplayLastAnimation();
-          _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
-        }));
-      
-      // Handle ExecuteTestPlan
-      // Executes a test path defined in latticePlanner
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ExecuteTestPlan,
-        [this] (const EventType& event)
-        {
-          Planning::Path p;
-          _longPathPlanner->GetTestPath(GetPose(), p);
-          ExecutePath(p);
-        }));
-      
-      // Handle SaveImages
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SaveImages,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::SaveImages& msg = event.GetData().Get_SaveImages();
-          _imageSaveMode = (SaveMode_t)msg.mode;
-        }));
-      
-      // Handle SaveRobotState
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SaveRobotState,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::SaveRobotState& msg = event.GetData().Get_SaveRobotState();
-          _stateSaveMode = (SaveMode_t)msg.mode;
-        }));
-    
-      // SetRobotCarryingObject
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotCarryingObject,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::SetRobotCarryingObject& msg = event.GetData().Get_SetRobotCarryingObject();
-          if(msg.objectID < 0) {
-            UnSetCarryingObjects();
-          } else {
-            SetCarryingObject(msg.objectID);
-          }
-        }));
-    
-      // AbortPath
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::AbortPath,
-        [this] (const EventType& event)
-        {
-          AbortDrivingToPose();
-        }));
-    
-      // AbortAll
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::AbortAll,
-        [this] (const EventType& event)
-        {
-          AbortAll();
-        }));
-    
-      // CancelAction
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::CancelAction,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::CancelAction& msg = event.GetData().Get_CancelAction();
-          GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
-        }));
-    
-      // DrawPoseMarker
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::DrawPoseMarker,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::DrawPoseMarker& msg = event.GetData().Get_DrawPoseMarker();
-          
-          if(IsCarryingObject()) {
-            Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
-            Quad2f objectFootprint = GetBlockWorld().GetObjectByID(GetCarryingObject())->GetBoundingQuadXY(targetPose);
-            VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
-          }
-        }));
-    
-      // IMURequest
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::IMURequest,
-        [this] (const EventType& event)
-        {
-          const ExternalInterface::IMURequest& msg = event.GetData().Get_IMURequest();
-          RequestIMU(msg.length_ms);
-        }));
-      
-      using namespace ExternalInterface;
-      
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>(*_externalInterface, this, _signalHandles);
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>(*_externalInterface, this, _signalHandles);
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>(*_externalInterface, this, _signalHandles);
-    }
-    
-    template<>
-    void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg)
-    {
-      _isBehaviorMgrEnabled = msg.enabled;
-    }
-    
-    template<>
-    void Robot::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
-    {
-      assert(msg.objectID <= s32_MAX);
-      SetObjectLights(msg.objectID,
-                      msg.whichLEDs,
-                      msg.onColor, msg.offColor,
-                      msg.onPeriod_ms, msg.offPeriod_ms,
-                      msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                      msg.turnOffUnspecifiedLEDs,
-                      msg.makeRelative,
-                      Point2f(msg.relativeToX, msg.relativeToY));
-    }
-    
-    template<>
-    void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
-    {
-      assert(msg.objectID <= s32_MAX);
-      SetObjectLights(msg.objectID,
-                      msg.onColor, msg.offColor,
-                      msg.onPeriod_ms, msg.offPeriod_ms,
-                      msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
-                      msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
-    }
     
     Robot::~Robot()
     {
@@ -2705,45 +2553,6 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
-    {
-      // StartFaceTracking
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          _visionProcessor.EnableFaceDetection(true);
-        }));
-      
-      // StopFaceTracking
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          _visionProcessor.EnableFaceDetection(false);
-        }));
-      
-      // StartLookingForMarkers
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartLookingForMarkers,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          StartLookingForMarkers();
-        }));
-      
-      // StopLookingForMarkers
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopLookingForMarkers,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          StopLookingForMarkers();
-        }));
-      
-      // VisionWhileMoving
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionWhileMoving,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
-          EnableVisionWhileMoving(msg.enable);
-        }));
-    }
-    
     /*
     const Pose3d Robot::ProxDetectTransform[] = { Pose3d(0, Z_AXIS_3D(), Vec3f(50, 25, 0)),
                                                   Pose3d(0, Z_AXIS_3D(), Vec3f(50, 0, 0)),
@@ -2800,49 +2609,6 @@ namespace Anki {
     f32 Robot::GetLiftHeight() const
     {
       return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
-    }
-    
-    void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
-    {
-      // SetWheelControllerGains
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
-          
-          SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
-                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
-        }));
-      
-      // SetHeadControllerGains
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
-          
-          SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
-        }));
-      
-      // SetLiftControllerGains
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
-          
-          SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
-                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
-        }));
-      
-      // SetSteeringControllerGains
-      _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
-        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-        {
-          const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
-          
-          SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, 0.0f, 0.0f,
-                                                            Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing);
-        }));
     }
     
     Result Robot::RequestIMU(const u32 length_ms) const

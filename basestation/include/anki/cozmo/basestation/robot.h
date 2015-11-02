@@ -553,6 +553,7 @@ public:
     Result AbortDocking(); // a.k.a. PickAndPlace
     Result AbortDrivingToPose(); // stops planning and path following
   
+    // Helper template for sending Robot messages with clean syntax
     template<typename T, typename... Args>
     Result SendRobotMessage(Args&&... args)
     {
