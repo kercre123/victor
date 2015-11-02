@@ -301,8 +301,8 @@ public class RobotEngineManager : MonoBehaviour {
 
     int ID = (int)message.objectID;
 
-    if (current.activeBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = current.activeBlocks[ID];
+    if (current.ActiveBlocks.ContainsKey(ID)) {
+      ActiveBlock activeBlock = current.ActiveBlocks[ID];
 
       activeBlock.Moving(message);
       current.UpdateDirtyList(activeBlock);
@@ -315,8 +315,8 @@ public class RobotEngineManager : MonoBehaviour {
 
     int ID = (int)message.objectID;
     
-    if (current.activeBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = current.activeBlocks[ID];
+    if (current.ActiveBlocks.ContainsKey(ID)) {
+      ActiveBlock activeBlock = current.ActiveBlocks[ID];
       
       activeBlock.StoppedMoving(message);
     }
@@ -328,8 +328,8 @@ public class RobotEngineManager : MonoBehaviour {
     
     int ID = (int)message.objectID;
     
-    if (current.activeBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = current.activeBlocks[ID];
+    if (current.ActiveBlocks.ContainsKey(ID)) {
+      ActiveBlock activeBlock = current.ActiveBlocks[ID];
       
       activeBlock.Tapped(message);
     }
@@ -351,7 +351,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
     
-    if (current.seenObjects.Count == 0 && !current.isBusy) {
+    if (current.SeenObjects.Count == 0 && !current.isBusy) {
       current.ClearVisibleObjects();
     }
   }
@@ -362,47 +362,47 @@ public class RobotEngineManager : MonoBehaviour {
 
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
-    ObservedObject deleted = current.seenObjects.Find(x => x == message.objectID);
+    ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
 
     if (deleted != null) {
       deleted.Delete();
-      current.seenObjects.Remove(deleted);
+      current.SeenObjects.Remove(deleted);
     }
 
-    deleted = current.seenObjects.Find(x => x == message.objectID);
+    deleted = current.SeenObjects.Find(x => x == message.objectID);
 
     if (deleted != null)
-      current.seenObjects.Remove(deleted);
+      current.SeenObjects.Remove(deleted);
 
-    deleted = current.seenObjects.Find(x => x == message.objectID);
+    deleted = current.SeenObjects.Find(x => x == message.objectID);
     
     if (deleted != null)
-      current.seenObjects.Remove(deleted);
+      current.SeenObjects.Remove(deleted);
 
-    deleted = current.visibleObjects.Find(x => x == message.objectID);
+    deleted = current.VisibleObjects.Find(x => x == message.objectID);
     
     if (deleted != null)
-      current.visibleObjects.Remove(deleted);
+      current.VisibleObjects.Remove(deleted);
 
-    if (current.activeBlocks.ContainsKey((int)message.objectID))
-      current.activeBlocks.Remove((int)message.objectID);
+    if (current.ActiveBlocks.ContainsKey((int)message.objectID))
+      current.ActiveBlocks.Remove((int)message.objectID);
   }
 
   private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
-    ObservedObject deleted = current.seenObjects.Find(x => x == message.objectID);
+    ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
 
     if (deleted != null) {
-      current.seenObjects.Remove(deleted);
+      current.SeenObjects.Remove(deleted);
     }
 
-    deleted = current.visibleObjects.Find(x => x == message.objectID);
+    deleted = current.VisibleObjects.Find(x => x == message.objectID);
     if (deleted != null) {
-      current.visibleObjects.Remove(deleted);
+      current.VisibleObjects.Remove(deleted);
     }
 
-    deleted = current.dirtyObjects.Find(x => x == message.objectID);
+    deleted = current.DirtyObjects.Find(x => x == message.objectID);
     if (deleted != null) {
-      current.dirtyObjects.Remove(deleted);
+      current.DirtyObjects.Remove(deleted);
     }
   }
 
@@ -410,11 +410,11 @@ public class RobotEngineManager : MonoBehaviour {
     if (current == null)
       return;
 		
-    Face deleted = current.faceObjects.Find(x => x == message.faceID);
+    Face deleted = current.Faces.Find(x => x == message.faceID);
 
     if (deleted != null) {
       DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
-      current.faceObjects.Remove(deleted);
+      current.Faces.Remove(deleted);
     }
 
   }
