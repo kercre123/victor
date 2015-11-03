@@ -12,10 +12,19 @@ public class ConsoleLogManager : MonoBehaviour {
 
   private ConsoleLogPane consoleLogPaneView_;
 
+  private Dictionary<LogPacket.ELogKind, bool> lastToggleValues_;
+
 	// Use this for initialization
 	private void Awake () {
     mostRecentLogs_ = new Queue<LogPacket>();
     consoleLogPaneView_ = null;
+
+    lastToggleValues_ = new Dictionary<LogPacket.ELogKind, bool>();
+    lastToggleValues_.Add(LogPacket.ELogKind.INFO, true);
+    lastToggleValues_.Add(LogPacket.ELogKind.WARNING, true);
+    lastToggleValues_.Add(LogPacket.ELogKind.ERROR, true);
+    lastToggleValues_.Add(LogPacket.ELogKind.EVENT, true);
+    lastToggleValues_.Add(LogPacket.ELogKind.DEBUG, true);
 
     DAS.OnInfoLogged += OnInfoLogged;
     DAS.OnWarningLogged += OnWarningLogged;
@@ -33,6 +42,10 @@ public class ConsoleLogManager : MonoBehaviour {
     DAS.OnDebugLogged -= OnDebugLogged;
     DAS.OnEventLogged -= OnEventLogged;
     ConsoleLogPane.ConsoleLogPaneOpened -= OnConsoleLogPaneOpened;
+
+    if (consoleLogPaneView_ != null) {
+      consoleLogPaneView_.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
+    }
   }
 
   private void OnInfoLogged(string eventName, string eventValue, Object context){
@@ -54,24 +67,7 @@ public class ConsoleLogManager : MonoBehaviour {
   private void OnDebugLogged(string eventName, string eventValue, Object context){
     SaveLogPacket(LogPacket.ELogKind.DEBUG, eventName, eventValue, context);
   }
-
-  private void OnConsoleLogPaneOpened(ConsoleLogPane logPane){
-    consoleLogPaneView_ = logPane;
-
-    StringBuilder sb = new StringBuilder();
-    foreach (LogPacket packet in mostRecentLogs_) {
-      sb.Append(packet.ToString());
-      sb.Append("\n");
-    }
-
-    consoleLogPaneView_.Initialize(sb.ToString());
-  }
-
-  private void OnConsoleLogPaneClosed(){
-    // TODO: Save last used filters
-    consoleLogPaneView_ = null;
-  }
-
+  
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, Object context){
     // Add the new log to the queue
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context);
@@ -79,12 +75,51 @@ public class ConsoleLogManager : MonoBehaviour {
     while (mostRecentLogs_.Count > numberCachedLogMaximum) {
       mostRecentLogs_.Dequeue();
     }
-
+    
     // Update the UI, if it is open
     if (consoleLogPaneView_ != null) {
       // TODO: Only add the new log to the UI if the filter is toggled on
-      consoleLogPaneView_.AppendLog(newPacket.ToString());
+      if (lastToggleValues_[newPacket.LogKind] == true){
+        consoleLogPaneView_.AppendLog(newPacket.ToString());
+      }
     }
+  }
+
+  private void OnConsoleLogPaneOpened(ConsoleLogPane logPane){
+    consoleLogPaneView_ = logPane;
+
+    string consoleText = CompileRecentLogs();
+    consoleLogPaneView_.Initialize(consoleText);
+    foreach (KeyValuePair<LogPacket.ELogKind, bool> kvp in lastToggleValues_) {
+      consoleLogPaneView_.SetToggle(kvp.Key, kvp.Value);
+    }
+    consoleLogPaneView_.ConsoleLogToggleChanged += OnConsoleToggleChanged;
+  }
+
+  private void OnConsoleToggleChanged(LogPacket.ELogKind logKind, bool newValue) {
+    // IVY: For some reason the newValue is always false - bug on unity's end?
+    // lastToggleValues_[logKind] = newValue;
+    lastToggleValues_[logKind] = !lastToggleValues_[logKind];
+
+    // Change the text for the pane
+    string consoleText = CompileRecentLogs();
+    consoleLogPaneView_.SetText(consoleText);
+  }
+
+  private void OnConsoleLogPaneClosed(){
+    consoleLogPaneView_.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
+    consoleLogPaneView_ = null;
+  }
+
+  private string CompileRecentLogs(){
+    StringBuilder sb = new StringBuilder();
+    foreach (LogPacket packet in mostRecentLogs_) {
+      if (lastToggleValues_[packet.LogKind] == true){
+        sb.Append(packet.ToString());
+        sb.Append("\n");
+      }
+    }
+    return sb.ToString();
   }
 
   // TODO: Pragma out for production

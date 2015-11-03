@@ -21,11 +21,22 @@ public class ConsoleLogPane : MonoBehaviour {
     }
   }
 
+  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind, bool newIsOnValue);
+  public event ConsoleLogToggleChangedHandler ConsoleLogToggleChanged;
+  private void RaiseConsoleLogToggleChanged(LogPacket.ELogKind logKind, bool newIsOnValue) {
+    if (ConsoleLogToggleChanged != null) {
+      ConsoleLogToggleChanged(logKind, newIsOnValue);
+    }
+  }
+
   [SerializeField]
   private Text consoleTextLabel_;
 
   [SerializeField]
   private ScrollRect textScrollRect_;
+  
+  [SerializeField]
+  private ConsoleLogToggle[] logToggles_;
 
 	// Use this for initialization
 	private void Start () {
@@ -41,6 +52,14 @@ public class ConsoleLogPane : MonoBehaviour {
     textScrollRect_.verticalNormalizedPosition = 1;
   }
 
+  public void SetText(string consoleText) {
+    bool wasAtBottom = (textScrollRect_.verticalNormalizedPosition >= 1);
+    consoleTextLabel_.text = consoleText;
+    if (wasAtBottom) {
+      textScrollRect_.verticalNormalizedPosition = 1;
+    }
+  }
+
   public void AppendLog(string newLog) {
     bool wasAtBottom = (textScrollRect_.verticalNormalizedPosition >= 1);
     StringBuilder sb = new StringBuilder();
@@ -53,4 +72,38 @@ public class ConsoleLogPane : MonoBehaviour {
       textScrollRect_.verticalNormalizedPosition = 1;
     }
   }
+
+  public void SetToggle(LogPacket.ELogKind logKind, bool isOn) {
+    foreach (ConsoleLogToggle logToggle in logToggles_) {
+      if (logToggle.logKind == logKind) {
+        logToggle.toggle.isOn = isOn;
+      }
+    }
+  }
+
+  public void OnInfoToggleChanged(bool newValue){
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.INFO, newValue);
+  }
+
+  public void OnWarningToggleChanged(bool newValue){
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.WARNING, newValue);
+  }
+
+  public void OnErrorToggleChanged(bool newValue){
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.ERROR, newValue);
+  }
+
+  public void OnEventToggleChanged(bool newValue){
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.EVENT, newValue);
+  }
+
+  public void OnDebugToggleChanged(bool newValue){
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.DEBUG, newValue);
+  }
+}
+
+[System.Serializable]
+public class ConsoleLogToggle {
+  public LogPacket.ELogKind logKind;
+  public Toggle toggle;
 }
