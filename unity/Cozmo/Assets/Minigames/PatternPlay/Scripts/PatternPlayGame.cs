@@ -5,8 +5,8 @@ using Anki.Cozmo;
 
 public class PatternPlayGame : GameBase {
 
-  StateMachineManager patternPlayStateMachineManager_ = new StateMachineManager();
-  StateMachine patternPlayStateMachine_ = new StateMachine();
+  private StateMachineManager patternPlayStateMachineManager_ = new StateMachineManager();
+  private StateMachine patternPlayStateMachine_ = new StateMachine();
 
   private Dictionary<int, BlockPatternData> blockPatternData_ = new Dictionary<int, BlockPatternData>();
   private PatternMemory memoryBank_ = new PatternMemory();
