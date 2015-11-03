@@ -4,8 +4,8 @@ using System;
 
 public class SpeedTapGame : GameBase {
 
-  public ActiveBlock cozmoBlock_;
-  public ActiveBlock playerBlock_;
+  public LightCube cozmoBlock_;
+  public LightCube playerBlock_;
   public int cozmoScore_;
   public int playerScore_;
 
@@ -26,7 +26,7 @@ public class SpeedTapGame : GameBase {
     DAS.Info("SpeedTapGame", "Game Created");
 
     robot.VisionWhileMoving(true);
-    ActiveBlock.TappedAction += BlockTapped;
+    LightCube.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     robot.SetBehaviorSystem(false);
 

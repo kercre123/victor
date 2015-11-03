@@ -121,7 +121,7 @@ public class BlockPattern {
 
     // check rotation alignment
     for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.ActiveBlocks[robot.VisibleObjects[i].ID].Forward;
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.LightCubes[robot.VisibleObjects[i].ID].Forward;
       relativeForward.Normalize();
 
       if (Mathf.Abs(relativeForward.x) < 0.92f && Mathf.Abs(relativeForward.y) < 0.92f && Mathf.Abs(relativeForward.z) < 0.92f) {
@@ -132,7 +132,7 @@ public class BlockPattern {
 
     // convert get block lights in cozmo space. build out pattern seen.
     for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.ActiveBlocks[robot.VisibleObjects[i].ID].Forward;
+      Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.LightCubes[robot.VisibleObjects[i].ID].Forward;
       BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.VisibleObjects[i].ID].blockLightsLocalSpace, relativeForward, facingCozmo);
       patternSeen.blocks.Add(blockLightCozmoSpace);
     }
@@ -157,7 +157,7 @@ public class BlockPattern {
 
   static bool CheckFacingCozmo(Robot robot) {
     for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.ActiveBlocks[robot.VisibleObjects[i].ID].Up;
+      Vector3 relativeUp = Quaternion.Inverse(robot.Rotation) * robot.LightCubes[robot.VisibleObjects[i].ID].Up;
       if (relativeUp.x > -0.9f) {
         return false;
       }
@@ -168,8 +168,8 @@ public class BlockPattern {
   static bool CheckVerticalStack(Robot robot) {
 
     for (int i = 0; i < robot.VisibleObjects.Count - 1; ++i) {
-      Vector2 flatPos0 = (Vector2)(robot.ActiveBlocks[robot.VisibleObjects[i].ID].WorldPosition);
-      Vector2 flatPos1 = (Vector2)(robot.ActiveBlocks[robot.VisibleObjects[i + 1].ID].WorldPosition);
+      Vector2 flatPos0 = (Vector2)(robot.LightCubes[robot.VisibleObjects[i].ID].WorldPosition);
+      Vector2 flatPos1 = (Vector2)(robot.LightCubes[robot.VisibleObjects[i + 1].ID].WorldPosition);
 
       if (Vector2.Distance(flatPos0, flatPos1) > 5.0f) {
         return false;

@@ -91,8 +91,8 @@ public class PatternPlayGame : GameBase {
   public void InitialCubesDone() {
     initialCubesDone_ = true;
 
-    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.ActiveBlocks) {
-      blockPatternData_.Add(activeBlock.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
+    foreach (KeyValuePair<int, LightCube> lightCube in robot.LightCubes) {
+      blockPatternData_.Add(lightCube.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
     }
     ResetLookHeadForkLift();
 
@@ -189,7 +189,7 @@ public class PatternPlayGame : GameBase {
       lightCount--;
     }
 
-    float blockAngleWorldSpace = robot.ActiveBlocks[blockID].Rotation.eulerAngles.z;
+    float blockAngleWorldSpace = robot.LightCubes[blockID].Rotation.eulerAngles.z;
     if (blockAngleWorldSpace < 0.0f) {
       blockAngleWorldSpace += 360.0f;
     }
@@ -259,8 +259,8 @@ public class PatternPlayGame : GameBase {
       enabledColor = Color.blue;
       disabledColor = Color.black;
 
-      for (int i = 0; i < robot.ActiveBlocks[blockConfig.Key].Lights.Length; ++i) {
-        robot.ActiveBlocks[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+      for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
+        robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
       if (blockConfig.Key == currentInputID && blockPatternData_[blockConfig.Key].moving && Time.time - lastSetTime_ > 5.0f) {
@@ -269,30 +269,30 @@ public class PatternPlayGame : GameBase {
       }
 
       for (int i = 0; i < 4; ++i) {
-        robot.ActiveBlocks[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.back) {
-        robot.ActiveBlocks[blockConfig.Key].Lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.front) {
-        robot.ActiveBlocks[blockConfig.Key].Lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.left) {
-        robot.ActiveBlocks[blockConfig.Key].Lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.right) {
-        robot.ActiveBlocks[blockConfig.Key].Lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
       // in a pattern yet to white.
       bool autoBuilding = patternPlayAutoBuild_.autoBuilding;
-      bool nonDirtySeen = robot.SeenObjects.Contains(robot.ActiveBlocks[blockConfig.Key]);
-      bool notInNeatList = patternPlayAutoBuild_.NeatListContains(robot.ActiveBlocks[blockConfig.Key]) == false;
+      bool nonDirtySeen = robot.SeenObjects.Contains(robot.LightCubes[blockConfig.Key]);
+      bool notInNeatList = patternPlayAutoBuild_.NeatListContains(robot.LightCubes[blockConfig.Key]) == false;
       bool notCarrying = true;
       if (patternPlayAutoBuild_.GetHeldObject() != null) {
         if (blockConfig.Key != patternPlayAutoBuild_.GetHeldObject().ID) {
@@ -301,8 +301,8 @@ public class PatternPlayGame : GameBase {
       }
 
       if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
-        for (int i = 0; i < robot.ActiveBlocks[blockConfig.Key].Lights.Length; ++i) {
-          robot.ActiveBlocks[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
+        for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
+          robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
         }
       }
 

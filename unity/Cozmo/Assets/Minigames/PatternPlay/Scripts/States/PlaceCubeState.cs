@@ -24,7 +24,7 @@ public class PlaceCubeState : State {
       robot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
     }
     else {
-      robot.PlaceObjectRel(robot.ActiveBlocks[dockID], offset, dockAngleRads, PlaceDone);
+      robot.PlaceObjectRel(robot.LightCubes[dockID], offset, dockAngleRads, PlaceDone);
     }
   }
 

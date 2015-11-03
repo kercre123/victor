@@ -303,11 +303,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     int ID = (int)message.objectID;
 
-    if (CurrentRobot.ActiveBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = CurrentRobot.ActiveBlocks[ID];
+    if (CurrentRobot.LightCubes.ContainsKey(ID)) {
+      LightCube lightCube = CurrentRobot.LightCubes[ID];
 
-      activeBlock.Moving(message);
-      CurrentRobot.UpdateDirtyList(activeBlock);
+      lightCube.Moving(message);
+      CurrentRobot.UpdateDirtyList(lightCube);
     }
   }
 
@@ -317,10 +317,10 @@ public class RobotEngineManager : MonoBehaviour {
 
     int ID = (int)message.objectID;
     
-    if (CurrentRobot.ActiveBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = CurrentRobot.ActiveBlocks[ID];
+    if (CurrentRobot.LightCubes.ContainsKey(ID)) {
+      LightCube lightCube = CurrentRobot.LightCubes[ID];
       
-      activeBlock.StoppedMoving(message);
+      lightCube.StoppedMoving(message);
     }
   }
 
@@ -330,10 +330,10 @@ public class RobotEngineManager : MonoBehaviour {
     
     int ID = (int)message.objectID;
     
-    if (CurrentRobot.ActiveBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = CurrentRobot.ActiveBlocks[ID];
+    if (CurrentRobot.LightCubes.ContainsKey(ID)) {
+      LightCube lightCube = CurrentRobot.LightCubes[ID];
       
-      activeBlock.Tapped(message);
+      lightCube.Tapped(message);
     }
   }
 
@@ -369,7 +369,7 @@ public class RobotEngineManager : MonoBehaviour {
     CurrentRobot.SeenObjects.Remove(deleted);
     CurrentRobot.VisibleObjects.Remove(deleted);
     CurrentRobot.DirtyObjects.Remove(deleted);
-    CurrentRobot.ActiveBlocks.Remove((int)message.objectID);
+    CurrentRobot.LightCubes.Remove((int)message.objectID);
 
   }
 

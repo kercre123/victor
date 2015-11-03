@@ -32,7 +32,6 @@ public class SpeedTapStatePlayNewHand : State {
     speedTapGame_.playerBlock_.SetLEDs(0, 0, 0xFF);
     lightsOn_ = false;
 
-    //ActiveBlock.TappedAction += BlockTapped;
     speedTapGame_.PlayerTappedBlockEvent += PlayerDidTap;
   }
 
@@ -71,7 +70,7 @@ public class SpeedTapStatePlayNewHand : State {
 
   public override void Exit() {
     base.Exit();
-    //ActiveBlock.TappedAction -= BlockTapped;
+
     RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
     speedTapGame_.PlayerTappedBlockEvent -= PlayerDidTap;
   }

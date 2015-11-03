@@ -24,13 +24,13 @@ public class InitialCubesState : State {
   public override void Update() {
     base.Update();
 
-    foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.ActiveBlocks) {
-      for (int j = 0; j < activeBlock.Value.Lights.Length; ++j) {
-        activeBlock.Value.Lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
+    foreach (KeyValuePair<int, LightCube> lightCube in robot.LightCubes) {
+      for (int j = 0; j < lightCube.Value.Lights.Length; ++j) {
+        lightCube.Value.Lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
       }
     }
 
-    if (stateMachine_.GetGame().robot.ActiveBlocks.Count >= cubesRequired_) {
+    if (stateMachine_.GetGame().robot.LightCubes.Count >= cubesRequired_) {
       stateMachine_.SetNextState(nextState_);
     }
   }

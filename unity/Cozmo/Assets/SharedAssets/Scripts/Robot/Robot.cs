@@ -111,7 +111,7 @@ public class Robot : IDisposable {
 
   public List<ObservedObject> DirtyObjects { get; private set; }
 
-  public Dictionary<int, ActiveBlock> ActiveBlocks { get; private set; }
+  public Dictionary<int, LightCube> LightCubes { get; private set; }
 
   public List<Face> Faces { get; private set; }
 
@@ -252,7 +252,7 @@ public class Robot : IDisposable {
     SeenObjects = new List<ObservedObject>(initialSize);
     VisibleObjects = new List<ObservedObject>(initialSize);
     DirtyObjects = new List<ObservedObject>(initialSize);
-    ActiveBlocks = new Dictionary<int, ActiveBlock>();
+    LightCubes = new Dictionary<int, LightCube>();
     Faces = new List< global::Face>();
 
     DriveWheelsMessage = new U2G.DriveWheels();
@@ -351,7 +351,7 @@ public class Robot : IDisposable {
 
     SeenObjects.Clear();
     VisibleObjects.Clear();
-    ActiveBlocks.Clear();
+    LightCubes.Clear();
     RobotStatus = RobotStatusFlag.NoneRobotStatusFlag;
     GameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
@@ -416,14 +416,14 @@ public class Robot : IDisposable {
     if (RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected)
       return;
 
-    if (Time.time > ActiveBlock.Light.messageDelay || now) {
-      var enumerator = ActiveBlocks.GetEnumerator();
+    if (Time.time > LightCube.Light.messageDelay || now) {
+      var enumerator = LightCubes.GetEnumerator();
 
       while (enumerator.MoveNext()) {
-        ActiveBlock activeBlock = enumerator.Current.Value;
+        LightCube lightCube = enumerator.Current.Value;
 
-        if (activeBlock.lightsChanged)
-          activeBlock.SetAllLEDs();
+        if (lightCube.lightsChanged)
+          lightCube.SetAllLEDs();
       }
     }
 
@@ -451,7 +451,7 @@ public class Robot : IDisposable {
     }
 
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.LightCube) {
-      AddActiveBlock(ActiveBlocks.ContainsKey(message.objectID) ? ActiveBlocks[message.objectID] : null, message);
+      AddLightCube(LightCubes.ContainsKey(message.objectID) ? LightCubes[message.objectID] : null, message);
     }
     else {
       ObservedObject knownObject = SeenObjects.Find(x => x == message.objectID);
@@ -464,15 +464,15 @@ public class Robot : IDisposable {
     ClearVisibleObjects();
   }
 
-  private void AddActiveBlock(ActiveBlock activeBlock, G2U.RobotObservedObject message) {
-    if (activeBlock == null) {
-      activeBlock = new ActiveBlock(message.objectID, message.objectFamily, message.objectType);
+  private void AddLightCube(LightCube lightCube, G2U.RobotObservedObject message) {
+    if (lightCube == null) {
+      lightCube = new LightCube(message.objectID, message.objectFamily, message.objectType);
 
-      ActiveBlocks.Add(activeBlock, activeBlock);
-      SeenObjects.Add(activeBlock);
+      LightCubes.Add(lightCube, lightCube);
+      SeenObjects.Add(lightCube);
     }
 
-    AddObservedObject(activeBlock, message);
+    AddObservedObject(lightCube, message);
   }
 
   private void AddObservedObject(ObservedObject knownObject, G2U.RobotObservedObject message) {
@@ -986,12 +986,12 @@ public class Robot : IDisposable {
   }
 
   public void TurnOffAllLights(bool now = false) {
-    var enumerator = ActiveBlocks.GetEnumerator();
+    var enumerator = LightCubes.GetEnumerator();
     
     while (enumerator.MoveNext()) {
-      ActiveBlock activeBlock = enumerator.Current.Value;
+      LightCube lightCube = enumerator.Current.Value;
       
-      activeBlock.SetLEDs();
+      lightCube.SetLEDs();
     }
 
     SetBackpackLEDs();

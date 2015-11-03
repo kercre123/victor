@@ -11,7 +11,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 ///   adds functionality for controlling the four LEDs
 ///   adds awareness of accelerometer messages to detect LightCube movements
 /// </summary>
-public class ActiveBlock : ObservedObject {
+public class LightCube : ObservedObject {
   public class Light : Robot.Light {
     public static new float messageDelay = 0f;
 
@@ -71,13 +71,13 @@ public class ActiveBlock : ObservedObject {
 
   public Mode mode { get; private set; }
 
-  public event Action<ActiveBlock> OnAxisChange;
+  public event Action<LightCube> OnAxisChange;
 
   public static Action<int, int> TappedAction;
   public static Action<int, float, float, float> MovedAction;
   public static Action<int> StoppedAction;
 
-  public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
+  public LightCube(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
 
     UpAxis = UpAxis.Unknown;
@@ -122,7 +122,7 @@ public class ActiveBlock : ObservedObject {
   }
 
   public void Tapped(ObjectTapped message) {
-    DAS.Debug("ActiveBlock", "Tapped Message Received for ActiveBlock(" + ID + "): " + message.numTaps + " taps");
+    DAS.Debug("LightCube", "Tapped Message Received for LightCube(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps);
   }
