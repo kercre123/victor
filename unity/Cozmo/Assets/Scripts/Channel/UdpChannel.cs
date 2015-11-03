@@ -8,11 +8,6 @@ using Anki.Cozmo;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
-// LostPolygon replacement doesn't seem to work on device
-// eventually we should replace this file with reliable C++ UDP anyway though
-//using LostPolygon.System.Net;
-//using LostPolygon.System.Net.Sockets;
-//using LostPolygon.System.Net.NetworkInformation;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
@@ -182,21 +177,21 @@ public class UdpChannel : ChannelBase {
         // set up advertisement message
         DAS.Debug("UdpChannel", "Advertising IP: " + localIP);
         int length = Encoding.UTF8.GetByteCount(localIP);
-        if (length + 1 > advertisementRegistrationMessage.ip.Length) {
+        if (length + 1 > advertisementRegistrationMessage.ip_.Length) {
           DAS.Error("UdpChannel", "Advertising host is too long: " +
-          advertisementRegistrationMessage.ip.Length.ToString() + " bytes allowed, " +
+          advertisementRegistrationMessage.ip_.Length.ToString() + " bytes allowed, " +
           length.ToString() + " bytes used.");
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
           return;
         }
-        Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.ip, 0);
-        advertisementRegistrationMessage.ip[length] = 0;
+        Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.ip_, 0);
+        advertisementRegistrationMessage.ip_[length] = 0;
         
-        advertisementRegistrationMessage.port = (ushort)realPort;
-        advertisementRegistrationMessage.id = (byte)deviceID;
-        advertisementRegistrationMessage.protocol = (byte)ChannelProtocol.Udp;
-        advertisementRegistrationMessage.enableAdvertisement = 1;
-        advertisementRegistrationMessage.oneShot = 1;
+        advertisementRegistrationMessage.port_ = (ushort)realPort;
+        advertisementRegistrationMessage.id_ = (byte)deviceID;
+        advertisementRegistrationMessage.protocol_ = (byte)ChannelProtocol.Udp;
+        advertisementRegistrationMessage.enableAdvertisement_ = 1;
+        advertisementRegistrationMessage.oneShot_ = 1;
 
         // set up advertisement socket
         advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
