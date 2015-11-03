@@ -942,7 +942,6 @@ public class Robot : IDisposable {
   }
 
   private void SetAllBackpackLEDs() { // should only be called from update loop
-    //Debug.Log ("frame("+Time.frameCount+") SetAllBackpackLEDs " + lights[0].onColor);
 
     SetBackpackLEDsMessage.robotID = ID;
 

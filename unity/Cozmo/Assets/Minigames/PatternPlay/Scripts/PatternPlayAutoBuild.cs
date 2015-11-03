@@ -153,7 +153,6 @@ public class PatternPlayAutoBuild {
 
   private void ComputeIdealViewPose() {
     idealViewPosition = neatList[0].WorldPosition + new Vector3(0.0f, 1.0f, 0.0f) * 190.0f;
-    Debug.Log("ideal view fwd: " + neatList[0].Forward);
     idealViewAngle = 3.0f * Mathf.PI / 2.0f;
   }
 }

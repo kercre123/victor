@@ -193,7 +193,6 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     }
 
-    //Debug.Log ("frame("+Time.frameCount+") SendMessage " + Message.GetTag().ToString());
     channel_.Send(Message);
   }
 

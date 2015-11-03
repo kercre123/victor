@@ -33,7 +33,6 @@ public class PlaceCubeState : State {
       stateMachine_.SetNextState(new SetCubeToPatternState());
     }
     else {
-      Debug.LogError("place failed");
       robot.PlaceObjectOnGroundHere(PlaceGroundHere);
     }
   }

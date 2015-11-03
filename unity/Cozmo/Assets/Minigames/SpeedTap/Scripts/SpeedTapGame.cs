@@ -47,7 +47,7 @@ public class SpeedTapGame : GameBase {
   }
 
   private void BlockTapped(int blockID, int tappedTimes) {
-    Debug.Log("Ima tapped:" + blockID);
+    DAS.Info("SpeedTapGame", "Player Block Tapped.");
     if (playerBlock_ != null && playerBlock_.ID == blockID) {
       if (PlayerTappedBlockEvent != null) {
         PlayerTappedBlockEvent();
