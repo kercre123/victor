@@ -2300,7 +2300,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11404316
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2330,7 +2329,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11409044
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2342,7 +2340,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11413706
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2354,7 +2351,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11415250
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2375,7 +2371,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
     m_FontSize: 120
     m_FontStyle: 0
     m_BestFit: 0
@@ -2402,7 +2398,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11436852
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2450,7 +2445,7 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: fe45c1b02a46a40ff9591b7d0bd89aee, type: 3}
+    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
     m_FontSize: 36
     m_FontStyle: 0
     m_BestFit: 0
@@ -2490,7 +2485,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11457776
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2502,7 +2496,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11458058
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2541,7 +2534,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11473656
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2587,7 +2579,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!114 &11488126
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2616,7 +2607,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11494286
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2628,7 +2618,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: 0, g: 0, b: 1, a: 1}
 --- !u!114 &11496282
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2640,7 +2629,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ObjectColor: {r: .5, g: .5, b: .5, a: 1}
 --- !u!222 &22206162
 CanvasRenderer:
   m_ObjectHideFlags: 1
