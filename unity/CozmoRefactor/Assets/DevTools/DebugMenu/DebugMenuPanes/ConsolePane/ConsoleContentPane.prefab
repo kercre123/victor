@@ -25,6 +25,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22424390}
+  - 114: {fileID: 11488482}
   m_Layer: 5
   m_Name: ConsoleContentPane
   m_TagString: Untagged
@@ -1147,6 +1148,19 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11488482
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 100452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: adba3f99b4e9c49d9833d9b8b710f2fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  consoleTextLabel_: {fileID: 11471168}
+  textScrollRect_: {fileID: 11490106}
 --- !u!114 &11489016
 MonoBehaviour:
   m_ObjectHideFlags: 1

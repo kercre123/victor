@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 
 public class ConsoleLogManager : MonoBehaviour {
 
@@ -9,15 +10,20 @@ public class ConsoleLogManager : MonoBehaviour {
 
   private Queue<LogPacket> mostRecentLogs_;
 
+  private ConsoleLogPane consoleLogPaneView_;
+
 	// Use this for initialization
 	private void Awake () {
     mostRecentLogs_ = new Queue<LogPacket>();
+    consoleLogPaneView_ = null;
 
     DAS.OnInfoLogged += OnInfoLogged;
     DAS.OnWarningLogged += OnWarningLogged;
     DAS.OnErrorLogged += OnErrorLogged;
     DAS.OnDebugLogged += OnDebugLogged;
     DAS.OnEventLogged += OnEventLogged;
+
+    ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
 	}
 
   private void OnDestroy(){
@@ -26,6 +32,7 @@ public class ConsoleLogManager : MonoBehaviour {
     DAS.OnErrorLogged -= OnErrorLogged;
     DAS.OnDebugLogged -= OnDebugLogged;
     DAS.OnEventLogged -= OnEventLogged;
+    ConsoleLogPane.ConsoleLogPaneOpened -= OnConsoleLogPaneOpened;
   }
 
   private void OnInfoLogged(string eventName, string eventValue, Object context){
@@ -48,6 +55,23 @@ public class ConsoleLogManager : MonoBehaviour {
     SaveLogPacket(LogPacket.ELogKind.DEBUG, eventName, eventValue, context);
   }
 
+  private void OnConsoleLogPaneOpened(ConsoleLogPane logPane){
+    consoleLogPaneView_ = logPane;
+
+    StringBuilder sb = new StringBuilder();
+    foreach (LogPacket packet in mostRecentLogs_) {
+      sb.Append(packet.ToString());
+      sb.Append("\n");
+    }
+
+    consoleLogPaneView_.Initialize(sb.ToString());
+  }
+
+  private void OnConsoleLogPaneClosed(){
+    // TODO: Save last used filters
+    consoleLogPaneView_ = null;
+  }
+
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, Object context){
     // Add the new log to the queue
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context);
@@ -56,8 +80,11 @@ public class ConsoleLogManager : MonoBehaviour {
       mostRecentLogs_.Dequeue();
     }
 
-    // TODO: Update the UI, if it is open
-    // TODO: Only add the new log to the UI if the filter is toggled on
+    // Update the UI, if it is open
+    if (consoleLogPaneView_ != null) {
+      // TODO: Only add the new log to the UI if the filter is toggled on
+      consoleLogPaneView_.AppendLog(newPacket.ToString());
+    }
   }
 
   // TODO: Pragma out for production
@@ -115,5 +142,39 @@ public class LogPacket {
     EventName = eventName;
     EventValue = eventValue;
     Context = context;
+  }
+
+  public override string ToString() {
+    string logKindStr = "";
+    string colorStr = "";
+    switch (LogKind) {
+    case ELogKind.INFO:
+      logKindStr = "INFO";
+      colorStr = "ffffff";
+      break;
+    case ELogKind.WARNING:
+      logKindStr = "WARN";
+      colorStr = "ffcc00";
+      break;
+    case ELogKind.ERROR:
+      logKindStr = "ERROR";
+      colorStr = "ff0000";
+      break;
+    case ELogKind.EVENT:
+      logKindStr = "EVENT";
+      colorStr = "0099ff";
+      break;
+    case ELogKind.DEBUG:
+      logKindStr = "DEBUG";
+      colorStr = "00cc00";
+      break;
+    }
+    
+    string contextStr = "null";
+    if (Context != null) {
+      contextStr = Context.ToString();
+    }
+    // TODO: Colorize the text
+    return string.Format("<color=#{0}>[{1}] {2}: {3} ({4})</color>", colorStr, logKindStr, EventName, EventValue, contextStr);
   }
 }
