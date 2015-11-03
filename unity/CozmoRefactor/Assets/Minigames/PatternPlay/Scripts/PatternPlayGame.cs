@@ -50,6 +50,7 @@ public class PatternPlayGame : GameBase {
     // Check Keyboard for Input to set block lights.
     // useful for testing using webots.
     KeyboardBlockCycle();
+    PhoneCycle();
 
     // actually set the lights on the physical blocks.
     SetBlockLights();
@@ -220,6 +221,18 @@ public class PatternPlayGame : GameBase {
 
     }
 
+  }
+
+  private void PhoneCycle() {
+    if (Input.GetMouseButtonDown(0)) {
+      int lastTouchedID = SelectNewInputCandidate();
+
+      if (lastTouchedID != -1) {
+        blockPatternData_[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData_[lastTouchedID].blockLightsLocalSpace);
+        blockPatternData_[lastTouchedID].lastTimeTouched = Time.time;
+        LightSet(lastTouchedID);
+      }
+    }
   }
 
   // sets the lights on the physical blocks based on configurations in Pattern Play.
