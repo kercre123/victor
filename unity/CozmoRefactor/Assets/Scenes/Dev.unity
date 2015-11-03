@@ -399,6 +399,10 @@ Prefab:
       propertyPath: audioSources.Array.data[3]
       value: 
       objectReference: {fileID: 1601653689}
+    - target: {fileID: 11479540, guid: 1ab431f5047cb417f885bec7f259641f, type: 2}
+      propertyPath: audioSource_
+      value: 
+      objectReference: {fileID: 1601653689}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 1ab431f5047cb417f885bec7f259641f, type: 2}
   m_IsPrefabParent: 0
@@ -420,7 +424,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0

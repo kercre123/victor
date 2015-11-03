@@ -7,6 +7,6 @@ public class PatternPlayAudio : MonoBehaviour {
   AudioClip[] lightSounds_;
 
   public void PlayLightsSound(int index) {
-    AudioManager.PlayAudioClip(lightSounds_[index], 0, AudioManager.Source.Gameplay, 1, 2);
+    AudioManager.PlayAudioClip(lightSounds_[index]);
   }
 }
