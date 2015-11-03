@@ -662,6 +662,11 @@ namespace Anki {
                           robot.GetID(), _objectID.GetValue());
         
         result = ActionResult::FAILURE_ABORT;
+      } else if(ObservableObject::PoseState::Unknown == object->GetPoseState()) {
+        PRINT_NAMED_ERROR("DriveToObjectAction.CheckPreconditions.ObjectPoseStateUnknown",
+                          "Robot %d cannot plan a path to ActionableObject %d, whose pose state is Unknown.",
+                          robot.GetID(), _objectID.GetValue());
+        result = ActionResult::FAILURE_ABORT;
       } else {
       
         // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
@@ -1963,7 +1968,7 @@ namespace Anki {
               PRINT_STREAM_INFO("PickupObjectAction.Verify",
                                 "Moving carried object to object seen in original pose and clearing that object.");
               carryObject->SetPose(objectInOriginalPose->GetPose());
-              blockWorld.ClearObject(objectInOriginalPose->GetID());
+              blockWorld.DeleteObject(objectInOriginalPose->GetID());
             }
             robot.UnSetCarryingObjects();
             
