@@ -180,6 +180,7 @@ public class Robot : IDisposable {
   private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
+  private U2G.SetRobotVolume SetRobotVolumeMessage;
 
   private ObservedObject _carryingObject;
 
@@ -285,6 +286,7 @@ public class Robot : IDisposable {
     PlayAnimationMessages = new U2G.PlayAnimation[2];
     PlayAnimationMessages[0] = new U2G.PlayAnimation();
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
+    SetRobotVolumeMessage = new U2G.SetRobotVolume();
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -546,7 +548,6 @@ public class Robot : IDisposable {
     if (callback != null) {
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
     }
-
   }
 
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
@@ -651,6 +652,14 @@ public class Robot : IDisposable {
     if (onComplete != null) {
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
     }
+  }
+
+  public void SetRobotVolume(float volume) {
+    SetRobotVolumeMessage.volume = volume;
+    DAS.Debug("RobotEngineManager", "Set Robot Volume " + SetRobotVolumeMessage.volume);
+
+    RobotEngineManager.instance.Message.SetRobotVolume = SetRobotVolumeMessage;
+    RobotEngineManager.instance.SendMessage();
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {

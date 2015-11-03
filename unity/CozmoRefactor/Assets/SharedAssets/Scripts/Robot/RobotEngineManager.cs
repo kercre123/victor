@@ -175,8 +175,6 @@ public class RobotEngineManager : MonoBehaviour {
     if (ConnectedToClient != null) {
       ConnectedToClient(connectionIdentifier);
     }
-
-    SetRobotVolume();
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -287,10 +285,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotConnected message) {
-    // no longer a good indicator
-//    if (RobotConnected != null) {
-//      RobotConnected((int)message.robotID);
-//    }
+
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
@@ -493,14 +488,6 @@ public class RobotEngineManager : MonoBehaviour {
     StartEngineMessage.vizHostIP[length] = 0;
 
     Message.StartEngine = StartEngineMessage;
-    SendMessage();
-  }
-
-  public void SetRobotVolume() {
-    SetRobotVolumeMessage.volume = 0.0f;
-    DAS.Debug("RobotEngineManager", "Set Robot Volume " + SetRobotVolumeMessage.volume);
-
-    Message.SetRobotVolume = SetRobotVolumeMessage;
     SendMessage();
   }
 
