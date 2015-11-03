@@ -1,7 +1,0 @@
-#include "NotARealFile.clad"
-// This is a struct, which is bad!
-message SomeFoo {
-  int_8 foo,
-  int_8 bar,
-}
-

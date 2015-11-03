@@ -61,6 +61,7 @@ bool xythetaPlanner::Replan(unsigned int maxExpansions, bool* runPlan)
 
   duration<double> time_d = duration_cast<duration<double>>(end - start);
   double time = time_d.count();
+  _impl->_lastPlanTime = time;
 
   PRINT_NAMED_INFO("xythetaPlanner.ReplanComplete", 
                    "planning took %f seconds. (%f exps/sec, %f cons/sec, %f checks/sec)",
@@ -87,6 +88,21 @@ Cost xythetaPlanner::GetFinalCost() const
   return _impl->_finalCost;
 }
 
+float xythetaPlanner::GetLastPlanTime() const
+{
+  return _impl->_lastPlanTime;
+}
+
+int xythetaPlanner::GetLastNumEpansions() const
+{
+  return _impl->_expansions;
+}
+
+int xythetaPlanner::GetLastNumConsiderations() const
+{
+  return _impl->_considerations;
+}
+
 void xythetaPlanner::GetTestPlan(xythetaPlan& plan)
 {
   _impl->GetTestPlan(plan);
@@ -105,6 +121,7 @@ xythetaPlannerImpl::xythetaPlannerImpl(const xythetaPlannerContext& context)
   , _goalChanged(false)
   , _searchNum(0)
   , _runPlan(nullptr)
+  , _lastPlanTime(-1.0)
 {
   _startID = _start.GetStateID();
   Reset();
@@ -244,10 +261,6 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
     Cost c = q.topF();
     curr = q.pop();
 
-    if( _heurMap.find(curr) == _heurMap.end()) {
-      _heurMap.insert( std::make_pair( curr, c ) );
-    }
-
     if(!_context.env.IsInSoftCollision(curr)) {
       if( numEscapes == 0 ) {
         minCostOutside = c;
@@ -268,6 +281,11 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
       // NOTE: need more testing to prove to myself that allowing any COLLISION_GOAL_HEURISTIC_NUM_ESCAPES > 1
       // actually works, and is helpful at all.
     }
+    else {
+      if( _heurMap.find(curr) == _heurMap.end()) {
+        _heurMap.insert( std::make_pair( curr, c ) );
+      }
+    }
 
     // this logic is almost identical to ExpandState, but using reverse successors
     SuccessorIterator it = _context.env.GetSuccessors(curr, c, true);
@@ -280,12 +298,16 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
       StateID nextID = it.Front().stateID;
       float newC = it.Front().g;
 
+      it.Next(_context.env);
+
+      if( _heurMap.find(nextID) != _heurMap.end() ) {
+        continue;
+      }
+
       // simplified best-first expansion backwards from the goal
 
       // this might repeat work (no closed list), but who cares, this is a short bit of code
       q.insert(nextID, newC);
-
-      it.Next(_context.env);
     }
 
     heurExpansions++;
@@ -423,11 +445,12 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, bool* runPlan)
 
     // TODO:(bn) make this a dev option / parameter
     if(_expansions % 10000 == 0) {
-      printf("PLANDEBUG: %8d %8.5f = %8.5f + %8.5f\n",
-             _expansions,
-             _open.topF(),
-             _table[_open.top()].g_,
-             _open.topF() - _table[_open.top()].g_);
+      PRINT_NAMED_INFO("xythetaPlanner.PLANDEBUG",
+                       "%8d %8.5f = %8.5f + %8.5f\n",
+                       _expansions,
+                       _open.topF(),
+                       _table[_open.top()].g_,
+                       _open.topF() - _table[_open.top()].g_);
     }
   }
 
@@ -530,11 +553,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
 
 Cost xythetaPlannerImpl::heur_internal(StateID sid)
 {
-  State s(sid);
-
-  // TODO:(bn) opt: consider squaring the entire damn thing so we don't have to sqrt here (within
-  // GetDistanceBetween). I.e. heur() would return squared value, and then f = g^2 + h. First, do a profile
-  // and see if the sqrt is taking up any significant amount of time
+  State s(sid);  
 
   return _context.env.GetDistanceBetween(_goal_c, s) * _context.env.GetOneOverMaxVelocity();
 }
