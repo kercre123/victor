@@ -20,7 +20,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public int CurrentRobotID { get; private set; }
 
-  public Robot current { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
+  public Robot CurrentRobot { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
 
   public bool IsConnected { get { return (channel_ != null && channel_.IsConnected); } }
 
@@ -122,10 +122,10 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void LateUpdate() {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
 
-    current.UpdateLightMessages();
+    CurrentRobot.UpdateLightMessages();
   }
 
   public void AddRobot(byte robotID) {
@@ -299,124 +299,124 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(ObjectMoved message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
 
     int ID = (int)message.objectID;
 
-    if (current.ActiveBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = current.ActiveBlocks[ID];
+    if (CurrentRobot.ActiveBlocks.ContainsKey(ID)) {
+      ActiveBlock activeBlock = CurrentRobot.ActiveBlocks[ID];
 
       activeBlock.Moving(message);
-      current.UpdateDirtyList(activeBlock);
+      CurrentRobot.UpdateDirtyList(activeBlock);
     }
   }
 
   private void ReceivedSpecificMessage(ObjectStoppedMoving message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
 
     int ID = (int)message.objectID;
     
-    if (current.ActiveBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = current.ActiveBlocks[ID];
+    if (CurrentRobot.ActiveBlocks.ContainsKey(ID)) {
+      ActiveBlock activeBlock = CurrentRobot.ActiveBlocks[ID];
       
       activeBlock.StoppedMoving(message);
     }
   }
 
   private void ReceivedSpecificMessage(ObjectTapped message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
     
     int ID = (int)message.objectID;
     
-    if (current.ActiveBlocks.ContainsKey(ID)) {
-      ActiveBlock activeBlock = current.ActiveBlocks[ID];
+    if (CurrentRobot.ActiveBlocks.ContainsKey(ID)) {
+      ActiveBlock activeBlock = CurrentRobot.ActiveBlocks[ID];
       
       activeBlock.Tapped(message);
     }
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedObject message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
-    current.UpdateObservedObjectInfo(message);
+    CurrentRobot.UpdateObservedObjectInfo(message);
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedFace message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
-    current.UpdateObservedFaceInfo(message);
+    CurrentRobot.UpdateObservedFaceInfo(message);
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
     
-    if (current.SeenObjects.Count == 0 && !current.isBusy) {
-      current.ClearVisibleObjects();
+    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.isBusy) {
+      CurrentRobot.ClearVisibleObjects();
     }
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedObject message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
 
     DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
-    ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
+    ObservedObject deleted = CurrentRobot.SeenObjects.Find(x => x == message.objectID);
 
-    current.SeenObjects.Remove(deleted);
-    current.VisibleObjects.Remove(deleted);
-    current.DirtyObjects.Remove(deleted);
-    current.ActiveBlocks.Remove((int)message.objectID);
+    CurrentRobot.SeenObjects.Remove(deleted);
+    CurrentRobot.VisibleObjects.Remove(deleted);
+    CurrentRobot.DirtyObjects.Remove(deleted);
+    CurrentRobot.ActiveBlocks.Remove((int)message.objectID);
 
   }
 
   private void ReceivedSpecificMessage(G2U.RobotMarkedObjectPoseUnknown message) {
-    ObservedObject deleted = current.SeenObjects.Find(x => x == message.objectID);
+    ObservedObject deleted = CurrentRobot.SeenObjects.Find(x => x == message.objectID);
 
-    current.SeenObjects.Remove(deleted);
-    current.VisibleObjects.Remove(deleted);
-    current.DirtyObjects.Remove(deleted);
+    CurrentRobot.SeenObjects.Remove(deleted);
+    CurrentRobot.VisibleObjects.Remove(deleted);
+    CurrentRobot.DirtyObjects.Remove(deleted);
 
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedFace message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
 		
-    Face deleted = current.Faces.Find(x => x == message.faceID);
+    Face deleted = CurrentRobot.Faces.Find(x => x == message.faceID);
 
     if (deleted != null) {
       DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
-      current.Faces.Remove(deleted);
+      CurrentRobot.Faces.Remove(deleted);
     }
 
   }
 
   private void ReceivedSpecificMessage(G2U.RobotCompletedAction message) {
-    if (current == null)
+    if (CurrentRobot == null)
       return;
     
-    RobotActionType action_type = (RobotActionType)message.actionType;
-    bool success = (message.result == ActionResult.SUCCESS) || ((action_type == RobotActionType.PLAY_ANIMATION || action_type == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
-    current.targetLockedObject = null;
+    RobotActionType actionType = (RobotActionType)message.actionType;
+    bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
+    CurrentRobot.targetLockedObject = null;
 
-    current.localBusyTimer = 0f;
+    CurrentRobot.localBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
-      SuccessOrFailure(success, action_type);
+      SuccessOrFailure(success, actionType);
     }
 
-    if (action_type == RobotActionType.PLAY_ANIMATION) {
+    if (actionType == RobotActionType.PLAY_ANIMATION) {
       if (RobotCompletedAnimation != null) {
         RobotCompletedAnimation(success, message.completionInfo.animName);
       }
     }
 
-    if (action_type == RobotActionType.COMPOUND) {
+    if (actionType == RobotActionType.COMPOUND) {
       if (RobotCompletedCompoundAction != null) {
         RobotCompletedCompoundAction(success, message.idTag);
       }
@@ -428,11 +428,11 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (!success) {
-      if (current.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
-        current.SetLiftHeight(1f);
+      if (CurrentRobot.Status(RobotStatusFlag.IS_CARRYING_BLOCK)) {
+        CurrentRobot.SetLiftHeight(1f);
       }
       else {
-        current.SetLiftHeight(0f);
+        CurrentRobot.SetLiftHeight(0f);
       }
     }
   }

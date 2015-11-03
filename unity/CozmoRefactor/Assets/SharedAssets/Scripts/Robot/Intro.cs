@@ -16,7 +16,7 @@ public class Intro : MonoBehaviour {
 
   private const int ROBOT_ID = 1;
 
-  private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+  private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
   private string lastEngineIp {
     get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }

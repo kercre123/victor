@@ -64,7 +64,7 @@ public class ObservedObject {
 
   public float TimeCreated { get; private set; }
 
-  protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.current : null; } }
+  protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
   public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
 
