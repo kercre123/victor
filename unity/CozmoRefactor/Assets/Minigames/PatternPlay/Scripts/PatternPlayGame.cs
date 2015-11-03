@@ -20,6 +20,8 @@ public class PatternPlayGame : GameBase {
   // variables for autonomous pattern building
   private PatternPlayAutoBuild patternPlayAutoBuild_ = new PatternPlayAutoBuild();
 
+  private PatternPlayAudio patternPlayAudio_;
+
   void Start() {
     DAS.Info("PatternPlayGame", "Game Created");
     patternPlayStateMachine_.SetGameRef(this);
@@ -34,6 +36,8 @@ public class PatternPlayGame : GameBase {
     robot.StopFaceAwareness();
 
     memoryBank_.Initialize();
+
+    patternPlayAudio_ = GetComponent<PatternPlayAudio>();
   }
 
   void Update() {
@@ -230,6 +234,7 @@ public class PatternPlayGame : GameBase {
       if (lastTouchedID != -1) {
         blockPatternData_[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData_[lastTouchedID].blockLightsLocalSpace);
         blockPatternData_[lastTouchedID].lastTimeTouched = Time.time;
+        patternPlayAudio_.PlayLightsSound(blockPatternData_[lastTouchedID].blockLightsLocalSpace.NumberOfLightsOn());
         LightSet(lastTouchedID);
       }
     }

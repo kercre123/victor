@@ -10,6 +10,7 @@ GameObject:
   - 4: {fileID: 469956}
   - 114: {fileID: 11461286}
   - 114: {fileID: 11424622}
+  - 114: {fileID: 11405386}
   m_Layer: 0
   m_Name: PatternPlayGame
   m_TagString: Untagged
@@ -29,6 +30,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!114 &11405386
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 123120}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcdf6da5cb7d343438848e45e03b1f95, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lightSounds:
+  - {fileID: 8300000, guid: 5867bf7a6b7d24d38bde2720e193f07d, type: 3}
+  - {fileID: 8300000, guid: 4cafa048fc05c4d7288ff296c83680b3, type: 3}
+  - {fileID: 8300000, guid: 0527a7ecbcfc94b1b8308b356a669fc2, type: 3}
+  - {fileID: 8300000, guid: 48715a99938c14c10a8b5ceb360df92c, type: 3}
+  - {fileID: 8300000, guid: 99ccd2007770b4d80b4d91635c9c8677, type: 3}
 --- !u!114 &11424622
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -60,9 +78,17 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: lightSounds.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: gameName_
       value: Pattern Play
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: patternPlayAudio_
+      value: 
+      objectReference: {fileID: 11405386}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 123120}

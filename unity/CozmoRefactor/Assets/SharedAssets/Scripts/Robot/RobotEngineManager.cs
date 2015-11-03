@@ -62,7 +62,6 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
-  private U2G.SetRobotVolume SetRobotVolumeMessage = new G2U.SetRobotVolume();
 
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
