@@ -354,7 +354,7 @@ namespace Cozmo {
   {
     if(_robot->HasExternalInterface())
     {
-      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT && !observedObject->IsPoseStateUnknown())
+      if(observedObject->IsExistenceConfirmed())
       {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
@@ -2056,7 +2056,7 @@ namespace Cozmo {
       
       if(numObjectsObserved == 0) {
         // If we didn't see/update anything, send a signal saying so
-        _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
       }
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
@@ -2256,9 +2256,9 @@ namespace Cozmo {
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(_robot->HasExternalInterface() && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+        if(object->IsExistenceConfirmed())
         {
-          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
+          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
