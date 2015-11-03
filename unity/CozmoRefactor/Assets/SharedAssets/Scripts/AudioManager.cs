@@ -4,6 +4,7 @@ using System.Collections;
 public class AudioManager : MonoBehaviour {
   private static AudioManager instance = null;
 
+  [SerializeField]
   private AudioSource[] audioSources;
 
   public enum Source {
