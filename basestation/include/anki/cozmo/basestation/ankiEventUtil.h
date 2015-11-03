@@ -36,18 +36,31 @@ namespace Cozmo {
 class IExternalInterface;
 template<typename T> class AnkiEvent;
   
+template <typename T, typename H>
 class AnkiEventUtil
 {
 public:
-  template <ExternalInterface::MessageGameToEngineTag Tag, typename T, typename H>
-  static void SubscribeInternal(IExternalInterface& externalInterface, T thisPointer, H& eventHandlers)
+  AnkiEventUtil(IExternalInterface& externalInterface, T& object, H& handlersIn)
+  : _interface(externalInterface)
+  , _object(object)
+  , _eventHandlers(handlersIn)
+  { }
+  
+  template <ExternalInterface::MessageGameToEngineTag Tag>
+  void SubscribeInternal()
   {
-    eventHandlers.push_back(externalInterface.Subscribe(Tag,
-      [thisPointer] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    T& temp = _object;
+    _eventHandlers.push_back(_interface.Subscribe(Tag,
+      [&temp] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
       {
-        thisPointer->HandleMessage(event.GetData().Get_<Tag>());
+        temp.HandleMessage(event.GetData().Get_<Tag>());
       }));
   }
+  
+private:
+  IExternalInterface& _interface;
+  T& _object;
+  H& _eventHandlers;
   
 }; // class Event
 

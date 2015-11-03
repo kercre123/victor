@@ -25,6 +25,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
+#include <functional>
 
 namespace Anki {
 namespace Cozmo {
@@ -502,26 +503,26 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
   }
 }
 
-
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {
-  using namespace ExternalInterface;
+  auto helper = AnkiEventUtil<Robot, decltype(_signalHandles)>(externalInterface, *this, _signalHandles);
   
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>(*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::CancelAction>            (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>          (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::IMURequest>              (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>         (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>        (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>     (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::ExecuteTestPlan>         (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SaveImages>              (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SaveRobotState>          (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetRobotCarryingObject>  (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::AbortPath>               (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::AbortAll>                (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>     (*_externalInterface, this, _signalHandles);
-  AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>  (*_externalInterface, this, _signalHandles);
+  using namespace ExternalInterface;
+  helper.SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
+  helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
+  helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
+  helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
+  helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
+  helper.SubscribeInternal<MessageGameToEngineTag::ExecuteTestPlan>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SaveImages>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SaveRobotState>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetRobotCarryingObject>();
+  helper.SubscribeInternal<MessageGameToEngineTag::AbortPath>();
+  helper.SubscribeInternal<MessageGameToEngineTag::AbortAll>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
 }
 
 template<>

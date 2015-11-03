@@ -766,13 +766,14 @@ namespace Anki {
     
     void VizManager::SubscribeToEngineEvents(IExternalInterface& externalInterface)
     {
-      using namespace ExternalInterface;
+      auto helper = AnkiEventUtil<VizManager, decltype(_eventHandlers)>(externalInterface, *this, _eventHandlers);
       
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::EnableDisplay>(externalInterface, this, _eventHandlers);
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::ErasePoseMarker>(externalInterface, this, _eventHandlers);
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::VisualizeQuad>(externalInterface, this, _eventHandlers);
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::SetVizOrigin>(externalInterface, this, _eventHandlers);
-      AnkiEventUtil::SubscribeInternal<MessageGameToEngineTag::EraseQuad>(externalInterface, this, _eventHandlers);
+      using namespace ExternalInterface;
+      helper.SubscribeInternal<MessageGameToEngineTag::EnableDisplay>();
+      helper.SubscribeInternal<MessageGameToEngineTag::ErasePoseMarker>();
+      helper.SubscribeInternal<MessageGameToEngineTag::VisualizeQuad>();
+      helper.SubscribeInternal<MessageGameToEngineTag::SetVizOrigin>();
+      helper.SubscribeInternal<MessageGameToEngineTag::EraseQuad>();
     }
     
     template<>
