@@ -1965,8 +1965,10 @@ namespace Anki {
             // object I matched to it above, and then delete that object.
             // (This prevents a new object with different ID being created.)
             if(carryObject->GetID() != objectInOriginalPose->GetID()) {
-              PRINT_STREAM_INFO("PickupObjectAction.Verify",
-                                "Moving carried object to object seen in original pose and clearing that object.");
+              PRINT_NAMED_INFO("PickupObjectAction.Verify",
+                               "Moving carried object to object seen in original pose "
+                               "and deleting that object (ID=%d).",
+                               objectInOriginalPose->GetID().GetValue());
               carryObject->SetPose(objectInOriginalPose->GetPose());
               blockWorld.DeleteObject(objectInOriginalPose->GetID());
             }

@@ -200,26 +200,6 @@ namespace Cozmo {
       return nullptr;
     }
   
-    ObservableObject* BlockWorld::GetObjectByIdHelper(const ObjectID objectID,
-                                                      ObjectsMapByID_t::iterator& objectIter,
-                                                      ObjectsMapByType_t::iterator& typeIter,
-                                                      ObjectsMapByFamily_t::iterator& familyIter)
-    {
-      for(familyIter = _existingObjects.begin(); familyIter != _existingObjects.end(); ++familyIter)
-      {
-        for(typeIter = familyIter->second.begin(); typeIter != familyIter->second.end(); ++typeIter)
-        {
-          objectIter = typeIter->second.find(objectID);
-          if(objectIter != typeIter->second.end()) {
-            return objectIter->second;
-          }
-        }
-      }
-      
-      return nullptr;
-    }
-  
-  
     ObservableObject* BlockWorld::GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
@@ -2479,10 +2459,7 @@ namespace Cozmo {
     bool BlockWorld::DeleteObject(const ObjectID withID)
     {
       bool retval = false;
-      ObjectsMapByID_t::iterator objectIter;
-      ObjectsMapByType_t::iterator typeIter;
-      ObjectsMapByFamily_t::iterator familyIter;
-      ObservableObject* object = GetObjectByIdHelper(withID, objectIter, typeIter, familyIter);
+      ObservableObject* object = GetObjectByIdHelper(withID);
       
       if(nullptr != object)
       {
@@ -2493,16 +2470,12 @@ namespace Cozmo {
         ClearObjectHelper(object);
         
         // Actually delete the object we found
+        ObjectFamily inFamily = object->GetFamily();
+        ObjectType   withType = object->GetType();
         delete object;
         
-        // If that was the last object/type/family existing, clear the container
-        typeIter->second.erase(objectIter);
-        if(typeIter->second.empty()) {
-          familyIter->second.erase(typeIter);
-          if(familyIter->second.empty()) {
-            _existingObjects.erase(familyIter);
-          }
-        }
+        // And remove it from the container
+        _existingObjects[inFamily][withType].erase(withID);
       }
       
       return retval;
@@ -2542,20 +2515,8 @@ namespace Cozmo {
         // Delete the object
         delete object;
         
-        // Erase from the container and get the iterator to the next element
-        auto & familyContainer = _existingObjects[fromFamily];
-        auto & typeContainer = familyContainer[withType];
-        auto retval = typeContainer.erase(objIter);
-        
-        // If the type/family container is now empty, erase it
-        if(typeContainer.empty()) {
-          familyContainer.erase(withType);
-          if(familyContainer.empty()) {
-            _existingObjects.erase(fromFamily);
-          }
-        }
-        
-        return retval;
+        // Erase from the container and return the iterator to the next element
+        return _existingObjects[fromFamily][withType].erase(objIter);
       } else {
         PRINT_NAMED_WARNING("BlockWorld.DeleteObject.DeleteDisabled",
                             "Will not delete object %d because object deletion is disabled.",
