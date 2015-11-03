@@ -25,6 +25,8 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include <vector>
 
 namespace Anki
 {
@@ -35,6 +37,7 @@ namespace Anki
     class RobotManager;
     class RobotMessageHandler;
     class ActiveCube;
+    class IExternalInterface;
     
     class BlockWorld
     {
@@ -290,6 +293,8 @@ namespace Anki
       ObservableObject* FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter = BlockWorldFilter(),
                                          bool returnFirstFound = false) const;
       
+      void SetupEventHandlers(IExternalInterface& externalInterface);
+      
       //
       // Member Variables
       //
@@ -337,6 +342,8 @@ namespace Anki
       bool _enableDraw;
       
       std::set<ObjectID> _unidentifiedActiveObjects;
+      
+      std::vector<Signal::SmartHandle> _eventHandles;
       
     }; // class BlockWorld
 

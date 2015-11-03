@@ -14,18 +14,23 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
+#include <functional>
 
 namespace Anki {
 namespace Cozmo {
+  
+using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId)
 {
@@ -500,6 +505,225 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
   }
 }
 
+void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
+{
+  auto helper = AnkiEventUtil<Robot, decltype(_signalHandles)>(externalInterface, *this, _signalHandles);
+  
+  using namespace ExternalInterface;
+  helper.SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
+  helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
+  helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
+  helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
+  helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
+  helper.SubscribeInternal<MessageGameToEngineTag::ExecuteTestPlan>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SaveImages>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SaveRobotState>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetRobotCarryingObject>();
+  helper.SubscribeInternal<MessageGameToEngineTag::AbortPath>();
+  helper.SubscribeInternal<MessageGameToEngineTag::AbortAll>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
+}
 
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg)
+{
+  _isBehaviorMgrEnabled = msg.enabled;
+}
+  
+template<>
+void Robot::HandleMessage(const ExternalInterface::CancelAction& msg)
+{
+  GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
+{
+  if(IsCarryingObject()) {
+    Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
+    Quad2f objectFootprint = GetBlockWorld().GetObjectByID(GetCarryingObject())->GetBoundingQuadXY(targetPose);
+    VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
+  }
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::IMURequest& msg)
+{
+  RequestIMU(msg.length_ms);
+}
+  
+  
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
+{
+  SetBackpackLights(msg.onColor, msg.offColor,
+                    msg.onPeriod_ms, msg.offPeriod_ms,
+                    msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetIdleAnimation& msg)
+{
+  _animationStreamer.SetIdleAnimation(msg.animationName);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::ReplayLastAnimation& msg)
+{
+  _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
+{
+  Planning::Path p;
+  _longPathPlanner->GetTestPath(GetPose(), p);
+  ExecutePath(p);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SaveImages& msg)
+{
+  _imageSaveMode = (SaveMode_t)msg.mode;
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SaveRobotState& msg)
+{
+  _stateSaveMode = (SaveMode_t)msg.mode;
+}
+  
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetRobotCarryingObject& msg)
+{
+  if(msg.objectID < 0) {
+    UnSetCarryingObjects();
+  } else {
+    SetCarryingObject(msg.objectID);
+  }
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::AbortPath& msg)
+{
+  AbortDrivingToPose();
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::AbortAll& msg)
+{
+  AbortAll();
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
+{
+  assert(msg.objectID <= s32_MAX);
+  SetObjectLights(msg.objectID,
+                  msg.whichLEDs,
+                  msg.onColor, msg.offColor,
+                  msg.onPeriod_ms, msg.offPeriod_ms,
+                  msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                  msg.turnOffUnspecifiedLEDs,
+                  msg.makeRelative,
+                  Point2f(msg.relativeToX, msg.relativeToY));
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
+{
+  assert(msg.objectID <= s32_MAX);
+  SetObjectLights(msg.objectID,
+                  msg.onColor, msg.offColor,
+                  msg.onPeriod_ms, msg.offPeriod_ms,
+                  msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                  msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+}
+  
+void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
+{
+  // StartFaceTracking
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
+    [this] (const GameToEngineEvent& event)
+    {
+      _visionProcessor.EnableFaceDetection(true);
+    }));
+  
+  // StopFaceTracking
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
+    [this] (const GameToEngineEvent& event)
+    {
+      _visionProcessor.EnableFaceDetection(false);
+    }));
+  
+  // StartLookingForMarkers
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartLookingForMarkers,
+    [this] (const GameToEngineEvent& event)
+    {
+      StartLookingForMarkers();
+    }));
+  
+  // StopLookingForMarkers
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopLookingForMarkers,
+    [this] (const GameToEngineEvent& event)
+    {
+      StopLookingForMarkers();
+    }));
+  
+  // VisionWhileMoving
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionWhileMoving,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
+      EnableVisionWhileMoving(msg.enable);
+    }));
+}
+
+void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
+{
+  // SetWheelControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
+    }));
+  
+  // SetHeadControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
+    }));
+  
+  // SetLiftControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
+    }));
+  
+  // SetSteeringControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, 0.0f, 0.0f,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing);
+    }));
+}
+  
 } // end namespace Cozmo
 } // end namespace Anki

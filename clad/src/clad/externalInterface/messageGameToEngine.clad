@@ -459,8 +459,8 @@ message SetActiveObjectLEDs {
     uint_32  transitionOffPeriod_ms,
     float_32 relativeToX,
     float_32 relativeToY,
-    uint_8   whichLEDs,    // Bit pattern: see activeBlockTypes.h
-    uint_8   makeRelative, // MakeRelativeMode: see activeBlockTypes.h
+    WhichCubeLEDs   whichLEDs,
+    MakeRelativeMode   makeRelative,
     uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
     uint_8   robotID
 }

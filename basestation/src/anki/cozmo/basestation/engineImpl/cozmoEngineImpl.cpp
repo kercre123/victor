@@ -110,6 +110,12 @@ Result CozmoEngineImpl::Init(const Json::Value& config)
     if(_config[AnkiUtil::kP_VIZ_HOST_IP] == _config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
       VizManager::getInstance()->EnableImageSend(true);
     }
+    
+    if (nullptr != _externalInterface)
+    {
+      // Have VizManager subscribe to the events it should care about
+      VizManager::getInstance()->SubscribeToEngineEvents(*_externalInterface);
+    }
   }
 
   lastResult = InitInternal();

@@ -42,7 +42,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
       PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                        "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
     } else {
-      DriveWheels(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+      _robot.SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
     }
   }));
   
@@ -51,7 +51,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   [this] (const AnkiEvent<MessageGameToEngine>& event)
   {
     const struct TurnInPlaceAtSpeed& msg = event.GetData().Get_TurnInPlaceAtSpeed();
-    TurnInPlaceAtSpeed(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
+    _robot.SendRobotMessage<RobotInterface::TurnInPlaceAtSpeed>(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
   }));
   
   // Lambda for handling MoveHead
@@ -63,7 +63,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
       PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                        "Ignoring ExternalInterface::MoveHead while head is locked.");
     } else {
-      MoveHead(msg.speed_rad_per_sec);
+      _robot.SendRobotMessage<RobotInterface::MoveHead>(msg.speed_rad_per_sec);
     }
   }));
   
@@ -76,7 +76,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
       PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                        "Ignoring ExternalInterface::MoveLift while lift is locked.");
     } else {
-      MoveLift(msg.speed_rad_per_sec);
+      _robot.SendRobotMessage<RobotInterface::MoveLift>(msg.speed_rad_per_sec);
     }
   }));
   
@@ -122,18 +122,6 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   
 // =========== Motor commands ============
 
-// Sends message to move lift at specified speed
-Result MovementComponent::MoveLift(const f32 speed_rad_per_sec)
-{
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::MoveLift(speed_rad_per_sec)));
-}
-
-// Sends message to move head at specified speed
-Result MovementComponent::MoveHead(const f32 speed_rad_per_sec)
-{
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::MoveHead(speed_rad_per_sec)));
-}
-
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,
@@ -156,20 +144,6 @@ Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
                                                                                        max_speed_rad_per_sec,
                                                                                        accel_rad_per_sec2,
                                                                                        duration_sec)));
-}
-
-Result MovementComponent::TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
-                                             const f32 accel_rad_per_sec2)
-{
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::TurnInPlaceAtSpeed(speed_rad_per_sec,
-                                                                                             accel_rad_per_sec2)));
-}
-
-Result MovementComponent::DriveWheels(const f32 lwheel_speed_mmps,
-                                      const f32 rwheel_speed_mmps)
-{
-  return _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DriveWheels(lwheel_speed_mmps,
-                                                                                      rwheel_speed_mmps)));
 }
 
 Result MovementComponent::StopAllMotors()

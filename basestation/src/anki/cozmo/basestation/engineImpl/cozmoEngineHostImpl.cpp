@@ -51,6 +51,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
+  _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
 
 }
 
@@ -321,7 +322,7 @@ void CozmoEngineHostImpl::SetRobotImageSendMode(RobotID_t robotID, ImageSendMode
       robot->GetBlockWorld().EnableDraw(true);
     }
 
-    robot->RequestImage(newMode, resolution);
+    robot->SendRobotMessage<RobotInterface::ImageRequest>(newMode, resolution);
   }
 
 }
@@ -381,8 +382,14 @@ void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::Me
       const ExternalInterface::StartTestMode& msg = event.GetData().Get_StartTestMode();
       Robot* robot = GetRobotByID(msg.robotID);
       if(robot != nullptr) {
-        robot->StartTestMode((TestMode)msg.mode, msg.p1, msg.p2, msg.p3);
+        robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
       }
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SetRobotVolume:
+    {
+      const ExternalInterface::SetRobotVolume& msg = event.GetData().Get_SetRobotVolume();
+      SoundManager::getInstance()->SetRobotVolume(msg.volume);
       break;
     }
     default:
