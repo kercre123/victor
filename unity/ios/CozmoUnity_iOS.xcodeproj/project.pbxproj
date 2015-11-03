@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		08B24F76137BFDFA00FBA309 /* iAd.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08B24F75137BFDFA00FBA309 /* iAd.framework */; settings = {ATTRIBUTES = (Required, ); }; };
+		192A4B791BE93F360033FEC8 /* UnityAdsUnityWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 192A4B781BE93F360033FEC8 /* UnityAdsUnityWrapper.mm */; };
+		192A4B7B1BE93F7E0033FEC8 /* OnDemandResources.mm in Sources */ = {isa = PBXBuildFile; fileRef = 192A4B7A1BE93F7E0033FEC8 /* OnDemandResources.mm */; };
 		1D60589F0D05DD5A006BFB54 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D30AB110D05D00D00671497 /* Foundation.framework */; };
 		462D5BBB1B0576230027DC17 /* libopencv_calib3d.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75DA1A96C17D001011B7 /* libopencv_calib3d.a */; };
 		462D5BBC1B0576230027DC17 /* libopencv_highgui.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 468C75DC1A96C17D001011B7 /* libopencv_highgui.a */; };
@@ -142,6 +144,8 @@
 
 /* Begin PBXFileReference section */
 		08B24F75137BFDFA00FBA309 /* iAd.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = iAd.framework; path = System/Library/Frameworks/iAd.framework; sourceTree = SDKROOT; };
+		192A4B781BE93F360033FEC8 /* UnityAdsUnityWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = UnityAdsUnityWrapper.mm; path = "../../build/ios/unity-ios/Debug-iphoneos/Classes/UnityAds/UnityAdsUnityWrapper.mm"; sourceTree = "<group>"; };
+		192A4B7A1BE93F7E0033FEC8 /* OnDemandResources.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = OnDemandResources.mm; path = "../../build/ios/unity-ios/Debug-iphoneos/Classes/Unity/OnDemandResources.mm"; sourceTree = "<group>"; };
 		1D30AB110D05D00D00671497 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		1D6058910D05DD3D006BFB54 /* cozmo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cozmo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		462D5BC31B0576230027DC17 /* libopencv_video.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libopencv_video.a; path = opencv/libopencv_video.a; sourceTree = SOURCE_ROOT; };
@@ -374,6 +378,8 @@
 		29B97314FDCFA39411CA2CEA /* CustomTemplate */ = {
 			isa = PBXGroup;
 			children = (
+				192A4B7A1BE93F7E0033FEC8 /* OnDemandResources.mm */,
+				192A4B781BE93F360033FEC8 /* UnityAdsUnityWrapper.mm */,
 				E71A19B51BE2941B00299C46 /* DemiLib.dll.s */,
 				E71A19B61BE2941B00299C46 /* DOTween.dll.s */,
 				E71A19B71BE2941B00299C46 /* DOTween43.dll.s */,
@@ -781,6 +787,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				192A4B7B1BE93F7E0033FEC8 /* OnDemandResources.mm in Sources */,
+				192A4B791BE93F360033FEC8 /* UnityAdsUnityWrapper.mm in Sources */,
 				46D2C2C01B4F9E3E00FC7553 /* DisplayManager.mm in Sources */,
 				46D2C2B11B4F9E3E00FC7553 /* UnityViewControllerListener.mm in Sources */,
 				F8BD0CFE1B5ED7DF00F71EA3 /* UnityEngine.Networking.dll.s in Sources */,
