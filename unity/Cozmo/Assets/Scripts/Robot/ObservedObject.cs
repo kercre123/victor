@@ -30,7 +30,7 @@ public class ObservedObject {
 
   public int ID { get; private set; }
 
-  public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.25f; } }
+  public bool MarkersVisible { get { return Time.time - TimeLastSeen < 0.3f; } }
 
   public Rect VizRect { get; private set; }
 
@@ -112,7 +112,7 @@ public class ObservedObject {
     }
   }
 
-  public const float RemoveDelay = 0.33f;
+  public const float RemoveDelay = 0.4f;
 
   public string InfoString { get; private set; }
 

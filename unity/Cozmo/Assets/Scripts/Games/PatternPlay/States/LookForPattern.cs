@@ -73,7 +73,7 @@ public class LookForPattern : State {
     }
     else if (ShouldAutoBuildPattern()) {
       // nobody has moved blocks for a while... ima make my own pattern.
-      stateMachine.SetNextState(new HaveIdeaForPattern());
+      //stateMachine.SetNextState(new HaveIdeaForPattern());
     }
 
     lastFrameVisibleCount = robot.visibleObjects.Count;
@@ -82,7 +82,7 @@ public class LookForPattern : State {
   }
 
   bool ShouldAutoBuildPattern() {
-    bool blocksNotTouched = Time.time - patternPlayController.GetMostRecentMovedTime() > 5.0f;
+    bool blocksNotTouched = Time.time - patternPlayController.GetMostRecentMovedTime() > 10.0f;
     bool patternNotSeen = Time.time - patternPlayController.LastPatternSeenTime() > 20.0f;
     return blocksNotTouched && patternNotSeen;
   }

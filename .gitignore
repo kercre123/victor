@@ -164,6 +164,17 @@ unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
 unity/Cozmo/obj/*
 
+# UnityRefactor
+unity/CozmoRefactor/Builds
+unity/CozmoRefactor/Library
+unity/CozmoRefactor/Temp
+unity/CozmoRefactor/*.sln
+unity/CozmoRefactor/*.proj
+unity/CozmoRefactor/*.csproj
+unity/CozmoRefactor/*.userprefs
+unity/CozmoRefactor/*.obj
+unity/CozmoRefactor/obj/*
+
 # Visual studio
 *.userprefs
 .vs
