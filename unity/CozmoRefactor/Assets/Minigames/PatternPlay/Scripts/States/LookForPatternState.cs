@@ -72,7 +72,7 @@ public class LookForPatternState : State {
     }
     else if (ShouldAutoBuildPattern()) {
       // nobody has moved blocks for a while... ima make my own pattern.
-      //stateMachine.SetNextState(new HaveIdeaForPattern());
+      //stateMachine.SetNextState(new HaveIdeaForPatternState());
     }
 
     lastFrameVisibleCount_ = robot.VisibleObjects.Count;
