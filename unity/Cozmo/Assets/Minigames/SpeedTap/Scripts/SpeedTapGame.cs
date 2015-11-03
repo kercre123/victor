@@ -34,18 +34,17 @@ public class SpeedTapGame : GameBase {
   }
 
   public void UpdateUI() {
-    if (cozmoScoreField != null) {
+    /*if (cozmoScoreField != null) {
       cozmoScoreField.text = cozmoScore_.ToString();
     }
     if (playerScoreField != null) {
       playerScoreField.text = playerScore_.ToString();
-    }
+    }*/
   }
 
   public void RollingBlocks() {
     AudioManager.PlayAudioClip(rollSound_);
   }
-
 
   private void BlockTapped(int blockID, int tappedTimes) {
     Debug.Log("Ima tapped:" + blockID);
