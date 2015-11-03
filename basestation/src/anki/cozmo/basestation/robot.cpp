@@ -167,9 +167,7 @@ namespace Anki {
         
         _visionProcessor.Pause(true);
         
-        if (_externalInterface != nullptr) {
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
-        }
+        Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
       }
       else if (true == _isPickedUp && false == t) {
         // Robot just got put back down
@@ -187,9 +185,7 @@ namespace Anki {
           SetLocalizedTo(nullptr); // marks us as localized to odometry only
         }
         
-        if (_externalInterface != nullptr) {
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
-        }
+        Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
       }
       _isPickedUp = t;
     }
@@ -1394,9 +1390,8 @@ namespace Anki {
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
-      if (_externalInterface != nullptr) {
-        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
-      }
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
+      
       //CozmoEngineSignals::PlaySoundForRobotSignal().emit(GetID(), soundName, numLoops, volume);
       return RESULT_OK;
     } // PlaySound()
@@ -1404,9 +1399,7 @@ namespace Anki {
       
     void Robot::StopSound()
     {
-      if (_externalInterface != nullptr) {
-        _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
-      }
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
       
       
@@ -1483,7 +1476,7 @@ namespace Anki {
       }
 
       // Tell UI about available animations
-      if (_externalInterface != nullptr) {
+      if (HasExternalInterface()) {
         std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
         for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
@@ -3200,5 +3193,14 @@ namespace Anki {
       return driveCenterOffset;
     }
     
+    bool Robot::Broadcast(ExternalInterface::MessageEngineToGame&& event)
+    {
+      if(HasExternalInterface()) {
+        GetExternalInterface()->Broadcast(event);
+        return true;
+      } else {
+        return false;
+      }
+    }
   } // namespace Cozmo
 } // namespace Anki

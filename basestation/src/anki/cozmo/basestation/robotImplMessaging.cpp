@@ -236,7 +236,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
     if(!actionObject->IsBeingCarried()) {
       // Update the ID to be the blockworld ID before broadcasting
       payload.objectID = object->GetID();
-      _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
+      Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
     }
   }
 }
@@ -295,7 +295,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = object->GetID();
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
   }
 }
 
@@ -319,7 +319,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = object->GetID();
-    GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
   }
 }
 
@@ -358,7 +358,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
-  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
+  Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
   
 }
   
@@ -377,7 +377,7 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
   
   // Forward on with EngineToGame event
   ChargerEvent payload = message.GetData().Get_chargerEvent();
-  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
+  Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
 }
   
 
