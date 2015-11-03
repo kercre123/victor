@@ -160,21 +160,19 @@ namespace Cozmo {
     }
     
     // Send out an event about this face being observed
-    if(_robot.HasExternalInterface())
-    {
-      using namespace ExternalInterface;
-      const Vec3f& trans = knownFace->face.GetHeadPose().GetTranslation();
-      const UnitQuaternion<f32>& q = knownFace->face.GetHeadPose().GetRotation().GetQuaternion();
-      _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
-                                                                                     _robot.GetID(),
-                                                                                     trans.x(),
-                                                                                     trans.y(),
-                                                                                     trans.z(),
-                                                                                     q.w(),
-                                                                                     q.x(),
-                                                                                     q.y(),
-                                                                                     q.z())));
-    }
+    using namespace ExternalInterface;
+    const Vec3f& trans = knownFace->face.GetHeadPose().GetTranslation();
+    const UnitQuaternion<f32>& q = knownFace->face.GetHeadPose().GetRotation().GetQuaternion();
+    _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
+                                                           _robot.GetID(),
+                                                           trans.x(),
+                                                           trans.y(),
+                                                           trans.z(),
+                                                           q.w(),
+                                                           q.x(),
+                                                           q.y(),
+                                                           q.z())));
+
 
     return RESULT_OK;
   }
@@ -191,10 +189,8 @@ namespace Cozmo {
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
-        if(_robot.GetExternalInterface()) {
-          using namespace ExternalInterface;
-          _robot.GetExternalInterface()->Broadcast(MessageEngineToGame(RobotDeletedFace(faceIter->second.face.GetID(), _robot.GetID())));
-        }
+        using namespace ExternalInterface;
+        _robot.Broadcast(MessageEngineToGame(RobotDeletedFace(faceIter->second.face.GetID(), _robot.GetID())));
         
         VizManager::getInstance()->EraseVizObject(faceIter->second.vizHandle);
         faceIter = _knownFaces.erase(faceIter);

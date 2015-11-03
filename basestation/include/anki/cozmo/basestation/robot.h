@@ -106,12 +106,16 @@ typedef enum {
 } SaveMode_t;
     
 namespace RobotInterface {
-class MessageHandler;
-class EngineToRobot;
-class RobotToEngine;
-enum class EngineToRobotTag : uint8_t;
-enum class RobotToEngineTag : uint8_t;
+  class MessageHandler;
+  class EngineToRobot;
+  class RobotToEngine;
+  enum class EngineToRobotTag : uint8_t;
+  enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
+
+namespace ExternalInterface {
+  class MessageEngineToGame;
+}
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot
@@ -564,7 +568,7 @@ public:
     Result SendMessage(const RobotInterface::EngineToRobot& message,
                        bool reliable = true, bool hot = false) const;
     
-    // Events
+    // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
     inline bool HasExternalInterface() const { return _externalInterface != nullptr; }
@@ -582,6 +586,11 @@ public:
     // Handle various message types
     template<typename T>
     void HandleMessage(const T& msg);
+
+    // Convenience wrapper for broadcasting an event if the robot has an ExternalInterface.
+    // Does nothing if not. Returns true if event was broadcast, false if not (i.e.
+    // if there was no external interface).
+    bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
   
   protected:
     IExternalInterface* _externalInterface;

@@ -1,7 +1,22 @@
+/**
+ * File: cozmoObservableObject.h
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: ?/?/2015
+ *
+ *
+ * Description: Extends Vision::ObservableObject to add some Cozmo-specific
+ *              stuff, like object families and types.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+
 #ifndef __Anki_Cozmo_ObservableObject_H__
 #define __Anki_Cozmo_ObservableObject_H__
 
 #include "anki/vision/basestation/observableObject.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/activeObjectTypes.h"
@@ -40,6 +55,8 @@ namespace Cozmo {
     bool IsSameAs(const ObservableObject& otherObject,
                   const Point3f& distThreshold,
                   const Radians& angleThreshold) const;
+    
+    bool IsExistenceConfirmed() const;
     
   protected:
     
@@ -81,6 +98,12 @@ namespace Cozmo {
     Radians angleDiff;
     return IsSameAs(otherObject, distThreshold, angleThreshold,
                     Tdiff, angleDiff);
+  }
+  
+  inline bool ObservableObject::IsExistenceConfirmed() const {
+    return ((!IsActive() || ActiveIdentityState::Identified == GetIdentityState()) &&
+            GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
+            !IsPoseStateUnknown());
   }
   
 } // namespace Cozmo
