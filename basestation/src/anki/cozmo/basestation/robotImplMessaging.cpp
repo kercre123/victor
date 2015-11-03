@@ -29,6 +29,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId)
 {
@@ -645,35 +647,35 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 {
   // StartFaceTracking
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       _visionProcessor.EnableFaceDetection(true);
     }));
   
   // StopFaceTracking
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       _visionProcessor.EnableFaceDetection(false);
     }));
   
   // StartLookingForMarkers
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartLookingForMarkers,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       StartLookingForMarkers();
     }));
   
   // StopLookingForMarkers
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopLookingForMarkers,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       StopLookingForMarkers();
     }));
   
   // VisionWhileMoving
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionWhileMoving,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
       EnableVisionWhileMoving(msg.enable);
@@ -684,7 +686,7 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
 {
   // SetWheelControllerGains
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
       
@@ -694,7 +696,7 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
   
   // SetHeadControllerGains
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
       
@@ -704,7 +706,7 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
   
   // SetLiftControllerGains
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
       
@@ -714,7 +716,7 @@ void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
   
   // SetSteeringControllerGains
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
-    [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+    [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
       
