@@ -134,6 +134,7 @@ GameObject:
   - 223: {fileID: 22341676}
   - 114: {fileID: 11423486}
   - 114: {fileID: 11415268}
+  - 114: {fileID: 11409332}
   m_Layer: 5
   m_Name: DebugMenuTestCanvas
   m_TagString: Untagged
@@ -278,6 +279,17 @@ MonoBehaviour:
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
+--- !u!114 &11409332
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 175498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3306016eea3ba46918b4416095e07df7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11415268
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -380,7 +392,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 11409332}
         m_MethodName: OnAddDebugTap
         m_Mode: 1
         m_Arguments:
@@ -458,7 +470,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 11409332}
         m_MethodName: OnAddEventTap
         m_Mode: 1
         m_Arguments:
@@ -510,7 +522,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 11409332}
         m_MethodName: OnAddErrorTap
         m_Mode: 1
         m_Arguments:
@@ -651,7 +663,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 11409332}
         m_MethodName: OnAddWarningTap
         m_Mode: 1
         m_Arguments:
@@ -745,7 +757,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 11409332}
         m_MethodName: OnAddInfoTap
         m_Mode: 1
         m_Arguments:
