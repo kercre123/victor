@@ -416,10 +416,10 @@ namespace Cozmo {
                 
                 msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
                 const UnitQuaternion<float>& q = robot->GetPose().GetRotation().GetQuaternion();
-                msg.pose_quaternion0 = q.w();
-                msg.pose_quaternion1 = q.x();
-                msg.pose_quaternion2 = q.y();
-                msg.pose_quaternion3 = q.z();
+                msg.pose_qw = q.w();
+                msg.pose_qx = q.x();
+                msg.pose_qy = q.y();
+                msg.pose_qz = q.z();
                 
                 msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
                 msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
