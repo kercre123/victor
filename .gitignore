@@ -165,15 +165,15 @@ unity/Cozmo/*.obj
 unity/Cozmo/obj/*
 
 # UnityRefactor
-unity/CozmoRefactor/Builds
-unity/CozmoRefactor/Library
-unity/CozmoRefactor/Temp
-unity/CozmoRefactor/*.sln
-unity/CozmoRefactor/*.proj
-unity/CozmoRefactor/*.csproj
-unity/CozmoRefactor/*.userprefs
-unity/CozmoRefactor/*.obj
-unity/CozmoRefactor/obj/*
+unity/CozmoDirty/Builds
+unity/CozmoDirty/Library
+unity/CozmoDirty/Temp
+unity/CozmoDirty/*.sln
+unity/CozmoDirty/*.proj
+unity/CozmoDirty/*.csproj
+unity/CozmoDirty/*.userprefs
+unity/CozmoDirty/*.obj
+unity/CozmoDirty/obj/*
 
 # Visual studio
 *.userprefs
