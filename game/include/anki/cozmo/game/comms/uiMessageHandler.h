@@ -73,10 +73,6 @@ namespace Anki {
       
       virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) override;
       
-      inline void RegisterCallbackForMessage(const std::function<void(const ExternalInterface::MessageGameToEngine&)>& messageCallback)
-      {
-        this->messageCallback = messageCallback;
-      }
       inline u32 GetHostUiDeviceID() const { return _hostUiDeviceID; }
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame>& GetEventMgrToGame() { return _eventMgrToGame; }
@@ -88,8 +84,6 @@ namespace Anki {
       
       bool isInitialized_;
       u32 _hostUiDeviceID;
-      
-      std::function<void(const ExternalInterface::MessageGameToEngine&)> messageCallback;
       
       // Process a raw byte buffer as a message and send it to the specified
       // robot

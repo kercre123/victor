@@ -1026,8 +1026,8 @@ namespace Anki {
                     printf("Updating active block edge\n");
                     msg.onColor = ::Anki::NamedColors::RED;
                     msg.offColor = ::Anki::NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichCubeLEDs::FRONT);
-                    msg.makeRelative = 2;
+                    msg.whichLEDs = WhichCubeLEDs::FRONT;
+                    msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
                     msg.relativeToX = GetRobotPose().GetTranslation().x();
                     msg.relativeToY = GetRobotPose().GetTranslation().y();
                     
@@ -1037,11 +1037,11 @@ namespace Anki {
                     printf("Turning edge %d new color %d (%x)\n",
                            edgeIndex, colorIndex, u32(colorList[colorIndex]));
                     
-                    msg.whichLEDs = (1 << edgeIndex);
+                    msg.whichLEDs = (WhichCubeLEDs)(1 << edgeIndex);
                     msg.onColor = colorList[colorIndex];
                     msg.offColor = 0;
                     msg.turnOffUnspecifiedLEDs = 0;
-                    msg.makeRelative = 2;
+                    msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
                     msg.relativeToX = GetRobotPose().GetTranslation().x();
                     msg.relativeToY = GetRobotPose().GetTranslation().y();
                     
@@ -1062,8 +1062,8 @@ namespace Anki {
                            colorList[colorIndex].b());
                     msg.onColor = colorList[colorIndex++];
                     msg.offColor = ::Anki::NamedColors::BLACK;
-                    msg.whichLEDs = static_cast<u8>(WhichCubeLEDs::FRONT);
-                    msg.makeRelative = 0;
+                    msg.whichLEDs = WhichCubeLEDs::FRONT;
+                    msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                     msg.turnOffUnspecifiedLEDs = 1;
                   }
                   
@@ -1351,8 +1351,8 @@ namespace Anki {
           msg.turnOffUnspecifiedLEDs = 1;
           msg.onColor = *colorIter;
           msg.offColor = 0;
-          msg.whichLEDs = static_cast<u8>(*ledIter);
-          msg.makeRelative = 0;
+          msg.whichLEDs = *ledIter;
+          msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
           
           ++ledIter;
           if(ledIter==leds.end()) {

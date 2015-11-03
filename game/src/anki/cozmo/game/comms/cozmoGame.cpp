@@ -19,6 +19,7 @@
 #include "util/logging/logging.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -107,7 +108,6 @@ namespace Cozmo {
     }
     
     _uiMsgHandler.Init(&_uiComms);
-    RegisterCallbacksU2G();
     
     if(!config.isMember(AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR)) {
       PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No NumRobotsToWaitFor defined in Json config, defaulting to 1.");
@@ -138,6 +138,7 @@ namespace Cozmo {
     // Subscribe to desired events
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice, commonCallback));
     _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::DisconnectFromUiDevice, commonCallback));
+    _signalHandles.push_back(_uiMsgHandler.Subscribe(ExternalInterface::MessageGameToEngineTag::Ping, commonCallback));
     
     // Use a separate callback for StartEngine
     auto startEngineCallback = std::bind(&CozmoGameImpl::HandleStartEngine, this, std::placeholders::_1);
@@ -415,10 +416,10 @@ namespace Cozmo {
                 
                 msg.poseAngle_rad = robot->GetPose().GetRotationAngle<'Z'>().ToFloat();
                 const UnitQuaternion<float>& q = robot->GetPose().GetRotation().GetQuaternion();
-                msg.pose_quaternion0 = q.w();
-                msg.pose_quaternion1 = q.x();
-                msg.pose_quaternion2 = q.y();
-                msg.pose_quaternion3 = q.z();
+                msg.pose_qw = q.w();
+                msg.pose_qx = q.x();
+                msg.pose_qy = q.y();
+                msg.pose_qz = q.z();
                 
                 msg.leftWheelSpeed_mmps  = robot->GetLeftWheelSpeed();
                 msg.rightWheelSpeed_mmps = robot->GetRigthWheelSpeed();
@@ -518,6 +519,29 @@ namespace Cozmo {
         }
         break;
       }
+      case ExternalInterface::MessageGameToEngineTag::Ping:
+      {
+        const ExternalInterface::Ping& msg = event.GetData().Get_Ping();
+        
+        _lastPingTimeFromUI_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        if (_uiComms.GetNumConnectedDevices() > 1) {
+          // The ping counter check doesn't work for more than 1 UI client
+          return;
+        }
+        
+        // Check to see if the ping counter is sequential or if we've dropped packets/pings
+        const u32 counterDiff = msg.counter - _lastPingCounterFromUI;
+        _lastPingCounterFromUI = msg.counter;
+        
+        if(counterDiff > 1) {
+          PRINT_STREAM_WARNING("CozmoGameImpl.Update",
+                               "Counter difference > 1 betweeen last two pings from UI. (Difference was " << counterDiff << ".)\n");
+          
+          // TODO: Take action if we've dropped pings?
+        }
+        break;
+      }
       default:
       {
         PRINT_STREAM_ERROR("CozmoGameImpl.HandleEvents",
@@ -549,7 +573,6 @@ namespace Cozmo {
     // Start the engine with that configuration
     StartEngine(config);
   }
-
   
 #pragma mark - CozmoGame Wrappers
   
