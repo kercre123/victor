@@ -218,10 +218,6 @@ namespace Anki
       // Note these are marked const but return non-const pointers.
       ObservableObject* GetObjectByIdHelper(const ObjectID objectID) const;
       ObservableObject* GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const;
-      ObservableObject* GetObjectByIdHelper(const ObjectID objectID,
-                                            ObjectsMapByID_t::iterator& objectIter,
-                                            ObjectsMapByType_t::iterator& typeIter,
-                                            ObjectsMapByFamily_t::iterator& familyIter);
       
       bool UpdateRobotPose(PoseKeyObsMarkerMap_t& obsMarkers, const TimeStamp_t atTimestamp);
       
