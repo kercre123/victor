@@ -3,18 +3,18 @@ using System.Collections;
 
 public class CelebratePatternState : State {
 
-  PatternPlayGame patternPlayGame = null;
+  private PatternPlayGame patternPlayGame_ = null;
 
   public override void Enter() {
     base.Enter();
     DAS.Info("State", "CelebratePattern");
-    patternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
 
-    patternPlayGame.ClearBlockLights();
+    patternPlayGame_.ClearBlockLights();
 
-    if (patternPlayGame.ShouldCelebrateNew()) {
+    if (patternPlayGame_.ShouldCelebrateNew()) {
       robot.SendAnimation("enjoyPattern", AnimationDone);
-      patternPlayGame.SetShouldCelebrateNew(false);
+      patternPlayGame_.SetShouldCelebrateNew(false);
     }
     else {
       robot.SendAnimation("seeOldPattern", AnimationDone);
@@ -22,8 +22,8 @@ public class CelebratePatternState : State {
   }
 
   void AnimationDone(bool success) {
-    patternPlayGame.GetAutoBuild().ClearNeatList();
-    patternPlayGame.ResetLookHeadForkLift();
+    patternPlayGame_.GetAutoBuild().ClearNeatList();
+    patternPlayGame_.ResetLookHeadForkLift();
     stateMachine_.SetNextState(new LookForPatternState());
   }
 }

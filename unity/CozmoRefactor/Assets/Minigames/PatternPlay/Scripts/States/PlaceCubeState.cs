@@ -3,8 +3,8 @@ using System.Collections;
 
 public class PlaceCubeState : State {
 
-  PatternPlayGame patternPlayGame_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild = null;
+  private PatternPlayGame patternPlayGame_ = null;
+  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
 
   public override void Enter() {
     base.Enter();
@@ -12,14 +12,14 @@ public class PlaceCubeState : State {
     DAS.Info("PatternPlayState", "PlaceCube");
 
     patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild = patternPlayGame_.GetAutoBuild();
+    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
 
     Vector3 placeTarget;
     int dockID;
     float offset;
     float dockAngleRads;
 
-    patternPlayAutoBuild.FindPlaceTarget(out placeTarget, out dockID, out offset, out dockAngleRads);
+    patternPlayAutoBuild_.FindPlaceTarget(out placeTarget, out dockID, out offset, out dockAngleRads);
     if (dockID == -1) {
       robot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
     }

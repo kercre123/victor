@@ -4,7 +4,7 @@ using System.Collections;
 public class HaveIdeaForPatternState : State {
 
   PatternPlayGame patternPlayGame_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild = null;
+  PatternPlayAutoBuild patternPlayAutoBuild_ = null;
 
   bool hasTargetToBuild = false;
 
@@ -15,10 +15,10 @@ public class HaveIdeaForPatternState : State {
 
     // pick a pattern to build
     patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild = patternPlayGame_.GetAutoBuild();
-    patternPlayAutoBuild.autoBuilding = true;
+    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
+    patternPlayAutoBuild_.autoBuilding = true;
 
-    hasTargetToBuild = patternPlayAutoBuild.PickNewTargetPattern();
+    hasTargetToBuild = patternPlayAutoBuild_.PickNewTargetPattern();
 
     if (hasTargetToBuild == false) {
       DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");

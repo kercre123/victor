@@ -2,8 +2,8 @@
 using System.Collections;
 
 public class LookForPatternState : State {
-  PatternPlayGame patternPlayGameRef_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+  private PatternPlayGame patternPlayGameRef_ = null;
+  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
 
   bool animationPlaying_ = false;
 

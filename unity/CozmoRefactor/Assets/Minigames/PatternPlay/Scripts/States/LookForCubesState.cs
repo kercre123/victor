@@ -3,8 +3,8 @@ using System.Collections;
 
 public class LookForCubesState : State {
 
-  PatternPlayGame patternPlayGame_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild = null;
+  private PatternPlayGame patternPlayGame_ = null;
+  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
 
   bool lookingAround = false;
 
@@ -12,7 +12,7 @@ public class LookForCubesState : State {
     base.Enter();
     DAS.Info("PatternPlayState", "LookForCubes");
     patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild = patternPlayGame_.GetAutoBuild();
+    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
   }
 
   public override void Update() {
@@ -23,7 +23,7 @@ public class LookForCubesState : State {
       return;
     }
 
-    if (patternPlayAutoBuild.AvailableBlocks() > 0) {
+    if (patternPlayAutoBuild_.AvailableBlocks() > 0) {
       stateMachine_.SetNextState(new PickUpCubeState());
     }
     else {

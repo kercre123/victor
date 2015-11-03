@@ -3,8 +3,8 @@ using System.Collections;
 
 public class PickUpCubeState : State {
 
-  PatternPlayGame patternPlayGame_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild = null;
+  private PatternPlayGame patternPlayGame_ = null;
+  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
 
   bool hasTarget = true;
 
@@ -12,9 +12,9 @@ public class PickUpCubeState : State {
     base.Enter();
     DAS.Info("PatternPlayState", "PickUpCube");
     patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild = patternPlayGame_.GetAutoBuild();
+    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
 
-    ObservedObject targetObject = patternPlayAutoBuild.GetClosestAvailableBlock();
+    ObservedObject targetObject = patternPlayAutoBuild_.GetClosestAvailableBlock();
 
     // it is possible that since we thought there were seenBlocks that they
     // have been dirtied since then. If there are no available blocks
@@ -25,7 +25,7 @@ public class PickUpCubeState : State {
     }
 
     robot.PickupObject(targetObject, true, false, false, 0.0f, PickUpDone);
-    patternPlayAutoBuild.SetObjectHeld(targetObject);
+    patternPlayAutoBuild_.SetObjectHeld(targetObject);
   }
 
   public override void Update() {
@@ -33,7 +33,7 @@ public class PickUpCubeState : State {
     if (hasTarget == false) {
       DAS.Info("PatternPlayPickUpCube", "No Cubes To Pickup");
       stateMachine_.SetNextState(new LookForCubesState());
-      patternPlayAutoBuild.SetObjectHeld(null);
+      patternPlayAutoBuild_.SetObjectHeld(null);
     }
     if (patternPlayGame_.SeenPattern()) {
       stateMachine_.SetNextState(new CelebratePatternState());
@@ -48,11 +48,11 @@ public class PickUpCubeState : State {
     else {
       DAS.Info("PatternPlay", "PickUp Failed!");
       stateMachine_.SetNextState(new LookForCubesState());
-      if (patternPlayAutoBuild.GetHeldObject() != null) {
-        robot.UpdateDirtyList(patternPlayAutoBuild.GetHeldObject());
+      if (patternPlayAutoBuild_.GetHeldObject() != null) {
+        robot.UpdateDirtyList(patternPlayAutoBuild_.GetHeldObject());
       }
 
-      patternPlayAutoBuild.SetObjectHeld(null);
+      patternPlayAutoBuild_.SetObjectHeld(null);
     }
 
   }

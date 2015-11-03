@@ -3,8 +3,8 @@ using System.Collections;
 
 public class SetCubeToPatternState : State {
 
-  PatternPlayGame patternPlayGame_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild = null;
+  private PatternPlayGame patternPlayGame_ = null;
+  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
 
   public override void Enter() {
     base.Enter();
@@ -12,7 +12,7 @@ public class SetCubeToPatternState : State {
     DAS.Info("PatternPlayState", "SetCubeToPattern");
 
     patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild = patternPlayGame_.GetAutoBuild();
+    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
   }
 
   public override void Update() {
@@ -22,8 +22,8 @@ public class SetCubeToPatternState : State {
   }
 
   void SetPattern() {
-    int heldObjectID = patternPlayAutoBuild.GetHeldObject().ID;
-    patternPlayAutoBuild.SetBlockLightsToPattern(heldObjectID);
-    patternPlayAutoBuild.PlaceBlockSuccess();
+    int heldObjectID = patternPlayAutoBuild_.GetHeldObject().ID;
+    patternPlayAutoBuild_.SetBlockLightsToPattern(heldObjectID);
+    patternPlayAutoBuild_.PlaceBlockSuccess();
   }
 }
