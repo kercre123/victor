@@ -2208,16 +2208,18 @@ namespace Cozmo {
     void BlockWorld::ClearObjectHelper(ObservableObject* object)
     {
       if(object == nullptr) {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer", "BlockWorld asked to clear a null object pointer.\n");
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer",
+                            "BlockWorld asked to clear a null object pointer.");
       } else {
         // Check to see if this object is the one the robot is localized to.
-        // If so, the robot needs to be delocalized:
+        // If so, the robot needs to be marked as localized to nothing.
         if(_robot->GetLocalizedTo() == object->GetID()) {
-          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
-                           "Delocalizing robot %d, which is currently localized to %s "
-                           "object with ID=%d, which is about to be cleared.\n",
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
+                           "Setting robot %d as localized to no object, because it "
+                           "is currently localized to %s object with ID=%d, which is "
+                           "about to be cleared.",
                            _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-          _robot->Delocalize();
+          _robot->SetLocalizedTo(nullptr);
         }
         
         // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
@@ -2226,7 +2228,7 @@ namespace Cozmo {
         // Check to see if this object is the one the robot is carrying.
         if(_robot->GetCarryingObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                           "Clearing %s object %d which robot %d thinks it is carrying.\n",
+                           "Clearing %s object %d which robot %d thinks it is carrying.",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
@@ -2235,7 +2237,7 @@ namespace Cozmo {
         
         if(_selectedObject == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingSelectedObject",
-                           "Clearing %s object %d which is currently selected.\n",
+                           "Clearing %s object %d which is currently selected.",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue());
           _selectedObject.UnSet();
@@ -2243,7 +2245,7 @@ namespace Cozmo {
         
         if(_robot->GetMoveComponent().GetTrackToObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
-                           "Clearing %s object %d which robot %d is currently tracking its head to.\n",
+                           "Clearing %s object %d which robot %d is currently tracking its head to.",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
@@ -2258,7 +2260,8 @@ namespace Cozmo {
         //  process of being identified)
         if(object->IsExistenceConfirmed())
         {
-          _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
+          using namespace ExternalInterface;
+          _robot->Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
