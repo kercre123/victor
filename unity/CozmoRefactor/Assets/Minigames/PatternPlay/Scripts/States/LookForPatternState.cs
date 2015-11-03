@@ -14,7 +14,7 @@ public class LookForPatternState : State {
 
   public override void Enter() { 
     base.Enter();
-    DAS.Info("State", "LookForPattern");
+
     // TODO: Set eyes to scan. 
     patternPlayGameRef_ = (PatternPlayGame)stateMachine_.GetGame();
     patternPlayAutoBuild_ = patternPlayGameRef_.GetAutoBuild();

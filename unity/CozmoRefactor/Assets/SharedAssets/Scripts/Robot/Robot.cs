@@ -567,6 +567,7 @@ public class Robot : IDisposable {
     PlayAnimationMessage.numLoops = 1;
     PlayAnimationMessage.robotID = this.ID;
 
+    RobotEngineManager.instance.Message.PlayAnimation = PlayAnimationMessage;
     RobotEngineManager.instance.SendMessage();
 
     if (callback != null) {
