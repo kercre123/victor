@@ -33,27 +33,27 @@ public class ActiveBlock : ObservedObject {
     Count
   }
 
-  public bool isMoving { get; private set; }
+  public bool IsMoving { get; private set; }
 
-  public UpAxis upAxis { get; private set; }
+  public UpAxis UpAxis { get; private set; }
 
-  public float xAccel { get; private set; }
+  public float XAccel { get; private set; }
 
-  public float yAccel { get; private set; }
+  public float YAccel { get; private set; }
 
-  public float zAccel { get; private set; }
+  public float ZAccel { get; private set; }
 
   private U2G.SetAllActiveObjectLEDs SetAllActiveObjectLEDsMessage;
 
-  public Light[] lights { get; private set; }
+  public Light[] Lights { get; private set; }
 
   public bool lightsChanged {
     get {
       if (lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY)
         return true;
 
-      for (int i = 0; i < lights.Length; ++i) {
-        if (lights[i].changed)
+      for (int i = 0; i < Lights.Length; ++i) {
+        if (Lights[i].changed)
           return true;
       }
 
@@ -80,37 +80,37 @@ public class ActiveBlock : ObservedObject {
   public ActiveBlock(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
 
-    upAxis = UpAxis.Unknown;
-    xAccel = byte.MaxValue;
-    yAccel = byte.MaxValue;
-    zAccel = byte.MaxValue;
-    isMoving = false;
+    UpAxis = UpAxis.Unknown;
+    XAccel = byte.MaxValue;
+    YAccel = byte.MaxValue;
+    ZAccel = byte.MaxValue;
+    IsMoving = false;
 
     SetAllActiveObjectLEDsMessage = new U2G.SetAllActiveObjectLEDs();
 
-    lights = new Light[SetAllActiveObjectLEDsMessage.onColor.Length];
+    Lights = new Light[SetAllActiveObjectLEDsMessage.onColor.Length];
 
-    for (int i = 0; i < lights.Length; ++i) {
-      lights[i] = new Light();
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i] = new Light();
     }
 
   }
 
   public void Moving(ObjectMoved message) {
-    isMoving = true;
+    IsMoving = true;
 
-    upAxis = message.upAxis;
-    xAccel = message.accel.x;
-    yAccel = message.accel.y;
-    zAccel = message.accel.z;
+    UpAxis = message.upAxis;
+    XAccel = message.accel.x;
+    YAccel = message.accel.y;
+    ZAccel = message.accel.z;
 
     if (MovedAction != null) {
-      MovedAction(ID, xAccel, yAccel, zAccel);
+      MovedAction(ID, XAccel, YAccel, ZAccel);
     }
   }
 
   public void StoppedMoving(ObjectStoppedMoving message) {
-    isMoving = false;
+    IsMoving = false;
 
     if (message.rolled) {
       if (OnAxisChange != null)
@@ -131,13 +131,13 @@ public class ActiveBlock : ObservedObject {
     SetAllActiveObjectLEDsMessage.objectID = (uint)ID;
     SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
-    for (int i = 0; i < lights.Length; ++i) {
-      SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = lights[i].onPeriod_ms;
-      SetAllActiveObjectLEDsMessage.offPeriod_ms[i] = lights[i].offPeriod_ms;
-      SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms[i] = lights[i].transitionOnPeriod_ms;
-      SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = lights[i].transitionOffPeriod_ms;
-      SetAllActiveObjectLEDsMessage.onColor[i] = lights[i].onColor;
-      SetAllActiveObjectLEDsMessage.offColor[i] = lights[i].offColor;
+    for (int i = 0; i < Lights.Length; ++i) {
+      SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = Lights[i].onPeriod_ms;
+      SetAllActiveObjectLEDsMessage.offPeriod_ms[i] = Lights[i].offPeriod_ms;
+      SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].transitionOnPeriod_ms;
+      SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].transitionOffPeriod_ms;
+      SetAllActiveObjectLEDsMessage.onColor[i] = Lights[i].onColor;
+      SetAllActiveObjectLEDsMessage.offColor[i] = Lights[i].offColor;
     }
 
     SetAllActiveObjectLEDsMessage.makeRelative = relativeMode;
@@ -155,21 +155,21 @@ public class ActiveBlock : ObservedObject {
     lastRelativeToX = relativeToX;
     lastRelativeToY = relativeToY;
 
-    for (int i = 0; i < lights.Length; ++i) {
-      lights[i].SetLastInfo();
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i].SetLastInfo();
     }
   }
 
   public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
 
-    for (int i = 0; i < lights.Length; ++i) {
-      lights[i].onColor = onColor;
-      lights[i].offColor = offColor;
-      lights[i].onPeriod_ms = onPeriod_ms;
-      lights[i].offPeriod_ms = offPeriod_ms;
-      lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
-      lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
+    for (int i = 0; i < Lights.Length; ++i) {
+      Lights[i].onColor = onColor;
+      Lights[i].offColor = offColor;
+      Lights[i].onPeriod_ms = onPeriod_ms;
+      Lights[i].offPeriod_ms = offPeriod_ms;
+      Lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
+      Lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
     }
 
     relativeMode = 0;

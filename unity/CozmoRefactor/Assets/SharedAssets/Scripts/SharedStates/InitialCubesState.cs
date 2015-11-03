@@ -25,8 +25,8 @@ public class InitialCubesState : State {
     base.Update();
 
     foreach (KeyValuePair<int, ActiveBlock> activeBlock in robot.ActiveBlocks) {
-      for (int j = 0; j < activeBlock.Value.lights.Length; ++j) {
-        activeBlock.Value.lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
+      for (int j = 0; j < activeBlock.Value.Lights.Length; ++j) {
+        activeBlock.Value.Lights[j].onColor = CozmoPalette.ColorToUInt(Color.blue);
       }
     }
 

@@ -241,8 +241,8 @@ public class PatternPlayGame : GameBase {
       enabledColor = Color.blue;
       disabledColor = Color.black;
 
-      for (int i = 0; i < robot.ActiveBlocks[blockConfig.Key].lights.Length; ++i) {
-        robot.ActiveBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+      for (int i = 0; i < robot.ActiveBlocks[blockConfig.Key].Lights.Length; ++i) {
+        robot.ActiveBlocks[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
       if (blockConfig.Key == currentInputID && blockPatternData_[blockConfig.Key].moving && Time.time - lastSetTime_ > 5.0f) {
@@ -251,23 +251,23 @@ public class PatternPlayGame : GameBase {
       }
 
       for (int i = 0; i < 4; ++i) {
-        robot.ActiveBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.ActiveBlocks[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.back) {
-        robot.ActiveBlocks[blockConfig.Key].lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.ActiveBlocks[blockConfig.Key].Lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.front) {
-        robot.ActiveBlocks[blockConfig.Key].lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.ActiveBlocks[blockConfig.Key].Lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.left) {
-        robot.ActiveBlocks[blockConfig.Key].lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.ActiveBlocks[blockConfig.Key].Lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.blockLightsLocalSpace.right) {
-        robot.ActiveBlocks[blockConfig.Key].lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.ActiveBlocks[blockConfig.Key].Lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
@@ -283,8 +283,8 @@ public class PatternPlayGame : GameBase {
       }
 
       if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
-        for (int i = 0; i < robot.ActiveBlocks[blockConfig.Key].lights.Length; ++i) {
-          robot.ActiveBlocks[blockConfig.Key].lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
+        for (int i = 0; i < robot.ActiveBlocks[blockConfig.Key].Lights.Length; ++i) {
+          robot.ActiveBlocks[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
         }
       }
 
