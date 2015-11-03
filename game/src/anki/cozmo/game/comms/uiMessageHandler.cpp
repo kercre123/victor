@@ -81,9 +81,8 @@ namespace Anki {
                           "Buffer's size does not match expected size for this message ID. (Msg " << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
       }
       
-      if (messageCallback != nullptr) {
-        messageCallback(message);
-      }
+      // Send out this message to anyone that's subscribed
+      Broadcast(std::move(message));
       
       return retVal;
     } // ProcessBuffer()
