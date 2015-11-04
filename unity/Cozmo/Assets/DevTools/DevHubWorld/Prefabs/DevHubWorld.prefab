@@ -39,7 +39,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f6635c134896494684868c9147b038f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gamePrefab_: {fileID: 11424622, guid: f5aa50aecd5ed45918720eb6733779a2, type: 2}
+  gamePrefabs_:
+  - {fileID: 11424622, guid: f5aa50aecd5ed45918720eb6733779a2, type: 2}
+  - {fileID: 11489490, guid: 5cdde45f3f19243c593dc39faf8bf354, type: 2}
+  - {fileID: 11464680, guid: 3f51dcc1802bc49b4b436d61e498310b, type: 2}
+  - {fileID: 11428904, guid: 1e70a0fe6f9ce40d5a83bd8d69d54094, type: 2}
+  devHubWorldDialogPrefab_: {fileID: 11411698, guid: ec15ecdfb1f0d4b44817e0cf9abe7cf1,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -48,9 +54,38 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: gamePrefabs_.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: gamePrefab_
       value: 
       objectReference: {fileID: 11424622, guid: f5aa50aecd5ed45918720eb6733779a2,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: devHubWorldDialogPrefab_
+      value: 
+      objectReference: {fileID: 11411698, guid: ec15ecdfb1f0d4b44817e0cf9abe7cf1,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: gamePrefabs_.Array.data[0]
+      value: 
+      objectReference: {fileID: 11424622, guid: f5aa50aecd5ed45918720eb6733779a2,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: gamePrefabs_.Array.data[1]
+      value: 
+      objectReference: {fileID: 11489490, guid: 5cdde45f3f19243c593dc39faf8bf354,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: gamePrefabs_.Array.data[2]
+      value: 
+      objectReference: {fileID: 11464680, guid: 3f51dcc1802bc49b4b436d61e498310b,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: gamePrefabs_.Array.data[3]
+      value: 
+      objectReference: {fileID: 11428904, guid: 1e70a0fe6f9ce40d5a83bd8d69d54094,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
