@@ -73,6 +73,9 @@ public:
   const Vision::TrackedFace::ID_t GetTrackToFace() const { return _trackToFaceID; }
   bool  IsTrackingWithHeadOnly() const { return _trackWithHeadOnly; }
   
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
 protected:
   Robot& _robot;
   std::list<Signal::SmartHandle> _eventHandles;
