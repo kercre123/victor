@@ -213,7 +213,7 @@ public class BlockPattern {
       }
       else if (blockForward.y < -0.9f) {
         // same orientation so copy it over
-        blockLightCozmoSpace = blockLocalSpace;
+        blockLightCozmoSpace = blockLocalSpace.Clone() as BlockLights;
       }
     }
     else {
