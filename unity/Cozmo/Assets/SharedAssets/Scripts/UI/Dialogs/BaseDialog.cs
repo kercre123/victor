@@ -69,6 +69,13 @@ public abstract class BaseDialog : MonoBehaviour {
     PlayCloseAnimations ();
   }
 
+  public void CloseDialogImmediately() {
+    RaiseDialogClosed(this);
+
+    // Close dialog without playing animations
+    OnCloseAnimationsFinished();
+  }
+
   private void PlayOpenAnimations() {
     UIManager.DisableTouchEvents ();
 

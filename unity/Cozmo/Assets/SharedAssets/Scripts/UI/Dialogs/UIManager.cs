@@ -38,6 +38,7 @@ public class UIManager : MonoBehaviour {
     _instance = this;
     _openDialogs = new List<BaseDialog>();
     DOTween.Init ();
+    BaseDialog.BaseDialogCloseAnimationFinished += HandleBaseDialogCloseAnimationFinished;
   }
 
   public static GameObject CreateUI(GameObject uiPrefab) {
@@ -69,13 +70,27 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseDialog(BaseDialog dialogObject) {
-    Instance._openDialogs.Remove (dialogObject);
     dialogObject.CloseDialog ();
+  }
+
+  public static void CloseDialogImmediately(BaseDialog dialogObject) {
+    dialogObject.CloseDialogImmediately ();
   }
 
   public static void CloseAllDialogs() {
     foreach (BaseDialog dialog in Instance._openDialogs) {
-      dialog.CloseDialog();
+      if (dialog != null) {
+        dialog.CloseDialog();
+      }
+    }
+    Instance._openDialogs.Clear ();
+  }
+
+  public static void CloseAllDialogsImmediately() {
+    foreach (BaseDialog dialog in Instance._openDialogs) {
+      if (dialog != null) {
+        dialog.CloseDialogImmediately();
+      }
     }
     Instance._openDialogs.Clear ();
   }
@@ -91,4 +106,10 @@ public class UIManager : MonoBehaviour {
   public static void EnableTouchEvents() {
     _instance._eventSystemScript.gameObject.SetActive (true);
   }
+
+  private void HandleBaseDialogCloseAnimationFinished (string dialogId, BaseDialog dialog)
+  {
+    Instance._openDialogs.Remove (dialog);
+  }
+
 }

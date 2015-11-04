@@ -18,15 +18,10 @@ public class IntroManager : MonoBehaviour {
     RobotEngineManager.instance.DisconnectedFromClient += DisconnectedFromClient;
   }
   
-  private void OnDestroy(){
-    if (devConnectDialogInstance_ != null) {
-      Destroy(devConnectDialogInstance_);
-    }
-  }
-  
   void Connected(int robotID) {
     // Spawn HubWorld
     GameObject hubWorldObject = GameObject.Instantiate(hubWorldPrefab_.gameObject);
+    hubWorldObject.transform.SetParent(transform, false);
     hubWorldInstance_ = hubWorldObject.GetComponent<HubWorldBase>();
 
     // Hide Intro dialog when it finishes loading
@@ -39,6 +34,9 @@ public class IntroManager : MonoBehaviour {
   {
     // Force quit hub world and show connect dialog again
     hubWorldInstance_.DestroyHubWorld();
+    Destroy(hubWorldInstance_);
+
+    UIManager.CloseAllDialogsImmediately();
     ShowDevConnectDialog();
   }
   

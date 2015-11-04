@@ -15,6 +15,12 @@ public class AskCozmoGame : GameBase {
     gamePanel_.OnAskButtonPressed += OnAnswerRequested;
   }
 
+  public override void HandleHubWorldDestroyed() {
+    if (gamePanel_ != null) {
+      UIManager.CloseDialogImmediately(gamePanel_);
+    }
+  }
+
   // user just asked the question and pressed the
   // give me answer button.
   public void OnAnswerRequested() {

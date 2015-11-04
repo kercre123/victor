@@ -7,6 +7,8 @@ public class BadgeData {
   public List<string> tags;
 }
 
+// TODO: Need to be able to have multiple BadgeManagers? 
+// One per game and per HubWorld
 public class BadgeManager : MonoBehaviour {
 
   private static BadgeManager _instance;

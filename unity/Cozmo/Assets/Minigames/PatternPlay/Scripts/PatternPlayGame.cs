@@ -7,6 +7,7 @@ public class PatternPlayGame : GameBase {
 
   [SerializeField]
   private PatternCollectionViewController viewControllerPrefab_;
+  private PatternCollectionViewController viewControllerInstance_;
 
   private StateMachineManager patternPlayStateMachineManager_ = new StateMachineManager();
   private StateMachine patternPlayStateMachine_ = new StateMachine();
@@ -41,8 +42,9 @@ public class PatternPlayGame : GameBase {
     patternMemory_.Initialize();
 
     GameObject viewControllerObject = Instantiate(viewControllerPrefab_.gameObject);
-    PatternCollectionViewController viewControllerScript = viewControllerObject.GetComponent<PatternCollectionViewController>();
-    viewControllerScript.Initialize(patternMemory_);
+    viewControllerObject.transform.SetParent(transform, false);
+    viewControllerInstance_ = viewControllerObject.GetComponent<PatternCollectionViewController>();
+    viewControllerInstance_.Initialize(patternMemory_);
 
     patternPlayAudio_ = GetComponent<PatternPlayAudio>();
   }
@@ -74,6 +76,12 @@ public class PatternPlayGame : GameBase {
     // in pattern.
     SeenAccumulatorCompute();
 
+  }
+
+  public override void HandleHubWorldDestroyed() {
+    if (viewControllerInstance_ != null) {
+      Destroy(viewControllerInstance_.gameObject);
+    }
   }
 
   public void SetShouldCelebrateNew(bool shouldCelebrateNew) {

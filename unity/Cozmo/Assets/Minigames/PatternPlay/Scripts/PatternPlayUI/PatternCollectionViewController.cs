@@ -9,7 +9,6 @@ public class PatternCollectionViewController : MonoBehaviour {
 
   [SerializeField]
   private BadgeDisplay _openPatternCollectionDialogButtonPrefab;
-
   private BadgeDisplay _buttonBadgeDisplay;
   private Tweener _buttonBadgeDisplayTweener;
  
@@ -38,6 +37,7 @@ public class PatternCollectionViewController : MonoBehaviour {
     
     if (_patternCollectionDialog != null) {
       _patternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
+      UIManager.CloseDialogImmediately(_patternCollectionDialog);
     }
 
     if (_patternMemory != null) {
@@ -46,6 +46,14 @@ public class PatternCollectionViewController : MonoBehaviour {
 
     if (_buttonBadgeDisplayTweener != null) {
       _buttonBadgeDisplayTweener.Kill();
+    }
+    if (_buttonBadgeDisplay != null) {
+      Destroy(_buttonBadgeDisplay.gameObject);
+    }
+
+    if (_patternDiscoveredDialog != null) {
+      _patternDiscoveredDialog.DialogCloseAnimationFinished -= OnDiscoveryDialogClosed;
+      UIManager.CloseDialogImmediately(_patternDiscoveredDialog);
     }
   }
 
@@ -108,7 +116,7 @@ public class PatternCollectionViewController : MonoBehaviour {
 
   #region Pattern Unlock Moment
   private void OnPatternAdded(BlockPattern pattern, MemoryBank bank) {
-    UIManager.CloseAllDialogs ();
+    UIManager.CloseAllDialogsImmediately ();
     ShowUnlockMomentDialog (pattern);
   }
 

@@ -14,6 +14,10 @@ public class FollowCubeGame : GameBase {
     stateMachine_.SetNextState(initCubeState);
     robot.StopFaceAwareness();
   }
+
+  public override void HandleHubWorldDestroyed() {
+
+  }
 	
   // Update is called once per frame
   void Update() {
