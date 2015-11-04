@@ -78,21 +78,19 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllDialogs() {
-    foreach (BaseDialog dialog in Instance._openDialogs) {
-      if (dialog != null) {
-        dialog.CloseDialog();
+    while(Instance._openDialogs.Count > 0) {
+      if (Instance._openDialogs[0] != null) {
+        Instance._openDialogs[0].CloseDialog();
       }
     }
-    Instance._openDialogs.Clear ();
   }
 
   public static void CloseAllDialogsImmediately() {
-    foreach (BaseDialog dialog in Instance._openDialogs) {
-      if (dialog != null) {
-        dialog.CloseDialogImmediately();
+    while(Instance._openDialogs.Count > 0) {
+      if (Instance._openDialogs[0] != null) {
+        Instance._openDialogs[0].CloseDialogImmediately();
       }
     }
-    Instance._openDialogs.Clear ();
   }
 
   public static Camera GetUICamera() {
