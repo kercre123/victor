@@ -28,7 +28,8 @@ public class SpeedTapGame : GameBase {
     stateMachine_.SetGameRef(this);
     stateMachineManager_.AddStateMachine("FollowCubeStateMachine", stateMachine_);
     InitialCubesState initCubeState = new InitialCubesState();
-    initCubeState.InitialCubeRequirements(new SpeedTapStateBeginMatch(), 2, InitialCubesDone);
+    initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, InitialCubesDone);
+    stateMachine_.SetNextState(initCubeState);
 
     robot.VisionWhileMoving(true);
     LightCube.TappedAction += BlockTapped;
@@ -38,8 +39,13 @@ public class SpeedTapGame : GameBase {
     UpdateUI();
   }
 
+  void Update() {
+    stateMachineManager_.UpdateAllMachines();
+  }
+
   void InitialCubesDone() {
-    
+    cozmoBlock_ = GetClosestAvailableBlock();
+    playerBlock_ = GetFarthestAvailableBlock();
   }
 
   public void UpdateUI() {
@@ -59,4 +65,35 @@ public class SpeedTapGame : GameBase {
     }
   }
 
+  private LightCube GetClosestAvailableBlock() {
+    float minDist = float.MaxValue;
+    ObservedObject closest = null;
+
+    for (int i = 0; i < robot.SeenObjects.Count; ++i) {
+      if (robot.SeenObjects[i] is LightCube) {
+        float d = Vector3.Distance(robot.SeenObjects[i].WorldPosition, robot.WorldPosition);
+        if (d < minDist) {
+          minDist = d;
+          closest = robot.SeenObjects[i];
+        }
+      }
+    }
+    return closest as LightCube;
+  }
+
+  private LightCube GetFarthestAvailableBlock() {
+    float maxDist = 0;
+    ObservedObject farthest = null;
+
+    for (int i = 0; i < robot.SeenObjects.Count; ++i) {
+      if (robot.SeenObjects[i] is LightCube) {
+        float d = Vector3.Distance(robot.SeenObjects[i].WorldPosition, robot.WorldPosition);
+        if (d >= maxDist) {
+          maxDist = d;
+          farthest = robot.SeenObjects[i];
+        }
+      }
+    }
+    return farthest as LightCube;
+  }
 }

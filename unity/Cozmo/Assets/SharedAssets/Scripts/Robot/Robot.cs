@@ -836,16 +836,17 @@ public class Robot : IDisposable {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : LiftHeightFactor;
   }
 
-  public void SetLiftHeight(float height_factor, RobotCallback callback = null) {
-    if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && height_factor == liftHeightRequested) || LiftHeightFactor == height_factor)
+  public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
+    DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
+    if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == liftHeightRequested) || LiftHeightFactor == heightFactor)
       return;
 
-    liftHeightRequested = height_factor;
+    liftHeightRequested = heightFactor;
     lastLiftHeightRequestTime = Time.time;
 
     SetLiftHeightMessage.accel_rad_per_sec2 = 5f;
     SetLiftHeightMessage.max_speed_rad_per_sec = 10f;
-    SetLiftHeightMessage.height_mm = (height_factor * (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM)) + CozmoUtil.MIN_LIFT_HEIGHT_MM;
+    SetLiftHeightMessage.height_mm = (heightFactor * (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM)) + CozmoUtil.MIN_LIFT_HEIGHT_MM;
 
     RobotEngineManager.instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.instance.SendMessage();
