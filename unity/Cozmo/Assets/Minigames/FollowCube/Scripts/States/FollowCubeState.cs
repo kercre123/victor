@@ -27,7 +27,15 @@ public class FollowCubeState : State {
       }
     }
     if (closest != null) {
-      
+      if (dist > distanceMax_) {
+        robot.DriveWheels(20.0f, 20.0f);
+      }
+      else if (dist < distanceMin_) {
+        robot.DriveWheels(-20.0f, -20.0f);
+      }
+      else {
+        robot.DriveWheels(0.0f, 0.0f);
+      }
     }
   }
 }
