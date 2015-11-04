@@ -11,10 +11,12 @@ public class SpeedTapGame : GameBase {
 
   public event Action PlayerTappedBlockEvent;
 
+  private StateMachineManager stateMachineManager_ = new StateMachineManager();
+  private StateMachine stateMachine_ = new StateMachine();
+
   [SerializeField]
   private SpeedTapPanel gamePanelPrefab_;
   private SpeedTapPanel gamePanel_;
-
 
   [SerializeField]
   private AudioClip rollSound_;
@@ -23,12 +25,21 @@ public class SpeedTapGame : GameBase {
   void Start() { 
     DAS.Info("SpeedTapGame", "Game Created");
 
+    stateMachine_.SetGameRef(this);
+    stateMachineManager_.AddStateMachine("FollowCubeStateMachine", stateMachine_);
+    InitialCubesState initCubeState = new InitialCubesState();
+    initCubeState.InitialCubeRequirements(new SpeedTapStateBeginMatch(), 2, InitialCubesDone);
+
     robot.VisionWhileMoving(true);
     LightCube.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     robot.SetBehaviorSystem(false);
     gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<SpeedTapPanel>();
     UpdateUI();
+  }
+
+  void InitialCubesDone() {
+    
   }
 
   public void UpdateUI() {

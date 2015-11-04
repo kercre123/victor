@@ -96,7 +96,6 @@ public class PatternPlayGame : GameBase {
     }
     ResetLookHeadForkLift();
 
-
     // set idle parameters
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
       Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementDurationMax_ms,
