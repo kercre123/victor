@@ -5,6 +5,9 @@ using Anki.Cozmo;
 
 public class PatternPlayGame : GameBase {
 
+  [SerializeField]
+  private PatternCollectionViewController viewControllerPrefab_;
+
   private StateMachineManager patternPlayStateMachineManager_ = new StateMachineManager();
   private StateMachine patternPlayStateMachine_ = new StateMachine();
 
@@ -36,6 +39,10 @@ public class PatternPlayGame : GameBase {
     robot.StopFaceAwareness();
 
     memoryBank_.Initialize();
+
+    GameObject viewControllerObject = Instantiate(viewControllerPrefab_.gameObject);
+    PatternCollectionViewController viewControllerScript = viewControllerObject.GetComponent<PatternCollectionViewController>();
+    viewControllerScript.Initialize(memoryBank_);
 
     patternPlayAudio_ = GetComponent<PatternPlayAudio>();
   }
