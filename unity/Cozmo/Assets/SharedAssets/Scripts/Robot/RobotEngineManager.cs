@@ -10,7 +10,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 
 /// <summary>
 /// Robot engine manager lives on a GameObject(named MasterObject) in our Intro scene,
-///    and handles launching, ticking, and messaging with the Cozmo Engine
+/// and handles launching, ticking, and messaging with the Cozmo Engine
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
   

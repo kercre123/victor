@@ -11,13 +11,13 @@ public class UIManager : MonoBehaviour {
   public static UIManager Instance {
     get {
       if (_instance == null) {
-        Debug.LogError("Don't access this until Start!");
+        DAS.Error("UIManager", "Don't access this until Start!");
       }
       return _instance;
     }
     private set {
       if (_instance != null) {
-        Debug.LogError("There shouldn't be more than one UIManager");
+        DAS.Error("UIManager", "There shouldn't be more than one UIManager");
       }
       _instance = value;
     }
