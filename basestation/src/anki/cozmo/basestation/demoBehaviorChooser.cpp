@@ -17,10 +17,15 @@
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+
+
+// Disabled by default for now - it seems to work fine as far as I can tell but i don't want to risk breaking anyone
+#define USE_MOOD_MANAGER_FOR_DEMO_CHOOSER   0
 
 
 namespace Anki {
@@ -88,6 +93,46 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorNone was not created properly.");
     return;
   }
+  
+  // Setup Happy React
+  {
+    BehaviorPlayAnim* behaviorPlayAnim = new BehaviorPlayAnim(robot, config);
+    addResult = super::AddBehavior(behaviorPlayAnim);
+    
+    if (Result::RESULT_OK == addResult)
+    {
+      behaviorPlayAnim->SetAnimationName("happy");
+      behaviorPlayAnim->SetName("HappyReact");
+      behaviorPlayAnim->SetMinTimeBetweenRuns(5.0);
+      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happiness,
+                                                       Anki::Util::GraphEvaluator2d({{0.01f, 0.0f}, {0.01f, 1.0f}, {1.0f, 1.0f}}), true));
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorPlayAnim was not created properly.");
+      return;
+    }
+  }
+  
+  // Setup Sad React
+  {
+    BehaviorPlayAnim* behaviorPlayAnim = new BehaviorPlayAnim(robot, config);
+    addResult = super::AddBehavior(behaviorPlayAnim);
+    
+    if (Result::RESULT_OK == addResult)
+    {
+      behaviorPlayAnim->SetAnimationName("sad");
+      behaviorPlayAnim->SetName("SadReact");
+      behaviorPlayAnim->SetMinTimeBetweenRuns(5.0);
+      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happiness,
+                                                       Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.01f, 1.0f}, {-0.01f, 0.0f}}), true));
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorPlayAnim was not created properly.");
+      return;
+    }
+  }
 }
   
 Result DemoBehaviorChooser::Update(double currentTime_sec)
@@ -115,13 +160,15 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double cu
     return (nullptr != behavior && behavior->IsRunnable(robot, currentTime_sec));
   };
   
+  IBehavior* forcedChoice = nullptr;
+  
   switch (_demoState)
   {
     case DemoBehaviorState::BlocksOnly:
     {
       if (runnable(_behaviorOCD))
       {
-        return _behaviorOCD;
+        forcedChoice = _behaviorOCD;
       }
       break;
     }
@@ -129,7 +176,7 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double cu
     {
       if (runnable(_behaviorInteractWithFaces))
       {
-        return _behaviorInteractWithFaces;
+        forcedChoice = _behaviorInteractWithFaces;
       }
       break;
     }
@@ -137,11 +184,11 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double cu
     {
       if (runnable(_behaviorOCD))
       {
-        return _behaviorOCD;
+        forcedChoice = _behaviorOCD;
       }
       else if (runnable(_behaviorInteractWithFaces))
       {
-        return _behaviorInteractWithFaces;
+        forcedChoice = _behaviorInteractWithFaces;
       }
       break;
     }
@@ -151,21 +198,51 @@ IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot, double cu
     }
   }
   
-  // Shared logic if desired behavior isn't possible
-  if(runnable(_behaviorLookAround))
+  #if USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
   {
-    return _behaviorLookAround;
+    IBehavior* simpleChoice = SimpleBehaviorChooser::ChooseNextBehavior(robot, currentTime_sec);
+    
+    if (forcedChoice)
+    {
+      if (simpleChoice && (forcedChoice != simpleChoice) && simpleChoice->IsShortInterruption())
+      {
+        // maybe still force simpleChoice if sufficiently better scoring?
+        // or if it's a short behavior?
+        const float forcedChoiceScore = forcedChoice->EvaluateScore(robot, currentTime_sec);
+        const float simpleChoiceScore = simpleChoice->EvaluateScore(robot, currentTime_sec);
+        if (simpleChoiceScore > (forcedChoiceScore + 0.05f))
+        {
+          return simpleChoice;
+        }
+      }
+      
+      return forcedChoice;
+    }
+    
+    return simpleChoice;
   }
-  else if (runnable(_behaviorFidget))
+  #else
   {
-    return _behaviorFidget;
+    if (forcedChoice)
+    {
+      return forcedChoice;
+    }
+    else if(runnable(_behaviorLookAround))
+    {
+      return _behaviorLookAround;
+    }
+    else if (runnable(_behaviorFidget))
+    {
+      return _behaviorFidget;
+    }
+    else if (runnable(_behaviorNone))
+    {
+      return _behaviorNone;
+    }
+    
+    return nullptr;
   }
-  else if (runnable(_behaviorNone))
-  {
-    return _behaviorNone;
-  }
-  
-  return nullptr;
+  #endif // USE_MOOD_MANAGER_FOR_DEMO_CHOOSER
 }
   
 Result DemoBehaviorChooser::AddBehavior(IBehavior* newBehavior)

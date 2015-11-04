@@ -153,6 +153,15 @@ namespace Cozmo {
                           "Failed to initialize %s behavior.",
                           _nextBehavior->GetName().c_str());
       }
+      
+      #if SEND_MOOD_TO_VIZ_DEBUG
+      {
+        VizInterface::NewBehaviorSelected newBehaviorSelected;
+        newBehaviorSelected.newCurrentBehavior = _nextBehavior ? _nextBehavior->GetName() : "null";
+        VizManager::getInstance()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
+      }
+      #endif // SEND_MOOD_TO_VIZ_DEBUG
+
       _currentBehavior = _nextBehavior;
       _nextBehavior = nullptr;
     }

@@ -5,6 +5,12 @@ PROTO CozmoVizDisplay
   # Resolution of incoming camera images.
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
   field SFString streamResolution "CVGA"
+  
+  # Following (but with PixelSize=2) works well on Macbook screen
+  field SFFloat moodPixelSize 0.0
+  field SFFloat behaviorSelectionPixelSize 0.0
+  field SFVec2f moodPos 1.0 0.35
+  field SFVec2f behaviorSelectionPos 1.0 0.63
 ]
 {
 Supervisor {
@@ -59,6 +65,56 @@ Supervisor {
       height 200
       windowPosition 1 1
       pixelSize 1
+    }
+    
+    DEF DISPLAY_PLANE Display {
+      # Hide display plane far away
+      translation 1000 0.1 0
+
+      children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+            size 1 1
+          }
+        }
+      ]
+      name "cozmo_mood_display"
+      width 450
+      height 150
+      windowPosition %{=fields.moodPos.value.x}% %{=fields.moodPos.value.y}%
+      pixelSize %{=fields.moodPixelSize.value}%
+    }
+    
+    DEF DISPLAY_PLANE Display {
+      # Hide display plane far away
+      translation 1000 0.1 0
+
+      children [
+        DEF SHAPE Shape {
+          appearance Appearance {
+            material Material {
+              diffuseColor 1 1 1
+              specularColor 0 0 0
+              transparency 0.6
+            }
+          }
+          geometry Plane {
+            size 1 1
+          }
+        }
+      ]
+      name "cozmo_behavior_display"
+      width 450
+      height 150
+      windowPosition %{=fields.behaviorSelectionPos.value.x}% %{=fields.behaviorSelectionPos.value.y}%
+      pixelSize %{=fields.behaviorSelectionPixelSize.value}%
     }
 
     DEF CAM_DISPLAY_PLANE Display {

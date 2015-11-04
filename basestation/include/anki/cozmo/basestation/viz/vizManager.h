@@ -42,6 +42,7 @@ namespace Anki {
   namespace VizInterface {
   class MessageViz;
   enum class MessageVizTag : uint8_t;
+  struct RobotMood;
   } // end namespace VizInterface
     
     class IExternalInterface;
@@ -352,6 +353,10 @@ namespace Anki {
       template <typename T>
       void HandleMessage(const T& msg);
       
+      void SendRobotMood(VizInterface::RobotMood&& robotMood);
+      void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
+      void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
+
     protected:
       
       // Protected default constructor for singleton.

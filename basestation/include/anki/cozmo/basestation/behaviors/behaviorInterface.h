@@ -95,6 +95,9 @@ namespace Cozmo {
     void ClearEmotionScorers()                         { _emotionScorers.clear(); }
     void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
     
+    // Some behaviors are short interruptions that can resume directly to previous behavior
+    virtual bool IsShortInterruption() const { return false; }
+    
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
     

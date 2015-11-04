@@ -45,9 +45,9 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     EngineToGameTag::RobotPutDown
   });
 
-   // Boredom and loneliness -> LookAround
-  AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
-  AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+  // Boredom and loneliness -> LookAround
+  AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+  AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
 }
   
 BehaviorLookAround::~BehaviorLookAround()
@@ -154,6 +154,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     {
       if (0 < _recentObjects.size())
       {
+        robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "ExamineObject");
         _currentState = State::ExamineFoundObject;
       }
       return Status::Running;
@@ -342,6 +343,7 @@ void BehaviorLookAround::HandleObjectObserved(const EngineToGameEvent& event, Ro
   // We'll get continuous updates about objects in view, so only care about new ones whose markers we can see
   if (familyList.count(msg.objectFamily) > 0 && msg.markersVisible && 0 == _oldBoringObjects.count(msg.objectID))
   {
+    robot.GetMoodManager().AddToEmotion(EmotionType::Excited, kEmotionChangeVerySmall, "FoundObject");
     _recentObjects.insert(msg.objectID);
     
     ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);

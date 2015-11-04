@@ -585,6 +585,21 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, videoFramefateHz, animTag)));
     }
     
+    void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)
+    {
+      SendMessage(VizInterface::MessageViz(std::move(robotMood)));
+    }
+
+    void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
+    {
+      SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
+    }
+
+    void VizManager::SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected)
+    {
+      SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
+    }
+
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,
                                    const u8* data,
