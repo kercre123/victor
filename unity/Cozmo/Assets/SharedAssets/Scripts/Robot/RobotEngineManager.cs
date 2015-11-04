@@ -179,7 +179,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void Disconnected(DisconnectionReason reason) {
     DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
     isRobotConnected_ = false;
-    Application.LoadLevel("Dev");
 
     lastDisconnectionReason = reason;
     if (DisconnectedFromClient != null) {
