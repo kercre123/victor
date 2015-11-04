@@ -559,7 +559,7 @@ public:
   
     // Helper template for sending Robot messages with clean syntax
     template<typename T, typename... Args>
-    Result SendRobotMessage(Args&&... args)
+    Result SendRobotMessage(Args&&... args) const
     {
       return SendMessage(RobotInterface::EngineToRobot(T(std::forward<Args>(args)...)));
     }
