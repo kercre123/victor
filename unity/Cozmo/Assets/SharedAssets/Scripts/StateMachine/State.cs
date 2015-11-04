@@ -4,7 +4,8 @@ using System.Collections;
 public class State {
 
   protected StateMachine stateMachine_;
-  protected Robot robot;
+
+  protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
   public void SetStateMachine(StateMachine stateMachine) {
     stateMachine_ = stateMachine;
@@ -12,7 +13,6 @@ public class State {
 
   public virtual void Enter() {
     DAS.Info("State.Enter", this.GetType().ToString());
-    robot = stateMachine_.GetGame().robot;
   }
 
   public virtual void Update() {

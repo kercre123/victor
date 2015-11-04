@@ -11,6 +11,7 @@ public class FollowCubeGame : GameBase {
     stateMachineManager_.AddStateMachine("FollowCubeStateMachine", stateMachine_);
     InitialCubesState initCubeState = new InitialCubesState();
     initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, InitialCubesDone);
+    stateMachine_.SetNextState(initCubeState);
     robot.StopFaceAwareness();
   }
 	
