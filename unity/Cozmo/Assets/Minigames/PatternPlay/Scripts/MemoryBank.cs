@@ -50,6 +50,7 @@ public class MemoryBank {
   public bool Add(BlockPattern newPattern) {
     return patterns.Add(newPattern);
   }
+
   public bool Contains(BlockPattern newPattern) {
     return patterns.Contains(newPattern);
   }
@@ -67,15 +68,15 @@ public class MemoryBank {
       HashSet<BlockPattern>.Enumerator enumer = patterns.GetEnumerator();
       bool nonEmpty = enumer.MoveNext();
       Debug.Assert(nonEmpty);
-      if (enumer.Current.verticalStack) {
+      if (enumer.Current.verticalStack_) {
         result = PatternOrientation.Vertical;
       }
       BlockPattern cur;
       while ((cur = enumer.Current) != null) {
-        if (cur.verticalStack && result == PatternOrientation.Horizontal) {
+        if (cur.verticalStack_ && result == PatternOrientation.Horizontal) {
           return PatternOrientation.Mixed;
         }
-        else if (!cur.verticalStack && result == PatternOrientation.Vertical) {
+        else if (!cur.verticalStack_ && result == PatternOrientation.Vertical) {
           return PatternOrientation.Mixed;
         }
         if (!enumer.MoveNext()) {
@@ -93,13 +94,11 @@ public class MemoryBank {
   // seen patterns stored in cozmo space that fit the signature
   private HashSet<BlockPattern> seenPatterns = new HashSet<BlockPattern>();
 
-  public int GetNumTotalPatterns()
-  {
+  public int GetNumTotalPatterns() {
     return patterns.Count;
   }
 
-  public int GetNumSeenPatterns()
-  {
+  public int GetNumSeenPatterns() {
     return seenPatterns.Count;
   }
 }

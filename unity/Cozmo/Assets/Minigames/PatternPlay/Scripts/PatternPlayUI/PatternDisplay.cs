@@ -23,19 +23,19 @@ public class PatternDisplay : MonoBehaviour {
       }
 
       if (_pattern != null){
-        for (int i = 0; i < cubes.Length && i < pattern.blocks.Count; i++) {
+        for (int i = 0; i < cubes.Length && i < pattern.blocks_.Count; i++) {
           // Show the cube
           cubes[i].gameObject.SetActive(true);
 
           // Set up the colors
           Color patternColor = new Color(0.2f, 0.8f, 1f);
-          cubes[i].frontColor.ObjectColor = pattern.blocks[i].front ? patternColor : Color.gray;
-          cubes[i].backColor.ObjectColor = pattern.blocks[i].back ? patternColor : Color.gray;
-          cubes[i].leftColor.ObjectColor = pattern.blocks[i].left ? patternColor : Color.gray;
-          cubes[i].rightColor.ObjectColor = pattern.blocks[i].right ? patternColor : Color.gray;
+          cubes[i].frontColor.ObjectColor = pattern.blocks_[i].front ? patternColor : Color.gray;
+          cubes[i].backColor.ObjectColor = pattern.blocks_[i].back ? patternColor : Color.gray;
+          cubes[i].leftColor.ObjectColor = pattern.blocks_[i].left ? patternColor : Color.gray;
+          cubes[i].rightColor.ObjectColor = pattern.blocks_[i].right ? patternColor : Color.gray;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
-          cubes[i].SetOrientation(pattern.blocks[i].facing_cozmo);
+          cubes[i].SetOrientation(pattern.blocks_[i].facing_cozmo);
         }
 
         if (_newBadgeDisplay != null) {

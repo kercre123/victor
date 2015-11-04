@@ -137,7 +137,7 @@ public class PatternCollectionBankCard : MonoBehaviour {
     PatternDisplay patternCardPrefab;
     if (patterns != null) {
       foreach (BlockPattern pattern in patterns) {
-        if (pattern.verticalStack) {
+        if (pattern.verticalStack_) {
           layoutContainer = _halfHorizontalLayoutForStackPatterns;
           patternCardPrefab = _stackPatternDisplayPrefab;
         } else {

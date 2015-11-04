@@ -19,7 +19,7 @@ public class PatternDiscoveryDisplay : MonoBehaviour {
   }
 
   public void Initialize(BlockPattern discoveredPattern) {
-    if (discoveredPattern.verticalStack) {
+    if (discoveredPattern.verticalStack_) {
       _stackPatternDisplay.pattern = discoveredPattern;
       _horizontalPatternDisplay.pattern = null;
     } else {

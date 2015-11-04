@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class BlockLights {
+public class BlockLights : System.ICloneable {
   public bool front;
   public bool back;
   public bool left;
   public bool right;
   public bool facing_cozmo;
+
+  public object Clone() {
+    return this.MemberwiseClone();
+  }
 
   public bool AreLightsOff() {
     return !front && !back && !left && !right;

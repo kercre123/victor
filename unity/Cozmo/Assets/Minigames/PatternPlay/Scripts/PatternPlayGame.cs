@@ -12,7 +12,7 @@ public class PatternPlayGame : GameBase {
   private StateMachine patternPlayStateMachine_ = new StateMachine();
 
   private Dictionary<int, BlockPatternData> blockPatternData_ = new Dictionary<int, BlockPatternData>();
-  private PatternMemory memoryBank_ = new PatternMemory();
+  private PatternMemory patternMemory_ = new PatternMemory();
   private bool initialCubesDone_ = false;
   private float lastSetTime_ = -100.0f;
   private int previousInputID_ = -1;
@@ -38,11 +38,11 @@ public class PatternPlayGame : GameBase {
     robot.ExecuteBehavior(BehaviorType.NoneBehavior);
     robot.StopFaceAwareness();
 
-    memoryBank_.Initialize();
+    patternMemory_.Initialize();
 
     GameObject viewControllerObject = Instantiate(viewControllerPrefab_.gameObject);
     PatternCollectionViewController viewControllerScript = viewControllerObject.GetComponent<PatternCollectionViewController>();
-    viewControllerScript.Initialize(memoryBank_);
+    viewControllerScript.Initialize(patternMemory_);
 
     patternPlayAudio_ = GetComponent<PatternPlayAudio>();
   }
@@ -97,6 +97,9 @@ public class PatternPlayGame : GameBase {
 
   public void InitialCubesDone() {
     initialCubesDone_ = true;
+
+    LightCube.MovedAction += BlockMoving;
+    LightCube.StoppedAction += BlockStopped;
 
     foreach (KeyValuePair<int, LightCube> lightCube in robot.LightCubes) {
       blockPatternData_.Add(lightCube.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
@@ -164,7 +167,7 @@ public class PatternPlayGame : GameBase {
   }
 
   public PatternMemory GetPatternMemory() {
-    return memoryBank_;
+    return patternMemory_;
   }
 
   public PatternPlayAutoBuild GetAutoBuild() {
@@ -211,6 +214,18 @@ public class PatternPlayGame : GameBase {
     if (blockAngleWorldSpace > 255.0f) {
       blockPatternData_[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].blockLightsLocalSpace);
     }
+  }
+
+  private void BlockMoving(int blockID, float xAccel, float yAccel, float zAccel) {
+    blockPatternData_[blockID].moving = true;
+    blockPatternData_[blockID].lastFrameZAccel = zAccel;
+    blockPatternData_[blockID].lastTimeTouched = Time.time;
+    patternPlayAutoBuild_.ObjectMoved(blockID);
+  }
+
+
+  private void BlockStopped(int blockID) {
+    blockPatternData_[blockID].moving = false;
   }
 
   private void SeenAccumulatorCompute() {
@@ -325,7 +340,7 @@ public class PatternPlayGame : GameBase {
     if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData_)) {
       seenPattern_ = true;
       lastPatternSeen_ = Time.time;
-      if (memoryBank_.AddSeen(currentPattern)) {
+      if (patternMemory_.AddSeen(currentPattern)) {
         shouldCelebrateNew_ = true;
       }
     }

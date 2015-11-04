@@ -15,7 +15,7 @@ public class PatternPlayAutoBuild {
   List<ObservedObject> neatList = new List<ObservedObject>();
 
   public bool PickNewTargetPattern() {
-    targetPattern_ = gameRef_.GetPatternMemory().GetAnUnseenPattern(p => (!p.facingCozmo && !p.verticalStack));
+    targetPattern_ = gameRef_.GetPatternMemory().GetAnUnseenPattern(p => (!p.facingCozmo && !p.verticalStack_));
     if (targetPattern_ == null)
       return false;
     else
@@ -148,7 +148,7 @@ public class PatternPlayAutoBuild {
   }
 
   public void SetBlockLightsToPattern(int blockID) {
-    gameRef_.SetPatternOnBlock(blockID, targetPattern_.blocks[0].NumberOfLightsOn());
+    gameRef_.SetPatternOnBlock(blockID, targetPattern_.blocks_[0].NumberOfLightsOn());
   }
 
   private void ComputeIdealViewPose() {

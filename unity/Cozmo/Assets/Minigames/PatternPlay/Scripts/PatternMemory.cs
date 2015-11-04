@@ -52,7 +52,7 @@ public class PatternMemory {
       Debug.Assert(bankObj.IsArray);
       foreach (JSONObject pattern in bankObj.list) {
         BlockPattern curPattern = new BlockPattern();
-        curPattern.verticalStack = pattern[kPatternAttribVertical].b;
+        curPattern.verticalStack_ = pattern[kPatternAttribVertical].b;
         curPattern.facingCozmo = pattern[kPatternAttribBlocks].b;
         Debug.Assert(pattern[kPatternAttribBlocks].IsArray);
         foreach (JSONObject blockData in pattern[kPatternAttribBlocks].list) {
@@ -63,7 +63,7 @@ public class PatternMemory {
           curBlock.left = (blockData[kBlockAttribLeft].str != "");
           curBlock.right = (blockData[kBlockAttribRight].str != "");
           curBlock.facing_cozmo = blockData[kBlockAttribFacingCozmo].b;
-          curPattern.blocks.Add(curBlock);
+          curPattern.blocks_.Add(curBlock);
         }
         bank.Add(curPattern);
         DAS.Info("PatternMemory.Init", "Pattern Added for bank: " + key + " hash = " + curPattern.GetHashCode());
