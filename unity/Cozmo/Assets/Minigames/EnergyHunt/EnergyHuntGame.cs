@@ -11,7 +11,7 @@ public class EnergyHuntGame : GameBase {
     
   }
 
-  public override void HandleHubWorldDestroyed() {
+  public override void CleanUp() {
 
   }
 }

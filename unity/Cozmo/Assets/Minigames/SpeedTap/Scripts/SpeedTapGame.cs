@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System;
 
@@ -43,7 +43,7 @@ public class SpeedTapGame : GameBase {
     stateMachineManager_.UpdateAllMachines();
   }
 
-  public override void HandleHubWorldDestroyed() {
+  public override void CleanUp() {
     if (gamePanel_ != null) {
       UIManager.CloseDialogImmediately(gamePanel_);
     }

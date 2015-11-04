@@ -14,8 +14,11 @@ public class DevHubWorld : HubWorldBase {
   }
 
   public override bool DestroyHubWorld() {
-    miniGameInstance_.HandleHubWorldDestroyed();
-    Destroy(miniGameInstance_.gameObject);
+    // Destroy game if it exists
+    if (miniGameInstance_ != null) {
+      miniGameInstance_.CleanUp();
+      Destroy(miniGameInstance_.gameObject);
+    }
     return true;
   }
 }

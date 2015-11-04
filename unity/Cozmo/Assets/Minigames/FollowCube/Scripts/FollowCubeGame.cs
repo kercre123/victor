@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class FollowCubeGame : GameBase {
@@ -31,7 +31,7 @@ public class FollowCubeGame : GameBase {
     gamePanel_.OnDemonSpeedPressed += SetDemonSpeed;
   }
 
-  public override void HandleHubWorldDestroyed() {
+  public override void CleanUp() {
     if (gamePanel_ != null) {
       UIManager.CloseDialogImmediately(gamePanel_);
     }

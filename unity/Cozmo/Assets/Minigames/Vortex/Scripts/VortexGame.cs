@@ -10,7 +10,7 @@ public class VortexGame : GameBase {
 
   }
 
-  public override void HandleHubWorldDestroyed() {
+  public override void CleanUp() {
 
   }
 }

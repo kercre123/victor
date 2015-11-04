@@ -9,5 +9,5 @@ public abstract class GameBase : MonoBehaviour {
 
   public Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
-  public abstract void HandleHubWorldDestroyed();
+  public abstract void CleanUp();
 }

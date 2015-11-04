@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class AskCozmoGame : GameBase {
@@ -15,7 +15,7 @@ public class AskCozmoGame : GameBase {
     gamePanel_.OnAskButtonPressed += OnAnswerRequested;
   }
 
-  public override void HandleHubWorldDestroyed() {
+  public override void CleanUp() {
     if (gamePanel_ != null) {
       UIManager.CloseDialogImmediately(gamePanel_);
     }

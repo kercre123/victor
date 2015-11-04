@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -78,7 +78,7 @@ public class PatternPlayGame : GameBase {
 
   }
 
-  public override void HandleHubWorldDestroyed() {
+  public override void CleanUp() {
     if (viewControllerInstance_ != null) {
       Destroy(viewControllerInstance_.gameObject);
     }
