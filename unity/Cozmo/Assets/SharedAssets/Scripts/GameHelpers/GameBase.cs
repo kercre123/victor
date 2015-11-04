@@ -6,6 +6,7 @@ using System.Collections;
 public abstract class GameBase : MonoBehaviour {
   [SerializeField]
   string gameName_;
+  public string GameName { get { return gameName_; } private set { gameName_ = value; } }
 
   public Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 

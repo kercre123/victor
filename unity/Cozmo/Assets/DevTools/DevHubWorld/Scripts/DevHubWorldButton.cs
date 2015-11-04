@@ -8,6 +8,7 @@ public class DevHubWorldButton : MonoBehaviour {
   public event DevButtonClickedHandler OnDevButtonClicked;
   private void RaiseButtonClicked(GameBase minigame){
     if (OnDevButtonClicked != null) {
+      OnDevButtonClicked(minigame);
     }
   }
   
@@ -20,8 +21,16 @@ public class DevHubWorldButton : MonoBehaviour {
   private GameBase minigame_;
 
   public void Initialize(GameBase minigame){
+    minigame_ = minigame;
+    buttonLabel_.text = minigame.GameName;
+    buttonScript_.onClick.AddListener(OnButtonClicked);
+  }
+
+  private void OnDestroy(){
+    buttonScript_.onClick.RemoveListener(OnButtonClicked);
   }
 
   private void OnButtonClicked(){
+    RaiseButtonClicked(minigame_);
   }
 }

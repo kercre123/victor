@@ -7,6 +7,7 @@ public class DevHubWorldDialog : BaseDialog {
   public event DevButtonClickedHandler OnDevButtonClicked;
   private void RaiseButtonClicked(GameBase minigame){
     if (OnDevButtonClicked != null) {
+      OnDevButtonClicked(minigame);
     }
   }
 
@@ -17,6 +18,14 @@ public class DevHubWorldDialog : BaseDialog {
   private RectTransform buttonContainer_;
 
   public void Initialize(GameBase[] minigames){
+    GameObject newButton;
+    DevHubWorldButton buttonScript;
+    foreach (GameBase game in minigames) {
+      newButton = UIManager.CreateUI(devHubWorldButtonPrefab_.gameObject, buttonContainer_);
+      buttonScript = newButton.GetComponent<DevHubWorldButton>();
+      buttonScript.Initialize(game);
+      buttonScript.OnDevButtonClicked += HandleOnDevButtonClicked;
+    }
   }
 
   protected override void CleanUp() {
@@ -25,5 +34,10 @@ public class DevHubWorldDialog : BaseDialog {
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
 
+  }
+
+  private void HandleOnDevButtonClicked (GameBase miniGameClicked)
+  {
+    RaiseButtonClicked(miniGameClicked);
   }
 }
