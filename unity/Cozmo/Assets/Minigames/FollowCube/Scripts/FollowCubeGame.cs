@@ -6,6 +6,13 @@ public class FollowCubeGame : GameBase {
   private StateMachineManager stateMachineManager_ = new StateMachineManager();
   private StateMachine stateMachine_ = new StateMachine();
 
+  public float ForwardSpeed { get; set; }
+
+  [SerializeField]
+  private FollowCubeGamePanel gamePanelPrefab_;
+
+  private FollowCubeGamePanel gamePanel_;
+
   void Start() {
     stateMachine_.SetGameRef(this);
     stateMachineManager_.AddStateMachine("FollowCubeStateMachine", stateMachine_);
@@ -13,6 +20,11 @@ public class FollowCubeGame : GameBase {
     initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, InitialCubesDone);
     stateMachine_.SetNextState(initCubeState);
     robot.StopFaceAwareness();
+
+    gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<FollowCubeGamePanel>();
+    gamePanel_.OnSlowSpeedPressed += SetSlowSpeed;
+    gamePanel_.OnFastSpeedPressed += SetFastSpeed;
+    gamePanel_.OnDemonSpeedPressed += SetDemonSpeed;
   }
 	
   // Update is called once per frame
@@ -21,6 +33,18 @@ public class FollowCubeGame : GameBase {
   }
 
   void InitialCubesDone() {
-    
+    SetSlowSpeed();
+  }
+
+  void SetSlowSpeed() {
+    ForwardSpeed = 25.0f;
+  }
+
+  void SetFastSpeed() {
+    ForwardSpeed = 50.0f;
+  }
+
+  void SetDemonSpeed() {
+    ForwardSpeed = 200.0f;
   }
 }

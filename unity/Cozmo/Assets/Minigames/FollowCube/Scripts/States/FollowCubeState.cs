@@ -34,11 +34,14 @@ public class FollowCubeState : State {
 
     float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
     if (angle < 10.0f) {
+
+      float speed = (stateMachine_.GetGame() as FollowCubeGame).ForwardSpeed;
+
       if (dist > distanceMax_) {
-        robot.DriveWheels(20.0f, 20.0f);
+        robot.DriveWheels(speed, speed);
       }
       else if (dist < distanceMin_) {
-        robot.DriveWheels(-20.0f, -20.0f);
+        robot.DriveWheels(-speed, -speed);
       }
       else {
         robot.DriveWheels(0.0f, 0.0f);
