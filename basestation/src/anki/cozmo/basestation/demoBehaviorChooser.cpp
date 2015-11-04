@@ -103,9 +103,9 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     {
       behaviorPlayAnim->SetAnimationName("happy");
       behaviorPlayAnim->SetName("HappyReact");
-      behaviorPlayAnim->SetMinTimeBetweenRuns(5.0);
+      behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
       behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happiness,
-                                                       Anki::Util::GraphEvaluator2d({{0.01f, 0.0f}, {0.01f, 1.0f}, {1.0f, 1.0f}}), true));
+                                                       Anki::Util::GraphEvaluator2d({{0.059f, 0.0f}, {0.059f, 0.7f}, {1.0f, 1.0f}}), true));
     }
     else
     {
@@ -123,9 +123,29 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
     {
       behaviorPlayAnim->SetAnimationName("sad");
       behaviorPlayAnim->SetName("SadReact");
-      behaviorPlayAnim->SetMinTimeBetweenRuns(5.0);
+      behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
       behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happiness,
-                                                       Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.01f, 1.0f}, {-0.01f, 0.0f}}), true));
+                                                       Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.059f, 0.7f}, {-0.059f, 0.0f}}), true));
+    }
+    else
+    {
+      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorPlayAnim was not created properly.");
+      return;
+    }
+  }
+
+  // Setup Angry React
+  {
+    BehaviorPlayAnim* behaviorPlayAnim = new BehaviorPlayAnim(robot, config);
+    addResult = super::AddBehavior(behaviorPlayAnim);
+    
+    if (Result::RESULT_OK == addResult)
+    {
+      behaviorPlayAnim->SetAnimationName("angry");
+      behaviorPlayAnim->SetName("AngryReact");
+      behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
+      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Calmness,
+                                                       Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.059f, 0.7f}, {-0.059f, 0.0f}}), true));
     }
     else
     {

@@ -148,7 +148,8 @@ namespace Cozmo {
     
     // Initialize next behavior and make it the current one
     if (nullptr != _nextBehavior && _currentBehavior != _nextBehavior) {
-      if (_nextBehavior->Init(currentTime_sec) != RESULT_OK) {
+      const bool isResuming = (_nextBehavior == _resumeBehavior);
+      if (_nextBehavior->Init(currentTime_sec, isResuming) != RESULT_OK) {
         PRINT_NAMED_ERROR("BehaviorManager.SwitchToNextBehavior.InitFailed",
                           "Failed to initialize %s behavior.",
                           _nextBehavior->GetName().c_str());
@@ -161,6 +162,12 @@ namespace Cozmo {
         VizManager::getInstance()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
       }
       #endif // SEND_MOOD_TO_VIZ_DEBUG
+      
+      _resumeBehavior = nullptr;
+      if (_currentBehavior && _nextBehavior->IsShortInterruption() && _currentBehavior->WantsToResume())
+      {
+        _resumeBehavior = _currentBehavior;
+      }
 
       _currentBehavior = _nextBehavior;
       _nextBehavior = nullptr;
@@ -270,7 +277,8 @@ namespace Cozmo {
         // Interrupt the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
-        initResult = _currentBehavior->Interrupt(currentTime_sec);
+        const bool isShortInterrupt = _nextBehavior && _nextBehavior->IsShortInterruption();
+        initResult = _currentBehavior->Interrupt(currentTime_sec, isShortInterrupt);
         
         if (nullptr != _nextBehavior)
         {
@@ -284,8 +292,8 @@ namespace Cozmo {
   
   Result BehaviorManager::SelectNextBehavior(double currentTime_sec)
   {
-    
     _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot, currentTime_sec);
+
     if(nullptr == _nextBehavior) {
       PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoneRunnable", "");
       return RESULT_FAIL;
@@ -317,6 +325,7 @@ namespace Cozmo {
   {
     // These behavior pointers are going to be invalidated, so clear them
     _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
+    _resumeBehavior = nullptr;
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;

@@ -6,7 +6,7 @@ PROTO CozmoVizDisplay
   # Set this to match IMG_STREAM_RES in cozmoConfig.h
   field SFString streamResolution "CVGA"
   
-  # Following (but with PixelSize=2) works well on Macbook screen
+  # Following (but with PixelSize=2) works well on Macbook screen (size=1 for monitor)
   field SFFloat moodPixelSize 0.0
   field SFFloat behaviorSelectionPixelSize 0.0
   field SFVec2f moodPos 1.0 0.35

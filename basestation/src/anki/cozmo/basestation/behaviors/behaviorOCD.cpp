@@ -64,7 +64,7 @@ namespace Cozmo {
                                    (!_animActionTags.empty()));
   }
   
-  Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
   {
     Result lastResult = RESULT_OK;
     
@@ -83,7 +83,7 @@ namespace Cozmo {
       PlayAnimation(robot, "Demo_OCD_Confused");
     } else if (currentTime_sec - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
       robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  kEmotionChangeSmall,
-                                           EmotionType::Calmness,   kEmotionChangeSmall,
+                                           EmotionType::Calmness,   -kEmotionChangeMedium,
                                            EmotionType::Excited,    kEmotionChangeSmall, "OCD_NewMessy");
       PlayAnimation(robot, "Demo_OCD_New_Messy_Block");
     } else {
@@ -176,7 +176,7 @@ namespace Cozmo {
     return Status::Running;
   }
 
-  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
     return RESULT_OK;

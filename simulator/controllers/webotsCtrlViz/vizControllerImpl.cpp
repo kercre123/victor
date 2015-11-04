@@ -26,8 +26,8 @@ namespace Anki {
 namespace Cozmo {
 
 
-static const size_t kEmotionBuffersCapacity  = 200; // num ticks of emotion score values to store
-static const size_t kBehaviorBuffersCapacity = 200; // num ticks of behavior score values to store
+static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
+static const size_t kBehaviorBuffersCapacity = 300; // num ticks of behavior score values to store
   
   
 VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
@@ -706,7 +706,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
       ++colorIndex;
     }
     
-    _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
+      _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
     maxBufferValues = MAX(maxBufferValues, _behaviorEventBuffer.size());
 
     std::sort(activeScoreBuffers.begin(), activeScoreBuffers.end(),
@@ -808,8 +808,10 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
     
     for (size_t j=0; j < numValues; ++j)
     {
+      const float scoreVal = scoreBuffer[j];
+      
       const int xVal = (int)(xValF);
-      const int yVal = yValueFor0 + (int)(yScalar * scoreBuffer[j]);
+      const int yVal = yValueFor0 + (int)(yScalar * scoreVal);
       
       if (j > 0)
       {

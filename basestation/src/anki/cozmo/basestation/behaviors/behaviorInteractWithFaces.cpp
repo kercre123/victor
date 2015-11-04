@@ -49,12 +49,32 @@ namespace Cozmo {
     AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
   }
   
-  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
   {
+    if (isResuming && (_resumeState != State::Interrupted))
+    {
+      if (currentTime_sec > _timeWhenInterrupted)
+      {
+        const double timeWaitingToResume = currentTime_sec - _timeWhenInterrupted;
+        if (_newFaceAnimCooldownTime > 0.0)
+        {
+          _newFaceAnimCooldownTime += timeWaitingToResume;
+        }
+      }
+      _currentState = _resumeState;
+      _resumeState = State::Interrupted;
+      //robot.GetMoveComponent().EnableTrackToFace(); // [MarkW:TODO] If we disabled TrackToFace on interrupt we might want to restore it here?
+    }
+    else
+    {
+      _currentState = State::Inactive;
+    }
+    
+    _timeWhenInterrupted = 0.0;
+    
     // Make sure the robot's idle animation is set to use Live, since we are
     // going to stream live face mimicking
     robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
-    _currentState = State::Inactive;
     
     return RESULT_OK;
   }
@@ -134,6 +154,8 @@ namespace Cozmo {
     {
       case State::Inactive:
       {
+        _stateName = "Inactive";
+        
         // If we're still finishing an action, just wait
         if(_isActing)
         {
@@ -185,9 +207,12 @@ namespace Cozmo {
           break;
         }
         
-        static auto newFaceAnimCooldownTime = currentTime_sec;
+        if (_newFaceAnimCooldownTime == 0.0)
+        {
+          _newFaceAnimCooldownTime = currentTime_sec;
+        }
         // If we haven't played our init anim yet for this face and it's been awhile since we did so, do so and break early
-        if (!dataIter->second._playedInitAnim && currentTime_sec >= newFaceAnimCooldownTime)
+        if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
         {
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
           PlayAnimation(robot, "Demo_Look_Around_See_Something_A");
@@ -195,13 +220,9 @@ namespace Cozmo {
                                     EmotionType::Socialized, kEmotionChangeMedium,
                                     EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
           dataIter->second._playedInitAnim = true;
-          newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
+          _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
           break;
         }
-        
-        moodManager.AddToEmotions(EmotionType::Happiness,  kEmotionChangeSmall,
-                                  EmotionType::Socialized, kEmotionChangeSmall,
-                                  EmotionType::Excited,    kEmotionChangeSmall, "SeeSomething");
         
         dataIter->second._trackingStart_sec = currentTime_sec;
         
@@ -216,6 +237,8 @@ namespace Cozmo {
         
       case State::TrackingFace:
       {
+        _stateName = "TrackingFace";
+        
         auto faceID = robot.GetMoveComponent().GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
         if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
@@ -230,8 +253,8 @@ namespace Cozmo {
         auto lastSeen = _interestingFacesData[faceID]._lastSeen_sec;
         if(currentTime_sec - lastSeen > _trackingTimeout_sec)
         {
-          robot.GetMoodManager().AddToEmotion(EmotionType::Happiness,  -kEmotionChangeVerySmall, "LostFace");
-          robot.GetMoodManager().AddToEmotion(EmotionType::Socialized, -kEmotionChangeVerySmall, "LostFace");
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  -kEmotionChangeVerySmall,
+                                               EmotionType::Socialized, -kEmotionChangeVerySmall, "LostFace");
           
           robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
@@ -249,9 +272,9 @@ namespace Cozmo {
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
         if (watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
-          robot.GetMoodManager().AddToEmotion(EmotionType::Happiness,  kEmotionChangeSmall,  "LotsOfFace");
-          robot.GetMoodManager().AddToEmotion(EmotionType::Excited,    kEmotionChangeSmall,  "LotsOfFace");
-          robot.GetMoodManager().AddToEmotion(EmotionType::Socialized, kEmotionChangeLarge,  "LotsOfFace");
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  kEmotionChangeSmall,
+                                               EmotionType::Excited,    kEmotionChangeSmall,
+                                               EmotionType::Socialized, kEmotionChangeLarge,  "LotsOfFace");
 
           robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
@@ -268,6 +291,9 @@ namespace Cozmo {
         const Face* face = robot.GetFaceWorld().GetFace(faceID);
         if(face == nullptr)
         {
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  -kEmotionChangeVerySmall,
+                                               EmotionType::Socialized, -kEmotionChangeVerySmall, "InvalidFace");
+          
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
@@ -315,6 +341,8 @@ namespace Cozmo {
         
       case State::Interrupted:
       {
+        _stateName = "Interrupted";
+        
         status = Status::Complete;
         break;
       }
@@ -339,9 +367,15 @@ namespace Cozmo {
     _isActing = true;
   }
   
-  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
-    robot.GetMoveComponent().DisableTrackToFace();
+    _resumeState = isShortInterrupt ? _currentState : State::Interrupted;
+    _timeWhenInterrupted = currentTime_sec;
+
+    if (_resumeState == State::Interrupted)
+    {
+      robot.GetMoveComponent().DisableTrackToFace();
+    }
     _currentState = State::Interrupted;
     
     return RESULT_OK;

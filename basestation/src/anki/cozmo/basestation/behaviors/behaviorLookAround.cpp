@@ -112,7 +112,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
   }
 }
   
-Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
   // Update explorable area center to current robot pose
   ResetSafeRegion(robot);
@@ -315,7 +315,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   ResetBehavior(robot, currentTime_sec);
   return Result::RESULT_OK;

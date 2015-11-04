@@ -102,6 +102,7 @@ namespace Cozmo {
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
     IBehavior* _forceSwitchBehavior = nullptr;
+    IBehavior* _resumeBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;

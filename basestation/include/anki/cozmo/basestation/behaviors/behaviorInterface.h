@@ -63,7 +63,7 @@ namespace Cozmo {
     // Will be called upon first switching to a behavior before calling update.
     // Calls protected virtual InitInternal() method, which each derived class
     // should implement.
-    Result Init(double currentTime_sec);
+    Result Init(double currentTime_sec, bool isResuming);
 
     // Step through the behavior and deliver rewards to the robot along the way
     // This calls the protected virtual UpdateInternal() method, which each
@@ -81,7 +81,7 @@ namespace Cozmo {
     // Tell this behavior to finish up ASAP so we can switch to a new one.
     // This should trigger any cleanup and get Update() to return COMPLETE
     // as quickly as possible.
-    Result Interrupt(double currentTime_sec);
+    Result Interrupt(double currentTime_sec, bool isShortInterrupt);
     
     virtual const std::string& GetName() const { return _name; }
     virtual const std::string& GetStateName() const { return _stateName; }
@@ -97,15 +97,16 @@ namespace Cozmo {
     
     // Some behaviors are short interruptions that can resume directly to previous behavior
     virtual bool IsShortInterruption() const { return false; }
+    virtual bool WantsToResume() const { return false; }
     
     // All behaviors run in a single "slot" in the AcitonList. (This seems icky.)
     static const ActionList::SlotHandle sActionSlot;
     
   protected:
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec) = 0;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) = 0;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) = 0;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) = 0;
     
     // Can't create a public IBehavior, but derived classes must pass a robot
     // reference into this protected constructor.
@@ -172,9 +173,9 @@ namespace Cozmo {
     
   }; // class IBehavior
   
-  inline Result IBehavior::Init(double currentTime_sec)
+  inline Result IBehavior::Init(double currentTime_sec, bool isResuming)
   {
-    return InitInternal(_robot, currentTime_sec);
+    return InitInternal(_robot, currentTime_sec, isResuming);
   }
   
   inline IBehavior::Status IBehavior::Update(double currentTime_sec)
@@ -182,9 +183,9 @@ namespace Cozmo {
     return UpdateInternal(_robot, currentTime_sec);
   }
   
-  inline Result IBehavior::Interrupt(double currentTime_sec)
+  inline Result IBehavior::Interrupt(double currentTime_sec, bool isShortInterrupt)
   {
-    return InterruptInternal(_robot, currentTime_sec);
+    return InterruptInternal(_robot, currentTime_sec, isShortInterrupt);
   }
   
   inline Util::RandomGenerator& IBehavior::GetRNG() {

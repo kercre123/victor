@@ -340,9 +340,9 @@ public:
 
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
 
-  virtual Anki::Result InitInternal(Robot& robot, double currentTime_sec) override { return Anki::RESULT_OK; }
+  virtual Anki::Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override { return Anki::RESULT_OK; }
   virtual Status       UpdateInternal(Robot& robot, double currentTime_sec) override { return Status::Running; }
-  virtual Anki::Result InterruptInternal(Robot& robot, double currentTime_sec) override { return Anki::RESULT_OK; }
+  virtual Anki::Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override { return Anki::RESULT_OK; }
 };
 
 
