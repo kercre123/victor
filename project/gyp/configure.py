@@ -208,9 +208,11 @@ def main(scriptArgs):
 
   # mac
   if 'mac' in options.platforms:
-      os.environ['GYP_DEFINES'] = """ 
+      os.environ['GYP_DEFINES'] = """
                                   OS=mac
                                   ndk_root=INVALID
+                                  audio_library_type=static_library
+                                  audio_library_build=profile
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
@@ -252,6 +254,8 @@ def main(scriptArgs):
   if 'ios' in options.platforms:
     os.environ['GYP_DEFINES'] = """
                                 OS=ios
+                                audio_library_type=static_library
+                                audio_library_build=profile
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
@@ -285,9 +289,11 @@ def main(scriptArgs):
   # mex
   if 'mex' in options.platforms:
       gypFile = 'cozmoEngineMex.gyp'
-      os.environ['GYP_DEFINES'] = """ 
+      os.environ['GYP_DEFINES'] = """
                                   OS=mac
                                   ndk_root=INVALID
+                                  audio_library_type=static_library
+                                  audio_library_build=profile
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
@@ -349,7 +355,9 @@ def main(scriptArgs):
 
     os.environ['ANDROID_BUILD_TOP'] = configurePath
     ##################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """ 
+    os.environ['GYP_DEFINES'] = """
+                                audio_library_type=static_library
+                                audio_library_build=profile
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
@@ -394,7 +402,9 @@ def main(scriptArgs):
     gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
     gyp.main(gypArgs)
 
-    
+  #pre build setup: decompress audio libs
+  if (subprocess.call([os.path.join(projectRoot, 'lib/audio/gyp/decompressAudioLibs.sh')]) != 0):
+    Logger.error('error decompressing audio libs')
 
   return True
 
