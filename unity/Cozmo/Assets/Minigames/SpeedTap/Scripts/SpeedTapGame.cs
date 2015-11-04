@@ -43,6 +43,12 @@ public class SpeedTapGame : GameBase {
     stateMachineManager_.UpdateAllMachines();
   }
 
+  public override void HandleHubWorldDestroyed() {
+    if (gamePanel_ != null) {
+      UIManager.CloseDialogImmediately(gamePanel_);
+    }
+  }
+
   void InitialCubesDone() {
     cozmoBlock_ = GetClosestAvailableBlock();
     playerBlock_ = GetFarthestAvailableBlock();

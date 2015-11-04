@@ -131,11 +131,6 @@ public class Intro : MonoBehaviour {
     lastVisualizerIp = visualizerIP.text;
   }
 
-  public void FakeTest() {
-    SaveData();
-    Application.LoadLevel("ControlSchemeTest");
-  }
-
   private void Connected(string connectionIdentifier) {
     error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
     RobotEngineManager.instance.StartEngine(currentVizHostIP);

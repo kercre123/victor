@@ -9,6 +9,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 437578}
   - 114: {fileID: 11450830}
+  - 114: {fileID: 11480600}
   m_Layer: 0
   m_Name: PatternCollectionViewController
   m_TagString: Untagged
@@ -45,6 +46,17 @@ MonoBehaviour:
     type: 2}
   _patternDiscoveredDialogPrefab: {fileID: 11439408, guid: 1f97977e1561a4d43b6da7aa8e6ed02c,
     type: 2}
+--- !u!114 &11480600
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 178374}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bfbb67da94ce4e0ba48c9c86474f753, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

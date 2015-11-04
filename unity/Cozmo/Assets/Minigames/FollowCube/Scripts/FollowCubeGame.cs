@@ -26,6 +26,12 @@ public class FollowCubeGame : GameBase {
     gamePanel_.OnFastSpeedPressed += SetFastSpeed;
     gamePanel_.OnDemonSpeedPressed += SetDemonSpeed;
   }
+
+  public override void HandleHubWorldDestroyed() {
+    if (gamePanel_ != null) {
+      UIManager.CloseDialogImmediately(gamePanel_);
+    }
+  }
 	
   // Update is called once per frame
   void Update() {
