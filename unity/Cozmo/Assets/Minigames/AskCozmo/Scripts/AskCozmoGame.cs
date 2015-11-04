@@ -11,7 +11,7 @@ public class AskCozmoGame : GameBase {
   private AskCozmoPanel gamePanel_;
 
   void Start() {
-    gamePanel_ = UIManager.CreateUI(gamePanelPrefab_.gameObject).GetComponent<AskCozmoPanel>();
+    gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<AskCozmoPanel>();
     gamePanel_.OnAskButtonPressed += OnAnswerRequested;
   }
 

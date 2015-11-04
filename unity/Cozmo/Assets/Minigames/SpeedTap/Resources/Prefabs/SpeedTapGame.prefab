@@ -52,6 +52,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edea70fc2a8a54b7c8c036af62f5683a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cozmoScore_: 0
+  playerScore_: 0
+  gamePanelPrefab_: {fileID: 11487488, guid: a73dd626a2d594b738f14e865f6822a7, type: 2}
+  rollSound_: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -63,6 +67,11 @@ Prefab:
       propertyPath: gameName_
       value: Speed Tap
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: gamePanelPrefab_
+      value: 
+      objectReference: {fileID: 11487488, guid: a73dd626a2d594b738f14e865f6822a7,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}

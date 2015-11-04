@@ -11,12 +11,10 @@ public class SpeedTapGame : GameBase {
 
   public event Action PlayerTappedBlockEvent;
 
-
   [SerializeField]
-  private UnityEngine.UI.Text cozmoScoreField;
+  private SpeedTapPanel gamePanelPrefab_;
+  private SpeedTapPanel gamePanel_;
 
-  [SerializeField]
-  private UnityEngine.UI.Text playerScoreField;
 
   [SerializeField]
   private AudioClip rollSound_;
@@ -29,17 +27,12 @@ public class SpeedTapGame : GameBase {
     LightCube.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     robot.SetBehaviorSystem(false);
-
+    gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<SpeedTapPanel>();
     UpdateUI();
   }
 
   public void UpdateUI() {
-    /*if (cozmoScoreField != null) {
-      cozmoScoreField.text = cozmoScore_.ToString();
-    }
-    if (playerScoreField != null) {
-      playerScoreField.text = playerScore_.ToString();
-    }*/
+    gamePanel_.SetScoreText(cozmoScore_, playerScore_);
   }
 
   public void RollingBlocks() {
