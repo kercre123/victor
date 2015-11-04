@@ -8,6 +8,10 @@ public class FollowCubeGame : GameBase {
 
   public float ForwardSpeed { get; set; }
 
+  public float DistanceMin { get; set; }
+
+  public float DistanceMax { get; set; }
+
   [SerializeField]
   private FollowCubeGamePanel gamePanelPrefab_;
 
@@ -44,13 +48,19 @@ public class FollowCubeGame : GameBase {
 
   void SetSlowSpeed() {
     ForwardSpeed = 25.0f;
+    DistanceMax = 120.0f;
+    DistanceMin = 80.0f;
   }
 
   void SetFastSpeed() {
     ForwardSpeed = 50.0f;
+    DistanceMax = 130.0f;
+    DistanceMin = 90.0f;
   }
 
   void SetDemonSpeed() {
     ForwardSpeed = 200.0f;
+    DistanceMax = 200.0f;
+    DistanceMin = 0.0f;
   }
 }

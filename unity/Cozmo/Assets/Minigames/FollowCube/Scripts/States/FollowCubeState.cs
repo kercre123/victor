@@ -3,9 +3,6 @@ using System.Collections;
 
 public class FollowCubeState : State {
 
-  private float distanceMin_ = 100.0f;
-  private float distanceMax_ = 150.0f;
-
   private bool searchTurnRight_ = false;
 
   public override void Enter() {
@@ -29,18 +26,21 @@ public class FollowCubeState : State {
     }
 
     if (closest == null) {
+      robot.DriveWheels(0.0f, 0.0f);
       return;
     }
 
     float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
-    if (angle < 10.0f) {
+    if (angle < 5.0f) {
 
       float speed = (stateMachine_.GetGame() as FollowCubeGame).ForwardSpeed;
+      float distMax = (stateMachine_.GetGame() as FollowCubeGame).DistanceMax;
+      float distMin = (stateMachine_.GetGame() as FollowCubeGame).DistanceMin;
 
-      if (dist > distanceMax_) {
+      if (dist > distMax) {
         robot.DriveWheels(speed, speed);
       }
-      else if (dist < distanceMin_) {
+      else if (dist < distMin) {
         robot.DriveWheels(-speed, -speed);
       }
       else {
@@ -51,10 +51,10 @@ public class FollowCubeState : State {
       // we need to turn to face it
       ComputeTurnDirection(closest);
       if (searchTurnRight_) {
-        robot.DriveWheels(25.0f, -20.0f);
+        robot.DriveWheels(35.0f, -30.0f);
       }
       else {
-        robot.DriveWheels(-20.0f, 25.0f);
+        robot.DriveWheels(-30.0f, 35.0f);
       }
     }
 
