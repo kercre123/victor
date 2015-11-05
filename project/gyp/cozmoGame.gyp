@@ -350,9 +350,10 @@
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              'cozmoGame',
+              # Remove to allow cozmoEngine.gyp "direct_dependent_settings" to include libraries
+              # 'cozmoGame',
+              # '<(cg-ce_gyp_path):cozmoEngine',
               'CSharpBinding',
-              '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
               '<(cg-cti_gyp_path):ctiMessaging',
