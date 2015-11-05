@@ -515,7 +515,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
 
   // Calculate y coordinate range and scaling for graph points
   
-  const int   labelOffsetX  = 130; // Minimum indentation from right for the catagory label (e.g. "Happiness X.XX")
+  const int   labelOffsetX  = 120; // Minimum indentation from right for the catagory label (e.g. "Happy X.XX")
   const float xStep         = float(windowWidth-labelOffsetX) / float(_emotionBuffers[0].capacity());
   
   const int   yValueFor1    = 16;
