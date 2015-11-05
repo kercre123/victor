@@ -656,6 +656,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
+  public float GetRobotVolume() {
+    return SetRobotVolumeMessage.volume;
+  }
+
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
     if (HeadTrackingObjectID == observedObject) {
       lastHeadTrackingObjectID = -1;
