@@ -10,14 +10,14 @@ public class IntroManager : MonoBehaviour {
   [SerializeField]
   private HubWorldBase hubWorldPrefab_;
   private HubWorldBase hubWorldInstance_;
-  
+
   void Start() {
     ShowDevConnectDialog();
 
     RobotEngineManager.instance.RobotConnected += Connected;
     RobotEngineManager.instance.DisconnectedFromClient += DisconnectedFromClient;
   }
-  
+
   void Connected(int robotID) {
     // Spawn HubWorld
     GameObject hubWorldObject = GameObject.Instantiate(hubWorldPrefab_.gameObject);
@@ -29,24 +29,23 @@ public class IntroManager : MonoBehaviour {
       HideDevConnectDialog();
     }
   }
-  
-  void DisconnectedFromClient (DisconnectionReason obj)
-  {
+
+  void DisconnectedFromClient(DisconnectionReason obj) {
     // Force quit hub world and show connect dialog again
-    hubWorldInstance_.DestroyHubWorld();
+    hubWorldInstance_.DestroyHubWorld(); 
     Destroy(hubWorldInstance_);
 
     UIManager.CloseAllDialogsImmediately();
     ShowDevConnectDialog();
   }
-  
-  private void ShowDevConnectDialog(){
+
+  private void ShowDevConnectDialog() {
     if (devConnectDialogInstance_ == null) {
       devConnectDialogInstance_ = UIManager.CreateUI(devConnectDialog_.gameObject);
     }
   }
-  
-  private void HideDevConnectDialog(){
+
+  private void HideDevConnectDialog() {
     if (devConnectDialogInstance_ != null) {
       Destroy(devConnectDialogInstance_);
     }

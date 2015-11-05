@@ -46,7 +46,7 @@ public class SpeedTapStatePlayNewHand : State {
           if ((curTimeMillis - startTimeMs_) >= cozmoTapDelayTimeMs_) {
             DAS.Info("SpeedTap.CozmoTapping", "" + speedTapGame_.cozmoScore_);
             RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedTapAnimation;
-            robot.SendAnimation("firstTap");
+            robot.SendAnimation("tapCube");
             cozmoTapping_ = true;
           }
         }
@@ -108,11 +108,11 @@ public class SpeedTapStatePlayNewHand : State {
       speedTapGame_.cozmoScore_++;
       speedTapGame_.UpdateUI();
       // play sound, do dance
-      robot.SendAnimation("tapTwoTimes");
+      robot.SendAnimation("finishTapCubeWin");
     }
     // otherwise cozmo is too late!
     else {
-      robot.SendAnimation("tapThreeTimes");
+      robot.SendAnimation("finishTapCubeLose");
     }
   }
 
