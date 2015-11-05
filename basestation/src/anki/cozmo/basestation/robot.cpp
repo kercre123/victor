@@ -34,16 +34,17 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/robotStatusAndActions.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
-#include "util/fileUtils/fileUtils.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/fileUtils/fileUtils.h"
 
 #include <fstream>
 #include <regex>
@@ -965,6 +966,7 @@ namespace Anki {
       
       _moodManager.Update(currentTime);
       
+      const char* behaviorChooserName = "";
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
         _behaviorMgr.Update(currentTime);
@@ -978,10 +980,16 @@ namespace Anki {
             behaviorName += "-" + stateName;
           }
         }
+        
+        const IBehaviorChooser* behaviorChooser = _behaviorMgr.GetBehaviorChooser();
+        if (behaviorChooser)
+        {
+          behaviorChooserName = behaviorChooser->GetName();
+        }
       }
       
       VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "Behavior: %s", behaviorName.c_str());
+                                         "Behavior:%s:%s", behaviorChooserName, behaviorName.c_str());
 
       
       //////// Update Robot's State Machine /////////////
@@ -2437,13 +2445,7 @@ namespace Anki {
 
     Result Robot::SendIMURequest(const u32 length_ms) const
     {
-      /*
-      MessageIMURequest m;
-      m.length_ms = length_ms;
-
-      return SendMessage(m);
-      */
-      return Result::RESULT_OK;
+      return SendRobotMessage<RobotInterface::ImuRequest>(length_ms);
     }
 
     void Robot::SetSaveStateMode(const SaveMode_t mode)

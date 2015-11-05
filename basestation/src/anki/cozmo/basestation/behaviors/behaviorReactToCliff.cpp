@@ -64,8 +64,12 @@ bool BehaviorReactToCliff::IsRunnable(const Robot& robot, double currentTime_sec
   return false;
 }
 
-Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
+  robot.GetMoodManager().AddToEmotions(EmotionType::Happiness, -kEmotionChangeSmall,
+                                       EmotionType::Calmness,  -kEmotionChangeSmall,
+                                       EmotionType::Courage,   -kEmotionChangeSmall, "CliffReact");
+
   return Result::RESULT_OK;
 }
 
@@ -77,6 +81,9 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
     {
       if (_cliffDetected)
       {
+        robot.GetMoodManager().AddToEmotions(EmotionType::Happiness, -kEmotionChangeSmall,
+                                             EmotionType::Calmness,  -kEmotionChangeSmall,
+                                             EmotionType::Courage,   -kEmotionChangeSmall, "CliffDetected");
         _currentState = State::CliffDetected;
         return Status::Running;
       }
@@ -122,7 +129,7 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
   return Status::Complete;
 }
 
-Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

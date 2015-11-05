@@ -64,7 +64,7 @@ bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_se
   return false;
 }
 
-Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
   return Result::RESULT_OK;
 }
@@ -122,7 +122,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)

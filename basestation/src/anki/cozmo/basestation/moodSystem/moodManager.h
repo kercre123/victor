@@ -17,17 +17,35 @@
 
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
 #include "clad/types/emotionTypes.h"
+#include "util/global/globalDefinitions.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include <assert.h>
+#include <vector>
+
+
+#if ANKI_DEV_CHEATS
+  #define SEND_MOOD_TO_VIZ_DEBUG  1
+#else
+  #define SEND_MOOD_TO_VIZ_DEBUG  0
+#endif // ANKI_DEV_CHEATS
+
+#if SEND_MOOD_TO_VIZ_DEBUG
+  #define SEND_MOOD_TO_VIZ_DEBUG_ONLY(exp)  exp
+#else
+  #define SEND_MOOD_TO_VIZ_DEBUG_ONLY(exp)
+#endif // SEND_MOOD_TO_VIZ_DEBUG
+
 
 
 namespace Anki {
 namespace Cozmo {
 
-  
-constexpr float kEmotionChangeSmall  = 0.10f;
-constexpr float kEmotionChangeMedium = 0.25f;
-constexpr float kEmotionChangeLarge  = 0.50f;
+
+constexpr float kEmotionChangeVerySmall = 0.06f;
+constexpr float kEmotionChangeSmall     = 0.12f;
+constexpr float kEmotionChangeMedium    = 0.25f;
+constexpr float kEmotionChangeLarge     = 0.50f;
+constexpr float kEmotionChangeVeryLarge = 1.00f;
 
 
 class MoodManager
@@ -41,6 +59,14 @@ public:
   void Update(double currentTime);
   
   void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString); // , bool dropOff?
+  
+  void AddToEmotions(EmotionType emotionType1, float baseValue1,
+                     EmotionType emotionType2, float baseValue2, const char* uniqueIdString);
+  
+  void AddToEmotions(EmotionType emotionType1, float baseValue1,
+                     EmotionType emotionType2, float baseValue2,
+                     EmotionType emotionType3, float baseValue3,
+                     const char* uniqueIdString);
   
   void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
 
@@ -83,6 +109,7 @@ private:
   // ============================== Private Member Vars ==============================
   
   Emotion     _emotions[(size_t)EmotionType::Count];
+  SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   double      _lastUpdateTime;
 };
   

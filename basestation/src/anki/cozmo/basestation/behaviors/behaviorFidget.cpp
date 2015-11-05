@@ -70,7 +70,7 @@ namespace Cozmo {
 
   }
   
-  Result BehaviorFidget::InitInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorFidget::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
   {
     _interrupted = false;
     _nextFidgetWait_sec = 0.f;
@@ -123,7 +123,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     // Mark the behavior as interrupted so it will return COMPLETE on next update
     _interrupted = true;
