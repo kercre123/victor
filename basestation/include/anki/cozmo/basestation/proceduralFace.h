@@ -2,6 +2,7 @@
 #define __Anki_Cozmo_ProceduralFace_H__
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/point.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "clad/types/proceduralEyeParameters.h"
 
@@ -31,15 +32,8 @@ namespace Cozmo {
     static constexpr Value NominalLeftEyeCenX    = 0.25f*static_cast<f32>(WIDTH);
     static constexpr Value NominalRightEyeCenX   = 0.75f*static_cast<f32>(WIDTH);
     static constexpr Value NominalEyeCenY        = 0.6f*static_cast<f32>(HEIGHT);
-    static constexpr Value EyebrowThickness      = 2.f;
-    static constexpr s32   MinEyeHeightPix       = 0;
-    static constexpr s32   MaxEyeHeightPix       = 3*HEIGHT/4;
-    static constexpr s32   MinEyeWidthPix        = WIDTH/5;
-    static constexpr s32   MaxEyeWidthPix        = 2*WIDTH/5;
-    static constexpr s32   MidBrowLengthPix      = (MaxEyeHeightPix + MinEyeWidthPix)/2;
-    static constexpr s32   MaxBrowLengthPix      = MaxEyeWidthPix;
-    static constexpr s32   MaxBrowAngle          = 15; // Degrees (symmtric, also used for -ve angle)
-    static constexpr s32   MaxFaceAngle          = 25; //   "
+    static constexpr s32   NominalEyeHeight      = 40;
+    static constexpr s32   NominalEyeWidth       = 30;
     
     using Parameter = ProceduralEyeParameter;
     
@@ -60,6 +54,14 @@ namespace Cozmo {
     // Get/Set the overall angle of the whole face (still using parameter on interval [-1,1]
     void SetFaceAngle(Value value);
     Value GetFaceAngle() const;
+    
+    // Get/Set the overall face position
+    void SetFacePosition(Point<2,Value> center);
+    Point<2,Value> GetFacePosition() const;
+    
+    // Get/Set the overall face scale
+    void SetFaceScale(Value scale);
+    Value GetFaceScale() const;
     
     // Set this face's parameters to values interpolated from two other faces.
     //   When BlendFraction == 0.0, the parameters will be equal to face1's.
@@ -96,12 +98,13 @@ namespace Cozmo {
     static const cv::Rect imgRect;
     
     void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
-    s32 GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const;
     
     // Container for the parameters for both eyes
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
     
-    Value _faceAngle;
+    Value           _faceAngle;
+    Value           _faceScale;
+    Point<2,Value>  _faceCenter;
     
     static u8 _firstScanLine;
     bool _sentToRobot;
@@ -113,7 +116,7 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(-1.f, std::min(1.f, value));
+    _eyeParams[whichEye][static_cast<size_t>(param)] = value; //std::max(-1.f, std::min(1.f, value));
   }
   
   inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Parameter param) const
@@ -126,7 +129,25 @@ namespace Cozmo {
   }
   
   inline void ProceduralFace::SetFaceAngle(Value angle) {
-    _faceAngle = std::max(-1.f, std::min(1.f, angle));
+    _faceAngle = angle; //std::max(-1.f, std::min(1.f, angle));
+  }
+  
+  inline void ProceduralFace::SetFacePosition(Point<2, Value> center) {
+    _faceCenter = center;
+    //    _faceCenter.x() = std::max(-1.f, std::min(1.f, center.x()));
+    //    _faceCenter.y() = std::max(-1.f, std::min(1.f, center.y()));
+  }
+  
+  inline Point<2,ProceduralFace::Value> ProceduralFace::GetFacePosition() const {
+    return _faceCenter;
+  }
+  
+  inline void ProceduralFace::SetFaceScale(Value scale) {
+    _faceScale = scale;
+  }
+  
+  inline ProceduralFace::Value ProceduralFace::GetFaceScale() const {
+    return _faceScale;
   }
   
   inline bool ProceduralFace::HasBeenSentToRobot() const {

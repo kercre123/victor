@@ -297,10 +297,8 @@ namespace Cozmo {
     // Squint the current face while picking/placing to show concentration:
     if(robot.IsPickingOrPlacing()) {
       for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right}) {
-        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY,
                               GET_PARAM(f32, DockSquintEyeHeight));
-        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::BrowCenY,
-                              GET_PARAM(f32, DockSquintEyebrowHeight));
       }
       // Make sure squinting face gets displayed:
       if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
@@ -390,8 +388,8 @@ namespace Cozmo {
           }
           for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right})
           {
-            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX, x);
-            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY, y);
+            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeCenterX, x);
+            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeCenterY, y);
           }
           
           ProceduralFaceKeyFrame kf(crntFace);

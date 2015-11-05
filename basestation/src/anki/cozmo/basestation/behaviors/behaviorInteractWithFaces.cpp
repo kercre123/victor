@@ -521,12 +521,13 @@ namespace Cozmo {
       
       // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
       proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralFace::Parameter::BrowCenY,
+                                  ProceduralFace::Parameter::UpperLidY,
                                   leftEyebrowHeightScale);
       
       proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralFace::Parameter::BrowCenY,
+                                  ProceduralFace::Parameter::UpperLidY,
                                   rightEyebrowHeightScale);
+      
     }
     
     const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
@@ -548,12 +549,13 @@ namespace Cozmo {
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
       if(_baselineEyeHeight != 0.f) {
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleX,
                                     std::max(-.8f, std::min(.8f, eyeHeightFraction)));
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                    std::max(-.75f, std::min(.75f, eyeHeightFraction)));
+//        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
+//                                    std::max(-.75f, std::min(.75f, eyeHeightFraction)));
       }
-      
+
+      /*
       // To get saccade-like movement, only update the pupils if they new position is
       // different enough
       Point2f pupilChange(newPupilPos);
@@ -565,11 +567,12 @@ namespace Cozmo {
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
                                          newPupilPos.y());
       //}
+       */
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)
     if(std::abs(faceAngle.getDegrees()) > 5) {
-      proceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
+      proceduralFace.SetFaceAngle(faceAngle.getDegrees());
     } else {
       proceduralFace.SetFaceAngle(0);
     }
