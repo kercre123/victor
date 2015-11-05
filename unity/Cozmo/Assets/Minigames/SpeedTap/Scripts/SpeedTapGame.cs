@@ -36,6 +36,7 @@ public class SpeedTapGame : GameBase {
     robot.StopFaceAwareness();
     robot.SetBehaviorSystem(false);
     gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<SpeedTapPanel>();
+    gamePanel_.TapButtonPressed += UIButtonTapped;
     UpdateUI();
   }
 
@@ -60,6 +61,12 @@ public class SpeedTapGame : GameBase {
 
   public void RollingBlocks() {
     AudioManager.PlayAudioClip(rollSound_);
+  }
+
+  private void UIButtonTapped() {
+    if (PlayerTappedBlockEvent != null) {
+      PlayerTappedBlockEvent();
+    }
   }
 
   private void BlockTapped(int blockID, int tappedTimes) {

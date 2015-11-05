@@ -43,7 +43,7 @@ MonoBehaviour:
   cozmoScore_: 0
   playerScore_: 0
   gamePanelPrefab_: {fileID: 11487488, guid: a73dd626a2d594b738f14e865f6822a7, type: 2}
-  rollSound_: {fileID: 0}
+  rollSound_: {fileID: 8300000, guid: b37a7411c14b84af5bd107e05f284d16, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

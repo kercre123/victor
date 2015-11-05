@@ -33,6 +33,7 @@ public class SpeedTapStatePlayNewHand : State {
     lightsOn_ = false;
 
     speedTapGame_.PlayerTappedBlockEvent += PlayerDidTap;
+    RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedTapAnimation;
   }
 
   public override void Update() {
@@ -45,7 +46,6 @@ public class SpeedTapStatePlayNewHand : State {
         if (!cozmoTapping_) {
           if ((curTimeMillis - startTimeMs_) >= cozmoTapDelayTimeMs_) {
             DAS.Info("SpeedTap.CozmoTapping", "" + speedTapGame_.cozmoScore_);
-            RobotEngineManager.instance.RobotCompletedAnimation += RobotCompletedTapAnimation;
             robot.SendAnimation("tapCube");
             cozmoTapping_ = true;
           }
@@ -88,14 +88,12 @@ public class SpeedTapStatePlayNewHand : State {
       // check for player tapped first here.
       gotMatch_ = false;
       cozmoTapping_ = false;
-      RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
       break;
     case "finishTapCubeWin":
       DAS.Info("SpeedTapStatePlayNewHand.tap_win", "");
       // check for player tapped first here.
       gotMatch_ = false;
       cozmoTapping_ = false;
-      RobotEngineManager.instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
       break;
     }
 
