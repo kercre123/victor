@@ -25,7 +25,6 @@ public enum AnkiResult {
 
 public static class CozmoBinding {
 
-  private static object syncLogs = new object();
   private static bool initialized = false;
 
   [DllImport("__Internal")]

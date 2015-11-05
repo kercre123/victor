@@ -10,5 +10,5 @@ AudioManager:
   m_SampleRate: 0
   m_DSPBufferSize: 0
   m_VirtualVoiceCount: 512
-  m_RealVoiceCount: 128
+  m_RealVoiceCount: 32
   m_DisableAudio: 0

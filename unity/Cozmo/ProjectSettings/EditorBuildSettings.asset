@@ -4,28 +4,4 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes:
-  - enabled: 1
-    path: Assets/Scenes/Shell.unity
-  - enabled: 1
-    path: Assets/Scenes/GameMenu.unity
-  - enabled: 1
-    path: Assets/Scenes/FreePlay.unity
-  - enabled: 1
-    path: Assets/Scenes/Slalom.unity
-  - enabled: 1
-    path: Assets/Scenes/EnergyHunt.unity
-  - enabled: 1
-    path: Assets/Scenes/Vortex.unity
-  - enabled: 1
-    path: Assets/Scenes/Hypnosis.unity
-  - enabled: 1
-    path: Assets/Scenes/FaceReaction.unity
-  - enabled: 1
-    path: Assets/Scenes/CozmoWalker.unity
-  - enabled: 1
-    path: Assets/Scenes/ShakeShake.unity
-  - enabled: 1
-    path: Assets/Scenes/SpeedTap.unity
-  - enabled: 1
-    path: Assets/Scenes/PatternPlay.unity
+  m_Scenes: []
