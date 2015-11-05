@@ -1,0 +1,7 @@
+
+enum uint_32 EventType
+{
+  Invalid = 0,
+  Event1,
+}
+

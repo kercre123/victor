@@ -1,0 +1,6 @@
+
+
+enum uint_32 GameStateType
+{
+  Invalid = 0,
+}

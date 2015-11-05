@@ -1,0 +1,14 @@
+
+enum uint_8 EventCallbackFlag
+{
+  EventNone = 0,
+  EventBegin = 1,
+  EventComplete = 2,
+}
+
+
+enum uint_8 CurveType
+{
+  Invalid = 0,
+}
+

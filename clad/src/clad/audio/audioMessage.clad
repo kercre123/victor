@@ -1,0 +1,57 @@
+
+#include "clad/audio/audioMessageTypes.clad"
+#include "clad/audio/audioEventTypes.clad"
+#include "clad/audio/audioStateTypes.clad"
+#include "clad/audio/audioSwitchTypes.clad"
+#include "clad/audio/audioParameterTypes.clad"
+
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+
+message PostAudioEvent
+{
+  uint_16 gameObjectId,
+  EventType audioEvent,
+  EventCallbackFlag callbackFlag,
+}
+
+message PostAudioGameState
+{
+  GameStateType state,
+}
+
+message PostAudioSwitchState
+{
+  uint_16 gameObjectId,
+// Might need Switch Group if we can't determine it from the switch state
+  SwitchStateType switchState,
+}
+
+
+message PostAudioParameter
+{
+  uint_16 gameObjectId,
+  ParameterType parameter,
+  uint_8 value,
+  int_32 timeInMilliSeconds,
+  CurveType curve,
+}
+
+
+message PostCallbackEventBegin
+{
+  uint_16 callbackId,
+}
+
+
+message PostCallbackEventComplete
+{
+  uint_16 callbackId,
+}
+
+}
+}
+}
