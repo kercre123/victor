@@ -13,12 +13,14 @@ public class AskCozmoGame : GameBase {
   void Start() {
     gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<AskCozmoPanel>();
     gamePanel_.OnAskButtonPressed += OnAnswerRequested;
+    CreateDefaultQuitButton();
   }
 
   public override void CleanUp() {
     if (gamePanel_ != null) {
       UIManager.CloseDialogImmediately(gamePanel_);
     }
+    DestroyDefaultQuitButton();
   }
 
   // user just asked the question and pressed the
