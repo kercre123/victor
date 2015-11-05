@@ -533,7 +533,7 @@ message EraseQuad {
   uint_32 quadID
 }
 
-structure RobotActionUnion {
+union RobotActionUnion {
   FaceObject         faceObject,
   FacePose           facePose,
   GotoPose           goToPose,
@@ -555,7 +555,6 @@ message QueueSingleAction {
   uint_32 inSlot,
   uint_8  numRetries,
   QueueActionPosition    position,
-  RobotActionType        actionType,
   RobotActionUnion       action
 }
 
@@ -567,7 +566,6 @@ message QueueCompoundAction {
   uint_8  numRetries,
   bool  parallel,  // false means sequential
   QueueActionPosition    position,
-  RobotActionType        actionTypes[uint_8],
   RobotActionUnion       actions[uint_8]
 }
 
