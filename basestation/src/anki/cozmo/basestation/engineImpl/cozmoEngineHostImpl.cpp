@@ -14,8 +14,10 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
+#include "anki/cozmo/basestation/AudioController.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -69,6 +71,11 @@ Result CozmoEngineHostImpl::InitInternal()
   std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
   _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
   _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
+  
+  // Start Audio Controller
+  Anki::Cozmo::AudioController* audioController = Anki::Cozmo::AudioController::getInstance();
+  audioController->Initialize( _dataPlatform );
+  
   return RESULT_OK;
 }
 
