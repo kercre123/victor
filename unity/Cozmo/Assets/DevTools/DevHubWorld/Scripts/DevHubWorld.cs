@@ -13,13 +13,30 @@ public class DevHubWorld : HubWorldBase {
   private GameBase miniGameInstance_;
 
   public override bool LoadHubWorld() {
+    ShowHubWorldDialog();
+    return true;
+  }
+  
+  public override bool DestroyHubWorld() {
+    
+    // Deregister events
+    // Destroy dialog if it exists
+    if (devHubWorldDialogInstance_ != null) {
+      devHubWorldDialogInstance_.OnDevButtonClicked -= OnDevButtonClicked;
+      devHubWorldDialogInstance_.CloseDialogImmediately();
+    }
+    
+    CloseMiniGame();
+    return true;
+  }
+
+  private void ShowHubWorldDialog(){
     // Create dialog with the game prefabs
     devHubWorldDialogInstance_ = UIManager.OpenDialog(devHubWorldDialogPrefab_) as DevHubWorldDialog;
     devHubWorldDialogInstance_.Initialize(gamePrefabs_);
-
+    
     // Listen for dialog button tap events
     devHubWorldDialogInstance_.OnDevButtonClicked += OnDevButtonClicked;
-    return true;
   }
 
   private void OnDevButtonClicked (GameBase miniGameClicked)
@@ -29,22 +46,19 @@ public class DevHubWorld : HubWorldBase {
     
     GameObject newMiniGameObject = GameObject.Instantiate(miniGameClicked.gameObject);
     miniGameInstance_ = newMiniGameObject.GetComponent<GameBase>();
+    miniGameInstance_.OnMiniGameQuit += OnMiniGameQuit;
   }
 
-  public override bool DestroyHubWorld() {
+  private void OnMiniGameQuit () {
+    CloseMiniGame();
+    ShowHubWorldDialog();
+  }
 
-    // Deregister events
-    // Destroy dialog if it exists
-    if (devHubWorldDialogInstance_ != null) {
-      devHubWorldDialogInstance_.OnDevButtonClicked -= OnDevButtonClicked;
-      devHubWorldDialogInstance_.CloseDialogImmediately();
-    }
-
+  private void CloseMiniGame(){
     // Destroy game if it exists
     if (miniGameInstance_ != null) {
       miniGameInstance_.CleanUp();
       Destroy(miniGameInstance_.gameObject);
     }
-    return true;
   }
 }

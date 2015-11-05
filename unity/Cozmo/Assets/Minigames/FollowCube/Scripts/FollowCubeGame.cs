@@ -29,12 +29,16 @@ public class FollowCubeGame : GameBase {
     gamePanel_.OnSlowSpeedPressed += SetSlowSpeed;
     gamePanel_.OnFastSpeedPressed += SetFastSpeed;
     gamePanel_.OnDemonSpeedPressed += SetDemonSpeed;
+
+    CreateDefaultQuitButton();
   }
 
   public override void CleanUp() {
     if (gamePanel_ != null) {
       UIManager.CloseDialogImmediately(gamePanel_);
     }
+
+    DestroyDefaultQuitButton();
   }
 	
   // Update is called once per frame
