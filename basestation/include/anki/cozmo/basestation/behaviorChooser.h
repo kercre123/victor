@@ -48,6 +48,8 @@ public:
   virtual Result Update(double currentTime_sec) { return Result::RESULT_OK; }
 
   virtual ~IBehaviorChooser() { }
+  
+  virtual const char* GetName() const = 0;
 }; // class IBehaviorChooser
   
   
@@ -64,6 +66,8 @@ public:
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override { }
   virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override { return nullptr; }
   virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override { return nullptr; }
+  
+  virtual const char* GetName() const override { return "Simple"; }
   
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~SimpleBehaviorChooser();

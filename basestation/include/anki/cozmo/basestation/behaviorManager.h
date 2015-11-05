@@ -81,7 +81,9 @@ namespace Cozmo {
     
     // Returns nullptr if there is no current behavior
     const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
-    
+
+    const IBehaviorChooser* GetBehaviorChooser() const { return _behaviorChooser; }
+
   private:
     
     bool _isInitialized;
@@ -100,6 +102,7 @@ namespace Cozmo {
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
     IBehavior* _forceSwitchBehavior = nullptr;
+    IBehavior* _resumeBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;

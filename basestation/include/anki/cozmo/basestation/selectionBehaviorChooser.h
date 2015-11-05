@@ -39,6 +39,8 @@ public:
   
   virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const override;
   
+  virtual const char* GetName() const override { return "Selection"; }
+  
 protected:
   Robot& _robot;
   Json::Value _config;

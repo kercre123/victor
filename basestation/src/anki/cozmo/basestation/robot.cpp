@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -965,6 +966,7 @@ namespace Anki {
       
       _moodManager.Update(currentTime);
       
+      const char* behaviorChooserName = "";
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
         _behaviorMgr.Update(currentTime);
@@ -978,10 +980,16 @@ namespace Anki {
             behaviorName += "-" + stateName;
           }
         }
+        
+        const IBehaviorChooser* behaviorChooser = _behaviorMgr.GetBehaviorChooser();
+        if (behaviorChooser)
+        {
+          behaviorChooserName = behaviorChooser->GetName();
+        }
       }
       
       VizManager::getInstance()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "Behavior: %s", behaviorName.c_str());
+                                         "Behavior:%s:%s", behaviorChooserName, behaviorName.c_str());
 
       
       //////// Update Robot's State Machine /////////////

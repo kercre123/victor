@@ -141,6 +141,13 @@ void Emotion::Add(float baseValue, const char* uniqueIdString)
     _timeDecaying = 0.0f;
   }
 }
+  
+  
+void Emotion::SetValue(float newValue)
+{
+  _value = newValue;
+  _timeDecaying = 0.0f;
+}
 
 
 } // namespace Cozmo
