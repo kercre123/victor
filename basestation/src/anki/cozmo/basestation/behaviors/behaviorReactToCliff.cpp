@@ -66,9 +66,9 @@ bool BehaviorReactToCliff::IsRunnable(const Robot& robot, double currentTime_sec
 
 Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
-  robot.GetMoodManager().AddToEmotions(EmotionType::Happiness, -kEmotionChangeSmall,
-                                       EmotionType::Calmness,  -kEmotionChangeSmall,
-                                       EmotionType::Courage,   -kEmotionChangeSmall, "CliffReact");
+  robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
+                                       EmotionType::Calm,  -kEmotionChangeSmall,
+                                       EmotionType::Brave, -kEmotionChangeSmall, "CliffReact");
 
   return Result::RESULT_OK;
 }
@@ -81,9 +81,9 @@ IBehavior::Status BehaviorReactToCliff::UpdateInternal(Robot& robot, double curr
     {
       if (_cliffDetected)
       {
-        robot.GetMoodManager().AddToEmotions(EmotionType::Happiness, -kEmotionChangeSmall,
-                                             EmotionType::Calmness,  -kEmotionChangeSmall,
-                                             EmotionType::Courage,   -kEmotionChangeSmall, "CliffDetected");
+        robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
+                                             EmotionType::Calm,  -kEmotionChangeSmall,
+                                             EmotionType::Brave, -kEmotionChangeSmall, "CliffDetected");
         _currentState = State::CliffDetected;
         return Status::Running;
       }
