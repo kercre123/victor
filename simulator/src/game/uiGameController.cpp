@@ -1173,9 +1173,7 @@ namespace Anki {
       msg.robotID = 1;
       msg.inSlot = 1;
       msg.position = pos;
-      msg.actionType = RobotActionType::PLAY_ANIMATION;
-      msg.action.playAnimation.animationName = animName;
-      msg.action.playAnimation.numLoops = numLoops;
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
