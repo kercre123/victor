@@ -35,21 +35,27 @@ message PostAudioParameter
 {
   uint_16 gameObjectId,
   ParameterType parameter,
-  uint_8 value,
+  float_32 parameterValue,
   int_32 timeInMilliSeconds,
   CurveType curve,
 }
 
-
+// Don't lie this is only a duration call
 message PostCallbackEventBegin
 {
   uint_16 callbackId,
+  // EventId
 }
 
+message PostCallbackEventMarker
+{
+  // EventId
+}
 
 message PostCallbackEventComplete
 {
   uint_16 callbackId,
+  // EventId
 }
 
 }

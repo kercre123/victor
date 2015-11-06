@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
-#include "anki/cozmo/basestation/AudioController.h"
+#include "anki/cozmo/basestation/audio/AudioController.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -75,7 +75,7 @@ Result CozmoEngineHostImpl::InitInternal()
   // Start Audio Controller
   Anki::Cozmo::AudioController* audioController = Anki::Cozmo::AudioController::getInstance();
   audioController->Initialize( _dataPlatform );
-  
+
   return RESULT_OK;
 }
 
