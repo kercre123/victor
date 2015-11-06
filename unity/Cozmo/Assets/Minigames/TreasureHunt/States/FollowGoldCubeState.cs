@@ -22,7 +22,7 @@ public class FollowGoldCubeState : State {
       lastTimeSeenGoldBlock_ = Time.time;
       FollowClosest();
       if (HoveringOverGold()) {
-        stateMachine_.SetNextState(new LetMeGetItState());
+        stateMachine_.SetNextState(new CelebrateGoldState());
       }
     }
   }

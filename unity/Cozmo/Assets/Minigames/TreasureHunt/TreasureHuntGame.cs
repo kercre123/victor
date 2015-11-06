@@ -6,6 +6,8 @@ public class TreasureHuntGame : GameBase {
   private StateMachineManager stateMachineManager_ = new StateMachineManager();
   private StateMachine stateMachine_ = new StateMachine();
 
+  public Vector2 GoldPosition { get; set; }
+
   void Start() {
     stateMachine_.SetGameRef(this);
     stateMachineManager_.AddStateMachine("TreasureHuntStateMachine", stateMachine_);
