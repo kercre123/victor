@@ -38,6 +38,8 @@ public class SpeedTapGame : GameBase {
     gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<SpeedTapPanel>();
     gamePanel_.TapButtonPressed += UIButtonTapped;
     UpdateUI();
+
+    CreateDefaultQuitButton();
   }
 
   void Update() {
@@ -48,6 +50,7 @@ public class SpeedTapGame : GameBase {
     if (gamePanel_ != null) {
       UIManager.CloseDialogImmediately(gamePanel_);
     }
+    DestroyDefaultQuitButton();
   }
 
   void InitialCubesDone() {

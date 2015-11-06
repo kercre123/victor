@@ -47,6 +47,8 @@ public class PatternPlayGame : GameBase {
     viewControllerInstance_.Initialize(patternMemory_);
 
     patternPlayAudio_ = GetComponent<PatternPlayAudio>();
+
+    CreateDefaultQuitButton();
   }
 
   void Update() {
@@ -82,6 +84,7 @@ public class PatternPlayGame : GameBase {
     if (viewControllerInstance_ != null) {
       Destroy(viewControllerInstance_.gameObject);
     }
+    DestroyDefaultQuitButton();
   }
 
   public void SetShouldCelebrateNew(bool shouldCelebrateNew) {
