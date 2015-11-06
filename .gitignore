@@ -87,7 +87,7 @@ build/msvc*
 build/xcode*
 project/xcode4/Cozmo/Cozmo.xcodeproj/xcuserdata
 project/xcode4/Cozmo/Cozmo.xcodeproj/project.xcworkspace/xcuserdata
-/build
+build/*
 screenshot.png
 *.mvlib
 *.shv*lib
@@ -163,17 +163,6 @@ unity/Cozmo/*.csproj
 unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
 unity/Cozmo/obj/*
-
-# UnityRefactor
-unity/CozmoRefactor/Builds
-unity/CozmoRefactor/Library
-unity/CozmoRefactor/Temp
-unity/CozmoRefactor/*.sln
-unity/CozmoRefactor/*.proj
-unity/CozmoRefactor/*.csproj
-unity/CozmoRefactor/*.userprefs
-unity/CozmoRefactor/*.obj
-unity/CozmoRefactor/obj/*
 
 # Visual studio
 *.userprefs

@@ -13,8 +13,6 @@ TagManager:
   - UI
   - 
   - 
-  - LayoutInstructions
-  - VFX
   - 3DUI
   - 
   - 
@@ -37,10 +35,9 @@ TagManager:
   - 
   - 
   - 
+  - 
+  - 
   m_SortingLayers:
-  - name: Foreground
-    uniqueID: 988589707
-    locked: 0
   - name: Default
     uniqueID: 0
     locked: 0
