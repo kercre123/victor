@@ -32,8 +32,11 @@ public class IntroManager : MonoBehaviour {
 
   void DisconnectedFromClient(DisconnectionReason obj) {
     // Force quit hub world and show connect dialog again
-    hubWorldInstance_.DestroyHubWorld(); 
-    Destroy(hubWorldInstance_);
+    if (hubWorldInstance_ != null) {
+      hubWorldInstance_.DestroyHubWorld(); 
+      Destroy(hubWorldInstance_);
+    }
+
 
     UIManager.CloseAllDialogsImmediately();
     ShowDevConnectDialog();

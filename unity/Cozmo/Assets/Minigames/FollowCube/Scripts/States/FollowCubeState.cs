@@ -31,7 +31,7 @@ public class FollowCubeState : State {
     }
 
     float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
-    if (angle < 5.0f) {
+    if (angle < 10.0f) {
 
       float speed = (stateMachine_.GetGame() as FollowCubeGame).ForwardSpeed;
       float distMax = (stateMachine_.GetGame() as FollowCubeGame).DistanceMax;
