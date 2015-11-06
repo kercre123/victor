@@ -32,7 +32,7 @@ public class RobotEngineManager : MonoBehaviour {
   [SerializeField]
   private TextAsset alternateConfiguration_;
 
-  private DisconnectionReason lastDisconnectionReason = DisconnectionReason.None;
+  private DisconnectionReason lastDisconnectionReason_ = DisconnectionReason.None;
 
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
@@ -165,8 +165,8 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public DisconnectionReason GetLastDisconnectionReason() {
-    DisconnectionReason reason = lastDisconnectionReason;
-    lastDisconnectionReason = DisconnectionReason.None;
+    DisconnectionReason reason = lastDisconnectionReason_;
+    lastDisconnectionReason_ = DisconnectionReason.None;
     return reason;
   }
 
@@ -180,7 +180,7 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
     isRobotConnected_ = false;
 
-    lastDisconnectionReason = reason;
+    lastDisconnectionReason_ = reason;
     if (DisconnectedFromClient != null) {
       DisconnectedFromClient(reason);
     }

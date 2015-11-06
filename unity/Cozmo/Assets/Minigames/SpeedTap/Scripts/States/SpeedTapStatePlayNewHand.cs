@@ -39,31 +39,31 @@ public class SpeedTapStatePlayNewHand : State {
   public override void Update() {
     base.Update();
 
-    float curTimeMillis = Time.time * 1000.0f;
+    float currTimeMs = Time.time * 1000.0f;
 
     if (lightsOn_) {
       if (gotMatch_) {
         if (!cozmoTapping_) {
-          if ((curTimeMillis - startTimeMs_) >= cozmoTapDelayTimeMs_) {
+          if ((currTimeMs - startTimeMs_) >= cozmoTapDelayTimeMs_) {
             DAS.Info("SpeedTap.CozmoTapping", "" + speedTapGame_.cozmoScore_);
             robot.SendAnimation("tapCube");
             cozmoTapping_ = true;
           }
         }
       }
-      if ((curTimeMillis - startTimeMs_) >= onDelayTimeMs_) {
+      if ((currTimeMs - startTimeMs_) >= onDelayTimeMs_) {
         speedTapGame_.cozmoBlock_.SetLEDs(0, 0, 0xFF);
         speedTapGame_.playerBlock_.SetLEDs(0, 0, 0xFF);
         lightsOn_ = false;
-        startTimeMs_ = curTimeMillis;
+        startTimeMs_ = currTimeMs;
       }
     }
     else {
-      if ((curTimeMillis - startTimeMs_) >= offDelayTimeMs_) {
+      if ((currTimeMs - startTimeMs_) >= offDelayTimeMs_) {
         curWinState_ = WinState.Neutral;
         RollForLights();
         lightsOn_ = true;
-        startTimeMs_ = curTimeMillis;
+        startTimeMs_ = currTimeMs;
       }
     }
   }
@@ -85,13 +85,11 @@ public class SpeedTapStatePlayNewHand : State {
       break;
     case "finishTapCubeLose":
       DAS.Info("SpeedTapStatePlayNewHand.tap_win", "");
-      // check for player tapped first here.
       gotMatch_ = false;
       cozmoTapping_ = false;
       break;
     case "finishTapCubeWin":
       DAS.Info("SpeedTapStatePlayNewHand.tap_win", "");
-      // check for player tapped first here.
       gotMatch_ = false;
       cozmoTapping_ = false;
       break;
@@ -143,8 +141,8 @@ public class SpeedTapStatePlayNewHand : State {
     if (matchExperiment <= matchProbability_) {
       // Do match
       gotMatch_ = true;
-      int randColor = ((int)(matchExperiment * 1000f)) % colors.Length;
-      Color matchColor = colors[randColor];
+      int randColorIndex = ((int)(matchExperiment * 1000f)) % colors.Length;
+      Color matchColor = colors[randColorIndex];
       speedTapGame_.cozmoBlock_.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
       speedTapGame_.playerBlock_.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
     }

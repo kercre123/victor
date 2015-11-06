@@ -9,8 +9,10 @@ public abstract class GameBase : MonoBehaviour {
   private static GameObject s_defaultQuitGameButtonPrefab;
 
   public delegate void MiniGameQuitHandler();
+
   public event MiniGameQuitHandler OnMiniGameQuit;
-  protected void RaiseMiniGameQuit(){
+
+  protected void RaiseMiniGameQuit() {
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -20,19 +22,20 @@ public abstract class GameBase : MonoBehaviour {
   
   [SerializeField]
   string gameName_;
+
   public string GameName { get { return gameName_; } private set { gameName_ = value; } }
 
   public Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
-  
+
   protected void CreateDefaultQuitButton() {
     // Resources.Load can be pretty slow, so cache the prefab for future use.
     if (s_defaultQuitGameButtonPrefab == null) {
       s_defaultQuitGameButtonPrefab = Resources.Load("Prefabs/UI/DefaultQuitMiniGameButton") as GameObject;
     }
-    GameObject newButton = UIManager.CreateUI (s_defaultQuitGameButtonPrefab);
+    GameObject newButton = UIManager.CreateUI(s_defaultQuitGameButtonPrefab);
     
-    quitButtonInstance_ = newButton.GetComponent<Button> ();
-    quitButtonInstance_.onClick.AddListener (OnQuitButtonTap);
+    quitButtonInstance_ = newButton.GetComponent<Button>();
+    quitButtonInstance_.onClick.AddListener(OnQuitButtonTap);  
   }
 
   protected void DestroyDefaultQuitButton() {
@@ -40,7 +43,7 @@ public abstract class GameBase : MonoBehaviour {
       Destroy(quitButtonInstance_.gameObject);
     }
   }
-  
+
   protected void OnQuitButtonTap() {
     RaiseMiniGameQuit();
   }

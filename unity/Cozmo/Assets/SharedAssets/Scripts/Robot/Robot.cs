@@ -175,7 +175,6 @@ public class Robot : IDisposable {
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
   private U2G.PlaceRelObject PlaceRelObjectMessage;
-  private U2G.QueueCompoundAction QueueCompoundActionsMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
   private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
@@ -290,12 +289,6 @@ public class Robot : IDisposable {
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
-    QueueCompoundActionsMessage = new U2G.QueueCompoundAction();
-    QueueCompoundActionsMessage.actions = new U2G.RobotActionUnion[2];
-    QueueCompoundActionsMessage.actions[0] = new U2G.RobotActionUnion();
-    QueueCompoundActionsMessage.actions[1] = new U2G.RobotActionUnion();
-
-    QueueCompoundActionsMessage.actionTypes = new Anki.Cozmo.RobotActionType[2];
 
     Lights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
@@ -836,6 +829,8 @@ public class Robot : IDisposable {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : LiftHeightFactor;
   }
 
+  // Height factor should be between 0.0f and 1.0f
+  // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
     DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
     if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == liftHeightRequested) || LiftHeightFactor == heightFactor)
