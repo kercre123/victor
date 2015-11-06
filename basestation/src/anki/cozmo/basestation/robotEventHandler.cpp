@@ -42,6 +42,7 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
       ExternalInterface::MessageGameToEngineTag::GotoPose,
       ExternalInterface::MessageGameToEngineTag::GotoObject,
+      ExternalInterface::MessageGameToEngineTag::AlignWithObject,
       ExternalInterface::MessageGameToEngineTag::PickupObject,
       ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
       ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
@@ -193,7 +194,23 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
+  return new DriveToObjectAction(selectedObjectID, msg.distanceFromObjectOrigin_mm, msg.useManualSpeed);
+}
+
+IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  return new DriveToAlignWithObjectAction(selectedObjectID,
+                                          msg.distanceFromMarker_mm,
+                                          msg.useApproachAngle,
+                                          msg.approachAngle_rad,
+                                          msg.useManualSpeed);
 }
   
 IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
@@ -295,7 +312,10 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionType::DRIVE_TO_OBJECT:
       return GetDriveToObjectActionHelper(robot, actionUnion.goToObject);
-      
+
+    case RobotActionType::ALIGN_WITH_OBJECT:
+      return GetDriveToAlignWithObjectActionHelper(robot, actionUnion.alignWithObject);
+
     case RobotActionType::DRIVE_TO_POSE:
       return GetDriveToPoseActionHelper(robot, actionUnion.goToPose);
       
@@ -391,6 +411,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::GotoObject:
     {
       newAction = GetDriveToObjectActionHelper(robot, event.GetData().Get_GotoObject());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::AlignWithObject:
+    {
+      newAction = GetDriveToAlignWithObjectActionHelper(robot, event.GetData().Get_AlignWithObject());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::PickupObject:

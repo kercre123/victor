@@ -616,7 +616,7 @@ public:
     //Vision::PanTiltTracker _faceTracker;
 #   if !ASYNC_VISION_PROCESSING
     Vision::Image     _image;
-    MessageRobotState _robotStateForImage;
+    RobotState        _robotStateForImage;
     bool              _haveNewImage = false;
 #   endif
   

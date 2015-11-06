@@ -790,6 +790,41 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendGotoObject(const s32 objectID,
+                                          const f32 distFromObjectOrigin_mm,
+                                          const bool useManualSpeed)
+    {
+      ExternalInterface::GotoObject msg;
+      msg.objectID = objectID;
+      msg.distanceFromObjectOrigin_mm = distFromObjectOrigin_mm;
+      msg.useManualSpeed = useManualSpeed;
+      
+      ExternalInterface::MessageGameToEngine msgWrapper;
+      msgWrapper.Set_GotoObject(msg);
+      SendMessage(msgWrapper);
+    }
+    
+    void UiGameController::SendAlignWithObject(const s32 objectID,
+                                               const f32 distFromMarker_mm,
+                                               const bool usePreDockPose,
+                                               const bool useApproachAngle,
+                                               const f32 approachAngle_rad,
+                                               const bool useManualSpeed)
+    {
+      ExternalInterface::AlignWithObject msg;
+      msg.objectID = objectID;
+      msg.distanceFromMarker_mm = distFromMarker_mm;
+      msg.useApproachAngle = useApproachAngle;
+      msg.approachAngle_rad = approachAngle_rad;
+      msg.usePreDockPose = usePreDockPose;
+      msg.useManualSpeed = useManualSpeed;
+      
+      ExternalInterface::MessageGameToEngine msgWrapper;
+      msgWrapper.Set_AlignWithObject(msg);
+      SendMessage(msgWrapper);
+    }
+    
+    
     void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useExactRotation, const bool useManualSpeed)
     {
       ExternalInterface::PlaceObjectOnGround m;
