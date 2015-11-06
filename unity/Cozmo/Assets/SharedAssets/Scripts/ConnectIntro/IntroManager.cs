@@ -37,7 +37,6 @@ public class IntroManager : MonoBehaviour {
       Destroy(hubWorldInstance_);
     }
 
-
     UIManager.CloseAllDialogsImmediately();
     ShowDevConnectDialog();
   }

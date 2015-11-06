@@ -9,10 +9,10 @@ public class Intro : MonoBehaviour {
   [SerializeField] protected InputField visualizerIP;
   [SerializeField] protected Text error;
 
-  private bool simulated = false;
-  private string currentRobotIP;
-  private string currentScene;
-  private string currentVizHostIP;
+  private bool simulated_ = false;
+  private string currentRobotIP_;
+  private string currentScene_;
+  private string currentVizHostIP_;
 
   private const int ROBOT_ID = 1;
 
@@ -99,11 +99,11 @@ public class Intro : MonoBehaviour {
   }
 
   public void Play(bool sim) {
-    simulated = sim;
+    simulated_ = sim;
     RobotEngineManager.instance.Disconnect();
 
     string errorText = null;
-    string ipText = simulated ? simIP.text : ip.text;
+    string ipText = simulated_ ? simIP.text : ip.text;
     if (string.IsNullOrEmpty(engineIP.text)) {
       errorText = "You must enter a device ip address.";
     }
@@ -112,8 +112,8 @@ public class Intro : MonoBehaviour {
     }
 
     if (string.IsNullOrEmpty(errorText)) {
-      currentRobotIP = ipText;
-      currentVizHostIP = visualizerIP.text;
+      currentRobotIP_ = ipText;
+      currentVizHostIP_ = visualizerIP.text;
 
       SaveData();
       RobotEngineManager.instance.Connect(engineIP.text);
@@ -133,8 +133,8 @@ public class Intro : MonoBehaviour {
 
   private void Connected(string connectionIdentifier) {
     error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
-    RobotEngineManager.instance.StartEngine(currentVizHostIP);
-    RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, currentRobotIP, simulated);
+    RobotEngineManager.instance.StartEngine(currentVizHostIP_);
+    RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, currentRobotIP_, simulated_);
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -147,7 +147,7 @@ public class Intro : MonoBehaviour {
       return;
     }
 
-    if (simulated && robot != null) {
+    if (simulated_ && robot != null) {
       robot.VisionWhileMoving(true);    
       robot.StartFaceAwareness();
     }
