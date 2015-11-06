@@ -46,9 +46,9 @@ namespace Cozmo {
       EngineToGameTag::BlockPlaced
     });
     
-    // Boredom and loneliness -> OCD
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
-    AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.5f}}), false));
+    // Primarily Boredom and then loneliness -> OCD
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.3f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.2f, 0.8f}, {1.0f, 0.6f}}), false));
   }
   
 #pragma mark -
@@ -64,7 +64,7 @@ namespace Cozmo {
                                    (!_animActionTags.empty()));
   }
   
-  Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorOCD::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
   {
     Result lastResult = RESULT_OK;
     
@@ -78,8 +78,13 @@ namespace Cozmo {
     // based on current carry state.
     _animActionTags.clear();
     if (currentTime_sec - _lastNeatBlockDisturbedTime < kMajorIrritationTimeIntervalSec) {
+      robot.GetMoodManager().AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
+                                           EmotionType::Calm,  -kEmotionChangeSmall,  "OCD_Confused");
       PlayAnimation(robot, "Demo_OCD_Confused");
     } else if (currentTime_sec - _lastNewBlockObservedTime < kExcitedAboutNewBlockTimeIntervalSec) {
+      robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
+                                           EmotionType::Calm,   -kEmotionChangeMedium,
+                                           EmotionType::Excited, kEmotionChangeSmall, "OCD_NewMessy");
       PlayAnimation(robot, "Demo_OCD_New_Messy_Block");
     } else {
       if(robot.IsCarryingObject()) {
@@ -171,7 +176,7 @@ namespace Cozmo {
     return Status::Running;
   }
 
-  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorOCD::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     _interrupted = true;
     return RESULT_OK;
@@ -1028,6 +1033,8 @@ namespace Cozmo {
       return lastResult;
     }
     
+    MoodManager& moodManager = robot.GetMoodManager();
+    
     switch(_currentState)
     {
       case State::PickingUpBlock:
@@ -1041,12 +1048,20 @@ namespace Cozmo {
             case RobotActionType::PICKUP_OBJECT_HIGH:
             case RobotActionType::PICKUP_OBJECT_LOW:
               BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.PickupSuccessful", "");
+              
+              moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeSmall,
+                                        EmotionType::Confident, kEmotionChangeSmall, "OCD_PickupComplete");
+              
               // We're done picking up the block, figure out where to put it
               UnsetLastPickOrPlaceFailure();
               SelectNextPlacement(robot);
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
+              
+              moodManager.AddToEmotions(EmotionType::Happy,     -kEmotionChangeSmall,
+                                        EmotionType::Confident, -kEmotionChangeSmall, "OCD_PickupIncomplete");
+              
               // We failed to pick up or place the last block, try again?
               DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPickUp);
                 SetLastPickOrPlaceFailure(_objectToPickUp, robot.GetPose());
@@ -1067,6 +1082,11 @@ namespace Cozmo {
             if (_messyObjects.empty()) {
               if (_neatObjects.size() == kNumBlocksForCelebration) {
                 UpdateBlockLights(robot);
+                
+                moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeMedium,
+                                          EmotionType::Confident, kEmotionChangeLarge,
+                                          EmotionType::Calm,      kEmotionChangeSmall,   "OCD_Celebrate");
+
                 PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
               }
               break;
@@ -1077,6 +1097,11 @@ namespace Cozmo {
           // This isn't foolproof, but use lift height to check if this failure occured
           // during pickup verification.
           if (robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
+            
+            moodManager.AddToEmotions(EmotionType::Happy,     -kEmotionChangeSmall,
+                                      EmotionType::Confident, -kEmotionChangeSmall,
+                                      EmotionType::Calm,      -kEmotionChangeSmall,   "OCD_PickupFail");
+
             PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
           } else {
             lastResult = SelectNextObjectToPickUp(robot);
@@ -1105,14 +1130,25 @@ namespace Cozmo {
               
               if (_messyObjects.empty() && _neatObjects.size() == kNumBlocksForCelebration) {
                 UpdateBlockLights(robot);
+                moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeMedium,
+                                          EmotionType::Confident, kEmotionChangeLarge,
+                                          EmotionType::Calm,      kEmotionChangeSmall,   "OCD_Celebrate");
+
                 PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
               } else {
+                moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeSmall,
+                                          EmotionType::Confident, kEmotionChangeSmall,
+                                          EmotionType::Calm,      kEmotionChangeSmall,   "OCD_Neat");
+                
                 PlayAnimation(robot, "Demo_OCD_Successfully_Neat");
               }
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
               // We failed to place the last block, try again?
+              moodManager.AddToEmotions(EmotionType::Happy,     -kEmotionChangeSmall,
+                                        EmotionType::Confident, -kEmotionChangeSmall, "OCD_PickAndPlaceIncomplete");
+
               DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPlaceOn);
                 SetLastPickOrPlaceFailure(_objectToPlaceOn, robot.GetPose());
               lastResult = SelectNextPlacement(robot);
@@ -1209,6 +1245,10 @@ namespace Cozmo {
               _currentState = State::PickingUpBlock;
             }
           } else {
+            
+            moodManager.AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
+                                      EmotionType::Calm,  -kEmotionChangeMedium, "OCD_Irritation");
+
             PlayAnimation(robot, "Demo_OCD_Irritation_A");
           }
           
@@ -1273,15 +1313,29 @@ namespace Cozmo {
       if (!_blockToFace.IsSet()) {
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
         if (oObject) {
+          
+          MoodManager& moodManager = robot.GetMoodManager();
+          
           // If the block was last observed _very_ recently, then react angrily
           if (robot.GetLastMsgTimestamp() - oObject->GetLastObservedTime() < 1000) {
             if (currentTime_sec - _lastNeatBlockDisturbedTime > kMajorIrritationTimeIntervalSec) {
+              
+              moodManager.AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
+                                        EmotionType::Calm,  -kEmotionChangeMedium, "OCD_Irritation");
+
               PlayAnimation(robot, "Demo_OCD_Irritation_A");
             } else {
+              
+              moodManager.AddToEmotions(EmotionType::Happy, -kEmotionChangeMedium,
+                                        EmotionType::Calm,  -kEmotionChangeLarge, "OCD_VeryIrritated");
+              
               PlayAnimation(robot, "VeryIrritated");
             }
             // otherwise, act confused, face block, and act pissed.
           } else {
+            moodManager.AddToEmotions(EmotionType::Happy, -kEmotionChangeSmall,
+                                      EmotionType::Calm,  -kEmotionChangeSmall, "OCD_Confused");
+
             PlayAnimation(robot, "Demo_OCD_Confused");
             _blockToFace = objectID;
           }
@@ -1373,20 +1427,34 @@ namespace Cozmo {
     bool foundMessyToNeat=false, foundNeatToMessy=false, needToCancelLastActionTag=false;
     VerifyNeatness(robot, foundMessyToNeat, foundNeatToMessy, needToCancelLastActionTag);
     
+    MoodManager& moodManager = robot.GetMoodManager();
+    
     if (foundMessyToNeat || foundNeatToMessy) {
       
       if (_messyObjects.empty()) {
         // Blocks are all neatened
         if (_neatObjects.size() == kNumBlocksForCelebration) {
+          
+          moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeMedium,
+                                    EmotionType::Confident, kEmotionChangeLarge,
+                                    EmotionType::Calm,      kEmotionChangeSmall,   "OCD_Celebrate");
+
           UpdateBlockLights(robot);
           PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
         } else {
+          
+          moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeSmall,
+                                    EmotionType::Confident, kEmotionChangeSmall,
+                                    EmotionType::Calm,      kEmotionChangeSmall,   "OCD_Neat");
+          
           PlayAnimation(robot, "Demo_OCD_Successfully_Neat");
         }
       }
     }
     
     if (foundNeatToMessy) {
+      moodManager.AddToEmotions(EmotionType::Happy, -kEmotionChangeVerySmall,
+                                EmotionType::Calm,  -kEmotionChangeVerySmall, "OCD_Confused");
       PlayAnimation(robot, "Demo_OCD_Confused");
     }
     

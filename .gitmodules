@@ -1,3 +1,6 @@
 [submodule "tools/anki-util"]
 	path = tools/anki-util
 	url = git@github.com:anki/anki-util.git
+[submodule "lib/audio"]
+	path = lib/audio
+	url = git@github.com:anki/drive-audio.git

@@ -13,9 +13,11 @@
 #define __WebotsCtrlViz_VizControllerImpl_H__
 
 #include "clad/vizInterface/messageViz.h"
+#include "clad/types/emotionTypes.h"
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
+#include "util/container/circularBuffer.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -54,7 +56,7 @@ class VizControllerImpl
 {
 
 public:
-  VizControllerImpl(webots::Supervisor& vs): vizSupervisor(vs) {};
+  VizControllerImpl(webots::Supervisor& vs);
 
   void Init();
   void ProcessMessage(VizInterface::MessageViz&& message);
@@ -79,7 +81,17 @@ private:
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
 
+  using EmotionBuffer = Util::CircularBuffer<float>;
+  using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
+  using BehaviorScoreBuffer = Util::CircularBuffer<float>;
+  using BehaviorScoreBufferMap = std::map<std::string, BehaviorScoreBuffer>;
+  using BehaviorEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
+  
+  BehaviorScoreBuffer& FindOrAddScoreBuffer(const std::string& inName);
 
   void Subscribe(const VizInterface::MessageVizTag& tagType, std::function<void(const AnkiEvent<VizInterface::MessageViz>&)> messageHandler) {
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);
@@ -92,6 +104,12 @@ private:
 
   // For displaying docking data
   webots::Display* dockDisp;
+  
+  // For displaying mood data
+  webots::Display* moodDisp;
+  
+  // For displaying behavior selection data
+  webots::Display* behaviorDisp;
 
   // For displaying images
   webots::Display* camDisp;
@@ -111,6 +129,12 @@ private:
   ImageDeChunker _imageDeChunker;
 
   AnkiEventMgr<VizInterface::MessageViz> _eventMgr;
+  
+  // Circular buffers of data to show last N ticks of a value
+  EmotionBuffer           _emotionBuffers[(size_t)EmotionType::Count];
+  EmotionEventBuffer      _emotionEventBuffer;
+  BehaviorScoreBufferMap  _behaviorScoreBuffers;
+  BehaviorEventBuffer     _behaviorEventBuffer;
 };
 
 } // end namespace Cozmo
