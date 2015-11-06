@@ -1,6 +1,13 @@
 
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
 
 enum uint_32 GameStateType
 {
   Invalid = 0,
+}
+
+}
+}
 }

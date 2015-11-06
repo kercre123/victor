@@ -1,4 +1,8 @@
 
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
 enum uint_8 EventCallbackFlag
 {
   EventNone = 0,
@@ -12,3 +16,6 @@ enum uint_8 CurveType
   Invalid = 0,
 }
 
+}
+}
+}
