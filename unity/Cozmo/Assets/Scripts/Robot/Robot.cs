@@ -882,7 +882,7 @@ public class Robot : IDisposable {
 
   public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null) {
     GotoObjectMessage.objectID = obj;
-    GotoObjectMessage.distance_mm = distance_mm;
+    GotoObjectMessage.distanceFromObjectOrigin_mm = distance_mm;
     GotoObjectMessage.useManualSpeed = false;
 
     RobotEngineManager.instance.Message.GotoObject = GotoObjectMessage;

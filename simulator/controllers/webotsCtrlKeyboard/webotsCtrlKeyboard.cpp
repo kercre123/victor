@@ -1080,7 +1080,14 @@ namespace Anki {
                 
               case (s32)'O':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT && modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendAlignWithObject(-1, // tell game to use blockworld's "selected" object
+                                      22.f,
+                                      true,
+                                      useApproachAngle,
+                                      approachAngle_rad);
+                  
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   ExternalInterface::FaceObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
@@ -1092,14 +1099,8 @@ namespace Anki {
                   msgWrapper.Set_FaceObject(msg);
                   SendMessage(msgWrapper);
                 } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  ExternalInterface::GotoObject msg;
-                  msg.objectID = -1; // tell game to use blockworld's "selected" object
-                  msg.distance_mm = sqrtf(2.f)*44.f;
-                  msg.useManualSpeed = 0;
-                  
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_GotoObject(msg);
-                  SendMessage(msgWrapper);
+                  SendGotoObject(-1, // tell game to use blockworld's "selected" object
+                                 sqrtf(2.f)*44.f);
                 } else {
                   SendIMURequest(2000);
                 }
