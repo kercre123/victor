@@ -836,6 +836,8 @@ public class Robot : IDisposable {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : LiftHeightFactor;
   }
 
+  // Height factor should be between 0.0f and 1.0f
+  // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
     DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
     if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == liftHeightRequested) || LiftHeightFactor == heightFactor)
