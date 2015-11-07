@@ -20,15 +20,14 @@ public class FollowGoldCubeState : State {
 
     if (HasGoldBlockInView()) {
       lastTimeSeenGoldBlock_ = Time.time;
-      FollowClosest();
-      if (HoveringOverGold()) {
-        stateMachine_.SetNextState(new CelebrateGoldState());
+      ObservedObject followingCube = FollowClosest();
+      if (followingCube != null) {
+        if ((stateMachine_.GetGame() as TreasureHuntGame).HoveringOverGold((LightCube)followingCube)) {
+          stateMachine_.SetNextState(new CelebrateGoldState());
+        }
       }
-    }
-  }
 
-  private bool HoveringOverGold() {
-    return false;
+    }
   }
 
   private bool HasGoldBlockInView() {
@@ -40,7 +39,7 @@ public class FollowGoldCubeState : State {
     return false;
   }
 
-  private void FollowClosest() {
+  private ObservedObject FollowClosest() {
     ObservedObject closest = null;
     float dist = float.MaxValue;
     foreach (ObservedObject obj in robot.VisibleObjects) {
@@ -55,7 +54,7 @@ public class FollowGoldCubeState : State {
 
     if (closest == null) {
       robot.DriveWheels(0.0f, 0.0f);
-      return;
+      return closest;
     }
 
     float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
@@ -85,6 +84,8 @@ public class FollowGoldCubeState : State {
         robot.DriveWheels(-30.0f, 35.0f);
       }
     }
+
+    return closest;
 
   }
 
