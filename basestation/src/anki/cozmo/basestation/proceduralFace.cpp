@@ -32,7 +32,7 @@ namespace Cozmo {
     for(auto whichEye : {Left, Right}) {
       SetParameter(whichEye, Parameter::EyeScaleX, 1.f);
       SetParameter(whichEye, Parameter::EyeScaleY, 1.f);
-      SetParameter(whichEye, Parameter::EyeCenterX, WIDTH/3);
+      SetParameter(whichEye, Parameter::EyeCenterX, whichEye == Left ? WIDTH/3 : 2*WIDTH/3);
       SetParameter(whichEye, Parameter::EyeCenterY, HEIGHT/2);
       
       for(auto radius : {Parameter::UpperInnerRadiusX, Parameter::UpperInnerRadiusY,
@@ -351,7 +351,7 @@ namespace Cozmo {
     static const std::vector<BlinkParams> blinkParams{
       {.height = .85f, .width = 1.05f, .t = 33,  .blinkState = BlinkState::Closing},
       {.height = .6f,  .width = 1.2f,  .t = 33,  .blinkState = BlinkState::Closing},
-      {.height = .1f,  .width = 2.5f,   .t = 33,  .blinkState = BlinkState::Closing},
+      {.height = .1f,  .width = 2.5f,  .t = 33,  .blinkState = BlinkState::Closing},
       {.height = .05f, .width = 5.f,   .t = 33,  .blinkState = BlinkState::Closed},
       {.height = .15f, .width = 2.f,   .t = 33,  .blinkState = BlinkState::JustOpened},
       {.height = .7f,  .width = 1.2f,  .t = 33,  .blinkState = BlinkState::Opening},
