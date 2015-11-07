@@ -184,7 +184,18 @@ message GotoPose {
 // GotoObject
 message GotoObject {
     int_32 objectID,
-    float_32 distance_mm,
+    float_32 distanceFromObjectOrigin_mm,
+    bool useManualSpeed
+}
+
+// AlignWithObject
+// "Docks" to object so that it is aligned with it at the specified distance
+message AlignWithObject {
+    int_32 objectID,
+    float_32 distanceFromMarker_mm,
+    float_32 approachAngle_rad,
+    bool useApproachAngle,
+    bool usePreDockPose,
     bool useManualSpeed
 }
 
@@ -538,6 +549,7 @@ union RobotActionUnion {
   FacePose           facePose,
   GotoPose           goToPose,
   GotoObject         goToObject,
+  AlignWithObject    alignWithObject,
   PlayAnimation      playAnimation,
   PickupObject       pickupObject,
   PlaceOnObject      placeOnObject,
