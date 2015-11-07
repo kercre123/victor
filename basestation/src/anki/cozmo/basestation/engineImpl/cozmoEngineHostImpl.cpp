@@ -14,7 +14,9 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
-#include "anki/cozmo/basestation/audio/AudioController.h"
+#include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -32,6 +34,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _robotMsgHandler(*(new RobotInterface::MessageHandler()))
 , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
+, _audioServer( nullptr )
 {
 
   PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -72,9 +75,19 @@ Result CozmoEngineHostImpl::InitInternal()
   _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
   _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
   
-  // Start Audio Controller
-  Anki::Cozmo::AudioController* audioController = Anki::Cozmo::AudioController::getInstance();
+  // Setup Audio Controller
+  Audio::AudioController* audioController = Audio::AudioController::getInstance();
   audioController->Initialize( _dataPlatform );
+  
+  // Setup Audio Client Connections
+  Audio::AudioUnityClientConnection *unityConnection = new Audio::AudioUnityClientConnection( _externalInterface );
+  
+  // Setup Audio Server
+  // Transfering ownership of controller & connections
+  _audioServer = new Audio::AudioServer( audioController );
+  _audioServer->RegisterClientConnection( unityConnection );
+  
+  
 
   return RESULT_OK;
 }
