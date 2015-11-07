@@ -57,11 +57,11 @@ namespace Cozmo {
     
     // Get/Set the overall face position
     void SetFacePosition(Point<2,Value> center);
-    Point<2,Value> GetFacePosition() const;
+    Point<2,Value> const& GetFacePosition() const;
     
     // Get/Set the overall face scale
-    void SetFaceScale(Value scale);
-    Value GetFaceScale() const;
+    void SetFaceScale(Point<2,Value> scale);
+    Point<2,Value> const& GetFaceScale() const;
     
     // Set this face's parameters to values interpolated from two other faces.
     //   When BlendFraction == 0.0, the parameters will be equal to face1's.
@@ -75,8 +75,11 @@ namespace Cozmo {
                      float fraction,
                      bool usePupilSaccades = false);
     
-    // Closes eyes and switches interlacing
-    void Blink();
+    // Closes eyes and switches interlacing. Call until it returns false, which
+    // indicates there are no more blink frames and the face is back in its
+    // original state. The output "offset" indicates the desired timing since
+    // the previous state.
+    bool GetNextBlinkFrame(TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
     cv::Mat_<u8> GetFace() const;
@@ -103,7 +106,7 @@ namespace Cozmo {
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
     
     Value           _faceAngle;
-    Value           _faceScale;
+    Point<2,Value>  _faceScale;
     Point<2,Value>  _faceCenter;
     
     static u8 _firstScanLine;
@@ -138,15 +141,15 @@ namespace Cozmo {
     //    _faceCenter.y() = std::max(-1.f, std::min(1.f, center.y()));
   }
   
-  inline Point<2,ProceduralFace::Value> ProceduralFace::GetFacePosition() const {
+  inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFacePosition() const {
     return _faceCenter;
   }
   
-  inline void ProceduralFace::SetFaceScale(Value scale) {
+  inline void ProceduralFace::SetFaceScale(Point<2,Value> scale) {
     _faceScale = scale;
   }
   
-  inline ProceduralFace::Value ProceduralFace::GetFaceScale() const {
+  inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFaceScale() const {
     return _faceScale;
   }
   
