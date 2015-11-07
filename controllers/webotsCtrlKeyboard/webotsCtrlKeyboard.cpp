@@ -1141,46 +1141,93 @@ namespace Anki {
               }
               case (s32)'*':
               {
-                Util::RandomGenerator rng;
-                
-                // Send a random procedural face
-                // NOTE: idle animatino should be set to _LIVE_ or _ANIM_TOOL_ first.
                 using namespace ExternalInterface;
                 using Param = ProceduralEyeParameter;
                 DisplayProceduralFace msg;
                 msg.robotID = 1;
-                msg.leftEye.resize(static_cast<size_t>(Param::NumParameters));
-                msg.rightEye.resize(static_cast<size_t>(Param::NumParameters));
+                msg.leftEye.resize(static_cast<size_t>(Param::NumParameters),  0);
+                msg.rightEye.resize(static_cast<size_t>(Param::NumParameters), 0);
                 
-                msg.leftEye[static_cast<s32>(Param::InnerRadius)]   = rng.RandDblInRange(0., 0.5);
-                msg.leftEye[static_cast<s32>(Param::OuterRadius)]   = rng.RandDblInRange(0., 0.5);
-                msg.leftEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(24,40);
-                msg.leftEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(28,36);
-                msg.leftEye[static_cast<s32>(Param::EyeScaleX)]     = 1.f;
-                msg.leftEye[static_cast<s32>(Param::EyeScaleY)]     = 1.f;
-                msg.leftEye[static_cast<s32>(Param::EyeAngle)]      = rng.RandIntInRange(-10,10);
-                msg.leftEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
-                msg.leftEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
-                msg.leftEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
-                msg.leftEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  // Reset to base face
+                  msg.leftEye[static_cast<s32>(Param::EyeCenterX)]  = 32;
+                  msg.leftEye[static_cast<s32>(Param::EyeCenterY)]  = 32;
+                  msg.rightEye[static_cast<s32>(Param::EyeCenterX)] = 96;
+                  msg.rightEye[static_cast<s32>(Param::EyeCenterY)] = 32;
+                  
+                  msg.leftEye[static_cast<s32>(Param::EyeScaleX)] = 1.f;
+                  msg.leftEye[static_cast<s32>(Param::EyeScaleY)] = 1.f;
+                  msg.rightEye[static_cast<s32>(Param::EyeScaleX)] = 1.f;
+                  msg.rightEye[static_cast<s32>(Param::EyeScaleY)] = 1.f;
+                  
+                  for(auto radiusParam : {Param::UpperInnerRadiusX, Param::UpperInnerRadiusY,
+                    Param::UpperOuterRadiusX, Param::UpperOuterRadiusY,
+                    Param::LowerInnerRadiusX, Param::LowerInnerRadiusY,
+                    Param::LowerOuterRadiusX, Param::LowerOuterRadiusY})
+                  {
+                    const s32 radiusIndex = static_cast<s32>(radiusParam);
+                    msg.leftEye[radiusIndex]  = 0.25f;
+                    msg.rightEye[radiusIndex] = 0.25f;
+                  }
+                  
+                  msg.faceAngle = 0;
+                  msg.faceScaleX = 1.f;
+                  msg.faceScaleY = 1.f;
+                  msg.faceCenX  = 0;
+                  msg.faceCenY  = 0;
+                  
+                } else {
+                  // Send a random procedural face
+                  // NOTE: idle animatino should be set to _LIVE_ or _ANIM_TOOL_ first.
+                  Util::RandomGenerator rng;
+                  
+                  msg.leftEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::LowerInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::UpperOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::UpperOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::LowerOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::LowerOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.leftEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(24,40);
+                  msg.leftEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(28,36);
+                  msg.leftEye[static_cast<s32>(Param::EyeScaleX)]     = 1.f;
+                  msg.leftEye[static_cast<s32>(Param::EyeScaleY)]     = 1.f;
+                  msg.leftEye[static_cast<s32>(Param::EyeAngle)]      = 0;//rng.RandIntInRange(-10,10);
+                  msg.leftEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
+                  msg.leftEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
+                  msg.leftEye[static_cast<s32>(Param::LowerLidBend)]  = 0;//rng.RandDblInRange(0, 0.2);
+                  msg.leftEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
+                  msg.leftEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
+                  msg.leftEye[static_cast<s32>(Param::UpperLidBend)]  = 0;//rng.RandDblInRange(0, 0.2);
+                  
+                  msg.rightEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::LowerInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::UpperOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::UpperOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::LowerOuterRadiusX)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::LowerOuterRadiusY)]   = rng.RandDblInRange(0., 1.);
+                  msg.rightEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(88,104);
+                  msg.rightEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(28,36);
+                  msg.rightEye[static_cast<s32>(Param::EyeScaleX)]     = rng.RandDblInRange(0.8, 1.2);
+                  msg.rightEye[static_cast<s32>(Param::EyeScaleY)]     = rng.RandDblInRange(0.8, 1.2);
+                  msg.rightEye[static_cast<s32>(Param::EyeAngle)]      = 0;//rng.RandIntInRange(-15,15);
+                  msg.rightEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
+                  msg.rightEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
+                  msg.rightEye[static_cast<s32>(Param::LowerLidBend)]  = rng.RandDblInRange(0., 0.2);
+                  msg.rightEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
+                  msg.rightEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
+                  msg.rightEye[static_cast<s32>(Param::UpperLidBend)]  = rng.RandDblInRange(0, 0.2);
+                  
+                  msg.faceAngle = 0; //rng.RandIntInRange(-10, 10);
+                  msg.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);
+                  msg.faceScaleY = 1.f;//rng.RandDblInRange(0.9, 1.1);
+                  msg.faceCenX  = 0; //rng.RandIntInRange(-5, 5);
+                  msg.faceCenY  = 0; //rng.RandIntInRange(-5, 5);
+                }
                 
-                msg.rightEye[static_cast<s32>(Param::InnerRadius)]   = rng.RandDblInRange(0., 0.5);
-                msg.rightEye[static_cast<s32>(Param::OuterRadius)]   = rng.RandDblInRange(0., 0.5);
-                msg.rightEye[static_cast<s32>(Param::EyeCenterX)]    = rng.RandIntInRange(88,104);
-                msg.rightEye[static_cast<s32>(Param::EyeCenterY)]    = rng.RandIntInRange(28,36);
-                msg.rightEye[static_cast<s32>(Param::EyeScaleX)]     = rng.RandDblInRange(0.8, 1.2);
-                msg.rightEye[static_cast<s32>(Param::EyeScaleY)]     = rng.RandDblInRange(0.8, 1.2);
-                msg.rightEye[static_cast<s32>(Param::EyeAngle)]      = rng.RandIntInRange(-15,15);
-                msg.rightEye[static_cast<s32>(Param::LowerLidY)]     = rng.RandDblInRange(0., .25);
-                msg.rightEye[static_cast<s32>(Param::LowerLidAngle)] = rng.RandIntInRange(-20, 20);
-                msg.rightEye[static_cast<s32>(Param::UpperLidY)]     = rng.RandDblInRange(0., .25);
-                msg.rightEye[static_cast<s32>(Param::UpperLidAngle)] = rng.RandIntInRange(-20, 20);
-                
-                msg.faceAngle = 0; rng.RandIntInRange(-10, 10);
-                msg.faceScale = rng.RandDblInRange(0.9, 1.1);
-                msg.faceCenX  = 0; //rng.RandIntInRange(-5, 5);
-                msg.faceCenY  = 0; //rng.RandIntInRange(-5, 5);
-
                 SendMessage(MessageGameToEngine(std::move(msg)));
 
                 break;
