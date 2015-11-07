@@ -30,6 +30,7 @@ namespace Data {
   
 }
 namespace Cozmo {
+namespace Audio {
   
 class AudioController : public Anki::Util::noncopyable
 {
@@ -48,11 +49,11 @@ public:
   // TODO: Need to add Language Local, pathToZipFile, zipBasePath, assetManager & assetManagerBasePath for RAMS & Android
  
   // TODO: Add Callback stuff
-  AudioEngine::AudioEventID PostAudioEvent( const std::string& eventName,
-                                            AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
+  AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
   
-  AudioEngine::AudioEventID PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                            AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
+  AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
                  AudioEngine::AudioStateId stateId );
@@ -93,6 +94,7 @@ inline AudioController* AudioController::getInstance()
   return _singletonInstance;
 }
   
+} // Audio
 } // Cozmo
 } // Anki
 

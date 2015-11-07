@@ -6,7 +6,7 @@
 //
 //
 
-#include "anki/cozmo/basestation/audio/AudioController.h"
+#include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <util/helpers/templateHelpers.h>
@@ -30,6 +30,7 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace Audio {
   
 using namespace AudioEngine;
 
@@ -131,29 +132,29 @@ bool AudioController::Initialize(Util::Data::DataPlatform *dataPlatfrom)
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioEventID AudioController::PostAudioEvent( const std::string& eventName,
-                                                           AudioEngine::AudioGameObject gameObjectId)
+AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& eventName,
+                                                             AudioEngine::AudioGameObject gameObjectId)
 {
-  AudioEventID eventId = kInvalidAudioEventID;
+  AudioPlayingID playingId = kInvalidAudioPlayingID;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->PostEvent( eventName, gameObjectId );
+    playingId = _audioEngine->PostEvent( eventName, gameObjectId );
   }
 #endif
-  return eventId;
+  return playingId;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioEventID AudioController::PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                                           AudioEngine::AudioGameObject gameObjectId )
+AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioEventID eventId,
+                                                             AudioEngine::AudioGameObject gameObjectId )
 {
-  bool success = false;
+  AudioPlayingID playingId = kInvalidAudioPlayingID;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    _audioEngine->PostEvent( eventId, gameObjectId );
+    playingId = _audioEngine->PostEvent( eventId, gameObjectId );
   }
 #endif
-  return success;
+  return playingId;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -210,6 +211,6 @@ void AudioController::Update()
 #endif
 }
   
-  
+} // Audio
 } // Cozmo
 } // Anki

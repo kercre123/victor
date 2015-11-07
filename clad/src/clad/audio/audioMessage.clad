@@ -20,6 +20,7 @@ message PostAudioEvent
 
 message PostAudioGameState
 {
+// Might need Switch Group if we can't determine it from the state
   GameStateType state,
 }
 
