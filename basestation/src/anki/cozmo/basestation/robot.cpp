@@ -1147,10 +1147,15 @@ namespace Anki {
     bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
     {
 #     if ASYNC_VISION_PROCESSING
-      return _visionProcessor.GetCurrentImage(img, newerThan);
+      Vision::ImageRGB imgRGB;
+      bool retval = _visionProcessor.GetCurrentImage(imgRGB, newerThan);
+      if(retval) {
+        img = imgRGB.ToGray();
+      }
+      return retval;
 #     else
       if(!_image.IsEmpty() && _image.GetTimestamp() > newerThan ) {
-        _image.CopyDataTo(img);
+        img = _image.ToGray();
         img.SetTimestamp(_image.GetTimestamp());
         return true;
       } else {
@@ -2459,7 +2464,7 @@ namespace Anki {
       _imageSaveMode = mode;
     }
     
-    Result Robot::ProcessImage(const Vision::Image& image)
+    Result Robot::ProcessImage(const Vision::ImageRGB& image)
     {
       Result lastResult = RESULT_OK;
       

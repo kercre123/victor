@@ -202,6 +202,7 @@ public:
     Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Get a *copy* of the current image on this robot's vision processing thread
+    // TODO: Remove this method? I don't think anyone is using it...
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
@@ -372,7 +373,7 @@ public:
     //
     // Vision
     //
-    Result ProcessImage(const Vision::Image& image);
+    Result ProcessImage(const Vision::ImageRGB& image);
     Result StartLookingForMarkers();
     Result StopLookingForMarkers();
     void SetupVisionHandlers(IExternalInterface& externalInterface);
@@ -615,7 +616,7 @@ public:
     VisionProcessingThread _visionProcessor;
     //Vision::PanTiltTracker _faceTracker;
 #   if !ASYNC_VISION_PROCESSING
-    Vision::Image     _image;
+    Vision::RGBImage  _image;
     MessageRobotState _robotStateForImage;
     bool              _haveNewImage = false;
 #   endif
@@ -625,7 +626,7 @@ public:
     
     //ActionQueue      _actionQueue;
     ActionList       _actionList;
-  MovementComponent _movementComponent;
+    MovementComponent _movementComponent;
 
     // Path Following. There are two planners, only one of which can
     // be selected at a time

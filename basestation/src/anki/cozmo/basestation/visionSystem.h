@@ -94,7 +94,7 @@ namespace Cozmo {
     //   value and NOT by reference, since the vision system can be interrupted
     //   by main execution (which updates the state).
     Result Update(const RobotState robotState,
-                  const Vision::Image&    inputImg);
+                  const Vision::ImageRGB&    inputImg);
     
     void StopTracking();
 
@@ -225,7 +225,7 @@ namespace Cozmo {
 #   endif
     
     // Previous image for doing background subtraction, e.g. for saliency
-    Vision::Image _prevImage;
+    Vision::ImageRGB _prevImage;
     
     //
     // Formerly in Embedded VisionSystem "private" namespace:

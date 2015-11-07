@@ -113,7 +113,7 @@ namespace Cozmo {
   } // ~VisionSystem()
 
 
-  void VisionProcessingThread::SetNextImage(const Vision::Image &image,
+  void VisionProcessingThread::SetNextImage(const Vision::ImageRGB &image,
                                             const RobotState &robotState)
   {
     Lock();
@@ -153,7 +153,7 @@ namespace Cozmo {
   }
   
   
-  bool VisionProcessingThread::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThanTimestamp)
+  bool VisionProcessingThread::GetCurrentImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp)
   {
     bool retVal = false;
     
@@ -171,7 +171,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionProcessingThread::GetLastProcessedImage(Vision::Image& img,
+  bool VisionProcessingThread::GetLastProcessedImage(Vision::ImageRGB& img,
                                                      TimeStamp_t newerThanTimestamp)
   {
     bool retVal = false;
@@ -230,7 +230,7 @@ namespace Cozmo {
     _lock.unlock();
   }
 
-  void VisionProcessingThread::Update(const Vision::Image& image,
+  void VisionProcessingThread::Update(const Vision::ImageRGB& image,
                                       const RobotState& robotState)
   {
     if(_isCamCalibSet) {

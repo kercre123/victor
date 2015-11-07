@@ -93,6 +93,7 @@ namespace Vision {
     ImageRGBA(s32 nrows, s32 ncols); // allocates
     
     // No allocation, just wraps a header around given data.
+    // Assumes data_32bpp is nrows*ncols in length!
     ImageRGBA(s32 nrows, s32 ncols, u32* data_32bpp);
     
     // Allocates and expands given 24bpp RGB data to into internal 32bpp RGBA format.
@@ -124,7 +125,56 @@ namespace Vision {
     Image ToGray() const;
     
   }; // class ImageRGBA
+  
+  struct RGBPixel {
+    u8 r,g,b;
+  };
+  static_assert(sizeof(RGBPixel)==3, "RGB struct not 3 bytes!");
+} // namespace Vision
+} // namespace Anki
+
+// "Register" our RGBPixel struct as a 3-channel u8 DataType with OpenCV
+namespace cv {
+  template<> class cv::DataType<Anki::Vision::RGBPixel>
+  {
+  public:
+    typedef u8  value_type;
+    typedef s32 work_type;
+    typedef u8  channel_type;
+    enum { channels = 3, fmt='u', type = CV_8U };
+  };
+} // namespace cv
+
+namespace Anki {
+namespace Vision {
+
+  class ImageRGB : public ImageBase<RGBPixel>
+  {
+  public:
+    ImageRGB();
+    ImageRGB(s32 nrows, s32 ncols); // allocates
     
+    // No allocation, just wraps header around given data.
+    // Assumes data is nrows*ncols*3 in length!
+    ImageRGB(s32 nrows, s32 ncols, u8* data);
+    
+    u8 GetR(s32 row, s32 col) const;
+    u8 GetG(s32 row, s32 col) const;
+    u8 GetB(s32 row, s32 col) const;
+    
+    u8 GetGray(s32 row, s32 col) const;
+    
+    Image ToGray() const;
+/*
+#   if ANKICORETECH_USE_OPENCV
+    // Override Array2d's get_CvMat_ to return a 8UC3 cv::Mat instead of a
+    // cv::Mat_<T>. No data is copied, but a new header is returned sharing
+    // the same data buffer.
+    cv::Mat get_CvMat_();
+    const cv::Mat get_CvMat_() const;
+#   endif
+*/
+  }; // class ImageRGB
   
   //
   // Inlined implemenations
@@ -167,11 +217,12 @@ namespace Vision {
   
   inline u8 ImageRGBA::GetGray(u32 pixel)
   {
-    u32 average = EXTRACT_B(pixel);  // start with blue
-    average += EXTRACT_G(pixel);     // add green
-    average += EXTRACT_R(pixel);     // add red
-    average /= 3;
-    return static_cast<u8>(average);
+    u16 gray = EXTRACT_B(pixel);  // start with blue
+    gray += EXTRACT_G(pixel)<<1;  // add 2X green
+    gray += EXTRACT_R(pixel);     // add red
+    gray = gray >> 2;          // divide by 4
+    assert(gray <= u8_MAX);
+    return static_cast<u8>(gray);
   }
   
   inline u8 ImageRGBA::GetGray(s32 row, s32 col) const {
@@ -185,6 +236,27 @@ namespace Vision {
   inline ColorRGBA ImageRGBA::GetColor(s32 row, s32 col) const {
     return ColorRGBA(operator()(row,col));
   }
+  
+  inline u8 ImageRGB::GetR(s32 row, s32 col) const {
+    return operator()(row,col).r;
+  }
+  
+  inline u8 ImageRGB::GetG(s32 row, s32 col) const {
+    return operator()(row,col).g;
+  }
+  
+  inline u8 ImageRGB::GetB(s32 row, s32 col) const {
+    return operator()(row,col).b;
+  }
+  
+  inline u8 ImageRGB::GetGray(s32 row, s32 col) const {
+    RGBPixel rgb = operator()(row,col);
+    u16 gray = rgb.r + (rgb.g << 1) + rgb.b; // give gray double weight
+    gray = gray >> 2; // divide by 4
+    assert(gray <= u8_MAX);
+    return static_cast<u8>(gray);
+  }
+  
 
 } // namespace Vision
 } // namespace Anki

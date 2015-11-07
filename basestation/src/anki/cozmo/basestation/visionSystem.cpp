@@ -1327,7 +1327,7 @@ namespace Cozmo {
   
   // This is the regular Update() call
   Result VisionSystem::Update(const RobotState robotState,
-                              const Vision::Image&    inputImage)
+                              const Vision::ImageRGB&    inputImage)
   {
     Result lastResult = RESULT_OK;
     
@@ -1370,6 +1370,9 @@ namespace Cozmo {
     
     std::vector<Quad2f> markerQuads;
     
+    // Lots of the processing below needs a grayscale version of the image:
+    const Vision::Image inputImageGray = inputImage.ToGray();
+    
     if(_mode & TAKING_SNAPSHOT) {
       // Nothing to do, unless a snapshot was requested
       
@@ -1381,7 +1384,7 @@ namespace Cozmo {
         Array<u8> grayscaleImage(captureHeight, captureWidth,
                                  _memory._offchipScratch, Flags::Buffer(false,false,false));
         
-        GetImageHelper(inputImage, grayscaleImage);
+        GetImageHelper(inputImageGray, grayscaleImage);
         
         if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
           PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
@@ -1404,7 +1407,7 @@ namespace Cozmo {
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory._offchipScratch, Flags::Buffer(false,false,false));
       
-      GetImageHelper(inputImage, grayscaleImage);
+      GetImageHelper(inputImageGray, grayscaleImage);
       
       if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
         PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
@@ -1567,7 +1570,7 @@ namespace Cozmo {
         Array<u8> grayscaleImage(captureHeight, captureWidth,
                                  _onchipScratchlocal, Flags::Buffer(false,false,false));
         
-        GetImageHelper(inputImage, grayscaleImage);
+        GetImageHelper(inputImageGray, grayscaleImage);
         //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
         //HAL::CameraGetFrame(),
         //  _captureResolution, false);
@@ -1773,7 +1776,7 @@ namespace Cozmo {
       if(!markerQuads.empty())
       {
         // Black out detected markers so we don't find faces in them
-        Vision::Image maskedImage(inputImage);
+        Vision::Image maskedImage = inputImageGray;
         const cv::Rect_<f32> imgRect(0,0,inputImage.GetNumCols(),inputImage.GetNumRows());
         
         for(auto & quad : markerQuads)
@@ -1787,7 +1790,7 @@ namespace Cozmo {
       } else {
         // No markers were detected, so nothing to black out before looking
         // for faces
-        _faceTracker->Update(inputImage);
+        _faceTracker->Update(inputImageGray);
       }
       
       for(auto & currentFace : _faceTracker->GetFaces())
@@ -1811,11 +1814,11 @@ namespace Cozmo {
       //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
       
       if(headSame && poseSame && !_prevImage.IsEmpty()) {
-        /*
-        Vision::Image diffImage(*inputImage);
+        
+        Vision::ImageRGB diffImage(inputImage);
         diffImage -= _prevImage;
         diffImage.Abs();
-        */
+        
 #       if ANKI_COZMO_USE_MATLAB_VISION
         //_matlab.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
         //_matlab.EvalString("imagesc(diffImage), axis image, drawnow");

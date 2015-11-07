@@ -176,18 +176,51 @@ namespace Vision {
   
   Image ImageRGBA::ToGray() const
   {
-    // Create a little lambda wrapper for converting a pixel to gray, in the
-    // std::function form req'd by ApplyScalarFunction
-    std::function<void(const u32&, u8&)> convertToGrayHelper = [](const u32& rgbPixel, u8& grayValue) {
-      grayValue = ImageRGBA::GetGray(rgbPixel);
-    };
-    
-    // Call the grayscale conversion on every pixel of this color image
     Image grayImage(GetNumRows(), GetNumCols());
-    ApplyScalarFunction(convertToGrayHelper, grayImage);
-    
+    cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
     return grayImage;
   }
-
+  
+#if 0 
+#pragma mark --- ImageRGB ---
+#endif 
+  
+  ImageRGB::ImageRGB()
+  : ImageBase<RGBPixel>()
+  {
+    
+  }
+  
+  ImageRGB::ImageRGB(s32 nrows, s32 ncols)
+  : ImageBase<RGBPixel>(nrows, ncols)
+  {
+    
+  }
+  
+  ImageRGB::ImageRGB(s32 nrows, s32 ncols, u8* data)
+  : ImageBase<RGBPixel>(nrows, ncols, reinterpret_cast<RGBPixel*>(data))
+  {
+    
+  }
+  
+  Image ImageRGB::ToGray() const
+  {
+    Image grayImage(GetNumRows(), GetNumCols());
+    cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
+    return grayImage;
+  }
+/*
+# if ANKICORETECH_USE_OPENCV
+  cv::Mat ImageRGB::get_CvMat_()
+  {
+    return cv::Mat(GetNumRows(), GetNumCols(), CV_8UC3, GetDataPointer());
+  }
+  
+  const cv::Mat ImageRGB::get_CvMat_() const
+  {
+    return cv::Mat(GetNumRows(), GetNumCols(), CV_8UC3, const_cast<RGBPixel*>(GetDataPointer()));
+  }
+# endif
+*/
 } // namespace Vision
 } // namespace Anki

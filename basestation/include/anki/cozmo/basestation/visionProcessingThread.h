@@ -72,7 +72,7 @@ class VisionProcessingThread
     void Pause(); // toggle paused state
     void Pause(bool isPaused); // set pause state
     
-    void SetNextImage(const Vision::Image& image,
+    void SetNextImage(const Vision::ImageRGB& image,
                       const RobotState& robotState);
     
     //
@@ -80,7 +80,7 @@ class VisionProcessingThread
     //
     void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
-    void Update(const Vision::Image& image,
+    void Update(const Vision::ImageRGB& image,
                 const RobotState& robotState);
 
     
@@ -102,19 +102,17 @@ class VisionProcessingThread
     
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
-    //bool CheckMailbox(ImageChunk&          msg);
     bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
-    //bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(VizInterface::TrackerQuad&         msg);
-    bool CheckMailbox(RobotInterface::PanAndTilt&      msg);
-    bool CheckMailbox(Vision::TrackedFace&        msg);
+    bool CheckMailbox(Vision::ObservedMarker&      msg);
+    bool CheckMailbox(VizInterface::TrackerQuad&   msg);
+    bool CheckMailbox(RobotInterface::PanAndTilt&  msg);
+    bool CheckMailbox(Vision::TrackedFace&         msg);
     
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.
-    bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThanTimestamp);
+    bool GetCurrentImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
     
-    bool GetLastProcessedImage(Vision::Image& img, TimeStamp_t newerThanTimestamp);
+    bool GetLastProcessedImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
     
     TimeStamp_t GetLastProcessedImageTimeStamp();
     
@@ -129,9 +127,9 @@ class VisionProcessingThread
     bool   _paused  = false;
     std::mutex _lock;
     
-    Vision::Image _currentImg;
-    Vision::Image _nextImg;
-    Vision::Image _lastImg; // the last image we processed
+    Vision::ImageRGB _currentImg;
+    Vision::ImageRGB _nextImg;
+    Vision::ImageRGB _lastImg; // the last image we processed
     
     RobotState _currentRobotState;
     RobotState _nextRobotState;
