@@ -18,7 +18,7 @@ public class SpeedTapStateGoToCube : State {
       return;
     if (speedTapGame_.cozmoBlock_.MarkersVisible) {
       drivingToBlock_ = true;
-      robot.GotoObject(speedTapGame_.cozmoBlock_, 50.0f, (bool success) => {
+      robot.AlignWithObject(speedTapGame_.cozmoBlock_, 50.0f, (bool success) => {
         drivingToBlock_ = false;
         if (success) {
           stateMachine_.SetNextState(new SpeedTapStateBeginMatch());

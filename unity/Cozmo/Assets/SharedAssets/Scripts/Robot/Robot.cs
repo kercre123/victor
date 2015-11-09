@@ -831,13 +831,13 @@ public class Robot : IDisposable {
     }
   }
 
-  public void AlignWithObject(ObservedObject obj, float distance_mm, RobotCallback callback = null) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null) {
     AlignWithObjectMessage.objectID = obj;
-    AlignWithObjectMessage.distanceFromMarker_mm = distance_mm;
+    AlignWithObjectMessage.distanceFromMarker_mm = distanceFromMarker_mm;
     AlignWithObjectMessage.useManualSpeed = false;
     AlignWithObjectMessage.useApproachAngle = false;
 
-    RobotEngineManager.instance.Message.AlignWithObject = AlignWithObject;
+    RobotEngineManager.instance.Message.AlignWithObject = AlignWithObjectMessage;
     RobotEngineManager.instance.SendMessage();
 
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
