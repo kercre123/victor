@@ -17,6 +17,9 @@
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
+#include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
+#include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
@@ -76,17 +79,16 @@ Result CozmoEngineHostImpl::InitInternal()
   _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
   
   // Setup Audio Controller
-  Audio::AudioController* audioController = Audio::AudioController::getInstance();
+  using namespace Audio;
+  AudioController* audioController = AudioController::getInstance();
   audioController->Initialize( _dataPlatform );
   
-  // Setup Audio Client Connections
-  Audio::AudioUnityClientConnection *unityConnection = new Audio::AudioUnityClientConnection( _externalInterface );
-  
+  // Setup Unity Audio Client Connections
+  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( _externalInterface );
   // Setup Audio Server
   // Transfering ownership of controller & connections
-  _audioServer = new Audio::AudioServer( audioController );
+  _audioServer = new AudioServer( audioController );
   _audioServer->RegisterClientConnection( unityConnection );
-  
   
 
   return RESULT_OK;
@@ -227,6 +229,17 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
   } else {
     PRINT_NAMED_INFO("CozmoEngineHostImpl.AddRobot", "Sending init to the robot %d.", robotID);
     lastResult = robot->SyncTime();
+
+    // Setup Audio Server with Robot Audio Connection & Client
+    using namespace Audio;
+    AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
+    AudioEngineClientConnection* engineConnection = new AudioEngineClientConnection( engineMessageHandler );
+    // Transfer ownership of connection to Audio Server
+    _audioServer->RegisterClientConnection( engineConnection );
+
+    // Transfer ownership of audio client to Robot
+    RobotAudioClient* audioClient = new RobotAudioClient( engineConnection->GetMessageHandler() );
+    robot->SetRobotAudioClient( audioClient );
   }
 
   return lastResult;

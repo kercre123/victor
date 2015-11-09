@@ -45,7 +45,7 @@ void AudioServer::RegisterClientConnection( AudioClientConnection* clientConnect
 {
   // Setup Client Connection with Server
   uint8_t connectionId = GetNewClientConnectionId();
-  clientConnection->SetConnectionId( GetNewClientConnectionId() );
+  clientConnection->SetConnectionId( connectionId );
   clientConnection->SetAudioServer( this );
 
   _clientConnections.emplace( connectionId, clientConnection );
