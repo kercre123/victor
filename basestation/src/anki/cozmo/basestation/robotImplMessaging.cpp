@@ -221,7 +221,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
                          "Unsetting %s %d, which moved, as robot %d's localization object.",
                          ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
         SetLocalizedTo(nullptr);
-      } else if(!IsLocalized()) {
+      } else if(!IsLocalized() && !IsPickedUp()) {
         // If we are not localized and there is nothing else left in the world that
         // we could localize to, then go ahead and mark us as localized (via
         // odometry alone)
@@ -285,7 +285,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
                          "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
                          ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
         SetLocalizedTo(nullptr);
-      } else if(!IsLocalized()) {
+      } else if(!IsLocalized() && !IsPickedUp()) {
         // If we are not localized and there is nothing else left in the world that
         // we could localize to, then go ahead and mark us as localized (via
         // odometry alone)
