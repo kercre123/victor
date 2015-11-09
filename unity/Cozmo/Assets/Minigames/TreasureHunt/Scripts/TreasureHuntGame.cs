@@ -60,9 +60,8 @@ public class TreasureHuntGame : GameBase {
 
       cube.SetLEDs(0);
 
-      Debug.Log(cube.Forward);
       float dotVal = Vector2.Dot(cubeToTarget, cubeForward);
-      Debug.Log(dotVal);
+
       if (dotVal > 0.5f) {
         // front
         cube.Lights[0].onColor = CozmoPalette.ColorToUInt(Color.yellow);

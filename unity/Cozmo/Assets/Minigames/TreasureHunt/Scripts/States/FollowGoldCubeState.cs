@@ -9,6 +9,8 @@ public class FollowGoldCubeState : State {
   public override void Enter() {
     base.Update();
     lastTimeSeenGoldBlock_ = Time.time;
+    robot.SetLiftHeight(0.0f);
+    robot.SetHeadAngle(-1.0f);
   }
 
   public override void Update() {
@@ -26,7 +28,9 @@ public class FollowGoldCubeState : State {
           stateMachine_.SetNextState(new CelebrateGoldState());
         }
       }
-
+    }
+    else {
+      robot.DriveWheels(0.0f, 0.0f);
     }
   }
 
@@ -58,10 +62,10 @@ public class FollowGoldCubeState : State {
     }
 
     float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
-    if (angle < 5.0f) {
+    if (angle < 10.0f) {
 
       float speed = 60.0f;
-      float distMax = 130.0f;
+      float distMax = 150.0f;
       float distMin = 90.0f;
 
       if (dist > distMax) {
