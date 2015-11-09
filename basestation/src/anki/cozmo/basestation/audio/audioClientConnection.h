@@ -21,16 +21,16 @@ struct PostAudioEvent;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
-struct PostCallbackEventBegin;
-struct PostCallbackEventMarker;
-struct PostCallbackEventComplete;
+struct AudioCallbackDuration;
+struct AudioCallbackMarker;
+struct AudioCallbackComplete;
   
 class AudioClientConnection {
   
 public:
   
   AudioClientConnection();
-  ~AudioClientConnection();
+  virtual ~AudioClientConnection();
   
   void SetAudioServer( AudioServer* server ) { _server = server; }
   
@@ -45,7 +45,9 @@ protected:
   void HandleMessage( const PostAudioSwitchState& switchStateMessage );
   void HandleMessage( const PostAudioParameter& parameterMessage );
   
-//  PostCallback( const )
+  virtual void PostCallback( const AudioCallbackDuration& callbackMessage ) {}
+  virtual void PostCallback( const AudioCallbackMarker& callbackMessage ) {}
+  virtual void PostCallback( const AudioCallbackComplete& callbackMessage ) {}
   
 private:
   
