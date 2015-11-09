@@ -42,8 +42,19 @@ namespace Vision {
     
     void Display(const char *windowName, bool pause = false) const;
 
+    // Resize in place by scaleFactor
+    void Resize(f32 scaleFactor);
+    
+    // Resize in place to a specific size
+    void Resize(s32 desiredRows, s32 desiredCols);
+    
+    // Resize into the new image (which is already the desired size)
+    void Resize(ImageBase<T>& resizedImage) const;
+
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;
+    using Array2d<T>::GetNumRows;
+    using Array2d<T>::GetNumCols;
     
   protected:
     TimeStamp_t     _timeStamp;
@@ -51,6 +62,7 @@ namespace Vision {
   }; // class ImageBase
   
   
+  // Grayscale (i.e. scalar-valued) image, 8bpp
   class Image : public ImageBase<u8>
   {
   public:
@@ -72,24 +84,13 @@ namespace Vision {
 
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
-    
-    // Resize in place by scaleFactor
-    void Resize(f32 scaleFactor);
-    
-    // Resize in place to a specific size
-    void Resize(s32 desiredRows, s32 desiredCols);
-    
-    // Resize into the new image (which is already the desired size)
-    void Resize(Image& resizedImage) const;
-    
-    using Array2d<u8>::GetDataPointer;
-    using Array2d<u8>::IsEmpty;
   }; // class Image
   
   
   // Forward declaration:
   class ImageRGBA;
   
+  // RGB Color image, 24bpp
   class ImageRGB : public ImageBase<PixelRGB>
   {
   public:
@@ -108,6 +109,7 @@ namespace Vision {
   }; // class ImageRGB
   
   
+  // RGBA Color image (i.e. RGB + alpha channel), 32bpp
   class ImageRGBA : public ImageBase<PixelRGBA>
   {
   public:
