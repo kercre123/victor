@@ -656,6 +656,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
   }
 
+  public float GetRobotVolume() {
+    return SetRobotVolumeMessage.volume;
+  }
+
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
     if (HeadTrackingObjectID == observedObject) {
       lastHeadTrackingObjectID = -1;
@@ -812,7 +816,7 @@ public class Robot : IDisposable {
 
   public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null) {
     GotoObjectMessage.objectID = obj;
-    GotoObjectMessage.distance_mm = distance_mm;
+    GotoObjectMessage.distanceFromObjectOrigin_mm = distance_mm;
     GotoObjectMessage.useManualSpeed = false;
 
     RobotEngineManager.instance.Message.GotoObject = GotoObjectMessage;

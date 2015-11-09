@@ -29,7 +29,10 @@ public class TreasureHuntGame : GameBase {
   }
 
   public void PickNewGoldPosition() {
-    
+    // pick a random position from robot's world origin.
+    // this may be improved by looking at where the robot has
+    // been, where it is, where it is facing etc.
+    GoldPosition = Random.insideUnitCircle * 200.0f;
   }
 
   public void ClearBlockLights() {
