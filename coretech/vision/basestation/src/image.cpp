@@ -206,6 +206,7 @@ namespace Vision {
   Image ImageRGB::ToGray() const
   {
     Image grayImage(GetNumRows(), GetNumCols());
+    grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
     return grayImage;
   }

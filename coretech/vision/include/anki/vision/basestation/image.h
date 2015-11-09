@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef ANKI_CORETECH_VISION_BASESTATION_IMAGE_H
-#define ANKI_CORETECH_VISION_BASESTATION_IMAGE_H
+#ifndef __Anki_Coretech_Vision_Basestation_Image_H__
+#define __Anki_Coretech_Vision_Basestation_Image_H__
 
 #include "anki/common/types.h"
 
@@ -19,6 +19,7 @@
 #include "anki/common/basestation/math/point.h"
 
 #include "anki/vision/CameraSettings.h"
+#include "anki/vision/basestation/rgbPixel.h"
 
 namespace Anki {
 namespace Vision {
@@ -126,28 +127,6 @@ namespace Vision {
     
   }; // class ImageRGBA
   
-  struct RGBPixel {
-    u8 r,g,b;
-  };
-  static_assert(sizeof(RGBPixel)==3, "RGB struct not 3 bytes!");
-} // namespace Vision
-} // namespace Anki
-
-// "Register" our RGBPixel struct as a 3-channel u8 DataType with OpenCV
-namespace cv {
-  template<> class cv::DataType<Anki::Vision::RGBPixel>
-  {
-  public:
-    typedef u8  value_type;
-    typedef s32 work_type;
-    typedef u8  channel_type;
-    enum { channels = 3, fmt='u', type = CV_8U };
-  };
-} // namespace cv
-
-namespace Anki {
-namespace Vision {
-
   class ImageRGB : public ImageBase<RGBPixel>
   {
   public:
@@ -165,15 +144,7 @@ namespace Vision {
     u8 GetGray(s32 row, s32 col) const;
     
     Image ToGray() const;
-/*
-#   if ANKICORETECH_USE_OPENCV
-    // Override Array2d's get_CvMat_ to return a 8UC3 cv::Mat instead of a
-    // cv::Mat_<T>. No data is copied, but a new header is returned sharing
-    // the same data buffer.
-    cv::Mat get_CvMat_();
-    const cv::Mat get_CvMat_() const;
-#   endif
-*/
+
   }; // class ImageRGB
   
   //
@@ -238,27 +209,23 @@ namespace Vision {
   }
   
   inline u8 ImageRGB::GetR(s32 row, s32 col) const {
-    return operator()(row,col).r;
+    return operator()(row,col).r();
   }
   
   inline u8 ImageRGB::GetG(s32 row, s32 col) const {
-    return operator()(row,col).g;
+    return operator()(row,col).g();
   }
   
   inline u8 ImageRGB::GetB(s32 row, s32 col) const {
-    return operator()(row,col).b;
+    return operator()(row,col).b();
   }
   
   inline u8 ImageRGB::GetGray(s32 row, s32 col) const {
-    RGBPixel rgb = operator()(row,col);
-    u16 gray = rgb.r + (rgb.g << 1) + rgb.b; // give gray double weight
-    gray = gray >> 2; // divide by 4
-    assert(gray <= u8_MAX);
-    return static_cast<u8>(gray);
+    return operator()(row,col).gray();
   }
   
 
 } // namespace Vision
 } // namespace Anki
 
-#endif // ANKI_CORETECH_VISION_BASESTATION_IMAGE_H
+#endif // __Anki_Coretech_Vision_Basestation_Image_H__
