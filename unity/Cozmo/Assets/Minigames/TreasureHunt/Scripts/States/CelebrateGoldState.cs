@@ -11,6 +11,7 @@ public class CelebrateGoldState : State {
   void AnimationDone(bool success) {
     // play animation on phone screen
     (stateMachine_.GetGame() as TreasureHuntGame).ClearBlockLights();
+    OnNextHunt();
   }
 
   // called when next hunt button is pressed.

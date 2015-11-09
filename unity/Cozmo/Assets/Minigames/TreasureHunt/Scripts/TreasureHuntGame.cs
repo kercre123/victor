@@ -13,7 +13,7 @@ public class TreasureHuntGame : GameBase {
     stateMachine_.SetGameRef(this);
     stateMachineManager_.AddStateMachine("TreasureHuntStateMachine", stateMachine_);
     InitialCubesState initCubeState = new InitialCubesState();
-    initCubeState.InitialCubeRequirements(new LookForCubesState(), 1, InitialCubesDone);
+    initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
     stateMachine_.SetNextState(initCubeState);
     robot.StopFaceAwareness();
   }
@@ -52,7 +52,36 @@ public class TreasureHuntGame : GameBase {
     }
     else {
       // set directional lights
+      Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
+      Vector2 cubeForward = (Vector2)cube.Forward;
 
+      cubeToTarget.Normalize();
+      cubeForward.Normalize(); 
+
+      cube.SetLEDs(0);
+
+      Debug.Log(cube.Forward);
+      float dotVal = Vector2.Dot(cubeToTarget, cubeForward);
+      Debug.Log(dotVal);
+      if (dotVal > 0.5f) {
+        // front
+        cube.Lights[0].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+      }
+      else if (dotVal < -0.5f) {
+        // back
+        cube.Lights[2].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+      }
+      else {
+        float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
+        if (crossSign < 0.0f) {
+          // left
+          cube.Lights[1].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+        }
+        else {
+          // right
+          cube.Lights[3].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+        }
+      }
     }
 
     return hovering;
