@@ -1,0 +1,15 @@
+
+#include "clad/audio/audioMessage.clad"
+#include "clad/audio/audioCallbackMessage.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+// keep empty to generate an auto-union that includes all messages in this file
+// if you do not want to include messages in this union, use the keyword "structure" instead of "message"
+union MessageAudioClient { }
+
+}
+}
+}

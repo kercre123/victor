@@ -13,9 +13,9 @@ namespace Audio {
 
 message PostAudioEvent
 {
-  uint_16 gameObjectId,
   EventType audioEvent,
-  EventCallbackFlag callbackFlag,
+  uint_16 gameObjectId,
+  AudioCallbackFlag callbackFlag,
 }
 
 message PostAudioGameState
@@ -26,38 +26,20 @@ message PostAudioGameState
 
 message PostAudioSwitchState
 {
-  uint_16 gameObjectId,
 // Might need Switch Group if we can't determine it from the switch state
   SwitchStateType switchState,
+  uint_16 gameObjectId,
 }
-
 
 message PostAudioParameter
 {
-  uint_16 gameObjectId,
   ParameterType parameter,
   float_32 parameterValue,
+  uint_16 gameObjectId,
   int_32 timeInMilliSeconds,
   CurveType curve,
 }
 
-// Don't lie this is only a duration call
-message PostCallbackEventBegin
-{
-  uint_16 callbackId,
-  // EventId
-}
-
-message PostCallbackEventMarker
-{
-  // EventId
-}
-
-message PostCallbackEventComplete
-{
-  uint_16 callbackId,
-  // EventId
-}
 
 }
 }
