@@ -57,6 +57,7 @@ def write_file(file_name,data):
 def combine_bin(file_name,dest_file_name,start_offset_addr,need_chk):
     global chk_sum
     global blocks
+    global flashSectionsFH
     if dest_file_name is None:
         print 'dest_file_name cannot be none\n'
         sys.exit(0)
@@ -73,6 +74,7 @@ def combine_bin(file_name,dest_file_name,start_offset_addr,need_chk):
 		else:
 	            tmp_len = (data_len + 15) & (~15)
                 data_bin = struct.pack('<II',start_offset_addr,tmp_len)
+                flashSectionsFH.write("{:s}: 0x{:08x}\t{}\r\n".format(file_name, start_offset_addr, tmp_len))
                 write_file(dest_file_name,data_bin)
                 fp.seek(0,os.SEEK_SET)
                 data_bin = fp.read(data_len)
@@ -114,6 +116,7 @@ def gen_appbin():
     global chk_sum
     global crc_sum
     global blocks
+    global flashSectionsFH
     if len(sys.argv) != 6:
         print 'Usage: gen_appbin.py eagle.app.out boot_mode flash_mode flash_clk_div flash_size_map'
         sys.exit(0)
@@ -214,6 +217,7 @@ def gen_appbin():
     if boot_mode == '2':
         # write irom bin head
         data_bin = struct.pack('<BBBBI',BIN_MAGIC_IROM,4,byte2,byte3,long(entry_addr,16))
+        flashSectionsFH.write("IROM: 0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:08x}\r\n".format(BIN_MAGIC_IROM, 4, byte2, byte3, long(entry_addr,16)))
         sum_size = len(data_bin)
         write_file(flash_bin_name,data_bin)
         
@@ -221,6 +225,7 @@ def gen_appbin():
         combine_bin(irom0text_bin_name,flash_bin_name,0x0,0)
 
     data_bin = struct.pack('<BBBBI',BIN_MAGIC_FLASH,3,byte2,byte3,long(entry_addr,16))
+    flashSectionsFH.write("text: 0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:08x}\r\n".format(BIN_MAGIC_FLASH, 3, byte2, byte3, long(entry_addr,16)))
     sum_size = len(data_bin)
     write_file(flash_bin_name,data_bin)
 
@@ -270,4 +275,7 @@ def gen_appbin():
     os.system(cmd)
 
 if __name__=='__main__':
+    global flashSectionsFH
+    flashSectionsFH = open("{}.flash-sections".format(sys.argv[1]), "w")
     gen_appbin()
+    flashSectionsFH.close()
