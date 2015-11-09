@@ -180,6 +180,7 @@ public class Robot : IDisposable {
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
+  private U2G.AlignWithObject AlignWithObjectMessage;
 
   private ObservedObject _carryingObject;
 
@@ -286,6 +287,7 @@ public class Robot : IDisposable {
     PlayAnimationMessages[0] = new U2G.PlayAnimation();
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
+    AlignWithObjectMessage = new U2G.AlignWithObject();
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -826,6 +828,21 @@ public class Robot : IDisposable {
     localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
     if (callback != null) {
       robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
+    }
+  }
+
+  public void AlignWithObject(ObservedObject obj, float distance_mm, RobotCallback callback = null) {
+    AlignWithObjectMessage.objectID = obj;
+    AlignWithObjectMessage.distanceFromMarker_mm = distance_mm;
+    AlignWithObjectMessage.useManualSpeed = false;
+    AlignWithObjectMessage.useApproachAngle = false;
+
+    RobotEngineManager.instance.Message.AlignWithObject = AlignWithObject;
+    RobotEngineManager.instance.SendMessage();
+
+    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
     }
   }
 
