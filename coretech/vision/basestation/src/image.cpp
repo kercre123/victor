@@ -145,38 +145,42 @@ namespace Vision {
 #endif
   
   ImageRGBA::ImageRGBA()
-  : ImageBase<u32>()
+  : ImageBase<PixelRGBA>()
   {
     
   }
   
   ImageRGBA::ImageRGBA(s32 nrows, s32 ncols)
-  : ImageBase<u32>(nrows, ncols)
+  : ImageBase<PixelRGBA>(nrows, ncols)
   {
     
   }
   
   ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u32* data)
-  : ImageBase<u32>(nrows, ncols, data)
+  : ImageBase<PixelRGBA>(nrows, ncols, reinterpret_cast<PixelRGBA*>(data))
   {
     
   }
   
-  ImageRGBA::ImageRGBA(s32 nrows, s32 ncols, u8* data24)
-  : ImageRGBA(nrows,ncols)
+  ImageRGBA::ImageRGBA(const ImageRGB& imageRGB, u8 alpha)
+  : ImageRGBA(imageRGB.GetNumRows(), imageRGB.GetNumCols())
   {
-    s32 index=0;
-    u32* data32 = GetDataPointer();
-    for(s32 i=0; i<nrows*ncols; ++i, index+=3) {
-      data32[i] = ((static_cast<u32>(data24[index])  <<24) +
-                   (static_cast<u32>(data24[index+1])<<16) +
-                   (static_cast<u32>(data24[index+2])<<8));
+    PixelRGBA* dataRGBA = GetDataPointer();
+    const PixelRGB* dataRGB = imageRGB.GetDataPointer();
+    
+    for(s32 i=0; i<GetNumElements(); ++i)
+    {
+      dataRGBA[i].r() = dataRGB[i].r();
+      dataRGBA[i].g() = dataRGB[i].g();
+      dataRGBA[i].b() = dataRGB[i].b();
+      dataRGBA[i].a() = alpha;
     }
   }
   
   Image ImageRGBA::ToGray() const
   {
     Image grayImage(GetNumRows(), GetNumCols());
+    grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
     return grayImage;
   }
@@ -186,21 +190,35 @@ namespace Vision {
 #endif 
   
   ImageRGB::ImageRGB()
-  : ImageBase<RGBPixel>()
+  : ImageBase<PixelRGB>()
   {
     
   }
   
   ImageRGB::ImageRGB(s32 nrows, s32 ncols)
-  : ImageBase<RGBPixel>(nrows, ncols)
+  : ImageBase<PixelRGB>(nrows, ncols)
   {
     
   }
   
   ImageRGB::ImageRGB(s32 nrows, s32 ncols, u8* data)
-  : ImageBase<RGBPixel>(nrows, ncols, reinterpret_cast<RGBPixel*>(data))
+  : ImageBase<PixelRGB>(nrows, ncols, reinterpret_cast<PixelRGB*>(data))
   {
     
+  }
+  
+  ImageRGB::ImageRGB(const ImageRGBA& imageRGBA)
+  : ImageBase<PixelRGB>(imageRGBA.GetNumRows(), imageRGBA.GetNumCols())
+  {
+    PixelRGB* dataRGB = GetDataPointer();
+    const PixelRGBA* dataRGBA = imageRGBA.GetDataPointer();
+    
+    for(s32 i=0; i<GetNumElements(); ++i)
+    {
+      dataRGB[i].r() = dataRGBA[i].r();
+      dataRGB[i].g() = dataRGBA[i].g();
+      dataRGB[i].b() = dataRGBA[i].b();
+    }
   }
   
   Image ImageRGB::ToGray() const
@@ -210,18 +228,6 @@ namespace Vision {
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGB2GRAY);
     return grayImage;
   }
-/*
-# if ANKICORETECH_USE_OPENCV
-  cv::Mat ImageRGB::get_CvMat_()
-  {
-    return cv::Mat(GetNumRows(), GetNumCols(), CV_8UC3, GetDataPointer());
-  }
-  
-  const cv::Mat ImageRGB::get_CvMat_() const
-  {
-    return cv::Mat(GetNumRows(), GetNumCols(), CV_8UC3, const_cast<RGBPixel*>(GetDataPointer()));
-  }
-# endif
-*/
+
 } // namespace Vision
 } // namespace Anki

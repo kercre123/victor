@@ -19,7 +19,7 @@
 #include "anki/common/basestation/math/point.h"
 
 #include "anki/vision/CameraSettings.h"
-#include "anki/vision/basestation/rgbPixel.h"
+#include "anki/vision/basestation/colorPixelTypes.h"
 
 namespace Anki {
 namespace Vision {
@@ -87,47 +87,10 @@ namespace Vision {
   }; // class Image
   
   
-  class ImageRGBA : public ImageBase<u32>
-  {
-  public:
-    ImageRGBA();
-    ImageRGBA(s32 nrows, s32 ncols); // allocates
-    
-    // No allocation, just wraps a header around given data.
-    // Assumes data_32bpp is nrows*ncols in length!
-    ImageRGBA(s32 nrows, s32 ncols, u32* data_32bpp);
-    
-    // Allocates and expands given 24bpp RGB data to into internal 32bpp RGBA format.
-    // Assumes data buffer is nrows*ncols*3 bytes in length!
-    ImageRGBA(s32 nrows, s32 ncols, u8* data_24bpp);
-    
-#   if ANKICORETECH_USE_OPENCV
-    ImageRGBA(cv::Mat& cvMat);
-#   endif
-    
-    // Access specific channel of a specific pixel
-    u8 GetR(s32 row, s32 col) const;
-    u8 GetG(s32 row, s32 col) const;
-    u8 GetB(s32 row, s32 col) const;
-    u8 GetAlpha(s32 row, s32 col) const;
-    
-    u8 GetGray(s32 row, s32 col) const;
-    
-    static u8 GetGray(u32 colorPixel);
-    
-    ColorRGBA GetColor(s32 row, s32 col) const;
-    
-    /*
-    void SetR(s32 row, s32 col, u8 r);
-    void SetG(s32 row, s32 col, u8 r);
-    void SetB(s32 row, s32 col, u8 r);
-    */
-    
-    Image ToGray() const;
-    
-  }; // class ImageRGBA
+  // Forward declaration:
+  class ImageRGBA;
   
-  class ImageRGB : public ImageBase<RGBPixel>
+  class ImageRGB : public ImageBase<PixelRGB>
   {
   public:
     ImageRGB();
@@ -137,15 +100,36 @@ namespace Vision {
     // Assumes data is nrows*ncols*3 in length!
     ImageRGB(s32 nrows, s32 ncols, u8* data);
     
-    u8 GetR(s32 row, s32 col) const;
-    u8 GetG(s32 row, s32 col) const;
-    u8 GetB(s32 row, s32 col) const;
-    
-    u8 GetGray(s32 row, s32 col) const;
+    // Removes alpha channel and squeezes into 24bpp
+    ImageRGB(const ImageRGBA& imageRGBA);
     
     Image ToGray() const;
-
+    
   }; // class ImageRGB
+  
+  
+  class ImageRGBA : public ImageBase<PixelRGBA>
+  {
+  public:
+    ImageRGBA();
+    ImageRGBA(s32 nrows, s32 ncols); // allocates
+    
+    // No allocation, just wraps a header around given data.
+    // Assumes data_32bpp is nrows*ncols in length!
+    ImageRGBA(s32 nrows, s32 ncols, u32* data_32bpp);
+    
+    // Expands 24bpp RGB image into 32bpp RGBA, setting alpha of every pixel
+    // to the given value.
+    ImageRGBA(const ImageRGB& imageRGB, u8 alpha = 255);
+    
+#   if ANKICORETECH_USE_OPENCV
+    ImageRGBA(cv::Mat& cvMat);
+#   endif
+    
+    Image ToGray() const;
+    
+  }; // class ImageRGBA
+
   
   //
   // Inlined implemenations
@@ -160,71 +144,6 @@ namespace Vision {
     return _timeStamp;
   }
   
-  // Helper macros for getting RGB from a 32bit value
-# define EXTRACT_R(__PIXEL__) ((__PIXEL__ & 0xff000000) >> 24)
-# define EXTRACT_G(__PIXEL__) ((__PIXEL__ & 0x00ff0000) >> 16)
-# define EXTRACT_B(__PIXEL__) ((__PIXEL__ & 0x0000ff00) >>  8)
-# define EXTRACT_A(__PIXEL__)  (__PIXEL__ & 0x000000ff)
-  
-  inline u8 ImageRGBA::GetR(s32 row, s32 col) const {
-    const u32 pixel = operator()(row,col);
-    return static_cast<u8>(EXTRACT_R(pixel));
-  }
-
-  inline u8 ImageRGBA::GetG(s32 row, s32 col) const {
-    const u32 pixel = operator()(row,col);
-    return static_cast<u8>(EXTRACT_G(pixel));
-  }
-  
-  inline u8 ImageRGBA::GetB(s32 row, s32 col) const {
-    const u32 pixel = operator()(row,col);
-    return static_cast<u8>(EXTRACT_B(pixel));
-  }
-  
-  inline u8 ImageRGBA::GetAlpha(s32 row, s32 col) const {
-    const u32 pixel = operator()(row,col);
-    return static_cast<u8>(EXTRACT_A(pixel));
-  }
-  
-  inline u8 ImageRGBA::GetGray(u32 pixel)
-  {
-    u16 gray = EXTRACT_B(pixel);  // start with blue
-    gray += EXTRACT_G(pixel)<<1;  // add 2X green
-    gray += EXTRACT_R(pixel);     // add red
-    gray = gray >> 2;          // divide by 4
-    assert(gray <= u8_MAX);
-    return static_cast<u8>(gray);
-  }
-  
-  inline u8 ImageRGBA::GetGray(s32 row, s32 col) const {
-    return ImageRGBA::GetGray( operator()(row,col) );
-  }
-  
-# undef EXTRACT_R
-# undef EXTRACT_G
-# undef EXTRAC_B
-  
-  inline ColorRGBA ImageRGBA::GetColor(s32 row, s32 col) const {
-    return ColorRGBA(operator()(row,col));
-  }
-  
-  inline u8 ImageRGB::GetR(s32 row, s32 col) const {
-    return operator()(row,col).r();
-  }
-  
-  inline u8 ImageRGB::GetG(s32 row, s32 col) const {
-    return operator()(row,col).g();
-  }
-  
-  inline u8 ImageRGB::GetB(s32 row, s32 col) const {
-    return operator()(row,col).b();
-  }
-  
-  inline u8 ImageRGB::GetGray(s32 row, s32 col) const {
-    return operator()(row,col).gray();
-  }
-  
-
 } // namespace Vision
 } // namespace Anki
 
