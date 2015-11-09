@@ -23,18 +23,18 @@ public class FPSCalculator : MonoBehaviour {
 
   private PerformancePane performancePaneInstance_ = null;
 
-	// Use this for initialization
-	private void Start () {
-	  // Set the target frame rate super high so that we get
+  // Use this for initialization
+  private void Start() {
+    // Set the target frame rate super high so that we get
     // accurate numbers on device. (IOS normally caps at 30)
     Application.targetFrameRate = 1000;
     fpsSamples_ = new List<int>();
 
     PerformancePane.PerformancePaneOpened += OnPerformancePaneOpened;
-	}
+  }
 	
-	// Update is called once per frame
-	private void Update () {
+  // Update is called once per frame
+  private void Update() {
     float lastFrameSeconds = Time.deltaTime;
     secondTimeTracker_ += lastFrameSeconds;
     numFramesInSecond_++;
@@ -47,7 +47,7 @@ public class FPSCalculator : MonoBehaviour {
       fpsSamples_.Add(currentFPS_);
       
       // Truncate list of samples
-      while (fpsSamples_.Count > SECONDS_PER_MINUTE){
+      while (fpsSamples_.Count > SECONDS_PER_MINUTE) {
         fpsSamples_.RemoveAt(0);
       }
 
@@ -61,7 +61,7 @@ public class FPSCalculator : MonoBehaviour {
         performancePaneInstance_.SetAvgFPS(avgFPS);
         performancePaneInstance_.SetFPSPerMinute(CalculateAvgFramesPerMinute());
       }
-      if(fpsCounterInstance_ != null) {
+      if (fpsCounterInstance_ != null) {
         fpsCounterInstance_.SetFPS(currentFPS_);
         fpsCounterInstance_.SetAvgFPS(avgFPS);
       }
@@ -70,17 +70,16 @@ public class FPSCalculator : MonoBehaviour {
       secondTimeTracker_ -= 1f;
       numFramesInSecond_ = 0;
     }
-	}
+  }
 
-  private void OnDestroy(){
+  private void OnDestroy() {
     if (performancePaneInstance_ != null) {
       performancePaneInstance_.PerformancePaneClosed -= OnPerformancePaneClosed;
       performancePaneInstance_.PerformanceCounterButtonClicked -= OnPerformanceCounterButtonClicked;
     }
   }
 
-  private void OnPerformancePaneOpened (PerformancePane performancePane)
-  {
+  private void OnPerformancePaneOpened(PerformancePane performancePane) {
     performancePaneInstance_ = performancePane;
     performancePaneInstance_.PerformancePaneClosed += OnPerformancePaneClosed;
     performancePaneInstance_.PerformanceCounterButtonClicked += OnPerformanceCounterButtonClicked;
@@ -89,14 +88,12 @@ public class FPSCalculator : MonoBehaviour {
     performancePaneInstance_.SetFPSPerMinute(CalculateAvgFramesPerMinute());
   }
 
-  private void OnPerformancePaneClosed ()
-  {
+  private void OnPerformancePaneClosed() {
     performancePaneInstance_.PerformancePaneClosed -= OnPerformancePaneClosed;
     performancePaneInstance_ = null;
   }
 
-  private void OnPerformanceCounterButtonClicked ()
-  {
+  private void OnPerformanceCounterButtonClicked() {
     // Create counter instance if it doesn't exist
     if (fpsCounterInstance_ == null) {
       GameObject fpsCounter = UIManager.CreateUI(fpsCounterPrefab_.gameObject);
@@ -108,11 +105,11 @@ public class FPSCalculator : MonoBehaviour {
   private float CalculateAvgFPS() {
     // Recalculate average fps according to sample size
     int startIndex = fpsSamples_.Count - AVG_FPS_SAMPLE_SIZE;
-    if (startIndex < 0){
+    if (startIndex < 0) {
       startIndex = 0;
     }
     int framesInSample = 0;
-    for (int i = startIndex; i < fpsSamples_.Count; i++){
+    for (int i = startIndex; i < fpsSamples_.Count; i++) {
       framesInSample += fpsSamples_[i];
     }
     int numSamples = Mathf.Min(AVG_FPS_SAMPLE_SIZE, fpsSamples_.Count);
@@ -122,7 +119,7 @@ public class FPSCalculator : MonoBehaviour {
   private float CalculateAvgFramesPerMinute() {
     // Recalculate average fps for minute
     int framesInMinute = 0;
-    foreach(int numFrames in fpsSamples_){
+    foreach (int numFrames in fpsSamples_) {
       framesInMinute += numFrames;
     }
     return ((float)framesInMinute) / fpsSamples_.Count;
