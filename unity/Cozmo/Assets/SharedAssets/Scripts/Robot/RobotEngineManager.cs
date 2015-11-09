@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
+using Anki.Cozmo.Audio;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
@@ -41,6 +42,11 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
+
+  // Audio Callback events
+  public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
+  public event Action<AudioCallbackMarker> ReceivedAudioCallbackMarker;
+  public event Action<AudioCallbackComplete> ReceivedAudioCallbackComplete;
 
   private bool cozmoBindingStarted_ = false;
   private ChannelBase channel_ = null;
@@ -261,6 +267,17 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotPickedUp:
       break;
+    // Audio Callbacks
+    case G2U.MessageEngineToGame.Tag.AudioCallbackDuration:
+      ReceivedSpecificMessage(message.AudioCallbackDuration);
+      break;
+    case G2U.MessageEngineToGame.Tag.AudioCallbackMarker:
+      ReceivedSpecificMessage(message.AudioCallbackMarker);
+      break;
+    case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
+      ReceivedSpecificMessage(message.AudioCallbackComplete);
+      break;
+
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -470,6 +487,25 @@ public class RobotEngineManager : MonoBehaviour {
     }
     
     Robots[message.robotID].UpdateInfo(message);
+  }
+
+  // Audio Callback Messages
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackDuration message) {
+    if (ReceivedAudioCallbackDuration != null) {
+      ReceivedAudioCallbackDuration(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackMarker message) {
+    if (ReceivedAudioCallbackMarker != null) {
+      ReceivedAudioCallbackMarker(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackComplete message) {
+    if (ReceivedAudioCallbackComplete != null) {
+      ReceivedAudioCallbackComplete(message);
+    }
   }
 
   public void StartEngine(string vizHostIP) {
