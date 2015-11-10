@@ -299,14 +299,15 @@ namespace Anki
   template<typename T>
   template<typename Tresult>
   //void Array2d<T>::ApplyScalarFunction(void(*fcn)(const T&, Tresult&),
-  void Array2d<T>::ApplyScalarFunction(std::function<void(const T&, Tresult&)>fcn,
+  void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T&)>fcn,
                                        Array2d<Tresult> &result) const
   {
     s32 nrows = this->GetNumRows();
     s32 ncols = this->GetNumCols();
 
-    assert(result.GetNumRows() == this->GetNumRows() &&
-           result.GetNumCols() == this->GetNumCols());
+    ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
+                 result.GetNumCols() == this->GetNumCols(),
+                 "Result Array2d must be the same size as this one.");
 
     if (this->IsContinuous() && result.IsContinuous() ) {
       ncols *= nrows;
@@ -320,10 +321,40 @@ namespace Anki
 
       for (s32 j=0; j<ncols; ++j)
       {
-        fcn(data_i[j], result_i[j]);
+        result_i[j] = fcn(data_i[j]);
       }
     }
   } // applyScalarFunction() to separate result
+  
+  template<typename T>
+  template<class Tresult>
+  void Array2d<T>::ApplyScalarFunction(std::function<Tresult(const T& thisElem, const T& otherElem)>fcn,
+                                       const Array2d<T>& otherArray,
+                                       Array2d<Tresult>& result) const
+  {
+    s32 nrows = this->GetNumRows();
+    s32 ncols = this->GetNumCols();
+
+    ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
+                 result.GetNumCols() == this->GetNumCols(),
+                 "Result Array2d must be the same size as this one.");
+
+    if (this->IsContinuous() && otherArray.IsContinuous() && result.IsContinuous() ) {
+      ncols *= nrows;
+      nrows = 1;
+    }
+    
+    for(s32 i=0; i<nrows; ++i)
+    {
+      const T *dataThis_i  = this->GetRow(i);
+      const T *dataOther_i = otherArray.GetRow(i);
+      Tresult *result_i = result.GetRow(i);
+      
+      for (s32 j=0; j<ncols; ++j) {
+        result_i[j] = fcn(dataThis_i[j], dataOther_i[j]);
+      }
+    }
+  }
   
   template<typename T>
   Array2d<T>& Array2d<T>::operator+=(const Array2d<T>& other)
