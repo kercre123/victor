@@ -16,6 +16,7 @@ public class TreasureHuntGame : GameBase {
     initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
     _StateMachine.SetNextState(initCubeState);
     robot.StopFaceAwareness();
+    CreateDefaultQuitButton();
   }
 
   void InitialCubesDone() {
@@ -91,6 +92,6 @@ public class TreasureHuntGame : GameBase {
   }
 
   public override void CleanUp() {
-
+    DestroyDefaultQuitButton();
   }
 }
