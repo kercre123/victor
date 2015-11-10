@@ -154,10 +154,9 @@ uint8_t AudioServer::GetNewClientConnectionId()
 {
   // This only works for 255 Clients
   ++_previousClientConnectionId;
-  ASSERT_NAMED( 0 == _previousClientConnectionId, "AudioServer.GetNewClientConnectionId Invalid ConnectionId, this can be caused by adding more then 255 clients");
+  ASSERT_NAMED( 0 != _previousClientConnectionId, "AudioServer.GetNewClientConnectionId Invalid ConnectionId, this can be caused by adding more then 255 clients");
   
   return _previousClientConnectionId;
-  
 }
   
   
