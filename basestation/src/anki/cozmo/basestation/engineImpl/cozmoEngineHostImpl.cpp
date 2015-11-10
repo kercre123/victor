@@ -60,7 +60,6 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
-
 }
 
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
@@ -80,11 +79,10 @@ Result CozmoEngineHostImpl::InitInternal()
   
   // Setup Audio Controller
   using namespace Audio;
-  AudioController* audioController = AudioController::getInstance();
-  audioController->Initialize( _dataPlatform );
+  AudioController* audioController = new AudioController( _dataPlatform );
   
   // Setup Unity Audio Client Connections
-  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( _externalInterface );
+  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_externalInterface );
   // Setup Audio Server
   // Transfering ownership of controller & connections
   _audioServer = new AudioServer( audioController );
@@ -238,7 +236,7 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
     _audioServer->RegisterClientConnection( engineConnection );
 
     // Transfer ownership of audio client to Robot
-    RobotAudioClient* audioClient = new RobotAudioClient( engineConnection->GetMessageHandler() );
+    RobotAudioClient* audioClient = new RobotAudioClient( *engineConnection->GetMessageHandler() );
     robot->SetRobotAudioClient( audioClient );
   }
 
