@@ -167,19 +167,6 @@ static uint32 check_image(uint32 readpos) {
 	return romaddr;
 }
 
-
-/** calculate checksum for block of data
- * from start up to (but excluding) end
- */
-static uint8 calc_chksum(uint8 *start, uint8 *end) {
-	uint8 chksum = CHKSUM_INIT;
-	while(start < end) {
-		chksum ^= *start;
-		start++;
-	}
-	return chksum;
-}
-
 /** Simplified find_image function just wraps check_image's RAM initalization point finding function with error messages
  * prevent this function being placed inline with main
  * to keep main's stack size as small as possible

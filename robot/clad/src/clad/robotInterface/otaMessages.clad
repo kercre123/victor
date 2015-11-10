@@ -1,0 +1,43 @@
+/** Clad definitions of firmware / asset upgrade over the air messages
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+/// Erases flash
+message EraseFlash
+{
+  uint_32 start, ///< Where to start
+  uint_32 size,  ///< Number of 32 bit words to erase
+}
+
+/// Writes data into robot flash storage
+message WriteFlash
+{
+  uint_32 address, ///< Where to write data
+  uint_32 data[uint_32:256], ///< Data to write, must be uint_32 for Flash API alignment, address is uint_32 for alignment but must not be more than 256 for write size
+}
+
+enum uint_8 OTACommand
+{
+  OTA_none,
+  OTA_asset,
+  OTA_WiFi,
+  OTA_RTIP,
+  OTA_body,
+}
+
+/// Trigger a firmware upgrade from flash
+message OTAUpgrade
+{
+  uint_32    start,   ///< New firmware starting address
+  uint_32    size,    ///< Size of the new firmware
+  uint_32    version, ///< Version number for the new firmware
+  uint_8     sig[20], ///< Cryptographic signature / checksum for the firmware upgrade
+  OTACommand command, ///< What upgrade to do
+}
+
+} // RobotInterface
+} // Cozmo
+} // Anki

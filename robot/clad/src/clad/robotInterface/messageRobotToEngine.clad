@@ -85,6 +85,13 @@ message RobotAvailable
   uint_32 robotID,
 }
 
+message FlashWriteAcknowledge
+{
+  uint_32 address,      ///< The address we wrote to
+  uint_8  length,       ///< The number of 32 bit words we wrote, will be 0 on failure
+  bool    writeNotErase ///< True if acknowledging a write, false if acknowledging an erase
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -119,6 +126,7 @@ union RobotToEngine {
   ImageChunk                 image                  = 0x82,
   CameraCalibration          cameraCalibration      = 0x83,
   RobotAvailable             robotAvailable         = 0x84,
+  FlashWriteAcknowledge      flashWriteAck          = 0x85,
 }
 
 

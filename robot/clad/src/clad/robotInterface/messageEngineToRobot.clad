@@ -11,6 +11,7 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
+#include "clad/robotInterface/otaMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -183,8 +184,6 @@ message AbortAnimation
 {
 }
 
-
-
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot.
@@ -227,6 +226,9 @@ union EngineToRobot
   ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
   
   // To WiFi 0x80 to 0xFE
+  EraseFlash                    eraseFlash                  = 0x80,
+  WriteFlash                    writeFlash                  = 0x81,
+  OTAUpgrade                    triggerOTAUpgrade           = 0x82,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,

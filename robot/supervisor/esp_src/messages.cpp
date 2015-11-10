@@ -4,6 +4,7 @@ extern "C" {
 #include "messages.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "anki/cozmo/robot/esp.h"
 
@@ -14,30 +15,6 @@ namespace Anki {
       Result Init()
       {
         return RESULT_OK;
-      }
-      
-      void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
-      {
-        AnimationController::Clear();
-      }
-      
-      void Process_disableAnimTracks(const AnimKeyFrame::DisableAnimTracks& msg)
-      {
-        AnimationController::DisableTracks(msg.whichTracks);
-      }
-      
-      void Process_enableAnimTracks(const AnimKeyFrame::EnableAnimTracks& msg)
-      {
-        AnimationController::EnableTracks(msg.whichTracks);
-      }
-
-      // Group processor for all animation key frame messages
-      void Process_anim(const RobotInterface::EngineToRobot& msg)
-      {
-        if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-          //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
-          AnimationController::Clear();
-        }
       }
       
       void ProcessMessage(u8* buffer, u16 bufferSize)
@@ -63,34 +40,51 @@ namespace Anki {
           {
             switch(msg.tag)
             {
-              case 0x90:
+              case RobotInterface::EngineToRobot::Tag_eraseFlash:
               {
-                Process_abortAnimation(msg.abortAnimation);
+                UpgradeController::EraseFlash(msg.eraseFlash);
+              }
+              case RobotInterface::EngineToRobot::Tag_writeFlash:
+              {
+                UpgradeController::WriteFlash(msg.writeFlash);
                 break;
               }
-              case 0x91:
-              case 0x92:
-              case 0x93:
-              case 0x94:
-              case 0x95:
-              case 0x96:
-              case 0x97:
-              case 0x98:
-              case 0x99:
-              case 0x9A:
-              case 0x9B:
+              case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
               {
-                Process_anim(msg);
+                UpgradeController::Trigger(msg.triggerOTAUpgrade);
                 break;
               }
-              case 0x9D:
+              case RobotInterface::EngineToRobot::Tag_abortAnimation:
               {
-                Process_disableAnimTracks(msg.disableAnimTracks);
+                AnimationController::Clear();
                 break;
               }
-              case 0x9E:
+              case RobotInterface::EngineToRobot::Tag_animAudioSample:
+              case RobotInterface::EngineToRobot::Tag_animAudioSilence:
+              case RobotInterface::EngineToRobot::Tag_animHeadAngle:
+              case RobotInterface::EngineToRobot::Tag_animLiftHeight:
+              case RobotInterface::EngineToRobot::Tag_animFacePosition:
+              case RobotInterface::EngineToRobot::Tag_animBlink:
+              case RobotInterface::EngineToRobot::Tag_animFaceImage:
+              case RobotInterface::EngineToRobot::Tag_animBackpackLights:
+              case RobotInterface::EngineToRobot::Tag_animBodyMotion:
+              case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
+              case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
               {
-                Process_enableAnimTracks(msg.enableAnimTracks);
+                if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
+                  //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
+                  AnimationController::Clear();
+                }
+                break;
+              }
+              case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
+              {
+                AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
+                break;
+              }
+              case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
+              {
+                AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
                 break;
               }
               default:

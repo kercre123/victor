@@ -45,9 +45,11 @@
 #define CHKSUM_INIT 0xef
 
 /// Flash sector size always 4kb
-#define SECTOR_SIZE 0x1000
+#define SECTOR_SIZE (0x1000)
 /// Flash block size (for faster block erasure), depends on chip, might be 0x10000
-#define BLOCK_SIZE 0x8000
+#define BLOCK_SIZE (0x8000)
+/// A mask to check that an address is the start of a sector
+#define SECTOR_MASK (SECTOR_SIZE-1)
 /// Map of the sectors of flash where various things are stored
 typedef enum {
   BOOTLOADER_SECTOR,    ///< Where the boot loader (this code) lives.
@@ -70,5 +72,16 @@ typedef struct {
 	uint8 chksum;		      ///< config chksum
 } BootloaderConfig;
 
+/** calculate checksum for block of data
+ * from start up to (but excluding) end
+ */
+static inline uint8 calc_chksum(uint8 *start, uint8 *end) {
+	uint8 chksum = CHKSUM_INIT;
+	while(start < end) {
+		chksum ^= *start;
+		start++;
+	}
+	return chksum;
+}
 
 #endif

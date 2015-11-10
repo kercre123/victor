@@ -13,7 +13,6 @@
 #include "nv_params.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
-#include "upgrade_controller.h"
 #include "user_config.h"
 
 /** Handle wifi events passed by the OS
@@ -99,9 +98,6 @@ void user_rf_pre_init(void)
  */
 static void system_init_done(void)
 {
-  // Enable upgrade controller
-  upgradeControllerInit();
-
   // Setup Basestation client
   clientInit();
 
