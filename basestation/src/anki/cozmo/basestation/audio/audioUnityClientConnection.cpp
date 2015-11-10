@@ -1,10 +1,14 @@
-//
-//  audioUnityClientCunnection.cpp
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/6/15.
-//
-//
+/*
+ * File: audioUnityClientConnection.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This Connection is specific to communicating with the Unity Message Interface. It is a sub-class of
+ *              AudioClientConnection.
+ *
+ * Copyright: Anki, Inc. 2015
+ */
 
 #include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -19,24 +23,16 @@ namespace Cozmo {
 namespace Audio {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface* externalInterface ) :
+AudioUnityClientConnection::AudioUnityClientConnection( IExternalInterface& externalInterface ) :
   _externalInterface( externalInterface )
 {
-  ASSERT_NAMED( nullptr != externalInterface, "AudioUnityClientCunnection External Interface is NULL" );
   
   // Subscribe to Audio Messages
   auto callback = std::bind(&AudioUnityClientConnection::HandleGameEvents, this, std::placeholders::_1);
-  _signalHandles.emplace_back( _externalInterface->Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioEvent, callback ) );
-  _signalHandles.emplace_back( _externalInterface->Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioGameState, callback ) );
-  _signalHandles.emplace_back( _externalInterface->Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioSwitchState, callback ) );
-  _signalHandles.emplace_back( _externalInterface->Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioParameter, callback ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioUnityClientConnection::~AudioUnityClientConnection()
-{
-  // We're not the owner
-  _externalInterface = nullptr;
+  _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioEvent, callback ) );
+  _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioGameState, callback ) );
+  _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioSwitchState, callback ) );
+  _signalHandles.emplace_back( _externalInterface.Subscribe( ExternalInterface::MessageGameToEngineTag::PostAudioParameter, callback ) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,21 +75,21 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
 void AudioUnityClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage )
 {
   const ExternalInterface::MessageEngineToGame msg((AudioCallbackDuration( callbackMessage )));
-  _externalInterface->Broadcast( msg );
+  _externalInterface.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioUnityClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage )
 {
   const ExternalInterface::MessageEngineToGame msg((AudioCallbackMarker( callbackMessage )));
-  _externalInterface->Broadcast( msg );
+  _externalInterface.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioUnityClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage )
 {
   const ExternalInterface::MessageEngineToGame msg((AudioCallbackComplete( callbackMessage )));
-  _externalInterface->Broadcast( msg );
+  _externalInterface.Broadcast( std::move( msg ) );
 }
 
 

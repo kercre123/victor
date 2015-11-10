@@ -1,13 +1,16 @@
-//
-//  audioEngineMessageHandler.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/8/15.
-//
-//
+/*
+ * File: audioEngineMessageHandler.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is an event handler for Broadcasting and Subscribing to Audio CLAD Messages through MessageAudioClient Message.
+ *
+ * Copyright: Anki, Inc. 2015
+ */
 
-#ifndef audioEngineMessageHandler_h
-#define audioEngineMessageHandler_h
+#ifndef __Basestation_Audio_AudioEngineMessageHandler_H__
+#define __Basestation_Audio_AudioEngineMessageHandler_H__
 
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "clad/audio/messageAudioClient.h"
@@ -45,4 +48,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* audioEngineMessageHandler_h */
+#endif /* __Basestation_Audio_AudioEngineMessageHandler_H__ */

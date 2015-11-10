@@ -1,10 +1,14 @@
-//
-//  audioEngineClientCunnection.cpp
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/8/15.
-//
-//
+/*
+ * File: audioEngineClientCunnection.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is a sub-class of AudioClientConnection which provides communication between its self and an
+ *              AudioEngineClient by means of AudioEngineMessageHandler.
+ *
+ * Copyright: Anki, Inc. 2015
+ */
 
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
@@ -20,7 +24,7 @@ namespace Audio {
 AudioEngineClientConnection::AudioEngineClientConnection( AudioEngineMessageHandler* messageHandler ) :
   _messageHandler( messageHandler )
 {
-  ASSERT_NAMED( "AudioEngineClientConnection", "Message Handler is NULL!" );
+  ASSERT_NAMED( nullptr != messageHandler, "Message Handler is NULL!" );
   
   // Subscribe to Connection Side Messages
   auto callback = std::bind(&AudioEngineClientConnection::HandleEvents, this, std::placeholders::_1);
@@ -40,21 +44,21 @@ AudioEngineClientConnection::~AudioEngineClientConnection()
 void AudioEngineClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage )
 {
   const MessageAudioClient msg(( AudioCallbackDuration( callbackMessage ) ));
-  _messageHandler->Broadcast( msg );
+  _messageHandler->Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage )
 {
   const MessageAudioClient msg(( AudioCallbackMarker( callbackMessage ) ));
-  _messageHandler->Broadcast( msg );
+  _messageHandler->Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage )
 {
   const MessageAudioClient msg(( AudioCallbackComplete( callbackMessage ) ));
-  _messageHandler->Broadcast( msg );
+  _messageHandler->Broadcast( std::move( msg ) );
 }
 
 // Private

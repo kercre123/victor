@@ -1,13 +1,17 @@
-//
-//  audioEngineClientCunnection.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/8/15.
-//
-//
+/*
+ * File: audioEngineClientCunnection.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is a sub-class of AudioClientConnection which provides communication between its self and an
+ *              AudioEngineClient by means of AudioEngineMessageHandler.
+ *
+ * Copyright: Anki, Inc. 2015
+ */
 
-#ifndef audioEngineClientCunnection_h
-#define audioEngineClientCunnection_h
+#ifndef __Basestation_Audio_AudioEngineClientCunnection_H__
+#define __Basestation_Audio_AudioEngineClientCunnection_H__
 
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -53,4 +57,4 @@ private:
 } // Anki
 
 
-#endif /* audioEngineClientCunnection_h */
+#endif /* __Basestation_Audio_AudioEngineClientCunnection_H__ */

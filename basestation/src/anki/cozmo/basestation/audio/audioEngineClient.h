@@ -1,16 +1,23 @@
-//
-//  audioEngineClient.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/8/15.
-//
-//
+/*
+ * File: audioEngineClient.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is a sub-class of AudioClient which provides communication between its self and an
+ *              AudioEngineClientConnection by means of AudioEngineMessageHandler. It provide core audio functionality
+ *              by broadcasting post messages and subscribing to callback messages.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
 
-#ifndef audioEngineClient_h
-#define audioEngineClient_h
+#ifndef __Basestation_Audio_AudioEngineClient_H__
+#define __Basestation_Audio_AudioEngineClient_H__
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "util/signals/simpleSignal.hpp"
+#include <util/helpers/noncopyable.h>
+#include <util/signals/simpleSignal.hpp>
 #include "clad/audio/audioMessageTypes.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioStateTypes.h"
@@ -25,12 +32,11 @@ namespace Audio {
 class AudioEngineMessageHandler;
 class MessageAudioClient;
 
-class AudioEngineClient
+class AudioEngineClient : Util::noncopyable
 {
 public:
   
-  AudioEngineClient( AudioEngineMessageHandler* messageHandler );
-  ~AudioEngineClient();
+  AudioEngineClient( AudioEngineMessageHandler& messageHandler );
   
   void PostEvent( EventType event,
                   uint16_t gameObjectId,
@@ -48,7 +54,7 @@ public:
   
 private:
   
-  AudioEngineMessageHandler* _messageHandler;
+  AudioEngineMessageHandler& _messageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
   
   
@@ -59,4 +65,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* audioEngineClient_h */
+#endif /* __Basestation_Audio_AudioEngineClient_H__ */

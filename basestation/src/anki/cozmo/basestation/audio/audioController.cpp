@@ -1,10 +1,15 @@
-//
-//  AudioController.cpp
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/3/15.
-//
-//
+/*
+ * File: audioController.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is responsible for instantiating the Audio Engine and handling basic and app level audio
+ *              functionality.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
 
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
@@ -34,21 +39,54 @@ namespace Audio {
   
 using namespace AudioEngine;
 
-AudioController* AudioController::_singletonInstance = nullptr;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioController::AudioController() :
-  _audioEngine( nullptr ),
-  _dispatchQueue( nullptr ),
-  _taskHandle( nullptr ),
-  _isInitialized( false )
-//  _defaultGameObj( kInvalidAudioGameObject )
+AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 {
 #if USE_AUDIO_ENGINE
   {
     _audioEngine = new AudioEngineController();
+    
+    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/wwise/GeneratedSoundBanks/Mac/" );
+    
+    // Set Language Local
+    const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
+    
+    _audioEngine->SetLanguageLocale( localeType );
+    
+    _isInitialized = _audioEngine->Initialize( assetPath );
+    
+    // If we're using the audio engine, assert that it was successfully initialized.
+    ASSERT_NAMED(_isInitialized, "AudioController.Initialize Audio Engine fail");
   }
 #endif // USE_AUDIO_ENGINE
+  
+  // The audio engine was initialized correctly, so now let's setup everything else
+  if ( _isInitialized )
+  {
+    ASSERT_NAMED( !_taskHandle, "AudioController.Initialize Invalid Task Handle" );
+    
+    // Setup our update method to be called periodically
+    _dispatchQueue = Util::Dispatch::Create();
+    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
+    _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
+    
+#if USE_AUDIO_ENGINE
+    // FIXME: Temp fix to load audio banks
+    AudioBankList bankList = {
+      "Music.bnk",
+      "UI.bnk",
+      "VO.bnk",
+      "Cozmo_Movement.bnk",
+    };
+    const std::string sceneTitle = "InitScene";
+    AudioScene initScene = AudioScene( sceneTitle, AudioEventList(), bankList );
+    
+    _audioEngine->RegisterAudioScene( std::move(initScene) );
+    
+    _audioEngine->LoadAudioScene( sceneTitle );
+
+#endif
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,72 +106,8 @@ AudioController::~AudioController()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioController::removeInstance()
-{
-  delete _singletonInstance;
-  _singletonInstance = nullptr;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AudioController::Initialize(Util::Data::DataPlatform *dataPlatfrom)
-{
-  
-  if ( !_isInitialized )
-  {
-#if USE_AUDIO_ENGINE
-    {
-      const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/wwise/GeneratedSoundBanks/Mac/" );
-      
-      // Set Language Local
-      const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
-      
-      _audioEngine->SetLanguageLocale( localeType );
-      
-      _isInitialized = _audioEngine->Initialize( assetPath );
-      
-      // If we're using the audio engine, assert that it was successfully initialized.
-      ASSERT_NAMED(_isInitialized, "AudioController.Initialize Audio Engine fail");
-    }
-#endif // USE_AUDIO_ENGINE
-    
-    // The audio engine was initialized correctly, so now let's setup everything else
-    if ( _isInitialized )
-    {
-      ASSERT_NAMED( !_taskHandle, "AudioController.Initialize Invalid Task Handle" );
-      
-      // Setup our update method to be called periodically
-      _dispatchQueue = Util::Dispatch::Create();
-      const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
-      _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
-      
-#if USE_AUDIO_ENGINE
-      // FIXME: Temp fix to load audio banks
-      AudioBankList bankList = {
-        "Music.bnk",
-        "UI.bnk",
-        "VO.bnk",
-        "Cozmo_Movement.bnk",
-      };
-      const std::string sceneTitle = "InitScene";
-      AudioScene initScene = AudioScene( sceneTitle, AudioEventList(), bankList );
-      
-      _audioEngine->RegisterAudioScene( std::move(initScene) );
-      
-      _audioEngine->LoadAudioScene( sceneTitle );
-    
-      
-#endif
-
-    }
-  }
-  
-  return _isInitialized;
-}
- 
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& eventName,
-                                                             AudioEngine::AudioGameObject gameObjectId)
+                                                             AudioEngine::AudioGameObject gameObjectId) const
 {
   AudioPlayingID playingId = kInvalidAudioPlayingID;
 #if USE_AUDIO_ENGINE
@@ -146,7 +120,7 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                                             AudioEngine::AudioGameObject gameObjectId )
+                                                             AudioEngine::AudioGameObject gameObjectId ) const
 {
   AudioPlayingID playingId = kInvalidAudioPlayingID;
 #if USE_AUDIO_ENGINE
@@ -159,7 +133,7 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
-                                AudioEngine::AudioStateId stateId )
+                                AudioEngine::AudioStateId stateId ) const
 {
   bool success = false;
 #if USE_AUDIO_ENGINE
@@ -173,7 +147,7 @@ bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::SetSwitchState( AudioEngine::AudioSwitchGroupId switchGroupId,
                                       AudioEngine::AudioSwitchStateId switchStateId,
-                                      AudioEngine::AudioGameObject gameObject )
+                                      AudioEngine::AudioGameObject gameObject ) const
 {
   bool success = false;
 #if USE_AUDIO_ENGINE
@@ -189,7 +163,7 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
                                     AudioEngine::AudioRTPCValue rtpcValue,
                                     AudioEngine::AudioGameObject gameObject,
                                     AudioEngine::AudioTimeMs valueChangeDuration,
-                                    AudioEngine::AudioCurveType curve )
+                                    AudioEngine::AudioCurveType curve ) const
 {
   bool success = false;
 #if USE_AUDIO_ENGINE
@@ -201,7 +175,7 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Protected
+// Private
   
 void AudioController::Update()
 {

@@ -1,14 +1,20 @@
-//
-//  audioClientConnection.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/6/15.
-//
-//
+/*
+ * File: audioClientConnection.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is the base class for Client Connections which handle communication between the server and the audio
+ *              clients. It provides core audio functionality by using Audio CLAD messages as the transport interface.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
 
-#ifndef audioClientConnection_h
-#define audioClientConnection_h
+#ifndef __Basestation_Audio_AudioClientConnection_H__
+#define __Basestation_Audio_AudioClientConnection_H__
 
+#include <util/helpers/noncopyable.h>
 #include <stdio.h>
 #include <stdint.h>
 
@@ -25,7 +31,7 @@ struct AudioCallbackDuration;
 struct AudioCallbackMarker;
 struct AudioCallbackComplete;
   
-class AudioClientConnection {
+class AudioClientConnection : public Util::noncopyable {
   
 public:
   
@@ -40,10 +46,10 @@ public:
   
 protected:
   
-  void HandleMessage( const PostAudioEvent& eventMessage );
-  void HandleMessage( const PostAudioGameState& gameStateMessage );
-  void HandleMessage( const PostAudioSwitchState& switchStateMessage );
-  void HandleMessage( const PostAudioParameter& parameterMessage );
+  virtual void HandleMessage( const PostAudioEvent& eventMessage );
+  virtual void HandleMessage( const PostAudioGameState& gameStateMessage );
+  virtual void HandleMessage( const PostAudioSwitchState& switchStateMessage );
+  virtual void HandleMessage( const PostAudioParameter& parameterMessage );
   
   virtual void PostCallback( const AudioCallbackDuration& callbackMessage ) {}
   virtual void PostCallback( const AudioCallbackMarker& callbackMessage ) {}
@@ -51,8 +57,8 @@ protected:
   
 private:
   
-  AudioServer* _server;
-  uint8_t _connectionId;
+  AudioServer* _server = nullptr;
+  uint8_t _connectionId = 0;
   
   
 };
@@ -61,4 +67,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* audioClientConnection_h */
+#endif /* __Basestation_Audio_AudioClientConnection_H__ */

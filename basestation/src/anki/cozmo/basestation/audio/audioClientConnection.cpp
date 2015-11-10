@@ -1,10 +1,15 @@
-//
-//  audioClientConnection.cpp
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/6/15.
-//
-//
+/*
+ * File: audioClientConnection.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is the base class for Client Connections which handle communication between the server and the audio
+ *              clients. It provides core audio functionality by using Audio CLAD messages as the transport interface.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
 
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
@@ -17,9 +22,7 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioClientConnection::AudioClientConnection() :
-  _server( nullptr ),
-  _connectionId( 0 )
+AudioClientConnection::AudioClientConnection()
 {
   
 }

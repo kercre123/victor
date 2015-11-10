@@ -1,13 +1,16 @@
-//
-//  robotAudioClient.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/8/15.
-//
-//
+/*
+ * File: robotAudioClient.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This Client handles the Robot’s specific audio needs. It is a sub-class of AudioEngineClient.
+ *
+ * Copyright: Anki, Inc. 2015
+ */
 
-#ifndef robotAudioClient_h
-#define robotAudioClient_h
+#ifndef __Basestation_Audio_RobotAudioClient_H__
+#define __Basestation_Audio_RobotAudioClient_H__
 
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
 
@@ -19,7 +22,7 @@ class RobotAudioClient : public AudioEngineClient
 {
 public:
   
-  RobotAudioClient( AudioEngineMessageHandler* messageHandler );
+  RobotAudioClient( AudioEngineMessageHandler& messageHandler );
   
 };
   
@@ -29,4 +32,4 @@ public:
 
 
 
-#endif /* robotAudioClient_h */
+#endif /* __Basestation_Audio_RobotAudioClient_H__ */

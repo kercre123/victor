@@ -1,10 +1,16 @@
-//
-//  audioEngineClient.cpp
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/8/15.
-//
-//
+/*
+ * File: audioEngineClient.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is a sub-class of AudioClient which provides communication between its self and an
+ *              AudioEngineClientConnection by means of AudioEngineMessageHandler. It provide core audio functionality
+ *              by broadcasting post messages and subscribing to callback messages.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
 
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
@@ -18,45 +24,35 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::AudioEngineClient( AudioEngineMessageHandler* messageHandler ) :
+AudioEngineClient::AudioEngineClient( AudioEngineMessageHandler& messageHandler ) :
   _messageHandler( messageHandler )
 {
-  ASSERT_NAMED( "AudioEngineClient", "Message Handler is NULL!" );
-  
   // Subscribe to Audio Messages
   auto callback = std::bind( &AudioEngineClient::HandleEvents, this, std::placeholders::_1 );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackDuration, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackMarker, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackComplete, callback ) );
+  _signalHandles.emplace_back( _messageHandler.Subscribe( MessageAudioClientTag::AudioCallbackDuration, callback ) );
+  _signalHandles.emplace_back( _messageHandler.Subscribe( MessageAudioClientTag::AudioCallbackMarker, callback ) );
+  _signalHandles.emplace_back( _messageHandler.Subscribe( MessageAudioClientTag::AudioCallbackComplete, callback ) );
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::~AudioEngineClient()
-{
-  // We don't own message handler
-  _messageHandler = nullptr;
-}
-  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag ) const
 {
   const MessageAudioClient msg( PostAudioEvent( event, gameObjectId, callbackFlag ) );
-  _messageHandler->Broadcast( msg );
+  _messageHandler.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::PostGameState( GameStateType gameState ) const
 {
   const MessageAudioClient msg( (PostAudioGameState( gameState )) );
-  _messageHandler->Broadcast( msg );
+  _messageHandler.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId ) const
 {
   const MessageAudioClient msg( PostAudioSwitchState( switchState, gameObjectId ));
-  _messageHandler->Broadcast( msg );
+  _messageHandler.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,7 +63,7 @@ void AudioEngineClient::PostParameter( ParameterType parameter,
                                        CurveType curve ) const
 {
   const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObjectId, timeInMilliSeconds, curve) );
-  _messageHandler->Broadcast( msg );
+  _messageHandler.Broadcast( std::move( msg ) );
 }
 
 
@@ -82,17 +78,16 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
   switch ( event.GetData().GetTag() ) {
       
     case MessageAudioClientTag::AudioCallbackDuration:
-//      HandleMessage( event.GetData().Get_PostAudioEvent() );
+    // TODO: Handle Callback
       break;
       
     case MessageAudioClientTag::AudioCallbackMarker:
-//      HandleMessage( event.GetData().Get_PostAudioGameState() );
+    // TODO: Handle Callback
       break;
       
     case MessageAudioClientTag::AudioCallbackComplete:
-//      HandleMessage( event.GetData().Get_PostAudioSwitchState() );
+    // TODO: Handle Callback
       break;
-      
       
     default:
     {

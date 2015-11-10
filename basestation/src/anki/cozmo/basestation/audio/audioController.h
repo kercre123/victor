@@ -1,13 +1,18 @@
-//
-//  AudioController.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/3/15.
-//
-//
+/*
+ * File: audioController.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is responsible for instantiating the Audio Engine and handling basic and app level audio
+ *              functionality.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
 
-#ifndef AudioController_h
-#define AudioController_h
+#ifndef __Basestation_Audio_AudioController_H__
+#define __Basestation_Audio_AudioController_H__
 
 #include <stdio.h>
 
@@ -32,72 +37,55 @@ namespace Data {
 namespace Cozmo {
 namespace Audio {
   
-class AudioController : public Anki::Util::noncopyable
+class AudioController : public Util::noncopyable
 {
   
 public:
   
-  // TODO: Remove Singleton
-  inline static AudioController* getInstance();
-  static void removeInstance();
+  AudioController( Util::Data::DataPlatform* dataPlatfrom );
+  // TODO: Need to add Language Local, pathToZipFile, zipBasePath, assetManager & assetManagerBasePath for RAMS & Android
   
-  AudioController();
   ~AudioController();
 
-  
-  bool Initialize(Util::Data::DataPlatform* dataPlatfrom);
-  // TODO: Need to add Language Local, pathToZipFile, zipBasePath, assetManager & assetManagerBasePath for RAMS & Android
- 
   // TODO: Add Callback stuff
   AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
-                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
   
   AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject );
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
-                 AudioEngine::AudioStateId stateId );
+                 AudioEngine::AudioStateId stateId ) const;
   
   bool SetSwitchState( AudioEngine::AudioSwitchGroupId switchGroupId,
                        AudioEngine::AudioSwitchStateId switchStateId,
-                       AudioEngine::AudioGameObject gameObject );
+                       AudioEngine::AudioGameObject gameObject ) const;
   
   bool SetParameter( AudioEngine::AudioParameterId parameterId,
                      AudioEngine::AudioRTPCValue rtpcValue,
                      AudioEngine::AudioGameObject gameObject,
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
-                     AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
+                     AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
 
-protected:
+private:
   
-  static AudioController*             _singletonInstance;
-  AudioEngine::AudioEngineController* _audioEngine;             // Audio Engine
-  Util::Dispatch::Queue*              _dispatchQueue;           // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle;              // Handle to our tick callback task
+  AudioEngine::AudioEngineController* _audioEngine   = nullptr;   // Audio Engine Lib
+  Util::Dispatch::Queue*              _dispatchQueue = nullptr;   // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle              _taskHandle    = nullptr;   // Handle to our tick callback task
   
-  
-  bool _isInitialized;
+  bool _isInitialized = false;
   
   // Tick Audio Engine
   void Update();
   
 };
-  
-// TODO: Remove Singleton
-inline AudioController* AudioController::getInstance()
-{
-  // If we haven't already instantiated the singleton, do so now.
-  if( nullptr == _singletonInstance ) {
-    _singletonInstance = new AudioController();
-  }
-  return _singletonInstance;
-}
-  
+
+
 } // Audio
 } // Cozmo
 } // Anki
 
 
 
-#endif /* AudioController_h */
+#endif /* __Basestation_Audio_AudioController_H__ */
