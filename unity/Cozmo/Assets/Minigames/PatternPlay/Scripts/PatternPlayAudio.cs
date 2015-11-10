@@ -4,9 +4,9 @@ using System.Collections;
 public class PatternPlayAudio : MonoBehaviour {
 
   [SerializeField]
-  AudioClip[] lightSounds_;
+  AudioClip[] _LightSounds;
 
   public void PlayLightsSound(int index) {
-    AudioManager.PlayAudioClip(lightSounds_[index]);
+    AudioManager.PlayAudioClip(_LightSounds[index]);
   }
 }

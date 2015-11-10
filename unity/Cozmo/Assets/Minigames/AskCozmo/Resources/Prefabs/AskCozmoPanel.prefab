@@ -63,7 +63,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: AskCozmoDialog
-  askButton_: {fileID: 11448876}
+  _AskButton: {fileID: 11448876}
 --- !u!114 &11421800
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -245,6 +245,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11457122, guid: 5cfc3c18e14be4897ab6b17b0035f685,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _AskButton
+      value: 
+      objectReference: {fileID: 11448876}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 115894}
