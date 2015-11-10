@@ -691,7 +691,7 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
-        '../../lib/audio/gyp/audioengine.gyp:DriveAudioEngine',
+        '<(ce-audio_path):DriveAudioEngine',
       ],
       'type': '<(engine_library_type)',
       'conditions': [    
