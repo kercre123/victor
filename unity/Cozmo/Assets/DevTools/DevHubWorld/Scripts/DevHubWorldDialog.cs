@@ -4,8 +4,10 @@ using System.Collections;
 public class DevHubWorldDialog : BaseDialog {
 
   public delegate void DevButtonClickedHandler(GameBase miniGameClicked);
+
   public event DevButtonClickedHandler OnDevButtonClicked;
-  private void RaiseButtonClicked(GameBase minigame){
+
+  private void RaiseButtonClicked(GameBase minigame) {
     if (OnDevButtonClicked != null) {
       OnDevButtonClicked(minigame);
     }
@@ -17,7 +19,7 @@ public class DevHubWorldDialog : BaseDialog {
   [SerializeField]
   private RectTransform buttonContainer_;
 
-  public void Initialize(GameBase[] minigames){
+  public void Initialize(GameBase[] minigames) {
     GameObject newButton;
     DevHubWorldButton buttonScript;
     foreach (GameBase game in minigames) {
@@ -36,8 +38,7 @@ public class DevHubWorldDialog : BaseDialog {
 
   }
 
-  private void HandleOnDevButtonClicked (GameBase miniGameClicked)
-  {
+  private void HandleOnDevButtonClicked(GameBase miniGameClicked) {
     RaiseButtonClicked(miniGameClicked);
   }
 }

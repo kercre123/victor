@@ -4,61 +4,60 @@ using System.Collections;
 public class DevHubWorld : HubWorldBase {
 
   [SerializeField]
-  private GameBase[] gamePrefabs_;
+  private GameBase[] _GamePrefabs;
  
   [SerializeField]
-  private DevHubWorldDialog devHubWorldDialogPrefab_;
-  private DevHubWorldDialog devHubWorldDialogInstance_;
+  private DevHubWorldDialog _DevHubWorldDialogPrefab;
+  private DevHubWorldDialog _DevHubWorldDialogInstance;
 
-  private GameBase miniGameInstance_;
+  private GameBase _MiniGameInstance;
 
   public override bool LoadHubWorld() {
     ShowHubWorldDialog();
     return true;
   }
-  
+
   public override bool DestroyHubWorld() {
     
     // Deregister events
     // Destroy dialog if it exists
-    if (devHubWorldDialogInstance_ != null) {
-      devHubWorldDialogInstance_.OnDevButtonClicked -= OnDevButtonClicked;
-      devHubWorldDialogInstance_.CloseDialogImmediately();
+    if (_DevHubWorldDialogInstance != null) {
+      _DevHubWorldDialogInstance.OnDevButtonClicked -= OnDevButtonClicked;
+      _DevHubWorldDialogInstance.CloseDialogImmediately();
     }
     
     CloseMiniGame();
     return true;
   }
 
-  private void ShowHubWorldDialog(){
+  private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
-    devHubWorldDialogInstance_ = UIManager.OpenDialog(devHubWorldDialogPrefab_) as DevHubWorldDialog;
-    devHubWorldDialogInstance_.Initialize(gamePrefabs_);
+    _DevHubWorldDialogInstance = UIManager.OpenDialog(_DevHubWorldDialogPrefab) as DevHubWorldDialog;
+    _DevHubWorldDialogInstance.Initialize(_GamePrefabs);
     
     // Listen for dialog button tap events
-    devHubWorldDialogInstance_.OnDevButtonClicked += OnDevButtonClicked;
+    _DevHubWorldDialogInstance.OnDevButtonClicked += OnDevButtonClicked;
   }
 
-  private void OnDevButtonClicked (GameBase miniGameClicked)
-  {
-    devHubWorldDialogInstance_.OnDevButtonClicked -= OnDevButtonClicked;
-    devHubWorldDialogInstance_.CloseDialog();
+  private void OnDevButtonClicked(GameBase miniGameClicked) {
+    _DevHubWorldDialogInstance.OnDevButtonClicked -= OnDevButtonClicked;
+    _DevHubWorldDialogInstance.CloseDialog();
     
     GameObject newMiniGameObject = GameObject.Instantiate(miniGameClicked.gameObject);
-    miniGameInstance_ = newMiniGameObject.GetComponent<GameBase>();
-    miniGameInstance_.OnMiniGameQuit += OnMiniGameQuit;
+    _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+    _MiniGameInstance.OnMiniGameQuit += OnMiniGameQuit;
   }
 
-  private void OnMiniGameQuit () {
+  private void OnMiniGameQuit() {
     CloseMiniGame();
     ShowHubWorldDialog();
   }
 
-  private void CloseMiniGame(){
+  private void CloseMiniGame() {
     // Destroy game if it exists
-    if (miniGameInstance_ != null) {
-      miniGameInstance_.CleanUp();
-      Destroy(miniGameInstance_.gameObject);
+    if (_MiniGameInstance != null) {
+      _MiniGameInstance.CleanUp();
+      Destroy(_MiniGameInstance.gameObject);
     }
   }
 }

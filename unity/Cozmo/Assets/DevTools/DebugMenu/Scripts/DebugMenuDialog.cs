@@ -3,7 +3,7 @@ using UnityEngine.Serialization;
 using System.Collections;
 
 [System.Serializable]
-public class DebugContentPane{
+public class DebugContentPane {
   public string name;
   public GameObject panePrefab;
 }
@@ -11,61 +11,62 @@ public class DebugContentPane{
 public class DebugMenuDialog : MonoBehaviour {
 
   public delegate void DebugMenuDialogHandler(int lastOpenedTab);
+
   public event DebugMenuDialogHandler OnDebugMenuClosed;
 
   [SerializeField]
-  private DebugContentPane[] debugContentPaneData_;
+  private DebugContentPane[] _DebugContentPaneData;
   
   [SerializeField]
-  private DebugMenuDialogTab tabButtonPrefab_;
+  private DebugMenuDialogTab _TabButtonPrefab;
 
   [SerializeField]
-  private GameObject tabContainer_;
+  private GameObject _TabContainer;
 
   [SerializeField]
-  private GameObject contentPaneContainer_;
+  private GameObject _ContentPaneContainer;
 
-  private int currentTab_;
-  private GameObject currentPaneObject_;
+  private int _CurrentTab;
+  private GameObject _CurrentPaneObject;
 
-  public void Initialize(int lastOpenedTab){
+  public void Initialize(int lastOpenedTab) {
     GameObject newTab = null;
     DebugMenuDialogTab newTabScript = null;
-    for (int i = 0; i < debugContentPaneData_.Length; i++) {
-      newTab = CreateUI(tabButtonPrefab_.gameObject, tabContainer_.transform);
+    for (int i = 0; i < _DebugContentPaneData.Length; i++) {
+      newTab = CreateUI(_TabButtonPrefab.gameObject, _TabContainer.transform);
       newTabScript = newTab.GetComponent<DebugMenuDialogTab>();
-      newTabScript.Initialize(i, debugContentPaneData_[i].name);
+      newTabScript.Initialize(i, _DebugContentPaneData[i].name);
       newTabScript.OnTabTapped += OnTabTapped;
     }
 
     OpenTab(lastOpenedTab);
   }
 
-	public void OnDebugMenuCloseTap(){
+  public void OnDebugMenuCloseTap() {
     if (OnDebugMenuClosed != null) {
-      OnDebugMenuClosed(currentTab_);
+      OnDebugMenuClosed(_CurrentTab);
     }
     GameObject.Destroy(gameObject);
   }
 
-  private void OnTabTapped(int tabId){
-    if (currentPaneObject_ != null) {
-      GameObject.Destroy(currentPaneObject_);
+  private void OnTabTapped(int tabId) {
+    if (_CurrentPaneObject != null) {
+      GameObject.Destroy(_CurrentPaneObject);
     }
     OpenTab(tabId);
   }
 
-  private void OpenTab(int tabNumber){
-    if (tabNumber >= 0 && tabNumber < debugContentPaneData_.Length
-        && debugContentPaneData_.Length > 0) {
-      currentTab_ = tabNumber;
-      currentPaneObject_ = CreateUI(debugContentPaneData_[tabNumber].panePrefab, contentPaneContainer_.transform);
+  private void OpenTab(int tabNumber) {
+    if (tabNumber >= 0 && tabNumber < _DebugContentPaneData.Length
+        && _DebugContentPaneData.Length > 0) {
+      _CurrentTab = tabNumber;
+      _CurrentPaneObject = CreateUI(_DebugContentPaneData[tabNumber].panePrefab, _ContentPaneContainer.transform);
     }
   }
 
-  private GameObject CreateUI(GameObject uiPrefab, Transform uiParent){
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (uiParent, false);
+  private GameObject CreateUI(GameObject uiPrefab, Transform uiParent) {
+    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    newUi.transform.SetParent(uiParent, false);
     return newUi;
   }
 }
