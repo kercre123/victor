@@ -217,6 +217,9 @@ namespace Cozmo {
     bool CheckMailbox(RobotInterface::PanAndTilt& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
+    bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
+    bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
+    
   protected:
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
@@ -226,6 +229,8 @@ namespace Cozmo {
     
     // Previous image for doing background subtraction, e.g. for saliency
     Vision::ImageRGB _prevImage;
+    
+    
     
     //
     // Formerly in Embedded VisionSystem "private" namespace:
@@ -437,13 +442,16 @@ namespace Cozmo {
     // system communicates to main execution:
     //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
     //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
-    Mailbox<VizInterface::TrackerQuad>          _trackerMailbox;
+    Mailbox<VizInterface::TrackerQuad>        _trackerMailbox;
     Mailbox<RobotInterface::PanAndTilt>       _panTiltMailbox;
-    Mailbox<std::pair<Pose3d, TimeStamp_t> > _dockingMailbox; // holds timestamped marker pose w.r.t. camera
+    Mailbox<std::pair<Pose3d, TimeStamp_t> >  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
+    
+    MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
+    MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
     
     void RestoreNonTrackingMode();
     

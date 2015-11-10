@@ -30,7 +30,8 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionProcessingThread::VisionProcessingThread(Util::Data::DataPlatform* dataPlatform)
+  VisionProcessingThread::VisionProcessingThread(RunMode mode, Util::Data::DataPlatform* dataPlatform)
+  : _runMode(mode)
   {
     std::string dataPath("");
     if(dataPlatform != nullptr) {
@@ -49,6 +50,21 @@ namespace Cozmo {
   {
     _camCalib = camCalib;
     _isCamCalibSet = true;
+  }
+  
+  
+  void VisionProcessingThread::SetRunMode(RunMode mode) {
+    if(mode == RunMode::Synchronous && _runMode == RunMode::Asynchronous) {
+      PRINT_NAMED_INFO("VisionProcessingThread.SetRunMode.SwitchToAsync", "");
+      if(_running) {
+        Stop();
+      }
+      _runMode = mode;
+    }
+    else if(mode == RunMode::Asynchronous && _runMode == RunMode::Synchronous) {
+      PRINT_NAMED_INFO("VisionProcessingThread.SetRunMode.SwitchToSync", "");
+      _runMode = mode;
+    }
   }
   
   void VisionProcessingThread::Start()
@@ -78,11 +94,13 @@ namespace Cozmo {
     
   }
   
+  /*
   void VisionProcessingThread::Start(const Vision::CameraCalibration& camCalib)
   {
     SetCameraCalibration(camCalib);
     Start();
   }
+   */
 
   void VisionProcessingThread::Stop()
   {
@@ -119,8 +137,7 @@ namespace Cozmo {
     Lock();
     
     // TODO: Avoid the copying here (shared memory?)
-    image.CopyDataTo(_nextImg);
-    _nextImg.SetTimestamp(image.GetTimestamp());
+    image.CopyTo(_nextImg);
     
     //_nextImg = Vision::Image(image);
     _nextRobotState = robotState;
@@ -159,7 +176,7 @@ namespace Cozmo {
     
     Lock();
     if(_running && !_currentImg.IsEmpty() && _currentImg.GetTimestamp() > newerThanTimestamp) {
-      _currentImg.CopyDataTo(img);
+      _currentImg.CopyTo(img);
       img.SetTimestamp(_currentImg.GetTimestamp());
       retVal = true;
     } else {
@@ -178,7 +195,7 @@ namespace Cozmo {
     
     Lock();
     if(!_lastImg.IsEmpty() && _lastImg.GetTimestamp() > newerThanTimestamp) {
-      _lastImg.CopyDataTo(img);
+      _lastImg.CopyTo(img);
       img.SetTimestamp(_lastImg.GetTimestamp());
       retVal = true;
     }
@@ -241,14 +258,33 @@ namespace Cozmo {
         while(!_visionSystem->IsInitialized()) {
           usleep(500);
         }
+        
+        if(_runMode == RunMode::Asynchronous) {
+          Start();
+        }
       }
       
-      if(!_paused) {
-        _visionSystem->Update(robotState, image);
-        _lastImg = image;
-        
-        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
-                                           "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      if(_runMode == RunMode::Synchronous)
+      {
+        if(!_paused) {
+          _visionSystem->Update(robotState, image);
+          _lastImg = image;
+          
+          VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                             "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+        }
+      } else if(_runMode == RunMode::Asynchronous) {
+        SetNextImage(image, robotState);
+      }
+      
+      // Display any debug images left by the vision system
+      std::pair<const char*, Vision::Image>    debugGray;
+      std::pair<const char*, Vision::ImageRGB> debugRGB;
+      while(_visionSystem->CheckDebugMailbox(debugGray)) {
+        debugGray.second.Display(debugGray.first);
+      }
+      while(_visionSystem->CheckDebugMailbox(debugRGB)) {
+        debugRGB.second.Display(debugRGB.first);
       }
       
     } else {
@@ -263,12 +299,16 @@ namespace Cozmo {
     PRINT_NAMED_INFO("VisionProcessingThread.Processor",
                      "Starting Robot VisionProcessingThread::Processor thread...");
     
+    ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
+                 "VisionSystem should already be initialized.");
+    /*
     _visionSystem->Init(_camCalib);
     
     // Wait for initialization to complete (i.e. Matlab to start up, if needed)
     while(!_visionSystem->IsInitialized()) {
       usleep(500);
     }
+     */
     
     while (_running) {
       

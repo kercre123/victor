@@ -37,10 +37,12 @@ namespace Vision {
     ImageBase(cv::Mat_<T>& cvMat) : Array2d<T>(cvMat) { }
 #   endif
     
+    void CopyTo(ImageBase<T>& otherImage) const;
+    
     void SetTimestamp(TimeStamp_t ts);
     TimeStamp_t GetTimestamp() const;
     
-    void Display(const char *windowName, bool pause = false) const;
+    void Display(const char *windowName, s32 pauseTime_ms = 5) const;
 
     // Resize in place by scaleFactor
     void Resize(f32 scaleFactor);
@@ -55,6 +57,8 @@ namespace Vision {
     using Array2d<T>::IsEmpty;
     using Array2d<T>::GetNumRows;
     using Array2d<T>::GetNumCols;
+    
+    virtual s32 GetNumChannels() const = 0;
     
   protected:
     TimeStamp_t     _timeStamp;
@@ -84,6 +88,9 @@ namespace Vision {
 
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
+    
+    virtual s32 GetNumChannels() const override { return 1; }
+    
   }; // class Image
   
   
@@ -105,6 +112,8 @@ namespace Vision {
     ImageRGB(const ImageRGBA& imageRGBA);
     
     Image ToGray() const;
+    
+    virtual s32 GetNumChannels() const override { return 4; }
     
   }; // class ImageRGB
   
@@ -129,6 +138,8 @@ namespace Vision {
 #   endif
     
     Image ToGray() const;
+    
+    virtual s32 GetNumChannels() const override { return 3; }
     
   }; // class ImageRGBA
 

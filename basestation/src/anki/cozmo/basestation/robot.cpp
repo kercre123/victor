@@ -65,7 +65,7 @@ namespace Anki {
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
-    , _visionProcessor(dataPlatform)
+    , _visionProcessor(VisionProcessingThread::RunMode::Asynchronous, dataPlatform)
     , _behaviorMgr(*this)
     , _movementComponent(*this)
     , _camera(robotID)
@@ -806,18 +806,8 @@ namespace Anki {
        */
       
       
-      if (GetCamera().IsCalibrated()) {
-      
-#     if !ASYNC_VISION_PROCESSING
-      if(_haveNewImage)
-        
-        _visionProcessor.Update(_image, _robotStateForImage);
-        _haveNewImage = false;
-#     endif
+      if (GetCamera().IsCalibrated())
       {
-        
-        // Signal the availability of an image
-        //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
         
         ////////// Check for any messages from the Vision Thread ////////////
         
@@ -842,10 +832,10 @@ namespace Anki {
         Vision::TrackedFace faceDetection;
         while(true == _visionProcessor.CheckMailbox(faceDetection)) {
           /*
-          PRINT_NAMED_INFO("Robot.Update",
-                           "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
-                           GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
-          */
+           PRINT_NAMED_INFO("Robot.Update",
+           "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
+           GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
+           */
           
           Result lastResult;
           
@@ -878,8 +868,8 @@ namespace Anki {
           }
           
           VizManager::getInstance()->DrawCameraFace(faceDetection,
-            faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
-
+                                                    faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
+          
         }
         
         VizInterface::TrackerQuad trackerQuad;
@@ -905,14 +895,14 @@ namespace Anki {
           Vision::Camera histCamera(GetHistoricalCamera(&p, t));
           markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
           /*
-          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
-          Pose3d markerPoseWrtRobot;
-          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
-            PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
-                              "Could not get marker pose w.r.t. robot.");
-            return RESULT_FAIL;
-          }
-          */
+           // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+           Pose3d markerPoseWrtRobot;
+           if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+           PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
+           "Could not get marker pose w.r.t. robot.");
+           return RESULT_FAIL;
+           }
+           */
           //Pose3d poseWrtRobot = poseWrtCam;
           //poseWrtRobot.PreComposeWith(camWrtRobotPose);
           Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
@@ -933,6 +923,7 @@ namespace Anki {
           // Try to use this for closed-loop control by sending it on to the robot
           SendMessage(RobotInterface::EngineToRobot(std::move(dockErrMsg)));
         }
+        
         {
           RobotInterface::PanAndTilt panTiltHead;
           if (true == _visionProcessor.CheckMailbox(panTiltHead)) {
@@ -952,8 +943,7 @@ namespace Anki {
         if(RESULT_OK != _faceWorld.Update()) {
           PRINT_NAMED_WARNING("Robot.Update.FaceWorldUpdateFailed", "");
         }
-
-      } // if(_visionProcessor.WasLastImageProcessed())
+        
       } // if (GetCamera().IsCalibrated())
       
       ///////// Update the behavior manager ///////////
@@ -1146,22 +1136,12 @@ namespace Anki {
     
     bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
     {
-#     if ASYNC_VISION_PROCESSING
       Vision::ImageRGB imgRGB;
       bool retval = _visionProcessor.GetCurrentImage(imgRGB, newerThan);
       if(retval) {
         img = imgRGB.ToGray();
       }
       return retval;
-#     else
-      if(!_image.IsEmpty() && _image.GetTimestamp() > newerThan ) {
-        img = _image.ToGray();
-        img.SetTimestamp(_image.GetTimestamp());
-        return true;
-      } else {
-        return false;
-      }
-#     endif
     }
     
     u32 Robot::GetAverageImagePeriodMS()
@@ -2524,19 +2504,7 @@ namespace Anki {
       robotState.pose.z    = p.GetPose().GetTranslation().z();
       robotState.pose.angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
       
-#     if ASYNC_VISION_PROCESSING
-      
-      // Note this copies the image
-      _visionProcessor.SetNextImage(image, robotState);
-      
-#     else
-      
-      image.CopyDataTo(_image);
-      _image.SetTimestamp(image.GetTimestamp());
-      _robotStateForImage = robotState;
-      _haveNewImage = true;
-      
-#     endif
+      _visionProcessor.Update(image, robotState);
       
       return lastResult;
     }

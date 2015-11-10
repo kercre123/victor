@@ -59,21 +59,23 @@ class VisionProcessingThread
   {
   public:
     
-    VisionProcessingThread(Util::Data::DataPlatform* dataPlatform);
+    enum class RunMode : u8 {
+      Synchronous,
+      Asynchronous
+    };
+    
+    VisionProcessingThread(RunMode mode, Util::Data::DataPlatform* dataPlatform);
     ~VisionProcessingThread();
+    
+    void SetRunMode(RunMode mode);
     
     //
     // Asynchronous operation
     //
-    void Start(); // SetCameraCalibration() must have been called already
-    void Start(const Vision::CameraCalibration& camCalib);
     void Stop();
     
     void Pause(); // toggle paused state
     void Pause(bool isPaused); // set pause state
-    
-    void SetNextImage(const Vision::ImageRGB& image,
-                      const RobotState& robotState);
     
     //
     // Synchronous operation
@@ -123,6 +125,8 @@ class VisionProcessingThread
     Vision::CameraCalibration _camCalib;
     bool   _isCamCalibSet = false;
     
+    RunMode _runMode = RunMode::Asynchronous;
+    
     bool   _running = false;
     bool   _paused  = false;
     std::mutex _lock;
@@ -141,6 +145,11 @@ class VisionProcessingThread
     void Lock();
     void Unlock();
     
+    void Start(); // SetCameraCalibration() must have been called already
+    //void Start(const Vision::CameraCalibration& camCalib);
+    
+    void SetNextImage(const Vision::ImageRGB& image,
+                      const RobotState& robotState);
     
   }; // class VisionProcessingThread
 
@@ -151,7 +160,6 @@ class VisionProcessingThread
   inline void VisionProcessingThread::Pause(bool isPaused) {
     _paused = isPaused;
   }
-  
 
 } // namespace Cozmo
 } // namespace Anki

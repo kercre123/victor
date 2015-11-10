@@ -391,6 +391,24 @@ namespace Cozmo {
     return retVal;
   }
   
+  bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _debugImageMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
+  bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _debugImageRGBMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
   bool VisionSystem::IsInitialized() const
   {
     bool retVal = _isInitialized;
@@ -1885,8 +1903,7 @@ namespace Cozmo {
       
       // Store a copy of the current image for next time
       // TODO: switch to just swapping pointers between current and previous image
-      inputImage.CopyDataTo(_prevImage);
-      _prevImage.SetTimestamp(inputImage.GetTimestamp());
+      inputImage.CopyTo(_prevImage);
       
     } // if(_mode & LOOKING_FOR_SALIENCY)
     

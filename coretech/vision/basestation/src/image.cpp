@@ -25,13 +25,36 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
-  void ImageBase<T>::Display(const char *windowName, bool pause) const
+  void ImageBase<T>::Display(const char *windowName, s32 pauseTime_ms) const
   {
 #   if ANKICORETECH_USE_OPENCV
-    cv::imshow(windowName, this->get_CvMat_());
-    if(pause) {
-      cv::waitKey();
+    switch(GetNumChannels())
+    {
+      case 1:
+      {
+        cv::imshow(windowName, this->get_CvMat_());
+        break;
+      }
+      case 3:
+      {
+        cv::Mat dispImg;
+        cvtColor(this->get_CvMat_(), dispImg, CV_RGB2BGR); // imshow expects BGR color ordering
+        cv::imshow(windowName, dispImg);
+        break;
+      }
+      case 4:
+      {
+        cv::Mat dispImg;
+        cvtColor(this->get_CvMat_(), dispImg, CV_RGBA2BGR);
+        cv::imshow(windowName, dispImg);
+        break;
+      }
+      default:
+        PRINT_NAMED_ERROR("ImageBase.Display.InvaludNumChannels",
+                          "Cannot display image with %d channels.", GetNumChannels());
+        return;
     }
+    cv::waitKey(pauseTime_ms);
 #   endif
   }
   
@@ -61,6 +84,17 @@ namespace Vision {
     }
   }
   
+  template<typename T>
+  void ImageBase<T>::CopyTo(ImageBase<T>& otherImage) const
+  {
+    Array2d<T>::CopyTo(otherImage);
+    otherImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets copied too
+  }
+  
+  // Explicit instantation for each image type:
+  template class ImageBase<u8>;
+  template class ImageBase<PixelRGB>;
+  template class ImageBase<PixelRGBA>;
   
 #pragma mark --- Image ---
   

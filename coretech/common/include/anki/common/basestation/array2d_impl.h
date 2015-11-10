@@ -80,7 +80,7 @@ namespace Anki
   
   
   template<typename T>
-  void Array2d<T>::CopyDataTo(Array2d<T> &other) const
+  void Array2d<T>::CopyTo(Array2d<T> &other) const
   {
 #if ANKICORETECH_USE_OPENCV
     this->copyTo(other);
