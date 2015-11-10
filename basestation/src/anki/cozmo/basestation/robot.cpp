@@ -31,7 +31,8 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
-#include "anki/cozmo/basestation/soundManager.h"
+#include "anki/cozmo/basestation/soundManager.h"    // TODO: REMOVE ME
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
@@ -75,6 +76,7 @@ namespace Anki {
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
+    , _audioClient( nullptr )
     , _animationStreamer(_externalInterface, _cannedAnimations)
     , _moodManager()
     , _imageDeChunker(new ImageDeChunker())

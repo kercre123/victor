@@ -104,7 +104,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
       behaviorPlayAnim->SetAnimationName("happy");
       behaviorPlayAnim->SetName("HappyReact");
       behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
-      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happiness,
+      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happy,
                                                        Anki::Util::GraphEvaluator2d({{0.059f, 0.0f}, {0.059f, 0.7f}, {1.0f, 1.0f}}), true));
     }
     else
@@ -124,7 +124,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
       behaviorPlayAnim->SetAnimationName("sad");
       behaviorPlayAnim->SetName("SadReact");
       behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
-      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happiness,
+      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happy,
                                                        Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.059f, 0.7f}, {-0.059f, 0.0f}}), true));
     }
     else
@@ -144,7 +144,7 @@ void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config
       behaviorPlayAnim->SetAnimationName("angry");
       behaviorPlayAnim->SetName("AngryReact");
       behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
-      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Calmness,
+      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Calm,
                                                        Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.059f, 0.7f}, {-0.059f, 0.0f}}), true));
     }
     else

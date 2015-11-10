@@ -74,6 +74,8 @@ protected:
   virtual s32 UpdateInternal() = 0;
 
   
+  // TODO: These default handlers and senders should be CLAD-generated!
+  
   // Message handlers
   virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
@@ -108,6 +110,17 @@ protected:
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
   void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
+  void SendGotoObject(const s32 objectID,
+                      const f32 distFromObjectOrigin_mm,
+                      const bool useManualSpeed = false);
+  
+  void SendAlignWithObject(const s32 objectID,
+                           const f32 distFromMarker_mm,
+                           const bool usePreDockPose,
+                           const bool useApproachAngle = false,
+                           const f32 approachAngle_rad = false,
+                           const bool useManualSpeed = false);
+  
   void SendPlaceObjectOnGroundSequence(const Pose3d& p,
                                        const bool useExactRotation = false,
                                        const bool useManualSpeed = false);

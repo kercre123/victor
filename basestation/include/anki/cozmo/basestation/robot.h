@@ -117,6 +117,10 @@ namespace ExternalInterface {
   class MessageEngineToGame;
 }
 
+namespace Audio {
+  class RobotAudioClient;
+}
+
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot
 {
@@ -426,8 +430,13 @@ public:
     // Returns a reference to a count of the total number of bytes streamed to the robot.
     s32 GetNumAnimationBytesStreamed();
     void IncrementNumAnimationBytesStreamed(s32 num);
-    
+  
+    // =========== Audio =============
+    const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient; }
+    void SetRobotAudioClient( Audio::RobotAudioClient* audioClient ) { _audioClient = audioClient; }
+  
     // Ask the UI to play a sound for us
+    // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
     
@@ -616,7 +625,7 @@ public:
     //Vision::PanTiltTracker _faceTracker;
 #   if !ASYNC_VISION_PROCESSING
     Vision::Image     _image;
-    MessageRobotState _robotStateForImage;
+    RobotState        _robotStateForImage;
     bool              _haveNewImage = false;
 #   endif
   
@@ -625,7 +634,7 @@ public:
     
     //ActionQueue      _actionQueue;
     ActionList       _actionList;
-  MovementComponent _movementComponent;
+    MovementComponent _movementComponent;
 
     // Path Following. There are two planners, only one of which can
     // be selected at a time
@@ -775,7 +784,10 @@ public:
     /*
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
     */
-
+  
+    ///////// Audio /////////
+    Audio::RobotAudioClient* _audioClient;
+  
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
@@ -799,7 +811,7 @@ public:
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
 
 
-  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);

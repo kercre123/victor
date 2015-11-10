@@ -15,6 +15,7 @@
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/globalVizOrigin.clad"
+#include "clad/audio/audioMessage.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -184,7 +185,18 @@ message GotoPose {
 // GotoObject
 message GotoObject {
     int_32 objectID,
-    float_32 distance_mm,
+    float_32 distanceFromObjectOrigin_mm,
+    bool useManualSpeed
+}
+
+// AlignWithObject
+// "Docks" to object so that it is aligned with it at the specified distance
+message AlignWithObject {
+    int_32 objectID,
+    float_32 distanceFromMarker_mm,
+    float_32 approachAngle_rad,
+    bool useApproachAngle,
+    bool usePreDockPose,
     bool useManualSpeed
 }
 
@@ -537,11 +549,12 @@ message EraseQuad {
   uint_32 quadID
 }
 
-structure RobotActionUnion {
+union RobotActionUnion {
   FaceObject         faceObject,
   FacePose           facePose,
   GotoPose           goToPose,
   GotoObject         goToObject,
+  AlignWithObject    alignWithObject,
   PlayAnimation      playAnimation,
   PickupObject       pickupObject,
   PlaceOnObject      placeOnObject,
@@ -559,7 +572,6 @@ message QueueSingleAction {
   uint_32 inSlot,
   uint_8  numRetries,
   QueueActionPosition    position,
-  RobotActionType        actionType,
   RobotActionUnion       action
 }
 
@@ -571,7 +583,6 @@ message QueueCompoundAction {
   uint_8  numRetries,
   bool  parallel,  // false means sequential
   QueueActionPosition    position,
-  RobotActionType        actionTypes[uint_8],
   RobotActionUnion       actions[uint_8]
 }
 

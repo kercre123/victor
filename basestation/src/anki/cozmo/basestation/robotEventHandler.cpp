@@ -42,6 +42,7 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
       ExternalInterface::MessageGameToEngineTag::GotoPose,
       ExternalInterface::MessageGameToEngineTag::GotoObject,
+      ExternalInterface::MessageGameToEngineTag::AlignWithObject,
       ExternalInterface::MessageGameToEngineTag::PickupObject,
       ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
       ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
@@ -193,7 +194,23 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToObjectAction(selectedObjectID, msg.distance_mm, msg.useManualSpeed);
+  return new DriveToObjectAction(selectedObjectID, msg.distanceFromObjectOrigin_mm, msg.useManualSpeed);
+}
+
+IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  return new DriveToAlignWithObjectAction(selectedObjectID,
+                                          msg.distanceFromMarker_mm,
+                                          msg.useApproachAngle,
+                                          msg.approachAngle_rad,
+                                          msg.useManualSpeed);
 }
   
 IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
@@ -253,57 +270,63 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
 }
   
 IActionRunner* CreateNewActionByType(Robot& robot,
-                                     const RobotActionType actionType,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
-  switch(actionType)
+  using namespace ExternalInterface;
+  
+  switch(actionUnion.GetTag())
   {
-    case RobotActionType::TURN_IN_PLACE:
-      return new TurnInPlaceAction(actionUnion.turnInPlace.angle_rad, actionUnion.turnInPlace.isAbsolute);
+    case RobotActionUnionTag::turnInPlace:
+    {
+      auto & turnInPlace = actionUnion.Get_turnInPlace();
+      return new TurnInPlaceAction(turnInPlace.angle_rad, turnInPlace.isAbsolute);
+    }
+    case RobotActionUnionTag::playAnimation:
+    {
+      auto & playAnimation = actionUnion.Get_playAnimation();
+      return new PlayAnimationAction(playAnimation.animationName, playAnimation.numLoops);
+    }
+    case RobotActionUnionTag::pickupObject:
+      return GetPickupActionHelper(robot, actionUnion.Get_pickupObject());
+
+    case RobotActionUnionTag::placeOnObject:
+      return GetPlaceOnActionHelper(robot, actionUnion.Get_placeOnObject());
       
-    case RobotActionType::PLAY_ANIMATION:
-      return new PlayAnimationAction(actionUnion.playAnimation.animationName, actionUnion.playAnimation.numLoops);
+    case RobotActionUnionTag::placeRelObject:
+      return GetPlaceRelActionHelper(robot, actionUnion.Get_placeRelObject());
       
-    case RobotActionType::PICKUP_OBJECT_HIGH:
-    case RobotActionType::PICKUP_OBJECT_LOW:
-      return GetPickupActionHelper(robot, actionUnion.pickupObject);
-      
-    case RobotActionType::PLACE_OBJECT_HIGH:
-      return GetPlaceOnActionHelper(robot, actionUnion.placeOnObject);
-      
-    case RobotActionType::PLACE_OBJECT_LOW:
-      return GetPlaceRelActionHelper(robot, actionUnion.placeRelObject);
-      
-      
-      
-    case RobotActionType::MOVE_HEAD_TO_ANGLE:
+    case RobotActionUnionTag::setHeadAngle:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
-      return new MoveHeadToAngleAction(actionUnion.setHeadAngle.angle_rad);
+      return new MoveHeadToAngleAction(actionUnion.Get_setHeadAngle().angle_rad);
       
-    case RobotActionType::MOVE_LIFT_TO_HEIGHT:
+    case RobotActionUnionTag::setLiftHeight:
       // TODO: Provide a means to pass in the speed/acceleration values to the action
-      return new MoveLiftToHeightAction(actionUnion.setLiftHeight.height_mm);
+      return new MoveLiftToHeightAction(actionUnion.Get_setLiftHeight().height_mm);
       
-    case RobotActionType::FACE_OBJECT:
-      return GetFaceObjectActionHelper(robot, actionUnion.faceObject);
+    case RobotActionUnionTag::faceObject:
+      return GetFaceObjectActionHelper(robot, actionUnion.Get_faceObject());
       
-    case RobotActionType::FACE_POSE:
-      return GetFacePoseActionHelper(robot, actionUnion.facePose);
+    case RobotActionUnionTag::facePose:
+      return GetFacePoseActionHelper(robot, actionUnion.Get_facePose());
       
-    case RobotActionType::ROLL_OBJECT_LOW:
-      return GetRollObjectActionHelper(robot, actionUnion.rollObject);
+    case RobotActionUnionTag::rollObject:
+      return GetRollObjectActionHelper(robot, actionUnion.Get_rollObject());
       
-    case RobotActionType::DRIVE_TO_OBJECT:
-      return GetDriveToObjectActionHelper(robot, actionUnion.goToObject);
+    case RobotActionUnionTag::goToObject:
+      return GetDriveToObjectActionHelper(robot, actionUnion.Get_goToObject());
       
-    case RobotActionType::DRIVE_TO_POSE:
-      return GetDriveToPoseActionHelper(robot, actionUnion.goToPose);
+    case RobotActionUnionTag::goToPose:
+      return GetDriveToPoseActionHelper(robot, actionUnion.Get_goToPose());
+
+    case RobotActionUnionTag::alignWithObject:
+      return GetDriveToAlignWithObjectActionHelper(robot, actionUnion.Get_alignWithObject());
+
       
       // TODO: Add cases for other actions
       
     default:
-      PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionType",
-                        "Failed to create an action for the given actionType.");
+      PRINT_NAMED_ERROR("RobotEventHandler.CreateNewActionByType.InvalidActionTag",
+                        "Failed to create an action for the given actionTag.");
       return nullptr;
   }
 }
@@ -393,6 +416,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = GetDriveToObjectActionHelper(robot, event.GetData().Get_GotoObject());
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::AlignWithObject:
+    {
+      newAction = GetDriveToAlignWithObjectActionHelper(robot, event.GetData().Get_AlignWithObject());
+      break;
+    }
     case ExternalInterface::MessageGameToEngineTag::PickupObject:
     {
       numRetries = 1;
@@ -472,7 +500,7 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
     return;
   }
   
-  IActionRunner* action = CreateNewActionByType(*robot, msg.actionType, msg.action);
+  IActionRunner* action = CreateNewActionByType(*robot, msg.action);
   
   // Put the action in the given position of the specified queue:
   QueueActionHelper(msg.position, msg.idTag, msg.inSlot, robot->GetActionList(), action, msg.numRetries);
@@ -497,19 +525,11 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
     compoundAction = new CompoundActionSequential();
   }
   
-  // Make sure sizes match
-  if(msg.actions.size() != msg.actionTypes.size()) {
-    PRINT_NAMED_ERROR("CozmoGameImpl.Process_QueueCompoundAction.MismatchedSizes",
-                      "Number of actions (%lu) and actionTypes (%lu) should match!\n",
-                      msg.actions.size(), msg.actionTypes.size());
-    return;
-  }
-  
   // Add all the actions in the message to the compound action, according
   // to their type
   for(size_t iAction=0; iAction < msg.actions.size(); ++iAction) {
     
-    IActionRunner* action = CreateNewActionByType(*robot, msg.actionTypes[iAction], msg.actions[iAction]);
+    IActionRunner* action = CreateNewActionByType(*robot, msg.actions[iAction]);
     
     compoundAction->AddAction(action);
     

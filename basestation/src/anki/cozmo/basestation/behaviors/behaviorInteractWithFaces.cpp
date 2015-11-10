@@ -45,8 +45,8 @@ namespace Cozmo {
     });
     
     // Primarily loneliness and then boredom -> InteractWithFaces
-    AddEmotionScorer(EmotionScorer(EmotionType::Socialized, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited,    Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -216,8 +216,8 @@ namespace Cozmo {
         {
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
           PlayAnimation(robot, "Demo_Look_Around_See_Something_A");
-          moodManager.AddToEmotions(EmotionType::Happiness,  kEmotionChangeMedium,
-                                    EmotionType::Socialized, kEmotionChangeMedium,
+          moodManager.AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
+                                    EmotionType::Social, kEmotionChangeMedium,
                                     EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
           dataIter->second._playedInitAnim = true;
           _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
@@ -253,8 +253,8 @@ namespace Cozmo {
         auto lastSeen = _interestingFacesData[faceID]._lastSeen_sec;
         if(currentTime_sec - lastSeen > _trackingTimeout_sec)
         {
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  -kEmotionChangeVerySmall,
-                                               EmotionType::Socialized, -kEmotionChangeVerySmall, "LostFace");
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
+                                               EmotionType::Social, -kEmotionChangeVerySmall, "LostFace");
           
           robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
@@ -272,9 +272,9 @@ namespace Cozmo {
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
         if (watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  kEmotionChangeSmall,
-                                               EmotionType::Excited,    kEmotionChangeSmall,
-                                               EmotionType::Socialized, kEmotionChangeLarge,  "LotsOfFace");
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
+                                               EmotionType::Excited, kEmotionChangeSmall,
+                                               EmotionType::Social,  kEmotionChangeLarge,  "LotsOfFace");
 
           robot.GetMoveComponent().DisableTrackToFace();
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
@@ -291,8 +291,8 @@ namespace Cozmo {
         const Face* face = robot.GetFaceWorld().GetFace(faceID);
         if(face == nullptr)
         {
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happiness,  -kEmotionChangeVerySmall,
-                                               EmotionType::Socialized, -kEmotionChangeVerySmall, "InvalidFace");
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
+                                               EmotionType::Social, -kEmotionChangeVerySmall, "InvalidFace");
           
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
@@ -331,7 +331,7 @@ namespace Cozmo {
             robot.GetMoveComponent().DisableTrackToFace();
             
             PlayAnimation(robot, "Demo_Face_Interaction_ShockedScared_A");
-            robot.GetMoodManager().AddToEmotion(EmotionType::Courage, -kEmotionChangeMedium, "CloseFace");
+            robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
             _lastTooCloseScaredTime = currentTime_sec;
           }
         }

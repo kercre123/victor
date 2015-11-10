@@ -1796,6 +1796,79 @@ namespace Anki {
 
 #pragma mark ---- PickupObjectAction ----
     
+    AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
+                                                 f32 distanceFromMarker_mm,
+                                                 const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed, distanceFromMarker_mm)
+    {
+      
+    }
+    
+    AlignWithObjectAction::~AlignWithObjectAction()
+    {
+
+    }
+    
+    void AlignWithObjectAction::Reset()
+    {
+      IDockAction::Reset();
+    }
+    
+    const std::string& AlignWithObjectAction::GetName() const
+    {
+      static const std::string name("AlignWithObjectAction");
+      return name;
+    }
+
+
+    void AlignWithObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    {
+      completionInfo.numObjects = 1;
+      completionInfo.objectIDs.fill(-1);
+      completionInfo.objectIDs[0] = _dockObjectID;
+      
+      IDockAction::GetCompletionStruct(robot, completionInfo);
+    }
+
+    
+    Result AlignWithObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      _dockAction = DockAction::DA_ALIGN;
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    
+    ActionResult AlignWithObjectAction::Verify(Robot& robot)
+    {
+      ActionResult result = ActionResult::FAILURE_ABORT;
+      
+      switch(_dockAction)
+      {
+        case DockAction::DA_ALIGN:
+        {
+          // What does it mean to verify this action other than to complete
+          if (!robot.IsPickingOrPlacing() && !robot.IsTraversingPath()) {
+            PRINT_STREAM_INFO("AlignWithObjectAction.Verify", "Align with object SUCCEEDED!");
+            result = ActionResult::SUCCESS;
+          }
+          break;
+        } // ALIGN
+          
+        default:
+          PRINT_NAMED_ERROR("AlignWithObjectAction.Verify.ReachedDefaultCase",
+                            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          result = ActionResult::FAILURE_ABORT;
+          break;
+          
+      } // switch(_dockAction)
+      
+      return result;
+      
+    } // Verify()
+    
+    
+#pragma mark ---- PickupObjectAction ----
+    
     PickupObjectAction::PickupObjectAction(ObjectID objectID,
                                            const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
@@ -1805,7 +1878,7 @@ namespace Anki {
     
     PickupObjectAction::~PickupObjectAction()
     {
-
+      
     }
     
     void PickupObjectAction::Reset()
@@ -1828,7 +1901,7 @@ namespace Anki {
           
         case DockAction::DA_PICKUP_LOW:
           return RobotActionType::PICKUP_OBJECT_LOW;
-
+          
         default:
           PRINT_NAMED_WARNING("PickupObjectAction.GetType",
                               "Dock action not set before determining action type.");
@@ -1955,7 +2028,7 @@ namespace Anki {
               objectInOriginalPose = object.second;
               break;
             }
-
+            
           }
           
           if(objectInOriginalPose != nullptr)

@@ -465,6 +465,34 @@ namespace Anki {
     }; // class IDockAction
 
     
+    // "Docks" to the specified object at the distance specified
+    class AlignWithObjectAction : public IDockAction
+    {
+    public:
+      AlignWithObjectAction(ObjectID objectID,
+                            f32 distanceFromMarker_mm,
+                            const bool useManualSpeed = false);
+      virtual ~AlignWithObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      virtual RobotActionType GetType() const override {return RobotActionType::ALIGN_WITH_OBJECT;};
+      
+    protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
+
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
+      
+    }; // class AlignWithObjectAction
+    
+    
     // Picks up the specified object.
     class PickupObjectAction : public IDockAction
     {
@@ -575,7 +603,45 @@ namespace Anki {
       
     }; // class RollObjectAction
     
+
+    // Compound action for driving to an object, visually verifying it can still be seen,
+    // and then driving to it until it is at the specified distance (i.e. distanceFromMarker_mm)
+    // from the marker.
+    // @param distanceFromMarker_mm - The distance from the marker along it's normal axis that the robot should stop at.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class DriveToAlignWithObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToAlignWithObjectAction(const ObjectID& objectID,
+                                   const f32 distanceFromMarker_mm,
+                                   const bool useApproachAngle = false,
+                                   const f32 approachAngle_rad = 0,
+                                   const bool useManualSpeed = false)
+      : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+        PreActionPose::DOCKING,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+        new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
+      {
+        
+      }
+      
+      // GetType returns the type from the AlignWithObjectAction
+      virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
+      
+      // Use AlignWithObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
     
+
     
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then picking it up.

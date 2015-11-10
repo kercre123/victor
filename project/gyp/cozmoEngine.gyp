@@ -668,11 +668,6 @@
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
       ],
-      'libraries': [
-        '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
-        '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
-        '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
-      ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../basestation/include',
@@ -680,11 +675,6 @@
           '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
-        ],
-        'libraries': [
-          '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
-          '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
-          '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
         ],
         'defines': [
           'COZMO_BASESTATION'
@@ -701,9 +691,21 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
-        '../../lib/audio/gyp/audioengine.gyp:DriveAudioEngine',
+        '<(ce-audio_path):DriveAudioEngine',
       ],
       'type': '<(engine_library_type)',
+      'conditions': [    
+        [
+          'OS=="ios" or OS=="mac"',
+          {
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+            ],
+          },
+        ],
+      ],
     },
     
     {
