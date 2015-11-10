@@ -395,10 +395,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 08add32b5b978499d9262a66c5cd02de, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fpsLabel_: {fileID: 11442064}
-  avgFPSLabel_: {fileID: 11405820}
-  avgFPSPerMinuteLabel_: {fileID: 11455530}
-  showFPSCounterButton_: {fileID: 11459650}
+  _FpsLabel: {fileID: 11442064}
+  _AvgFPSLabel: {fileID: 11405820}
+  _AvgFPSPerMinuteLabel: {fileID: 11455530}
+  _ShowFPSCounterButton: {fileID: 11459650}
 --- !u!114 &11454038
 MonoBehaviour:
   m_ObjectHideFlags: 1

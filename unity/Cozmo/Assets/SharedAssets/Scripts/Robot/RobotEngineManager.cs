@@ -25,7 +25,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
-  public List<string> RobotAnimationNames = new List<string>();
+  private List<string> RobotAnimationNames = new List<string>();
 
   [SerializeField] 
   private TextAsset _Configuration;

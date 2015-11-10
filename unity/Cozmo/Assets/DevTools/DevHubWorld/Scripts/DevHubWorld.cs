@@ -45,10 +45,10 @@ public class DevHubWorld : HubWorldBase {
     
     GameObject newMiniGameObject = GameObject.Instantiate(miniGameClicked.gameObject);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.OnMiniGameQuit += OnMiniGameQuit;
+    _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
   }
 
-  private void OnMiniGameQuit() {
+  private void HandleMiniGameQuit() {
     CloseMiniGame();
     ShowHubWorldDialog();
   }

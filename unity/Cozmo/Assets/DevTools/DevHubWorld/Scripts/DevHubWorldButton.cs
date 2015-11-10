@@ -25,14 +25,14 @@ public class DevHubWorldButton : MonoBehaviour {
   public void Initialize(GameBase minigame) {
     _Minigame = minigame;
     _ButtonLabel.text = minigame.GameName;
-    _ButtonScript.onClick.AddListener(OnButtonClicked);
+    _ButtonScript.onClick.AddListener(HandleButtonClicked);
   }
 
   private void OnDestroy() {
-    _ButtonScript.onClick.RemoveListener(OnButtonClicked);
+    _ButtonScript.onClick.RemoveListener(HandleButtonClicked);
   }
 
-  private void OnButtonClicked() {
+  private void HandleButtonClicked() {
     RaiseButtonClicked(_Minigame);
   }
 }

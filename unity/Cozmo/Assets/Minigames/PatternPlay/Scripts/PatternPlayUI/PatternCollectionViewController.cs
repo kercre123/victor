@@ -8,7 +8,7 @@ using DG.Tweening;
 public class PatternCollectionViewController : MonoBehaviour {
 
   [SerializeField]
-  private BadgeDisplay _PpenPatternCollectionDialogButtonPrefab;
+  private BadgeDisplay _OpenPatternCollectionDialogButtonPrefab;
   private BadgeDisplay _ButtonBadgeDisplay;
   private Tweener _ButtonBadgeDisplayTweener;
  
@@ -77,7 +77,7 @@ public class PatternCollectionViewController : MonoBehaviour {
   #region Memory Bank Dialog
 
   private void CreateDialogButton() {
-    GameObject newButton = UIManager.CreateUI(_PpenPatternCollectionDialogButtonPrefab.gameObject);
+    GameObject newButton = UIManager.CreateUI(_OpenPatternCollectionDialogButtonPrefab.gameObject);
 
     Button buttonScript = newButton.GetComponent<Button>();
     buttonScript.enabled = false;

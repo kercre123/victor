@@ -5,32 +5,32 @@ using System.Collections;
 public class SimpleFPSCounterLabel : MonoBehaviour {
 
   [SerializeField]
-  private Text fpsLabel_;
+  private Text _FpsLabel;
 
   [SerializeField]
-  private Text fpsAvgLabel_;
+  private Text _FpsAvgLabel;
 
   [SerializeField]
-  private Button closeButton_;
+  private Button _CloseButton;
 
   // Use this for initialization
   private void Start() {
-    closeButton_.onClick.AddListener(OnCloseButtonClick);
+    _CloseButton.onClick.AddListener(HandleCloseButtonClick);
   }
 
   private void OnDestroy() {
-    closeButton_.onClick.RemoveListener(OnCloseButtonClick);
+    _CloseButton.onClick.RemoveListener(HandleCloseButtonClick);
   }
 
   public void SetFPS(float newFPS) {
-    fpsLabel_.text = newFPS.ToString();
+    _FpsLabel.text = newFPS.ToString();
   }
 
   public void SetAvgFPS(float newFPS) {
-    fpsAvgLabel_.text = newFPS.ToString("F2");
+    _FpsAvgLabel.text = newFPS.ToString("F2");
   }
 
-  private void OnCloseButtonClick() {
+  private void HandleCloseButtonClick() {
     Destroy(gameObject);
   }
 }

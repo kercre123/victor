@@ -3,10 +3,10 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class Intro : MonoBehaviour {
-  [SerializeField] protected InputField _EngineIP;
-  [SerializeField] protected InputField _IP;
-  [SerializeField] protected InputField _SimIp;
-  [SerializeField] protected InputField _VisualizerIP;
+  [SerializeField] protected InputField _EngineIPInputField;
+  [SerializeField] protected InputField _RobotIPInputField;
+  [SerializeField] protected InputField _SimIPInputField;
+  [SerializeField] protected InputField _VisualizerIPInputField;
   [SerializeField] protected Text _Error;
 
   private bool _Simulated = false;
@@ -50,15 +50,15 @@ public class Intro : MonoBehaviour {
 
   protected void OnEnable() {
 
-    _EngineIP.text = LastEngineIP;
-    _IP.text = LastIP;
-    _SimIp.text = LastSimIP;
-    _VisualizerIP.text = LastVisualizerIP;
+    _EngineIPInputField.text = LastEngineIP;
+    _RobotIPInputField.text = LastIP;
+    _SimIPInputField.text = LastSimIP;
+    _VisualizerIPInputField.text = LastVisualizerIP;
 
-    _EngineIP.Rebuild(CanvasUpdate.PreRender);
-    _IP.Rebuild(CanvasUpdate.PreRender);
-    _SimIp.Rebuild(CanvasUpdate.PreRender);
-    _VisualizerIP.Rebuild(CanvasUpdate.PreRender);
+    _EngineIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _RobotIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _SimIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _VisualizerIPInputField.Rebuild(CanvasUpdate.PreRender);
 
   }
 
@@ -103,8 +103,8 @@ public class Intro : MonoBehaviour {
     RobotEngineManager.instance.Disconnect();
 
     string errorText = null;
-    string ipText = _Simulated ? _SimIp.text : _IP.text;
-    if (string.IsNullOrEmpty(_EngineIP.text)) {
+    string ipText = _Simulated ? _SimIPInputField.text : _RobotIPInputField.text;
+    if (string.IsNullOrEmpty(_EngineIPInputField.text)) {
       errorText = "You must enter a device ip address.";
     }
     if (string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ipText)) {
@@ -113,11 +113,11 @@ public class Intro : MonoBehaviour {
 
     if (string.IsNullOrEmpty(errorText)) {
       _CurrentRobotIP = ipText;
-      _CurrentVizHostIP = _VisualizerIP.text;
+      _CurrentVizHostIP = _VisualizerIPInputField.text;
 
       SaveData();
-      RobotEngineManager.instance.Connect(_EngineIP.text);
-      _Error.text = "<color=#ffffff>Connecting to engine at " + _EngineIP.text + "....</color>";
+      RobotEngineManager.instance.Connect(_EngineIPInputField.text);
+      _Error.text = "<color=#ffffff>Connecting to engine at " + _EngineIPInputField.text + "....</color>";
     }
     else {
       _Error.text = errorText;
@@ -125,10 +125,10 @@ public class Intro : MonoBehaviour {
   }
 
   protected void SaveData() {
-    LastIP = _IP.text;
-    LastSimIP = _SimIp.text;
-    LastEngineIP = _EngineIP.text;
-    LastVisualizerIP = _VisualizerIP.text;
+    LastIP = _RobotIPInputField.text;
+    LastSimIP = _SimIPInputField.text;
+    LastEngineIP = _EngineIPInputField.text;
+    LastVisualizerIP = _VisualizerIPInputField.text;
   }
 
   private void Connected(string connectionIdentifier) {

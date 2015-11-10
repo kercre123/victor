@@ -97,9 +97,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: DevHubWorldDialog
-  devHubWorldButtonPrefab_: {fileID: 11488418, guid: 8b99ab09829ee42dc9cce2c8c7e9891f,
+  _DevHubWorldButtonPrefab: {fileID: 11488418, guid: 8b99ab09829ee42dc9cce2c8c7e9891f,
     type: 2}
-  buttonContainer_: {fileID: 22417830}
+  _ButtonContainer: {fileID: 22417830}
 --- !u!114 &11426050
 MonoBehaviour:
   m_ObjectHideFlags: 1

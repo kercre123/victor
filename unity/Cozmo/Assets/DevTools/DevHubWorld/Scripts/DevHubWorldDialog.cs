@@ -14,16 +14,16 @@ public class DevHubWorldDialog : BaseDialog {
   }
 
   [SerializeField]
-  private DevHubWorldButton devHubWorldButtonPrefab_;
+  private DevHubWorldButton _DevHubWorldButtonPrefab;
 
   [SerializeField]
-  private RectTransform buttonContainer_;
+  private RectTransform _ButtonContainer;
 
   public void Initialize(GameBase[] minigames) {
     GameObject newButton;
     DevHubWorldButton buttonScript;
     foreach (GameBase game in minigames) {
-      newButton = UIManager.CreateUI(devHubWorldButtonPrefab_.gameObject, buttonContainer_);
+      newButton = UIManager.CreateUI(_DevHubWorldButtonPrefab.gameObject, _ButtonContainer);
       buttonScript = newButton.GetComponent<DevHubWorldButton>();
       buttonScript.Initialize(game);
       buttonScript.OnDevButtonClicked += HandleOnDevButtonClicked;
