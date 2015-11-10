@@ -27,7 +27,8 @@ IPathPlanner::IPathPlanner()
 }
 
 EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
-                                             const std::vector<Pose3d>& targetPoses)
+                                             const std::vector<Pose3d>& targetPoses,
+                                             const PathMotionProfile motionProfile)
 {
   _hasValidPath = false;
   _planningError = false;
@@ -65,11 +66,12 @@ EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
   CORETECH_ASSERT(foundTarget);
   CORETECH_ASSERT(closestPose);
       
-  return ComputePath(startPose, targetPoses[_selectedTargetIdx]);
+  return ComputePath(startPose, targetPoses[_selectedTargetIdx], motionProfile);
 }
 
 EComputePathStatus IPathPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                                      bool forceReplanFromScratch)
+                                                        bool forceReplanFromScratch,
+                                                        const PathMotionProfile* motionProfile)
 {
   return EComputePathStatus::NoPlanNeeded;
 }
@@ -94,7 +96,7 @@ bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Pat
     return false;
   }
 
-  path = _path;
+  ApplyMotionProfile(_path, path);
   return true;
 }
 
@@ -104,12 +106,41 @@ bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Pat
     return false;
   }
 
-  path = _path;
+  ApplyMotionProfile(_path, path);
   selectedTargetIndex = _selectedTargetIdx;
   return true;
 }
 
-    
+  
+bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in, Planning::Path &out) const
+{
+  out.Clear();
+  
+  for (int i=0; i < in.GetNumSegments(); ++i)
+  {
+    Planning::PathSegment seg = in.GetSegmentConstRef(i);
+    switch(seg.GetType()) {
+      case Planning::PST_LINE:
+      case Planning::PST_ARC:
+        seg.SetSpeedProfile(_pathMotionProfile.speed_mmps,
+                            _pathMotionProfile.accel_mmps2,
+                            _pathMotionProfile.decel_mmps2);
+        break;
+      case Planning::PST_POINT_TURN:
+        seg.SetSpeedProfile(_pathMotionProfile.pointTurnSpeed_rad_per_sec,
+                            _pathMotionProfile.pointTurnAccel_rad_per_sec2,
+                            _pathMotionProfile.pointTurnDecel_rad_per_sec2);
+        break;
+      default:
+        PRINT_NAMED_WARNING("IPathPlanner.ApplyMotionProfile.UnknownSegment", "Path has invalid segment");
+        return false;
+    }
+    out.AppendSegment(seg);
+  }
+  
+  return true;
+}
+  
     
 } // namespace Cozmo
 } // namespace Anki

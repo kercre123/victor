@@ -11,6 +11,7 @@
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
 #include "clad/types/activeObjectTypes.clad"
+#include "clad/types/pathMotionProfile.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
@@ -177,6 +178,7 @@ message GotoPose {
     float_32 x_mm,
     float_32 y_mm,
     float_32 rad,
+    PathMotionProfile motionProf,
     uint_8 level,
     bool useManualSpeed
 }

@@ -102,7 +102,11 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   // TODO: expose whether or not to drive with head down in message?
   // (For now it is hard-coded to true)
   const bool driveWithHeadDown = true;
-  return new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed);
+  
+  return new DriveToPoseAction(targetPose,
+                               msg.motionProf,
+                               driveWithHeadDown,
+                               msg.useManualSpeed);
 }
   
   

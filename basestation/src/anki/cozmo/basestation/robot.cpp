@@ -1257,7 +1257,9 @@ namespace Anki {
       }
     }
 
-    Result Robot::StartDrivingToPose(const Pose3d& targetPose, bool useManualSpeed)
+    Result Robot::StartDrivingToPose(const Pose3d& targetPose,
+                                     const PathMotionProfile motionProfile,
+                                     bool useManualSpeed)
     {
       _usingManualPathSpeed = useManualSpeed;
 
@@ -1276,7 +1278,7 @@ namespace Anki {
       ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
 
       // Compute drive center pose for start pose
-      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPose);
+      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPose, motionProfile);
       if( status == EComputePathStatus::Error ) {
         _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
         return RESULT_FAIL;
@@ -1294,7 +1296,10 @@ namespace Anki {
       return RESULT_OK;
     }
 
-    Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses, size_t* selectedPoseIndexPtr, bool useManualSpeed)
+    Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses,
+                                     const PathMotionProfile motionProfile,
+                                     size_t* selectedPoseIndexPtr,
+                                     bool useManualSpeed)
     {
       _usingManualPathSpeed = useManualSpeed;
       _plannerSelectedPoseIndexPtr = selectedPoseIndexPtr;
@@ -1308,7 +1313,7 @@ namespace Anki {
         ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
 
-      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPoses);
+      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPoses, motionProfile);
       if( status == EComputePathStatus::Error ) {
         _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
 

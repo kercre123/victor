@@ -119,10 +119,12 @@ namespace Anki {
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
+    DriveToPoseAction::DriveToPoseAction(const PathMotionProfile motionProf,
+                                         const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
     : _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
+    , _pathMotionProfile(motionProf)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
@@ -140,13 +142,14 @@ namespace Anki {
     }
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
+                                         const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-      : DriveToPoseAction(forceHeadDown, useManualSpeed)
+      : DriveToPoseAction(motionProf, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -155,13 +158,14 @@ namespace Anki {
     }
     
     DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
+                                         const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-      : DriveToPoseAction(forceHeadDown, useManualSpeed)
+      : DriveToPoseAction(motionProf, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -251,9 +255,9 @@ namespace Anki {
         _selectedGoalIndex = 0;
 
         if(_goalPoses.size() == 1) {
-          planningResult = robot.StartDrivingToPose(_goalPoses.back(), _useManualSpeed);
+          planningResult = robot.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
         } else {
-          planningResult = robot.StartDrivingToPose(_goalPoses, &_selectedGoalIndex, _useManualSpeed);
+          planningResult = robot.StartDrivingToPose(_goalPoses, _pathMotionProfile, &_selectedGoalIndex, _useManualSpeed);
         }
         
         if(planningResult != RESULT_OK) {
@@ -626,7 +630,11 @@ namespace Anki {
           
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed, preActionPoseDistThresh));
+          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses,
+                                                          DEFAULT_PATH_MOTION_PROFILE, // _pathMotionProfile,
+                                                          true,
+                                                          _useManualSpeed,
+                                                          preActionPoseDistThresh));
         }
       
       
@@ -852,7 +860,7 @@ namespace Anki {
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
-    : DriveToPoseAction(false, false)
+    : DriveToPoseAction(DEFAULT_PATH_MOTION_PROFILE, false, false)
     , _turnAngle(angle)
     , _variability(variability)
     , _isAbsoluteAngle(isAbsolute)

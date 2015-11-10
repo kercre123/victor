@@ -221,7 +221,8 @@ void LatticePlanner::StopPlanning()
 }
 
 EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
-                                                     const Pose3d& targetPose)
+                                                     const Pose3d& targetPose,
+                                                     const PathMotionProfile* motionProfile)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
 
@@ -276,18 +277,20 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
     return EComputePathStatus::Error;
   }
 
-  return ComputeNewPathIfNeeded(startPose, true);
+  return ComputeNewPathIfNeeded(startPose, true, motionProfile);
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
-                                                     const Pose3d& targetPose)
+                                               const Pose3d& targetPose,
+                                               const PathMotionProfile motionProfile)
 {
   _selectedTargetIdx = 0;
-  return ComputePathHelper(startPose, targetPose);
+  return ComputePathHelper(startPose, targetPose, &motionProfile);
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
-                                               const std::vector<Pose3d>& targetPoses)
+                                               const std::vector<Pose3d>& targetPoses,
+                                               const PathMotionProfile motionProfile)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan internally
 
@@ -353,7 +356,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 
   if(found) {
     _selectedTargetIdx = bestTargetIdx;
-    return ComputePathHelper(startPose, targetPoses[bestTargetIdx]);
+    return ComputePathHelper(startPose, targetPoses[bestTargetIdx], &motionProfile);
   }
   else {
     PRINT_NAMED_INFO("LatticePlanner.ComputePath.NoValidTarget",
@@ -364,7 +367,8 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 }
 
 EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                          bool forceReplanFromScratch)
+                                                          bool forceReplanFromScratch,
+                                                          const PathMotionProfile* motionProfile)
 {
   if( !  _impl->_contextMutex.try_lock() ) {
     // thread is already running, in this case just say no plan needed
@@ -373,6 +377,11 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
 
+  // Update motion profile
+  if (motionProfile) {
+    _pathMotionProfile = *motionProfile;
+  }
+  
   EComputePathStatus ret = _impl->StartPlanning(startPose, forceReplanFromScratch);
 
   if( ret == EComputePathStatus::Running ) {
@@ -820,6 +829,11 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
 
+  // Apply motion profile to the path
+  Planning::Path pathCopy(path);
+  _parent->ApplyMotionProfile(pathCopy, path);
+  
+  
   // Do final check on how close the plan's goal angle is to the originally requested goal angle
   // and either add a point turn at the end or modify the last point turn action.
   u8 numSegments = path.GetNumSegments();

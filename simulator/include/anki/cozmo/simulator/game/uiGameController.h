@@ -109,7 +109,9 @@ protected:
   void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
-  void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
+  void SendExecutePathToPose(const Pose3d& p,
+                             PathMotionProfile motionProf,
+                             const bool useManualSpeed);
   void SendGotoObject(const s32 objectID,
                       const f32 distFromObjectOrigin_mm,
                       const bool useManualSpeed = false);

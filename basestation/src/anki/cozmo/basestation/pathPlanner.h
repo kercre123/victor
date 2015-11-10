@@ -16,6 +16,7 @@
 #include "anki/planning/shared/path.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
+#include "clad/types/pathMotionProfile.h"
 #include <set>
 
 
@@ -56,10 +57,12 @@ public:
   // means it is (or may have already finished)
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose) = 0;
+                                         const Pose3d& targetPose,
+                                         const PathMotionProfile motionProfile) = 0;
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const std::vector<Pose3d>& targetPoses);
+                                         const std::vector<Pose3d>& targetPoses,
+                                         const PathMotionProfile motionProfile);
 
   // While we are following a path, we can do a more efficient check to see if we need to update that path
   // based on new obstacles or other information. This function assumes that the robot is following the last
@@ -69,7 +72,8 @@ public:
   // used
   // Default implementation never plans (just gives you the same path as last time)
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false);
+                                                    bool forceReplanFromScratch = false,
+                                                    const PathMotionProfile* motionProfile = nullptr);
 
   virtual void StopPlanning() {}
 
@@ -109,6 +113,13 @@ protected:
   bool _planningError;
   size_t _selectedTargetIdx;
   Planning::Path _path;
+  PathMotionProfile _pathMotionProfile;
+  
+  
+  // Modifies in path according to _pathMotionProfile to produce out path.
+  // TODO: This where Cozmo mood/skill-based path wonkification would occur,
+  //       but currently it just changes speeds and accel on each segment.
+  bool ApplyMotionProfile(const Planning::Path &in, Planning::Path &out) const;
       
 }; // Interface IPathPlanner
 
@@ -119,7 +130,8 @@ public:
   PathPlannerStub() { }
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose) override {
+                                         const Pose3d& targetPose,
+                                         const PathMotionProfile motionProfile) override {
     return EComputePathStatus::Error;
   }
 };

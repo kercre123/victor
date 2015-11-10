@@ -269,12 +269,15 @@ public:
     // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
     // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
     // the path. If specified, the maxReplanTime arguments specifies the maximum nyum
-    Result StartDrivingToPose(const Pose3d& pose, bool useManualSpeed = false);
+    Result StartDrivingToPose(const Pose3d& pose,
+                              const PathMotionProfile motionProfile,
+                              bool useManualSpeed = false);
 
     // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
     // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
     // be set to the pose which is selected once planning is complete
     Result StartDrivingToPose(const std::vector<Pose3d>& poses,
+                              const PathMotionProfile motionProfile,                              
                               size_t* selectedPoseIndex = nullptr,
                               bool useManualSpeed = false);
   

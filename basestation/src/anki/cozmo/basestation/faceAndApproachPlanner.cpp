@@ -45,16 +45,18 @@ namespace Anki {
 namespace Cozmo {
 
 EComputePathStatus FaceAndApproachPlanner::ComputePath(const Pose3d& startPose,
-                                                               const Pose3d& targetPose)
+                                                       const Pose3d& targetPose,
+                                                       const PathMotionProfile motionProfile)
 {
   _targetVec = targetPose.GetTranslation();
   _finalTargetAngle = targetPose.GetRotationAngle<'Z'>().ToFloat();
 
-  return ComputeNewPathIfNeeded(startPose, true);
+  return ComputeNewPathIfNeeded(startPose, true, &motionProfile);
 }
 
 EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                                  bool forceReplanFromScratch)
+                                                                  bool forceReplanFromScratch,
+                                                                  const PathMotionProfile* motionProfile)
 {
 
   _hasValidPath = false;
@@ -118,6 +120,11 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
   }
 
   _path.Clear();
+  
+  // Update motion profile
+  if (motionProfile) {
+    _pathMotionProfile = *motionProfile;
+  }
 
   bool backup = false;
   if(doTurn0) {

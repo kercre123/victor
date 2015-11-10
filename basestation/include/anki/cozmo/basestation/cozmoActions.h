@@ -23,6 +23,7 @@
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/pathMotionProfile.h"
 
 namespace Anki {
   
@@ -40,6 +41,7 @@ namespace Anki {
     {
     public:
       DriveToPoseAction(const Pose3d& pose,
+                        const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -47,9 +49,11 @@ namespace Anki {
                         const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
-      DriveToPoseAction(const bool forceHeadDown  = true,
+      DriveToPoseAction(const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
+                        const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
       DriveToPoseAction(const std::vector<Pose3d>& poses,
+                        const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -91,6 +95,8 @@ namespace Anki {
       
       std::vector<Pose3d> _goalPoses;
       size_t              _selectedGoalIndex;
+      
+      PathMotionProfile _pathMotionProfile;
       
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
