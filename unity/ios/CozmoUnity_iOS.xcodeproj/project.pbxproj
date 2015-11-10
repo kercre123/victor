@@ -102,6 +102,7 @@
 		83B2570B0E62FF8A00468741 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2570A0E62FF8A00468741 /* QuartzCore.framework */; };
 		83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574B0E63022200468741 /* OpenAL.framework */; };
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
+		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
 		ADED221A1B9A2E7900B5D289 /* libpocketSphinx.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */; };
 		ADED221B1B9A2E7900B5D289 /* libsphinxad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22181B9A2E7900B5D289 /* libsphinxad.a */; };
 		ADED221C1B9A2E7900B5D289 /* libsphinxBase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = ADED22191B9A2E7900B5D289 /* libsphinxBase.a */; };
@@ -281,6 +282,7 @@
 		83B2570A0E62FF8A00468741 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		83B2574B0E63022200468741 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
+		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/anki/cozmo-engine/lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
 		8D1107310486CEB800E47090 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libpocketSphinx.a; path = sphinx/libpocketSphinx.a; sourceTree = "<group>"; };
 		ADED22181B9A2E7900B5D289 /* libsphinxad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsphinxad.a; path = sphinx/libsphinxad.a; sourceTree = "<group>"; };
@@ -302,6 +304,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */,
 				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
 				491A6D981B5F1D64003E91FB /* Security.framework in Frameworks */,
 				ADED221B1B9A2E7900B5D289 /* libsphinxad.a in Frameworks */,
@@ -395,6 +398,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */,
 				ADED22171B9A2E7900B5D289 /* libpocketSphinx.a */,
 				ADED22181B9A2E7900B5D289 /* libsphinxad.a */,
 				ADED22191B9A2E7900B5D289 /* libsphinxBase.a */,
