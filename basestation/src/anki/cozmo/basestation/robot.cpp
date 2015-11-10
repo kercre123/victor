@@ -796,6 +796,8 @@ namespace Anki {
       return RESULT_OK;
 #endif
       
+      VizManager::getInstance()->SendStartRobotUpdate();
+      
       /* DEBUG
        const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
        static double lastUpdateTime = currentTime_sec;
@@ -1141,6 +1143,8 @@ namespace Anki {
       VizManager::getInstance()->DrawCuboid(999, {ROBOT_BOUNDING_X, ROBOT_BOUNDING_Y, ROBOT_BOUNDING_Z},
                                             vizPose, ROBOT_BOUNDING_QUAD_COLOR);
       */
+      
+      VizManager::getInstance()->SendEndRobotUpdate();
       
       return RESULT_OK;
       
