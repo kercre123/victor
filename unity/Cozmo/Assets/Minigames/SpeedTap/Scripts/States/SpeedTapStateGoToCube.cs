@@ -24,7 +24,7 @@ public class SpeedTapStateGoToCube : State {
           stateMachine_.SetNextState(new SpeedTapStateBeginMatch());
         }
         else {
-          DAS.Error("SpeedTapStateGoToCube", "AlignWithObject Failed");
+          DAS.Debug("SpeedTapStateGoToCube", "AlignWithObject Failed");
         }
       });
     }
