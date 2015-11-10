@@ -13,6 +13,7 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/audio/audioCallbackMessage.clad"
 
 namespace Anki {
 namespace Cozmo {

@@ -15,6 +15,7 @@
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/globalVizOrigin.clad"
+#include "clad/audio/audioMessage.clad"
 
 namespace Anki {
 namespace Cozmo {
