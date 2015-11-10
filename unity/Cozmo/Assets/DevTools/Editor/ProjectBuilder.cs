@@ -133,6 +133,8 @@ public class ProjectBuilder {
     EditorApplication.isPlaying = false;
 
     // Force-Reimport Assets
+    // when build script invokes this Unity freaks out with a Reload Assembly error, which
+    // may not be an actual error http://answers.unity3d.com/questions/63184/error-using-importassetoptionsforcesynchronousimpo.html
     AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
   
     // run build
