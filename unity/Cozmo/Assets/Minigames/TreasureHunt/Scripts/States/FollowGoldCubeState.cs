@@ -3,39 +3,39 @@ using System.Collections;
 
 public class FollowGoldCubeState : State {
 
-  private bool searchTurnRight_ = false;
-  float lastTimeSeenGoldBlock_ = 0.0f;
+  private bool _SearchTurnRight = false;
+  float _LastTimeSeenGoldBlock = 0.0f;
 
   public override void Enter() {
     base.Update();
-    lastTimeSeenGoldBlock_ = Time.time;
-    robot.SetLiftHeight(0.0f);
-    robot.SetHeadAngle(-1.0f);
+    _LastTimeSeenGoldBlock = Time.time;
+    _CurrentRobot.SetLiftHeight(0.0f);
+    _CurrentRobot.SetHeadAngle(-1.0f);
   }
 
   public override void Update() {
     base.Update();
 
-    if (Time.time - lastTimeSeenGoldBlock_ > 5.0f) {
-      stateMachine_.SetNextState(new LookForGoldCubeState());
+    if (Time.time - _LastTimeSeenGoldBlock > 5.0f) {
+      _StateMachine.SetNextState(new LookForGoldCubeState());
     }
 
     if (HasGoldBlockInView()) {
-      lastTimeSeenGoldBlock_ = Time.time;
+      _LastTimeSeenGoldBlock = Time.time;
       ObservedObject followingCube = FollowClosest();
       if (followingCube != null) {
-        if ((stateMachine_.GetGame() as TreasureHuntGame).HoveringOverGold((LightCube)followingCube)) {
-          stateMachine_.SetNextState(new CelebrateGoldState());
+        if ((_StateMachine.GetGame() as TreasureHuntGame).HoveringOverGold((LightCube)followingCube)) {
+          _StateMachine.SetNextState(new CelebrateGoldState());
         }
       }
     }
     else {
-      robot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
   }
 
   private bool HasGoldBlockInView() {
-    foreach (ObservedObject obj in robot.VisibleObjects) {
+    foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
       if (obj is LightCube) {
         return true;
       }
@@ -46,9 +46,9 @@ public class FollowGoldCubeState : State {
   private ObservedObject FollowClosest() {
     ObservedObject closest = null;
     float dist = float.MaxValue;
-    foreach (ObservedObject obj in robot.VisibleObjects) {
+    foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
       if (obj is LightCube) {
-        float d = Vector3.Distance(robot.WorldPosition, obj.WorldPosition);
+        float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
         if (d < dist) {
           dist = d;
           closest = obj;
@@ -57,11 +57,11 @@ public class FollowGoldCubeState : State {
     }
 
     if (closest == null) {
-      robot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       return closest;
     }
 
-    float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
+    float angle = Vector2.Angle(_CurrentRobot.Forward, closest.WorldPosition - _CurrentRobot.WorldPosition);
     if (angle < 10.0f) {
 
       float speed = 60.0f;
@@ -69,23 +69,23 @@ public class FollowGoldCubeState : State {
       float distMin = 90.0f;
 
       if (dist > distMax) {
-        robot.DriveWheels(speed, speed);
+        _CurrentRobot.DriveWheels(speed, speed);
       }
       else if (dist < distMin) {
-        robot.DriveWheels(-speed, -speed);
+        _CurrentRobot.DriveWheels(-speed, -speed);
       }
       else {
-        robot.DriveWheels(0.0f, 0.0f);
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
       }
     }
     else {
       // we need to turn to face it
       ComputeTurnDirection(closest);
-      if (searchTurnRight_) {
-        robot.DriveWheels(35.0f, -30.0f);
+      if (_SearchTurnRight) {
+        _CurrentRobot.DriveWheels(35.0f, -30.0f);
       }
       else {
-        robot.DriveWheels(-30.0f, 35.0f);
+        _CurrentRobot.DriveWheels(-30.0f, 35.0f);
       }
     }
 
@@ -94,11 +94,11 @@ public class FollowGoldCubeState : State {
   }
 
   private void ComputeTurnDirection(ObservedObject followBlock) {
-    float turnAngle = Vector3.Cross(robot.Forward, followBlock.WorldPosition - robot.WorldPosition).z;
+    float turnAngle = Vector3.Cross(_CurrentRobot.Forward, followBlock.WorldPosition - _CurrentRobot.WorldPosition).z;
     if (turnAngle < 0.0f)
-      searchTurnRight_ = true;
+      _SearchTurnRight = true;
     else
-      searchTurnRight_ = false;
+      _SearchTurnRight = false;
   }
 
 }

@@ -3,22 +3,22 @@ using System.Collections;
 
 public class AskCozmoGame : GameBase {
 
-  private bool animationPlaying_ = false;
+  private bool _AnimationPlaying = false;
 
   [SerializeField]
-  private AskCozmoPanel gamePanelPrefab_;
+  private AskCozmoPanel _GamePanelPrefab;
 
-  private AskCozmoPanel gamePanel_;
+  private AskCozmoPanel _GamePanel;
 
   void Start() {
-    gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<AskCozmoPanel>();
-    gamePanel_.OnAskButtonPressed += OnAnswerRequested;
+    _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
+    _GamePanel.OnAskButtonPressed += OnAnswerRequested;
     CreateDefaultQuitButton();
   }
 
   public override void CleanUp() {
-    if (gamePanel_ != null) {
-      UIManager.CloseDialogImmediately(gamePanel_);
+    if (_GamePanel != null) {
+      UIManager.CloseDialogImmediately(_GamePanel);
     }
     DestroyDefaultQuitButton();
   }
@@ -26,11 +26,11 @@ public class AskCozmoGame : GameBase {
   // user just asked the question and pressed the
   // give me answer button.
   public void OnAnswerRequested() {
-    if (animationPlaying_) {
+    if (_AnimationPlaying) {
       return;
     }
 
-    animationPlaying_ = true;
+    _AnimationPlaying = true;
     if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
       robot.SendAnimation("majorWin", AnimationDone);
     }
@@ -40,6 +40,6 @@ public class AskCozmoGame : GameBase {
   }
 
   void AnimationDone(bool success) {
-    animationPlaying_ = false;
+    _AnimationPlaying = false;
   }
 }

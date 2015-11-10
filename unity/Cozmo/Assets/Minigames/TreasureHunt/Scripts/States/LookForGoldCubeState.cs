@@ -3,7 +3,7 @@ using System.Collections;
 
 public class LookForGoldCubeState : State {
 
-  bool lookingAround_ = false;
+  bool _LookingAround = false;
 
   public override void Enter() {
     base.Enter();
@@ -11,24 +11,24 @@ public class LookForGoldCubeState : State {
 
   public override void Update() {
     base.Update();
-    for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      if (robot.VisibleObjects[i] is LightCube) {
-        stateMachine_.SetNextState(new FollowGoldCubeState());
+    for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
+      if (_CurrentRobot.VisibleObjects[i] is LightCube) {
+        _StateMachine.SetNextState(new FollowGoldCubeState());
       }
     }
   }
 
   void SearchForAvailableBlock() {
-    if (lookingAround_ == false) {
-      lookingAround_ = true;
-      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+    if (_LookingAround == false) {
+      _LookingAround = true;
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
     }
   }
 
   public override void Exit() {
     base.Exit();
-    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-    lookingAround_ = false;
+    _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    _LookingAround = false;
   }
 
 }

@@ -40,11 +40,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1cc5214f734c4d29a7ee58dcdd70795, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _openPatternCollectionDialogButtonPrefab: {fileID: 11412590, guid: 9d90f5a6060b94ed5a5ec1718a1bd3a7,
+  _OpenPatternCollectionDialogButtonPrefab: {fileID: 11412590, guid: 9d90f5a6060b94ed5a5ec1718a1bd3a7,
     type: 2}
-  _patternCollectionDialogPrefab: {fileID: 11448498, guid: abab7cda4de7b428fa17f9b115fddb81,
+  _PatternCollectionDialogPrefab: {fileID: 11448498, guid: abab7cda4de7b428fa17f9b115fddb81,
     type: 2}
-  _patternDiscoveredDialogPrefab: {fileID: 11439408, guid: 1f97977e1561a4d43b6da7aa8e6ed02c,
+  _PatternDiscoveredDialogPrefab: {fileID: 11439408, guid: 1f97977e1561a4d43b6da7aa8e6ed02c,
     type: 2}
 --- !u!114 &11480600
 MonoBehaviour:
@@ -63,7 +63,22 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _OpenPatternCollectionDialogButtonPrefab
+      value: 
+      objectReference: {fileID: 11412590, guid: 9d90f5a6060b94ed5a5ec1718a1bd3a7,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _PatternCollectionDialogPrefab
+      value: 
+      objectReference: {fileID: 11448498, guid: abab7cda4de7b428fa17f9b115fddb81,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _PatternDiscoveredDialogPrefab
+      value: 
+      objectReference: {fileID: 11439408, guid: 1f97977e1561a4d43b6da7aa8e6ed02c,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 178374}

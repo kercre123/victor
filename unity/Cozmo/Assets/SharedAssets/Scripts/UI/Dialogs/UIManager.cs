@@ -7,19 +7,20 @@ using DG.Tweening;
 
 public class UIManager : MonoBehaviour {
 
-  private static UIManager _instance;
+  private static UIManager _Instance;
+
   public static UIManager Instance {
     get {
-      if (_instance == null) {
+      if (_Instance == null) {
         DAS.Error("UIManager", "Don't access this until Start!");
       }
-      return _instance;
+      return _Instance;
     }
     private set {
-      if (_instance != null) {
+      if (_Instance != null) {
         DAS.Error("UIManager", "There shouldn't be more than one UIManager");
       }
-      _instance = value;
+      _Instance = value;
     }
   }
 
@@ -35,9 +36,9 @@ public class UIManager : MonoBehaviour {
   private List<BaseDialog> _openDialogs;
 
   void Awake() {
-    _instance = this;
+    _Instance = this;
     _openDialogs = new List<BaseDialog>();
-    DOTween.Init ();
+    DOTween.Init();
     BaseDialog.BaseDialogCloseAnimationFinished += HandleBaseDialogCloseAnimationFinished;
   }
 
@@ -46,39 +47,39 @@ public class UIManager : MonoBehaviour {
   }
 
   public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (Instance._perspUiCanvas.transform, false);
-    newUi.layer = LayerMask.NameToLayer ("3DUI");
+    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    newUi.transform.SetParent(Instance._perspUiCanvas.transform, false);
+    newUi.layer = LayerMask.NameToLayer("3DUI");
     return newUi;
   }
 
   public static GameObject CreateUI(GameObject uiPrefab, Transform parentTransform) {
-    GameObject newUi = GameObject.Instantiate (uiPrefab);
-    newUi.transform.SetParent (parentTransform, false);
+    GameObject newUi = GameObject.Instantiate(uiPrefab);
+    newUi.transform.SetParent(parentTransform, false);
     return newUi;
   }
 
   public static BaseDialog OpenDialog(BaseDialog dialogPrefab) {
-    GameObject newDialog = GameObject.Instantiate (dialogPrefab.gameObject);
-    newDialog.transform.SetParent (Instance._orthoUiCanvas.transform, false);
+    GameObject newDialog = GameObject.Instantiate(dialogPrefab.gameObject);
+    newDialog.transform.SetParent(Instance._orthoUiCanvas.transform, false);
 
-    BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog> ();
-    baseDialogScript.OpenDialog ();
-    Instance._openDialogs.Add (baseDialogScript);
+    BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog>();
+    baseDialogScript.OpenDialog();
+    Instance._openDialogs.Add(baseDialogScript);
 
     return baseDialogScript;
   }
 
   public static void CloseDialog(BaseDialog dialogObject) {
-    dialogObject.CloseDialog ();
+    dialogObject.CloseDialog();
   }
 
   public static void CloseDialogImmediately(BaseDialog dialogObject) {
-    dialogObject.CloseDialogImmediately ();
+    dialogObject.CloseDialogImmediately();
   }
 
   public static void CloseAllDialogs() {
-    while(Instance._openDialogs.Count > 0) {
+    while (Instance._openDialogs.Count > 0) {
       if (Instance._openDialogs[0] != null) {
         Instance._openDialogs[0].CloseDialog();
       }
@@ -86,7 +87,7 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllDialogsImmediately() {
-    while(Instance._openDialogs.Count > 0) {
+    while (Instance._openDialogs.Count > 0) {
       if (Instance._openDialogs[0] != null) {
         Instance._openDialogs[0].CloseDialogImmediately();
       }
@@ -94,20 +95,19 @@ public class UIManager : MonoBehaviour {
   }
 
   public static Camera GetUICamera() {
-    return _instance._orthoUiCanvas.worldCamera;
+    return _Instance._orthoUiCanvas.worldCamera;
   }
 
   public static void DisableTouchEvents() {
-    _instance._eventSystemScript.gameObject.SetActive (false);
+    _Instance._eventSystemScript.gameObject.SetActive(false);
   }
 
   public static void EnableTouchEvents() {
-    _instance._eventSystemScript.gameObject.SetActive (true);
+    _Instance._eventSystemScript.gameObject.SetActive(true);
   }
 
-  private void HandleBaseDialogCloseAnimationFinished (string dialogId, BaseDialog dialog)
-  {
-    Instance._openDialogs.Remove (dialog);
+  private void HandleBaseDialogCloseAnimationFinished(string dialogId, BaseDialog dialog) {
+    Instance._openDialogs.Remove(dialog);
   }
 
 }

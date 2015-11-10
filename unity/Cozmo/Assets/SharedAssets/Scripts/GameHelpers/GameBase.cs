@@ -6,7 +6,7 @@ using System.Collections;
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
 
-  private static GameObject s_defaultQuitGameButtonPrefab;
+  private static GameObject sDefaultQuitGameButtonPrefab;
 
   public delegate void MiniGameQuitHandler();
 
@@ -18,29 +18,29 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  private Button quitButtonInstance_;
+  private Button _QuitButtonInstance;
   
   [SerializeField]
-  string gameName_;
+  string _GameName;
 
-  public string GameName { get { return gameName_; } private set { gameName_ = value; } }
+  public string GameName { get { return _GameName; } private set { _GameName = value; } }
 
   public Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
   protected void CreateDefaultQuitButton() {
     // Resources.Load can be pretty slow, so cache the prefab for future use.
-    if (s_defaultQuitGameButtonPrefab == null) {
-      s_defaultQuitGameButtonPrefab = Resources.Load("Prefabs/UI/DefaultQuitMiniGameButton") as GameObject;
+    if (sDefaultQuitGameButtonPrefab == null) {
+      sDefaultQuitGameButtonPrefab = Resources.Load("Prefabs/UI/DefaultQuitMiniGameButton") as GameObject;
     }
-    GameObject newButton = UIManager.CreateUI(s_defaultQuitGameButtonPrefab);
+    GameObject newButton = UIManager.CreateUI(sDefaultQuitGameButtonPrefab);
     
-    quitButtonInstance_ = newButton.GetComponent<Button>();
-    quitButtonInstance_.onClick.AddListener(OnQuitButtonTap);  
+    _QuitButtonInstance = newButton.GetComponent<Button>();
+    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);  
   }
 
   protected void DestroyDefaultQuitButton() {
-    if (quitButtonInstance_ != null) {
-      Destroy(quitButtonInstance_.gameObject);
+    if (_QuitButtonInstance != null) {
+      Destroy(_QuitButtonInstance.gameObject);
     }
   }
 

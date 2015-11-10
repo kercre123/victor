@@ -5,19 +5,19 @@ public class CelebrateGoldState : State {
 
   public override void Enter() {
     base.Enter();
-    robot.SendAnimation("majorWin", AnimationDone);
+    _CurrentRobot.SendAnimation("majorWin", AnimationDone);
   }
 
   void AnimationDone(bool success) {
     // play animation on phone screen
-    (stateMachine_.GetGame() as TreasureHuntGame).ClearBlockLights();
+    (_StateMachine.GetGame() as TreasureHuntGame).ClearBlockLights();
     OnNextHunt();
   }
 
   // called when next hunt button is pressed.
   void OnNextHunt() {
-    (stateMachine_.GetGame() as TreasureHuntGame).PickNewGoldPosition();
-    stateMachine_.SetNextState(new LookForGoldCubeState());
+    (_StateMachine.GetGame() as TreasureHuntGame).PickNewGoldPosition();
+    _StateMachine.SetNextState(new LookForGoldCubeState());
   }
 
   public override void Exit() {

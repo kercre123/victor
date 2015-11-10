@@ -5,7 +5,7 @@ public class AudioManager : MonoBehaviour {
   private static AudioManager instance = null;
 
   [SerializeField]
-  private AudioSource audioSource_;
+  private AudioSource _AudioSource;
 
   void Awake() {
     if (instance != null) {
@@ -26,10 +26,10 @@ public class AudioManager : MonoBehaviour {
       DAS.Warn("AudioManager", "AudioManager is null");
       return null;
     }
-    instance.audioSource_.clip = clip;
-    instance.audioSource_.Stop(); 
-    instance.audioSource_.Play();
-    return instance.audioSource_;
+    instance._AudioSource.clip = clip;
+    instance._AudioSource.Stop(); 
+    instance._AudioSource.Play();
+    return instance._AudioSource;
   }
 
   public static void Stop() {
@@ -37,6 +37,6 @@ public class AudioManager : MonoBehaviour {
       DAS.Warn("AudioManager", "AudioManager is null");
       return;
     }
-    instance.audioSource_.Stop();
+    instance._AudioSource.Stop();
   }
 }

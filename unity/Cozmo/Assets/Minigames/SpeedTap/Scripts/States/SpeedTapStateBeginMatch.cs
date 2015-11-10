@@ -2,22 +2,22 @@
 
 public class SpeedTapStateBeginMatch : State {
 
-  private SpeedTapGame speedTapGame_ = null;
+  private SpeedTapGame _SpeedTapGame = null;
 
   public override void Enter() {
     base.Enter();
-    speedTapGame_ = stateMachine_.GetGame() as SpeedTapGame;
+    _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
     // Do a little dance
     // Blink some lights
     // Clear the score
-    speedTapGame_.cozmoScore_ = 0;
-    speedTapGame_.playerScore_ = 0;
-    speedTapGame_.UpdateUI();
+    _SpeedTapGame.CozmoScore = 0;
+    _SpeedTapGame.PlayerScore = 0;
+    _SpeedTapGame.UpdateUI();
   }
 
   public override void Update() {
     base.Update();
-    stateMachine_.SetNextState(new SpeedTapStatePlayNewHand());
+    _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
   }
 }
 

@@ -4,17 +4,17 @@ using System.Collections.Generic;
 
 public class TreasureHuntGame : GameBase {
 
-  private StateMachineManager stateMachineManager_ = new StateMachineManager();
-  private StateMachine stateMachine_ = new StateMachine();
+  private StateMachineManager _StateMachineManager = new StateMachineManager();
+  private StateMachine _StateMachine = new StateMachine();
 
   public Vector2 GoldPosition { get; set; }
 
   void Start() {
-    stateMachine_.SetGameRef(this);
-    stateMachineManager_.AddStateMachine("TreasureHuntStateMachine", stateMachine_);
+    _StateMachine.SetGameRef(this);
+    _StateMachineManager.AddStateMachine("TreasureHuntStateMachine", _StateMachine);
     InitialCubesState initCubeState = new InitialCubesState();
     initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
-    stateMachine_.SetNextState(initCubeState);
+    _StateMachine.SetNextState(initCubeState);
     robot.StopFaceAwareness();
   }
 
@@ -47,7 +47,7 @@ public class TreasureHuntGame : GameBase {
 
     if (hovering) {
       for (int i = 0; i < cube.Lights.Length; ++i) {
-        cube.Lights[i].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+        cube.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
       }
     }
     else {
@@ -64,21 +64,21 @@ public class TreasureHuntGame : GameBase {
 
       if (dotVal > 0.5f) {
         // front
-        cube.Lights[0].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+        cube.Lights[0].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
       }
       else if (dotVal < -0.5f) {
         // back
-        cube.Lights[2].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+        cube.Lights[2].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
       }
       else {
         float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
         if (crossSign < 0.0f) {
           // left
-          cube.Lights[1].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+          cube.Lights[1].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
         }
         else {
           // right
-          cube.Lights[3].onColor = CozmoPalette.ColorToUInt(Color.yellow);
+          cube.Lights[3].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
         }
       }
     }
@@ -87,7 +87,7 @@ public class TreasureHuntGame : GameBase {
   }
 
   void Update() {
-    stateMachineManager_.UpdateAllMachines();
+    _StateMachineManager.UpdateAllMachines();
   }
 
   public override void CleanUp() {

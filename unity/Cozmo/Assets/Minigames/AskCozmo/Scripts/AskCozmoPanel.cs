@@ -4,14 +4,14 @@ using System.Collections;
 public class AskCozmoPanel : BaseDialog {
 
   [SerializeField]
-  private UnityEngine.UI.Button askButton_;
+  private UnityEngine.UI.Button _AskButton;
 
   public delegate void AskButtonPressedHandler();
 
   public AskButtonPressedHandler OnAskButtonPressed;
 
   void Start() {
-    askButton_.onClick.AddListener(OnAskButton);
+    _AskButton.onClick.AddListener(OnAskButton);
   }
 
   void OnAskButton() {

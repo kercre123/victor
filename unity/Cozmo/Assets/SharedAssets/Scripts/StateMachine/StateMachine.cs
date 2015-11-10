@@ -3,38 +3,38 @@ using System.Collections;
 
 public class StateMachine {
 
-  State currState_ = null;
-  State nextState_ = null;
+  private State _CurrState = null;
+  private State _NextState = null;
 
-  GameBase game_ = null;
+  private GameBase _Game = null;
 
   public GameBase GetGame() {
-    return game_;
+    return _Game;
   }
 
   // This is useful for if you want a reference back to the MonoBehaviour that created
   // and updates your state machine. You should be using GameBase as a common access
   // point for shared data across states.
   public void SetGameRef(GameBase game) {
-    game_ = game;
+    _Game = game;
   }
 
   public void SetNextState(State nextState) {
-    nextState_ = nextState;
-    nextState_.SetStateMachine(this);
+    _NextState = nextState;
+    _NextState.SetStateMachine(this);
   }
 
   public void UpdateStateMachine() {
-    if (nextState_ != null) {
-      if (currState_ != null) {
-        currState_.Exit();
+    if (_NextState != null) {
+      if (_CurrState != null) {
+        _CurrState.Exit();
       }
-      nextState_.Enter();
-      currState_ = nextState_;
-      nextState_ = null;
+      _NextState.Enter();
+      _CurrState = _NextState;
+      _NextState = null;
     }
     else {
-      currState_.Update();
+      _CurrState.Update();
     }
   }
 

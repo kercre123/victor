@@ -52,8 +52,8 @@ public class PatternMemory {
       Debug.Assert(bankObj.IsArray);
       foreach (JSONObject pattern in bankObj.list) {
         BlockPattern curPattern = new BlockPattern();
-        curPattern.verticalStack_ = pattern[kPatternAttribVertical].b;
-        curPattern.facingCozmo = pattern[kPatternAttribBlocks].b;
+        curPattern.VerticalStack = pattern[kPatternAttribVertical].b;
+        curPattern.FacingCozmo = pattern[kPatternAttribBlocks].b;
         Debug.Assert(pattern[kPatternAttribBlocks].IsArray);
         foreach (JSONObject blockData in pattern[kPatternAttribBlocks].list) {
           Debug.Assert(blockData.IsObject);
@@ -63,7 +63,7 @@ public class PatternMemory {
           curBlock.left = (blockData[kBlockAttribLeft].str != "");
           curBlock.right = (blockData[kBlockAttribRight].str != "");
           curBlock.facing_cozmo = blockData[kBlockAttribFacingCozmo].b;
-          curPattern.blocks_.Add(curBlock);
+          curPattern.Blocks.Add(curBlock);
         }
         bank.Add(curPattern);
         DAS.Info("PatternMemory.Init", "Pattern Added for bank: " + key + " hash = " + curPattern.GetHashCode());
@@ -83,18 +83,18 @@ public class PatternMemory {
     for (int i = 0; i < memoryBanks.Count; ++i) {
       if (memoryBanks[i].Contains(pattern)) {
         if (memoryBanks[i].TryAddSeen(pattern)) {
-          DAS.Info("PatternMemory.Add", "Pattern Added for bank: " + memoryBanks[i].name);
+          DAS.Info("PatternMemory.Add", "Pattern Added for bank: " + memoryBanks[i].Name);
 
           newPattern = true;
 
           List<string> tags = new List<string>();
           tags.Add(PATTERN_MEMORY_BADGE_TAG);
-          tags.Add(memoryBanks[i].name);
+          tags.Add(memoryBanks[i].Name);
           BadgeManager.TryAddBadge(pattern, tags);
           RaisePatternAdded(pattern, memoryBanks[i]);
         }
         else {
-          DAS.Info("PatternMemory.Add", "Pattern already exists in bank: " + memoryBanks[i].name);
+          DAS.Info("PatternMemory.Add", "Pattern already exists in bank: " + memoryBanks[i].Name);
           newPattern = false;
         }
         DAS.Info("PatternMemory.Add", "There are now " + memoryBanks[i].GetSeenPatterns().Count + " patterns in that bank");
@@ -128,7 +128,7 @@ public class PatternMemory {
   public HashSet<BlockPattern> GetAllPatterns() {
     HashSet<BlockPattern> allPatterns = new HashSet<BlockPattern>();
     for (int i = 0; i < memoryBanks.Count; i++) {
-      allPatterns.UnionWith(memoryBanks[i].patterns);
+      allPatterns.UnionWith(memoryBanks[i].Patterns);
     }
     return allPatterns;
   }

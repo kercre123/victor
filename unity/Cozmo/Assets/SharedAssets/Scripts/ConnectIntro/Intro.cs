@@ -3,46 +3,46 @@ using UnityEngine.UI;
 using System.Collections;
 
 public class Intro : MonoBehaviour {
-  [SerializeField] protected InputField engineIP_;
-  [SerializeField] protected InputField ip_;
-  [SerializeField] protected InputField simIP_;
-  [SerializeField] protected InputField visualizerIP_;
-  [SerializeField] protected Text error_;
+  [SerializeField] protected InputField _EngineIPInputField;
+  [SerializeField] protected InputField _RobotIPInputField;
+  [SerializeField] protected InputField _SimIPInputField;
+  [SerializeField] protected InputField _VisualizerIPInputField;
+  [SerializeField] protected Text _Error;
 
-  private bool simulated_ = false;
-  private string currentRobotIP_;
-  private string currentScene_;
-  private string currentVizHostIP_;
+  private bool _Simulated = false;
+  private string _CurrentRobotIP;
+  private string _CurrentScene;
+  private string _CurrentVizHostIP;
 
   private const int ROBOT_ID = 1;
 
-  private Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
+  private Robot _Robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
-  private string lastEngineIp {
+  private string LastEngineIP {
     get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
 
     set { PlayerPrefs.SetString("LastEngineIP", value); }
   }
 
-  private string lastIp {
+  private string LastIP {
     get { return PlayerPrefs.GetString("LastIP", "172.31.1.1"); }
     
     set { PlayerPrefs.SetString("LastIP", value); }
   }
 
-  private string lastSimIp {
+  private string LastSimIP {
     get { return PlayerPrefs.GetString("LastSimIP", "127.0.0.1"); }
     
     set { PlayerPrefs.SetString("LastSimIP", value); }
   }
 
-  private string lastId {
+  private string LastID {
     get { return PlayerPrefs.GetString("LastID", "1"); }
     
     set { PlayerPrefs.SetString("LastID", value); }
   }
 
-  private string lastVisualizerIp {
+  private string LastVisualizerIP {
     get { return PlayerPrefs.GetString("LastVisualizerIp", "127.0.0.1"); }
     
     set { PlayerPrefs.SetString("LastVisualizerIp", value); }
@@ -50,15 +50,15 @@ public class Intro : MonoBehaviour {
 
   protected void OnEnable() {
 
-    engineIP_.text = lastEngineIp;
-    ip_.text = lastIp;
-    simIP_.text = lastSimIp;
-    visualizerIP_.text = lastVisualizerIp;
+    _EngineIPInputField.text = LastEngineIP;
+    _RobotIPInputField.text = LastIP;
+    _SimIPInputField.text = LastSimIP;
+    _VisualizerIPInputField.text = LastVisualizerIP;
 
-    engineIP_.Rebuild(CanvasUpdate.PreRender);
-    ip_.Rebuild(CanvasUpdate.PreRender);
-    simIP_.Rebuild(CanvasUpdate.PreRender);
-    visualizerIP_.Rebuild(CanvasUpdate.PreRender);
+    _EngineIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _RobotIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _SimIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _VisualizerIPInputField.Rebuild(CanvasUpdate.PreRender);
 
   }
 
@@ -93,18 +93,18 @@ public class Intro : MonoBehaviour {
     if (RobotEngineManager.instance != null) {
       DisconnectionReason reason = RobotEngineManager.instance.GetLastDisconnectionReason();
       if (reason != DisconnectionReason.None) {
-        error_.text = "Disconnected: " + reason.ToString();
+        _Error.text = "Disconnected: " + reason.ToString();
       }
     }
   }
 
   public void Play(bool sim) {
-    simulated_ = sim;
+    _Simulated = sim;
     RobotEngineManager.instance.Disconnect();
 
     string errorText = null;
-    string ipText = simulated_ ? simIP_.text : ip_.text;
-    if (string.IsNullOrEmpty(engineIP_.text)) {
+    string ipText = _Simulated ? _SimIPInputField.text : _RobotIPInputField.text;
+    if (string.IsNullOrEmpty(_EngineIPInputField.text)) {
       errorText = "You must enter a device ip address.";
     }
     if (string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ipText)) {
@@ -112,33 +112,33 @@ public class Intro : MonoBehaviour {
     }
 
     if (string.IsNullOrEmpty(errorText)) {
-      currentRobotIP_ = ipText;
-      currentVizHostIP_ = visualizerIP_.text;
+      _CurrentRobotIP = ipText;
+      _CurrentVizHostIP = _VisualizerIPInputField.text;
 
       SaveData();
-      RobotEngineManager.instance.Connect(engineIP_.text);
-      error_.text = "<color=#ffffff>Connecting to engine at " + engineIP_.text + "....</color>";
+      RobotEngineManager.instance.Connect(_EngineIPInputField.text);
+      _Error.text = "<color=#ffffff>Connecting to engine at " + _EngineIPInputField.text + "....</color>";
     }
     else {
-      error_.text = errorText;
+      _Error.text = errorText;
     }
   }
 
   protected void SaveData() {
-    lastIp = ip_.text;
-    lastSimIp = simIP_.text;
-    lastEngineIp = engineIP_.text;
-    lastVisualizerIp = visualizerIP_.text;
+    LastIP = _RobotIPInputField.text;
+    LastSimIP = _SimIPInputField.text;
+    LastEngineIP = _EngineIPInputField.text;
+    LastVisualizerIP = _VisualizerIPInputField.text;
   }
 
   private void Connected(string connectionIdentifier) {
-    error_.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
-    RobotEngineManager.instance.StartEngine(currentVizHostIP_);
-    RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, currentRobotIP_, simulated_);
+    _Error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
+    RobotEngineManager.instance.StartEngine(_CurrentVizHostIP);
+    RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, _CurrentRobotIP, _Simulated);
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    error_.text = "Disconnected: " + reason.ToString();
+    _Error.text = "Disconnected: " + reason.ToString();
   }
 
   private void RobotConnected(int robotID) {
@@ -147,12 +147,12 @@ public class Intro : MonoBehaviour {
       return;
     }
 
-    if (simulated_ && robot != null) {
-      robot.VisionWhileMoving(true);    
-      robot.StartFaceAwareness();
+    if (_Simulated && _Robot != null) {
+      _Robot.VisionWhileMoving(true);    
+      _Robot.StartFaceAwareness();
     }
 
-    error_.text = "";
+    _Error.text = "";
     DAS.Info("Intro", "Robot Connected!");
   }
 

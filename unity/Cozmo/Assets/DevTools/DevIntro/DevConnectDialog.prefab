@@ -29,7 +29,7 @@ GameObject:
   - 114: {fileID: 11419638}
   - 114: {fileID: 11429128}
   m_Layer: 5
-  m_Name: Button_ConnectToRobot
+  m_Name: ButtonConnectToRobot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -132,7 +132,7 @@ GameObject:
   - 114: {fileID: 11482038}
   - 114: {fileID: 11494530}
   m_Layer: 5
-  m_Name: Robot IP
+  m_Name: RobotIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -168,7 +168,7 @@ GameObject:
   - 114: {fileID: 11492746}
   - 114: {fileID: 11455330}
   m_Layer: 5
-  m_Name: Engine IP
+  m_Name: EngineIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -237,7 +237,7 @@ GameObject:
   - 114: {fileID: 11489358}
   - 114: {fileID: 11407174}
   m_Layer: 5
-  m_Name: Simulator IP
+  m_Name: SimulatorIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -271,7 +271,7 @@ GameObject:
   - 114: {fileID: 11485454}
   - 114: {fileID: 11411302}
   m_Layer: 5
-  m_Name: Visualizer IP
+  m_Name: VisualizerIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -322,7 +322,7 @@ GameObject:
   - 222: {fileID: 22258368}
   - 114: {fileID: 11409176}
   m_Layer: 5
-  m_Name: Error
+  m_Name: ErrorText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -340,7 +340,7 @@ GameObject:
   - 114: {fileID: 11427572}
   - 114: {fileID: 11475770}
   m_Layer: 5
-  m_Name: Button_ConnectToSim
+  m_Name: ButtonConnectToSim
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1281,11 +1281,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21b8c8186a3de4a2e8c3ba2de77de642, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  engineIP_: {fileID: 11455330}
-  ip_: {fileID: 11494530}
-  simIP_: {fileID: 11407174}
-  visualizerIP_: {fileID: 11411302}
-  error_: {fileID: 11409176}
+  _EngineIPInputField: {fileID: 11455330}
+  _RobotIPInputField: {fileID: 11494530}
+  _SimIPInputField: {fileID: 11407174}
+  _VisualizerIPInputField: {fileID: 11411302}
+  _Error: {fileID: 11409176}
 --- !u!114 &11482038
 MonoBehaviour:
   m_ObjectHideFlags: 1
