@@ -9,6 +9,7 @@
 #include "anki/common/shared/utilities_shared.h"
 
 #include <stdexcept>
+#include <cmath>
 
 namespace Anki {
 
@@ -51,7 +52,13 @@ namespace Anki {
   {
     
   }
-  
+
+  void Pose2d::TranslateBy(float dist)
+  {
+    _translation.x() += dist * cosf(_angle.ToFloat());
+    _translation.y() += dist * sinf(_angle.ToFloat());
+  }
+
   void Pose2d::operator*=(const Pose2d &other)
   {
     _angle += other._angle;
@@ -94,6 +101,17 @@ namespace Anki {
     _translation = R * _translation;
     
     return *this;
+  }
+
+  void Pose2d::Print() const
+  {
+    CoreTechPrint("Pose2d%s%s: Translation=(%f, %f), RotAng=%frad (%.1fdeg), parent 0x%x;%s\n",
+                  GetName().empty() ? "" : " ", GetName().c_str(),
+                  _translation.x(), _translation.y(),
+                  _angle.ToFloat(), _angle.getDegrees(),
+                  _parent,
+                  _parent != nullptr ? _parent->GetName().c_str() : "NULL"
+                  );
   }
     
   
@@ -158,7 +176,7 @@ namespace Anki {
   }
   
   Pose3d::Pose3d(const Pose2d &pose2d)
-  : Pose3d(pose2d.GetAngle(), {0.f, 0.f, 0.f},
+  : Pose3d(pose2d.GetAngle(), {0.f, 0.f, 1.f},
            {pose2d.GetX(), pose2d.GetY(), 0.f})
   {
     // At this point, we have initialized a 3D pose corresponding
@@ -180,10 +198,13 @@ namespace Anki {
     // the cross product gives us the axis around which we will
     // rotate.
     Radians angle3d = std::acos(dotProduct);
-    Vec3f   axis3d  = CrossProduct(Zaxis, pose2d.GetPlaneNormal());
-    
-    Pose3d planePose(angle3d, axis3d, pose2d.GetPlaneOrigin());
-    this->PreComposeWith(planePose);
+
+    if( ! NEAR_ZERO( angle3d ) ) {
+      Vec3f axis3d = CrossProduct(Zaxis, pose2d.GetPlaneNormal());
+      Pose3d planePose(angle3d, axis3d, pose2d.GetPlaneOrigin());
+      this->PreComposeWith(planePose);
+    }
+    // else we are already in the correct plane
     
   } // Constructor: Pose3d(Pose2d)
 
