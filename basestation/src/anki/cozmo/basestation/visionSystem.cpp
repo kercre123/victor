@@ -418,71 +418,89 @@ namespace Cozmo {
     return retVal;
   }
   
-  Result VisionSystem::LookForMarkers(
-                                      const Array<u8> &grayscaleImage,
-                                      const DetectFiducialMarkersParameters &parameters,
-                                      FixedLengthList<VisionMarker> &markers,
-                                      MemoryStack ccmScratch,
-                                      MemoryStack onchipScratch,
-                                      MemoryStack offchipScratch)
+  Result VisionSystem::LookForMarkers(const Vision::Image& inputImageGray,
+                                      TimeStamp_t imageTimeStamp,
+                                      std::vector<Quad2f>& markerQuads)
   {
+    Result lastResult = RESULT_OK;
+    
+    Simulator::SetDetectionReadyTime(); // no-op on real hardware
+    
     BeginBenchmark("VisionSystem_LookForMarkers");
     
-    AnkiAssert(parameters.isInitialized);
+    AnkiAssert(_detectionParameters.isInitialized);
     
+    _memory.ResetBuffers();
+    
+    // Convert to an Embedded::Array<u8> so the old embedded methods can use the
+    // image data.
+    const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+    const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
+    
+    Array<u8> grayscaleImage(captureHeight, captureWidth,
+                             _memory._onchipScratch, Flags::Buffer(false,false,false));
+    
+    GetImageHelper(inputImageGray, grayscaleImage);
+    
+    PreprocessImage(grayscaleImage);
+    
+    Embedded::FixedLengthList<Embedded::VisionMarker>& markers = _memory._markers;
     const s32 maxMarkers = markers.get_maximumSize();
     
-    FixedLengthList<Array<f32> > homographies(maxMarkers, ccmScratch);
+    FixedLengthList<Array<f32> > homographies(maxMarkers, _memory._ccmScratch);
     
     markers.set_size(maxMarkers);
     homographies.set_size(maxMarkers);
     
     for(s32 i=0; i<maxMarkers; i++) {
-      Array<f32> newArray(3, 3, ccmScratch);
+      Array<f32> newArray(3, 3, _memory._ccmScratch);
       homographies[i] = newArray;
     }
     
     // TODO: Re-enable DebugStream for Basestation
     //MatlabVisualization::ResetFiducialDetection(grayscaleImage);
     
-#if USE_MATLAB_DETECTOR
+#   if USE_MATLAB_DETECTOR
     const Result result = MatlabVisionProcessor::DetectMarkers(grayscaleImage, markers, homographies, ccmScratch);
-#else
+#   else
     const CornerMethod cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
     
-    // TODO: Merge the fiducial detectio parameters structs
+    // Convert "basestation" detection parameters to "embedded" parameters
+    // TODO: Merge the fiducial detection parameters structs
     Embedded::FiducialDetectionParameters embeddedParams;
     embeddedParams.useIntegralImageFiltering = true;
-    embeddedParams.scaleImage_numPyramidLevels = parameters.scaleImage_numPyramidLevels;
-    embeddedParams.scaleImage_thresholdMultiplier = parameters.scaleImage_thresholdMultiplier;
-    embeddedParams.component1d_minComponentWidth = parameters.component1d_minComponentWidth;
-    embeddedParams.component1d_maxSkipDistance =  parameters.component1d_maxSkipDistance;
-    embeddedParams.component_minimumNumPixels = parameters.component_minimumNumPixels;
-    embeddedParams.component_maximumNumPixels = parameters.component_maximumNumPixels;
-    embeddedParams.component_sparseMultiplyThreshold = parameters.component_sparseMultiplyThreshold;
-    embeddedParams.component_solidMultiplyThreshold = parameters.component_solidMultiplyThreshold;
-    embeddedParams.component_minHollowRatio = parameters.component_minHollowRatio;
+    embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
+    embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
+    embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
+    embeddedParams.component1d_maxSkipDistance =  _detectionParameters.component1d_maxSkipDistance;
+    embeddedParams.component_minimumNumPixels = _detectionParameters.component_minimumNumPixels;
+    embeddedParams.component_maximumNumPixels = _detectionParameters.component_maximumNumPixels;
+    embeddedParams.component_sparseMultiplyThreshold = _detectionParameters.component_sparseMultiplyThreshold;
+    embeddedParams.component_solidMultiplyThreshold = _detectionParameters.component_solidMultiplyThreshold;
+    embeddedParams.component_minHollowRatio = _detectionParameters.component_minHollowRatio;
     embeddedParams.cornerMethod = cornerMethod;
-    embeddedParams.minLaplacianPeakRatio = parameters.minLaplacianPeakRatio;
-    embeddedParams.quads_minQuadArea = parameters.quads_minQuadArea;
-    embeddedParams.quads_quadSymmetryThreshold = parameters.quads_quadSymmetryThreshold;
-    embeddedParams.quads_minDistanceFromImageEdge = parameters.quads_minDistanceFromImageEdge;
-    embeddedParams.decode_minContrastRatio = parameters.decode_minContrastRatio;
-    embeddedParams.maxConnectedComponentSegments = parameters.maxConnectedComponentSegments;
-    embeddedParams.maxExtractedQuads = parameters.maxExtractedQuads;
-    embeddedParams.refine_quadRefinementIterations = parameters.quadRefinementIterations;
-    embeddedParams.refine_numRefinementSamples = parameters.numRefinementSamples;
-    embeddedParams.refine_quadRefinementMaxCornerChange = parameters.quadRefinementMaxCornerChange;
-    embeddedParams.refine_quadRefinementMinCornerChange = parameters.quadRefinementMinCornerChange;
-    embeddedParams.returnInvalidMarkers = parameters.keepUnverifiedMarkers;
+    embeddedParams.minLaplacianPeakRatio = _detectionParameters.minLaplacianPeakRatio;
+    embeddedParams.quads_minQuadArea = _detectionParameters.quads_minQuadArea;
+    embeddedParams.quads_quadSymmetryThreshold = _detectionParameters.quads_quadSymmetryThreshold;
+    embeddedParams.quads_minDistanceFromImageEdge = _detectionParameters.quads_minDistanceFromImageEdge;
+    embeddedParams.decode_minContrastRatio = _detectionParameters.decode_minContrastRatio;
+    embeddedParams.maxConnectedComponentSegments = _detectionParameters.maxConnectedComponentSegments;
+    embeddedParams.maxExtractedQuads = _detectionParameters.maxExtractedQuads;
+    embeddedParams.refine_quadRefinementIterations = _detectionParameters.quadRefinementIterations;
+    embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
+    embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
+    embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
+    embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
     embeddedParams.doCodeExtraction = true;
     
     const Result result = DetectFiducialMarkers(grayscaleImage,
                                                 markers,
                                                 homographies,
                                                 embeddedParams,
-                                                ccmScratch, onchipScratch, offchipScratch);
-#endif
+                                                _memory._ccmScratch,
+                                                _memory._onchipScratch,
+                                                _memory._offchipScratch);
+#   endif // USE_MATLAB_DETECTOR
     
     if(result != RESULT_OK) {
       return result;
@@ -503,35 +521,83 @@ namespace Cozmo {
      MatlabVisualization::SendDrawNow();
      */
     
+    const s32 numMarkers = _memory._markers.get_size();
+    markerQuads.reserve(numMarkers);
+    
+    bool isTrackingMarkerFound = false;
+    for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
+    {
+      const VisionMarker& crntMarker = _memory._markers[i_marker];
+      
+      // Construct a basestation quad from an embedded one:
+      Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
+        crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
+                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
+                  {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
+                    crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
+                  {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
+                    crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
+      
+      markerQuads.emplace_back(quad);
+      
+      Vision::ObservedMarker obsMarker(imageTimeStamp, crntMarker.markerType,
+                                       quad, _camera);
+      
+      _visionMarkerMailbox.putMessage(obsMarker);
+      
+      // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
+      if(!(_mode & TRACKING)          &&
+         _markerToTrack.IsSpecified() &&
+         !isTrackingMarkerFound       &&
+         _markerToTrack.Matches(crntMarker))
+      {
+        if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK)
+        {
+          return lastResult;
+        }
+        
+        // store the current mode so we can put it back when done tracking
+        _modeBeforeTracking = _mode;
+        
+        // Template initialization succeeded, switch to tracking mode:
+        // TODO: Log or issue message?
+        // NOTE: this disables any other modes so we are *only* tracking
+        _mode = IDLE;
+        EnableModeHelper(TRACKING);
+        
+      } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
+    } // for(each marker)
+    
     return RESULT_OK;
   } // LookForMarkers()
   
   
   
   // Divide image by mean of whatever is inside the trackingQuad
-  static Result BrightnessNormalizeImage(Embedded::Array<u8>& image,
+  Result VisionSystem::BrightnessNormalizeImage(Embedded::Array<u8>& image,
                                          const Embedded::Quadrilateral<f32>& quad)
   {
     //Debug: image.Show("OriginalImage", false);
     
-#define USE_VARIANCE 0
+#   define USE_VARIANCE 0
     
     // Compute mean of data inside the bounding box of the tracking quad
     const Embedded::Rectangle<s32> bbox = quad.ComputeBoundingRectangle<s32>();
     
     ConstArraySlice<u8> imageROI = image(bbox.top, bbox.bottom, bbox.left, bbox.right);
     
-#if USE_VARIANCE
+#   if USE_VARIANCE
     // Playing with normalizing using std. deviation as well
     s32 mean, var;
     Matrix::MeanAndVar<u8, s32>(imageROI, mean, var);
     const f32 stddev = sqrt(static_cast<f32>(var));
     const f32 oneTwentyEightOverStdDev = 128.f / stddev;
     //PRINT("Initial mean/std = %d / %.2f", mean, sqrt(static_cast<f32>(var)));
-#else
+#   else
     const u8 mean = Embedded::Matrix::Mean<u8, u32>(imageROI);
     //PRINT("Initial mean = %d", mean);
-#endif
+#   endif
     
     //PRINT("quad mean = %d", mean);
     //const f32 oneOverMean = 1.f / static_cast<f32>(mean);
@@ -545,9 +611,9 @@ namespace Cozmo {
       {
         f32 value = static_cast<f32>(img_i[j]);
         value -= static_cast<f32>(mean);
-#if USE_VARIANCE
+#       if USE_VARIANCE
         value *= oneTwentyEightOverStdDev;
-#endif
+#       endif
         value += 128.f;
         img_i[j] = saturate_cast<u8>(value) ;
       }
@@ -565,13 +631,13 @@ namespace Cozmo {
     
     //Debug: image.Show("NormalizedImage", true);
     
-#undef USE_VARIANCE
+#   undef USE_VARIANCE
     return RESULT_OK;
     
   } // BrightnessNormalizeImage()
   
   
-  static Result BrightnessNormalizeImage(Array<u8>& image, const Embedded::Quadrilateral<f32>& quad,
+  Result VisionSystem::BrightnessNormalizeImage(Array<u8>& image, const Embedded::Quadrilateral<f32>& quad,
                                          const f32 filterWidthFraction,
                                          MemoryStack scratch)
   {
@@ -622,32 +688,57 @@ namespace Cozmo {
     return RESULT_OK;
   } // BrightnessNormalizeImage()
   
-  Result VisionSystem::InitTemplate(const Array<u8> &grayscaleImage,
-                                    const Embedded::Quadrilateral<f32> &trackingQuad,
-                                    const TrackerParameters &parameters,
-                                    Tracker &tracker,
-                                    MemoryStack ccmScratch,
-                                    MemoryStack &onchipMemory, //< NOTE: onchip is a reference
-                                    MemoryStack &offchipMemory)
+  Result VisionSystem::InitTemplate(Array<u8> &grayscaleImage,
+                                    const Embedded::Quadrilateral<f32> &trackingQuad)
   {
-    AnkiAssert(parameters.isInitialized);
+    Result lastResult = RESULT_OK;
+    
+    AnkiAssert(_trackerParameters.isInitialized);
     AnkiAssert(_markerToTrack.width_mm > 0);
+
+    MemoryStack ccmScratch = _memory._ccmScratch;
+    MemoryStack &onchipMemory = _memory._onchipScratch; //< NOTE: onchip is a reference
+    MemoryStack &offchipMemory = _memory._offchipScratch;
+    
+    // We will start tracking the _first_ marker of the right type that
+    // we see.
+    // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
+    _isTrackingMarkerFound = true;
+    
+    // Normalize the image
+    // NOTE: This will change grayscaleImage!
+    if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
+      // Faster: normalize using mean of quad
+      lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad);
+    } else {
+      // Slower: normalize using local averages
+      // NOTE: This is currently off-chip for memory reasons, so it's slow!
+      lastResult = BrightnessNormalizeImage(grayscaleImage, trackingQuad,
+                                            _trackerParameters.normalizationFilterWidthFraction,
+                                            offchipMemory);
+    }
+    
+    AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                       "VisionSystem::Update::BrightnessNormalizeImage",
+                                       "BrightnessNormalizeImage failed.\n");
     
     _trackingIteration = 0;
     
-#if USE_MATLAB_TRACKER
-    return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
-#endif
+#   if USE_MATLAB_TRACKER
     
-    tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
+    return MatlabVisionProcessor::InitTemplate(grayscaleImage, trackingQuad, ccmScratch);
+    
+#   else
+    
+    _tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     trackingQuad,
-                                                                    parameters.scaleTemplateRegionPercent,
-                                                                    parameters.numPyramidLevels,
+                                                                    _trackerParameters.scaleTemplateRegionPercent,
+                                                                    _trackerParameters.numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
-                                                                    parameters.numFiducialEdgeSamples,
+                                                                    _trackerParameters.numFiducialEdgeSamples,
                                                                     FIDUCIAL_SQUARE_WIDTH_FRACTION,
-                                                                    parameters.numInteriorSamples,
-                                                                    parameters.numSamplingRegions,
+                                                                    _trackerParameters.numInteriorSamples,
+                                                                    _trackerParameters.numSamplingRegions,
                                                                     _headCamInfo->focalLength_x,
                                                                     _headCamInfo->focalLength_y,
                                                                     _headCamInfo->center_x,
@@ -666,10 +757,12 @@ namespace Cozmo {
      tracker.SetGainScheduling(tz_min, tz_max, Kp_min, Kp_max);
      */
     
-    if(!tracker.IsValid()) {
+    if(!_tracker.IsValid()) {
       PRINT_NAMED_ERROR("VisionSystem.InitTemplate", "Failed to initialize valid tracker.");
       return RESULT_FAIL;
     }
+    
+#   endif // USE_MATLAB_TRACKER
     
     /*
      // TODO: Re-enable visualization/debugstream on basestation
@@ -680,125 +773,262 @@ namespace Cozmo {
      #endif
      */
     
+    _trackingQuad = trackingQuad;
+    _trackerJustInitialized = true;
+    
     return RESULT_OK;
   } // InitTemplate()
   
   
   
-  Result VisionSystem::TrackTemplate(const Array<u8> &grayscaleImage,
-                                     const Embedded::Quadrilateral<f32> &trackingQuad,
-                                     const TrackerParameters &parameters,
-                                     Tracker &tracker,
-                                     bool &trackingSucceeded,
-                                     MemoryStack ccmScratch,
-                                     MemoryStack onchipScratch,
-                                     MemoryStack offchipScratch)
+  Result VisionSystem::TrackTemplate(const Vision::Image& inputImageGray, TimeStamp_t imageTimeStamp)
   {
-    BeginBenchmark("VisionSystem_TrackTemplate");
+    Result lastResult = RESULT_OK;
+
+    MemoryStack ccmScratch = _memory._ccmScratch;
+    MemoryStack onchipScratch(_memory._onchipScratch);
+    MemoryStack offchipScratch(_memory._offchipScratch);
+
+    // Convert to an Embedded::Array<u8> so the old embedded methods can use the
+    // image data.
+    const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+    const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
     
-    AnkiAssert(parameters.isInitialized);
+    Array<u8> grayscaleImage(captureHeight, captureWidth,
+                             onchipScratch, Flags::Buffer(false,false,false));
     
-#if USE_MATLAB_TRACKER
-    return MatlabVisionProcessor::TrackTemplate(grayscaleImage, converged, ccmScratch);
-#endif
+    GetImageHelper(inputImageGray, grayscaleImage);
     
-    trackingSucceeded = false;
-    s32 verify_meanAbsoluteDifference;
-    s32 verify_numInBounds;
-    s32 verify_numSimilarPixels;
+    PreprocessImage(grayscaleImage);
+
+    bool trackingSucceeded = false;
+    if(_trackerJustInitialized)
+    {
+      trackingSucceeded = true;
+    } else {
+      
+      // Normalize the image
+      // NOTE: This will change grayscaleImage!
+      if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
+        // Faster: normalize using mean of quad
+        lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
+      } else {
+        // Slower: normalize using local averages
+        // NOTE: This is currently off-chip for memory reasons, so it's slow!
+        lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
+                                              _trackerParameters.normalizationFilterWidthFraction,
+                                              offchipScratch);
+      }
+      
+      AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                         "VisionSystem::Update::BrightnessNormalizeImage",
+                                         "BrightnessNormalizeImage failed.\n");
+      
+      //
+      // Tracker Prediction
+      //
+      // Adjust the tracker transformation by approximately how much we
+      // think we've moved since the last tracking call.
+      //
+      
+      if((lastResult =TrackerPredictionUpdate(grayscaleImage, onchipScratch)) != RESULT_OK) {
+        PRINT_STREAM_INFO("VisionSystem.Update", " TrackTemplate() failed.\n");
+        return lastResult;
+      }
+      
+      BeginBenchmark("VisionSystem_TrackTemplate");
+      
+      AnkiAssert(_trackerParameters.isInitialized);
+      
+#   if USE_MATLAB_TRACKER
+      return MatlabVisionProcessor::TrackTemplate(grayscaleImage, converged, ccmScratch);
+#   endif
+      
+      trackingSucceeded = false;
+      s32 verify_meanAbsoluteDifference;
+      s32 verify_numInBounds;
+      s32 verify_numSimilarPixels;
+      
+      const Radians initAngleX(_tracker.get_angleX());
+      const Radians initAngleY(_tracker.get_angleY());
+      const Radians initAngleZ(_tracker.get_angleZ());
+      const Embedded::Point3<f32>& initTranslation = _tracker.GetTranslation();
+      
+      bool converged = false;
+      ++_trackingIteration;
+      const Result trackerResult = _tracker.UpdateTrack(grayscaleImage,
+                                                        _trackerParameters.maxIterations,
+                                                        _trackerParameters.convergenceTolerance_angle,
+                                                        _trackerParameters.convergenceTolerance_distance,
+                                                        _trackerParameters.verify_maxPixelDifference,
+                                                        converged,
+                                                        verify_meanAbsoluteDifference,
+                                                        verify_numInBounds,
+                                                        verify_numSimilarPixels,
+                                                        onchipScratch);
+      
+      // TODO: Do we care if converged == false?
+      
+      //
+      // Go through a bunch of checks to see whether the tracking succeeded
+      //
+      
+      if(fabs((initAngleX - _tracker.get_angleX()).ToFloat()) > _trackerParameters.successTolerance_angle ||
+         fabs((initAngleY - _tracker.get_angleY()).ToFloat()) > _trackerParameters.successTolerance_angle ||
+         fabs((initAngleZ - _tracker.get_angleZ()).ToFloat()) > _trackerParameters.successTolerance_angle)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: angle(s) changed too much.");
+        trackingSucceeded = false;
+      }
+      else if(_tracker.GetTranslation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: final distance too close.");
+        trackingSucceeded = false;
+      }
+      else if(_tracker.GetTranslation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: final distance too far away.");
+        trackingSucceeded = false;
+      }
+      else if((initTranslation - _tracker.GetTranslation()).Length() > _trackerParameters.successTolerance_distance)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: position changed too much.");
+        trackingSucceeded = false;
+      }
+      else if(_markerToTrack.checkAngleX && fabs(_tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target X angle too large.");
+        trackingSucceeded = false;
+      }
+      else if(fabs(_tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Y angle too large.");
+        trackingSucceeded = false;
+      }
+      else if(fabs(_tracker.get_angleZ()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Z angle too large.");
+        trackingSucceeded = false;
+      }
+      else if(atan_fast(fabs(_tracker.GetTranslation().x) / _tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: FOV angle too large.");
+        trackingSucceeded = false;
+      }
+      else if( (static_cast<f32>(verify_numSimilarPixels) /
+                static_cast<f32>(verify_numInBounds)) < _trackerParameters.successTolerance_matchingPixelsFraction)
+      {
+        PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: too many in-bounds pixels failed intensity verification (" << verify_numSimilarPixels << " / " << verify_numInBounds << " < " << _trackerParameters.successTolerance_matchingPixelsFraction << ").");
+        trackingSucceeded = false;
+      }
+      else {
+        // Everything seems ok!
+        PRINT_STREAM_INFO("Tracker succeeded", _trackingIteration);
+        trackingSucceeded = true;
+      }
+      
+      if(trackerResult != RESULT_OK) {
+        return RESULT_FAIL;
+      }
+      
+      EndBenchmark("VisionSystem_TrackTemplate");
+      
+      // TODO: Re-enable tracker debugstream/vizualization on basestation
+      /*
+       MatlabVisualization::SendTrack(grayscaleImage, tracker, trackingSucceeded, offchipScratch);
+       
+       //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
+       
+       DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, static_cast<f32>(verify_numSimilarPixels) / static_cast<f32>(verify_numInBounds), ccmScratch, onchipScratch, offchipScratch);
+       */
+    } // if(_trackingJustInitialized)
+    
+    if(trackingSucceeded)
+    {
+      Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(onchipScratch);
+      
+      //FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
+      
+      // Convert to Pose3d and put it in the docking mailbox for the robot to
+      // get and send off to the real robot for docking. Note the pose should
+      // really have the camera pose as its parent, but we'll let the robot
+      // take care of that, since the vision system is running off on its own
+      // thread.
+      Array<f32> R(3,3,_memory._onchipScratch);
+      lastResult = _tracker.GetRotationMatrix(R);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.TrackerRotationFail",
+                          "Could not get Rotation matrix from 6DoF tracker.");
+        return lastResult;
+      }
+      RotationMatrix3d Rmat{
+        R[0][0], R[0][1], R[0][2],
+        R[1][0], R[1][1], R[1][2],
+        R[2][0], R[2][1], R[2][2]
+      };
+      Pose3d markerPoseWrtCamera(Rmat, {
+        _tracker.GetTranslation().x, _tracker.GetTranslation().y, _tracker.GetTranslation().z
+      });
+      
+      // Add docking offset:
+      if(_markerToTrack.postOffsetAngle_rad != 0.f ||
+         _markerToTrack.postOffsetX_mm != 0.f ||
+         _markerToTrack.postOffsetY_mm != 0.f)
+      {
+        // Note that the tracker effectively uses camera coordinates for the
+        // marker, so the requested "X" offset (which is distance away from
+        // the marker's face) is along its negative "Z" axis.
+        Pose3d offsetPoseWrtMarker(_markerToTrack.postOffsetAngle_rad, Y_AXIS_3D(),
+                                   {-_markerToTrack.postOffsetY_mm, 0.f, -_markerToTrack.postOffsetX_mm});
+        markerPoseWrtCamera *= offsetPoseWrtMarker;
+      }
+      
+      // Send tracker quad if image streaming
+      if (_imageSendMode == ImageSendMode::Stream) {
+        f32 scale = 1.f;
+        for (u8 s = (u8)ImageResolution::CVGA; s<(u8)_nextSendImageResolution; ++s) {
+          scale *= 0.5f;
+        }
         
-    const Radians initAngleX(tracker.get_angleX());
-    const Radians initAngleY(tracker.get_angleY());
-    const Radians initAngleZ(tracker.get_angleZ());
-    const Embedded::Point3<f32>& initTranslation = tracker.GetTranslation();
-    
-    bool converged = false;
-    ++_trackingIteration;
-    const Result trackerResult = tracker.UpdateTrack(grayscaleImage,
-                                                     parameters.maxIterations,
-                                                     parameters.convergenceTolerance_angle,
-                                                     parameters.convergenceTolerance_distance,
-                                                     parameters.verify_maxPixelDifference,
-                                                     converged,
-                                                     verify_meanAbsoluteDifference,
-                                                     verify_numInBounds,
-                                                     verify_numSimilarPixels,
-                                                     onchipScratch);
-    
-    // TODO: Do we care if converged == false?
-    
-    //
-    // Go through a bunch of checks to see whether the tracking succeeded
-    //
-    
-    if(fabs((initAngleX - tracker.get_angleX()).ToFloat()) > parameters.successTolerance_angle ||
-       fabs((initAngleY - tracker.get_angleY()).ToFloat()) > parameters.successTolerance_angle ||
-       fabs((initAngleZ - tracker.get_angleZ()).ToFloat()) > parameters.successTolerance_angle)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: angle(s) changed too much.");
-      trackingSucceeded = false;
-    }
-    else if(tracker.GetTranslation().z < TrackerParameters::MIN_TRACKER_DISTANCE)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: final distance too close.");
-      trackingSucceeded = false;
-    }
-    else if(tracker.GetTranslation().z > TrackerParameters::MAX_TRACKER_DISTANCE)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: final distance too far away.");
-      trackingSucceeded = false;
-    }
-    else if((initTranslation - tracker.GetTranslation()).Length() > parameters.successTolerance_distance)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: position changed too much.");
-      trackingSucceeded = false;
-    }
-    else if(_markerToTrack.checkAngleX && fabs(tracker.get_angleX()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target X angle too large.");
-      trackingSucceeded = false;
-    }
-    else if(fabs(tracker.get_angleY()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Y angle too large.");
-      trackingSucceeded = false;
-    }
-    else if(fabs(tracker.get_angleZ()) > TrackerParameters::MAX_BLOCK_DOCKING_ANGLE)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: target Z angle too large.");
-      trackingSucceeded = false;
-    }
-    else if(atan_fast(fabs(tracker.GetTranslation().x) / tracker.GetTranslation().z) > TrackerParameters::MAX_DOCKING_FOV_ANGLE)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: FOV angle too large.");
-      trackingSucceeded = false;
-    }
-    else if( (static_cast<f32>(verify_numSimilarPixels) /
-              static_cast<f32>(verify_numInBounds)) < parameters.successTolerance_matchingPixelsFraction)
-    {
-      PRINT_STREAM_INFO("VisionSystem.TrackTemplate", "Tracker failed: too many in-bounds pixels failed intensity verification (" << verify_numSimilarPixels << " / " << verify_numInBounds << " < " << parameters.successTolerance_matchingPixelsFraction << ").");
-      trackingSucceeded = false;
+        VizInterface::TrackerQuad m;
+        m.topLeft_x     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
+        m.topLeft_y     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
+        m.topRight_x    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
+        m.topRight_y    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].y * scale);
+        m.bottomRight_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].x * scale);
+        m.bottomRight_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].y * scale);
+        m.bottomLeft_x  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
+        m.bottomLeft_y  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
+        
+        //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::TrackerQuad), &m);
+        _trackerMailbox.putMessage(m);
+      }
+      
+      // Reset the failure counter
+      _numTrackFailures = 0;
+      
+      _dockingMailbox.putMessage({markerPoseWrtCamera, imageTimeStamp});
     }
     else {
-      // Everything seems ok!
-      PRINT_STREAM_INFO("Tracker succeeded", _trackingIteration);
-      trackingSucceeded = true;
+      _numTrackFailures += 1;
+      
+      if(_numTrackFailures == MAX_TRACKING_FAILURES)
+      {
+        PRINT_NAMED_INFO("VisionSystem.Update", "Reached max number of tracking "
+                         "failures (%d). Switching back to looking for markers.\n",
+                         MAX_TRACKING_FAILURES);
+        
+        // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
+        SetMarkerToTrack(_markerToTrack.type,
+                         _markerToTrack.width_mm,
+                         _markerToTrack.imageCenter,
+                         _markerToTrack.imageSearchRadius,
+                         _markerToTrack.checkAngleX,
+                         _markerToTrack.postOffsetX_mm,
+                         _markerToTrack.postOffsetY_mm,
+                         _markerToTrack.postOffsetAngle_rad);
+      }
     }
-    
-    if(trackerResult != RESULT_OK) {
-      return RESULT_FAIL;
-    }
-
-    EndBenchmark("VisionSystem_TrackTemplate");
-    
-    // TODO: Re-enable tracker debugstream/vizualization on basestation
-    /*
-     MatlabVisualization::SendTrack(grayscaleImage, tracker, trackingSucceeded, offchipScratch);
-     
-     //MatlabVisualization::SendTrackerPrediction_Compare(tracker, offchipScratch);
-     
-     DebugStream::SendTrackingUpdate(grayscaleImage, tracker, parameters, verify_meanAbsoluteDifference, static_cast<f32>(verify_numSimilarPixels) / static_cast<f32>(verify_numInBounds), ccmScratch, onchipScratch, offchipScratch);
-     */
     
     return RESULT_OK;
   } // TrackTemplate()
@@ -917,6 +1147,211 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
+  Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
+                                   const std::vector<Quad2f>& markerQuads)
+  {
+    Simulator::SetFaceDetectionReadyTime();
+    
+    if(_faceTracker == nullptr) {
+      PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
+                        "In detecting faces mode, but face tracker is null.");
+      return RESULT_FAIL;
+    }
+    
+    if(!markerQuads.empty())
+    {
+      // Black out detected markers so we don't find faces in them
+      Vision::Image maskedImage = grayImage;
+      const cv::Rect_<f32> imgRect(0,0,grayImage.GetNumCols(),grayImage.GetNumRows());
+      
+      for(auto & quad : markerQuads)
+      {
+        Anki::Rectangle<f32> rect(quad);
+        cv::Mat roi = maskedImage.get_CvMat_()(rect.get_CvRect_() & imgRect);
+        roi.setTo(0);
+      }
+      
+      _faceTracker->Update(maskedImage);
+    } else {
+      // No markers were detected, so nothing to black out before looking
+      // for faces
+      _faceTracker->Update(grayImage);
+    }
+    
+    for(auto & currentFace : _faceTracker->GetFaces())
+    {
+      _faceMailbox.putMessage(currentFace);
+    }
+
+    return RESULT_OK;
+  } // DetectFaces()
+  
+  
+  Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
+  {
+    const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(1));
+    const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    1.f) &&
+                           NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    1.f) &&
+                           NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(1)));
+    
+    //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
+    
+    if(headSame && poseSame && !_prevImage.IsEmpty()) {
+      
+      /*
+       Vision::ImageRGB diffImage(inputImage);
+       diffImage -= _prevImage;
+       diffImage.Abs();
+       */
+      
+      //auto pixLog = [](u8 value) { return std::log(static_cast<f32>(std::max((u8)1, value))); };
+      s32 numAboveThresh = 0;
+      
+      std::function<u8(const Vision::PixelRGB& thisElem, const Vision::PixelRGB& otherElem)> ratioTest = [&numAboveThresh](const Vision::PixelRGB& p1, const Vision::PixelRGB& p2)
+      {
+        auto ratioTestHelper = [](u8 value1, u8 value2)
+        {
+          if(value1 > value2) {
+            return static_cast<f32>(value1) / std::max(1.f, static_cast<f32>(value2));
+          } else {
+            return static_cast<f32>(value2) / std::max(1.f, static_cast<f32>(value1));
+          }
+        };
+        
+        const f32 ratioThreshold = 1.5f; // TODO: pass in or capture?
+        const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
+        const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
+        const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
+        const f32 maxRatio = std::max(ratioR, std::max(ratioG, ratioB));
+        if(maxRatio > ratioThreshold) {
+          ++numAboveThresh;
+          return static_cast<u8>(true);
+        } else {
+          return static_cast<u8>(false);
+        }
+      };
+      
+      
+      Vision::Image ratioImg(image.GetNumRows(), image.GetNumCols());
+      image.ApplyScalarFunction(ratioTest, _prevImage, ratioImg);
+      
+      _debugImageRGBMailbox.putMessage({"CurrentImage", image});
+      _debugImageRGBMailbox.putMessage({"PreviousImage", _prevImage});
+      _debugImageMailbox.putMessage({"RatioImg", ratioImg});
+      
+      size_t minArea = image.GetNumElements() / 50;
+      PRINT_NAMED_INFO("VisionSystem.Update.MotionPixels",
+                       "NumAboveThresh = %d (thresh=%lu)",
+                       numAboveThresh, minArea);
+      if(numAboveThresh > minArea)
+      {
+        Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
+        std::vector<std::vector<Point2<s32>>> regionPoints;
+        ratioImg.GetConnectedComponents(motionRegions, regionPoints);
+        
+        Anki::Point2f centroid(0.f,0.f); // Not Embedded::
+        for(auto & region : regionPoints) {
+          PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
+                           "Area=%lu", region.size());
+          if(region.size() > minArea) {
+            centroid = 0.f;
+            for(auto & point : region) {
+              centroid += point;
+            }
+            centroid /= static_cast<f32>(region.size());
+            minArea = region.size();
+          }
+        } // for each region
+        
+        if(centroid.x() > 0.f) {
+          ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < motionRegions.GetNumCols() &&
+                       centroid.y() > 0.f && centroid.y() < motionRegions.GetNumRows(),
+                       "Motion centroid should be within image bounds.");
+          
+          RobotInterface::PanAndTilt msg;
+          
+          // Convert image positions to desired angles
+          const f32 yError_pix = static_cast<f32>(motionRegions.GetNumRows())*0.5f - centroid.y();
+          msg.headTiltAngle_rad = atan_fast(yError_pix / _headCamInfo->focalLength_y);
+          
+          const f32 xError_pix = static_cast<f32>(motionRegions.GetNumCols())*0.5f - centroid.x();
+          msg.bodyPanAngle_rad = atan_fast(xError_pix / _headCamInfo->focalLength_x);
+          
+          _panTiltMailbox.putMessage(msg);
+          
+        }
+      } // if(anyAboveThresh)
+      
+#       if ANKI_COZMO_USE_MATLAB_VISION
+      //_matlab.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
+      //_matlab.EvalString("imagesc(diffImage), axis image, drawnow");
+      
+      _matlab.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
+      _matlab.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
+      
+      
+      _matlab.EvalString("[nrows,ncols,~] = size(inputImage); "
+                         "[xgrid,ygrid] = meshgrid(1:ncols,1:nrows); "
+                         "logImg1 = log(max(1,double(prevImage))); "
+                         "logImg2 = log(max(1,double(inputImage))); "
+                         "diff = imabsdiff(logImg1, logImg2); "
+                         "diffThresh = diff > log(1.5); "
+                         "if any(diffThresh(:)), "
+                         "  diff(~diffThresh) = 0; "
+                         "  sumDiff = sum(diff(:)); "
+                         "  x = sum(xgrid(:).*diff(:))/sumDiff; "
+                         "  y = sum(ygrid(:).*diff(:))/sumDiff; "
+                         "  centroid = [x y]; "
+      /*                           "stats = regionprops(diffThresh, 'Area', 'Centroid', 'PixelIdxList'); "
+       "areas = [stats.Area]; "
+       "keep = areas > .01*nrows*ncols & areas < .5*nrows*ncols; "
+       "diffThresh(vertcat(stats(~keep).PixelIdxList)) = false; "
+       "keep = find(keep); "
+       "if ~isempty(keep), "
+       "  [~,toTrack] = max(areas(keep)); "
+       "  centroid = stats(keep(toTrack)).Centroid; "
+       */                         "else, "
+                         "  clear centroid; "
+                         "end");
+      
+      if(_matlab.DoesVariableExist("centroid")) {
+        
+        _matlab.EvalString("hold off, imagesc(diff), axis image, colormap(gray), "
+                           "title(%d), "
+                           "hold on, plot(centroid(1), centroid(2), 'go', 'MarkerSize', 10, 'LineWidth', 2); drawnow",
+                           inputImage->GetTimestamp());
+        
+        mxArray* mxCentroid = _matlab.GetArray("centroid");
+        
+        CORETECH_ASSERT(mxGetNumberOfElements(mxCentroid) == 2);
+        const f32 xCen = mxGetPr(mxCentroid)[0];
+        const f32 yCen = mxGetPr(mxCentroid)[1];
+        
+        MessagePanAndTiltHead msg;
+        
+        // Convert image positions to desired angles
+        const f32 yError_pix = static_cast<f32>(inputImage->GetNumRows())*0.5f - yCen;
+        msg.relativeHeadTiltAngle_rad = atan_fast(yError_pix / _headCamInfo->focalLength_y);
+        
+        const f32 xError_pix = static_cast<f32>(inputImage->GetNumCols())*0.5f - xCen;
+        msg.relativePanAngle_rad = atan_fast(xError_pix / _headCamInfo->focalLength_x);
+        
+        _panTiltMailbox.putMessage(msg);
+      }
+      
+      _matlab.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
+      _matlab.EvalString("title(%d)", inputImage->GetTimestamp());
+#       endif
+      
+      
+    } // if(headSame && poseSame)
+    
+    // Store a copy of the current image for next time
+    // TODO: switch to just swapping pointers between current and previous image
+    image.CopyTo(_prevImage);
+    
+    return RESULT_OK;
+  } // DetectMotion()
   
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -983,11 +1418,10 @@ namespace Cozmo {
     
     static const std::map<Mode, std::string> LUT = {
       {IDLE,                  "IDLE"}
-      ,{LOOKING_FOR_MARKERS,  "LOOKING_FOR_MARKERS"}
+      ,{LOOKING_FOR_MARKERS,  "MARKERS"}
       ,{TRACKING,             "TRACKING"}
-      ,{DETECTING_FACES,      "DETECTING_FACES"}
-      ,{TAKING_SNAPSHOT,      "TAKING_SNAPSHOT"}
-      ,{LOOKING_FOR_SALIENCY, "LOOKING_FOR_SALIENCY"}
+      ,{DETECTING_FACES,      "FACES"}
+      ,{DETECTING_MOTION,     "MOTION"}
     };
     
     if(mode == 0) {
@@ -1137,11 +1571,6 @@ namespace Cozmo {
       _newMarkerToTrack.Clear();
       _newMarkerToTrackWasProvided = false;
       
-      _isWaitingOnSnapShot = false;
-      _isSnapshotReady = NULL;
-      _snapshotROI = Embedded::Rectangle<s32>(-1, -1, -1, -1);
-      _snapshot = NULL;
-      
       // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
       // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
       // the main engine thread. We don't want it referring to any memory allocated
@@ -1192,8 +1621,6 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  
-  
   const Embedded::FixedLengthList<Embedded::VisionMarker>& VisionSystem::GetObservedMarkerList()
   {
     return _memory._markers;
@@ -1220,106 +1647,13 @@ namespace Cozmo {
                             rotation, translation);
   } // GetVisionMarkerPose()
   
-  
-  Result VisionSystem::TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
-                                    Embedded::Array<u8>& snapshot, bool& readyFlag)
-  {
-    if(!_isWaitingOnSnapShot)
-    {
-      _snapshotROI = roi;
-      
-      _snapshotSubsample = subsample;
-      AnkiConditionalErrorAndReturnValue(_snapshotSubsample >= 1,
-                                         RESULT_FAIL_INVALID_PARAMETER,
-                                         "VisionSystem::TakeSnapshot()",
-                                         "Subsample must be >= 1. %d was specified!\n", _snapshotSubsample);
-      
-      _snapshot = &snapshot;
-      
-      AnkiConditionalErrorAndReturnValue(_snapshot != NULL, RESULT_FAIL_INVALID_OBJECT,
-                                         "VisionSystem::TakeSnapshot()", "NULL snapshot pointer!\n");
-      
-      AnkiConditionalErrorAndReturnValue(_snapshot->IsValid(),
-                                         RESULT_FAIL_INVALID_OBJECT,
-                                         "VisionSystem::TakeSnapshot()", "Invalid snapshot array!\n");
-      
-      const s32 nrowsSnap = _snapshot->get_size(0);
-      const s32 ncolsSnap = _snapshot->get_size(1);
-      
-      AnkiConditionalErrorAndReturnValue(nrowsSnap*_snapshotSubsample == _snapshotROI.get_height() &&
-                                         ncolsSnap*_snapshotSubsample == _snapshotROI.get_width(),
-                                         RESULT_FAIL_INVALID_SIZE,
-                                         "VisionSystem::TakeSnapshot()",
-                                         "Snapshot ROI size (%dx%d) subsampled by %d doesn't match snapshot array size (%dx%d)!\n",
-                                         _snapshotROI.get_height(), _snapshotROI.get_width(), _snapshotSubsample, nrowsSnap, ncolsSnap);
-      
-      _isSnapshotReady = &readyFlag;
-      
-      AnkiConditionalErrorAndReturnValue(_isSnapshotReady != NULL,
-                                         RESULT_FAIL_INVALID_OBJECT,
-                                         "VisionSystem::TakeSnapshot()",
-                                         "NULL isSnapshotReady pointer!\n");
-      
-      _isWaitingOnSnapShot = true;
-      
-    } // if !_isWaitingOnSnapShot
-    
-    return RESULT_OK;
-  } // TakeSnapshot()
-  
-  
-  Result VisionSystem::TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage)
-  {
-    if(_isWaitingOnSnapShot) {
-      
-      const s32 nrowsFull = grayscaleImage.get_size(0);
-      const s32 ncolsFull = grayscaleImage.get_size(1);
-      
-      if(_snapshotROI.top    < 0 || _snapshotROI.top    >= nrowsFull-1 ||
-         _snapshotROI.bottom < 0 || _snapshotROI.bottom >= nrowsFull-1 ||
-         _snapshotROI.left   < 0 || _snapshotROI.left   >= ncolsFull-1 ||
-         _snapshotROI.right  < 0 || _snapshotROI.right  >= ncolsFull-1)
-      {
-        PRINT_STREAM_INFO("VisionSystem.TakeSnapshotHelper", "VisionSystem::TakeSnapshotHelper(): Snapshot ROI out of bounds!");
-        return RESULT_FAIL_INVALID_SIZE;
-      }
-      
-      const s32 nrowsSnap = _snapshot->get_size(0);
-      const s32 ncolsSnap = _snapshot->get_size(1);
-      
-      for(s32 iFull=_snapshotROI.top, iSnap=0;
-          iFull<_snapshotROI.bottom && iSnap<nrowsSnap;
-          iFull+= _snapshotSubsample, ++iSnap)
-      {
-        const u8 * restrict pImageRow = grayscaleImage.Pointer(iFull,0);
-        u8 * restrict pSnapRow = _snapshot->Pointer(iSnap, 0);
-        
-        for(s32 jFull=_snapshotROI.left, jSnap=0;
-            jFull<_snapshotROI.right && jSnap<ncolsSnap;
-            jFull+= _snapshotSubsample, ++jSnap)
-        {
-          pSnapRow[jSnap] = pImageRow[jFull];
-        }
-      }
-      
-      _isWaitingOnSnapShot = false;
-      *_isSnapshotReady = true;
-      
-    } // if _isWaitingOnSnapShot
-    
-    return RESULT_OK;
-    
-  } // TakeSnapshotHelper()
-  
-  
-  
 #if defined(SEND_IMAGE_ONLY)
 #  error SEND_IMAGE_ONLY doesn't really make sense for Basestation vision system.
 #elif defined(RUN_GROUND_TRUTHING_CAPTURE)
 #  error RUN_GROUND_TRUTHING_CAPTURE not implemented in Basestation vision system.
 #endif
   
-  Result GetImageHelper(const Vision::Image& srcImage,
+  Result VisionSystem::GetImageHelper(const Vision::Image& srcImage,
                       Array<u8>& destArray)
   {
     const s32 captureHeight = destArray.get_size(0);
@@ -1342,6 +1676,42 @@ namespace Cozmo {
     
   } // GetImageHelper()
 
+  Result VisionSystem::PreprocessImage(Array<u8>& grayscaleImage)
+  {
+    
+    if(_vignettingCorrection == VignettingCorrection_Software) {
+      BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+      
+      MemoryStack _onchipScratchlocal = _memory._onchipScratch;
+      FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
+      
+      for(s32 i=0; i<5; i++)
+        polynomialParameters[i] = _vignettingCorrectionParameters[i];
+      
+      CorrectVignetting(grayscaleImage, polynomialParameters);
+      
+      EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
+    } // if(_vignettingCorrection == VignettingCorrection_Software)
+    
+    if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
+      BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+      
+      ComputeBestCameraParameters(grayscaleImage,
+                                  Embedded::Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
+                                  _autoExposure_integerCountsIncrement,
+                                  _autoExposure_highValue,
+                                  _autoExposure_percentileToMakeHigh,
+                                  _autoExposure_minExposureTime,
+                                  _autoExposure_maxExposureTime,
+                                  _autoExposure_tooHighPercentMultiplier,
+                                  _exposureTime,
+                                  _memory._ccmScratch);
+      
+      EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
+    }
+    
+    return RESULT_OK;
+  } // PreprocessImage()
   
   // This is the regular Update() call
   Result VisionSystem::Update(const RobotState robotState,
@@ -1369,7 +1739,7 @@ namespace Cozmo {
     
     // prevent us from trying to update a tracker we just initialized in the same
     // frame
-    bool trackerJustInitialzed = false;
+    _trackerJustInitialized = false;
     
     // If SetMarkerToTrack() was called by main() during previous Update(),
     // actually swap in the new marker now.
@@ -1377,535 +1747,51 @@ namespace Cozmo {
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
     
-    // Use the timestamp of passed-in robot state as our frame capture's
-    // timestamp.  This is not totally correct, since the image will be
-    // grabbed some (trivial?) number of cycles later, once we get to the
-    // CameraGetFrame() calls below.  But this enforces, for now, that we
-    // always send a RobotState message off to basestation with a matching
-    // timestamp to every VisionMarker message.
-    //const TimeStamp_t imageTimeStamp = HAL::GetTimeStamp();
-    const TimeStamp_t imageTimeStamp = inputImage.GetTimestamp(); // robotState.timestamp;
-    
-    std::vector<Quad2f> markerQuads;
-    
     // Lots of the processing below needs a grayscale version of the image:
     const Vision::Image inputImageGray = inputImage.ToGray();
     
-    if(_mode & TAKING_SNAPSHOT) {
-      // Nothing to do, unless a snapshot was requested
-      
-      if(_isWaitingOnSnapShot) {
-        const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
-        const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
-        
-        
-        Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                 _memory._offchipScratch, Flags::Buffer(false,false,false));
-        
-        GetImageHelper(inputImageGray, grayscaleImage);
-        
-        if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-          PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
-          return lastResult;
-        }
-      }
-      
-    } // if(_mode & TAKING_SNAPSHOT)
+    // TODO: Provide a way to specify camera parameters from basestation
+    //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
     
+    EndBenchmark("VisionSystem_CameraImagingPipeline");
+    
+    std::vector<Quad2f> markerQuads;
+
     if(_mode & LOOKING_FOR_MARKERS) {
-      Simulator::SetDetectionReadyTime(); // no-op on real hardware
-      
-      _memory.ResetBuffers();
-      
-      //MemoryStack _offchipScratchlocal(VisionMemory::_offchipScratch);
-      
-      const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
-      const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
-      
-      Array<u8> grayscaleImage(captureHeight, captureWidth,
-                               _memory._offchipScratch, Flags::Buffer(false,false,false));
-      
-      GetImageHelper(inputImageGray, grayscaleImage);
-      
-      if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-        PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
+      if((lastResult = LookForMarkers(inputImageGray, inputImage.GetTimestamp(), markerQuads)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
         return lastResult;
       }
-      
-      BeginBenchmark("VisionSystem_CameraImagingPipeline");
-      
-      if(_vignettingCorrection == VignettingCorrection_Software) {
-        BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-        
-        MemoryStack _onchipScratchlocal = _memory._onchipScratch;
-        FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
-        
-        for(s32 i=0; i<5; i++)
-          polynomialParameters[i] = _vignettingCorrectionParameters[i];
-        
-        CorrectVignetting(grayscaleImage, polynomialParameters);
-        
-        EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-      } // if(_vignettingCorrection == VignettingCorrection_Software)
-      
-      if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
-        BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-        
-        ComputeBestCameraParameters(
-                                    grayscaleImage,
-                                    Embedded::Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-                                    _autoExposure_integerCountsIncrement,
-                                    _autoExposure_highValue,
-                                    _autoExposure_percentileToMakeHigh,
-                                    _autoExposure_minExposureTime,
-                                    _autoExposure_maxExposureTime,
-                                    _autoExposure_tooHighPercentMultiplier,
-                                    _exposureTime,
-                                    _memory._ccmScratch);
-        
-        EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-      }
-      
-      // TODO: Provide a way to specify camera parameters from basestation
-      //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
-      
-      EndBenchmark("VisionSystem_CameraImagingPipeline");
-      
-      // TODO: Re-enable sending of images from basestation vision
-      //DownsampleAndSendImage(grayscaleImage);
-      
-      if((lastResult = LookForMarkers(grayscaleImage,
-                                      _detectionParameters,
-                                      _memory._markers,
-                                      _memory._ccmScratch,
-                                      _memory._onchipScratch,
-                                      _memory._offchipScratch)) != RESULT_OK)
-      {
-        return lastResult;
-      }
-      
-      const s32 numMarkers = _memory._markers.get_size();
-      markerQuads.reserve(numMarkers);
-      
-      bool isTrackingMarkerFound = false;
-      for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
-      {
-        const VisionMarker& crntMarker = _memory._markers[i_marker];
-        
-        // Construct a basestation quad from an embedded one:
-        Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
-          crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
-                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
-                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
-                    {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
-                      crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].y},
-                    {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
-                      crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
-        
-        markerQuads.emplace_back(quad);
-        
-        Vision::ObservedMarker obsMarker(imageTimeStamp, crntMarker.markerType,
-                                         quad, _camera);
-        
-        _visionMarkerMailbox.putMessage(obsMarker);
-        
-        // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
-        if(!(_mode & TRACKING)          &&
-           _markerToTrack.IsSpecified() &&
-           !isTrackingMarkerFound       &&
-           _markerToTrack.Matches(crntMarker))
-        {
-          // We will start tracking the _first_ marker of the right type that
-          // we see.
-          // TODO: Something smarter to track the one closest to the image center or to the expected location provided by the basestation?
-          isTrackingMarkerFound = true;
-          
-          // I'd rather only initialize _trackingQuad if InitTemplate() succeeds, but
-          // InitTemplate downsamples it for the time being, since we're still doing template
-          // initialization at tracking resolution instead of the eventual goal of doing it at
-          // full detection resolution.
-          _trackingQuad = crntMarker.corners;
-          
-          // Normalize the image
-          // NOTE: This will change grayscaleImage!
-          if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
-            // Faster: normalize using mean of quad
-            lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
-          } else {
-            // Slower: normalize using local averages
-            // NOTE: This is currently off-chip for memory reasons, so it's slow!
-            lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
-                                                  _trackerParameters.normalizationFilterWidthFraction,
-                                                  _memory._offchipScratch);
-          }
-          
-          AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                             "VisionSystem::Update::BrightnessNormalizeImage",
-                                             "BrightnessNormalizeImage failed.\n");
-          
-          if((lastResult = InitTemplate(grayscaleImage,
-                                        _trackingQuad,
-                                        _trackerParameters,
-                                        _tracker,
-                                        _memory._ccmScratch,
-                                        _memory._onchipScratch, //< NOTE: onchip is a reference
-                                        _memory._offchipScratch)) != RESULT_OK)
-          {
-            return lastResult;
-          }
-          
-          trackerJustInitialzed = true;
-          
-          // store the current mode so we can put it back when done tracking
-          _modeBeforeTracking = _mode;
-          
-          // Template initialization succeeded, switch to tracking mode:
-          // TODO: Log or issue message?
-          // NOTE: this disables any other modes so we are *only* tracking
-          _mode = IDLE;
-          EnableModeHelper(TRACKING);
-          
-        } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
-      } // for(each marker)
     } // if(_mode & LOOKING_FOR_MARKERS)
-    
     
     if(_mode & TRACKING) {
       Simulator::SetTrackingReadyTime(); // no-op on real hardware
-      
-      //
-      // Capture image for tracking
-      //
-      bool converged = false;
-      if(!trackerJustInitialzed)
-      {
-        MemoryStack _offchipScratchlocal(_memory._offchipScratch);
-        MemoryStack _onchipScratchlocal(_memory._onchipScratch);
-        
-        const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
-        const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
-        
-        Array<u8> grayscaleImage(captureHeight, captureWidth,
-                                 _onchipScratchlocal, Flags::Buffer(false,false,false));
-        
-        GetImageHelper(inputImageGray, grayscaleImage);
-        //memcpy(reinterpret_cast<u8*>(grayscaleImage.get_buffer()), inputImage, captureWidth*captureHeight*sizeof(u8));
-        //HAL::CameraGetFrame(),
-        //  _captureResolution, false);
-        
-        if((lastResult = TakeSnapshotHelper(grayscaleImage)) != RESULT_OK) {
-          PRINT_STREAM_INFO("VisionSystem.Update", "TakeSnapshotHelper() failed.\n");
-          return lastResult;
-        }
-        
-        BeginBenchmark("VisionSystem_CameraImagingPipeline");
-        
-        if(_vignettingCorrection == VignettingCorrection_Software) {
-          BeginBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-          
-          MemoryStack _onchipScratchlocal = _memory._onchipScratch;
-          FixedLengthList<f32> polynomialParameters(5, _onchipScratchlocal, Flags::Buffer(false, false, true));
-          
-          for(s32 i=0; i<5; i++)
-            polynomialParameters[i] = _vignettingCorrectionParameters[i];
-          
-          CorrectVignetting(grayscaleImage, polynomialParameters);
-          
-          EndBenchmark("VisionSystem_CameraImagingPipeline_Vignetting");
-        } // if(_vignettingCorrection == VignettingCorrection_Software)
-        
-        // TODO: allow tracking to work with exposure changes
-        /*if(_autoExposure_enabled && (_frameNumber % _autoExposure_adjustEveryNFrames) == 0) {
-         BeginBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-         
-         ComputeBestCameraParameters(
-         grayscaleImage,
-         Rectangle<s32>(0, grayscaleImage.get_size(1)-1, 0, grayscaleImage.get_size(0)-1),
-         _autoExposure_integerCountsIncrement,
-         _autoExposure_highValue,
-         _autoExposure_percentileToMakeHigh,
-         _autoExposure_minExposureTime, _autoExposure_maxExposureTime,
-         _autoExposure_tooHighPercentMultiplier,
-         _exposureTime,
-         VisionMemory::_ccmScratch);
-         
-         EndBenchmark("VisionSystem_CameraImagingPipeline_AutoExposure");
-         }*/
-        
-        EndBenchmark("VisionSystem_CameraImagingPipeline");
-        
-        // TODO: Re-enable setting camera parameters from basestation vision
-        //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
-        
-        // TODO: Re-enable sending of images from basestation vision
-        //DownsampleAndSendImage(grayscaleImage);
-        
-        // Normalize the image
-        // NOTE: This will change grayscaleImage!
-        if(_trackerParameters.normalizationFilterWidthFraction < 0.f) {
-          // Faster: normalize using mean of quad
-          lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad);
-        } else {
-          // Slower: normalize using local averages
-          // NOTE: This is currently off-chip for memory reasons, so it's slow!
-          lastResult = BrightnessNormalizeImage(grayscaleImage, _trackingQuad,
-                                                _trackerParameters.normalizationFilterWidthFraction,
-                                                _memory._offchipScratch);
-        }
-        
-        AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
-                                           "VisionSystem::Update::BrightnessNormalizeImage",
-                                           "BrightnessNormalizeImage failed.\n");
-        
-        //
-        // Tracker Prediction
-        //
-        // Adjust the tracker transformation by approximately how much we
-        // think we've moved since the last tracking call.
-        //
-        
-        if((lastResult =TrackerPredictionUpdate(grayscaleImage, _onchipScratchlocal)) != RESULT_OK) {
-          PRINT_STREAM_INFO("VisionSystem.Update", " TrackTemplate() failed.\n");
-          return lastResult;
-        }
-        
-        //
-        // Update the tracker transformation using this image
-        //
-        
-        // Set by TrackTemplate() call
-        if((lastResult = TrackTemplate(grayscaleImage,
-                                       _trackingQuad,
-                                       _trackerParameters,
-                                       _tracker,
-                                       converged,
-                                       _memory._ccmScratch,
-                                       _onchipScratchlocal,
-                                       _offchipScratchlocal)) != RESULT_OK) {
-          PRINT_STREAM_INFO("VisionSystem.Update", "TrackTemplate() failed.\n");
-          return lastResult;
-        }
-      } else {
-        converged = true;
-      } // if(!trackerJustInitialzed)
-      
-      if(converged)
-      {
-        Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(_memory._onchipScratch);
-       
-        //FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
-        
-        // Convert to Pose3d and put it in the docking mailbox for the robot to
-        // get and send off to the real robot for docking. Note the pose should
-        // really have the camera pose as its parent, but we'll let the robot
-        // take care of that, since the vision system is running off on its own
-        // thread.
-        Array<f32> R(3,3,_memory._onchipScratch);
-        lastResult = _tracker.GetRotationMatrix(R);
-        if(RESULT_OK != lastResult) {
-          PRINT_NAMED_ERROR("VisionSystem.Update.TrackerRotationFail",
-                            "Could not get Rotation matrix from 6DoF tracker.");
-          return lastResult;
-        }
-        RotationMatrix3d Rmat{
-          R[0][0], R[0][1], R[0][2],
-          R[1][0], R[1][1], R[1][2],
-          R[2][0], R[2][1], R[2][2]
-        };
-        Pose3d markerPoseWrtCamera(Rmat, {
-          _tracker.GetTranslation().x, _tracker.GetTranslation().y, _tracker.GetTranslation().z
-        });
-        
-        // Add docking offset:
-        if(_markerToTrack.postOffsetAngle_rad != 0.f ||
-           _markerToTrack.postOffsetX_mm != 0.f ||
-           _markerToTrack.postOffsetY_mm != 0.f)
-        {
-          // Note that the tracker effectively uses camera coordinates for the
-          // marker, so the requested "X" offset (which is distance away from
-          // the marker's face) is along its negative "Z" axis.
-          Pose3d offsetPoseWrtMarker(_markerToTrack.postOffsetAngle_rad, Y_AXIS_3D(),
-                                     {-_markerToTrack.postOffsetY_mm, 0.f, -_markerToTrack.postOffsetX_mm});
-          markerPoseWrtCamera *= offsetPoseWrtMarker;
-        }
-        
-        // Send tracker quad if image streaming
-        if (_imageSendMode == ImageSendMode::Stream) {
-          f32 scale = 1.f;
-          for (u8 s = (u8)ImageResolution::CVGA; s<(u8)_nextSendImageResolution; ++s) {
-            scale *= 0.5f;
-          }
-          
-          VizInterface::TrackerQuad m;
-          m.topLeft_x     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
-          m.topLeft_y     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
-          m.topRight_x    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
-          m.topRight_y    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].y * scale);
-          m.bottomRight_x = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].x * scale);
-          m.bottomRight_y = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomRight].y * scale);
-          m.bottomLeft_x  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
-          m.bottomLeft_y  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
-          
-          //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::TrackerQuad), &m);
-          _trackerMailbox.putMessage(m);
-        }
-        
-        // Reset the failure counter
-        _numTrackFailures = 0;
-        
-        _dockingMailbox.putMessage({markerPoseWrtCamera, imageTimeStamp});
+    
+      // Update the tracker transformation using this image
+      if((lastResult = TrackTemplate(inputImageGray, inputImage.GetTimestamp())) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.TrackTemplateFailed", "");
+        return lastResult;
       }
-      else {
-        _numTrackFailures += 1;
-        
-        if(_numTrackFailures == MAX_TRACKING_FAILURES)
-        {          
-          PRINT_NAMED_INFO("VisionSystem.Update", "Reached max number of tracking "
-                           "failures (%d). Switching back to looking for markers.\n",
-                           MAX_TRACKING_FAILURES);
-          
-          // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
-          SetMarkerToTrack(_markerToTrack.type,
-                           _markerToTrack.width_mm,
-                           _markerToTrack.imageCenter,
-                           _markerToTrack.imageSearchRadius,
-                           _markerToTrack.checkAngleX,
-                           _markerToTrack.postOffsetX_mm,
-                           _markerToTrack.postOffsetY_mm,
-                           _markerToTrack.postOffsetAngle_rad);
-        }
-      }
-      
-      //Messages::ProcessDockingErrorSignalMessage(dockErrMsg);
-      
       
     } // if(_mode & TRACKING)
     
-    
     if(_mode & DETECTING_FACES) {
-      Simulator::SetFaceDetectionReadyTime();
-  
-      if(_faceTracker == nullptr) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
-                          "In detecting faces mode, but face tracker is null.");
-        return RESULT_FAIL;
+      if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
+        return lastResult;
       }
-      
-      if(!markerQuads.empty())
-      {
-        // Black out detected markers so we don't find faces in them
-        Vision::Image maskedImage = inputImageGray;
-        const cv::Rect_<f32> imgRect(0,0,inputImage.GetNumCols(),inputImage.GetNumRows());
-        
-        for(auto & quad : markerQuads)
-        {
-          Anki::Rectangle<f32> rect(quad);
-          cv::Mat roi = maskedImage.get_CvMat_()(rect.get_CvRect_() & imgRect);
-          roi.setTo(0);
-        }
-        
-        _faceTracker->Update(maskedImage);
-      } else {
-        // No markers were detected, so nothing to black out before looking
-        // for faces
-        _faceTracker->Update(inputImageGray);
-      }
-      
-      for(auto & currentFace : _faceTracker->GetFaces())
-      {
-        _faceMailbox.putMessage(currentFace);
-
-      } // for each face detection
-      
     } // if(_mode & DETECTING_FACES)
     
     // DEBUG!!!!
     //_mode |= LOOKING_FOR_SALIENCY;
     
-    if(_mode & LOOKING_FOR_SALIENCY)
+    if(_mode & DETECTING_MOTION)
     {
-      const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(1));
-      const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    1.f) &&
-                             NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    1.f) &&
-                             NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(1)));
-      
-      //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
-      
-      if(headSame && poseSame && !_prevImage.IsEmpty()) {
-        
-        Vision::ImageRGB diffImage(inputImage);
-        diffImage -= _prevImage;
-        diffImage.Abs();
-        
-#       if ANKI_COZMO_USE_MATLAB_VISION
-        //_matlab.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
-        //_matlab.EvalString("imagesc(diffImage), axis image, drawnow");
-        
-        _matlab.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
-        _matlab.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
-        
-        
-        _matlab.EvalString("[nrows,ncols,~] = size(inputImage); "
-                           "[xgrid,ygrid] = meshgrid(1:ncols,1:nrows); "
-                           "logImg1 = log(max(1,double(prevImage))); "
-                           "logImg2 = log(max(1,double(inputImage))); "
-                           "diff = imabsdiff(logImg1, logImg2); "
-                           "diffThresh = diff > log(1.5); "
-                           "if any(diffThresh(:)), "
-                           "  diff(~diffThresh) = 0; "
-                           "  sumDiff = sum(diff(:)); "
-                           "  x = sum(xgrid(:).*diff(:))/sumDiff; "
-                           "  y = sum(ygrid(:).*diff(:))/sumDiff; "
-                           "  centroid = [x y]; "
-/*                           "stats = regionprops(diffThresh, 'Area', 'Centroid', 'PixelIdxList'); "
-                           "areas = [stats.Area]; "
-                           "keep = areas > .01*nrows*ncols & areas < .5*nrows*ncols; "
-                           "diffThresh(vertcat(stats(~keep).PixelIdxList)) = false; "
-                           "keep = find(keep); "
-                           "if ~isempty(keep), "
-                           "  [~,toTrack] = max(areas(keep)); "
-                           "  centroid = stats(keep(toTrack)).Centroid; "
-  */                         "else, "
-                           "  clear centroid; "
-                           "end");
-        
-        if(_matlab.DoesVariableExist("centroid")) {
-          
-          _matlab.EvalString("hold off, imagesc(diff), axis image, colormap(gray), "
-                             "title(%d), "
-                             "hold on, plot(centroid(1), centroid(2), 'go', 'MarkerSize', 10, 'LineWidth', 2); drawnow",
-                             inputImage->GetTimestamp());
-          
-          mxArray* mxCentroid = _matlab.GetArray("centroid");
-          
-          CORETECH_ASSERT(mxGetNumberOfElements(mxCentroid) == 2);
-          const f32 xCen = mxGetPr(mxCentroid)[0];
-          const f32 yCen = mxGetPr(mxCentroid)[1];
-          
-          MessagePanAndTiltHead msg;
-          
-          // Convert image positions to desired angles
-          const f32 yError_pix = static_cast<f32>(inputImage->GetNumRows())*0.5f - yCen;
-          msg.relativeHeadTiltAngle_rad = atan_fast(yError_pix / _headCamInfo->focalLength_y);
-          
-          const f32 xError_pix = static_cast<f32>(inputImage->GetNumCols())*0.5f - xCen;
-          msg.relativePanAngle_rad = atan_fast(xError_pix / _headCamInfo->focalLength_x);
-          
-          _panTiltMailbox.putMessage(msg);
-        }
-        
-        _matlab.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
-        _matlab.EvalString("title(%d)", inputImage->GetTimestamp());
-#       endif
-
-        
-      } // if(headSame && poseSame)
-      
-      // Store a copy of the current image for next time
-      // TODO: switch to just swapping pointers between current and previous image
-      inputImage.CopyTo(_prevImage);
-      
-    } // if(_mode & LOOKING_FOR_SALIENCY)
+      if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
+        return lastResult;
+      }
+    } // if(_mode & DETECTING_MOTION)
     
     return lastResult;
   } // Update() [Real]

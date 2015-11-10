@@ -70,8 +70,7 @@ namespace Cozmo {
       LOOKING_FOR_MARKERS  = 0x01,
       TRACKING             = 0x02,
       DETECTING_FACES      = 0x04,
-      TAKING_SNAPSHOT      = 0x08,
-      LOOKING_FOR_SALIENCY = 0x10
+      DETECTING_MOTION     = 0x08
     };
     
     //
@@ -168,16 +167,6 @@ namespace Cozmo {
                                  const Embedded::Point3<f32>& translationWrtCamera,
                                  Embedded::Array<f32>&        rotationWrtRobot,
                                  Embedded::Point3<f32>&       translationWrtRobot);
-    
-    // Tell the vision system to grab a snapshot on the next call to Update(),
-    // within the specified Region of Interest (roi), subsampled by the
-    // given amount (e.g. every subsample=4 pixels) and put it in the given
-    // snapshot array.  readyFlag will be set to true once this is done.
-    // Calling this multiple times before the snapshot is ready does nothing
-    // extra (internally, the system already knows it is waiting on a snapshot).
-    Result TakeSnapshot(const Embedded::Rectangle<s32> roi, const s32 subsample,
-                        Embedded::Array<u8>& snapshot, bool& readyFlag);
-
     
     // Tell the vision system to switch to face-detection mode
     Result StartDetectingFaces();
@@ -334,6 +323,8 @@ namespace Cozmo {
     Embedded::Quadrilateral<f32>    _trackingQuad;
     s32                             _numTrackFailures ;
     Tracker                         _tracker;
+    bool                            _trackerJustInitialized = false;
+    bool                            _isTrackingMarkerFound = false;
     
     Embedded::Point3<P3P_PRECISION> _canonicalMarker3d[4];
     
@@ -351,13 +342,6 @@ namespace Cozmo {
     ImageSendMode                 _imageSendMode = ImageSendMode::Off;
     ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
-    // For taking snapshots
-    bool                            _isWaitingOnSnapShot;
-    bool*                           _isSnapshotReady;
-    Embedded::Rectangle<s32>        _snapshotROI;
-    s32                             _snapshotSubsample;
-    Embedded::Array<u8>*            _snapshot;
-
     // FaceTracking
     Vision::FaceTracker*            _faceTracker;
 
@@ -402,41 +386,48 @@ namespace Cozmo {
     Radians GetCurrentHeadAngle();
     Radians GetPreviousHeadAngle();
     
+    static Result GetImageHelper(const Vision::Image& srcImage,
+                                 Embedded::Array<u8>& destArray);
+
     //void DownsampleAndSendImage(const Embedded::Array<u8> &img);
+    Result PreprocessImage(Embedded::Array<u8>& grayscaleImage);
     
-    Result LookForMarkers(const Embedded::Array<u8> &grayscaleImage,
+    static Result BrightnessNormalizeImage(Embedded::Array<u8>& image,
+                                           const Embedded::Quadrilateral<f32>& quad);
+
+    static Result BrightnessNormalizeImage(Embedded::Array<u8>& image,
+                                           const Embedded::Quadrilateral<f32>& quad,
+                                           const f32 filterWidthFraction,
+                                           Embedded::MemoryStack scratch);
+    
+    
+    Result LookForMarkers(const Vision::Image& inputImage,
+                          TimeStamp_t imageTimeStamp,
+                          std::vector<Quad2f>& markerQuads);
+    /*,
                           const DetectFiducialMarkersParameters &parameters,
                           Embedded::FixedLengthList<Embedded::VisionMarker> &markers,
                           Embedded::MemoryStack ccmScratch,
                           Embedded::MemoryStack onchipScratch,
                           Embedded::MemoryStack offchipScratch);
+    */
+    Result InitTemplate(Embedded::Array<u8> &grayscaleImage,
+                        const Embedded::Quadrilateral<f32> &trackingQuad);
     
-    Result InitTemplate(const Embedded::Array<u8> &grayscaleImage,
-                        const Embedded::Quadrilateral<f32> &trackingQuad,
-                        const TrackerParameters &parameters,
-                        Tracker &tracker,
-                        Embedded::MemoryStack ccmScratch,
-                        Embedded::MemoryStack &onchipMemory, //< NOTE: onchip is a reference
-                        Embedded::MemoryStack &offchipMemory);
-    
-    Result TrackTemplate(const Embedded::Array<u8> &grayscaleImage,
-                         const Embedded::Quadrilateral<f32> &trackingQuad,
-                         const TrackerParameters &parameters,
-                         Tracker &tracker,
-                         bool &trackingSucceeded,
-                         Embedded::MemoryStack ccmScratch,
-                         Embedded::MemoryStack onchipScratch,
-                         Embedded::MemoryStack offchipScratch);
+    Result TrackTemplate(const Vision::Image& inputImage,
+                         TimeStamp_t imageTimeStamp);
     
     Result TrackerPredictionUpdate(const Embedded::Array<u8>& grayscaleImage,
                                    Embedded::MemoryStack scratch);
     
+    Result DetectFaces(const Vision::Image& grayImage,
+                       const std::vector<Quad2f>& markerQuads);
+    
+    Result DetectMotion(const Vision::ImageRGB& image);
+    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
-    
-    Result TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage);
-    
     
     // Mailboxes for different types of messages that the vision
     // system communicates to main execution:
