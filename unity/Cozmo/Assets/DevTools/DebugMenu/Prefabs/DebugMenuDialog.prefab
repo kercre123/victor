@@ -376,6 +376,8 @@ MonoBehaviour:
   debugContentPaneData_:
   - name: Console Log
     panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
+  - name: Performance
+    panePrefab: {fileID: 113690, guid: 30ad73b1c18b443bdb77716d180d9439, type: 2}
   - name: Robot Settings
     panePrefab: {fileID: 148378, guid: 701dfcc79baab409dbce121bb5bad0c3, type: 2}
   - name: Pattern Play
