@@ -26,10 +26,10 @@ public class SpeedTapStatePlayNewHand : State {
 
   public override void Enter() {
     base.Enter();
-    _SpeedTapGame = stateMachine_.GetGame() as SpeedTapGame;
+    _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
     _StartTimeMs = Time.time * 1000.0f;
-    _SpeedTapGame.cozmoBlock_.SetLEDs(0, 0, 0xFF);
-    _SpeedTapGame.playerBlock_.SetLEDs(0, 0, 0xFF);
+    _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
+    _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
     _LightsOn = false;
 
     _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
@@ -45,15 +45,15 @@ public class SpeedTapStatePlayNewHand : State {
       if (_GotMatch) {
         if (!_CozmoTapping) {
           if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) {
-            DAS.Info("SpeedTap.CozmoTapping", "" + _SpeedTapGame.cozmoScore_);
-            robot.SendAnimation("tapCube");
+            DAS.Info("SpeedTap.CozmoTapping", "" + _SpeedTapGame.CozmoScore);
+            _CurrentRobot.SendAnimation("tapCube");
             _CozmoTapping = true;
           }
         }
       }
       if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
-        _SpeedTapGame.cozmoBlock_.SetLEDs(0, 0, 0xFF);
-        _SpeedTapGame.playerBlock_.SetLEDs(0, 0, 0xFF);
+        _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
+        _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
         _LightsOn = false;
         _StartTimeMs = currTimeMs;
       }
@@ -101,19 +101,19 @@ public class SpeedTapStatePlayNewHand : State {
     DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
     if (curWinState_ == WinState.Neutral) {
       curWinState_ = WinState.CozmoWins;
-      _SpeedTapGame.cozmoScore_++;
+      _SpeedTapGame.CozmoScore++;
       _SpeedTapGame.UpdateUI();
       // play sound, do dance
-      robot.SendAnimation("finishTapCubeWin");
+      _CurrentRobot.SendAnimation("finishTapCubeWin");
     }
     // otherwise cozmo is too late!
     else {
-      robot.SendAnimation("finishTapCubeLose");
+      _CurrentRobot.SendAnimation("finishTapCubeLose");
     }
   }
 
   void BlockTapped(int blockID, int numTaps) {
-    if (blockID == _SpeedTapGame.playerBlock_.ID) {
+    if (blockID == _SpeedTapGame.PlayerBlock.ID) {
       PlayerDidTap();
     }   
   }
@@ -123,13 +123,13 @@ public class SpeedTapStatePlayNewHand : State {
     if (_GotMatch) {
       if (curWinState_ == WinState.Neutral) {
         curWinState_ = WinState.PlayerWins;
-        _SpeedTapGame.playerScore_++;
+        _SpeedTapGame.PlayerScore++;
         _SpeedTapGame.UpdateUI();
       }
     }
     else if (curWinState_ == WinState.Neutral) {
       curWinState_ = WinState.CozmoWins;
-      _SpeedTapGame.playerScore_--;
+      _SpeedTapGame.PlayerScore--;
       _SpeedTapGame.UpdateUI();
     }
   }
@@ -143,8 +143,8 @@ public class SpeedTapStatePlayNewHand : State {
       _GotMatch = true;
       int randColorIndex = ((int)(matchExperiment * 1000f)) % colors.Length;
       Color matchColor = colors[randColorIndex];
-      _SpeedTapGame.cozmoBlock_.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
-      _SpeedTapGame.playerBlock_.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
+      _SpeedTapGame.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
+      _SpeedTapGame.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
     }
     else {
       // Do non-match
@@ -156,8 +156,8 @@ public class SpeedTapStatePlayNewHand : State {
       }
       Color playerColor = colors[playerColorIdx];
       Color cozmoColor = colors[cozmoColorIdx];
-      _SpeedTapGame.playerBlock_.SetLEDs(CozmoPalette.ColorToUInt(playerColor), 0, 0xFF);
-      _SpeedTapGame.cozmoBlock_.SetLEDs(CozmoPalette.ColorToUInt(cozmoColor), 0, 0xFF);
+      _SpeedTapGame.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(playerColor), 0, 0xFF);
+      _SpeedTapGame.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(cozmoColor), 0, 0xFF);
     }
   }
 

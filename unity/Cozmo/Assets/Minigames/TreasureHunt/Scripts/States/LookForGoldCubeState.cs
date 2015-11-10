@@ -11,9 +11,9 @@ public class LookForGoldCubeState : State {
 
   public override void Update() {
     base.Update();
-    for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      if (robot.VisibleObjects[i] is LightCube) {
-        stateMachine_.SetNextState(new FollowGoldCubeState());
+    for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
+      if (_CurrentRobot.VisibleObjects[i] is LightCube) {
+        _StateMachine.SetNextState(new FollowGoldCubeState());
       }
     }
   }
@@ -21,13 +21,13 @@ public class LookForGoldCubeState : State {
   void SearchForAvailableBlock() {
     if (_LookingAround == false) {
       _LookingAround = true;
-      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
     }
   }
 
   public override void Exit() {
     base.Exit();
-    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     _LookingAround = false;
   }
 

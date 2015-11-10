@@ -14,10 +14,10 @@ public class LookAtPatternConstructionState : State {
 
     DAS.Info("PatternPlayState", "LookAtPatternConstruction");
 
-    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
     _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
     Vector3 idealViewPos = _PatternPlayAutoBuild.IdealViewPosition();
-    robot.GotoPose(idealViewPos.x, idealViewPos.y, _PatternPlayAutoBuild.IdealViewAngle(), ArrivedPose, false, false);
+    _CurrentRobot.GotoPose(idealViewPos.x, idealViewPos.y, _PatternPlayAutoBuild.IdealViewAngle(), ArrivedPose, false, false);
   }
 
   public override void Update() {
@@ -25,14 +25,14 @@ public class LookAtPatternConstructionState : State {
     if (_ArrivedPose) {
       if (Time.time - _ArrivedPoseTime < 2.0f) {
         if (_PatternPlayGame.SeenPattern()) {
-          stateMachine_.SetNextState(new CelebratePatternState());
+          _StateMachine.SetNextState(new CelebratePatternState());
         }
       }
       else if (_PatternPlayAutoBuild.BlocksInNeatList() == 3) {
-        stateMachine_.SetNextState(new LookForPatternState());
+        _StateMachine.SetNextState(new LookForPatternState());
       }
       else {
-        stateMachine_.SetNextState(new LookForCubesState());
+        _StateMachine.SetNextState(new LookForCubesState());
       }
     }
   }
@@ -43,7 +43,7 @@ public class LookAtPatternConstructionState : State {
       _ArrivedPoseTime = Time.time;
     }
     else {
-      stateMachine_.SetNextState(new LookForCubesState());
+      _StateMachine.SetNextState(new LookForCubesState());
     }
   }
 }

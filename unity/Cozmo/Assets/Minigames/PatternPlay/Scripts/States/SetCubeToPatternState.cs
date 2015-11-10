@@ -11,14 +11,14 @@ public class SetCubeToPatternState : State {
 
     DAS.Info("PatternPlayState", "SetCubeToPattern");
 
-    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
     _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
   }
 
   public override void Update() {
     base.Update();
     SetPattern();
-    stateMachine_.SetNextState(new LookAtPatternConstructionState());
+    _StateMachine.SetNextState(new LookAtPatternConstructionState());
   }
 
   void SetPattern() {

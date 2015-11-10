@@ -11,7 +11,7 @@ public class PlaceCubeState : State {
 
     DAS.Info("PatternPlayState", "PlaceCube");
 
-    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
     _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
 
     Vector3 placeTarget;
@@ -21,23 +21,23 @@ public class PlaceCubeState : State {
 
     _PatternPlayAutoBuild.FindPlaceTarget(out placeTarget, out dockID, out offset, out dockAngleRads);
     if (dockID == -1) {
-      robot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
+      _CurrentRobot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
     }
     else {
-      robot.PlaceObjectRel(robot.LightCubes[dockID], offset, dockAngleRads, PlaceDone);
+      _CurrentRobot.PlaceObjectRel(_CurrentRobot.LightCubes[dockID], offset, dockAngleRads, PlaceDone);
     }
   }
 
   void PlaceDone(bool success) {
     if (success) {
-      stateMachine_.SetNextState(new SetCubeToPatternState());
+      _StateMachine.SetNextState(new SetCubeToPatternState());
     }
     else {
-      robot.PlaceObjectOnGroundHere(PlaceGroundHere);
+      _CurrentRobot.PlaceObjectOnGroundHere(PlaceGroundHere);
     }
   }
 
   void PlaceGroundHere(bool success) {
-    stateMachine_.SetNextState(new LookForCubesState());
+    _StateMachine.SetNextState(new LookForCubesState());
   }
 }

@@ -6,7 +6,7 @@ public class SpeedTapStateBeginMatch : State {
 
   public override void Enter() {
     base.Enter();
-    _SpeedTapGame = stateMachine_.GetGame() as SpeedTapGame;
+    _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
     // Do a little dance
     // Blink some lights
     // Clear the score
@@ -17,7 +17,7 @@ public class SpeedTapStateBeginMatch : State {
 
   public override void Update() {
     base.Update();
-    stateMachine_.SetNextState(new SpeedTapStatePlayNewHand());
+    _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
   }
 }
 

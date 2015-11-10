@@ -292,7 +292,7 @@ public class PatternPlayGame : GameBase {
       disabledColor = Color.black;
 
       for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
-        robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
       if (blockConfig.Key == currentInputID && blockPatternData_[blockConfig.Key].Moving && Time.time - lastSetTime_ > 5.0f) {
@@ -301,23 +301,23 @@ public class PatternPlayGame : GameBase {
       }
 
       for (int i = 0; i < 4; ++i) {
-        robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
       if (blockConfig.Value.BlockLightsLocalSpace.back) {
-        robot.LightCubes[blockConfig.Key].Lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[1].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.BlockLightsLocalSpace.front) {
-        robot.LightCubes[blockConfig.Key].Lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[3].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.BlockLightsLocalSpace.left) {
-        robot.LightCubes[blockConfig.Key].Lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[2].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       if (blockConfig.Value.BlockLightsLocalSpace.right) {
-        robot.LightCubes[blockConfig.Key].Lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[0].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
@@ -334,7 +334,7 @@ public class PatternPlayGame : GameBase {
 
       if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
         for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
-          robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
+          robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
         }
       }
 

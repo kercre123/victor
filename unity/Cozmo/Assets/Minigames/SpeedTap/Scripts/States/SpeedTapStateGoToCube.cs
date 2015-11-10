@@ -8,9 +8,9 @@ public class SpeedTapStateGoToCube : State {
 
   public override void Enter() {
     base.Enter();
-    _SpeedTapGame = stateMachine_.GetGame() as SpeedTapGame;
-    robot.SetLiftHeight(1.0f);
-    robot.SetHeadAngle();
+    _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+    _CurrentRobot.SetLiftHeight(1.0f);
+    _CurrentRobot.SetHeadAngle();
   }
 
   void DriveToBlock() {
@@ -18,10 +18,10 @@ public class SpeedTapStateGoToCube : State {
       return;
     if (_SpeedTapGame.CozmoBlock.MarkersVisible) {
       _DrivingToBlock = true;
-      robot.AlignWithObject(_SpeedTapGame.CozmoBlock, 90.0f, (bool success) => {
+      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 90.0f, (bool success) => {
         _DrivingToBlock = false;
         if (success) {
-          stateMachine_.SetNextState(new SpeedTapStateBeginMatch());
+          _StateMachine.SetNextState(new SpeedTapStateBeginMatch());
         }
         else {
           DAS.Debug("SpeedTapStateGoToCube", "AlignWithObject Failed");

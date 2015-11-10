@@ -17,8 +17,8 @@ public class FollowCubeState : State {
   void FollowClosest() {
     ObservedObject closest = null;
     float dist = float.MaxValue;
-    foreach (ObservedObject obj in robot.VisibleObjects) {
-      float d = Vector3.Distance(robot.WorldPosition, obj.WorldPosition);
+    foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
+      float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
       if (d < dist) {
         dist = d;
         closest = obj;
@@ -26,42 +26,42 @@ public class FollowCubeState : State {
     }
 
     if (closest == null) {
-      robot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       return;
     }
 
-    float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
+    float angle = Vector2.Angle(_CurrentRobot.Forward, closest.WorldPosition - _CurrentRobot.WorldPosition);
     if (angle < 10.0f) {
 
-      float speed = (stateMachine_.GetGame() as FollowCubeGame).ForwardSpeed;
-      float distMax = (stateMachine_.GetGame() as FollowCubeGame).DistanceMax;
-      float distMin = (stateMachine_.GetGame() as FollowCubeGame).DistanceMin;
+      float speed = (_StateMachine.GetGame() as FollowCubeGame).ForwardSpeed;
+      float distMax = (_StateMachine.GetGame() as FollowCubeGame).DistanceMax;
+      float distMin = (_StateMachine.GetGame() as FollowCubeGame).DistanceMin;
 
       if (dist > distMax) {
-        robot.DriveWheels(speed, speed);
+        _CurrentRobot.DriveWheels(speed, speed);
       }
       else if (dist < distMin) {
-        robot.DriveWheels(-speed, -speed);
+        _CurrentRobot.DriveWheels(-speed, -speed);
       }
       else {
-        robot.DriveWheels(0.0f, 0.0f);
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
       }
     }
     else {
       // we need to turn to face it
       ComputeTurnDirection(closest);
       if (_SearchTurnRight) {
-        robot.DriveWheels(35.0f, -30.0f);
+        _CurrentRobot.DriveWheels(35.0f, -30.0f);
       }
       else {
-        robot.DriveWheels(-30.0f, 35.0f);
+        _CurrentRobot.DriveWheels(-30.0f, 35.0f);
       }
     }
 
   }
 
   private void ComputeTurnDirection(ObservedObject followBlock) {
-    float turnAngle = Vector3.Cross(robot.Forward, followBlock.WorldPosition - robot.WorldPosition).z;
+    float turnAngle = Vector3.Cross(_CurrentRobot.Forward, followBlock.WorldPosition - _CurrentRobot.WorldPosition).z;
     if (turnAngle < 0.0f)
       _SearchTurnRight = true;
     else

@@ -17,41 +17,41 @@ public enum ByteSwappingArchitecture {
 /// </summary>
 public class ByteSerializer {
 
-  private float[] floatBuffer = new float[1];
-  private double[] doubleBuffer = new double[1];
+  private float[] _FloatBuffer = new float[1];
+  private double[] _DoubleBuffer = new double[1];
 
-  protected byte[] buffer = null;
-  private int index = 0;
+  protected byte[] _Buffer = null;
+  private int _Index = 0;
 
-  private bool useLittleEndian;
-  private bool needSwap;
+  private bool _UseLittleEndian;
+  private bool _NeedSwap;
 
   public byte[] ByteBuffer {
     get {
-      return buffer;
+      return _Buffer;
     }
 
     set {
-      buffer = value;
-      index = 0;
+      _Buffer = value;
+      _Index = 0;
     }
   }
 
-  public int Index { get { return index; } }
+  public int Index { get { return _Index; } }
 
   public ByteSerializer(ByteSwappingArchitecture architecture) {
     switch (architecture) {
     case ByteSwappingArchitecture.LittleEndian:
-      useLittleEndian = true;
-      needSwap = !BitConverter.IsLittleEndian;
+      _UseLittleEndian = true;
+      _NeedSwap = !BitConverter.IsLittleEndian;
       break;
     case ByteSwappingArchitecture.BigEndian:
-      useLittleEndian = false;
-      needSwap = BitConverter.IsLittleEndian;
+      _UseLittleEndian = false;
+      _NeedSwap = BitConverter.IsLittleEndian;
       break;
     case ByteSwappingArchitecture.Native:
-      useLittleEndian = BitConverter.IsLittleEndian;
-      needSwap = false;
+      _UseLittleEndian = BitConverter.IsLittleEndian;
+      _NeedSwap = false;
       break;
     }
   }
@@ -61,37 +61,37 @@ public class ByteSerializer {
   }
 
   public void Serialize(byte value) {
-    buffer[index] = value;
-    index += 1;
+    _Buffer[_Index] = value;
+    _Index += 1;
   }
 
   public void Serialize(ushort value) {
-    if (useLittleEndian) {
-      buffer[index] = (byte)value;
-      buffer[index + 1] = (byte)(value >> 8);
+    if (_UseLittleEndian) {
+      _Buffer[_Index] = (byte)value;
+      _Buffer[_Index + 1] = (byte)(value >> 8);
     }
     else {
-      buffer[index] = (byte)(value >> 8);
-      buffer[index + 1] = (byte)value;
+      _Buffer[_Index] = (byte)(value >> 8);
+      _Buffer[_Index + 1] = (byte)value;
     }
-    index += 2;
+    _Index += 2;
   }
 
   public void Serialize(uint value) {
-    if (useLittleEndian) {
-      buffer[index] = (byte)value;
-      buffer[index + 1] = (byte)(value >> 8);
-      buffer[index + 2] = (byte)(value >> 16);
-      buffer[index + 3] = (byte)(value >> 24);
+    if (_UseLittleEndian) {
+      _Buffer[_Index] = (byte)value;
+      _Buffer[_Index + 1] = (byte)(value >> 8);
+      _Buffer[_Index + 2] = (byte)(value >> 16);
+      _Buffer[_Index + 3] = (byte)(value >> 24);
     }
     else {
-      buffer[index] = (byte)(value >> 24);
-      buffer[index + 1] = (byte)(value >> 16);
-      buffer[index + 2] = (byte)(value >> 8);
-      buffer[index + 3] = (byte)value;
+      _Buffer[_Index] = (byte)(value >> 24);
+      _Buffer[_Index + 1] = (byte)(value >> 16);
+      _Buffer[_Index + 2] = (byte)(value >> 8);
+      _Buffer[_Index + 3] = (byte)value;
     }
 
-    index += 4;
+    _Index += 4;
   }
 
   public void Serialize(int value) {
@@ -101,7 +101,7 @@ public class ByteSerializer {
   public void Serialize(ulong value) {
     uint i0 = (uint)value;
     uint i1 = (uint)(value >> 32);
-    if (useLittleEndian) {
+    if (_UseLittleEndian) {
       Serialize(i0);
       Serialize(i1);
     }
@@ -112,67 +112,67 @@ public class ByteSerializer {
   }
 
   public void Serialize(float value) {
-    floatBuffer[0] = value;
-    Buffer.BlockCopy(floatBuffer, 0, buffer, index, 4);
+    _FloatBuffer[0] = value;
+    Buffer.BlockCopy(_FloatBuffer, 0, _Buffer, _Index, 4);
     
     Swap4();
     
-    index += 4;
+    _Index += 4;
   }
 
   public void Serialize(double value) {
-    doubleBuffer[0] = value;
-    Buffer.BlockCopy(doubleBuffer, 0, buffer, index, 8);
+    _DoubleBuffer[0] = value;
+    Buffer.BlockCopy(_DoubleBuffer, 0, _Buffer, _Index, 8);
     
     Swap8();
     
-    index += 8;
+    _Index += 8;
   }
 
   public void Serialize(byte[] value) {
-    Array.Copy(value, 0, buffer, index, value.Length);
-    index += value.Length;
+    Array.Copy(value, 0, _Buffer, _Index, value.Length);
+    _Index += value.Length;
   }
 
   public void Serialize(char[] value) {
     for (int i = 0; i < value.Length; ++i) {
-      buffer[index + i] = (byte)value[i];
+      _Buffer[_Index + i] = (byte)value[i];
     }
-    index += value.Length;
+    _Index += value.Length;
   }
 
   public void Deserialize(out byte value) {
-    value = buffer[index];
-    index += 1;
+    value = _Buffer[_Index];
+    _Index += 1;
   }
 
   public void Deserialize(out ushort value) {
-    uint b0 = buffer[index];
-    uint b1 = buffer[index + 1];
+    uint b0 = _Buffer[_Index];
+    uint b1 = _Buffer[_Index + 1];
 
-    if (useLittleEndian) {
+    if (_UseLittleEndian) {
       value = (ushort)(b0 | (b1 << 8));
     }
     else {
       value = (ushort)(b1 | (b0 << 8));
     }
 
-    index += 2;
+    _Index += 2;
   }
 
   public void Deserialize(out uint value) {
-    uint b0 = buffer[index];
-    uint b1 = buffer[index + 1];
-    uint b2 = buffer[index + 2];
-    uint b3 = buffer[index + 3];
-    if (useLittleEndian) {
+    uint b0 = _Buffer[_Index];
+    uint b1 = _Buffer[_Index + 1];
+    uint b2 = _Buffer[_Index + 2];
+    uint b3 = _Buffer[_Index + 3];
+    if (_UseLittleEndian) {
       value = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
     }
     else {
       value = b3 | (b2 << 8) | (b1 << 16) | (b0 << 24);
     }
 
-    index += 4;
+    _Index += 4;
   }
 
   public void Deserialize(out int value) {
@@ -184,7 +184,7 @@ public class ByteSerializer {
   public void Deserialize(out ulong value) {
     uint i0;
     uint i1;
-    if (useLittleEndian) {
+    if (_UseLittleEndian) {
       Deserialize(out i0);
       Deserialize(out i1);
     }
@@ -194,62 +194,62 @@ public class ByteSerializer {
     }
     value = i0 | (i1 << 32);
 
-    index += 8;
+    _Index += 8;
   }
 
   public void Deserialize(out float value) {
+    Swap4(); 
+    
+    Buffer.BlockCopy(_Buffer, _Index, _FloatBuffer, 0, 4);
+    value = _FloatBuffer[0];
+    
     Swap4();
     
-    Buffer.BlockCopy(buffer, index, floatBuffer, 0, 4);
-    value = floatBuffer[0];
-    
-    Swap4();
-    
-    index += 4;
+    _Index += 4;
   }
 
   
   public void Deserialize(out double value) {
     Swap8();
     
-    Buffer.BlockCopy(buffer, index, doubleBuffer, 0, 8);
-    value = doubleBuffer[0];
+    Buffer.BlockCopy(_Buffer, _Index, _DoubleBuffer, 0, 8);
+    value = _DoubleBuffer[0];
     
     Swap8();
     
-    index += 8;
+    _Index += 8;
   }
 
   public void Deserialize(byte[] value) {
-    Array.Copy(buffer, index, value, 0, value.Length);
-    index += value.Length;
+    Array.Copy(_Buffer, _Index, value, 0, value.Length);
+    _Index += value.Length;
   }
 
   public void Deserialize(char[] value) {
     for (int i = 0; i < value.Length; ++i) {
-      value[i] = (char)buffer[index + i];
+      value[i] = (char)_Buffer[_Index + i];
     }
-    index += value.Length;
+    _Index += value.Length;
   }
 
   private void Swap(int offsetA, int offsetB) {
-    int indexA = index + offsetA;
-    int indexB = index + offsetB;
+    int indexA = _Index + offsetA;
+    int indexB = _Index + offsetB;
 
-    byte swap = buffer[indexA];
-    buffer[indexA] = buffer[indexB];
-    buffer[indexB] = swap;
+    byte swap = _Buffer[indexA];
+    _Buffer[indexA] = _Buffer[indexB];
+    _Buffer[indexB] = swap;
   }
 
   private void Swap4() {
-    if (needSwap) {
+    if (_NeedSwap) {
       Swap(0, 3);
       Swap(1, 2);
     }
   }
 
   private void Swap8() {
-    if (needSwap) {
+    if (_NeedSwap) {
       Swap(0, 7);
       Swap(1, 6);
       Swap(2, 5);

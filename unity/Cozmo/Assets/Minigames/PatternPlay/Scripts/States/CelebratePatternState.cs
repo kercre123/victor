@@ -8,22 +8,22 @@ public class CelebratePatternState : State {
   public override void Enter() {
     base.Enter();
     DAS.Info("State", "CelebratePattern");
-    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
 
     _PatternPlayGame.ClearBlockLights();
 
     if (_PatternPlayGame.ShouldCelebrateNew()) {
-      robot.SendAnimation("enjoyPattern", AnimationDone);
+      _CurrentRobot.SendAnimation("enjoyPattern", AnimationDone);
       _PatternPlayGame.SetShouldCelebrateNew(false);
     }
     else {
-      robot.SendAnimation("seeOldPattern", AnimationDone);
+      _CurrentRobot.SendAnimation("seeOldPattern", AnimationDone);
     }
   }
 
   void AnimationDone(bool success) {
     _PatternPlayGame.GetAutoBuild().ClearNeatList();
     _PatternPlayGame.ResetLookHeadForkLift();
-    stateMachine_.SetNextState(new LookForPatternState());
+    _StateMachine.SetNextState(new LookForPatternState());
   }
 }

@@ -14,7 +14,7 @@ public class HaveIdeaForPatternState : State {
     DAS.Info("PatternPlayState", "HaveIdeaForPattern");
 
     // pick a pattern to build
-    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
     _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
     _PatternPlayAutoBuild.autoBuilding = true;
 
@@ -26,23 +26,23 @@ public class HaveIdeaForPatternState : State {
     }
 
     // TODO: Use "have idea" animation
-    robot.SendAnimation("shocked", AnimationDone);
+    _CurrentRobot.SendAnimation("shocked", AnimationDone);
   }
 
   public override void Update() {
     base.Update();
 
     if (_PatternPlayGame.SeenPattern()) {
-      stateMachine_.SetNextState(new CelebratePatternState());
+      _StateMachine.SetNextState(new CelebratePatternState());
       return;
     }
 
     if (!_HasTargetToBuild) {
-      stateMachine_.SetNextState(new LookForPatternState());
+      _StateMachine.SetNextState(new LookForPatternState());
     }
   }
 
   private void AnimationDone(bool success) {
-    stateMachine_.SetNextState(new LookForCubesState());
+    _StateMachine.SetNextState(new LookForCubesState());
   }
 }

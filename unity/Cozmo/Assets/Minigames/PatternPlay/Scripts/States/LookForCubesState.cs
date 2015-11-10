@@ -11,7 +11,7 @@ public class LookForCubesState : State {
   public override void Enter() {
     base.Enter();
     DAS.Info("PatternPlayState", "LookForCubes");
-    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
     _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
   }
 
@@ -19,12 +19,12 @@ public class LookForCubesState : State {
     base.Update();
 
     if (_PatternPlayGame.SeenPattern()) {
-      stateMachine_.SetNextState(new CelebratePatternState());
+      _StateMachine.SetNextState(new CelebratePatternState());
       return;
     }
 
     if (_PatternPlayAutoBuild.AvailableBlocks() > 0) {
-      stateMachine_.SetNextState(new PickUpCubeState());
+      _StateMachine.SetNextState(new PickUpCubeState());
     }
     else {
       SearchForAvailableBlock();
@@ -33,14 +33,14 @@ public class LookForCubesState : State {
 
   public override void Exit() {
     base.Exit();
-    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     lookingAround = false;
   }
 
   void SearchForAvailableBlock() {
     if (lookingAround == false) {
       lookingAround = true;
-      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
     }
   }
 }
