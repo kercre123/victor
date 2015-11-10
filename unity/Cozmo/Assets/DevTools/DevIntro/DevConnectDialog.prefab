@@ -29,7 +29,7 @@ GameObject:
   - 114: {fileID: 11419638}
   - 114: {fileID: 11429128}
   m_Layer: 5
-  m_Name: Button_ConnectToRobot
+  m_Name: ButtonConnectToRobot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -132,7 +132,7 @@ GameObject:
   - 114: {fileID: 11482038}
   - 114: {fileID: 11494530}
   m_Layer: 5
-  m_Name: Robot IP
+  m_Name: RobotIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -168,7 +168,7 @@ GameObject:
   - 114: {fileID: 11492746}
   - 114: {fileID: 11455330}
   m_Layer: 5
-  m_Name: Engine IP
+  m_Name: EngineIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -237,7 +237,7 @@ GameObject:
   - 114: {fileID: 11489358}
   - 114: {fileID: 11407174}
   m_Layer: 5
-  m_Name: Simulator IP
+  m_Name: SimulatorIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -271,7 +271,7 @@ GameObject:
   - 114: {fileID: 11485454}
   - 114: {fileID: 11411302}
   m_Layer: 5
-  m_Name: Visualizer IP
+  m_Name: VisualizerIP
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -340,7 +340,7 @@ GameObject:
   - 114: {fileID: 11427572}
   - 114: {fileID: 11475770}
   m_Layer: 5
-  m_Name: Button_ConnectToSim
+  m_Name: ButtonConnectToSim
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

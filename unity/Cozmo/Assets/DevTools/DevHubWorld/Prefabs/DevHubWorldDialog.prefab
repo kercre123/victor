@@ -362,7 +362,16 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _DevHubWorldButtonPrefab
+      value: 
+      objectReference: {fileID: 11488418, guid: 8b99ab09829ee42dc9cce2c8c7e9891f,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ButtonContainer
+      value: 
+      objectReference: {fileID: 22420594}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 119414}
