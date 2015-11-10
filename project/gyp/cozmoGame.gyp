@@ -363,6 +363,7 @@
               '<(cg-cti_gyp_path):ctiVisionRobot',
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
+              '<(cg-audio_path):DriveAudioEngine',
             ]
           },
         ],
@@ -487,7 +488,20 @@
                   }],
                 ], # conditions
               },
-            ] # actions
+            ], # actions
+
+            'conditions': [
+              [
+                'OS=="ios" or OS=="mac"',
+                {
+                  'libraries': [
+                    '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+                  ],
+                },
+              ],
+            ],
           }, # end controller Game Engine
 
           {
