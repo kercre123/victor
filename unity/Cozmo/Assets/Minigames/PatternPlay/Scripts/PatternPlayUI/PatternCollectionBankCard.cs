@@ -6,66 +6,66 @@ using System.Collections.Generic;
 public class PatternCollectionBankCard : MonoBehaviour {
 
   [SerializeField]
-  private RectTransform _verticalLayoutForRowPatterns;
+  private RectTransform _VerticalLayoutForRowPatterns;
 
   [SerializeField]
-  private RectTransform _horizontalLayoutForStackPatterns;
+  private RectTransform _HorizontalLayoutForStackPatterns;
 
   [SerializeField]
-  private RectTransform _halfHorizontalLayoutForStackPatterns;
+  private RectTransform _HalfHorizontalLayoutForStackPatterns;
 
   [SerializeField]
-  private PatternDisplay _rowPatternDisplayPrefab;
+  private PatternDisplay _RowPatternDisplayPrefab;
 
   [SerializeField]
-  private PatternDisplay _stackPatternDisplayPrefab;
+  private PatternDisplay _StackPatternDisplayPrefab;
 
   [SerializeField]
-  private Text _headerText;
+  private Text _HeaderText;
   
   [SerializeField]
-  private BadgeDisplay _newBadgeDisplay;
+  private BadgeDisplay _NewBadgeDisplay;
   
   [SerializeField]
-  private LayoutElement _layoutElement;
+  private LayoutElement _LayoutElement;
 
-  List<PatternDisplay> _patternsShown;
+  List<PatternDisplay> _PatternsShown;
 
   public void Initialize(MemoryBank memoryBank, float cardWidth) {
-    _patternsShown = new List<PatternDisplay> ();
+    _PatternsShown = new List<PatternDisplay>();
 
     // Depending on the signature, we need to use a particular layout
     switch (memoryBank.BankOrientation) {
     case MemoryBank.PatternOrientation.Horizontal:
-      ShowRowPatterns (memoryBank);
+      ShowRowPatterns(memoryBank);
       break;
     case MemoryBank.PatternOrientation.Vertical:
-      ShowStackPatterns (memoryBank);
+      ShowStackPatterns(memoryBank);
       break;
     case MemoryBank.PatternOrientation.Mixed:
-      ShowSpecialPatterns (memoryBank);
+      ShowSpecialPatterns(memoryBank);
       break;
     default:
-      Debug.LogError ("Not implemented!");
+      Debug.LogError("Not implemented!");
       break;
     }
 
-    SetHeaderText (memoryBank);
-    SetCardWidth (cardWidth);
+    SetHeaderText(memoryBank);
+    SetCardWidth(cardWidth);
 
-    SetupBadge (memoryBank.name);
+    SetupBadge(memoryBank.Name);
   }
 
   public void RemoveBadgeIfSeen() {
-    foreach (PatternDisplay display in _patternsShown) {
+    foreach (PatternDisplay display in _PatternsShown) {
       display.RemoveBadgeIfSeen();
     }
   }
 
   public bool HasAnyNewPatterns() {
     bool anyNewPatterns = false;
-    foreach (PatternDisplay display in _patternsShown) {
-      if (display.pattern != null && BadgeManager.DoesBadgeExistForKey(display.pattern)){
+    foreach (PatternDisplay display in _PatternsShown) {
+      if (display.Pattern != null && BadgeManager.DoesBadgeExistForKey(display.Pattern)) {
         anyNewPatterns = true;
         break;
       }
@@ -74,39 +74,40 @@ public class PatternCollectionBankCard : MonoBehaviour {
   }
 
   public bool IsBadged() {
-    return _newBadgeDisplay.IsShowing ();
+    return _NewBadgeDisplay.IsShowing();
   }
 
   private void SetCardWidth(float newWidth) {
-    _layoutElement.minWidth = newWidth;
+    _LayoutElement.minWidth = newWidth;
   }
 
   private void SetHeaderText(MemoryBank memoryBank) {
     // TODO: Localize this?
-    _headerText.text = memoryBank.name;
+    _HeaderText.text = memoryBank.Name;
   }
 
   private void SetupBadge(string tagName) {
-    _newBadgeDisplay.UpdateDisplayWithTag (tagName);
+    _NewBadgeDisplay.UpdateDisplayWithTag(tagName);
   }
 
   private void ShowRowPatterns(MemoryBank memoryBank) {
-    ShowPatterns (memoryBank, _verticalLayoutForRowPatterns, _rowPatternDisplayPrefab);
+    ShowPatterns(memoryBank, _VerticalLayoutForRowPatterns, _RowPatternDisplayPrefab);
   }
 
   private void ShowStackPatterns(MemoryBank memoryBank) {
-    ShowPatterns (memoryBank, _horizontalLayoutForStackPatterns, _stackPatternDisplayPrefab);
+    ShowPatterns(memoryBank, _HorizontalLayoutForStackPatterns, _StackPatternDisplayPrefab);
   }
 
   private void ShowPatterns(MemoryBank memoryBank, RectTransform layoutContainer, PatternDisplay patternCardPrefab) {
     // Foreach seen pattern create a card
-    HashSet<BlockPattern> patterns = memoryBank.patterns;
-    HashSet<BlockPattern> seenPatterns = memoryBank.GetSeenPatterns ();
+    HashSet<BlockPattern> patterns = memoryBank.Patterns;
+    HashSet<BlockPattern> seenPatterns = memoryBank.GetSeenPatterns();
     if (patterns != null) {
       foreach (BlockPattern pattern in patterns) {
         if (seenPatterns != null && seenPatterns.Contains(pattern)) {
           CreatePatternCard(pattern, layoutContainer, patternCardPrefab);
-        } else {
+        }
+        else {
           CreatePatternCard(null, layoutContainer, patternCardPrefab);
         }
       }
@@ -115,38 +116,40 @@ public class PatternCollectionBankCard : MonoBehaviour {
 
   private void CreatePatternCard(BlockPattern pattern, RectTransform layoutContainer, PatternDisplay patternCardPrefab) {
     // Create the card
-    GameObject newCard = Instantiate (patternCardPrefab.gameObject) as GameObject;
+    GameObject newCard = Instantiate(patternCardPrefab.gameObject) as GameObject;
 
     // Add the card to the layout
-    newCard.transform.SetParent (layoutContainer, false);
+    newCard.transform.SetParent(layoutContainer, false);
 
     // Update the card's display using the pattern
-    PatternDisplay patternDisplay = newCard.GetComponent<PatternDisplay> ();
-    patternDisplay.pattern = pattern;
+    PatternDisplay patternDisplay = newCard.GetComponent<PatternDisplay>();
+    patternDisplay.Pattern = pattern;
 
     if (pattern != null) {
-      _patternsShown.Add (patternDisplay);
+      _PatternsShown.Add(patternDisplay);
     }
   }
 
   private void ShowSpecialPatterns(MemoryBank memoryBank) {
     // Foreach seen pattern create a card
-    HashSet<BlockPattern> patterns = memoryBank.patterns;
-    HashSet<BlockPattern> seenPatterns = memoryBank.GetSeenPatterns ();
+    HashSet<BlockPattern> patterns = memoryBank.Patterns;
+    HashSet<BlockPattern> seenPatterns = memoryBank.GetSeenPatterns();
     RectTransform layoutContainer;
     PatternDisplay patternCardPrefab;
     if (patterns != null) {
       foreach (BlockPattern pattern in patterns) {
-        if (pattern.verticalStack_) {
-          layoutContainer = _halfHorizontalLayoutForStackPatterns;
-          patternCardPrefab = _stackPatternDisplayPrefab;
-        } else {
-          layoutContainer = _verticalLayoutForRowPatterns;
-          patternCardPrefab = _rowPatternDisplayPrefab;
+        if (pattern.VerticalStack) {
+          layoutContainer = _HalfHorizontalLayoutForStackPatterns;
+          patternCardPrefab = _StackPatternDisplayPrefab;
+        }
+        else {
+          layoutContainer = _VerticalLayoutForRowPatterns;
+          patternCardPrefab = _RowPatternDisplayPrefab;
         }
         if (seenPatterns != null && seenPatterns.Contains(pattern)) {
           CreatePatternCard(pattern, layoutContainer, patternCardPrefab);
-        } else {
+        }
+        else {
           CreatePatternCard(null, layoutContainer, patternCardPrefab);
         }
       }

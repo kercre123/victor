@@ -3,39 +3,39 @@ using System.Collections;
 
 public class PickUpCubeState : State {
 
-  private PatternPlayGame patternPlayGame_ = null;
-  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+  private PatternPlayGame _PatternPlayGame = null;
+  private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-  bool hasTarget = true;
+  private bool _HasTarget = true;
 
   public override void Enter() {
     base.Enter();
     DAS.Info("PatternPlayState", "PickUpCube");
-    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
+    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
 
-    ObservedObject targetObject = patternPlayAutoBuild_.GetClosestAvailableBlock();
+    ObservedObject targetObject = _PatternPlayAutoBuild.GetClosestAvailableBlock();
 
     // it is possible that since we thought there were seenBlocks that they
     // have been dirtied since then. If there are no available blocks
     // anymore then we should go look for more.
     if (targetObject == null) {
-      hasTarget = false;
+      _HasTarget = false;
       return;
     }
 
     robot.PickupObject(targetObject, true, false, false, 0.0f, PickUpDone);
-    patternPlayAutoBuild_.SetObjectHeld(targetObject);
+    _PatternPlayAutoBuild.SetObjectHeld(targetObject);
   }
 
   public override void Update() {
     base.Update();
-    if (hasTarget == false) {
+    if (_HasTarget == false) {
       DAS.Info("PatternPlayPickUpCube", "No Cubes To Pickup");
       stateMachine_.SetNextState(new LookForCubesState());
-      patternPlayAutoBuild_.SetObjectHeld(null);
+      _PatternPlayAutoBuild.SetObjectHeld(null);
     }
-    if (patternPlayGame_.SeenPattern()) {
+    if (_PatternPlayGame.SeenPattern()) {
       stateMachine_.SetNextState(new CelebratePatternState());
       return;
     }
@@ -48,11 +48,11 @@ public class PickUpCubeState : State {
     else {
       DAS.Info("PatternPlay", "PickUp Failed!");
       stateMachine_.SetNextState(new LookForCubesState());
-      if (patternPlayAutoBuild_.GetHeldObject() != null) {
-        robot.UpdateDirtyList(patternPlayAutoBuild_.GetHeldObject());
+      if (_PatternPlayAutoBuild.GetHeldObject() != null) {
+        robot.UpdateDirtyList(_PatternPlayAutoBuild.GetHeldObject());
       }
 
-      patternPlayAutoBuild_.SetObjectHeld(null);
+      _PatternPlayAutoBuild.SetObjectHeld(null);
     }
 
   }

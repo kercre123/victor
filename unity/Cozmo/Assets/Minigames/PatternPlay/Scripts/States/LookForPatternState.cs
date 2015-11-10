@@ -2,50 +2,50 @@
 using System.Collections;
 
 public class LookForPatternState : State {
-  private PatternPlayGame patternPlayGameRef_ = null;
-  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+  private PatternPlayGame _PatternPlayGameRef = null;
+  private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-  bool animationPlaying_ = false;
+  private bool _AnimationPlaying = false;
 
-  int lastFrameVisibleCount_ = 0;
-  int lastSeenThresholdCount_ = 0;
+  private int _LastFrameVisibleCount = 0;
+  private int _LastSeenThresholdCount = 0;
 
-  bool lastFrameHasVerticalBlock_ = false;
+  private bool _LastFrameHasVerticalBlock = false;
 
   public override void Enter() { 
     base.Enter();
 
     // TODO: Set eyes to scan. 
-    patternPlayGameRef_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild_ = patternPlayGameRef_.GetAutoBuild();
-    patternPlayAutoBuild_.autoBuilding = false;
+    _PatternPlayGameRef = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayAutoBuild = _PatternPlayGameRef.GetAutoBuild();
+    _PatternPlayAutoBuild.autoBuilding = false;
   }
 
   public override void Update() {
     base.Update(); 
 
-    if (animationPlaying_) { 
+    if (_AnimationPlaying) { 
       return;
     }
 
     CheckShouldPlayIdle();
 
     float closestD = ClosestsObject();
-    int seenThreshold = patternPlayGameRef_.SeenBlocksOverThreshold(0.5f);
+    int seenThreshold = _PatternPlayGameRef.SeenBlocksOverThreshold(0.5f);
 
-    bool hasVerticalBlock = patternPlayGameRef_.HasVerticalStack();
+    bool hasVerticalBlock = _PatternPlayGameRef.HasVerticalStack();
 
-    if (seenThreshold > lastSeenThresholdCount_) {
+    if (seenThreshold > _LastSeenThresholdCount) {
       robot.SendAnimation("enjoyLight", AnimationDone);
-      animationPlaying_ = true;
+      _AnimationPlaying = true;
       robot.DriveWheels(0.0f, 0.0f);
     }
 
-    if (hasVerticalBlock && !lastFrameHasVerticalBlock_) {
+    if (hasVerticalBlock && !_LastFrameHasVerticalBlock) {
       robot.SetHeadAngle(0.3f);
     }
 
-    if (!hasVerticalBlock && lastFrameHasVerticalBlock_) {
+    if (!hasVerticalBlock && _LastFrameHasVerticalBlock) {
       robot.SetHeadAngle(-0.1f);
     }
 
@@ -63,11 +63,11 @@ public class LookForPatternState : State {
 
     // last frame visible count flag is used to prevent locking up the
     // wheels on the idle animation.
-    if (lastFrameVisibleCount_ > 0 && robot.VisibleObjects.Count == 0) {
+    if (_LastFrameVisibleCount > 0 && robot.VisibleObjects.Count == 0) {
       robot.DriveWheels(0.0f, 0.0f);
     }
 
-    if (patternPlayGameRef_.SeenPattern()) {
+    if (_PatternPlayGameRef.SeenPattern()) {
       stateMachine_.SetNextState(new CelebratePatternState());
     }
     else if (ShouldAutoBuildPattern()) {
@@ -75,14 +75,14 @@ public class LookForPatternState : State {
       //stateMachine.SetNextState(new HaveIdeaForPatternState());
     }
 
-    lastFrameVisibleCount_ = robot.VisibleObjects.Count;
-    lastSeenThresholdCount_ = seenThreshold;
-    lastFrameHasVerticalBlock_ = hasVerticalBlock;
+    _LastFrameVisibleCount = robot.VisibleObjects.Count;
+    _LastSeenThresholdCount = seenThreshold;
+    _LastFrameHasVerticalBlock = hasVerticalBlock;
   }
 
   bool ShouldAutoBuildPattern() {
-    bool blocksNotTouched = Time.time - patternPlayGameRef_.GetMostRecentMovedTime() > 10.0f;
-    bool patternNotSeen = Time.time - patternPlayGameRef_.LastPatternSeenTime() > 20.0f;
+    bool blocksNotTouched = Time.time - _PatternPlayGameRef.GetMostRecentMovedTime() > 10.0f;
+    bool patternNotSeen = Time.time - _PatternPlayGameRef.LastPatternSeenTime() > 20.0f;
     return blocksNotTouched && patternNotSeen;
   }
 
@@ -104,7 +104,7 @@ public class LookForPatternState : State {
 
   private void CheckShouldPlayIdle() {
     for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      if (patternPlayGameRef_.GetBlockPatternData(robot.VisibleObjects[i].ID).blockLightsLocalSpace.AreLightsOff() == false) {
+      if (_PatternPlayGameRef.GetBlockPatternData(robot.VisibleObjects[i].ID).BlockLightsLocalSpace.AreLightsOff() == false) {
         robot.SetIdleAnimation("NONE");
         return;
       }
@@ -114,6 +114,6 @@ public class LookForPatternState : State {
   }
 
   private void AnimationDone(bool success) {
-    animationPlaying_ = false;
+    _AnimationPlaying = false;
   }
 }

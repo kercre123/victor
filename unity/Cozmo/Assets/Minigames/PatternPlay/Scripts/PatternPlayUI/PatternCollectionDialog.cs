@@ -7,36 +7,36 @@ using DG.Tweening;
 public class PatternCollectionDialog : BaseDialog {
 
   [SerializeField]
-  private PatternCollectionBankCard _memoryBankCardPrefab;
+  private PatternCollectionBankCard _MemoryBankCardPrefab;
 
   [SerializeField]
-  private RectTransform _memoryBankCardContentPanel;
+  private RectTransform _MemoryBankCardContentPanel;
 
   [SerializeField]
-  private Text _percentCompleteLabel;
+  private Text _PercentCompleteLabel;
 
   [SerializeField]
-  private ScrollRect _memoryBankScrollRect;
+  private ScrollRect _MemoryBankScrollRect;
 
-  private List<PatternCollectionBankCard> _memoryBankCards;
-
-  [SerializeField]
-  private float _slowDragSpeedThreshold = 30f;
+  private List<PatternCollectionBankCard> _MemoryBankCards;
 
   [SerializeField]
-  private HorizontalLayoutGroup _cardLayoutGroup;
+  private float _SlowDragSpeedThreshold = 30f;
 
   [SerializeField]
-  private float _cardWidth = 600f;
+  private HorizontalLayoutGroup _CardLayoutGroup;
 
-	public void Initialize(PatternMemory patternMemory) {
+  [SerializeField]
+  private float _CardWidth = 600f;
+
+  public void Initialize(PatternMemory patternMemory) {
     // Create all the memory bank cards
-    _memoryBankCards = CreateMemoryBankCards (patternMemory);
+    _MemoryBankCards = CreateMemoryBankCards(patternMemory);
 
     // TODO: Listen for added patterns and update dialog - shouldn't update every frame
     // We'll need to cache the cards for easy access later
 
-    SetCompletionText (patternMemory.GetNumSeenPatterns (), patternMemory.GetNumTotalPatterns ());
+    SetCompletionText(patternMemory.GetNumSeenPatterns(), patternMemory.GetNumTotalPatterns());
   }
 
   protected override void CleanUp() {
@@ -46,8 +46,8 @@ public class PatternCollectionDialog : BaseDialog {
     // The player could be dragging the scrollview slowly while 
     // looking at the cards at the same time. We want to remove the badge
     // if the player has seen it.
-    float scrollXSpeed = Mathf.Abs(_memoryBankScrollRect.velocity.x);
-    if (scrollXSpeed < _slowDragSpeedThreshold) {
+    float scrollXSpeed = Mathf.Abs(_MemoryBankScrollRect.velocity.x);
+    if (scrollXSpeed < _SlowDragSpeedThreshold) {
       RemoveBadgesIfSeen();
     }
   }
@@ -55,42 +55,42 @@ public class PatternCollectionDialog : BaseDialog {
   public void OnDragEnd() {
     // We want to remove the badge if the player has seen it, 
     // which is generally when they stop scrolling.
-    RemoveBadgesIfSeen ();
+    RemoveBadgesIfSeen();
   }
 
   protected override void ConstructCloseAnimation(Sequence closeAnimation) {
   }
 
   private void RemoveBadgesIfSeen() {
-    foreach (PatternCollectionBankCard card in _memoryBankCards) {
+    foreach (PatternCollectionBankCard card in _MemoryBankCards) {
       card.RemoveBadgeIfSeen();
     }
   }
-  
+
   private List<PatternCollectionBankCard> CreateMemoryBankCards(PatternMemory patternMemory) {
     List<PatternCollectionBankCard> memoryBankCards = new List<PatternCollectionBankCard>();
 
     // Foreach memory bank...
-    List<MemoryBank> memoryBanks = patternMemory.GetMemoryBanks ();
+    List<MemoryBank> memoryBanks = patternMemory.GetMemoryBanks();
     GameObject newBankCard;
     PatternCollectionBankCard bankCardScript;
     foreach (MemoryBank bank in memoryBanks) {
       // Only show cards if the player has seen at least one pattern
       if (bank.GetSeenPatterns().Count > 0) {
         // Create a card
-        newBankCard = Instantiate(_memoryBankCardPrefab.gameObject) as GameObject;
+        newBankCard = Instantiate(_MemoryBankCardPrefab.gameObject) as GameObject;
 
         // Layout the card into the scrollable panel
         // The layout will modify the position, so make sure that FALSE is 
         // there so that the world position will update.
-        newBankCard.transform.SetParent(_memoryBankCardContentPanel, false);
+        newBankCard.transform.SetParent(_MemoryBankCardContentPanel, false);
 
         // Initialize the card with the bank
         bankCardScript = newBankCard.GetComponent<PatternCollectionBankCard>();
-        bankCardScript.Initialize(bank, _cardWidth);
+        bankCardScript.Initialize(bank, _CardWidth);
 
         // Add the card to the list
-        memoryBankCards.Add ( bankCardScript );
+        memoryBankCards.Add(bankCardScript);
       }
     }
 
@@ -98,39 +98,39 @@ public class PatternCollectionDialog : BaseDialog {
   }
 
   public void OnCloseButtonTap() {
-    RemoveBadgesIfSeen ();
-    UIManager.CloseDialog (this);
+    RemoveBadgesIfSeen();
+    UIManager.CloseDialog(this);
   }
 
   private void SetCompletionText(int numSeenPatterns, int numTotalPatterns) {
     float percentComplete = numSeenPatterns / (float)numTotalPatterns;
     percentComplete *= 100;
-    _percentCompleteLabel.text = string.Format ("{0:N1}% Complete", percentComplete);
+    _PercentCompleteLabel.text = string.Format("{0:N1}% Complete", percentComplete);
   }
 
   public bool ScrollToFirstNewPattern() {
     bool scrolled = false;
-    int badgedCardIndex = GetFirstBadgedCard ();
+    int badgedCardIndex = GetFirstBadgedCard();
     if (badgedCardIndex >= 0) {
-      float scrollValue = CalculateScrollValue (badgedCardIndex);
-      SetScrollValue (scrollValue);
+      float scrollValue = CalculateScrollValue(badgedCardIndex);
+      SetScrollValue(scrollValue);
       scrolled = true;
     }
     return scrolled;
   }
 
   public float CalculateScrollValue(int badgedCardIndex) {
-    float cardSpacing = _cardLayoutGroup.spacing;
-    float cardWidth = _cardWidth;
+    float cardSpacing = _CardLayoutGroup.spacing;
+    float cardWidth = _CardWidth;
     float scrollLeftOfScreen = (cardSpacing + cardWidth) * badgedCardIndex;
 
-    int numCards = _memoryBankCards.Count;
+    int numCards = _MemoryBankCards.Count;
     float fullCardWidth = (numCards * cardWidth) + ((numCards - 1) * cardSpacing);
-    float screenCanvasWidth = GetScrollViewWidth ();
+    float screenCanvasWidth = GetScrollViewWidth();
     float scrollOffOfScreen = fullCardWidth - screenCanvasWidth;
 
     float normalizedPosition = scrollLeftOfScreen / scrollOffOfScreen;
-    normalizedPosition = Mathf.Clamp (normalizedPosition, 0f, 1f);
+    normalizedPosition = Mathf.Clamp(normalizedPosition, 0f, 1f);
 
     return normalizedPosition;
   }
@@ -138,7 +138,7 @@ public class PatternCollectionDialog : BaseDialog {
   private int GetFirstBadgedCard() {
     int badgedCardIndex = -1;
     int currentIndex = 0;
-    foreach (PatternCollectionBankCard card in _memoryBankCards) {
+    foreach (PatternCollectionBankCard card in _MemoryBankCards) {
       if (card.IsBadged()) {
         badgedCardIndex = currentIndex;
         break;
@@ -149,16 +149,16 @@ public class PatternCollectionDialog : BaseDialog {
   }
 
   private float GetScrollViewWidth() {
-    RectTransform rectTransform = _memoryBankScrollRect.transform as RectTransform;
+    RectTransform rectTransform = _MemoryBankScrollRect.transform as RectTransform;
     return rectTransform.rect.width;
   }
 
   public void SetScrollValue(float scrollValue) {
-    float clampValue = Mathf.Clamp (scrollValue, 0, 1);
-    _memoryBankScrollRect.horizontalNormalizedPosition = clampValue;
+    float clampValue = Mathf.Clamp(scrollValue, 0, 1);
+    _MemoryBankScrollRect.horizontalNormalizedPosition = clampValue;
   }
 
   public float GetScrollValue() {
-    return _memoryBankScrollRect.horizontalNormalizedPosition;
+    return _MemoryBankScrollRect.horizontalNormalizedPosition;
   }
 }

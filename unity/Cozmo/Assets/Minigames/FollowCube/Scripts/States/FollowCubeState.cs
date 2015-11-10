@@ -3,7 +3,7 @@ using System.Collections;
 
 public class FollowCubeState : State {
 
-  private bool searchTurnRight_ = false;
+  private bool _SearchTurnRight = false;
 
   public override void Enter() {
     base.Update();
@@ -50,7 +50,7 @@ public class FollowCubeState : State {
     else {
       // we need to turn to face it
       ComputeTurnDirection(closest);
-      if (searchTurnRight_) {
+      if (_SearchTurnRight) {
         robot.DriveWheels(35.0f, -30.0f);
       }
       else {
@@ -63,8 +63,8 @@ public class FollowCubeState : State {
   private void ComputeTurnDirection(ObservedObject followBlock) {
     float turnAngle = Vector3.Cross(robot.Forward, followBlock.WorldPosition - robot.WorldPosition).z;
     if (turnAngle < 0.0f)
-      searchTurnRight_ = true;
+      _SearchTurnRight = true;
     else
-      searchTurnRight_ = false;
+      _SearchTurnRight = false;
   }
 }

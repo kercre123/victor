@@ -3,10 +3,10 @@ using System.Collections;
 
 public class HaveIdeaForPatternState : State {
 
-  PatternPlayGame patternPlayGame_ = null;
-  PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+  PatternPlayGame _PatternPlayGame = null;
+  PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-  bool hasTargetToBuild = false;
+  private bool _HasTargetToBuild = false;
 
   public override void Enter() {
     base.Enter();
@@ -14,13 +14,13 @@ public class HaveIdeaForPatternState : State {
     DAS.Info("PatternPlayState", "HaveIdeaForPattern");
 
     // pick a pattern to build
-    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
-    patternPlayAutoBuild_.autoBuilding = true;
+    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
+    _PatternPlayAutoBuild.autoBuilding = true;
 
-    hasTargetToBuild = patternPlayAutoBuild_.PickNewTargetPattern();
+    _HasTargetToBuild = _PatternPlayAutoBuild.PickNewTargetPattern();
 
-    if (hasTargetToBuild == false) {
+    if (_HasTargetToBuild == false) {
       DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");
       return;
     }
@@ -32,12 +32,12 @@ public class HaveIdeaForPatternState : State {
   public override void Update() {
     base.Update();
 
-    if (patternPlayGame_.SeenPattern()) {
+    if (_PatternPlayGame.SeenPattern()) {
       stateMachine_.SetNextState(new CelebratePatternState());
       return;
     }
 
-    if (!hasTargetToBuild) {
+    if (!_HasTargetToBuild) {
       stateMachine_.SetNextState(new LookForPatternState());
     }
   }

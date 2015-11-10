@@ -3,12 +3,12 @@ using System.Collections;
 
 public class FollowGoldCubeState : State {
 
-  private bool searchTurnRight_ = false;
-  float lastTimeSeenGoldBlock_ = 0.0f;
+  private bool _SearchTurnRight = false;
+  float _LastTimeSeenGoldBlock = 0.0f;
 
   public override void Enter() {
     base.Update();
-    lastTimeSeenGoldBlock_ = Time.time;
+    _LastTimeSeenGoldBlock = Time.time;
     robot.SetLiftHeight(0.0f);
     robot.SetHeadAngle(-1.0f);
   }
@@ -16,12 +16,12 @@ public class FollowGoldCubeState : State {
   public override void Update() {
     base.Update();
 
-    if (Time.time - lastTimeSeenGoldBlock_ > 5.0f) {
+    if (Time.time - _LastTimeSeenGoldBlock > 5.0f) {
       stateMachine_.SetNextState(new LookForGoldCubeState());
     }
 
     if (HasGoldBlockInView()) {
-      lastTimeSeenGoldBlock_ = Time.time;
+      _LastTimeSeenGoldBlock = Time.time;
       ObservedObject followingCube = FollowClosest();
       if (followingCube != null) {
         if ((stateMachine_.GetGame() as TreasureHuntGame).HoveringOverGold((LightCube)followingCube)) {
@@ -81,7 +81,7 @@ public class FollowGoldCubeState : State {
     else {
       // we need to turn to face it
       ComputeTurnDirection(closest);
-      if (searchTurnRight_) {
+      if (_SearchTurnRight) {
         robot.DriveWheels(35.0f, -30.0f);
       }
       else {
@@ -96,9 +96,9 @@ public class FollowGoldCubeState : State {
   private void ComputeTurnDirection(ObservedObject followBlock) {
     float turnAngle = Vector3.Cross(robot.Forward, followBlock.WorldPosition - robot.WorldPosition).z;
     if (turnAngle < 0.0f)
-      searchTurnRight_ = true;
+      _SearchTurnRight = true;
     else
-      searchTurnRight_ = false;
+      _SearchTurnRight = false;
   }
 
 }

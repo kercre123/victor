@@ -5,35 +5,37 @@ using DG.Tweening;
 public class PatternDiscoveryDisplay : MonoBehaviour {
 
   [SerializeField]
-  private PatternDisplay _stackPatternDisplay;
+  private PatternDisplay _StackPatternDisplay;
   
   [SerializeField]
-  private PatternDisplay _horizontalPatternDisplay;
+  private PatternDisplay _HorizontalPatternDisplay;
 
   [SerializeField]
-  private GameObject _animationAnchorPrefab;
-  private GameObject _animationAnchorInstance;
+  private GameObject _AnimationAnchorPrefab;
+  private GameObject _AnimationAnchorInstance;
 
   private void OnDestroy() {
-    GameObject.Destroy (_animationAnchorInstance);
+    GameObject.Destroy(_AnimationAnchorInstance);
   }
 
   public void Initialize(BlockPattern discoveredPattern) {
-    if (discoveredPattern.verticalStack_) {
-      _stackPatternDisplay.pattern = discoveredPattern;
-      _horizontalPatternDisplay.pattern = null;
-    } else {
-      _stackPatternDisplay.pattern = null;
-      _horizontalPatternDisplay.pattern = discoveredPattern;
+    if (discoveredPattern.VerticalStack) {
+      _StackPatternDisplay.Pattern = discoveredPattern;
+      _HorizontalPatternDisplay.Pattern = null;
+    }
+    else {
+      _StackPatternDisplay.Pattern = null;
+      _HorizontalPatternDisplay.Pattern = discoveredPattern;
     } 
-    _animationAnchorInstance = UIManager.CreatePerspectiveUI (_animationAnchorPrefab);
+    _AnimationAnchorInstance = UIManager.CreatePerspectiveUI(_AnimationAnchorPrefab);
   }
 
   public void AddCloseAnimationSequence(Sequence sequence) {
-    if (_stackPatternDisplay.pattern != null) {
-      AddCascadeAnimationSequence(sequence, _stackPatternDisplay.cubes);
-    } else {
-      AddCascadeAnimationSequence(sequence, _horizontalPatternDisplay.cubes);
+    if (_StackPatternDisplay.Pattern != null) {
+      AddCascadeAnimationSequence(sequence, _StackPatternDisplay.cubes);
+    }
+    else {
+      AddCascadeAnimationSequence(sequence, _HorizontalPatternDisplay.cubes);
     }
   }
 
@@ -42,14 +44,15 @@ public class PatternDiscoveryDisplay : MonoBehaviour {
     float stagger = 0.1f;
     for (int i = 0; i < cubesToAnimate.Length; i++) {
       Transform target = cubesToAnimate[i].gameObject.transform;
-      Tweener moveTween = target.DOMove(_animationAnchorInstance.transform.position, duration);
+      Tweener moveTween = target.DOMove(_AnimationAnchorInstance.transform.position, duration);
       moveTween.SetEase(Ease.InBack);
       Tweener scaleTween = target.DOScale(0.01f, duration);
       scaleTween.SetEase(Ease.InBack);
       if (i <= 0) {
         sequence.Append(moveTween);
         sequence.Join(scaleTween);
-      } else {
+      }
+      else {
         moveTween.SetDelay(stagger);
         sequence.Join(moveTween);
         sequence.Join(scaleTween);

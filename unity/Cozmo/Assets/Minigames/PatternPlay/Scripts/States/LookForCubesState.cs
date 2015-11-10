@@ -3,27 +3,27 @@ using System.Collections;
 
 public class LookForCubesState : State {
 
-  private PatternPlayGame patternPlayGame_ = null;
-  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+  private PatternPlayGame _PatternPlayGame = null;
+  private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-  bool lookingAround = false;
+  private bool lookingAround = false;
 
   public override void Enter() {
     base.Enter();
     DAS.Info("PatternPlayState", "LookForCubes");
-    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
+    _PatternPlayGame = (PatternPlayGame)stateMachine_.GetGame();
+    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
   }
 
   public override void Update() {
     base.Update();
 
-    if (patternPlayGame_.SeenPattern()) {
+    if (_PatternPlayGame.SeenPattern()) {
       stateMachine_.SetNextState(new CelebratePatternState());
       return;
     }
 
-    if (patternPlayAutoBuild_.AvailableBlocks() > 0) {
+    if (_PatternPlayAutoBuild.AvailableBlocks() > 0) {
       stateMachine_.SetNextState(new PickUpCubeState());
     }
     else {

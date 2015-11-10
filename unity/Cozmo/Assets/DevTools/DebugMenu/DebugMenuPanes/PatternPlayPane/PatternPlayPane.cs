@@ -86,73 +86,73 @@ public class PatternPlayPane : MonoBehaviour {
     
     // Add fake seen patterns to memory
     BlockPattern newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern); 
     
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern);
     
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false }
     };
-    newPattern.verticalStack_ = false;
+    newPattern.VerticalStack = false;
     patternMemory.AddSeen(newPattern);
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = false;
+    newPattern.VerticalStack = false;
     patternMemory.AddSeen(newPattern);
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern);
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false }
     };
-    newPattern.verticalStack_ = false;
+    newPattern.VerticalStack = false;
     patternMemory.AddSeen(newPattern);
     
     _PatternPlayViewInstance.Initialize(patternMemory);
@@ -170,7 +170,7 @@ public class PatternPlayPane : MonoBehaviour {
         bool randStack = FlipCoin();
       
         BlockPattern newPattern = new BlockPattern();
-        newPattern.blocks_ = new List<BlockLights> {
+        newPattern.Blocks = new List<BlockLights> {
           new BlockLights {
             front = randFront,
             back = randBack,
@@ -193,7 +193,7 @@ public class PatternPlayPane : MonoBehaviour {
             facing_cozmo = randFacing
           }
         };
-        newPattern.verticalStack_ = randStack;
+        newPattern.VerticalStack = randStack;
         addedPattern = _PatternPlayViewInstance.TryAddPattern(newPattern);
       } while (!addedPattern);
     }

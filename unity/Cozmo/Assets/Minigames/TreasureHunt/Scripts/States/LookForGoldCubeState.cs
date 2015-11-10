@@ -3,7 +3,7 @@ using System.Collections;
 
 public class LookForGoldCubeState : State {
 
-  bool lookingAround_ = false;
+  bool _LookingAround = false;
 
   public override void Enter() {
     base.Enter();
@@ -19,8 +19,8 @@ public class LookForGoldCubeState : State {
   }
 
   void SearchForAvailableBlock() {
-    if (lookingAround_ == false) {
-      lookingAround_ = true;
+    if (_LookingAround == false) {
+      _LookingAround = true;
       robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
     }
   }
@@ -28,7 +28,7 @@ public class LookForGoldCubeState : State {
   public override void Exit() {
     base.Exit();
     robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-    lookingAround_ = false;
+    _LookingAround = false;
   }
 
 }

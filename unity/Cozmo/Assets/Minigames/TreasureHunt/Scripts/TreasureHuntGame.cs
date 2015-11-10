@@ -4,17 +4,17 @@ using System.Collections.Generic;
 
 public class TreasureHuntGame : GameBase {
 
-  private StateMachineManager stateMachineManager_ = new StateMachineManager();
-  private StateMachine stateMachine_ = new StateMachine();
+  private StateMachineManager _StateMachineManager = new StateMachineManager();
+  private StateMachine _StateMachine = new StateMachine();
 
   public Vector2 GoldPosition { get; set; }
 
   void Start() {
-    stateMachine_.SetGameRef(this);
-    stateMachineManager_.AddStateMachine("TreasureHuntStateMachine", stateMachine_);
+    _StateMachine.SetGameRef(this);
+    _StateMachineManager.AddStateMachine("TreasureHuntStateMachine", _StateMachine);
     InitialCubesState initCubeState = new InitialCubesState();
     initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
-    stateMachine_.SetNextState(initCubeState);
+    _StateMachine.SetNextState(initCubeState);
     robot.StopFaceAwareness();
   }
 
@@ -87,7 +87,7 @@ public class TreasureHuntGame : GameBase {
   }
 
   void Update() {
-    stateMachineManager_.UpdateAllMachines();
+    _StateMachineManager.UpdateAllMachines();
   }
 
   public override void CleanUp() {
