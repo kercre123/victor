@@ -149,4 +149,5 @@ show:
 clean:
 	if test -d $(OUTPUT_DIR_ENGINE); then chmod -Rf 777 $(OUTPUT_DIR_ENGINE); fi
 	if test -d $(OUTPUT_DIR_CSHARP); then chmod -Rf 777 $(OUTPUT_DIR_CSHARP); fi
-	rm -rf $(OUTPUT_DIR_ENGINE) $(OUTPUT_DIR_CSHARP) $(OUTPUT_VIZ_LST)
+	if test -d $(OUTPUT_DIR_PYTHON); then chmod -Rf 777 $(OUTPUT_DIR_PYTHON); fi
+	rm -rf $(OUTPUT_DIR_ENGINE) $(OUTPUT_DIR_CSHARP) $(OUTPUT_DIR_PYTHON) $(OUTPUT_VIZ_LST)

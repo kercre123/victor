@@ -61,4 +61,5 @@ show:
 
 clean:
 	if test -d $(OUTPUT_DIR); then chmod -Rf 777 $(OUTPUT_DIR); fi
-	rm -rf $(OUTPUT_DIR)
+	if test -d $(OUTPUT_DIR_PYTHON); then chmod -Rf 777 $(OUTPUT_DIR_PYTHON); fi
+	rm -rf $(OUTPUT_DIR) $(OUTPUT_DIR_PYTHON)
