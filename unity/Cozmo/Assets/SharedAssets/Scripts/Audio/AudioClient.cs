@@ -8,78 +8,78 @@ namespace Anki {
       
       public class AudioClient {
 
-        private static AudioClient _audioClient = null;
-        private RobotEngineManager _robotEngineManager = null;
-        private bool _isInitialized = false;
+        private static AudioClient _AudioClient = null;
+        private RobotEngineManager _RobotEngineManager = null;
+        private bool _IsInitialized = false;
 
         public static AudioClient Instance {
           get {
-            if (_audioClient == null) {
-              _audioClient = new AudioClient();
-              _audioClient.Initialize();
+            if (_AudioClient == null) {
+              _AudioClient = new AudioClient();
+              _AudioClient.Initialize();
             }
-            return _audioClient;
+            return _AudioClient;
           }
         }
 
         public void Initialize() {
-          if (_isInitialized) {
+          if (_IsInitialized) {
             return;
           }
           // Setup Audio Controller
-          _robotEngineManager = RobotEngineManager.instance;
+          _RobotEngineManager = RobotEngineManager.instance;
           // Setup Engine To Game callbacks
-          _robotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
-          _robotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
-          _robotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
-          _isInitialized = true;
+          _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
+          _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
+          _RobotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
+          _IsInitialized = true;
         }
 
         ~AudioClient() {
-          _robotEngineManager.ReceivedAudioCallbackDuration -= HandleCallback;
-          _robotEngineManager.ReceivedAudioCallbackMarker -= HandleCallback;
-          _robotEngineManager.ReceivedAudioCallbackComplete -= HandleCallback;
+          _RobotEngineManager.ReceivedAudioCallbackDuration -= HandleCallback;
+          _RobotEngineManager.ReceivedAudioCallbackMarker -= HandleCallback;
+          _RobotEngineManager.ReceivedAudioCallbackComplete -= HandleCallback;
 
-          _robotEngineManager = null;
-          _isInitialized = false;
+          _RobotEngineManager = null;
+          _IsInitialized = false;
         }
 
         public void PostEvent(Anki.Cozmo.Audio.EventType audioEvent,
-                        ushort gameObjectId,
-                        Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone) {
+                              ushort gameObjectId,
+                              Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone) {
           DAS.Info("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  gameObjId: " +
           gameObjectId + " CallbackFlag: " + callbackFlag.GetHashCode());
 
           PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObjectId, callbackFlag);
-          _robotEngineManager.Message.PostAudioEvent = msg;
-          _robotEngineManager.SendMessage();
+          _RobotEngineManager.Message.PostAudioEvent = msg;
+          _RobotEngineManager.SendMessage();
         }
 
         public void PostGameState(Anki.Cozmo.Audio.GameStateType gameState) {
           DAS.Info("AudioController.PostAudioGameState", "GameState: " + gameState.ToString());
           PostAudioGameState msg = new PostAudioGameState(gameState);
-          _robotEngineManager.Message.PostAudioGameState = msg;
-          _robotEngineManager.SendMessage();
+          _RobotEngineManager.Message.PostAudioGameState = msg;
+          _RobotEngineManager.SendMessage();
         }
 
         public void PostSwitchState(Anki.Cozmo.Audio.SwitchStateType switchState, ushort gameObjectId) {
           DAS.Info("AudioController.PostAudioSwitchState", "SwitchState: " + switchState.ToString() +
           " gameObjId: " + gameObjectId);
           PostAudioSwitchState msg = new PostAudioSwitchState(switchState, gameObjectId);
-          _robotEngineManager.Message.PostAudioSwitchState = msg;
-          _robotEngineManager.SendMessage();
+          _RobotEngineManager.Message.PostAudioSwitchState = msg;
+          _RobotEngineManager.SendMessage();
         }
 
         public void PostParameter(Anki.Cozmo.Audio.ParameterType parameter,
-                            float parameterValue,
-                            ushort gameObjectId,
-                            int timeInMilliSeconds = 0,
-                            Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
+                                  float parameterValue,
+                                  ushort gameObjectId,
+                                  int timeInMilliSeconds = 0,
+                                  Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
           DAS.Info("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " value: " + parameterValue +
           " gameObjId: " + gameObjectId + " timeInMilliSec: " + timeInMilliSeconds + " curve: " + curve);
           PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObjectId, timeInMilliSeconds, curve);
-          _robotEngineManager.Message.PostAudioParameter = msg;
-          _robotEngineManager.SendMessage();
+          _RobotEngineManager.Message.PostAudioParameter = msg;
+          _RobotEngineManager.SendMessage();
         }
 
         private void HandleCallback(AudioCallbackDuration message) {
