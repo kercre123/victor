@@ -137,16 +137,16 @@ public class Robot : IDisposable {
     }
   }
 
-  private int carryingObjectID;
+  private int _CarryingObjectID;
 
   public int HeadTrackingObjectID { get; private set; }
 
-  private int lastHeadTrackingObjectID;
+  private int _LastHeadTrackingObjectID;
 
-  private float headAngleRequested;
-  private float lastHeadAngleRequestTime;
-  private float liftHeightRequested;
-  private float lastLiftHeightRequestTime;
+  private float _HeadAngleRequested;
+  private float _LastHeadAngleRequestTime;
+  private float _LiftHeightRequested;
+  private float _LastLiftHeightRequestTime;
 
   private U2G.DriveWheels DriveWheelsMessage;
   private U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
@@ -182,25 +182,25 @@ public class Robot : IDisposable {
   private U2G.SetRobotVolume SetRobotVolumeMessage;
   private U2G.AlignWithObject AlignWithObjectMessage;
 
-  private ObservedObject _carryingObject;
+  private ObservedObject _CarryingObject;
 
   public ObservedObject CarryingObject {
     get {
-      if (_carryingObject != carryingObjectID)
-        _carryingObject = SeenObjects.Find(x => x == carryingObjectID);
+      if (_CarryingObject != _CarryingObjectID)
+        _CarryingObject = SeenObjects.Find(x => x == _CarryingObjectID);
 
-      return _carryingObject;
+      return _CarryingObject;
     }
   }
 
-  private ObservedObject _headTrackingObject;
+  private ObservedObject _HeadTrackingObject;
 
   public ObservedObject HeadTrackingObject {
     get {
-      if (_headTrackingObject != HeadTrackingObjectID)
-        _headTrackingObject = SeenObjects.Find(x => x == HeadTrackingObjectID);
+      if (_HeadTrackingObject != HeadTrackingObjectID)
+        _HeadTrackingObject = SeenObjects.Find(x => x == HeadTrackingObjectID);
       
-      return _headTrackingObject;
+      return _HeadTrackingObject;
     }
   }
 
@@ -211,25 +211,25 @@ public class Robot : IDisposable {
     OBSERVED_RECENTLY
   }
 
-  private List<KeyValuePair<RobotActionType, RobotCallback>> robotCallbacks = new List<KeyValuePair<RobotActionType, RobotCallback>>();
+  private List<KeyValuePair<RobotActionType, RobotCallback>> _RobotCallbacks = new List<KeyValuePair<RobotActionType, RobotCallback>>();
 
   // er, should be 5?
-  private const float MaxVoltage = 5.0f;
+  private const float _MaxVoltage = 5.0f;
 
-  [System.NonSerialized] public float localBusyTimer = 0f;
-  [System.NonSerialized] public bool localBusyOverride = false;
+  [System.NonSerialized] public float LocalBusyTimer = 0f;
+  [System.NonSerialized] public bool LocalBusyOverride = false;
 
-  public bool isBusy {
+  public bool IsBusy {
     get {
-      return localBusyOverride
-      || localBusyTimer > 0f
+      return LocalBusyOverride
+      || LocalBusyTimer > 0f
       || Status(RobotStatusFlag.IS_PATHING)
       || (Status(RobotStatusFlag.IS_ANIMATING) && !Status(RobotStatusFlag.IS_ANIMATING_IDLE))
       || Status(RobotStatusFlag.IS_PICKED_UP);
     }
 
     set {
-      localBusyOverride = value;
+      LocalBusyOverride = value;
 
       if (value) {
         DriveWheels(0, 0); 
@@ -311,17 +311,17 @@ public class Robot : IDisposable {
   }
 
   public void CooldownTimers(float delta) {
-    if (localBusyTimer > 0f) {
-      localBusyTimer -= delta;
+    if (LocalBusyTimer > 0f) {
+      LocalBusyTimer -= delta;
     }
   }
 
   private void RobotEngineMessages(bool success, RobotActionType messageType) {
     DAS.Info("Robot.ActionCallback", "Type = " + messageType + " success = " + success);
-    for (int i = 0; i < robotCallbacks.Count; ++i) {
-      if (messageType == robotCallbacks[i].Key) {
-        robotCallbacks[i].Value(success);
-        robotCallbacks.RemoveAt(i);
+    for (int i = 0; i < _RobotCallbacks.Count; ++i) {
+      if (messageType == _RobotCallbacks[i].Key) {
+        _RobotCallbacks[i].Value(success);
+        _RobotCallbacks.RemoveAt(i);
         i--;
       }
     }
@@ -351,14 +351,14 @@ public class Robot : IDisposable {
     GameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
-    carryingObjectID = -1;
+    _CarryingObjectID = -1;
     HeadTrackingObjectID = -1;
-    lastHeadTrackingObjectID = -1;
+    _LastHeadTrackingObjectID = -1;
     targetLockedObject = null;
-    _carryingObject = null;
-    _headTrackingObject = null;
-    headAngleRequested = float.MaxValue;
-    liftHeightRequested = float.MaxValue;
+    _CarryingObject = null;
+    _HeadTrackingObject = null;
+    _HeadAngleRequested = float.MaxValue;
+    _LiftHeightRequested = float.MaxValue;
     HeadAngle = float.MaxValue;
     PoseAngle = float.MaxValue;
     LeftWheelSpeed = float.MaxValue;
@@ -369,7 +369,7 @@ public class Robot : IDisposable {
     WorldPosition = Vector3.zero;
     LastRotation = Quaternion.identity;
     Rotation = Quaternion.identity;
-    localBusyTimer = 0f;
+    LocalBusyTimer = 0f;
 
     for (int i = 0; i < Lights.Length; ++i) {
       Lights[i].ClearData();
@@ -392,12 +392,12 @@ public class Robot : IDisposable {
     LiftHeight = message.liftHeight_mm;
     RobotStatus = (RobotStatusFlag)message.status;
     GameStatus = (GameStatusFlag)message.gameStatus;
-    BatteryPercent = (message.batteryVoltage / MaxVoltage);
-    carryingObjectID = message.carryingObjectID;
+    BatteryPercent = (message.batteryVoltage / _MaxVoltage);
+    _CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
-    if (HeadTrackingObjectID == lastHeadTrackingObjectID)
-      lastHeadTrackingObjectID = -1;
+    if (HeadTrackingObjectID == _LastHeadTrackingObjectID)
+      _LastHeadTrackingObjectID = -1;
 
     LastWorldPosition = WorldPosition;
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
@@ -520,10 +520,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.instance.SendMessage();
 
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
     }
   }
 
@@ -541,7 +541,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
     }
   }
 
@@ -566,7 +566,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLAY_ANIMATION, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLAY_ANIMATION, callback));
     }
   }
 
@@ -590,7 +590,7 @@ public class Robot : IDisposable {
 
   public float GetHeadAngleFactor() {
 
-    float angle = IsHeadAngleRequestUnderway() ? headAngleRequested : HeadAngle;
+    float angle = IsHeadAngleRequestUnderway() ? _HeadAngleRequested : HeadAngle;
 
     if (angle >= 0f) {
       angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad));
@@ -604,7 +604,7 @@ public class Robot : IDisposable {
 
 
   public bool IsHeadAngleRequestUnderway() {
-    return Time.time < lastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
+    return Time.time < _LastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
   }
 
   /// <summary>
@@ -629,13 +629,13 @@ public class Robot : IDisposable {
       }
     }
 
-    if (IsHeadAngleRequestUnderway() && Mathf.Abs(headAngleRequested - radians) < 0.001f)
+    if (IsHeadAngleRequestUnderway() && Mathf.Abs(_HeadAngleRequested - radians) < 0.001f)
       return;
     if (HeadTrackingObject == -1 && Mathf.Abs(radians - HeadAngle) < 0.001f)
       return;
 
-    headAngleRequested = radians;
-    lastHeadAngleRequestTime = Time.time;
+    _HeadAngleRequested = radians;
+    _LastHeadAngleRequestTime = Time.time;
 
     SetHeadAngleMessage.angle_rad = radians;
 
@@ -646,7 +646,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     if (onComplete != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
     }
   }
 
@@ -664,14 +664,14 @@ public class Robot : IDisposable {
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
     if (HeadTrackingObjectID == observedObject) {
-      lastHeadTrackingObjectID = -1;
+      _LastHeadTrackingObjectID = -1;
       return;
     }
-    else if (lastHeadTrackingObjectID == observedObject) {
+    else if (_LastHeadTrackingObjectID == observedObject) {
       return;
     }
 
-    lastHeadTrackingObjectID = observedObject;
+    _LastHeadTrackingObjectID = observedObject;
 
     if (observedObject != null) {
       TrackToObjectMessage.objectID = (uint)observedObject;
@@ -727,12 +727,12 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.PickupObject = PickupObjectMessage;
     RobotEngineManager.instance.SendMessage();
 
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_INCOMPLETE, callback));
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_HIGH, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_INCOMPLETE, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_HIGH, callback));
     }
   }
 
@@ -746,9 +746,9 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.RollObject = RollObjectMessage;
     RobotEngineManager.instance.SendMessage();
 
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
     }
   }
 
@@ -767,10 +767,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
     RobotEngineManager.instance.SendMessage();
     
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
     }
 
   }
@@ -809,10 +809,10 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.GotoPose = GotoPoseMessage;
     RobotEngineManager.instance.SendMessage();
     
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
 
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
     }
   }
 
@@ -825,9 +825,9 @@ public class Robot : IDisposable {
 
     RobotEngineManager.instance.SendMessage();
     
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
     }
   }
 
@@ -840,25 +840,25 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.AlignWithObject = AlignWithObjectMessage;
     RobotEngineManager.instance.SendMessage();
 
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
     }
   }
 
   public float GetLiftHeightFactor() {
-    return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : LiftHeightFactor;
+    return (Time.time < _LastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? _LiftHeightRequested : LiftHeightFactor;
   }
 
   // Height factor should be between 0.0f and 1.0f
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
     DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
-    if ((Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == liftHeightRequested) || LiftHeightFactor == heightFactor)
+    if ((Time.time < _LastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == _LiftHeightRequested) || LiftHeightFactor == heightFactor)
       return;
 
-    liftHeightRequested = heightFactor;
-    lastLiftHeightRequestTime = Time.time;
+    _LiftHeightRequested = heightFactor;
+    _LastLiftHeightRequestTime = Time.time;
 
     SetLiftHeightMessage.accel_rad_per_sec2 = 5f;
     SetLiftHeightMessage.max_speed_rad_per_sec = 10f;
@@ -868,7 +868,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     if (callback != null) {
-      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
     }
   }
 
@@ -937,7 +937,7 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.Message.TraverseObject = TraverseObjectMessage;
     RobotEngineManager.instance.SendMessage();
 
-    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
   private void SetLastLEDs() {

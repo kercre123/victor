@@ -368,7 +368,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
     
-    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.isBusy) {
+    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.IsBusy) {
       CurrentRobot.ClearVisibleObjects();
     }
   }
@@ -418,7 +418,7 @@ public class RobotEngineManager : MonoBehaviour {
     bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
     CurrentRobot.targetLockedObject = null;
 
-    CurrentRobot.localBusyTimer = 0f;
+    CurrentRobot.LocalBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
       SuccessOrFailure(success, actionType);
