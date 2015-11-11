@@ -5,7 +5,7 @@ public class State {
 
   protected StateMachine _StateMachine;
 
-  protected Robot _CurrentRobot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
+  protected Robot _CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   public void SetStateMachine(StateMachine stateMachine) {
     _StateMachine = stateMachine;

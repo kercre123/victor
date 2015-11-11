@@ -15,7 +15,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
   
-  public static RobotEngineManager instance = null;
+  public static RobotEngineManager Instance = null;
 
   public Dictionary<int, Robot> Robots { get; private set; }
 
@@ -71,12 +71,12 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
-    if (instance != null && instance != this) {
+    if (Instance != null && Instance != this) {
       Destroy(gameObject);
       return;
     }
     else {
-      instance = this;
+      Instance = this;
       DontDestroyOnLoad(gameObject);
     }
 
@@ -368,7 +368,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
     
-    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.isBusy) {
+    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.IsBusy) {
       CurrentRobot.ClearVisibleObjects();
     }
   }
@@ -418,7 +418,7 @@ public class RobotEngineManager : MonoBehaviour {
     bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
     CurrentRobot.targetLockedObject = null;
 
-    CurrentRobot.localBusyTimer = 0f;
+    CurrentRobot.LocalBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
       SuccessOrFailure(success, actionType);

@@ -16,7 +16,7 @@ public class Intro : MonoBehaviour {
 
   private const int ROBOT_ID = 1;
 
-  private Robot _Robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
+  private Robot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private string LastEngineIP {
     get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
@@ -63,13 +63,13 @@ public class Intro : MonoBehaviour {
   }
 
   private void Start() {
-    if (RobotEngineManager.instance != null && RobotEngineManager.instance.IsConnected)
-      RobotEngineManager.instance.Disconnect();
+    if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.IsConnected)
+      RobotEngineManager.Instance.Disconnect();
 
-    if (RobotEngineManager.instance != null) {
-      RobotEngineManager.instance.ConnectedToClient += Connected;
-      RobotEngineManager.instance.DisconnectedFromClient += Disconnected;
-      RobotEngineManager.instance.RobotConnected += RobotConnected;
+    if (RobotEngineManager.Instance != null) {
+      RobotEngineManager.Instance.ConnectedToClient += Connected;
+      RobotEngineManager.Instance.DisconnectedFromClient += Disconnected;
+      RobotEngineManager.Instance.RobotConnected += RobotConnected;
     }
 
     Application.targetFrameRate = 60;
@@ -81,17 +81,17 @@ public class Intro : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    if (RobotEngineManager.instance != null) {
-      RobotEngineManager.instance.ConnectedToClient -= Connected;
-      RobotEngineManager.instance.DisconnectedFromClient -= Disconnected;
-      RobotEngineManager.instance.RobotConnected -= RobotConnected;
+    if (RobotEngineManager.Instance != null) {
+      RobotEngineManager.Instance.ConnectedToClient -= Connected;
+      RobotEngineManager.Instance.DisconnectedFromClient -= Disconnected;
+      RobotEngineManager.Instance.RobotConnected -= RobotConnected;
     }
   }
 
   private void Update() {
 
-    if (RobotEngineManager.instance != null) {
-      DisconnectionReason reason = RobotEngineManager.instance.GetLastDisconnectionReason();
+    if (RobotEngineManager.Instance != null) {
+      DisconnectionReason reason = RobotEngineManager.Instance.GetLastDisconnectionReason();
       if (reason != DisconnectionReason.None) {
         _Error.text = "Disconnected: " + reason.ToString();
       }
@@ -100,7 +100,7 @@ public class Intro : MonoBehaviour {
 
   public void Play(bool sim) {
     _Simulated = sim;
-    RobotEngineManager.instance.Disconnect();
+    RobotEngineManager.Instance.Disconnect();
 
     string errorText = null;
     string ipText = _Simulated ? _SimIPInputField.text : _RobotIPInputField.text;
@@ -116,7 +116,7 @@ public class Intro : MonoBehaviour {
       _CurrentVizHostIP = _VisualizerIPInputField.text;
 
       SaveData();
-      RobotEngineManager.instance.Connect(_EngineIPInputField.text);
+      RobotEngineManager.Instance.Connect(_EngineIPInputField.text);
       _Error.text = "<color=#ffffff>Connecting to engine at " + _EngineIPInputField.text + "....</color>";
     }
     else {
@@ -133,8 +133,8 @@ public class Intro : MonoBehaviour {
 
   private void Connected(string connectionIdentifier) {
     _Error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
-    RobotEngineManager.instance.StartEngine(_CurrentVizHostIP);
-    RobotEngineManager.instance.ForceAddRobot(ROBOT_ID, _CurrentRobotIP, _Simulated);
+    RobotEngineManager.Instance.StartEngine(_CurrentVizHostIP);
+    RobotEngineManager.Instance.ForceAddRobot(ROBOT_ID, _CurrentRobotIP, _Simulated);
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -142,7 +142,7 @@ public class Intro : MonoBehaviour {
   }
 
   private void RobotConnected(int robotID) {
-    if (!RobotEngineManager.instance.Robots.ContainsKey(robotID)) {
+    if (!RobotEngineManager.Instance.Robots.ContainsKey(robotID)) {
       DAS.Error("Intro", "Unknown robot connected: " + robotID.ToString());
       return;
     }

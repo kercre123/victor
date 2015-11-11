@@ -14,8 +14,8 @@ public class IntroManager : MonoBehaviour {
   void Start() {
     ShowDevConnectDialog();
 
-    RobotEngineManager.instance.RobotConnected += Connected;
-    RobotEngineManager.instance.DisconnectedFromClient += DisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected += Connected;
+    RobotEngineManager.Instance.DisconnectedFromClient += DisconnectedFromClient;
   }
 
   void Connected(int robotID) {

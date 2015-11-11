@@ -144,8 +144,8 @@ public class LightCube : ObservedObject {
     SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
     SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
 
-    RobotEngineManager.instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
-    RobotEngineManager.instance.SendMessage();
+    RobotEngineManager.Instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
+    RobotEngineManager.Instance.SendMessage();
 
     SetLastLEDs();
   }

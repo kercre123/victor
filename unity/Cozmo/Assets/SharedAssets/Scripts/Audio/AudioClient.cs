@@ -27,7 +27,7 @@ namespace Anki {
             return;
           }
           // Setup Audio Controller
-          _RobotEngineManager = RobotEngineManager.instance;
+          _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
           _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
           _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;

@@ -11,7 +11,7 @@ public class RobotSettingsPane : MonoBehaviour {
     _VolumeSlider.minValue = 0;
     _VolumeSlider.maxValue = 1;
     _VolumeSlider.value = 0.5f;
-    Robot robot = RobotEngineManager.instance.CurrentRobot;
+    Robot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       _VolumeSlider.value = robot.GetRobotVolume();
     }
@@ -19,7 +19,7 @@ public class RobotSettingsPane : MonoBehaviour {
   }
 
   private void OnVolumeSliderChanged(float newValue) {
-    Robot robot = RobotEngineManager.instance.CurrentRobot;
+    Robot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       robot.SetRobotVolume(_VolumeSlider.value);
     }
