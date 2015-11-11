@@ -249,7 +249,7 @@ def main(scriptArgs):
     return False
 
   # symlink coretech external resources 
-  if subprocess.call(['ln', '-s', '-f', '-h',
+  if subprocess.call(['ln', '-s', '-f', '-n',
     os.path.join(coretechExternalPath, 'pocketsphinx/pocketsphinx/model/en-us'),
     os.path.join(projectRoot, 'generated/resources/pocketsphinx')]) != 0 :
     UtilLog.error("error symlinking pocket sphinx resources")
