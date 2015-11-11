@@ -10,7 +10,7 @@ namespace AnimationTool.FaceAnimation
         public EnableChart(ChartForm form)
         {
             chart = form.chart;
-            checkBox = form.checkBox;
+            checkBox = form.CheckBox;
             removeDataPoints = new List<Sequencer.RemoveDataPoint>();
             unselectAllDataPoints = new UnselectAllDataPoints(chart);
         }
