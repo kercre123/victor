@@ -6,11 +6,13 @@ CLAD_LIB_DIR=$(CLAD_BASE_DIR)/clad
 CLAD_DEPENDENCIES=$(CLAD_LIB_DIR)/*.py
 CLAD_CPP=$(CLAD_EMITTER_DIR)/CPP_emitter.py
 CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
+CLAD_PYTHON=$(CLAD_EMITTER_DIR)/Python_emitter.py
 CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
 CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_switch_emitter.py
 
 OUTPUT_DIR:=../generated/clad/
 OUTPUT_DIR_CSHARP=../generated/cladCsharp/
+OUTPUT_DIR_PYTHON=../generated/cladPython/
 OUTPUT_DIR_ENGINE:=$(OUTPUT_DIR)/engine/
 
 INPUT_ENGINE_DIR=./src/
@@ -19,6 +21,7 @@ OUTPUT_ENGINE_CPP=$(patsubst %.clad, %.cpp, $(INPUT_ENGINE_FILES))
 OUTPUT_ENGINE_H=$(patsubst %.clad, %.h, $(INPUT_ENGINE_FILES))
 OUTPUT_ENGINE_H_AND_CPP=$(OUTPUT_ENGINE_H) $(OUTPUT_ENGINE_CPP)
 OUTPUT_ENGINE_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_ENGINE_FILES))
+OUTPUT_ENGINE_PYTHON=$(patsubst %.clad, %.py, $(INPUT_ENGINE_FILES))
 
 INPUT_VIZ_DIR=./vizSrc/
 INPUT_VIZ_FILES=$(shell cd $(INPUT_VIZ_DIR); find . -type f -iname '*.clad')
@@ -35,12 +38,14 @@ OUTPUT_ROBOT_CPP=$(patsubst %.clad, %.cpp, $(INPUT_ROBOT_CPP_FILES))
 OUTPUT_ROBOT_H=$(patsubst %.clad, %.h, $(INPUT_ROBOT_CPP_FILES))
 OUTPUT_ROBOT_H_AND_CPP=$(OUTPUT_ROBOT_H) $(OUTPUT_ROBOT_CPP)
 OUTPUT_ROBOT_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_ROBOT_SHARED_FILES))
+OUTPUT_ROBOT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_ROBOT_SHARED_FILES))
 
 
 vpath %.clad $(INPUT_ENGINE_DIR):$(INPUT_VIZ_DIR):$(INPUT_ROBOT_DIR)
 vpath %.h $(OUTPUT_DIR_ENGINE)/
 vpath %.cpp $(OUTPUT_DIR_ENGINE)/
 vpath %.cs $(OUTPUT_DIR_CSHARP)/
+vpath % $(OUTPUT_DIR_PYTHON)/
 
 .PHONY: show clean $(OUTPUT_VIZ_LST)
 
@@ -53,7 +58,9 @@ vizCpp: $(OUTPUT_VIZ_H_AND_CPP)
 csharp: engineCsharp robotCsharp
 robotCsharp: $(OUTPUT_ROBOT_CSHARP)
 engineCsharp: $(OUTPUT_ENGINE_CSHARP)
-
+robotPython: $(OUTPUT_ROBOT_PYTHON)
+enginePython: $(OUTPUT_ENGINE_PYTHON)
+python: enginePython robotPython
 
 $(OUTPUT_VIZ_H_AND_CPP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.h; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.h; fi
@@ -100,6 +107,19 @@ $(OUTPUT_ENGINE_CSHARP): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHAR
 	$(CLAD_CSHARP) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
 	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
 
+# in this target stem does not work. probably issue with patsubst,
+# instead of $*.clad use $(@:.py=.clad)
+$(OUTPUT_ROBOT_PYTHON): $(INPUT_ROBOT_SHARED_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
+	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
+	$(CLAD_PYTHON) -C $(INPUT_ROBOT_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
+	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
+
+# in this target stem does not work. probably issue with patsubst,
+# instead of $*.clad use $(@:.py=.clad)
+$(OUTPUT_ENGINE_PYTHON): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
+	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
+	$(CLAD_PYTHON) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
+	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
 
 # clad specific paths in here..
 $(OUTPUT_VIZ_LST): 
@@ -117,7 +137,14 @@ show:
 	echo $(INPUT_ROBOT_SHARED_FILES)
 	echo "*** output files robot cpp ***"
 	echo $(OUTPUT_ROBOT_H_AND_CPP)
-	
+	echo "*** output engine C# ***"
+	echo $(OUTPUT_ENGINE_CSHARP)
+	echo "*** output robot C# ***"
+	echo $(OUTPUT_ROBOT_CSHARP)
+	echo "*** output engine python ***"
+	echo $(OUTPUT_ENGINE_PYTHON)
+	echo "*** output robot python ***"
+	echo $(OUTPUT_ROBOT_PYTHON)
 
 clean:
 	if test -d $(OUTPUT_DIR_ENGINE); then chmod -Rf 777 $(OUTPUT_DIR_ENGINE); fi
