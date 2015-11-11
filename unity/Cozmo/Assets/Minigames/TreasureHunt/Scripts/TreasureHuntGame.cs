@@ -52,10 +52,10 @@ namespace TreasureHunt {
       }
         
       // flash based on on close the object is to the target.
-      /*int flashComp = (int)(Time.time / distance);
-      if (flashComp % 2) {
+      int flashComp = (int)(Time.time * 200.0f / distance);
+      if (flashComp % 2 == 0) {
         return;
-      }*/
+      }
 
       // set directional lights
       Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
