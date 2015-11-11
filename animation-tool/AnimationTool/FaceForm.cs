@@ -38,6 +38,7 @@ namespace AnimationTool
 
             eyes = new FaceTrackBarForm[(int)ProceduralEyeParameter.NumParameters];
 
+            /*
             eyes[(int)ProceduralEyeParameter.BrowAngle] = browAngle;
             eyes[(int)ProceduralEyeParameter.BrowLength] = browLength;
             eyes[(int)ProceduralEyeParameter.BrowCenX] = browX;
@@ -50,6 +51,7 @@ namespace AnimationTool
             eyes[(int)ProceduralEyeParameter.PupilCenX] = pupilX;
             eyes[(int)ProceduralEyeParameter.PupilHeight] = pupilSize;
             eyes[(int)ProceduralEyeParameter.PupilWidth] = pupilSize;
+            */
 
             for(int i = 0; i < eyes.Length; ++i)
             {
