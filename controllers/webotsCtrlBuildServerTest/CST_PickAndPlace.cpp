@@ -25,6 +25,24 @@ namespace Cozmo {
     TestDone
   };
   
+  
+  // Motion profile for test
+  const f32 defaultPathSpeed_mmps = 60;
+  const f32 defaultPathAccel_mmps2 = 200;
+  const f32 defaultPathDecel_mmps2 = 500;
+  const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
+  const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
+  const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
+  PathMotionProfile defaultMotionProfile(defaultPathSpeed_mmps,
+                                         defaultPathAccel_mmps2,
+                                         defaultPathDecel_mmps2,
+                                         defaultPathPointTurnSpeed_rad_per_sec,
+                                         defaultPathPointTurnAccel_rad_per_sec2,
+                                         defaultPathPointTurnDecel_rad_per_sec2);
+
+
+  
+  
   // ============ Test class declaration ============
   class CST_PickAndPlace : public CozmoSimTestController {
     
@@ -81,7 +99,7 @@ namespace Cozmo {
           CST_ASSERT(_pickupBlockID >= 0, "Failed to find closest object to robot");
           
           PRINT_NAMED_INFO("CST_PickAndPlace.VerifyBlocks.PickingUpBlock", "%d", _pickupBlockID);
-          SendPickupObject(_pickupBlockID, true);
+          SendPickupObject(_pickupBlockID, defaultMotionProfile, true);
           
           _observedNewObject = false;
           _lastActionSucceeded = false;
@@ -109,7 +127,7 @@ namespace Cozmo {
           CST_ASSERT(_placeBlockID >= 0, "Failed to find closest object to robot");
           
           PRINT_NAMED_INFO("CST_PickAndPlace.PickupBlock.PlacingBlock", "%d", _placeBlockID);
-          SendPlaceOnObject(_placeBlockID, true);
+          SendPlaceOnObject(_placeBlockID, defaultMotionProfile, true);
           
           _lastActionSucceeded = false;
           _testState = TestState::PlaceBlock;
