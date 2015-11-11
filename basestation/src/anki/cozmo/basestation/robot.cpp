@@ -9,6 +9,7 @@
 // TODO:(bn) should these be a full path?
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
+#include "anki/cozmo/basestation/minimalAnglePlanner.h"
 #include "anki/cozmo/basestation/faceAndApproachPlanner.h"
 #include "anki/cozmo/basestation/pathDolerOuter.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -144,6 +145,7 @@ namespace Anki {
       }
 
       _shortPathPlanner = new FaceAndApproachPlanner;
+      _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
     } // Constructor: Robot
@@ -155,6 +157,7 @@ namespace Anki {
       Util::SafeDelete(_pdo);
       Util::SafeDelete(_longPathPlanner);
       Util::SafeDelete(_shortPathPlanner);
+      Util::SafeDelete(_shortMinAnglePathPlanner);
       
       _selectedPathPlanner = nullptr;
       
@@ -1246,7 +1249,7 @@ namespace Anki {
       CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
     }
         
-  void Robot::SelectPlanner(const Pose3d& targetPose)
+    void Robot::SelectPlanner(const Pose3d& targetPose)
     {
       Pose2d target2d(targetPose);
       Pose2d start2d(GetPose());
@@ -1254,12 +1257,36 @@ namespace Anki {
       float distSquared = pow(target2d.GetX() - start2d.GetX(), 2) + pow(target2d.GetY() - start2d.GetY(), 2);
 
       if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
-        PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting short planner\n", distSquared);
-        _selectedPathPlanner = _shortPathPlanner;
+
+        // if we are already at an angle which is close to the goal angle, then use the angle preserving
+        // planner, otherwise use the normal short planner
+        Radians angleDelta = targetPose.GetRotationAngle<'Z'>() - GetDriveCenterPose().GetRotationAngle<'Z'>();
+        if( angleDelta.getAbsoluteVal().ToFloat() <= 2 * PLANNER_MAINTAIN_ANGLE_THRESHOLD ) {
+          PRINT_NAMED_INFO("Robot.SelectPlanner.ShortMinAngle",
+                           "distance^2 is %f, angleDelta is %f, selecting short min_angle planner\n",
+                           distSquared,
+                           angleDelta.getAbsoluteVal().ToFloat());
+          _selectedPathPlanner = _shortMinAnglePathPlanner;
+        }
+        else {
+          PRINT_NAMED_INFO("Robot.SelectPlanner.Short",
+                           "distance^2 is %f, angleDelta is %f, selecting short planner\n",
+                           distSquared,
+                           angleDelta.getAbsoluteVal().ToFloat());
+          _selectedPathPlanner = _shortPathPlanner;
+        }
       }
       else {
-        PRINT_NAMED_INFO("Robot.SelectPlanner", "distance^2 is %f, selecting long planner\n", distSquared);
+        PRINT_NAMED_INFO("Robot.SelectPlanner.Long", "distance^2 is %f, selecting long planner\n", distSquared);
         _selectedPathPlanner = _longPathPlanner;
+      }
+    }
+
+    void Robot::SelectPlanner(const std::vector<Pose3d>& targetPoses)
+    {
+      if( ! targetPoses.empty() ) {
+        size_t closest = IPathPlanner::ComputeClosestGoalPose(GetDriveCenterPose(), targetPoses);
+        SelectPlanner(targetPoses[closest]);
       }
     }
 
@@ -1305,8 +1332,7 @@ namespace Anki {
       _usingManualPathSpeed = useManualSpeed;
       _plannerSelectedPoseIndexPtr = selectedPoseIndexPtr;
 
-      // Let the long path (lattice) planner do its thing and choose a target
-      _selectedPathPlanner = _longPathPlanner;
+      SelectPlanner(poses);
 
       // Compute drive center pose for start pose and goal poses
       std::vector<Pose3d> targetDriveCenterPoses(poses.size());

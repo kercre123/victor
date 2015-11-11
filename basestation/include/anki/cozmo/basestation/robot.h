@@ -641,6 +641,7 @@ public:
     IPathPlanner*            _selectedPathPlanner          = nullptr;
     IPathPlanner*            _longPathPlanner              = nullptr;
     IPathPlanner*            _shortPathPlanner             = nullptr;
+    IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
     size_t*                  _plannerSelectedPoseIndexPtr  = nullptr;
     int                      _numPlansStarted              = 0;
     int                      _numPlansFinished             = 0;
@@ -652,9 +653,9 @@ public:
     bool                     _usingManualPathSpeed         = false;
     PathDolerOuter*          _pdo                          = nullptr;
     
-    // This functions sets _selectedPathPlanner to the appropriate
-    // planner
+    // This functions sets _selectedPathPlanner to the appropriate planner
     void SelectPlanner(const Pose3d& targetPose);
+    void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
     // Sends a path to the robot to be immediately executed
     Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);

@@ -101,6 +101,11 @@ namespace Anki {
     // When getting a preaction pose for an offset dock, this is the amount by which the
     // preaction pose is offset relative to the specified docking offset. (0 < val < 1)
     const f32 PREACTION_POSE_OFFSET_SCALAR = 1.0f;
+
+    // For things like docking, we want to not turn away too much if we can avoid it. This is a threshold in
+    // radians. If the starting point is close (in euclidean distance) and also the robot angle is within this
+    // threshold of the final goal angle
+    const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
     
   } // namespace Cozmo
 } // namespace Anki
