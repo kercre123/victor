@@ -1,29 +1,33 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SetCubeToPatternState : State {
+namespace PatternPlay {
 
-  private PatternPlayGame _PatternPlayGame = null;
-  private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
+  public class SetCubeToPatternState : State {
 
-  public override void Enter() {
-    base.Enter();
+    private PatternPlayGame _PatternPlayGame = null;
+    private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-    DAS.Info("PatternPlayState", "SetCubeToPattern");
+    public override void Enter() {
+      base.Enter();
 
-    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
-    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
+      DAS.Info("PatternPlayState", "SetCubeToPattern");
+
+      _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
+      _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
+    }
+
+    public override void Update() {
+      base.Update();
+      SetPattern();
+      _StateMachine.SetNextState(new LookAtPatternConstructionState());
+    }
+
+    void SetPattern() {
+      int heldObjectID = _PatternPlayAutoBuild.GetHeldObject().ID;
+      _PatternPlayAutoBuild.SetBlockLightsToPattern(heldObjectID);
+      _PatternPlayAutoBuild.PlaceBlockSuccess();
+    }
   }
 
-  public override void Update() {
-    base.Update();
-    SetPattern();
-    _StateMachine.SetNextState(new LookAtPatternConstructionState());
-  }
-
-  void SetPattern() {
-    int heldObjectID = _PatternPlayAutoBuild.GetHeldObject().ID;
-    _PatternPlayAutoBuild.SetBlockLightsToPattern(heldObjectID);
-    _PatternPlayAutoBuild.PlaceBlockSuccess();
-  }
 }

@@ -1,43 +1,47 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PlaceCubeState : State {
+namespace PatternPlay {
 
-  private PatternPlayGame _PatternPlayGame = null;
-  private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
+  public class PlaceCubeState : State {
 
-  public override void Enter() {
-    base.Enter();
+    private PatternPlayGame _PatternPlayGame = null;
+    private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-    DAS.Info("PatternPlayState", "PlaceCube");
+    public override void Enter() {
+      base.Enter();
 
-    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
-    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
+      DAS.Info("PatternPlayState", "PlaceCube");
 
-    Vector3 placeTarget;
-    int dockID;
-    float offset;
-    float dockAngleRads;
+      _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
+      _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
 
-    _PatternPlayAutoBuild.FindPlaceTarget(out placeTarget, out dockID, out offset, out dockAngleRads);
-    if (dockID == -1) {
-      _CurrentRobot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
+      Vector3 placeTarget;
+      int dockID;
+      float offset;
+      float dockAngleRads;
+
+      _PatternPlayAutoBuild.FindPlaceTarget(out placeTarget, out dockID, out offset, out dockAngleRads);
+      if (dockID == -1) {
+        _CurrentRobot.PlaceObjectOnGround(placeTarget, Quaternion.identity, false, false, PlaceDone);
+      }
+      else {
+        _CurrentRobot.PlaceObjectRel(_CurrentRobot.LightCubes[dockID], offset, dockAngleRads, PlaceDone);
+      }
     }
-    else {
-      _CurrentRobot.PlaceObjectRel(_CurrentRobot.LightCubes[dockID], offset, dockAngleRads, PlaceDone);
+
+    void PlaceDone(bool success) {
+      if (success) {
+        _StateMachine.SetNextState(new SetCubeToPatternState());
+      }
+      else {
+        _CurrentRobot.PlaceObjectOnGroundHere(PlaceGroundHere);
+      }
+    }
+
+    void PlaceGroundHere(bool success) {
+      _StateMachine.SetNextState(new LookForCubesState());
     }
   }
 
-  void PlaceDone(bool success) {
-    if (success) {
-      _StateMachine.SetNextState(new SetCubeToPatternState());
-    }
-    else {
-      _CurrentRobot.PlaceObjectOnGroundHere(PlaceGroundHere);
-    }
-  }
-
-  void PlaceGroundHere(bool success) {
-    _StateMachine.SetNextState(new LookForCubesState());
-  }
 }

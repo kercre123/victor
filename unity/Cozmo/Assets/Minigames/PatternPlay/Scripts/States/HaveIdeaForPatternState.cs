@@ -1,48 +1,52 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class HaveIdeaForPatternState : State {
+namespace PatternPlay {
 
-  PatternPlayGame _PatternPlayGame = null;
-  PatternPlayAutoBuild _PatternPlayAutoBuild = null;
+  public class HaveIdeaForPatternState : State {
 
-  private bool _HasTargetToBuild = false;
+    PatternPlayGame _PatternPlayGame = null;
+    PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-  public override void Enter() {
-    base.Enter();
+    private bool _HasTargetToBuild = false;
 
-    DAS.Info("PatternPlayState", "HaveIdeaForPattern");
+    public override void Enter() {
+      base.Enter();
 
-    // pick a pattern to build
-    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
-    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
-    _PatternPlayAutoBuild.autoBuilding = true;
+      DAS.Info("PatternPlayState", "HaveIdeaForPattern");
 
-    _HasTargetToBuild = _PatternPlayAutoBuild.PickNewTargetPattern();
+      // pick a pattern to build
+      _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
+      _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
+      _PatternPlayAutoBuild.autoBuilding = true;
 
-    if (_HasTargetToBuild == false) {
-      DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");
-      return;
+      _HasTargetToBuild = _PatternPlayAutoBuild.PickNewTargetPattern();
+
+      if (_HasTargetToBuild == false) {
+        DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");
+        return;
+      }
+
+      // TODO: Use "have idea" animation
+      _CurrentRobot.SendAnimation("shocked", AnimationDone);
     }
 
-    // TODO: Use "have idea" animation
-    _CurrentRobot.SendAnimation("shocked", AnimationDone);
-  }
+    public override void Update() {
+      base.Update();
 
-  public override void Update() {
-    base.Update();
+      if (_PatternPlayGame.SeenPattern()) {
+        _StateMachine.SetNextState(new CelebratePatternState());
+        return;
+      }
 
-    if (_PatternPlayGame.SeenPattern()) {
-      _StateMachine.SetNextState(new CelebratePatternState());
-      return;
+      if (!_HasTargetToBuild) {
+        _StateMachine.SetNextState(new LookForPatternState());
+      }
     }
 
-    if (!_HasTargetToBuild) {
-      _StateMachine.SetNextState(new LookForPatternState());
+    private void AnimationDone(bool success) {
+      _StateMachine.SetNextState(new LookForCubesState());
     }
   }
 
-  private void AnimationDone(bool success) {
-    _StateMachine.SetNextState(new LookForCubesState());
-  }
 }
