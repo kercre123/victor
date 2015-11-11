@@ -1,45 +1,49 @@
 using UnityEngine;
 using System.Collections;
 
-public class AskCozmoGame : GameBase {
+namespace AskCozmo {
 
-  private bool _AnimationPlaying = false;
+  public class AskCozmoGame : GameBase {
 
-  [SerializeField]
-  private AskCozmoPanel _GamePanelPrefab;
+    private bool _AnimationPlaying = false;
 
-  private AskCozmoPanel _GamePanel;
+    [SerializeField]
+    private AskCozmoPanel _GamePanelPrefab;
 
-  void Start() {
-    _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
-    _GamePanel.OnAskButtonPressed += OnAnswerRequested;
-    CreateDefaultQuitButton();
-  }
+    private AskCozmoPanel _GamePanel;
 
-  public override void CleanUp() {
-    if (_GamePanel != null) {
-      UIManager.CloseDialogImmediately(_GamePanel);
-    }
-    DestroyDefaultQuitButton();
-  }
-
-  // user just asked the question and pressed the
-  // give me answer button.
-  public void OnAnswerRequested() {
-    if (_AnimationPlaying) {
-      return;
+    void Start() {
+      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
+      _GamePanel.OnAskButtonPressed += OnAnswerRequested;
+      CreateDefaultQuitButton();
     }
 
-    _AnimationPlaying = true;
-    if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
-      robot.SendAnimation("majorWin", AnimationDone);
+    public override void CleanUp() {
+      if (_GamePanel != null) {
+        UIManager.CloseDialogImmediately(_GamePanel);
+      }
+      DestroyDefaultQuitButton();
     }
-    else {
-      robot.SendAnimation("shocked", AnimationDone);
+
+    // user just asked the question and pressed the
+    // give me answer button.
+    public void OnAnswerRequested() {
+      if (_AnimationPlaying) {
+        return;
+      }
+
+      _AnimationPlaying = true;
+      if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
+        robot.SendAnimation("majorWin", AnimationDone);
+      }
+      else {
+        robot.SendAnimation("shocked", AnimationDone);
+      }
+    }
+
+    void AnimationDone(bool success) {
+      _AnimationPlaying = false;
     }
   }
 
-  void AnimationDone(bool success) {
-    _AnimationPlaying = false;
-  }
 }

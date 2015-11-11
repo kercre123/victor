@@ -3,55 +3,59 @@ using UnityEngine.UI;
 using System.Collections;
 using DG.Tweening;
 
-public class PatternDiscoveredDialog : BaseDialog {
+namespace PatternPlay {
 
-  [SerializeField]
-  private PatternDiscoveryDisplay _PatternDiscoveryDisplayPrefab;
-  private PatternDiscoveryDisplay _PatternDiscoveryDisplayInstance;
+  public class PatternDiscoveredDialog : BaseDialog {
 
-  [SerializeField]
-  private Image[] _ImagesToFadeOnClose;
+    [SerializeField]
+    private PatternDiscoveryDisplay _PatternDiscoveryDisplayPrefab;
+    private PatternDiscoveryDisplay _PatternDiscoveryDisplayInstance;
 
-  [SerializeField]
-  private Text[] _TextToFadeOnClose;
+    [SerializeField]
+    private Image[] _ImagesToFadeOnClose;
 
-  public void Initialize(BlockPattern discoveredPattern) {
-    GameObject display = UIManager.CreatePerspectiveUI(_PatternDiscoveryDisplayPrefab.gameObject);
-    _PatternDiscoveryDisplayInstance = display.GetComponent<PatternDiscoveryDisplay>();
-    _PatternDiscoveryDisplayInstance.Initialize(discoveredPattern);
-  }
+    [SerializeField]
+    private Text[] _TextToFadeOnClose;
 
-  protected override void CleanUp() {
-    GameObject.Destroy(_PatternDiscoveryDisplayInstance.gameObject);
-  }
-
-  public void OnCloseButtonTap() {
-    UIManager.CloseDialog(this);
-  }
-
-  protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-    int objectsFaded = 0;
-    float endValue = 0f;
-    float fadeDuration = 0.25f;
-    foreach (Image image in _ImagesToFadeOnClose) {
-      if (objectsFaded == 0) {
-        closeAnimation.Append(image.DOFade(endValue, fadeDuration));
-      }
-      else {
-        closeAnimation.Join(image.DOFade(endValue, fadeDuration));
-      }
-      objectsFaded++;
-    }
-    foreach (Text text in _TextToFadeOnClose) {
-      if (objectsFaded == 0) {
-        closeAnimation.Append(text.DOFade(endValue, fadeDuration));
-      }
-      else {
-        closeAnimation.Join(text.DOFade(endValue, fadeDuration));
-      }
-      objectsFaded++;
+    public void Initialize(BlockPattern discoveredPattern) {
+      GameObject display = UIManager.CreatePerspectiveUI(_PatternDiscoveryDisplayPrefab.gameObject);
+      _PatternDiscoveryDisplayInstance = display.GetComponent<PatternDiscoveryDisplay>();
+      _PatternDiscoveryDisplayInstance.Initialize(discoveredPattern);
     }
 
-    _PatternDiscoveryDisplayInstance.AddCloseAnimationSequence(closeAnimation);
+    protected override void CleanUp() {
+      GameObject.Destroy(_PatternDiscoveryDisplayInstance.gameObject);
+    }
+
+    public void OnCloseButtonTap() {
+      UIManager.CloseDialog(this);
+    }
+
+    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+      int objectsFaded = 0;
+      float endValue = 0f;
+      float fadeDuration = 0.25f;
+      foreach (Image image in _ImagesToFadeOnClose) {
+        if (objectsFaded == 0) {
+          closeAnimation.Append(image.DOFade(endValue, fadeDuration));
+        }
+        else {
+          closeAnimation.Join(image.DOFade(endValue, fadeDuration));
+        }
+        objectsFaded++;
+      }
+      foreach (Text text in _TextToFadeOnClose) {
+        if (objectsFaded == 0) {
+          closeAnimation.Append(text.DOFade(endValue, fadeDuration));
+        }
+        else {
+          closeAnimation.Join(text.DOFade(endValue, fadeDuration));
+        }
+        objectsFaded++;
+      }
+
+      _PatternDiscoveryDisplayInstance.AddCloseAnimationSequence(closeAnimation);
+    }
   }
+
 }

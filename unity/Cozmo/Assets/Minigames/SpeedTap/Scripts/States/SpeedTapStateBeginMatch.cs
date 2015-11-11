@@ -1,24 +1,26 @@
 ﻿using System;
 
-public class SpeedTapStateBeginMatch : State {
+namespace SpeedTap {
 
-  private SpeedTapGame _SpeedTapGame = null;
+  public class SpeedTapStateBeginMatch : State {
 
-  public override void Enter() {
-    base.Enter();
-    _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-    // Do a little dance
-    // Blink some lights
-    // Clear the score
-    _SpeedTapGame.CozmoScore = 0;
-    _SpeedTapGame.PlayerScore = 0;
-    _SpeedTapGame.UpdateUI();
+    private SpeedTapGame _SpeedTapGame = null;
+
+    public override void Enter() {
+      base.Enter();
+      _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      // Do a little dance
+      // Blink some lights
+      // Clear the score
+      _SpeedTapGame.CozmoScore = 0;
+      _SpeedTapGame.PlayerScore = 0;
+      _SpeedTapGame.UpdateUI();
+    }
+
+    public override void Update() {
+      base.Update();
+      _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
+    }
   }
 
-  public override void Update() {
-    base.Update();
-    _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
-  }
 }
-
-

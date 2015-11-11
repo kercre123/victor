@@ -1,30 +1,34 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class AskCozmoPanel : BaseDialog {
+namespace AskCozmo {
 
-  [SerializeField]
-  private UnityEngine.UI.Button _AskButton;
+  public class AskCozmoPanel : BaseDialog {
 
-  public delegate void AskButtonPressedHandler();
+    [SerializeField]
+    private UnityEngine.UI.Button _AskButton;
 
-  public AskButtonPressedHandler OnAskButtonPressed;
+    public delegate void AskButtonPressedHandler();
 
-  void Start() {
-    _AskButton.onClick.AddListener(OnAskButton);
-  }
+    public AskButtonPressedHandler OnAskButtonPressed;
 
-  void OnAskButton() {
-    if (OnAskButtonPressed != null) {
-      OnAskButtonPressed();
+    void Start() {
+      _AskButton.onClick.AddListener(OnAskButton);
+    }
+
+    void OnAskButton() {
+      if (OnAskButtonPressed != null) {
+        OnAskButtonPressed();
+      }
+    }
+
+    protected override void CleanUp() {
+
+    }
+
+    protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
+
     }
   }
 
-  protected override void CleanUp() {
-    
-  }
-
-  protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
-    
-  }
 }

@@ -5,203 +5,207 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 
-public class PatternCollectionViewController : MonoBehaviour {
+namespace PatternPlay {
 
-  [SerializeField]
-  private BadgeDisplay _OpenPatternCollectionDialogButtonPrefab;
-  private BadgeDisplay _ButtonBadgeDisplay;
-  private Tweener _ButtonBadgeDisplayTweener;
- 
-  [SerializeField]
-  private PatternCollectionDialog _PatternCollectionDialogPrefab;
+  public class PatternCollectionViewController : MonoBehaviour {
 
-  private PatternCollectionDialog _PatternCollectionDialog;
+    [SerializeField]
+    private BadgeDisplay _OpenPatternCollectionDialogButtonPrefab;
+    private BadgeDisplay _ButtonBadgeDisplay;
+    private Tweener _ButtonBadgeDisplayTweener;
 
-  [SerializeField]
-  private PatternDiscoveredDialog _PatternDiscoveredDialogPrefab;
-  
-  private PatternDiscoveredDialog _PatternDiscoveredDialog;
+    [SerializeField]
+    private PatternCollectionDialog _PatternCollectionDialogPrefab;
 
-  private float _LastOpenedScrollValue = 0;
+    private PatternCollectionDialog _PatternCollectionDialog;
 
-  private PatternMemory _PatternMemory = null;
+    [SerializeField]
+    private PatternDiscoveredDialog _PatternDiscoveredDialogPrefab;
 
-  // TODO: Pragma out for production
-  private void Start() {
-    // Listen for debug menu events
-    PatternPlayPane.PatternPlayPaneOpened += OnPatternPlayPaneOpened;
-  }
+    private PatternDiscoveredDialog _PatternDiscoveredDialog;
 
-  private void OnDestroy() {
-    //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
-    
-    if (_PatternCollectionDialog != null) {
-      _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
-      UIManager.CloseDialogImmediately(_PatternCollectionDialog);
+    private float _LastOpenedScrollValue = 0;
+
+    private PatternMemory _PatternMemory = null;
+
+    // TODO: Pragma out for production
+    private void Start() {
+      // Listen for debug menu events
+      PatternPlayPane.PatternPlayPaneOpened += OnPatternPlayPaneOpened;
     }
 
-    if (_PatternMemory != null) {
-      _PatternMemory.PatternAdded -= OnPatternAdded;
+    private void OnDestroy() {
+      //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
+
+      if (_PatternCollectionDialog != null) {
+        _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
+        UIManager.CloseDialogImmediately(_PatternCollectionDialog);
+      }
+
+      if (_PatternMemory != null) {
+        _PatternMemory.PatternAdded -= OnPatternAdded;
+      }
+
+      if (_ButtonBadgeDisplayTweener != null) {
+        _ButtonBadgeDisplayTweener.Kill();
+      }
+      if (_ButtonBadgeDisplay != null) {
+        Destroy(_ButtonBadgeDisplay.gameObject);
+      }
+
+      if (_PatternDiscoveredDialog != null) {
+        _PatternDiscoveredDialog.DialogCloseAnimationFinished -= OnDiscoveryDialogClosed;
+        UIManager.CloseDialogImmediately(_PatternDiscoveredDialog);
+      }
     }
 
-    if (_ButtonBadgeDisplayTweener != null) {
-      _ButtonBadgeDisplayTweener.Kill();
+    #region Initialization
+
+    public void Initialize(PatternMemory patternMemory) {
+      if (_PatternMemory == null) {
+        _PatternMemory = patternMemory;
+        _PatternMemory.PatternAdded += OnPatternAdded;
+
+        CreateDialogButton();
+      }
+      else {
+        DAS.Error("PatternCollectionViewController", 
+          "Tried to Initialize with a new PatternMemory when one already exists!");
+      }
     }
-    if (_ButtonBadgeDisplay != null) {
-      Destroy(_ButtonBadgeDisplay.gameObject);
+
+    #endregion
+
+    #region Memory Bank Dialog
+
+    private void CreateDialogButton() {
+      GameObject newButton = UIManager.CreateUI(_OpenPatternCollectionDialogButtonPrefab.gameObject);
+
+      Button buttonScript = newButton.GetComponent<Button>();
+      buttonScript.enabled = false;
+      buttonScript.enabled = true;
+      buttonScript.onClick.AddListener(OnDialogButtonTap);
+
+      _ButtonBadgeDisplay = newButton.GetComponent<BadgeDisplay>();
+      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
     }
 
-    if (_PatternDiscoveredDialog != null) {
-      _PatternDiscoveredDialog.DialogCloseAnimationFinished -= OnDiscoveryDialogClosed;
-      UIManager.CloseDialogImmediately(_PatternDiscoveredDialog);
+    public void OnDialogButtonTap() {
+      ShowCollectionDialog();
     }
-  }
 
-  #region Initialization
+    private void ShowCollectionDialog() {
+      BaseDialog newDialog = UIManager.OpenDialog(_PatternCollectionDialogPrefab);
+      _PatternCollectionDialog = newDialog as PatternCollectionDialog;
 
-  public void Initialize(PatternMemory patternMemory) {
-    if (_PatternMemory == null) {
-      _PatternMemory = patternMemory;
-      _PatternMemory.PatternAdded += OnPatternAdded;
+      // Populate dialog with cards using memory
+      _PatternCollectionDialog.Initialize(_PatternMemory);
 
-      CreateDialogButton();
-    }
-    else {
-      DAS.Error("PatternCollectionViewController", 
-        "Tried to Initialize with a new PatternMemory when one already exists!");
-    }
-  }
-
-  #endregion
-
-  #region Memory Bank Dialog
-
-  private void CreateDialogButton() {
-    GameObject newButton = UIManager.CreateUI(_OpenPatternCollectionDialogButtonPrefab.gameObject);
-
-    Button buttonScript = newButton.GetComponent<Button>();
-    buttonScript.enabled = false;
-    buttonScript.enabled = true;
-    buttonScript.onClick.AddListener(OnDialogButtonTap);
-
-    _ButtonBadgeDisplay = newButton.GetComponent<BadgeDisplay>();
-    _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
-  }
-
-  public void OnDialogButtonTap() {
-    ShowCollectionDialog();
-  }
-
-  private void ShowCollectionDialog() {
-    BaseDialog newDialog = UIManager.OpenDialog(_PatternCollectionDialogPrefab);
-    _PatternCollectionDialog = newDialog as PatternCollectionDialog;
-
-    // Populate dialog with cards using memory
-    _PatternCollectionDialog.Initialize(_PatternMemory);
-
-    if (BadgeManager.NumBadgesWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG) > 0) {
-      bool scrollSuccess = _PatternCollectionDialog.ScrollToFirstNewPattern();
-      if (!scrollSuccess) {
+      if (BadgeManager.NumBadgesWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG) > 0) {
+        bool scrollSuccess = _PatternCollectionDialog.ScrollToFirstNewPattern();
+        if (!scrollSuccess) {
+          _PatternCollectionDialog.SetScrollValue(_LastOpenedScrollValue);
+        }
+      }
+      else {
         _PatternCollectionDialog.SetScrollValue(_LastOpenedScrollValue);
       }
+
+      _PatternCollectionDialog.DialogClosed += OnCollectionDialogClose;
     }
-    else {
-      _PatternCollectionDialog.SetScrollValue(_LastOpenedScrollValue);
+
+    private void OnCollectionDialogClose() {
+      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+      _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
+      _LastOpenedScrollValue = _PatternCollectionDialog.GetScrollValue();
     }
 
-    _PatternCollectionDialog.DialogClosed += OnCollectionDialogClose;
-  }
+    #endregion
 
-  private void OnCollectionDialogClose() {
-    _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
-    _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
-    _LastOpenedScrollValue = _PatternCollectionDialog.GetScrollValue();
-  }
+    #region Pattern Unlock Moment
 
-  #endregion
-
-  #region Pattern Unlock Moment
-
-  private void OnPatternAdded(BlockPattern pattern, MemoryBank bank) {
-    UIManager.CloseAllDialogsImmediately();
-    ShowUnlockMomentDialog(pattern);
-  }
-
-  private void ShowUnlockMomentDialog(BlockPattern pattern) {
-    BaseDialog newDialog = UIManager.OpenDialog(_PatternDiscoveredDialogPrefab);
-    _PatternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
-    _PatternDiscoveredDialog.Initialize(pattern);
-    
-    _PatternDiscoveredDialog.DialogCloseAnimationFinished += OnDiscoveryDialogClosed;
-  }
-
-  private void OnDiscoveryDialogClosed() {
-    // Update badge visuals
-    _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
-
-    float targetScale = 0.2f;
-    if (_ButtonBadgeDisplayTweener == null) {
-      _ButtonBadgeDisplayTweener = _ButtonBadgeDisplay.gameObject.transform.DOPunchScale(new Vector3(targetScale, targetScale, targetScale),
-        0.5f,
-        15)
-        .SetAutoKill(false); // Let the tween stick around in memory
+    private void OnPatternAdded(BlockPattern pattern, MemoryBank bank) {
+      UIManager.CloseAllDialogsImmediately();
+      ShowUnlockMomentDialog(pattern);
     }
-    _ButtonBadgeDisplayTweener.Restart();
-    _ButtonBadgeDisplayTweener.Play();
-  }
 
-  #endregion
+    private void ShowUnlockMomentDialog(BlockPattern pattern) {
+      BaseDialog newDialog = UIManager.OpenDialog(_PatternDiscoveredDialogPrefab);
+      _PatternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
+      _PatternDiscoveredDialog.Initialize(pattern);
 
-  #region Instructions dialog
-
-  private void ShowInstructionsDialog() {
-    // Show instructions
-    // TODO: Instantiate instructions
-    // _patternPlayInstructions.gameObject.SetActive (true);
-    // _patternPlayInstructions.Initialize ();
-    // _patternPlayInstructions.InstructionsFinished += OnInstructionsFinished;
-  }
-
-  private void OnInstructionsFinished() {
-    // Destroy instructions dialog
-    // Create button?
-  }
-
-  #endregion
-
-  // TODO pragma out for production
-
-  #region DebugMenu
-
-  private void OnPatternPlayPaneOpened(PatternPlayPane patternPlayPane) {
-    patternPlayPane.Initialize(this);
-  }
-
-  public bool IsInitialized() {
-    return _PatternMemory != null;
-  }
-
-  public bool TryAddPattern(BlockPattern pattern) {
-    bool success = false;
-    if (IsInitialized()) {
-      success = _PatternMemory.AddSeen(pattern);
+      _PatternDiscoveredDialog.DialogCloseAnimationFinished += OnDiscoveryDialogClosed;
     }
-    return success;
-  }
 
-  public void AddAllUnseenPatterns() {
-    if (IsInitialized()) {
-      HashSet<BlockPattern> unseenPatterns = _PatternMemory.GetAllUnseenPatterns();
-      foreach (BlockPattern pattern in unseenPatterns) {
-        _PatternMemory.AddSeen(pattern);
+    private void OnDiscoveryDialogClosed() {
+      // Update badge visuals
+      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+
+      float targetScale = 0.2f;
+      if (_ButtonBadgeDisplayTweener == null) {
+        _ButtonBadgeDisplayTweener = _ButtonBadgeDisplay.gameObject.transform.DOPunchScale(new Vector3(targetScale, targetScale, targetScale),
+          0.5f,
+          15)
+          .SetAutoKill(false); // Let the tween stick around in memory
+      }
+      _ButtonBadgeDisplayTweener.Restart();
+      _ButtonBadgeDisplayTweener.Play();
+    }
+
+    #endregion
+
+    #region Instructions dialog
+
+    private void ShowInstructionsDialog() {
+      // Show instructions
+      // TODO: Instantiate instructions
+      // _patternPlayInstructions.gameObject.SetActive (true);
+      // _patternPlayInstructions.Initialize ();
+      // _patternPlayInstructions.InstructionsFinished += OnInstructionsFinished;
+    }
+
+    private void OnInstructionsFinished() {
+      // Destroy instructions dialog
+      // Create button?
+    }
+
+    #endregion
+
+    // TODO pragma out for production
+
+    #region DebugMenu
+
+    private void OnPatternPlayPaneOpened(PatternPlayPane patternPlayPane) {
+      patternPlayPane.Initialize(this);
+    }
+
+    public bool IsInitialized() {
+      return _PatternMemory != null;
+    }
+
+    public bool TryAddPattern(BlockPattern pattern) {
+      bool success = false;
+      if (IsInitialized()) {
+        success = _PatternMemory.AddSeen(pattern);
+      }
+      return success;
+    }
+
+    public void AddAllUnseenPatterns() {
+      if (IsInitialized()) {
+        HashSet<BlockPattern> unseenPatterns = _PatternMemory.GetAllUnseenPatterns();
+        foreach (BlockPattern pattern in unseenPatterns) {
+          _PatternMemory.AddSeen(pattern);
+        }
       }
     }
+
+    public bool AnyUnseenPatterns() {
+      HashSet<BlockPattern> unseenPatterns = _PatternMemory.GetAllUnseenPatterns();
+      return unseenPatterns != null && unseenPatterns.Count > 0;
+    }
+
+    #endregion
   }
 
-  public bool AnyUnseenPatterns() {
-    HashSet<BlockPattern> unseenPatterns = _PatternMemory.GetAllUnseenPatterns();
-    return unseenPatterns != null && unseenPatterns.Count > 0;
-  }
-
-  #endregion
 }
