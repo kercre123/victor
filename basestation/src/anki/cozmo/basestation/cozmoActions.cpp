@@ -111,11 +111,11 @@ namespace Anki {
       // Extra confirmation that the robot is upright in this pose
       assert(poseRobotIfPlacingObject.GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
       
-      approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
+      approachAngle_rad = poseRobotIfPlacingObject.GetRotationMatrix().GetAngleAroundParentAxis<'Z'>().ToFloat();
       
       return RESULT_OK;
     }
-
+    
     
 #pragma mark ---- DriveToPoseAction ----
     
@@ -419,6 +419,7 @@ namespace Anki {
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
+                                             const PathMotionProfile motionProfile,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
@@ -430,12 +431,14 @@ namespace Anki {
     , _useManualSpeed(useManualSpeed)
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
+    , _pathMotionProfile(motionProfile)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const f32 distance,
+                                             const PathMotionProfile motionProfile,
                                              const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
@@ -444,6 +447,7 @@ namespace Anki {
     , _useManualSpeed(useManualSpeed)
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
+    , _pathMotionProfile(motionProfile)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -631,7 +635,7 @@ namespace Anki {
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
           _compoundAction.AddAction(new DriveToPoseAction(possiblePoses,
-                                                          DEFAULT_PATH_MOTION_PROFILE, // _pathMotionProfile,
+                                                          _pathMotionProfile,
                                                           true,
                                                           _useManualSpeed,
                                                           preActionPoseDistThresh));
@@ -747,10 +751,12 @@ namespace Anki {
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
                                                                      const Pose3d& placementPose,
                                                                      const bool placeOnGround,
+                                                                     const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : DriveToObjectAction(robot.GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
+                          motionProfile,
                           0,
                           false,
                           0,
@@ -829,33 +835,6 @@ namespace Anki {
     } // DriveToPlaceCarriedObjectAction::CheckIfDone()
 
     
-    
-    
-#pragma mark ---- DriveToPlaceOnObjectAction ----
-    
-    // Places carried object on top of objectID
-    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
-                                                           const ObjectID& objectID,
-                                                           const bool useExactRotation,
-                                                           const Rotation3d& rotation,
-                                                           const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToPlaceCarriedObjectAction(robot,
-                                          Pose3d(rotation,
-                                                 robot.GetBlockWorld().GetObjectByID(objectID)->GetPose().GetTranslation(),
-                                                 robot.GetBlockWorld().GetObjectByID(objectID)->GetPose().GetParent() ),
-                                          false,
-                                          useExactRotation,
-                                          useManualSpeed),
-      new PlaceRelObjectAction(objectID,
-                               false,
-                               0,
-                               useManualSpeed)})
-    {
-      
-    }
-    
-
     
 #pragma mark ---- TurnInPlaceAction ----
     

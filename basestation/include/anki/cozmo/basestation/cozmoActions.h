@@ -121,6 +121,7 @@ namespace Anki {
     public:
       DriveToObjectAction(const ObjectID& objectID,
                           const PreActionPose::ActionType& actionType,
+                          const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const f32 predockOffsetDistX_mm = 0,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
@@ -128,6 +129,7 @@ namespace Anki {
       
       DriveToObjectAction(const ObjectID& objectID,
                           const f32 distance_mm,
+                          const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
@@ -166,6 +168,7 @@ namespace Anki {
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
       
+      PathMotionProfile          _pathMotionProfile;
     }; // DriveToObjectAction
     
     
@@ -175,6 +178,7 @@ namespace Anki {
       DriveToPlaceCarriedObjectAction(const Robot& robot,
                                       const Pose3d& placementPose,
                                       const bool placeOnGround,
+                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false);
       
@@ -578,7 +582,8 @@ namespace Anki {
     class RollObjectAction : public IDockAction
     {
     public:
-      RollObjectAction(ObjectID objectID, const bool useManualSpeed);
+      RollObjectAction(ObjectID objectID,
+                       const bool useManualSpeed = false);
       virtual ~RollObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -622,13 +627,15 @@ namespace Anki {
     public:
       DriveToAlignWithObjectAction(const ObjectID& objectID,
                                    const f32 distanceFromMarker_mm,
+                                   const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
                                    const bool useManualSpeed = false)
       : CompoundActionSequential({
       new DriveToObjectAction(objectID,
-        PreActionPose::DOCKING,
-                              0,
+                              PreActionPose::DOCKING,
+                              motionProfile,
+                              distanceFromMarker_mm,
                               useApproachAngle,
                               approachAngle_rad,
                               useManualSpeed),
@@ -658,12 +665,14 @@ namespace Anki {
     {
     public:
       DriveToPickupObjectAction(const ObjectID& objectID,
-                                      const bool useApproachAngle = false,
-                                      const f32 approachAngle_rad = 0,
-                                      const bool useManualSpeed = false)
+                                const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
+                                const bool useApproachAngle = false,
+                                const f32 approachAngle_rad = 0,
+                                const bool useManualSpeed = false)
       : CompoundActionSequential({
         new DriveToObjectAction(objectID,
                                 PreActionPose::DOCKING,
+                                motionProfile,
                                 0,
                                 useApproachAngle,
                                 approachAngle_rad,
@@ -688,11 +697,6 @@ namespace Anki {
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then placing an object on it.
     // @param objectID         - object to place carried object on
-    // @param useExactRotation - If true, then only the preAction pose that results in the carried object
-    //                           being placed in alignment with objectID that is closest to the specified
-    //                           rotation is considered.
-    //                           If the up-axis of the current rotation is not the same as that of the
-    //                           currently carried object, the action fails.
     class DriveToPlaceOnObjectAction : public CompoundActionSequential
     {
     public:
@@ -700,9 +704,25 @@ namespace Anki {
       // Places carried object on top of objectID
       DriveToPlaceOnObjectAction(const Robot& robot,
                                   const ObjectID& objectID,
-                                  const bool useExactRotation = false,
-                                  const Rotation3d& rotation = Rotation3d(0, Z_AXIS_3D()),
-                                  const bool useManualSpeed = false);
+                                  const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
+                                  const bool useApproachAngle = false,
+                                  const f32 approachAngle_rad = 0,
+                                 const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID,
+                                PreActionPose::PLACE_RELATIVE,
+                                motionProf,
+                                0,
+                                useApproachAngle,
+                                approachAngle_rad,
+                                useManualSpeed),
+        new PlaceRelObjectAction(objectID,
+                                 false,
+                                 0,
+                                 useManualSpeed)})
+      {
+      }
+      
 
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -731,6 +751,7 @@ namespace Anki {
       // Place carried object on ground at specified placementOffset from objectID,
       // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
       DriveToPlaceRelObjectAction(const ObjectID& objectID,
+                                  const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                   const f32 placementOffsetX_mm = 0,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
@@ -738,6 +759,7 @@ namespace Anki {
       : CompoundActionSequential({
         new DriveToObjectAction(objectID,
                                 PreActionPose::PLACE_RELATIVE,
+                                motionProfile,
                                 placementOffsetX_mm,
                                 useApproachAngle,
                                 approachAngle_rad,
@@ -772,11 +794,18 @@ namespace Anki {
     {
     public:
       DriveToRollObjectAction(const ObjectID& objectID,
+                              const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, useApproachAngle, approachAngle_rad, useManualSpeed),
+        new DriveToObjectAction(objectID,
+                                PreActionPose::ROLLING,
+                                motionProfile,
+                                0,
+                                useApproachAngle,
+                                approachAngle_rad,
+                                useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
@@ -834,10 +863,16 @@ namespace Anki {
     public:
       PlaceObjectOnGroundAtPoseAction(const Robot& robot,
                                       const Pose3d& placementPose,
+                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot, placementPose, true, useExactRotation, useManualSpeed),
+        new DriveToPlaceCarriedObjectAction(robot,
+                                            placementPose,
+                                            true,
+                                            motionProfile,
+                                            useExactRotation,
+                                            useManualSpeed),
         new PlaceObjectOnGroundAction()})
       {
         
@@ -950,9 +985,17 @@ namespace Anki {
     class DriveToAndTraverseObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToAndTraverseObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
+      DriveToAndTraverseObjectAction(const ObjectID& objectID,
+                                     const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
+                                     const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, false, 0, useManualSpeed),
+        new DriveToObjectAction(objectID,
+                                PreActionPose::ENTRY,
+                                motionProfile,
+                                0,
+                                false,
+                                0,
+                                useManualSpeed),
         new TraverseObjectAction(objectID, useManualSpeed)})
       {
         
