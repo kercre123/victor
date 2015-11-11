@@ -89,11 +89,7 @@ public class Robot : IDisposable {
 
   public Vector3 WorldPosition { get; private set; }
 
-  public Vector3 LastWorldPosition { get; private set; }
-
   public Quaternion Rotation { get; private set; }
-
-  public Quaternion LastRotation { get; private set; }
 
   public Vector3 Forward { get { return Rotation * Vector3.right; } }
 
@@ -117,7 +113,7 @@ public class Robot : IDisposable {
 
   public Light[] Lights { get; private set; }
 
-  private bool lightsChanged {
+  private bool _LightsChanged {
     get {
       for (int i = 0; i < Lights.Length; ++i) {
         if (Lights[i].Changed)
@@ -168,7 +164,6 @@ public class Robot : IDisposable {
   private U2G.TurnInPlace TurnInPlaceMessage;
   private U2G.TraverseObject TraverseObjectMessage;
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
-  private U2G.SetObjectAdditionAndDeletion SetObjectAdditionAndDeletionMessage;
   private U2G.StartFaceTracking StartFaceTrackingMessage;
   private U2G.StopFaceTracking StopFaceTrackingMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
@@ -275,7 +270,6 @@ public class Robot : IDisposable {
     TurnInPlaceMessage = new U2G.TurnInPlace();
     TraverseObjectMessage = new U2G.TraverseObject();
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
-    SetObjectAdditionAndDeletionMessage = new U2G.SetObjectAdditionAndDeletion();
     StartFaceTrackingMessage = new U2G.StartFaceTracking();
     StopFaceTrackingMessage = new U2G.StopFaceTracking();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
@@ -340,7 +334,6 @@ public class Robot : IDisposable {
   public void ClearData(bool initializing = false) {
     if (!initializing) {
       TurnOffAllLights(true);
-      SetObjectAdditionAndDeletion(true, true);
       DAS.Debug("Robot", "Robot data cleared");
     }
 
@@ -365,9 +358,7 @@ public class Robot : IDisposable {
     RightWheelSpeed = float.MaxValue;
     LiftHeight = float.MaxValue;
     BatteryPercent = float.MaxValue;
-    LastWorldPosition = Vector3.zero;
     WorldPosition = Vector3.zero;
-    LastRotation = Quaternion.identity;
     Rotation = Quaternion.identity;
     LocalBusyTimer = 0f;
 
@@ -399,10 +390,7 @@ public class Robot : IDisposable {
     if (HeadTrackingObjectID == _LastHeadTrackingObjectID)
       _LastHeadTrackingObjectID = -1;
 
-    LastWorldPosition = WorldPosition;
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
-
-    LastRotation = Rotation;
     Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
 
   }
@@ -423,7 +411,7 @@ public class Robot : IDisposable {
     }
 
     if (Time.time > Light.MessageDelay || now) {
-      if (lightsChanged)
+      if (_LightsChanged)
         SetAllBackpackLEDs();
     }
   }
@@ -775,28 +763,6 @@ public class Robot : IDisposable {
 
   }
 
-  public Vector3 NudgePositionOutOfObjects(Vector3 position) {
-
-    int attempts = 0;
-
-    while (attempts++ < 3) {
-      Vector3 nudge = Vector3.zero;
-      float padding = CozmoUtil.BLOCK_LENGTH_MM * 2f;
-      for (int i = 0; i < SeenObjects.Count; i++) {
-        Vector3 fromObject = position - SeenObjects[i].WorldPosition;
-        if (fromObject.magnitude > padding)
-          continue;
-        nudge += fromObject.normalized * padding;
-      }
-
-      if (nudge.sqrMagnitude == 0f)
-        break;
-      position += nudge;
-    }
-
-    return position;
-  }
-
   public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
     GotoPoseMessage.useManualSpeed = useManualSpeed;
@@ -844,10 +810,6 @@ public class Robot : IDisposable {
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
     }
-  }
-
-  public float GetLiftHeightFactor() {
-    return (Time.time < _LastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? _LiftHeightRequested : LiftHeightFactor;
   }
 
   // Height factor should be between 0.0f and 1.0f
@@ -908,15 +870,10 @@ public class Robot : IDisposable {
     SetHeadAngle();
   }
 
-  
   public void VisionWhileMoving(bool enable) {
     VisionWhileMovingMessage.enable = System.Convert.ToByte(enable);
 
     RobotEngineManager.instance.Message.VisionWhileMoving = VisionWhileMovingMessage;
-    RobotEngineManager.instance.SendMessage();
-  }
-
-  public void StopAllMotors() {
     RobotEngineManager.instance.SendMessage();
   }
 
@@ -958,7 +915,8 @@ public class Robot : IDisposable {
     }
   }
 
-  private void SetAllBackpackLEDs() { // should only be called from update loop
+  // should only be called from update loop
+  private void SetAllBackpackLEDs() {
 
     SetBackpackLEDsMessage.robotID = ID;
 
@@ -975,18 +933,6 @@ public class Robot : IDisposable {
     RobotEngineManager.instance.SendMessage();
 
     SetLastLEDs();
-  }
-
-  public void SetObjectAdditionAndDeletion(bool enableAddition, bool enableDeletion) {
-    if (RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected)
-      return;
-    
-    SetObjectAdditionAndDeletionMessage.robotID = ID;
-    SetObjectAdditionAndDeletionMessage.enableAddition = enableAddition;
-    SetObjectAdditionAndDeletionMessage.enableDeletion = enableDeletion;
-
-    RobotEngineManager.instance.Message.SetObjectAdditionAndDeletion = SetObjectAdditionAndDeletionMessage;
-    RobotEngineManager.instance.SendMessage();
   }
 
   public void StartFaceAwareness() {
