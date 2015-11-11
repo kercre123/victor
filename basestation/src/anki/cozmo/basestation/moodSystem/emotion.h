@@ -17,7 +17,6 @@
 
 #include "clad/types/emotionTypes.h"
 #include "util/container/circularBuffer.h"
-#include <vector>
 
 
 namespace Anki {
