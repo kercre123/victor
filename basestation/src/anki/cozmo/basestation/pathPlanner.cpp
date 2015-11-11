@@ -99,8 +99,10 @@ bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
     
     if (motionProfile != nullptr) {
       ApplyMotionProfile(path, *motionProfile, _path);
+      path = _path;
+    } else {
+      _path = path;
     }
-    path = _path;
     return true;
     
   }
@@ -117,8 +119,10 @@ bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
     
     if (motionProfile != nullptr) {
       ApplyMotionProfile(path, *motionProfile, _path);
+      path = _path;
+    } else {
+      _path = path;
     }
-    path = _path;
     return true;
     
   }
