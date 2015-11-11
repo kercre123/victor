@@ -2437,6 +2437,114 @@ namespace Anki {
     } // Verify()
     
     
+#pragma mark ---- DriveToAlignWithObjectAction ----
+    
+    DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(const ObjectID& objectID,
+                                                               const f32 distanceFromMarker_mm,
+                                                               const PathMotionProfile motionProfile,
+                                                               const bool useApproachAngle,
+                                                               const f32 approachAngle_rad,
+                                                               const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::DOCKING,
+                              motionProfile,
+                              distanceFromMarker_mm,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
+    {
+      
+    }
+
+#pragma mark ---- DriveToPickupObjectAction ----
+    
+    DriveToPickupObjectAction::DriveToPickupObjectAction(const ObjectID& objectID,
+                                                         const PathMotionProfile motionProfile,
+                                                         const bool useApproachAngle,
+                                                         const f32 approachAngle_rad,
+                                                         const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::DOCKING,
+                              motionProfile,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PickupObjectAction(objectID)})
+    {
+      
+    }
+    
+#pragma mark ---- DriveToPlaceOnObjectAction ----
+    
+    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
+                                                           const ObjectID& objectID,
+                                                           const PathMotionProfile motionProf,
+                                                           const bool useApproachAngle,
+                                                           const f32 approachAngle_rad,
+                                                           const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::PLACE_RELATIVE,
+                              motionProf,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PlaceRelObjectAction(objectID,
+                               false,
+                               0,
+                               useManualSpeed)})
+    {
+    }
+    
+#pragma mark ---- DriveToPlaceRelObjectAction ----
+    
+    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(const ObjectID& objectID,
+                                                             const PathMotionProfile motionProfile,
+                                                             const f32 placementOffsetX_mm,
+                                                             const bool useApproachAngle,
+                                                             const f32 approachAngle_rad,
+                                                             const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::PLACE_RELATIVE,
+                              motionProfile,
+                              placementOffsetX_mm,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PlaceRelObjectAction(objectID,
+                               true,
+                               placementOffsetX_mm,
+                               useManualSpeed)})
+    {
+      
+    }
+    
+#pragma mark ---- DriveToRollObjectAction ----
+    
+    DriveToRollObjectAction::DriveToRollObjectAction(const ObjectID& objectID,
+                                                     const PathMotionProfile motionProfile,
+                                                     const bool useApproachAngle,
+                                                     const f32 approachAngle_rad,
+                                                     const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::ROLLING,
+                              motionProfile,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new RollObjectAction(objectID, useManualSpeed)})
+    {
+      
+    }
+    
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
@@ -2530,6 +2638,24 @@ namespace Anki {
     } // CheckIfDone()
     
 
+#pragma mark ---- PlaceObjectOnGroundAtPoseAction ----    
+    
+    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+                                                                     const Pose3d& placementPose,
+                                                                     const PathMotionProfile motionProfile,
+                                                                     const bool useExactRotation,
+                                                                     const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToPlaceCarriedObjectAction(robot,
+                                          placementPose,
+                                          true,
+                                          motionProfile,
+                                          useExactRotation,
+                                          useManualSpeed),
+      new PlaceObjectOnGroundAction()})
+    {
+      
+    }
     
 #pragma mark ---- CrossBridgeAction ----
     

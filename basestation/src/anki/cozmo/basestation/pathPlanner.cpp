@@ -156,7 +156,7 @@ bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
 
 bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
                                       const PathMotionProfile& motionProfile,
-                                      Planning::Path &out) const
+                                      Planning::Path &out)
 {
   out.Clear();
 
@@ -172,16 +172,17 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
     switch(seg.GetType()) {
       case Planning::PST_ARC:
         speed = arc_speed;
+        // fall through to PST_LINE handling
       case Planning::PST_LINE:
       {
-        seg.SetSpeedProfile(seg.GetTargetSpeed() > 0 ? speed : -speed,
+        seg.SetSpeedProfile(std::copysign(speed, seg.GetTargetSpeed()),
                             motionProfile.accel_mmps2,
                             motionProfile.decel_mmps2);
         break;
       }
       case Planning::PST_POINT_TURN:
       {
-        seg.SetSpeedProfile(seg.GetTargetSpeed() > 0 ? turn_speed : -turn_speed,
+        seg.SetSpeedProfile(std::copysign(turn_speed, seg.GetTargetSpeed()),
                             motionProfile.pointTurnAccel_rad_per_sec2,
                             motionProfile.pointTurnDecel_rad_per_sec2);
         break;

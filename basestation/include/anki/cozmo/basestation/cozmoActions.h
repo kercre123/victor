@@ -630,19 +630,7 @@ namespace Anki {
                                    const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
-                                   const bool useManualSpeed = false)
-      : CompoundActionSequential({
-      new DriveToObjectAction(objectID,
-                              PreActionPose::DOCKING,
-                              motionProfile,
-                              distanceFromMarker_mm,
-                              useApproachAngle,
-                              approachAngle_rad,
-                              useManualSpeed),
-        new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
-      {
-        
-      }
+                                   const bool useManualSpeed = false);
       
       // GetType returns the type from the AlignWithObjectAction
       virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
@@ -668,19 +656,7 @@ namespace Anki {
                                 const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                 const bool useApproachAngle = false,
                                 const f32 approachAngle_rad = 0,
-                                const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::DOCKING,
-                                motionProfile,
-                                0,
-                                useApproachAngle,
-                                approachAngle_rad,
-                                useManualSpeed),
-        new PickupObjectAction(objectID)})
-      {
-        
-      }
+                                const bool useManualSpeed = false);
       
       // GetType returns the type from the PickupObjectAction, which is
       // determined dynamically
@@ -707,22 +683,7 @@ namespace Anki {
                                   const PathMotionProfile motionProf = DEFAULT_PATH_MOTION_PROFILE,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
-                                 const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::PLACE_RELATIVE,
-                                motionProf,
-                                0,
-                                useApproachAngle,
-                                approachAngle_rad,
-                                useManualSpeed),
-        new PlaceRelObjectAction(objectID,
-                                 false,
-                                 0,
-                                 useManualSpeed)})
-      {
-      }
-      
+                                 const bool useManualSpeed = false);
 
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -755,22 +716,7 @@ namespace Anki {
                                   const f32 placementOffsetX_mm = 0,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
-                                  const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::PLACE_RELATIVE,
-                                motionProfile,
-                                placementOffsetX_mm,
-                                useApproachAngle,
-                                approachAngle_rad,
-                                useManualSpeed),
-        new PlaceRelObjectAction(objectID,
-                                 true,
-                                 placementOffsetX_mm,
-                                 useManualSpeed)})
-      {
-        
-      }
+                                  const bool useManualSpeed = false);
       
       
       // GetType returns the type from the PlaceRelObjectAction, which is
@@ -797,19 +743,7 @@ namespace Anki {
                               const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
-                              const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ROLLING,
-                                motionProfile,
-                                0,
-                                useApproachAngle,
-                                approachAngle_rad,
-                                useManualSpeed),
-        new RollObjectAction(objectID, useManualSpeed)})
-      {
-        
-      }
+                              const bool useManualSpeed = false);
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -865,18 +799,7 @@ namespace Anki {
                                       const Pose3d& placementPose,
                                       const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
-                                      const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot,
-                                            placementPose,
-                                            true,
-                                            motionProfile,
-                                            useExactRotation,
-                                            useManualSpeed),
-        new PlaceObjectOnGroundAction()})
-      {
-        
-      }
+                                      const bool useManualSpeed = false);
 
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
     };

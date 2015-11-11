@@ -129,9 +129,9 @@ protected:
   // Modifies in path according to _pathMotionProfile to produce out path.
   // TODO: This is where Cozmo mood/skill-based path wonkification would occur,
   //       but currently it just changes speeds and accel on each segment.
-  bool ApplyMotionProfile(const Planning::Path &in,
-                          const PathMotionProfile& motionProfile,
-                          Planning::Path &out) const;
+  static bool ApplyMotionProfile(const Planning::Path &in,
+                                 const PathMotionProfile& motionProfile,
+                                 Planning::Path &out);
       
 }; // Interface IPathPlanner
 
