@@ -82,6 +82,10 @@ namespace AnimationTool
         public const string NAME = "ProceduralFaceKeyFrame";
 
         public float faceAngle;
+        public int faceCenterX;
+        public int faceCenterY;
+        public float faceScaleX;
+        public float faceScaleY;
 
         public float[] leftEye;
         public float[] rightEye;

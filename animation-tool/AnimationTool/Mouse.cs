@@ -520,6 +520,10 @@ namespace AnimationTool
             if (faceForm.Open(previous != null ? previous : extraData) == DialogResult.OK)
             {
                 extraData.faceAngle = faceForm.faceAngle;
+                extraData.faceCenterX = faceForm.faceCenterX;
+                extraData.faceCenterY = faceForm.faceCenterY;
+                extraData.faceScaleX = faceForm.faceScaleX;
+                extraData.faceScaleY = faceForm.faceScaleY;
 
                 for (int i = 0; i < extraData.leftEye.Length && i < faceForm.eyes.Length; ++i)
                 {
