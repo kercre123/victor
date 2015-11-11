@@ -81,8 +81,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aef90997faa354db2bbf1a8f2a3ef80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _countLabel: {fileID: 11484124}
-  _toggleBadgeDisplay: {fileID: 22442882}
+  _CountLabel: {fileID: 11484124}
+  _ToggleBadgeDisplay: {fileID: 22442882}
 --- !u!114 &11414436
 MonoBehaviour:
   m_ObjectHideFlags: 1

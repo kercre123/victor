@@ -311,10 +311,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afc1cf9eb0f324bd1bcd2a98711795a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dialogId: Dialog
-  cozmoScoreField_: {fileID: 11466038}
-  playerScoreField_: {fileID: 11413030}
-  tapButton_: {fileID: 11472374}
+  _dialogId: SpeedTapPanel
+  _CozmoScoreField: {fileID: 11466038}
+  _PlayerScoreField: {fileID: 11413030}
+  _TapButton: {fileID: 11472374}
 --- !u!114 &11489682
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -512,6 +512,22 @@ Prefab:
       propertyPath: tapButton_
       value: 
       objectReference: {fileID: 11472374}
+    - target: {fileID: 0}
+      propertyPath: _CozmoScoreField
+      value: 
+      objectReference: {fileID: 11466038}
+    - target: {fileID: 0}
+      propertyPath: _PlayerScoreField
+      value: 
+      objectReference: {fileID: 11413030}
+    - target: {fileID: 0}
+      propertyPath: _TapButton
+      value: 
+      objectReference: {fileID: 11472374}
+    - target: {fileID: 0}
+      propertyPath: _dialogId
+      value: SpeedTapPanel
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 139038}

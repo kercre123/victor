@@ -5,57 +5,59 @@ public class PatternDisplay : MonoBehaviour {
   public CozmoCube[] cubes;
 
   [SerializeField]
-  private RectTransform _notFoundDisplay;
+  private RectTransform _NotFoundDisplay;
   
   [SerializeField]
-  private BadgeDisplay _newBadgeDisplay;
+  private BadgeDisplay _NewBadgeDisplay;
 
-  private BlockPattern _pattern;
-  public BlockPattern pattern {
+  private BlockPattern _Pattern;
+
+  public BlockPattern Pattern {
     get {
-      return _pattern;
+      return _Pattern;
     }
     set {
-      _pattern = value;
+      _Pattern = value;
 
-      if (_notFoundDisplay != null) {
-        _notFoundDisplay.gameObject.SetActive(_pattern == null);
+      if (_NotFoundDisplay != null) {
+        _NotFoundDisplay.gameObject.SetActive(_Pattern == null);
       }
 
-      if (_pattern != null){
-        for (int i = 0; i < cubes.Length && i < pattern.blocks_.Count; i++) {
+      if (_Pattern != null) {
+        for (int i = 0; i < cubes.Length && i < Pattern.Blocks.Count; i++) {
           // Show the cube
           cubes[i].gameObject.SetActive(true);
 
           // Set up the colors
           Color patternColor = new Color(0.2f, 0.8f, 1f);
-          cubes[i].frontColor.ObjectColor = pattern.blocks_[i].front ? patternColor : Color.gray;
-          cubes[i].backColor.ObjectColor = pattern.blocks_[i].back ? patternColor : Color.gray;
-          cubes[i].leftColor.ObjectColor = pattern.blocks_[i].left ? patternColor : Color.gray;
-          cubes[i].rightColor.ObjectColor = pattern.blocks_[i].right ? patternColor : Color.gray;
+          cubes[i].frontColor.ObjectColor = Pattern.Blocks[i].front ? patternColor : Color.gray;
+          cubes[i].backColor.ObjectColor = Pattern.Blocks[i].back ? patternColor : Color.gray;
+          cubes[i].leftColor.ObjectColor = Pattern.Blocks[i].left ? patternColor : Color.gray;
+          cubes[i].rightColor.ObjectColor = Pattern.Blocks[i].right ? patternColor : Color.gray;
 
           // Update the cube's orientation depending on if the cube is facing cozmo
-          cubes[i].SetOrientation(pattern.blocks_[i].facing_cozmo);
+          cubes[i].SetOrientation(Pattern.Blocks[i].facing_cozmo);
         }
 
-        if (_newBadgeDisplay != null) {
-          _newBadgeDisplay.UpdateDisplayWithKey(_pattern);
+        if (_NewBadgeDisplay != null) {
+          _NewBadgeDisplay.UpdateDisplayWithKey(_Pattern);
         }
-      } else {
+      }
+      else {
         // Hide all the cubes
         for (int i = 0; i < cubes.Length; i++) {
           cubes[i].gameObject.SetActive(false);
         }
         
-        if (_newBadgeDisplay != null) {
-          _newBadgeDisplay.HideDisplay();
+        if (_NewBadgeDisplay != null) {
+          _NewBadgeDisplay.HideDisplay();
         }
       }
     }
   }
 
   public void RemoveBadgeIfSeen() {
-    if (_newBadgeDisplay  == null || _pattern == null || !BadgeManager.DoesBadgeExistForKey(_pattern)) {
+    if (_NewBadgeDisplay == null || _Pattern == null || !BadgeManager.DoesBadgeExistForKey(_Pattern)) {
       return;
     }
 
@@ -74,7 +76,7 @@ public class PatternDisplay : MonoBehaviour {
     }
     
     if (!isObjectOffscreen) {
-      BadgeManager.TryRemoveBadge(_pattern);
+      BadgeManager.TryRemoveBadge(_Pattern);
     }
   }
 }

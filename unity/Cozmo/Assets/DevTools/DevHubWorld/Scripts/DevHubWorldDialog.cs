@@ -4,24 +4,26 @@ using System.Collections;
 public class DevHubWorldDialog : BaseDialog {
 
   public delegate void DevButtonClickedHandler(GameBase miniGameClicked);
+
   public event DevButtonClickedHandler OnDevButtonClicked;
-  private void RaiseButtonClicked(GameBase minigame){
+
+  private void RaiseButtonClicked(GameBase minigame) {
     if (OnDevButtonClicked != null) {
       OnDevButtonClicked(minigame);
     }
   }
 
   [SerializeField]
-  private DevHubWorldButton devHubWorldButtonPrefab_;
+  private DevHubWorldButton _DevHubWorldButtonPrefab;
 
   [SerializeField]
-  private RectTransform buttonContainer_;
+  private RectTransform _ButtonContainer;
 
-  public void Initialize(GameBase[] minigames){
+  public void Initialize(GameBase[] minigames) {
     GameObject newButton;
     DevHubWorldButton buttonScript;
     foreach (GameBase game in minigames) {
-      newButton = UIManager.CreateUI(devHubWorldButtonPrefab_.gameObject, buttonContainer_);
+      newButton = UIManager.CreateUI(_DevHubWorldButtonPrefab.gameObject, _ButtonContainer);
       buttonScript = newButton.GetComponent<DevHubWorldButton>();
       buttonScript.Initialize(game);
       buttonScript.OnDevButtonClicked += HandleOnDevButtonClicked;
@@ -36,8 +38,7 @@ public class DevHubWorldDialog : BaseDialog {
 
   }
 
-  private void HandleOnDevButtonClicked (GameBase miniGameClicked)
-  {
+  private void HandleOnDevButtonClicked(GameBase miniGameClicked) {
     RaiseButtonClicked(miniGameClicked);
   }
 }

@@ -130,16 +130,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a16bc64d06554b4bae76ecffe8e8210, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _verticalLayoutForRowPatterns: {fileID: 22490474}
-  _horizontalLayoutForStackPatterns: {fileID: 22437950}
-  _halfHorizontalLayoutForStackPatterns: {fileID: 22484316}
-  _rowPatternDisplayPrefab: {fileID: 11407164, guid: 65ad75c0e5d3041c49e0320174736c33,
+  _VerticalLayoutForRowPatterns: {fileID: 22490474}
+  _HorizontalLayoutForStackPatterns: {fileID: 22437950}
+  _HalfHorizontalLayoutForStackPatterns: {fileID: 22484316}
+  _RowPatternDisplayPrefab: {fileID: 11407164, guid: 65ad75c0e5d3041c49e0320174736c33,
     type: 2}
-  _stackPatternDisplayPrefab: {fileID: 11488126, guid: 650e2cdec07f74fa8afa1c0b489f02ee,
+  _StackPatternDisplayPrefab: {fileID: 11488126, guid: 650e2cdec07f74fa8afa1c0b489f02ee,
     type: 2}
-  _headerText: {fileID: 11456622}
-  _newBadgeDisplay: {fileID: 11488880}
-  _layoutElement: {fileID: 11427520}
+  _HeaderText: {fileID: 11456622}
+  _NewBadgeDisplay: {fileID: 11488880}
+  _LayoutElement: {fileID: 11427520}
 --- !u!114 &11427520
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -353,8 +353,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aef90997faa354db2bbf1a8f2a3ef80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _countLabel: {fileID: 11449294}
-  _toggleBadgeDisplay: {fileID: 22442628}
+  _CountLabel: {fileID: 11449294}
+  _ToggleBadgeDisplay: {fileID: 22442628}
 --- !u!222 &22202834
 CanvasRenderer:
   m_ObjectHideFlags: 1

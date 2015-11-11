@@ -4,21 +4,21 @@ using System.Collections;
 public class BlockPatternData {
 
   public BlockPatternData(BlockLights lights, float frameZAccel, float timeTapped) {
-    blockLightsLocalSpace = lights;
-    lastFrameZAccel = frameZAccel;
-    lastTimeTapped = timeTapped;
+    BlockLightsLocalSpace = lights;
+    LastFrameZAccel = frameZAccel;
+    LastTimeTapped = timeTapped;
   }
 
-  public BlockLights blockLightsLocalSpace;
-  public float lastFrameZAccel;
-  public float lastTimeTapped;
+  public BlockLights BlockLightsLocalSpace;
+  public float LastFrameZAccel;
+  public float LastTimeTapped;
   // for phone input
-  public float lastTimeTouched;
-  public bool moving = false;
-  public float seenAccumulator = 0.0f;
+  public float LastTimeTouched;
+  public bool Moving = false;
+  public float SeenAccumulator = 0.0f;
 
   public bool BlockActiveTimeTouched() {
-    return Time.time - lastTimeTouched < 1.2f;
+    return Time.time - LastTimeTouched < 1.2f;
   }
 }
 

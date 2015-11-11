@@ -3,12 +3,12 @@ using System.Collections;
 
 public class State {
 
-  protected StateMachine stateMachine_;
+  protected StateMachine _StateMachine;
 
-  protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
+  protected Robot _CurrentRobot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
   public void SetStateMachine(StateMachine stateMachine) {
-    stateMachine_ = stateMachine;
+    _StateMachine = stateMachine;
   }
 
   public virtual void Enter() {

@@ -39,8 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  devConnectDialog_: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
-  hubWorldPrefab_: {fileID: 11466608, guid: 6a1896e8147fa4277a1f396a5575f32d, type: 2}
+  _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
+  _HubWorldPrefab: {fileID: 11466608, guid: 6a1896e8147fa4277a1f396a5575f32d, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -55,6 +55,16 @@ Prefab:
         type: 2}
     - target: {fileID: 0}
       propertyPath: hubWorldPrefab_
+      value: 
+      objectReference: {fileID: 11466608, guid: 6a1896e8147fa4277a1f396a5575f32d,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DevConnectDialog
+      value: 
+      objectReference: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HubWorldPrefab
       value: 
       objectReference: {fileID: 11466608, guid: 6a1896e8147fa4277a1f396a5575f32d,
         type: 2}

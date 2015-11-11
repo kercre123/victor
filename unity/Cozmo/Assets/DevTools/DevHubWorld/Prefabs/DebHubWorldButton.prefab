@@ -148,8 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a160cba19df554dc8a9ae7f941c3df95, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  buttonScript_: {fileID: 11409606}
-  buttonLabel_: {fileID: 11401782}
+  _ButtonScript: {fileID: 11409606}
+  _ButtonLabel: {fileID: 11401782}
 --- !u!114 &11494122
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -221,7 +221,15 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _ButtonLabel
+      value: 
+      objectReference: {fileID: 11401782}
+    - target: {fileID: 0}
+      propertyPath: _ButtonScript
+      value: 
+      objectReference: {fileID: 11409606}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 149604}

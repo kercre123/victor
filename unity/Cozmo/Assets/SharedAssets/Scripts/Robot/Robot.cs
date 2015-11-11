@@ -12,58 +12,58 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class Robot : IDisposable {
   public class Light {
-    private uint lastOnColor;
-    public uint onColor;
-    private uint lastOffColor;
-    public uint offColor;
-    private uint lastOnPeriod_ms;
-    public uint onPeriod_ms;
-    private uint lastOffPeriod_ms;
-    public uint offPeriod_ms;
-    private uint lastTransitionOnPeriod_ms;
-    public uint transitionOnPeriod_ms;
-    private uint lastTransitionOffPeriod_ms;
-    public uint transitionOffPeriod_ms;
+    private uint _LastOnColor;
+    public uint OnColor;
+    private uint _LastOffColor;
+    public uint OffColor;
+    private uint _LastOnPeriodMs;
+    public uint OnPeriodMs;
+    private uint _LastOffPeriodMs;
+    public uint OffPeriodMs;
+    private uint _LastTransitionOnPeriodMs;
+    public uint TransitionOnPeriodMs;
+    private uint _LastTransitionOffPeriodMs;
+    public uint TransitionOffPeriodMs;
 
     public void SetLastInfo() {
-      lastOnColor = onColor;
-      lastOffColor = offColor;
-      lastOnPeriod_ms = onPeriod_ms;
-      lastOffPeriod_ms = offPeriod_ms;
-      lastTransitionOnPeriod_ms = transitionOnPeriod_ms;
-      lastTransitionOffPeriod_ms = transitionOffPeriod_ms;
-      initialized = true;
+      _LastOnColor = OnColor;
+      _LastOffColor = OffColor;
+      _LastOnPeriodMs = OnPeriodMs;
+      _LastOffPeriodMs = OffPeriodMs;
+      _LastTransitionOnPeriodMs = TransitionOnPeriodMs;
+      _LastTransitionOffPeriodMs = TransitionOffPeriodMs;
+      _Initialized = true;
     }
 
-    public bool changed {
+    public bool Changed {
       get {
-        return !initialized || lastOnColor != onColor || lastOffColor != offColor || lastOnPeriod_ms != onPeriod_ms || lastOffPeriod_ms != offPeriod_ms ||
-        lastTransitionOnPeriod_ms != transitionOnPeriod_ms || lastTransitionOffPeriod_ms != transitionOffPeriod_ms;
+        return !_Initialized || _LastOnColor != OnColor || _LastOffColor != OffColor || _LastOnPeriodMs != OnPeriodMs || _LastOffPeriodMs != OffPeriodMs ||
+        _LastTransitionOnPeriodMs != TransitionOnPeriodMs || _LastTransitionOffPeriodMs != TransitionOffPeriodMs;
       }
     }
 
     public virtual void ClearData() {
-      onColor = 0;
-      offColor = 0;
-      onPeriod_ms = 1000;
-      offPeriod_ms = 0;
-      transitionOnPeriod_ms = 0;
-      transitionOffPeriod_ms = 0;
+      OnColor = 0;
+      OffColor = 0;
+      OnPeriodMs = 1000;
+      OffPeriodMs = 0;
+      TransitionOnPeriodMs = 0;
+      TransitionOffPeriodMs = 0;
 
-      lastOnColor = 0;
-      lastOffColor = 0;
-      lastOnPeriod_ms = 1000;
-      lastOffPeriod_ms = 0;
-      lastTransitionOnPeriod_ms = 0;
-      lastTransitionOffPeriod_ms = 0;
+      _LastOnColor = 0;
+      _LastOffColor = 0;
+      _LastOnPeriodMs = 1000;
+      _LastOffPeriodMs = 0;
+      _LastTransitionOnPeriodMs = 0;
+      _LastTransitionOffPeriodMs = 0;
 
-      messageDelay = 0f;
+      MessageDelay = 0f;
     }
 
-    public static float messageDelay = 0f;
+    public static float MessageDelay = 0f;
 
     public const uint FOREVER = 2147483647;
-    private bool initialized = false;
+    private bool _Initialized = false;
   }
 
   public delegate void RobotCallback(bool success);
@@ -120,7 +120,7 @@ public class Robot : IDisposable {
   private bool lightsChanged {
     get {
       for (int i = 0; i < Lights.Length; ++i) {
-        if (Lights[i].changed)
+        if (Lights[i].Changed)
           return true;
       }
 
@@ -180,6 +180,7 @@ public class Robot : IDisposable {
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
+  private U2G.AlignWithObject AlignWithObjectMessage;
 
   private ObservedObject _carryingObject;
 
@@ -286,6 +287,7 @@ public class Robot : IDisposable {
     PlayAnimationMessages[0] = new U2G.PlayAnimation();
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
+    AlignWithObjectMessage = new U2G.AlignWithObject();
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -409,18 +411,18 @@ public class Robot : IDisposable {
     if (RobotEngineManager.instance == null || !RobotEngineManager.instance.IsConnected)
       return;
 
-    if (Time.time > LightCube.Light.messageDelay || now) {
+    if (Time.time > LightCube.Light.MessageDelay || now) {
       var enumerator = LightCubes.GetEnumerator();
 
       while (enumerator.MoveNext()) {
         LightCube lightCube = enumerator.Current.Value;
 
-        if (lightCube.lightsChanged)
+        if (lightCube.LightsChanged)
           lightCube.SetAllLEDs();
       }
     }
 
-    if (Time.time > Light.messageDelay || now) {
+    if (Time.time > Light.MessageDelay || now) {
       if (lightsChanged)
         SetAllBackpackLEDs();
     }
@@ -829,6 +831,21 @@ public class Robot : IDisposable {
     }
   }
 
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null) {
+    AlignWithObjectMessage.objectID = obj;
+    AlignWithObjectMessage.distanceFromMarker_mm = distanceFromMarker_mm;
+    AlignWithObjectMessage.useManualSpeed = false;
+    AlignWithObjectMessage.useApproachAngle = false;
+
+    RobotEngineManager.instance.Message.AlignWithObject = AlignWithObjectMessage;
+    RobotEngineManager.instance.SendMessage();
+
+    localBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    if (callback != null) {
+      robotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
+    }
+  }
+
   public float GetLiftHeightFactor() {
     return (Time.time < lastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME) ? liftHeightRequested : LiftHeightFactor;
   }
@@ -932,12 +949,12 @@ public class Robot : IDisposable {
   public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
     for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].onColor = onColor;
-      Lights[i].offColor = offColor;
-      Lights[i].onPeriod_ms = onPeriod_ms;
-      Lights[i].offPeriod_ms = offPeriod_ms;
-      Lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
-      Lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
+      Lights[i].OnColor = onColor;
+      Lights[i].OffColor = offColor;
+      Lights[i].OnPeriodMs = onPeriod_ms;
+      Lights[i].OffPeriodMs = offPeriod_ms;
+      Lights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
+      Lights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
     }
   }
 
@@ -946,12 +963,12 @@ public class Robot : IDisposable {
     SetBackpackLEDsMessage.robotID = ID;
 
     for (int i = 0; i < Lights.Length; ++i) {
-      SetBackpackLEDsMessage.onColor[i] = Lights[i].onColor;
-      SetBackpackLEDsMessage.offColor[i] = Lights[i].offColor;
-      SetBackpackLEDsMessage.onPeriod_ms[i] = Lights[i].onPeriod_ms;
-      SetBackpackLEDsMessage.offPeriod_ms[i] = Lights[i].offPeriod_ms;
-      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].transitionOnPeriod_ms;
-      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].transitionOffPeriod_ms;
+      SetBackpackLEDsMessage.onColor[i] = Lights[i].OnColor;
+      SetBackpackLEDsMessage.offColor[i] = Lights[i].OffColor;
+      SetBackpackLEDsMessage.onPeriod_ms[i] = Lights[i].OnPeriodMs;
+      SetBackpackLEDsMessage.offPeriod_ms[i] = Lights[i].OffPeriodMs;
+      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].TransitionOnPeriodMs;
+      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
     }
     
     RobotEngineManager.instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;

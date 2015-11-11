@@ -4,20 +4,20 @@ using System.Collections;
 public class SpeedTapPanel : BaseDialog {
 
   [SerializeField]
-  private UnityEngine.UI.Text cozmoScoreField_;
+  private UnityEngine.UI.Text _CozmoScoreField;
 
   [SerializeField]
-  private UnityEngine.UI.Text playerScoreField_;
+  private UnityEngine.UI.Text _PlayerScoreField;
 
   [SerializeField]
-  private UnityEngine.UI.Button tapButton_;
+  private UnityEngine.UI.Button _TapButton;
 
   public delegate void TapButtonPressedHandler();
 
   public TapButtonPressedHandler TapButtonPressed;
 
   void Start() {
-    tapButton_.onClick.AddListener(OnTapped);
+    _TapButton.onClick.AddListener(OnTapped);
   }
 
   private void OnTapped() {
@@ -27,11 +27,11 @@ public class SpeedTapPanel : BaseDialog {
   }
 
   public void SetScoreText(int cozmoScore, int playerScore) {
-    if (cozmoScoreField_ != null) {
-      cozmoScoreField_.text = "cozmo: " + cozmoScore.ToString();
+    if (_CozmoScoreField != null) {
+      _CozmoScoreField.text = "cozmo: " + cozmoScore.ToString();
     }
-    if (playerScoreField_ != null) {
-      playerScoreField_.text = "player: " + playerScore.ToString();
+    if (_PlayerScoreField != null) {
+      _PlayerScoreField.text = "player: " + playerScore.ToString();
     }
   }
 

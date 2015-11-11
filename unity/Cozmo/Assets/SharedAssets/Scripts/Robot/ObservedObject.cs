@@ -20,7 +20,7 @@ public enum CubeType {
 ///   so far, we only both handling three types of cubes and the occasional human head
 /// </summary>
 public class ObservedObject {
-  public CubeType cubeType { get; private set; }
+  public CubeType CubeType { get; private set; }
 
   public uint RobotID { get; private set; }
 
@@ -64,11 +64,11 @@ public class ObservedObject {
 
   public float TimeCreated { get; private set; }
 
-  protected Robot robot { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
+  protected Robot RobotInstance { get { return RobotEngineManager.instance != null ? RobotEngineManager.instance.CurrentRobot : null; } }
 
-  public bool isActive { get { return cubeType == CubeType.LIGHT_CUBE; } }
+  public bool IsActive { get { return CubeType == CubeType.LIGHT_CUBE; } }
 
-  public bool isFace { get { return cubeType == CubeType.FACE; } }
+  public bool IsFace { get { return CubeType == CubeType.FACE; } }
 
   public const float RemoveDelay = 0.33f;
 
@@ -93,20 +93,20 @@ public class ObservedObject {
     SelectInfoString = "Select ID: " + ID + " Family: " + Family + " Type: " + ObjectType;
 
     if (objectFamily == ObjectFamily.LightCube) {
-      cubeType = CubeType.LIGHT_CUBE;
+      CubeType = CubeType.LIGHT_CUBE;
     }
     else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
-      cubeType = CubeType.BULLS_EYE;
+      CubeType = CubeType.BULLS_EYE;
     }
     else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
-      cubeType = CubeType.FLAG;
+      CubeType = CubeType.FLAG;
     }
     else {
-      cubeType = CubeType.UNKNOWN;
+      CubeType = CubeType.UNKNOWN;
       DAS.Warn("ObservedObject", "Object " + ID + " with type " + objectType + " is unsupported"); 
     }
 
-    DAS.Debug("ObservedObject", "ObservedObject cubeType(" + cubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+    DAS.Debug("ObservedObject", "ObservedObject cubeType(" + CubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
 
   }
 

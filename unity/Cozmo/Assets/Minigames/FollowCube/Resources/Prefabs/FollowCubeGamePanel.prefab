@@ -365,9 +365,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: FollowGamePanel
-  slowSpeedButton_: {fileID: 11496320}
-  fastSpeedButton_: {fileID: 11436652}
-  demonSpeedButton_: {fileID: 11404304}
+  _SlowSpeedButton: {fileID: 11496320}
+  _FastSpeedButton: {fileID: 11436652}
+  _DemonSpeedButton: {fileID: 11404304}
 --- !u!114 &11490654
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -603,7 +603,19 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _SlowSpeedButton
+      value: 
+      objectReference: {fileID: 11496320}
+    - target: {fileID: 0}
+      propertyPath: _FastSpeedButton
+      value: 
+      objectReference: {fileID: 11436652}
+    - target: {fileID: 0}
+      propertyPath: _DemonSpeedButton
+      value: 
+      objectReference: {fileID: 11404304}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 154828}

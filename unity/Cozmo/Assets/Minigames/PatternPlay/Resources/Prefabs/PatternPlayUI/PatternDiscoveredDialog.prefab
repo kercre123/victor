@@ -281,16 +281,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: PatternDiscoveredDialog
-  _patternDiscoveryDisplayPrefab: {fileID: 11419336, guid: cee9aa1e0cda0472393280aff0993f5f,
+  _PatternDiscoveryDisplayPrefab: {fileID: 11419336, guid: cee9aa1e0cda0472393280aff0993f5f,
     type: 2}
-  _imagesToFadeOnClose:
-  - {fileID: 11416280}
-  - {fileID: 11421306}
-  - {fileID: 11411656}
+  _ImagesToFadeOnClose:
   - {fileID: 11487072}
-  _textToFadeOnClose:
-  - {fileID: 11427704}
+  - {fileID: 11421306}
+  - {fileID: 11416280}
+  - {fileID: 11411656}
+  _TextToFadeOnClose:
   - {fileID: 11483582}
+  - {fileID: 11427704}
 --- !u!114 &11483582
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -499,7 +499,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _PatternDiscoveryDisplayPrefab
+      value: 
+      objectReference: {fileID: 11419336, guid: cee9aa1e0cda0472393280aff0993f5f,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 164518}

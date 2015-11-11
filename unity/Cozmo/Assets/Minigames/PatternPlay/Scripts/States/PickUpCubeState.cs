@@ -3,56 +3,56 @@ using System.Collections;
 
 public class PickUpCubeState : State {
 
-  private PatternPlayGame patternPlayGame_ = null;
-  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+  private PatternPlayGame _PatternPlayGame = null;
+  private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-  bool hasTarget = true;
+  private bool _HasTarget = true;
 
   public override void Enter() {
     base.Enter();
     DAS.Info("PatternPlayState", "PickUpCube");
-    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
+    _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
+    _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
 
-    ObservedObject targetObject = patternPlayAutoBuild_.GetClosestAvailableBlock();
+    ObservedObject targetObject = _PatternPlayAutoBuild.GetClosestAvailableBlock();
 
     // it is possible that since we thought there were seenBlocks that they
     // have been dirtied since then. If there are no available blocks
     // anymore then we should go look for more.
     if (targetObject == null) {
-      hasTarget = false;
+      _HasTarget = false;
       return;
     }
 
-    robot.PickupObject(targetObject, true, false, false, 0.0f, PickUpDone);
-    patternPlayAutoBuild_.SetObjectHeld(targetObject);
+    _CurrentRobot.PickupObject(targetObject, true, false, false, 0.0f, PickUpDone);
+    _PatternPlayAutoBuild.SetObjectHeld(targetObject);
   }
 
   public override void Update() {
     base.Update();
-    if (hasTarget == false) {
+    if (_HasTarget == false) {
       DAS.Info("PatternPlayPickUpCube", "No Cubes To Pickup");
-      stateMachine_.SetNextState(new LookForCubesState());
-      patternPlayAutoBuild_.SetObjectHeld(null);
+      _StateMachine.SetNextState(new LookForCubesState());
+      _PatternPlayAutoBuild.SetObjectHeld(null);
     }
-    if (patternPlayGame_.SeenPattern()) {
-      stateMachine_.SetNextState(new CelebratePatternState());
+    if (_PatternPlayGame.SeenPattern()) {
+      _StateMachine.SetNextState(new CelebratePatternState());
       return;
     }
   }
 
   void PickUpDone(bool success) {
     if (success) {
-      stateMachine_.SetNextState(new PlaceCubeState());
+      _StateMachine.SetNextState(new PlaceCubeState());
     }
     else {
       DAS.Info("PatternPlay", "PickUp Failed!");
-      stateMachine_.SetNextState(new LookForCubesState());
-      if (patternPlayAutoBuild_.GetHeldObject() != null) {
-        robot.UpdateDirtyList(patternPlayAutoBuild_.GetHeldObject());
+      _StateMachine.SetNextState(new LookForCubesState());
+      if (_PatternPlayAutoBuild.GetHeldObject() != null) {
+        _CurrentRobot.UpdateDirtyList(_PatternPlayAutoBuild.GetHeldObject());
       }
 
-      patternPlayAutoBuild_.SetObjectHeld(null);
+      _PatternPlayAutoBuild.SetObjectHeld(null);
     }
 
   }

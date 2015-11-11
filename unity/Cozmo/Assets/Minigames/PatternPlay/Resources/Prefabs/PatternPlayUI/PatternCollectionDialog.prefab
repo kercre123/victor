@@ -310,14 +310,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _dialogId: PatternCollectionDialog
-  _memoryBankCardPrefab: {fileID: 11402378, guid: c9f5369cdc6734c8e9ab0fa74c47495e,
+  _MemoryBankCardPrefab: {fileID: 11402378, guid: c9f5369cdc6734c8e9ab0fa74c47495e,
     type: 2}
-  _memoryBankCardContentPanel: {fileID: 22453032}
-  _percentCompleteLabel: {fileID: 11425318}
-  _memoryBankScrollRect: {fileID: 11401160}
-  _slowDragSpeedThreshold: 30
-  _cardLayoutGroup: {fileID: 11474354}
-  _cardWidth: 600
+  _MemoryBankCardContentPanel: {fileID: 22453032}
+  _PercentCompleteLabel: {fileID: 11425318}
+  _MemoryBankScrollRect: {fileID: 11401160}
+  _SlowDragSpeedThreshold: 30
+  _CardLayoutGroup: {fileID: 11474354}
+  _CardWidth: 600
 --- !u!114 &11467954
 MonoBehaviour:
   m_ObjectHideFlags: 1

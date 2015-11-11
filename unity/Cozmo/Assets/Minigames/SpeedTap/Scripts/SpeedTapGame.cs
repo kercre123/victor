@@ -4,10 +4,10 @@ using System;
 
 public class SpeedTapGame : GameBase {
 
-  public LightCube cozmoBlock_;
-  public LightCube playerBlock_;
-  public int cozmoScore_;
-  public int playerScore_;
+  public LightCube CozmoBlock;
+  public LightCube PlayerBlock;
+  public int CozmoScore;
+  public int PlayerScore;
 
   public event Action PlayerTappedBlockEvent;
 
@@ -15,11 +15,11 @@ public class SpeedTapGame : GameBase {
   private StateMachine stateMachine_ = new StateMachine();
 
   [SerializeField]
-  private SpeedTapPanel gamePanelPrefab_;
-  private SpeedTapPanel gamePanel_;
+  private SpeedTapPanel _GamePanelPrefab;
+  private SpeedTapPanel _GamePanel;
 
   [SerializeField]
-  private AudioClip rollSound_;
+  private AudioClip _RollSound;
 
   // Use this for initialization
   void Start() { 
@@ -35,8 +35,8 @@ public class SpeedTapGame : GameBase {
     LightCube.TappedAction += BlockTapped;
     robot.StopFaceAwareness();
     robot.SetBehaviorSystem(false);
-    gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<SpeedTapPanel>();
-    gamePanel_.TapButtonPressed += UIButtonTapped;
+    _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
+    _GamePanel.TapButtonPressed += UIButtonTapped;
     UpdateUI();
 
     CreateDefaultQuitButton();
@@ -47,23 +47,23 @@ public class SpeedTapGame : GameBase {
   }
 
   public override void CleanUp() {
-    if (gamePanel_ != null) {
-      UIManager.CloseDialogImmediately(gamePanel_);
+    if (_GamePanel != null) {
+      UIManager.CloseDialogImmediately(_GamePanel);
     }
     DestroyDefaultQuitButton();
   }
 
   void InitialCubesDone() {
-    cozmoBlock_ = GetClosestAvailableBlock();
-    playerBlock_ = GetFarthestAvailableBlock();
+    CozmoBlock = GetClosestAvailableBlock();
+    PlayerBlock = GetFarthestAvailableBlock();
   }
 
   public void UpdateUI() {
-    gamePanel_.SetScoreText(cozmoScore_, playerScore_);
+    _GamePanel.SetScoreText(CozmoScore, PlayerScore);
   }
 
   public void RollingBlocks() {
-    AudioManager.PlayAudioClip(rollSound_);
+    AudioManager.PlayAudioClip(_RollSound);
   }
 
   private void UIButtonTapped() {
@@ -74,7 +74,7 @@ public class SpeedTapGame : GameBase {
 
   private void BlockTapped(int blockID, int tappedTimes) {
     DAS.Info("SpeedTapGame", "Player Block Tapped.");
-    if (playerBlock_ != null && playerBlock_.ID == blockID) {
+    if (PlayerBlock != null && PlayerBlock.ID == blockID) {
       if (PlayerTappedBlockEvent != null) {
         PlayerTappedBlockEvent();
       }
