@@ -44,49 +44,61 @@ namespace TreasureHunt {
       }
     }
 
-    public bool HoveringOverGold(LightCube cube) {
-      Vector2 blockPosition = (Vector2)cube.WorldPosition;
-      bool hovering = Vector2.Distance(blockPosition, GoldPosition) < 15.0f;
+    public void SetDirectionalLight(LightCube cube, float distance) {
 
-      if (hovering) {
-        for (int i = 0; i < cube.Lights.Length; ++i) {
-          cube.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-        }
+      // if distance is really small then let's not set lights at all.
+      if (distance < 0.01f) {
+        return;
+      }
+        
+      // flash based on on close the object is to the target.
+      int flashComp = (int)(Time.time * 200.0f / distance);
+      if (flashComp % 2 == 0) {
+        return;
+      }
+
+      // set directional lights
+      Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
+      Vector2 cubeForward = (Vector2)cube.Forward;
+
+      cubeToTarget.Normalize();
+      cubeForward.Normalize();
+
+      cube.SetLEDs(0);
+
+      float dotVal = Vector2.Dot(cubeToTarget, cubeForward);
+
+      if (dotVal > 0.5f) {
+        // front
+        cube.Lights[0].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+      }
+      else if (dotVal < -0.5f) {
+        // back
+        cube.Lights[2].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
       }
       else {
-        // set directional lights
-        Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
-        Vector2 cubeForward = (Vector2)cube.Forward;
-
-        cubeToTarget.Normalize();
-        cubeForward.Normalize(); 
-
-        cube.SetLEDs(0);
-
-        float dotVal = Vector2.Dot(cubeToTarget, cubeForward);
-
-        if (dotVal > 0.5f) {
-          // front
-          cube.Lights[0].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-        }
-        else if (dotVal < -0.5f) {
-          // back
-          cube.Lights[2].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+        float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
+        if (crossSign < 0.0f) {
+          // left
+          cube.Lights[1].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
         }
         else {
-          float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
-          if (crossSign < 0.0f) {
-            // left
-            cube.Lights[1].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-          }
-          else {
-            // right
-            cube.Lights[3].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-          }
+          // right
+          cube.Lights[3].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
         }
       }
+    }
 
-      return hovering;
+    public void SetHoveringLight(LightCube cube) {
+      for (int i = 0; i < cube.Lights.Length; ++i) {
+        cube.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+      }
+    }
+
+    public bool HoveringOverGold(LightCube cube, out float distance) {
+      Vector2 blockPosition = (Vector2)cube.WorldPosition;
+      distance = Vector2.Distance(blockPosition, GoldPosition);
+      return distance < 15.0f;
     }
 
     void Update() {
