@@ -28,12 +28,13 @@ namespace TreasureHunt {
         if (followingCube != null) {
           TreasureHuntGame treasureHuntGame = (_StateMachine.GetGame() as TreasureHuntGame);
           treasureHuntGame.ClearBlockLights();
-          if (treasureHuntGame.HoveringOverGold(followingCube as LightCube)) {
+          float distance = 0.0f;
+          if (treasureHuntGame.HoveringOverGold(followingCube as LightCube, out distance)) {
             treasureHuntGame.SetHoveringLight(followingCube as LightCube);
             _StateMachine.SetNextState(new CelebrateGoldState());
           }
           else {
-            treasureHuntGame.SetDirectionalLight(followingCube as LightCube);
+            treasureHuntGame.SetDirectionalLight(followingCube as LightCube, distance);
           }
         }
       }

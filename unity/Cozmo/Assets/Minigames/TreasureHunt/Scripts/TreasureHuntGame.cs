@@ -44,13 +44,25 @@ namespace TreasureHunt {
       }
     }
 
-    public void SetDirectionalLight(LightCube cube) {
+    public void SetDirectionalLight(LightCube cube, float distance) {
+
+      // if distance is really small then let's not set lights at all.
+      if (distance < 0.01f) {
+        return;
+      }
+        
+      // flash based on on close the object is to the target.
+      /*int flashComp = (int)(Time.time / distance);
+      if (flashComp % 2) {
+        return;
+      }*/
+
       // set directional lights
       Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
       Vector2 cubeForward = (Vector2)cube.Forward;
 
       cubeToTarget.Normalize();
-      cubeForward.Normalize(); 
+      cubeForward.Normalize();
 
       cube.SetLEDs(0);
 
@@ -83,9 +95,10 @@ namespace TreasureHunt {
       }
     }
 
-    public bool HoveringOverGold(LightCube cube) {
+    public bool HoveringOverGold(LightCube cube, out float distance) {
       Vector2 blockPosition = (Vector2)cube.WorldPosition;
-      return Vector2.Distance(blockPosition, GoldPosition) < 15.0f;
+      distance = Vector2.Distance(blockPosition, GoldPosition);
+      return distance < 15.0f;
     }
 
     void Update() {
