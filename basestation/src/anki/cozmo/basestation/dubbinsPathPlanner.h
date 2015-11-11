@@ -24,8 +24,7 @@ public:
   DubbinsPlanner();
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose,
-                                         const PathMotionProfile motionProfile) override;
+                                         const Pose3d& targetPose) override;
       
 };
 

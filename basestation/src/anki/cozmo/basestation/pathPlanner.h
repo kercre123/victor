@@ -57,12 +57,10 @@ public:
   // means it is (or may have already finished)
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose,
-                                         const PathMotionProfile motionProfile) = 0;
+                                         const Pose3d& targetPose) = 0;
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const std::vector<Pose3d>& targetPoses,
-                                         const PathMotionProfile motionProfile);
+                                         const std::vector<Pose3d>& targetPoses);
 
   // While we are following a path, we can do a more efficient check to see if we need to update that path
   // based on new obstacles or other information. This function assumes that the robot is following the last
@@ -72,8 +70,7 @@ public:
   // used
   // Default implementation never plans (just gives you the same path as last time)
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false,
-                                                    const PathMotionProfile* motionProfile = nullptr);
+                                                    bool forceReplanFromScratch = false);
 
   virtual void StopPlanning() {}
 
@@ -85,8 +82,13 @@ public:
   // recent ComputePlan call. If the robot has moved significantly between computing the path and getting the
   // complete path, the path may trim the first few actions removed to account for the robots motion, based on
   // the passed in position
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path);
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex);
+  bool GetCompletePath(const Pose3d& currentRobotPose,
+                       Planning::Path &path,
+                       const PathMotionProfile* motionProfile = nullptr);
+  bool GetCompletePath(const Pose3d& currentRobotPose,
+                       Planning::Path &path,
+                       size_t& selectedTargetIndex,
+                       const PathMotionProfile* motionProfile = nullptr);
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
@@ -113,13 +115,20 @@ protected:
   bool _planningError;
   size_t _selectedTargetIdx;
   Planning::Path _path;
-  PathMotionProfile _pathMotionProfile;
   
+  
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                        Planning::Path &path);
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                        Planning::Path &path,
+                                        size_t& selectedTargetIndex);
   
   // Modifies in path according to _pathMotionProfile to produce out path.
-  // TODO: This where Cozmo mood/skill-based path wonkification would occur,
+  // TODO: This is where Cozmo mood/skill-based path wonkification would occur,
   //       but currently it just changes speeds and accel on each segment.
-  bool ApplyMotionProfile(const Planning::Path &in, Planning::Path &out) const;
+  bool ApplyMotionProfile(const Planning::Path &in,
+                          const PathMotionProfile& motionProfile,
+                          Planning::Path &out) const;
       
 }; // Interface IPathPlanner
 
@@ -130,8 +139,7 @@ public:
   PathPlannerStub() { }
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose,
-                                         const PathMotionProfile motionProfile) override {
+                                         const Pose3d& targetPose) override {
     return EComputePathStatus::Error;
   }
 };

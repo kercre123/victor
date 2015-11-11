@@ -1073,7 +1073,7 @@ namespace Anki {
             size_t selectedPoseIdx;
             Planning::Path newPath;
 
-            _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx);
+            _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx, &_pathMotionProfile);
             ExecutePath(newPath, _usingManualPathSpeed);
 
             if( _plannerSelectedPoseIndexPtr != nullptr ) {
@@ -1278,7 +1278,7 @@ namespace Anki {
       ComputeDriveCenterPose(targetPoseWrtOrigin, targetDriveCenterPose);
 
       // Compute drive center pose for start pose
-      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPose, motionProfile);
+      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPose);
       if( status == EComputePathStatus::Error ) {
         _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
         return RESULT_FAIL;
@@ -1292,6 +1292,8 @@ namespace Anki {
       }
 
       _numPlansStarted++;
+      
+      _pathMotionProfile = motionProfile;
 
       return RESULT_OK;
     }
@@ -1313,7 +1315,7 @@ namespace Anki {
         ComputeDriveCenterPose(poses[i], targetDriveCenterPoses[i]);
       }
 
-      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPoses, motionProfile);
+      EComputePathStatus status = _selectedPathPlanner->ComputePath(GetDriveCenterPose(), targetDriveCenterPoses);
       if( status == EComputePathStatus::Error ) {
         _driveToPoseStatus = ERobotDriveToPoseStatus::Error;
 
@@ -1329,6 +1331,8 @@ namespace Anki {
 
       _numPlansStarted++;
 
+      _pathMotionProfile = motionProfile;
+      
       return RESULT_OK;
     }
 

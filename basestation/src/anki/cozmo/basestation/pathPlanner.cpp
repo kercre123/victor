@@ -27,8 +27,7 @@ IPathPlanner::IPathPlanner()
 }
 
 EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
-                                             const std::vector<Pose3d>& targetPoses,
-                                             const PathMotionProfile motionProfile)
+                                             const std::vector<Pose3d>& targetPoses)
 {
   _hasValidPath = false;
   _planningError = false;
@@ -66,12 +65,11 @@ EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
   CORETECH_ASSERT(foundTarget);
   CORETECH_ASSERT(closestPose);
       
-  return ComputePath(startPose, targetPoses[_selectedTargetIdx], motionProfile);
+  return ComputePath(startPose, targetPoses[_selectedTargetIdx]);
 }
 
 EComputePathStatus IPathPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                        bool forceReplanFromScratch,
-                                                        const PathMotionProfile* motionProfile)
+                                                        bool forceReplanFromScratch)
 {
   return EComputePathStatus::NoPlanNeeded;
 }
@@ -90,47 +88,97 @@ EPlannerStatus IPathPlanner::CheckPlanningStatus() const
   }
 }
 
-bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path)
+bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
+                                   Planning::Path &path,
+                                   const PathMotionProfile* motionProfile)
+{
+  if (GetCompletePath_Internal(currentRobotPose, path)) {
+    
+    if (motionProfile != nullptr) {
+      ApplyMotionProfile(path, *motionProfile, _path);
+    }
+    path = _path;
+    return true;
+    
+  }
+  
+  return false;
+}
+  
+bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
+                                   Planning::Path &path,
+                                   size_t& selectedTargetIndex,
+                                   const PathMotionProfile* motionProfile)
+{
+  if (GetCompletePath_Internal(currentRobotPose, path, selectedTargetIndex)) {
+    
+    if (motionProfile != nullptr) {
+      ApplyMotionProfile(path, *motionProfile, _path);
+    }
+    path = _path;
+    return true;
+    
+  }
+  
+  return false;
+}
+
+  
+bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                            Planning::Path &path)
 {
   if( ! _hasValidPath ) {
     return false;
   }
 
-  ApplyMotionProfile(_path, path);
   return true;
 }
 
-bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
+bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                            Planning::Path &path,
+                                            size_t& selectedTargetIndex)
 {
   if( ! _hasValidPath ) {
     return false;
   }
-
-  ApplyMotionProfile(_path, path);
+  
   selectedTargetIndex = _selectedTargetIdx;
   return true;
 }
 
-  
-bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in, Planning::Path &out) const
+
+bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
+                                      const PathMotionProfile& motionProfile,
+                                      Planning::Path &out) const
 {
   out.Clear();
+
+  const f32 lin_speed = fabsf(motionProfile.speed_mmps);
+  const f32 arc_speed = 0.75f * lin_speed;  // TEMP: We should actually use max wheel speeds to compute linear speed along arc.
+  const f32 turn_speed = fabsf(motionProfile.pointTurnSpeed_rad_per_sec);
   
   for (int i=0; i < in.GetNumSegments(); ++i)
   {
+    f32 speed = lin_speed;
+    
     Planning::PathSegment seg = in.GetSegmentConstRef(i);
     switch(seg.GetType()) {
-      case Planning::PST_LINE:
       case Planning::PST_ARC:
-        seg.SetSpeedProfile(_pathMotionProfile.speed_mmps,
-                            _pathMotionProfile.accel_mmps2,
-                            _pathMotionProfile.decel_mmps2);
+        speed = arc_speed;
+      case Planning::PST_LINE:
+      {
+        seg.SetSpeedProfile(seg.GetTargetSpeed() > 0 ? speed : -speed,
+                            motionProfile.accel_mmps2,
+                            motionProfile.decel_mmps2);
         break;
+      }
       case Planning::PST_POINT_TURN:
-        seg.SetSpeedProfile(_pathMotionProfile.pointTurnSpeed_rad_per_sec,
-                            _pathMotionProfile.pointTurnAccel_rad_per_sec2,
-                            _pathMotionProfile.pointTurnDecel_rad_per_sec2);
+      {
+        seg.SetSpeedProfile(seg.GetTargetSpeed() > 0 ? turn_speed : -turn_speed,
+                            motionProfile.pointTurnAccel_rad_per_sec2,
+                            motionProfile.pointTurnDecel_rad_per_sec2);
         break;
+      }
       default:
         PRINT_NAMED_WARNING("IPathPlanner.ApplyMotionProfile.UnknownSegment", "Path has invalid segment");
         return false;

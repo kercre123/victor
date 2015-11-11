@@ -645,7 +645,8 @@ public:
     u16                      _lastRecvdPathID              = 0;
     bool                     _usingManualPathSpeed         = false;
     PathDolerOuter*          _pdo                          = nullptr;
-    
+    PathMotionProfile        _pathMotionProfile            = DEFAULT_PATH_MOTION_PROFILE;
+  
     // This functions sets _selectedPathPlanner to the appropriate
     // planner
     void SelectPlanner(const Pose3d& targetPose);

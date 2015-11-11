@@ -221,8 +221,7 @@ void LatticePlanner::StopPlanning()
 }
 
 EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
-                                                     const Pose3d& targetPose,
-                                                     const PathMotionProfile* motionProfile)
+                                                     const Pose3d& targetPose)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan at the end
 
@@ -277,20 +276,18 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
     return EComputePathStatus::Error;
   }
 
-  return ComputeNewPathIfNeeded(startPose, true, motionProfile);
+  return ComputeNewPathIfNeeded(startPose, true);
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
-                                               const Pose3d& targetPose,
-                                               const PathMotionProfile motionProfile)
+                                               const Pose3d& targetPose)
 {
   _selectedTargetIdx = 0;
-  return ComputePathHelper(startPose, targetPose, &motionProfile);
+  return ComputePathHelper(startPose, targetPose);
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
-                                               const std::vector<Pose3d>& targetPoses,
-                                               const PathMotionProfile motionProfile)
+                                               const std::vector<Pose3d>& targetPoses)
 {
   // This has to live in LatticePlanner instead of impl because it calls LatticePlanner::GetPlan internally
 
@@ -356,7 +353,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 
   if(found) {
     _selectedTargetIdx = bestTargetIdx;
-    return ComputePathHelper(startPose, targetPoses[bestTargetIdx], &motionProfile);
+    return ComputePathHelper(startPose, targetPoses[bestTargetIdx]);
   }
   else {
     PRINT_NAMED_INFO("LatticePlanner.ComputePath.NoValidTarget",
@@ -367,8 +364,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 }
 
 EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                          bool forceReplanFromScratch,
-                                                          const PathMotionProfile* motionProfile)
+                                                          bool forceReplanFromScratch)
 {
   if( !  _impl->_contextMutex.try_lock() ) {
     // thread is already running, in this case just say no plan needed
@@ -376,11 +372,6 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   }
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
-
-  // Update motion profile
-  if (motionProfile) {
-    _pathMotionProfile = *motionProfile;
-  }
   
   EComputePathStatus ret = _impl->StartPlanning(startPose, forceReplanFromScratch);
 
@@ -412,13 +403,13 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
 }
 
 
-bool LatticePlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path)
+bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path)
 {
   size_t waste;
   return _impl->GetCompletePath(currentRobotPose, path, waste);
 }
 
-bool LatticePlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
+bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
 {
   return _impl->GetCompletePath(currentRobotPose, path, selectedTargetIndex);
 }
@@ -828,11 +819,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   printf("total path:\n");
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
-
-  // Apply motion profile to the path
-  Planning::Path pathCopy(path);
-  _parent->ApplyMotionProfile(pathCopy, path);
-  
+ 
   
   // Do final check on how close the plan's goal angle is to the originally requested goal angle
   // and either add a point turn at the end or modify the last point turn action.

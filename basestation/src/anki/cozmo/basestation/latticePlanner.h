@@ -42,23 +42,15 @@ public:
 
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose,
-                                         const PathMotionProfile motionProfile) override;
+                                         const Pose3d& targetPose) override;
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const std::vector<Pose3d>& targetPoses,
-                                         const PathMotionProfile motionProfile) override;
+                                         const std::vector<Pose3d>& targetPoses) override;
 
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false,
-                                                    const PathMotionProfile* motionProfile = nullptr) override;
+                                                    bool forceReplanFromScratch = false) override;
 
   virtual void StopPlanning() override;
-
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path) override;
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose,
-                               Planning::Path &path,
-                               size_t& selectedTargetIndex) override;
 
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) override;
 
@@ -66,9 +58,12 @@ public:
 
 protected:
   EComputePathStatus ComputePathHelper(const Pose3d& startPose,
-                                       const Pose3d& targetPose,
-                                       const PathMotionProfile* motionProfile = nullptr);
-  
+                                       const Pose3d& targetPose);
+
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path) override;
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                        Planning::Path &path,
+                                        size_t& selectedTargetIndex) override;
   LatticePlannerImpl* _impl;
 };
 

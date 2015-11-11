@@ -25,12 +25,10 @@ class FaceAndApproachPlanner : public IPathPlanner
 public:
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
-                                         const Pose3d& targetPose,
-                                         const PathMotionProfile motionProfile) override;
+                                         const Pose3d& targetPose) override;
 
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false,
-                                                    const PathMotionProfile* motionProfile = nullptr) override;
+                                                    bool forceReplanFromScratch = false) override;
 protected:
   Vec3f _targetVec;
   float _finalTargetAngle;

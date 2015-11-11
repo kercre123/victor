@@ -29,12 +29,10 @@ namespace Cozmo {
 DubbinsPlanner::DubbinsPlanner() {}
 
 EComputePathStatus DubbinsPlanner::ComputePath(const Pose3d& startPose,
-                                               const Pose3d& targetPose,
-                                               const PathMotionProfile motionProfile)
+                                               const Pose3d& targetPose)
 {
   _hasValidPath = false;
   _path.Clear();
-  _pathMotionProfile = motionProfile;
 
   Vec3f startPt = startPose.GetTranslation();
   f32 startAngle = startPose.GetRotationAngle<'Z'>().ToFloat(); // Assuming robot is not tilted

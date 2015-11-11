@@ -120,7 +120,7 @@ TEST(LatticePlanner, PlanOnceEmpty)
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,100,0) );
 
-  EComputePathStatus ret = planner->ComputePath(start, goal, defaultMotionProfile);
+  EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   ExpectPlanComplete(100, planner);
@@ -146,7 +146,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,100,0) );
 
-  EComputePathStatus ret = planner->ComputePath(start, goal, defaultMotionProfile);
+  EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   ExpectPlanComplete(100, planner);
@@ -165,7 +165,7 @@ TEST(LatticePlanner, PlanTwiceEmpty)
   Pose3d start2(0, Z_AXIS_3D(), Vec3f(17,-15,0) );
   Pose3d goal2(0, Z_AXIS_3D(), Vec3f(2000,10,0) );
 
-  ret = planner->ComputePath(start2, goal2, defaultMotionProfile);
+  ret = planner->ComputePath(start2, goal2);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   ExpectPlanComplete(100, planner);
@@ -197,8 +197,8 @@ TEST(LatticePlanner, DISABLED_PlanWhilePlanning)
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   Pose3d goal(0, Z_AXIS_3D(), Vec3f(20,1000,0) );
 
-  EComputePathStatus ret1 = planner->ComputePath(start, goal, defaultMotionProfile);
-  EComputePathStatus ret2 = planner->ComputePath(start, goal, defaultMotionProfile);
+  EComputePathStatus ret1 = planner->ComputePath(start, goal);
+  EComputePathStatus ret2 = planner->ComputePath(start, goal);
 
   EXPECT_EQ(ret1, EComputePathStatus::Running);
   EXPECT_EQ(ret2, EComputePathStatus::Error);
@@ -234,7 +234,7 @@ TEST(LatticePlanner, StopPlanning)
   Pose3d start(0, Z_AXIS_3D(), Vec3f(0,0,0) );
   Pose3d goal(0, Z_AXIS_3D(), Vec3f(200,1000,0) );
 
-  EComputePathStatus ret = planner->ComputePath(start, goal, defaultMotionProfile);
+  EComputePathStatus ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
 
   bool done = false;
@@ -288,7 +288,7 @@ TEST(LatticePlanner, StopPlanning)
   EXPECT_FALSE( planner->GetCompletePath(start, path) ) << "shouldn't have path";
 
   // now try again, letting it finish this time
-  ret = planner->ComputePath(start, goal, defaultMotionProfile);
+  ret = planner->ComputePath(start, goal);
   EXPECT_EQ(ret, EComputePathStatus::Running);
     
   ExpectPlanComplete(1000, planner);
