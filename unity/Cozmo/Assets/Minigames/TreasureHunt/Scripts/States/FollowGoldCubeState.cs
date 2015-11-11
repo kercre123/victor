@@ -28,7 +28,7 @@ namespace TreasureHunt {
         if (followingCube != null) {
           TreasureHuntGame treasureHuntGame = (_StateMachine.GetGame() as TreasureHuntGame);
           treasureHuntGame.ClearBlockLights();
-          if (treasureHuntGame.HoveringOverGold(followingCube as LightCube) {
+          if (treasureHuntGame.HoveringOverGold(followingCube as LightCube)) {
             treasureHuntGame.SetHoveringLight(followingCube as LightCube);
             _StateMachine.SetNextState(new CelebrateGoldState());
           }
