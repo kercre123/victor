@@ -15,7 +15,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
   
-  public static RobotEngineManager instance = null;
+  public static RobotEngineManager Instance = null;
 
   public Dictionary<int, Robot> Robots { get; private set; }
 
@@ -71,12 +71,12 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
-    if (instance != null && instance != this) {
+    if (Instance != null && Instance != this) {
       Destroy(gameObject);
       return;
     }
     else {
-      instance = this;
+      Instance = this;
       DontDestroyOnLoad(gameObject);
     }
 

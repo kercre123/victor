@@ -21,6 +21,7 @@ public static class CozmoUtil {
   public const float MAX_SPEED_RAD_PER_SEC = 5f;
   public const float HEAD_ANGLE_REQUEST_TIME = 3f;
   public const float CARRIED_OBJECT_HEIGHT = 75f;
+  public const float MAX_VOLTAGE = 5f;
 
   public static Vector3 Vector3UnityToCozmoSpace(Vector3 vector) {
     float forward = vector.z;
