@@ -1,0 +1,41 @@
+// File: moodEventTypes
+// Author: Mark Wesley
+// Created: 11/09/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_16 MoodEventType {
+
+    SeeSomethingNew = 0,
+    CloseFace,
+    LostFace,
+    LotsOfFace,
+    InvalidFace,
+
+    CliffReact,
+    CliffDetected,
+
+    ExamineObject,
+    FoundObject,
+
+    OCD_Celebrate,
+    OCD_Confused,
+    OCD_Irritation,
+    OCD_VeryIrritated,
+    OCD_Neat,
+    OCD_NewMessy,
+    OCD_PickAndPlaceIncomplete,
+    OCD_PickupComplete,
+    OCD_PickupIncomplete,
+    OCD_PickupFail,
+
+    
+    Count
+}
+
+
+} // namespace Cozmo
+} // namespace Anki
