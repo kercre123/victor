@@ -15,7 +15,6 @@
 #define __Cozmo_Basestation_MoodSystem_EmotionEvent_H__
 
 
-#include "clad/types/moodEventTypes.h"
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
 #include <vector>
 
@@ -32,7 +31,10 @@ class EmotionEvent
 {
 public:
   
-  explicit EmotionEvent(MoodEventType eventType = MoodEventType::Count);
+  using MoodEventType = uint32_t; // [MARKW:TODO] Need something data-driven (not CLAD) for doing string<->id for these
+  static const MoodEventType kInvalidMoodEventType = 0;
+  
+  explicit EmotionEvent(MoodEventType eventType = kInvalidMoodEventType);
   explicit EmotionEvent(const Json::Value& inJson);
   
   void AddEmotionAffector(const EmotionAffector& inAffector);

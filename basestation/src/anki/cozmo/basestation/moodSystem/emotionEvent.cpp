@@ -12,7 +12,6 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
-#include "anki/cozmo/basestation/moodSystem/moodEventTypesHelpers.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
@@ -29,7 +28,7 @@ EmotionEvent::EmotionEvent(MoodEventType eventType)
   
   
 EmotionEvent::EmotionEvent(const Json::Value& inJson)
-  : _eventType(MoodEventType::Count)
+  : _eventType(kInvalidMoodEventType)
 {
   ReadFromJson(inJson);
 }
