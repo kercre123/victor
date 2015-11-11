@@ -5,21 +5,22 @@ using System.Collections;
 public class DebugMenuDialogTab : MonoBehaviour {
 
   public delegate void DebugMenuTabHandler(int idTab);
+
   public event DebugMenuTabHandler OnTabTapped;
 
   [SerializeField]
-  private Text buttonLabel_;
+  private Text _ButtonLabel;
 
-  private int id_;
+  private int _Id;
 
-	public void Initialize(int tabId, string tabName){
-    id_ = tabId;
-    buttonLabel_.text = tabName;
+  public void Initialize(int tabId, string tabName) {
+    _Id = tabId;
+    _ButtonLabel.text = tabName;
   }
-	
-	public void OnTabButtonTapped(){
+
+  public void OnTabButtonTapped() {
     if (OnTabTapped != null) {
-      OnTabTapped(id_);
+      OnTabTapped(_Id);
     }
   }
 }

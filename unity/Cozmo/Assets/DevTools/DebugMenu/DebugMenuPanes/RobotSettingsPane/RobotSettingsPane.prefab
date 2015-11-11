@@ -189,7 +189,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56d29cdc5bda4401da219eaf444649ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  volumeSlider_: {fileID: 11417302}
+  _VolumeSlider: {fileID: 11417302}
 --- !u!114 &11452418
 MonoBehaviour:
   m_ObjectHideFlags: 1

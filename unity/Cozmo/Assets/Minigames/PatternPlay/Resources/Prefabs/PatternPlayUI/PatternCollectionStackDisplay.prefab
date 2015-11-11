@@ -2287,8 +2287,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aef90997faa354db2bbf1a8f2a3ef80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _countLabel: {fileID: 0}
-  _toggleBadgeDisplay: {fileID: 22405580}
+  _CountLabel: {fileID: 0}
+  _ToggleBadgeDisplay: {fileID: 22405580}
 --- !u!114 &11404002
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2468,8 +2468,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11413706}
   rightColor: {fileID: 11494286}
   frontColor: {fileID: 11457776}
@@ -2545,8 +2545,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11455510}
   rightColor: {fileID: 11406634}
   frontColor: {fileID: 11404002}
@@ -2562,8 +2562,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11416842}
   rightColor: {fileID: 11489130}
   frontColor: {fileID: 11485276}
@@ -2594,8 +2594,8 @@ MonoBehaviour:
   - {fileID: 11448942}
   - {fileID: 11473656}
   - {fileID: 11480620}
-  _notFoundDisplay: {fileID: 22487856}
-  _newBadgeDisplay: {fileID: 11403746}
+  _NotFoundDisplay: {fileID: 22487856}
+  _NewBadgeDisplay: {fileID: 11403746}
 --- !u!114 &11489130
 MonoBehaviour:
   m_ObjectHideFlags: 1

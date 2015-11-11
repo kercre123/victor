@@ -4,13 +4,13 @@ using System.Collections;
 public class FollowCubeGamePanel : BaseDialog {
 
   [SerializeField]
-  private UnityEngine.UI.Button slowSpeedButton_;
+  private UnityEngine.UI.Button _SlowSpeedButton;
 
   [SerializeField]
-  private UnityEngine.UI.Button fastSpeedButton_;
+  private UnityEngine.UI.Button _FastSpeedButton;
 
   [SerializeField]
-  private UnityEngine.UI.Button demonSpeedButton_;
+  private UnityEngine.UI.Button _DemonSpeedButton;
 
   public delegate void FollowCubeGameButtonHandler();
 
@@ -20,9 +20,9 @@ public class FollowCubeGamePanel : BaseDialog {
 
   // Use this for initialization
   void Start() {
-    slowSpeedButton_.onClick.AddListener(OnSlowButton);
-    fastSpeedButton_.onClick.AddListener(OnFastButton);
-    demonSpeedButton_.onClick.AddListener(OnDemonButton);
+    _SlowSpeedButton.onClick.AddListener(OnSlowButton);
+    _FastSpeedButton.onClick.AddListener(OnFastButton);
+    _DemonSpeedButton.onClick.AddListener(OnDemonButton);
   }
 
   void OnSlowButton() {

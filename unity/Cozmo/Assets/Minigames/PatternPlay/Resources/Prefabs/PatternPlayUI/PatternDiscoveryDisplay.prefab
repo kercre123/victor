@@ -4438,8 +4438,8 @@ MonoBehaviour:
   - {fileID: 11455906}
   - {fileID: 11420662}
   - {fileID: 11428976}
-  _notFoundDisplay: {fileID: 0}
-  _newBadgeDisplay: {fileID: 0}
+  _NotFoundDisplay: {fileID: 0}
+  _NewBadgeDisplay: {fileID: 0}
 --- !u!114 &11403240
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4473,9 +4473,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: edfb52f82995a40f282678668f785616, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _stackPatternDisplay: {fileID: 11401146}
-  _horizontalPatternDisplay: {fileID: 11460476}
-  _animationAnchorPrefab: {fileID: 158364, guid: 8f3f4d7636b4241eaa8734eec85c7ad2,
+  _StackPatternDisplay: {fileID: 11401146}
+  _HorizontalPatternDisplay: {fileID: 11460476}
+  _AnimationAnchorPrefab: {fileID: 158364, guid: 8f3f4d7636b4241eaa8734eec85c7ad2,
     type: 2}
 --- !u!114 &11419394
 MonoBehaviour:
@@ -4499,8 +4499,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11498584}
   rightColor: {fileID: 11428648}
   frontColor: {fileID: 11495468}
@@ -4549,8 +4549,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11467972}
   rightColor: {fileID: 11471668}
   frontColor: {fileID: 11419394}
@@ -4566,8 +4566,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11451458}
   rightColor: {fileID: 11479352}
   frontColor: {fileID: 11446630}
@@ -4605,8 +4605,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11403240}
   rightColor: {fileID: 11485780}
   frontColor: {fileID: 11427854}
@@ -4655,8 +4655,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11481194}
   rightColor: {fileID: 11479478}
   frontColor: {fileID: 11401076}
@@ -4676,8 +4676,8 @@ MonoBehaviour:
   - {fileID: 11435840}
   - {fileID: 11477838}
   - {fileID: 11430210}
-  _notFoundDisplay: {fileID: 0}
-  _newBadgeDisplay: {fileID: 0}
+  _NotFoundDisplay: {fileID: 0}
+  _NewBadgeDisplay: {fileID: 0}
 --- !u!114 &11467972
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -4744,8 +4744,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11424272}
   rightColor: {fileID: 11487226}
   frontColor: {fileID: 11470662}
@@ -4836,6 +4836,10 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: _animationAnchorPrefab
+      value: 
+      objectReference: {fileID: 158364, guid: 8f3f4d7636b4241eaa8734eec85c7ad2, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _AnimationAnchorPrefab
       value: 
       objectReference: {fileID: 158364, guid: 8f3f4d7636b4241eaa8734eec85c7ad2, type: 2}
     m_RemovedComponents: []

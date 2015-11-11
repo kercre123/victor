@@ -15,69 +15,69 @@ public class PatternPlayPane : MonoBehaviour {
     }
   }
 
-  private PatternCollectionViewController _patternPlayViewInstance = null;
+  private PatternCollectionViewController _PatternPlayViewInstance = null;
 
   [SerializeField]
-  private Button _createTestMemoryButton;
+  private Button _CreateTestPatternMemory;
 
   [SerializeField]
-  private Button _addRandomPatternButton;
+  private Button _AddRandomPatternButton;
 
   [SerializeField]
-  private Button _addAllPatternsButton;
+  private Button _AddAllPatternsButton;
 
   private void Start() {
     RaisePatternPlayPaneOpened(this);
   }
 
   private void OnDestroy() {
-    _createTestMemoryButton.onClick.RemoveListener(OnCreateTestMemoryButtonTap);
-    _addRandomPatternButton.onClick.RemoveListener(OnAddRandomPatternButtonTap);
-    _addAllPatternsButton.onClick.RemoveListener(OnAddAllPatternsButtonTap);
+    _CreateTestPatternMemory.onClick.RemoveListener(OnCreateTestMemoryButtonTap);
+    _AddRandomPatternButton.onClick.RemoveListener(OnAddRandomPatternButtonTap);
+    _AddAllPatternsButton.onClick.RemoveListener(OnAddAllPatternsButtonTap);
   }
 
   public void Initialize(PatternCollectionViewController viewController) {
-    _patternPlayViewInstance = viewController;
+    _PatternPlayViewInstance = viewController;
 
-    if (_patternPlayViewInstance.IsInitialized()) {
-      _createTestMemoryButton.interactable = false;
-      _addRandomPatternButton.interactable = true;
-      _addAllPatternsButton.interactable = true;
+    if (_PatternPlayViewInstance.IsInitialized()) {
+      _CreateTestPatternMemory.interactable = false;
+      _AddRandomPatternButton.interactable = true;
+      _AddAllPatternsButton.interactable = true;
     }
     else {
-      _createTestMemoryButton.interactable = true;
-      _addRandomPatternButton.interactable = false;
-      _addAllPatternsButton.interactable = false;
-      _createTestMemoryButton.onClick.AddListener(OnCreateTestMemoryButtonTap);
+      _CreateTestPatternMemory.interactable = true;
+      _AddRandomPatternButton.interactable = false;
+      _AddAllPatternsButton.interactable = false;
+      _CreateTestPatternMemory.onClick.AddListener(OnCreateTestMemoryButtonTap);
     }
 
-    _addRandomPatternButton.onClick.AddListener(OnAddRandomPatternButtonTap);
-    _addAllPatternsButton.onClick.AddListener(OnAddAllPatternsButtonTap);
+    _AddRandomPatternButton.onClick.AddListener(OnAddRandomPatternButtonTap);
+    _AddAllPatternsButton.onClick.AddListener(OnAddAllPatternsButtonTap);
   }
 
   private void OnCreateTestMemoryButtonTap() {
     CreateTestPatternMemory();
-    _createTestMemoryButton.interactable = false;
-    _addRandomPatternButton.interactable = true;
-    _addAllPatternsButton.interactable = true;
+    _CreateTestPatternMemory.interactable = false;
+    _AddRandomPatternButton.interactable = true;
+    _AddAllPatternsButton.interactable = true;
   }
 
   private void OnAddRandomPatternButtonTap() {
     bool success = AddRandomPattern();
-    _addRandomPatternButton.interactable = success;
-    _addAllPatternsButton.interactable = success;
+    _AddRandomPatternButton.interactable = success;
+    _AddAllPatternsButton.interactable = success;
   }
 
   private void OnAddAllPatternsButtonTap() {
     AddAllPatterns();
-    _addAllPatternsButton.interactable = false;
-    _addRandomPatternButton.interactable = false;
+    _AddAllPatternsButton.interactable = false;
+    _AddRandomPatternButton.interactable = false;
   }
 
   #region UI Testing Helpers
 
   public void CreateTestPatternMemory() {
-    if (_patternPlayViewInstance.IsInitialized()) {
+    if (_PatternPlayViewInstance.IsInitialized()) {
       return;
     }
 
@@ -86,81 +86,81 @@ public class PatternPlayPane : MonoBehaviour {
     
     // Add fake seen patterns to memory
     BlockPattern newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern); 
     
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true },
       new BlockLights{ front = false, back = false, left = false, right = true, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern);
     
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = true, right = false, facing_cozmo = false }
     };
-    newPattern.verticalStack_ = false;
+    newPattern.VerticalStack = false;
     patternMemory.AddSeen(newPattern);
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = false, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = false;
+    newPattern.VerticalStack = false;
     patternMemory.AddSeen(newPattern);
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false },
       new BlockLights{ front = false, back = true, left = false, right = false, facing_cozmo = false }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern);
     BadgeManager.TryRemoveBadge(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = true }
     };
-    newPattern.verticalStack_ = true;
+    newPattern.VerticalStack = true;
     patternMemory.AddSeen(newPattern);
     
     newPattern = new BlockPattern();
-    newPattern.blocks_ = new List<BlockLights> {
+    newPattern.Blocks = new List<BlockLights> {
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false },
       new BlockLights{ front = true, back = true, left = true, right = true, facing_cozmo = false }
     };
-    newPattern.verticalStack_ = false;
+    newPattern.VerticalStack = false;
     patternMemory.AddSeen(newPattern);
     
-    _patternPlayViewInstance.Initialize(patternMemory);
+    _PatternPlayViewInstance.Initialize(patternMemory);
   }
 
   public bool AddRandomPattern() {
     bool addedPattern = false;
-    if (_patternPlayViewInstance.AnyUnseenPatterns()) {
+    if (_PatternPlayViewInstance.AnyUnseenPatterns()) {
       do {
         bool randFront = FlipCoin();
         bool randBack = FlipCoin();
@@ -170,7 +170,7 @@ public class PatternPlayPane : MonoBehaviour {
         bool randStack = FlipCoin();
       
         BlockPattern newPattern = new BlockPattern();
-        newPattern.blocks_ = new List<BlockLights> {
+        newPattern.Blocks = new List<BlockLights> {
           new BlockLights {
             front = randFront,
             back = randBack,
@@ -193,8 +193,8 @@ public class PatternPlayPane : MonoBehaviour {
             facing_cozmo = randFacing
           }
         };
-        newPattern.verticalStack_ = randStack;
-        addedPattern = _patternPlayViewInstance.TryAddPattern(newPattern);
+        newPattern.VerticalStack = randStack;
+        addedPattern = _PatternPlayViewInstance.TryAddPattern(newPattern);
       } while (!addedPattern);
     }
     return addedPattern;
@@ -205,7 +205,7 @@ public class PatternPlayPane : MonoBehaviour {
   }
 
   public void AddAllPatterns() {
-    _patternPlayViewInstance.AddAllUnseenPatterns();
+    _PatternPlayViewInstance.AddAllUnseenPatterns();
   }
 
   #endregion

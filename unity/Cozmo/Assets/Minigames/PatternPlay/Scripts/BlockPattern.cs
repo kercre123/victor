@@ -7,18 +7,18 @@ public class BlockPattern {
   // block lights in cozmo-space.
   // front is the light facing cozmo.
   // left is the light left of cozmo etc.
-  public List<BlockLights> blocks_ = new List<BlockLights>();
-  public bool verticalStack_;
+  public List<BlockLights> Blocks = new List<BlockLights>();
+  public bool VerticalStack;
 
-  public bool facingCozmo {
+  public bool FacingCozmo {
     set {
-      for (int i = 0; i < blocks_.Count; i++) {
-        blocks_[i].facing_cozmo = value;
+      for (int i = 0; i < Blocks.Count; i++) {
+        Blocks[i].facing_cozmo = value;
       }
     }
     get {
-      for (int i = 0; i < blocks_.Count; i++) {
-        if (!blocks_[i].facing_cozmo) {
+      for (int i = 0; i < Blocks.Count; i++) {
+        if (!Blocks[i].facing_cozmo) {
           return false;
         }
       }
@@ -42,18 +42,18 @@ public class BlockPattern {
     if (pattern == null)
       return false;
 
-    if (pattern.blocks_.Count != blocks_.Count)
+    if (pattern.Blocks.Count != Blocks.Count)
       return false;
 
-    if (pattern.verticalStack_ != verticalStack_)
+    if (pattern.VerticalStack != VerticalStack)
       return false;
 
-    for (int i = 0; i < pattern.blocks_.Count; ++i) {
-      if (pattern.blocks_[i].back != blocks_[i].back ||
-          pattern.blocks_[i].front != blocks_[i].front ||
-          pattern.blocks_[i].left != blocks_[i].left ||
-          pattern.blocks_[i].right != blocks_[i].right ||
-          pattern.blocks_[i].facing_cozmo != blocks_[i].facing_cozmo) {
+    for (int i = 0; i < pattern.Blocks.Count; ++i) {
+      if (pattern.Blocks[i].back != Blocks[i].back ||
+          pattern.Blocks[i].front != Blocks[i].front ||
+          pattern.Blocks[i].left != Blocks[i].left ||
+          pattern.Blocks[i].right != Blocks[i].right ||
+          pattern.Blocks[i].facing_cozmo != Blocks[i].facing_cozmo) {
         return false;
       }
     }
@@ -62,18 +62,18 @@ public class BlockPattern {
   }
 
   public override int GetHashCode() {
-    int x = System.Convert.ToInt32(verticalStack_);
-    for (int i = 0; i < blocks_.Count; ++i) {
+    int x = System.Convert.ToInt32(VerticalStack);
+    for (int i = 0; i < Blocks.Count; ++i) {
       // If more attribs are added, please increase this radix value.
-      x = (x * 64) + (System.Convert.ToInt32(blocks_[i].back) | System.Convert.ToInt32(blocks_[i].front) << 1 |
-      System.Convert.ToInt32(blocks_[i].left) << 2 | System.Convert.ToInt32(blocks_[i].right) << 3 |
-      System.Convert.ToInt32(blocks_[i].facing_cozmo) << 4);
+      x = (x * 64) + (System.Convert.ToInt32(Blocks[i].back) | System.Convert.ToInt32(Blocks[i].front) << 1 |
+      System.Convert.ToInt32(Blocks[i].left) << 2 | System.Convert.ToInt32(Blocks[i].right) << 3 |
+      System.Convert.ToInt32(Blocks[i].facing_cozmo) << 4);
     }
     return x;
   }
 
   static public void SetRandomConfig(Robot robot, Dictionary<int, BlockPatternData> blockPatternData, BlockPattern lastPatternSeen) {
-    BlockLights patternLight = lastPatternSeen.blocks_[0];
+    BlockLights patternLight = lastPatternSeen.Blocks[0];
 
     // generate a new config that is not the current config.
     int nextConfigCount = Random.Range(1, 5);
@@ -97,7 +97,7 @@ public class BlockPattern {
         newRotatedLights = BlockLights.GetRotatedClockwise(newRotatedLights);
         rotationCount--;
       }
-      blockPatternData[blockID].blockLightsLocalSpace = newRotatedLights;
+      blockPatternData[blockID].BlockLightsLocalSpace = newRotatedLights;
     }
   }
 
@@ -110,12 +110,12 @@ public class BlockPattern {
       return false;
 
     bool facingCozmo = CheckFacingCozmo(robot);
-    patternSeen.facingCozmo = facingCozmo;
-    patternSeen.verticalStack_ = CheckVerticalStack(robot);
+    patternSeen.FacingCozmo = facingCozmo;
+    patternSeen.VerticalStack = CheckVerticalStack(robot);
 
     bool rowAlignment = CheckRowAlignment(robot);
 
-    if (patternSeen.verticalStack_ == false && rowAlignment == false) {
+    if (patternSeen.VerticalStack == false && rowAlignment == false) {
       return false;
     }
 
@@ -133,22 +133,22 @@ public class BlockPattern {
     // convert get block lights in cozmo space. build out pattern seen.
     for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
       Vector3 relativeForward = Quaternion.Inverse(robot.Rotation) * robot.LightCubes[robot.VisibleObjects[i].ID].Forward;
-      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.VisibleObjects[i].ID].blockLightsLocalSpace, relativeForward, facingCozmo);
-      patternSeen.blocks_.Add(blockLightCozmoSpace);
+      BlockLights blockLightCozmoSpace = GetInCozmoSpace(blockPatternData[robot.VisibleObjects[i].ID].BlockLightsLocalSpace, relativeForward, facingCozmo);
+      patternSeen.Blocks.Add(blockLightCozmoSpace);
     }
 
     // make sure all of the light patterns match.
-    for (int i = 0; i < patternSeen.blocks_.Count - 1; ++i) {
-      if (patternSeen.blocks_[i].back != patternSeen.blocks_[i + 1].back ||
-          patternSeen.blocks_[i].front != patternSeen.blocks_[i + 1].front ||
-          patternSeen.blocks_[i].left != patternSeen.blocks_[i + 1].left ||
-          patternSeen.blocks_[i].right != patternSeen.blocks_[i + 1].right) {
+    for (int i = 0; i < patternSeen.Blocks.Count - 1; ++i) {
+      if (patternSeen.Blocks[i].back != patternSeen.Blocks[i + 1].back ||
+          patternSeen.Blocks[i].front != patternSeen.Blocks[i + 1].front ||
+          patternSeen.Blocks[i].left != patternSeen.Blocks[i + 1].left ||
+          patternSeen.Blocks[i].right != patternSeen.Blocks[i + 1].right) {
         return false;
       }
     }
 
     // if all of the patterns match but no lights are on don't match.
-    if (patternSeen.blocks_[0].AreLightsOff()) {
+    if (patternSeen.Blocks[0].AreLightsOff()) {
       return false;
     }
 

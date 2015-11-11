@@ -373,16 +373,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad51ffd40b452470ca4ac3865e543ab2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  debugContentPaneData_:
+  _DebugContentPaneData:
   - name: Console Log
     panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
+  - name: Performance
+    panePrefab: {fileID: 113690, guid: 30ad73b1c18b443bdb77716d180d9439, type: 2}
   - name: Robot Settings
     panePrefab: {fileID: 148378, guid: 701dfcc79baab409dbce121bb5bad0c3, type: 2}
   - name: Pattern Play
     panePrefab: {fileID: 196276, guid: cb7a8c585deb2451e8c662434aaf4a7e, type: 2}
-  tabButtonPrefab_: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
-  tabContainer_: {fileID: 188218}
-  contentPaneContainer_: {fileID: 121806}
+  _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
+  _TabContainer: {fileID: 188218}
+  _ContentPaneContainer: {fileID: 121806}
 --- !u!222 &22204634
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -550,6 +552,10 @@ Prefab:
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
       value: 
       objectReference: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308,
@@ -562,6 +568,11 @@ Prefab:
       propertyPath: debugContentPaneData_.Array.data[1].panePrefab
       value: 
       objectReference: {fileID: 196276, guid: cb7a8c585deb2451e8c662434aaf4a7e, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _TabButtonPrefab
+      value: 
+      objectReference: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 159258}

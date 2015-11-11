@@ -6,50 +6,52 @@ using DG.Tweening;
 public class PatternDiscoveredDialog : BaseDialog {
 
   [SerializeField]
-  private PatternDiscoveryDisplay _patternDiscoveryDisplayPrefab;
-  private PatternDiscoveryDisplay _patternDiscoveryDisplayInstance;
+  private PatternDiscoveryDisplay _PatternDiscoveryDisplayPrefab;
+  private PatternDiscoveryDisplay _PatternDiscoveryDisplayInstance;
 
   [SerializeField]
-  private Image[] _imagesToFadeOnClose;
+  private Image[] _ImagesToFadeOnClose;
 
   [SerializeField]
-  private Text[] _textToFadeOnClose;
+  private Text[] _TextToFadeOnClose;
 
   public void Initialize(BlockPattern discoveredPattern) {
-    GameObject display = UIManager.CreatePerspectiveUI (_patternDiscoveryDisplayPrefab.gameObject);
-    _patternDiscoveryDisplayInstance = display.GetComponent<PatternDiscoveryDisplay> ();
-    _patternDiscoveryDisplayInstance.Initialize (discoveredPattern);
+    GameObject display = UIManager.CreatePerspectiveUI(_PatternDiscoveryDisplayPrefab.gameObject);
+    _PatternDiscoveryDisplayInstance = display.GetComponent<PatternDiscoveryDisplay>();
+    _PatternDiscoveryDisplayInstance.Initialize(discoveredPattern);
   }
 
   protected override void CleanUp() {
-    GameObject.Destroy (_patternDiscoveryDisplayInstance.gameObject);
+    GameObject.Destroy(_PatternDiscoveryDisplayInstance.gameObject);
   }
 
   public void OnCloseButtonTap() {
-    UIManager.CloseDialog (this);
+    UIManager.CloseDialog(this);
   }
 
   protected override void ConstructCloseAnimation(Sequence closeAnimation) {
     int objectsFaded = 0;
     float endValue = 0f;
     float fadeDuration = 0.25f;
-    foreach (Image image in _imagesToFadeOnClose) {
+    foreach (Image image in _ImagesToFadeOnClose) {
       if (objectsFaded == 0) {
         closeAnimation.Append(image.DOFade(endValue, fadeDuration));
-      } else {
+      }
+      else {
         closeAnimation.Join(image.DOFade(endValue, fadeDuration));
       }
       objectsFaded++;
     }
-    foreach (Text text in _textToFadeOnClose) {
+    foreach (Text text in _TextToFadeOnClose) {
       if (objectsFaded == 0) {
         closeAnimation.Append(text.DOFade(endValue, fadeDuration));
-      } else {
+      }
+      else {
         closeAnimation.Join(text.DOFade(endValue, fadeDuration));
       }
       objectsFaded++;
     }
 
-    _patternDiscoveryDisplayInstance.AddCloseAnimationSequence (closeAnimation);
+    _PatternDiscoveryDisplayInstance.AddCloseAnimationSequence(closeAnimation);
   }
 }

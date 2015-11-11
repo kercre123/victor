@@ -40,17 +40,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   RobotAnimationNames: []
-  configuration: {fileID: 4900000, guid: 0af30709c80ce4039978f9ccbfc2b24b, type: 3}
-  alternateConfiguration: {fileID: 4900000, guid: 17d6429d232624c808866bd8490aaeb9,
+  _Configuration: {fileID: 4900000, guid: 0af30709c80ce4039978f9ccbfc2b24b, type: 3}
+  _AlternateConfiguration: {fileID: 4900000, guid: 17d6429d232624c808866bd8490aaeb9,
     type: 3}
-  lastDisconnectionReason: 6
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _Configuration
+      value: 
+      objectReference: {fileID: 4900000, guid: 0af30709c80ce4039978f9ccbfc2b24b, type: 3}
+    - target: {fileID: 0}
+      propertyPath: _AlternateConfiguration
+      value: 
+      objectReference: {fileID: 4900000, guid: 17d6429d232624c808866bd8490aaeb9, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 155362}

@@ -97,7 +97,7 @@ public class PatternPlayGame : GameBase {
 
   public void ClearBlockLights() {
     foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
-      kvp.Value.blockLightsLocalSpace.TurnOffLights();
+      kvp.Value.BlockLightsLocalSpace.TurnOffLights();
     }
   }
 
@@ -142,8 +142,8 @@ public class PatternPlayGame : GameBase {
   public float GetMostRecentMovedTime() {
     float minTime = 0.0f;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData_) {
-      if (block.Value.lastTimeTouched > minTime) {
-        minTime = block.Value.lastTimeTouched;
+      if (block.Value.LastTimeTouched > minTime) {
+        minTime = block.Value.LastTimeTouched;
       }
     }
     return minTime;
@@ -156,7 +156,7 @@ public class PatternPlayGame : GameBase {
   public int SeenBlocksOverThreshold(float threshold) {
     int count = 0;
     foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
-      if (kvp.Value.seenAccumulator > threshold && kvp.Value.blockLightsLocalSpace.AreLightsOff() == false) {
+      if (kvp.Value.SeenAccumulator > threshold && kvp.Value.BlockLightsLocalSpace.AreLightsOff() == false) {
         count++;
       }
     }
@@ -187,25 +187,25 @@ public class PatternPlayGame : GameBase {
 
   public void SetPatternOnBlock(int blockID, int lightCount) {
 
-    blockPatternData_[blockID].blockLightsLocalSpace.TurnOffLights();
+    blockPatternData_[blockID].BlockLightsLocalSpace.TurnOffLights();
 
     if (lightCount > 0) {
-      blockPatternData_[blockID].blockLightsLocalSpace.front = true;
+      blockPatternData_[blockID].BlockLightsLocalSpace.front = true;
       lightCount--;
     }
 
     if (lightCount > 0) {
-      blockPatternData_[blockID].blockLightsLocalSpace.left = true;
+      blockPatternData_[blockID].BlockLightsLocalSpace.left = true;
       lightCount--;
     }
 
     if (lightCount > 0) {
-      blockPatternData_[blockID].blockLightsLocalSpace.back = true;
+      blockPatternData_[blockID].BlockLightsLocalSpace.back = true;
       lightCount--;
     }
 
     if (lightCount > 0) {
-      blockPatternData_[blockID].blockLightsLocalSpace.right = true;
+      blockPatternData_[blockID].BlockLightsLocalSpace.right = true;
       lightCount--;
     }
 
@@ -215,28 +215,28 @@ public class PatternPlayGame : GameBase {
     }
 
     if (blockAngleWorldSpace > 75.0f) {
-      blockPatternData_[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].blockLightsLocalSpace);
+      blockPatternData_[blockID].BlockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].BlockLightsLocalSpace);
     }
 
     if (blockAngleWorldSpace > 165.0f) {
-      blockPatternData_[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].blockLightsLocalSpace);
+      blockPatternData_[blockID].BlockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].BlockLightsLocalSpace);
     }
 
     if (blockAngleWorldSpace > 255.0f) {
-      blockPatternData_[blockID].blockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].blockLightsLocalSpace);
+      blockPatternData_[blockID].BlockLightsLocalSpace = BlockLights.GetRotatedClockwise(blockPatternData_[blockID].BlockLightsLocalSpace);
     }
   }
 
   private void BlockMoving(int blockID, float xAccel, float yAccel, float zAccel) {
-    blockPatternData_[blockID].moving = true;
-    blockPatternData_[blockID].lastFrameZAccel = zAccel;
-    blockPatternData_[blockID].lastTimeTouched = Time.time;
+    blockPatternData_[blockID].Moving = true;
+    blockPatternData_[blockID].LastFrameZAccel = zAccel;
+    blockPatternData_[blockID].LastTimeTouched = Time.time;
     patternPlayAutoBuild_.ObjectMoved(blockID);
   }
 
 
   private void BlockStopped(int blockID) {
-    blockPatternData_[blockID].moving = false;
+    blockPatternData_[blockID].Moving = false;
   }
 
   private void SeenAccumulatorCompute() {
@@ -249,10 +249,10 @@ public class PatternPlayGame : GameBase {
         }
       }
       if (isVisible) {
-        kvp.Value.seenAccumulator = Mathf.Min(1.5f, kvp.Value.seenAccumulator + Time.deltaTime);
+        kvp.Value.SeenAccumulator = Mathf.Min(1.5f, kvp.Value.SeenAccumulator + Time.deltaTime);
       }
       else {
-        kvp.Value.seenAccumulator = Mathf.Max(0.0f, kvp.Value.seenAccumulator - Time.deltaTime * 2.0f);
+        kvp.Value.SeenAccumulator = Mathf.Max(0.0f, kvp.Value.SeenAccumulator - Time.deltaTime * 2.0f);
       }
 
     }
@@ -264,9 +264,9 @@ public class PatternPlayGame : GameBase {
       int lastTouchedID = SelectNewInputCandidate();
 
       if (lastTouchedID != -1) {
-        blockPatternData_[lastTouchedID].blockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData_[lastTouchedID].blockLightsLocalSpace);
-        blockPatternData_[lastTouchedID].lastTimeTouched = Time.time;
-        patternPlayAudio_.PlayLightsSound(blockPatternData_[lastTouchedID].blockLightsLocalSpace.NumberOfLightsOn());
+        blockPatternData_[lastTouchedID].BlockLightsLocalSpace = BlockLights.GetNextConfig(blockPatternData_[lastTouchedID].BlockLightsLocalSpace);
+        blockPatternData_[lastTouchedID].LastTimeTouched = Time.time;
+        patternPlayAudio_.PlayLightsSound(blockPatternData_[lastTouchedID].BlockLightsLocalSpace.NumberOfLightsOn());
         LightSet(lastTouchedID);
       }
     }
@@ -292,32 +292,32 @@ public class PatternPlayGame : GameBase {
       disabledColor = Color.black;
 
       for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
-        robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
-      if (blockConfig.Key == currentInputID && blockPatternData_[blockConfig.Key].moving && Time.time - lastSetTime_ > 5.0f) {
+      if (blockConfig.Key == currentInputID && blockPatternData_[blockConfig.Key].Moving && Time.time - lastSetTime_ > 5.0f) {
         enabledColor = Color.green;
         disabledColor = Color.green;
       }
 
       for (int i = 0; i < 4; ++i) {
-        robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(disabledColor);
+        robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
       }
 
-      if (blockConfig.Value.blockLightsLocalSpace.back) {
-        robot.LightCubes[blockConfig.Key].Lights[1].onColor = CozmoPalette.ColorToUInt(enabledColor);
+      if (blockConfig.Value.BlockLightsLocalSpace.back) {
+        robot.LightCubes[blockConfig.Key].Lights[1].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
-      if (blockConfig.Value.blockLightsLocalSpace.front) {
-        robot.LightCubes[blockConfig.Key].Lights[3].onColor = CozmoPalette.ColorToUInt(enabledColor);
+      if (blockConfig.Value.BlockLightsLocalSpace.front) {
+        robot.LightCubes[blockConfig.Key].Lights[3].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
-      if (blockConfig.Value.blockLightsLocalSpace.left) {
-        robot.LightCubes[blockConfig.Key].Lights[2].onColor = CozmoPalette.ColorToUInt(enabledColor);
+      if (blockConfig.Value.BlockLightsLocalSpace.left) {
+        robot.LightCubes[blockConfig.Key].Lights[2].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
-      if (blockConfig.Value.blockLightsLocalSpace.right) {
-        robot.LightCubes[blockConfig.Key].Lights[0].onColor = CozmoPalette.ColorToUInt(enabledColor);
+      if (blockConfig.Value.BlockLightsLocalSpace.right) {
+        robot.LightCubes[blockConfig.Key].Lights[0].OnColor = CozmoPalette.ColorToUInt(enabledColor);
       }
 
       // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
@@ -334,7 +334,7 @@ public class PatternPlayGame : GameBase {
 
       if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
         for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
-          robot.LightCubes[blockConfig.Key].Lights[i].onColor = CozmoPalette.ColorToUInt(Color.white);
+          robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
         }
       }
 
@@ -361,9 +361,9 @@ public class PatternPlayGame : GameBase {
     int lastTouchedID = -1;
     float minTime = -float.MaxValue;
     foreach (KeyValuePair<int, BlockPatternData> block in blockPatternData_) {
-      if (block.Value.lastTimeTouched > minTime) {
+      if (block.Value.LastTimeTouched > minTime) {
         lastTouchedID = block.Key;
-        minTime = block.Value.lastTimeTouched;
+        minTime = block.Value.LastTimeTouched;
       }
     }
     return lastTouchedID;
@@ -393,7 +393,7 @@ public class PatternPlayGame : GameBase {
       int i = 0;
       foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
         if (i == blockIndex) {
-          kvp.Value.blockLightsLocalSpace = BlockLights.GetNextConfig(kvp.Value.blockLightsLocalSpace);
+          kvp.Value.BlockLightsLocalSpace = BlockLights.GetNextConfig(kvp.Value.BlockLightsLocalSpace);
           break;
         }
         ++i;
