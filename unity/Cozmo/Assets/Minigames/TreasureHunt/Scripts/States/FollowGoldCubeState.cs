@@ -26,8 +26,14 @@ namespace TreasureHunt {
         _LastTimeSeenGoldBlock = Time.time;
         ObservedObject followingCube = FollowClosest();
         if (followingCube != null) {
-          if ((_StateMachine.GetGame() as TreasureHuntGame).HoveringOverGold((LightCube)followingCube)) {
+          TreasureHuntGame treasureHuntGame = (_StateMachine.GetGame() as TreasureHuntGame);
+          treasureHuntGame.ClearBlockLights();
+          if (treasureHuntGame.HoveringOverGold(followingCube as LightCube) {
+            treasureHuntGame.SetHoveringLight(followingCube as LightCube);
             _StateMachine.SetNextState(new CelebrateGoldState());
+          }
+          else {
+            treasureHuntGame.SetDirectionalLight(followingCube as LightCube);
           }
         }
       }

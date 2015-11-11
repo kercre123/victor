@@ -44,49 +44,48 @@ namespace TreasureHunt {
       }
     }
 
-    public bool HoveringOverGold(LightCube cube) {
-      Vector2 blockPosition = (Vector2)cube.WorldPosition;
-      bool hovering = Vector2.Distance(blockPosition, GoldPosition) < 15.0f;
+    public void SetDirectionalLight(LightCube cube) {
+      // set directional lights
+      Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
+      Vector2 cubeForward = (Vector2)cube.Forward;
 
-      if (hovering) {
-        for (int i = 0; i < cube.Lights.Length; ++i) {
-          cube.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-        }
+      cubeToTarget.Normalize();
+      cubeForward.Normalize(); 
+
+      cube.SetLEDs(0);
+
+      float dotVal = Vector2.Dot(cubeToTarget, cubeForward);
+
+      if (dotVal > 0.5f) {
+        // front
+        cube.Lights[0].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+      }
+      else if (dotVal < -0.5f) {
+        // back
+        cube.Lights[2].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
       }
       else {
-        // set directional lights
-        Vector2 cubeToTarget = GoldPosition - (Vector2)cube.WorldPosition;
-        Vector2 cubeForward = (Vector2)cube.Forward;
-
-        cubeToTarget.Normalize();
-        cubeForward.Normalize(); 
-
-        cube.SetLEDs(0);
-
-        float dotVal = Vector2.Dot(cubeToTarget, cubeForward);
-
-        if (dotVal > 0.5f) {
-          // front
-          cube.Lights[0].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-        }
-        else if (dotVal < -0.5f) {
-          // back
-          cube.Lights[2].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+        float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
+        if (crossSign < 0.0f) {
+          // left
+          cube.Lights[1].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
         }
         else {
-          float crossSign = cubeToTarget.x * cubeForward.y - cubeToTarget.y * cubeForward.x;
-          if (crossSign < 0.0f) {
-            // left
-            cube.Lights[1].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-          }
-          else {
-            // right
-            cube.Lights[3].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
-          }
+          // right
+          cube.Lights[3].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
         }
       }
+    }
 
-      return hovering;
+    public void SetHoveringLight(LightCube cube) {
+      for (int i = 0; i < cube.Lights.Length; ++i) {
+        cube.Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.yellow);
+      }
+    }
+
+    public bool HoveringOverGold(LightCube cube) {
+      Vector2 blockPosition = (Vector2)cube.WorldPosition;
+      return Vector2.Distance(blockPosition, GoldPosition) < 15.0f;
     }
 
     void Update() {
