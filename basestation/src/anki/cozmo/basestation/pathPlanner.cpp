@@ -26,6 +26,39 @@ IPathPlanner::IPathPlanner()
 {
 }
 
+size_t IPathPlanner::ComputeClosestGoalPose(const Pose3d& startPose,
+                                            const std::vector<Pose3d>& targetPoses)
+{
+  size_t selectedTargetIdx = 0;
+  bool foundTarget = false;
+  f32 shortestDistToPose = -1.f;
+  for(size_t i=0; i<targetPoses.size(); ++i)
+  {
+    const Pose3d& targetPose = targetPoses[i];
+        
+    const f32 distToPose = (targetPose.GetTranslation() - startPose.GetTranslation()).LengthSq();
+    if (!foundTarget || distToPose < shortestDistToPose)
+    {
+      foundTarget = true;
+      shortestDistToPose = distToPose;
+      selectedTargetIdx = i;
+    }
+
+    PRINT_NAMED_DEBUG("IPathPlanner.ComputeClosestGoalPose",
+                      "Candidate target pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f): dist %f",
+                      targetPose.GetTranslation().x(),
+                      targetPose.GetTranslation().y(),
+                      targetPose.GetTranslation().z(),
+                      targetPose.GetRotationAngle<'Z'>().getDegrees(),
+                      targetPose.GetRotationAxis().x(),
+                      targetPose.GetRotationAxis().y(),
+                      targetPose.GetRotationAxis().z(),
+                      distToPose);
+  }
+
+  return selectedTargetIdx;
+}
+
 EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
                                              const std::vector<Pose3d>& targetPoses)
 {
@@ -33,37 +66,7 @@ EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
   _planningError = false;
 
   // Select the closest
-  const Pose3d* closestPose = nullptr;
-      
-  _selectedTargetIdx = 0;
-  bool foundTarget = false;
-  f32 shortestDistToPose = -1.f;
-  for(size_t i=0; i<targetPoses.size(); ++i)
-  {
-    const Pose3d& targetPose = targetPoses[i];
-        
-    PRINT_NAMED_INFO("IPathPlanner.GetPlan.FindClosestPose",
-                     "Candidate target pose: (%.2f %.2f %.2f), %.1fdeg @ (%.2f %.2f %.2f)\n",
-                     targetPose.GetTranslation().x(),
-                     targetPose.GetTranslation().y(),
-                     targetPose.GetTranslation().z(),
-                     targetPose.GetRotationAngle<'Z'>().getDegrees(),
-                     targetPose.GetRotationAxis().x(),
-                     targetPose.GetRotationAxis().y(),
-                     targetPose.GetRotationAxis().z());
-        
-    const f32 distToPose = (targetPose.GetTranslation() - startPose.GetTranslation()).LengthSq();
-    if (!foundTarget || distToPose < shortestDistToPose)
-    {
-      foundTarget = true;
-      shortestDistToPose = distToPose;
-      closestPose = &targetPose;
-      _selectedTargetIdx = i;
-    }
-  } // for each targetPose
-    
-  CORETECH_ASSERT(foundTarget);
-  CORETECH_ASSERT(closestPose);
+  _selectedTargetIdx = ComputeClosestGoalPose(startPose, targetPoses);
       
   return ComputePath(startPose, targetPoses[_selectedTargetIdx]);
 }

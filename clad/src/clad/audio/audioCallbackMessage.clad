@@ -1,0 +1,26 @@
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+message AudioCallbackDuration
+{
+uint_16 callbackId,
+// EventId
+}
+
+message AudioCallbackMarker
+{
+uint_16 callbackId,
+// EventId
+}
+
+message AudioCallbackComplete
+{
+uint_16 callbackId,
+// EventId
+}
+
+}
+}
+}

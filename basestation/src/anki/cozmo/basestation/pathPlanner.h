@@ -62,6 +62,9 @@ public:
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const std::vector<Pose3d>& targetPoses);
 
+  // Utility function to simply select the closest target pose from a vector
+  static size_t ComputeClosestGoalPose(const Pose3d& startPose, const std::vector<Pose3d>& targetPoses);
+
   // While we are following a path, we can do a more efficient check to see if we need to update that path
   // based on new obstacles or other information. This function assumes that the robot is following the last
   // path that was computed by ComputePath and returned by GetCompletePath. If a new path is needed, it will

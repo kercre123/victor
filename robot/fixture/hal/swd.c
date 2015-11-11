@@ -1,6 +1,6 @@
 // Based on Drive Testfix, updated for Cozmo EP1 Testfix
 
-// #define SWD_DEBUG
+//#define SWD_DEBUG
 
 #include "hal/console.h"
 #include "hal/flash.h"
@@ -18,7 +18,6 @@
 #define PINB_SWD        GPIO_PinSource0
 #define GPIOB_SWC       GPIO_Pin_2
 #define PINB_SWC        GPIO_PinSource2
-#define GPIOC_NRST      GPIO_Pin_5
 //#define GPIOB_VCC       GPIO_Pin_1
 #define GPIOA_TXRX    GPIO_Pin_2
 
@@ -41,7 +40,7 @@ void SlowPrintf(const char* format, ...);
 #define SWD_PARITY 8
 
 // 80 would occasionally fail a board, 150 seems enough margin - tested empirically
-#define bit_delay() {volatile int x = 150; while (x--);}
+#define bit_delay() {volatile int x = 10; while (x--);}
 
 char HostBus = 0; // SWD bus is controlled by the host or target
 
@@ -184,6 +183,11 @@ void swd_enable(void)
 {
 	unsigned long data;
 
+	// Just for nRF51 - write 150 FFs at >= 125KHz
+	data = 0xFFFFFFFF;
+  for (int i = 0; i < 25; i++)
+    write_bits(32, &data);
+  
 	// write 0s
 	data = 0;
 	write_bits(32, &data);
@@ -483,7 +487,6 @@ void InitSWD(void)
 {
   // Put board power in safe state
   GPIO_SetBits(GPIOC, GPIO_Pin_12);   // Charge power off
-  GPIO_ResetBits(GPIOC, GPIOC_NRST);  // Default in reset
 
   GPIO_InitTypeDef  GPIO_InitStructure; 
   GPIO_InitStructure.GPIO_Pin = GPIOB_SWD;
@@ -495,8 +498,6 @@ void InitSWD(void)
   GPIO_InitStructure.GPIO_Pin = GPIOB_SWC;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = GPIOC_NRST;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_Pin = GPIOA_TXRX;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
@@ -506,8 +507,7 @@ void InitSWD(void)
   
   // Power it on
   GPIO_ResetBits(GPIOC, GPIO_Pin_12);
-  GPIO_ResetBits(GPIOC, GPIOC_NRST);  // Default in reset
-  
+
   TestEnableTx();
 }
 
@@ -568,7 +568,7 @@ error_t SWDTest(void)
     swd_chipinit();
 
     swd_write32(0xE000EDF0, 0xA05F0003);            // Halt core, just in case
-    GPIO_SetBits(GPIOC, GPIOC_NRST);                // Exit reset
+    
     int r = swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
     swd_write32(0xE000ED0C, 0x05FA0004);            // Reset peripherals 
     
