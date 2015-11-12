@@ -1080,7 +1080,7 @@ namespace Anki {
             size_t selectedPoseIdx;
             Planning::Path newPath;
 
-            _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx);
+            _selectedPathPlanner->GetCompletePath(GetDriveCenterPose(), newPath, selectedPoseIdx, &_pathMotionProfile);
             ExecutePath(newPath, _usingManualPathSpeed);
 
             if( _plannerSelectedPoseIndexPtr != nullptr ) {
@@ -1290,7 +1290,9 @@ namespace Anki {
       }
     }
 
-    Result Robot::StartDrivingToPose(const Pose3d& targetPose, bool useManualSpeed)
+    Result Robot::StartDrivingToPose(const Pose3d& targetPose,
+                                     const PathMotionProfile motionProfile,
+                                     bool useManualSpeed)
     {
       _usingManualPathSpeed = useManualSpeed;
 
@@ -1323,11 +1325,16 @@ namespace Anki {
       }
 
       _numPlansStarted++;
+      
+      _pathMotionProfile = motionProfile;
 
       return RESULT_OK;
     }
 
-    Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses, size_t* selectedPoseIndexPtr, bool useManualSpeed)
+    Result Robot::StartDrivingToPose(const std::vector<Pose3d>& poses,
+                                     const PathMotionProfile motionProfile,
+                                     size_t* selectedPoseIndexPtr,
+                                     bool useManualSpeed)
     {
       _usingManualPathSpeed = useManualSpeed;
       _plannerSelectedPoseIndexPtr = selectedPoseIndexPtr;
@@ -1356,6 +1363,8 @@ namespace Anki {
 
       _numPlansStarted++;
 
+      _pathMotionProfile = motionProfile;
+      
       return RESULT_OK;
     }
 
