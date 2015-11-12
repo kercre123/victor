@@ -47,16 +47,9 @@
 
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/shared/cozmoConfig.h"
-//#include "anki/cozmo/robot/hal.h"
 
-// Local Cozmo Includes
-//#include "headController.h"
-//#include "imuFilter.h"
-//#include "matlabVisualization.h"
-//#include "localization.h"
-//#include "visionDebugStream.h"
-
-
+#define DEBUG_MOTION_DETECTION 1
+#define DEBUG_FACE_DETECTION   1
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -156,33 +149,43 @@ namespace Cozmo {
 #pragma mark --- Mode Controls ---
 #endif
   
-  void VisionSystem::EnableModeHelper(Mode mode)
+  void VisionSystem::EnableMode(Mode whichMode, bool enabled)
   {
-    const bool modeAlreadyEnabled = _mode & mode;
-    if(!modeAlreadyEnabled) {
-      PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
-                       "Adding mode %s to current mode %s.",
-                       VisionSystem::GetModeName(static_cast<Mode>(mode)).c_str(),
-                       VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str());
-      
-      _mode |= mode;
+    if(whichMode == Mode::TRACKING) {
+      // Tracking enable/disable is a special case
+      if(enabled) {
+        // store the current mode so we can put it back when done tracking
+        _modeBeforeTracking = _mode;
+        
+        // TODO: Log or issue message?
+        // NOTE: this disables any other modes so we are *only* tracking
+        _mode = whichMode;
+      } else {
+        StopTracking();
+      }
+    } else {
+      if(enabled) {
+        const bool modeAlreadyEnabled = _mode & whichMode;
+        if(!modeAlreadyEnabled) {
+          PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
+                           "Adding mode %s to current mode %s.",
+                           VisionSystem::GetModeName(whichMode).c_str(),
+                           VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str());
+          
+          _mode |= whichMode;
+        }
+      } else {
+        const bool modeAlreadyDisabled = !(_mode & whichMode);
+        if(!modeAlreadyDisabled) {
+          PRINT_NAMED_WARNING("VisionSystem.EnableMode.DisablingMode",
+                              "Removing mode %s from current mode %s.",
+                              VisionSystem::GetModeName(whichMode).c_str(),
+                              VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str());
+          _mode &= ~whichMode;
+        }
+      }
     }
-  }
-  
-  void VisionSystem::DisableModeHelper(Mode mode)
-  {
-    _mode &= ~mode;
-  }
-  
-  void VisionSystem::StartMarkerDetection()
-  {
-    EnableModeHelper(LOOKING_FOR_MARKERS);
-  }
-  
-  void VisionSystem::StopMarkerDetection()
-  {
-    DisableModeHelper(LOOKING_FOR_MARKERS);
-  }
+  } // EnableMode()
   
   void VisionSystem::StopTracking()
   {
@@ -204,25 +207,6 @@ namespace Cozmo {
     }
   }
   
-  Result VisionSystem::StartDetectingFaces()
-  {
-    EnableModeHelper(DETECTING_FACES);
-    
-    if(_faceTracker == nullptr) {
-      PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
-                       "With model path %s.", _dataPath.c_str());
-      _faceTracker = new Vision::FaceTracker(_dataPath);
-      PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
-    }
-    
-    return RESULT_OK;
-  }
-  
-  Result VisionSystem::StopDetectingFaces()
-  {
-    DisableModeHelper(DETECTING_FACES);
-    return RESULT_OK;
-  }
   
 #if 0
 #pragma mark --- Simulator-Related Definitions ---
@@ -294,7 +278,7 @@ namespace Cozmo {
     if(_newMarkerToTrackWasProvided) {
       
       RestoreNonTrackingMode();
-      _mode              |= LOOKING_FOR_MARKERS;
+      EnableMode(DETECTING_MARKERS, true); // Make sure we enable marker detection
       _numTrackFailures  =  0;
       
       _markerToTrack = _newMarkerToTrack;
@@ -373,11 +357,11 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(RobotInterface::PanAndTilt&         msg)
+  bool VisionSystem::CheckMailbox(Anki::Point2f& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _panTiltMailbox.getMessage(msg);
+      retVal = _motionCentroidMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -418,8 +402,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  Result VisionSystem::LookForMarkers(const Vision::Image& inputImageGray,
-                                      TimeStamp_t imageTimeStamp,
+  Result VisionSystem::DetectMarkers(const Vision::Image& inputImageGray,
                                       std::vector<Quad2f>& markerQuads)
   {
     Result lastResult = RESULT_OK;
@@ -524,7 +507,6 @@ namespace Cozmo {
     const s32 numMarkers = _memory._markers.get_size();
     markerQuads.reserve(numMarkers);
     
-    bool isTrackingMarkerFound = false;
     for(s32 i_marker = 0; i_marker < numMarkers; ++i_marker)
     {
       const VisionMarker& crntMarker = _memory._markers[i_marker];
@@ -541,36 +523,30 @@ namespace Cozmo {
       
       markerQuads.emplace_back(quad);
       
-      Vision::ObservedMarker obsMarker(imageTimeStamp, crntMarker.markerType,
+      Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
+                                       crntMarker.markerType,
                                        quad, _camera);
       
       _visionMarkerMailbox.putMessage(obsMarker);
       
       // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
-      if(!(_mode & TRACKING)          &&
+      if(!IsModeEnabled(TRACKING)     &&
          _markerToTrack.IsSpecified() &&
-         !isTrackingMarkerFound       &&
          _markerToTrack.Matches(crntMarker))
       {
-        if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK)
-        {
+        if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK) {
+          PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
           return lastResult;
         }
-        
-        // store the current mode so we can put it back when done tracking
-        _modeBeforeTracking = _mode;
-        
+
         // Template initialization succeeded, switch to tracking mode:
-        // TODO: Log or issue message?
-        // NOTE: this disables any other modes so we are *only* tracking
-        _mode = IDLE;
-        EnableModeHelper(TRACKING);
+        EnableMode(TRACKING, true);
         
       } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
     } // for(each marker)
     
     return RESULT_OK;
-  } // LookForMarkers()
+  } // DetectMarkers()
   
   
   
@@ -781,10 +757,11 @@ namespace Cozmo {
   
   
   
-  Result VisionSystem::TrackTemplate(const Vision::Image& inputImageGray, TimeStamp_t imageTimeStamp)
+  Result VisionSystem::TrackTemplate(const Vision::Image& inputImageGray)
   {
     Result lastResult = RESULT_OK;
-
+    Simulator::SetTrackingReadyTime(); // no-op on real hardware
+    
     MemoryStack ccmScratch = _memory._ccmScratch;
     MemoryStack onchipScratch(_memory._onchipScratch);
     MemoryStack offchipScratch(_memory._offchipScratch);
@@ -840,9 +817,9 @@ namespace Cozmo {
       
       AnkiAssert(_trackerParameters.isInitialized);
       
-#   if USE_MATLAB_TRACKER
+#     if USE_MATLAB_TRACKER
       return MatlabVisionProcessor::TrackTemplate(grayscaleImage, converged, ccmScratch);
-#   endif
+#     endif
       
       trackingSucceeded = false;
       s32 verify_meanAbsoluteDifference;
@@ -1007,7 +984,7 @@ namespace Cozmo {
       // Reset the failure counter
       _numTrackFailures = 0;
       
-      _dockingMailbox.putMessage({markerPoseWrtCamera, imageTimeStamp});
+      _dockingMailbox.putMessage({markerPoseWrtCamera, inputImageGray.GetTimestamp()});
     }
     else {
       _numTrackFailures += 1;
@@ -1018,7 +995,7 @@ namespace Cozmo {
                          "failures (%d). Switching back to looking for markers.\n",
                          MAX_TRACKING_FAILURES);
         
-        // This resets docking, puttings us back in VISION_MODE_LOOKING_FOR_MARKERS mode
+        // This resets docking, puttings us back in VISION_MODE_DETECTING_MARKERS mode
         SetMarkerToTrack(_markerToTrack.type,
                          _markerToTrack.width_mm,
                          _markerToTrack.imageCenter,
@@ -1150,6 +1127,8 @@ namespace Cozmo {
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {
+    ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
+    
     Simulator::SetFaceDetectionReadyTime();
     
     if(_faceTracker == nullptr) {
@@ -1162,6 +1141,9 @@ namespace Cozmo {
     {
       // Black out detected markers so we don't find faces in them
       Vision::Image maskedImage = grayImage;
+      ASSERT_NAMED(maskedImage.GetTimestamp() == grayImage.GetTimestamp(),
+                   "Image timestamps should match after assignment.");
+      
       const cv::Rect_<f32> imgRect(0,0,grayImage.GetNumCols(),grayImage.GetNumRows());
       
       for(auto & quad : markerQuads)
@@ -1170,6 +1152,10 @@ namespace Cozmo {
         cv::Mat roi = maskedImage.get_CvMat_()(rect.get_CvRect_() & imgRect);
         roi.setTo(0);
       }
+      
+#     if DEBUG_FACE_DETECTION
+      _debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
+#     endif
       
       _faceTracker->Update(maskedImage);
     } else {
@@ -1180,6 +1166,8 @@ namespace Cozmo {
     
     for(auto & currentFace : _faceTracker->GetFaces())
     {
+      ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
+                   "Timestamp error.");
       _faceMailbox.putMessage(currentFace);
     }
 
@@ -1189,22 +1177,16 @@ namespace Cozmo {
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
   {
-    const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(1));
-    const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    1.f) &&
-                           NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    1.f) &&
-                           NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(1)));
+    const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(0.1));
+    const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    .5f) &&
+                           NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    .5f) &&
+                           NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(0.1)));
     
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
-    if(headSame && poseSame && !_prevImage.IsEmpty()) {
-      
-      /*
-       Vision::ImageRGB diffImage(inputImage);
-       diffImage -= _prevImage;
-       diffImage.Abs();
-       */
-      
-      //auto pixLog = [](u8 value) { return std::log(static_cast<f32>(std::max((u8)1, value))); };
+    if(headSame && poseSame && !_prevImage.IsEmpty() &&
+       image.GetTimestamp() - _lastMotionTime > 500)
+    {
       s32 numAboveThresh = 0;
       
       std::function<u8(const Vision::PixelRGB& thisElem, const Vision::PixelRGB& otherElem)> ratioTest = [&numAboveThresh](const Vision::PixelRGB& p1, const Vision::PixelRGB& p2)
@@ -1218,41 +1200,37 @@ namespace Cozmo {
           }
         };
         
-        const f32 ratioThreshold = 1.5f; // TODO: pass in or capture?
-        const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
-        const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
-        const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
-        const f32 maxRatio = std::max(ratioR, std::max(ratioG, ratioB));
-        if(maxRatio > ratioThreshold) {
-          ++numAboveThresh;
-          return static_cast<u8>(true);
-        } else {
-          return static_cast<u8>(false);
-        }
+        u8 retVal = 0;
+        const u8 minBrightness = 10;
+        if(p1.IsBrighterThan(minBrightness) && p2.IsBrighterThan(minBrightness)) {
+          
+          const f32 ratioThreshold = 1.25f; // TODO: pass in or capture?
+          const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
+          const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
+          const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
+          if(ratioR > ratioThreshold || ratioG > ratioThreshold || ratioB > ratioThreshold) {
+            ++numAboveThresh;
+            retVal = 255; // use 255 because it will actually display
+          }
+        } // if both pixels are bright enough
+        
+        return retVal;
       };
-      
       
       Vision::Image ratioImg(image.GetNumRows(), image.GetNumCols());
       image.ApplyScalarFunction(ratioTest, _prevImage, ratioImg);
       
-      _debugImageRGBMailbox.putMessage({"CurrentImage", image});
-      _debugImageRGBMailbox.putMessage({"PreviousImage", _prevImage});
-      _debugImageMailbox.putMessage({"RatioImg", ratioImg});
-      
-      size_t minArea = image.GetNumElements() / 50;
-      PRINT_NAMED_INFO("VisionSystem.Update.MotionPixels",
-                       "NumAboveThresh = %d (thresh=%lu)",
-                       numAboveThresh, minArea);
+      size_t minArea = image.GetNumElements() / 225; // 1/15 of each image dimension
+      Anki::Point2f centroid(0.f,0.f); // Not Embedded::
       if(numAboveThresh > minArea)
       {
         Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
         std::vector<std::vector<Point2<s32>>> regionPoints;
         ratioImg.GetConnectedComponents(motionRegions, regionPoints);
         
-        Anki::Point2f centroid(0.f,0.f); // Not Embedded::
         for(auto & region : regionPoints) {
-          PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
-                           "Area=%lu", region.size());
+          //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
+          //                 "Area=%lu", region.size());
           if(region.size() > minArea) {
             centroid = 0.f;
             for(auto & point : region) {
@@ -1267,88 +1245,29 @@ namespace Cozmo {
           ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < motionRegions.GetNumCols() &&
                        centroid.y() > 0.f && centroid.y() < motionRegions.GetNumRows(),
                        "Motion centroid should be within image bounds.");
+
+          PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
+                           "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
+                           "[out of %lu regions]",
+                           minArea, centroid.x(), centroid.y(), regionPoints.size());
           
-          RobotInterface::PanAndTilt msg;
-          
-          // Convert image positions to desired angles
-          const f32 yError_pix = static_cast<f32>(motionRegions.GetNumRows())*0.5f - centroid.y();
-          msg.headTiltAngle_rad = atan_fast(yError_pix / _headCamInfo->focalLength_y);
-          
-          const f32 xError_pix = static_cast<f32>(motionRegions.GetNumCols())*0.5f - centroid.x();
-          msg.bodyPanAngle_rad = atan_fast(xError_pix / _headCamInfo->focalLength_x);
-          
-          _panTiltMailbox.putMessage(msg);
+          _lastMotionTime = image.GetTimestamp();
+          _motionCentroidMailbox.putMessage(centroid);
           
         }
+        
       } // if(anyAboveThresh)
       
-#       if ANKI_COZMO_USE_MATLAB_VISION
-      //_matlab.PutOpencvMat(diffImage.get_CvMat_(), "diffImage");
-      //_matlab.EvalString("imagesc(diffImage), axis image, drawnow");
-      
-      _matlab.PutOpencvMat(inputImage->get_CvMat_(), "inputImage");
-      _matlab.PutOpencvMat(_prevImage.get_CvMat_(), "prevImage");
-      
-      
-      _matlab.EvalString("[nrows,ncols,~] = size(inputImage); "
-                         "[xgrid,ygrid] = meshgrid(1:ncols,1:nrows); "
-                         "logImg1 = log(max(1,double(prevImage))); "
-                         "logImg2 = log(max(1,double(inputImage))); "
-                         "diff = imabsdiff(logImg1, logImg2); "
-                         "diffThresh = diff > log(1.5); "
-                         "if any(diffThresh(:)), "
-                         "  diff(~diffThresh) = 0; "
-                         "  sumDiff = sum(diff(:)); "
-                         "  x = sum(xgrid(:).*diff(:))/sumDiff; "
-                         "  y = sum(ygrid(:).*diff(:))/sumDiff; "
-                         "  centroid = [x y]; "
-      /*                           "stats = regionprops(diffThresh, 'Area', 'Centroid', 'PixelIdxList'); "
-       "areas = [stats.Area]; "
-       "keep = areas > .01*nrows*ncols & areas < .5*nrows*ncols; "
-       "diffThresh(vertcat(stats(~keep).PixelIdxList)) = false; "
-       "keep = find(keep); "
-       "if ~isempty(keep), "
-       "  [~,toTrack] = max(areas(keep)); "
-       "  centroid = stats(keep(toTrack)).Centroid; "
-       */                         "else, "
-                         "  clear centroid; "
-                         "end");
-      
-      if(_matlab.DoesVariableExist("centroid")) {
-        
-        _matlab.EvalString("hold off, imagesc(diff), axis image, colormap(gray), "
-                           "title(%d), "
-                           "hold on, plot(centroid(1), centroid(2), 'go', 'MarkerSize', 10, 'LineWidth', 2); drawnow",
-                           inputImage->GetTimestamp());
-        
-        mxArray* mxCentroid = _matlab.GetArray("centroid");
-        
-        CORETECH_ASSERT(mxGetNumberOfElements(mxCentroid) == 2);
-        const f32 xCen = mxGetPr(mxCentroid)[0];
-        const f32 yCen = mxGetPr(mxCentroid)[1];
-        
-        MessagePanAndTiltHead msg;
-        
-        // Convert image positions to desired angles
-        const f32 yError_pix = static_cast<f32>(inputImage->GetNumRows())*0.5f - yCen;
-        msg.relativeHeadTiltAngle_rad = atan_fast(yError_pix / _headCamInfo->focalLength_y);
-        
-        const f32 xError_pix = static_cast<f32>(inputImage->GetNumCols())*0.5f - xCen;
-        msg.relativePanAngle_rad = atan_fast(xError_pix / _headCamInfo->focalLength_x);
-        
-        _panTiltMailbox.putMessage(msg);
+#     if DEBUG_MOTION_DETECTION
+      {
+        Vision::ImageRGB ratioImgDisp(ratioImg);
+        ratioImgDisp.DrawPoint(centroid, NamedColors::RED, 2);
+        _debugImageRGBMailbox.putMessage({"RatioImg", ratioImgDisp});
+        //_debugImageRGBMailbox.putMessage({"CurrentImg", image});
       }
-      
-      _matlab.EvalString("imagesc(imabsdiff(inputImage, prevImage)), axis image, colormap(gray), drawnow");
-      _matlab.EvalString("title(%d)", inputImage->GetTimestamp());
-#       endif
-      
-      
-    } // if(headSame && poseSame)
+#     endif
     
-    // Store a copy of the current image for next time
-    // TODO: switch to just swapping pointers between current and previous image
-    image.CopyTo(_prevImage);
+    } // if(headSame && poseSame)
     
     return RESULT_OK;
   } // DetectMotion()
@@ -1418,7 +1337,7 @@ namespace Cozmo {
     
     static const std::map<Mode, std::string> LUT = {
       {IDLE,                  "IDLE"}
-      ,{LOOKING_FOR_MARKERS,  "MARKERS"}
+      ,{DETECTING_MARKERS,  "MARKERS"}
       ,{TRACKING,             "TRACKING"}
       ,{DETECTING_FACES,      "FACES"}
       ,{DETECTING_MOTION,     "MOTION"}
@@ -1501,7 +1420,7 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      _mode                      = LOOKING_FOR_MARKERS | DETECTING_FACES;
+      _mode                      = DETECTING_MARKERS | DETECTING_FACES;
       _markerToTrack.Clear();
       _numTrackFailures          = 0;
       
@@ -1518,15 +1437,12 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      if ((_mode & DETECTING_FACES) == DETECTING_FACES)
-      {
-        Result startFacesResult = StartDetectingFaces();
-        if (Result::RESULT_OK != startFacesResult)
-        {
-          PRINT_NAMED_ERROR("VisionSystem.Init.StartDetectingFaces", "Face tracker not initialized!");
-          return startFacesResult;
-        }
-      }
+      
+      PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                       "With model path %s.", _dataPath.c_str());
+      _faceTracker = new Vision::FaceTracker(_dataPath);
+      PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+      
       
       // Compute FOV from focal length (currently used for tracker prediciton)
       _headCamFOV_ver = 2.f * atanf(static_cast<f32>(_headCamInfo->nrows) /
@@ -1735,6 +1651,7 @@ namespace Cozmo {
      Messages::SendRobotStateMsg(&robotState);
      */
     
+    // Store the new robot state and keep a copy of the previous one
     UpdateRobotState(robotState);
     
     // prevent us from trying to update a tracker we just initialized in the same
@@ -1757,44 +1674,46 @@ namespace Cozmo {
     
     std::vector<Quad2f> markerQuads;
 
-    if(_mode & LOOKING_FOR_MARKERS) {
-      if((lastResult = LookForMarkers(inputImageGray, inputImage.GetTimestamp(), markerQuads)) != RESULT_OK) {
+    if(IsModeEnabled(DETECTING_MARKERS)) {
+      if((lastResult = DetectMarkers(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
         return lastResult;
       }
-    } // if(_mode & LOOKING_FOR_MARKERS)
+    }
     
-    if(_mode & TRACKING) {
-      Simulator::SetTrackingReadyTime(); // no-op on real hardware
-    
+    if(IsModeEnabled(TRACKING)) {
       // Update the tracker transformation using this image
-      if((lastResult = TrackTemplate(inputImageGray, inputImage.GetTimestamp())) != RESULT_OK) {
+      if((lastResult = TrackTemplate(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.TrackTemplateFailed", "");
         return lastResult;
       }
-      
-    } // if(_mode & TRACKING)
+    }
     
-    if(_mode & DETECTING_FACES) {
+    if(IsModeEnabled(DETECTING_FACES)) {
       if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
       }
-    } // if(_mode & DETECTING_FACES)
+    }
     
     // DEBUG!!!!
-    //_mode |= LOOKING_FOR_SALIENCY;
+    EnableMode(DETECTING_MOTION, true);
     
-    if(_mode & DETECTING_MOTION)
+    if(IsModeEnabled(DETECTING_MOTION))
     {
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
       }
-    } // if(_mode & DETECTING_MOTION)
+    }
+    
+    // Store a copy of the current image for next time
+    // NOTE: Now _prevImage should correspond to _prevRobotState
+    // TODO: switch to just swapping pointers between current and previous image
+    inputImage.CopyTo(_prevImage);
     
     return lastResult;
-  } // Update() [Real]
+  } // Update()
   
   
   void VisionSystem::SetParams(const bool autoExposureOn,

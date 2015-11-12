@@ -130,7 +130,7 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  SetCameraCalibration(calib);
+  _visionComponent.SetCameraCalibration(calib);
   SetPhysicalRobot(payload.isPhysicalRobots);
 }
 
@@ -645,14 +645,14 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
     [this] (const GameToEngineEvent& event)
     {
-      _visionProcessor.EnableFaceDetection(true);
+      _visionComponent.EnableFaceDetection(true);
     }));
   
   // StopFaceTracking
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
     [this] (const GameToEngineEvent& event)
     {
-      _visionProcessor.EnableFaceDetection(false);
+      _visionComponent.EnableFaceDetection(false);
     }));
   
   // StartLookingForMarkers

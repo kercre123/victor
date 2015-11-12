@@ -24,8 +24,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
 
 RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* interface)
   : _robotManager(manager)
@@ -460,7 +458,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
   }
   
   // Everything's ok and we have an action, so queue it
-  QueueActionHelper(QueueActionPosition::AT_END, DriveAndManipulateSlot, robot.GetActionList(), newAction, numRetries);
+  QueueActionHelper(QueueActionPosition::AT_END, Robot::DriveAndManipulateSlot, robot.GetActionList(), newAction, numRetries);
 }
   
 void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -537,7 +535,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       
       // Put the block down right here
       IActionRunner* newAction = new PlaceObjectOnGroundAction();
-      QueueActionHelper(QueueActionPosition::AT_END, DriveAndManipulateSlot, robot->GetActionList(), newAction);
+      QueueActionHelper(QueueActionPosition::AT_END, Robot::DriveAndManipulateSlot, robot->GetActionList(), newAction);
     }
     else {
       // In the normal case directly set the lift height

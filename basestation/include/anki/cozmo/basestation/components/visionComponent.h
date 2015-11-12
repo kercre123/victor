@@ -1,5 +1,5 @@
 /**
- * File: visionProcessingThread.h
+ * File: visionComponent.h
  *
  * Author: Andrew Stein
  * Date:   11/20/2014
@@ -19,6 +19,7 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "util/helpers/noncopyable.h"
 #include <thread>
 #include <mutex>
 
@@ -52,10 +53,11 @@ enum class MessageVizTag : uint8_t;
 } // end namespace VizInterface
 
 // Forward declaration
+class Robot;
 class VisionSystem;
 struct DockingErrorSignal;
 
-class VisionProcessingThread
+  class VisionComponent : public Util::noncopyable
   {
   public:
     
@@ -64,28 +66,31 @@ class VisionProcessingThread
       Asynchronous
     };
     
-    VisionProcessingThread(RunMode mode, Util::Data::DataPlatform* dataPlatform);
-    ~VisionProcessingThread();
+    VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform);
+    virtual ~VisionComponent();
     
     void SetRunMode(RunMode mode);
+
+    // Calibration must be provided before Update() can be called
+    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
-    //
-    // Asynchronous operation
-    //
-    void Stop();
-    
+    // Provide next image for processing, with corresponding robot state.
+    // In synchronous mode, the image is processed immediately. In asynchronous
+    // mode, it will be processed as soon as the current image is completed.
+    // Also, any debug images left by vision processing for display will be
+    // displayed.
+    void SetNextImage(const Vision::ImageRGB& image,
+                      const RobotState& robotState);
+
     void Pause(); // toggle paused state
     void Pause(bool isPaused); // set pause state
     
-    //
-    // Synchronous operation
-    //
-    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
+    // Enable/disable different types of processing
+    void EnableMarkerDetection(bool tf);
+    void EnableFaceDetection(bool tf);
+    void EnableMotionDetection(bool tf);
     
-    void Update(const Vision::ImageRGB& image,
-                const RobotState& robotState);
-
-    
+    // Vision system will switch to tracking when this marker is seen
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
                           const f32                    markerWidth_mm,
                           const Point2f&               imageCenter,
@@ -95,21 +100,20 @@ class VisionProcessingThread
                           const f32                    postOffsetY_mm = 0,
                           const f32                    postOffsetAngle_rad = 0);
     
-    // Enable/disable different types of processing
-    void EnableMarkerDetection(bool tf);
-    void EnableFaceDetection(bool tf);
-    
     // Abort any marker tracking we were doing
     void StopMarkerTracking();
     
-    // These return true if a mailbox messages was available, and they copy
-    // that message into the passed-in message struct.
-    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
-    bool CheckMailbox(Vision::ObservedMarker&      msg);
-    bool CheckMailbox(VizInterface::TrackerQuad&   msg);
-    bool CheckMailbox(RobotInterface::PanAndTilt&  msg);
-    bool CheckMailbox(Vision::TrackedFace&         msg);
+    Result UpdateFaces(Robot& robot);
+    Result UpdateVisionMarkers(Robot& robot);
+    Result UpdateTrackingQuad(Robot& robot);
+    Result UpdateDockingErrorSignal(Robot& robot);
+    Result UpdateMotionCentroid(Robot& robot);
     
+    const Vision::Camera& GetCamera(void) const;
+    Vision::Camera& GetCamera(void);
+    
+    const Vision::CameraCalibration& GetCameraCalibration() const;
+      
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.
     bool GetCurrentImage(Vision::ImageRGB& img, TimeStamp_t newerThanTimestamp);
@@ -122,8 +126,12 @@ class VisionProcessingThread
     
     VisionSystem* _visionSystem = nullptr;
     
+    // Robot stores the calibration, camera just gets a reference to it
+    // This is so we can share the same calibration data across multiple
+    // cameras (e.g. those stored inside the pose history)
+    Vision::Camera            _camera;
     Vision::CameraCalibration _camCalib;
-    bool   _isCamCalibSet = false;
+    bool    _isCamCalibSet = false;
     
     RunMode _runMode = RunMode::Asynchronous;
     
@@ -145,20 +153,31 @@ class VisionProcessingThread
     void Lock();
     void Unlock();
     
-    void Start(); // SetCameraCalibration() must have been called already
-    //void Start(const Vision::CameraCalibration& camCalib);
-    
-    void SetNextImage(const Vision::ImageRGB& image,
-                      const RobotState& robotState);
-    
-  }; // class VisionProcessingThread
 
-  inline void VisionProcessingThread::Pause() {
+    // Used for asynchronous run mode
+    void Start(); // SetCameraCalibration() must have been called already
+    void Stop();
+    
+  }; // class VisionComponent
+
+  inline void VisionComponent::Pause() {
     _paused = !_paused;
   }
   
-  inline void VisionProcessingThread::Pause(bool isPaused) {
+  inline void VisionComponent::Pause(bool isPaused) {
     _paused = isPaused;
+  }
+  
+  inline const Vision::Camera& VisionComponent::GetCamera(void) const {
+    return _camera;
+  }
+  
+  inline Vision::Camera& VisionComponent::GetCamera(void) {
+    return _camera;
+  }
+  
+  inline const Vision::CameraCalibration& VisionComponent::GetCameraCalibration() const {
+    return _camCalib;
   }
 
 } // namespace Cozmo

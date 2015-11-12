@@ -43,6 +43,11 @@ namespace Vision {
       return static_cast<u8>(gray);
     }
     
+    // Return true if all channels are > or < than given value.
+    // If "any" is set to true, then returns true if any channel is > or <.
+    bool IsBrighterThan(u8 value, bool any = false) const;
+    bool IsDarkerThan(u8 value, bool any = false) const;
+    
   }; // class PixelRGB
   
   static_assert(sizeof(PixelRGB)==3, "PixelRGB not 3 bytes!");
@@ -78,10 +83,54 @@ namespace Vision {
       return static_cast<u8>(gray);
     }
     
+    // Return true if all channels are > or < than given value.
+    // If "any" is set to true, then returns true if any channel is > or <.
+    // NOTE: Ignores alpha channel!
+    bool IsBrighterThan(u8 value, bool any = false) const;
+    bool IsDarkerThan(u8 value, bool any = false) const;
+    
   }; // class PixelRGBA
   
   static_assert(sizeof(PixelRGBA)==4, "PixelRGBA not 4 bytes!");
   
+  
+  //
+  // Inlined implementations
+  //
+  
+  inline bool PixelRGB::IsBrighterThan(u8 value, bool any) const {
+    if(any) {
+      return r() > value || g() > value || b() > value;
+    } else {
+      return r() > value && g() > value && b() > value;
+    }
+  }
+  
+  inline bool PixelRGB::IsDarkerThan(u8 value, bool any) const {
+    if(any) {
+      return r() < value || g() < value || b() < value;
+    } else {
+      return r() < value && g() < value && b() < value;
+    }
+  }
+
+  inline bool PixelRGBA::IsBrighterThan(u8 value, bool any) const {
+    if(any) {
+      return r() > value || g() > value || b() > value;
+    } else {
+      return r() > value && g() > value && b() > value;
+    }
+  }
+  
+  inline bool PixelRGBA::IsDarkerThan(u8 value, bool any) const {
+    if(any) {
+      return r() < value || g() < value || b() < value;
+    } else {
+      return r() < value && g() < value && b() < value;
+    }
+  }
+
+ 
 } // namespace Vision
 } // namespace Anki
 

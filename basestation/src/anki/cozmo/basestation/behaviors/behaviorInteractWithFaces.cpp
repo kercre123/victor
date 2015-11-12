@@ -587,8 +587,8 @@ namespace Cozmo {
     newPupilPos += face.GetRightEyeCenter();
     newPupilPos *= 0.5f;
     
-    Point2f imageHalfSize(robot.GetCamera().GetCalibration().GetNcols()/2,
-                          robot.GetCamera().GetCalibration().GetNrows()/2);
+    const Vision::CameraCalibration& camCalib = robot.GetVisionComponent().GetCameraCalibration();
+    Point2f imageHalfSize(camCalib.GetNcols()/2, camCalib.GetNrows()/2);
     newPupilPos -= imageHalfSize; // make relative to image center
     newPupilPos /= imageHalfSize; // scale to be between -1 and 1
 

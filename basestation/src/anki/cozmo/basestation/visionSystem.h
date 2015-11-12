@@ -67,7 +67,7 @@ namespace Cozmo {
     
     enum Mode {
       IDLE                 = 0x00,
-      LOOKING_FOR_MARKERS  = 0x01,
+      DETECTING_MARKERS    = 0x01,
       TRACKING             = 0x02,
       DETECTING_FACES      = 0x04,
       DETECTING_MOTION     = 0x08
@@ -80,11 +80,10 @@ namespace Cozmo {
     Result Init(const Vision::CameraCalibration& camCalib);
     bool IsInitialized() const;
     
-    void StartMarkerDetection();
-    void StopMarkerDetection();
+    void EnableMode(Mode whichMode, bool enabled);
+    bool IsModeEnabled(Mode whichMode) const { return _mode & whichMode; }
     
     // Accessors
-    //const HAL::CameraInfo* GetCameraCalibration();
     f32 GetTrackingMarkerWidth();
     
     // This is main Update() call to be called in a loop from above.
@@ -168,10 +167,6 @@ namespace Cozmo {
                                  Embedded::Array<f32>&        rotationWrtRobot,
                                  Embedded::Point3<f32>&       translationWrtRobot);
     
-    // Tell the vision system to switch to face-detection mode
-    Result StartDetectingFaces();
-    Result StopDetectingFaces();
-    
     // Returns field of view (radians) of camera
     f32 GetVerticalFOV();
     f32 GetHorizontalFOV();
@@ -203,7 +198,8 @@ namespace Cozmo {
     bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
     bool CheckMailbox(VizInterface::TrackerQuad& msg);
-    bool CheckMailbox(RobotInterface::PanAndTilt& msg);
+    //bool CheckMailbox(RobotInterface::PanAndTilt& msg);
+    bool CheckMailbox(Point2f& centroid);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
@@ -218,7 +214,7 @@ namespace Cozmo {
     
     // Previous image for doing background subtraction, e.g. for saliency
     Vision::ImageRGB _prevImage;
-    
+    TimeStamp_t      _lastMotionTime = 0;
     
     
     //
@@ -376,9 +372,6 @@ namespace Cozmo {
     
     VisionMemory _memory;
     
-    void EnableModeHelper(Mode mode);
-    void DisableModeHelper(Mode mode);
-    
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
     Result UpdateRobotState(const RobotState newRobotState);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
@@ -401,21 +394,13 @@ namespace Cozmo {
                                            Embedded::MemoryStack scratch);
     
     
-    Result LookForMarkers(const Vision::Image& inputImage,
-                          TimeStamp_t imageTimeStamp,
+    Result DetectMarkers(const Vision::Image& inputImage,
                           std::vector<Quad2f>& markerQuads);
-    /*,
-                          const DetectFiducialMarkersParameters &parameters,
-                          Embedded::FixedLengthList<Embedded::VisionMarker> &markers,
-                          Embedded::MemoryStack ccmScratch,
-                          Embedded::MemoryStack onchipScratch,
-                          Embedded::MemoryStack offchipScratch);
-    */
+
     Result InitTemplate(Embedded::Array<u8> &grayscaleImage,
                         const Embedded::Quadrilateral<f32> &trackingQuad);
     
-    Result TrackTemplate(const Vision::Image& inputImage,
-                         TimeStamp_t imageTimeStamp);
+    Result TrackTemplate(const Vision::Image& inputImage);
     
     Result TrackerPredictionUpdate(const Embedded::Array<u8>& grayscaleImage,
                                    Embedded::MemoryStack scratch);
@@ -430,11 +415,9 @@ namespace Cozmo {
                         Embedded::MemoryStack scratch);
     
     // Mailboxes for different types of messages that the vision
-    // system communicates to main execution:
-    //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
-    //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+    // system communicates back to the vision processing thread
     Mailbox<VizInterface::TrackerQuad>        _trackerMailbox;
-    Mailbox<RobotInterface::PanAndTilt>       _panTiltMailbox;
+    Mailbox<Point2f>                          _motionCentroidMailbox;
     Mailbox<std::pair<Pose3d, TimeStamp_t> >  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;

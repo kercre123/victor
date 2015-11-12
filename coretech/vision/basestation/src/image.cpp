@@ -25,6 +25,14 @@ namespace Vision {
 #pragma mark --- ImageBase ---
   
   template<typename T>
+  ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
+  {
+    SetTimestamp(other.GetTimestamp());
+    Array2d<T>::operator=(other);
+    return *this;
+  }
+  
+  template<typename T>
   void ImageBase<T>::Display(const char *windowName, s32 pauseTime_ms) const
   {
 #   if ANKICORETECH_USE_OPENCV
@@ -56,6 +64,21 @@ namespace Vision {
     }
     cv::waitKey(pauseTime_ms);
 #   endif
+  }
+
+  template<typename T>
+  void ImageBase<T>::DrawLine(const Point2f& start, const Point2f& end,
+                              const ColorRGBA& color, const s32 thickness)
+  {
+    cv::line(this->get_CvMat_(), start.get_CvPoint_(), end.get_CvPoint_(),
+             {color.GetR(), color.GetG(), color.GetB()}, thickness);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size)
+  {
+    cv::circle(this->get_CvMat_(), point.get_CvPoint_(), size,
+               {color.GetR(), color.GetG(), color.GetB()});
   }
   
   template<typename T>
@@ -132,6 +155,21 @@ namespace Vision {
     //    http://nghiaho.com/uploads/code/opencv_connected_component/blob.cpp
     //
     
+    if(labelImage.GetNumRows() != GetNumRows() || labelImage.GetNumCols() != GetNumCols()) {
+      PRINT_NAMED_ERROR("Image.GetConnectedComponents.SizeMismatch",
+                        "Label image should be %dx%d, not %dx%d",
+                        GetNumCols(), GetNumRows(), labelImage.GetNumCols(), labelImage.GetNumRows());
+      return -1;
+    }
+    
+    // Put a 1 in labelImage everywhere this image is > 0, and 0 otherwise
+    // NOTE: can't use use cv::Mat's > 0 operation, b/c that yields 0 and 255.
+    // TODO: is "(this->get_CvMat()_ > 0)/255" actually faster?
+    std::function<s32(const u8&)> lambda = [](u8 p) {
+      return s32(p > 0 ? 1 : 0);
+    };
+    ApplyScalarFunction(lambda, labelImage);
+
     regionPoints.clear();
     
     // Fill the label_image with the blobs
@@ -211,6 +249,8 @@ namespace Vision {
       dataRGBA[i].b() = dataRGB[i].b();
       dataRGBA[i].a() = alpha;
     }
+    
+    SetTimestamp(imageRGB.GetTimestamp());
   }
   
   Image ImageRGBA::ToGray() const
@@ -251,10 +291,19 @@ namespace Vision {
     
     for(s32 i=0; i<GetNumElements(); ++i)
     {
+      // TODO: Is this faster? memcpy(dataRGB+i, dataRGBA+i, 3);
       dataRGB[i].r() = dataRGBA[i].r();
       dataRGB[i].g() = dataRGBA[i].g();
       dataRGB[i].b() = dataRGBA[i].b();
     }
+    SetTimestamp(imageRGBA.GetTimestamp());
+  }
+  
+  ImageRGB::ImageRGB(const Image& imageGray)
+  : ImageBase<PixelRGB>(imageGray.GetNumRows(), imageGray.GetNumCols())
+  {
+    cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
+    SetTimestamp(imageGray.GetTimestamp());
   }
   
   Image ImageRGB::ToGray() const

@@ -37,6 +37,9 @@ namespace Vision {
     ImageBase(cv::Mat_<T>& cvMat) : Array2d<T>(cvMat) { }
 #   endif
     
+    // Reference counting assignment (does not copy):
+    ImageBase<T>& operator= (const ImageBase<T> &other);
+    
     void CopyTo(ImageBase<T>& otherImage) const;
     
     void SetTimestamp(TimeStamp_t ts);
@@ -52,6 +55,11 @@ namespace Vision {
     
     // Resize into the new image (which is already the desired size)
     void Resize(ImageBase<T>& resizedImage) const;
+    
+    void DrawLine(const Point2f& start, const Point2f& end,
+                  const ColorRGBA& color, const s32 thickness);
+    
+    void DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size);
 
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;
@@ -60,7 +68,7 @@ namespace Vision {
     
     virtual s32 GetNumChannels() const = 0;
     
-  protected:
+  private:
     TimeStamp_t     _timeStamp;
     
   }; // class ImageBase
@@ -110,6 +118,9 @@ namespace Vision {
     
     // Removes alpha channel and squeezes into 24bpp
     ImageRGB(const ImageRGBA& imageRGBA);
+    
+    // Replicates grayscale image across all three channels
+    ImageRGB(const Image& imageGray);
     
     Image ToGray() const;
     
