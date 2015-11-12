@@ -53,7 +53,7 @@ namespace VisionTraining {
       LightCube pickedCubeInView = null;
       for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
-          pickedCubeInView = _CurrentRobot.VisibleObjects[i].ID as LightCube;
+          pickedCubeInView = _CurrentRobot.VisibleObjects[i] as LightCube;
         }
       }
 
