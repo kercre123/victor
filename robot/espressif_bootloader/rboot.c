@@ -33,32 +33,23 @@
 
 #include "rboot-private.h"
 
-/** Simplified find_image function just wraps check_image's RAM initalization point finding function with error messages
- * prevent this function being placed inline with main
- * to keep main's stack size as small as possible
- * don't mark as static or it'll be optimised out when
- * using the assembler stub
+//#define DEBUG
+
+/** Reads ROM headers and returns relivant information.
+ * This is a separate functions from find_image so it can live in low IRAM and keep high IRAM minimized
+ * @param[in/out] buffer A pointer to memory to use for a read buffer
+ * @param[out] Gets set to the section count from the header
+ * @param[in/out] readpos Used as starting position and gets set to the SPI read position to continue from
+ * @return 0 on failure or firmware entry point on success
  */
-__attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
+static NOINLINE usercode* check_image(uint32* buffer, uint8* sectcount, uint32* readpos)
 {
-  uint32 buffer[BUFFER_SIZE/4];
-  uint8 sectcount;
-  uint8 sectcurrent;
-  uint8 chksum = CHKSUM_INIT;
-  uint32 loop;
-  uint32 remaining;
-  uint32 romaddr;
-  uint32 readpos = SECTOR_SIZE * FIRMWARE_START_SECTOR;
-  uint8 *writepos;
-  usercode* entry;
-  
+  rom_header_new *header = (rom_header_new*)buffer;
+
   ets_printf("Checking image at %x\r\n", readpos);
   
-  rom_header_new *header = (rom_header_new*)buffer;
-  section_header *section = (section_header*)buffer;
-  
   // read rom header
-  if (SPIRead(readpos, header, sizeof(rom_header_new)) != 0) {
+  if (SPIRead(*readpos, header, sizeof(rom_header_new)) != 0) {
     ets_printf("SPIRead firmware new header failed!\r\n");
     return 0;
   }
@@ -68,13 +59,13 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
   {
     ets_printf("New style ROM header detected\r\n");
     // skip the extra header and irom section
-    readpos = readpos + header->len + sizeof(rom_header_new);
+    *readpos = *readpos + header->len + sizeof(rom_header_new);
     // read the normal header that follows
-    if (SPIRead(readpos, header, sizeof(rom_header)) != 0) {
+    if (SPIRead(*readpos, header, sizeof(rom_header)) != 0) {
       ets_printf("SPIRead firmware rom header failed!\r\n");
       return 0;
     }
-    if (SPIRead(readpos, header, sizeof(rom_header)) != 0)
+    if (SPIRead(*readpos, header, sizeof(rom_header)) != 0)
     {
       ets_printf("SPIRead secondary header failed\r\n");
       return 0;
@@ -83,19 +74,34 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
   if (header->magic == ROM_MAGIC)
   {
     // old type, no extra header or irom section to skip over
-    ets_printf("ROM header detected, count = %d\r\n", header->count);
-    readpos += sizeof(rom_header);
-    sectcount = header->count;
-    entry = header->entry;
+    ets_printf("ROM header detected, count = %d, entry = %x\r\n", header->count, header->entry);
+    *readpos += sizeof(rom_header);
+    *sectcount = header->count;
+    return header->entry;
   }
   else
   {
     ets_printf("No ROM header detected, read %02X from address %x\r\n", header->magic, readpos);
     return 0;
   }
+}
+
+/** Simplified find_image function
+ */
+__attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
+{
+  uint32 buffer[BUFFER_SIZE/4];
+  uint8 sectcount;
+  uint8 chksum = CHKSUM_INIT;
+  uint32 remaining;
+  uint32 readpos = SECTOR_SIZE * FIRMWARE_START_SECTOR;
+  uint8 *writepos;
+  section_header *section = (section_header*)buffer;
+
+  usercode* entry = check_image(buffer, &sectcount, &readpos);
   
   // copy all the sections
-	for (; sectcount > 0; sectcount--) {
+	while (sectcount > 0) {
 		// read section header
 		SPIRead(readpos, section, sizeof(section_header));
 		readpos += sizeof(section_header);
@@ -103,8 +109,6 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
 		// get section address and length
 		writepos = section->address;
 		remaining = section->length;
-
-    ets_printf("Loading s=%d, %x[%d]\r\n", sectcount, writepos, remaining);
 
 		while (remaining > 0) {
 			// work out how much to read, up to 16 bytes at a time
@@ -119,9 +123,9 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
 			// decrement remaining count
 			remaining -= readlen;
 		}
+    sectcount--;
 	}
-  
-  ets_printf("Jumping to firmware at %x\r\n", entry);
+
   return entry;
 }
 
