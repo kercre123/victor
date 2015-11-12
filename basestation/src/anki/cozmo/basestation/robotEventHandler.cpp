@@ -89,7 +89,11 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  return new PlaceObjectOnGroundAtPoseAction(robot, targetPose, msg.useExactRotation, msg.useManualSpeed);
+  return new PlaceObjectOnGroundAtPoseAction(robot,
+                                             targetPose,
+                                             msg.motionProf,
+                                             msg.useExactRotation,
+                                             msg.useManualSpeed);
 }
 
 IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)
@@ -102,7 +106,11 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   // TODO: expose whether or not to drive with head down in message?
   // (For now it is hard-coded to true)
   const bool driveWithHeadDown = true;
-  return new DriveToPoseAction(targetPose, driveWithHeadDown, msg.useManualSpeed);
+  
+  return new DriveToPoseAction(targetPose,
+                               msg.motionProf,
+                               driveWithHeadDown,
+                               msg.useManualSpeed);
 }
   
   
@@ -117,6 +125,7 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToPickupObjectAction(selectedObjectID,
+                                         msg.motionProf,
                                          msg.useApproachAngle,
                                          msg.approachAngle_rad,
                                          msg.useManualSpeed);
@@ -139,6 +148,7 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToPlaceRelObjectAction(selectedObjectID,
+                                           msg.motionProf,
                                            msg.placementOffsetX_mm,
                                            msg.useApproachAngle,
                                            msg.approachAngle_rad,
@@ -165,13 +175,11 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
   
   if(static_cast<bool>(msg.usePreDockPose)) {
 
-    // Compute rotation
-    Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
-    
     return new DriveToPlaceOnObjectAction(robot,
                                           selectedObjectID,
-                                          msg.useExactRotation,
-                                          rot,
+                                          msg.motionProf,
+                                          msg.useApproachAngle,
+                                          msg.approachAngle_rad,
                                           msg.useManualSpeed);
   } else {
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
@@ -194,7 +202,10 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToObjectAction(selectedObjectID, msg.distanceFromObjectOrigin_mm, msg.useManualSpeed);
+  return new DriveToObjectAction(selectedObjectID,
+                                 msg.distanceFromObjectOrigin_mm,
+                                 msg.motionProf,
+                                 msg.useManualSpeed);
 }
 
 IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
@@ -208,6 +219,7 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
   
   return new DriveToAlignWithObjectAction(selectedObjectID,
                                           msg.distanceFromMarker_mm,
+                                          msg.motionProf,
                                           msg.useApproachAngle,
                                           msg.approachAngle_rad,
                                           msg.useManualSpeed);
@@ -224,6 +236,7 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   
   if(static_cast<bool>(msg.usePreDockPose)) {
     return new DriveToRollObjectAction(selectedObjectID,
+                                       msg.motionProf,
                                        msg.useApproachAngle,
                                        msg.approachAngle_rad,
                                        msg.useManualSpeed);
@@ -239,7 +252,9 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToAndTraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+    return new DriveToAndTraverseObjectAction(selectedObjectID,
+                                              msg.motionProf,
+                                              msg.useManualSpeed);
   } else {
     return new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
   }

@@ -81,10 +81,19 @@ private:
   void ProcessVizImageChunkMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
+  bool IsMoodDisplayEnabled() const;
   void ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
+  bool IsBehaviorDisplayEnabled() const;
+  void PreUpdateBehaviorDisplay();
   void ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
-
+  void DrawBehaviorDisplay();
+  
+  void ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   using BehaviorScoreBuffer = Util::CircularBuffer<float>;

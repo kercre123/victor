@@ -18,6 +18,9 @@
 #include "clad/types/emotionTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
 namespace Cozmo {
@@ -34,9 +37,16 @@ public:
   {  
   }
   
+  explicit EmotionScorer(const Json::Value& inJson);
+  
   EmotionType             GetEmotionType() const  { return _emotionType; }
   Util::GraphEvaluator2d  GetScoreGraph()  const  { return _scoreGraph; }
   bool                    TrackDeltaScore() const { return _trackDeltaScore; }
+  
+  // ===== Json =====
+  
+  bool ReadFromJson(const Json::Value& inJson);
+  bool WriteToJson(Json::Value& outJson) const;
   
 private:
   

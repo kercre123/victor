@@ -52,11 +52,6 @@ public:
 
   virtual void StopPlanning() override;
 
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path) override;
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose,
-                               Planning::Path &path,
-                               size_t& selectedTargetIndex) override;
-
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) override;
 
   virtual EPlannerStatus CheckPlanningStatus() const override;
@@ -64,7 +59,11 @@ public:
 protected:
   EComputePathStatus ComputePathHelper(const Pose3d& startPose,
                                        const Pose3d& targetPose);
-  
+
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path) override;
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                        Planning::Path &path,
+                                        size_t& selectedTargetIndex) override;
   LatticePlannerImpl* _impl;
 };
 

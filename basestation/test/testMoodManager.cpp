@@ -443,3 +443,204 @@ TEST(MoodManager, BehaviorScoring)
 }
 
 
+TEST(MoodManager, EmotionScorerRoundTripJson)
+{
+  EmotionScorer testScorer(EmotionType::Happy,
+                           Anki::Util::GraphEvaluator2d({{-1.0f, 0.0f}, {0.5f, 1.0f}, {1.0f, 0.6f}}), true);
+  
+  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Happy);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 3);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._x, -1.0f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._y,  0.0f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(1)._x,  0.5f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(1)._y,  1.0f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(2)._x,  1.0f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(2)._y,  0.6f);
+  EXPECT_EQ(testScorer.TrackDeltaScore(), true);
+  
+  Json::Value testJson;
+  const bool writeRes = testScorer.WriteToJson(testJson);
+  
+  EXPECT_TRUE( writeRes );
+  
+  EmotionScorer testScorer2(testJson);
+  
+  EXPECT_EQ(testScorer2.GetEmotionType(), EmotionType::Happy);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNumNodes(), 3);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(0)._x, -1.0f);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(0)._y,  0.0f);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(1)._x,  0.5f);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(1)._y,  1.0f);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(2)._x,  1.0f);
+  EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(2)._y,  0.6f);
+  EXPECT_EQ(testScorer2.TrackDeltaScore(), true);
+}
+
+
+const char* kTestEmotionScorerJson =
+"{"
+"   \"emotionType\" : \"Calm\","
+"   \"scoreGraph\" : {"
+"      \"nodes\" : ["
+"         {"
+"            \"x\" : -1,"
+"            \"y\" : -0.5"
+"         },"
+"         {"
+"            \"x\" : 2.0,"
+"            \"y\" : 1.5"
+"         }"
+"      ]"
+"   },"
+"   \"trackDelta\" : true"
+"}";
+
+
+TEST(MoodManager, EmotionScorerReadJson)
+{
+  Json::Value  emotionScorerJson;
+  Json::Reader reader;
+  const bool parsedOK = reader.parse(kTestEmotionScorerJson, emotionScorerJson, false);
+  ASSERT_TRUE(parsedOK);
+  
+  EmotionScorer testScorer(emotionScorerJson);
+
+  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Calm);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 2);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._x, -1.0f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._y, -0.5f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(1)._x,  2.0f);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNode(1)._y,  1.5f);
+  EXPECT_EQ(testScorer.TrackDeltaScore(), true);
+}
+
+
+// Bad emotionType
+const char* kBadTestEmotionScorerJson =
+"{"
+"   \"emotionType\" : \"Welsh\","
+"   \"scoreGraph\" : {"
+"      \"nodes\" : ["
+"         {"
+"            \"x\" : -1,"
+"            \"y\" : -0.5"
+"         }"
+"      ]"
+"   },"
+"   \"trackDelta\" : false"
+"}";
+
+
+// Unknown EmotionType entry
+TEST(MoodManager, EmotionScorerReadBadJson)
+{
+  Json::Value  emotionScorerJson;
+  Json::Reader reader;
+  const bool parsedOK = reader.parse(kBadTestEmotionScorerJson, emotionScorerJson, false);
+  ASSERT_TRUE(parsedOK);
+
+  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
+  const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
+  
+  EXPECT_FALSE( readRes );
+  
+  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Count);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 0);
+  EXPECT_EQ(testScorer.TrackDeltaScore(), false);
+}
+
+
+// Missing emotionType entry
+const char* kBad2TestEmotionScorerJson =
+"{"
+"   \"scoreGraph\" : {"
+"      \"nodes\" : ["
+"         {"
+"            \"x\" : -1,"
+"            \"y\" : -0.5"
+"         }"
+"      ]"
+"   },"
+"   \"trackDelta\" : false"
+"}";
+
+
+TEST(MoodManager, EmotionScorerReadBadJson2)
+{
+  Json::Value  emotionScorerJson;
+  Json::Reader reader;
+  const bool parsedOK = reader.parse(kBad2TestEmotionScorerJson, emotionScorerJson, false);
+  ASSERT_TRUE(parsedOK);
+  
+  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
+  const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
+  
+  EXPECT_FALSE( readRes );
+  
+  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Count);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 0);
+  EXPECT_EQ(testScorer.TrackDeltaScore(), false);
+}
+
+
+// Missing scoreGraph entry
+const char* kBad3TestEmotionScorerJson =
+"{"
+"   \"emotionType\" : \"Calm\","
+"   \"trackDelta\" : false"
+"}";
+
+
+TEST(MoodManager, EmotionScorerReadBadJson3)
+{
+  Json::Value  emotionScorerJson;
+  Json::Reader reader;
+  const bool parsedOK = reader.parse(kBad3TestEmotionScorerJson, emotionScorerJson, false);
+  ASSERT_TRUE(parsedOK);
+  
+  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
+  const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
+  
+  EXPECT_FALSE( readRes );
+  
+  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Calm);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 0);
+  EXPECT_EQ(testScorer.TrackDeltaScore(), false);
+}
+
+
+// Missing scoreGraph entry
+const char* kBad4TestEmotionScorerJson =
+"{"
+"   \"emotionType\" : \"Calm\","
+"   \"scoreGraph\" : {"
+"      \"nodes\" : ["
+"         {"
+"            \"x\" : -1,"
+"            \"y\" : -0.5"
+"         }"
+"      ]"
+"   }"
+"}";
+
+
+TEST(MoodManager, EmotionScorerReadBadJson4)
+{
+  Json::Value  emotionScorerJson;
+  Json::Reader reader;
+  const bool parsedOK = reader.parse(kBad4TestEmotionScorerJson, emotionScorerJson, false);
+  ASSERT_TRUE(parsedOK);
+  
+  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
+  const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
+  
+  EXPECT_FALSE( readRes );
+  
+  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Calm);
+  EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 1);
+  EXPECT_EQ(testScorer.TrackDeltaScore(), false);
+}
+
+
+
+

@@ -356,6 +356,8 @@ namespace Anki {
       void SendRobotMood(VizInterface::RobotMood&& robotMood);
       void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
       void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
+      void SendStartRobotUpdate();
+      void SendEndRobotUpdate();
 
     protected:
       

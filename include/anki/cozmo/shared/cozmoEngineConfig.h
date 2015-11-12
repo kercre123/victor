@@ -4,6 +4,7 @@
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
 #include "clad/types/imageTypes.h"
+#include "clad/types/pathMotionProfile.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -101,6 +102,31 @@ namespace Anki {
     // When getting a preaction pose for an offset dock, this is the amount by which the
     // preaction pose is offset relative to the specified docking offset. (0 < val < 1)
     const f32 PREACTION_POSE_OFFSET_SCALAR = 1.0f;
+
+    // For things like docking, we want to not turn away too much if we can avoid it. This is a threshold in
+    // radians. If the starting point is close (in euclidean distance) and also the robot angle is within this
+    // threshold of the final goal angle
+    const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
+    
+    
+    // DON'T CHANGE THESE VALUES. ROBOT WON'T STOP WHERE IT'S SUPPOSED TO IF YOU DECREASE THEM.
+    // TODO: Using a high fixed deceleration for all paths until we have support for
+    // the planner to compute when it should need to start decelerating and modify
+    // the path accordingly.
+    const f32 DEFAULT_PATH_DECEL_MMPS2 = 500;
+    const f32 DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2 = 500;
+    
+    // Default path motion profile parameters
+    const f32 DEFAULT_PATH_SPEED_MMPS = 60;
+    const f32 DEFAULT_PATH_ACCEL_MMPS2 = 200;
+    const f32 DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC = 2;
+    const f32 DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2 = 100.f;
+    const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE(DEFAULT_PATH_SPEED_MMPS,
+                                                        DEFAULT_PATH_ACCEL_MMPS2,
+                                                        DEFAULT_PATH_DECEL_MMPS2,
+                                                        DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC,
+                                                        DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2,
+                                                        DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2);
     
   } // namespace Cozmo
 } // namespace Anki

@@ -280,7 +280,7 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
 }
 
 EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
-                                                     const Pose3d& targetPose)
+                                               const Pose3d& targetPose)
 {
   _selectedTargetIdx = 0;
   return ComputePathHelper(startPose, targetPose);
@@ -372,7 +372,7 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   }
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
-
+  
   EComputePathStatus ret = _impl->StartPlanning(startPose, forceReplanFromScratch);
 
   if( ret == EComputePathStatus::Running ) {
@@ -403,13 +403,13 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
 }
 
 
-bool LatticePlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path)
+bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path)
 {
   size_t waste;
   return _impl->GetCompletePath(currentRobotPose, path, waste);
 }
 
-bool LatticePlanner::GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
+bool LatticePlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex)
 {
   return _impl->GetCompletePath(currentRobotPose, path, selectedTargetIndex);
 }
@@ -819,7 +819,8 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   printf("total path:\n");
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
-
+ 
+  
   // Do final check on how close the plan's goal angle is to the originally requested goal angle
   // and either add a point turn at the end or modify the last point turn action.
   u8 numSegments = path.GetNumSegments();

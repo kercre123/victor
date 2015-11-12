@@ -273,12 +273,15 @@ public:
     // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
     // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
     // the path. If specified, the maxReplanTime arguments specifies the maximum nyum
-    Result StartDrivingToPose(const Pose3d& pose, bool useManualSpeed = false);
+    Result StartDrivingToPose(const Pose3d& pose,
+                              const PathMotionProfile motionProfile,
+                              bool useManualSpeed = false);
 
     // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
     // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
     // be set to the pose which is selected once planning is complete
     Result StartDrivingToPose(const std::vector<Pose3d>& poses,
+                              const PathMotionProfile motionProfile,                              
                               size_t* selectedPoseIndex = nullptr,
                               bool useManualSpeed = false);
   
@@ -641,6 +644,7 @@ public:
     IPathPlanner*            _selectedPathPlanner          = nullptr;
     IPathPlanner*            _longPathPlanner              = nullptr;
     IPathPlanner*            _shortPathPlanner             = nullptr;
+    IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
     size_t*                  _plannerSelectedPoseIndexPtr  = nullptr;
     int                      _numPlansStarted              = 0;
     int                      _numPlansFinished             = 0;
@@ -651,10 +655,11 @@ public:
     u16                      _lastRecvdPathID              = 0;
     bool                     _usingManualPathSpeed         = false;
     PathDolerOuter*          _pdo                          = nullptr;
-    
-    // This functions sets _selectedPathPlanner to the appropriate
-    // planner
+    PathMotionProfile        _pathMotionProfile            = DEFAULT_PATH_MOTION_PROFILE;
+  
+    // This functions sets _selectedPathPlanner to the appropriate planner
     void SelectPlanner(const Pose3d& targetPose);
+    void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
     // Sends a path to the robot to be immediately executed
     Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);

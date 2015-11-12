@@ -11,6 +11,7 @@
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
 #include "clad/types/activeObjectTypes.clad"
+#include "clad/types/pathMotionProfile.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
@@ -178,6 +179,7 @@ message GotoPose {
     float_32 x_mm,
     float_32 y_mm,
     float_32 rad,
+    PathMotionProfile motionProf,
     uint_8 level,
     bool useManualSpeed
 }
@@ -185,6 +187,7 @@ message GotoPose {
 // GotoObject
 message GotoObject {
     int_32 objectID,
+    PathMotionProfile motionProf,
     float_32 distanceFromObjectOrigin_mm,
     bool useManualSpeed
 }
@@ -193,6 +196,7 @@ message GotoObject {
 // "Docks" to object so that it is aligned with it at the specified distance
 message AlignWithObject {
     int_32 objectID,
+    PathMotionProfile motionProf,
     float_32 distanceFromMarker_mm,
     float_32 approachAngle_rad,
     bool useApproachAngle,
@@ -208,6 +212,7 @@ message PlaceObjectOnGround {
     float_32 qx,
     float_32 qy,
     float_32 qz,
+    PathMotionProfile motionProf,
     uint_8 level,
     bool useManualSpeed,
     bool useExactRotation    // If true, then tries to place object at the exact rotation specified by the quaternion
@@ -232,6 +237,7 @@ message SelectNextObject {
 // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
 message PickupObject {
     int_32 objectID, // negative value means "currently selected object"
+    PathMotionProfile motionProf,
     float_32 approachAngle_rad,
     bool   useApproachAngle,
     bool usePreDockPose,
@@ -247,11 +253,9 @@ message PickupObject {
 //                           currently carried object, the action fails.
 message PlaceOnObject {
     int_32 objectID, // negative value means "currently selected object"
-    float_32 qw,
-    float_32 qx,
-    float_32 qy,
-    float_32 qz,
-    float_32 useExactRotation,
+    PathMotionProfile motionProf,
+    float_32 approachAngle_rad,
+    bool   useApproachAngle,
     bool usePreDockPose,
     bool useManualSpeed,
 }
@@ -265,6 +269,7 @@ message PlaceOnObject {
 // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
 message PlaceRelObject {
     int_32 objectID, // negative value means "currently selected object"
+    PathMotionProfile motionProf,
     float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
     float_32 approachAngle_rad,
     bool   useApproachAngle,
@@ -275,6 +280,7 @@ message PlaceRelObject {
 // RollObject
 message RollObject {
   int_32 objectID, // negative value means "currently selected object"
+  PathMotionProfile motionProf,
   float_32 approachAngle_rad,
   bool   useApproachAngle,
   bool usePreDockPose,
@@ -283,6 +289,7 @@ message RollObject {
 
 // TraverseObject
 message TraverseObject {
+  PathMotionProfile motionProf,
   bool usePreDockPose,
   bool useManualSpeed
 }

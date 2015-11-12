@@ -247,8 +247,10 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
     }
   }
   
-  
-  IActionRunner* goToPoseAction = new DriveToPoseAction(destPose, false, false);
+    IActionRunner* goToPoseAction = new DriveToPoseAction(destPose,
+                                                        DEFAULT_PATH_MOTION_PROFILE,
+                                                        false,
+                                                        false);
   _currentDriveActionID = goToPoseAction->GetTag();
   robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
   return RESULT_OK;
