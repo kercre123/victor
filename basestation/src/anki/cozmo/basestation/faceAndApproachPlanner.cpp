@@ -45,7 +45,7 @@ namespace Anki {
 namespace Cozmo {
 
 EComputePathStatus FaceAndApproachPlanner::ComputePath(const Pose3d& startPose,
-                                                               const Pose3d& targetPose)
+                                                       const Pose3d& targetPose)
 {
   _targetVec = targetPose.GetTranslation();
   _finalTargetAngle = targetPose.GetRotationAngle<'Z'>().ToFloat();
