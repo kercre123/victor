@@ -31,13 +31,19 @@ namespace VisionTraining {
     public int PickCube() {
       int index = Random.Range(0, robot.LightCubes.Count);
       int i = 0;
+      int id = -1;
       foreach (KeyValuePair<int, LightCube> lightCube in robot.LightCubes) {
         if (index == i) {
-          return lightCube.Key;
+          id = lightCube.Key;
+          lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+
+        }
+        else {
+          lightCube.Value.SetLEDs(0);
         }
         i++;
       }
-      return -1;
+      return id;
     }
 
     public override void CleanUp() {
