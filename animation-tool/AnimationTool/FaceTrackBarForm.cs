@@ -14,18 +14,57 @@ namespace AnimationTool
         private TrackBar rightTrackBar;
         private CheckBox checkBox;
         private TextBox rightTextBox;
+        private bool fakeFloat;
 
         public string LeftLabel { get { return leftLabel.Text; } set { leftLabel.Text = value; } }
-        public float LeftValue { get { return leftTrackBar.Value * 0.01f; } set { leftTrackBar.Value = (int)(value * 100); } }
+        public float LeftValue
+        {
+            get
+            {
+                if (fakeFloat)
+                {
+                    return leftTrackBar.Value * 0.01f;
+                }
+                return leftTrackBar.Value;
+            }
+            set
+            {
+                if (fakeFloat)
+                {
+                    leftTrackBar.Value = (int)(value * 100);
+                }
+                leftTrackBar.Value = (int) value;
+            }
+        }
         public int LeftMinimum { get { return leftTrackBar.Minimum; } set { leftTrackBar.Minimum = value; } }
         public int LeftMaximum { get { return leftTrackBar.Maximum; } set { leftTrackBar.Maximum = value; } }
 
         public string RightLabel { get { return rightLabel.Text; } set { rightLabel.Text = value; } }
-        public float RightValue { get { return rightTrackBar.Value * 0.01f; } set { rightTrackBar.Value = (int)(value * 100); } }
+        public float RightValue
+        {
+            get
+            {
+                if (fakeFloat)
+                {
+                    return rightTrackBar.Value * 0.01f;
+                }
+                return rightTrackBar.Value;
+            }
+            set
+            {
+                if (fakeFloat)
+                {
+                    rightTrackBar.Value = (int)(value * 100);
+                }
+                rightTrackBar.Value = (int)value;
+            }
+        }
+
         public int RightMinimum { get { return rightTrackBar.Minimum; } set { rightTrackBar.Minimum = value; } }
         public int RightMaximum { get { return rightTrackBar.Maximum; } set { rightTrackBar.Maximum = value; } }
 
         public bool CheckBoxVisible { get { return checkBox.Visible; } set { checkBox.Visible = value; } }
+        public bool FakeFloat { get { return fakeFloat; } set { fakeFloat = value; } }
 
         public EventHandler OnChanged;
 
@@ -44,6 +83,7 @@ namespace AnimationTool
             this.rightTrackBar = new System.Windows.Forms.TrackBar();
             this.rightTextBox = new System.Windows.Forms.TextBox();
             this.checkBox = new System.Windows.Forms.CheckBox();
+            this.fakeFloat = false;
             ((System.ComponentModel.ISupportInitialize)(this.leftTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.rightTrackBar)).BeginInit();
             this.SuspendLayout();

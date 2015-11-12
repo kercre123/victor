@@ -265,7 +265,8 @@ namespace AnimationTool
             // eyeAngle
             // 
             this.eyeAngle.BackColor = System.Drawing.SystemColors.Control;
-            this.eyeAngle.CheckBoxVisible = false;
+            this.eyeAngle.CheckBoxVisible = true;
+            this.eyeAngle.FakeFloat = false;
             this.eyeAngle.LeftLabel = "Deg";
             this.eyeAngle.LeftMaximum = 100;
             this.eyeAngle.LeftMinimum = -100;
@@ -292,7 +293,8 @@ namespace AnimationTool
             // eyeScaleY
             // 
             this.eyeScaleY.BackColor = System.Drawing.SystemColors.Control;
-            this.eyeScaleY.CheckBoxVisible = false;
+            this.eyeScaleY.CheckBoxVisible = true;
+            this.eyeScaleY.FakeFloat = true;
             this.eyeScaleY.LeftLabel = "Y";
             this.eyeScaleY.LeftMaximum = 100;
             this.eyeScaleY.LeftMinimum = -100;
@@ -309,7 +311,8 @@ namespace AnimationTool
             // eyeScaleX
             // 
             this.eyeScaleX.BackColor = System.Drawing.SystemColors.Control;
-            this.eyeScaleX.CheckBoxVisible = false;
+            this.eyeScaleX.CheckBoxVisible = true;
+            this.eyeScaleX.FakeFloat = true;
             this.eyeScaleX.LeftLabel = "X";
             this.eyeScaleX.LeftMaximum = 100;
             this.eyeScaleX.LeftMinimum = -100;
@@ -336,7 +339,8 @@ namespace AnimationTool
             // eyeCenterY
             // 
             this.eyeCenterY.BackColor = System.Drawing.SystemColors.Control;
-            this.eyeCenterY.CheckBoxVisible = false;
+            this.eyeCenterY.CheckBoxVisible = true;
+            this.eyeCenterY.FakeFloat = false;
             this.eyeCenterY.LeftLabel = "Y";
             this.eyeCenterY.LeftMaximum = 100;
             this.eyeCenterY.LeftMinimum = -100;
@@ -354,6 +358,7 @@ namespace AnimationTool
             // 
             this.eyeCenterX.BackColor = System.Drawing.SystemColors.Control;
             this.eyeCenterX.CheckBoxVisible = false;
+            this.eyeCenterX.FakeFloat = false;
             this.eyeCenterX.LeftLabel = "X";
             this.eyeCenterX.LeftMaximum = 100;
             this.eyeCenterX.LeftMinimum = -100;
@@ -402,7 +407,8 @@ namespace AnimationTool
             // upperOuterRadiusY
             // 
             this.upperOuterRadiusY.BackColor = System.Drawing.SystemColors.Control;
-            this.upperOuterRadiusY.CheckBoxVisible = false;
+            this.upperOuterRadiusY.CheckBoxVisible = true;
+            this.upperOuterRadiusY.FakeFloat = true;
             this.upperOuterRadiusY.LeftLabel = "Y";
             this.upperOuterRadiusY.LeftMaximum = 100;
             this.upperOuterRadiusY.LeftMinimum = -100;
@@ -419,7 +425,8 @@ namespace AnimationTool
             // upperOuterRadiusX
             // 
             this.upperOuterRadiusX.BackColor = System.Drawing.SystemColors.Control;
-            this.upperOuterRadiusX.CheckBoxVisible = false;
+            this.upperOuterRadiusX.CheckBoxVisible = true;
+            this.upperOuterRadiusX.FakeFloat = true;
             this.upperOuterRadiusX.LeftLabel = "X";
             this.upperOuterRadiusX.LeftMaximum = 100;
             this.upperOuterRadiusX.LeftMinimum = -100;
@@ -446,7 +453,8 @@ namespace AnimationTool
             // upperInnerRadiusY
             // 
             this.upperInnerRadiusY.BackColor = System.Drawing.SystemColors.Control;
-            this.upperInnerRadiusY.CheckBoxVisible = false;
+            this.upperInnerRadiusY.CheckBoxVisible = true;
+            this.upperInnerRadiusY.FakeFloat = true;
             this.upperInnerRadiusY.LeftLabel = "Y";
             this.upperInnerRadiusY.LeftMaximum = 100;
             this.upperInnerRadiusY.LeftMinimum = -100;
@@ -463,7 +471,8 @@ namespace AnimationTool
             // upperInnerRadiusX
             // 
             this.upperInnerRadiusX.BackColor = System.Drawing.SystemColors.Control;
-            this.upperInnerRadiusX.CheckBoxVisible = false;
+            this.upperInnerRadiusX.CheckBoxVisible = true;
+            this.upperInnerRadiusX.FakeFloat = true;
             this.upperInnerRadiusX.LeftLabel = "X";
             this.upperInnerRadiusX.LeftMaximum = 100;
             this.upperInnerRadiusX.LeftMinimum = -100;
@@ -490,7 +499,8 @@ namespace AnimationTool
             // lowerOuterRadiusY
             // 
             this.lowerOuterRadiusY.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerOuterRadiusY.CheckBoxVisible = false;
+            this.lowerOuterRadiusY.CheckBoxVisible = true;
+            this.lowerOuterRadiusY.FakeFloat = true;
             this.lowerOuterRadiusY.LeftLabel = "Y";
             this.lowerOuterRadiusY.LeftMaximum = 100;
             this.lowerOuterRadiusY.LeftMinimum = -100;
@@ -507,7 +517,8 @@ namespace AnimationTool
             // lowerOuterRadiusX
             // 
             this.lowerOuterRadiusX.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerOuterRadiusX.CheckBoxVisible = false;
+            this.lowerOuterRadiusX.CheckBoxVisible = true;
+            this.lowerOuterRadiusX.FakeFloat = true;
             this.lowerOuterRadiusX.LeftLabel = "X";
             this.lowerOuterRadiusX.LeftMaximum = 100;
             this.lowerOuterRadiusX.LeftMinimum = -100;
@@ -534,7 +545,8 @@ namespace AnimationTool
             // lowerInnerRadiusY
             // 
             this.lowerInnerRadiusY.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerInnerRadiusY.CheckBoxVisible = false;
+            this.lowerInnerRadiusY.CheckBoxVisible = true;
+            this.lowerInnerRadiusY.FakeFloat = true;
             this.lowerInnerRadiusY.LeftLabel = "Y";
             this.lowerInnerRadiusY.LeftMaximum = 100;
             this.lowerInnerRadiusY.LeftMinimum = -100;
@@ -551,7 +563,8 @@ namespace AnimationTool
             // lowerInnerRadiusX
             // 
             this.lowerInnerRadiusX.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerInnerRadiusX.CheckBoxVisible = false;
+            this.lowerInnerRadiusX.CheckBoxVisible = true;
+            this.lowerInnerRadiusX.FakeFloat = true;
             this.lowerInnerRadiusX.LeftLabel = "X";
             this.lowerInnerRadiusX.LeftMaximum = 100;
             this.lowerInnerRadiusX.LeftMinimum = -100;
@@ -596,7 +609,8 @@ namespace AnimationTool
             // lowerLidBend
             // 
             this.lowerLidBend.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerLidBend.CheckBoxVisible = false;
+            this.lowerLidBend.CheckBoxVisible = true;
+            this.lowerLidBend.FakeFloat = true;
             this.lowerLidBend.LeftLabel = "Bend";
             this.lowerLidBend.LeftMaximum = 100;
             this.lowerLidBend.LeftMinimum = -100;
@@ -613,7 +627,8 @@ namespace AnimationTool
             // lowerLidAngle
             // 
             this.lowerLidAngle.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerLidAngle.CheckBoxVisible = false;
+            this.lowerLidAngle.CheckBoxVisible = true;
+            this.lowerLidAngle.FakeFloat = false;
             this.lowerLidAngle.LeftLabel = "Angle";
             this.lowerLidAngle.LeftMaximum = 100;
             this.lowerLidAngle.LeftMinimum = -100;
@@ -630,7 +645,8 @@ namespace AnimationTool
             // lowerLidY
             // 
             this.lowerLidY.BackColor = System.Drawing.SystemColors.Control;
-            this.lowerLidY.CheckBoxVisible = false;
+            this.lowerLidY.CheckBoxVisible = true;
+            this.lowerLidY.FakeFloat = true;
             this.lowerLidY.LeftLabel = "Y";
             this.lowerLidY.LeftMaximum = 100;
             this.lowerLidY.LeftMinimum = -100;
@@ -657,7 +673,8 @@ namespace AnimationTool
             // upperLidBend
             // 
             this.upperLidBend.BackColor = System.Drawing.SystemColors.Control;
-            this.upperLidBend.CheckBoxVisible = false;
+            this.upperLidBend.CheckBoxVisible = true;
+            this.upperLidBend.FakeFloat = true;
             this.upperLidBend.LeftLabel = "Bend";
             this.upperLidBend.LeftMaximum = 100;
             this.upperLidBend.LeftMinimum = -100;
@@ -674,7 +691,8 @@ namespace AnimationTool
             // upperLidAngle
             // 
             this.upperLidAngle.BackColor = System.Drawing.SystemColors.Control;
-            this.upperLidAngle.CheckBoxVisible = false;
+            this.upperLidAngle.CheckBoxVisible = true;
+            this.upperLidAngle.FakeFloat = false;
             this.upperLidAngle.LeftLabel = "Angle";
             this.upperLidAngle.LeftMaximum = 100;
             this.upperLidAngle.LeftMinimum = -100;
@@ -691,7 +709,8 @@ namespace AnimationTool
             // upperLidY
             // 
             this.upperLidY.BackColor = System.Drawing.SystemColors.Control;
-            this.upperLidY.CheckBoxVisible = false;
+            this.upperLidY.CheckBoxVisible = true;
+            this.upperLidY.FakeFloat = true;
             this.upperLidY.LeftLabel = "Y";
             this.upperLidY.LeftMaximum = 100;
             this.upperLidY.LeftMinimum = -100;
@@ -735,6 +754,7 @@ namespace AnimationTool
             // 
             this.faceAngleNew.BackColor = System.Drawing.SystemColors.Control;
             this.faceAngleNew.CheckBoxVisible = false;
+            this.faceAngleNew.FakeFloat = false;
             this.faceAngleNew.LeftLabel = "Deg";
             this.faceAngleNew.LeftMaximum = 100;
             this.faceAngleNew.LeftMinimum = -100;
@@ -762,6 +782,7 @@ namespace AnimationTool
             // 
             this.faceScale.BackColor = System.Drawing.SystemColors.Control;
             this.faceScale.CheckBoxVisible = true;
+            this.faceScale.FakeFloat = true;
             this.faceScale.LeftLabel = "X";
             this.faceScale.LeftMaximum = 100;
             this.faceScale.LeftMinimum = -100;
@@ -789,6 +810,7 @@ namespace AnimationTool
             // 
             this.faceCenter.BackColor = System.Drawing.SystemColors.Control;
             this.faceCenter.CheckBoxVisible = false;
+            this.faceCenter.FakeFloat = false;
             this.faceCenter.LeftLabel = "X";
             this.faceCenter.LeftMaximum = 100;
             this.faceCenter.LeftMinimum = -100;
