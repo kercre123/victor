@@ -14,7 +14,9 @@ public static class Localization {
       #if !UNITY_EDITOR
       DAS.Warn("LocalizedString.Get.MissingKey", "");  //disabling populating of key name for COPPA reasons (JDN)
       #else
-      DAS.Warn("LocalizedString.Get.MissingKey", key);
+      if (Application.isPlaying) {
+        DAS.Warn("LocalizedString.Get.MissingKey", key);
+      }
       #endif
       value = key;
     }
@@ -35,7 +37,8 @@ public static class Localization {
   // Return locale code for a language code.
   public static string GetStringsLocale() {
 
-    // TODO: INGO - Need to provide functionality to GetCurrentLocale?
+    // TODO: INGO - Need to provide functionality for GetCurrentLocale that 
+    // doesn't rely on DriveEngine
     // string lang;
     // string country;
     // string deviceLocale = Anki.ApplicationServices.GetCurrentLocale(out lang, out country);
@@ -70,20 +73,18 @@ public static class Localization {
   public static void LoadStrings() {
     // TODO(BRC) Dynamically read variable number of strings files
     string[] resources = {
-      "overdrive-strings.json",
-      "asset-strings.json",
-      "overlay-strings-custom.json"
+      "HubWorldStrings",
+      "MinigameStrings"
     };
 
     string locale = GetStringsLocale();
     for (int i = 0; i < resources.Length; ++i) {
-      string resource = "localized-strings/" + locale + "/" + resources[i];
+      string resourceFilePath = "LocalizedStrings/" + locale + "/" + resources[i];
 
-      // TODO: INGO - need to analyze what GetPathForResource does?
-      //string path = Anki.DriveEngine.Platform.GetPathForResource(resource);
-      string path = resource;
+      TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
+      string languageJson = languageAsset.text;
 
-      Anki.AppResources.StringTable st = Anki.AppResources.StringTable.LoadStringsFromSmartlingJSONFile(path);
+      Anki.AppResources.StringTable st = Anki.AppResources.StringTable.LoadStringsFromSmartlingJSONFile(languageJson);
       _st.MergeEntriesFromStringTable(st);
     }
   }
