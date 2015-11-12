@@ -21,13 +21,14 @@ namespace VisionTraining {
       base.Update();
 
       bool cubeInRectNow = false;
+      bool cubeInViewNow = false;
 
       for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
           if (_VisionRect.Contains((Vector2)_CurrentRobot.VisibleObjects[i].WorldPosition)) {
             cubeInRectNow = true;
-
           }
+          cubeInViewNow = true;
         }
       }
 
@@ -36,7 +37,13 @@ namespace VisionTraining {
         _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.white));
       }
       else {
-        _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
+        if (cubeInViewNow) {
+          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
+        }
+        else {
+          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.red));
+        }
+
         _CubeInRectTime -= Time.deltaTime;
         if (_CubeInRectTime < 0.0f) {
           _CubeInRectTime = 0.0f;

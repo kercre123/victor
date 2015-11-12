@@ -38,10 +38,12 @@ namespace VisionTraining {
         }
       }
 
-      int index = Random.Range(0, CurrentRobot.LightCubes.Count);
-      int i = 0;
       int id = -2;
+
       do {
+        int index = Random.Range(0, CurrentRobot.LightCubes.Count);
+        int i = 0;
+
         foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
           if (index == i) {
             id = lightCube.Key;
@@ -53,7 +55,9 @@ namespace VisionTraining {
           i++;
         }
       } while (id == _LastSelectedId);
+
       _LastSelectedId = id;
+
       return id;
     }
 
