@@ -98,14 +98,6 @@ namespace Cozmo {
     //_processingThread.detach();
     
   }
-  
-  /*
-  void VisionComponent::Start(const Vision::CameraCalibration& camCalib)
-  {
-    SetCameraCalibration(camCalib);
-    Start();
-  }
-   */
 
   void VisionComponent::Stop()
   {
@@ -293,14 +285,6 @@ namespace Cozmo {
     
     ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
                  "VisionSystem should already be initialized.");
-    /*
-    _visionSystem->Init(_camCalib);
-    
-    // Wait for initialization to complete (i.e. Matlab to start up, if needed)
-    while(!_visionSystem->IsInitialized()) {
-      usleep(500);
-    }
-     */
     
     while (_running) {
       
@@ -493,9 +477,11 @@ namespace Cozmo {
     if(_visionSystem != nullptr)
     {
       Point2f motionCentroid;
-      if (true == _visionSystem->CheckMailbox(motionCentroid)) {
-        
+      if (true == _visionSystem->CheckMailbox(motionCentroid))
+      {
         motionCentroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
+       
+        // TODO: Send motionCentroid as an event move the following to a new behaviorReactToMotion
         
         if(NEAR(motionCentroid.x(), 0.f, _camera.GetCalibration().GetNcols()/10) &&
            NEAR(motionCentroid.y(), 0.f, _camera.GetCalibration().GetNrows()/10))

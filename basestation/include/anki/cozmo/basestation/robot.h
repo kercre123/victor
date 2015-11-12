@@ -732,16 +732,6 @@ public:
     const Vision::KnownMarker*  _carryingMarker           = nullptr;
     bool                        _lastPickOrPlaceSucceeded = false;
   
-    /*
-     // Plan a path to the pre-ascent/descent pose (depending on current
-     // height of the robot) and then go up or down the ramp.
-     Result ExecuteRampingSequence(Ramp* ramp);
-     
-     // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
-     // object, then cross it.
-     Result ExecuteBridgeCrossingSequence(ActionableObject* object);
-     */
-    
     // A place to store reaction callback functions, indexed by the type of
     // vision marker that triggers them
     std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
@@ -877,20 +867,7 @@ inline const Pose3d& Robot::GetDriveCenterPose(void) const
 
 inline void Robot::EnableVisionWhileMoving(bool enable)
 { _visionWhileMovingEnabled = enable; }
-/*
-inline const Vision::Camera& Robot::GetCamera(void) const
-{ return _visionComponent.GetCamera(); }
 
-inline Vision::Camera& Robot::GetCamera(void)
-{ return _visionComponent.GetCamera(); }
-
-inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib) {
-  _visionComponent.SetCameraCalibration(calib);
-}
-
-inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
-{ return _visionComponent.GetCameraCalibration(); }
-*/
 inline const f32 Robot::GetHeadAngle() const
 { return _currentHeadAngle; }
 
