@@ -176,6 +176,7 @@ public class Robot : IDisposable {
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
   private U2G.AlignWithObject AlignWithObjectMessage;
+  private PathMotionProfile PathMotionProfileDefault;
 
   private ObservedObject _CarryingObject;
 
@@ -272,6 +273,15 @@ public class Robot : IDisposable {
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
+
+    // These defaults should eventually be in clad
+    PathMotionProfileDefault = new PathMotionProfile();
+    PathMotionProfileDefault.speed_mmps = 60.0f;
+    PathMotionProfileDefault.accel_mmps2 = 200.0f;
+    PathMotionProfileDefault.decel_mmps2 = 500.0f;
+    PathMotionProfileDefault.pointTurnSpeed_rad_per_sec = 2.0f;
+    PathMotionProfileDefault.pointTurnAccel_rad_per_sec2 = 100.0f;
+    PathMotionProfileDefault.pointTurnDecel_rad_per_sec2 = 500.0f;
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -509,6 +519,7 @@ public class Robot : IDisposable {
     PlaceRelObjectMessage.useApproachAngle = true;
     PlaceRelObjectMessage.usePreDockPose = true;
     PlaceRelObjectMessage.useManualSpeed = false;
+    PlaceRelObjectMessage.motionProf = PathMotionProfileDefault;
 
     RobotEngineManager.Instance.Message.PlaceRelObject = PlaceRelObjectMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -694,6 +705,7 @@ public class Robot : IDisposable {
     PickupObjectMessage.useManualSpeed = useManualSpeed;
     PickupObjectMessage.useApproachAngle = useApproachAngle;
     PickupObjectMessage.approachAngle_rad = approachAngleRad;
+    PickupObjectMessage.motionProf = PathMotionProfileDefault;
     
     DAS.Debug("Robot", "Pick And Place Object " + PickupObjectMessage.objectID + " usePreDockPose " + PickupObjectMessage.usePreDockPose + " useManualSpeed " + PickupObjectMessage.useManualSpeed);
 
@@ -713,6 +725,7 @@ public class Robot : IDisposable {
     RollObjectMessage.objectID = selectedObject;
     RollObjectMessage.usePreDockPose = usePreDockPose;
     RollObjectMessage.useManualSpeed = useManualSpeed;
+    RollObjectMessage.motionProf = PathMotionProfileDefault;
 
     DAS.Debug("Robot", "Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed);
     
@@ -734,6 +747,7 @@ public class Robot : IDisposable {
     PlaceObjectOnGroundMessage.qw = rotation.w;
     PlaceObjectOnGroundMessage.level = System.Convert.ToByte(level);
     PlaceObjectOnGroundMessage.useManualSpeed = useManualSpeed;
+    PlaceObjectOnGroundMessage.motionProf = PathMotionProfileDefault;
     
     DAS.Debug("Robot", "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
     
@@ -754,6 +768,7 @@ public class Robot : IDisposable {
     GotoPoseMessage.x_mm = x_mm;
     GotoPoseMessage.y_mm = y_mm;
     GotoPoseMessage.rad = rad;
+    GotoPoseMessage.motionProf = PathMotionProfileDefault;
 
     DAS.Debug("Robot", "Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level);
 
@@ -771,6 +786,7 @@ public class Robot : IDisposable {
     GotoObjectMessage.objectID = obj;
     GotoObjectMessage.distanceFromObjectOrigin_mm = distance_mm;
     GotoObjectMessage.useManualSpeed = false;
+    GotoObjectMessage.motionProf = PathMotionProfileDefault;
 
     RobotEngineManager.Instance.Message.GotoObject = GotoObjectMessage;
 
@@ -787,6 +803,7 @@ public class Robot : IDisposable {
     AlignWithObjectMessage.distanceFromMarker_mm = distanceFromMarker_mm;
     AlignWithObjectMessage.useManualSpeed = false;
     AlignWithObjectMessage.useApproachAngle = false;
+    AlignWithObjectMessage.motionProf = PathMotionProfileDefault;
 
     RobotEngineManager.Instance.Message.AlignWithObject = AlignWithObjectMessage;
     RobotEngineManager.Instance.SendMessage();
