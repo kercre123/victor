@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class DevHubWorldDialog : BaseDialog {
 
@@ -19,6 +21,9 @@ public class DevHubWorldDialog : BaseDialog {
   [SerializeField]
   private RectTransform _ButtonContainer;
 
+  [SerializeField]
+  private ScrollRect _ScrollRect;
+
   public void Initialize(GameBase[] minigames) {
     GameObject newButton;
     DevHubWorldButton buttonScript;
@@ -28,6 +33,7 @@ public class DevHubWorldDialog : BaseDialog {
       buttonScript.Initialize(game);
       buttonScript.OnDevButtonClicked += HandleOnDevButtonClicked;
     }
+    _ScrollRect.verticalNormalizedPosition = 1.0f;
   }
 
   protected override void CleanUp() {

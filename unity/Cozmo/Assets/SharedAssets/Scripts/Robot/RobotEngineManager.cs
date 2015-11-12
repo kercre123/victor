@@ -124,6 +124,9 @@ public class RobotEngineManager : MonoBehaviour {
     if (_Channel != null) {
       _Channel.Update();
     }
+    if (CurrentRobot != null) {
+      CurrentRobot.ClearVisibleObjects();
+    }
   }
 
   public void LateUpdate() {
@@ -367,10 +370,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
     if (CurrentRobot == null)
       return;
-    
-    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.IsBusy) {
-      CurrentRobot.ClearVisibleObjects();
-    }
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedObject message) {
