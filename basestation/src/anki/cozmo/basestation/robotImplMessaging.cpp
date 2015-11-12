@@ -157,7 +157,7 @@ void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& 
 
   // Note: this returns the vision system to whatever mode it was in before
   // it was docking/tracking
-  StopDocking();
+  _visionComponent.EnableMode(VisionMode::Tracking, false);
 }
 
 void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -175,8 +175,8 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
     SetLastPickOrPlaceSucceeded(false);
   }
 
-  StopDocking();
-  StartLookingForMarkers();
+  _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
+  _visionComponent.EnableMode(VisionMode::Tracking, false);
 
 }
 

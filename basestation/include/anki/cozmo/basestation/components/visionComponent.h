@@ -34,29 +34,24 @@ namespace Data {
 }
 }
   
-  namespace Vision {
-    class TrackedFace;
-  }
+namespace Vision {
+  class TrackedFace;
+}
   
 namespace Cozmo {
 
 namespace RobotInterface {
-struct PanAndTilt;
-class EngineToRobot;
-class RobotToEngine;
-enum class EngineToRobotTag : uint8_t;
-enum class RobotToEngineTag : uint8_t;
+  struct PanAndTilt;
+  class EngineToRobot;
+  class RobotToEngine;
+  enum class EngineToRobotTag : uint8_t;
+  enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
-
-namespace VizInterface {
-class MessageViz;
-struct TrackerQuad;
-enum class MessageVizTag : uint8_t;
-} // end namespace VizInterface
 
 // Forward declaration
 class Robot;
 class VisionSystem;
+  
 struct DockingErrorSignal;
 
   class VisionComponent : public Util::noncopyable
@@ -150,7 +145,6 @@ struct DockingErrorSignal;
     void Lock();
     void Unlock();
     
-
     // Used for asynchronous run mode
     void Start(); // SetCameraCalibration() must have been called already
     void Stop();

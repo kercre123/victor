@@ -1918,12 +1918,6 @@ namespace Anki {
       
     } // SetOnPose()
     
-    Result Robot::StopDocking()
-    {
-      _visionComponent.EnableMode(VisionMode::Tracking, false);
-      return RESULT_OK;
-    }
-    
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
@@ -2390,27 +2384,15 @@ namespace Anki {
       robotState.timestamp     = actualTimestamp;
       robotState.pose_frame_id = p.GetFrameId();
       robotState.headAngle     = p.GetHeadAngle();
-      robotState.liftAngle = p.GetLiftAngle();
-      robotState.pose.x    = p.GetPose().GetTranslation().x();
-      robotState.pose.y    = p.GetPose().GetTranslation().y();
-      robotState.pose.z    = p.GetPose().GetTranslation().z();
-      robotState.pose.angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
+      robotState.liftAngle     = p.GetLiftAngle();
+      robotState.pose.x        = p.GetPose().GetTranslation().x();
+      robotState.pose.y        = p.GetPose().GetTranslation().y();
+      robotState.pose.z        = p.GetPose().GetTranslation().z();
+      robotState.pose.angle    = p.GetPose().GetRotationAngle<'Z'>().ToFloat();
       
       _visionComponent.SetNextImage(image, robotState);
       
       return lastResult;
-    }
-    
-    Result Robot::StartLookingForMarkers()
-    {
-      _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
-      return RESULT_OK;
-    }
-
-    Result Robot::StopLookingForMarkers()
-    {
-      _visionComponent.EnableMode(VisionMode::DetectingMarkers, false);
-      return RESULT_OK;
     }
     
     /*

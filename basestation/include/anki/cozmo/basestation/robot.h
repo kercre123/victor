@@ -194,9 +194,6 @@ public:
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request);
   
     Result ProcessImage(const Vision::ImageRGB& image);
-    Result StartLookingForMarkers();
-    Result StopLookingForMarkers();
-    void SetupVisionHandlers(IExternalInterface& externalInterface);
   
     // Queue an observed vision marker for processing with BlockWorld.
     // Note that this is a NON-const reference: the marker's camera will be updated
@@ -356,9 +353,7 @@ public:
     // w.r.t. the world, and removes it from the lift pose chain so it is no
     // longer "attached" to the robot.
     Result SetCarriedObjectAsUnattached();
-    
-    Result StopDocking();
-    
+  
     /*
     //
     // Proximity Sensors
@@ -450,8 +445,6 @@ public:
     
     Result RequestIMU(const u32 length_ms) const;
 
-    // For debugging robot parameters:
-    void SetupGainsHandlers(IExternalInterface& externalInterface);
 
     // =========== Pose history =============
   
@@ -785,7 +778,6 @@ public:
     uint32_t _imuDataSize = 0;
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
 
-
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -807,7 +799,9 @@ public:
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
-
+    void SetupVisionHandlers(IExternalInterface& externalInterface);
+    void SetupGainsHandlers(IExternalInterface& externalInterface);
+  
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,
                                      const PoseFrameID_t& frameId) const;
