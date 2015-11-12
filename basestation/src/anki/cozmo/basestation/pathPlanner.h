@@ -16,6 +16,7 @@
 #include "anki/planning/shared/path.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
+#include "clad/types/pathMotionProfile.h"
 #include <set>
 
 
@@ -61,6 +62,9 @@ public:
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,
                                          const std::vector<Pose3d>& targetPoses);
 
+  // Utility function to simply select the closest target pose from a vector
+  static size_t ComputeClosestGoalPose(const Pose3d& startPose, const std::vector<Pose3d>& targetPoses);
+
   // While we are following a path, we can do a more efficient check to see if we need to update that path
   // based on new obstacles or other information. This function assumes that the robot is following the last
   // path that was computed by ComputePath and returned by GetCompletePath. If a new path is needed, it will
@@ -81,8 +85,13 @@ public:
   // recent ComputePlan call. If the robot has moved significantly between computing the path and getting the
   // complete path, the path may trim the first few actions removed to account for the robots motion, based on
   // the passed in position
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path);
-  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, size_t& selectedTargetIndex);
+  bool GetCompletePath(const Pose3d& currentRobotPose,
+                       Planning::Path &path,
+                       const PathMotionProfile* motionProfile = nullptr);
+  bool GetCompletePath(const Pose3d& currentRobotPose,
+                       Planning::Path &path,
+                       size_t& selectedTargetIndex,
+                       const PathMotionProfile* motionProfile = nullptr);
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) {}
@@ -109,6 +118,20 @@ protected:
   bool _planningError;
   size_t _selectedTargetIdx;
   Planning::Path _path;
+  
+  
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                        Planning::Path &path);
+  virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
+                                        Planning::Path &path,
+                                        size_t& selectedTargetIndex);
+  
+  // Modifies in path according to _pathMotionProfile to produce out path.
+  // TODO: This is where Cozmo mood/skill-based path wonkification would occur,
+  //       but currently it just changes speeds and accel on each segment.
+  static bool ApplyMotionProfile(const Planning::Path &in,
+                                 const PathMotionProfile& motionProfile,
+                                 Planning::Path &out);
       
 }; // Interface IPathPlanner
 

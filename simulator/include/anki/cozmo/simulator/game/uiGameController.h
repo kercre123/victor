@@ -75,6 +75,8 @@ protected:
   virtual s32 UpdateInternal() = 0;
 
   
+  // TODO: These default handlers and senders should be CLAD-generated!
+  
   // Message handlers
   virtual void HandleRobotStateUpdate(ExternalInterface::RobotState const& msg){};
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg){};
@@ -108,58 +110,84 @@ protected:
   void SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution);
   void SendSaveImages(SaveMode_t mode, bool alsoSaveState=false);
   void SendEnableDisplay(bool on);
-  void SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed);
+  void SendExecutePathToPose(const Pose3d& p,
+                             PathMotionProfile motionProf,
+                             const bool useManualSpeed);
+  void SendGotoObject(const s32 objectID,
+                      const f32 distFromObjectOrigin_mm,
+                      PathMotionProfile motionProf,
+                      const bool useManualSpeed = false);
+  
+  void SendAlignWithObject(const s32 objectID,
+                           const f32 distFromMarker_mm,
+                           PathMotionProfile motionProf,
+                           const bool usePreDockPose,
+                           const bool useApproachAngle = false,
+                           const f32 approachAngle_rad = false,
+                           const bool useManualSpeed = false);
+  
   void SendPlaceObjectOnGroundSequence(const Pose3d& p,
+                                       PathMotionProfile motionProf,
                                        const bool useExactRotation = false,
                                        const bool useManualSpeed = false);
   
   void SendPickupObject(const s32 objectID,
+                        PathMotionProfile motionProf,
                         const bool usePreDockPose,
                         const bool useApproachAngle = false,
                         const f32 approachAngle_rad = false,
                         const bool useManualSpeed = false);
   
-  void SendPickupSelectedObject(const bool usePreDockPose,
+  void SendPickupSelectedObject(PathMotionProfile motionProf,
+                                const bool usePreDockPose,
                                 const bool useApproachAngle,
                                 const f32 approachAngle_rad,
                                 const bool useManualSpeed = false);
   
   void SendPlaceOnObject(const s32 objectID,
+                         PathMotionProfile motionProf,
                          const bool usePreDockPose,
-                         const bool useExactRotation = false,
-                         const Rotation3d rot = Rotation3d(0, Z_AXIS_3D()),
+                         const bool useApproachAngle = false,
+                         const f32 approachAngle_rad = 0,
                          const bool useManualSpeed = false);
   
-  void SendPlaceOnSelectedObject(const bool usePreDockPose,
-                                 const bool useExactRotation = false,
-                                 const Rotation3d rot = Rotation3d(0, Z_AXIS_3D()),
+  void SendPlaceOnSelectedObject(PathMotionProfile motionProf,
+                                 const bool usePreDockPose,
+                                 const bool useApproachAngle = false,
+                                 const f32 approachAngle_rad = 0,
                                  const bool useManualSpeed = false);
 
   void SendPlaceRelObject(const s32 objectID,
+                          PathMotionProfile motionProf,
                           const bool usePreDockPose,
                           const f32 placementOffsetX_mm,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
                           const bool useManualSpeed = false);
   
-  void SendPlaceRelSelectedObject(const bool usePreDockPose,
+  void SendPlaceRelSelectedObject(PathMotionProfile motionProf,
+                                  const bool usePreDockPose,
                                   const f32 placementOffsetX_mm,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
                                   const bool useManualSpeed = false);
 
   void SendRollObject(const s32 objectID,
+                      PathMotionProfile motionProf,
                       const bool usePreDockPose,
                       const bool useApproachAngle = false,
                       const f32 approachAngle_rad = 0,
                       const bool useManualSpeed = false);
   
-  void SendRollSelectedObject(const bool usePreDockPose,
+  void SendRollSelectedObject(PathMotionProfile motionProf,
+                              const bool usePreDockPose,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
   
-  void SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed);
+  void SendTraverseSelectedObject(PathMotionProfile motionProf,
+                                  const bool usePreDockPose,
+                                  const bool useManualSpeed);
   void SendExecuteTestPlan();
   void SendClearAllBlocks();
   void SendClearAllObjects();

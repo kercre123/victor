@@ -600,6 +600,16 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
     }
 
+    void VizManager::SendStartRobotUpdate()
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::StartRobotUpdate()));
+    }
+
+    void VizManager::SendEndRobotUpdate()
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
+    }
+
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,
                                    const u8* data,

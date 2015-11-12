@@ -14,8 +14,15 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
+#include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
+#include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
+#include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -30,6 +37,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
 , _robotMsgHandler(*(new RobotInterface::MessageHandler()))
 , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(externalInterface))
 , _lastAnimationFolderScan(0)
+, _audioServer( nullptr )
 {
 
   PRINT_NAMED_INFO("CozmoEngineHostImpl.Constructor",
@@ -52,7 +60,6 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
-
 }
 
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
@@ -69,6 +76,19 @@ Result CozmoEngineHostImpl::InitInternal()
   std::string dictFile = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "pocketsphinx/cmudict-en-us.dict");
   _keywordRecognizer->Init(hmmFolder, keywordFile, dictFile);
   _robotMsgHandler.Init(&_robotChannel, &_robotMgr);
+  
+  // Setup Audio Controller
+  using namespace Audio;
+  AudioController* audioController = new AudioController( _dataPlatform );
+  
+  // Setup Unity Audio Client Connections
+  AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_externalInterface );
+  // Setup Audio Server
+  // Transfering ownership of controller & connections
+  _audioServer = new AudioServer( audioController );
+  _audioServer->RegisterClientConnection( unityConnection );
+  
+
   return RESULT_OK;
 }
 
@@ -207,6 +227,17 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
   } else {
     PRINT_NAMED_INFO("CozmoEngineHostImpl.AddRobot", "Sending init to the robot %d.", robotID);
     lastResult = robot->SyncTime();
+
+    // Setup Audio Server with Robot Audio Connection & Client
+    using namespace Audio;
+    AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();
+    AudioEngineClientConnection* engineConnection = new AudioEngineClientConnection( engineMessageHandler );
+    // Transfer ownership of connection to Audio Server
+    _audioServer->RegisterClientConnection( engineConnection );
+
+    // Transfer ownership of audio client to Robot
+    RobotAudioClient* audioClient = new RobotAudioClient( *engineConnection->GetMessageHandler() );
+    robot->SetRobotAudioClient( audioClient );
   }
 
   return lastResult;

@@ -100,6 +100,32 @@ namespace Anki {
     
   } // Namespace NamedColors
   
+  
+  ColorRGBA ColorRGBA::CreateFromColorIndex(uint32_t colorIndex)
+  {
+    // Generate distinct "primary-ish" colors for each index
+    // Generates 1 of the 7 possible non-black binary RGB combos (R,G,B,RG,RB,GB,RGB) at decreasing intensities for higher indices
+    
+    const uint32_t kNumIntensityLevels = 5;
+    const uint32_t kMaxIntensity  = 255;
+    const uint32_t kMinIntesity   =  64; // used for "off", min "on" intensity is 1 step above this
+    const uint32_t kIntensityStep = (kMaxIntensity - kMinIntesity) / kNumIntensityLevels;
+    const uint32_t kMaxColorIndex = (7 * kNumIntensityLevels);
+    
+    // ensure colorIndex is in 0..((7*kNumIntensityLevels)-1) range
+    colorIndex = colorIndex % kMaxColorIndex;
+    
+    const uint32_t intensity = kMaxIntensity - (kIntensityStep * (colorIndex / 7));
+    const uint32_t colType = (colorIndex % 7);
+    
+    const uint32_t red   = ((colType - 2)  < 4) ? intensity : kMinIntesity;
+    const uint32_t green = ((colType % 2) == 0) ? intensity : kMinIntesity;
+    const uint32_t blue  = ((colType < 4)     ) ? intensity : kMinIntesity;
+    
+    const ColorRGBA color((u8)red, (u8)green, (u8)blue);
+    
+    return color;
+  }
 
   
 } // namespace Anki

@@ -196,6 +196,8 @@ namespace Anki {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
                 break;
+              case DA_ALIGN:
+                break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = 0;
@@ -239,6 +241,7 @@ namespace Anki {
                     break;
                   case DA_PICKUP_LOW:
                   case DA_PLACE_HIGH:
+                  case DA_ALIGN:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
                     break;
                   default:
@@ -276,7 +279,12 @@ namespace Anki {
                 // Take snapshot of pose
                 UpdatePoseSnapshot();
                 
-                if(action_ == DA_RAMP_DESCEND) {
+                if (action_ == DA_ALIGN) {
+                  #if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: ALIGN\n");
+                  #endif
+                  mode_ = IDLE;
+                } else if(action_ == DA_RAMP_DESCEND) {
                   #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: TRAVERSE_RAMP_DOWN\n");
                   #endif

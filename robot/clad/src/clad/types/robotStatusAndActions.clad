@@ -33,6 +33,7 @@ enum uint_8 DockAction
   DA_PLACE_LOW,       // Placing block on level 0
   DA_PLACE_LOW_BLIND, // Placing block on level 0 (relative to some pose)
   DA_ROLL_LOW,        // Rolling a block at level 0 by pulling it towards you
+  DA_ALIGN,           // Approaches block and stops at specified distance from marker
   DA_RAMP_ASCEND,     // Going up a ramp
   DA_RAMP_DESCEND,    // Going down a ramp
   DA_CROSS_BRIDGE,    // Crossing a bridge

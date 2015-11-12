@@ -12,6 +12,7 @@
 
 
 #include "vizControllerImpl.h"
+#include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
 #include <webots/Supervisor.hpp>
@@ -74,6 +75,10 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::NewBehaviorSelected,
     std::bind(&VizControllerImpl::ProcessVizNewBehaviorSelectedMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::StartRobotUpdate,
+    std::bind(&VizControllerImpl::ProcessVizStartRobotUpdate, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EndRobotUpdate,
+    std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
 
   // Get display devices
   disp = vizSupervisor.getDisplay("cozmo_viz_display");
@@ -468,41 +473,25 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
 }
 
-
-static uint32_t ColorIndexToColor(uint32_t colorIndex)
-{
-  // Generate distinct "primary-ish" colors for each index
-  // Generates 1 of the 7 possible non-black binary RGB combos (R,G,B,RG,RB,GB,RGB) at decreasing intensities for higher indices
-  
-  const uint32_t kNumIntensityLevels = 5;
-  const uint32_t kMaxIntensity  = 255;
-  const uint32_t kMinIntesity   =  64; // used for "off", min "on" intensity is 1 step above this
-  const uint32_t kIntensityStep = (kMaxIntensity - kMinIntesity) / kNumIntensityLevels;
-  const uint32_t kMaxColorIndex = (7 * kNumIntensityLevels);
-
-  // ensure colorIndex is in 0..((7*kNumIntensityLevels)-1) range
-  colorIndex = colorIndex % kMaxColorIndex;
-  
-  const uint32_t intensity = kMaxIntensity - (kIntensityStep * (colorIndex / 7));
-  const uint32_t colType = (colorIndex % 7);
-  
-  const uint32_t red   = ((colType - 2)  < 4) ? intensity : kMinIntesity;
-  const uint32_t green = ((colType % 2) == 0) ? intensity : kMinIntesity;
-  const uint32_t blue  = ((colType < 4)     ) ? intensity : kMinIntesity;
-  
-  const uint32_t color = (red << 16) | (green << 8) | (blue);
-  
-  return color;
-}
   
   
 static const int kTextSpacingY = 10;
 static const int kTextOffsetY  = -3;
   
   
+// ========== Mood Display ==========
+  
+  
+bool VizControllerImpl::IsMoodDisplayEnabled() const
+{
+  // maybe check settings or pixel size too?
+  return ((behaviorDisp != nullptr) && (_emotionBuffers[0].capacity() > 0));
+}
+
+
 void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  if (moodDisp == nullptr || (_emotionBuffers[0].capacity() == 0))
+  if (!IsMoodDisplayEnabled())
   {
     return;
   }
@@ -600,7 +589,7 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
     const float latestValue = robotMood.emotion[eT];
     emotionBuffer.push_back(latestValue);
   
-    moodDisp->setColor(ColorIndexToColor(eT));
+    moodDisp->setColor( ColorRGBA::CreateFromColorIndex(eT).As0RGB() );
     
     float xValF = 0.0f;
     int lastX = 0;
@@ -638,7 +627,36 @@ void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface:
     moodDisp->drawText(text, textX, textY + kTextOffsetY);
   }
 }
+
   
+// ========== BehaviorSelection Display ==========
+  
+  
+bool VizControllerImpl::IsBehaviorDisplayEnabled() const
+{
+  // maybe check settings or pixel size too?
+  return ((behaviorDisp != nullptr) && (_behaviorEventBuffer.capacity() > 0));
+}
+
+  
+void VizControllerImpl::PreUpdateBehaviorDisplay()
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
+  // Advance all behaviors by one empty tick - any active ones will be updated later
+  
+  for (auto& kv : _behaviorScoreBuffers)
+  {
+    BehaviorScoreBuffer& behaviorScoreBuffer = kv.second;
+    behaviorScoreBuffer.push_back( behaviorScoreBuffer.back() );
+  }
+  
+  _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
+}
+
   
 VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(const std::string& inName)
 {
@@ -654,26 +672,31 @@ VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(
   return it->second;
 }
 
-  
+
 void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
   const VizInterface::NewBehaviorSelected& selectData = msg.GetData().Get_NewBehaviorSelected();
   
   if (_behaviorEventBuffer.size() > 0)
   {
     std::vector<std::string>& latestEvents =_behaviorEventBuffer.back();
-
+    
     if (!selectData.newCurrentBehavior.empty())
     {
       latestEvents.push_back(selectData.newCurrentBehavior);
     }
   }
 }
-
+  
 
 void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  if (behaviorDisp == nullptr)
+  if (!IsBehaviorDisplayEnabled())
   {
     return;
   }
@@ -681,6 +704,29 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   const VizInterface::RobotBehaviorSelectData& selectData = msg.GetData().Get_RobotBehaviorSelectData();
   
   // Build a sorted vector of NamedScoreBuffer containing all the behaviors currently being graphed, so that they're in
+  // order of the most recent value, top-to-bottom in the graph
+  
+  for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
+  {
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.name);
+    if (!scoreBuffer.empty())
+    {
+      // Remove the dummy entry we added during preUpdate
+      scoreBuffer.pop_back();
+    }
+    scoreBuffer.push_back(scoreData.totalScore);
+  }
+}
+  
+  
+void VizControllerImpl::DrawBehaviorDisplay()
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
+  // Build a sorted vector of NamedScoreBuffer containing all the active behaviors, so that they're in
   // order of the most recent value, top-to-bottom in the graph
   
   struct NamedScoreBuffer
@@ -691,24 +737,25 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   };
   
   std::vector<NamedScoreBuffer> activeScoreBuffers;
-  activeScoreBuffers.reserve(selectData.scoreData.size());
   
   size_t maxBufferValues = 0;
   
   {
     uint32_t colorIndex = 0;
-    for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
+    
+    for (auto& kv : _behaviorScoreBuffers)
     {
-      BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.name);
-      scoreBuffer.push_back(scoreData.totalScore);
-      maxBufferValues = MAX(maxBufferValues, scoreBuffer.size());
-      activeScoreBuffers.push_back({&scoreBuffer, scoreData.name.c_str(), ColorIndexToColor(colorIndex)});
+      BehaviorScoreBuffer& behaviorScoreBuffer = kv.second;
+      
+      maxBufferValues = MAX(maxBufferValues, behaviorScoreBuffer.size());
+      activeScoreBuffers.push_back({&behaviorScoreBuffer,
+                                    kv.first.c_str(),
+                                    ColorRGBA::CreateFromColorIndex(colorIndex).As0RGB()});
       ++colorIndex;
     }
     
-      _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
     maxBufferValues = MAX(maxBufferValues, _behaviorEventBuffer.size());
-
+    
     std::sort(activeScoreBuffers.begin(), activeScoreBuffers.end(),
               [](const NamedScoreBuffer& lhs, const NamedScoreBuffer& rhs)
               {
@@ -716,15 +763,13 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
               } );
   }
   
-  // [MarkW:TODO] for every entry in _behaviorScoreBuffers that we didn't just add to, either pop_front() or remove from _behaviorScoreBuffers entirely?
-  
   // Draw everything
   
   const int windowWidth  = behaviorDisp->getWidth();
   const int windowHeight = behaviorDisp->getHeight();
   
   // Calculate y coordinate range and scaling for graph points
-
+  
   const int yValueFor0 = windowHeight - 16;
   const int yValueFor1 = 16;
   float yScalar = (yValueFor1 - yValueFor0);
@@ -751,7 +796,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
   const float xStep = float(windowWidth-labelOffset) / float(activeScoreBuffers[0]._scoreBuffer->capacity());
   
   const int textSpacingY = kTextSpacingY;
-
+  
   const int kTopTextY    = (kTextSpacingY/2);
   const int kBottomTextY = windowHeight - (kTextSpacingY/2);
   
@@ -773,7 +818,7 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
       if (eventsThisTick.size() > 0)
       {
         const int xVal = (int)(xValF);
-
+        
         for (const std::string& eventText : eventsThisTick)
         {
           behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
@@ -835,11 +880,27 @@ void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent
     char valueString[32];
     snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back());
     std::string text = std::string(valueString) + namedScoreBuffer._name;
-
+    
     behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
   }
 }
 
+  
+// ========== Start/End of Robot Updates ==========
+  
+
+void VizControllerImpl::ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  PreUpdateBehaviorDisplay();
+}
+  
+  
+void VizControllerImpl::ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  // This signals end of the Robot::Update() and is where we tick and update the drawing for live graph windows etc.
+  DrawBehaviorDisplay();
+}
+  
   
 } // end namespace Cozmo
 } // end namespace Anki

@@ -27,6 +27,9 @@ class KeyWordRecognizer;
 namespace ExternalInterface {
 class MessageGameToEngine;
 }
+namespace Audio {
+class AudioServer;
+}
 
 class CozmoEngineHostImpl : public CozmoEngineImpl
 {
@@ -73,6 +76,9 @@ protected:
 
   std::map<AdvertisingRobot, bool> _forceAddedRobots;
   BaseStationTime_t _lastAnimationFolderScan;
+  
+  Audio::AudioServer* _audioServer;
+  
   
 #ifdef COZMO_RECORDING_PLAYBACK
   // TODO: Make use of these for playback/recording

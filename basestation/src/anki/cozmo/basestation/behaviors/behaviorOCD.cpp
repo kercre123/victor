@@ -586,7 +586,9 @@ namespace Cozmo {
             }
 
             // Place block at specified offset from lastObjectPlacedOnGround.
-            placementAction = new DriveToPlaceRelObjectAction(_lastObjectPlacedOnGround, kLowPlacementOffsetMM);
+            placementAction = new DriveToPlaceRelObjectAction(_lastObjectPlacedOnGround,
+                                                              DEFAULT_PATH_MOTION_PROFILE,
+                                                              kLowPlacementOffsetMM);
 
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.SelectNextPlacement.STACKS_OF_TWO",
                              "Placing object on ground at (%.1f,%.1f,%.1f) @ %.1fdeg (near object %d)",

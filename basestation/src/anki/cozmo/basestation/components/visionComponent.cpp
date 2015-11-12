@@ -507,7 +507,10 @@ namespace Cozmo {
           newPose.SetTranslation({newPose.GetTranslation().x() + dist_mm*std::cos(angleRad),
             newPose.GetTranslation().y() + dist_mm*std::sin(angleRad),
             newPose.GetTranslation().z()});
-          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, new DriveToPoseAction(newPose, false, false, 50, DEG_TO_RAD(45)));
+          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
+                                               new DriveToPoseAction(newPose, DEFAULT_PATH_MOTION_PROFILE,
+                                                                     false, false, 50, DEG_TO_RAD(45))
+                                               );
           
         } else {
           // Turn to face the motion:

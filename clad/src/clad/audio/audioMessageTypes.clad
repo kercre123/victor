@@ -1,0 +1,30 @@
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+enum uint_8 AudioCallbackFlag
+{
+  EventNone     = 0x00,
+  EventDuration = 0x01,
+  EventMarker   = 0x02,
+  EventComplete = 0x04,
+}
+
+
+enum uint_8 CurveType
+{
+  Linear = 0,       // Linear (Default)
+  SCurve,           // S Curve
+  InversedSCurve,   // Inversed S Curve
+  Sine,             // Sine Curve
+  SineReciprocal,   // Reciprocal of Sine Curve
+  Exp1,             // Exponential 1 Curve
+  Exp3,             // Exponential 3 Curve
+  Log1,             // Logarithm 1 Curve
+  Log3              // Logarithm 3 Curve
+}
+
+}
+}
+}

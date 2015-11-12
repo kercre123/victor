@@ -91,7 +91,12 @@ namespace Anki {
 
     void  SetPlaneOrigin(const Point3f &origin);
     void  SetPlaneNormal(const Vec3f   &normal);
-    
+
+    // translate along its current angle (negative means backwards)
+    void TranslateBy(float dist);
+
+    void SetRotation(Radians theta);
+
     // Note that this Rotation Matrix is not a member but is computed
     // on-the-fly from the Pose's angle.
     RotationMatrix2d GetRotationMatrix() const;
@@ -121,6 +126,8 @@ namespace Anki {
     Pose2d GetWithRespectToOrigin() const;
 
     const Pose2d& FindOrigin() const;
+
+    void Print() const;
     
   protected:
     Point2f _translation;
@@ -348,6 +355,11 @@ namespace Anki {
     _planeNormal.MakeUnitLength();
   }
   
+  inline void Pose2d::SetRotation(Radians theta)
+  {
+    _angle = theta;
+  }
+
   inline const Vec3f& Pose2d::GetPlaneNormal() const
   { return _planeNormal; }
   

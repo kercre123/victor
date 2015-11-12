@@ -355,9 +355,9 @@
             <uSurpInc>1</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
+              <Define>COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM,COZMO_ROBOT_V41</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;../coretech/common/include;../coretech/vision/include;../include;include;k02_hal/lib;k02_hal/;k02_hal/startup</IncludePath>
+              <IncludePath>.;supervisor/src;../coretech/common/include;../coretech/vision/include;../include;include;k02_hal/lib;k02_hal/;k02_hal/startup;generated/clad/robot/</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

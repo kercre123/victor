@@ -1,0 +1,91 @@
+/*
+ * File: audioController.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/09/2015
+ *
+ * Description: This is responsible for instantiating the Audio Engine and handling basic and app level audio
+ *              functionality.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ */
+
+#ifndef __Basestation_Audio_AudioController_H__
+#define __Basestation_Audio_AudioController_H__
+
+#include <stdio.h>
+
+#include <DriveAudioEngine/audioTypes.h>
+#include <util/helpers/noncopyable.h>
+#include <util/dispatchQueue/iTaskHandle.h>
+
+namespace AudioEngine {
+  class AudioEngineController;
+}
+
+namespace Anki {
+namespace Util {
+namespace Dispatch {
+  class Queue;
+}
+namespace Data {
+  class DataPlatform;
+}
+  
+}
+namespace Cozmo {
+namespace Audio {
+  
+class AudioController : public Util::noncopyable
+{
+  
+public:
+  
+  AudioController( Util::Data::DataPlatform* dataPlatfrom );
+  // TODO: Need to add Language Local, pathToZipFile, zipBasePath, assetManager & assetManagerBasePath for RAMS & Android
+  
+  ~AudioController();
+
+  // TODO: Add Callback stuff
+  AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
+  
+  AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
+  
+  bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
+                 AudioEngine::AudioStateId stateId ) const;
+  
+  bool SetSwitchState( AudioEngine::AudioSwitchGroupId switchGroupId,
+                       AudioEngine::AudioSwitchStateId switchStateId,
+                       AudioEngine::AudioGameObject gameObject ) const;
+  
+  bool SetParameter( AudioEngine::AudioParameterId parameterId,
+                     AudioEngine::AudioRTPCValue rtpcValue,
+                     AudioEngine::AudioGameObject gameObject,
+                     AudioEngine::AudioTimeMs valueChangeDuration = 0,
+                     AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
+  
+
+private:
+  
+  AudioEngine::AudioEngineController* _audioEngine   = nullptr;   // Audio Engine Lib
+  Util::Dispatch::Queue*              _dispatchQueue = nullptr;   // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle              _taskHandle    = nullptr;   // Handle to our tick callback task
+  
+  bool _isInitialized = false;
+  
+  // Tick Audio Engine
+  void Update();
+  
+};
+
+
+} // Audio
+} // Cozmo
+} // Anki
+
+
+
+#endif /* __Basestation_Audio_AudioController_H__ */
