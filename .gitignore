@@ -223,3 +223,5 @@ robot/generated/clad
 resources/config/faciometric
 resources/config/basestation/vision/faciometric
 generated/cladCsharp/clad
+*.lst
+robot/cube/lst/block.m51

@@ -466,13 +466,9 @@ void InitAcc()
   // Shadowing
   WriteVerify(ACCD_HBW, 0);
   delay_ms(1);
-  
-  // 125 Hz bandwidth
-  WriteVerify(PMU_BW, BW_125);
-#else
+#endif
   // 250 Hz bandwidth
   WriteVerify(PMU_BW, BW_250);
-#endif
   delay_ms(1);
   
   // Configure and enable FIFO

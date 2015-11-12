@@ -1,63 +1,35 @@
 #include "hal.h"
 
+#ifdef HUMAN_READABLE 
+#define ACC_PRINT(x)            PutDec((x))
+#else
+#define ACC_PRINT(x)            PutHex((x))
+#endif
+
 void StreamAccelerometer()
 {
   #ifdef STREAM_ACCELEROMETER
   volatile s8 accData[8];
-  u8 TH, TL;
-  //s8 accDataLast[3];
   InitUart();
   InitAcc();
-  InitTimer1();
   while(1)
   {
     ReadAcc(accData);  
-    if((accData[0] & 0x01) || (accData[2] & 0x01) || (accData[4] & 0x01))
+    if((accData[0] & 0x01) && (accData[2] & 0x01) && (accData[4] & 0x01)) // is all data new?
     {
-      TH = TH1;
-      TL = TL1;
-      if(TH != TH1)
-      {
-        TH = TH1;
-        TL = TL1;
-      }
-      PutHex(TH);
-      PutHex(TL);
-      
-      PutChar('\t');
-      
-      if(accData[0] & 0x01)
-        PutDec(accData[1]);
-      else
-        PutChar('.');
-      PutChar('\t');
-      if(accData[2] & 0x01)
-        PutDec(accData[3]);
-      else
-        PutChar('.');
-      PutChar('\t');
-      if(accData[4] & 0x01)
-        PutDec(accData[5]);
-      else
-        PutChar('.');
-      
+      ACC_PRINT(accData[1]);
+      ACC_PRINT(accData[3]);
+      ACC_PRINT(accData[5]);
       PutString("\r\n");
     }
-
-    //ReadFifo();
-    //memcpy(accDataLast, accData, sizeof(accData));
-    //delay_ms(9); // 100 hz loop.
-    /*delay_ms(8);
-    delay_us(850);*/
-   // delay_us(700); //500 hz loop
-    //delay_ms(2);
+    //#define VERIFY_STREAMING_RATE
+    #ifdef VERIFY_STREAMING_RATE
+    else
+    {
+      PutChar('.');
+    }
+    #endif
     
-    // ~ 1.15-1.3 ms for I2C read
-    // Maybe even 1.5 ms
-    // 250 hz delay = 4ms-1.5ms = 2.5 ms
-    // In practice 2.83 so I2C read is ~1.17ms
-    //delay_ms(2);
-    //delay_us(830);
   }
   #endif
 }
