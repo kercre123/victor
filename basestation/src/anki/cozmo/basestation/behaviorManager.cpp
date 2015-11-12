@@ -12,6 +12,7 @@
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
+#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
@@ -19,10 +20,13 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+
+#include "clad/types/behaviorChooserType.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -52,6 +56,29 @@ namespace Cozmo {
     
     SetupBehaviorChooser(config);
     
+    if (_robot.HasExternalInterface())
+    {
+      IExternalInterface* externalInterface = _robot.GetExternalInterface();
+      _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
+       [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+       {
+         switch (event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType)
+         {
+           case BehaviorChooserType::Demo:
+           {
+             SetupBehaviorChooser(config);
+             break;
+           }
+           case BehaviorChooserType::Selection:
+           {
+             SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+             break;
+           }
+           default:
+             break;
+         }
+       }));
+    }
     _isInitialized = true;
     
     _lastSwitchTime_sec = 0.f;
@@ -62,9 +89,10 @@ namespace Cozmo {
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
     DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot, config);
-    _behaviorChooser = newDemoChooser;
+    SetBehaviorChooser(newDemoChooser);
     
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
+    AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -120,11 +148,27 @@ namespace Cozmo {
     
     // Initialize next behavior and make it the current one
     if (nullptr != _nextBehavior && _currentBehavior != _nextBehavior) {
-      if (_nextBehavior->Init(currentTime_sec) != RESULT_OK) {
+      const bool isResuming = (_nextBehavior == _resumeBehavior);
+      if (_nextBehavior->Init(currentTime_sec, isResuming) != RESULT_OK) {
         PRINT_NAMED_ERROR("BehaviorManager.SwitchToNextBehavior.InitFailed",
                           "Failed to initialize %s behavior.",
                           _nextBehavior->GetName().c_str());
       }
+      
+      #if SEND_MOOD_TO_VIZ_DEBUG
+      {
+        VizInterface::NewBehaviorSelected newBehaviorSelected;
+        newBehaviorSelected.newCurrentBehavior = _nextBehavior ? _nextBehavior->GetName() : "null";
+        VizManager::getInstance()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
+      }
+      #endif // SEND_MOOD_TO_VIZ_DEBUG
+      
+      _resumeBehavior = nullptr;
+      if (_currentBehavior && _nextBehavior->IsShortInterruption() && _currentBehavior->WantsToResume())
+      {
+        _resumeBehavior = _currentBehavior;
+      }
+
       _currentBehavior = _nextBehavior;
       _nextBehavior = nullptr;
     }
@@ -233,7 +277,8 @@ namespace Cozmo {
         // Interrupt the current behavior that's running if there is one. It will continue
         // to run on calls to Update() until it completes and then we will switch
         // to the selected next behavior
-        initResult = _currentBehavior->Interrupt(currentTime_sec);
+        const bool isShortInterrupt = _nextBehavior && _nextBehavior->IsShortInterruption();
+        initResult = _currentBehavior->Interrupt(currentTime_sec, isShortInterrupt);
         
         if (nullptr != _nextBehavior)
         {
@@ -247,8 +292,8 @@ namespace Cozmo {
   
   Result BehaviorManager::SelectNextBehavior(double currentTime_sec)
   {
-    
-    _nextBehavior = _behaviorChooser->ChooseNextBehavior(currentTime_sec);
+    _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot, currentTime_sec);
+
     if(nullptr == _nextBehavior) {
       PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoneRunnable", "");
       return RESULT_FAIL;
@@ -267,7 +312,7 @@ namespace Cozmo {
                         "No behavior named '%s'", name.c_str());
       return RESULT_FAIL;
     }
-    else if(_nextBehavior->IsRunnable(currentTime_sec) == false) {
+    else if(_nextBehavior->IsRunnable(_robot, currentTime_sec) == false) {
       PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NotRunnable",
                         "Behavior '%s' is not runnable.", name.c_str());
       return RESULT_FAIL;
@@ -278,7 +323,11 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
+    // These behavior pointers are going to be invalidated, so clear them
+    _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
+    _resumeBehavior = nullptr;
     Util::SafeDelete(_behaviorChooser);
+    
     _behaviorChooser = newChooser;
   }
   

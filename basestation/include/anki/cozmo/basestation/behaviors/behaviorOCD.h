@@ -16,17 +16,13 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "util/signals/simpleSignal_fwd.h"
-
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include <set>
+#include <queue>
 
 namespace Anki {
 namespace Cozmo {
-  
-  // Forward declaration
-  template<typename TYPE> class AnkiEvent;
   
   // A behavior that tries to neaten up blocks present in the world
   class BehaviorOCD : public IBehavior
@@ -36,18 +32,15 @@ namespace Cozmo {
     BehaviorOCD(Robot& robot, const Json::Value& config);
     virtual ~BehaviorOCD() { }
     
-    virtual bool IsRunnable(double currentTime_sec) const override;
-
-    virtual Result Init(double currentTime_sec) override;
-    
-    virtual Status Update(double currentTime_sec) override;
-    
-    // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt(double currentTime_sec) override;
-    
-    virtual bool GetRewardBid(Reward& reward) override;
+    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
     
   private:
+    
+    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+   
+    // Finish placing current object if there is one, otherwise good to go
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
     // Offset at which low block should be placed wrt
     // another low block. (Twice block width)
@@ -81,34 +74,42 @@ namespace Cozmo {
       Complete
     };
     
-    // Dispatch handlers based on tag of passed-in event
-    void EventHandler(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+    virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+    virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+    virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
     // TODO: These need to be some kind of _internal_ signal or event
-    Result HandleObjectMoved(const ExternalInterface::ActiveObjectMoved &msg, double currentTime_sec);
-    Result HandleObservedObject(const ExternalInterface::RobotObservedObject &msg, double currentTime_sec);
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec);
+    bool HandleObjectMovedHelper(const Robot& robot, const ObjectID& objectID, double currentTime_sec);
+    Result HandleObjectMovedWhileRunning(Robot& robot, const ObjectMoved &msg, double currentTime_sec);
+    Result HandleObjectMovedWhileNotRunning(const Robot& robot, const ObjectMoved &msg, double currentTime_sec);
     
-    Result HandleActionCompleted(const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec);
-    Result HandleBlockPlaced(const ExternalInterface::BlockPlaced &msg, double currentTime_sec);
+    bool HandleObservedObjectHelper(const Robot& robot, const ObjectID& objectID, double currentTime_sec);
+    Result HandleObservedObjectWhileRunning(Robot& robot, const ExternalInterface::RobotObservedObject& msg, double currentTime_sec);
+    Result HandleObservedObjectWhileNotRunning(const Robot& robot, const ExternalInterface::RobotObservedObject& msg, double currentTime_sec);
+    
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
+    
+    Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg, double currentTime_sec);
+    Result HandleBlockPlaced(const ExternalInterface::BlockPlaced& msg, double currentTime_sec);
     
     Result SelectArrangement();
-    Result SelectNextObjectToPickUp();
-    Result SelectNextPlacement();
-    Result FindEmptyPlacementPose(const ObjectID& nearObjectID, const f32 offset_mm, Pose3d& pose);
+    Result SelectNextObjectToPickUp(Robot& robot);
+    Result SelectNextPlacement(Robot& robot);
+    Result FindEmptyPlacementPose(const Robot& robot, const ObjectID& nearObjectID, const f32 offset_mm, Pose3d& pose);
     void ComputeAlignedPoses(const Pose3d& basePose, f32 distance, std::vector<Pose3d> &alignedPoses);
     
     // Gets the object within objectSet that is closest to the robot and
     // 1) at the specified heighLevel (0 == equal same as robot, 1 == high dock height) and
     // 2) honors the ObjectOnTopStatus
-    Result GetClosestObjectInSet(const std::set<ObjectID>& objectSet, u8 heightLevel, ObjectOnTopStatus ootStatus, ObjectID &objID);
+    Result GetClosestObjectInSet(const Robot& robot, const std::set<ObjectID>& objectSet, u8 heightLevel,
+                                 ObjectOnTopStatus ootStatus, ObjectID &objID);
     
-    void SetBlockLightState(const std::set<ObjectID>& objectSet,  BlockLightState state);
-    void SetBlockLightState(const ObjectID& objID, BlockLightState state);
+    void SetBlockLightState(Robot& robot, const std::set<ObjectID>& objectSet,  BlockLightState state);
+    void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
     
     // Updates all block lights according to messy/neat state
-    void UpdateBlockLights();
+    void UpdateBlockLights(Robot& robot);
     
     // Set/Unset the location of the last pick or place failure
     void SetLastPickOrPlaceFailure(const ObjectID& objectID, const Pose3d& pose);
@@ -117,17 +118,18 @@ namespace Cozmo {
     // Deletes the object if it was also the previous object that the robot
     // had failed to pick or place from the same robot pose.
     // Returns true if object deleted.
-    bool DeleteObjectIfFailedToPickOrPlaceAgain(const ObjectID& objectID);
+    bool DeleteObjectIfFailedToPickOrPlaceAgain(Robot& robot, const ObjectID& objectID);
     
     // Checks if blocks are "aligned".
     // A messy block that is aligned with a neat block should be considered neat
-    bool AreAligned(const ObjectID& o1, const ObjectID& o2);
+    bool AreAligned(const Robot& robot, const ObjectID& o1, const ObjectID& o2);
     
     // Checks the neatness of any blocks that it has observed within the last second
-    void VerifyNeatness();
+    void VerifyNeatness(const Robot& robot, bool& foundMessyToNeat,
+                        bool& foundNeatToMessy, bool& needToCancelLastActionTag);
     
     // Returns neatness score of object
-    f32 GetNeatnessScore(const ObjectID& whichObject);
+    f32 GetNeatnessScore(const Robot& robot, const ObjectID& whichObject);
     
     // Goal is to move objects from messy to neat
     std::set<ObjectID> _messyObjects;
@@ -152,7 +154,6 @@ namespace Cozmo {
     bool  _interrupted;
     
     Result _lastHandlerResult;
-    std::vector<::Signal::SmartHandle> _eventHandles;
     
     // Enumerate possible arrangements Cozmo "likes".
     enum class Arrangement {
@@ -185,8 +186,10 @@ namespace Cozmo {
     
     void UpdateName();
     
-    void PlayAnimation(const std::string& animName);
-    void FaceDisturbedBlock(const ObjectID& objID);
+    void PlayAnimation(Robot& robot, const std::string& animName);
+    void FaceDisturbedBlock(Robot& robot, const ObjectID& objID);
+    
+    std::queue<std::pair<ObjectID, BlockLightState> > _blocksToSetLightState;
     
     void MakeNeat(const ObjectID& objID);
     void MakeMessy(const ObjectID& objID);

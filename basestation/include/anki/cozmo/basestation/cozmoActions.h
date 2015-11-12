@@ -22,6 +22,7 @@
 #include "anki/common/basestation/math/pose.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/animationKeyFrames.h"
 
 namespace Anki {
   
@@ -42,7 +43,9 @@ namespace Anki {
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
+                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
+                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       DriveToPoseAction(const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal() must be called befure Update()!
@@ -50,14 +53,16 @@ namespace Anki {
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
-                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+                        const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD,
+                        const float maxPlanningTime = DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S,
+                        const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       // TODO: Add methods to adjust the goal thresholds from defaults
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
 
@@ -90,7 +95,11 @@ namespace Anki {
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
       bool     _useManualSpeed;
-      bool     _forceReplanOnNextWorldChange;
+
+      float _maxPlanningTime;
+      float _maxReplanPlanningTime;
+
+      float _timeToAbortPlanning;
       
       Signal::SmartHandle _signalHandle;
       
@@ -104,8 +113,16 @@ namespace Anki {
     class DriveToObjectAction : public IAction 
     {
     public:
-      DriveToObjectAction(const ObjectID& objectID, const PreActionPose::ActionType& actionType, const f32 predockOffsetDistX_mm = 0, const bool useManualSpeed = false);
-      DriveToObjectAction(const ObjectID& objectID, const f32 distance_mm, const bool useManualSpeed = false);
+      DriveToObjectAction(const ObjectID& objectID,
+                          const PreActionPose::ActionType& actionType,
+                          const f32 predockOffsetDistX_mm = 0,
+                          const bool useApproachAngle = false,
+                          const f32 approachAngle_rad = 0,
+                          const bool useManualSpeed = false);
+      
+      DriveToObjectAction(const ObjectID& objectID,
+                          const f32 distance_mm,
+                          const bool useManualSpeed = false);
       
       // TODO: Add version where marker code is specified instead of action?
       //DriveToObjectAction(Robot& robot, const ObjectID& objectID, Vision::Marker::Code code);
@@ -113,7 +130,11 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_OBJECT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+      
+      // If set, instead of driving to the nearest preActionPose, only the preActionPose
+      // that is most closely aligned with the approach angle is considered.
+      void SetApproachAngle(const f32 angle_rad);
       
     protected:
       
@@ -136,13 +157,20 @@ namespace Anki {
       bool                       _useManualSpeed;
       CompoundActionSequential   _compoundAction;
       
+      bool                       _useApproachAngle;
+      Radians                    _approachAngle_rad;
+      
     }; // DriveToObjectAction
     
     
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
-      DriveToPlaceCarriedObjectAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed);
+      DriveToPlaceCarriedObjectAction(const Robot& robot,
+                                      const Pose3d& placementPose,
+                                      const bool placeOnGround,
+                                      const bool useExactRotation = false,
+                                      const bool useManualSpeed = false);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT; }
@@ -152,6 +180,8 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override; // Simplified version from DriveToObjectAction
       Pose3d _placementPose;
+      
+      bool   _useExactRotation;
       
     }; // DriveToPlaceCarriedObjectAction()
     
@@ -166,7 +196,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       
@@ -190,7 +220,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return HEAD_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
       
     protected:
       
@@ -230,7 +260,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; };
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       
@@ -266,7 +296,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return BODY_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
     protected:
       virtual ActionResult Init(Robot& robot) override;
@@ -376,10 +406,10 @@ namespace Anki {
     public:
       IDockAction(ObjectID objectID,
                   const bool useManualSpeed = false,
-                  const f32 placeObjectOnGround = false,
                   const f32 placementOffsetX_mm = 0,
                   const f32 placementOffsetY_mm = 0,
-                  const f32 placementOffsetAngle_rad = 0);
+                  const f32 placementOffsetAngle_rad = 0,
+                  const bool placeObjectOnGround = false);
       
       virtual ~IDockAction();
       
@@ -388,7 +418,7 @@ namespace Anki {
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
       
       virtual u8 GetAnimTracksToDisable() const override {
-        return HEAD_TRACK | LIFT_TRACK | BODY_TRACK;
+        return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
       }
       
     protected:
@@ -420,7 +450,7 @@ namespace Anki {
       virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                    _dockObjectID;
-      DockAction_t                _dockAction;
+      DockAction                _dockAction;
       const Vision::KnownMarker*  _dockMarker;
       const Vision::KnownMarker*  _dockMarker2;
       Radians                     _preActionPoseAngleTolerance;
@@ -435,18 +465,41 @@ namespace Anki {
     }; // class IDockAction
 
     
-    // If not carrying anything, picks up the specified object.
-    // If carrying an object, places it on the specified object.
-    class PickAndPlaceObjectAction : public IDockAction
+    // "Docks" to the specified object at the distance specified
+    class AlignWithObjectAction : public IDockAction
     {
     public:
-      PickAndPlaceObjectAction(ObjectID objectID,
-                               const bool useManualSpeed = false,
-                               const f32 placementOffsetX_mm = 0,
-                               const f32 placementOffsetY_mm = 0,
-                               const f32 placementOffsetAngle_rad = 0,
-                               const bool placeObjectOnGroundIfCarrying = false);
-      virtual ~PickAndPlaceObjectAction();
+      AlignWithObjectAction(ObjectID objectID,
+                            f32 distanceFromMarker_mm,
+                            const bool useManualSpeed = false);
+      virtual ~AlignWithObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      virtual RobotActionType GetType() const override {return RobotActionType::ALIGN_WITH_OBJECT;};
+      
+    protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
+
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
+      
+    }; // class AlignWithObjectAction
+    
+    
+    // Picks up the specified object.
+    class PickupObjectAction : public IDockAction
+    {
+    public:
+      PickupObjectAction(ObjectID objectID,
+                         const bool useManualSpeed = false);
+      virtual ~PickupObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -458,7 +511,7 @@ namespace Anki {
       
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
@@ -469,6 +522,40 @@ namespace Anki {
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
       
+    }; // class PickupObjectAction
+    
+
+    // If carrying an object, places it on or relative to the specified object.
+    class PlaceRelObjectAction : public IDockAction
+    {
+    public:
+      PlaceRelObjectAction(ObjectID objectID,
+                           const bool placeOnGround = false,                           
+                           const f32 placementOffsetX_mm = 0,
+                           const bool useManualSpeed = false);
+      virtual ~PlaceRelObjectAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      // Override to determine type (pick/place, low/high) dynamically depending
+      // on what we were doing.
+      virtual RobotActionType GetType() const override;
+      
+    protected:
+      
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
+      
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+      virtual void Reset() override;
+      
+      // For verifying if we successfully picked up the object
+      //Pose3d _dockObjectOrigPose;
+      
       // If placing an object, we need a place to store what robot was
       // carrying, for verification.
       ObjectID                   _carryObjectID;
@@ -477,8 +564,8 @@ namespace Anki {
       IActionRunner*             _placementVerifyAction;
       bool                       _verifyComplete; // used in PLACE modes
       
-    }; // class PickAndPlaceObjectAction
-
+    }; // class PlaceRelObjectAction
+    
     
     // If not carrying anything, rolls the specified object.
     // If carrying an object, fails.
@@ -499,7 +586,7 @@ namespace Anki {
 
     protected:
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
       
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
@@ -510,34 +597,159 @@ namespace Anki {
       // For verifying if we successfully rolled the object
       Pose3d _dockObjectOrigPose;
       
+      const Vision::KnownMarker* _expectedMarkerPostRoll;
+      
       IActionRunner*             _rollVerifyAction;
       
     }; // class RollObjectAction
     
-    
-    // Common compound action for driving to an object, visually verifying we
-    // can still see it, and then picking/placing it.
-    class DriveToPickAndPlaceObjectAction : public CompoundActionSequential
+
+    // Compound action for driving to an object, visually verifying it can still be seen,
+    // and then driving to it until it is at the specified distance (i.e. distanceFromMarker_mm)
+    // from the marker.
+    // @param distanceFromMarker_mm - The distance from the marker along it's normal axis that the robot should stop at.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class DriveToAlignWithObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToPickAndPlaceObjectAction(const ObjectID& objectID,
-                                      const bool useManualSpeed = false,
-                                      const f32 placementOffsetX_mm = 0,
-                                      const f32 placementOffsetY_mm = 0,
-                                      const f32 placementOffsetAngle_rad = 0,
-                                      const bool placeObjectOnGroundIfCarrying = false)
+      DriveToAlignWithObjectAction(const ObjectID& objectID,
+                                   const f32 distanceFromMarker_mm,
+                                   const bool useApproachAngle = false,
+                                   const f32 approachAngle_rad = 0,
+                                   const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, placementOffsetX_mm, useManualSpeed),
-        new PickAndPlaceObjectAction(objectID, useManualSpeed, placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad, placeObjectOnGroundIfCarrying)})
+      new DriveToObjectAction(objectID,
+        PreActionPose::DOCKING,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+        new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
       {
-
+        
       }
       
-      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // GetType returns the type from the AlignWithObjectAction
+      virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
+      
+      // Use AlignWithObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
+    
+
+    
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then picking it up.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class DriveToPickupObjectAction : public CompoundActionSequential
+    {
+    public:
+      DriveToPickupObjectAction(const ObjectID& objectID,
+                                      const bool useApproachAngle = false,
+                                      const f32 approachAngle_rad = 0,
+                                      const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID,
+                                PreActionPose::DOCKING,
+                                0,
+                                useApproachAngle,
+                                approachAngle_rad,
+                                useManualSpeed),
+        new PickupObjectAction(objectID)})
+      {
+        
+      }
+      
+      // GetType returns the type from the PickupObjectAction, which is
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
-      // Use PickAndPlaceObjectAction's completion info
+      // Use PickupObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
+    
+
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then placing an object on it.
+    // @param objectID         - object to place carried object on
+    // @param useExactRotation - If true, then only the preAction pose that results in the carried object
+    //                           being placed in alignment with objectID that is closest to the specified
+    //                           rotation is considered.
+    //                           If the up-axis of the current rotation is not the same as that of the
+    //                           currently carried object, the action fails.
+    class DriveToPlaceOnObjectAction : public CompoundActionSequential
+    {
+    public:
+     
+      // Places carried object on top of objectID
+      DriveToPlaceOnObjectAction(const Robot& robot,
+                                  const ObjectID& objectID,
+                                  const bool useExactRotation = false,
+                                  const Rotation3d& rotation = Rotation3d(0, Z_AXIS_3D()),
+                                  const bool useManualSpeed = false);
+
+      // GetType returns the type from the PlaceRelObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PlaceRelObjectAction's completion info
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
+
+    
+    
+    // Common compound action for driving to an object, visually verifying we
+    // can still see it, and then placing an object relative to it.
+    // @param placementOffsetX_mm - The desired distance between the center of the docking marker
+    //                              and the center of the object that is being placed, along the
+    //                              direction of the docking marker's normal.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class DriveToPlaceRelObjectAction : public CompoundActionSequential
+    {
+    public:
+      // Place carried object on ground at specified placementOffset from objectID,
+      // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
+      DriveToPlaceRelObjectAction(const ObjectID& objectID,
+                                  const f32 placementOffsetX_mm = 0,
+                                  const bool useApproachAngle = false,
+                                  const f32 approachAngle_rad = 0,
+                                  const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID,
+                                PreActionPose::PLACE_RELATIVE,
+                                placementOffsetX_mm,
+                                useApproachAngle,
+                                approachAngle_rad,
+                                useManualSpeed),
+        new PlaceRelObjectAction(objectID,
+                                 true,
+                                 placementOffsetX_mm,
+                                 useManualSpeed)})
+      {
+        
+      }
+      
+      
+      // GetType returns the type from the PlaceRelObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use PlaceRelObjectAction's completion info
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
         _actions.back().second->GetCompletionStruct(robot, completionInfo);
       }
@@ -547,18 +759,24 @@ namespace Anki {
     
     // Common compound action for driving to an object, visually verifying we
     // can still see it, and then rolling it.
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
     class DriveToRollObjectAction : public CompoundActionSequential
     {
     public:
-      DriveToRollObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
+      DriveToRollObjectAction(const ObjectID& objectID,
+                              const bool useApproachAngle = false,
+                              const f32 approachAngle_rad = 0,
+                              const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::DOCKING, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ROLLING, 0, useApproachAngle, approachAngle_rad, useManualSpeed),
         new RollObjectAction(objectID, useManualSpeed)})
       {
         
       }
       
-      // GetType returns the type from the PickAndPlaceObjectAction, which is
+      // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
@@ -581,7 +799,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return LIFT_TRACK; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
       
     protected:
       
@@ -600,17 +818,25 @@ namespace Anki {
     
     
     // Common compound action
+    // @param placementPose    - The pose in which the carried object should be placed.
+    // @param useExactRotation - If true, then the carried object is placed in the exact
+    //                           6D pose represented by placement pose. Otherwise,
+    //                           x,y and general axis alignment with placementPose rotation
+    //                           are the only constraints.
     class PlaceObjectOnGroundAtPoseAction : public CompoundActionSequential
     {
     public:
-      PlaceObjectOnGroundAtPoseAction(const Robot& robot, const Pose3d& placementPose, const bool useManualSpeed = false)
+      PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+                                      const Pose3d& placementPose,
+                                      const bool useExactRotation = false,
+                                      const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToPlaceCarriedObjectAction(robot, placementPose, useManualSpeed),
+        new DriveToPlaceCarriedObjectAction(robot, placementPose, true, useExactRotation, useManualSpeed),
         new PlaceObjectOnGroundAction()})
       {
         
       }
-      
+
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
     };
     
@@ -720,7 +946,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID, const bool useManualSpeed = false)
       : CompoundActionSequential({
-        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, useManualSpeed),
+        new DriveToObjectAction(objectID, PreActionPose::ENTRY, 0, false, 0, useManualSpeed),
         new TraverseObjectAction(objectID, useManualSpeed)})
       {
         

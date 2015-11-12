@@ -192,6 +192,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
+            'LIBRARY_SEARCH_PATHS': [
+                '<@(opencv_lib_search_path_mac_release)',
+            ],
            },
           'defines': [
             '_LIBCPP_DEBUG=0',
@@ -204,6 +207,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -216,6 +222,9 @@
           'xcode_settings': {
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
+            'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
+            ],
            },
           'defines': [
             'NDEBUG=1',
@@ -291,6 +300,7 @@
               '../../common/basestation/test',
               '../../planning/basestation/test',
               '../../vision/basestation/test',
+              '../../../robot/include',
               '<@(opencv_includes)',
             ],
             'defines': [
@@ -369,6 +379,7 @@
               '../../common/basestation/test',
               '../../planning/basestation/test',
               '../../vision/basestation/test',
+              '../../../robot/include',
               '<@(opencv_includes)',
             ],
             'defines': [
@@ -542,6 +553,7 @@
       'include_dirs': [
         '../../planning/basestation/src',
         '../../planning/include',
+        '../../../robot/include',
         '<@(opencv_includes)',
       ],
       'direct_dependent_settings': {
@@ -569,6 +581,7 @@
       'include_dirs': [
         '../../planning/robot/src',
         '../../planning/include',
+        '../../../robot/include',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

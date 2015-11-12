@@ -1,8 +1,8 @@
 #ifndef ANKI_COZMO_ROBOT_LED_CONTROLLER_H
 #define ANKI_COZMO_ROBOT_LED_CONTROLLER_H
 
-#include "anki/common/types.h"
-#include "anki/cozmo/shared/ledTypes.h"
+#include "anki/types.h"
+#include "clad/types/ledTypes.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -10,7 +10,7 @@ namespace Anki {
     // Based on the current time and the current state of an LED (as indicated by
     // its LEDParams), returns the new RGBA color in newColor. Returns whether the
     // color of the LED actually changed.
-    bool GetCurrentLEDcolor(LEDParams_t& ledParams, TimeStamp_t currentTime,
+    bool GetCurrentLEDcolor(LightState& ledParams, TimeStamp_t currentTime,
                             u32& newColor);
     
   } // namespace Cozmo

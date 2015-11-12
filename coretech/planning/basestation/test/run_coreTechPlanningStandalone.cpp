@@ -14,14 +14,19 @@
 #include "anki/planning/basestation/xythetaPlanner.h"
 #include "anki/planning/basestation/xythetaPlannerContext.h"
 #include "json/json.h"
+#include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
 #include <fstream>
 #include <getopt.h>
 #include <iomanip>
 #include <iostream>
+#include <libgen.h>
 #include <map>
 
 using namespace Anki::Planning;
 using namespace std;
+
+Anki::Util::PrintfLoggerProvider* loggerProvider = nullptr;
 
 void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan& plan)
 {
@@ -36,32 +41,37 @@ void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan
 
 void usage()
 {
-  cout<<"usage: ctiPlanningStandalone -p mprim.json [--manual | --context env.json]\n";
+  cout<<"usage: ctiPlanningStandalone -p mprim.json [--manual | --context env.json] --stat\n";
+  cout<<"       --stat causes the program to output a single line suitable for appending to a state file\n";
 }
 
 int main(int argc, char *argv[])
 {
-  cout<<"Welcome to xythetaPlanner.\n";
 
   bool gotMprim = false;
+  bool stats = false;
+  bool quiet = false;
   xythetaPlannerContext context;
 
   int doManualPlanner = 0;
   int doContextPlan = 0;
   Json::Value contextJson;
 
+  std::string contextFilenameBase;
+
   static struct option opts[] = {
     {"help", no_argument, 0, 'h'},
     {"mprim", required_argument, 0, 'p'},
     {"manual", no_argument, &doManualPlanner, 1},
     {"context", required_argument, 0, 'c'},
+    {"stat", no_argument, 0, 's'},
     {0, 0, 0, 0}
   };
 
   int option_index = 0;
 
   while(true) {
-    int c = getopt_long( argc, argv, "hp:c:", opts, &option_index );
+    int c = getopt_long( argc, argv, "hp:c:s", opts, &option_index );
     if (c == -1) {
       break;
     }
@@ -72,6 +82,11 @@ int main(int argc, char *argv[])
       case 'h':
         usage();
         return 0;
+
+      case 's':
+        stats = true;
+        quiet = true;
+        break;
 
       case 'p':
         gotMprim = context.env.ReadMotionPrimitives(optarg);
@@ -85,6 +100,11 @@ int main(int argc, char *argv[])
         doContextPlan = 1;
         
         Json::Reader jsonReader;
+
+        char* contextFilenameBase_c = basename(optarg);
+        if( contextFilenameBase_c != nullptr ) {
+          contextFilenameBase = contextFilenameBase_c;
+        }
 
         ifstream contextStream(optarg);
         bool success = jsonReader.parse(contextStream, contextJson);
@@ -107,6 +127,14 @@ int main(int argc, char *argv[])
     return -1;
   }
 
+  if( ! quiet ) {
+    cout<<"Welcome to xythetaPlanner.\n";
+
+    loggerProvider = new Anki::Util::PrintfLoggerProvider();
+    loggerProvider->SetMinLogLevel(0);
+    Anki::Util::gLoggerProvider = loggerProvider;
+  }
+
 
   if( doContextPlan ) {
     bool success = context.Import(contextJson);
@@ -115,11 +143,43 @@ int main(int argc, char *argv[])
       return -1;
     }
 
+    using namespace std::chrono;
+
+    high_resolution_clock::time_point envStartT = high_resolution_clock::now();
+    context.env.PrepareForPlanning();
+    high_resolution_clock::time_point envEndT = high_resolution_clock::now();
+
     xythetaPlanner planner(context);
     planner.Replan();
 
-    writePath("path.txt", context.env, planner.GetPlan());
-    cout<<"done! check path.txt\n";
+    if( ! quiet ) {
+      printf("complete. Path: \n");
+      context.env.PrintPlan(planner.GetPlan());
+
+      char* cwd=NULL;
+      size_t size = 0;
+      cwd = getcwd(cwd,size);
+
+      writePath("path.txt", context.env, planner.GetPlan());
+      cout<<"check "<<cwd<<"/path.txt\n";
+    }
+
+    if( stats ) {
+      duration<double> time_d = duration_cast<duration<double>>(envEndT - envStartT);
+      double envTime = time_d.count();
+
+      Json::Value statsJson;
+      statsJson["context"] = contextFilenameBase;
+      statsJson["planTime"] = planner.GetLastPlanTime();
+      statsJson["envTime"] = envTime;
+      statsJson["expansions"] = planner.GetLastNumEpansions();
+      statsJson["considerations"] = planner.GetLastNumConsiderations();
+      statsJson["cost"] = planner.GetFinalCost();
+      
+      Json::StyledStreamWriter writer("  ");
+      writer.write(cout, statsJson);
+      cout << std::endl;
+    }
   }
 
   if( doManualPlanner ) {

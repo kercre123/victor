@@ -12,7 +12,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 #define _ANKICORETECHEMBEDDED_COMMON_MEMORY_H_
 
-#include "anki/common/robot/config.h"
+#include "anki/common/types.h"
 #include "anki/common/robot/flags_declarations.h"
 
 namespace Anki

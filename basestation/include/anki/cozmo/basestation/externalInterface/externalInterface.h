@@ -13,9 +13,10 @@
 #ifndef __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__
 #define __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterface_H__
 
-#include "anki/cozmo/basestation/events/ankiEventMgr.h"
-
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "util/signals/simpleSignal.hpp"
 #include <vector>
+#include <utility>
 
 namespace Anki {
 namespace Cozmo {
@@ -38,6 +39,18 @@ public:
   
   virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) = 0;
+  
+  template<typename T, typename ...Args>
+  void BroadcastToGame(Args&& ...args)
+  {
+    Broadcast(ExternalInterface::MessageEngineToGame(T(std::forward<Args>(args)...)));
+  }
+  
+  template<typename T, typename ...Args>
+  void BroadcastToEngine(Args&& ...args)
+  {
+    Broadcast(ExternalInterface::MessageGameToEngine(T(std::forward<Args>(args)...)));
+  }
   
   virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler) = 0;
   

@@ -1,0 +1,26 @@
+// File: emotionTypes
+// Author: Mark Wesley
+// Created: 10/14/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 EmotionType {
+
+    Happy = 0,
+    Calm,
+    Brave,
+    Confident,
+    Charged,
+    Excited,
+    Social,
+    Winning,
+    
+    Count
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

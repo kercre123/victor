@@ -47,10 +47,11 @@ public:
   // Computes a path from start to goal. Returns true if path found, false otherwise. Note that replanning may
   // or may not actually trigger the planner. E.g. if the environment hasn't changed (much), it may just use
   // the same path. Everything in context is allowed to change between replan calls (but it won't necessarily
-  // be efficient if too many things change)
-  bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS);  
+  // be efficient if too many things change). If the second argument is not null, then its value will be
+  // checked somewhere within the planenr loop, and the planner will return quickly if it turns false
+  bool Replan(unsigned int maxExpansions = DEFUALT_MAX_EXPANSIONS, bool* runPlan = nullptr);
 
-  // must call compute path before getting the plan
+  // must Replan before getting the plan
   xythetaPlan& GetPlan();
   const xythetaPlan& GetPlan() const;
 
@@ -58,6 +59,10 @@ public:
   void GetTestPlan(xythetaPlan& plan);
 
   Cost GetFinalCost() const;
+
+  float GetLastPlanTime() const;
+  int GetLastNumEpansions() const;
+  int GetLastNumConsiderations() const;
 
 private:
   xythetaPlannerImpl* _impl;

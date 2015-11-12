@@ -1,0 +1,13 @@
+
+namespace Anki {
+namespace Cozmo {
+namespace Audio {
+
+enum uint_32 ParameterType
+{
+  Invalid = 0,
+}
+
+}
+}
+}

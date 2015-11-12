@@ -74,3 +74,38 @@ Firmware may be installed onto a module by running:
 ./burn.sh <COM PORT>
 ```
 Where _COM PORT_ is the serial port the ESP8266 programming port is connected to.
+
+## Guidelines for writing Espressif Firmware
+The Espressif SoC is a slightly unusual beast with a lot of power but it is not idiot proof. A number of precautions
+need to be taken.
+
+### For application code
+
+#### Code structure
+* All application code must be in either a task or a timer
+* All tasks and timers *should* complete in less than 2ms and **must** complete in less than 500ms.
+* Reoccuring timers should not be scheduled more often than every 5ms.
+* There are 3 user task levels: 0, 1, 2.
+ * All level 2 tasks queued run before any queued level 1 tasks and so on.
+ * Task level 2 is reserved for HAL functions
+* Timers which are due are higher priority than tasks.
+* Tasks and timers *do not* pre-empt each other. A new task or timer cannot start until the runing task / timer has
+  ended.
+* Interrupts must not be locked out for more than 10us at a time or WiFi will crash
+
+#### Performance and Memory
+* The Expressif has a fast clock speed but low cycle efficiency for and most significantly fetching code is relatively
+slow as it comes from an external QSPI flash chip when not in cache, however, it has a relatively large amount of RAM so
+when making computation/code-size/RAM use trade offs, generally take the path that uses more RAM.
+* Heep (malloc and free) is available but should be used sparingly and cautiously.
+* Code size:
+ * Since the Espressif uses external QSPI flash, there is effectively unlimited code memory.
+ * However, loading code from SPI flash is relatively slow and there is a limited code cache in local chip RAM. Hence
+  inner loops and code which executes often should be kept relatively small to reduce cache thrashing.
+
+### For HAL
+In addition to all the guidelines above:
+* Interrupts must not be disabled for more than 10us.
+* No ISR can run for more than 10us.
+* Register reading and writing is surprisingly slow, cache where possible, etc.
+* All HAL code which runs often should *not* have the `ICACHE_FLASH_ATTR` decorator.

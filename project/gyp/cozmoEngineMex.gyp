@@ -86,7 +86,6 @@
       'libmex.dylib',
       'libeng.dylib',
       'AppKit.framework',
-      '<@(face_library_libs)',
     ],
     'xcode_settings': {
       'OTHER_CFLAGS': ['<@(compiler_c_flags)'],
@@ -112,7 +111,8 @@
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
-              '<(matlabRootDir)/bin/maci64'
+              '<@(opencv_lib_search_path_mac_debug)',
+              '<(matlabRootDir)/bin/maci64',
             ],
            },
           'defines': [
@@ -127,6 +127,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
               '<(matlabRootDir)/bin/maci64'
             ],
            },
@@ -142,6 +143,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
+              '<@(opencv_lib_search_path_mac_release)',
               '<(matlabRootDir)/bin/maci64'
             ],
            },
@@ -262,6 +264,21 @@
         '<(ce-cti_gyp_path):ctiVisionRobot',
       ],
     }, # end mexCameraCapture
+    
+    {
+      'target_name': 'mexFaceDetect',
+      'sources': [
+        '../../matlab/mex/mexFaceDetect.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'defines': [
+        'OPENCV_ROOT_PATH=<(coretech_external_path)/opencv-2.4.8',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiCommonRobot',
+        '<(ce-util_gyp_path):utilEmbedded',
+      ],
+    }, # end mexFaceDetect
     
 
   ] # end targets

@@ -18,6 +18,7 @@
 
 #include <thread>
 #include <map>
+#include <regex>
 
 #include <string.h>
 #include <sys/types.h>
@@ -266,13 +267,13 @@ namespace Anki {
     
     void SoundManager::ReadSoundDir(const std::string& root, const std::string& subDir, const bool isRobotAudio)
     {
-
+      static const std::regex wavFilenameMatcher("[^.].*\\.wav\0");
       DIR* dir = opendir((root + subDir).c_str());
       
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          if (ent->d_type == DT_REG && ent->d_name[0] != '.') {
+          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, wavFilenameMatcher)) {
             std::string shortFilename = subDir + ent->d_name;
             std::string fullSoundFilename = root + subDir + ent->d_name;
             struct stat attrib{0};
@@ -395,7 +396,7 @@ namespace Anki {
       return soundIter->second.duration_ms;
     }
 
-    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg)
+    bool SoundManager::GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, AnimKeyFrame::AudioSample &msg)
     {
       if (_currOpenSoundFileName != name) {
         // Dump file contents to buffer if this is not the same file

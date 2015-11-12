@@ -12,8 +12,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_DECLARATIONS_H_
 #define _ANKICORETECHEMBEDDED_COMMON_ARRAY2D_DECLARATIONS_H_
 
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/utilities_declarations.h"
+//#include "anki/common/robot/utilities_declarations.h"
+#include "anki/common/types.h"
 #include "anki/common/robot/memory.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/geometry_declarations.h"

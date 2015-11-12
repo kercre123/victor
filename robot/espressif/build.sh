@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 
 export PATH=/opt/xtensa-lx106-elf/bin:$PATH
-cd app
+export ESPDIR=`pwd`
+
+# Clear the terminal so debugging builds is easier
 clear
-make COMPILE=gcc BOOT=new APP=1 SPI_SPEED=20 SPI_MODE=QIO SPI_SIZE_MAP=3 && \
+
+# Generate clad source 
+cd ../clad
+make
+cd -
+
+# Build the Espressif app
+cd app
+make COMPILE=gcc BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 && \
 make clean && \
-make COMPILE=gcc BOOT=new APP=2 SPI_SPEED=20 SPI_MODE=QIO SPI_SIZE_MAP=3 && \
+make COMPILE=gcc BOOT=new APP=2 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3 && \
 make clean

@@ -17,8 +17,6 @@
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "clad/types/actionTypes.h"
 

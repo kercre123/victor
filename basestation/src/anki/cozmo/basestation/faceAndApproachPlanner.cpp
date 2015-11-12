@@ -18,6 +18,8 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/planning/shared/path.h"
 #include "faceAndApproachPlanner.h"
+#include "util/logging/logging.h"
+
 
 // amount of radians to be off from the desired angle in order to
 // introduce a turn in place action
@@ -42,24 +44,27 @@
 namespace Anki {
 namespace Cozmo {
 
-IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
-                                                          const Pose3d& startPose,
-                                                          const Pose3d& targetPose)
+EComputePathStatus FaceAndApproachPlanner::ComputePath(const Pose3d& startPose,
+                                                               const Pose3d& targetPose)
 {
   _targetVec = targetPose.GetTranslation();
   _finalTargetAngle = targetPose.GetRotationAngle<'Z'>().ToFloat();
 
-  return GetPlan(path, startPose, true);
+  return ComputeNewPathIfNeeded(startPose, true);
 }
 
-
-IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
-                                                          const Pose3d& startPose,
-                                                          bool forceReplanFromScratch)
+EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
+                                                                  bool forceReplanFromScratch)
 {
+
+  _hasValidPath = false;
+
   // for now, don't try to replan
-  if(!forceReplanFromScratch)
-    return PLAN_NOT_NEEDED;
+  if(!forceReplanFromScratch) {
+    // just use the existing path
+    _hasValidPath = true;
+    return EComputePathStatus::NoPlanNeeded;
+  }
 
   // TODO:(bn) this logic is incorrect for planning because it will
   // just constantly send a new plan. Instead if needs to detect if it
@@ -82,9 +87,9 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
   Point2f target2d(_targetVec.x(), _targetVec.y());
   float distSquared = pow(target2d.x() - start2d.x(), 2) + pow(target2d.y() - start2d.y(), 2);
   if(distSquared > FACE_AND_APPROACH_LENGTH_SQUARED_THRESHOLD) {
-    printf("FaceAndApproachPlanner: doing straight because distance^2 of %f > %f\n",
-           distSquared,
-           FACE_AND_APPROACH_LENGTH_SQUARED_THRESHOLD);
+    PRINT_NAMED_INFO("FaceAndApproachPlanner.Straight", "doing straight because distance^2 of %f > %f",
+                     distSquared,
+                     FACE_AND_APPROACH_LENGTH_SQUARED_THRESHOLD);
     doStraight = true;
     
     // If doing a straight then, the target angle is the approach angle to the target point.
@@ -93,25 +98,26 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
 
   float deltaTheta1 = -(intermediateTargetAngle - _finalTargetAngle).ToFloat();
   if(std::abs(deltaTheta1) > FACE_AND_APPROACH_THETA_THRESHOLD) {
-    printf("FaceAndApproachPlanner: doing final turn because delta theta of %f > %f\n",
-           deltaTheta1,
-           FACE_AND_APPROACH_THETA_THRESHOLD);
+    PRINT_NAMED_INFO("FaceAndApproachPlanner.FinalTurn", "doing final turn because delta theta of %f > %f\n",
+                     deltaTheta1,
+                     FACE_AND_APPROACH_THETA_THRESHOLD);
     doTurn1 = true;
   }
 
   float deltaTheta = (intermediateTargetAngle - currAngle).ToFloat();
   if(doStraight && std::abs(deltaTheta) > FACE_AND_APPROACH_THETA_THRESHOLD) {
-    printf("FaceAndApproachPlanner: doing initial turn because delta theta of %f > %f\n",
-           deltaTheta,
-           FACE_AND_APPROACH_THETA_THRESHOLD);
+    PRINT_NAMED_INFO("FaceAndApproachPlanner.InitialTurn", "doing initial turn because delta theta of %f > %f\n",
+                     deltaTheta,
+                     FACE_AND_APPROACH_THETA_THRESHOLD);
     doTurn0 = true;
   }
   
   if(!doTurn0 && !doStraight && !doTurn1) {
-    return PLAN_NOT_NEEDED;
+    _hasValidPath = true;
+    return EComputePathStatus::Running;
   }
 
-  path.Clear();
+  _path.Clear();
 
   bool backup = false;
   if(doTurn0) {
@@ -123,33 +129,35 @@ IPathPlanner::EPlanStatus FaceAndApproachPlanner::GetPlan(Planning::Path &path,
       backup = true;
     }
 
-    path.AppendPointTurn(0,
-                         startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
-                         deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
-                         FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
-                         FACE_AND_APPROACH_PLANNER_ROT_DECEL,
-                         true);
+    _path.AppendPointTurn(0,
+                          startVec.x(), startVec.y(), intermediateTargetAngle.ToFloat(),
+                          deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
+                          FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
+                          FACE_AND_APPROACH_PLANNER_ROT_DECEL,
+                          true);
   }
 
   if(doStraight) {
-    path.AppendLine(0,
-                    startVec.x(), startVec.y(),
-                    _targetVec.x(), _targetVec.y(),
-                    backup ? -FACE_AND_APPROACH_TARGET_SPEED : FACE_AND_APPROACH_TARGET_SPEED,
-                    FACE_AND_APPROACH_PLANNER_ACCEL,
-                    FACE_AND_APPROACH_PLANNER_DECEL);
+    _path.AppendLine(0,
+                     startVec.x(), startVec.y(),
+                     _targetVec.x(), _targetVec.y(),
+                     backup ? -FACE_AND_APPROACH_TARGET_SPEED : FACE_AND_APPROACH_TARGET_SPEED,
+                     FACE_AND_APPROACH_PLANNER_ACCEL,
+                     FACE_AND_APPROACH_PLANNER_DECEL);
   }
 
   if(doTurn1) {
-    path.AppendPointTurn(0,
-                         _targetVec.x(), _targetVec.y(), _finalTargetAngle,
-                         deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
-                         FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
-                         FACE_AND_APPROACH_PLANNER_ROT_DECEL,
-                         true);
+    _path.AppendPointTurn(0,
+                          _targetVec.x(), _targetVec.y(), _finalTargetAngle,
+                          deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
+                          FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
+                          FACE_AND_APPROACH_PLANNER_ROT_DECEL,
+                          true);
   }
 
-  return DID_PLAN;  
+  _hasValidPath = true;
+
+  return EComputePathStatus::Running;
 }
 
     

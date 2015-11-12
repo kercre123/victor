@@ -23,7 +23,7 @@
 // FacioMetric
 #  define ESTIMATE_EMOTION 0
 #  define ESTIMATE_GAZE    0
-#  define DO_RECOGNITION   1
+#  define DO_RECOGNITION   0
 
 #  include <intraface/core/core.h>
 #  include <intraface/core/LocalManager.h>
@@ -63,6 +63,13 @@
 
 namespace Anki {
 namespace Vision {
+  
+#if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC || \
+    FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
+  // Parameters used by cv::detectMultiScale for both of these face trackers
+  static const f32 opencvDetectScaleFactor = 1.3f;
+  static const cv::Size opencvDetectMinFaceSize(48,48);
+#endif
   
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC
 #pragma mark - FacioMetric-Based FaceTracker
@@ -232,6 +239,52 @@ namespace Vision {
     return vectorSubjectRecogData;
   } // loadEnrolledSubjectsFromFolder()
   
+  Result saveSubjectData(facio::SubjectRecogData& subjectDataToEnroll, std::string fileToSave)
+  {
+    //Variables to save the information
+    char *subjectMetaData;
+    size_t subjectMetaDataSize;
+    char *subjectData;
+    size_t subjectDataSize;
+
+    //Init SubjectSerializer
+    std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
+    
+    //We serialize the subject to save it to a file
+    if(subjectSerializer->serialize(subjectDataToEnroll,subjectMetaData, subjectMetaDataSize, subjectData, subjectDataSize) == 1){
+      
+      //Now we save the serialized data to a file for later use
+      std::ofstream outfile (fileToSave,std::ofstream::binary);
+      
+      //If we can open file
+      if(outfile.is_open()){
+        //Save size of metadata
+        outfile.write((char*)&subjectMetaDataSize,(long)sizeof(size_t));
+        //Save metadata
+        outfile.write(subjectMetaData,subjectMetaDataSize);
+        //Save size of data
+        outfile.write((char*)&subjectDataSize,(long)sizeof(size_t));
+        //Save data
+        outfile.write(subjectData,subjectDataSize);
+        
+        //Close file
+        outfile.close();
+        
+        //Enrollment done
+        PRINT_NAMED_INFO("FaceTracker.saveSubjectData.Success",
+                         "Successfully enrolled %s to the following path: %s",
+                         subjectDataToEnroll.getLabel().c_str(), fileToSave.c_str());
+      }
+      else{
+        PRINT_NAMED_ERROR("FaceTracker.saveSubjectData.Fail",
+                          "Could not open file %s", fileToSave.c_str());
+        return RESULT_FAIL;
+      }
+    }
+    
+    return RESULT_OK;
+  } // saveSubjectData()
+  
   
   //! This function perfom the recognition of the subject
   /*!
@@ -250,9 +303,11 @@ namespace Vision {
     bool status = false;
     
     //Perform recognition
+    /*
     PRINT_NAMED_INFO("FaceTracker.doRecognition",
                      "Performing recognition with %lu images.",
                      imRDList.size());
+     */
     
     //We prepare the subject that we will recognize
     facio::SubjectRecogData subjectDataToRecognize;
@@ -263,12 +318,19 @@ namespace Vision {
     if(subjectCreated){
       
       //Perform recodnition
+
       status = faceRecog.predict(subjectDataToRecognize, vectorSubjectRecogData, subject, scores);
+      
+      // Debug:
+      //saveSubjectData(subjectDataToRecognize, "/Users/andrew/temp/toRecognize.dat");
+      //saveSubjectData(vectorSubjectRecogData[0], "/Users/andrew/temp/enrolledFace.dat");
+      
       if(status)
-      {
+      {/*
         if (subject != -1) {
-          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Recognized: %s",
-                           vectorSubjectRecogData[subject].getLabel().c_str());
+          PRINT_NAMED_INFO("FaceTracker.doRecognition", "Recognized: %s with score %f",
+                           vectorSubjectRecogData[subject].getLabel().c_str(),
+                           scores[subject]);
         } else {
           PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject not found");
         }
@@ -276,6 +338,7 @@ namespace Vision {
           PRINT_NAMED_INFO("FaceTracker.doRecognition", "Subject %s with score %f",
                            vectorSubjectRecogData[i].getLabel().c_str(), scores[i]);
         }
+         */
       }
       else
       {
@@ -312,52 +375,19 @@ namespace Vision {
     // Fill the subjectDataToEnroll with the information
     bool subjectCreated = faceRecog.processSubjectRecogData(imRDList, name, subjectDataToEnroll);
     
-    
     if(subjectCreated){
       //Store in the given vector
       knownFaces.push_back(subjectDataToEnroll);
+
+      PRINT_NAMED_INFO("FaceTracker.enrollSubject.SubjectAdded",
+                       "Added subject with label %s and name %s.",
+                       subjectDataToEnroll.getLabel().c_str(),
+                       name.c_str());
+
+      // Uncomment to save each subject as they are enrolled (for use on next run)
+      //std::string fileToSave = folder+"/"+name+".dat";
+      //saveSubjectData(subjectDataToEnroll, fileToSave);
       
-      //Variables to save the information
-      char *subjectMetaData;
-      size_t subjectMetaDataSize;
-      char *subjectData;
-      size_t subjectDataSize;
-      
-      //Init SubjectSerializer
-      std::unique_ptr<facio::SubjectSerializer> subjectSerializer(new facio::SubjectSerializer());
-      
-      //We serialize the subject to save it to a file
-      if(subjectSerializer->serialize(subjectDataToEnroll,subjectMetaData, subjectMetaDataSize, subjectData, subjectDataSize) == 1){
-        
-        std::string fileToSave = folder+"/"+name+".dat";
-        
-        //Now we save the serialized data to a file for later use
-        std::ofstream outfile (fileToSave,std::ofstream::binary);
-        
-        //If we can open file
-        if(outfile.is_open()){
-          //Save size of metadata
-          outfile.write((char*)&subjectMetaDataSize,(long)sizeof(size_t));
-          //Save metadata
-          outfile.write(subjectMetaData,subjectMetaDataSize);
-          //Save size of data
-          outfile.write((char*)&subjectDataSize,(long)sizeof(size_t));
-          //Save data
-          outfile.write(subjectData,subjectDataSize);
-          
-          //Close file
-          outfile.close();
-          
-          //Enrollment done
-          PRINT_NAMED_INFO("FaceTracker.enrollSubject.Success",
-                           "Successfully enrolled %s to the following path: %s",
-                           name.c_str(), fileToSave.c_str());
-        }
-        else{
-          PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
-                            "Could not enroll %s to the database", name.c_str());
-        }
-      }
     }
     else{
       PRINT_NAMED_ERROR("FaceTracker.enrollSubject.Fail",
@@ -483,6 +513,21 @@ namespace Vision {
     return pointVec;
   }
   
+  static inline Point2f GetFeatureAverageHelper(const float* x, const float* y,
+                                                const int fromIndex, const int toIndex)
+  {
+    Point2f avg(0.f,0.f);
+    
+    for(int i=fromIndex; i<=toIndex; ++i) {
+      avg.x() += x[i];
+      avg.y() += y[i];
+    }
+    
+    avg /= static_cast<float>(toIndex-fromIndex+1);
+    
+    return avg;
+  }
+                                                
   static inline void UpdateFaceFeatures(const cv::Mat& landmarks,
                                         TrackedFace& face)
   {
@@ -498,6 +543,11 @@ namespace Vision {
     face.SetFeature(TrackedFace::Nose,         GetFeatureHelper(x, y, 14, 18));
     face.SetFeature(TrackedFace::LeftEye,      GetFeatureHelper(x, y, 19, 24, true));
     face.SetFeature(TrackedFace::RightEye,     GetFeatureHelper(x, y, 25, 30, true));
+    
+#   if !ESTIMATE_GAZE
+    face.SetLeftEyeCenter(GetFeatureAverageHelper(x, y, 19, 24));
+    face.SetRightEyeCenter(GetFeatureAverageHelper(x, y, 25, 30));
+#   endif
     
     face.SetFeature(TrackedFace::UpperLip, GetFeatureHelper(x, y, {
       31,32,33,34,35,36,37,45,44,43,31}));
@@ -558,11 +608,12 @@ namespace Vision {
         ++faceIter;
       }
     }
-    
+
     // Detecting new faces in the image
     // TODO: Expose these parameters
     std::vector<cv::Rect> newFaceRects;
-    _faceCascade.detectMultiScale(frame, newFaceRects, 1.1, 2, 0, cv::Size(15,15));
+    _faceCascade.detectMultiScale(frame, newFaceRects, opencvDetectScaleFactor,
+                                  2, 0, opencvDetectMinFaceSize);
     
     // TODO: See if we recognize this face
     
@@ -577,7 +628,10 @@ namespace Vision {
         TrackedFace newFace;
         
         newFace.SetRect(Rectangle<f32>(newFaceRect));
+        
+#       if !DO_RECOGNITION
         newFace.SetID(_faceCtr++);
+#       endif
         
         _faces.emplace_back(newFace, landmarks);
       }
@@ -656,10 +710,13 @@ namespace Vision {
         subject = doRecognition(*_fr, currentRecogData, _recognizableFaces, scores);
       }
       
-      if(subject != -1) {
+      const float scoreThreshold = 0.9f;
+      if(subject != -1 && scores[subject] > scoreThreshold) {
         face.SetID(subject);
+        face.SetName(_recognizableFaces[subject].getLabel());
       } else {
-        if(false == enrollSubject(*_fr, "Person" + std::to_string(_faceCtr++),
+        std::string newName("Person" + std::to_string(_faceCtr++));
+        if(false == enrollSubject(*_fr, newName,
                                   currentRecogData, _recognizedFacesPath,
                                   _recognizableFaces))
         {
@@ -667,6 +724,8 @@ namespace Vision {
                             "Failed to enroll new subject.");
           return RESULT_FAIL;
         }
+        face.SetID(_recognizableFaces.size()-1);
+        face.SetName(_recognizableFaces.back().getLabel());
       }
 #     endif // DO_RECOGNITION
       
@@ -941,6 +1000,7 @@ namespace Vision {
           FSDKP_FACE_CONTOUR13,
           FSDKP_FACE_CONTOUR12}));
       }
+       
     }
     
     // Remove any faces that were not observed
@@ -1017,21 +1077,24 @@ namespace Vision {
     
   private:
     
-    bool _isInitialized;
+    bool _isInitialized = false;
     
     cv::CascadeClassifier _faceCascade;
     cv::CascadeClassifier _eyeCascade;
     
-    u32 _faceCtr;
+    u32 _faceCtr = 0;
+    
+    u32 _frameCtr = 0;
+    const u32 _checkForNewFacesEveryNthFrame = 5; // TODO: Make a settable parameter?
     
     std::map<TrackedFace::ID_t, TrackedFace> _faces;
     
+    cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+
   }; // class FaceTracker::Impl
   
   
   FaceTracker::Impl::Impl(const std::string& modelPath)
-  : _isInitialized(false)
-  , _faceCtr(0)
   {
     const std::string faceCascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     
@@ -1053,6 +1116,9 @@ namespace Vision {
       return;
     }
     
+    // TODO: Make a settable parameter, and/or apply this further up the chain
+    clahe->setClipLimit(4);
+    
     _isInitialized = true;
   }
   
@@ -1063,60 +1129,104 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
-    std::vector<cv::Rect> newFaceRects;
-    _faceCascade.detectMultiScale(frame.get_CvMat_(), newFaceRects, 1.1, 2, 0, cv::Size(15,15));
+    // Apply contrast-limited adaptive histogram equalization (CLAHE) to help
+    // normalize illumination
+    // TODO: apply this further up the chain
+    cv::Mat cvFrame;
+    clahe->apply(frame.get_CvMat_(), cvFrame);
     
-    // Match detections to existing faces if they overlap enough
-    const f32 intersectionOverUnionThreshold = 0.5f;
-    
-    // Keep a list of existing faces to check and remove any that we find matches
-    // for in the loop below
-    std::list<std::map<TrackedFace::ID_t,TrackedFace>::iterator> existingFacesToCheck;
-    for(auto iter = _faces.begin(); iter != _faces.end(); ++iter) {
-      existingFacesToCheck.emplace_back(iter);
-    }
-    
-    for(auto & newFaceRect : newFaceRects)
+    if(_frameCtr++ == _checkForNewFacesEveryNthFrame)
     {
-      Rectangle<f32> rect_f32(newFaceRect);
+      _frameCtr = 0;
       
-      bool matchFound = false;
-      for(auto existingIter = existingFacesToCheck.begin();
-          !matchFound && existingIter != existingFacesToCheck.end(); )
+      // Search entire frame
+      std::vector<cv::Rect> newFaceRects;
+      _faceCascade.detectMultiScale(cvFrame, newFaceRects,
+                                    opencvDetectScaleFactor, 2, 0,
+                                    opencvDetectMinFaceSize);
+      
+      // Match detections to existing faces if they overlap enough
+      const f32 intersectionOverUnionThreshold = 0.5f;
+      
+      // Keep a list of existing faces to check and remove any that we find matches
+      // for in the loop below
+      std::list<std::map<TrackedFace::ID_t,TrackedFace>::iterator> existingFacesToCheck;
+      for(auto iter = _faces.begin(); iter != _faces.end(); ++iter) {
+        existingFacesToCheck.emplace_back(iter);
+      }
+      
+      for(auto & newFaceRect : newFaceRects)
       {
-        TrackedFace& existingFace = (*existingIter)->second;
-        const Rectangle<f32>& existingRect = existingFace.GetRect();
-        const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
-        const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
-        const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
+        Rectangle<f32> rect_f32(newFaceRect);
         
-        if(IoU > intersectionOverUnionThreshold) {
-          // Update existing face and remove it from additional checking for matches
-          existingFace.SetRect(std::move(rect_f32));
-          existingIter = existingFacesToCheck.erase(existingIter);
-          matchFound = true;
-          break;
-        } else {
-          ++existingIter;
+        bool matchFound = false;
+        for(auto existingIter = existingFacesToCheck.begin();
+            !matchFound && existingIter != existingFacesToCheck.end(); )
+        {
+          TrackedFace& existingFace = (*existingIter)->second;
+          const Rectangle<f32>& existingRect = existingFace.GetRect();
+          const f32 intersectionArea = existingRect.Intersect(rect_f32).area();
+          const f32 unionArea = existingRect.area() + rect_f32.area() - intersectionArea;
+          const f32 IoU = intersectionArea / unionArea; // "intersection over union" score
+          
+          if(IoU > intersectionOverUnionThreshold) {
+            // Update existing face and remove it from additional checking for matches
+            existingFace.SetRect(std::move(rect_f32));
+            existingIter = existingFacesToCheck.erase(existingIter);
+            matchFound = true;
+            break;
+          } else {
+            ++existingIter;
+          }
+        } // for each existing face
+        
+        if(!matchFound) {
+          // Add as new face
+          TrackedFace newFace;
+          
+          newFace.SetRect(Rectangle<f32>(newFaceRect));
+          newFace.SetID(_faceCtr++);
+          _faces.emplace(newFace.GetID(), newFace);
         }
-      } // for each existing face
+      }
       
-      if(!matchFound) {
-        // Add as new face
-        TrackedFace newFace;
+      // Remove any faces we are no longer seeing
+      for(auto oldFace : existingFacesToCheck) {
+        _faces.erase(oldFace);
+      }
+      
+    } else {
+      // Search in ROIs around existing faces
+      std::vector<cv::Rect> updatedRects;
+      for(auto faceIter = _faces.begin(); faceIter != _faces.end(); )
+      {
+        Rectangle<f32> faceRect = faceIter->second.GetRect().Scale(1.5f);
+        cv::Rect_<f32> cvFaceRect = (faceRect.get_CvRect_() &
+                                    cv::Rect_<f32>(0, 0, frame.GetNumCols(), frame.GetNumRows()));
         
-        newFace.SetRect(Rectangle<f32>(newFaceRect));
-        newFace.SetID(_faceCtr++);
-        _faces.emplace(newFace.GetID(), newFace);
+        cv::Mat faceRoi = cvFrame(cvFaceRect);
+        
+        _faceCascade.detectMultiScale(faceRoi, updatedRects,
+                                      opencvDetectScaleFactor, 2, 0,
+                                      cv::Size(cvFaceRect.width/2, cvFaceRect.height/2));
+        if(updatedRects.empty()) {
+          // Lost face
+          faceIter = _faces.erase(faceIter);
+        } else {
+          // Update face
+          if(updatedRects.size() > 1) {
+            PRINT_NAMED_WARNING("FaceTracker.Impl.Update.MultipleFaceUpdates",
+                                "Found more than one face in vicinity of existing face. Using first.");
+          }
+          faceIter->second.SetRect(Rectangle<f32>(cvFaceRect.x + updatedRects[0].x,
+                                                  cvFaceRect.y + updatedRects[0].y,
+                                                  updatedRects[0].width, updatedRects[0].height));
+          ++faceIter;
+        }
       }
     }
     
-    // Remove any faces we are no longer seeing
-    for(auto oldFace : existingFacesToCheck) {
-      _faces.erase(oldFace);
-    }
-    
-    // Update all existing faces
+    // Update all remaining existing faces
     for(auto & facePair : _faces)
     {
       TrackedFace& face = facePair.second;
@@ -1124,11 +1234,10 @@ namespace Vision {
       face.SetTimeStamp(frame.GetTimestamp());
       
       // Just use assumed eye locations within the rectangle
-      // TODO: Use OpenCV's eye detector?
       std::vector<cv::Rect> eyeRects;
       const cv::Rect_<float>& faceRect = face.GetRect().get_CvRect_();
-      cv::Mat faceRoi = frame.get_CvMat_()(faceRect);
-      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.1, 2, 0, cv::Size(5,5),
+      cv::Mat faceRoi = cvFrame(faceRect);
+      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.25, 2, 0, cv::Size(5,5),
                                     cv::Size(faceRoi.cols/4,faceRoi.rows/4));
       if(eyeRects.size() == 2) {
         // Iff we find two eyes within the face rectangle, use them

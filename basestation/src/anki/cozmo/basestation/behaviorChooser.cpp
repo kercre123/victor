@@ -13,8 +13,24 @@
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
+
+
+#if ANKI_DEV_CHEATS
+  #define VIZ_BEHAVIOR_SELECTION  1
+#else
+  #define VIZ_BEHAVIOR_SELECTION  0
+#endif // ANKI_DEV_CHEATS
+
+#if VIZ_BEHAVIOR_SELECTION
+  #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)  exp
+#else
+  #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)
+#endif // VIZ_BEHAVIOR_SELECTION
+
 
 namespace Anki {
 namespace Cozmo {
@@ -46,17 +62,42 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   _behaviorList.push_back(newBehavior);
   return Result::RESULT_OK;
 }
-  
-IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(double currentTime_sec) const
+
+IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
-  for (auto behavior : _behaviorList)
+  const float kRandomFactor = 0.1f;
+  
+  Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
+  
+  VIZ_BEHAVIOR_SELECTION_ONLY( VizInterface::RobotBehaviorSelectData robotBehaviorSelectData );
+  
+  IBehavior* bestBehavior = nullptr;
+  float bestScore = 0.0f;
+  for (IBehavior* behavior : _behaviorList)
   {
-    if (behavior->IsRunnable(currentTime_sec))
+    VizInterface::BehaviorScoreData scoreData;
+    
+    scoreData.behaviorScore = behavior->EvaluateScore(robot, currentTime_sec);
+    scoreData.totalScore    = scoreData.behaviorScore;
+    VIZ_BEHAVIOR_SELECTION_ONLY( scoreData.name = behavior->GetName() );
+    
+    if (scoreData.totalScore > 0.0f)
     {
-      return behavior;
+      scoreData.totalScore += rng.RandDbl(kRandomFactor);
+      
+      if (scoreData.totalScore > bestScore)
+      {
+        bestBehavior = behavior;
+        bestScore    = scoreData.totalScore;
+      }
     }
+    
+    VIZ_BEHAVIOR_SELECTION_ONLY( robotBehaviorSelectData.scoreData.push_back(scoreData) );
   }
-  return nullptr;
+  
+  VIZ_BEHAVIOR_SELECTION_ONLY( VizManager::getInstance()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
+  
+  return bestBehavior;
 }
   
 IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) const

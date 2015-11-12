@@ -1,0 +1,19 @@
+// File: behaviorType
+// Author: Lee Crippen
+// Created: 10/15/2015
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 BehaviorType {
+  NoneBehavior, // Named differently to not conflict with the Python keyword
+  LookAround,
+  OCD,
+  Fidget,
+  InteractWithFaces,
+  ReactToPickup
+}
+
+} // namespace Cozmo
+} // namespace Anki

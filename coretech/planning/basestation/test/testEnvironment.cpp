@@ -263,3 +263,102 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
 
   EXPECT_TRUE(it.Done(env));
 }
+
+GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch)
+{
+  // Assuming this is running from root/build......
+  xythetaEnvironment env;
+
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+
+  State curr(-14,107,15);
+
+  SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0, false);
+
+  // now go through each one, then from there, apply the reverse successors and make sure they match up
+  ASSERT_FALSE(it.Done(env));
+  it.Next(env);
+
+  int numActions = 0;
+
+  while( ! it.Done(env) ) {
+    numActions++;
+    StateID nextID = it.Front().stateID;
+
+    SuccessorIterator rIt = env.GetSuccessors(nextID, 0.0, true);
+    ASSERT_FALSE(rIt.Done(env));
+    rIt.Next(env);
+    int numMatches = 0;
+
+    while( ! rIt.Done(env) ) {
+      if( rIt.Front().stateID == curr.GetStateID() ) {
+        numMatches++;
+        EXPECT_EQ(rIt.Front().actionID, it.Front().actionID);
+        EXPECT_FLOAT_EQ(rIt.Front().g, it.Front().g);
+        EXPECT_FLOAT_EQ(rIt.Front().penalty, it.Front().penalty);
+      }
+      rIt.Next(env);
+    }
+
+    EXPECT_EQ(numMatches, 1) << "going forward then backwards should have exactly 1 match";
+
+    it.Next(env);
+  }
+
+  EXPECT_GT(numActions, 2);
+}
+
+GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch_WithObstacle)
+{
+  // Assuming this is running from root/build......
+  xythetaEnvironment env;
+
+  EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+
+  env.AddObstacle(Anki::RotatedRectangle(-20.0, 100.0, 20.0, 100.0, 20.0), 1.0f);
+
+  env.PrepareForPlanning();
+
+  State_c curr_c(-14,107,15);
+  State curr = env.State_c2State(curr_c);
+
+  SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 5.0, false);
+
+  // now go through each one, then from there, apply the reverse successors and make sure they match up
+  ASSERT_FALSE(it.Done(env));
+  it.Next(env);
+
+  int numActions = 0;
+
+  while( ! it.Done(env) ) {
+    numActions++;
+    StateID nextID = it.Front().stateID;
+
+    SuccessorIterator rIt = env.GetSuccessors(nextID, 5.0, true);
+    ASSERT_FALSE(rIt.Done(env));
+    rIt.Next(env);
+    int numMatches = 0;
+
+    while( ! rIt.Done(env) ) {
+      if( rIt.Front().stateID == curr.GetStateID() ) {
+        numMatches++;
+        EXPECT_EQ(rIt.Front().actionID, it.Front().actionID);
+        EXPECT_FLOAT_EQ(rIt.Front().g, it.Front().g)
+          << "g value incorrect " << ((int)it.Front().actionID) << ": "
+          << env.GetActionType(it.Front().actionID).GetName();
+        EXPECT_FLOAT_EQ(rIt.Front().penalty, it.Front().penalty);
+        EXPECT_GT(rIt.Front().penalty, 0.0f)
+          << "action penalty fail " << ((int)it.Front().actionID) << ": "
+          << env.GetActionType(it.Front().actionID).GetName();
+      }
+      rIt.Next(env);
+    }
+
+    EXPECT_EQ(numMatches, 1) << "going forward then backwards should have exactly 1 match";
+
+    it.Next(env);
+  }
+
+  EXPECT_GT(numActions, 2);
+}
+

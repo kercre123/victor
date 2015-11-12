@@ -1,0 +1,35 @@
+/** Clad for messages from active objects to Engine or Came
+ * ROBOT_CLAD_SHARED
+ */
+
+#include "clad/types/activeObjectTypes.clad"
+
+
+namespace Anki {
+namespace Cozmo {
+  
+message ObjectMoved
+{
+  uint_32     objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32     robotID,
+  ActiveAccel accel,
+  UpAxis      upAxis,
+}
+
+message ObjectStoppedMoving
+{
+  uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 robotID,
+  UpAxis  upAxis,
+  bool    rolled,
+}
+
+message ObjectTapped
+{
+  uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
+  uint_32 robotID,
+  uint_8  numTaps,
+}
+  
+} // Cozmo
+} // Anki

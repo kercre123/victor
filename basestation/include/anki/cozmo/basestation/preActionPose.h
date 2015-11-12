@@ -31,9 +31,11 @@ namespace Anki {
     {
     public:
       enum ActionType {
-        DOCKING,       // e.g. with objects to pick up with lifter down
-        PLACEMENT,     // e.g. for putting a carried object down
-        ENTRY,         // e.g. for entering a bridge or ascending/descending a ramp
+        DOCKING,         // for picking up a specified object
+        PLACE_RELATIVE,  // for placing a carried object on top of / in front of the specified object
+        PLACE_ON_GROUND, // for putting a carried object down
+        ENTRY,           // for entering a bridge or ascending/descending a ramp
+        ROLLING,         // for rolling a block towards the robot
         NONE
       };
       
@@ -62,6 +64,9 @@ namespace Anki {
       PreActionPose(const PreActionPose& canonicalPose,
                     const Pose3d& markerParentPose,
                     const f32 offset_mm = 0);
+
+      // Copy constructor
+      PreActionPose(const PreActionPose& other);
       
       // Get the type of action associated with this PreActionPose
       ActionType GetActionType() const;

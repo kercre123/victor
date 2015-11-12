@@ -18,8 +18,6 @@
 
 #include "anki/common/types.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
 
@@ -83,7 +81,9 @@ namespace Cozmo {
     
     // Returns nullptr if there is no current behavior
     const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
-    
+
+    const IBehaviorChooser* GetBehaviorChooser() const { return _behaviorChooser; }
+
   private:
     
     bool _isInitialized;
@@ -91,17 +91,18 @@ namespace Cozmo {
     
     Robot& _robot;
     
-    void SwitchToNextBehavior(double currentTime_sec);
+    void   SwitchToNextBehavior(double currentTime_sec);
     Result InitNextBehaviorHelper(float currentTime_sec);
-    void SetupBehaviorChooser(const Json::Value &config);
-    void AddReactionaryBehavior(IReactionaryBehavior* behavior);
+    void   SetupBehaviorChooser(const Json::Value &config);
+    void   AddReactionaryBehavior(IReactionaryBehavior* behavior);
     
     // How we store and choose next behavior
-    IBehaviorChooser* _behaviorChooser;
+    IBehaviorChooser* _behaviorChooser = nullptr;
     
     IBehavior* _currentBehavior = nullptr;
     IBehavior* _nextBehavior = nullptr;
     IBehavior* _forceSwitchBehavior = nullptr;
+    IBehavior* _resumeBehavior = nullptr;
     
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;

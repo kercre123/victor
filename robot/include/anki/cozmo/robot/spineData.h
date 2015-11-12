@@ -19,21 +19,32 @@ typedef s64 Fixed64;
 #define FIXED_MUL(x, y) ((s32)(((s64)(x) * (s64)(y)) >> 16))
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
+static const int spine_baud_rate = 350000;
+static const int uart_chunk_size = 8;
 
 enum SPISource
 {
-  SPI_SOURCE_HEAD = 'H',
-  SPI_SOURCE_BODY = 'B',
-  SPI_SOURCE_CLEAR = 0
+#ifdef COZMO_ROBOT_V41
+  SPI_SOURCE_HEAD = 'HEAD',
+  SPI_SOURCE_BODY = 'BODY'
+#else
+	SPI_SOURCE_HEAD = 'H',
+	SPI_SOURCE_BODY = 'B',
+	SPI_SOURCE_CLEAR = 0
+#endif
 };
 
 union GlobalCommon
 {
-  struct {
-    SPISource source;
-    uint8_t SYNC[3];
-  };
-  uint32_t common;
+#ifdef COZMO_ROBOT_V41
+  uint32_t source;
+#else
+	struct {
+		SPISource source;
+		uint8_t SYNC[3];
+	};
+	uint32_t common;
+#endif
 };
 
 struct AcceleratorPacket {
@@ -53,27 +64,18 @@ union GlobalDataToHead
     GlobalCommon common;
     Fixed speeds[4];
     Fixed positions[4];
-#ifdef ROBOT41
-    Fixed _unused;
+    uint32_t cliffLevel;
     Fixed VBat;
     Fixed VExt;
-#else
-    Fixed IBat;
-    Fixed VBat;
-    Fixed Vusb;
-#endif
     u8    chargeStat;
 
     u8                cubeToUpdate;
     AcceleratorPacket cubeStatus;
-
-    uint8_t _TAIL;
   };
 
   // Force alignment
   struct {
-    uint8_t _RESERVED[63];
-    uint8_t tail;
+    uint8_t _RESERVED[64];
   };
 };
 
@@ -91,14 +93,11 @@ union GlobalDataToBody
     
     u8          cubeToUpdate;
     LEDPacket   cubeStatus;
-    
-    uint8_t _TAIL;
   };
   
   // Force alignment
   struct {
-    uint8_t _RESERVED[63];  // Pad out to 64 bytes
-    uint8_t tail;
+    uint8_t _RESERVED[64];  // Pad out to 64 bytes
   };
 };
 

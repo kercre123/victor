@@ -17,10 +17,10 @@
 #ifndef COZMO_DOCKING_CONTROLLER_H_
 #define COZMO_DOCKING_CONTROLLER_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 #include "anki/vision/MarkerCodeDefinitions.h"
 #include "anki/common/robot/geometry_declarations.h"
-#include "messages.h"
+#include "clad/types/dockingSignals.h"
 
 
 // Distance between the robot origin and the distance along the robot's x-axis
@@ -36,12 +36,6 @@ const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
 const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
 const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 19.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 16.f;
-
-#elif defined(COZMO_ROBOT_V40)
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 20.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 17.f;
-const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;
-const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 #else
 // Cozmo v4.1
@@ -106,7 +100,7 @@ namespace Anki {
       bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle);
       
       // Sets the latest docking error signal message coming from engine
-      void SetDockingErrorSignalMessage(const Messages::DockingErrorSignal& msg);
+      void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);
       
     } // namespace DockingController
   } // namespace Cozmo

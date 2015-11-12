@@ -102,7 +102,20 @@ Supervisor {
 		Compass {
 		  name "compass"
 		}
-	
+
+		Transform {
+		  translation 0 0 -0.013
+		  rotation 0 1 0 1.5708
+		  children [
+		    DistanceSensor {
+		      name "cliffSensor"
+		      type "infra-red"
+		      aperture 0.5
+		      lookupTable [0   255 0,
+		                   0.1   0 0]
+		    }
+		  ]
+		}
 	
 		DEF BODY Solid {
 		  translation -0.015 0 0

@@ -39,7 +39,7 @@ namespace Anki {
     static const Point3f& GetSizeByType(MarkerlessObject::Type type)
     {
       static const std::map<MarkerlessObject::Type, Point3f> Sizes = {
-        {MarkerlessObject::Type::ProxObstacle, {10.f, 24.f, 50.f}},
+        {MarkerlessObject::Type::ProxObstacle, {20.f, 40.f, 50.f}},
       };
     
       auto iter = Sizes.find(type);
@@ -81,13 +81,13 @@ namespace Anki {
       return _size*.5f;
     }
     
-    void MarkerlessObject::Visualize(const ColorRGBA& color)
+    void MarkerlessObject::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToOrigin();
       _vizHandle = VizManager::getInstance()->DrawCuboid(GetID().GetValue(), _size, vizPose, color);
     }
     
-    void MarkerlessObject::EraseVisualization()
+    void MarkerlessObject::EraseVisualization() const
     {
       // Erase the main object
       if(_vizHandle != VizManager::INVALID_HANDLE) {

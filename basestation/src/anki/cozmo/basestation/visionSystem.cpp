@@ -15,12 +15,14 @@
  **/
 
 #include "visionSystem.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "clad/vizInterface/messageViz.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/robotStatusAndActions.h"
 
 //
 // Embedded implementation holdovers:
@@ -249,7 +251,7 @@ namespace Cozmo {
 #endif
   } // GetTrackerQuad()
   
-  Result VisionSystem::UpdateRobotState(const MessageRobotState newRobotState)
+  Result VisionSystem::UpdateRobotState(const RobotState newRobotState)
   {
     _prevRobotState = _robotState;
     _robotState     = newRobotState;
@@ -268,17 +270,17 @@ namespace Cozmo {
   {
     AnkiAssert(_havePreviousRobotState);
     
-    angleChange = Radians(_robotState.pose_angle) - Radians(_prevRobotState.pose_angle);
+    angleChange = Radians(_robotState.pose.angle) - Radians(_prevRobotState.pose.angle);
     
     //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
-    const f32 dx = _robotState.pose_x - _prevRobotState.pose_x;
-    const f32 dy = _robotState.pose_y - _prevRobotState.pose_y;
+    const f32 dx = _robotState.pose.x - _prevRobotState.pose.x;
+    const f32 dy = _robotState.pose.y - _prevRobotState.pose.y;
     
     // Get change in robot coordinates
-    const f32 cosAngle = cosf(-_prevRobotState.pose_angle);
-    const f32 sinAngle = sinf(-_prevRobotState.pose_angle);
+    const f32 cosAngle = cosf(-_prevRobotState.pose.angle);
+    const f32 sinAngle = sinf(-_prevRobotState.pose.angle);
     xChange = dx*cosAngle - dy*sinAngle;
     yChange = dx*sinAngle + dy*cosAngle;
   } // GetPoseChange()
@@ -343,7 +345,7 @@ namespace Cozmo {
   }
   
   /*
-  bool VisionSystem::CheckMailbox(MessageFaceDetection&       msg)
+  bool VisionSystem::CheckMailbox(Viz::FaceDetection&       msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -362,7 +364,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(MessageTrackerQuad&         msg)
+  bool VisionSystem::CheckMailbox(VizInterface::TrackerQuad&         msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -371,7 +373,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(MessagePanAndTiltHead&         msg)
+  bool VisionSystem::CheckMailbox(RobotInterface::PanAndTilt&         msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -817,7 +819,7 @@ namespace Cozmo {
     // MatlabVisualization::SendTrackerPrediction_Before(grayscaleImage, currentQuad);
     Anki::Quad2f vizQuad;
     GetVizQuad(currentQuad, vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::BLUE);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, ::Anki::NamedColors::BLUE);
     
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
@@ -892,7 +894,7 @@ namespace Cozmo {
     // TODO: Re-enable tracker prediction viz on basestation
     //MatlabVisualization::SendTrackerPrediction_After(GetTrackerQuad(scratch));
     GetVizQuad(GetTrackerQuad(scratch), vizQuad);
-    VizManager::getInstance()->DrawCameraQuad(vizQuad, NamedColors::GREEN);
+    VizManager::getInstance()->DrawCameraQuad(vizQuad, ::Anki::NamedColors::GREEN);
     
     return result;
   } // TrackerPredictionUpdate()
@@ -1025,15 +1027,15 @@ namespace Cozmo {
       {
         case 640:
           calibSizeValid = camCalib.GetNrows() == 480;
-          _captureResolution = Vision::CAMERA_RES_VGA;
+          _captureResolution = ImageResolution::VGA;
           break;
         case 400:
           calibSizeValid = camCalib.GetNrows() == 296;
-          _captureResolution = Vision::CAMERA_RES_CVGA;
+          _captureResolution = ImageResolution::CVGA;
           break;
         case 320:
           calibSizeValid = camCalib.GetNrows() == 240;
-          _captureResolution = Vision::CAMERA_RES_QVGA;
+          _captureResolution = ImageResolution::QVGA;
           break;
       }
       AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
@@ -1324,7 +1326,7 @@ namespace Cozmo {
 
   
   // This is the regular Update() call
-  Result VisionSystem::Update(const MessageRobotState robotState,
+  Result VisionSystem::Update(const RobotState robotState,
                               const Vision::Image&    inputImage)
   {
     Result lastResult = RESULT_OK;
@@ -1372,8 +1374,8 @@ namespace Cozmo {
       // Nothing to do, unless a snapshot was requested
       
       if(_isWaitingOnSnapShot) {
-        const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-        const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+        const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+        const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
         
         
         Array<u8> grayscaleImage(captureHeight, captureWidth,
@@ -1396,8 +1398,8 @@ namespace Cozmo {
       
       //MemoryStack _offchipScratchlocal(VisionMemory::_offchipScratch);
       
-      const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-      const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+      const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+      const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
       
       Array<u8> grayscaleImage(captureHeight, captureWidth,
                                _memory._offchipScratch, Flags::Buffer(false,false,false));
@@ -1559,8 +1561,8 @@ namespace Cozmo {
         MemoryStack _offchipScratchlocal(_memory._offchipScratch);
         MemoryStack _onchipScratchlocal(_memory._onchipScratch);
         
-        const s32 captureHeight = Vision::CameraResInfo[_captureResolution].height;
-        const s32 captureWidth  = Vision::CameraResInfo[_captureResolution].width;
+        const s32 captureHeight = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].height;
+        const s32 captureWidth  = Vision::CameraResInfo[static_cast<size_t>(_captureResolution)].width;
         
         Array<u8> grayscaleImage(captureHeight, captureWidth,
                                  _onchipScratchlocal, Flags::Buffer(false,false,false));
@@ -1666,10 +1668,6 @@ namespace Cozmo {
         converged = true;
       } // if(!trackerJustInitialzed)
       
-      //
-      // Create docking error signal from tracker
-      //
-      
       if(converged)
       {
         Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(_memory._onchipScratch);
@@ -1711,13 +1709,13 @@ namespace Cozmo {
         }
         
         // Send tracker quad if image streaming
-        if (_imageSendMode == ISM_STREAM) {
+        if (_imageSendMode == ImageSendMode::Stream) {
           f32 scale = 1.f;
-          for (u8 s = (u8)Vision::CAMERA_RES_CVGA; s<(u8)_nextSendImageResolution; ++s) {
+          for (u8 s = (u8)ImageResolution::CVGA; s<(u8)_nextSendImageResolution; ++s) {
             scale *= 0.5f;
           }
           
-          MessageTrackerQuad m;
+          VizInterface::TrackerQuad m;
           m.topLeft_x     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].x * scale);
           m.topLeft_y     = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopLeft].y * scale);
           m.topRight_x    = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::TopRight].x * scale);
@@ -1806,9 +1804,9 @@ namespace Cozmo {
     if(_mode & LOOKING_FOR_SALIENCY)
     {
       const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(1));
-      const bool poseSame = (NEAR(_robotState.pose_x,    _prevRobotState.pose_x,    1.f) &&
-                             NEAR(_robotState.pose_y,    _prevRobotState.pose_y,    1.f) &&
-                             NEAR(_robotState.pose_angle,_prevRobotState.pose_angle, DEG_TO_RAD(1)));
+      const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    1.f) &&
+                             NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    1.f) &&
+                             NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(1)));
       
       //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
       

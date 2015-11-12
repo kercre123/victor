@@ -23,13 +23,12 @@ namespace Cozmo {
 class FaceAndApproachPlanner : public IPathPlanner
 {
 public:
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              bool forceReplanFromScratch = false) override;
 
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const Pose3d& targetPose) override;
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) override;
+
+  virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
+                                                    bool forceReplanFromScratch = false) override;
 protected:
   Vec3f _targetVec;
   float _finalTargetAngle;

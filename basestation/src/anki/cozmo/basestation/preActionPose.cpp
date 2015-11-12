@@ -27,9 +27,10 @@ namespace Anki {
     const ColorRGBA& PreActionPose::GetVisualizeColor(ActionType type)
     {
       static const std::map<ActionType, ColorRGBA> ColorLUT = {
-        {DOCKING,      ColorRGBA(0.0f,0.0f,1.0f,0.5f)},
-        {PLACEMENT,    ColorRGBA(0.0f,0.8f,0.2f,0.5f)},
-        {ENTRY,        ColorRGBA(1.f,0.f,0.f,0.5f)}
+        {DOCKING,         ColorRGBA(0.0f,0.0f,1.0f,0.5f)},
+        {PLACE_RELATIVE,  ColorRGBA(0.0f,0.8f,0.2f,0.5f)},
+        {PLACE_ON_GROUND, ColorRGBA(0.5f,0.5f,0.0f,0.5f)},
+        {ENTRY,           ColorRGBA(1.f,0.f,0.f,0.5f)}
       };
       
       static const ColorRGBA Default(1.0f,0.0f,0.0f,0.5f);
@@ -118,6 +119,15 @@ namespace Anki {
       _poseWrtMarkerParent.SetName("PreActionPose");
       
       SetHeightTolerance();
+    }
+    
+    PreActionPose::PreActionPose(const PreActionPose& other)
+    : _type(other._type)
+    , _marker(other._marker)
+    , _poseWrtMarkerParent(other._poseWrtMarkerParent)
+    , _heightTolerance(other._heightTolerance)
+    {
+      
     }
     
     

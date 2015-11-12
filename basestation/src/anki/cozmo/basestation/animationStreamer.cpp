@@ -1,7 +1,11 @@
 
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 
 #include "util/logging/logging.h"
 
@@ -13,8 +17,10 @@ namespace Cozmo {
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
   
-  AnimationStreamer::AnimationStreamer(CannedAnimationContainer& container)
-  : _animationContainer(container)
+  AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
+                                       CannedAnimationContainer& container)
+  : HasSettableParameters(externalInterface)
+  , _animationContainer(container)
   , _liveAnimation(LiveAnimation)
   , _idleAnimation(nullptr)
   , _streamingAnimation(nullptr)
@@ -33,7 +39,7 @@ namespace Cozmo {
   , _liftMoveSpacing_ms(0)
   , _headMoveSpacing_ms(0)
   {
-    
+
   }
 
   u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
@@ -81,7 +87,8 @@ namespace Cozmo {
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
-    if(name.empty()) {
+    // Special cases for disabling, animation tool, or "live"
+    if(name.empty() || name == "NONE") {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
                        "Disabling idle animation.\n");
@@ -98,7 +105,7 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
-    
+    // Otherwise find the specified name and use that as the idle
     _idleAnimation = _animationContainer.GetAnimation(name);
     if(_idleAnimation == nullptr) {
       return RESULT_FAIL;
@@ -239,38 +246,47 @@ namespace Cozmo {
     return RESULT_OK;
   } // StreamProceduralFace()
   
+
+  
+  void AnimationStreamer::SetDefaultParams()
+  {
+#   define SET_DEFAULT(__NAME__, __VALUE__) SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
+    
+    SET_DEFAULT(BlinkCloseTime_ms, 150);
+    SET_DEFAULT(BlinkOpenTime_ms, 150);
+    
+    SET_DEFAULT(BlinkSpacingMinTime_ms, 3000);
+    SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000);
+    SET_DEFAULT(TimeBeforeWiggleMotions_ms, 1000);
+    SET_DEFAULT(BodyMovementSpacingMin_ms, 100);
+    SET_DEFAULT(BodyMovementSpacingMax_ms, 1000);
+    SET_DEFAULT(BodyMovementDurationMin_ms, 250);
+    SET_DEFAULT(BodyMovementDurationMax_ms, 1500);
+    SET_DEFAULT(BodyMovementSpeedMinMax_mmps, 10);
+    SET_DEFAULT(BodyMovementStraightFraction, 0.5f);
+    SET_DEFAULT(MaxPupilMovement, 0.5f);
+    SET_DEFAULT(LiftMovementDurationMin_ms, 50);
+    SET_DEFAULT(LiftMovementDurationMax_ms, 500);
+    SET_DEFAULT(LiftMovementSpacingMin_ms,  250);
+    SET_DEFAULT(LiftMovementSpacingMax_ms, 2000);
+    SET_DEFAULT(LiftHeightMean_mm, 35);
+    SET_DEFAULT(LiftHeightVariability_mm, 8);
+    SET_DEFAULT(HeadMovementDurationMin_ms, 50);
+    SET_DEFAULT(HeadMovementDurationMax_ms, 500);
+    SET_DEFAULT(HeadMovementSpacingMin_ms, 250);
+    SET_DEFAULT(HeadMovementSpacingMax_ms, 1000);
+    SET_DEFAULT(HeadAngleVariability_deg, 6);
+    SET_DEFAULT(DockSquintEyeHeight, -0.4f);
+    SET_DEFAULT(DockSquintEyebrowHeight, -0.4f);
+    
+#    undef SET_DEFAULT
+  }
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
   {
-    Result lastResult = RESULT_OK;
+#   define GET_PARAM(__TYPE__, __NAME__) GetParam<__TYPE__>(LiveIdleAnimationParameter::__NAME__)
     
-    // Live animation parameters:
-    // TODO: Get all these constants from config somehow
-    const s32 kBlinkCloseTime_ms = 150;
-    const s32 kBlinkOpenTime_ms  = 100;
-    const s32 kBlinkSpacingMinTime_ms = 3000;
-    const s32 kBlinkSpacingMaxTime_ms = 4000;
-    const s32 kTimeBeforeWiggleMotions_ms = 1000;
-    const s32 kBodyMovementSpacingMin_ms = 100;
-    const s32 kBodyMovementSpacingMax_ms = 1000;
-    const s32 kBodyMovementDurationMin_ms = 250;
-    const s32 kBodyMovementDurationMax_ms = 1500;
-    const s32 kBodyMovementSpeedMinMax_mmps = 10;
-    const f32 kBodyMovementStraightFraction = 0.5f;
-    const f32 kMaxPupilMovement = 0.5f;
-    const s32 kLiftMovementDurationMin_ms = 50;
-    const s32 kLiftMovementDurationMax_ms = 500;
-    const s32 kLiftMovementSpacingMin_ms = 250;
-    const s32 kLiftMovementSpacingMax_ms = 2000;
-    const u8  kLiftHeightMean_mm = 35;
-    const u8  kLiftHeightVariability_mm = 8;
-    const s32 kHeadMovementDurationMin_ms = 50;
-    const s32 kHeadMovementDurationMax_ms = 500;
-    const s32 kHeadMovementSpacingMin_ms = 250;
-    const s32 kHeadMovementSpacingMax_ms = 1000;
-    const u8  kHeadAngleVariability_deg = 6;
-    const f32 kDockSquintEyeHeight = -0.4f;
-    const f32 kDockSquintEyebrowHeight = -0.4f;
+    Result lastResult = RESULT_OK;
     
     // Use procedural face
     const ProceduralFace& lastFace = robot.GetLastProceduralFace();
@@ -281,8 +297,10 @@ namespace Cozmo {
     // Squint the current face while picking/placing to show concentration:
     if(robot.IsPickingOrPlacing()) {
       for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right}) {
-        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight, kDockSquintEyeHeight);
-        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::BrowCenY, kDockSquintEyebrowHeight);
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+                              GET_PARAM(f32, DockSquintEyeHeight));
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::BrowCenY,
+                              GET_PARAM(f32, DockSquintEyebrowHeight));
       }
       // Make sure squinting face gets displayed:
       if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
@@ -318,21 +336,22 @@ namespace Cozmo {
       blinkFace.Blink();
       
       // Close: interpolate from current face to blink face (eyes closed)
-      blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + kBlinkCloseTime_ms);
+      blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + GET_PARAM(s32, BlinkCloseTime_ms));
       lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
       if(RESULT_OK != lastResult) {
         return lastResult;
       }
       
       // Open: interpolate from blink face (eyes closed) back to current face
-      crntFace.SetTimeStamp(blinkFace.GetTimeStamp() + kBlinkOpenTime_ms);
+      crntFace.SetTimeStamp(blinkFace.GetTimeStamp() + GET_PARAM(s32, BlinkOpenTime_ms));
       lastResult = StreamProceduralFace(robot, blinkFace, crntFace, _liveAnimation);
       if(RESULT_OK != lastResult) {
         return lastResult;
       }
       
       // Pick random next time to blink
-      _nextBlink_ms = _rng.RandIntInRange(kBlinkSpacingMinTime_ms, kBlinkSpacingMaxTime_ms);
+      _nextBlink_ms = _rng.RandIntInRange(GET_PARAM(s32, BlinkSpacingMinTime_ms),
+                                          GET_PARAM(s32, BlinkSpacingMaxTime_ms));
       faceSent = true;
     }
     
@@ -340,18 +359,20 @@ namespace Cozmo {
     // Don't start wiggling until we've been idling for a bit and make sure we
     // picking or placing
     if(_isLiveTwitchEnabled &&
-       _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms &&
+       _timeSpentIdling_ms >= GET_PARAM(s32, TimeBeforeWiggleMotions_ms) &&
        !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.AreWheelsLocked())
+      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.GetMoveComponent().AreWheelsLocked())
       {
-        _bodyMoveDuration_ms = _rng.RandIntInRange(kBodyMovementDurationMin_ms, kBodyMovementDurationMax_ms);
-        s16 speed = _rng.RandIntInRange(-kBodyMovementSpeedMinMax_mmps, kBodyMovementSpeedMinMax_mmps);
+        _bodyMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementDurationMin_ms),
+                                                   GET_PARAM(s32, BodyMovementDurationMax_ms));
+        s16 speed = _rng.RandIntInRange(-GET_PARAM(s32, BodyMovementSpeedMinMax_mmps),
+                                         GET_PARAM(s32, BodyMovementSpeedMinMax_mmps));
 
         // Drive straight sometimes, turn in place the rest of the time
         s16 curvature = s16_MAX; // drive straight
-        if(_rng.RandDblInRange(0., 1.) < kBodyMovementStraightFraction) {
+        if(_rng.RandDblInRange(0., 1.) > GET_PARAM(f32, BodyMovementStraightFraction)) {
           curvature = 0;
         }
         
@@ -363,6 +384,7 @@ namespace Cozmo {
           
           f32 x = 0, y = 0;
           if(curvature == 0) {
+            const f32 kMaxPupilMovement = GET_PARAM(f32, MaxPupilMovement);
             x = (speed < 0 ? _rng.RandDblInRange(-kMaxPupilMovement, 0.) : _rng.RandDblInRange(0., kMaxPupilMovement));
             y = _rng.RandDblInRange(-kMaxPupilMovement, kMaxPupilMovement);
           }
@@ -392,50 +414,57 @@ namespace Cozmo {
           return RESULT_FAIL;
         }
         
-        _bodyMoveSpacing_ms = _rng.RandIntInRange(kBodyMovementSpacingMin_ms, kBodyMovementSpacingMax_ms);
+        _bodyMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementSpacingMin_ms),
+                                                  GET_PARAM(s32, BodyMovementSpacingMax_ms));
         
       } else {
         _bodyMoveDuration_ms -= BS_TIME_STEP;
       }
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.IsLiftLocked() && !robot.IsCarryingObject()) {
-        _liftMoveDuration_ms = _rng.RandIntInRange(kLiftMovementDurationMin_ms, kLiftMovementDurationMax_ms);
+      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.GetMoveComponent().IsLiftLocked() && !robot.IsCarryingObject()) {
+        _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
+                                                   GET_PARAM(s32, LiftMovementDurationMax_ms));
 
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
                          "duration=%d", _liftMoveDuration_ms);
 #       endif
-        LiftHeightKeyFrame kf(kLiftHeightMean_mm, kLiftHeightVariability_mm, _liftMoveDuration_ms);
+        LiftHeightKeyFrame kf(GET_PARAM(u8, LiftHeightMean_mm),
+                              GET_PARAM(u8, LiftHeightVariability_mm),
+                              _liftMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddLiftHeightKeyFrameFailed", "");
           return RESULT_FAIL;
         }
         
-        _liftMoveSpacing_ms = _rng.RandIntInRange(kLiftMovementSpacingMin_ms, kLiftMovementSpacingMax_ms);
+        _liftMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementSpacingMin_ms),
+                                                  GET_PARAM(s32, LiftMovementSpacingMax_ms));
         
       } else {
         _liftMoveDuration_ms -= BS_TIME_STEP;
       }
       
       // If head is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0 && !robot.IsHeadLocked()) {
-        _headMoveDuration_ms = _rng.RandIntInRange(kHeadMovementDurationMin_ms, kHeadMovementDurationMax_ms);
+      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0 && !robot.GetMoveComponent().IsHeadLocked()) {
+        _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
+                                                   GET_PARAM(s32, HeadMovementDurationMax_ms));
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
 
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
                          "duration=%d", _headMoveDuration_ms);
 #       endif
-        HeadAngleKeyFrame kf(currentAngle_deg, kHeadAngleVariability_deg, _headMoveDuration_ms);
+        HeadAngleKeyFrame kf(currentAngle_deg, GET_PARAM(u8, HeadAngleVariability_deg), _headMoveDuration_ms);
         kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");
           return RESULT_FAIL;
         }
         
-        _headMoveSpacing_ms = _rng.RandIntInRange(kHeadMovementSpacingMin_ms, kHeadMovementSpacingMax_ms);
+        _headMoveSpacing_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementSpacingMin_ms),
+                                                  GET_PARAM(s32, HeadMovementSpacingMax_ms));
         
       } else {
         _headMoveDuration_ms -= BS_TIME_STEP;
@@ -444,7 +473,8 @@ namespace Cozmo {
     } // if(_isLiveTwitchEnabled && _timeSpentIdling_ms >= kTimeBeforeWiggleMotions_ms)
     
     return lastResult;
-  }
+#   undef GET_PARAM
+  } // UpdateLiveAnimation()
   
   bool AnimationStreamer::IsIdleAnimating() const
   {
@@ -455,6 +485,8 @@ namespace Cozmo {
   {
     return _streamingAnimation ? _streamingAnimation->GetName() : "";
   }
+  
+
   
 } // namespace Cozmo
 } // namespace Anki

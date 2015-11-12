@@ -5,10 +5,13 @@
 #include "liftController.h"
 #include "localization.h"
 #include "imuFilter.h"
+#include "proxSensors.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
+#include "messages.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/types/dockingSignals.h"
 #include "speedController.h"
 #include "steeringController.h"
 
@@ -57,7 +60,7 @@ namespace Anki {
         
         Mode mode_ = IDLE;
         
-        DockAction_t action_ = DA_PICKUP_LOW;
+        DockAction action_ = DA_PICKUP_LOW;
 
         Embedded::Point2f ptStamp_;
         Radians angleStamp_;
@@ -69,7 +72,7 @@ namespace Anki {
         // Last seen marker pose used for bridge crossing
         f32 relMarkerX_, relMarkerY_, relMarkerAng_;
         
-        CarryState_t carryState_ = CARRY_NONE;
+        CarryState carryState_ = CARRY_NONE;
         bool lastActionSucceeded_ = false;
         
         // When to transition to the next state. Only some states use this.
@@ -105,10 +108,10 @@ namespace Anki {
       
       Result SendBlockPickUpMessage(const bool success)
       {
-        Messages::BlockPickedUp msg;
+        BlockPickedUp msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPickedUp), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -116,10 +119,10 @@ namespace Anki {
       
       Result SendBlockPlacedMessage(const bool success)
       {
-        Messages::BlockPlaced msg;
+        BlockPlaced msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
-        if(HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::BlockPlaced), &msg)) {
+        if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -141,7 +144,7 @@ namespace Anki {
         PRINT("PAP: Last marker dist = %.1fmm. Starting %.1fmm backout (%.2fsec duration)\n",
               relMarkerX_, backoutDist_mm, backoutTime_sec);
         
-        transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3);
+        transitionTime_ = HAL::GetTimeStamp() + (backoutTime_sec*1e3f);
         
         SteeringController::ExecuteDirectDrive(-BACKOUT_SPEED_MMPS, -BACKOUT_SPEED_MMPS);
         
@@ -158,6 +161,7 @@ namespace Anki {
         switch(mode_)
         {
           case IDLE:
+            ProxSensors::EnableCliffDetector(true);
             break;
             
           case SET_LIFT_PREDOCK:
@@ -191,6 +195,8 @@ namespace Anki {
               case DA_ROLL_LOW:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
+                break;
+              case DA_ALIGN:
                 break;
               case DA_RAMP_ASCEND:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
@@ -235,6 +241,7 @@ namespace Anki {
                     break;
                   case DA_PICKUP_LOW:
                   case DA_PLACE_HIGH:
+                  case DA_ALIGN:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
                     break;
                   default:
@@ -272,7 +279,12 @@ namespace Anki {
                 // Take snapshot of pose
                 UpdatePoseSnapshot();
                 
-                if(action_ == DA_RAMP_DESCEND) {
+                if (action_ == DA_ALIGN) {
+                  #if(DEBUG_PAP_CONTROLLER)
+                  PRINT("PAP: ALIGN\n");
+                  #endif
+                  mode_ = IDLE;
+                } else if(action_ == DA_RAMP_DESCEND) {
                   #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: TRAVERSE_RAMP_DOWN\n");
                   #endif
@@ -591,17 +603,17 @@ namespace Anki {
         return carryState_ != CARRY_NONE;
       }
 
-      void SetCarryState(CarryState_t state)
+      void SetCarryState(CarryState state)
       {
         carryState_ = state;
       }
       
-      CarryState_t GetCarryState()
+      CarryState GetCarryState()
       {
         return carryState_;
       }
       
-      void DockToBlock(const DockAction_t action,
+      void DockToBlock(const DockAction action,
                        const f32 rel_x,
                        const f32 rel_y,
                        const f32 rel_angle,
@@ -629,6 +641,10 @@ namespace Anki {
         
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
+        
+        if (action_ == DA_ROLL_LOW) {
+          ProxSensors::EnableCliffDetector(false);
+        }
       }
 
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)

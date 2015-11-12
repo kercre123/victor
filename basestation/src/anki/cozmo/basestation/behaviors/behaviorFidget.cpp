@@ -43,7 +43,7 @@ namespace Cozmo {
       new MoveLiftToHeightAction(32, 2, 5)});},
               1);
     
-    AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", this->_rng.RandIntInRange(1, 3));}, 1);
+    AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", GetRNG().RandIntInRange(1, 3));}, 1);
     
     AddFidget("TurnInPlace", [](){return new TurnInPlaceAction(0, false, DEG_TO_RAD(90));}, 2);
     
@@ -52,6 +52,8 @@ namespace Cozmo {
     AddFidget("Stretch", [](){return new PlayAnimationAction("Stretch");}, 0);
     AddFidget("Sneeze", [](){return new PlayAnimationAction("Sneeze");}, 0);
     
+    // Bored -> Fidget
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.1f}}), false));
   }
   
   void BehaviorFidget::AddFidget(const std::string& name, MakeFidgetAction fcn,
@@ -68,7 +70,7 @@ namespace Cozmo {
 
   }
   
-  Result BehaviorFidget::Init(double currentTime_sec)
+  Result BehaviorFidget::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
   {
     _interrupted = false;
     _nextFidgetWait_sec = 0.f;
@@ -77,7 +79,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  IBehavior::Status BehaviorFidget::Update(double currentTime_sec)
+  IBehavior::Status BehaviorFidget::UpdateInternal(Robot& robot, double currentTime_sec)
   {
     if(_interrupted) {
       // TODO: Do we need to cancel the last commanded fidget action?
@@ -87,7 +89,7 @@ namespace Cozmo {
     if(currentTime_sec > _lastFidgetTime_sec + _nextFidgetWait_sec) {
     
       // Pick another random fidget action
-      s32 prob = _rng.RandIntInRange(0, _totalProb);
+      s32 prob = GetRNG().RandIntInRange(0, _totalProb);
 
       auto fidgetIter = _fidgets.begin();
       while(prob > fidgetIter->first) {
@@ -103,13 +105,13 @@ namespace Cozmo {
       // Set the name based on the selected fidget and then queue the action
       // returned by its MakeFidgetAction function
       _stateName = fidgetIter->second.first;
-      _robot.GetActionList().QueueActionNext(IBehavior::sActionSlot,
+      robot.GetActionList().QueueActionNext(IBehavior::sActionSlot,
                                              fidgetIter->second.second());
       
       // Set next time to fidget
       // TODO: Get min/max wait times from Json config
       _lastFidgetTime_sec = currentTime_sec;
-      _nextFidgetWait_sec += _rng.RandDblInRange(_minWait_sec, _maxWait_sec);
+      _nextFidgetWait_sec += GetRNG().RandDblInRange(_minWait_sec, _maxWait_sec);
       
 #     if DEBUG_FIDGET_BEHAVIOR
       PRINT_NAMED_INFO("BehaviorFidget.Update.Times",
@@ -121,7 +123,7 @@ namespace Cozmo {
     return Status::Running;
   } // Update()
   
-  Result BehaviorFidget::Interrupt(double currentTime_sec)
+  Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
     // Mark the behavior as interrupted so it will return COMPLETE on next update
     _interrupted = true;
@@ -129,14 +131,6 @@ namespace Cozmo {
     // TODO: Is there any cleanup that needs to happen?
     
     return RESULT_OK;
-  }
-  
-  bool BehaviorFidget::GetRewardBid(Reward& reward)
-  {
-    
-    // TODO: Fill in reward value
-    
-    return true;
   }
   
   

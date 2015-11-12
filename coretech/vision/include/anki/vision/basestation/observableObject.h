@@ -85,8 +85,13 @@ namespace Anki {
       
       // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
       virtual bool IsActive() const { return false; }
-      virtual bool IsIdentified() const { return false; }
       virtual void Identify() { /* no-op */ }
+      
+      // Override for objects that can be used for localization (e.g., mats
+      // or active blocks that have not moved since last localization)
+      virtual bool CanBeUsedForLocalization() const { return false; }
+      
+      virtual bool IsMoveable() const { return true; }
       
       // Add possible poses implied by seeing the observed marker to the list.
       // Each pose will be paired with a pointer to the known marker on this
@@ -128,8 +133,11 @@ namespace Anki {
       
       void SetID();
       void SetColor(const ColorRGBA& color);
-      void SetPose(const Pose3d& newPose);
+      void SetPose(const Pose3d& newPose, f32 fromDistance = -1.f, bool skipStateUpdate = false);
       void SetPoseParent(const Pose3d* newParent);
+      
+      // Returns last "fromDistance" supplied to SetPose(), or -1 if none set.
+      f32 GetLastPoseUpdateDistance() const;
       
       void SetLastObservedTime(TimeStamp_t t);
       const TimeStamp_t GetLastObservedTime() const;
@@ -179,12 +187,29 @@ namespace Anki {
       virtual void GetCorners(std::vector<Point3f>& corners) const;
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const;
       
-      virtual void Visualize(); // using internal ColorRGBA
-      virtual void Visualize(const ColorRGBA& color) = 0; // using specified color
-      virtual void EraseVisualization() = 0;
+      virtual void Visualize() const; // using internal ColorRGBA
+      virtual void Visualize(const ColorRGBA& color) const = 0; // using specified color
+      virtual void EraseVisualization() const = 0;
       
       Quad2f GetBoundingQuadXY(const f32 padding_mm = 0.f) const;
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const;
+      
+      // Check whether the object's current pose is resting flat on one of its
+      // sides (within the given tolerance). This means it is allowed to have any
+      // orientation around the Z axis (w.r.t. its parent), but no rotation about the
+      // X and Y axes.
+      bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(5)) const;
+
+      enum class PoseState
+      {
+        Known,
+        Dirty,
+        Unknown
+      };
+      
+      PoseState GetPoseState() const { return _poseState; }
+      void SetPoseState(PoseState newState) { _poseState = newState; }
+      bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
       
     protected:
       
@@ -193,9 +218,10 @@ namespace Anki {
       virtual const std::vector<Point3f>& GetCanonicalCorners() const = 0;
       
       ObjectID     _ID;
-      TimeStamp_t  _lastObservedTime;
-      u32          _numTimesObserved;
+      TimeStamp_t  _lastObservedTime = 0;
+      u32          _numTimesObserved = 0;
       ColorRGBA    _color;
+      PoseState    _poseState = PoseState::Unknown;
       
       // Using a list here so that adding new markers does not affect references
       // to pre-existing markers
@@ -211,6 +237,7 @@ namespace Anki {
     private:
       // Force setting of pose through SetPose() to keep pose name updated
       Pose3d _pose;
+      f32    _lastSetPoseDistance = -1.f;
       
       // Don't allow a copy constuctor, because it won't handle fixing the
       // marker pointers and pose parents
@@ -239,12 +266,25 @@ namespace Anki {
       _ID.Set();
     }
   
-    inline void ObservableObject::SetPose(const Pose3d& newPose) {
+    inline void ObservableObject::SetPose(const Pose3d& newPose, f32 fromDistance, bool skipStateUpdate) {
       _pose = newPose;
+      
+      if (!skipStateUpdate)
+      {
+        _poseState = PoseState::Known;
+      }
       
       std::string poseName("Object");
       poseName += "_" + std::to_string(GetID().GetValue());
       _pose.SetName(poseName);
+      
+      if(fromDistance >= 0.f) {
+        _lastSetPoseDistance = fromDistance;
+      }
+    }
+    
+    inline f32 ObservableObject::GetLastPoseUpdateDistance() const {
+      return _lastSetPoseDistance;
     }
     
     inline void ObservableObject::SetPoseParent(const Pose3d* newParent) {
@@ -259,7 +299,7 @@ namespace Anki {
       _color = color;
     }
     
-    inline void ObservableObject::Visualize() {
+    inline void ObservableObject::Visualize() const {
       Visualize(_color);
     }
     

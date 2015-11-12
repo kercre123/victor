@@ -1,0 +1,127 @@
+/** Clad definitions of all messages sent from the Cozmo robot to the Cozmo engine
+ * This file is used on both the RTIP and WiFi chips on the robot but because we use explicit union tags, we don't have
+ * to recompile the code in lock step.
+ */
+
+
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/rtipTraces.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/dockingSignals.clad"
+#include "clad/types/imu.clad"
+#include "clad/types/proxMessages.clad"
+#include "clad/types/powerMessages.clad"
+#include "clad/robotInterface/messageFromActiveObject.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+/// *************** RTIP to Engine messages ******************************* ///
+
+message PrintTraceInt
+{
+  int_32    value,
+  RtipTrace name,
+}
+
+message PrintTraceDouble
+{
+  float_64  value,
+  RtipTrace name,
+}
+
+message MainCycleTimeError
+{
+  uint_32 numMainTooLongErrors,
+  uint_32 avgMainTooLateTime,
+  uint_32 numMainTooLateErrors,
+  uint_32 avgMainTooLongTime,
+}
+
+message DataDump
+{
+  uint_32 id,
+  uint_8  data[uint_8],
+}
+
+message TimeProfileStat
+{
+  uint_32 avg,
+  uint_32 max,
+  bool    isHeader,
+  string  profName,
+}
+
+/// *************** WiFi to Engine messages ******************************* ///
+
+message PrintText
+{
+  string text
+}
+
+message AnimationState
+{
+  uint_32 timestamp,
+  int_32  numAnimBytesPlayed,
+  RobotStatusFlag status, // RobotStatusFlag packs as a uint_16
+  uint_8 tag,
+}
+
+message CameraCalibration
+{
+  float_32 focalLength_x,
+  float_32 focalLength_y,
+  float_32 center_x,
+  float_32 center_y,
+  float_32 skew,
+  uint_16  nrows,
+  uint_16  ncols,
+  bool     isPhysicalRobots,
+}
+
+message RobotAvailable
+{
+  uint_32 robotID,
+}
+
+/// *************** Overall message pipe ******************************* ///
+
+/** Pipe from robot to engine.
+ * This cannot be an auto union because we need explicit tag values to partition the RTIP and WiFi code
+ * and to make debugging from message dumps more sane.
+ */
+union RobotToEngine {
+  // From RTIP 0x01 to 0x7F
+  RobotState                 state                  = 0x01,
+  PrintTraceInt              traceInt               = 0x02,
+  PrintTraceDouble           traceDbl               = 0x03,
+  MainCycleTimeError         mainCycleTimeError     = 0x04,
+  GoalPose                   goalPose               = 0x05,
+  ObjectMoved                activeObjectMoved      = 0x06,
+  ObjectStoppedMoving        activeObjectStopped    = 0x07,
+  ObjectTapped               activeObjectTapped     = 0x08,
+  DataDump                   dataDump               = 0x09,
+  BlockPickedUp              blockPickedUp          = 0x0A,
+  BlockPlaced                blockPlaced            = 0x0B,
+  RampTraverseStart          rampTraverseStarted    = 0x0C,
+  RampTraverseComplete       rampTraverseCompleted  = 0x0D,
+  BridgeTraverseStart        bridgeTraverseStarted  = 0x0E,
+  BridgeTraverseComplete     bridgeTraverseCompleted= 0x0F,
+  TimeProfileStat            timeProfStat           = 0x10,
+  IMUDataChunk               imuDataChunk           = 0x11,
+  CliffEvent                 cliffEvent             = 0x12,
+  ChargerEvent               chargerEvent           = 0x13,
+  
+  // From WiFi 0x80 to 0xFE
+  AnimationState             animState              = 0x80,
+  PrintText                  printText              = 0x81,
+  ImageChunk                 image                  = 0x82,
+  CameraCalibration          cameraCalibration      = 0x83,
+  RobotAvailable             robotAvailable         = 0x84,
+}
+
+
+} // namespace RobotInterface
+} // namespace Cozmo
+} // namespace Anki

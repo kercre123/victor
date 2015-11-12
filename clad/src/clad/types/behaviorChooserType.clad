@@ -1,0 +1,15 @@
+// File: behaviorChooserType
+// Author: Lee Crippen
+// Created: 10/15/2015
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 BehaviorChooserType {
+  Demo,
+  Selection
+}
+
+} // namespace Cozmo
+} // namespace Anki

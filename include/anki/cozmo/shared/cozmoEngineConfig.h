@@ -3,14 +3,10 @@
 
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
-#include "anki/vision/CameraSettings.h"
+#include "clad/types/imageTypes.h"
 
 namespace Anki {
   namespace Cozmo {
-   
-    // Suppresses marker-based localization (FOR PHYSICAL ROBOT ONLY)
-    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
-    
     
     // Camera pose correction (APPLIES TO PHYSICAL ROBOT ONLY)
     // TODO: The headCamPose is eventually to be calibrated
@@ -22,8 +18,23 @@ namespace Anki {
 
     
     // Resolution of images that are streamed to basestation (dev purposes)
-    const Vision::CameraResolution IMG_STREAM_RES = Vision::CAMERA_RES_QQQVGA;
+    const ImageResolution IMG_STREAM_RES = ImageResolution::QQQVGA;
     
+    // Minimum number of times we need to observe an object to keep it and signal
+    // that we saw it.
+    const s32 MIN_TIMES_TO_OBSERVE_OBJECT = 2;
+    
+    /***************************************************************************
+     *
+     *                          Localization
+     *
+     **************************************************************************/
+    
+    // Suppresses marker-based localization (FOR PHYSICAL ROBOT ONLY)
+    const bool SKIP_PHYS_ROBOT_LOCALIZATION = true;
+    
+    // Only localize to / identify active objects within this distance
+    const f32 MAX_LOCALIZATION_AND_ID_DISTANCE_MM = 250.f;
     
     /***************************************************************************
      *
@@ -73,6 +84,12 @@ namespace Anki {
     // A common angle threshold for pose equality comparison
     // If two poses are this close in terms of angle, they are considered equal.
     const f32 DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD = DEG_TO_RAD(10);
+
+    // Default maximum amount of time to let the planner run
+    const f32 DEFAULT_MAX_PLANNER_COMPUTATION_TIME_S = 4.f;
+
+    // A different default used for replanning (while we are already following a path)
+    const f32 DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S = 1.f;
     
     // Default distance from marker for predock pose
     const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
@@ -84,6 +101,11 @@ namespace Anki {
     // When getting a preaction pose for an offset dock, this is the amount by which the
     // preaction pose is offset relative to the specified docking offset. (0 < val < 1)
     const f32 PREACTION_POSE_OFFSET_SCALAR = 1.0f;
+
+    // For things like docking, we want to not turn away too much if we can avoid it. This is a threshold in
+    // radians. If the starting point is close (in euclidean distance) and also the robot angle is within this
+    // threshold of the final goal angle
+    const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
     
   } // namespace Cozmo
 } // namespace Anki

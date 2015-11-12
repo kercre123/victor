@@ -44,16 +44,10 @@ int main(void)
 
   TestFixtures::run();
 
-  g_dataToHead.common.source = SPI_SOURCE_BODY;
-  g_dataToHead.tail = 0x84;
-
   u32 timerStart = GetCounter();
   for (;;)
   {
-    g_dataToBody.common.source = SPI_SOURCE_CLEAR;
-
     // Only call every loop through - not all the time
-    Radio::manage();
     Motors::update();
     Battery::update();
 
@@ -61,22 +55,19 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
     #endif
 
-    // If we're not on the charge contacts, exchange data with the head board
-    if (!Battery::onContacts)
-    {
-      Head::TxRx();
-    }
-    else // If not, reset the spine system
-    {
-      Head::spokenTo = false;
-    }
-    
     // Update at 200Hz (5ms delay)
     timerStart += CYCLES_MS(5.0f);
     while ( timerStart > GetCounter()) ;
  
+    // Update at 200Hz (5ms delay) - with unsigned subtract to handle wraparound
+    const u32 DELAY = CYCLES_MS(5.0f);
+    while (GetCounter() - timerStart < DELAY)
+      ;
+    timerStart += DELAY;
+
+    /*
     // Verify the source
-    if (g_dataToBody.common.source != SPI_SOURCE_HEAD)
+    if (Head::spokenTo)
     {
       // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
@@ -94,5 +85,6 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
+    */
   }
 }

@@ -12,8 +12,8 @@
 #ifndef SOUND_MANAGER_H
 #define SOUND_MANAGER_H
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
+#include "anki/types.h"
+#include "clad/types/animationKeyFrames.h"
 
 #include <string>
 #include <unordered_map>
@@ -57,7 +57,7 @@ namespace Anki {
       const u32 GetSoundDurationInMilliseconds(const std::string& name) const;
 
       // Returns pointer to a buffer of the sound data
-      bool GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, MessageAnimKeyFrame_AudioSample &msg);
+      bool GetSoundSample(const std::string& name, const u32 sampleIdx, f32 volume, AnimKeyFrame::AudioSample &msg);
       
       // 1.0 = "normal volume"
       void SetRobotVolume(f32 volume);

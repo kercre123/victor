@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 namespace Anki {
   
@@ -40,14 +41,10 @@ namespace Anki {
     {
       if(!_isRunning && !_isPartOfCompoundAction) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.LockHead( ShouldLockHead() );
-        robot.LockLift( ShouldLockLift() );
-        robot.LockWheels( ShouldLockWheels() );
-        
-        MessageDisableAnimTracks msg;
-        msg.whichTracks = GetAnimTracksToDisable();
-        robot.SendMessage(msg);
-        
+        robot.GetMoveComponent().LockHead( ShouldLockHead() );
+        robot.GetMoveComponent().LockLift( ShouldLockLift() );
+        robot.GetMoveComponent().LockWheels( ShouldLockWheels() );
+        robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(GetAnimTracksToDisable())));
         _isRunning = true;
       }
 
@@ -77,14 +74,11 @@ namespace Anki {
           EmitCompletionSignal(robot, result);
           
           // Action is done, always completely unlock the robot
-          robot.LockHead(false);
-          robot.LockLift(false);
-          robot.LockWheels(false);
-          
+          robot.GetMoveComponent().LockHead(false);
+          robot.GetMoveComponent().LockLift(false);
+          robot.GetMoveComponent().LockWheels(false);
           // Re-enable any animation tracks that were disabled
-          MessageEnableAnimTracks msg;
-          msg.whichTracks = GetAnimTracksToDisable();
-          robot.SendMessage(msg);
+          robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(GetAnimTracksToDisable())));
         }
         _isRunning = false;
       }
@@ -105,9 +99,7 @@ namespace Anki {
 
       GetCompletionStruct(robot, completionInfo);
       
-      ExternalInterface::MessageEngineToGame event(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo));
-      
-      robot.GetExternalInterface()->Broadcast(event);
+      robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
     }
     
     bool IActionRunner::RetriesRemain()

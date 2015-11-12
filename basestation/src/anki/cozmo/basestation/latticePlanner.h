@@ -39,25 +39,32 @@ class LatticePlanner : public IPathPlanner, private Util::noncopyable
 public:
   LatticePlanner(const Robot* robot, Util::Data::DataPlatform* dataPlatform);
   virtual ~LatticePlanner();
-      
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              bool forceReplanFromScratch = false) override;
 
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const Pose3d& targetPose) override;
 
-  // This version gets a plan to any of the goals you supply. It
-  // is up to the planner implementation to decide 
-  virtual EPlanStatus GetPlan(Planning::Path &path,
-                              const Pose3d& startPose,
-                              const std::vector<Pose3d>& targetPoses,
-                              size_t& selectedIndex) override;
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const Pose3d& targetPose) override;
+
+  virtual EComputePathStatus ComputePath(const Pose3d& startPose,
+                                         const std::vector<Pose3d>& targetPoses) override;
+
+  virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
+                                                    bool forceReplanFromScratch = false) override;
+
+  virtual void StopPlanning() override;
+
+  virtual bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path) override;
+  virtual bool GetCompletePath(const Pose3d& currentRobotPose,
+                               Planning::Path &path,
+                               size_t& selectedTargetIndex) override;
 
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path) override;
 
+  virtual EPlannerStatus CheckPlanningStatus() const override;
+
 protected:
+  EComputePathStatus ComputePathHelper(const Pose3d& startPose,
+                                       const Pose3d& targetPose);
+  
   LatticePlannerImpl* _impl;
 };
 

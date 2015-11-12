@@ -1,0 +1,105 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 AnimTrackFlag {
+  DISABLE_ALL_TRACKS = 0,
+  HEAD_TRACK = 0x01,
+  LIFT_TRACK = 0x02,
+  BODY_TRACK = 0x04,
+  FACE_IMAGE_TRACK = 0x08,
+  FACE_POS_TRACK   = 0x10,
+  BACKPACK_LIGHTS_TRACK = 0x20,
+  AUDIO_TRACK = 0x40,
+  BLINK_TRACK = 0x80,
+  ENABLE_ALL_TRACKS = 0xFF
+}
+
+enum int_32 AnimConstants
+{
+  AUDIO_SAMPLE_SIZE     = 800,
+  AUDIO_BYTES_PER_DROP  = 4,
+  SCREEN_BYTES_PER_DROP = 4,
+  MAX_FACE_FRAME_SIZE   = 1024,
+  KEYFRAME_BUFFER_SIZE  = 16384,
+}
+
+namespace AnimKeyFrame {
+
+  message AudioSample // Don't touch this definition, AudioSample messages are processed as raw bytes on the robot
+  {
+    uint_8 sample[800] // AUDIO_SAMPLE_SIZE above
+  }
+
+  message AudioSilence
+  { // Must not contain any members
+  }
+
+  message HeadAngle
+  {
+    uint_16 time_ms,
+    int_8   angle_deg,
+  }
+
+  message LiftHeight
+  {
+    uint_16 time_ms,
+    uint_8  height_mm,
+  }
+
+  message FacePosition
+  {
+    int_8 xCen,
+    int_8 yCen,
+  }
+  
+  message Blink
+  {
+    bool enable,
+    bool blinkNow,
+  }
+  
+  message FaceImage
+  {
+    uint_8 image[uint_16:1024], // MAX_FACE_FRAME_SIZE above
+  }
+  
+  message BackpackLights
+  {
+    uint_32 colors[5],
+  }
+  
+  message BodyMotion
+  {
+    int_16 speed,              // Commanded speed in mm/sec or deg/sec
+    int_16 curvatureRadius_mm, // +ve: curves left, -ve: curves right, ...
+                               // ...u16_MAX/MIN: drive straight...
+                               // ...0: turn in place (+ve speed: left, -ve speed: right)
+  }
+
+  message EnableAnimTracks
+  {
+    uint_8 whichTracks
+  }
+
+  message DisableAnimTracks
+  {
+    uint_8 whichTracks
+  }
+
+  message StartOfAnimation
+  {
+    uint_8 tag
+  }
+
+  message EndOfAnimation
+  {
+  }
+
+} // namespace AnimKeyFrame
+
+} // namespace Cozmo
+} // namespace Anki

@@ -96,7 +96,7 @@ Result CozmoEngineImpl::Init(const Json::Value& config)
     PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
                         "No VizHostIP member in JSON config file. Not initializing VizManager.");
   } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].asString().empty()){
-    VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), VIZ_SERVER_PORT);
+    VizManager::getInstance()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
 
     // Erase anything that's still being visualized in case there were leftovers from
     // a previous run?? (We should really be cleaning up after ourselves when
@@ -109,6 +109,12 @@ Result CozmoEngineImpl::Init(const Json::Value& config)
     //  to be displayed on another machine)
     if(_config[AnkiUtil::kP_VIZ_HOST_IP] == _config[AnkiUtil::kP_ADVERTISING_HOST_IP]) {
       VizManager::getInstance()->EnableImageSend(true);
+    }
+    
+    if (nullptr != _externalInterface)
+    {
+      // Have VizManager subscribe to the events it should care about
+      VizManager::getInstance()->SubscribeToEngineEvents(*_externalInterface);
     }
   }
 
@@ -170,22 +176,6 @@ Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
     return RESULT_FAIL;
   }
 
-  // Check if engine tic is exceeding expected time
-  static TimeStamp_t prevTime = 0;
-  TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  if (prevTime != 0) {
-    TimeStamp_t timeSinceLastTic = currTime - prevTime;
-    // Print warning if this tic was executed more than the expected amount of time
-    // (with some margin) after the last tic.
-    if (timeSinceLastTic > BS_TIME_STEP + 10) {
-      PRINT_NAMED_WARNING("CozmoEngine.Update.LateTic",
-                          "currTime %dms, timeSinceLastTic %dms (should be ~%dms)\n",
-                          currTime, timeSinceLastTic, BS_TIME_STEP);
-    }
-  }
-  prevTime = currTime;
-
-
   // Notify any listeners that robots are advertising
   std::vector<Comms::ConnectionId> advertisingRobots;
   _robotChannel.GetAdvertisingConnections(advertisingRobots);
@@ -208,11 +198,12 @@ Result CozmoEngineImpl::Update(const BaseStationTime_t currTime_ns)
 void CozmoEngineImpl::ProcessDeviceImage(const Vision::Image &image)
 {
   // Process image within the detection rectangle with vision processing thread:
-  static const Cozmo::MessageRobotState bogusState; // req'd by API, but not really necessary for marker detection
 
 # if DEVICE_VISION_MODE == DEVICE_VISION_MODE_ASYNC
+  static const Cozmo::RobotState bogusState; // req'd by API, but not really necessary for marker detection
   _deviceVisionThread.SetNextImage(image, bogusState);
 # elif DEVICE_VISION_MODE == DEVICE_VISION_MODE_SYNC
+  static const Cozmo::RobotState bogusState; // req'd by API, but not really necessary for marker detection
   _deviceVisionThread.Update(image, bogusState);
 
   MessageVisionMarker msg;

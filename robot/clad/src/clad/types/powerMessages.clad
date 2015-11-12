@@ -1,0 +1,15 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+message ChargerEvent {
+  bool   onCharger
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

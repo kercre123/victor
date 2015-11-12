@@ -25,17 +25,14 @@ namespace Cozmo {
     BehaviorFidget(Robot& robot, const Json::Value& config);
     virtual ~BehaviorFidget();
     
-    virtual bool IsRunnable(double currentTime_sec) const override { return true; }
+    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
     
-    virtual Result Init(double currentTime_sec) override;
+  protected:
     
-    virtual Status Update(double currentTime_sec) override;
+    virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
+    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
-    // Finish placing current object if there is one, otherwise good to go
-    virtual Result Interrupt(double currentTime_sec) override;
-    
-    virtual bool GetRewardBid(Reward& reward) override;
-
   private:
     
     enum class FidgetType {

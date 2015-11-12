@@ -12,7 +12,7 @@
  **/
 
 #include "anki/cozmo/basestation/visionProcessingThread.h"
-#include "visionSystem.h"
+#include "anki/cozmo/basestation/visionSystem.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -31,9 +31,6 @@ namespace Anki {
 namespace Cozmo {
   
   VisionProcessingThread::VisionProcessingThread(Util::Data::DataPlatform* dataPlatform)
-  : _visionSystem(nullptr)
-  , _isCamCalibSet(false)
-  , _running(false)
   {
     std::string dataPath("");
     if(dataPlatform != nullptr) {
@@ -72,6 +69,7 @@ namespace Cozmo {
     }
     
     _running = true;
+    _paused = false;
     
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
@@ -116,7 +114,7 @@ namespace Cozmo {
 
 
   void VisionProcessingThread::SetNextImage(const Vision::Image &image,
-                                            const Anki::Cozmo::MessageRobotState &robotState)
+                                            const RobotState &robotState)
   {
     Lock();
     
@@ -233,7 +231,7 @@ namespace Cozmo {
   }
 
   void VisionProcessingThread::Update(const Vision::Image& image,
-                                      const MessageRobotState& robotState)
+                                      const RobotState& robotState)
   {
     if(_isCamCalibSet) {
       if(!_visionSystem->IsInitialized()) {
@@ -245,11 +243,13 @@ namespace Cozmo {
         }
       }
       
-      _visionSystem->Update(robotState, image);
-      _lastImg = image;
-      
-      VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
-                                         "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      if(!_paused) {
+        _visionSystem->Update(robotState, image);
+        _lastImg = image;
+        
+        VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                                           "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+      }
       
     } else {
       PRINT_NAMED_ERROR("VisionProcessingThread.Update.NoCamCalib",
@@ -271,6 +271,11 @@ namespace Cozmo {
     }
     
     while (_running) {
+      
+      if(_paused) {
+        usleep(100);
+        continue;
+      }
       
       //if(_currentImg != nullptr) {
       if(!_currentImg.IsEmpty()) {
@@ -337,7 +342,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(markerPoseWrtCamera);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessageTrackerQuad& msg)
+  bool VisionProcessingThread::CheckMailbox(VizInterface::TrackerQuad& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",
@@ -345,7 +350,7 @@ namespace Cozmo {
     return _visionSystem->CheckMailbox(msg);
   }
   
-  bool VisionProcessingThread::CheckMailbox(MessagePanAndTiltHead& msg)
+  bool VisionProcessingThread::CheckMailbox(RobotInterface::PanAndTilt& msg)
   {
     AnkiConditionalErrorAndReturnValue(_visionSystem != nullptr /*& _visionSystem->IsInitialized()*/, false,
                                        "VisionProcessingThread.CheckMailbox.NullVisionSystem",

@@ -29,8 +29,9 @@ namespace Anki {
         s32 _stepTimeMS;
         webots::Supervisor _supervisor;
         
-        const double* _robotTransActual;
-        const double* _robotOrientationActual;
+        webots::Node* _robotNode = nullptr;
+        std::vector<std::pair<webots::Node*, Pose3d> > _lightCubes;
+        auto _lightCubeOriginIter = _lightCubes.end();
         
         Pose3d _robotPose;
         Pose3d _robotPoseActual;
@@ -67,7 +68,7 @@ namespace Anki {
     void UiGameController::HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg)
     {
       _robotPose.SetTranslation({msg.pose_x, msg.pose_y, msg.pose_z});
-      _robotPose.SetRotation(msg.headAngle_rad, Z_AXIS_3D());
+      _robotPose.SetRotation(msg.poseAngle_rad, Z_AXIS_3D());
       
       _robotStateMsg = msg;
       
@@ -80,7 +81,7 @@ namespace Anki {
       s32 objID = msg.objectID;
       ObjectFamily objFamily = msg.objectFamily;
       ObjectType objType = msg.objectType;
-      UnitQuaternion<float> q(msg.quaternion0, msg.quaternion1, msg.quaternion2, msg.quaternion3);
+      UnitQuaternion<float> q(msg.quaternion_w, msg.quaternion_x, msg.quaternion_y, msg.quaternion_z);
       Vec3f trans(msg.world_x, msg.world_y, msg.world_z);
       
       // If an object with the same ID already exists in the map, make sure that it's type hasn't changed
@@ -220,29 +221,29 @@ namespace Anki {
     
     // For processing image chunks arriving from robot.
     // Sends complete images to VizManager for visualization (and possible saving).
-    void UiGameController::HandleImageChunkBase(ExternalInterface::ImageChunk const& msg)
+    void UiGameController::HandleImageChunkBase(ImageChunk const& msg)
     {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
     
-    void UiGameController::HandleActiveObjectMovedBase(ExternalInterface::ActiveObjectMoved const& msg)
+    void UiGameController::HandleActiveObjectMovedBase(ObjectMoved const& msg)
     {
      PRINT_NAMED_INFO("HandleActiveObjectMoved", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
-                      msg.objectID, msg.xAccel, msg.yAccel, msg.zAccel, UpAxisCladToString(msg.upAxis));
+                      msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
       
       HandleActiveObjectMoved(msg);
     }
     
-    void UiGameController::HandleActiveObjectStoppedMovingBase(ExternalInterface::ActiveObjectStoppedMoving const& msg)
+    void UiGameController::HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving%s. UpAxis=%s",
-                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisCladToString(msg.upAxis));
+                       msg.objectID, (msg.rolled ? " and rolled" : ""), UpAxisToString(msg.upAxis));
       
       HandleActiveObjectStoppedMoving(msg);
     }
     
-    void UiGameController::HandleActiveObjectTappedBase(ExternalInterface::ActiveObjectTapped const& msg)
+    void UiGameController::HandleActiveObjectTappedBase(ObjectTapped const& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
                        msg.objectID, msg.numTaps);
@@ -264,8 +265,7 @@ namespace Anki {
     UiGameController::UiGameController(s32 step_time_ms)
     {
       _stepTimeMS = step_time_ms;
-      _robotTransActual = nullptr;
-      _robotOrientationActual = nullptr;
+      _robotNode = nullptr;
       _robotPose.SetTranslation({0.f, 0.f, 0.f});
       _robotPose.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
@@ -349,14 +349,14 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::RobotCompletedAction:
             HandleRobotCompletedActionBase(message.Get_RobotCompletedAction());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectMoved:
-            HandleActiveObjectMovedBase(message.Get_ActiveObjectMoved());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectMoved:
+            HandleActiveObjectMovedBase(message.Get_ObjectMoved());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectStoppedMoving:
-            HandleActiveObjectStoppedMovingBase(message.Get_ActiveObjectStoppedMoving());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectStoppedMoving:
+            HandleActiveObjectStoppedMovingBase(message.Get_ObjectStoppedMoving());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::ActiveObjectTapped:
-            HandleActiveObjectTappedBase(message.Get_ActiveObjectTapped());
+          case ExternalInterface::MessageEngineToGame::Tag::ObjectTapped:
+            HandleActiveObjectTappedBase(message.Get_ObjectTapped());
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
@@ -498,8 +498,9 @@ namespace Anki {
     
     void UiGameController::UpdateActualObjectPoses()
     {
-      if (_robotTransActual == nullptr) {
-      
+      // Only look for the robot node once at the beginning
+      if (_robotNode == nullptr)
+      {
         webots::Field* rootChildren = GetSupervisor()->getRoot()->getField("children");
         int numRootChildren = rootChildren->getCount();
         for (int n = 0 ; n<numRootChildren; ++n) {
@@ -518,30 +519,106 @@ namespace Anki {
           if (nd->getTypeName().find("Supervisor") != std::string::npos &&
               nodeName.find("CozmoBot") != std::string::npos) {
 
-            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses", "Found robot with name %s", nodeName.c_str());
+            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                             "Found robot with name %s", nodeName.c_str());
             
-            _robotTransActual = nd->getPosition();
-            _robotOrientationActual = nd->getOrientation();
+            _robotNode = nd;
             
             break;
           }
+          else if(nodeName.find("LightCube") != std::string::npos) {
+            _lightCubes.emplace_back(std::make_pair(nd, Pose3d()));
+            _lightCubeOriginIter = _lightCubes.begin();
+            
+            PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
+                             "Found LightCube with name %s", nodeName.c_str());
+
+          }
+          
         }
       }
       
-      _robotPoseActual.SetTranslation( {static_cast<f32>(_robotTransActual[0]),
-                                        static_cast<f32>(_robotTransActual[1]),
-                                        static_cast<f32>(_robotTransActual[2])} );
+      const double* transActual = _robotNode->getPosition();
+      _robotPoseActual.SetTranslation( {static_cast<f32>(M_TO_MM(transActual[0])),
+                                        static_cast<f32>(M_TO_MM(transActual[1])),
+                                        static_cast<f32>(M_TO_MM(transActual[2]))} );
       
-      _robotPoseActual.SetRotation({static_cast<f32>(_robotOrientationActual[0]),
-                                    static_cast<f32>(_robotOrientationActual[1]),
-                                    static_cast<f32>(_robotOrientationActual[2]),
-                                    static_cast<f32>(_robotOrientationActual[3]),
-                                    static_cast<f32>(_robotOrientationActual[4]),
-                                    static_cast<f32>(_robotOrientationActual[5]),
-                                    static_cast<f32>(_robotOrientationActual[6]),
-                                    static_cast<f32>(_robotOrientationActual[7]),
-                                    static_cast<f32>(_robotOrientationActual[8])} );
+      const double *orientationActual = _robotNode->getOrientation();
+      _robotPoseActual.SetRotation({static_cast<f32>(orientationActual[0]),
+                                    static_cast<f32>(orientationActual[1]),
+                                    static_cast<f32>(orientationActual[2]),
+                                    static_cast<f32>(orientationActual[3]),
+                                    static_cast<f32>(orientationActual[4]),
+                                    static_cast<f32>(orientationActual[5]),
+                                    static_cast<f32>(orientationActual[6]),
+                                    static_cast<f32>(orientationActual[7]),
+                                    static_cast<f32>(orientationActual[8])} );
       
+      
+      for(auto & lightCube : _lightCubes)
+      {
+        transActual = lightCube.first->getPosition();
+        orientationActual = lightCube.first->getOrientation();
+        
+        lightCube.second.SetTranslation({static_cast<f32>(M_TO_MM(transActual[0])),
+          static_cast<f32>(M_TO_MM(transActual[1])),
+          static_cast<f32>(M_TO_MM(transActual[2]))} );
+
+        lightCube.second.SetRotation({static_cast<f32>(orientationActual[0]),
+          static_cast<f32>(orientationActual[1]),
+          static_cast<f32>(orientationActual[2]),
+          static_cast<f32>(orientationActual[3]),
+          static_cast<f32>(orientationActual[4]),
+          static_cast<f32>(orientationActual[5]),
+          static_cast<f32>(orientationActual[6]),
+          static_cast<f32>(orientationActual[7]),
+          static_cast<f32>(orientationActual[8])} );
+      }
+      
+    }
+    
+    void UiGameController::UpdateVizOrigin()
+    {
+      SetVizOrigin msg;
+      
+      Pose3d correctionPose;
+      if(_robotStateMsg.localizedToObjectID >= 0)
+      {
+        // Align the pose of the object to which the robot is localized to the
+        // the next actual light cube in the world
+        ++_lightCubeOriginIter;
+        if(_lightCubeOriginIter == _lightCubes.end()) {
+          _lightCubeOriginIter = _lightCubes.begin();
+        }
+       
+        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                         "Aligning viz to match next known LightCube to object %d",
+                         _robotStateMsg.localizedToObjectID);
+        
+        correctionPose = _lightCubeOriginIter->second * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+      } else {
+        // Robot is not localized to any object, so align the robot's estimated
+        // pose to its actual pose in the world
+
+        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                         "Aligning viz to match robot's pose.");
+                         
+        correctionPose = _robotPoseActual * _robotPose.GetInverse();
+      }
+      
+      
+      const RotationVector3d Rvec(correctionPose.GetRotationVector());
+      
+      msg.rot_rad = Rvec.GetAngle().ToFloat();
+      msg.rot_axis_x = Rvec.GetAxis().x();
+      msg.rot_axis_y = Rvec.GetAxis().y();
+      msg.rot_axis_z = Rvec.GetAxis().z();
+      
+      msg.trans_x = correctionPose.GetTranslation().x();
+      msg.trans_y = correctionPose.GetTranslation().y();
+      msg.trans_z = correctionPose.GetTranslation().z();
+      
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
 
     
@@ -587,6 +664,7 @@ namespace Anki {
       ExternalInterface::TurnInPlace m;
       m.robotID = 1;
       m.angle_rad = angle_rad;
+      m.isAbsolute = false;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TurnInPlace(m);
       SendMessage(message);
@@ -645,15 +723,6 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendTapBlockOnGround(const u8 numTaps)
-    {
-      ExternalInterface::TapBlockOnGround m;
-      m.numTaps = numTaps;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_TapBlockOnGround(m);
-      SendMessage(message);
-    }
-    
     void UiGameController::SendStopAllMotors()
     {
       ExternalInterface::StopAllMotors m;
@@ -672,7 +741,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, CameraResolutionClad resolution)
+    void UiGameController::SendSetRobotImageSendMode(ImageSendMode mode, ImageResolution resolution)
     {
       ExternalInterface::SetRobotImageSendMode m;
       m.mode = mode;
@@ -708,15 +777,6 @@ namespace Anki {
       SendMessage(message);
    }
     
-    void UiGameController::SendSetHeadlights(u8 intensity)
-    {
-      ExternalInterface::SetHeadlights m;
-      m.intensity = intensity;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_SetHeadlights(m);
-      SendMessage(message);
-    }
-    
     void UiGameController::SendExecutePathToPose(const Pose3d& p, const bool useManualSpeed)
     {
       ExternalInterface::GotoPose m;
@@ -724,20 +784,60 @@ namespace Anki {
       m.y_mm = p.GetTranslation().y();
       m.rad = p.GetRotationAngle<'Z'>().ToFloat();
       m.level = 0;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_GotoPose(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useManualSpeed)
+    void UiGameController::SendGotoObject(const s32 objectID,
+                                          const f32 distFromObjectOrigin_mm,
+                                          const bool useManualSpeed)
+    {
+      ExternalInterface::GotoObject msg;
+      msg.objectID = objectID;
+      msg.distanceFromObjectOrigin_mm = distFromObjectOrigin_mm;
+      msg.useManualSpeed = useManualSpeed;
+      
+      ExternalInterface::MessageGameToEngine msgWrapper;
+      msgWrapper.Set_GotoObject(msg);
+      SendMessage(msgWrapper);
+    }
+    
+    void UiGameController::SendAlignWithObject(const s32 objectID,
+                                               const f32 distFromMarker_mm,
+                                               const bool usePreDockPose,
+                                               const bool useApproachAngle,
+                                               const f32 approachAngle_rad,
+                                               const bool useManualSpeed)
+    {
+      ExternalInterface::AlignWithObject msg;
+      msg.objectID = objectID;
+      msg.distanceFromMarker_mm = distFromMarker_mm;
+      msg.useApproachAngle = useApproachAngle;
+      msg.approachAngle_rad = approachAngle_rad;
+      msg.usePreDockPose = usePreDockPose;
+      msg.useManualSpeed = useManualSpeed;
+      
+      ExternalInterface::MessageGameToEngine msgWrapper;
+      msgWrapper.Set_AlignWithObject(msg);
+      SendMessage(msgWrapper);
+    }
+    
+    
+    void UiGameController::SendPlaceObjectOnGroundSequence(const Pose3d& p, const bool useExactRotation, const bool useManualSpeed)
     {
       ExternalInterface::PlaceObjectOnGround m;
       m.x_mm = p.GetTranslation().x();
       m.y_mm = p.GetTranslation().y();
-      m.rad = p.GetRotationAngle<'Z'>().ToFloat();
       m.level = 0;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.useManualSpeed = useManualSpeed;
+      UnitQuaternion<f32> q(p.GetRotation().GetQuaternion());
+      m.qw = q.w();
+      m.qx = q.x();
+      m.qy = q.y();
+      m.qz = q.z();
+      m.useExactRotation = useExactRotation;
       ExternalInterface::MessageGameToEngine message;
       message.Set_PlaceObjectOnGround(m);
       SendMessage(message);
@@ -777,77 +877,163 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendPickAndPlaceObject(const s32 objectID,
-                                                  const bool usePreDockPose,
-                                                  const f32 placementOffsetX_mm,
-                                                  const f32 placementOffsetY_mm,
-                                                  const f32 placementOffsetAngle_rad,
-                                                  const bool placeOnGroundIfCarrying,
-                                                  const bool useManualSpeed)
+    void UiGameController::SendPickupObject(const s32 objectID,
+                                            const bool usePreDockPose,
+                                            const bool useApproachAngle,
+                                            const f32 approachAngle_rad,
+                                            const bool useManualSpeed)
     {
-      ExternalInterface::PickAndPlaceObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.placeOnGroundIfCarrying = static_cast<u8>(placeOnGroundIfCarrying);
-      m.placementOffsetX_mm = placementOffsetX_mm;
-      m.placementOffsetY_mm = placementOffsetY_mm;
-      m.placementOffsetAngle_rad = placementOffsetAngle_rad;
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
-      m.objectID = objectID;
+      ExternalInterface::PickupObject m;
+      m.objectID = objectID,
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle;
+      m.approachAngle_rad = approachAngle_rad;
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
-      message.Set_PickAndPlaceObject(m);
+      message.Set_PickupObject(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendPickAndPlaceSelectedObject(const bool usePreDockPose,
-                                                          const f32 placementOffsetX_mm,
-                                                          const f32 placementOffsetY_mm,
-                                                          const f32 placementOffsetAngle_rad,
-                                                          const bool placeOnGroundIfCarrying,
-                                                          const bool useManualSpeed)
+    
+    void UiGameController::SendPlaceOnObject(const s32 objectID,
+                                   const bool usePreDockPose,
+                                   const bool useExactRotation,
+                                   const Rotation3d rot,
+                                   const bool useManualSpeed)
     {
-      SendPickAndPlaceObject(-1,
-                             usePreDockPose,
-                             placementOffsetX_mm,
-                             placementOffsetY_mm,
-                             placementOffsetAngle_rad,
-                             placeOnGroundIfCarrying,
-                             useManualSpeed);
+      ExternalInterface::PlaceOnObject m;
+      m.objectID = objectID,
+      m.usePreDockPose = usePreDockPose;
+      m.useExactRotation = useExactRotation;
+      
+      UnitQuaternion<f32> q(rot.GetQuaternion());
+      m.qw = q.w();
+      m.qx = q.x();
+      m.qy = q.y();
+      m.qz = q.z();
+      
+      m.useManualSpeed = useManualSpeed;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PlaceOnObject(m);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendPlaceRelObject(const s32 objectID,
+                                    const bool usePreDockPose,
+                                    const f32 placementOffsetX_mm,
+                                    const bool useApproachAngle,
+                                    const f32 approachAngle_rad,
+                                    const bool useManualSpeed)
+    {
+      ExternalInterface::PlaceRelObject m;
+      m.objectID = objectID,
+      m.usePreDockPose = usePreDockPose;
+      m.placementOffsetX_mm = placementOffsetX_mm;
+      m.useApproachAngle = useApproachAngle;
+      m.approachAngle_rad = approachAngle_rad;
+      m.useManualSpeed = useManualSpeed;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PlaceRelObject(m);
+      SendMessage(message);
     }
 
-    void UiGameController::SendRollObject(const s32 objectID, const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendPickupSelectedObject(const bool usePreDockPose,
+                                                    const bool useApproachAngle,
+                                                    const f32 approachAngle_rad,
+                                                    const bool useManualSpeed)
+    {
+      SendPickupObject(-1,
+                       usePreDockPose,
+                       useApproachAngle,
+                       approachAngle_rad,
+                       useManualSpeed);
+    }
+    
+    
+    void UiGameController::SendPlaceOnSelectedObject(const bool usePreDockPose,
+                                                     const bool useExactRotation,
+                                                     const Rotation3d rot,
+                                                     const bool useManualSpeed)
+    {
+      SendPlaceOnObject(-1,
+                        usePreDockPose,
+                        useExactRotation,
+                        rot,
+                        useManualSpeed);
+    }
+    
+    void UiGameController::SendPlaceRelSelectedObject(const bool usePreDockPose,
+                                                      const f32 placementOffsetX_mm,
+                                                      const bool useApproachAngle,
+                                                      const f32 approachAngle_rad,
+                                                      const bool useManualSpeed)
+    {
+      SendPlaceRelObject(-1,
+                         usePreDockPose,
+                         placementOffsetX_mm,
+                         useApproachAngle,
+                         approachAngle_rad,
+                         useManualSpeed);
+    }
+    
+    
+    
+    void UiGameController::SendRollObject(const s32 objectID,
+                                          const bool usePreDockPose,
+                                          const bool useApproachAngle,
+                                          const f32 approachAngle_rad,
+                                          const bool useManualSpeed)
     {
       ExternalInterface::RollObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
       m.objectID = -1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_RollObject(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendRollSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
+    void UiGameController::SendRollSelectedObject(const bool usePreDockPose,
+                                                  const bool useApproachAngle,
+                                                  const f32 approachAngle_rad,
+                                                  const bool useManualSpeed)
     {
-      SendRollObject(-1, usePreDockPose, useManualSpeed);
+      SendRollObject(-1,
+                     usePreDockPose,
+                     useApproachAngle,
+                     approachAngle_rad,
+                     useManualSpeed);
     }
 
     
     void UiGameController::SendTraverseSelectedObject(const bool usePreDockPose, const bool useManualSpeed)
     {
       ExternalInterface::TraverseObject m;
-      m.usePreDockPose = static_cast<u8>(usePreDockPose);
-      m.useManualSpeed = static_cast<u8>(useManualSpeed);
+      m.usePreDockPose = usePreDockPose;
+      m.useManualSpeed = useManualSpeed;
       ExternalInterface::MessageGameToEngine message;
       message.Set_TraverseObject(m);
       SendMessage(message);
     }
     
-    void UiGameController::SendExecuteBehavior(const std::string& behaviorName)
+    BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {
-      ExternalInterface::ExecuteBehavior m;
-      m.behaviorName = behaviorName;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ExecuteBehavior(m);
-      SendMessage(message);
+      if (behaviorName == "LookAround")
+      {
+        return BehaviorType::LookAround;
+      }
+      else if (behaviorName == "OCD")
+      {
+        return BehaviorType::OCD;
+      }
+      else if (behaviorName == "InteractWithFaces")
+      {
+        return BehaviorType::InteractWithFaces;
+      }
+      
+      return BehaviorType::NoneBehavior;
     }
     
     void UiGameController::SendAbortPath()
@@ -945,7 +1131,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendStartTestMode(TestModeClad mode, s32 p1, s32 p2, s32 p3)
+    void UiGameController::SendStartTestMode(TestMode mode, s32 p1, s32 p2, s32 p3)
     {
       ExternalInterface::StartTestMode m;
       m.robotID = 1;
@@ -1022,9 +1208,7 @@ namespace Anki {
       msg.robotID = 1;
       msg.inSlot = 1;
       msg.position = pos;
-      msg.actionType = RobotActionType::PLAY_ANIMATION;
-      msg.action.playAnimation.animationName = animName;
-      msg.action.playAnimation.numLoops = numLoops;
+      msg.action.Set_playAnimation(ExternalInterface::PlayAnimation(msg.robotID, numLoops, animName));
 
       ExternalInterface::MessageGameToEngine message;
       message.Set_QueueSingleAction(msg);
@@ -1063,46 +1247,6 @@ namespace Anki {
       SendMessage(message);
     }
 
-    void UiGameController::SendVisionSystemParams()
-    {
-      if (_root) {
-         // Vision system params
-         ExternalInterface::SetVisionSystemParams p;
-         p.autoexposureOn = _root->getField("camera_autoexposureOn")->getSFInt32();
-         p.exposureTime = _root->getField("camera_exposureTime")->getSFFloat();
-         p.integerCountsIncrement = _root->getField("camera_integerCountsIncrement")->getSFInt32();
-         p.minExposureTime = _root->getField("camera_minExposureTime")->getSFFloat();
-         p.maxExposureTime = _root->getField("camera_maxExposureTime")->getSFFloat();
-         p.highValue = _root->getField("camera_highValue")->getSFInt32();
-         p.percentileToMakeHigh = _root->getField("camera_percentileToMakeHigh")->getSFFloat();
-         p.limitFramerate = _root->getField("camera_limitFramerate")->getSFInt32();
-
-        PRINT_NAMED_INFO("UiGameController.SendVisionSystemParams", "New Camera params");
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_SetVisionSystemParams(p);
-        SendMessage(message);
-       }
-    }
-
-    void UiGameController::SendFaceDetectParams()
-    {
-      if (_root) {
-        // Face Detect params
-        ExternalInterface::SetFaceDetectParams p;
-        p.scaleFactor = _root->getField("fd_scaleFactor")->getSFFloat();
-        p.minNeighbors = _root->getField("fd_minNeighbors")->getSFInt32();
-        p.minObjectHeight = _root->getField("fd_minObjectHeight")->getSFInt32();
-        p.minObjectWidth = _root->getField("fd_minObjectWidth")->getSFInt32();
-        p.maxObjectHeight = _root->getField("fd_maxObjectHeight")->getSFInt32();
-        p.maxObjectWidth = _root->getField("fd_maxObjectWidth")->getSFInt32();
-
-        PRINT_NAMED_INFO("UiGameController.SendFaceDetectParams", "New Face detect params");
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_SetFaceDetectParams(p);
-        SendMessage(message);
-      }
-    }
-    
     void UiGameController::SendForceAddRobot()
     {
       if (_root) {
@@ -1177,19 +1321,19 @@ namespace Anki {
       right = _robotStateMsg.rightWheelSpeed_mmps;
     }
     
-    u32 UiGameController::GetCarryingObjectID() const
+    s32 UiGameController::GetCarryingObjectID() const
     {
       return _robotStateMsg.carryingObjectID;
     }
     
-    u32 UiGameController::GetCarryingObjectOnTopID() const
+    s32 UiGameController::GetCarryingObjectOnTopID() const
     {
       return _robotStateMsg.carryingObjectOnTopID;
     }
     
     bool UiGameController::IsRobotStatus(RobotStatusFlag mask) const
     {
-      return _robotStateMsg.status & mask;
+      return _robotStateMsg.status & (uint16_t)mask;
     }
     
     std::vector<s32> UiGameController::GetAllObjectIDs() const
@@ -1314,5 +1458,34 @@ namespace Anki {
       return _availableAnimations.find(anim) != _availableAnimations.end();
     }
     
+    void UiGameController::SetActualRobotPose(const Pose3d& newPose)
+    {
+      webots::Field* rotField = _robotNode->getField("rotation");
+      assert(rotField != nullptr);
+      
+      webots::Field* transField = _robotNode->getField("translation");
+      assert(transField != nullptr);
+      
+      const RotationVector3d Rvec = newPose.GetRotationVector();
+      const double rotation[4] = {
+        Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+        Rvec.GetAngle().ToFloat()
+      };
+      rotField->setSFRotation(rotation);
+      
+      const double translation[3] = {
+        MM_TO_M(newPose.GetTranslation().x()),
+        MM_TO_M(newPose.GetTranslation().y()),
+        MM_TO_M(newPose.GetTranslation().z())
+      };
+      transField->setSFVec3f(translation);
+      
+    }
+    
+    void SetActualObjectPose(const std::string& name, const Pose3d& newPose)
+    {
+      // TODO: Implement!
+    }
+
   } // namespace Cozmo
 } // namespace Anki

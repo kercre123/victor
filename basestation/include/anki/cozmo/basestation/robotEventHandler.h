@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_RobotEventHandler_H__
 #define __Cozmo_Basestation_RobotEventHandler_H__
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
 
@@ -60,6 +60,7 @@ protected:
   void HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   

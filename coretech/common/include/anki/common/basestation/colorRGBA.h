@@ -54,7 +54,15 @@ namespace Anki {
     void SetAlpha(f32 a);
     
     // Pack into a 32-bit integer [R G B A]
-    operator u32() const;
+    u32 AsRGBA() const;
+    
+    // Packs into a 32-bit integer [0 R G B]
+    u32 As0RGB() const;
+
+    // Convenience conversion operator using pack function
+    operator u32() const { return AsRGBA(); }
+    
+    static ColorRGBA CreateFromColorIndex(uint32_t colorIndex);
     
     // Convert string name to color
     
@@ -126,7 +134,7 @@ namespace Anki {
   inline void ColorRGBA::SetB(f32 blue)  { b() = GetU8(blue);  }
   inline void ColorRGBA::SetAlpha(f32 alphaNew) { alpha() = GetU8(alphaNew); }
   
-  inline ColorRGBA::operator u32() const
+  inline u32 ColorRGBA::AsRGBA() const
   {
     const u32 packedValue = ((static_cast<u32>(r()) << 24) |
                              (static_cast<u32>(g()) << 16) |
@@ -135,6 +143,16 @@ namespace Anki {
     
     return packedValue;
   }
+  
+  inline u32 ColorRGBA::As0RGB() const
+  {
+    const u32 packedValue = ((static_cast<u32>(r()) << 16) |
+                             (static_cast<u32>(g()) <<  8) |
+                             (static_cast<u32>(b())      ) );
+    
+    return packedValue;
+  }
+
   
 } // namespace Anki
 

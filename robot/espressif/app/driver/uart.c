@@ -25,7 +25,6 @@
 #include "mem.h"
 #include "os_type.h"
 #include "user_interface.h"
-#include "telnet.h"
 #include "client.h"
 
 // UartDev is defined and initialized in rom code.
@@ -33,14 +32,7 @@ extern UartDevice    UartDev;
 
 #define min(a, b) (a < b ? a : b)
 
-// System task
-#define    uartTaskQueueLen    10
-os_event_t uartTaskQueue[uartTaskQueueLen];
-
 LOCAL void uart_rx_intr_handler(void *para);
-
-const uint8 UART_PACKET_HEADER[] = {0xbe, 0xef};
-#define UART_PACKET_HEADER_LEN 2
 
 inline void uart_rx_intr_disable(uint8 uart_no)
 {
@@ -109,7 +101,7 @@ uart_config(uint8 uart_no)
     //clear all interrupt
     WRITE_PERI_REG(UART_INT_CLR(uart_no), 0xffff);
     //enable rx_interrupt
-    SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_OVF_INT_ENA);
+    //SET_PERI_REG_MASK(UART_INT_ENA(uart_no), UART_RXFIFO_FULL_INT_ENA|UART_RXFIFO_OVF_INT_ENA);
 }
 
 /******************************************************************************
@@ -179,84 +171,20 @@ uart_tx_buffer(uint8 uart, uint8 *buf, uint16 len)
 *******************************************************************************/
 void os_put_char(uint8 c)
 {
-  //uart_tx_one_char_no_wait(UART1, c);
-  uart_tx_one_char(UART1, c);
+  //uart_tx_one_char_no_wait(UART0, c);
+  uart_tx_one_char(UART0, c);
 }
 
-/** Length of the TX buffer
- * @warning Must be a power of 2
- */
-#define TX_BUF_LEN 8192
-/** Mask for TX buffer indexing
- */
-#define TX_BUF_LENMSK (TX_BUF_LEN - 1)
-/** Current write index for TX buffer
- * Volatile because used in both queue packet callback and task
- */
-static volatile uint16 txWind = 0;
-/** Current read index for TX buffer
- * Volatile because used in both queue packet callback and task
- */
-static volatile uint16 txRind = 0;
-/** Buffer for writing out TX data
- */
-static uint8 txBuf[TX_BUF_LEN];
-
-// Queue a packet for writing out the serial port
-STATUS ICACHE_FLASH_ATTR uartQueuePacket(uint8* data, uint16 len)
+void os_put_hex(unsigned int i, unsigned short nibbles)
 {
-  const uint16 localTxRind = txRind;
-  uint16 localTxWind = txWind;
-  const uint16 available = TX_BUF_LEN - ((localTxWind - localTxRind) & TX_BUF_LENMSK);
-  uint16 writeOne;
-
-  if ((len + 6) > available)
+  static const char HEXTABLE[16] = "0123456789abcdef";
+  unsigned short n = 1;
+  while (n <= nibbles)
   {
-    telnetPrintf("RFRX, no space %d > %d\r\n", len + 6, available);
-    return BUSY;
+    os_put_char(HEXTABLE[(i>>((nibbles-n)*4))&0xf]);
+    n += 1;
   }
-
-  txBuf[localTxWind] = 0xbe;                localTxWind = (localTxWind + 1) & TX_BUF_LENMSK;
-  txBuf[localTxWind] = 0xef;                localTxWind = (localTxWind + 1) & TX_BUF_LENMSK;
-  txBuf[localTxWind] = (len & 0xff);        localTxWind = (localTxWind + 1) & TX_BUF_LENMSK;
-  txBuf[localTxWind] = ((len >> 8) & 0xff); localTxWind = (localTxWind + 1) & TX_BUF_LENMSK;
-  txBuf[localTxWind] = 0x00;                localTxWind = (localTxWind + 1) & TX_BUF_LENMSK;
-  txBuf[localTxWind] = 0x00;                localTxWind = (localTxWind + 1) & TX_BUF_LENMSK;
-
-  writeOne = min(len, TX_BUF_LEN - localTxWind);
-  os_memcpy(txBuf + localTxWind, data, writeOne);
-  if (writeOne < len)
-  {
-    os_memcpy(txBuf, data + writeOne, len - writeOne);
-  }
-  
-  // Post the new index
-  txWind = (localTxWind + len) & TX_BUF_LENMSK;
-
-  ets_intr_lock();
-  if (system_os_post(uartTaskPrio, 0, 0) == false) // 0, 0 indicates tx task
-  {
-    os_printf("uartQueuePacket Couldn't post uart tx task\r\n");
-  }
-  ets_intr_unlock();
-
-  return OK;
 }
-
-/** Length of the RX buffer
- */
-#define RX_BUF_LEN 8192
-/** Current write index for TX buffer
- * Must be volatile because it's used in both ISR and task
- */
-static volatile uint16 rxWind = 0;
-/** Current read index for TX buffer
- * Must be volatile because it's used in both ISR and task
- */
-static volatile uint16 rxRind = 0;
-/** Buffer for writing out TX data
- */
-static uint8 rxBuf[RX_BUF_LEN];
 
 /******************************************************************************
 * FunctionName : uart_rx_intr_handler
@@ -273,17 +201,10 @@ uart_rx_intr_handler(void *para)
   * However, since UART1 rx is not enabled, we can assume this is UART0
   */
   //RcvMsgBuff *pRxBuff = (RcvMsgBuff *)para;
-  static uint8* pktStart = 0;
-  static uint8* pktEnd   = 0;
-  static uint16 pktLen   = 0;
-  static uint8 phase     = 0;
-  static uint8* localRxWptr = rxBuf;
-  
   const uint32 INT_ST = READ_PERI_REG(UART_INT_ST(UART0));
 
   if (INT_ST & (UART_FRM_ERR_INT_ST | UART_RXFIFO_TOUT_INT_ST | UART_TXFIFO_EMPTY_INT_ST | UART_RXFIFO_OVF_INT_ST))
   {
-    phase = 0;
     os_put_char('!'); 
     if (INT_ST & UART_FRM_ERR_INT_ST) // Frame error
     {
@@ -309,178 +230,12 @@ uart_rx_intr_handler(void *para)
 
   while (count-- != 0) // While data in the FIFO
   {
-    uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
-
-    switch (phase)
-    {
-      case 0: // Not synchronized / looking for header byte 1
-      {
-        while (true)
-        {
-          if (byte == UART_PACKET_HEADER[0])
-          {
-            phase++;
-            break;
-          }
-          else if (count > 0)
-          {
-            byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
-            count--;
-          }
-          else
-          {
-            break;
-          }
-        }
-        break;
-      }
-      case 1: // Header byte 2
-      {
-        if (byte == UART_PACKET_HEADER[1]) phase++;
-        else phase = 0;
-        break;
-      }
-      case 2: // Low length byte
-      {
-        pktLen = byte;
-        phase++;
-        break;
-      }
-      case 3: // High length byte
-      {
-        pktLen |= (byte << 8);
-        if ((RX_BUF_LEN - rxWind) < pktLen) // Not enough space at the end of the buffer
-        {
-          if (rxRind < pktLen) // Not enough space at the beginning of the packet buffer
-          {
-            // No where to put the packet, dump it
-            phase = 0;
-            os_put_char('!'); os_put_char('O'); os_put_char('G');
-            continue;
-          }
-          else
-          {
-            localRxWptr = rxBuf; // Put this packet at the beginning of the buffer
-          }
-        }
-        phase++;
-        break;
-      }
-      case 4: // Skip unused bytes
-      case 5:
-      {
-        if (byte == 0)
-        {
-          phase++;
-        }
-        else
-        {
-          os_put_char('!'); os_put_char('I'); os_put_char('B');
-          phase = 0;
-        }
-        break;
-      }
-      case 6: // Start of payload
-      {
-        pktStart = localRxWptr;
-        pktEnd   = localRxWptr + pktLen;
-        phase++;
-        // Explicit fallthrough to next case
-      }
-      case 7: // Payload
-      {
-        while (true)
-        {
-          *(localRxWptr++) = byte;
-
-          if (localRxWptr == pktEnd)
-          {
-            if (system_os_post(uartTaskPrio, (uint32)pktStart, (uint32)pktLen) == false)
-            {
-              os_put_char('!'); os_put_char('O'); os_put_char('S');
-              localRxWptr = &rxBuf[rxWind];
-            }
-            else
-            {
-              rxWind = localRxWptr - rxBuf;
-            }
-            phase = 0;
-            break;
-          }
-          else if (count > 0)
-          {
-            byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF);
-            count--;
-          }
-          else
-          {
-            break;
-          }
-        }
-        break;
-      }
-      default:
-      {
-        os_printf("ERROR: uart RX phase default\r\n");
-        phase = 0;
-      }
-    }
+    READ_PERI_REG(UART_FIFO(UART0)); //const uint8 byte = (READ_PERI_REG(UART_FIFO(UART0)) & 0xFF); 
+    // RX byte here
   }
   WRITE_PERI_REG(UART_INT_CLR(UART0), INT_ST);
 }
 
-
-/** OS Task for handling UART communication
- * Most of the actual work is handled uartHandleRawRx and uartHandleRawTx
- * @param event event->sig indicates what the task should process
- */
-LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
-{
-  if (event->sig == 0) // TX event
-  {
-    const uint16 localTxWind = txWind;
-    uint16 localTxRind = txRind;
-    while (localTxRind != localTxWind) // While have stuff to write
-    {
-      if (uart_tx_one_char_no_wait(UART0, txBuf[localTxRind]) == OK) // while have room to write it
-      {
-        localTxRind = (localTxRind + 1) & TX_BUF_LENMSK;
-      }
-      else // Ran out of FIFO before tx buffer
-      {
-        ets_intr_lock();
-        if (system_os_post(uartTaskPrio, 0, 0) == false) // Repost the task
-        {
-          os_printf("UART couldn't repost tx task\r\n");
-        }
-        ets_intr_unlock();
-        break;
-      }
-    }
-    txRind = localTxRind;
-  }
-  else // RX event
-  {
-    const uint16 pktLen = event->par;
-    uint8* pktStart = (uint8*)event->sig;
-    if (pktStart < rxBuf || pktStart > (rxBuf + RX_BUF_LEN)) {
-      telnetPrintf("FATAL: uart pktStart out of bounds %p %p..%p\r\n", pktStart, rxBuf, rxBuf+RX_BUF_LEN);
-      while(true);
-    }
-    else // Packet data is contiguous in memory
-    {
-      clientQueuePacket(pktStart, pktLen);
-    }
-    if (pktStart == rxBuf) // This was a packet placed at the beginning rather than wrapping
-    {
-      rxRind = pktLen;
-    }
-    else // Normal case
-    {
-      rxRind += pktLen;
-    }
-  }
-}
 
 /******************************************************************************
 * FunctionName : uart_init
@@ -492,8 +247,6 @@ LOCAL void ICACHE_FLASH_ATTR uartTask(os_event_t *event)
 void ICACHE_FLASH_ATTR
 uart_init(UartBautRate uart0_br, UartBautRate uart1_br)
 {
-  system_os_task(uartTask, uartTaskPrio, uartTaskQueue, uartTaskQueueLen); // Setup task queue for handling UART
-
   UartDev.baut_rate = uart0_br;
   uart_config(UART0);
   UartDev.baut_rate = uart1_br;

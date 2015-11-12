@@ -14,6 +14,7 @@
     'ctrlViz_source': 'ctrlViz.lst',
     'clad_source': 'clad.lst',
     'pluginPhysics_source': 'pluginPhysics.lst',
+    'robot_generated_clad_source': 'robotGeneratedClad.lst',
     
     # TODO: should this be passed in, or shared?
     'coretech_defines': [
@@ -195,12 +196,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_debug)',
+                    '<@(opencv_lib_search_path_ios_debug)',
+                    '<(webots_path)/lib/',
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_debug)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_debug)',
+                    '<@(opencv_lib_search_path_mac_debug)',
+                    '<(webots_path)/lib/',
+                ],
               },
             }],
           ],
@@ -220,12 +229,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_ios_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_mac_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
           ],
@@ -245,12 +262,20 @@
           'conditions': [
             ['OS=="ios"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_ios_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_ios_release)',
+                    '<@(opencv_lib_search_path_ios_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
-                'LIBRARY_SEARCH_PATHS': [ '<@(cte_lib_search_path_mac_release)', '<(webots_path)/lib/' ],
+                'LIBRARY_SEARCH_PATHS': [
+                    '<@(cte_lib_search_path_mac_release)',
+                    '<@(opencv_lib_search_path_mac_release)',
+                    '<(webots_path)/lib/'
+                ],
               },
             }],
           ],
@@ -334,7 +359,9 @@
               '<@(opencv_includes)',
             ],
             'dependencies': [
+              'cozmoEngine',
               '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
               '<(ce-util_gyp_path):util',
             ],
@@ -362,6 +389,7 @@
               '<@(webots_includes)',
             ],
             'dependencies': [
+              'robotClad',
               '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
             'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
@@ -379,10 +407,12 @@
             'type': 'executable',
             'include_dirs': [
               '../../include',
+              '../../robot/include',
               '<@(webots_includes)',
               '<@(opencv_includes)',
             ],
             'dependencies': [
+              'cozmoEngine',
               '<(ce-cti_gyp_path):ctiCommon',
               '<(ce-cti_gyp_path):ctiVision',
               '<(ce-cti_gyp_path):ctiMessaging',
@@ -440,6 +470,7 @@
               '<(ce-cti_gyp_path):ctiMessagingRobot',
               '<(ce-cti_gyp_path):ctiPlanningRobot',
               '<(ce-util_gyp_path):utilEmbedded',
+              'robotClad',
             ],
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],
             'defines': [
@@ -458,6 +489,7 @@
             'type': 'executable',
             'include_dirs': [
               '../../basestation/test',
+              '../../robot/include',
               '<@(opencv_includes)',
             ],
             'dependencies': [
@@ -631,6 +663,7 @@
         '../../basestation/src',
         '../../basestation/include',
         '../../include',
+        '../../robot/include',
         '../../generated/clad/engine',
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
@@ -639,6 +672,7 @@
         'include_dirs': [
           '../../basestation/include',
           '../../include',
+          '../../robot/include',
           '../../generated/clad/engine',
           '../../basestation/src',
         ],
@@ -657,10 +691,40 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-audio_path):DriveAudioEngine',
       ],
       'type': '<(engine_library_type)',
+      'conditions': [    
+        [
+          'OS=="ios" or OS=="mac"',
+          {
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+            ],
+          },
+        ],
+      ],
     },
     
+    {
+      'target_name': 'robotClad',
+      'sources': [ 
+        '<!@(cat <(robot_generated_clad_source))',
+      ],
+      'include_dirs': [
+        '../../robot/generated/clad/robot',
+      ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          '../../robot/generated/clad/robot',
+        ],
+      },
+      'dependencies': [
+      ],
+      'type': 'static_library',
+    },
 
 
   ] # end targets

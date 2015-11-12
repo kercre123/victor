@@ -9,6 +9,7 @@
 #include "anki/common/shared/utilities_shared.h"
 
 #include <stdexcept>
+#include <cmath>
 
 namespace Anki {
 
@@ -51,7 +52,13 @@ namespace Anki {
   {
     
   }
-  
+
+  void Pose2d::TranslateBy(float dist)
+  {
+    _translation.x() += dist * cosf(_angle.ToFloat());
+    _translation.y() += dist * sinf(_angle.ToFloat());
+  }
+
   void Pose2d::operator*=(const Pose2d &other)
   {
     _angle += other._angle;
@@ -94,6 +101,17 @@ namespace Anki {
     _translation = R * _translation;
     
     return *this;
+  }
+
+  void Pose2d::Print() const
+  {
+    CoreTechPrint("Pose2d%s%s: Translation=(%f, %f), RotAng=%frad (%.1fdeg), parent 0x%x;%s\n",
+                  GetName().empty() ? "" : " ", GetName().c_str(),
+                  _translation.x(), _translation.y(),
+                  _angle.ToFloat(), _angle.getDegrees(),
+                  _parent,
+                  _parent != nullptr ? _parent->GetName().c_str() : "NULL"
+                  );
   }
     
   
@@ -158,7 +176,7 @@ namespace Anki {
   }
   
   Pose3d::Pose3d(const Pose2d &pose2d)
-  : Pose3d(pose2d.GetAngle(), {0.f, 0.f, 0.f},
+  : Pose3d(pose2d.GetAngle(), {0.f, 0.f, 1.f},
            {pose2d.GetX(), pose2d.GetY(), 0.f})
   {
     // At this point, we have initialized a 3D pose corresponding
@@ -180,10 +198,13 @@ namespace Anki {
     // the cross product gives us the axis around which we will
     // rotate.
     Radians angle3d = std::acos(dotProduct);
-    Vec3f   axis3d  = CrossProduct(Zaxis, pose2d.GetPlaneNormal());
-    
-    Pose3d planePose(angle3d, axis3d, pose2d.GetPlaneOrigin());
-    this->PreComposeWith(planePose);
+
+    if( ! NEAR_ZERO( angle3d ) ) {
+      Vec3f axis3d = CrossProduct(Zaxis, pose2d.GetPlaneNormal());
+      Pose3d planePose(angle3d, axis3d, pose2d.GetPlaneOrigin());
+      this->PreComposeWith(planePose);
+    }
+    // else we are already in the correct plane
     
   } // Constructor: Pose3d(Pose2d)
 
@@ -481,7 +502,6 @@ namespace Anki {
     PoseBase<Pose3d>::PrintNamedPathToOrigin(*this, showTranslations);
   }
   
-  
   void Pose3d::Print() const
   {
     CoreTechPrint("Pose%s%s: Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg), parent 0x%x;%s\n",
@@ -500,17 +520,21 @@ namespace Anki {
   Vec3f ComputeVectorBetween(const Pose3d& pose1, const Pose3d& pose2)
   {
     // Make sure the two poses share a common parent:
-    Pose3d pose2mod(pose2);
+    
     if(pose1.GetParent() != pose2.GetParent()) {
-      if(pose1.GetParent() == nullptr || false == pose2.GetWithRespectTo(*pose1.GetParent(), pose2mod)) {
-        CORETECH_THROW("ComputeVectorBetween.NoCommonParent: Could not get pose2 w.r.t. pose1's parent.");
+      Pose3d pose1wrt2;
+      if(false == pose1.GetWithRespectTo(pose2, pose1wrt2)) {
+        PRINT_NAMED_ERROR("ComputeVectorBetween.NoCommonParent",
+                          "Could not get pose1 w.r.t. pose2.");
+        return Vec3f(0.f,0.f,0.f);
       }
+      return pose1wrt2.GetTranslation();
     }
     
     // Compute distance between the two poses' translation vectors
     // TODO: take rotation into account?
     Vec3f distVec(pose1.GetTranslation());
-    distVec -= pose2mod.GetTranslation();
+    distVec -= pose2.GetTranslation();
     return distVec;
   }
 

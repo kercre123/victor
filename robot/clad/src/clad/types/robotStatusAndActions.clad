@@ -1,0 +1,81 @@
+// File: robotStatusFlag
+// Author: damjan stulic
+// Created: 8/13/15
+// Copyright: Anki, inc. 2015
+// ROBOT_CLAD_SHARED
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_16 RobotStatusFlag {
+    NoneRobotStatusFlag,
+    IS_MOVING               = 0x00000001,  // Head, lift, or wheels
+    IS_CARRYING_BLOCK       = 0x00000002,
+    IS_PICKING_OR_PLACING   = 0x00000004,
+    IS_PICKED_UP            = 0x00000008,
+    IS_PROX_FORWARD_BLOCKED = 0x00000010,
+    IS_PROX_SIDE_BLOCKED    = 0x00000020,
+    IS_ANIMATING            = 0x00000040,
+    IS_PATHING              = 0x00000080,
+    LIFT_IN_POS             = 0x00000100,
+    HEAD_IN_POS             = 0x00000200,
+    IS_ANIM_BUFFER_FULL     = 0x00000400,
+    IS_ANIMATING_IDLE       = 0x00000800,
+    IS_ON_CHARGER           = 0x00001000,
+    IS_CHARGING             = 0x00002000
+}
+
+enum uint_8 DockAction
+{
+  DA_PICKUP_LOW = 0,  // Docking to block at level 0
+  DA_PICKUP_HIGH,     // Docking to block at level 1
+  DA_PLACE_HIGH,      // Placing block atop another block at level 0
+  DA_PLACE_LOW,       // Placing block on level 0
+  DA_PLACE_LOW_BLIND, // Placing block on level 0 (relative to some pose)
+  DA_ROLL_LOW,        // Rolling a block at level 0 by pulling it towards you
+  DA_ALIGN,           // Approaches block and stops at specified distance from marker
+  DA_RAMP_ASCEND,     // Going up a ramp
+  DA_RAMP_DESCEND,    // Going down a ramp
+  DA_CROSS_BRIDGE,    // Crossing a bridge
+  DA_MOUNT_CHARGER    // Reversing onto charger
+}
+
+enum uint_8 CarryState
+{
+  CARRY_NONE = 0,
+  CARRY_1_BLOCK,
+  CARRY_2_BLOCK,
+  NUM_CARRY_STATES
+}
+
+// Structure definition for convenience
+structure RobotPose
+{
+  float_32 x,
+  float_32 y,
+  float_32 z,
+  float_32 angle,
+  float_32 pitch_angle,
+}
+ 
+structure RobotState
+{
+  uint_32 timestamp,
+  uint_32 pose_frame_id,
+  RobotPose pose,
+  float_32 lwheel_speed_mmps,
+  float_32 rwheel_speed_mmps,
+  float_32 headAngle,
+  float_32 liftAngle,
+  float_32 liftHeight,
+  float_32 rawGyroZ,
+  float_32 rawAccelY,
+  uint_16 status, // RobotStatusFlag packs as a uint_16
+  uint_16 lastPathID,
+  int_8   currPathSegment, // -1 if not traversing a path
+  uint_8  numFreeSegmentSlots,
+  uint_8  battVolt10x,
+}
+
+} // namespace Cozmo
+} // namespace Anki

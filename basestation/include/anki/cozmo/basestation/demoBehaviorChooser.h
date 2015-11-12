@@ -29,6 +29,7 @@ class BehaviorLookAround;
 class BehaviorInteractWithFaces;
 class BehaviorOCD;
 class BehaviorFidget;
+class BehaviorNone;
 class Robot;
 namespace ExternalInterface {
   class MessageGameToEngine;
@@ -40,9 +41,11 @@ class DemoBehaviorChooser : public ReactionaryBehaviorChooser
 public:
   DemoBehaviorChooser(Robot& robot, const Json::Value& config);
   
-  virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const override;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const override;
   virtual Result Update(double currentTime_sec) override;
   virtual Result AddBehavior(IBehavior* newBehavior) override;
+  
+  virtual const char* GetName() const override { return "Demo"; }
   
 protected:
   Robot& _robot;
@@ -56,12 +59,15 @@ protected:
   BehaviorInteractWithFaces* _behaviorInteractWithFaces = nullptr;
   BehaviorOCD* _behaviorOCD = nullptr;
   BehaviorFidget* _behaviorFidget = nullptr;
+  BehaviorNone* _behaviorNone = nullptr;
   
   void SetupBehaviors(Robot& robot, const Json::Value& config);
   void HandleSetDemoState(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
 private:
   using super = ReactionaryBehaviorChooser;
+
+  bool _liveIdleEnabled = false;
   
 }; // class DemoBehaviorChooser
   

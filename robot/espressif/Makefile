@@ -9,6 +9,7 @@ ifeq ($(COMPILE), gcc)
 	CC = xtensa-lx106-elf-gcc
 	NM = xtensa-lx106-elf-nm
 	CPP = xtensa-lx106-elf-cpp
+  CXX = xtensa-lx106-elf-g++
 	OBJCOPY = xtensa-lx106-elf-objcopy
 	OBJDUMP = xtensa-lx106-elf-objdump
 else
@@ -162,6 +163,7 @@ else
 endif
 
 CSRCS ?= $(wildcard *.c)
+CXXSRCS ?= $(wildcard *.cpp)
 ASRCs ?= $(wildcard *.s)
 ASRCS ?= $(wildcard *.S)
 SUBDIRS ?= $(patsubst %/,%,$(dir $(wildcard */Makefile)))
@@ -169,11 +171,13 @@ SUBDIRS ?= $(patsubst %/,%,$(dir $(wildcard */Makefile)))
 ODIR := .output
 OBJODIR := $(ODIR)/$(TARGET)/$(FLAVOR)/obj
 
-OBJS := $(CSRCS:%.c=$(OBJODIR)/%.o) \
+OBJS ?= $(CSRCS:%.c=$(OBJODIR)/%.o) \
+        $(CXXSRCS:%.cpp=$(OBJODIR)/%.o) \
         $(ASRCs:%.s=$(OBJODIR)/%.o) \
         $(ASRCS:%.S=$(OBJODIR)/%.o)
 
-DEPS := $(CSRCS:%.c=$(OBJODIR)/%.d) \
+DEPS ?= $(CSRCS:%.c=$(OBJODIR)/%.d) \
+        $(CXXSRCS:%.cpp=$(OBJODIR)/%.d) \
         $(ASRCs:%.s=$(OBJODIR)/%.d) \
         $(ASRCS:%.S=$(OBJODIR)/%.d)
 
@@ -190,7 +194,6 @@ CCFLAGS += 			\
 	-g			\
 	-Wpointer-arith		\
 	-Wundef			\
-	-Werror			\
 	-Wl,-EL			\
 	-fno-inline-functions	\
 	-nostdlib       \
@@ -198,7 +201,10 @@ CCFLAGS += 			\
 	-mtext-section-literals \
 	-ffunction-sections \
 	-fdata-sections \
-	-Wall			
+	-Wall \
+  -Werror
+
+CXXFLAGS = -fno-threadsafe-statics 
 
 CFLAGS = $(CCFLAGS) $(DEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
 DFLAGS = $(CCFLAGS) $(DDEFINES) $(EXTRA_CCFLAGS) $(INCLUDES)
@@ -212,6 +218,7 @@ define ShortcutRule
 $(1): .subdirs $(2)/$(1)
 endef
 
+ifndef MakeLibrary
 define MakeLibrary
 DEP_LIBS_$(1) = $$(foreach lib,$$(filter %.a,$$(COMPONENTS_$(1))),$$(dir $$(lib))$$(LIBODIR)/$$(notdir $$(lib)))
 DEP_OBJS_$(1) = $$(foreach obj,$$(filter %.o,$$(COMPONENTS_$(1))),$$(dir $$(obj))$$(OBJODIR)/$$(notdir $$(obj)))
@@ -219,9 +226,10 @@ $$(LIBODIR)/$(1).a: $$(OBJS) $$(DEP_OBJS_$(1)) $$(DEP_LIBS_$(1)) $$(DEPENDS_$(1)
 	@mkdir -p $$(LIBODIR)
 	$$(if $$(filter %.a,$$?),mkdir -p $$(EXTRACT_DIR)_$(1))
 	$$(if $$(filter %.a,$$?),cd $$(EXTRACT_DIR)_$(1); $$(foreach lib,$$(filter %.a,$$?),$$(AR) xo $$(UP_EXTRACT_DIR)/$$(lib);))
-	$$(AR) ru $$@ $$(filter %.o,$$?) $$(if $$(filter %.a,$$?),$$(EXTRACT_DIR)_$(1)/*.o)
+	$$(AR) ru $$@ $$(filter %.o,$$?) $$(if $$(filter %.a,$$?),$$(EXTRACT_DIR)_$(1)/*.o) $$(OBJODIR)/*.o
 	$$(if $$(filter %.a,$$?),$$(RM) -r $$(EXTRACT_DIR)_$(1))
 endef
+endif
 
 define MakeImage
 DEP_LIBS_$(1) = $$(foreach lib,$$(filter %.a,$$(COMPONENTS_$(1))),$$(dir $$(lib))$$(LIBODIR)/$$(notdir $$(lib)))
@@ -329,6 +337,18 @@ $(OBJODIR)/%.d: %.c
 	sed 's,\($*\.o\)[ :]*,$(OBJODIR)/\1 $@ : ,g' < $@.$$$$ > $@; \
 	rm -f $@.$$$$
 
+$(OBJODIR)/%.o: %.cpp
+	@mkdir -p $(OBJODIR);
+	$(CXX) $(if $(findstring $<,$(DSRCS)),$(DFLAGS),$(CFLAGS)) $(CXXFLAGS) $(COPTS_$(*F)) -o $(OBJODIR)/$(notdir $@) -c $<
+
+$(OBJODIR)/%.d: %.cpp
+	@mkdir -p $(OBJODIR);
+	@echo DEPEND: $(CC) -M $(CFLAGS) $<
+	@set -e; rm -f $(OBJODIR)/$(notdir $@); \
+	$(CXX) -M $(CFLAGS) $(CXXFLAGS) $< > $(OBJODIR)/$(notdir $@).$$$$; \
+	sed 's,\($*\.o\)[ :]*,$(OBJODIR)/\1 $(OBJODIR)/$(notdir $@) : ,g' < $@.$$$$ > $(OBJODIR)/$(notdir $@); \
+	rm -f $(OBJODIR)/$(notdir $@).$$$$
+
 $(OBJODIR)/%.o: %.s
 	@mkdir -p $(OBJODIR);
 	$(CC) $(CFLAGS) -o $@ -c $<
@@ -373,6 +393,6 @@ $(foreach image,$(GEN_IMAGES),$(eval $(call MakeImage,$(basename $(image)))))
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(PDIR)include/$(TARGET)
+INCLUDES += $(INCLUDES) -I $(PDIR)include -I $(PDIR)include/$(TARGET)
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile

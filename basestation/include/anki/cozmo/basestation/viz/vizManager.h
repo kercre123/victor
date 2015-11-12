@@ -22,10 +22,14 @@
 #include "anki/vision/CameraSettings.h"
 #include "anki/planning/shared/path.h"
 #include "anki/messaging/shared/UdpClient.h"
-#include "anki/cozmo/shared/VizStructs.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
- 
+#include "clad/types/imageTypes.h"
+#include "clad/types/vizTypes.h"
+#include "clad/types/objectTypes.h"
+#include "clad/types/robotStatusAndActions.h"
+#include "clad/vizInterface/messageViz.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include <vector>
+
 namespace Anki {
   
   // Forward declaration
@@ -34,8 +38,16 @@ namespace Anki {
   }
   
   namespace Cozmo {
+
+  namespace VizInterface {
+  class MessageViz;
+  enum class MessageVizTag : uint8_t;
+  struct RobotMood;
+  } // end namespace VizInterface
     
-    // NOTE: this is a singleton class
+    class IExternalInterface;
+
+  // NOTE: this is a singleton class
     class VizManager
     {
     public:
@@ -43,6 +55,7 @@ namespace Anki {
       typedef enum : u8 {
         ACTION,
         LOCALIZED_TO,
+        WORLD_ORIGIN,
         VISION_MODE,
         BEHAVIOR_STATE
       } TextLabelType;
@@ -84,16 +97,16 @@ namespace Anki {
       
       Handle_t DrawRobot(const u32 robotID,
                          const Pose3d &pose,
-                         const ColorRGBA& color = NamedColors::DEFAULT);
+                         const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawCuboid(const u32 blockID,
                           const Point3f &size,
                           const Pose3d &pose,
-                          const ColorRGBA& color = NamedColors::DEFAULT);
+                          const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawPreDockPose(const u32 preDockPoseID,
                                const Pose3d &pose,
-                               const ColorRGBA& color = NamedColors::DEFAULT);
+                               const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawRamp(const u32 rampID,
                         const f32 platformLength,
@@ -101,7 +114,7 @@ namespace Anki {
                         const f32 width,
                         const f32 height,
                         const Pose3d& pose,
-                        const ColorRGBA& color = NamedColors::DEFAULT);
+                        const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawCharger(const u32 chargerID,
                            const f32 platformLength,
@@ -109,12 +122,12 @@ namespace Anki {
                            const f32 width,
                            const f32 height,
                            const Pose3d& pose,
-                           const ColorRGBA& color = NamedColors::DEFAULT);
+                           const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       Handle_t DrawHumanHead(const u32 headID,
                              const Point3f& size,
                              const Pose3d& pose,
-                             const ColorRGBA& color = NamedColors::DEFAULT);
+                             const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       void DrawCameraFace(const Vision::TrackedFace& face,
                           const ColorRGBA& color);
@@ -136,11 +149,11 @@ namespace Anki {
       // of the object. For other types, like VIZ_ROBOT, size is ignored.
       // Up to 4 other parameters can be specified in an array pointed to
       // by params.
-      void DrawObject(const u32 objectID, const u32 objectTypeID,
-                      const Point3f &size,
-                      const Pose3d &pose,
-                      const ColorRGBA& color = NamedColors::DEFAULT,
-                      const f32* params = nullptr);
+      void DrawObject(const u32 objectID, VizObjectType objectTypeID,
+        const Point3f &size,
+        const Pose3d &pose,
+        const ColorRGBA& color = ::Anki::NamedColors::DEFAULT,
+        const f32* params = nullptr);
       
       // Erases the object corresponding to the objectID
       void EraseVizObject(const Handle_t objectID);
@@ -156,7 +169,7 @@ namespace Anki {
       
       void DrawPath(const u32 pathID,
                     const Planning::Path& p,
-                    const ColorRGBA& color = NamedColors::DEFAULT);
+                    const ColorRGBA& color = ::Anki::NamedColors::DEFAULT);
       
       // Appends the specified line segment to the path with id pathID
       void AppendPathSegmentLine(const u32 pathID,
@@ -246,17 +259,12 @@ namespace Anki {
       // Draw quads of a specified type (usually called as a helper by the
       // above methods for specific types)
       template<typename T>
-      void DrawQuad(const u32 quadType,
-                    const u32 quadID,
-                    const Quadrilateral<3,T>& quad,
-                    const ColorRGBA& color);
+      void DrawQuad(const VizQuadType quadType, const u32 quadID, const Quadrilateral<2,T>& quad,
+        const T zHeight_mm, const ColorRGBA& color);
 
       template<typename T>
-      void DrawQuad(const u32 quadType,
-                    const u32 quadID,
-                    const Quadrilateral<2,T>& quad,
-                    const T zHeight,
-                    const ColorRGBA& color);
+      void DrawQuad(const VizQuadType quadType, const u32 quadID, const Quadrilateral<3,T>& quad,
+        const ColorRGBA& color);
 
       template<typename T>
       void DrawPoly(const u32 polyID,
@@ -270,10 +278,10 @@ namespace Anki {
       void ErasePoly(u32 polyID);
       
       // Erases the quad with the specified type and ID
-      void EraseQuad(const u32 quadType, const u32 quadID);
+      void EraseQuad(const uint32_t quadType, const u32 quadID);
       
       // Erases all the quads fo the specified type
-      void EraseAllQuadsWithType(const u32 quadType);
+      void EraseAllQuadsWithType(const uint32_t quadType);
       
       // Erases all quads
       void EraseAllQuads();
@@ -310,15 +318,17 @@ namespace Anki {
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
+      /*
       void SendGreyImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp);
       void SendColorImage(const RobotID_t robotID, const u8* data, const Vision::CameraResolution res, const TimeStamp_t timestamp);
-      
+
       void SendImage(const RobotID_t robotID, const u8* data, const u32 dataLength,
                      const Vision::CameraResolution res,
                      const TimeStamp_t timestamp,
                      const Vision::ImageEncoding_t encoding);
-      
-      void SendImageChunk(const RobotID_t robotID, MessageImageChunk robotImageChunk);
+      */
+
+      void SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk);
       
       void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
                             const u16 topRight_x, const u16 topRight_y,
@@ -331,34 +341,52 @@ namespace Anki {
                            const u16 bottomRight_x, const u16 bottomRight_y,
                            const u16 bottomLeft_x, const u16 bottomLeft_y);
       
-      void SendRobotState(const MessageRobotState &msg,
-                          const s32 &numAnimBytesFree,
-                          const u8 &videoFramefateHz);
+      void SendRobotState(const RobotState &msg,
+                          const s32 numAnimBytesFree,
+                          const u8 videoFramefateHz, const u8 animTag);
       
+      void SetOrigin(const SetVizOrigin& msg);
+      
+      void SubscribeToEngineEvents(IExternalInterface& externalInterface);
+      
+      // Declaration for message handling specializations. See AnkiEventUtil.h
+      template <typename T>
+      void HandleMessage(const T& msg);
+      
+      void SendRobotMood(VizInterface::RobotMood&& robotMood);
+      void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
+      void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
+      void SendStartRobotUpdate();
+      void SendEndRobotUpdate();
+
     protected:
       
       // Protected default constructor for singleton.
       VizManager();
       
-      void SendMessage(u8 vizMsgID, void* msg);
-      
+      void SendMessage(const VizInterface::MessageViz& message);
+
       static VizManager* _singletonInstance;
       
       bool               _isInitialized;
       UdpClient          _vizClient;
       
-      char               _sendBuf[MAX_VIZ_MSG_SIZE];
 
+      /*
       // Image sending
       std::map<RobotID_t, u8> _imgID;
-      
+      */
+
       bool               _sendImages;
       
       // Stores the maximum ID permitted for a given VizObject type
-      u32 _VizObjectMaxID[NUM_VIZ_OBJECT_TYPES];
+      u32 _VizObjectMaxID[(int)VizObjectType::NUM_VIZ_OBJECT_TYPES];
       
       // TODO: Won't need this offest once Polygon is implmeneted correctly (not drawing with path)
       const u32 _polyIDOffset = 2200;
+      
+      // For handling messages:
+      std::vector<Signal::SmartHandle> _eventHandlers;
     }; // class VizManager
     
     
@@ -373,70 +401,61 @@ namespace Anki {
     }
     
     template<typename T>
-    void VizManager::DrawQuad(const u32 quadType,
-                              const u32 quadID,
-                              const Quadrilateral<2,T>& quad,
-                              const T zHeight_mm,
-                              const ColorRGBA& color)
+    void VizManager::DrawQuad(const VizQuadType quadType, const u32 quadID, const Quadrilateral<2,T>& quad,
+      const T zHeight_mm, const ColorRGBA& color)
     {
       using namespace Quad;
-      VizQuad v;
+      VizInterface::Quad v;
       v.quadType = quadType;
       v.quadID = quadID;
       
-      const f32 zHeight_m = MM_TO_M(static_cast<f32>(zHeight_mm));
+      const f32 zHeight_m = (float)MM_TO_M(static_cast<float>(zHeight_mm));
       
-      v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].x()));
-      v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].y()));
+      v.xUpperLeft  = (float)MM_TO_M(static_cast<float>(quad[TopLeft].x()));
+      v.yUpperLeft  = (float)MM_TO_M(static_cast<float>(quad[TopLeft].y()));
       v.zUpperLeft  = zHeight_m;
       
-      v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].x()));
-      v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].y()));
+      v.xLowerLeft  = (float)MM_TO_M(static_cast<float>(quad[BottomLeft].x()));
+      v.yLowerLeft  = (float)MM_TO_M(static_cast<float>(quad[BottomLeft].y()));
       v.zLowerLeft  = zHeight_m;
       
-      v.xUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].x()));
-      v.yUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].y()));
+      v.xUpperRight = (float)MM_TO_M(static_cast<float>(quad[TopRight].x()));
+      v.yUpperRight = (float)MM_TO_M(static_cast<float>(quad[TopRight].y()));
       v.zUpperRight = zHeight_m;
       
-      v.xLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].x()));
-      v.yLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].y()));
+      v.xLowerRight = (float)MM_TO_M(static_cast<float>(quad[BottomRight].x()));
+      v.yLowerRight = (float)MM_TO_M(static_cast<float>(quad[BottomRight].y()));
       v.zLowerRight = zHeight_m;
-      
-      v.color = u32(color);
-      
-      SendMessage( GET_MESSAGE_ID(VizQuad), &v );
+      v.color = (uint32_t)color;
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
 
     template<typename T>
-    void VizManager::DrawQuad(const u32 quadType,
-                              const u32 quadID,
-                              const Quadrilateral<3,T>& quad,
-                              const ColorRGBA& color)
+    void VizManager::DrawQuad(const VizQuadType quadType, const u32 quadID, const Quadrilateral<3,T>& quad,
+      const ColorRGBA& color)
     {
       using namespace Quad;
-      VizQuad v;
+      VizInterface::Quad v;
       v.quadType = quadType;
       v.quadID = quadID;
       
-      v.xUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].x()));
-      v.yUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].y()));
-      v.zUpperLeft  = MM_TO_M(static_cast<f32>(quad[TopLeft].z()));
+      v.xUpperLeft  = (float)MM_TO_M(static_cast<float>(quad[TopLeft].x()));
+      v.yUpperLeft  = (float)MM_TO_M(static_cast<float>(quad[TopLeft].y()));
+      v.zUpperLeft  = (float)MM_TO_M(static_cast<float>(quad[TopLeft].z()));
       
-      v.xLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].x()));
-      v.yLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].y()));
-      v.zLowerLeft  = MM_TO_M(static_cast<f32>(quad[BottomLeft].z()));
+      v.xLowerLeft  = (float)MM_TO_M(static_cast<float>(quad[BottomLeft].x()));
+      v.yLowerLeft  = (float)MM_TO_M(static_cast<float>(quad[BottomLeft].y()));
+      v.zLowerLeft  = (float)MM_TO_M(static_cast<float>(quad[BottomLeft].z()));
       
-      v.xUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].x()));
-      v.yUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].y()));
-      v.zUpperRight = MM_TO_M(static_cast<f32>(quad[TopRight].z()));
+      v.xUpperRight = (float)MM_TO_M(static_cast<float>(quad[TopRight].x()));
+      v.yUpperRight = (float)MM_TO_M(static_cast<float>(quad[TopRight].y()));
+      v.zUpperRight = (float)MM_TO_M(static_cast<float>(quad[TopRight].z()));
       
-      v.xLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].x()));
-      v.yLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].y()));
-      v.zLowerRight = MM_TO_M(static_cast<f32>(quad[BottomRight].z()));
-      
-      v.color = u32(color);
-      
-      SendMessage( GET_MESSAGE_ID(VizQuad), &v );
+      v.xLowerRight = (float)MM_TO_M(static_cast<float>(quad[BottomRight].x()));
+      v.yLowerRight = (float)MM_TO_M(static_cast<float>(quad[BottomRight].y()));
+      v.zLowerRight = (float)MM_TO_M(static_cast<float>(quad[BottomRight].z()));
+      v.color = (uint32_t)color;
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
     
     template<typename T>
@@ -471,7 +490,7 @@ namespace Anki {
                                      const T zHeight_mm,
                                      const ColorRGBA& color)
     {
-      DrawQuad(VIZ_QUAD_GENERIC_2D, quadID, quad, zHeight_mm, color);
+      DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_2D, quadID, quad, zHeight_mm, color);
     }
     
     template<typename T>
@@ -479,7 +498,7 @@ namespace Anki {
                                      const Quadrilateral<3,T>& quad,
                                      const ColorRGBA& color)
     {
-      DrawQuad(VIZ_QUAD_GENERIC_3D, quadID, quad, color);
+      DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, quadID, quad, color);
     }
     
     template<typename T>
@@ -487,23 +506,21 @@ namespace Anki {
                                     const ColorRGBA& color)
     {
       using namespace Quad;
-      VizCameraQuad v;
+      VizInterface::CameraQuad v;
       
-      v.xUpperLeft  = static_cast<f32>(quad[TopLeft].x());
-      v.yUpperLeft  = static_cast<f32>(quad[TopLeft].y());
+      v.xUpperLeft  = static_cast<float>(quad[TopLeft].x());
+      v.yUpperLeft  = static_cast<float>(quad[TopLeft].y());
       
-      v.xLowerLeft  = static_cast<f32>(quad[BottomLeft].x());
-      v.yLowerLeft  = static_cast<f32>(quad[BottomLeft].y());
+      v.xLowerLeft  = static_cast<float>(quad[BottomLeft].x());
+      v.yLowerLeft  = static_cast<float>(quad[BottomLeft].y());
       
-      v.xUpperRight = static_cast<f32>(quad[TopRight].x());
-      v.yUpperRight = static_cast<f32>(quad[TopRight].y());
+      v.xUpperRight = static_cast<float>(quad[TopRight].x());
+      v.yUpperRight = static_cast<float>(quad[TopRight].y());
       
-      v.xLowerRight = static_cast<f32>(quad[BottomRight].x());
-      v.yLowerRight = static_cast<f32>(quad[BottomRight].y());
-      
-      v.color = u32(color);
-      
-      SendMessage( GET_MESSAGE_ID(VizCameraQuad), &v );
+      v.xLowerRight = static_cast<float>(quad[BottomRight].x());
+      v.yLowerRight = static_cast<float>(quad[BottomRight].y());
+      v.color = (uint32_t)color;
+      SendMessage(VizInterface::MessageViz(std::move(v)));
     }
 
     
@@ -512,7 +529,7 @@ namespace Anki {
                                    const Quadrilateral<3,T>& quad,
                                    const ColorRGBA& color)
     {
-      DrawQuad(VIZ_QUAD_MAT_MARKER, quadID, quad, color);
+      DrawQuad(VizQuadType::VIZ_QUAD_MAT_MARKER, quadID, quad, color);
     }
     
     template<typename T>
@@ -532,7 +549,7 @@ namespace Anki {
                                           const Quadrilateral<3,T>& quad,
                                           const ColorRGBA& color)
     {
-      DrawQuad(VIZ_QUAD_ROBOT_BOUNDING_BOX, quadID, quad, color);
+      DrawQuad(VizQuadType::VIZ_QUAD_ROBOT_BOUNDING_BOX, quadID, quad, color);
     }
 
     template<typename T>
@@ -540,7 +557,7 @@ namespace Anki {
                                     const Quadrilateral<2,T>& quad,
                                     const ColorRGBA& color)
     {
-      DrawQuad(VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, color);
+      DrawQuad(VizQuadType::VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, color);
     }
     
     template <typename T>

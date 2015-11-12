@@ -9,6 +9,8 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "hal/portable.h"
 
+#include "clad/types/animationKeyFrames.h"
+
 //#include "gauss.h"
 
 #define AUDIO_SPI         SPI2
@@ -173,7 +175,7 @@ namespace Anki
         m_AudioRendered = true;
       }
 
-      void AudioPlayFrame(Messages::AnimKeyFrame_AudioSample *msg) {
+      void AudioPlayFrame(AnimKeyFrame::AudioSample *msg) {
         // We are not ready to render another audio frame yet
         if (m_AudioRendered) { return ; }
 

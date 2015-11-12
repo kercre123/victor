@@ -1,21 +1,7 @@
-/*
- * File	: uart.h
- * This file is part of Espressif's UART driver.
- * Copyright (C) 2013 - 2016, Espressif Systems
- *
- * Modified for Anki use by Daniel Casner May 2015
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of version 3 of the GNU General Public License as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+/**
+ * @file Espressif UART driver interface
+ * Originally based on file from Espressif IoT SDK
+ * @author Daniel Casner <daniel@anki.com>
  */
 #ifndef UART_APP_H
 #define UART_APP_H
@@ -26,9 +12,6 @@
 
 #define UART0   0
 #define UART1   1
-
-/// USER_TASK_PRIO_2 is the highest allowed user task priority
-#define uartTaskPrio USER_TASK_PRIO_2
 
 typedef enum {
     FIVE_BITS = 0x0,
@@ -162,6 +145,12 @@ STATUS uartQueuePacket(uint8* data, uint16 len);
 
 STATUS uart_tx_one_char(uint8 uart, uint8 TxChar);
 STATUS uart_tx_one_char_no_wait(uint8 uart, uint8 TxChar);
+
+/// Writes one
+void os_put_char(uint8 c);
+
+/// Writes one number in hex out the debug uart without using any OS calls
+void os_put_hex(unsigned int i, unsigned short nibbles);
 
 //==============================================
 #define FUNC_UART0_CTS 4

@@ -41,16 +41,15 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-
-#include "anki/cozmo/basestation/comms/robot/robotMessages.h"
-
 #include "anki/vision/basestation/camera.h"
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceTracker.h"
 
 #include "visionParameters.h"
+#include "clad/vizInterface/messageViz.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/imageTypes.h"
 
 
 namespace Anki {  
@@ -94,7 +93,7 @@ namespace Cozmo {
     // NOTE: It is important the passed-in robot state message be passed by
     //   value and NOT by reference, since the vision system can be interrupted
     //   by main execution (which updates the state).
-    Result Update(const MessageRobotState robotState,
+    Result Update(const RobotState robotState,
                   const Vision::Image&    inputImg);
     
     void StopTracking();
@@ -211,12 +210,12 @@ namespace Cozmo {
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
     //bool CheckMailbox(ImageChunk&          msg);
-    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
     //bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(Vision::ObservedMarker&     observedMarker);
-    bool CheckMailbox(MessageTrackerQuad&         msg);
-    bool CheckMailbox(MessagePanAndTiltHead&      msg);
-    bool CheckMailbox(Vision::TrackedFace&        trackedFace);
+    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
+    bool CheckMailbox(Vision::ObservedMarker&     msg);
+    bool CheckMailbox(VizInterface::TrackerQuad& msg);
+    bool CheckMailbox(RobotInterface::PanAndTilt& msg);
+    bool CheckMailbox(Vision::TrackedFace&        msg);
     
   protected:
     
@@ -335,17 +334,17 @@ namespace Cozmo {
     
     // Snapshots of robot state
     bool _wasCalledOnce, _havePreviousRobotState;
-    MessageRobotState _robotState, _prevRobotState;
+    RobotState _robotState, _prevRobotState;
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
     TrackerParameters               _trackerParameters;
     FaceDetectionParameters         _faceDetectionParameters;
-    Vision::CameraResolution        _captureResolution;
+    ImageResolution                 _captureResolution;
     
     // For sending images to basestation
-    ImageSendMode_t                 _imageSendMode = ISM_OFF;
-    Vision::CameraResolution        _nextSendImageResolution = Vision::CAMERA_RES_NONE;
+    ImageSendMode                 _imageSendMode = ImageSendMode::Off;
+    ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
     // For taking snapshots
     bool                            _isWaitingOnSnapShot;
@@ -392,7 +391,7 @@ namespace Cozmo {
     void DisableModeHelper(Mode mode);
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
-    Result UpdateRobotState(const MessageRobotState newRobotState);
+    Result UpdateRobotState(const RobotState newRobotState);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();
@@ -428,7 +427,7 @@ namespace Cozmo {
                                    Embedded::MemoryStack scratch);
     
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
-                        MessageDockingErrorSignal& dockErrMsg,
+                        DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
     
     Result TakeSnapshotHelper(const Embedded::Array<u8>& grayscaleImage);
@@ -438,9 +437,9 @@ namespace Cozmo {
     // system communicates to main execution:
     //MultiMailbox<Messages::BlockMarkerObserved, MAX_BLOCK_MARKER_MESSAGES> blockMarkerMailbox_;
     //Mailbox<Messages::MatMarkerObserved>    matMarkerMailbox_;
+    Mailbox<VizInterface::TrackerQuad>          _trackerMailbox;
+    Mailbox<RobotInterface::PanAndTilt>       _panTiltMailbox;
     Mailbox<std::pair<Pose3d, TimeStamp_t> > _dockingMailbox; // holds timestamped marker pose w.r.t. camera
-    Mailbox<MessageTrackerQuad>          _trackerMailbox;
-    Mailbox<MessagePanAndTiltHead>       _panTiltMailbox;
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     

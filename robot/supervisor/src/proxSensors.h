@@ -15,7 +15,7 @@
 #ifndef PROX_SENSORS_H_
 #define PROX_SENSORS_H_
 
-#include "anki/common/types.h"
+#include "anki/types.h"
 
 namespace Anki {
   
@@ -32,6 +32,8 @@ namespace Anki {
       // blocked by the lift.
       bool IsSideBlocked();
       bool IsForwardBlocked();
+
+      void EnableCliffDetector(bool enable);
       
     } // namespace ProxSensors
   } // namespace Cozmo

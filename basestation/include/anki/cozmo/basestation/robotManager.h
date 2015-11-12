@@ -12,7 +12,6 @@
 #define ANKI_COZMO_BASESTATION_ROBOTMANAGER_H
 
 #include "anki/cozmo/basestation/robotEventHandler.h"
-#include "anki/cozmo/shared/cozmoTypes.h"
 #include "util/signals/simpleSignal.hpp"
 #include <map>
 #include <vector>
@@ -28,11 +27,12 @@ namespace Anki {
   namespace Cozmo {
     
   // Forward declarations:
+  namespace RobotInterface {
+  class MessageHandler;
+  }
   class Robot;
-  class IRobotMessageHandler;
   class IExternalInterface;
 
-    
     class RobotManager
     {
     public:
@@ -52,7 +52,7 @@ namespace Anki {
       bool DoesRobotExist(const RobotID_t withID) const;
       
       // Add / remove robots
-      void AddRobot(const RobotID_t withID, IRobotMessageHandler* msgHandler);
+      void AddRobot(const RobotID_t withID, RobotInterface::MessageHandler* msgHandler);
       void RemoveRobot(const RobotID_t withID);
       
       // Call each Robot's Update() function

@@ -38,8 +38,8 @@ namespace Anki {
       //
       virtual ~MatPiece(); 
       
-      virtual void Visualize(const ColorRGBA& color) override;
-      virtual void EraseVisualization() override;
+      virtual void Visualize(const ColorRGBA& color) const override;
+      virtual void EraseVisualization() const override;
       
       virtual Point3f GetSameDistanceTolerance() const override;
       virtual Radians GetSameAngleTolerance() const override;
@@ -62,8 +62,6 @@ namespace Anki {
       virtual f32 GetDrivingSurfaceHeight() const { return 0.f; }
       
       //void SetOrigin(const Pose3d* newOrigin);
-      
-      virtual bool IsMoveable() const { return false; }
       
       // Like GetBoundingQuadXY, but returns quads indicating unsafe regions to
       // drive on or around this mat, such as the regions around a platform
@@ -93,7 +91,7 @@ namespace Anki {
     private:
       Point3f _size;
       const std::vector<Point3f> _canonicalCorners;
-      VizManager::Handle_t _vizHandle;
+      mutable VizManager::Handle_t _vizHandle;
       
     }; // class MatPiece
 

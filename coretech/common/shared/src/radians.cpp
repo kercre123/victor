@@ -11,7 +11,8 @@
 *
 **/
 
-#include "anki/common/robot/config.h"
+#include <assert.h>
+#include "anki/common/types.h"
 #include "anki/common/constantsAndMacros.h"
 #include "anki/common/shared/radians.h"
 

@@ -1,0 +1,282 @@
+// Vizualization manager messages
+//  for the C-Like Abstract Data language
+// Author: Daniel Casner
+// Copyright: Anki Inc (c) 2015
+
+#include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/objectTypes.clad"
+#include "clad/types/vizTypes.clad"
+#include "clad/types/globalVizOrigin.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace VizInterface {
+
+message RobotStateMessage
+{
+  RobotState state,
+  int_32 numAnimBytesFree,
+  uint_8 videoFramefateHz,
+  uint_8 animTag
+}
+
+// VizObject
+message Object
+{
+  uint_32    objectID,
+  VizObjectType objectTypeID,
+  uint_32    color,
+  float_32   x_size_m,
+  float_32   y_size_m,
+  float_32   z_size_m,
+  float_32   x_trans_m,
+  float_32   y_trans_m,
+  float_32   z_trans_m,
+  float_32   rot_deg,
+  float_32   rot_axis_x,
+  float_32   rot_axis_y,
+  float_32   rot_axis_z,
+  float_32   objParameters[4] // for object-specific parameters
+}
+
+// VizQuad
+message Quad
+{
+  VizQuadType quadType,
+  uint_32 quadID,
+  uint_32 color,
+  float_32 xUpperLeft,
+  float_32 yUpperLeft,
+  float_32 zUpperLeft,
+  float_32 xLowerLeft,
+  float_32 yLowerLeft,
+  float_32 zLowerLeft,
+  float_32 xUpperRight,
+  float_32 yUpperRight,
+  float_32 zUpperRight,
+  float_32 xLowerRight,
+  float_32 yLowerRight,
+  float_32 zLowerRight,
+}
+
+// VizCameraQuad
+message CameraQuad
+{
+  uint_32 color,
+  float_32 xUpperLeft,
+  float_32 yUpperLeft,
+  float_32 xLowerLeft,
+  float_32 yLowerLeft,
+  float_32 xUpperRight,
+  float_32 yUpperRight,
+  float_32 xLowerRight,
+  float_32 yLowerRight,
+}
+
+// VizCameraLine
+message CameraLine
+{
+  uint_32 color,
+  float_32 xStart,
+  float_32 yStart,
+  float_32 xEnd,
+  float_32 yEnd,
+}
+
+// VizCameraPoint
+message CameraOval
+{
+  uint_32 color,
+  float_32 xCen,
+  float_32 yCen,
+  float_32 xRad,
+  float_32 yRad,
+}
+
+// VizCameraText
+message CameraText
+{
+  uint_32 color,
+  int_32  x,
+  int_32  y,
+  string  text[uint_8]
+}
+
+// EraseObject
+message EraseObject
+{
+  uint_32 objectID,
+  uint_32 lower_bound_id,
+  uint_32 upper_bound_id,
+}
+
+// EraseQuad
+message EraseQuad
+{
+  uint_32 quadType,
+  uint_32 quadID,
+}
+
+// VizSetRobot
+message SetRobot
+{
+  uint_32 robotID,
+  float_32 x_trans_m,
+  float_32 y_trans_m,
+  float_32 z_trans_m,
+  float_32 rot_rad,
+  float_32 rot_axis_x,
+  float_32 rot_axis_y,
+  float_32 rot_axis_z,
+  float_32 head_angle,
+  float_32 lift_angle,
+}
+
+
+// VizAppendPathSegmentLine
+message AppendPathSegmentLine
+{
+  uint_32 pathID,
+  float_32 x_start_m,
+  float_32 y_start_m,
+  float_32 z_start_m,
+  float_32 x_end_m,
+  float_32 y_end_m,
+  float_32 z_end_m,
+}
+
+// VizAppendPathSegmentArc
+message AppendPathSegmentArc
+{
+  uint_32 pathID,
+  float_32 x_center_m,
+  float_32 y_center_m,
+  float_32 radius_m,
+  float_32 start_rad,
+  float_32 sweep_rad,
+}
+
+// VizSetPathColor
+message SetPathColor
+{
+  uint_32 pathID,
+  uint_32 colorID,
+}
+
+
+// ErasePath
+message ErasePath
+{
+  uint_32 pathID,
+}
+
+
+// VizDefineColor
+message DefineColor
+{
+  uint_32 colorID,
+  float_32 r,
+  float_32 g,
+  float_32 b,
+  float_32 alpha,
+}
+
+
+// VizSetLabel
+message SetLabel
+{
+  uint_32 labelID,
+  uint_32 colorID,
+  string  text[uint_8]
+}
+
+
+// VizDockingErrorSignal
+message DockingErrorSignal
+{
+  float_32 x_dist,
+  float_32 y_dist,
+  float_32 angle,
+}
+
+// VizVisionMarker
+message VisionMarker
+{
+  int_16 topLeft_x,
+  int_16 topLeft_y,
+  int_16 topRight_x,
+  int_16 topRight_y,
+  int_16 bottomRight_x,
+  int_16 bottomRight_y,
+  int_16 bottomLeft_x,
+  int_16 bottomLeft_y,
+  int_8  verified,
+}
+
+// VizShowObjects
+message ShowObjects
+{
+  int_8  show,
+}
+
+// VizTrackerQuad
+message TrackerQuad
+{
+  int_16 topLeft_x,
+  int_16 topLeft_y,
+  int_16 topRight_x,
+  int_16 topRight_y,
+  int_16 bottomRight_x,
+  int_16 bottomRight_y,
+  int_16 bottomLeft_x,
+  int_16 bottomLeft_y,
+}
+
+message FaceDetection
+{
+  uint_16 x_upperLeft,
+  uint_16 y_upperLeft,
+  uint_16 width,
+  uint_16 height,
+  bool    visualize
+}
+
+message RobotMood
+{
+  float_32  emotion[uint_8],
+  string    recentEvents[uint_8]
+}
+
+structure BehaviorScoreData
+{
+  float_32 behaviorScore,
+  float_32 totalScore,
+  string   name
+}
+
+message RobotBehaviorSelectData
+{
+  BehaviorScoreData scoreData[uint_8]
+}
+
+message NewBehaviorSelected
+{
+  string  newCurrentBehavior
+}
+
+message StartRobotUpdate
+{
+}
+
+message EndRobotUpdate
+{
+}
+
+// keep empty to generate an auto-union that includes all messages in this file
+// if you do not want to include messages in this union, use the keyword "structure" instead of "message"
+union MessageViz { }
+
+} // namespace Viz
+} // namespace Cozmo
+} // namespace Anki

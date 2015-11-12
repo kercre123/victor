@@ -4,6 +4,7 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 #include "anki/common/robot/errorHandling.h"
+#include "messages.h"
 
 #define DEBUG_HEAD_CONTROLLER 0
 
@@ -16,8 +17,8 @@ namespace HeadController {
       // TODO: Ideally, this value should be calibrated
 #ifdef SIMULATOR
       const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(0);
-#elif defined(COZMO_ROBOT_V40)
-      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(-4);
+#elif defined(COZMO_ROBOT_3AA0)
+      const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(-3);
 #else
       const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(2);
 #endif

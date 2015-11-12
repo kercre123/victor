@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorChooser_H__
 #define __Cozmo_Basestation_BehaviorChooser_H__
 
-#include "anki/cozmo/shared/cozmoTypes.h"
+#include "anki/types.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/helpers/noncopyable.h"
@@ -29,6 +29,8 @@ namespace Cozmo {
 //Forward declarations
 class IBehavior;
 class IReactionaryBehavior;
+class MoodManager;
+class Robot;
 template <typename Type> class AnkiEvent;
 
 // Interface for the container and logic associated with holding and choosing behaviors
@@ -36,7 +38,7 @@ class IBehaviorChooser : private Util::noncopyable
 {
 public:
   virtual Result AddBehavior(IBehavior *newBehavior) = 0;
-  virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const = 0;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const = 0;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const = 0;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) = 0;
@@ -46,6 +48,8 @@ public:
   virtual Result Update(double currentTime_sec) { return Result::RESULT_OK; }
 
   virtual ~IBehaviorChooser() { }
+  
+  virtual const char* GetName() const = 0;
 }; // class IBehaviorChooser
   
   
@@ -56,12 +60,14 @@ class SimpleBehaviorChooser : public IBehaviorChooser
 public:
   // For IBehaviorChooser
   virtual Result AddBehavior(IBehavior *newBehavior) override;
-  virtual IBehavior* ChooseNextBehavior(double currentTime_sec) const override;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const override;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const override;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override { }
   virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override { return nullptr; }
   virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override { return nullptr; }
+  
+  virtual const char* GetName() const override { return "Simple"; }
   
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~SimpleBehaviorChooser();

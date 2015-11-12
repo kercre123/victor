@@ -1,7 +1,7 @@
 // High speed DMA-driven face animation
 #include "lib/stm32f4xx.h"
 #include "anki/cozmo/robot/hal.h"
-#include "anki/cozmo/shared/faceDisplayDecode.h"
+#include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "hal/portable.h"
 
 #include <math.h>

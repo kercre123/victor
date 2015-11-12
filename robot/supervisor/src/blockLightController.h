@@ -15,8 +15,8 @@
 #ifndef COZMO_BLOCK_LIGHT_CONTROLLER_H_
 #define COZMO_BLOCK_LIGHT_CONTROLLER_H_
 
-#include "anki/cozmo/shared/cozmoTypes.h"
-#include "anki/cozmo/shared/ledTypes.h"
+#include "anki/types.h"
+#include "clad/types/ledTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +30,7 @@ namespace BlockLightController {
   bool IsRegisteredBlock(u8 blockID);
   
   // Set lights for a blockID.
-  Result SetLights(u8 blockID, LEDParams_t *params);
+  Result SetLights(u8 blockID, LightState *params);
   
   
 } // namespace BlockLightController
