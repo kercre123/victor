@@ -266,14 +266,7 @@ namespace AnimationTool.Sequencer
         public float[] leftEye;
         public float[] rightEye;
 
-        public ExtraProceduralFaceData()
-        {
-            Length = MoveSelectedDataPoints.DELTA_X;
-            Exists = true;
-
-            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
-        }
+        public ExtraProceduralFaceData() : this (new ProceduralFacePointData()) { }
 
         public ExtraProceduralFaceData(ProceduralFacePointData data)
         {

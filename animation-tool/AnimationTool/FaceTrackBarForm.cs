@@ -33,7 +33,10 @@ namespace AnimationTool
                 {
                     leftTrackBar.Value = (int)(value * 100);
                 }
-                leftTrackBar.Value = (int) value;
+                else
+                {
+                    leftTrackBar.Value = (int)value;
+                }
             }
         }
         public int LeftMinimum { get { return leftTrackBar.Minimum; } set { leftTrackBar.Minimum = value; } }
@@ -56,7 +59,10 @@ namespace AnimationTool
                 {
                     rightTrackBar.Value = (int)(value * 100);
                 }
-                rightTrackBar.Value = (int)value;
+                else
+                {
+                    rightTrackBar.Value = (int)value;
+                }
             }
         }
 
