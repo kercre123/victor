@@ -866,12 +866,16 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void TurnInPlace(float angle_rad) {
+  public void TurnInPlace(float angle_rad, RobotCallback callback = null) {
     TurnInPlaceMessage.robotID = ID;
     TurnInPlaceMessage.angle_rad = angle_rad;
 
     RobotEngineManager.Instance.Message.TurnInPlace = TurnInPlaceMessage;
     RobotEngineManager.Instance.SendMessage();
+
+    if (callback != null) {
+      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.TURN_IN_PLACE, callback));
+    }
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
