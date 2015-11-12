@@ -1232,13 +1232,13 @@ namespace Anki {
               case (s32)'F':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  SendStopFaceTracking();
+                  SendEnableVisionMode(VisionMode::DetectingFaces, false);
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %llu\n", _lastFace.faceID);
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FacePose(_lastFace.world_x, _lastFace.world_y, _lastFace.world_z, DEG_TO_RAD(10), M_PI, 1)));
                 } else {
-                  SendStartFaceTracking(5);
+                  SendEnableVisionMode(VisionMode::DetectingFaces, true);
                 }
                 break;
               }
