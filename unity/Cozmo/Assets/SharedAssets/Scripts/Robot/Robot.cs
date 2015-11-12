@@ -430,10 +430,6 @@ public class Robot : IDisposable {
 
       AddObservedObject(knownObject, message);
     }
-
-    // check to see if we haven't seen some visible objects in a while
-    // and clear them out if we haven't.
-    ClearVisibleObjects();
   }
 
   private void AddLightCube(LightCube lightCube, G2U.RobotObservedObject message) {
