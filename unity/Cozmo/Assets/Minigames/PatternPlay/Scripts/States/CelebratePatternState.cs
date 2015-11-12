@@ -1,29 +1,33 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class CelebratePatternState : State {
+namespace PatternPlay {
 
-  private PatternPlayGame patternPlayGame_ = null;
+  public class CelebratePatternState : State {
 
-  public override void Enter() {
-    base.Enter();
-    DAS.Info("State", "CelebratePattern");
-    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
+    private PatternPlayGame _PatternPlayGame = null;
 
-    patternPlayGame_.ClearBlockLights();
+    public override void Enter() {
+      base.Enter();
+      DAS.Info("State", "CelebratePattern");
+      _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
 
-    if (patternPlayGame_.ShouldCelebrateNew()) {
-      robot.SendAnimation("enjoyPattern", AnimationDone);
-      patternPlayGame_.SetShouldCelebrateNew(false);
+      _PatternPlayGame.ClearBlockLights();
+
+      if (_PatternPlayGame.ShouldCelebrateNew()) {
+        _CurrentRobot.SendAnimation("enjoyPattern", AnimationDone);
+        _PatternPlayGame.SetShouldCelebrateNew(false);
+      }
+      else {
+        _CurrentRobot.SendAnimation("seeOldPattern", AnimationDone);
+      }
     }
-    else {
-      robot.SendAnimation("seeOldPattern", AnimationDone);
+
+    void AnimationDone(bool success) {
+      _PatternPlayGame.GetAutoBuild().ClearNeatList();
+      _PatternPlayGame.ResetLookHeadForkLift();
+      _StateMachine.SetNextState(new LookForPatternState());
     }
   }
 
-  void AnimationDone(bool success) {
-    patternPlayGame_.GetAutoBuild().ClearNeatList();
-    patternPlayGame_.ResetLookHeadForkLift();
-    stateMachine_.SetNextState(new LookForPatternState());
-  }
 }

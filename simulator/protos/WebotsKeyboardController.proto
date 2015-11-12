@@ -18,6 +18,14 @@ PROTO WebotsKeyboardController [
   # Point turn speed (deg/s), no target angle 
   field SFFloat pointTurnSpeed_degPerSec 45
   
+  # Path speeds
+  field SFFloat pathSpeed_mmps  60
+  field SFFloat pathAccel_mmps2 100
+  field SFFloat pathDecel_mmps2 500
+  field SFFloat pathPointTurnSpeed_radPerSec 1.5
+  field SFFloat pathPointTurnAccel_radPerSec2 10
+  field SFFloat pathPointTurnDecel_radPerSec2 50
+
   # Value between 0 and 1 which determines how much the robot turns with 
   # the left/right arrow keys when going forward or backward.
   # At 1, it will turn one wheel at driveSpeed and the other not at all.
@@ -36,6 +44,10 @@ PROTO WebotsKeyboardController [
   # when performing pickAndPlace on an object with placeObjectOnGroundIfCarrying enabled.
   # Only works if actually carrying an object!
   field SFFloat placeOnGroundOffsetX_mm 88
+
+  # The desired distance between robot origin and the marker face on 
+  # AlignWithObject action
+  field SFFloat alignWithObjectDistToMarker_mm 20
 
   # Hacky way for me to modify values that I want to send to robot via keyboard controller
   field SFFloat lWheelKp 0.0005

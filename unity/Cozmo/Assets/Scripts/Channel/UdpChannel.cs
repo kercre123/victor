@@ -177,21 +177,21 @@ public class UdpChannel : ChannelBase {
         // set up advertisement message
         DAS.Debug("UdpChannel", "Advertising IP: " + localIP);
         int length = Encoding.UTF8.GetByteCount(localIP);
-        if (length + 1 > advertisementRegistrationMessage.ip_.Length) {
+        if (length + 1 > advertisementRegistrationMessage.Ip.Length) {
           DAS.Error("UdpChannel", "Advertising host is too long: " +
-          advertisementRegistrationMessage.ip_.Length.ToString() + " bytes allowed, " +
+          advertisementRegistrationMessage.Ip.Length.ToString() + " bytes allowed, " +
           length.ToString() + " bytes used.");
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
           return;
         }
-        Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.ip_, 0);
-        advertisementRegistrationMessage.ip_[length] = 0;
+        Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.Ip, 0);
+        advertisementRegistrationMessage.Ip[length] = 0;
         
-        advertisementRegistrationMessage.port_ = (ushort)realPort;
-        advertisementRegistrationMessage.id_ = (byte)deviceID;
-        advertisementRegistrationMessage.protocol_ = (byte)ChannelProtocol.Udp;
-        advertisementRegistrationMessage.enableAdvertisement_ = 1;
-        advertisementRegistrationMessage.oneShot_ = 1;
+        advertisementRegistrationMessage.Port = (ushort)realPort;
+        advertisementRegistrationMessage.Id = (byte)deviceID;
+        advertisementRegistrationMessage.Protocol = (byte)ChannelProtocol.Udp;
+        advertisementRegistrationMessage.EnableAdvertisement = 1;
+        advertisementRegistrationMessage.OneShot = 1;
 
         // set up advertisement socket
         advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);

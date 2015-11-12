@@ -13,11 +13,11 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class LightCube : ObservedObject {
   public class Light : Robot.Light {
-    public static new float messageDelay = 0f;
+    public static new float MessageDelay = 0f;
 
     public override void ClearData() {
       base.ClearData();
-      messageDelay = 0f;
+      MessageDelay = 0f;
     }
   }
 
@@ -47,13 +47,13 @@ public class LightCube : ObservedObject {
 
   public Light[] Lights { get; private set; }
 
-  public bool lightsChanged {
+  public bool LightsChanged {
     get {
       if (lastRelativeMode != relativeMode || lastRelativeToX != relativeToX || lastRelativeToY != relativeToY)
         return true;
 
       for (int i = 0; i < Lights.Length; ++i) {
-        if (Lights[i].changed)
+        if (Lights[i].Changed)
           return true;
       }
 
@@ -132,20 +132,20 @@ public class LightCube : ObservedObject {
     SetAllActiveObjectLEDsMessage.robotID = (byte)RobotID;
 
     for (int i = 0; i < Lights.Length; ++i) {
-      SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = Lights[i].onPeriod_ms;
-      SetAllActiveObjectLEDsMessage.offPeriod_ms[i] = Lights[i].offPeriod_ms;
-      SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].transitionOnPeriod_ms;
-      SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].transitionOffPeriod_ms;
-      SetAllActiveObjectLEDsMessage.onColor[i] = Lights[i].onColor;
-      SetAllActiveObjectLEDsMessage.offColor[i] = Lights[i].offColor;
+      SetAllActiveObjectLEDsMessage.onPeriod_ms[i] = Lights[i].OnPeriodMs;
+      SetAllActiveObjectLEDsMessage.offPeriod_ms[i] = Lights[i].OffPeriodMs;
+      SetAllActiveObjectLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].TransitionOnPeriodMs;
+      SetAllActiveObjectLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
+      SetAllActiveObjectLEDsMessage.onColor[i] = Lights[i].OnColor;
+      SetAllActiveObjectLEDsMessage.offColor[i] = Lights[i].OffColor;
     }
 
     SetAllActiveObjectLEDsMessage.makeRelative = relativeMode;
     SetAllActiveObjectLEDsMessage.relativeToX = relativeToX;
     SetAllActiveObjectLEDsMessage.relativeToY = relativeToY;
 
-    RobotEngineManager.instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
-    RobotEngineManager.instance.SendMessage();
+    RobotEngineManager.Instance.Message.SetAllActiveObjectLEDs = SetAllActiveObjectLEDsMessage;
+    RobotEngineManager.Instance.SendMessage();
 
     SetLastLEDs();
   }
@@ -164,12 +164,12 @@ public class LightCube : ObservedObject {
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
 
     for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].onColor = onColor;
-      Lights[i].offColor = offColor;
-      Lights[i].onPeriod_ms = onPeriod_ms;
-      Lights[i].offPeriod_ms = offPeriod_ms;
-      Lights[i].transitionOnPeriod_ms = transitionOnPeriod_ms;
-      Lights[i].transitionOffPeriod_ms = transitionOffPeriod_ms;
+      Lights[i].OnColor = onColor;
+      Lights[i].OffColor = offColor;
+      Lights[i].OnPeriodMs = onPeriod_ms;
+      Lights[i].OffPeriodMs = offPeriod_ms;
+      Lights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
+      Lights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
     }
 
     relativeMode = 0;

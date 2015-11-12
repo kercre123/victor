@@ -350,10 +350,9 @@
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              # Remove to allow cozmoEngine.gyp "direct_dependent_settings" to include libraries
-              # 'cozmoGame',
-              # '<(cg-ce_gyp_path):cozmoEngine',
+              'cozmoGame',
               'CSharpBinding',
+              '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
               '<(cg-cti_gyp_path):ctiMessaging',
@@ -364,6 +363,7 @@
               '<(cg-cti_gyp_path):ctiVisionRobot',
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
+              '<(cg-audio_path):DriveAudioEngine',
             ]
           },
         ],
@@ -415,7 +415,7 @@
           'xcode_settings': {
               'ARCHS': [ '>@(mac_target_archs)' ],
               'SDKROOT': 'macosx',
-              # 'MACOSX_DEPLOYMENT_TARGET': '10.9', # latest
+              'MACOSX_DEPLOYMENT_TARGET': '10.10', # latest
               'LIBRARY_SEARCH_PATHS': [
                 '<(face_library_lib_path)',
                ],
@@ -488,7 +488,20 @@
                   }],
                 ], # conditions
               },
-            ] # actions
+            ], # actions
+
+            'conditions': [
+              [
+                'OS=="ios" or OS=="mac"',
+                {
+                  'libraries': [
+                    '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                    '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+                  ],
+                },
+              ],
+            ],
           }, # end controller Game Engine
 
           {

@@ -61,7 +61,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22476688}
   - 222: {fileID: 22202834}
-  - 114: {fileID: 11456622}
+  - 114: {fileID: 11401782}
   m_Layer: 0
   m_Name: BankHeader
   m_TagString: Untagged
@@ -95,7 +95,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22421112}
   - 222: {fileID: 22229230}
-  - 114: {fileID: 11449294}
+  - 114: {fileID: 11491696}
   m_Layer: 0
   m_Name: BadgeText
   m_TagString: Untagged
@@ -119,6 +119,38 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11401782
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 161060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
+    m_FontSize: 58
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 6
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: Memory Bank 000
 --- !u!114 &11402378
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -130,16 +162,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a16bc64d06554b4bae76ecffe8e8210, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _verticalLayoutForRowPatterns: {fileID: 22490474}
-  _horizontalLayoutForStackPatterns: {fileID: 22437950}
-  _halfHorizontalLayoutForStackPatterns: {fileID: 22484316}
-  _rowPatternDisplayPrefab: {fileID: 11407164, guid: 65ad75c0e5d3041c49e0320174736c33,
+  _VerticalLayoutForRowPatterns: {fileID: 22490474}
+  _HorizontalLayoutForStackPatterns: {fileID: 22437950}
+  _HalfHorizontalLayoutForStackPatterns: {fileID: 22484316}
+  _RowPatternDisplayPrefab: {fileID: 11407164, guid: 65ad75c0e5d3041c49e0320174736c33,
     type: 2}
-  _stackPatternDisplayPrefab: {fileID: 11488126, guid: 650e2cdec07f74fa8afa1c0b489f02ee,
+  _StackPatternDisplayPrefab: {fileID: 11488126, guid: 650e2cdec07f74fa8afa1c0b489f02ee,
     type: 2}
-  _headerText: {fileID: 11456622}
-  _newBadgeDisplay: {fileID: 11488880}
-  _layoutElement: {fileID: 11427520}
+  _HeaderText: {fileID: 11401782}
+  _NewBadgeDisplay: {fileID: 11488880}
+  _LayoutElement: {fileID: 11427520}
 --- !u!114 &11427520
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -208,38 +240,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11449294
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 197908}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
-    m_FontSize: 42
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: 9
 --- !u!114 &11449892
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -263,38 +263,6 @@ MonoBehaviour:
   m_Spacing: {x: 0, y: 0}
   m_Constraint: 1
   m_ConstraintCount: 2
---- !u!114 &11456622
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 161060}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
-    m_FontSize: 58
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 18
-    m_Alignment: 6
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: Memory Bank 000
 --- !u!114 &11468180
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -353,8 +321,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aef90997faa354db2bbf1a8f2a3ef80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _countLabel: {fileID: 11449294}
-  _toggleBadgeDisplay: {fileID: 22442628}
+  _CountLabel: {fileID: 11491696}
+  _ToggleBadgeDisplay: {fileID: 22442628}
+--- !u!114 &11491696
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 197908}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
+    m_FontSize: 42
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_RichText: 0
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 9
 --- !u!222 &22202834
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -514,7 +514,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _headerText
       value: 
-      objectReference: {fileID: 11456622}
+      objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _layoutElement
       value: 

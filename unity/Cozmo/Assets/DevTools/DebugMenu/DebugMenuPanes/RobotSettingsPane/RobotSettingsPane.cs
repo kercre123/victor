@@ -5,23 +5,23 @@ using System.Collections;
 public class RobotSettingsPane : MonoBehaviour {
 
   [SerializeField]
-  private Slider volumeSlider_;
+  private Slider _VolumeSlider;
 
-	private void Start(){
-    volumeSlider_.minValue = 0;
-    volumeSlider_.maxValue = 1;
-    volumeSlider_.value = 0.5f;
-    Robot robot = RobotEngineManager.instance.CurrentRobot;
+  private void Start() {
+    _VolumeSlider.minValue = 0;
+    _VolumeSlider.maxValue = 1;
+    _VolumeSlider.value = 0.5f;
+    Robot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      volumeSlider_.value = robot.GetRobotVolume();
+      _VolumeSlider.value = robot.GetRobotVolume();
     }
-    volumeSlider_.onValueChanged.AddListener(OnVolumeSliderChanged);
+    _VolumeSlider.onValueChanged.AddListener(OnVolumeSliderChanged);
   }
 
-  private void OnVolumeSliderChanged(float newValue){
-    Robot robot = RobotEngineManager.instance.CurrentRobot;
+  private void OnVolumeSliderChanged(float newValue) {
+    Robot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      robot.SetRobotVolume(volumeSlider_.value);
+      robot.SetRobotVolume(_VolumeSlider.value);
     }
   }
 }

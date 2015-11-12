@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Anki.Cozmo;
+using Anki.Cozmo.Audio;
 using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
@@ -14,7 +15,7 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
   
-  public static RobotEngineManager instance = null;
+  public static RobotEngineManager Instance = null;
 
   public Dictionary<int, Robot> Robots { get; private set; }
 
@@ -22,17 +23,17 @@ public class RobotEngineManager : MonoBehaviour {
 
   public Robot CurrentRobot { get { return Robots.ContainsKey(CurrentRobotID) ? Robots[CurrentRobotID] : null; } }
 
-  public bool IsConnected { get { return (channel_ != null && channel_.IsConnected); } }
+  public bool IsConnected { get { return (_Channel != null && _Channel.IsConnected); } }
 
-  public List<string> RobotAnimationNames = new List<string>();
+  private List<string> RobotAnimationNames = new List<string>();
 
   [SerializeField] 
-  private TextAsset configuration_;
+  private TextAsset _Configuration;
 
   [SerializeField]
-  private TextAsset alternateConfiguration_;
+  private TextAsset _AlternateConfiguration;
 
-  private DisconnectionReason lastDisconnectionReason_ = DisconnectionReason.None;
+  private DisconnectionReason _LastDisconnectionReason = DisconnectionReason.None;
 
   public event Action<string> ConnectedToClient;
   public event Action<DisconnectionReason> DisconnectedFromClient;
@@ -42,21 +43,26 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
 
-  private bool cozmoBindingStarted_ = false;
-  private ChannelBase channel_ = null;
-  private bool isRobotConnected_ = false;
+  // Audio Callback events
+  public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
+  public event Action<AudioCallbackMarker> ReceivedAudioCallbackMarker;
+  public event Action<AudioCallbackComplete> ReceivedAudioCallbackComplete;
 
-  private const int UIDeviceID_ = 1;
-  private const int UIAdvertisingRegistrationPort_ = 5103;
+  private bool _CozmoBindingStarted = false;
+  private ChannelBase _Channel = null;
+  private bool _IsRobotConnected = false;
+
+  private const int _UIDeviceID = 1;
+  private const int _UIAdvertisingRegistrationPort = 5103;
   // 0 means random unused port
   // Used to be 5106
-  private const int UILocalPort_ = 0;
+  private const int _UILocalPort = 0;
 
   public bool AllowImageSaving { get; private set; }
 
-  private U2G.MessageGameToEngine message_ = new G2U.MessageGameToEngine();
+  private U2G.MessageGameToEngine _Message = new G2U.MessageGameToEngine();
 
-  public U2G.MessageGameToEngine Message { get { return message_; } }
+  public U2G.MessageGameToEngine Message { get { return _Message; } }
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
   private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
@@ -65,19 +71,19 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
-    if (instance != null && instance != this) {
+    if (Instance != null && Instance != this) {
       Destroy(gameObject);
       return;
     }
     else {
-      instance = this;
+      Instance = this;
       DontDestroyOnLoad(gameObject);
     }
 
-    TextAsset config = configuration_;
+    TextAsset config = _Configuration;
 
     if (PlayerPrefs.GetInt("DebugUseAltConfig", 0) == 1) {
-      config = alternateConfiguration_;
+      config = _AlternateConfiguration;
     }
 
     if (config == null) {
@@ -85,38 +91,41 @@ public class RobotEngineManager : MonoBehaviour {
     }
     else {
       CozmoBinding.Startup(config.text);
-      cozmoBindingStarted_ = true;
+      _CozmoBindingStarted = true;
     }
 
     Application.runInBackground = true;
 
-    channel_ = new UdpChannel();
-    channel_.ConnectedToClient += Connected;
-    channel_.DisconnectedFromClient += Disconnected;
-    channel_.MessageReceived += ReceivedMessage;
+    _Channel = new UdpChannel();
+    _Channel.ConnectedToClient += Connected;
+    _Channel.DisconnectedFromClient += Disconnected;
+    _Channel.MessageReceived += ReceivedMessage;
 
     Robots = new Dictionary<int, Robot>();
   }
 
   private void OnDisable() {
     
-    if (channel_ != null) {
-      if (channel_.IsActive) {
+    if (_Channel != null) {
+      if (_Channel.IsActive) {
         Disconnect();
         Disconnected(DisconnectionReason.UnityReloaded);
       }
 
-      channel_ = null;
+      _Channel = null;
     }
 
-    if (cozmoBindingStarted_) {
+    if (_CozmoBindingStarted) {
       CozmoBinding.Shutdown();
     }
   }
 
   void Update() {
-    if (channel_ != null) {
-      channel_.Update();
+    if (_Channel != null) {
+      _Channel.Update();
+    }
+    if (CurrentRobot != null) {
+      CurrentRobot.ClearVisibleObjects();
     }
   }
 
@@ -142,18 +151,18 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void Connect(string engineIP) {
-    channel_.Connect(UIDeviceID_, UILocalPort_, engineIP, UIAdvertisingRegistrationPort_);
+    _Channel.Connect(_UIDeviceID, _UILocalPort, engineIP, _UIAdvertisingRegistrationPort);
   }
 
   public void Disconnect() {
-    isRobotConnected_ = false;
-    if (channel_ != null) {
-      channel_.Disconnect();
+    _IsRobotConnected = false;
+    if (_Channel != null) {
+      _Channel.Disconnect();
 
       // only really needed in editor in case unhitting play
 #if UNITY_EDITOR
       float limit = Time.realtimeSinceStartup + 2.0f;
-      while (channel_.HasPendingOperations) {
+      while (_Channel.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
           DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
           break;
@@ -165,8 +174,8 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public DisconnectionReason GetLastDisconnectionReason() {
-    DisconnectionReason reason = lastDisconnectionReason_;
-    lastDisconnectionReason_ = DisconnectionReason.None;
+    DisconnectionReason reason = _LastDisconnectionReason;
+    _LastDisconnectionReason = DisconnectionReason.None;
     return reason;
   }
 
@@ -178,9 +187,9 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void Disconnected(DisconnectionReason reason) {
     DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
-    isRobotConnected_ = false;
+    _IsRobotConnected = false;
 
-    lastDisconnectionReason_ = reason;
+    _LastDisconnectionReason = reason;
     if (DisconnectedFromClient != null) {
       DisconnectedFromClient(reason);
     }
@@ -192,7 +201,7 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     }
 
-    channel_.Send(Message);
+    _Channel.Send(Message);
   }
 
   private void ReceivedMessage(G2U.MessageEngineToGame message) {
@@ -261,6 +270,17 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotPickedUp:
       break;
+    // Audio Callbacks
+    case G2U.MessageEngineToGame.Tag.AudioCallbackDuration:
+      ReceivedSpecificMessage(message.AudioCallbackDuration);
+      break;
+    case G2U.MessageEngineToGame.Tag.AudioCallbackMarker:
+      ReceivedSpecificMessage(message.AudioCallbackMarker);
+      break;
+    case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
+      ReceivedSpecificMessage(message.AudioCallbackComplete);
+      break;
+
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -350,10 +370,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
     if (CurrentRobot == null)
       return;
-    
-    if (CurrentRobot.SeenObjects.Count == 0 && !CurrentRobot.isBusy) {
-      CurrentRobot.ClearVisibleObjects();
-    }
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDeletedObject message) {
@@ -401,7 +417,7 @@ public class RobotEngineManager : MonoBehaviour {
     bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
     CurrentRobot.targetLockedObject = null;
 
-    CurrentRobot.localBusyTimer = 0f;
+    CurrentRobot.LocalBusyTimer = 0f;
 
     if (SuccessOrFailure != null) {
       SuccessOrFailure(success, actionType);
@@ -452,9 +468,9 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
-    if (!isRobotConnected_) {
+    if (!_IsRobotConnected) {
       DAS.Debug("RobotEngineManager", "Robot " + message.robotID.ToString() + " sent first state message.");
-      isRobotConnected_ = true;
+      _IsRobotConnected = true;
 
       AddRobot(message.robotID);
 
@@ -470,6 +486,25 @@ public class RobotEngineManager : MonoBehaviour {
     }
     
     Robots[message.robotID].UpdateInfo(message);
+  }
+
+  // Audio Callback Messages
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackDuration message) {
+    if (ReceivedAudioCallbackDuration != null) {
+      ReceivedAudioCallbackDuration(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackMarker message) {
+    if (ReceivedAudioCallbackMarker != null) {
+      ReceivedAudioCallbackMarker(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackComplete message) {
+    if (ReceivedAudioCallbackComplete != null) {
+      ReceivedAudioCallbackComplete(message);
+    }
   }
 
   public void StartEngine(string vizHostIP) {

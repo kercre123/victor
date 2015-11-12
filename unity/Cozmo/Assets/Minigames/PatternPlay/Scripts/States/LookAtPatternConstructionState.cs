@@ -1,49 +1,53 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class LookAtPatternConstructionState : State {
+namespace PatternPlay {
 
-  private bool arrivedPose = false;
-  private float arrivedPoseTime = 0.0f;
+  public class LookAtPatternConstructionState : State {
 
-  private PatternPlayGame patternPlayGame_ = null;
-  private PatternPlayAutoBuild patternPlayAutoBuild_ = null;
+    private bool _ArrivedPose = false;
+    private float _ArrivedPoseTime = 0.0f;
 
-  public override void Enter() {
-    base.Enter();
+    private PatternPlayGame _PatternPlayGame = null;
+    private PatternPlayAutoBuild _PatternPlayAutoBuild = null;
 
-    DAS.Info("PatternPlayState", "LookAtPatternConstruction");
+    public override void Enter() {
+      base.Enter();
 
-    patternPlayGame_ = (PatternPlayGame)stateMachine_.GetGame();
-    patternPlayAutoBuild_ = patternPlayGame_.GetAutoBuild();
-    Vector3 idealViewPos = patternPlayAutoBuild_.IdealViewPosition();
-    robot.GotoPose(idealViewPos.x, idealViewPos.y, patternPlayAutoBuild_.IdealViewAngle(), ArrivedPose, false, false);
-  }
+      DAS.Info("PatternPlayState", "LookAtPatternConstruction");
 
-  public override void Update() {
-    base.Update();
-    if (arrivedPose) {
-      if (Time.time - arrivedPoseTime < 2.0f) {
-        if (patternPlayGame_.SeenPattern()) {
-          stateMachine_.SetNextState(new CelebratePatternState());
+      _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
+      _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
+      Vector3 idealViewPos = _PatternPlayAutoBuild.IdealViewPosition();
+      _CurrentRobot.GotoPose(idealViewPos.x, idealViewPos.y, _PatternPlayAutoBuild.IdealViewAngle(), ArrivedPose, false, false);
+    }
+
+    public override void Update() {
+      base.Update();
+      if (_ArrivedPose) {
+        if (Time.time - _ArrivedPoseTime < 2.0f) {
+          if (_PatternPlayGame.SeenPattern()) {
+            _StateMachine.SetNextState(new CelebratePatternState());
+          }
+        }
+        else if (_PatternPlayAutoBuild.BlocksInNeatList() == 3) {
+          _StateMachine.SetNextState(new LookForPatternState());
+        }
+        else {
+          _StateMachine.SetNextState(new LookForCubesState());
         }
       }
-      else if (patternPlayAutoBuild_.BlocksInNeatList() == 3) {
-        stateMachine_.SetNextState(new LookForPatternState());
+    }
+
+    void ArrivedPose(bool success) {
+      if (success) {
+        _ArrivedPose = true;
+        _ArrivedPoseTime = Time.time;
       }
       else {
-        stateMachine_.SetNextState(new LookForCubesState());
+        _StateMachine.SetNextState(new LookForCubesState());
       }
     }
   }
 
-  void ArrivedPose(bool success) {
-    if (success) {
-      arrivedPose = true;
-      arrivedPoseTime = Time.time;
-    }
-    else {
-      stateMachine_.SetNextState(new LookForCubesState());
-    }
-  }
 }

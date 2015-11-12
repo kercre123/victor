@@ -3,36 +3,36 @@ using System.Collections;
 
 public class DebugMenuManager : MonoBehaviour {
 
-	[SerializeField]
-	private DebugMenuDialog debugMenuDialogPrefab_;
-  private DebugMenuDialog debugMenuDialogInstance_;
+  [SerializeField]
+  private DebugMenuDialog _DebugMenuDialogPrefab;
+  private DebugMenuDialog _DebugMenuDialogInstance;
 
   [SerializeField]
-  private Canvas debugMenuCanvas_;
+  private Canvas _DebugMenuCanvas;
 
-  private int lastOpenedDebugTab_ = 0;
+  private int _LastOpenedDebugTab = 0;
 
-  void Start(){
+  void Start() {
     // TODO: Destroy self if not production
   }
   
   // TODO: Pragma out this code for production
-  public void OnDebugMenuButtonTap(){
+  public void OnDebugMenuButtonTap() {
     CreateDebugDialog();
   }
-  
-  private void CreateDebugDialog(){
-    GameObject debugMenuDialogInstance = GameObject.Instantiate(debugMenuDialogPrefab_.gameObject);
+
+  private void CreateDebugDialog() {
+    GameObject debugMenuDialogInstance = GameObject.Instantiate(_DebugMenuDialogPrefab.gameObject);
     Transform dialogTransform = debugMenuDialogInstance.transform;
-    dialogTransform.SetParent(debugMenuCanvas_.transform, false);
+    dialogTransform.SetParent(_DebugMenuCanvas.transform, false);
     dialogTransform.localPosition = Vector3.zero;
-    debugMenuDialogInstance_ = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
-    debugMenuDialogInstance_.Initialize(lastOpenedDebugTab_);
-    debugMenuDialogInstance_.OnDebugMenuClosed += OnDebugMenuDialogClose;
+    _DebugMenuDialogInstance = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
+    _DebugMenuDialogInstance.Initialize(_LastOpenedDebugTab);
+    _DebugMenuDialogInstance.OnDebugMenuClosed += OnDebugMenuDialogClose;
   }
 
-  private void OnDebugMenuDialogClose(int lastOpenTab){
-    debugMenuDialogInstance_.OnDebugMenuClosed -= OnDebugMenuDialogClose;
-    lastOpenedDebugTab_ = lastOpenTab;
+  private void OnDebugMenuDialogClose(int lastOpenTab) {
+    _DebugMenuDialogInstance.OnDebugMenuClosed -= OnDebugMenuDialogClose;
+    _LastOpenedDebugTab = lastOpenTab;
   }
 }

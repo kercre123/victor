@@ -60,6 +60,7 @@ namespace Anki {
         
         double lastKeyPressTime_;
         
+        PathMotionProfile pathMotionProfile_ = DEFAULT_PATH_MOTION_PROFILE;
         
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
@@ -325,6 +326,22 @@ namespace Anki {
           
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
+          
+          // Path speeds
+          const f32 pathSpeed_mmps = root_->getField("pathSpeed_mmps")->getSFFloat();
+          const f32 pathAccel_mmps2 = root_->getField("pathAccel_mmps2")->getSFFloat();
+          const f32 pathDecel_mmps2 = root_->getField("pathDecel_mmps2")->getSFFloat();
+          const f32 pathPointTurnSpeed_radPerSec = root_->getField("pathPointTurnSpeed_radPerSec")->getSFFloat();
+          const f32 pathPointTurnAccel_radPerSec2 = root_->getField("pathPointTurnAccel_radPerSec2")->getSFFloat();
+          const f32 pathPointTurnDecel_radPerSec2 = root_->getField("pathPointTurnDecel_radPerSec2")->getSFFloat();
+          
+          pathMotionProfile_.speed_mmps = pathSpeed_mmps;
+          pathMotionProfile_.accel_mmps2 = pathAccel_mmps2;
+          pathMotionProfile_.decel_mmps2 = pathDecel_mmps2;
+          pathMotionProfile_.pointTurnSpeed_rad_per_sec = pathPointTurnSpeed_radPerSec;
+          pathMotionProfile_.pointTurnAccel_rad_per_sec2 = pathPointTurnAccel_radPerSec2;
+          pathMotionProfile_.pointTurnDecel_rad_per_sec2 = pathPointTurnDecel_radPerSec2;
+          
           
           // For pickup or placeRel, specify whether or not you want to use the
           // given approach angle for pickup, placeRel, or roll actions
@@ -674,7 +691,8 @@ namespace Anki {
                          poseMarkerPose_.GetTranslation().y(),
                          poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(),
                          useManualSpeed);
-                  SendExecutePathToPose(poseMarkerPose_, useManualSpeed);
+
+                  SendExecutePathToPose(poseMarkerPose_, pathMotionProfile_, useManualSpeed);
                   SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                 } else {
                   
@@ -682,7 +700,10 @@ namespace Anki {
                   // just use the nearest preActionPose so that it's merely aligned with the specified pose.
                   printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", poseMarkerPose_.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
                   
-                  SendPlaceObjectOnGroundSequence(poseMarkerPose_, useExactRotation, useManualSpeed);
+                  SendPlaceObjectOnGroundSequence(poseMarkerPose_,
+                                                  pathMotionProfile_,
+                                                  useExactRotation,
+                                                  useManualSpeed);
                   // Make sure head is tilted down so that it can localize well
                   SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
                   
@@ -832,12 +853,25 @@ namespace Anki {
                 
                 if (GetCarryingObjectID() < 0) {
                   // Not carrying anything so pick up!
-                  SendPickupSelectedObject(usePreDockPose, useApproachAngle, approachAngle_rad, useManualSpeed);
+                  SendPickupSelectedObject(pathMotionProfile_,
+                                           usePreDockPose,
+                                           useApproachAngle,
+                                           approachAngle_rad,
+                                           useManualSpeed);
                 } else {
                   if (placeOnGroundAtOffset) {
-                    SendPlaceRelSelectedObject(usePreDockPose, placementOffsetX_mm, useApproachAngle, approachAngle_rad, useManualSpeed);
+                    SendPlaceRelSelectedObject(pathMotionProfile_,
+                                               usePreDockPose,
+                                               placementOffsetX_mm,
+                                               useApproachAngle,
+                                               approachAngle_rad,
+                                               useManualSpeed);
                   } else {
-                    SendPlaceOnSelectedObject(usePreDockPose, useExactRotation, rot, useManualSpeed);
+                    SendPlaceOnSelectedObject(pathMotionProfile_,
+                                              usePreDockPose,
+                                              useApproachAngle,
+                                              approachAngle_rad,
+                                              useManualSpeed);
                   }
                 }
                 
@@ -850,7 +884,9 @@ namespace Anki {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
                 
-                SendTraverseSelectedObject(usePreDockPose, useManualSpeed);
+                SendTraverseSelectedObject(pathMotionProfile_,
+                                           usePreDockPose,
+                                           useManualSpeed);
                 break;
               }
                 
@@ -859,7 +895,8 @@ namespace Anki {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
                 bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
                 
-                SendRollSelectedObject(usePreDockPose,
+                SendRollSelectedObject(pathMotionProfile_,
+                                       usePreDockPose,
                                        useApproachAngle,
                                        approachAngle_rad,
                                        useManualSpeed);
@@ -1080,7 +1117,16 @@ namespace Anki {
                 
               case (s32)'O':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT && modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  f32 distToMarker = root_->getField("alignWithObjectDistToMarker_mm")->getSFFloat();
+                  SendAlignWithObject(-1, // tell game to use blockworld's "selected" object
+                                      distToMarker,
+                                      pathMotionProfile_,
+                                      true,
+                                      useApproachAngle,
+                                      approachAngle_rad);
+                  
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                   ExternalInterface::FaceObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
@@ -1092,14 +1138,9 @@ namespace Anki {
                   msgWrapper.Set_FaceObject(msg);
                   SendMessage(msgWrapper);
                 } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  ExternalInterface::GotoObject msg;
-                  msg.objectID = -1; // tell game to use blockworld's "selected" object
-                  msg.distance_mm = sqrtf(2.f)*44.f;
-                  msg.useManualSpeed = 0;
-                  
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_GotoObject(msg);
-                  SendMessage(msgWrapper);
+                  SendGotoObject(-1, // tell game to use blockworld's "selected" object
+                                 sqrtf(2.f)*44.f,
+                                 pathMotionProfile_);
                 } else {
                   SendIMURequest(2000);
                 }

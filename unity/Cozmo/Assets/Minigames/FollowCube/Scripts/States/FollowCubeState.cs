@@ -1,70 +1,74 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class FollowCubeState : State {
+namespace FollowCube {
 
-  private bool searchTurnRight_ = false;
+  public class FollowCubeState : State {
 
-  public override void Enter() {
-    base.Update();
-  }
+    private bool _SearchTurnRight = false;
 
-  public override void Update() {
-    base.Update();
-    FollowClosest();
-  }
-
-  void FollowClosest() {
-    ObservedObject closest = null;
-    float dist = float.MaxValue;
-    foreach (ObservedObject obj in robot.VisibleObjects) {
-      float d = Vector3.Distance(robot.WorldPosition, obj.WorldPosition);
-      if (d < dist) {
-        dist = d;
-        closest = obj;
-      }
+    public override void Enter() {
+      base.Update();
     }
 
-    if (closest == null) {
-      robot.DriveWheels(0.0f, 0.0f);
-      return;
+    public override void Update() {
+      base.Update();
+      FollowClosest();
     }
 
-    float angle = Vector2.Angle(robot.Forward, closest.WorldPosition - robot.WorldPosition);
-    if (angle < 10.0f) {
-
-      float speed = (stateMachine_.GetGame() as FollowCubeGame).ForwardSpeed;
-      float distMax = (stateMachine_.GetGame() as FollowCubeGame).DistanceMax;
-      float distMin = (stateMachine_.GetGame() as FollowCubeGame).DistanceMin;
-
-      if (dist > distMax) {
-        robot.DriveWheels(speed, speed);
+    void FollowClosest() {
+      ObservedObject closest = null;
+      float dist = float.MaxValue;
+      foreach (ObservedObject obj in _CurrentRobot.VisibleObjects) {
+        float d = Vector3.Distance(_CurrentRobot.WorldPosition, obj.WorldPosition);
+        if (d < dist) {
+          dist = d;
+          closest = obj;
+        }
       }
-      else if (dist < distMin) {
-        robot.DriveWheels(-speed, -speed);
+
+      if (closest == null) {
+        _CurrentRobot.DriveWheels(0.0f, 0.0f);
+        return;
+      }
+
+      float angle = Vector2.Angle(_CurrentRobot.Forward, closest.WorldPosition - _CurrentRobot.WorldPosition);
+      if (angle < 10.0f) {
+
+        float speed = (_StateMachine.GetGame() as FollowCubeGame).ForwardSpeed;
+        float distMax = (_StateMachine.GetGame() as FollowCubeGame).DistanceMax;
+        float distMin = (_StateMachine.GetGame() as FollowCubeGame).DistanceMin;
+
+        if (dist > distMax) {
+          _CurrentRobot.DriveWheels(speed, speed);
+        }
+        else if (dist < distMin) {
+          _CurrentRobot.DriveWheels(-speed, -speed);
+        }
+        else {
+          _CurrentRobot.DriveWheels(0.0f, 0.0f);
+        }
       }
       else {
-        robot.DriveWheels(0.0f, 0.0f);
+        // we need to turn to face it
+        ComputeTurnDirection(closest);
+        if (_SearchTurnRight) {
+          _CurrentRobot.DriveWheels(35.0f, -30.0f);
+        }
+        else {
+          _CurrentRobot.DriveWheels(-30.0f, 35.0f);
+        }
       }
-    }
-    else {
-      // we need to turn to face it
-      ComputeTurnDirection(closest);
-      if (searchTurnRight_) {
-        robot.DriveWheels(35.0f, -30.0f);
-      }
-      else {
-        robot.DriveWheels(-30.0f, 35.0f);
-      }
+
     }
 
+    private void ComputeTurnDirection(ObservedObject followBlock) {
+      float turnAngle = Vector3.Cross(_CurrentRobot.Forward, followBlock.WorldPosition - _CurrentRobot.WorldPosition).z;
+      if (turnAngle < 0.0f)
+        _SearchTurnRight = true;
+      else
+        _SearchTurnRight = false;
+    }
   }
 
-  private void ComputeTurnDirection(ObservedObject followBlock) {
-    float turnAngle = Vector3.Cross(robot.Forward, followBlock.WorldPosition - robot.WorldPosition).z;
-    if (turnAngle < 0.0f)
-      searchTurnRight_ = true;
-    else
-      searchTurnRight_ = false;
-  }
 }
