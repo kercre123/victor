@@ -33,7 +33,7 @@ namespace PatternPlay {
     }
 
     public int AvailableBlocks() {
-      return gameRef_.robot.SeenObjects.Count;
+      return gameRef_.CurrentRobot.SeenObjects.Count;
     }
 
     public void ClearNeatList() {
@@ -41,7 +41,7 @@ namespace PatternPlay {
     }
 
     public ObservedObject GetClosestAvailableBlock() {
-      Robot robot = gameRef_.robot;
+      Robot robot = gameRef_.CurrentRobot;
 
       float minDist = float.MaxValue;
       ObservedObject closest = null;
@@ -90,7 +90,7 @@ namespace PatternPlay {
 
     public void FindPlaceTarget(out Vector3 position, out int dockID, out float offset, out float dockAngleRad) {
       if (neatList.Count == 0) {
-        position = gameRef_.robot.WorldPosition + gameRef_.robot.Forward * 40.0f;
+        position = gameRef_.CurrentRobot.WorldPosition + gameRef_.CurrentRobot.Forward * 40.0f;
         dockID = -1;
         offset = 0.0f;
         dockAngleRad = 0.0f;

@@ -36,10 +36,10 @@ namespace PatternPlay {
       initCubeState.InitialCubeRequirements(new LookForPatternState(), 3, InitialCubesDone);
       patternPlayStateMachine_.SetNextState(initCubeState);
 
-      robot.SetBehaviorSystem(true);
-      robot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
-      robot.ExecuteBehavior(BehaviorType.NoneBehavior);
-      robot.StopFaceAwareness();
+      CurrentRobot.SetBehaviorSystem(true);
+      CurrentRobot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(BehaviorType.NoneBehavior);
+      CurrentRobot.StopFaceAwareness();
 
       patternMemory_.Initialize();
 
@@ -104,8 +104,8 @@ namespace PatternPlay {
     }
 
     public void ResetLookHeadForkLift() {
-      robot.SetHeadAngle(-0.1f);
-      robot.SetLiftHeight(0.0f);
+      CurrentRobot.SetHeadAngle(-0.1f);
+      CurrentRobot.SetLiftHeight(0.0f);
     }
 
     public void InitialCubesDone() {
@@ -114,7 +114,7 @@ namespace PatternPlay {
       LightCube.MovedAction += BlockMoving;
       LightCube.StoppedAction += BlockStopped;
 
-      foreach (KeyValuePair<int, LightCube> lightCube in robot.LightCubes) {
+      foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
         blockPatternData_.Add(lightCube.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
       }
       ResetLookHeadForkLift();
@@ -134,7 +134,7 @@ namespace PatternPlay {
         0.0f
       };
 
-      robot.SetLiveIdleAnimationParameters(paramNames, paramValues);
+      CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
     }
 
     public float LastPatternSeenTime() {
@@ -170,8 +170,8 @@ namespace PatternPlay {
     }
 
     public bool HasVerticalStack() {
-      for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-        Vector3 rel = robot.VisibleObjects[i].WorldPosition - robot.WorldPosition;
+      for (int i = 0; i < CurrentRobot.VisibleObjects.Count; ++i) {
+        Vector3 rel = CurrentRobot.VisibleObjects[i].WorldPosition - CurrentRobot.WorldPosition;
         if (rel.z > 35.0f) {
           return true;
         }
@@ -211,7 +211,7 @@ namespace PatternPlay {
         lightCount--;
       }
 
-      float blockAngleWorldSpace = robot.LightCubes[blockID].Rotation.eulerAngles.z;
+      float blockAngleWorldSpace = CurrentRobot.LightCubes[blockID].Rotation.eulerAngles.z;
       if (blockAngleWorldSpace < 0.0f) {
         blockAngleWorldSpace += 360.0f;
       }
@@ -244,8 +244,8 @@ namespace PatternPlay {
     private void SeenAccumulatorCompute() {
       foreach (KeyValuePair<int, BlockPatternData> kvp in blockPatternData_) {
         bool isVisible = false;
-        for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-          if (robot.VisibleObjects[i].ID == kvp.Key) {
+        for (int i = 0; i < CurrentRobot.VisibleObjects.Count; ++i) {
+          if (CurrentRobot.VisibleObjects[i].ID == kvp.Key) {
             isVisible = true;
             break;
           }
@@ -293,8 +293,8 @@ namespace PatternPlay {
         enabledColor = Color.blue;
         disabledColor = Color.black;
 
-        for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
-          robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
+        for (int i = 0; i < CurrentRobot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
+          CurrentRobot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
         }
 
         if (blockConfig.Key == currentInputID && blockPatternData_[blockConfig.Key].Moving && Time.time - lastSetTime_ > 5.0f) {
@@ -303,30 +303,30 @@ namespace PatternPlay {
         }
 
         for (int i = 0; i < 4; ++i) {
-          robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
+          CurrentRobot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(disabledColor);
         }
 
         if (blockConfig.Value.BlockLightsLocalSpace.back) {
-          robot.LightCubes[blockConfig.Key].Lights[1].OnColor = CozmoPalette.ColorToUInt(enabledColor);
+          CurrentRobot.LightCubes[blockConfig.Key].Lights[1].OnColor = CozmoPalette.ColorToUInt(enabledColor);
         }
 
         if (blockConfig.Value.BlockLightsLocalSpace.front) {
-          robot.LightCubes[blockConfig.Key].Lights[3].OnColor = CozmoPalette.ColorToUInt(enabledColor);
+          CurrentRobot.LightCubes[blockConfig.Key].Lights[3].OnColor = CozmoPalette.ColorToUInt(enabledColor);
         }
 
         if (blockConfig.Value.BlockLightsLocalSpace.left) {
-          robot.LightCubes[blockConfig.Key].Lights[2].OnColor = CozmoPalette.ColorToUInt(enabledColor);
+          CurrentRobot.LightCubes[blockConfig.Key].Lights[2].OnColor = CozmoPalette.ColorToUInt(enabledColor);
         }
 
         if (blockConfig.Value.BlockLightsLocalSpace.right) {
-          robot.LightCubes[blockConfig.Key].Lights[0].OnColor = CozmoPalette.ColorToUInt(enabledColor);
+          CurrentRobot.LightCubes[blockConfig.Key].Lights[0].OnColor = CozmoPalette.ColorToUInt(enabledColor);
         }
 
         // if cozmo is building his own pattern, then set the "seen" non-dirty blocks that are not
         // in a pattern yet to white.
         bool autoBuilding = patternPlayAutoBuild_.autoBuilding;
-        bool nonDirtySeen = robot.SeenObjects.Contains(robot.LightCubes[blockConfig.Key]);
-        bool notInNeatList = patternPlayAutoBuild_.NeatListContains(robot.LightCubes[blockConfig.Key]) == false;
+        bool nonDirtySeen = CurrentRobot.SeenObjects.Contains(CurrentRobot.LightCubes[blockConfig.Key]);
+        bool notInNeatList = patternPlayAutoBuild_.NeatListContains(CurrentRobot.LightCubes[blockConfig.Key]) == false;
         bool notCarrying = true;
         if (patternPlayAutoBuild_.GetHeldObject() != null) {
           if (blockConfig.Key != patternPlayAutoBuild_.GetHeldObject().ID) {
@@ -335,8 +335,8 @@ namespace PatternPlay {
         }
 
         if (autoBuilding && nonDirtySeen && notInNeatList && notCarrying) {
-          for (int i = 0; i < robot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
-            robot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
+          for (int i = 0; i < CurrentRobot.LightCubes[blockConfig.Key].Lights.Length; ++i) {
+            CurrentRobot.LightCubes[blockConfig.Key].Lights[i].OnColor = CozmoPalette.ColorToUInt(Color.white);
           }
         }
 
@@ -350,7 +350,7 @@ namespace PatternPlay {
       BlockPattern currentPattern = null;
       seenPattern_ = false;
 
-      if (BlockPattern.ValidPatternSeen(out currentPattern, robot, blockPatternData_)) {
+      if (BlockPattern.ValidPatternSeen(out currentPattern, CurrentRobot, blockPatternData_)) {
         seenPattern_ = true;
         lastPatternSeen_ = Time.time;
         if (patternMemory_.AddSeen(currentPattern)) {

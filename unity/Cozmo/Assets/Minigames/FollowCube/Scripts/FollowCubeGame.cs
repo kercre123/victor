@@ -25,7 +25,7 @@ namespace FollowCube {
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
-      robot.StopFaceAwareness();
+      CurrentRobot.StopFaceAwareness();
 
       gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<FollowCubeGamePanel>();
       gamePanel_.OnSlowSpeedPressed += SetSlowSpeed;

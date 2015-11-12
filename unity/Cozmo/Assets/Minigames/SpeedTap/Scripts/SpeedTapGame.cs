@@ -33,10 +33,10 @@ namespace SpeedTap {
       initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, InitialCubesDone);
       stateMachine_.SetNextState(initCubeState);
 
-      robot.VisionWhileMoving(true);
+      CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
-      robot.StopFaceAwareness();
-      robot.SetBehaviorSystem(false);
+      CurrentRobot.StopFaceAwareness();
+      CurrentRobot.SetBehaviorSystem(false);
       _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
@@ -87,12 +87,12 @@ namespace SpeedTap {
       float minDist = float.MaxValue;
       ObservedObject closest = null;
 
-      for (int i = 0; i < robot.SeenObjects.Count; ++i) {
-        if (robot.SeenObjects[i] is LightCube) {
-          float d = Vector3.Distance(robot.SeenObjects[i].WorldPosition, robot.WorldPosition);
+      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
+        if (CurrentRobot.SeenObjects[i] is LightCube) {
+          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
           if (d < minDist) {
             minDist = d;
-            closest = robot.SeenObjects[i];
+            closest = CurrentRobot.SeenObjects[i];
           }
         }
       }
@@ -103,12 +103,12 @@ namespace SpeedTap {
       float maxDist = 0;
       ObservedObject farthest = null;
 
-      for (int i = 0; i < robot.SeenObjects.Count; ++i) {
-        if (robot.SeenObjects[i] is LightCube) {
-          float d = Vector3.Distance(robot.SeenObjects[i].WorldPosition, robot.WorldPosition);
+      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
+        if (CurrentRobot.SeenObjects[i] is LightCube) {
+          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
           if (d >= maxDist) {
             maxDist = d;
-            farthest = robot.SeenObjects[i];
+            farthest = CurrentRobot.SeenObjects[i];
           }
         }
       }

@@ -8,6 +8,7 @@ namespace VisionTraining {
 
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
+    private int _LastSelectedId = -1;
 
     void Start() {
       _StateMachine.SetGameRef(this);
@@ -15,13 +16,13 @@ namespace VisionTraining {
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 3, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
-      robot.StopFaceAwareness();
+      CurrentRobot.StopFaceAwareness();
 
       CreateDefaultQuitButton();
     }
 
     void Update() {
-
+      _StateMachineManager.UpdateAllMachines();
     }
 
     private void InitialCubesDone() {
@@ -29,20 +30,30 @@ namespace VisionTraining {
     }
 
     public int PickCube() {
-      int index = Random.Range(0, robot.LightCubes.Count);
-      int i = 0;
-      int id = -1;
-      foreach (KeyValuePair<int, LightCube> lightCube in robot.LightCubes) {
-        if (index == i) {
-          id = lightCube.Key;
-          lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
 
+      // for weird edge case of if batteries die and there's only one cube left.
+      if (CurrentRobot.LightCubes.Count == 1) {
+        foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
+          return lightCube.Key;
         }
-        else {
-          lightCube.Value.SetLEDs(0);
-        }
-        i++;
       }
+
+      int index = Random.Range(0, CurrentRobot.LightCubes.Count);
+      int i = 0;
+      int id = -2;
+      do {
+        foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
+          if (index == i) {
+            id = lightCube.Key;
+            lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+          }
+          else {
+            lightCube.Value.SetLEDs(0);
+          }
+          i++;
+        }
+      } while (id == _LastSelectedId);
+
       return id;
     }
 

@@ -17,7 +17,7 @@ namespace TreasureHunt {
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
-      robot.StopFaceAwareness();
+      CurrentRobot.StopFaceAwareness();
       CreateDefaultQuitButton();
     }
 
@@ -39,7 +39,7 @@ namespace TreasureHunt {
     }
 
     public void ClearBlockLights() {
-      foreach (KeyValuePair<int, LightCube> kvp in robot.LightCubes) {
+      foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
         kvp.Value.SetLEDs(0, 0, 0, 0);
       }
     }

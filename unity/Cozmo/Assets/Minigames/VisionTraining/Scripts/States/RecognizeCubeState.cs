@@ -13,6 +13,8 @@ namespace VisionTraining {
     public override void Enter() {
       base.Enter();
       _SelectedCubeId = (_StateMachine.GetGame() as VisionTrainingGame).PickCube();
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     public override void Update() {
@@ -39,16 +41,12 @@ namespace VisionTraining {
       }
 
       if (CubeInRect()) {
-        _CurrentRobot.SendAnimation("majorWin", AnimationDone);
+        _StateMachine.SetNextState(new CelebrateState());
       }
     }
 
     public override void Exit() {
       base.Exit();
-    }
-
-    void AnimationDone(bool success) {
-      _StateMachine.SetNextState(new RecognizeCubeState());
     }
 
     public bool CubeInRect() {
