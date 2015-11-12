@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace DockTraining {
 
@@ -32,6 +33,13 @@ namespace DockTraining {
 
       _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
       _CurrentTarget = _DockTrainingGame.GetCurrentTarget();
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
+        if (_CurrentTarget.ID == kvp.Key) {
+          continue;
+        }
+        _CubeID = kvp.Key;
+        break;
+      }
     }
 
     public override void Update() {
@@ -43,7 +51,21 @@ namespace DockTraining {
         _StateMachine.SetNextState(new AngryTargetChangedState());
       }
       else {
-        SteeringLogic();
+        float distance = Vector3.Distance(_CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
+        if (distance < 40.0f) {
+          // decide if success or fail
+          float relDot = Vector3.Dot(_CurrentRobot.Forward, (_CurrentTarget.WorldPosition - _CurrentRobot.WorldPosition).normalized);
+          if (relDot > 0.95f) {
+            _StateMachine.SetNextState(new TrySuccessDockState());
+          }
+          else {
+            _StateMachine.SetNextState(new FailDockState());
+          }
+        }
+        else {
+          SteeringLogic();
+        }
+
       }
 
     }
@@ -73,12 +95,12 @@ namespace DockTraining {
       }
 
       if (_RotateCubeState == RotateCubeState.LEFT) {
-        _DriveWheelRightSpeed += Time.deltaTime * 5000.0f;
-        _DriveWheelLeftSpeed -= Time.deltaTime * 5000.0f;
+        _DriveWheelRightSpeed += Time.deltaTime * 500.0f;
+        _DriveWheelLeftSpeed -= Time.deltaTime * 500.0f;
       }
       else {
-        _DriveWheelLeftSpeed += Time.deltaTime * 5000.0f;
-        _DriveWheelRightSpeed -= Time.deltaTime * 5000.0f;
+        _DriveWheelLeftSpeed += Time.deltaTime * 500.0f;
+        _DriveWheelRightSpeed -= Time.deltaTime * 500.0f;
       }
     }
 

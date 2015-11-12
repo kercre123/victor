@@ -10,6 +10,7 @@ namespace DockTraining {
     private StateMachine _StateMachine = new StateMachine();
 
     private LightCube _CurrentTarget = null;
+    private float _LastSeenTargetTime = 0.0f;
 
     void Start() {
       _StateMachine.SetGameRef(this);
@@ -25,10 +26,23 @@ namespace DockTraining {
     // Update is called once per frame
     void Update() {
       _StateMachineManager.UpdateAllMachines();
-
-      if (CurrentRobot.SeenObjects.Contains(_CurrentTarget) == false) {
-        _CurrentTarget = FindNewTarget();
+      if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
+        if (Time.time - _LastSeenTargetTime > 1.0f) {
+          if (_CurrentTarget != null) {
+            _CurrentTarget.SetLEDs(0);
+          }
+          _CurrentTarget = FindNewTarget();
+          _LastSeenTargetTime = Time.time;
+        }
       }
+      else {
+        _LastSeenTargetTime = Time.time;
+      }
+
+      if (_CurrentTarget != null) {
+        _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+      }
+
     }
 
     void InitialCubesDone() {
@@ -48,7 +62,7 @@ namespace DockTraining {
         float distance = Vector3.Distance(CurrentRobot.WorldPosition, CurrentRobot.VisibleObjects[i].WorldPosition);
         float relDot = Vector3.Dot(CurrentRobot.Forward, (CurrentRobot.VisibleObjects[i].WorldPosition - CurrentRobot.WorldPosition).normalized);
 
-        if (distance > 80.0f && relDot > 0.8f && CurrentRobot.VisibleObjects[i] is LightCube) {
+        if (distance > 100.0f && relDot > 0.8f && CurrentRobot.VisibleObjects[i] is LightCube) {
           return CurrentRobot.VisibleObjects[i] as LightCube;
         }
       }
