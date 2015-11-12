@@ -52,10 +52,12 @@
 #define SECTOR_MASK (SECTOR_SIZE-1)
 /// Map of the sectors of flash where various things are stored
 typedef enum {
-  BOOTLOADER_SECTOR,    ///< Where the boot loader (this code) lives.
-  FACTORY_SECTOR,       ///< Where factory build information will be stored
-  BOOT_CONFIG_SECTOR,   ///< Where the boot configuration is stored
-  FIRMWARE_START_SECTOR ///< Where the user firmware starts
+  BOOTLOADER_SECTOR,     ///< Where the boot loader (this code) lives.
+  FACTORY_SECTOR,        ///< Where factory build information will be stored
+  BOOT_CONFIG_SECTOR,    ///< Where the boot configuration is stored
+  FIRMWARE_START_SECTOR, ///< Where the user firmware starts
+  ESP_INIT_DATA_SECTOR = 0x1fc, ///< Where the Espressif OS keeps it's init data, two sectors long
+  ESP_WIFI_CFG_SECTOR  = 0x1fe, ///< Where the Espressif OS keeps it's wifi configuration data, two sectors long
 } FlashSector;
 /** Defines a header to look for in flash to determine that the bootloader control structure is valid
  * This value MUST change if a new bootloader is written with an incompatible structure and it will be flashed onto

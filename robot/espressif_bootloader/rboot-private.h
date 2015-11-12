@@ -16,6 +16,8 @@ typedef unsigned char uint8;
 
 #define NOINLINE __attribute__ ((noinline))
 
+#define CPU_CLK_FREQ 80*1000000       //unit: Hz
+
 #define ROM_MAGIC	   0xe9
 #define ROM_MAGIC_NEW1 0xea
 #define ROM_MAGIC_NEW2 0x04
@@ -62,7 +64,7 @@ typedef struct {
 	uint8 count; // second magic for new header
 	uint8 flags1;
 	uint8 flags2;
-	uint32 entry;
+	usercode* entry;
 	// new type rom, lib header
 	uint32 add; // zero
 	uint32 len; // length of irom section

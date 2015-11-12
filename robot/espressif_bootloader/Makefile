@@ -34,10 +34,6 @@ $(RBOOT_FW_BASE):
 $(RBOOT_BUILD_BASE)/rboot-stage2a.o: rboot-stage2a.c rboot-private.h rboot.h
 	@echo "CC $<"
 	@$(CC) $(CFLAGS) $(RBOOT_EXTRA_INCDIR) -c $< -o $@
-	
-$(RBOOT_BUILD_BASE)/rboot-stage2a.elf: $(RBOOT_BUILD_BASE)/rboot-stage2a.o
-	@echo "LD $@"
-	@$(LD) -Trboot-stage2a.ld $(LDFLAGS) -Wl,--start-group $^ -Wl,--end-group -o $@
 
 $(RBOOT_BUILD_BASE)/rboot.o: rboot.c rboot-private.h rboot.h
 	@echo "CC $<"
@@ -49,7 +45,7 @@ $(RBOOT_BUILD_BASE)/%.o: %.c %.h
 
 $(RBOOT_BUILD_BASE)/%.elf: $(RBOOT_BUILD_BASE)/%.o
 	@echo "LD $@"
-	@$(LD) -T$(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $^ -Wl,--end-group -o $@
+	@$(LD) -T$(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $^ -Wl,--end-group -Xlinker --Map=esp.map -o $@
 
 $(RBOOT_FW_BASE)/%.bin: $(RBOOT_BUILD_BASE)/%.elf
 	@echo "GEN APPBIN $@"
@@ -57,9 +53,10 @@ $(RBOOT_FW_BASE)/%.bin: $(RBOOT_BUILD_BASE)/%.elf
 	@$(OBJCOPY) --only-section .data       -O binary $< eagle.app.v6.data.bin
 	@$(OBJCOPY) --only-section .rodata     -O binary $< eagle.app.v6.rodata.bin
 	@$(OBJCOPY) --only-section .irom0.text -O binary $< eagle.app.v6.irom0text.bin
+	@$(OBJCOPY) --only-section .iram2.text -O binary $< eagle.app.v6.iram2text.bin
 	@python2 $(SDK_BASE)/tools/gen_appbin.py $< $(BOOT) $(SPI_MODE) $(SPI_FREQ_DIV) $(SPI_SIZE_MAP)
 	@mv eagle.app.flash.bin "$@"
-	@rm eagle.app.v6.*.bin
+	#@rm eagle.app.v6.*.bin
 
 clean:
 	@echo "RM $(RBOOT_BUILD_BASE) $(RBOOT_FW_BASE)"

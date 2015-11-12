@@ -131,6 +131,7 @@ def gen_appbin():
     data_line_bits = 0xf
 
     irom0text_bin_name = 'eagle.app.v6.irom0text.bin'
+    iram2text_bin_name = 'eagle.app.v6.iram2text.bin'
     text_bin_name = 'eagle.app.v6.text.bin'
     data_bin_name = 'eagle.app.v6.data.bin'
     rodata_bin_name = 'eagle.app.v6.rodata.bin'
@@ -183,6 +184,14 @@ def gen_appbin():
         if m != None:
             rodata_start_addr = m.group(1)
             # print rodata_start_addr
+            
+    iram2_start_addr = '0'
+    p = re.compile('(\w*)(\sA\s)(_iram2_text_start)$')
+    for line in lines:
+        m = p.search(line)
+        if m != None:
+            iram2_start_addr = m.group(1)
+            print "iram2 start addr", iram2_start_addr
 
     # write flash bin header
     #============================
@@ -238,6 +247,10 @@ def gen_appbin():
 
     # rodata.bin
     combine_bin(rodata_bin_name,flash_bin_name,long(rodata_start_addr,16),1)
+    
+    # iram2.bin
+    if (os.path.isfile(iram2text_bin_name)):
+        combine_bin(iram2text_bin_name,flash_bin_name, long(iram2_start_addr, 16), 1)
 
     # write checksum header
     sum_size = os.path.getsize(flash_bin_name) + 1
@@ -272,6 +285,7 @@ def gen_appbin():
         print all_bin_crc
         write_file(flash_bin_name,chr((all_bin_crc & 0x000000FF))+chr((all_bin_crc & 0x0000FF00) >> 8)+chr((all_bin_crc & 0x00FF0000) >> 16)+chr((all_bin_crc & 0xFF000000) >> 24))
     cmd = 'rm eagle.app.sym'
+    print "eagle.app.sym"
     os.system(cmd)
 
 if __name__=='__main__':

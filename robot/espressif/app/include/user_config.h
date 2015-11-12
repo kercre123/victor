@@ -51,7 +51,4 @@ enum FIXED_RATE {
  */
 int wifi_set_user_fixed_rate(uint8 enable_mask, uint8 rate);
 
-/// Rom function to reset the chip
-void software_reset(void);
-
 #endif

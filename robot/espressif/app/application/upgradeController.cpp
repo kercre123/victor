@@ -184,7 +184,7 @@ LOCAL bool TaskOtaWiFi(uint32 param)
     {
       os_printf("WiFi OTA rebooting for version %d\r\n", state->version);
       os_free(state);
-      software_reset();
+      system_restart();
       return false;
     }
     case SPI_FLASH_RESULT_ERR:

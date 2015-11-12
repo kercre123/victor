@@ -33,24 +33,69 @@
 
 #include "rboot-private.h"
 
-/** Loads data and instruction RAMs from the firmware.
- * We put this function in a different RAM section to make sure it winds up safely at the end of instruction RAM
- * see the LD script for more details. Note that the firmware must not use all of the instruction RAM since that would
- * cause this function to overwrite itself.
- * @param readpos The starting read position to find firmware section headers
- * @param count The number of sections to copy
- * @param entry The firmware entry point, passed through this function for tail return from the caller
+/** Simplified find_image function just wraps check_image's RAM initalization point finding function with error messages
+ * prevent this function being placed inline with main
+ * to keep main's stack size as small as possible
+ * don't mark as static or it'll be optimised out when
+ * using the assembler stub
  */
-__attribute__((section(".iram2.text"))) usercode* NOINLINE load_rom(uint32 readpos, const uint8 count, usercode* entry)
-{	
-	uint8 buffer[BUFFER_SIZE];
-	uint8 *writepos;
-	uint32 remaining;
-	section_header *section = (section_header*)buffer;
+__attribute__((section(".iram2.text"))) usercode* NOINLINE find_image(void)
+{
+  uint32 buffer[BUFFER_SIZE/4];
   uint8 sectcount;
+  uint8 sectcurrent;
+  uint8 chksum = CHKSUM_INIT;
+  uint32 loop;
+  uint32 remaining;
+  uint32 romaddr;
+  uint32 readpos = SECTOR_SIZE * FIRMWARE_START_SECTOR;
+  uint8 *writepos;
+  usercode* entry;
   
-	// copy all the sections
-	for (sectcount = count; sectcount > 0; sectcount--) {
+  ets_printf("Checking image at %x\r\n", readpos);
+  
+  rom_header_new *header = (rom_header_new*)buffer;
+  section_header *section = (section_header*)buffer;
+  
+  // read rom header
+  if (SPIRead(readpos, header, sizeof(rom_header_new)) != 0) {
+    ets_printf("SPIRead firmware new header failed!\r\n");
+    return 0;
+  }
+  
+  // check header type
+  if (header->magic == ROM_MAGIC_NEW1 && header->count == ROM_MAGIC_NEW2)
+  {
+    ets_printf("New style ROM header detected\r\n");
+    // skip the extra header and irom section
+    readpos = readpos + header->len + sizeof(rom_header_new);
+    // read the normal header that follows
+    if (SPIRead(readpos, header, sizeof(rom_header)) != 0) {
+      ets_printf("SPIRead firmware rom header failed!\r\n");
+      return 0;
+    }
+    if (SPIRead(readpos, header, sizeof(rom_header)) != 0)
+    {
+      ets_printf("SPIRead secondary header failed\r\n");
+      return 0;
+    }
+  }
+  if (header->magic == ROM_MAGIC)
+  {
+    // old type, no extra header or irom section to skip over
+    ets_printf("ROM header detected, count = %d\r\n", header->count);
+    readpos += sizeof(rom_header);
+    sectcount = header->count;
+    entry = header->entry;
+  }
+  else
+  {
+    ets_printf("No ROM header detected, read %02X from address %x\r\n", header->magic, readpos);
+    return 0;
+  }
+  
+  // copy all the sections
+	for (; sectcount > 0; sectcount--) {
 		// read section header
 		SPIRead(readpos, section, sizeof(section_header));
 		readpos += sizeof(section_header);
@@ -58,6 +103,8 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE load_rom(uint32 readp
 		// get section address and length
 		writepos = section->address;
 		remaining = section->length;
+
+    ets_printf("Loading s=%d, %x[%d]\r\n", sectcount, writepos, remaining);
 
 		while (remaining > 0) {
 			// work out how much to read, up to 16 bytes at a time
@@ -74,122 +121,8 @@ __attribute__((section(".iram2.text"))) usercode* NOINLINE load_rom(uint32 readp
 		}
 	}
   
+  ets_printf("Jumping to firmware at %x\r\n", entry);
   return entry;
-}
-
-static uint32 check_image(uint32 readpos) {
-	
-	uint8 buffer[BUFFER_SIZE];
-	uint8 sectcount;
-	uint8 sectcurrent;
-	uint8 *writepos;
-	uint8 chksum = CHKSUM_INIT;
-	uint32 loop;
-	uint32 remaining;
-	uint32 romaddr;
-	
-	rom_header_new *header = (rom_header_new*)buffer;
-	section_header *section = (section_header*)buffer;
-	
-	if (readpos == 0 || readpos == 0xffffffff) {
-		return 0;
-	}
-	
-	// read rom header
-	if (SPIRead(readpos, header, sizeof(rom_header_new)) != 0) {
-		return 0;
-	}
-	
-	// check header type
-	if (header->magic == ROM_MAGIC) {
-		// old type, no extra header or irom section to skip over
-		romaddr = readpos;
-		readpos += sizeof(rom_header);
-		sectcount = header->count;
-	} else if (header->magic == ROM_MAGIC_NEW1 && header->count == ROM_MAGIC_NEW2) {
-		// new type, has extra header and irom section first
-		romaddr = readpos + header->len + sizeof(rom_header_new);
-		// skip the extra header and irom section
-		readpos = romaddr;
-		// read the normal header that follows
-		if (SPIRead(readpos, header, sizeof(rom_header)) != 0) {
-			return 0;
-		}
-		sectcount = header->count;
-		readpos += sizeof(rom_header);
-	} else {
-		return 0;
-	}
-	
-	// test each section
-	for (sectcurrent = 0; sectcurrent < sectcount; sectcurrent++) {
-		
-		// read section header
-		if (SPIRead(readpos, section, sizeof(section_header)) != 0) {
-			return 0;
-		}
-		readpos += sizeof(section_header);
-
-		// get section address and length
-		writepos = section->address;
-		remaining = section->length;
-		
-		while (remaining > 0) {
-			// work out how much to read, up to BUFFER_SIZE
-			uint32 readlen = (remaining < BUFFER_SIZE) ? remaining : BUFFER_SIZE;
-			// read the block
-			if (SPIRead(readpos, buffer, readlen) != 0) {
-				return 0;
-			}
-			// increment next read and write positions
-			readpos += readlen;
-			writepos += readlen;
-			// decrement remaining count
-			remaining -= readlen;
-			// add to chksum
-			for (loop = 0; loop < readlen; loop++) {
-				chksum ^= buffer[loop];
-			}
-		}
-	}
-	
-	// round up to next 16 and get checksum
-	readpos = readpos | 0x0f;
-	if (SPIRead(readpos, buffer, 1) != 0) {
-		return 0;
-	}
-	
-	// compare calculated and stored checksums
-	if (buffer[0] != chksum) {
-		return 0;
-	}
-	
-	return romaddr;
-}
-
-/** Simplified find_image function just wraps check_image's RAM initalization point finding function with error messages
- * prevent this function being placed inline with main
- * to keep main's stack size as small as possible
- * don't mark as static or it'll be optimised out when
- * using the assembler stub
- */
-usercode* NOINLINE find_image(void)
-{
-  uint32 readpos = check_image(SECTOR_SIZE * FIRMWARE_START_SECTOR);
-  if (readpos == 0)
-  {
-    ets_printf("DIE: Couldn't find firmware run addr!\r\n");
-    return 0;
-  }
-  else
-  {
-    rom_header header;
-    
-    // read rom header
-    SPIRead(readpos, &header, sizeof(rom_header));
-    readpos += sizeof(rom_header);
-    return load_rom(readpos, header.count, header.entry); // XXX Counting on tail return to make this work
-  }
 }
 
 /** Checks the boot config sector to see if there's a new image to write and if so, erases old and copies in new
@@ -212,7 +145,7 @@ void NOINLINE copyNewImage(void)
   }
   else if (config.newImageStart == 0 || config.newImageSize == 0)
   {
-    // No new image
+    ets_printf("No new firmware, continuing\r\n");
     return;
   }
   else
@@ -257,6 +190,18 @@ void NOINLINE copyNewImage(void)
   }
 }
 
+/** Sets up the UART so we can get debugging output from the bootloader
+ */
+void NOINLINE setupSerial(void)
+{
+  // Update the clock rate here since it's the first function we call
+  //uart_div_modify(0, CPU_CLK_FREQ/115200);
+  // Debugging delay
+  ets_delay_us(2000000);
+  
+  ets_printf("Welcome to rboot\r\n");
+}
+
 /** Command SPI flash to make certain sectors read only until next power cycle
  * @note Must be NOINLINE and not static to call from ASM without generating a stack which will be left in memory
  */
@@ -264,6 +209,7 @@ void NOINLINE writeProtect(void)
 {
   uint32 factoryDoneFlag = 0xFFFFffff;
   uint8  protectSectors = 1; // Always protecting outselves
+
   SPIRead(FACTORY_SECTOR * SECTOR_SIZE + SECTOR_SIZE - 4, &factoryDoneFlag, 4); // Read the last word from the factory sector
   if (factoryDoneFlag != 0xFFFFffff)
   {
@@ -292,6 +238,7 @@ __attribute__((section(".iram2.text"))) void NOINLINE stage2a(void)
 void call_user_start() {
 	__asm volatile (
 		"mov a15, a0\n"                  // store return addr, hope nobody wanted a15!
+    "call0 setupSerial\n"            // Set serial baudrate
 		"call0 writeProtect\n"           // apply flash write protection
     "call0 copyNewImage\n"           // check for and copy in new image
     "mov a0, a15\n"                  // restore return addr
