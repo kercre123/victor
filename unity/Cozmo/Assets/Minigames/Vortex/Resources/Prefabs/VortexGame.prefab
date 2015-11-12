@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bbae069a9d8274a3d8c4ed855de2498e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameName: Vortex
+  _GameId: vortex
   _GamePanelPrefab: {fileID: 11434440, guid: 1d72446819af34a649504d91e3287180, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -57,6 +57,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11434440, guid: 1d72446819af34a649504d91e3287180,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _GameId
+      value: vortex
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 140786}

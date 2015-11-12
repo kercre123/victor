@@ -18,7 +18,31 @@
             "/{*}"
         ]
     },
+    "askCozmo.title" : {
+        "translation" : "Ask Cozmo"
+    },
+    "dockTraining.title" : {
+        "translation" : "Dock Training"
+    },
+    "followCube.title" : {
+        "translation" : "Follow Cube"
+    },
+    "patternPlay.title" : {
+        "translation" : "Pattern Play"
+    },
+    "rotationTraining.title" : {
+        "translation" : "Rotation Training"
+    },
     "speedTap.title" : {
-        "translation" : "SPEED TAP"
+        "translation" : "Speed Tap"
+    },
+    "treasureHunt.title" : {
+        "translation" : "Treasure Hunt"
+    },
+    "visionTraining.title" : {
+        "translation" : "Vision Training"
+    },
+    "vortex.title" : {
+        "translation" : "Vortex"
     }
 }
