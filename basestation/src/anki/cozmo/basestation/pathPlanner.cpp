@@ -11,6 +11,7 @@
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/planning/basestation/robotActionParams.h"
 #include "pathPlanner.h"
 #include "util/logging/logging.h"
 
@@ -161,18 +162,35 @@ bool IPathPlanner::ApplyMotionProfile(const Planning::Path &in,
   out.Clear();
 
   const f32 lin_speed = fabsf(motionProfile.speed_mmps);
-  const f32 arc_speed = 0.75f * lin_speed;  // TEMP: We should actually use max wheel speeds to compute linear speed along arc.
   const f32 turn_speed = fabsf(motionProfile.pointTurnSpeed_rad_per_sec);
+  
+  
+  // Create RobotActionParam which holds max wheel speeds and other parameters necessary to compute
+  // valid motion profile on path.
+  Planning::RobotActionParams actionParams;
   
   for (int i=0; i < in.GetNumSegments(); ++i)
   {
-    f32 speed = lin_speed;
     
     Planning::PathSegment seg = in.GetSegmentConstRef(i);
+    
+    // Limit linear speed based on direction-dependent max wheel speed
+    f32 speed = lin_speed;
+    if (seg.GetTargetSpeed() > 0) {
+      speed = std::min((f32)actionParams.maxVelocity_mmps, lin_speed);
+    } else {
+      speed = std::min((f32)actionParams.maxReverseVelocity_mmps, lin_speed);
+    }
+    
     switch(seg.GetType()) {
       case Planning::PST_ARC:
-        speed = arc_speed;
+      {
+        // Scale speed along arc to accommodate the max wheel speed
+        f32 arcRadius_mm = std::fabsf(seg.GetDef().arc.radius);
+        speed = (arcRadius_mm * speed) / (arcRadius_mm + actionParams.halfWheelBase_mm);
+        
         // fall through to PST_LINE handling
+      }
       case Planning::PST_LINE:
       {
         seg.SetSpeedProfile(std::copysign(speed, seg.GetTargetSpeed()),
