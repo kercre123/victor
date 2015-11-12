@@ -221,9 +221,9 @@ public:
     const Pose3d&          GetPose()         const;
     const f32              GetHeadAngle()    const;
     const f32              GetLiftAngle()    const;
-    const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
-    const PoseFrameID_t    GetPoseFrameID()  const {return _frameId;}
-    const Pose3d*          GetWorldOrigin() const { return _worldOrigin; }
+    const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
+    const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
+    const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
 
     // These change the robot's internal (basestation) representation of its
     // pose, head angle, and lift angle, but do NOT actually command the

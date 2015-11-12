@@ -50,6 +50,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
+#include "clad/types/visionModes.h"
 
 
 namespace Anki {  
@@ -65,14 +66,6 @@ namespace Cozmo {
     VisionSystem(const std::string& dataPath);
     ~VisionSystem();
     
-    enum Mode {
-      IDLE                 = 0x00,
-      DETECTING_MARKERS    = 0x01,
-      TRACKING             = 0x02,
-      DETECTING_FACES      = 0x04,
-      DETECTING_MOTION     = 0x08
-    };
-    
     //
     // Methods:
     //
@@ -80,8 +73,8 @@ namespace Cozmo {
     Result Init(const Vision::CameraCalibration& camCalib);
     bool IsInitialized() const;
     
-    void EnableMode(Mode whichMode, bool enabled);
-    bool IsModeEnabled(Mode whichMode) const { return _mode & whichMode; }
+    Result EnableMode(VisionMode whichMode, bool enabled);
+    bool IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
     
     // Accessors
     f32 GetTrackingMarkerWidth();
@@ -173,7 +166,7 @@ namespace Cozmo {
     
     const FaceDetectionParameters& GetFaceDetectionParams();
     
-    std::string GetModeName(Mode mode) const;
+    std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
     void SetParams(const bool autoExposureOn,

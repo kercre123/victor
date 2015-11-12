@@ -19,7 +19,9 @@
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/visionModes.h"
 #include "util/helpers/noncopyable.h"
+
 #include <thread>
 #include <mutex>
 
@@ -86,9 +88,7 @@ struct DockingErrorSignal;
     void Pause(bool isPaused); // set pause state
     
     // Enable/disable different types of processing
-    void EnableMarkerDetection(bool tf);
-    void EnableFaceDetection(bool tf);
-    void EnableMotionDetection(bool tf);
+    Result EnableMode(VisionMode mode, bool enable);
     
     // Vision system will switch to tracking when this marker is seen
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
@@ -99,9 +99,6 @@ struct DockingErrorSignal;
                           const f32                    postOffsetX_mm = 0,
                           const f32                    postOffsetY_mm = 0,
                           const f32                    postOffsetAngle_rad = 0);
-    
-    // Abort any marker tracking we were doing
-    void StopMarkerTracking();
     
     Result UpdateFaces(Robot& robot);
     Result UpdateVisionMarkers(Robot& robot);
@@ -159,7 +156,7 @@ struct DockingErrorSignal;
     void Stop();
     
   }; // class VisionComponent
-
+  
   inline void VisionComponent::Pause() {
     _paused = !_paused;
   }

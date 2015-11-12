@@ -149,42 +149,49 @@ namespace Cozmo {
 #pragma mark --- Mode Controls ---
 #endif
   
-  void VisionSystem::EnableMode(Mode whichMode, bool enabled)
+  Result VisionSystem::EnableMode(VisionMode whichMode, bool enabled)
   {
-    if(whichMode == Mode::TRACKING) {
+    if(whichMode == VisionMode::Tracking) {
       // Tracking enable/disable is a special case
       if(enabled) {
+        if(!_markerToTrack.IsSpecified()) {
+          PRINT_NAMED_ERROR("VisionSystem.EnableMode.NoMarkerToTrack",
+                            "Cannot enable Tracking mode without MarkerToTrack specified.");
+          return RESULT_FAIL;
+        }
+        
         // store the current mode so we can put it back when done tracking
         _modeBeforeTracking = _mode;
         
         // TODO: Log or issue message?
         // NOTE: this disables any other modes so we are *only* tracking
-        _mode = whichMode;
+        _mode = static_cast<u32>(whichMode);
       } else {
         StopTracking();
       }
     } else {
       if(enabled) {
-        const bool modeAlreadyEnabled = _mode & whichMode;
+        const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
         if(!modeAlreadyEnabled) {
           PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
                            "Adding mode %s to current mode %s.",
                            VisionSystem::GetModeName(whichMode).c_str(),
-                           VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str());
+                           VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
           
-          _mode |= whichMode;
+          _mode |= static_cast<u32>(whichMode);
         }
       } else {
-        const bool modeAlreadyDisabled = !(_mode & whichMode);
+        const bool modeAlreadyDisabled = !(_mode & static_cast<u32>(whichMode));
         if(!modeAlreadyDisabled) {
           PRINT_NAMED_WARNING("VisionSystem.EnableMode.DisablingMode",
                               "Removing mode %s from current mode %s.",
                               VisionSystem::GetModeName(whichMode).c_str(),
-                              VisionSystem::GetModeName(static_cast<Mode>(_mode)).c_str());
-          _mode &= ~whichMode;
+                              VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
+          _mode &= ~static_cast<u32>(whichMode);
         }
       }
     }
+    return RESULT_OK;
   } // EnableMode()
   
   void VisionSystem::StopTracking()
@@ -196,11 +203,11 @@ namespace Cozmo {
   void VisionSystem::RestoreNonTrackingMode()
   {
     // Restore whatever we were doing before tracking
-    if (TRACKING == (_mode & TRACKING))
+    if(IsModeEnabled(VisionMode::Tracking))
     {
       _mode = _modeBeforeTracking;
       
-      if (TRACKING == (_mode & TRACKING))
+      if(IsModeEnabled(VisionMode::Tracking))
       {
         PRINT_NAMED_ERROR("VisionSystem.StopTracking","Restored mode before tracking but it still includes tracking!");
       }
@@ -278,7 +285,7 @@ namespace Cozmo {
     if(_newMarkerToTrackWasProvided) {
       
       RestoreNonTrackingMode();
-      EnableMode(DETECTING_MARKERS, true); // Make sure we enable marker detection
+      EnableMode(VisionMode::DetectingMarkers, true); // Make sure we enable marker detection
       _numTrackFailures  =  0;
       
       _markerToTrack = _newMarkerToTrack;
@@ -530,7 +537,7 @@ namespace Cozmo {
       _visionMarkerMailbox.putMessage(obsMarker);
       
       // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
-      if(!IsModeEnabled(TRACKING)     &&
+      if(!IsModeEnabled(VisionMode::Tracking)     &&
          _markerToTrack.IsSpecified() &&
          _markerToTrack.Matches(crntMarker))
       {
@@ -540,7 +547,7 @@ namespace Cozmo {
         }
 
         // Template initialization succeeded, switch to tracking mode:
-        EnableMode(TRACKING, true);
+        EnableMode(VisionMode::Tracking, true);
         
       } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
     } // for(each marker)
@@ -1329,28 +1336,28 @@ namespace Cozmo {
   }
   
   std::string VisionSystem::GetCurrentModeName() const {
-    return VisionSystem::GetModeName(static_cast<Mode>(_mode));
+    return VisionSystem::GetModeName(static_cast<VisionMode>(_mode));
   }
   
-  std::string VisionSystem::GetModeName(Mode mode) const
+  std::string VisionSystem::GetModeName(VisionMode mode) const
   {
     
-    static const std::map<Mode, std::string> LUT = {
-      {IDLE,                  "IDLE"}
-      ,{DETECTING_MARKERS,  "MARKERS"}
-      ,{TRACKING,             "TRACKING"}
-      ,{DETECTING_FACES,      "FACES"}
-      ,{DETECTING_MOTION,     "MOTION"}
+    static const std::map<VisionMode, std::string> LUT = {
+      {VisionMode::Idle,                  "IDLE"}
+      ,{VisionMode::DetectingMarkers,     "MARKERS"}
+      ,{VisionMode::Tracking,             "TRACKING"}
+      ,{VisionMode::DetectingFaces,       "FACES"}
+      ,{VisionMode::DetectingMotion,      "MOTION"}
     };
+
+    std::string retStr("");
     
-    if(mode == 0) {
-      return LUT.at(IDLE);
+    if(mode == VisionMode::Idle) {
+      return LUT.at(VisionMode::Idle);
     } else {
-      std::string retStr("");
-      
       for(auto possibleMode : LUT) {
-        if(possibleMode.first != IDLE &&
-           mode & possibleMode.first)
+        if(possibleMode.first != VisionMode::Idle &&
+           static_cast<u32>(mode) & static_cast<u32>(possibleMode.first))
         {
           if(!retStr.empty()) {
             retStr += "+";
@@ -1358,9 +1365,9 @@ namespace Cozmo {
           retStr += possibleMode.second;
         }
       }
-      
       return retStr;
     }
+    
   } // GetModeName()
   
   VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
@@ -1420,7 +1427,9 @@ namespace Cozmo {
       // Initialize the VisionSystem's state (i.e. its "private member variables")
       //
       
-      _mode                      = DETECTING_MARKERS | DETECTING_FACES;
+      EnableMode(VisionMode::DetectingMarkers, true);
+      EnableMode(VisionMode::DetectingFaces,   true);
+
       _markerToTrack.Clear();
       _numTrackFailures          = 0;
       
@@ -1674,14 +1683,14 @@ namespace Cozmo {
     
     std::vector<Quad2f> markerQuads;
 
-    if(IsModeEnabled(DETECTING_MARKERS)) {
+    if(IsModeEnabled(VisionMode::DetectingMarkers)) {
       if((lastResult = DetectMarkers(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
         return lastResult;
       }
     }
     
-    if(IsModeEnabled(TRACKING)) {
+    if(IsModeEnabled(VisionMode::Tracking)) {
       // Update the tracker transformation using this image
       if((lastResult = TrackTemplate(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.TrackTemplateFailed", "");
@@ -1689,7 +1698,7 @@ namespace Cozmo {
       }
     }
     
-    if(IsModeEnabled(DETECTING_FACES)) {
+    if(IsModeEnabled(VisionMode::DetectingFaces)) {
       if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
@@ -1697,9 +1706,9 @@ namespace Cozmo {
     }
     
     // DEBUG!!!!
-    EnableMode(DETECTING_MOTION, true);
+    //EnableMode(VisionMode::DetectingMotion, true);
     
-    if(IsModeEnabled(DETECTING_MOTION))
+    if(IsModeEnabled(VisionMode::DetectingMotion))
     {
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");

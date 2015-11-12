@@ -15,6 +15,7 @@
 #include "clad/externalInterface/keyWordRecognitionState.clad"
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/globalVizOrigin.clad"
+#include "clad/types/visionModes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -430,22 +431,9 @@ message SetIdleAnimation {
 message ReadAnimationFile {
 }
 
-// StartFaceTracking
-message StartFaceTracking {
-//TODO: add     uint_8 selectionMode
-    uint_8 timeout_sec
-}
-
-// StopFaceTracking
-message StopFaceTracking {
-}
-
-// StartLookingForMarkers
-message StartLookingForMarkers {
-}
-
-// StopLookingForMarkers
-message StopLookingForMarkers {
+message EnableVisionMode {
+   VisionMode mode,
+   bool       enable
 }
 
 // SetActiveObjectLEDs

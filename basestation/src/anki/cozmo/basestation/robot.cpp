@@ -1920,7 +1920,7 @@ namespace Anki {
     
     Result Robot::StopDocking()
     {
-      _visionComponent.StopMarkerTracking();
+      _visionComponent.EnableMode(VisionMode::Tracking, false);
       return RESULT_OK;
     }
     
@@ -2403,13 +2403,13 @@ namespace Anki {
     
     Result Robot::StartLookingForMarkers()
     {
-      _visionComponent.EnableMarkerDetection(true);
+      _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
       return RESULT_OK;
     }
 
     Result Robot::StopLookingForMarkers()
     {
-      _visionComponent.EnableMarkerDetection(false);
+      _visionComponent.EnableMode(VisionMode::DetectingMarkers, false);
       return RESULT_OK;
     }
     

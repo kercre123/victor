@@ -19,6 +19,7 @@
 #include "clad/types/robotTestModes.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
+#include "clad/types/visionModes.h"
 #include <webots/Supervisor.hpp>
 #include <unordered_set>
 
@@ -178,8 +179,7 @@ protected:
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
   void SendReadAnimationFile();
-  void SendStartFaceTracking(u8 timeout_sec);
-  void SendStopFaceTracking();
+  void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendForceAddRobot();
   void SendSetIdleAnimation(const std::string &animName);
   void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);

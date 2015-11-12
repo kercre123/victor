@@ -642,31 +642,11 @@ void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
 void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 {
   // StartFaceTracking
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::EnableVisionMode,
     [this] (const GameToEngineEvent& event)
     {
-      _visionComponent.EnableFaceDetection(true);
-    }));
-  
-  // StopFaceTracking
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
-    [this] (const GameToEngineEvent& event)
-    {
-      _visionComponent.EnableFaceDetection(false);
-    }));
-  
-  // StartLookingForMarkers
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartLookingForMarkers,
-    [this] (const GameToEngineEvent& event)
-    {
-      StartLookingForMarkers();
-    }));
-  
-  // StopLookingForMarkers
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopLookingForMarkers,
-    [this] (const GameToEngineEvent& event)
-    {
-      StopLookingForMarkers();
+      auto const& payload = event.GetData().Get_EnableVisionMode();
+      _visionComponent.EnableMode(payload.mode, payload.enable);
     }));
   
   // VisionWhileMoving

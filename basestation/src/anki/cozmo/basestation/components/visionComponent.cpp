@@ -202,26 +202,6 @@ namespace Cozmo {
 
     return t;
   }
-  
-  void VisionComponent::EnableMarkerDetection(bool enable)
-  {
-    _visionSystem->EnableMode(VisionSystem::Mode::DETECTING_MARKERS, enable);
-  }
-
-  void VisionComponent::EnableFaceDetection(bool enable)
-  {
-    _visionSystem->EnableMode(VisionSystem::Mode::DETECTING_FACES, enable);
-  }
-
-  void VisionComponent::EnableMotionDetection(bool enable)
-  {
-    _visionSystem->EnableMode(VisionSystem::Mode::DETECTING_MOTION, enable);
-  }
-  
-  void VisionComponent::StopMarkerTracking()
-  {
-    _visionSystem->EnableMode(VisionSystem::Mode::TRACKING, false);
-  }
 
   void VisionComponent::Lock()
   {
@@ -233,6 +213,16 @@ namespace Cozmo {
     _lock.unlock();
   }
 
+  Result VisionComponent::EnableMode(VisionMode mode, bool enable)
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->EnableMode(mode, enable);
+    } else {
+      PRINT_NAMED_ERROR("VisionComponent.EnableMode.NullVisionSystem", "");
+      return RESULT_FAIL;
+    }
+  }
+  
   void VisionComponent::SetNextImage(const Vision::ImageRGB& image,
                                      const RobotState& robotState)
   {
