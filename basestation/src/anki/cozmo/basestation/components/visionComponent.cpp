@@ -507,8 +507,10 @@ namespace Cozmo {
           newPose.SetTranslation({newPose.GetTranslation().x() + dist_mm*std::cos(angleRad),
             newPose.GetTranslation().y() + dist_mm*std::sin(angleRad),
             newPose.GetTranslation().z()});
+          PathMotionProfile motionProfile(DEFAULT_PATH_MOTION_PROFILE);
+          motionProfile.speed_mmps *= 1.5f; // Drive forward a little faster than normal
           robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
-                                               new DriveToPoseAction(newPose, DEFAULT_PATH_MOTION_PROFILE,
+                                               new DriveToPoseAction(newPose, motionProfile,
                                                                      false, false, 50, DEG_TO_RAD(45))
                                                );
           
