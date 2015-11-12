@@ -138,7 +138,8 @@ bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
   if( ! _hasValidPath ) {
     return false;
   }
-
+  
+  path = _path;
   return true;
 }
 
@@ -150,6 +151,7 @@ bool IPathPlanner::GetCompletePath_Internal(const Pose3d& currentRobotPose,
     return false;
   }
   
+  path = _path;
   selectedTargetIndex = _selectedTargetIdx;
   return true;
 }
