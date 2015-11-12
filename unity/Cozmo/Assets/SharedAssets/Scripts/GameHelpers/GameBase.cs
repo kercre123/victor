@@ -25,7 +25,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public string GameName { get { return _GameName; } private set { _GameName = value; } }
 
-  public Robot robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+  public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   protected void CreateDefaultQuitButton() {
     // Resources.Load can be pretty slow, so cache the prefab for future use.
@@ -35,7 +35,7 @@ public abstract class GameBase : MonoBehaviour {
     GameObject newButton = UIManager.CreateUI(sDefaultQuitGameButtonPrefab);
     
     _QuitButtonInstance = newButton.GetComponent<Button>();
-    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);  
+    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);
   }
 
   protected void DestroyDefaultQuitButton() {

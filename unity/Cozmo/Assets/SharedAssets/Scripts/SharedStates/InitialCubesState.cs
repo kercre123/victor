@@ -30,7 +30,7 @@ public class InitialCubesState : State {
       }
     }
 
-    if (_StateMachine.GetGame().robot.LightCubes.Count >= _CubesRequired) {
+    if (_StateMachine.GetGame().CurrentRobot.LightCubes.Count >= _CubesRequired) {
       _StateMachine.SetNextState(_NextState);
     }
   }
