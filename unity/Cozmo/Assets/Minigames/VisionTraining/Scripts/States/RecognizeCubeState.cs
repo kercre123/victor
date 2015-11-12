@@ -26,18 +26,17 @@ namespace VisionTraining {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
           if (_VisionRect.Contains((Vector2)_CurrentRobot.VisibleObjects[i].WorldPosition)) {
             cubeInRectNow = true;
-            ((_CurrentRobot.VisibleObjects[i]) as LightCube).SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-          }
-          else {
-            ((_CurrentRobot.VisibleObjects[i]) as LightCube).SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
+
           }
         }
       }
 
       if (cubeInRectNow) {
         _CubeInRectTime += Time.deltaTime;
+        _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.white));
       }
       else {
+        _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
         _CubeInRectTime -= Time.deltaTime;
         if (_CubeInRectTime < 0.0f) {
           _CubeInRectTime = 0.0f;

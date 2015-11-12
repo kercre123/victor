@@ -53,7 +53,7 @@ namespace VisionTraining {
           i++;
         }
       } while (id == _LastSelectedId);
-
+      _LastSelectedId = id;
       return id;
     }
 
