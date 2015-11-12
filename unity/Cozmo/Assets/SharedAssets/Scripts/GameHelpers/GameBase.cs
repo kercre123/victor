@@ -35,7 +35,7 @@ public abstract class GameBase : MonoBehaviour {
     GameObject newButton = UIManager.CreateUI(sDefaultQuitGameButtonPrefab);
     
     _QuitButtonInstance = newButton.GetComponent<Button>();
-    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);  
+    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);
   }
 
   protected void DestroyDefaultQuitButton() {

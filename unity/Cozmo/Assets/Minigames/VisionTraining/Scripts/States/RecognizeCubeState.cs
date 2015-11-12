@@ -26,6 +26,10 @@ namespace VisionTraining {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
           if (_VisionRect.Contains((Vector2)_CurrentRobot.VisibleObjects[i].WorldPosition)) {
             cubeInRectNow = true;
+            ((_CurrentRobot.VisibleObjects[i]) as LightCube).SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+          }
+          else {
+            ((_CurrentRobot.VisibleObjects[i]) as LightCube).SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
           }
         }
       }
@@ -42,6 +46,23 @@ namespace VisionTraining {
 
       if (CubeInRect()) {
         _StateMachine.SetNextState(new CelebrateState());
+      }
+    }
+
+    public void SetDistanceBackpackLights() {
+      LightCube pickedCubeInView = null;
+      for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
+        if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
+          pickedCubeInView = _CurrentRobot.VisibleObjects[i].ID as LightCube;
+        }
+      }
+
+      if (pickedCubeInView != null) {
+        // set backpack light based on distance
+
+      }
+      else {
+        // set backpack light off
       }
     }
 

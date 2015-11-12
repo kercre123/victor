@@ -45,7 +45,7 @@ namespace VisionTraining {
         foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
           if (index == i) {
             id = lightCube.Key;
-            lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+            lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
           }
           else {
             lightCube.Value.SetLEDs(0);
