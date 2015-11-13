@@ -235,20 +235,40 @@ namespace Cozmo {
     DrawEye(Left, faceImg);
     DrawEye(Right, faceImg);
     
-    // Rotate entire face
-    if(_faceAngle != 0) {
+    // Apply whole-face params
+    if(_faceAngle != 0 || !(_faceCenter == 0) || !(_faceScale == 1.f)) {
+      //
       // Create a 2x3 warp matrix which incorporates scale, rotation, and translation
-      //    W = [scale*R T]
-
-      cv::Mat W = cv::getRotationMatrix2D(cv::Point2f(WIDTH/2,HEIGHT/2), _faceAngle, 1.f);
-      W.at<Value>(0,0) *= _faceScale.x();
-      W.at<Value>(0,1) *= _faceScale.x();
-      W.at<Value>(1,0) *= _faceScale.y();
-      W.at<Value>(1,1) *= _faceScale.y();
-      W.at<Value>(0,2) += _faceCenter.x();
-      W.at<Value>(1,2) += _faceCenter.y();
+      //    W = [scale_x    0   ] * R * [x - x0] + [x0] + [tx]
+      //        [   0    scale_y]       [y - y0] + [y0] + [ty]
+      //
+      // So a given point gets scaled and rotated around the center of the image
+      // ((x0,y0) is the image center) and then translated by (tx,ty), which is
+      // stored in _faceCenter.
+      //
+      // Note: can't use cv::getRotationMatrix2D, b/c it only incorporates one
+      // scale factor, not separate scaling in x and y. Otherwise, this is
+      // exactly the same thing
+      //
+      f32 cosAngle = 1, sinAngle = 0;
+      if(_faceAngle != 0) {
+        const f32 angleRad = DEG_TO_RAD(_faceAngle);
+        cosAngle = std::cos(angleRad);
+        sinAngle = std::sin(angleRad);
+      }
       
-      cv::warpAffine(faceImg, faceImg, W, cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
+      const f32 alpha_x = _faceScale.x() * cosAngle;
+      const f32 beta_x  = _faceScale.x() * sinAngle;
+      const f32 alpha_y = _faceScale.y() * cosAngle;
+      const f32 beta_y  = _faceScale.y() * sinAngle;
+      const f32 x0 = static_cast<f32>(WIDTH) * 0.5f;
+      const f32 y0 = static_cast<f32>(HEIGHT) * 0.5f;
+      SmallMatrix<2, 3, float> W{
+        alpha_x, beta_x,  (1.f - alpha_x)*x0 - beta_x*y0 + _faceCenter.x(),
+        -beta_y, alpha_y, beta_y*x0 + (1.f - alpha_y)*y0 + _faceCenter.y()
+      };
+      
+      cv::warpAffine(faceImg, faceImg, W.get_CvMatx_(), cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
 
     // Apply interlacing / scanlines at the end
@@ -320,14 +340,24 @@ namespace Cozmo {
       {
         Parameter param = static_cast<Parameter>(iParam);
         
-        SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
-                                                        face2.GetParameter(whichEye, param),
-                                                        blendFraction));
+        if(Parameter::EyeAngle == param) {
+          SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
+                                                         face2.GetParameter(whichEye, param),
+                                                         blendFraction));
+        } else {
+          SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
+                                                          face2.GetParameter(whichEye, param),
+                                                          blendFraction));
+        }
 
       } // for each parameter
     } // for each eye
     
     SetFaceAngle(BlendAngleHelper(face1.GetFaceAngle(), face2.GetFaceAngle(), blendFraction));
+    SetFacePosition({LinearBlendHelper(face1.GetFacePosition().x(), face2.GetFacePosition().x(), blendFraction),
+      LinearBlendHelper(face1.GetFacePosition().y(), face2.GetFacePosition().y(), blendFraction)});
+    SetFaceScale({LinearBlendHelper(face1.GetFaceScale().x(), face2.GetFaceScale().x(), blendFraction),
+      LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
     
   } // Interpolate()
 
