@@ -5,8 +5,8 @@ using System.Collections.Generic;
 public class FPSCalculator : MonoBehaviour {
   
   [SerializeField]
-  private SimpleFPSCounterLabel fpsCounterPrefab_;
-  private SimpleFPSCounterLabel fpsCounterInstance_ = null;
+  private SimpleFPSCounterLabel _FpsCounterPrefab;
+  private SimpleFPSCounterLabel _FpsCounterInstance = null;
 
   /// <summary>
   /// Number of frames to sample for the avg fps numbers
@@ -15,113 +15,113 @@ public class FPSCalculator : MonoBehaviour {
 
   private const float SECONDS_PER_MINUTE = 60.0f;
 
-  private int currentFPS_ = 0;
-  private int numFramesInSecond_ = 0;
-  private float secondTimeTracker_ = 0f;
+  private int _CurrentFPS = 0;
+  private int _NumFramesInSecond = 0;
+  private float _SecondTimeTracker = 0f;
 
-  private List<int> fpsSamples_ = new List<int>();
+  private List<int> _FpsSamples = new List<int>();
 
-  private PerformancePane performancePaneInstance_ = null;
+  private PerformancePane _PerformancePaneInstance = null;
 
   // Use this for initialization
   private void Start() {
     // Set the target frame rate super high so that we get
     // accurate numbers on device. (IOS normally caps at 30)
     Application.targetFrameRate = 1000;
-    fpsSamples_ = new List<int>();
+    _FpsSamples = new List<int>();
 
-    PerformancePane.PerformancePaneOpened += OnPerformancePaneOpened;
+    PerformancePane.OnPerformancePaneOpened += HandlePerformancePaneOpened;
   }
 	
   // Update is called once per frame
   private void Update() {
     float lastFrameSeconds = Time.deltaTime;
-    secondTimeTracker_ += lastFrameSeconds;
-    numFramesInSecond_++;
+    _SecondTimeTracker += lastFrameSeconds;
+    _NumFramesInSecond++;
 
-    if (secondTimeTracker_ >= 1f) {
+    if (_SecondTimeTracker >= 1f) {
       // Calculate the current fps
-      currentFPS_ = numFramesInSecond_;
+      _CurrentFPS = _NumFramesInSecond;
 
       // Add to samples
-      fpsSamples_.Add(currentFPS_);
+      _FpsSamples.Add(_CurrentFPS);
       
       // Truncate list of samples
-      while (fpsSamples_.Count > SECONDS_PER_MINUTE) {
-        fpsSamples_.RemoveAt(0);
+      while (_FpsSamples.Count > SECONDS_PER_MINUTE) {
+        _FpsSamples.RemoveAt(0);
       }
 
       // Update UI
       float avgFPS = 0f;
-      if (performancePaneInstance_ != null || fpsCounterInstance_ != null) {
+      if (_PerformancePaneInstance != null || _FpsCounterInstance != null) {
         avgFPS = CalculateAvgFPS();
       }
-      if (performancePaneInstance_ != null) {
-        performancePaneInstance_.SetFPS(currentFPS_);
-        performancePaneInstance_.SetAvgFPS(avgFPS);
-        performancePaneInstance_.SetFPSPerMinute(CalculateAvgFramesPerMinute());
+      if (_PerformancePaneInstance != null) {
+        _PerformancePaneInstance.SetFPS(_CurrentFPS);
+        _PerformancePaneInstance.SetAvgFPS(avgFPS);
+        _PerformancePaneInstance.SetFPSPerMinute(CalculateAvgFramesPerMinute());
       }
-      if (fpsCounterInstance_ != null) {
-        fpsCounterInstance_.SetFPS(currentFPS_);
-        fpsCounterInstance_.SetAvgFPS(avgFPS);
+      if (_FpsCounterInstance != null) {
+        _FpsCounterInstance.SetFPS(_CurrentFPS);
+        _FpsCounterInstance.SetAvgFPS(avgFPS);
       }
 
       // Reset time tracker
-      secondTimeTracker_ -= 1f;
-      numFramesInSecond_ = 0;
+      _SecondTimeTracker -= 1f;
+      _NumFramesInSecond = 0;
     }
   }
 
   private void OnDestroy() {
-    if (performancePaneInstance_ != null) {
-      performancePaneInstance_.PerformancePaneClosed -= OnPerformancePaneClosed;
-      performancePaneInstance_.PerformanceCounterButtonClicked -= OnPerformanceCounterButtonClicked;
+    if (_PerformancePaneInstance != null) {
+      _PerformancePaneInstance.OnPerformancePaneClosed -= HandlePerformancePaneClosed;
+      _PerformancePaneInstance.OnPerformanceCounterButtonClicked -= HandlePerformanceCounterButtonClicked;
     }
   }
 
-  private void OnPerformancePaneOpened(PerformancePane performancePane) {
-    performancePaneInstance_ = performancePane;
-    performancePaneInstance_.PerformancePaneClosed += OnPerformancePaneClosed;
-    performancePaneInstance_.PerformanceCounterButtonClicked += OnPerformanceCounterButtonClicked;
-    performancePaneInstance_.SetFPS(currentFPS_);
-    performancePaneInstance_.SetAvgFPS(CalculateAvgFPS());
-    performancePaneInstance_.SetFPSPerMinute(CalculateAvgFramesPerMinute());
+  private void HandlePerformancePaneOpened(PerformancePane performancePane) {
+    _PerformancePaneInstance = performancePane;
+    _PerformancePaneInstance.OnPerformancePaneClosed += HandlePerformancePaneClosed;
+    _PerformancePaneInstance.OnPerformanceCounterButtonClicked += HandlePerformanceCounterButtonClicked;
+    _PerformancePaneInstance.SetFPS(_CurrentFPS);
+    _PerformancePaneInstance.SetAvgFPS(CalculateAvgFPS());
+    _PerformancePaneInstance.SetFPSPerMinute(CalculateAvgFramesPerMinute());
   }
 
-  private void OnPerformancePaneClosed() {
-    performancePaneInstance_.PerformancePaneClosed -= OnPerformancePaneClosed;
-    performancePaneInstance_ = null;
+  private void HandlePerformancePaneClosed() {
+    _PerformancePaneInstance.OnPerformancePaneClosed -= HandlePerformancePaneClosed;
+    _PerformancePaneInstance = null;
   }
 
-  private void OnPerformanceCounterButtonClicked() {
+  private void HandlePerformanceCounterButtonClicked() {
     // Create counter instance if it doesn't exist
-    if (fpsCounterInstance_ == null) {
-      GameObject fpsCounter = UIManager.CreateUI(fpsCounterPrefab_.gameObject);
-      fpsCounterInstance_ = fpsCounter.GetComponent<SimpleFPSCounterLabel>();
-      fpsCounterInstance_.SetFPS(CalculateAvgFPS());
+    if (_FpsCounterInstance == null) {
+      GameObject fpsCounter = UIManager.CreateUI(_FpsCounterPrefab.gameObject);
+      _FpsCounterInstance = fpsCounter.GetComponent<SimpleFPSCounterLabel>();
+      _FpsCounterInstance.SetFPS(CalculateAvgFPS());
     }
   }
 
   private float CalculateAvgFPS() {
     // Recalculate average fps according to sample size
-    int startIndex = fpsSamples_.Count - AVG_FPS_SAMPLE_SIZE;
+    int startIndex = _FpsSamples.Count - AVG_FPS_SAMPLE_SIZE;
     if (startIndex < 0) {
       startIndex = 0;
     }
     int framesInSample = 0;
-    for (int i = startIndex; i < fpsSamples_.Count; i++) {
-      framesInSample += fpsSamples_[i];
+    for (int i = startIndex; i < _FpsSamples.Count; i++) {
+      framesInSample += _FpsSamples[i];
     }
-    int numSamples = Mathf.Min(AVG_FPS_SAMPLE_SIZE, fpsSamples_.Count);
+    int numSamples = Mathf.Min(AVG_FPS_SAMPLE_SIZE, _FpsSamples.Count);
     return ((float)framesInSample) / numSamples;
   }
 
   private float CalculateAvgFramesPerMinute() {
     // Recalculate average fps for minute
     int framesInMinute = 0;
-    foreach (int numFrames in fpsSamples_) {
+    foreach (int numFrames in _FpsSamples) {
       framesInMinute += numFrames;
     }
-    return ((float)framesInMinute) / fpsSamples_.Count;
+    return ((float)framesInMinute) / _FpsSamples.Count;
   }
 }

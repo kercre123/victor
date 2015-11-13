@@ -1,53 +1,57 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class FollowCubeGamePanel : BaseDialog {
+namespace FollowCube {
 
-  [SerializeField]
-  private UnityEngine.UI.Button slowSpeedButton_;
+  public class FollowCubeGamePanel : BaseDialog {
 
-  [SerializeField]
-  private UnityEngine.UI.Button fastSpeedButton_;
+    [SerializeField]
+    private UnityEngine.UI.Button _SlowSpeedButton;
 
-  [SerializeField]
-  private UnityEngine.UI.Button demonSpeedButton_;
+    [SerializeField]
+    private UnityEngine.UI.Button _FastSpeedButton;
 
-  public delegate void FollowCubeGameButtonHandler();
+    [SerializeField]
+    private UnityEngine.UI.Button _DemonSpeedButton;
 
-  public FollowCubeGameButtonHandler OnSlowSpeedPressed;
-  public FollowCubeGameButtonHandler OnFastSpeedPressed;
-  public FollowCubeGameButtonHandler OnDemonSpeedPressed;
+    public delegate void FollowCubeGameButtonHandler();
 
-  // Use this for initialization
-  void Start() {
-    slowSpeedButton_.onClick.AddListener(OnSlowButton);
-    fastSpeedButton_.onClick.AddListener(OnFastButton);
-    demonSpeedButton_.onClick.AddListener(OnDemonButton);
-  }
+    public FollowCubeGameButtonHandler OnSlowSpeedPressed;
+    public FollowCubeGameButtonHandler OnFastSpeedPressed;
+    public FollowCubeGameButtonHandler OnDemonSpeedPressed;
 
-  void OnSlowButton() {
-    if (OnSlowSpeedPressed != null) {
-      OnSlowSpeedPressed();
+    // Use this for initialization
+    void Start() {
+      _SlowSpeedButton.onClick.AddListener(OnSlowButton);
+      _FastSpeedButton.onClick.AddListener(OnFastButton);
+      _DemonSpeedButton.onClick.AddListener(OnDemonButton);
+    }
+
+    void OnSlowButton() {
+      if (OnSlowSpeedPressed != null) {
+        OnSlowSpeedPressed();
+      }
+    }
+
+    void OnFastButton() {
+      if (OnFastSpeedPressed != null) {
+        OnFastSpeedPressed();
+      }
+    }
+
+    void OnDemonButton() {
+      if (OnDemonSpeedPressed != null) {
+        OnDemonSpeedPressed();
+      }
+    }
+
+    protected override void CleanUp() {
+
+    }
+
+    protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
+
     }
   }
 
-  void OnFastButton() {
-    if (OnFastSpeedPressed != null) {
-      OnFastSpeedPressed();
-    }
-  }
-
-  void OnDemonButton() {
-    if (OnDemonSpeedPressed != null) {
-      OnDemonSpeedPressed();
-    }
-  }
-
-  protected override void CleanUp() {
-
-  }
-
-  protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
-
-  }
 }

@@ -5,24 +5,27 @@ using DG.Tweening;
 public abstract class BaseDialog : MonoBehaviour {
   
   public delegate void SimpleBaseDialogHandler();
+
   public delegate void BaseDialogHandler(string dialogId, BaseDialog dialog);
 
   public event SimpleBaseDialogHandler DialogOpened;
   public static event BaseDialogHandler BaseDialogOpened;
+
   private static void RaiseDialogOpened(BaseDialog dialog) {
     if (dialog.DialogOpened != null) {
-      dialog.DialogOpened ();
+      dialog.DialogOpened();
     }
     if (BaseDialogOpened != null) {
-      BaseDialogOpened (dialog.Id, dialog);
+      BaseDialogOpened(dialog.Id, dialog);
     }
   }
 
   public event SimpleBaseDialogHandler DialogClosed;
   public static event BaseDialogHandler BaseDialogClosed;
+
   private static void RaiseDialogClosed(BaseDialog dialog) {
     if (dialog.DialogClosed != null) {
-      dialog.DialogClosed ();
+      dialog.DialogClosed();
     }
     if (BaseDialogClosed != null) {
       BaseDialogClosed(dialog.Id, dialog);
@@ -31,9 +34,10 @@ public abstract class BaseDialog : MonoBehaviour {
 
   public event SimpleBaseDialogHandler DialogCloseAnimationFinished;
   public static event BaseDialogHandler BaseDialogCloseAnimationFinished;
+
   private static void RaiseDialogCloseAnimationFinished(BaseDialog dialog) {
     if (dialog.DialogCloseAnimationFinished != null) {
-      dialog.DialogCloseAnimationFinished ();
+      dialog.DialogCloseAnimationFinished();
     }
     if (BaseDialogCloseAnimationFinished != null) {
       BaseDialogCloseAnimationFinished(dialog.Id, dialog);
@@ -42,6 +46,7 @@ public abstract class BaseDialog : MonoBehaviour {
 
   [SerializeField]
   private string _dialogId = "Dialog";
+
   public string Id {
     get { return _dialogId; }
     private set { _dialogId = value; }
@@ -54,19 +59,19 @@ public abstract class BaseDialog : MonoBehaviour {
       _closeAnimation.Kill();
     }
 
-    CleanUp ();
+    CleanUp();
   }
 
-  protected abstract void CleanUp ();
+  protected abstract void CleanUp();
 
   public void OpenDialog() {
-    RaiseDialogOpened (this);
-    PlayOpenAnimations ();
+    RaiseDialogOpened(this);
+    PlayOpenAnimations();
   }
 
   public void CloseDialog() {
-    RaiseDialogClosed (this);
-    PlayCloseAnimations ();
+    RaiseDialogClosed(this);
+    PlayCloseAnimations();
   }
 
   public void CloseDialogImmediately() {
@@ -77,35 +82,35 @@ public abstract class BaseDialog : MonoBehaviour {
   }
 
   private void PlayOpenAnimations() {
-    UIManager.DisableTouchEvents ();
+    UIManager.DisableTouchEvents();
 
     // TODO: Play some animations
 
-    OnOpenAnimationsFinished ();
+    OnOpenAnimationsFinished();
   }
 
   private void OnOpenAnimationsFinished() {
-    UIManager.EnableTouchEvents ();
+    UIManager.EnableTouchEvents();
 
     // TODO: Raise event
   }
 
   private void PlayCloseAnimations() {
-    UIManager.DisableTouchEvents ();
+    UIManager.DisableTouchEvents();
 
     // Play some animations
-    _closeAnimation = DOTween.Sequence ();
-    ConstructCloseAnimation (_closeAnimation);
+    _closeAnimation = DOTween.Sequence();
+    ConstructCloseAnimation(_closeAnimation);
     _closeAnimation.AppendCallback(OnCloseAnimationsFinished);
 
   }
 
-  protected abstract void ConstructCloseAnimation (Sequence closeAnimation);
+  protected abstract void ConstructCloseAnimation(Sequence closeAnimation);
 
   private void OnCloseAnimationsFinished() {
-    UIManager.EnableTouchEvents ();
-    RaiseDialogCloseAnimationFinished (this);
+    UIManager.EnableTouchEvents();
+    RaiseDialogCloseAnimationFinished(this);
 
-    GameObject.Destroy (gameObject);
+    GameObject.Destroy(gameObject);
   }
 }

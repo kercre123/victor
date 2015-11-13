@@ -4,37 +4,37 @@ using System.Collections;
 public class IntroManager : MonoBehaviour {
 
   [SerializeField]
-  private Intro devConnectDialog_;
-  private GameObject devConnectDialogInstance_;
+  private Intro _DevConnectDialog;
+  private GameObject _DevConnectDialogInstance;
 
   [SerializeField]
-  private HubWorldBase hubWorldPrefab_;
-  private HubWorldBase hubWorldInstance_;
+  private HubWorldBase _HubWorldPrefab;
+  private HubWorldBase _HubWorldInstance;
 
   void Start() {
     ShowDevConnectDialog();
 
-    RobotEngineManager.instance.RobotConnected += Connected;
-    RobotEngineManager.instance.DisconnectedFromClient += DisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected += Connected;
+    RobotEngineManager.Instance.DisconnectedFromClient += DisconnectedFromClient;
   }
 
   void Connected(int robotID) {
     // Spawn HubWorld
-    GameObject hubWorldObject = GameObject.Instantiate(hubWorldPrefab_.gameObject);
+    GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
     hubWorldObject.transform.SetParent(transform, false);
-    hubWorldInstance_ = hubWorldObject.GetComponent<HubWorldBase>();
+    _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
 
     // Hide Intro dialog when it finishes loading
-    if (hubWorldInstance_.LoadHubWorld()) {
+    if (_HubWorldInstance.LoadHubWorld()) {
       HideDevConnectDialog();
     }
   }
 
   void DisconnectedFromClient(DisconnectionReason obj) {
     // Force quit hub world and show connect dialog again
-    if (hubWorldInstance_ != null) {
-      hubWorldInstance_.DestroyHubWorld(); 
-      Destroy(hubWorldInstance_);
+    if (_HubWorldInstance != null) {
+      _HubWorldInstance.DestroyHubWorld(); 
+      Destroy(_HubWorldInstance);
     }
 
     UIManager.CloseAllDialogsImmediately();
@@ -42,14 +42,14 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void ShowDevConnectDialog() {
-    if (devConnectDialogInstance_ == null) {
-      devConnectDialogInstance_ = UIManager.CreateUI(devConnectDialog_.gameObject);
+    if (_DevConnectDialogInstance == null) {
+      _DevConnectDialogInstance = UIManager.CreateUI(_DevConnectDialog.gameObject);
     }
   }
 
   private void HideDevConnectDialog() {
-    if (devConnectDialogInstance_ != null) {
-      Destroy(devConnectDialogInstance_);
+    if (_DevConnectDialogInstance != null) {
+      Destroy(_DevConnectDialogInstance);
     }
   }
 }

@@ -1,34 +1,38 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class LookForGoldCubeState : State {
+namespace TreasureHunt {
 
-  bool lookingAround_ = false;
+  public class LookForGoldCubeState : State {
 
-  public override void Enter() {
-    base.Enter();
-  }
+    bool _LookingAround = false;
 
-  public override void Update() {
-    base.Update();
-    for (int i = 0; i < robot.VisibleObjects.Count; ++i) {
-      if (robot.VisibleObjects[i] is LightCube) {
-        stateMachine_.SetNextState(new FollowGoldCubeState());
+    public override void Enter() {
+      base.Enter();
+    }
+
+    public override void Update() {
+      base.Update();
+      for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
+        if (_CurrentRobot.VisibleObjects[i] is LightCube) {
+          _StateMachine.SetNextState(new FollowGoldCubeState());
+        }
       }
     }
-  }
 
-  void SearchForAvailableBlock() {
-    if (lookingAround_ == false) {
-      lookingAround_ = true;
-      robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+    void SearchForAvailableBlock() {
+      if (_LookingAround == false) {
+        _LookingAround = true;
+        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      }
     }
-  }
 
-  public override void Exit() {
-    base.Exit();
-    robot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-    lookingAround_ = false;
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      _LookingAround = false;
+    }
+
   }
 
 }

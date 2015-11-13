@@ -4,21 +4,21 @@ using System.Collections.Generic;
 
 public class StateMachineManager {
 
-  Dictionary<string, StateMachine> stateMachines_ = new Dictionary<string, StateMachine>();
+  Dictionary<string, StateMachine> _StateMachines = new Dictionary<string, StateMachine>();
 
   public void AddStateMachine(string stateMachineName, StateMachine stateMachine) {
-    if (stateMachines_.ContainsKey(stateMachineName)) {
+    if (_StateMachines.ContainsKey(stateMachineName)) {
       DAS.Error("StateMachineManager", "Duplicate State Machine Name");
     }
-    stateMachines_.Add(stateMachineName, stateMachine);
+    _StateMachines.Add(stateMachineName, stateMachine);
   }
 
   public bool RemoveStateMachine(string stateMachineName) {
-    return stateMachines_.Remove(stateMachineName);
+    return _StateMachines.Remove(stateMachineName);
   }
 
   public void UpdateAllMachines() {
-    foreach (KeyValuePair<string, StateMachine> kvp in stateMachines_) {
+    foreach (KeyValuePair<string, StateMachine> kvp in _StateMachines) {
       kvp.Value.UpdateStateMachine();
     }
   }

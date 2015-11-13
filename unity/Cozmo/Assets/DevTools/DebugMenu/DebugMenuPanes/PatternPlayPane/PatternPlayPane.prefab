@@ -481,9 +481,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2c861ee524d1c4f44a5cb60768cdb6c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _createTestMemoryButton: {fileID: 11493168}
-  _addRandomPatternButton: {fileID: 11461436}
-  _addAllPatternsButton: {fileID: 11474134}
+  _CreateTestPatternMemory: {fileID: 11493168}
+  _AddRandomPatternButton: {fileID: 11461436}
+  _AddAllPatternsButton: {fileID: 11474134}
 --- !u!114 &11498192
 MonoBehaviour:
   m_ObjectHideFlags: 1

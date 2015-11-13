@@ -1,12 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PatternPlayAudio : MonoBehaviour {
+namespace PatternPlay {
 
-  [SerializeField]
-  AudioClip[] lightSounds_;
+  public class PatternPlayAudio : MonoBehaviour {
 
-  public void PlayLightsSound(int index) {
-    AudioManager.PlayAudioClip(lightSounds_[index]);
+    [SerializeField]
+    AudioClip[] _LightSounds;
+
+    public void PlayLightsSound(int index) {
+      AudioManager.PlayAudioClip(_LightSounds[index]);
+    }
   }
+
 }

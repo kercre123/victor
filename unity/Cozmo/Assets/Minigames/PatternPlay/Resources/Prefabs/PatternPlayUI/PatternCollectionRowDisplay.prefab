@@ -95,7 +95,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22494430}
   - 222: {fileID: 22238080}
-  - 114: {fileID: 11418892}
+  - 114: {fileID: 11489274}
   m_Layer: 0
   m_Name: BadgeText
   m_TagString: Untagged
@@ -2291,8 +2291,8 @@ MonoBehaviour:
   - {fileID: 11491408}
   - {fileID: 11448474}
   - {fileID: 11473192}
-  _notFoundDisplay: {fileID: 22462698}
-  _newBadgeDisplay: {fileID: 11484388}
+  _NotFoundDisplay: {fileID: 22462698}
+  _NewBadgeDisplay: {fileID: 11484388}
 --- !u!114 &11413834
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2326,38 +2326,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26d7554d2003d4df08242f5a00f3609e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &11418892
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 117708}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
-      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_FontData:
-    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
-    m_FontSize: 36
-    m_FontStyle: 0
-    m_BestFit: 0
-    m_MinSize: 10
-    m_MaxSize: 40
-    m_Alignment: 4
-    m_RichText: 1
-    m_HorizontalOverflow: 0
-    m_VerticalOverflow: 0
-    m_LineSpacing: 1
-  m_Text: NEW!
 --- !u!114 &11419066
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2440,8 +2408,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11419066}
   rightColor: {fileID: 11425822}
   frontColor: {fileID: 11413834}
@@ -2578,8 +2546,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11425216}
   rightColor: {fileID: 11466830}
   frontColor: {fileID: 11454884}
@@ -2606,8 +2574,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aef90997faa354db2bbf1a8f2a3ef80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _countLabel: {fileID: 0}
-  _toggleBadgeDisplay: {fileID: 22445420}
+  _CountLabel: {fileID: 0}
+  _ToggleBadgeDisplay: {fileID: 22445420}
+--- !u!114 &11489274
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 117708}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
+    m_FontSize: 36
+    m_FontStyle: 0
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_RichText: 0
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: NEW!
 --- !u!114 &11491408
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2619,8 +2619,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _facingCozmoAngle: -90
-  _awayCozmoAngle: 0
+  _FacingCozmoAngle: -140
+  _AwayCozmoAngle: -50
   leftColor: {fileID: 11462508}
   rightColor: {fileID: 11461494}
   frontColor: {fileID: 11414838}
