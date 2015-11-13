@@ -51,6 +51,7 @@ def add_unity_arguments(parser):
         '--unity-binary-path',
         metavar='path',
         help='the full path to the Unity executable')
+
     
     def postprocess_unity(args):
         if hasattr(args, 'unity_dir'):
@@ -85,16 +86,21 @@ def parse_game_arguments():
     # NOTE: Both mac + ios here.
     default_platforms = ['mac', 'ios']
     parser.add_platform_arguments(platforms, default_platforms)
-    
-    add_unity_arguments(parser)
 
+    add_unity_arguments(parser)
     parser.add_output_directory_arguments(GAME_ROOT)
     parser.add_configuration_arguments()
     parser.add_verbose_arguments()
     parser.add_argument('--mex', '-m', dest='mex', action='store_true',
                 help='builds mathlab\'s mex project')
+    signing_group = parser.add_mutually_exclusive_group(required=False)
+    signing_group.add_argument(
+        '--provision-profile',
+        metavar='path',
+        default='',
+        help='Provide a mobile provisioning profile for signing')
 
-    
+
     return parser.parse_args()
 
 
@@ -130,7 +136,10 @@ class GamePlatformConfiguration(object):
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir, 'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
             
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
-            
+            if hasattr(self.options, 'provision_profile'):
+                self.provision_profile = self.options.provision_profile
+            else:
+                self.provision_profile = ''
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
             
             self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
@@ -190,7 +199,7 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
-                
+                'PROVISIONING_PROFILE={0}'.format(self.provision_profile),
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
                 '']
             
@@ -280,7 +289,7 @@ def recursive_delete(options):
 
 def main():
     options = parse_game_arguments()
-    
+
     clad_csharp = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'Scripts', 'Generated')
     clad_folders = [os.path.join(options.output_dir, 'clad'), clad_csharp, clad_csharp + '.meta']
     shared_generated_folders = [options.build_dir, options.output_dir]
