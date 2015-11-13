@@ -14,6 +14,7 @@
 #include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "user_config.h"
+#include "rboot.h"
 
 /** Handle wifi events passed by the OS
  */
@@ -82,6 +83,25 @@ void wifi_event_callback(System_Event_t *evt)
   }
 }
 
+static void checkAndClearBootloaderConfig(void)
+{
+  BootloaderConfig bootConfig;
+  if (spi_flash_read(BOOT_CONFIG_SECTOR * SECTOR_SIZE, (uint32*)&bootConfig, sizeof(BootloaderConfig)) == SPI_FLASH_RESULT_OK)
+  {
+    if (bootConfig.header != 0xe1df0c05)
+    {
+      return; // No need to erase
+    }
+  }
+  else
+  {
+    os_printf("Error reading back bootloader config\r\n");
+  }
+  
+  // Clear the bootloader config to indicate we have successfully booted
+  spi_flash_erase_sector(BOOT_CONFIG_SECTOR);
+}
+
 
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
@@ -112,6 +132,9 @@ static void system_init_done(void)
 
   // Enable I2SPI start only after clientInit
   i2spiStart();
+
+  // Check bootloader config and clear if nessisary
+  checkAndClearBootloaderConfig();
 
   os_printf("CPU Freq: %d MHz\r\n", system_get_cpu_freq());
 

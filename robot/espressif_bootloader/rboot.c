@@ -138,7 +138,7 @@ void NOINLINE copyNewImage(void)
   SPIRead(BOOT_CONFIG_SECTOR * SECTOR_SIZE, &config, sizeof(BootloaderConfig));
   if (config.header != BOOT_CONFIG_HEADER)
   {
-    ets_printf("WARNING: Incorrect boot config header, %08x != %08x, skipping\r\n", config.header, BOOT_CONFIG_HEADER);
+    ets_printf("No boot config header, %08x != %08x, skipping\r\n", config.header, BOOT_CONFIG_HEADER);
     return;
   }
   else if (calc_chksum((uint8*)&config, (uint8*)&config.chksum) != config.chksum)
