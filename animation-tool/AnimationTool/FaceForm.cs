@@ -97,6 +97,10 @@ namespace AnimationTool
                 }
             }
 
+            faceAngleNew.OnChanged += OnChanged;
+            faceScale.OnChanged += OnChanged;
+            faceCenter.OnChanged += OnChanged;
+
             Reset();
         }
 
