@@ -35,7 +35,7 @@ namespace SpeedTap {
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
-      CurrentRobot.StopFaceAwareness();
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetBehaviorSystem(false);
       _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
