@@ -64,12 +64,7 @@ namespace Anki.AppResources {
       }
     }
 
-    public static StringTable LoadStringsFromSmartlingJSONFile(string smartlingJSONFile) {
-
-      System.IO.StreamReader reader = System.IO.File.OpenText(smartlingJSONFile);
-      string jsonText = Anki.Util.ReadUnicodeEscapedString(reader);
-      reader.Close();
-
+    public static StringTable LoadStringsFromSmartlingJSONFile(string jsonText) {
       JSONObject stringMapJSON = new JSONObject(jsonText);
 
       List<string> keys = stringMapJSON.keys;

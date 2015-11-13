@@ -62,12 +62,6 @@ namespace Anki.UI {
 
       _LocalizedTextKey = text.Substring(1);
       _DisplayText = Localization.Get(_LocalizedTextKey);
-
-      // INGO - These lines weren't in the original version from OverDrive
-      m_Text = _DisplayText;
-      SetVerticesDirty();
-      SetLayoutDirty();
-      // end new lines
     }
 
     protected override void Awake() {
@@ -76,23 +70,10 @@ namespace Anki.UI {
       SetLayoutDirty();
     }
 
-    // INGO - These lines weren't in the original version from OverDrive
-    #if UNITY_EDITOR
-    private void Update() {
-      if (m_Text != DisplayText && !UnityEditor.EditorApplication.isPlaying) {
-        SetLocalizedText(m_Text);
-      }
-    }
-    #endif
-    // end new lines
-
     //
     // Override UI.Text methods to use LocalizedString
     //
-    // TODO: INGO - Unity 5.2.2 is throwing an error because OnFillVBO is
-    // obsolete (and we call base.OnFillVBO in this method). Need to understand
-    // what these methods do so that we can update them.
-    /*protected void _OnFillVBO(List<UIVertex> vbo) { 
+    protected override void OnPopulateMesh(UnityEngine.UI.VertexHelper vh) { 
       #if UNITY_EDITOR
       if (m_Text != DisplayText && !UnityEditor.EditorApplication.isPlaying) {
         SetLocalizedText(m_Text);
@@ -107,28 +88,12 @@ namespace Anki.UI {
         m_Text = _DisplayText;
       }
 
-      base.OnFillVBO(vbo);
+      base.OnPopulateMesh(vh);
 
       if (null != saveText) {
         m_Text = saveText;
       }
     }
-
-    // TODO: INGO - Need to override to use OnPopulateMesh(VertexHelper vh)
-    // instead. Not sure if it's possible here.
-    protected override void OnPopulateMesh(Mesh m) {
-      var vbo = new List<UIVertex>();
-      _OnFillVBO(vbo);
-
-      using (var vh = new UnityEngine.UI.VertexHelper()) {
-        var quad = new UIVertex[4];
-        for (int i = 0; i < vbo.Count; i += 4) {
-          vbo.CopyTo(i, quad, 0, 4);
-          vh.AddUIVertexQuad(quad);
-        }
-        vh.FillMesh(m);
-      }
-    }*/
 
     public override float preferredWidth {
       get {
