@@ -12,9 +12,9 @@ class BootloaderConfig(struct.Struct):
     
     def __init__(self, start=0, size=0, version=0):
         struct.Struct.__init__(self, "<IIIIB")
-        self.newImageStart = 0
-        self.newImageSize  = 0
-        self.version = 0
+        self.newImageStart = start
+        self.newImageSize  = size
+        self.version = version
     
     @property
     def checksum(self):
@@ -41,4 +41,5 @@ if __name__ == "__main__":
         version = int(eval(sys.argv[3]))
     except:
         version = 0
+    #sys.stdout.write("FW start = {:x}\tlen = {:x}\r\n".format(start, size))
     open("firmware/bootloaderConfig.bin", "wb").write(BootloaderConfig(start, size, version).serialize())

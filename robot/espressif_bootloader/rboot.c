@@ -46,7 +46,7 @@ static NOINLINE usercode* check_image(uint32* buffer, uint8* sectcount, uint32* 
 {
   rom_header_new *header = (rom_header_new*)buffer;
 
-  ets_printf("Checking image at %x\r\n", readpos);
+  ets_printf("Checking image at %x\r\n", *readpos);
   
   // read rom header
   if (SPIRead(*readpos, header, sizeof(rom_header_new)) != 0) {
@@ -81,7 +81,7 @@ static NOINLINE usercode* check_image(uint32* buffer, uint8* sectcount, uint32* 
   }
   else
   {
-    ets_printf("No ROM header detected, read %02X from address %x\r\n", header->magic, readpos);
+    ets_printf("No ROM header detected, read %02X from address %x\r\n", header->magic, *readpos);
     return 0;
   }
 }
@@ -158,7 +158,7 @@ void NOINLINE copyNewImage(void)
     uint32 sector;
     SpiFlashOpResult rslt;
     
-    ets_printf("Found new image\r\n");
+    ets_printf("Found new image: %x[%x]\r\n", config.newImageStart, config.newImageSize);
     
     ets_printf("\tErasing old firmware\r\n");
     for (sector = FIRMWARE_START_SECTOR; sector < FIRMWARE_START_SECTOR + config.newImageSize; sector++)

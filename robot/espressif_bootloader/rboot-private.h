@@ -16,7 +16,8 @@ typedef unsigned char uint8;
 
 #define NOINLINE __attribute__ ((noinline))
 
-#define CPU_CLK_FREQ 80*1000000       //unit: Hz
+#define CRYSTAL_FREQ 26000000
+#define CPU_CLK_FREQ (80*(CRYSTAL_FREQ)/16000000)
 
 #define ROM_MAGIC	   0xe9
 #define ROM_MAGIC_NEW1 0xea

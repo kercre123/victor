@@ -56,7 +56,7 @@ $(RBOOT_FW_BASE)/%.bin: $(RBOOT_BUILD_BASE)/%.elf
 	@$(OBJCOPY) --only-section .iram2.text -O binary $< eagle.app.v6.iram2text.bin
 	@python2 $(SDK_BASE)/tools/gen_appbin.py $< $(BOOT) $(SPI_MODE) $(SPI_FREQ_DIV) $(SPI_SIZE_MAP)
 	@mv eagle.app.flash.bin "$@"
-	#@rm eagle.app.v6.*.bin
+	@mv eagle.app.v6.*.bin build/
 
 clean:
 	@echo "RM $(RBOOT_BUILD_BASE) $(RBOOT_FW_BASE)"
