@@ -1248,27 +1248,12 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendStartFaceTracking(u8 timeout_sec)
+    void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
-      ExternalInterface::StartFaceTracking m;
-      m.timeout_sec = timeout_sec;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_StartFaceTracking(m);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendStopFaceTracking()
-    {
-      ExternalInterface::StopFaceTracking m;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_StopFaceTracking(m);
-      SendMessage(message);
-      
-      // For now, have to re-enable marker finding b/c turning on face
-      // tracking will have stopped it:
-      ExternalInterface::StartLookingForMarkers m2;
-      message.Set_StartLookingForMarkers(m2);
-      SendMessage(message);
+      ExternalInterface::EnableVisionMode m;
+      m.mode = mode;
+      m.enable = enable;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
     void UiGameController::SendForceAddRobot()

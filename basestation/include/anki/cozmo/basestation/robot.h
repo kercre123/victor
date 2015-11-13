@@ -38,7 +38,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
@@ -49,6 +48,7 @@
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
@@ -57,8 +57,6 @@
 #include <unordered_map>
 #include <time.h>
 #include <utility>
-
-#define ASYNC_VISION_PROCESSING 1
 
 namespace Anki {
   
@@ -193,19 +191,21 @@ public:
     //
     // Camera / Vision
     //
-    void                              EnableVisionWhileMoving(bool enable);
-    const Vision::Camera&             GetCamera() const;
-    Vision::Camera&                   GetCamera();
-    void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
-    const Vision::CameraCalibration&  GetCameraCalibration() const;
-    Vision::Camera                    GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
-    
+    VisionComponent&         GetVisionComponent() { return _visionComponent; }
+    const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
+    void                     EnableVisionWhileMoving(bool enable);
+    Vision::Camera           GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
+    Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request);
+  
+    Result ProcessImage(const Vision::ImageRGB& image);
+  
     // Queue an observed vision marker for processing with BlockWorld.
     // Note that this is a NON-const reference: the marker's camera will be updated
     // to use a pose from pose history.
     Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Get a *copy* of the current image on this robot's vision processing thread
+    // TODO: Remove this method? I don't think anyone is using it...
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
@@ -222,9 +222,9 @@ public:
     const Pose3d&          GetPose()         const;
     const f32              GetHeadAngle()    const;
     const f32              GetLiftAngle()    const;
-    const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
-    const PoseFrameID_t    GetPoseFrameID()  const {return _frameId;}
-    const Pose3d*          GetWorldOrigin() const { return _worldOrigin; }
+    const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
+    const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
+    const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
 
     // These change the robot's internal (basestation) representation of its
     // pose, head angle, and lift angle, but do NOT actually command the
@@ -360,9 +360,7 @@ public:
     // w.r.t. the world, and removes it from the lift pose chain so it is no
     // longer "attached" to the robot.
     Result SetCarriedObjectAsUnattached();
-    
-    Result StopDocking();
-    
+  
     /*
     //
     // Proximity Sensors
@@ -375,15 +373,6 @@ public:
     static const Pose3d ProxDetectTransform[NUM_PROX];
     */
 
-
-    //
-    // Vision
-    //
-    Result ProcessImage(const Vision::Image& image);
-    Result StartLookingForMarkers();
-    Result StopLookingForMarkers();
-    void SetupVisionHandlers(IExternalInterface& externalInterface);
-
     // Set how to save incoming robot state messages
     void SetSaveStateMode(const SaveMode_t mode);
     
@@ -391,7 +380,7 @@ public:
     void SetSaveImageMode(const SaveMode_t mode);
     
     // Return the timestamp of the last _processed_ image
-    TimeStamp_t GetLastImageTimeStamp() { return _visionProcessor.GetLastProcessedImageTimeStamp(); }
+    TimeStamp_t GetLastImageTimeStamp() { return _visionComponent.GetLastProcessedImageTimeStamp(); }
     
     // =========== Actions Commands =============
     
@@ -399,7 +388,9 @@ public:
     // to do, either "now" or in queues.
     // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
     ActionList& GetActionList() { return _actionList; }
-    
+  
+    static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
+  
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
     // anything.
@@ -466,11 +457,11 @@ public:
     
     Result RequestIMU(const u32 length_ms) const;
 
-    // For debugging robot parameters:
-    void SetupGainsHandlers(IExternalInterface& externalInterface);
 
     // =========== Pose history =============
-    
+  
+    RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
+  
     Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                    const PoseFrameID_t frameID,
                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
@@ -583,17 +574,17 @@ public:
     // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-    inline bool HasExternalInterface() const { return _externalInterface != nullptr; }
-    inline IExternalInterface* GetExternalInterface() {
+    bool HasExternalInterface() const { return _externalInterface != nullptr; }
+    IExternalInterface* GetExternalInterface() {
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
-    inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
-    inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+    void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
+    const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   
-    inline MovementComponent& GetMoveComponent() { return _movementComponent; }
-    inline const MovementComponent& GetMoveComponent() const { return _movementComponent; }
+    MovementComponent& GetMoveComponent() { return _movementComponent; }
+    const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    inline const MoodManager& GetMoodManager() const { return _moodManager; }
-    inline MoodManager& GetMoodManager() { return _moodManager; }
+    MoodManager& GetMoodManager() { return _moodManager; }
+    const MoodManager& GetMoodManager() const { return _moodManager; }
   
     // Handle various message types
     template<typename T>
@@ -603,6 +594,8 @@ public:
     // Does nothing if not. Returns true if event was broadcast, false if not (i.e.
     // if there was no external interface).
     bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
+  
+    Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
   
   protected:
     IExternalInterface* _externalInterface;
@@ -623,22 +616,15 @@ public:
     
     // A container for faces/people the robot knows about
     FaceWorld         _faceWorld;
-    
-    VisionProcessingThread _visionProcessor;
-    //Vision::PanTiltTracker _faceTracker;
-#   if !ASYNC_VISION_PROCESSING
-    Vision::Image     _image;
-    RobotState        _robotStateForImage;
-    bool              _haveNewImage = false;
-#   endif
   
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
     //ActionQueue      _actionQueue;
-    ActionList       _actionList;
+    ActionList        _actionList;
     MovementComponent _movementComponent;
-
+    VisionComponent   _visionComponent;
+  
     // Path Following. There are two planners, only one of which can
     // be selected at a time
     IPathPlanner*            _selectedPathPlanner          = nullptr;
@@ -663,12 +649,6 @@ public:
 
     // Sends a path to the robot to be immediately executed
     Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
-    
-    // Robot stores the calibration, camera just gets a reference to it
-    // This is so we can share the same calibration data across multiple
-    // cameras (e.g. those stored inside the pose history)
-    Vision::CameraCalibration _cameraCalibration;
-    Vision::Camera            _camera;
     bool                      _visionWhileMovingEnabled = false;
 
     /*
@@ -752,16 +732,6 @@ public:
     const Vision::KnownMarker*  _carryingMarker           = nullptr;
     bool                        _lastPickOrPlaceSucceeded = false;
   
-    /*
-     // Plan a path to the pre-ascent/descent pose (depending on current
-     // height of the robot) and then go up or down the ramp.
-     Result ExecuteRampingSequence(Ramp* ramp);
-     
-     // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
-     // object, then cross it.
-     Result ExecuteBridgeCrossingSequence(ActionableObject* object);
-     */
-    
     // A place to store reaction callback functions, indexed by the type of
     // vision marker that triggers them
     std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
@@ -815,7 +785,6 @@ public:
     uint32_t _imuDataSize = 0;
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
 
-
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -837,7 +806,9 @@ public:
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
-
+    void SetupVisionHandlers(IExternalInterface& externalInterface);
+    void SetupGainsHandlers(IExternalInterface& externalInterface);
+  
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,
                                      const PoseFrameID_t& frameId) const;
@@ -897,46 +868,16 @@ inline const Pose3d& Robot::GetDriveCenterPose(void) const
 inline void Robot::EnableVisionWhileMoving(bool enable)
 { _visionWhileMovingEnabled = enable; }
 
-inline const Vision::Camera& Robot::GetCamera(void) const
-{ return _camera; }
+inline const f32 Robot::GetHeadAngle() const
+{ return _currentHeadAngle; }
 
-inline Vision::Camera& Robot::GetCamera(void)
-{ return _camera; }
+inline const f32 Robot::GetLiftAngle() const
+{ return _currentLiftAngle; }
 
-inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
-{
-  if (_cameraCalibration != calib) {
-
-    _cameraCalibration = calib;
-    _camera.SetSharedCalibration(&_cameraCalibration);
-
-    //_faceTracker.Init(calib);
-
-#if ASYNC_VISION_PROCESSING
-    // Now that we have camera calibration, we can start the vision
-    // processing thread
-    _visionProcessor.Start(_cameraCalibration);
-#else
-    _visionProcessor.SetCameraCalibration(_cameraCalibration);
-#endif
-  } else {
-    PRINT_NAMED_INFO("Robot.SetCameraCalibration.IgnoringDuplicateCalib","");
-  }
+inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
+  _rampID = rampID;
+  _rampDirection = direction;
 }
-
-inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
-{ return _cameraCalibration; }
-
-  inline const f32 Robot::GetHeadAngle() const
-  { return _currentHeadAngle; }
-  
-  inline const f32 Robot::GetLiftAngle() const
-  { return _currentLiftAngle; }
-  
-  inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
-    _rampID = rampID;
-    _rampDirection = direction;
-  }
 
 inline Result Robot::SetDockObjectAsAttachedToLift(){
   return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);

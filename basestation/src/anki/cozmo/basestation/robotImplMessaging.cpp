@@ -130,7 +130,7 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  SetCameraCalibration(calib);
+  _visionComponent.SetCameraCalibration(calib);
   SetPhysicalRobot(payload.isPhysicalRobots);
 }
 
@@ -157,7 +157,7 @@ void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& 
 
   // Note: this returns the vision system to whatever mode it was in before
   // it was docking/tracking
-  StopDocking();
+  _visionComponent.EnableMode(VisionMode::Tracking, false);
 }
 
 void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -175,8 +175,8 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
     SetLastPickOrPlaceSucceeded(false);
   }
 
-  StopDocking();
-  StartLookingForMarkers();
+  _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
+  _visionComponent.EnableMode(VisionMode::Tracking, false);
 
 }
 
@@ -418,34 +418,30 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
   if(isImageReady)
   {
-    Vision::Image image;
     cv::Mat cvImg = _imageDeChunker->GetImage();
     if(cvImg.channels() == 1) {
-      image = Vision::Image(height, width, cvImg.data);
-    } else {
-      // TODO: Actually support processing color data (and have ImageRGB object)
-      cv::cvtColor(cvImg, cvImg, CV_RGB2GRAY);
-      image = Vision::Image(height, width, cvImg.data);
+      cv::cvtColor(cvImg, cvImg, CV_GRAY2RGB);
     }
 
+    Vision::ImageRGB image(height,width,cvImg.data);
     image.SetTimestamp(payload.frameTimeStamp);
 
-#       if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+#   if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
     // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
-        static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
-        static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
-        static s32 g_queueImages_queueIndex = 0;
-
-        char filename[256];
-        snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
-
-        cv::imwrite(filename, image.get_CvMat_());
-
-        g_queueImages_queueIndex++;
-
-        if(g_queueImages_queueIndex >= g_queueImages_queueLength)
-          g_queueImages_queueIndex = 0;
-#       endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+    static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
+    static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
+    static s32 g_queueImages_queueIndex = 0;
+    
+    char filename[256];
+    snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
+    
+    cv::imwrite(filename, image.get_CvMat_());
+    
+    g_queueImages_queueIndex++;
+    
+    if(g_queueImages_queueIndex >= g_queueImages_queueLength)
+      g_queueImages_queueIndex = 0;
+#   endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
 
     ProcessImage(image);
 
@@ -646,31 +642,11 @@ void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
 void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 {
   // StartFaceTracking
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartFaceTracking,
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::EnableVisionMode,
     [this] (const GameToEngineEvent& event)
     {
-      _visionProcessor.EnableFaceDetection(true);
-    }));
-  
-  // StopFaceTracking
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopFaceTracking,
-    [this] (const GameToEngineEvent& event)
-    {
-      _visionProcessor.EnableFaceDetection(false);
-    }));
-  
-  // StartLookingForMarkers
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StartLookingForMarkers,
-    [this] (const GameToEngineEvent& event)
-    {
-      StartLookingForMarkers();
-    }));
-  
-  // StopLookingForMarkers
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::StopLookingForMarkers,
-    [this] (const GameToEngineEvent& event)
-    {
-      StopLookingForMarkers();
+      auto const& payload = event.GetData().Get_EnableVisionMode();
+      _visionComponent.EnableMode(payload.mode, payload.enable);
     }));
   
   // VisionWhileMoving
