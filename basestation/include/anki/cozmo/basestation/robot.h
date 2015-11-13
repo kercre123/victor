@@ -454,7 +454,10 @@ public:
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
-    
+  
+    // This is just for unit tests to fake a syncTimeAck message from the robot
+    void FakeSyncTimeAck() { _timeSynced = true;}
+  
     Result RequestIMU(const u32 length_ms) const;
 
 
@@ -604,7 +607,10 @@ public:
     // The robot's identifier
     RobotID_t         _ID;
     bool              _isPhysical = false;
-    
+  
+    // Whether or not sync time was acknowledged by physical robot
+    bool              _timeSynced = false;
+  
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable = false;
     
@@ -804,6 +810,7 @@ public:
     // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupVisionHandlers(IExternalInterface& externalInterface);
@@ -827,7 +834,7 @@ public:
     // Sync time with physical robot and trigger it robot to send back camera
     // calibration
     Result SendSyncTime() const;
-    
+  
     // Send's robot's current pose
     Result SendAbsLocalizationUpdate() const;
     

@@ -65,6 +65,7 @@ namespace Anki {
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _ID(robotID)
+    , _timeSynced(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
@@ -289,6 +290,11 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
 
+      // Ignore state messages received before time sync
+      if (!_timeSynced) {
+        return lastResult;
+      }
+      
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
       {
@@ -1396,6 +1402,9 @@ namespace Anki {
 
     Result Robot::SyncTime()
     {
+      _timeSynced = false;
+      _poseHistory->Clear();
+      
       return SendSyncTime();
     }
     

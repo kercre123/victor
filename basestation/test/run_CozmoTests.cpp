@@ -56,6 +56,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   
   RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, &msgHandler, nullptr, nullptr);
+  robot.FakeSyncTimeAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
