@@ -165,10 +165,12 @@ namespace Anki {
 
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
-
-        PRINT("Robot received SyncTime message from basestation with ID=%d and syncTime=%d.\n",
-              msg.robotID, msg.syncTime);
-
+        
+        RobotInterface::SyncTimeAck syncTimeAckMsg;
+        if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
+          PRINT("Error: Failed to send syncTimeAckMsg");
+        }
+        
         initReceived_ = true;
 
         // TODO: Compare message ID to robot ID as a handshake?
@@ -448,7 +450,7 @@ namespace Anki {
 #           endif
           };
 
-          if(RobotInterface::SendMessage(headCalibMsg)) {
+          if(!RobotInterface::SendMessage(headCalibMsg)) {
             PRINT("Failed to send camera calibration message.\n");
           }
         }

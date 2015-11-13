@@ -384,7 +384,7 @@ namespace Cozmo {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
         f32 observationDistance = 0;
-        _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+        _robot->GetVisionComponent().GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
         
         Rectangle<f32> boundingBox(projectedCorners);
         
@@ -612,7 +612,7 @@ namespace Cozmo {
               }
               
               // Project this existing object into the robot's camera, using its new pose
-              _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+              _robot->GetVisionComponent().GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
               
               // If the object is being carried, uncarry it
               if (_robot->GetCarryingObject() == observedObject->GetID()) {
@@ -667,7 +667,7 @@ namespace Cozmo {
           // Don't add as an occluder the very first time we see the object; wait
           // until we've seen it MIN_TIMES_TO_OBSERVE_OBJECT times.
           // // Project this new object into the robot's camera:
-          // //_robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
+          // //_robot->GetVisionComponent().GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
           observedObject = objSeen;
             
@@ -796,7 +796,7 @@ namespace Cozmo {
                 for(auto marker : matchingObject->GetMarkers()) {
                   if(marker.GetLastObservedTime() >= matchingObject->GetLastObservedTime()) {
                     Pose3d markerPoseWrtCamera;
-                    if(false == marker.GetPose().GetWithRespectTo(_robot->GetCamera().GetPose(), markerPoseWrtCamera)) {
+                    if(false == marker.GetPose().GetWithRespectTo(_robot->GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera)) {
                       PRINT_NAMED_ERROR("Robot.AddAndUpdateObjects.MarkerOriginProblem",
                                         "Could not get pose of marker w.r.t. robot camera.\n");
                       return RESULT_FAIL;
@@ -857,13 +857,13 @@ namespace Cozmo {
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          //_robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
+          //_robot->GetVisionComponent().GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
           // Add all observed markers of this object as occluders:
           std::vector<const Vision::KnownMarker *> observedMarkers;
           observedObject->GetObservedMarkers(observedMarkers);
           for(auto marker : observedMarkers) {
-            _robot->GetCamera().AddOccluder(*marker);
+            _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
           }
           
           // Now that we've merged in objSeen, we can delete it because we
@@ -1078,7 +1078,7 @@ namespace Cozmo {
         // Remove objects that should have been visible based on their last known
         // location, but which must not be there because we saw something behind
         // that location:
-        const Vision::Camera& camera = _robot->GetCamera();
+        const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
         const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNcols()));
         const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNrows()));
         if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true,
@@ -1147,7 +1147,7 @@ namespace Cozmo {
           bool markersShouldBeVisible = false;
           bool markerIsOccluded = false;
           for(auto & marker : unobserved.object->GetMarkers()) {
-            if(marker.IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
+            if(marker.IsVisibleFrom(_robot->GetVisionComponent().GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
               // As soon as one marker is visible, we can stop
               markersShouldBeVisible = true;
               break;
@@ -1168,7 +1168,7 @@ namespace Cozmo {
             // TODO: Avoid ProjectObject here because it also happens inside BroadcastObjectObservation
             f32 distance;
             std::vector<Point2f> projectedCorners;
-            _robot->GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
+            _robot->GetVisionComponent().GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
             
             if(distance > 0.f) { // in front of camera?
               for(auto & corner : projectedCorners) {
@@ -1311,7 +1311,7 @@ namespace Cozmo {
       // Get all mat objects *seen by this robot's camera*
       std::multimap<f32, ObservableObject*> matsSeen;
       _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                                                  (_robot->GetCamera().GetID()));
+                                                                  (_robot->GetVisionComponent().GetCamera().GetID()));
 
       // Remove used markers from map container
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -1680,7 +1680,7 @@ namespace Cozmo {
                            Vision::MarkerTypeStrings[obsMarker->GetCode()],
                            robot->GetID());
            */
-          _robot->GetCamera().AddOccluder(*obsMarker);
+          _robot->GetVisionComponent().GetCamera().AddOccluder(*obsMarker);
         }
         
         /* Always re-drawing everything now
@@ -1920,7 +1920,7 @@ namespace Cozmo {
       
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with the robot's camera
-      _robot->GetCamera().ClearOccluders();
+      _robot->GetVisionComponent().GetCamera().ClearOccluders();
       
       // New timestep, clear list of observed object bounding boxes
       //_obsProjectedObjects.clear();
@@ -1948,7 +1948,7 @@ namespace Cozmo {
         // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
         // Increasing history time window would fix this, but it's not really a solution.
         for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-          if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetCamera().GetID()) &&
+          if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetVisionComponent().GetCamera().GetID()) &&
               !_robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
             PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
             poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair);

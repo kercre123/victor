@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -64,13 +65,13 @@ namespace Anki {
     : _externalInterface(externalInterface)
     , _dataPlatform(dataPlatform)
     , _ID(robotID)
+    , _timeSynced(false)
     , _msgHandler(msgHandler)
     , _blockWorld(this)
     , _faceWorld(*this)
-    , _visionProcessor(dataPlatform)
     , _behaviorMgr(*this)
     , _movementComponent(*this)
-    , _camera(robotID)
+    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, dataPlatform)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
     , _headCamPose(RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0}),
                   {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
@@ -169,13 +170,13 @@ namespace Anki {
         // Robot is being picked up: de-localize it
         Delocalize();
         
-        _visionProcessor.Pause(true);
+        _visionComponent.Pause(true);
         
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
       }
       else if (true == _isPickedUp && false == t) {
         // Robot just got put back down
-        _visionProcessor.Pause(false);
+        _visionComponent.Pause(false);
         
         ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
         
@@ -253,7 +254,7 @@ namespace Anki {
       for(auto marker : object->GetMarkers()) {
         if(marker.GetLastObservedTime() >= mostRecentObsTime) {
           Pose3d markerPoseWrtCamera;
-          if(false == marker.GetPose().GetWithRespectTo(_camera.GetPose(), markerPoseWrtCamera)) {
+          if(false == marker.GetPose().GetWithRespectTo(_visionComponent.GetCamera().GetPose(), markerPoseWrtCamera)) {
             PRINT_NAMED_ERROR("Robot.SetLocalizedTo.MarkerOriginProblem",
                               "Could not get pose of marker w.r.t. robot camera.\n");
             return RESULT_FAIL;
@@ -289,6 +290,11 @@ namespace Anki {
     {
       Result lastResult = RESULT_OK;
 
+      // Ignore state messages received before time sync
+      if (!_timeSynced) {
+        return lastResult;
+      }
+      
       // Save state to file
       if(_stateSaveMode != SAVE_OFF)
       {
@@ -557,9 +563,17 @@ namespace Anki {
       return headAngSpeed;
     }
 
+    Vision::Camera Robot::GetHistoricalCamera(TimeStamp_t t_request)
+    {
+      RobotPoseStamp p;
+      TimeStamp_t t;
+      _poseHistory->GetRawPoseAt(t_request, t, p);
+      return GetHistoricalCamera(&p, t);
+    }
+    
     Vision::Camera Robot::GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t)
     {
-      Vision::Camera camera(GetCamera());
+      Vision::Camera camera(_visionComponent.GetCamera());
       
       // Compute pose from robot body to camera
       // Start with canonical (untilted) headPose
@@ -658,13 +672,6 @@ namespace Anki {
         }
         
       } // if(!_visionWhileMovingEnabled)
-   
-      if(!GetCamera().IsCalibrated()) {
-        PRINT_NAMED_WARNING("MessageHandler::CalibrationNotSet",
-                            "Received VisionMarker message from robot before "
-                            "camera calibration was set on Basestation.");
-        return RESULT_FAIL;
-      }
       
       // Update the marker's camera to use a pose from pose history, and
       // create a new marker with the updated camera
@@ -792,6 +799,8 @@ namespace Anki {
        */
     }
     
+    
+    
     Result Robot::Update(void)
     {
 #if(0)
@@ -813,145 +822,27 @@ namespace Anki {
        */
       
       
-      if (GetCamera().IsCalibrated()) {
-      
-#     if !ASYNC_VISION_PROCESSING
-      if(_haveNewImage)
-        
-        _visionProcessor.Update(_image, _robotStateForImage);
-        _haveNewImage = false;
-#     endif
+      if(_visionComponent.GetCamera().IsCalibrated())
       {
-        
-        // Signal the availability of an image
-        //CozmoEngineSignals::RobotImageAvailableSignal().emit(GetID());
-        
-        ////////// Check for any messages from the Vision Thread ////////////
-        
-        Vision::ObservedMarker visionMarker;
-        while(true == _visionProcessor.CheckMailbox(visionMarker)) {
-          
-          Result lastResult = QueueObservedMarker(visionMarker);
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
-                              "Got VisionMarker message from vision processing thread but failed to queue it.");
-            return lastResult;
-          }
-          
-          const Quad2f& corners = visionMarker.GetImageCorners();
-          VizManager::getInstance()->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
-                                                      corners[Quad::TopRight].x(),  corners[Quad::TopRight].y(),
-                                                      corners[Quad::BottomRight].x(),  corners[Quad::BottomRight].y(),
-                                                      corners[Quad::BottomLeft].x(),  corners[Quad::BottomLeft].y(),
-                                                      visionMarker.GetCode() != Vision::MARKER_UNKNOWN);
-        }
-        
-        Vision::TrackedFace faceDetection;
-        while(true == _visionProcessor.CheckMailbox(faceDetection)) {
-          /*
-          PRINT_NAMED_INFO("Robot.Update",
-                           "Robot %d reported seeing a face at (x,y,w,h)=(%d,%d,%d,%d).",
-                           GetID(), faceDetection.x_upperLeft, faceDetection.y_upperLeft, faceDetection.width, faceDetection.height);
-          */
-          
-          Result lastResult;
-          
-          // Get historical robot pose at specified timestamp to make sure we've
-          // got a robot/camera in pose history
-          TimeStamp_t t;
-          RobotPoseStamp* p = nullptr;
-          HistPoseKey poseKey;
-          lastResult = ComputeAndInsertPoseIntoHistory(faceDetection.GetTimeStamp(),
-                                                       t, &p, &poseKey, true);
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("Robot.Update.HistoricalPoseNotFound",
-                                "For face seen at time: %d, hist: %d to %d\n",
-                                faceDetection.GetTimeStamp(),
-                                _poseHistory->GetOldestTimeStamp(),
-                                _poseHistory->GetNewestTimeStamp());
-            return lastResult;
-          }
+        Result visionResult = RESULT_OK;
 
-          // Use a camera from the robot's pose history to estimate the head's
-          // 3D translation, w.r.t. that camera. Also puts the face's pose in
-          // the camera's pose chain.
-          faceDetection.UpdateTranslation(GetHistoricalCamera(p, t));
-          
-          // Now use the faceDetection to update FaceWorld:
-          lastResult = _faceWorld.AddOrUpdateFace(faceDetection);
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_ERROR("Robot.Update.FailedToUpdateFace",
-                              "Got FaceDetection from vision processing but failed to update it.");
-          }
-          
-          VizManager::getInstance()->DrawCameraFace(faceDetection,
-            faceDetection.IsBeingTracked() ? NamedColors::GREEN : NamedColors::RED);
-
-        }
+        // Helper macro for running a vision component, capturing result, and
+        // printing error message / returning if that result was not RESULT_OK.
+#       define TRY_AND_RETURN_ON_FAILURE(__NAME__) \
+        do { if((visionResult = _visionComponent.__NAME__(*this)) != RESULT_OK) { \
+          PRINT_NAMED_ERROR("Robot.Update." QUOTE(__NAME__) "Failed", ""); \
+          return visionResult; } } while(0)
         
-        VizInterface::TrackerQuad trackerQuad;
-        if(true == _visionProcessor.CheckMailbox(trackerQuad)) {
-          // Send tracker quad info to viz
-          VizManager::getInstance()->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
-                                                     trackerQuad.topRight_x, trackerQuad.topRight_y,
-                                                     trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
-                                                     trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
-        }
+        TRY_AND_RETURN_ON_FAILURE(UpdateVisionMarkers);
+        TRY_AND_RETURN_ON_FAILURE(UpdateFaces);
+        TRY_AND_RETURN_ON_FAILURE(UpdateTrackingQuad);
+        TRY_AND_RETURN_ON_FAILURE(UpdateDockingErrorSignal);
+        TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
         
-        //MessageDockingErrorSignal dockingErrorSignal;
-        std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
-        if(true == _visionProcessor.CheckMailbox(markerPoseWrtCamera)) {
-          
-          // Convert from camera frame to robot frame
-          Anki::Cozmo::RobotPoseStamp p;
-          TimeStamp_t t;
-          _poseHistory->GetRawPoseAt(markerPoseWrtCamera.second, t, p);
-          
-          // Hook the pose coming out of the vision system up to the historical
-          // camera at that timestamp
-          Vision::Camera histCamera(GetHistoricalCamera(&p, t));
-          markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
-          /*
-          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
-          Pose3d markerPoseWrtRobot;
-          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
-            PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
-                              "Could not get marker pose w.r.t. robot.");
-            return RESULT_FAIL;
-          }
-          */
-          //Pose3d poseWrtRobot = poseWrtCam;
-          //poseWrtRobot.PreComposeWith(camWrtRobotPose);
-          Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
-          markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
-          
-          DockingErrorSignal dockErrMsg;
-          dockErrMsg.timestamp = markerPoseWrtCamera.second;
-          dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
-          dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
-          dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
-          dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
-                    
-          // Visualize docking error signal
-          VizManager::getInstance()->SetDockingError(dockErrMsg.x_distErr,
-                                                     dockErrMsg.y_horErr,
-                                                     dockErrMsg.angleErr);
-          
-          // Try to use this for closed-loop control by sending it on to the robot
-          SendMessage(RobotInterface::EngineToRobot(std::move(dockErrMsg)));
-        }
-        {
-          RobotInterface::PanAndTilt panTiltHead;
-          if (true == _visionProcessor.CheckMailbox(panTiltHead)) {
-            SendMessage(RobotInterface::EngineToRobot(std::move(panTiltHead)));
-          }
-        }
+#       undef TRY_AND_RETURN_ON_FAILURE
         
-        ////////// Update the robot's blockworld //////////
-        // (Note that we're only doing this if the vision processor completed)
-        
+        // Update Block and Face Worlds
         uint32_t numBlocksObserved = 0;
-
         if(RESULT_OK != _blockWorld.Update(numBlocksObserved)) {
           PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
         }
@@ -959,8 +850,7 @@ namespace Anki {
         if(RESULT_OK != _faceWorld.Update()) {
           PRINT_NAMED_WARNING("Robot.Update.FaceWorldUpdateFailed", "");
         }
-
-      } // if(_visionProcessor.WasLastImageProcessed())
+        
       } // if (GetCamera().IsCalibrated())
       
       ///////// Update the behavior manager ///////////
@@ -1155,17 +1045,8 @@ namespace Anki {
     
     bool Robot::GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan)
     {
-#     if ASYNC_VISION_PROCESSING
-      return _visionProcessor.GetCurrentImage(img, newerThan);
-#     else
-      if(!_image.IsEmpty() && _image.GetTimestamp() > newerThan ) {
-        _image.CopyDataTo(img);
-        img.SetTimestamp(_image.GetTimestamp());
-        return true;
-      } else {
-        return false;
-      }
-#     endif
+      PRINT_NAMED_ERROR("Robot.GetCurrentImage.Deprecated", "");
+      return false;
     }
     
     u32 Robot::GetAverageImagePeriodMS()
@@ -1224,7 +1105,7 @@ namespace Anki {
       newHeadPose.SetName("Camera");
       
       // Update the head camera's pose
-      _camera.SetPose(newHeadPose);
+      _visionComponent.GetCamera().SetPose(newHeadPose);
       
     } // set_headAngle()
 
@@ -1533,6 +1414,9 @@ namespace Anki {
 
     Result Robot::SyncTime()
     {
+      _timeSynced = false;
+      _poseHistory->Clear();
+      
       return SendSyncTime();
     }
     
@@ -2096,12 +1980,6 @@ namespace Anki {
       
     } // SetOnPose()
     
-    Result Robot::StopDocking()
-    {
-      _visionProcessor.StopMarkerTracking();
-      return RESULT_OK;
-    }
-    
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
@@ -2175,8 +2053,10 @@ namespace Anki {
                                    dockAction == DockAction::DA_CROSS_BRIDGE);
         
         // Tell the VisionSystem to start tracking this marker:
-        _visionProcessor.SetMarkerToTrack(marker->GetCode(), marker->GetSize(), image_pixel_x, image_pixel_y, checkAngleX,
-                                          placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad);
+        _visionComponent.SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
+                                          image_pixel_x, image_pixel_y, checkAngleX,
+                                          placementOffsetX_mm, placementOffsetY_mm,
+                                          placementOffsetAngle_rad);
       }
       
       return sendResult;
@@ -2512,7 +2392,7 @@ namespace Anki {
       _imageSaveMode = mode;
     }
     
-    Result Robot::ProcessImage(const Vision::Image& image)
+    Result Robot::ProcessImage(const Vision::ImageRGB& image)
     {
       Result lastResult = RESULT_OK;
       
@@ -2566,39 +2446,15 @@ namespace Anki {
       robotState.timestamp     = actualTimestamp;
       robotState.pose_frame_id = p.GetFrameId();
       robotState.headAngle     = p.GetHeadAngle();
-      robotState.liftAngle = p.GetLiftAngle();
-      robotState.pose.x    = p.GetPose().GetTranslation().x();
-      robotState.pose.y    = p.GetPose().GetTranslation().y();
-      robotState.pose.z    = p.GetPose().GetTranslation().z();
-      robotState.pose.angle= p.GetPose().GetRotationAngle<'Z'>().ToFloat();
+      robotState.liftAngle     = p.GetLiftAngle();
+      robotState.pose.x        = p.GetPose().GetTranslation().x();
+      robotState.pose.y        = p.GetPose().GetTranslation().y();
+      robotState.pose.z        = p.GetPose().GetTranslation().z();
+      robotState.pose.angle    = p.GetPose().GetRotationAngle<'Z'>().ToFloat();
       
-#     if ASYNC_VISION_PROCESSING
-      
-      // Note this copies the image
-      _visionProcessor.SetNextImage(image, robotState);
-      
-#     else
-      
-      image.CopyDataTo(_image);
-      _image.SetTimestamp(image.GetTimestamp());
-      _robotStateForImage = robotState;
-      _haveNewImage = true;
-      
-#     endif
+      _visionComponent.SetNextImage(image, robotState);
       
       return lastResult;
-    }
-    
-    Result Robot::StartLookingForMarkers()
-    {
-      _visionProcessor.EnableMarkerDetection(true);
-      return RESULT_OK;
-    }
-
-    Result Robot::StopLookingForMarkers()
-    {
-      _visionProcessor.EnableMarkerDetection(false);
-      return RESULT_OK;
     }
     
     /*

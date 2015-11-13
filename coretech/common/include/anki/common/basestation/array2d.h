@@ -54,8 +54,8 @@ namespace Anki
     // Reference counting assignment (does not copy):
     Array2d<T>& operator= (const Array2d<T> &other);
     
-    // Copies *just the data* to another Array2d
-    void CopyDataTo(Array2d<T> &other) const;
+    // Copies to another Array2d
+    void CopyTo(Array2d<T> &other) const;
 
     // Access by row, col (for isolated access):
     T  operator() (const int row, const int col) const;
@@ -87,13 +87,19 @@ namespace Anki
     const T* GetDataPointer() const;
 
     // Apply a function to every element, in place:
-    void ApplyScalarFunction(std::function<T(T)>fcn); //T (*fcn)(T));
-
+    void ApplyScalarFunction(std::function<T(T)>fcn);
+    
     // Apply a function pointer to every element, storing the
     // result in a separate, possibly differently-typed, result:
     template<class Tresult>
-    void ApplyScalarFunction(std::function<void(const T&, Tresult&)>fcn,//void(*fcn)(const T&, Tresult&),
-      Array2d<Tresult> &result) const;
+    void ApplyScalarFunction(std::function<Tresult(const T&)>fcn, Array2d<Tresult> &result) const;
+    
+    // Apply scalar function that takes each pixel of this array and another array
+    // of the same size and stores in a given output array
+    template<class Tresult>
+    void ApplyScalarFunction(std::function<Tresult(const T& thisElem, const T& otherElem)>fcn,
+                             const Array2d<T>& otherArray,
+                             Array2d<Tresult>& result) const;
     
     Array2d<T>& operator+=(const Array2d<T>& other);
     Array2d<T>& operator-=(const Array2d<T>& other);
@@ -111,7 +117,7 @@ namespace Anki
 #if ANKICORETECH_USE_OPENCV
     bool IsContinuous() const { return cv::Mat_<T>::isContinuous(); }
 #else
-    bool IsContinuous() const { return false; }
+    bool IsContinuous() const { return true; }
 #endif
     
   protected:
