@@ -164,8 +164,7 @@ public class Robot : IDisposable {
   private U2G.TurnInPlace TurnInPlaceMessage;
   private U2G.TraverseObject TraverseObjectMessage;
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
-  private U2G.StartFaceTracking StartFaceTrackingMessage;
-  private U2G.StopFaceTracking StopFaceTrackingMessage;
+  private U2G.EnableVisionMode EnableVisionModeMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
@@ -176,6 +175,7 @@ public class Robot : IDisposable {
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
   private U2G.AlignWithObject AlignWithObjectMessage;
+ 
   private PathMotionProfile PathMotionProfileDefault;
 
   private ObservedObject _CarryingObject;
@@ -261,8 +261,7 @@ public class Robot : IDisposable {
     TurnInPlaceMessage = new U2G.TurnInPlace();
     TraverseObjectMessage = new U2G.TraverseObject();
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
-    StartFaceTrackingMessage = new U2G.StartFaceTracking();
-    StopFaceTrackingMessage = new U2G.StopFaceTracking();
+    EnableVisionModeMessage = new U2G.EnableVisionMode();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
@@ -942,14 +941,18 @@ public class Robot : IDisposable {
   }
 
   public void StartFaceAwareness() {
-    StartFaceTrackingMessage.timeout_sec = byte.MaxValue;
+    EnableVisionModeMessage.mode = VisionMode.DetectingFaces;
+    EnableVisionModeMessage.enable = true;
 
-    RobotEngineManager.Instance.Message.StartFaceTracking = StartFaceTrackingMessage;
+    RobotEngineManager.Instance.Message.EnableVisionMode = EnableVisionModeMessage;
     RobotEngineManager.Instance.SendMessage();
   }
 
   public void StopFaceAwareness() {
-    RobotEngineManager.Instance.Message.StopFaceTracking = StopFaceTrackingMessage;
+    EnableVisionModeMessage.mode = VisionMode.DetectingFaces;
+    EnableVisionModeMessage.enable = false;
+
+    RobotEngineManager.Instance.Message.EnableVisionMode = EnableVisionModeMessage;
     RobotEngineManager.Instance.SendMessage();
   }
 
