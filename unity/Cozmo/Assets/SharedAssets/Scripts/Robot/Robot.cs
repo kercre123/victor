@@ -111,12 +111,12 @@ public class Robot : IDisposable {
 
   public List<Face> Faces { get; private set; }
 
-  public Light[] Lights { get; private set; }
+  public Light[] BackpackLights { get; private set; }
 
   private bool _LightsChanged {
     get {
-      for (int i = 0; i < Lights.Length; ++i) {
-        if (Lights[i].Changed)
+      for (int i = 0; i < BackpackLights.Length; ++i) {
+        if (BackpackLights[i].Changed)
           return true;
       }
 
@@ -285,10 +285,10 @@ public class Robot : IDisposable {
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
 
-    Lights = new Light[SetBackpackLEDsMessage.onColor.Length];
+    BackpackLights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i] = new Light();
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i] = new Light();
     }
 
     ClearData(true);
@@ -361,8 +361,8 @@ public class Robot : IDisposable {
     Rotation = Quaternion.identity;
     LocalBusyTimer = 0f;
 
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].ClearData();
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i].ClearData();
     }
   }
 
@@ -392,27 +392,6 @@ public class Robot : IDisposable {
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
     Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
 
-  }
-
-  public void UpdateLightMessages(bool now = false) {
-    if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnected)
-      return;
-
-    if (Time.time > LightCube.Light.MessageDelay || now) {
-      var enumerator = LightCubes.GetEnumerator();
-
-      while (enumerator.MoveNext()) {
-        LightCube lightCube = enumerator.Current.Value;
-
-        if (lightCube.LightsChanged)
-          lightCube.SetAllLEDs();
-      }
-    }
-
-    if (Time.time > Light.MessageDelay || now) {
-      if (_LightsChanged)
-        SetAllBackpackLEDs();
-    }
   }
 
   // Object moved, so remove it from the seen list
@@ -902,65 +881,12 @@ public class Robot : IDisposable {
     LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
   }
 
-  private void SetLastLEDs() {
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].SetLastInfo();
-    }
-  }
-
-  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
-                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].OnColor = onColor;
-      Lights[i].OffColor = offColor;
-      Lights[i].OnPeriodMs = onPeriod_ms;
-      Lights[i].OffPeriodMs = offPeriod_ms;
-      Lights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
-      Lights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
-    }
-  }
-
-  // should only be called from update loop
-  private void SetAllBackpackLEDs() {
-
-    SetBackpackLEDsMessage.robotID = ID;
-
-    for (int i = 0; i < Lights.Length; ++i) {
-      SetBackpackLEDsMessage.onColor[i] = Lights[i].OnColor;
-      SetBackpackLEDsMessage.offColor[i] = Lights[i].OffColor;
-      SetBackpackLEDsMessage.onPeriod_ms[i] = Lights[i].OnPeriodMs;
-      SetBackpackLEDsMessage.offPeriod_ms[i] = Lights[i].OffPeriodMs;
-      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].TransitionOnPeriodMs;
-      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
-    }
-    
-    RobotEngineManager.Instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
-    RobotEngineManager.Instance.SendMessage();
-
-    SetLastLEDs();
-  }
-
   public void SetVisionMode(VisionMode mode, bool enable) {
     EnableVisionModeMessage.mode = mode;
     EnableVisionModeMessage.enable = enable;
 
     RobotEngineManager.Instance.Message.EnableVisionMode = EnableVisionModeMessage;
     RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void TurnOffAllLights(bool now = false) {
-    var enumerator = LightCubes.GetEnumerator();
-    
-    while (enumerator.MoveNext()) {
-      LightCube lightCube = enumerator.Current.Value;
-      
-      lightCube.SetLEDs();
-    }
-
-    SetBackpackLEDs();
-
-    if (now)
-      UpdateLightMessages(now);
   }
 
   public void ExecuteBehavior(BehaviorType type) {
@@ -985,4 +911,86 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.ActivateBehaviorChooser = ActivateBehaviorChooserMessage;
     RobotEngineManager.Instance.SendMessage();
   }
+
+  #region Light manipulation
+
+  #region Backpack Lights
+
+  private void SetLastLEDs() {
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i].SetLastInfo();
+    }
+  }
+
+  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i].OnColor = onColor;
+      BackpackLights[i].OffColor = offColor;
+      BackpackLights[i].OnPeriodMs = onPeriod_ms;
+      BackpackLights[i].OffPeriodMs = offPeriod_ms;
+      BackpackLights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
+      BackpackLights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
+    }
+  }
+
+  // should only be called from update loop
+  private void SetAllBackpackLEDs() {
+
+    SetBackpackLEDsMessage.robotID = ID;
+
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      SetBackpackLEDsMessage.onColor[i] = BackpackLights[i].OnColor;
+      SetBackpackLEDsMessage.offColor[i] = BackpackLights[i].OffColor;
+      SetBackpackLEDsMessage.onPeriod_ms[i] = BackpackLights[i].OnPeriodMs;
+      SetBackpackLEDsMessage.offPeriod_ms[i] = BackpackLights[i].OffPeriodMs;
+      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = BackpackLights[i].TransitionOnPeriodMs;
+      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = BackpackLights[i].TransitionOffPeriodMs;
+    }
+
+    RobotEngineManager.Instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
+    RobotEngineManager.Instance.SendMessage();
+
+    SetLastLEDs();
+  }
+
+  #endregion
+
+  public void TurnOffAllLights(bool now = false) {
+    var enumerator = LightCubes.GetEnumerator();
+
+    while (enumerator.MoveNext()) {
+      LightCube lightCube = enumerator.Current.Value;
+
+      lightCube.SetLEDs();
+    }
+
+    SetBackpackLEDs();
+
+    if (now)
+      UpdateLightMessages(now);
+  }
+
+  public void UpdateLightMessages(bool now = false) {
+    if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnected)
+      return;
+
+    if (Time.time > LightCube.Light.MessageDelay || now) {
+      var enumerator = LightCubes.GetEnumerator();
+
+      while (enumerator.MoveNext()) {
+        LightCube lightCube = enumerator.Current.Value;
+
+        if (lightCube.LightsChanged)
+          lightCube.SetAllLEDs();
+      }
+    }
+
+    if (Time.time > Light.MessageDelay || now) {
+      if (_LightsChanged)
+        SetAllBackpackLEDs();
+    }
+  }
+
+  #endregion
 }
