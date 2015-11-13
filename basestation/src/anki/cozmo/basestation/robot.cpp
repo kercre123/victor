@@ -80,7 +80,8 @@ namespace Anki {
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _audioClient( nullptr )
     , _animationStreamer(_externalInterface, _cannedAnimations)
-    , _moodManager()
+    , _moodManager(this)
+    , _progressionManager(this)
     , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
@@ -862,6 +863,8 @@ namespace Anki {
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
       _moodManager.Update(currentTime);
+      
+      _progressionManager.Update(currentTime);
       
       const char* behaviorChooserName = "";
       std::string behaviorName("<disabled>");
