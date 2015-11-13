@@ -19,7 +19,7 @@ namespace SpeedTap {
         return;
       if (_SpeedTapGame.CozmoBlock.MarkersVisible) {
         _DrivingToBlock = true;
-        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 90.0f, (bool success) => {
+        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 30.0f, (bool success) => {
           _DrivingToBlock = false;
           if (success) {
             _StateMachine.SetNextState(new SpeedTapStateBeginMatch());
