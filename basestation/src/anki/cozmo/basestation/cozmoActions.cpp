@@ -111,18 +111,20 @@ namespace Anki {
       // Extra confirmation that the robot is upright in this pose
       assert(poseRobotIfPlacingObject.GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
       
-      approachAngle_rad = poseRobotIfPlacingObject.GetRotationAngle<'Z'>().ToFloat();
+      approachAngle_rad = poseRobotIfPlacingObject.GetRotationMatrix().GetAngleAroundParentAxis<'Z'>().ToFloat();
       
       return RESULT_OK;
     }
-
+    
     
 #pragma mark ---- DriveToPoseAction ----
     
-    DriveToPoseAction::DriveToPoseAction(const bool forceHeadDown,
+    DriveToPoseAction::DriveToPoseAction(const PathMotionProfile motionProf,
+                                         const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
     : _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
+    , _pathMotionProfile(motionProf)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
@@ -140,13 +142,14 @@ namespace Anki {
     }
     
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
+                                         const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-      : DriveToPoseAction(forceHeadDown, useManualSpeed)
+      : DriveToPoseAction(motionProf, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -155,13 +158,14 @@ namespace Anki {
     }
     
     DriveToPoseAction::DriveToPoseAction(const std::vector<Pose3d>& poses,
+                                         const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-      : DriveToPoseAction(forceHeadDown, useManualSpeed)
+      : DriveToPoseAction(motionProf, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -251,9 +255,9 @@ namespace Anki {
         _selectedGoalIndex = 0;
 
         if(_goalPoses.size() == 1) {
-          planningResult = robot.StartDrivingToPose(_goalPoses.back(), _useManualSpeed);
+          planningResult = robot.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
         } else {
-          planningResult = robot.StartDrivingToPose(_goalPoses, &_selectedGoalIndex, _useManualSpeed);
+          planningResult = robot.StartDrivingToPose(_goalPoses, _pathMotionProfile, &_selectedGoalIndex, _useManualSpeed);
         }
         
         if(planningResult != RESULT_OK) {
@@ -415,6 +419,7 @@ namespace Anki {
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
+                                             const PathMotionProfile motionProfile,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
@@ -426,12 +431,14 @@ namespace Anki {
     , _useManualSpeed(useManualSpeed)
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
+    , _pathMotionProfile(motionProfile)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
     
     DriveToObjectAction::DriveToObjectAction(const ObjectID& objectID,
                                              const f32 distance,
+                                             const PathMotionProfile motionProfile,
                                              const bool useManualSpeed)
     : _objectID(objectID)
     , _actionType(PreActionPose::ActionType::NONE)
@@ -440,6 +447,7 @@ namespace Anki {
     , _useManualSpeed(useManualSpeed)
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
+    , _pathMotionProfile(motionProfile)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
     }
@@ -626,7 +634,11 @@ namespace Anki {
           
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses, true, _useManualSpeed, preActionPoseDistThresh));
+          _compoundAction.AddAction(new DriveToPoseAction(possiblePoses,
+                                                          _pathMotionProfile,
+                                                          true,
+                                                          _useManualSpeed,
+                                                          preActionPoseDistThresh));
         }
       
       
@@ -739,10 +751,12 @@ namespace Anki {
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(const Robot& robot,
                                                                      const Pose3d& placementPose,
                                                                      const bool placeOnGround,
+                                                                     const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : DriveToObjectAction(robot.GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
+                          motionProfile,
                           0,
                           false,
                           0,
@@ -822,37 +836,10 @@ namespace Anki {
 
     
     
-    
-#pragma mark ---- DriveToPlaceOnObjectAction ----
-    
-    // Places carried object on top of objectID
-    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
-                                                           const ObjectID& objectID,
-                                                           const bool useExactRotation,
-                                                           const Rotation3d& rotation,
-                                                           const bool useManualSpeed)
-    : CompoundActionSequential({
-      new DriveToPlaceCarriedObjectAction(robot,
-                                          Pose3d(rotation,
-                                                 robot.GetBlockWorld().GetObjectByID(objectID)->GetPose().GetTranslation(),
-                                                 robot.GetBlockWorld().GetObjectByID(objectID)->GetPose().GetParent() ),
-                                          false,
-                                          useExactRotation,
-                                          useManualSpeed),
-      new PlaceRelObjectAction(objectID,
-                               false,
-                               0,
-                               useManualSpeed)})
-    {
-      
-    }
-    
-
-    
 #pragma mark ---- TurnInPlaceAction ----
     
     TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
-    : DriveToPoseAction(false, false)
+    : DriveToPoseAction(DEFAULT_PATH_MOTION_PROFILE, false, false)
     , _turnAngle(angle)
     , _variability(variability)
     , _isAbsoluteAngle(isAbsolute)
@@ -2450,6 +2437,114 @@ namespace Anki {
     } // Verify()
     
     
+#pragma mark ---- DriveToAlignWithObjectAction ----
+    
+    DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(const ObjectID& objectID,
+                                                               const f32 distanceFromMarker_mm,
+                                                               const PathMotionProfile motionProfile,
+                                                               const bool useApproachAngle,
+                                                               const f32 approachAngle_rad,
+                                                               const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::DOCKING,
+                              motionProfile,
+                              distanceFromMarker_mm,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
+    {
+      
+    }
+
+#pragma mark ---- DriveToPickupObjectAction ----
+    
+    DriveToPickupObjectAction::DriveToPickupObjectAction(const ObjectID& objectID,
+                                                         const PathMotionProfile motionProfile,
+                                                         const bool useApproachAngle,
+                                                         const f32 approachAngle_rad,
+                                                         const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::DOCKING,
+                              motionProfile,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PickupObjectAction(objectID)})
+    {
+      
+    }
+    
+#pragma mark ---- DriveToPlaceOnObjectAction ----
+    
+    DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
+                                                           const ObjectID& objectID,
+                                                           const PathMotionProfile motionProf,
+                                                           const bool useApproachAngle,
+                                                           const f32 approachAngle_rad,
+                                                           const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::PLACE_RELATIVE,
+                              motionProf,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PlaceRelObjectAction(objectID,
+                               false,
+                               0,
+                               useManualSpeed)})
+    {
+    }
+    
+#pragma mark ---- DriveToPlaceRelObjectAction ----
+    
+    DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(const ObjectID& objectID,
+                                                             const PathMotionProfile motionProfile,
+                                                             const f32 placementOffsetX_mm,
+                                                             const bool useApproachAngle,
+                                                             const f32 approachAngle_rad,
+                                                             const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::PLACE_RELATIVE,
+                              motionProfile,
+                              placementOffsetX_mm,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PlaceRelObjectAction(objectID,
+                               true,
+                               placementOffsetX_mm,
+                               useManualSpeed)})
+    {
+      
+    }
+    
+#pragma mark ---- DriveToRollObjectAction ----
+    
+    DriveToRollObjectAction::DriveToRollObjectAction(const ObjectID& objectID,
+                                                     const PathMotionProfile motionProfile,
+                                                     const bool useApproachAngle,
+                                                     const f32 approachAngle_rad,
+                                                     const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::ROLLING,
+                              motionProfile,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new RollObjectAction(objectID, useManualSpeed)})
+    {
+      
+    }
+    
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
@@ -2543,6 +2638,24 @@ namespace Anki {
     } // CheckIfDone()
     
 
+#pragma mark ---- PlaceObjectOnGroundAtPoseAction ----    
+    
+    PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(const Robot& robot,
+                                                                     const Pose3d& placementPose,
+                                                                     const PathMotionProfile motionProfile,
+                                                                     const bool useExactRotation,
+                                                                     const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToPlaceCarriedObjectAction(robot,
+                                          placementPose,
+                                          true,
+                                          motionProfile,
+                                          useExactRotation,
+                                          useManualSpeed),
+      new PlaceObjectOnGroundAction()})
+    {
+      
+    }
     
 #pragma mark ---- CrossBridgeAction ----
     

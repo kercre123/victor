@@ -4,6 +4,7 @@
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/polygon.h"
+#include "anki/planning/basestation/robotActionParams.h"
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
@@ -298,24 +299,6 @@ private:
   bool _reverse;
 };
 
-
-// This struct holds values that the motions will use to calculate costs, based on the turning radius and
-// velocity of the robot
-struct RobotActionParams
-{
-  RobotActionParams();
-
-  void Reset();
-
-  // returns true on success
-  bool Import(const Json::Value& config);
-  void Dump(Util::JsonWriter& writer) const;
-
-  double halfWheelBase_mm;
-  double maxVelocity_mmps;
-  double maxReverseVelocity_mmps;
-  double oneOverMaxVelocity;
-};
 
 
 class xythetaEnvironment
