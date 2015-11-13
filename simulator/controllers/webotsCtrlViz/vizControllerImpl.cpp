@@ -12,6 +12,7 @@
 
 
 #include "vizControllerImpl.h"
+#include "anki/common/basestation/colorRGBA.h"
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
 #include <webots/Supervisor.hpp>
@@ -24,6 +25,23 @@
 
 namespace Anki {
 namespace Cozmo {
+
+
+static const size_t kEmotionBuffersCapacity  = 300; // num ticks of emotion score values to store
+static const size_t kBehaviorBuffersCapacity = 300; // num ticks of behavior score values to store
+  
+  
+VizControllerImpl::VizControllerImpl(webots::Supervisor& vs)
+  : vizSupervisor(vs)
+{
+  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+  {
+    _emotionBuffers[i].Reset(kEmotionBuffersCapacity);
+  }
+  _emotionEventBuffer.Reset(kEmotionBuffersCapacity);
+  _behaviorEventBuffer.Reset(kBehaviorBuffersCapacity);
+}
+  
 
 void VizControllerImpl::Init()
 {
@@ -51,10 +69,22 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizTrackerQuadMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::RobotStateMessage,
     std::bind(&VizControllerImpl::ProcessVizRobotStateMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::RobotMood,
+    std::bind(&VizControllerImpl::ProcessVizRobotMoodMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::RobotBehaviorSelectData,
+    std::bind(&VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::NewBehaviorSelected,
+    std::bind(&VizControllerImpl::ProcessVizNewBehaviorSelectedMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::StartRobotUpdate,
+    std::bind(&VizControllerImpl::ProcessVizStartRobotUpdate, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::EndRobotUpdate,
+    std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
 
   // Get display devices
   disp = vizSupervisor.getDisplay("cozmo_viz_display");
   dockDisp = vizSupervisor.getDisplay("cozmo_docking_display");
+  moodDisp = vizSupervisor.getDisplay("cozmo_mood_display");
+  behaviorDisp = vizSupervisor.getDisplay("cozmo_behavior_display");
   camDisp = vizSupervisor.getDisplay("cozmo_cam_viz_display");
 
 
@@ -443,6 +473,434 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG_3, Anki::NamedColors::GREEN, txt);
 }
 
+  
+  
+static const int kTextSpacingY = 10;
+static const int kTextOffsetY  = -3;
+  
+  
+// ========== Mood Display ==========
+  
+  
+bool VizControllerImpl::IsMoodDisplayEnabled() const
+{
+  // maybe check settings or pixel size too?
+  return ((behaviorDisp != nullptr) && (_emotionBuffers[0].capacity() > 0));
+}
 
+
+void VizControllerImpl::ProcessVizRobotMoodMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if (!IsMoodDisplayEnabled())
+  {
+    return;
+  }
+  
+  const VizInterface::RobotMood& robotMood = msg.GetData().Get_RobotMood();
+  assert(robotMood.emotion.size() == (size_t)EmotionType::Count);
+  
+  const int windowWidth  = moodDisp->getWidth();
+  const int windowHeight = moodDisp->getHeight();
+
+  // Calculate y coordinate range and scaling for graph points
+  
+  const int   labelOffsetX  = 120; // Minimum indentation from right for the catagory label (e.g. "Happy X.XX")
+  const float xStep         = float(windowWidth-labelOffsetX) / float(_emotionBuffers[0].capacity());
+  
+  const int   yValueFor1    = 16;
+  const int   yValueForNeg1 = windowHeight - yValueFor1;
+  const float yValueFor0    = float(yValueForNeg1 + yValueFor1) * 0.5f;
+  const float yScalar       = float(yValueFor1) - yValueFor0; // y-is-down so larger y value = lower graph value
+  
+  // Clear Window
+  
+  moodDisp->setColor(0x000000);
+  moodDisp->fillRectangle(0, 0, windowWidth, windowHeight);
+  
+  // Draw Graph Axis labels
+  
+  moodDisp->setColor(0xffffff);
+  moodDisp->drawText("1.0",  0, yValueFor1 + kTextOffsetY);
+  moodDisp->drawText("-1.0", 0, yValueForNeg1 + kTextOffsetY);
+  
+  // Sort emotion indices based on the most recent value, sorting from largest to smallest value
+  // so that we can draw in order (important for label positioning on right as we prvent labels drawing on top of each other)
+  
+  int sortedEmoIndices[(uint32_t)EmotionType::Count];
+  for (uint32_t eT=0; eT < (uint32_t)EmotionType::Count; ++eT)
+  {
+    sortedEmoIndices[eT] = eT;
+  }
+  std::sort(std::begin(sortedEmoIndices), std::end(sortedEmoIndices),
+            [robotMood](const int& lhs, const int& rhs)
+            {
+              return robotMood.emotion[lhs] > robotMood.emotion[rhs];
+            } );
+  
+  // Calculate line spacing and top/bottom range
+  
+  const int kTopTextY    = (kTextSpacingY/2);
+  const int kBottomTextY = windowHeight - (kTextSpacingY/2);
+  
+  int lastTextY = kTopTextY - kTextSpacingY;
+  
+  _emotionEventBuffer.push_back( robotMood.recentEvents );
+  
+  // Draw all the events
+  
+  {
+    int eventY = kTopTextY;
+    
+    moodDisp->setColor(0xffffff);
+    float xValF = 0.0f;
+    
+    for (size_t j=0; j < _emotionEventBuffer.size(); ++j)
+    {
+      const std::vector<std::string>& eventsThisTick = _emotionEventBuffer[j];
+      
+      if (eventsThisTick.size() > 0)
+      {
+        const int xVal = (int)(xValF);
+        
+        for (const std::string& eventText : eventsThisTick)
+        {
+          moodDisp->drawLine(xVal, eventY, xVal, eventY + 30);
+          moodDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
+          
+          eventY += kTextSpacingY;
+          if (eventY > kBottomTextY)
+          {
+            eventY = kTopTextY;
+          }
+        }
+      }
+      
+      xValF += xStep;
+    }
+  }
+  
+  // Draw each emotion graph in order, from top to bottom
+  
+  for (size_t i=0; i < (size_t)EmotionType::Count; ++i)
+  {
+    const uint32_t eT = sortedEmoIndices[i];
+    EmotionType emotionType = (EmotionType)eT;
+    Util::CircularBuffer<float>& emotionBuffer = _emotionBuffers[eT];
+    const float latestValue = robotMood.emotion[eT];
+    emotionBuffer.push_back(latestValue);
+  
+    moodDisp->setColor( ColorRGBA::CreateFromColorIndex(eT).As0RGB() );
+    
+    float xValF = 0.0f;
+    int lastX = 0;
+    int lastY = 0;
+    
+    // Draw a line graph connecting all of the sample points
+    
+    for (size_t j=0; j < emotionBuffer.size(); ++j)
+    {
+      const float emotionValue = emotionBuffer[j];
+      const int xVal = (int)(xValF);
+      const int yVal = (int)(yValueFor0 + (yScalar * emotionValue));
+      
+      if (j > 0)
+      {
+        moodDisp->drawLine(lastX, lastY, xVal, yVal);
+      }
+      
+      xValF += xStep;
+      lastX = xVal;
+      lastY = yVal;
+    }
+    
+    // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
+    // and at least 1 line down from the last category, clamped to the top/bottom range
+    
+    const int textX = MIN(lastX, windowWidth-labelOffsetX);
+    const int maxTextY = kBottomTextY - (kTextSpacingY * int(size_t(EmotionType::Count)-(i+1)));
+    const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
+    lastTextY = textY;
+    
+    char valueString[32];
+    snprintf(valueString, sizeof(valueString), "%1.2f: ", latestValue);
+    std::string text = std::string(valueString) + EmotionTypeToString(emotionType);
+    moodDisp->drawText(text, textX, textY + kTextOffsetY);
+  }
+}
+
+  
+// ========== BehaviorSelection Display ==========
+  
+  
+bool VizControllerImpl::IsBehaviorDisplayEnabled() const
+{
+  // maybe check settings or pixel size too?
+  return ((behaviorDisp != nullptr) && (_behaviorEventBuffer.capacity() > 0));
+}
+
+  
+void VizControllerImpl::PreUpdateBehaviorDisplay()
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
+  // Advance all behaviors by one empty tick - any active ones will be updated later
+  
+  for (auto& kv : _behaviorScoreBuffers)
+  {
+    BehaviorScoreBuffer& behaviorScoreBuffer = kv.second;
+    behaviorScoreBuffer.push_back( behaviorScoreBuffer.back() );
+  }
+  
+  _behaviorEventBuffer.push_back(std::vector<std::string>()); // empty entry, expanded in other message
+}
+
+  
+VizControllerImpl::BehaviorScoreBuffer& VizControllerImpl::FindOrAddScoreBuffer(const std::string& inName)
+{
+  BehaviorScoreBufferMap::iterator it = _behaviorScoreBuffers.find(inName);
+  if (it != _behaviorScoreBuffers.end())
+  {
+    return it->second;
+  }
+  
+  // Not found - add one and return that
+  
+  it = _behaviorScoreBuffers.insert(BehaviorScoreBufferMap::value_type(inName, BehaviorScoreBuffer(kBehaviorBuffersCapacity))).first;
+  return it->second;
+}
+
+
+void VizControllerImpl::ProcessVizNewBehaviorSelectedMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
+  const VizInterface::NewBehaviorSelected& selectData = msg.GetData().Get_NewBehaviorSelected();
+  
+  if (_behaviorEventBuffer.size() > 0)
+  {
+    std::vector<std::string>& latestEvents =_behaviorEventBuffer.back();
+    
+    if (!selectData.newCurrentBehavior.empty())
+    {
+      latestEvents.push_back(selectData.newCurrentBehavior);
+    }
+  }
+}
+  
+
+void VizControllerImpl::ProcessVizRobotBehaviorSelectDataMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
+  const VizInterface::RobotBehaviorSelectData& selectData = msg.GetData().Get_RobotBehaviorSelectData();
+  
+  // Build a sorted vector of NamedScoreBuffer containing all the behaviors currently being graphed, so that they're in
+  // order of the most recent value, top-to-bottom in the graph
+  
+  for (const VizInterface::BehaviorScoreData& scoreData : selectData.scoreData)
+  {
+    BehaviorScoreBuffer& scoreBuffer = FindOrAddScoreBuffer(scoreData.name);
+    if (!scoreBuffer.empty())
+    {
+      // Remove the dummy entry we added during preUpdate
+      scoreBuffer.pop_back();
+    }
+    scoreBuffer.push_back(scoreData.totalScore);
+  }
+}
+  
+  
+void VizControllerImpl::DrawBehaviorDisplay()
+{
+  if (!IsBehaviorDisplayEnabled())
+  {
+    return;
+  }
+  
+  // Build a sorted vector of NamedScoreBuffer containing all the active behaviors, so that they're in
+  // order of the most recent value, top-to-bottom in the graph
+  
+  struct NamedScoreBuffer
+  {
+    BehaviorScoreBuffer*  _scoreBuffer;
+    const char*           _name;
+    uint32_t              _color;
+  };
+  
+  std::vector<NamedScoreBuffer> activeScoreBuffers;
+  
+  size_t maxBufferValues = 0;
+  
+  {
+    uint32_t colorIndex = 0;
+    
+    for (auto& kv : _behaviorScoreBuffers)
+    {
+      BehaviorScoreBuffer& behaviorScoreBuffer = kv.second;
+      
+      maxBufferValues = MAX(maxBufferValues, behaviorScoreBuffer.size());
+      activeScoreBuffers.push_back({&behaviorScoreBuffer,
+                                    kv.first.c_str(),
+                                    ColorRGBA::CreateFromColorIndex(colorIndex).As0RGB()});
+      ++colorIndex;
+    }
+    
+    maxBufferValues = MAX(maxBufferValues, _behaviorEventBuffer.size());
+    
+    std::sort(activeScoreBuffers.begin(), activeScoreBuffers.end(),
+              [](const NamedScoreBuffer& lhs, const NamedScoreBuffer& rhs)
+              {
+                return lhs._scoreBuffer->back() > rhs._scoreBuffer->back();
+              } );
+  }
+  
+  // Draw everything
+  
+  const int windowWidth  = behaviorDisp->getWidth();
+  const int windowHeight = behaviorDisp->getHeight();
+  
+  // Calculate y coordinate range and scaling for graph points
+  
+  const int yValueFor0 = windowHeight - 16;
+  const int yValueFor1 = 16;
+  float yScalar = (yValueFor1 - yValueFor0);
+  
+  // Clear Window
+  
+  behaviorDisp->setColor(0x000000);
+  behaviorDisp->fillRectangle(0, 0, windowWidth, windowHeight);
+  
+  // Draw Graph Axis labels
+  
+  behaviorDisp->setColor(0xffffff);
+  behaviorDisp->drawText("1.0", 0, yValueFor1 + kTextOffsetY);
+  behaviorDisp->drawText("0.0", 0, yValueFor0 + kTextOffsetY);
+  
+  if (activeScoreBuffers.empty() || (activeScoreBuffers[0]._scoreBuffer->capacity() == 0))
+  {
+    return;
+  }
+  
+  // Calculate line spacing and top/bottom range
+  
+  const int labelOffset = 170;
+  const float xStep = float(windowWidth-labelOffset) / float(activeScoreBuffers[0]._scoreBuffer->capacity());
+  
+  const int textSpacingY = kTextSpacingY;
+  
+  const int kTopTextY    = (kTextSpacingY/2);
+  const int kBottomTextY = windowHeight - (kTextSpacingY/2);
+  
+  int lastTextY = kTopTextY - textSpacingY;
+  
+  int numLinesLeft = (int)activeScoreBuffers.size();
+  
+  // Draw all the events
+  {
+    int eventY = kTopTextY;
+    
+    behaviorDisp->setColor(0xffffff);
+    float xValF = 0.0f;
+    
+    for (size_t j=0; j < maxBufferValues; ++j)
+    {
+      const std::vector<std::string>& eventsThisTick = _behaviorEventBuffer[j];
+      
+      if (eventsThisTick.size() > 0)
+      {
+        const int xVal = (int)(xValF);
+        
+        for (const std::string& eventText : eventsThisTick)
+        {
+          behaviorDisp->drawLine(xVal, eventY, xVal, eventY + 30);
+          behaviorDisp->drawText(eventText, xVal, eventY + kTextOffsetY);
+          
+          eventY += kTextSpacingY;
+          if (eventY > kBottomTextY)
+          {
+            eventY = kTopTextY;
+          }
+        }
+      }
+      
+      xValF += xStep;
+    }
+  }
+  
+  for (const NamedScoreBuffer& namedScoreBuffer : activeScoreBuffers)
+  {
+    const BehaviorScoreBuffer& scoreBuffer = *namedScoreBuffer._scoreBuffer;
+    
+    behaviorDisp->setColor(namedScoreBuffer._color);
+    
+    const size_t numValues = scoreBuffer.size();
+    assert(numValues > 0);
+    
+    // Draw a line graph connecting all of the sample points
+    
+    float xValF = (xStep * float(maxBufferValues - numValues)); // start indented if behavior has fewer values than the max
+    int lastX = 0;
+    int lastY = 0;
+    
+    for (size_t j=0; j < numValues; ++j)
+    {
+      const float scoreVal = scoreBuffer[j];
+      
+      const int xVal = (int)(xValF);
+      const int yVal = yValueFor0 + (int)(yScalar * scoreVal);
+      
+      if (j > 0)
+      {
+        behaviorDisp->drawLine(lastX, lastY, xVal, yVal);
+      }
+      
+      xValF += xStep;
+      lastX = xVal;
+      lastY = yVal;
+    }
+    
+    // Draw the label, ideally next to the last sample, but above maxTextY (so there's room for the rest of the labels)
+    // and at least 1 line down from the last category, clamped to the top/bottom range
+    
+    const int textX = MIN(lastX, windowWidth-labelOffset);
+    --numLinesLeft;
+    const int maxTextY = kBottomTextY - (kTextSpacingY * numLinesLeft);
+    const int textY = CLIP(MAX(MIN(lastY, maxTextY), lastTextY+kTextSpacingY), kTopTextY, kBottomTextY);
+    lastTextY = textY;
+    
+    char valueString[32];
+    snprintf(valueString, sizeof(valueString), "%1.2f: ", scoreBuffer.back());
+    std::string text = std::string(valueString) + namedScoreBuffer._name;
+    
+    behaviorDisp->drawText(text, textX, textY + kTextOffsetY);
+  }
+}
+
+  
+// ========== Start/End of Robot Updates ==========
+  
+
+void VizControllerImpl::ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  PreUpdateBehaviorDisplay();
+}
+  
+  
+void VizControllerImpl::ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  // This signals end of the Robot::Update() and is where we tick and update the drawing for live graph windows etc.
+  DrawBehaviorDisplay();
+}
+  
+  
 } // end namespace Cozmo
 } // end namespace Anki

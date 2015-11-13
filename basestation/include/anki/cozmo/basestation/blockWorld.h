@@ -4,12 +4,7 @@
  * Author: Andrew Stein (andrew)
  * Created: 10/1/2013
  *
- * Information on last revision to this file:
- *    $LastChangedDate$
- *    $LastChangedBy$
- *    $LastChangedRevision$
- *
- * Description: Defines a world of Cozmo robots and blocks.
+ * Description: Defines a container for tracking the state of all objects in Cozmo's world.
  *
  * Copyright: Anki, Inc. 2013
  *
@@ -30,6 +25,8 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include <vector>
 
 namespace Anki
 {
@@ -40,6 +37,7 @@ namespace Anki
     class RobotManager;
     class RobotMessageHandler;
     class ActiveCube;
+    class IExternalInterface;
     
     class BlockWorld
     {
@@ -71,24 +69,18 @@ namespace Anki
       // Object Access
       //
       
-      // Clearing objects: all, by type, by family, or by ID
+      // Clearing objects: all, by type, by family, or by ID.
+      // NOTE: Clearing does not _delete_ an object; it marks its pose as unknown.
       void ClearAllExistingObjects();
       void ClearObjectsByFamily(const ObjectFamily family);
       void ClearObjectsByType(const ObjectType type);
       bool ClearObject(const ObjectID withID); // Returns true if object with ID is found and cleared, false otherwise.
+      bool ClearObject(ObservableObject* object);
       
-      // Clear an object when you have a direct iterator pointing to it. Returns
-      // the iterator to the next object in the container.
-      ObjectsMapByID_t::iterator ClearObject(const ObjectsMapByID_t::iterator objIter,
-                                             const ObjectType&    withType,
-                                             const ObjectFamily&  fromFamily);
-      
-      // Clear an object when you have just the pointer and its family
-      // Returns true if the object was cleared.
-      bool ClearObject(ObservableObject* object,
-                       const ObjectType&    withType,
-                       const ObjectFamily&  fromFamily);
-      
+
+      // First clears the object and then actually deletes it, removing it from
+      // BlockWorld entirely.
+      bool DeleteObject(const ObjectID withID);
       
       // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
@@ -283,7 +275,13 @@ namespace Anki
                             std::list<Vision::ObservedMarker*>& lst);
       
       void ClearObjectHelper(ObservableObject* object);
-      ObjectsMapByID_t::iterator ClearObject(ObjectsMapByID_t::iterator objectIter, ObjectsMapByID_t& inContainer);
+      
+      // Delete an object when you have a direct iterator pointing to it. Returns
+      // the iterator to the next object in the container.
+      ObjectsMapByID_t::iterator DeleteObject(const ObjectsMapByID_t::iterator objIter,
+                                              const ObjectType&    withType,
+                                              const ObjectFamily&  fromFamily);
+      
       
       void UpdateTrackToObject(const ObservableObject* observedObject);
       
@@ -294,6 +292,8 @@ namespace Anki
       
       ObservableObject* FindObjectHelper(FindFcn findFcn, const BlockWorldFilter& filter = BlockWorldFilter(),
                                          bool returnFirstFound = false) const;
+      
+      void SetupEventHandlers(IExternalInterface& externalInterface);
       
       //
       // Member Variables
@@ -342,6 +342,8 @@ namespace Anki
       bool _enableDraw;
       
       std::set<ObjectID> _unidentifiedActiveObjects;
+      
+      std::vector<Signal::SmartHandle> _eventHandles;
       
     }; // class BlockWorld
 

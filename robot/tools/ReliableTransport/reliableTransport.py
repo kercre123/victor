@@ -168,7 +168,7 @@ class ReliableTransport(threading.Thread):
 
     def Disconnect(self, destAddress):
         "Request disconnection from remote end"
-        self.QueueMessage(true, destAddress, b"", EReliableMessageType.DisconnectRequest)
+        self.QueueMessage(True, destAddress, b"", EReliableMessageType.DisconnectRequest)
 
     def HandleSubMessage(self, innerMessage, messageType, seqId, connectionInfo, sourceAddress):
         "Handle a single message from inside a multi-part message"

@@ -242,6 +242,37 @@ message FaceDetection
   bool    visualize
 }
 
+message RobotMood
+{
+  float_32  emotion[uint_8],
+  string    recentEvents[uint_8]
+}
+
+structure BehaviorScoreData
+{
+  float_32 behaviorScore,
+  float_32 totalScore,
+  string   name
+}
+
+message RobotBehaviorSelectData
+{
+  BehaviorScoreData scoreData[uint_8]
+}
+
+message NewBehaviorSelected
+{
+  string  newCurrentBehavior
+}
+
+message StartRobotUpdate
+{
+}
+
+message EndRobotUpdate
+{
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union MessageViz { }

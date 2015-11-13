@@ -47,6 +47,8 @@ def main(scriptArgs):
                       help='Use coretech-external repo checked out at CORETECH_EXTERNAL_DIR')
   parser.add_argument('--coretechInternal', metavar='CORETECH_INTERNAL_DIR', dest='coretechInternalPath', action='store', default=None,
                       help='Use coretech-internal repo checked out at CORETECH_INTERNAL_DIR')
+  parser.add_argument('--audio', metavar='AUDIO_PATH', dest='audioPath', action='store', default=None,
+                      help='Use audio repo checked out at AUDIO_PATH')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
@@ -115,6 +117,14 @@ def main(scriptArgs):
     UtilLog.error('webots not found [%s]' % options.webotsPath)
     return False
   webotsPath = options.webotsPath
+
+  if not options.audioPath:
+    options.audioPath = os.path.join(options.projectRoot, 'lib/audio')
+  if not os.path.exists(options.audioPath):
+    UtilLog.error('audio path not found [%s]' % options.audioPath)
+    return False
+  audioProjectPath = os.path.join(options.audioPath, 'gyp/audioengine.gyp')
+
 
   # do not check for coretech external, and gyp if we are only updating list files
   if not options.updateListsOnly:
@@ -205,12 +215,15 @@ def main(scriptArgs):
   ankiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, configurePath)
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
+  audioProjectPath = os.path.relpath(audioProjectPath, configurePath)
 
   # mac
   if 'mac' in options.platforms:
-      os.environ['GYP_DEFINES'] = """ 
+      os.environ['GYP_DEFINES'] = """
                                   OS=mac
                                   ndk_root=INVALID
+                                  audio_library_type=static_library
+                                  audio_library_build=profile
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
@@ -226,6 +239,7 @@ def main(scriptArgs):
                                   ce-gtest_path={7}
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
+                                  ce-audio_path={10}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -236,7 +250,8 @@ def main(scriptArgs):
                                     projectRoot,
                                     gtestPath, 
                                     ankiUtilProjectPath, 
-                                    coretechInternalProjectPath
+                                    coretechInternalProjectPath,
+                                    audioProjectPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -252,6 +267,8 @@ def main(scriptArgs):
   if 'ios' in options.platforms:
     os.environ['GYP_DEFINES'] = """
                                 OS=ios
+                                audio_library_type=static_library
+                                audio_library_build=profile
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
@@ -266,6 +283,7 @@ def main(scriptArgs):
                                 ce-gtest_path={7}
                                 ce-util_gyp_path={8}
                                 ce-cti_gyp_path={9}
+                                ce-audio_path={10}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -276,7 +294,8 @@ def main(scriptArgs):
                                   projectRoot,
                                   gtestPath, 
                                   ankiUtilProjectPath, 
-                                  coretechInternalProjectPath
+                                  coretechInternalProjectPath,
+                                  audioProjectPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -285,9 +304,11 @@ def main(scriptArgs):
   # mex
   if 'mex' in options.platforms:
       gypFile = 'cozmoEngineMex.gyp'
-      os.environ['GYP_DEFINES'] = """ 
+      os.environ['GYP_DEFINES'] = """
                                   OS=mac
                                   ndk_root=INVALID
+                                  audio_library_type=static_library
+                                  audio_library_build=profile
                                   kazmath_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
@@ -302,6 +323,7 @@ def main(scriptArgs):
                                   ce-gtest_path={7}
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
+                                  ce-audio_path={10}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mex'),
@@ -312,7 +334,8 @@ def main(scriptArgs):
                                     projectRoot,
                                     gtestPath, 
                                     ankiUtilProjectPath, 
-                                    coretechInternalProjectPath
+                                    coretechInternalProjectPath,
+                                    audioProjectPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
       gyp.main(gypArgs)
@@ -349,7 +372,9 @@ def main(scriptArgs):
 
     os.environ['ANDROID_BUILD_TOP'] = configurePath
     ##################### GYP_DEFINES ####
-    os.environ['GYP_DEFINES'] = """ 
+    os.environ['GYP_DEFINES'] = """
+                                audio_library_type=static_library
+                                audio_library_build=profile
                                 kazmath_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
@@ -372,6 +397,7 @@ def main(scriptArgs):
                                 ce-util_gyp_path={8}
                                 ce-cti_gyp_path={9}
                                 ndk_root={10}
+                                ce-audio_path={11}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -383,7 +409,8 @@ def main(scriptArgs):
                                   gtestPath, 
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
-                                  ndk_root
+                                  ndk_root,
+                                  audioProjectPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
@@ -394,7 +421,9 @@ def main(scriptArgs):
     gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
     gyp.main(gypArgs)
 
-    
+  #pre build setup: decompress audio libs
+  if (subprocess.call([os.path.join(projectRoot, 'lib/audio/gyp/decompressAudioLibs.sh')]) != 0):
+    Logger.error('error decompressing audio libs')
 
   return True
 

@@ -46,12 +46,6 @@ public:
   // Below are low-level actions to tell the robot to do something "now"
   // without using the ActionList system:
   
-  // Sends message to move lift at specified speed
-  Result MoveLift(const f32 speed_rad_per_sec);
-  
-  // Sends message to move head at specified speed
-  Result MoveHead(const f32 speed_rad_per_sec);
-  
   // Sends a message to the robot to move the lift to the specified height
   Result MoveLiftToHeight(const f32 height_mm,
                           const f32 max_speed_rad_per_sec,
@@ -63,12 +57,6 @@ public:
                          const f32 max_speed_rad_per_sec,
                          const f32 accel_rad_per_sec2,
                          const f32 duration_sec = 0.f);
-  
-  Result TurnInPlaceAtSpeed(const f32 speed_rad_per_sec,
-                            const f32 accel_rad_per_sec2);
-  
-  Result DriveWheels(const f32 lwheel_speed_mmps,
-                     const f32 rwheel_speed_mmps);
   
   Result StopAllMotors();
   
@@ -84,6 +72,9 @@ public:
   const ObjectID& GetTrackToObject() const { return _trackToObjectID; }
   const Vision::TrackedFace::ID_t GetTrackToFace() const { return _trackToFaceID; }
   bool  IsTrackingWithHeadOnly() const { return _trackWithHeadOnly; }
+  
+  template<typename T>
+  void HandleMessage(const T& msg);
   
 protected:
   Robot& _robot;

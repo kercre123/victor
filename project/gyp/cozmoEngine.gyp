@@ -691,8 +691,21 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-audio_path):DriveAudioEngine',
       ],
       'type': '<(engine_library_type)',
+      'conditions': [    
+        [
+          'OS=="ios" or OS=="mac"',
+          {
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+            ],
+          },
+        ],
+      ],
     },
     
     {

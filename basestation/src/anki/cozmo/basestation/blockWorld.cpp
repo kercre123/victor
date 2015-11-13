@@ -1,3 +1,14 @@
+/**
+ * File: blockWorld.cpp
+ *
+ * Author: Andrew Stein (andrew)
+ * Created: 10/1/2013
+ *
+ * Description: Implements a container for tracking the state of all objects in Cozmo's world.
+ *
+ * Copyright: Anki, Inc. 2013
+ *
+ **/
 
 // TODO: this include is shared b/w BS and Robot.  Move up a level.
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -23,6 +34,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -157,8 +169,52 @@ namespace Cozmo {
       //
       _objectLibrary[ObjectFamily::Charger].AddObject(new Charger());
       
+      if(_robot->HasExternalInterface())
+      {
+        SetupEventHandlers(*_robot->GetExternalInterface());
+      }
+      
       
     } // BlockWorld() Constructor
+  
+    void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
+    {
+      using EventType = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+      
+      // ClearAllBlocks
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllBlocks,
+        [this] (const EventType& event)
+        {
+          VizManager::getInstance()->EraseAllVizObjects();
+          ClearObjectsByFamily(ObjectFamily::Block);
+          ClearObjectsByFamily(ObjectFamily::LightCube);
+        }));
+      
+      // ClearAllObjects
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::ClearAllObjects,
+        [this] (const EventType& event)
+        {
+          VizManager::getInstance()->EraseAllVizObjects();
+          ClearAllExistingObjects();
+        }));
+      
+      // SetObjectAdditionAndDeletion
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetObjectAdditionAndDeletion,
+        [this] (const EventType& event)
+        {
+          const ExternalInterface::SetObjectAdditionAndDeletion& msg = event.GetData().Get_SetObjectAdditionAndDeletion();
+          
+          EnableObjectAddition(msg.enableAddition);
+          EnableObjectDeletion(msg.enableDeletion);
+        }));
+      
+      // SelectNextObject
+      _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SelectNextObject,
+        [this] (const EventType& event)
+        {
+          CycleSelectedObject();
+        }));
+    }
     
     BlockWorld::~BlockWorld()
     {
@@ -188,7 +244,7 @@ namespace Cozmo {
       
       return nullptr;
     }
-    
+  
     ObservableObject* BlockWorld::GetObjectByIDandFamilyHelper(const ObjectID objectID, const ObjectFamily inFamily) const
     {
       // TODO: Maintain a separate map indexed directly by ID so we don't have to loop over the outer maps?
@@ -323,12 +379,12 @@ namespace Cozmo {
   {
     if(_robot->HasExternalInterface())
     {
-      if(observedObject->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT && !observedObject->IsPoseStateUnknown())
+      if(observedObject->IsExistenceConfirmed())
       {
         // Project the observed object into the robot's camera, using its new pose
         std::vector<Point2f> projectedCorners;
         f32 observationDistance = 0;
-        _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+        _robot->GetVisionComponent().GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
         
         Rectangle<f32> boundingBox(projectedCorners);
         
@@ -556,7 +612,7 @@ namespace Cozmo {
               }
               
               // Project this existing object into the robot's camera, using its new pose
-              _robot->GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
+              _robot->GetVisionComponent().GetCamera().ProjectObject(*observedObject, projectedCorners, observationDistance);
               
               // If the object is being carried, uncarry it
               if (_robot->GetCarryingObject() == observedObject->GetID()) {
@@ -611,7 +667,7 @@ namespace Cozmo {
           // Don't add as an occluder the very first time we see the object; wait
           // until we've seen it MIN_TIMES_TO_OBSERVE_OBJECT times.
           // // Project this new object into the robot's camera:
-          // //_robot->GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
+          // //_robot->GetVisionComponent().GetCamera().ProjectObject(*objSeen, projectedCorners, observationDistance);
           
           observedObject = objSeen;
             
@@ -651,7 +707,7 @@ namespace Cozmo {
                                      "Found duplicate active ID %d: will use %d and delete %d.",
                                      matchingObject->GetActiveID(),
                                      candidateObject->GetID().GetValue(), matchingObject->GetID().GetValue());
-                    ClearObject(matchingObject->GetID());
+                    DeleteObject(matchingObject->GetID());
                     matchingObject = candidateObject;
                     break;
                   }
@@ -740,7 +796,7 @@ namespace Cozmo {
                 for(auto marker : matchingObject->GetMarkers()) {
                   if(marker.GetLastObservedTime() >= matchingObject->GetLastObservedTime()) {
                     Pose3d markerPoseWrtCamera;
-                    if(false == marker.GetPose().GetWithRespectTo(_robot->GetCamera().GetPose(), markerPoseWrtCamera)) {
+                    if(false == marker.GetPose().GetWithRespectTo(_robot->GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera)) {
                       PRINT_NAMED_ERROR("Robot.AddAndUpdateObjects.MarkerOriginProblem",
                                         "Could not get pose of marker w.r.t. robot camera.\n");
                       return RESULT_FAIL;
@@ -801,13 +857,13 @@ namespace Cozmo {
           */
           
           // Project this existing object into the robot's camera, using its new pose
-          //_robot->GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
+          //_robot->GetVisionComponent().GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
           // Add all observed markers of this object as occluders:
           std::vector<const Vision::KnownMarker *> observedMarkers;
           observedObject->GetObservedMarkers(observedMarkers);
           for(auto marker : observedMarkers) {
-            _robot->GetCamera().AddOccluder(*marker);
+            _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
           }
           
           // Now that we've merged in objSeen, we can delete it because we
@@ -975,23 +1031,23 @@ namespace Cozmo {
                 // If this object has only been seen once and that was too long ago,
                 // just delete it
                 PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
-                                 "Removing %s object %d that was only observed %d time(s).\n",
+                                 "Deleting %s object %d that was only observed %d time(s).\n",
                                  ObjectTypeToString(object->GetType()),
                                  object->GetID().GetValue(),
                                  object->GetNumTimesObserved());
-                objectIter = ClearObject(objectIter, objectsByType.first, objectFamily.first);
+                objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
               } else if(object->IsActive() &&
                         ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
                         object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS)
               {
                 
                 PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
-                                 "Removing unobserved %s active object %d that has "
+                                 "Deleting unobserved %s active object %d that has "
                                  "not completed identification in %dms",
                                  EnumToString(object->GetType()),
                                  object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
                 
-                objectIter = ClearObject(objectIter, objectsByType.first, objectFamily.first);
+                objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
 
               } else {
                 // Otherwise, add it to the list for further checks below to see if
@@ -1022,7 +1078,7 @@ namespace Cozmo {
         // Remove objects that should have been visible based on their last known
         // location, but which must not be there because we saw something behind
         // that location:
-        const Vision::Camera& camera = _robot->GetCamera();
+        const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
         const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNcols()));
         const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNrows()));
         if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true,
@@ -1034,7 +1090,7 @@ namespace Cozmo {
                            "Removing object %d, which should have been seen, "
                            "but wasn't.\n", unobserved.object->GetID().GetValue());
           
-          ClearObject(unobserved.object, unobserved.type, unobserved.family);
+          ClearObject(unobserved.object);
         } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
@@ -1091,7 +1147,7 @@ namespace Cozmo {
           bool markersShouldBeVisible = false;
           bool markerIsOccluded = false;
           for(auto & marker : unobserved.object->GetMarkers()) {
-            if(marker.IsVisibleFrom(_robot->GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
+            if(marker.IsVisibleFrom(_robot->GetVisionComponent().GetCamera(), DEG_TO_RAD(45), 20.f, false, xBorderPad, 0, reason)) {
               // As soon as one marker is visible, we can stop
               markersShouldBeVisible = true;
               break;
@@ -1112,7 +1168,7 @@ namespace Cozmo {
             // TODO: Avoid ProjectObject here because it also happens inside BroadcastObjectObservation
             f32 distance;
             std::vector<Point2f> projectedCorners;
-            _robot->GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
+            _robot->GetVisionComponent().GetCamera().ProjectObject(*unobserved.object, projectedCorners, distance);
             
             if(distance > 0.f) { // in front of camera?
               for(auto & corner : projectedCorners) {
@@ -1255,7 +1311,7 @@ namespace Cozmo {
       // Get all mat objects *seen by this robot's camera*
       std::multimap<f32, ObservableObject*> matsSeen;
       _objectLibrary[ObjectFamily::Mat].CreateObjectsFromMarkers(obsMarkersListAtTimestamp, matsSeen,
-                                                                  (_robot->GetCamera().GetID()));
+                                                                  (_robot->GetVisionComponent().GetCamera().GetID()));
 
       // Remove used markers from map container
       RemoveUsedMarkers(obsMarkersAtTimestamp);
@@ -1624,7 +1680,7 @@ namespace Cozmo {
                            Vision::MarkerTypeStrings[obsMarker->GetCode()],
                            robot->GetID());
            */
-          _robot->GetCamera().AddOccluder(*obsMarker);
+          _robot->GetVisionComponent().GetCamera().AddOccluder(*obsMarker);
         }
         
         /* Always re-drawing everything now
@@ -1864,7 +1920,7 @@ namespace Cozmo {
       
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with the robot's camera
-      _robot->GetCamera().ClearOccluders();
+      _robot->GetVisionComponent().GetCamera().ClearOccluders();
       
       // New timestep, clear list of observed object bounding boxes
       //_obsProjectedObjects.clear();
@@ -1892,7 +1948,7 @@ namespace Cozmo {
         // This shouldn't happen! If it does, robotStateMsgs may be buffering up somewhere.
         // Increasing history time window would fix this, but it's not really a solution.
         for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
-          if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetCamera().GetID()) &&
+          if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetVisionComponent().GetCamera().GetID()) &&
               !_robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
             PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
             poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair);
@@ -2025,7 +2081,7 @@ namespace Cozmo {
       
       if(numObjectsObserved == 0) {
         // If we didn't see/update anything, send a signal saying so
-        _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
       }
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
@@ -2042,19 +2098,16 @@ namespace Cozmo {
         {
           for(auto & objectsByType : objectsByFamily.second)
           {
-            
-            //for(auto & objectsByID : objectsByType.second)
-            for(auto objectIter = objectsByType.second.begin();
-                objectIter != objectsByType.second.end(); /* increment based on whether we erase */)
+            for(auto & objectIdPair : objectsByType.second)
             {
-              ActionableObject* object = dynamic_cast<ActionableObject*>(objectIter->second);
+              ActionableObject* object = dynamic_cast<ActionableObject*>(objectIdPair.second);
               if(object == nullptr) {
-                PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingDockableObject",
-                                  "In robot/object collision check, can currently only handle ActionableObjects.\n");
+                PRINT_NAMED_ERROR("BlockWorld.Update.ExpectingActionableObject",
+                                  "In robot/object collision check, can currently only "
+                                  "handle ActionableObjects.");
                 continue;
               }
               
-              bool didErase = false;
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                  !object->IsBeingCarried() &&
                  !object->IsPoseStateUnknown())
@@ -2107,20 +2160,14 @@ namespace Cozmo {
                       // Erase the vizualized block and its projected quad
                       //VizManager::getInstance()->EraseCuboid(object->GetID());
 
-                      // Erase the block (with a postfix increment of the iterator)
-                      objectIter = ClearObject(objectIter, objectsByType.first, objectsByFamily.first);
-                      didErase = true;
-                      
-                      break; // no need to check other robots, block already gone
+                      // Clear object, indicating we don't know where it went
+                      ClearObject(object);
+
                     } // if quads intersect
                   } // if we got block pose wrt robot origin
                 } // if robot is not picking or placing
 
               } // if block was not observed
-              
-              if(!didErase) {
-                ++objectIter;
-              }
               
             } // for each object of this type
           } // for each object type
@@ -2186,25 +2233,27 @@ namespace Cozmo {
     void BlockWorld::ClearObjectHelper(ObservableObject* object)
     {
       if(object == nullptr) {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer", "BlockWorld asked to clear a null object pointer.\n");
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectHelper.NullObjectPointer",
+                            "BlockWorld asked to clear a null object pointer.");
       } else {
         // Check to see if this object is the one the robot is localized to.
-        // If so, the robot needs to be delocalized:
+        // If so, the robot needs to be marked as localized to nothing.
         if(_robot->GetLocalizedTo() == object->GetID()) {
-          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.DelocalizingRobot",
-                           "Delocalizing robot %d, which is currently localized to %s "
-                           "object with ID=%d, which is about to be deleted.\n",
+          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
+                           "Setting robot %d as localized to no object, because it "
+                           "is currently localized to %s object with ID=%d, which is "
+                           "about to be cleared.",
                            _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-          _robot->Delocalize();
+          _robot->SetLocalizedTo(nullptr);
         }
         
         // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
-        // If so, delete them too or update their poses somehow? (Deleting seems easier)
+        // If so, clear them too or update their poses somehow? (Deleting seems easier)
         
         // Check to see if this object is the one the robot is carrying.
         if(_robot->GetCarryingObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                           "Clearing %s object %d which robot %d thinks it is carrying.\n",
+                           "Clearing %s object %d which robot %d thinks it is carrying.",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
@@ -2213,7 +2262,7 @@ namespace Cozmo {
         
         if(_selectedObject == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingSelectedObject",
-                           "Clearing %s object %d which is currently selected.\n",
+                           "Clearing %s object %d which is currently selected.",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue());
           _selectedObject.UnSet();
@@ -2221,7 +2270,7 @@ namespace Cozmo {
         
         if(_robot->GetMoveComponent().GetTrackToObject() == object->GetID()) {
           PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
-                           "Clearing %s object %d which robot %d is currently tracking its head to.\n",
+                           "Clearing %s object %d which robot %d is currently tracking its head to.",
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue(),
                            _robot->GetID());
@@ -2234,9 +2283,10 @@ namespace Cozmo {
         // (Only notify for objects that were broadcast in the first place, meaning
         //  they must have been seen the minimum number of times and not be in the
         //  process of being identified)
-        if(_robot->HasExternalInterface() && object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
+        if(object->IsExistenceConfirmed())
         {
-          _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotMarkedObjectPoseUnknown(
+          using namespace ExternalInterface;
+          _robot->Broadcast(MessageEngineToGame(RobotMarkedObjectPoseUnknown(
             _robot->GetID(), object->GetID().GetValue()
           )));
         }
@@ -2423,8 +2473,8 @@ namespace Cozmo {
           }
         }
       } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.DeleteDisabled",
-                            "Will not delete family %d objects because object deletion is disabled.",
+        PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByFamily.ClearDisabled",
+                            "Will not clear family %d objects because object deletion is disabled.",
                             family);
       }
     }
@@ -2445,49 +2495,38 @@ namespace Cozmo {
         }
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObjectsByType.DeleteDisabled",
-                            "Will not delete %s objects because object deletion is disabled.",
+                            "Will not clear %s objects because object deletion is disabled.",
                             ObjectTypeToString(type));
 
       }
     } // ClearBlocksByType()
-    
 
-    bool BlockWorld::ClearObject(const ObjectID withID)
+    bool BlockWorld::DeleteObject(const ObjectID withID)
     {
-      ObservableObject* object = GetObjectByID(withID);
-      return ClearObject(object, object->GetType(), object->GetFamily());
+      bool retval = false;
+      ObservableObject* object = GetObjectByIdHelper(withID);
       
-    } // ClearObject()
-    
-    
-    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(ObjectsMapByID_t::iterator objIter,
-                                                                   ObjectsMapByID_t& inContainer)
-    {
-      ObservableObject* object = objIter->second;
-      
-      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
+      if(nullptr != object)
+      {
+        // Inform caller that we found the requested ID:
+        retval = true;
+        
+        // Need to do all the same cleanup as Clear() calls
         ClearObjectHelper(object);
         
-        return inContainer.erase(objIter);
-      } else {
-        PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
-                            "Will not delete object %d because object deletion is disabled.",
-                            object->GetID().GetValue());
-        auto retIter(objIter);
-        return ++retIter;
+        // Actually delete the object we found
+        ObjectFamily inFamily = object->GetFamily();
+        ObjectType   withType = object->GetType();
+        delete object;
+        
+        // And remove it from the container
+        _existingObjects[inFamily][withType].erase(withID);
       }
-    }
-    
-    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::ClearObject(const ObjectsMapByID_t::iterator objIter,
-                                                                   const ObjectType&   withType,
-                                                                   const ObjectFamily& fromFamily)
-    {
-      return ClearObject(objIter, _existingObjects[fromFamily][withType]);
-    }
-    
-    bool BlockWorld::ClearObject(ObservableObject* object,
-                                 const ObjectType&   withType,
-                                 const ObjectFamily& fromFamily)
+      
+      return retval;
+    } // DeleteObject()
+
+    bool BlockWorld::ClearObject(ObservableObject* object)
     {
       if(nullptr == object) {
         return false;
@@ -2496,13 +2535,42 @@ namespace Cozmo {
         return true;
       } else {
         PRINT_NAMED_WARNING("BlockWorld.ClearObject.DeleteDisabled",
-                            "Will not delete object %d because object deletion is disabled.",
+                            "Will not clear object %d because object deletion is disabled.",
                             object->GetID().GetValue());
         return false;
       }
     }
+  
+    bool BlockWorld::ClearObject(const ObjectID withID)
+    {
+      return ClearObject(GetObjectByID(withID));
+    } // ClearObject()
     
-    
+  
+    BlockWorld::ObjectsMapByID_t::iterator BlockWorld::DeleteObject(const ObjectsMapByID_t::iterator objIter,
+                                                                    const ObjectType&   withType,
+                                                                    const ObjectFamily& fromFamily)
+    {
+      ObservableObject* object = objIter->second;
+      
+      if(_canDeleteObjects || object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT)
+      {
+        ClearObjectHelper(object);
+        
+        // Delete the object
+        delete object;
+        
+        // Erase from the container and return the iterator to the next element
+        return _existingObjects[fromFamily][withType].erase(objIter);
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.DeleteObject.DeleteDisabled",
+                            "Will not delete object %d because object deletion is disabled.",
+                            object->GetID().GetValue());
+        auto retIter(objIter);
+        return ++retIter;
+      }
+    }
+  
     bool BlockWorld::SelectObject(const ObjectID objectID)
     {
       ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetObjectByID(objectID));

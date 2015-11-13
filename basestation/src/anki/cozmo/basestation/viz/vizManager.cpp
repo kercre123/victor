@@ -20,6 +20,8 @@
 #include "anki/vision/basestation/imageIO.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "clad/vizInterface/messageViz.h"
 #include <fstream>
 
@@ -583,6 +585,31 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, numAnimBytesFree, videoFramefateHz, animTag)));
     }
     
+    void VizManager::SendRobotMood(VizInterface::RobotMood&& robotMood)
+    {
+      SendMessage(VizInterface::MessageViz(std::move(robotMood)));
+    }
+
+    void VizManager::SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData)
+    {
+      SendMessage(VizInterface::MessageViz(std::move(robotBehaviorSelectData)));
+    }
+
+    void VizManager::SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected)
+    {
+      SendMessage(VizInterface::MessageViz(std::move(newBehaviorSelected)));
+    }
+
+    void VizManager::SendStartRobotUpdate()
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::StartRobotUpdate()));
+    }
+
+    void VizManager::SendEndRobotUpdate()
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
+    }
+
     /*
     void VizManager::SendGreyImage(const RobotID_t robotID,
                                    const u8* data,
@@ -760,6 +787,55 @@ namespace Anki {
       SetVizOrigin v(msg);
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }
+    
+    
+    void VizManager::SubscribeToEngineEvents(IExternalInterface& externalInterface)
+    {
+      auto helper = AnkiEventUtil<VizManager, decltype(_eventHandlers)>(externalInterface, *this, _eventHandlers);
+      
+      using namespace ExternalInterface;
+      helper.SubscribeInternal<MessageGameToEngineTag::EnableDisplay>();
+      helper.SubscribeInternal<MessageGameToEngineTag::ErasePoseMarker>();
+      helper.SubscribeInternal<MessageGameToEngineTag::VisualizeQuad>();
+      helper.SubscribeInternal<MessageGameToEngineTag::SetVizOrigin>();
+      helper.SubscribeInternal<MessageGameToEngineTag::EraseQuad>();
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::EnableDisplay& msg)
+    {
+      ShowObjects(msg.enable);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::ErasePoseMarker& msg)
+    {
+      EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_POSE_MARKER);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::VisualizeQuad& msg)
+    {
+      const Quad3f quad({msg.xUpperLeft,  msg.yUpperLeft,  msg.zUpperLeft},
+                        {msg.xUpperRight, msg.yUpperRight, msg.zUpperRight},
+                        {msg.xLowerLeft,  msg.yLowerLeft,  msg.zLowerLeft},
+                        {msg.xLowerRight, msg.yLowerRight, msg.zLowerRight});
+      
+      DrawGenericQuad(msg.quadID, quad, msg.color);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const SetVizOrigin& msg)
+    {
+      SetOrigin(msg);
+    }
+    
+    template<>
+    void VizManager::HandleMessage(const ExternalInterface::EraseQuad& msg)
+    {
+      EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
+    }
+    
     
   } // namespace Cozmo
 } // namespace Anki

@@ -60,6 +60,10 @@ public:
 
   Cost GetFinalCost() const;
 
+  float GetLastPlanTime() const;
+  int GetLastNumEpansions() const;
+  int GetLastNumConsiderations() const;
+
 private:
   xythetaPlannerImpl* _impl;
 

@@ -6,17 +6,25 @@ Python command line interface for Robot over the network
 import sys, os, socket, threading, time, select
 
 if sys.version_info.major < 3:
-    sys.stderr.write("Cozmo CLI only works with python3+")
-    sys.exit(1)
+    sys.exit("Cozmo CLI only works with python3+")
+
+TOOLS_DIR = os.path.join("tools")
+CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
+
+if not os.path.isdir(TOOLS_DIR):
+    sys.exit("Cannot find tools directory \"{}\". Are you running from the base robot directory?".format(TOOLS_DIR))
+elif not os.path.isdir(CLAD_DIR):
+    sys.exit("Cannot find CLAD directory \"{}\". Are you running from the base robot directory?".format(CLAD_DIR))
+
+sys.path.insert(0, TOOLS_DIR)
+sys.path.insert(0, CLAD_DIR)
 
 from ReliableTransport import *
 
-# XXX Replace this with importing the CLAD python messages
-assert os.path.split(os.path.abspath(os.path.curdir))[1] == 'products-cozmo', "Script must be run from root cozmo directory"
-sys.path.insert(0, 'python')
-from messages import *
+from clad.robotInterface import messageEngineToRobot, messageRobotToEngine
+EngineToRobot = messageEngineToRobot.Anki.Cozmo.RobotInterface.EngineToRobot
+RobotToEngine = messageRobotToEngine.Anki.Cozmo.RobotInterface.RobotToEngine
 
-ROBOT_PORT = 5551
 
 
 class CozmoCLI(IDataReceiver):
@@ -193,7 +201,6 @@ class CozmoCLI(IDataReceiver):
 
 
 if __name__ == '__main__':
-    from ReliableTransport.testbench import UartSimRadio
     transport = UDPTransport()
     #transport = UartSimRadio("com4", 115200)
     cli = CozmoCLI(transport, ("172.31.1.1", ROBOT_PORT))

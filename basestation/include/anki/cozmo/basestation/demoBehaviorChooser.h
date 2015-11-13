@@ -45,6 +45,8 @@ public:
   virtual Result Update(double currentTime_sec) override;
   virtual Result AddBehavior(IBehavior* newBehavior) override;
   
+  virtual const char* GetName() const override { return "Demo"; }
+  
 protected:
   Robot& _robot;
   std::vector<Signal::SmartHandle> _eventHandlers;

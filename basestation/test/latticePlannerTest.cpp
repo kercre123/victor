@@ -30,6 +30,20 @@ using namespace Cozmo;
 
 extern Anki::Util::Data::DataPlatform* dataPlatform;
 
+// Motion profile for test
+const f32 defaultPathSpeed_mmps = 60;
+const f32 defaultPathAccel_mmps2 = 200;
+const f32 defaultPathDecel_mmps2 = 500;
+const f32 defaultPathPointTurnSpeed_rad_per_sec = 2;
+const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
+const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
+PathMotionProfile defaultMotionProfile(defaultPathSpeed_mmps,
+                                       defaultPathAccel_mmps2,
+                                       defaultPathDecel_mmps2,
+                                       defaultPathPointTurnSpeed_rad_per_sec,
+                                       defaultPathPointTurnAccel_rad_per_sec2,
+                                       defaultPathPointTurnDecel_rad_per_sec2);
+
 TEST(LatticePlanner, Create)
 {
 

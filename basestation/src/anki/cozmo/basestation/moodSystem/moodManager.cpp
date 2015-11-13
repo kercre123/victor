@@ -12,9 +12,11 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "clad/vizInterface/messageViz.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include <assert.h>
 
 
@@ -100,9 +102,11 @@ void MoodManager::InitDecayGraphs()
     Anki::Util::GraphEvaluator2d& decayGraph = sEmotionDecayGraphs[i];
     if (decayGraph.GetNumNodes() == 0)
     {
-      decayGraph.AddNode( 0.0f, 1.0f);
-      decayGraph.AddNode( 1.0f, 1.0f);
-      decayGraph.AddNode(10.0f, 0.0f);
+      decayGraph.AddNode(  0.0f, 1.0f);
+      decayGraph.AddNode( 15.0f, 1.0f);
+      decayGraph.AddNode( 60.0f, 0.9f);
+      decayGraph.AddNode(150.0f, 0.6f);
+      decayGraph.AddNode(300.0f, 0.0f);
     }
     assert(VerifyDecayGraph(decayGraph));
   }
@@ -123,28 +127,65 @@ const Anki::Util::GraphEvaluator2d& MoodManager::GetDecayGraph(EmotionType emoti
 
 void MoodManager::Update(double currentTime)
 {
-  const float kMinTimeStep = 0.01f;//(1.0f / 60.0f); // minimal sensible timestep, should be at least > epsilon
+  const float kMinTimeStep = 0.0001f; // minimal sensible timestep, should be at least > epsilon
   float timeDelta = (_lastUpdateTime != 0.0) ? float(currentTime - _lastUpdateTime) : kMinTimeStep;
   if (timeDelta < kMinTimeStep)
   {
-    PRINT_NAMED_ERROR("MoodManager.BadTimeStep", "TimeStep %f (%f-%f) is < %f - clamping!", timeDelta, currentTime, _lastUpdateTime, kMinTimeStep);
-    assert(0); // TEMP
+    PRINT_NAMED_WARNING("MoodManager.BadTimeStep", "TimeStep %f (%f-%f) is < %f - clamping!", timeDelta, currentTime, _lastUpdateTime, kMinTimeStep);
     timeDelta = kMinTimeStep;
   }
   
   _lastUpdateTime = currentTime;
-  
+
+  SEND_MOOD_TO_VIZ_DEBUG_ONLY( VizInterface::RobotMood robotMood );
+  SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.reserve((size_t)EmotionType::Count) );
+
   for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
   {
-    EmotionType emotionType = (EmotionType)i;
-    GetEmotionByIndex(i).Update(GetDecayGraph(emotionType), currentTime, timeDelta);
+    const EmotionType emotionType = (EmotionType)i;
+    Emotion& emotion = GetEmotionByIndex(i);
+    
+    emotion.Update(GetDecayGraph(emotionType), currentTime, timeDelta);
+
+    SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
   }
+
+  #if SEND_MOOD_TO_VIZ_DEBUG
+  robotMood.recentEvents = std::move(_eventNames);
+  _eventNames.clear();
+  VizManager::getInstance()->SendRobotMood(std::move(robotMood));
+  #endif //SEND_MOOD_TO_VIZ_DEBUG
 }
   
   
 void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString)
 {
   GetEmotion(emotionType).Add(baseValue, uniqueIdString);
+  
+  #if SEND_MOOD_TO_VIZ_DEBUG
+  if (_eventNames.empty() || (_eventNames.back() != uniqueIdString))
+  {
+    _eventNames.push_back(uniqueIdString);
+  }
+  #endif // SEND_MOOD_TO_VIZ_DEBUG
+}
+  
+
+void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
+                                EmotionType emotionType2, float baseValue2, const char* uniqueIdString)
+{
+  AddToEmotion(emotionType1, baseValue1, uniqueIdString);
+  AddToEmotion(emotionType2, baseValue2, uniqueIdString);
+}
+
+  
+void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
+                                EmotionType emotionType2, float baseValue2,
+                                EmotionType emotionType3, float baseValue3, const char* uniqueIdString)
+{
+  AddToEmotion(emotionType1, baseValue1, uniqueIdString);
+  AddToEmotion(emotionType2, baseValue2, uniqueIdString);
+  AddToEmotion(emotionType3, baseValue3, uniqueIdString);
 }
 
 

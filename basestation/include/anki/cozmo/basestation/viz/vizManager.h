@@ -27,6 +27,8 @@
 #include "clad/types/objectTypes.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/vizInterface/messageViz.h"
+#include "util/signals/simpleSignal_fwd.h"
+#include <vector>
 
 namespace Anki {
   
@@ -40,7 +42,10 @@ namespace Anki {
   namespace VizInterface {
   class MessageViz;
   enum class MessageVizTag : uint8_t;
+  struct RobotMood;
   } // end namespace VizInterface
+    
+    class IExternalInterface;
 
   // NOTE: this is a singleton class
     class VizManager
@@ -342,6 +347,18 @@ namespace Anki {
       
       void SetOrigin(const SetVizOrigin& msg);
       
+      void SubscribeToEngineEvents(IExternalInterface& externalInterface);
+      
+      // Declaration for message handling specializations. See AnkiEventUtil.h
+      template <typename T>
+      void HandleMessage(const T& msg);
+      
+      void SendRobotMood(VizInterface::RobotMood&& robotMood);
+      void SendRobotBehaviorSelectData(VizInterface::RobotBehaviorSelectData&& robotBehaviorSelectData);
+      void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
+      void SendStartRobotUpdate();
+      void SendEndRobotUpdate();
+
     protected:
       
       // Protected default constructor for singleton.
@@ -367,6 +384,9 @@ namespace Anki {
       
       // TODO: Won't need this offest once Polygon is implmeneted correctly (not drawing with path)
       const u32 _polyIDOffset = 2200;
+      
+      // For handling messages:
+      std::vector<Signal::SmartHandle> _eventHandlers;
     }; // class VizManager
     
     

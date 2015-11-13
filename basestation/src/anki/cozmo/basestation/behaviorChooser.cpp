@@ -13,8 +13,24 @@
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
+
+
+#if ANKI_DEV_CHEATS
+  #define VIZ_BEHAVIOR_SELECTION  1
+#else
+  #define VIZ_BEHAVIOR_SELECTION  0
+#endif // ANKI_DEV_CHEATS
+
+#if VIZ_BEHAVIOR_SELECTION
+  #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)  exp
+#else
+  #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)
+#endif // VIZ_BEHAVIOR_SELECTION
+
 
 namespace Anki {
 namespace Cozmo {
@@ -46,29 +62,41 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
   _behaviorList.push_back(newBehavior);
   return Result::RESULT_OK;
 }
-  
+
 IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
 {
   const float kRandomFactor = 0.1f;
   
   Util::RandomGenerator rng; // [MarkW:TODO] We should share these (1 per robot or subsystem maybe?) for replay determinism
   
+  VIZ_BEHAVIOR_SELECTION_ONLY( VizInterface::RobotBehaviorSelectData robotBehaviorSelectData );
+  
   IBehavior* bestBehavior = nullptr;
   float bestScore = 0.0f;
   for (IBehavior* behavior : _behaviorList)
   {
-    float score = behavior->EvaluateScore(robot, currentTime_sec);
-    if (score > 0.0f)
+    VizInterface::BehaviorScoreData scoreData;
+    
+    scoreData.behaviorScore = behavior->EvaluateScore(robot, currentTime_sec);
+    scoreData.totalScore    = scoreData.behaviorScore;
+    VIZ_BEHAVIOR_SELECTION_ONLY( scoreData.name = behavior->GetName() );
+    
+    if (scoreData.totalScore > 0.0f)
     {
-      score += rng.RandDbl(kRandomFactor);
+      scoreData.totalScore += rng.RandDbl(kRandomFactor);
       
-      if (score > bestScore)
+      if (scoreData.totalScore > bestScore)
       {
         bestBehavior = behavior;
-        bestScore    = score;
+        bestScore    = scoreData.totalScore;
       }
     }
+    
+    VIZ_BEHAVIOR_SELECTION_ONLY( robotBehaviorSelectData.scoreData.push_back(scoreData) );
   }
+  
+  VIZ_BEHAVIOR_SELECTION_ONLY( VizManager::getInstance()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
+  
   return bestBehavior;
 }
   

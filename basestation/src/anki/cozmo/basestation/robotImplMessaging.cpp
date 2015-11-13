@@ -14,18 +14,23 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/pathPlanner.h"
+#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/helpers/printByteArray.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
+#include <functional>
 
 namespace Anki {
 namespace Cozmo {
+  
+using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId)
 {
@@ -54,6 +59,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
     std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
+    std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
 
   // lambda wrapper to call internal handler
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -125,7 +132,7 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  SetCameraCalibration(calib);
+  _visionComponent.SetCameraCalibration(calib);
   SetPhysicalRobot(payload.isPhysicalRobots);
 }
 
@@ -152,7 +159,7 @@ void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& 
 
   // Note: this returns the vision system to whatever mode it was in before
   // it was docking/tracking
-  StopDocking();
+  _visionComponent.EnableMode(VisionMode::Tracking, false);
 }
 
 void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -170,8 +177,8 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
     SetLastPickOrPlaceSucceeded(false);
   }
 
-  StopDocking();
-  StartLookingForMarkers();
+  _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
+  _visionComponent.EnableMode(VisionMode::Tracking, false);
 
 }
 
@@ -216,7 +223,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
                          "Unsetting %s %d, which moved, as robot %d's localization object.",
                          ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
         SetLocalizedTo(nullptr);
-      } else if(!IsLocalized()) {
+      } else if(!IsLocalized() && !IsPickedUp()) {
         // If we are not localized and there is nothing else left in the world that
         // we could localize to, then go ahead and mark us as localized (via
         // odometry alone)
@@ -236,7 +243,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
     if(!actionObject->IsBeingCarried()) {
       // Update the ID to be the blockworld ID before broadcasting
       payload.objectID = object->GetID();
-      _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
+      Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
     }
   }
 }
@@ -280,7 +287,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
                          "Unsetting %s %d, which stopped moving, as robot %d's localization object.",
                          ObjectTypeToString(object->GetType()), object->GetID().GetValue(), GetID());
         SetLocalizedTo(nullptr);
-      } else if(!IsLocalized()) {
+      } else if(!IsLocalized() && !IsPickedUp()) {
         // If we are not localized and there is nothing else left in the world that
         // we could localize to, then go ahead and mark us as localized (via
         // odometry alone)
@@ -295,7 +302,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = object->GetID();
-    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
   }
 }
 
@@ -319,7 +326,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
     
     // Update the ID to be the blockworld ID before broadcasting
     payload.objectID = object->GetID();
-    GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
   }
 }
 
@@ -358,7 +365,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
-  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
+  Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
   
 }
   
@@ -377,7 +384,7 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
   
   // Forward on with EngineToGame event
   ChargerEvent payload = message.GetData().Get_chargerEvent();
-  _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
+  Broadcast(ExternalInterface::MessageEngineToGame(ChargerEvent(payload)));
 }
   
 
@@ -385,6 +392,10 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
 // Sends complete images to VizManager for visualization (and possible saving).
 void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
+  // Ignore images if robot has not yet acknowledged time sync
+  if (!_timeSynced)
+    return;
+  
   const ImageChunk& payload = message.GetData().Get_image();
   const u16 width  = Vision::CameraResInfo[(int)payload.resolution].width;
   const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
@@ -413,34 +424,30 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
   if(isImageReady)
   {
-    Vision::Image image;
     cv::Mat cvImg = _imageDeChunker->GetImage();
     if(cvImg.channels() == 1) {
-      image = Vision::Image(height, width, cvImg.data);
-    } else {
-      // TODO: Actually support processing color data (and have ImageRGB object)
-      cv::cvtColor(cvImg, cvImg, CV_RGB2GRAY);
-      image = Vision::Image(height, width, cvImg.data);
+      cv::cvtColor(cvImg, cvImg, CV_GRAY2RGB);
     }
 
+    Vision::ImageRGB image(height,width,cvImg.data);
     image.SetTimestamp(payload.frameTimeStamp);
 
-#       if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+#   if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
     // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
-        static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
-        static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
-        static s32 g_queueImages_queueIndex = 0;
-
-        char filename[256];
-        snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
-
-        cv::imwrite(filename, image.get_CvMat_());
-
-        g_queueImages_queueIndex++;
-
-        if(g_queueImages_queueIndex >= g_queueImages_queueLength)
-          g_queueImages_queueIndex = 0;
-#       endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
+    static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
+    static const s32 g_queueImages_queueLength = 70; // Must be at least the FPS of the camera. But higher numbers may cause more lag for the consuming process.
+    static s32 g_queueImages_queueIndex = 0;
+    
+    char filename[256];
+    snprintf(filename, 256, g_queueImages_filenamePattern, g_queueImages_queueIndex);
+    
+    cv::imwrite(filename, image.get_CvMat_());
+    
+    g_queueImages_queueIndex++;
+    
+    if(g_queueImages_queueIndex >= g_queueImages_queueLength)
+      g_queueImages_queueIndex = 0;
+#   endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
 
     ProcessImage(image);
 
@@ -499,7 +506,212 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
     oFile.close();
   }
 }
+  
+void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _timeSynced = true;
+}
+  
 
+void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
+{
+  auto helper = AnkiEventUtil<Robot, decltype(_signalHandles)>(externalInterface, *this, _signalHandles);
+  
+  using namespace ExternalInterface;
+  helper.SubscribeInternal<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
+  helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
+  helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
+  helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
+  helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
+  helper.SubscribeInternal<MessageGameToEngineTag::ExecuteTestPlan>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SaveImages>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SaveRobotState>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetRobotCarryingObject>();
+  helper.SubscribeInternal<MessageGameToEngineTag::AbortPath>();
+  helper.SubscribeInternal<MessageGameToEngineTag::AbortAll>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetActiveObjectLEDs>();
+  helper.SubscribeInternal<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
+}
 
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg)
+{
+  _isBehaviorMgrEnabled = msg.enabled;
+}
+  
+template<>
+void Robot::HandleMessage(const ExternalInterface::CancelAction& msg)
+{
+  GetActionList().Cancel(-1, (RobotActionType)msg.actionType);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::DrawPoseMarker& msg)
+{
+  if(IsCarryingObject()) {
+    Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
+    Quad2f objectFootprint = GetBlockWorld().GetObjectByID(GetCarryingObject())->GetBoundingQuadXY(targetPose);
+    VizManager::getInstance()->DrawPoseMarker(0, objectFootprint, ::Anki::NamedColors::GREEN);
+  }
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::IMURequest& msg)
+{
+  RequestIMU(msg.length_ms);
+}
+  
+  
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
+{
+  SetBackpackLights(msg.onColor, msg.offColor,
+                    msg.onPeriod_ms, msg.offPeriod_ms,
+                    msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetIdleAnimation& msg)
+{
+  _animationStreamer.SetIdleAnimation(msg.animationName);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::ReplayLastAnimation& msg)
+{
+  _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
+{
+  Planning::Path p;
+  _longPathPlanner->GetTestPath(GetPose(), p);
+  ExecutePath(p);
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SaveImages& msg)
+{
+  _imageSaveMode = (SaveMode_t)msg.mode;
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SaveRobotState& msg)
+{
+  _stateSaveMode = (SaveMode_t)msg.mode;
+}
+  
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetRobotCarryingObject& msg)
+{
+  if(msg.objectID < 0) {
+    UnSetCarryingObjects();
+  } else {
+    SetCarryingObject(msg.objectID);
+  }
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::AbortPath& msg)
+{
+  AbortDrivingToPose();
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::AbortAll& msg)
+{
+  AbortAll();
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetActiveObjectLEDs& msg)
+{
+  assert(msg.objectID <= s32_MAX);
+  SetObjectLights(msg.objectID,
+                  msg.whichLEDs,
+                  msg.onColor, msg.offColor,
+                  msg.onPeriod_ms, msg.offPeriod_ms,
+                  msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                  msg.turnOffUnspecifiedLEDs,
+                  msg.makeRelative,
+                  Point2f(msg.relativeToX, msg.relativeToY));
+}
+
+template<>
+void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
+{
+  assert(msg.objectID <= s32_MAX);
+  SetObjectLights(msg.objectID,
+                  msg.onColor, msg.offColor,
+                  msg.onPeriod_ms, msg.offPeriod_ms,
+                  msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms,
+                  msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
+}
+  
+void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
+{
+  // StartFaceTracking
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::EnableVisionMode,
+    [this] (const GameToEngineEvent& event)
+    {
+      auto const& payload = event.GetData().Get_EnableVisionMode();
+      _visionComponent.EnableMode(payload.mode, payload.enable);
+    }));
+  
+  // VisionWhileMoving
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionWhileMoving,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
+      EnableVisionWhileMoving(msg.enable);
+    }));
+}
+
+void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
+{
+  // SetWheelControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetWheelControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetWheelControllerGains& msg = event.GetData().Get_SetWheelControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kpLeft, msg.kiLeft, 0.0f, msg.maxIntegralErrorLeft,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_wheel);
+    }));
+  
+  // SetHeadControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetHeadControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetHeadControllerGains& msg = event.GetData().Get_SetHeadControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_head);
+    }));
+  
+  // SetLiftControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetLiftControllerGains& msg = event.GetData().Get_SetLiftControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.kp, msg.ki, msg.kd, msg.maxIntegralError,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_lift);
+    }));
+  
+  // SetSteeringControllerGains
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetSteeringControllerGains,
+    [this] (const GameToEngineEvent& event)
+    {
+      const ExternalInterface::SetSteeringControllerGains& msg = event.GetData().Get_SetSteeringControllerGains();
+      
+      SendRobotMessage<RobotInterface::ControllerGains>(msg.k1, msg.k2, 0.0f, 0.0f,
+                                                        Anki::Cozmo::RobotInterface::ControllerChannel::controller_stearing);
+    }));
+}
+  
 } // end namespace Cozmo
 } // end namespace Anki

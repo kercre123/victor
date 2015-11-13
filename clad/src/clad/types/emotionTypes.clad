@@ -9,14 +9,14 @@ namespace Cozmo {
 
 enum uint_8 EmotionType {
 
-    Happiness = 0,
-    Calmness,
-    Courage,
-    Confidence,
-    BatteryEnergy,
+    Happy = 0,
+    Calm,
+    Brave,
+    Confident,
+    Charged,
     Excited,
-    Socialized,
-    GameSuccess,
+    Social,
+    Winning,
     
     Count
 }

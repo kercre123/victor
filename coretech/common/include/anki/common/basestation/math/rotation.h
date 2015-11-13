@@ -319,7 +319,7 @@ namespace Anki {
   {
     f32 maxVal;
     GetRotatedParentAxis<parentAxis>(&maxVal);
-    return std::acos(maxVal);
+    return std::acos(std::abs(maxVal));
   }
   
   template<char parentAxis>

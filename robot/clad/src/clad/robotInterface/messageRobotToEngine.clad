@@ -53,6 +53,11 @@ message TimeProfileStat
   string  profName,
 }
 
+message SyncTimeAck
+{
+}
+
+
 /// *************** WiFi to Engine messages ******************************* ///
 
 message PrintText
@@ -119,6 +124,7 @@ union RobotToEngine {
   IMUDataChunk               imuDataChunk           = 0x11,
   CliffEvent                 cliffEvent             = 0x12,
   ChargerEvent               chargerEvent           = 0x13,
+  SyncTimeAck                syncTimeAck            = 0x14,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,

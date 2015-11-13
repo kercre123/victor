@@ -4,6 +4,7 @@
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/quad.h"
 #include "anki/common/basestation/math/polygon.h"
+#include "anki/planning/basestation/robotActionParams.h"
 #include "anki/planning/shared/path.h"
 #include "json/json-forwards.h"
 #include "xythetaPlanner_definitions.h"
@@ -299,24 +300,6 @@ private:
 };
 
 
-// This struct holds values that the motions will use to calculate costs, based on the turning radius and
-// velocity of the robot
-struct RobotActionParams
-{
-  RobotActionParams();
-
-  void Reset();
-
-  // returns true on success
-  bool Import(const Json::Value& config);
-  void Dump(Util::JsonWriter& writer) const;
-
-  double halfWheelBase_mm;
-  double maxVelocity_mmps;
-  double maxReverseVelocity_mmps;
-  double oneOverMaxVelocity;
-};
-
 
 class xythetaEnvironment
 {
@@ -474,6 +457,9 @@ public:
   float GetDistanceBetween(const State_c& start, const State& end) const;
   static float GetDistanceBetween(const State_c& start, const State_c& end);
 
+  float GetMinAngleBetween(const State_c& start, const State& end) const;
+  static float GetMinAngleBetween(const State_c& start, const State_c& end);
+
   // Get a motion primitive. Returns true if the action is retrieved,
   // false otherwise. Returns primitive in arguments
   inline bool GetMotion(StateTheta theta, ActionID actionID, MotionPrimitive& prim) const;
@@ -496,6 +482,7 @@ public:
   double GetMaxVelocity_mmps() const {return _robotParams.maxVelocity_mmps;}
   double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
   double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
+  double GetHalfWheelBase_mm() const {return _robotParams.halfWheelBase_mm;}
 
   float GetResolution_mm() const { return resolution_mm_; }
 

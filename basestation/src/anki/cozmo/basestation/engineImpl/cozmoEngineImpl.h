@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/cozmoEngine.h"
 #include "anki/cozmo/basestation/multiClientChannel.h" // TODO: Remove?
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/messaging/basestation/advertisementService.h"
 #include "anki/common/basestation/jsonTools.h"

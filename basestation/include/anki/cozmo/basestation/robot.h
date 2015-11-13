@@ -38,7 +38,6 @@
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/faceWorld.h"
-#include "anki/cozmo/basestation/visionProcessingThread.h"
 #include "anki/cozmo/basestation/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
@@ -49,6 +48,7 @@
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
@@ -56,8 +56,7 @@
 #include <queue>
 #include <unordered_map>
 #include <time.h>
-
-#define ASYNC_VISION_PROCESSING 1
+#include <utility>
 
 namespace Anki {
   
@@ -105,12 +104,20 @@ typedef enum {
 } SaveMode_t;
     
 namespace RobotInterface {
-class MessageHandler;
-class EngineToRobot;
-class RobotToEngine;
-enum class EngineToRobotTag : uint8_t;
-enum class RobotToEngineTag : uint8_t;
+  class MessageHandler;
+  class EngineToRobot;
+  class RobotToEngine;
+  enum class EngineToRobotTag : uint8_t;
+  enum class RobotToEngineTag : uint8_t;
 } // end namespace RobotInterface
+
+namespace ExternalInterface {
+  class MessageEngineToGame;
+}
+
+namespace Audio {
+  class RobotAudioClient;
+}
 
 // indent 2 spaces << that way !!!! coding standards !!!!
 class Robot
@@ -184,19 +191,21 @@ public:
     //
     // Camera / Vision
     //
-    void                              EnableVisionWhileMoving(bool enable);
-    const Vision::Camera&             GetCamera() const;
-    Vision::Camera&                   GetCamera();
-    void                              SetCameraCalibration(const Vision::CameraCalibration& calib);
-    const Vision::CameraCalibration&  GetCameraCalibration() const;
-    Vision::Camera                    GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
-    
+    VisionComponent&         GetVisionComponent() { return _visionComponent; }
+    const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
+    void                     EnableVisionWhileMoving(bool enable);
+    Vision::Camera           GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
+    Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request);
+  
+    Result ProcessImage(const Vision::ImageRGB& image);
+  
     // Queue an observed vision marker for processing with BlockWorld.
     // Note that this is a NON-const reference: the marker's camera will be updated
     // to use a pose from pose history.
     Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Get a *copy* of the current image on this robot's vision processing thread
+    // TODO: Remove this method? I don't think anyone is using it...
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
@@ -213,9 +222,9 @@ public:
     const Pose3d&          GetPose()         const;
     const f32              GetHeadAngle()    const;
     const f32              GetLiftAngle()    const;
-    const Pose3d&          GetLiftPose()     const {return _liftPose;}  // At current lift position!
-    const PoseFrameID_t    GetPoseFrameID()  const {return _frameId;}
-    const Pose3d*          GetWorldOrigin() const { return _worldOrigin; }
+    const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
+    const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
+    const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
 
     // These change the robot's internal (basestation) representation of its
     // pose, head angle, and lift angle, but do NOT actually command the
@@ -264,18 +273,18 @@ public:
     // useManualSpeed is set to true, the robot will plan a path to the goal, but won't actually execute any
     // speed changes, so the user (or some other system) will have control of the speed along the "rails" of
     // the path. If specified, the maxReplanTime arguments specifies the maximum nyum
-    Result StartDrivingToPose(const Pose3d& pose, bool useManualSpeed = false);
+    Result StartDrivingToPose(const Pose3d& pose,
+                              const PathMotionProfile motionProfile,
+                              bool useManualSpeed = false);
 
     // Just like above, but will plan to any of the given poses. It's up to the robot / planner to pick which
     // pose it wants to go to. The optional second argument is a pointer to a size_t, which, if not null, will
     // be set to the pose which is selected once planning is complete
     Result StartDrivingToPose(const std::vector<Pose3d>& poses,
+                              const PathMotionProfile motionProfile,                              
                               size_t* selectedPoseIndex = nullptr,
                               bool useManualSpeed = false);
-    
-    // Executes a test path defined in latticePlanner
-    void ExecuteTestPath();
-
+  
     // This function checks the planning / path following status of the robot. See the enum definition for
     // details
     ERobotDriveToPoseStatus CheckDriveToPoseStatus() const;
@@ -351,9 +360,7 @@ public:
     // w.r.t. the world, and removes it from the lift pose chain so it is no
     // longer "attached" to the robot.
     Result SetCarriedObjectAsUnattached();
-    
-    Result StopDocking();
-    
+  
     /*
     //
     // Proximity Sensors
@@ -366,16 +373,6 @@ public:
     static const Pose3d ProxDetectTransform[NUM_PROX];
     */
 
-
-    //
-    // Vision
-    //
-    Result ProcessImage(const Vision::Image& image);
-    Result StartFaceTracking(u8 timeout_sec);
-    Result StopFaceTracking();
-    Result StartLookingForMarkers();
-    Result StopLookingForMarkers();
-
     // Set how to save incoming robot state messages
     void SetSaveStateMode(const SaveMode_t mode);
     
@@ -383,7 +380,7 @@ public:
     void SetSaveImageMode(const SaveMode_t mode);
     
     // Return the timestamp of the last _processed_ image
-    TimeStamp_t GetLastImageTimeStamp() { return _visionProcessor.GetLastProcessedImageTimeStamp(); }
+    TimeStamp_t GetLastImageTimeStamp() { return _visionComponent.GetLastProcessedImageTimeStamp(); }
     
     // =========== Actions Commands =============
     
@@ -391,7 +388,9 @@ public:
     // to do, either "now" or in queues.
     // TODO: This seems simpler than writing/maintaining wrappers, but maybe that would be better?
     ActionList& GetActionList() { return _actionList; }
-    
+  
+    static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
+  
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying
     // anything.
@@ -425,14 +424,17 @@ public:
     // Returns a reference to a count of the total number of bytes streamed to the robot.
     s32 GetNumAnimationBytesStreamed();
     void IncrementNumAnimationBytesStreamed(s32 num);
-    
+  
+    // =========== Audio =============
+    const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient; }
+    void SetRobotAudioClient( Audio::RobotAudioClient* audioClient ) { _audioClient = audioClient; }
+  
     // Ask the UI to play a sound for us
+    // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
     
     Result StopAnimation();
-
-    void ReplayLastAnimation(const s32 loopCount);
 
     // Read the animations in a dir
     void ReadAnimationFile(const char* filename, std::string& animationID);
@@ -452,23 +454,17 @@ public:
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
-
-    Result RequestImage(const ImageSendMode mode, const ImageResolution resolution) const;
-    
+  
+    // This is just for unit tests to fake a syncTimeAck message from the robot
+    void FakeSyncTimeAck() { _timeSynced = true;}
+  
     Result RequestIMU(const u32 length_ms) const;
 
-    // Tell the robot to start a given test mode
-    Result StartTestMode(const TestMode mode, s32 p1, s32 p2, s32 p3) const;
-
-    // For debugging robot parameters:
-    Result SetWheelControllerGains(const f32 kpLeft, const f32 kiLeft, const f32 maxIntegralErrorLeft,
-                                   const f32 kpRight, const f32 kiRight, const f32 maxIntegralErrorRight);
-    Result SetHeadControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
-    Result SetLiftControllerGains(const f32 kp, const f32 ki, const f32 kd, const f32 maxIntegralError);
-    Result SetSteeringControllerGains(const f32 k1, const f32 k2);
 
     // =========== Pose history =============
-    
+  
+    RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
+  
     Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                    const PoseFrameID_t frameID,
                                    const f32 pose_x, const f32 pose_y, const f32 pose_z,
@@ -566,25 +562,43 @@ public:
     Result AbortAnimation();
     Result AbortDocking(); // a.k.a. PickAndPlace
     Result AbortDrivingToPose(); // stops planning and path following
-    
+  
+    // Helper template for sending Robot messages with clean syntax
+    template<typename T, typename... Args>
+    Result SendRobotMessage(Args&&... args) const
+    {
+      return SendMessage(RobotInterface::EngineToRobot(T(std::forward<Args>(args)...)));
+    }
+  
     // Send a message to the physical robot
     Result SendMessage(const RobotInterface::EngineToRobot& message,
                        bool reliable = true, bool hot = false) const;
     
-    // Events
+    // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
-    inline bool HasExternalInterface() const { return _externalInterface != nullptr; }
-    inline IExternalInterface* GetExternalInterface() {
+    bool HasExternalInterface() const { return _externalInterface != nullptr; }
+    IExternalInterface* GetExternalInterface() {
       ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
-    inline void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
-    inline const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+    void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
+    const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   
-    inline MovementComponent& GetMoveComponent() { return _movementComponent; }
-    inline const MovementComponent& GetMoveComponent() const { return _movementComponent; }
+    MovementComponent& GetMoveComponent() { return _movementComponent; }
+    const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    inline const MoodManager& GetMoodManager() const { return _moodManager; }
-    inline MoodManager& GetMoodManager() { return _moodManager; }
+    MoodManager& GetMoodManager() { return _moodManager; }
+    const MoodManager& GetMoodManager() const { return _moodManager; }
+  
+    // Handle various message types
+    template<typename T>
+    void HandleMessage(const T& msg);
+
+    // Convenience wrapper for broadcasting an event if the robot has an ExternalInterface.
+    // Does nothing if not. Returns true if event was broadcast, false if not (i.e.
+    // if there was no external interface).
+    bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
+  
+    Util::Data::DataPlatform* GetDataPlatform() { return _dataPlatform; }
   
   protected:
     IExternalInterface* _externalInterface;
@@ -593,7 +607,10 @@ public:
     // The robot's identifier
     RobotID_t         _ID;
     bool              _isPhysical = false;
-    
+  
+    // Whether or not sync time was acknowledged by physical robot
+    bool              _timeSynced = false;
+  
     // Flag indicating whether a robotStateMessage was ever received
     bool              _newStateMsgAvailable = false;
     
@@ -605,27 +622,21 @@ public:
     
     // A container for faces/people the robot knows about
     FaceWorld         _faceWorld;
-    
-    VisionProcessingThread _visionProcessor;
-    //Vision::PanTiltTracker _faceTracker;
-#   if !ASYNC_VISION_PROCESSING
-    Vision::Image     _image;
-    MessageRobotState _robotStateForImage;
-    bool              _haveNewImage = false;
-#   endif
   
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
     //ActionQueue      _actionQueue;
-    ActionList       _actionList;
-  MovementComponent _movementComponent;
-
+    ActionList        _actionList;
+    MovementComponent _movementComponent;
+    VisionComponent   _visionComponent;
+  
     // Path Following. There are two planners, only one of which can
     // be selected at a time
     IPathPlanner*            _selectedPathPlanner          = nullptr;
     IPathPlanner*            _longPathPlanner              = nullptr;
     IPathPlanner*            _shortPathPlanner             = nullptr;
+    IPathPlanner*            _shortMinAnglePathPlanner     = nullptr;
     size_t*                  _plannerSelectedPoseIndexPtr  = nullptr;
     int                      _numPlansStarted              = 0;
     int                      _numPlansFinished             = 0;
@@ -636,19 +647,14 @@ public:
     u16                      _lastRecvdPathID              = 0;
     bool                     _usingManualPathSpeed         = false;
     PathDolerOuter*          _pdo                          = nullptr;
-    
-    // This functions sets _selectedPathPlanner to the appropriate
-    // planner
+    PathMotionProfile        _pathMotionProfile            = DEFAULT_PATH_MOTION_PROFILE;
+  
+    // This functions sets _selectedPathPlanner to the appropriate planner
     void SelectPlanner(const Pose3d& targetPose);
+    void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
     // Sends a path to the robot to be immediately executed
     Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
-    
-    // Robot stores the calibration, camera just gets a reference to it
-    // This is so we can share the same calibration data across multiple
-    // cameras (e.g. those stored inside the pose history)
-    Vision::CameraCalibration _cameraCalibration;
-    Vision::Camera            _camera;
     bool                      _visionWhileMovingEnabled = false;
 
     /*
@@ -732,16 +738,6 @@ public:
     const Vision::KnownMarker*  _carryingMarker           = nullptr;
     bool                        _lastPickOrPlaceSucceeded = false;
   
-    /*
-     // Plan a path to the pre-ascent/descent pose (depending on current
-     // height of the robot) and then go up or down the ramp.
-     Result ExecuteRampingSequence(Ramp* ramp);
-     
-     // Plan a path to the nearest (?) pre-crossing pose of the specified bridge
-     // object, then cross it.
-     Result ExecuteBridgeCrossingSequence(ActionableObject* object);
-     */
-    
     // A place to store reaction callback functions, indexed by the type of
     // vision marker that triggers them
     std::map<Vision::Marker::Code, std::list<ReactionCallback> > _reactionCallbacks;
@@ -769,7 +765,10 @@ public:
     /*
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
     */
-
+  
+    ///////// Audio /////////
+    Audio::RobotAudioClient* _audioClient;
+  
     ///////// Animation /////////
     
     CannedAnimationContainer _cannedAnimations;
@@ -792,8 +791,7 @@ public:
     uint32_t _imuDataSize = 0;
     int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
 
-
-  void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
+    void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -812,7 +810,12 @@ public:
     // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-
+    void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
+    void SetupMiscHandlers(IExternalInterface& externalInterface);
+    void SetupVisionHandlers(IExternalInterface& externalInterface);
+    void SetupGainsHandlers(IExternalInterface& externalInterface);
+  
     Result SendAbsLocalizationUpdate(const Pose3d&        pose,
                                      const TimeStamp_t&   t,
                                      const PoseFrameID_t& frameId) const;
@@ -831,7 +834,7 @@ public:
     // Sync time with physical robot and trigger it robot to send back camera
     // calibration
     Result SendSyncTime() const;
-    
+  
     // Send's robot's current pose
     Result SendAbsLocalizationUpdate() const;
     
@@ -840,12 +843,7 @@ public:
 
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
-    
-    Result SendPlaceObjectOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
 
-    Result SendDockWithObject(const DockAction dockAction,
-                              const bool useManualSpeed);
-    
     Result SendAbortDocking();
     Result SendAbortAnimation();
     
@@ -877,46 +875,16 @@ inline const Pose3d& Robot::GetDriveCenterPose(void) const
 inline void Robot::EnableVisionWhileMoving(bool enable)
 { _visionWhileMovingEnabled = enable; }
 
-inline const Vision::Camera& Robot::GetCamera(void) const
-{ return _camera; }
+inline const f32 Robot::GetHeadAngle() const
+{ return _currentHeadAngle; }
 
-inline Vision::Camera& Robot::GetCamera(void)
-{ return _camera; }
+inline const f32 Robot::GetLiftAngle() const
+{ return _currentLiftAngle; }
 
-inline void Robot::SetCameraCalibration(const Vision::CameraCalibration& calib)
-{
-  if (_cameraCalibration != calib) {
-
-    _cameraCalibration = calib;
-    _camera.SetSharedCalibration(&_cameraCalibration);
-
-    //_faceTracker.Init(calib);
-
-#if ASYNC_VISION_PROCESSING
-    // Now that we have camera calibration, we can start the vision
-    // processing thread
-    _visionProcessor.Start(_cameraCalibration);
-#else
-    _visionProcessor.SetCameraCalibration(_cameraCalibration);
-#endif
-  } else {
-    PRINT_NAMED_INFO("Robot.SetCameraCalibration.IgnoringDuplicateCalib","");
-  }
+inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
+  _rampID = rampID;
+  _rampDirection = direction;
 }
-
-inline const Vision::CameraCalibration& Robot::GetCameraCalibration() const
-{ return _cameraCalibration; }
-
-  inline const f32 Robot::GetHeadAngle() const
-  { return _currentHeadAngle; }
-  
-  inline const f32 Robot::GetLiftAngle() const
-  { return _currentLiftAngle; }
-  
-  inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
-    _rampID = rampID;
-    _rampDirection = direction;
-  }
 
 inline Result Robot::SetDockObjectAsAttachedToLift(){
   return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);

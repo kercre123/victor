@@ -1,0 +1,18 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+  enum int_8 VisionMode
+  {
+    Idle                = 0x00,
+    DetectingMarkers    = 0x01,
+    Tracking            = 0x02,
+    DetectingFaces      = 0x04,
+    DetectingMotion     = 0x08
+  }
+      
+} // namespace Cozmo
+} // namespace Anki

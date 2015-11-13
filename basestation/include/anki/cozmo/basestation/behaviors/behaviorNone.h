@@ -26,7 +26,7 @@ public:
     _name = "NoneBehavior";
     
     // Baseline emotion score so this behavior gets a non-zero score regardless of mood
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{0.0f, 0.1f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{0.0f, 0.05f}}), false));
   }
   virtual ~BehaviorNone() { }
   
@@ -37,7 +37,7 @@ public:
   
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override
+  virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override
   {
     _isInterrupted = false; return Result::RESULT_OK;
   }
@@ -48,7 +48,7 @@ protected:
     return retval;
   }
 
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override
   {
     _isInterrupted = true; return Result::RESULT_OK;
   }
