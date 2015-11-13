@@ -36,7 +36,6 @@
 #endif // SEND_MOOD_TO_VIZ_DEBUG
 
 
-
 namespace Anki {
 namespace Cozmo {
 
@@ -47,12 +46,24 @@ constexpr float kEmotionChangeMedium    = 0.25f;
 constexpr float kEmotionChangeLarge     = 0.50f;
 constexpr float kEmotionChangeVeryLarge = 1.00f;
 
+  
+template <typename Type>
+class AnkiEvent;
 
+
+namespace ExternalInterface {
+  class MessageGameToEngine;
+}
+  
+  
+class Robot;
+
+  
 class MoodManager
 {
 public:
   
-  MoodManager();
+  explicit MoodManager(Robot* inRobot = nullptr);
   
   void Reset();
   
@@ -74,6 +85,10 @@ public:
 
   float GetEmotionDeltaRecentTicks(EmotionType emotionType, uint32_t numTicksBackwards) const { return GetEmotion(emotionType).GetDeltaRecentTicks(numTicksBackwards); }
   float GetEmotionDeltaRecentSeconds(EmotionType emotionType, float secondsBackwards)   const { return GetEmotion(emotionType).GetDeltaRecentSeconds(secondsBackwards); }
+  
+  void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
+  void SendEmotionsToGame();
 
   // ============================== Public Static Member Funcs ==============================
   
@@ -102,6 +117,8 @@ private:
     return _emotions[index];
   }
   
+  SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
+  
   // ============================== Private Static Member Vars ==============================
 
   static Anki::Util::GraphEvaluator2d    sEmotionDecayGraphs[(size_t)EmotionType::Count];
@@ -110,6 +127,7 @@ private:
   
   Emotion     _emotions[(size_t)EmotionType::Count];
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
+  Robot*      _robot;
   double      _lastUpdateTime;
 };
   
