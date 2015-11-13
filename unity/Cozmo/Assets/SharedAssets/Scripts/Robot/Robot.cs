@@ -940,17 +940,9 @@ public class Robot : IDisposable {
     SetLastLEDs();
   }
 
-  public void StartFaceAwareness() {
-    EnableVisionModeMessage.mode = VisionMode.DetectingFaces;
-    EnableVisionModeMessage.enable = true;
-
-    RobotEngineManager.Instance.Message.EnableVisionMode = EnableVisionModeMessage;
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void StopFaceAwareness() {
-    EnableVisionModeMessage.mode = VisionMode.DetectingFaces;
-    EnableVisionModeMessage.enable = false;
+  public void SetVisionMode(VisionMode mode, bool enable) {
+    EnableVisionModeMessage.mode = mode;
+    EnableVisionModeMessage.enable = enable;
 
     RobotEngineManager.Instance.Message.EnableVisionMode = EnableVisionModeMessage;
     RobotEngineManager.Instance.SendMessage();
