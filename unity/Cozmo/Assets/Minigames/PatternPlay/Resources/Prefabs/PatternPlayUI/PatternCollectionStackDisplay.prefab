@@ -2429,7 +2429,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: NEW!
+  m_Text: '#badge.new'
 --- !u!114 &11436852
 MonoBehaviour:
   m_ObjectHideFlags: 1

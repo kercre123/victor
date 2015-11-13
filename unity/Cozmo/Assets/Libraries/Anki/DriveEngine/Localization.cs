@@ -79,7 +79,7 @@ public static class Localization {
   public static void LoadStrings() {
     // TODO(BRC) Dynamically read variable number of strings files
     string[] resources = {
-      "HubWorldStrings",
+      "SimpleStrings",
       "MinigameStrings"
     };
 

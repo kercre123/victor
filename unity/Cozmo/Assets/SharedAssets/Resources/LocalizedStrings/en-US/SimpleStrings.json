@@ -23,5 +23,11 @@
     },
     "button.quit" : {
         "translation" : "Quit"
+    },
+    "badge.new" : {
+        "translation" : "NEW!"
+    },
+    "label.percentComplete" : {
+        "translation" : "{0:P2} Complete"
     }
 }
