@@ -11,6 +11,9 @@ namespace RotationTraining {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
+
+      // TODO: Swap countdown state for rotate to prep player.
+
       initCubeState.InitialCubeRequirements(new RotateState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
