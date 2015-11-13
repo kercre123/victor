@@ -25,6 +25,7 @@
 #include "anki/common/basestation/math/quad_impl.h"
 
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
@@ -121,10 +122,8 @@ namespace Cozmo {
   {
     Stop();
     
-    if(_visionSystem != nullptr) {
-      delete _visionSystem;
-      _visionSystem = nullptr;
-    }
+    Util::SafeDelete(_visionSystem);
+    
   } // ~VisionSystem()
  
   
@@ -146,7 +145,8 @@ namespace Cozmo {
                                       postOffsetY_mm,
                                       postOffsetAngle_rad);
     } else {
-      PRINT_NAMED_ERROR("VisionComponent.SetMarkerToTrack.NullVisionSystem", "Cannot set vision marker to track before vision system is instantiated.\n");
+      PRINT_NAMED_ERROR("VisionComponent.SetMarkerToTrack.NullVisionSystem",
+                        "Cannot set vision marker to track before vision system is instantiated.\n");
     }
   }
   
@@ -170,7 +170,7 @@ namespace Cozmo {
   }
   
   bool VisionComponent::GetLastProcessedImage(Vision::ImageRGB& img,
-                                                     TimeStamp_t newerThanTimestamp)
+                                              TimeStamp_t newerThanTimestamp)
   {
     bool retVal = false;
     
