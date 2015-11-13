@@ -17,7 +17,7 @@ namespace RotationTraining {
     }
 
     private void AnimationDone(bool success) {
-      _CurrentRobot.TurnInPlace(180.0f, TurnInPlaceDone);
+      _CurrentRobot.TurnInPlace(90.0f, TurnInPlaceDone);
     }
 
     private void TurnInPlaceDone(bool success) {

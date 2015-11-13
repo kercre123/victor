@@ -10,19 +10,18 @@ namespace RotationTraining {
       RIGHT
     }
 
+    private int _CubeID = -1;
     private Color[] _RotateCubeColors = { Color.blue, Color.green };
     private RotateCubeState _RotateCubeState = RotateCubeState.LEFT;
     private float _LastRotateCubeStateChanged;
-    private float _InitialPoseRadian;
-    private int _CubeID = -1;
 
     private float _CurrentWheelLeftSpeed = 0.0f;
     private float _CurrentWheelRightSpeed = 0.0f;
 
-    private float _CubeShakeWheelSpeedMmpsModifier = 5000f;
+    private float _CubeShakeWheelSpeedMmpsModifier = 300f;
 
     // Value from 0 to 1
-    private float _WheelSpeedDecayModifier = 0.5f;
+    private float _WheelSpeedDecayModifier = 0.75f;
 
     public override void Enter() {
       base.Enter();
@@ -31,6 +30,10 @@ namespace RotationTraining {
 
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
+
+      // PoseAngle gets reset to 0 automatically on state enter.
+      // Range is -PI to PI
+      // _CurrentRobot.PoseAngle = 0;
 
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         _CubeID = kvp.Key;
@@ -41,6 +44,7 @@ namespace RotationTraining {
     }
 
     public override void Update() {
+
       base.Update();
       // TODO: Use better change method
       if (_LastRotateCubeStateChanged > 2.0f && Random.Range(0.0f, 1.0f) > 0.98f) {
@@ -48,7 +52,8 @@ namespace RotationTraining {
       }
 
       // celebrate when he is at 180... TODO: don't let players cheat by rotating cozmo manually?
-      if (_CurrentRobot.PoseAngle > 0.9f * Mathf.PI && _CurrentRobot.PoseAngle < 1.1f * Mathf.PI) {
+      float marginOfError = 0.9f;
+      if (_CurrentRobot.PoseAngle > Mathf.PI * marginOfError || _CurrentRobot.PoseAngle < -Mathf.PI * marginOfError) {
         _StateMachine.SetNextState(new CelebrateState());
       }
 
@@ -56,8 +61,8 @@ namespace RotationTraining {
       _CurrentRobot.LightCubes[_CubeID].SetLEDs(CozmoPalette.ColorToUInt(_RotateCubeColors[(int)_RotateCubeState]));
 
       // Decay the wheel speed over time if the cube doesn't move
-      _CurrentWheelLeftSpeed = Mathf.Lerp(_CurrentWheelLeftSpeed, 0.0f, _WheelSpeedDecayModifier);
-      _CurrentWheelRightSpeed = Mathf.Lerp(_CurrentWheelRightSpeed, 0.0f, _WheelSpeedDecayModifier);
+      _CurrentWheelLeftSpeed = Mathf.Lerp(_CurrentWheelLeftSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
+      _CurrentWheelRightSpeed = Mathf.Lerp(_CurrentWheelRightSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
 
       _CurrentRobot.DriveWheels(_CurrentWheelLeftSpeed * Time.deltaTime, _CurrentWheelRightSpeed * Time.deltaTime);
     }
@@ -73,12 +78,20 @@ namespace RotationTraining {
       }
 
       if (_RotateCubeState == RotateCubeState.LEFT) {
-        _CurrentWheelRightSpeed = _CubeShakeWheelSpeedMmpsModifier;
-        _CurrentWheelLeftSpeed = -_CubeShakeWheelSpeedMmpsModifier;
+        if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
+          _CurrentWheelRightSpeed = 0;
+          _CurrentWheelLeftSpeed = 0;
+        }
+        _CurrentWheelRightSpeed += _CubeShakeWheelSpeedMmpsModifier;
+        _CurrentWheelLeftSpeed -= _CubeShakeWheelSpeedMmpsModifier;
       }
       else {
-        _CurrentWheelRightSpeed = -_CubeShakeWheelSpeedMmpsModifier;
-        _CurrentWheelLeftSpeed = _CubeShakeWheelSpeedMmpsModifier;
+        if (_CurrentWheelRightSpeed > 0 || _CurrentWheelLeftSpeed < 0) {
+          _CurrentWheelRightSpeed = 0;
+          _CurrentWheelLeftSpeed = 0;
+        }
+        _CurrentWheelRightSpeed -= _CubeShakeWheelSpeedMmpsModifier;
+        _CurrentWheelLeftSpeed += _CubeShakeWheelSpeedMmpsModifier;
       }
     }
 
