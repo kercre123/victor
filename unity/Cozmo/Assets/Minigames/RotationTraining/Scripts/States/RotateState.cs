@@ -16,8 +16,13 @@ namespace RotationTraining {
     private float _InitialPoseRadian;
     private int _CubeID = -1;
 
-    private float _DriveWheelLeftSpeed = 0.0f;
-    private float _DriveWheelRightSpeed = 0.0f;
+    private float _CurrentWheelLeftSpeed = 0.0f;
+    private float _CurrentWheelRightSpeed = 0.0f;
+
+    private float _CubeShakeWheelSpeedMmpsModifier = 5000f;
+
+    // Value from 0 to 1
+    private float _WheelSpeedDecayModifier = 0.5f;
 
     public override void Enter() {
       base.Enter();
@@ -31,6 +36,8 @@ namespace RotationTraining {
         _CubeID = kvp.Key;
         break;
       }
+
+      // TODO: Start timer for lose state
     }
 
     public override void Update() {
@@ -48,10 +55,11 @@ namespace RotationTraining {
       // set light cube color based on _RotateCubeState
       _CurrentRobot.LightCubes[_CubeID].SetLEDs(CozmoPalette.ColorToUInt(_RotateCubeColors[(int)_RotateCubeState]));
 
-      _DriveWheelLeftSpeed = Mathf.Lerp(_DriveWheelLeftSpeed, 0.0f, Time.deltaTime * 8.0f);
-      _DriveWheelRightSpeed = Mathf.Lerp(_DriveWheelRightSpeed, 0.0f, Time.deltaTime * 8.0f);
-      _CurrentRobot.DriveWheels(_DriveWheelLeftSpeed, _DriveWheelRightSpeed);
+      // Decay the wheel speed over time if the cube doesn't move
+      _CurrentWheelLeftSpeed = Mathf.Lerp(_CurrentWheelLeftSpeed, 0.0f, _WheelSpeedDecayModifier);
+      _CurrentWheelRightSpeed = Mathf.Lerp(_CurrentWheelRightSpeed, 0.0f, _WheelSpeedDecayModifier);
 
+      _CurrentRobot.DriveWheels(_CurrentWheelLeftSpeed * Time.deltaTime, _CurrentWheelRightSpeed * Time.deltaTime);
     }
 
     public override void Exit() {
@@ -65,12 +73,12 @@ namespace RotationTraining {
       }
 
       if (_RotateCubeState == RotateCubeState.LEFT) {
-        _DriveWheelRightSpeed += Time.deltaTime * 5000.0f;
-        _DriveWheelLeftSpeed -= Time.deltaTime * 5000.0f;
+        _CurrentWheelRightSpeed = _CubeShakeWheelSpeedMmpsModifier;
+        _CurrentWheelLeftSpeed = -_CubeShakeWheelSpeedMmpsModifier;
       }
       else {
-        _DriveWheelLeftSpeed += Time.deltaTime * 5000.0f;
-        _DriveWheelRightSpeed -= Time.deltaTime * 5000.0f;
+        _CurrentWheelRightSpeed = -_CubeShakeWheelSpeedMmpsModifier;
+        _CurrentWheelLeftSpeed = _CubeShakeWheelSpeedMmpsModifier;
       }
     }
 
