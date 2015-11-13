@@ -13,7 +13,6 @@ namespace RotationTraining {
 
     private int _TurningCubeID = -1;
     private LightCube _TurningCube;
-    private Color[] _RotateCubeColors = { Color.blue, Color.green };
     private RotateCubeState _RotateCubeState = RotateCubeState.Left;
 
     private float _NextCubeChangeTime;
@@ -22,7 +21,7 @@ namespace RotationTraining {
     private float _MinChangeSeconds = 3f;
     private float _MaxChangeSeconds = 5f;
 
-    private uint _FlashCubeLightMs = 500;
+    private uint _FlashCubeLightMs = 700;
     private bool _CubeIsFlashing = false;
     private Timer _FlashCubeTimer;
 
@@ -53,7 +52,7 @@ namespace RotationTraining {
 
       // Pick a cube state randomly
       _RotateCubeState = Random.Range(0.0f, 1.0f) > 0.5f ? RotateCubeState.Left : RotateCubeState.Right;
-      _TurningCube.SetLEDs(_RotateCubeColors[(int)_RotateCubeState]);
+      UpdateRobotLEDs();
 
       // Set the next change time to sometime in the future.
       _NextCubeChangeTime = GenerateNextChangeTime();
@@ -74,6 +73,7 @@ namespace RotationTraining {
       // Change the cube light if it's time.
       if (!_CubeIsFlashing && Time.time > _NextCubeChangeTime) {
         StartFlashingCube();
+        _NextCubeChangeTime = GenerateNextChangeTime();
       }
 
       // celebrate when he is at 180... TODO: don't let players cheat by rotating cozmo manually?
@@ -122,7 +122,11 @@ namespace RotationTraining {
       _FlashCubeTimer.Start();
 
       uint flashDuration = _FlashCubeLightMs / 7;
-      _TurningCube.SetFlashingLEDs(_RotateCubeColors[(int)_RotateCubeState], flashDuration, flashDuration, 0);
+      Color currentColor = GetRotateLightColor();
+      _TurningCube.SetFlashingLEDs(currentColor, flashDuration, flashDuration, 0);
+
+      Anki.Cozmo.LEDId currentLedId = GetRotateLEDId();
+      _CurrentRobot.SetFlashingBackpackLED(currentLedId, currentColor, flashDuration, flashDuration, 0);
     }
 
     private void ChangeRotateCubeState() {
@@ -132,10 +136,14 @@ namespace RotationTraining {
       else {
         _RotateCubeState = RotateCubeState.Left;
       }
-      _NextCubeChangeTime = GenerateNextChangeTime();
+      UpdateRobotLEDs();
+    }
 
+    private void UpdateRobotLEDs() {
       // set light cube color based on _RotateCubeState
-      _TurningCube.SetLEDs(_RotateCubeColors[(int)_RotateCubeState]);
+      Color rotateColor = GetRotateLightColor();
+      _TurningCube.SetLEDs(rotateColor);
+      _CurrentRobot.SetBackpackLED(GetRotateLEDId(), rotateColor);
     }
 
     private float GenerateNextChangeTime() {
@@ -145,6 +153,36 @@ namespace RotationTraining {
     private void HandleFlashCubeTimerStopped(object source, ElapsedEventArgs e) {
       _CubeIsFlashing = false;
       ChangeRotateCubeState();
+    }
+
+    private Color GetRotateLightColor() {
+      Color rotateColor = Color.white;
+      switch (_RotateCubeState) {
+      case RotateCubeState.Left:
+        rotateColor = Color.green;
+        break;
+      case RotateCubeState.Right:
+        rotateColor = Color.blue;
+        break;
+      default:
+        break;
+      }
+      return rotateColor;
+    }
+
+    private Anki.Cozmo.LEDId GetRotateLEDId() {
+      Anki.Cozmo.LEDId ledId = Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT;
+      switch (_RotateCubeState) {
+      case RotateCubeState.Left:
+        ledId = Anki.Cozmo.LEDId.LED_BACKPACK_LEFT;
+        break;
+      case RotateCubeState.Right:
+        ledId = Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT;
+        break;
+      default:
+        break;
+      }
+      return ledId;
     }
   }
 }

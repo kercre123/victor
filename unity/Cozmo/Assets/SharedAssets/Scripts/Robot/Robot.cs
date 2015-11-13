@@ -111,7 +111,7 @@ public class Robot : IDisposable {
 
   public List<Face> Faces { get; private set; }
 
-  public Light[] BackpackLights { get; private set; }
+  private Light[] BackpackLights { get; set; }
 
   private bool _LightsChanged {
     get {
@@ -916,22 +916,31 @@ public class Robot : IDisposable {
 
   #region Backpack Lights
 
-  private void SetLastLEDs() {
-    for (int i = 0; i < BackpackLights.Length; ++i) {
-      BackpackLights[i].SetLastInfo();
-    }
+  public void SetBackpackLED(LEDId ledToChange, Color color) {
+    uint colorUint = CozmoPalette.ColorToUInt(color);
+    SetBackpackLED((int)(byte)ledToChange, colorUint);
+  }
+
+  public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs, uint offDurationMs, uint transitionDurationMs) {
+    uint colorUint = CozmoPalette.ColorToUInt(color);
+    SetBackpackLED((int)(byte)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
   public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
-                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     for (int i = 0; i < BackpackLights.Length; ++i) {
-      BackpackLights[i].OnColor = onColor;
-      BackpackLights[i].OffColor = offColor;
-      BackpackLights[i].OnPeriodMs = onPeriod_ms;
-      BackpackLights[i].OffPeriodMs = offPeriod_ms;
-      BackpackLights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
-      BackpackLights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
+      SetBackpackLED(i, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
     }
+  }
+
+  private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+    BackpackLights[index].OnColor = onColor;
+    BackpackLights[index].OffColor = offColor;
+    BackpackLights[index].OnPeriodMs = onPeriod_ms;
+    BackpackLights[index].OffPeriodMs = offPeriod_ms;
+    BackpackLights[index].TransitionOnPeriodMs = transitionOnPeriod_ms;
+    BackpackLights[index].TransitionOffPeriodMs = transitionOffPeriod_ms;
   }
 
   // should only be called from update loop
@@ -952,6 +961,12 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     SetLastLEDs();
+  }
+
+  private void SetLastLEDs() {
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i].SetLastInfo();
+    }
   }
 
   #endregion
