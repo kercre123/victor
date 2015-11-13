@@ -57,7 +57,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51d87db553dbc468f901fbd2a3372e9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameName: Pattern Play
+  _GameId: patternPlay
   viewControllerPrefab_: {fileID: 11450830, guid: 22bb0865be29f4cd29f0d6354dc4d025,
     type: 2}
 --- !u!1001 &100100000
@@ -111,6 +111,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _GameName
       value: Pattern Play
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameId
+      value: patternPlay
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

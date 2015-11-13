@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56ccea07113664e3387949215bacc588, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameName: Treasure Hunt
+  _GameId: treasureHunt
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -50,6 +50,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _GameName
       value: Treasure Hunt
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GameId
+      value: treasureHunt
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

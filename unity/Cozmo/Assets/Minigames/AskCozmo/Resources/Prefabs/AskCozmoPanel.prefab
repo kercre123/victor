@@ -163,7 +163,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: GIVE ME ANSWER
+  m_Text: '#askCozmo.button'
 --- !u!222 &22241766
 CanvasRenderer:
   m_ObjectHideFlags: 1

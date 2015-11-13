@@ -167,7 +167,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: TAP
+  m_Text: '#button.tap'
 --- !u!114 &11459452
 MonoBehaviour:
   m_ObjectHideFlags: 1

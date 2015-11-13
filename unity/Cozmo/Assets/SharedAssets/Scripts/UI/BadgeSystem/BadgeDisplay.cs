@@ -34,7 +34,7 @@ public class BadgeDisplay : MonoBehaviour {
     
     if (_CountLabel != null) {
       _CountLabel.gameObject.SetActive(show);
-      _CountLabel.text = count.ToString();
+      _CountLabel.text = string.Format(Localization.GetCultureInfo(), "{0}", count);
     }
   }
 }

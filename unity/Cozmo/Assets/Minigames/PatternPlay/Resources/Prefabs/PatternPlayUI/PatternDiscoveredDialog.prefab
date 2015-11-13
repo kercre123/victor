@@ -290,7 +290,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Save Pattern
+  m_Text: '#patternPlay.discoverView.okButton'
 --- !u!114 &11487072
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -349,7 +349,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: NEW PATTERN DISCOVERED!
+  m_Text: '#patternPlay.discoverView.title'
 --- !u!222 &22200262
 CanvasRenderer:
   m_ObjectHideFlags: 1
