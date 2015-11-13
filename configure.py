@@ -93,12 +93,20 @@ def parse_game_arguments():
     parser.add_verbose_arguments()
     parser.add_argument('--mex', '-m', dest='mex', action='store_true',
                 help='builds mathlab\'s mex project')
-    signing_group = parser.add_mutually_exclusive_group(required=False)
-    signing_group.add_argument(
+
+    #signing_group = parser.add_mutually_exclusive_group(required=False)
+    parser.add_argument(
         '--provision-profile',
         metavar='path',
         default='',
+        required=False,
         help='Provide a mobile provisioning profile for signing')
+    parser.add_argument(
+        '--codesign-identity',
+        metavar='string',
+        default='',
+        required=False,
+        help='Provide a code signing identity')
 
 
     return parser.parse_args()
@@ -140,6 +148,10 @@ class GamePlatformConfiguration(object):
                 self.provision_profile = self.options.provision_profile
             else:
                 self.provision_profile = ''
+            if hasattr(self.options, 'codesign_identity'):
+                self.codesign_identity = self.options.codesign_identity
+            else:
+                self.codesign_identity = ''
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
             
             self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
@@ -200,6 +212,7 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
                 'PROVISIONING_PROFILE={0}'.format(self.provision_profile),
+                'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
                 'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
                 '']
             
