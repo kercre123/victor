@@ -449,6 +449,11 @@ Prefab:
       propertyPath: m_Name
       value: DevIntroManager
       objectReference: {fileID: 0}
+    - target: {fileID: 11464276, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+      propertyPath: _HubWorldPrefab
+      value: 
+      objectReference: {fileID: 11493130, guid: bfa7fd6aafe374445b17295977fa163f,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
   m_IsPrefabParent: 0

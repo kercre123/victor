@@ -18,7 +18,7 @@ public class HubWorld : HubWorldBase {
     // Deregister events
     // Destroy dialog if it exists
     if (_HubWorldDialogInstance != null) {
-      _HubWorldDialogInstance.OnButtonClicked -= OnDevButtonClicked;
+      _HubWorldDialogInstance.OnButtonClicked -= OnButtonClicked;
       _HubWorldDialogInstance.CloseDialogImmediately();
     }
 
@@ -30,11 +30,12 @@ public class HubWorld : HubWorldBase {
 
     // Create dialog with the game prefabs
     _HubWorldDialogInstance = UIManager.OpenDialog(_HubWorldDialogPrefab) as HubWorldDialog;
+    _HubWorldDialogInstance.OnButtonClicked += OnButtonClicked;
 
   }
 
-  private void OnDevButtonClicked(GameBase miniGameClicked) {
-    _HubWorldDialogInstance.OnButtonClicked -= OnDevButtonClicked;
+  private void OnButtonClicked(GameBase miniGameClicked) {
+    _HubWorldDialogInstance.OnButtonClicked -= OnButtonClicked;
     _HubWorldDialogInstance.CloseDialog();
 
     GameObject newMiniGameObject = GameObject.Instantiate(miniGameClicked.gameObject);
