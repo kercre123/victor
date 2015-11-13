@@ -12,6 +12,7 @@ namespace DockTraining {
 
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
 
       _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
       _CurrentTarget = _DockTrainingGame.GetCurrentTarget();
@@ -20,7 +21,7 @@ namespace DockTraining {
         _StateMachine.SetNextState(new AngryTargetChangedState());
       }
       else {
-        _CurrentRobot.AlignWithObject(_CurrentTarget, 20.0f, AlignDone);
+        _CurrentRobot.AlignWithObject(_CurrentTarget, 30.0f, AlignDone);
       }
     }
 
