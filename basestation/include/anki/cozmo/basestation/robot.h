@@ -463,7 +463,10 @@ public:
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
-    
+  
+    // This is just for unit tests to fake a syncTimeAck message from the robot
+    void FakeSyncTimeAck() { _timeSynced = true;}
+  
     Result RequestIMU(const u32 length_ms) const;
 
     // For debugging robot parameters:
