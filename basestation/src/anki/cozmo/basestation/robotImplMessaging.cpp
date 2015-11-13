@@ -59,6 +59,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
     std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
+    std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
 
   // lambda wrapper to call internal handler
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -390,6 +392,10 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
 // Sends complete images to VizManager for visualization (and possible saving).
 void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
+  // Ignore images if robot has not yet acknowledged time sync
+  if (!_timeSynced)
+    return;
+  
   const ImageChunk& payload = message.GetData().Get_image();
   const u16 width  = Vision::CameraResInfo[(int)payload.resolution].width;
   const u16 height = Vision::CameraResInfo[(int)payload.resolution].height;
@@ -500,6 +506,12 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
     oFile.close();
   }
 }
+  
+void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _timeSynced = true;
+}
+  
 
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {
