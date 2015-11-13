@@ -21,11 +21,23 @@
     "askCozmo.title" : {
         "translation" : "Ask Cozmo"
     },
+    "askCozmo.button" : {
+        "translation" : "GIVE ME ANSWER"
+    },
     "dockTraining.title" : {
         "translation" : "Dock Training"
     },
     "followCube.title" : {
         "translation" : "Follow Cube"
+    },
+    "followCube.button.slow" : {
+        "translation" : "Slow"
+    },
+    "followCube.button.fast" : {
+        "translation" : "Fast"
+    },
+    "followCube.button.veryFast" : {
+        "translation" : "DEMON"
     },
     "patternPlay.title" : {
         "translation" : "Pattern Play"
@@ -35,6 +47,12 @@
     },
     "speedTap.title" : {
         "translation" : "Speed Tap"
+    },
+    "speedTap.score.cozmo" : {
+        "translation" : "cosmo: {0}"
+    },
+    "speedTap.score.player" : {
+        "translation" : "player: {0}"
     },
     "treasureHunt.title" : {
         "translation" : "Treasure Hunt"

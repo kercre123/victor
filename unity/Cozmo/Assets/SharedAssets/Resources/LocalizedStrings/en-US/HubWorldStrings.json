@@ -18,6 +18,9 @@
             "/{*}"
         ]
     },
+    "button.tap" : {
+        "translation" : "Tap"
+    },
     "button.quit" : {
         "translation" : "Quit"
     }
