@@ -8,10 +8,10 @@ namespace Cozmo {
 // Health / direction bar on the top of the backpack
 enum uint_8 LEDId {
   // Directional arrangement
-  LED_BACKPACK_BACK = 0,
-  LED_BACKPACK_MIDDLE,
+  LED_BACKPACK_LEFT = 0,
   LED_BACKPACK_FRONT,
-  LED_BACKPACK_LEFT,
+  LED_BACKPACK_MIDDLE,
+  LED_BACKPACK_BACK,
   LED_BACKPACK_RIGHT,  
   NUM_BACKPACK_LEDS
 }

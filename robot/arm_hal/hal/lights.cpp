@@ -12,7 +12,6 @@ namespace Anki
       static const uint32_t DROP_LEVEL = 20;
 
       extern volatile GlobalDataToBody g_dataToBody;
-      char const backpackLightLUT[5] = {3, 2, 1, 0, 0};
 
       GPIO_PIN_SOURCE(IRLED, GPIOE, 0);
 
@@ -34,7 +33,8 @@ namespace Anki
       // Light up one of the backpack LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u32 color)
       {
-        volatile u32* channel = &g_dataToBody.backpackColors[ backpackLightLUT[led_id] ];
+        u8 led_channel = led_id & 0x3; // so that LED_BACKPACK_RIGHT maps to 0
+        volatile u32* channel = &g_dataToBody.backpackColors[ led_channel ];
         if (led_id == LED_BACKPACK_LEFT) {
           // Use red color channel for intensity
           *channel = (*channel & 0xffff00ff) | (color>>8);
