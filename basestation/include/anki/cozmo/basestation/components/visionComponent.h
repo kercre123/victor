@@ -114,6 +114,8 @@ struct DockingErrorSignal;
     
     TimeStamp_t GetLastProcessedImageTimeStamp();
     
+    TimeStamp_t GetProcessingPeriod();
+    
   protected:
     
     VisionSystem* _visionSystem = nullptr;
@@ -134,6 +136,8 @@ struct DockingErrorSignal;
     Vision::ImageRGB _currentImg;
     Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
+    
+    TimeStamp_t _processingPeriod = 0;
     
     RobotState _currentRobotState;
     RobotState _nextRobotState;

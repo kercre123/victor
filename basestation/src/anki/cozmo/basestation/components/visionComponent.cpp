@@ -194,6 +194,14 @@ namespace Cozmo {
 
     return t;
   }
+  
+  TimeStamp_t VisionComponent::GetProcessingPeriod()
+  {
+    Lock();
+    const TimeStamp_t t = _processingPeriod;
+    Unlock();
+    return t;
+  }
 
   void VisionComponent::Lock()
   {
@@ -304,6 +312,9 @@ namespace Cozmo {
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
         
         Lock();
+        // Store frame rate
+        _processingPeriod = _currentImg.GetTimestamp() - _lastImg.GetTimestamp();
+        
         // Save the image we just processed
         _lastImg = _currentImg;
         ASSERT_NAMED(_lastImg.GetTimestamp() == _currentImg.GetTimestamp(),
@@ -311,6 +322,8 @@ namespace Cozmo {
         
         // Clear it when done.
         _currentImg = {};
+        _nextImg = {};
+        
         Unlock();
         
       } else if(!_nextImg.IsEmpty()) {
