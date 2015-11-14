@@ -75,6 +75,8 @@ namespace Cozmo {
     
     Result EnableMode(VisionMode whichMode, bool enabled);
     bool IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
+    u32 GetEnabledModes() const { return _mode; }
+    void SetModes(u32 modes) { _mode = modes; }
     
     // Accessors
     f32 GetTrackingMarkerWidth();

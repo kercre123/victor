@@ -12,7 +12,8 @@ enum uint_8 BehaviorType {
   OCD,
   Fidget,
   InteractWithFaces,
-  ReactToPickup
+  ReactToPickup,
+  ReactToMotion
 }
 
 } // namespace Cozmo

@@ -85,6 +85,15 @@ struct DockingErrorSignal;
     // Enable/disable different types of processing
     Result EnableMode(VisionMode mode, bool enable);
     
+    // Check whether a specific vision mode is enabled
+    bool IsModeEnabled(VisionMode mode) const;
+    
+    // Get a bit flag for all enabled vision modes
+    u32 GetEnabledModes() const;
+    
+    // Set modes from a bit mask
+    Result SetModes(u32 modes);
+    
     // Vision system will switch to tracking when this marker is seen
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
                           const f32                    markerWidth_mm,
