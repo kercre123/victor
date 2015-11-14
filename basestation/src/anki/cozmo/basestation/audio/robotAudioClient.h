@@ -14,15 +14,29 @@
 
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
 
+
 namespace Anki {
 namespace Cozmo {
+  
+namespace AnimKeyFrame {
+struct AudioSample;
+}
+  
 namespace Audio {
+  
+class RobotAudioBuffer;
   
 class RobotAudioClient : public AudioEngineClient
 {
 public:
   
-  RobotAudioClient( AudioEngineMessageHandler& messageHandler );
+  RobotAudioClient( AudioEngineMessageHandler& messageHandler, RobotAudioBuffer& audioBuffer );
+  
+  bool GetSoundSample(const uint32_t sampleIdx, AnimKeyFrame::AudioSample &msg);
+  
+private:
+  
+  RobotAudioBuffer& _audioBuffer;
   
 };
   

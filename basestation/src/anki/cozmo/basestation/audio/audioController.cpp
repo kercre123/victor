@@ -12,6 +12,7 @@
  */
 
 #include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <util/helpers/templateHelpers.h>
@@ -24,7 +25,7 @@
 
 #define USE_AUDIO_ENGINE 1
 #include <DriveAudioEngine/audioEngineController.h>
-
+#include <DriveAudioEngine/PlugIns/cozmoPlugIn.h>
 #else
 
 // If we're excluding the audio libs, don't link any of the audio engine
@@ -64,15 +65,36 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   if ( _isInitialized )
   {
     ASSERT_NAMED( !_taskHandle, "AudioController.Initialize Invalid Task Handle" );
-    
-    // Setup our update method to be called periodically
-    _dispatchQueue = Util::Dispatch::Create();
-    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
-    _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
-    
 #if USE_AUDIO_ENGINE
+    
+    // Setup CozmoPlugIn & RobotAudioBuffer
+    _cozmoPlugIn = new CozmoPlugIn();
+    _robotAudioBuffer = new RobotAudioBuffer();
+    
+    // Setup Callbacks
+    _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
+      PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
+    } );
+    // Not yet working
+    _cozmoPlugIn->SetDestroyPluginCallback( [this] () {
+      PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
+    } );
+    
+    _cozmoPlugIn->SetProcessCallback( [this] (AudioEngine::CozmoPlugIn::CozmoAudioBuffer& buffer )
+    {
+      if ( nullptr != _robotAudioBuffer ) {
+       _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
+      }
+    });
+    
+    const bool success = _cozmoPlugIn->RegisterPlugin();
+    if ( ! success ) {
+      PRINT_NAMED_ERROR( "AudioController.Initialize", "Fail to Regist Cozmo PlugIn");
+    }
+    
     // FIXME: Temp fix to load audio banks
     AudioBankList bankList = {
+      "Init.bnk",
       "Music.bnk",
       "UI.bnk",
       "VO.bnk",
@@ -86,6 +108,12 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _audioEngine->LoadAudioScene( sceneTitle );
 
 #endif
+  
+    // Setup our update method to be called periodically
+    _dispatchQueue = Util::Dispatch::Create();
+    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
+    _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
+    
   }
 }
 

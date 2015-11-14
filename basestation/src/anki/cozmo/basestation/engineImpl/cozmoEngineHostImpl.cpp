@@ -87,7 +87,7 @@ Result CozmoEngineHostImpl::InitInternal()
   // Transfering ownership of controller & connections
   _audioServer = new AudioServer( audioController );
   _audioServer->RegisterClientConnection( unityConnection );
-  
+
 
   return RESULT_OK;
 }
@@ -236,9 +236,14 @@ Result CozmoEngineHostImpl::AddRobot(RobotID_t robotID)
     _audioServer->RegisterClientConnection( engineConnection );
 
     // Transfer ownership of audio client to Robot
-    RobotAudioClient* audioClient = new RobotAudioClient( *engineConnection->GetMessageHandler() );
+    // NOTE: Assume there is only 1 Robot
+    RobotAudioBuffer* audioBuffer = _audioServer->GetAudioController()->GetRobotAudioBuffer();
+    RobotAudioClient* audioClient = new RobotAudioClient( *engineConnection->GetMessageHandler(), *audioBuffer );
     robot->SetRobotAudioClient( audioClient );
   }
+  
+  _audioServer->GetAudioController()->PostAudioEvent(2557561967U);
+  _audioServer->GetAudioController()->SetState(712897226U, 177292647U);
 
   return lastResult;
 }

@@ -10,6 +10,8 @@
  */
 
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
+#include "anki/cozmo/basestation/keyframe.h"
 
 #include <util/helpers/templateHelpers.h>
 #include <util/logging/logging.h>
@@ -18,12 +20,24 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+  
+//static const uint32_t SOUND_SAMPLE_SIZE = 800;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioClient::RobotAudioClient( AudioEngineMessageHandler& messageHandler ) :
-  AudioEngineClient( messageHandler)  
+RobotAudioClient::RobotAudioClient( AudioEngineMessageHandler& messageHandler, RobotAudioBuffer& audioBuffer ) :
+  AudioEngineClient( messageHandler ),
+  _audioBuffer( audioBuffer )
+{
+
+}
+  
+bool RobotAudioClient::GetSoundSample(const uint32_t sampleIdx, AnimKeyFrame::AudioSample &msg)
 {
   
+  // TODO: Do stuff!
+  
+  _audioBuffer.hasBuffer();
+  return true;
 }
 
 } // Audio

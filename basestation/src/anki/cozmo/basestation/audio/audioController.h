@@ -22,6 +22,7 @@
 
 namespace AudioEngine {
   class AudioEngineController;
+  class CozmoPlugIn;
 }
 
 namespace Anki {
@@ -36,6 +37,8 @@ namespace Data {
 }
 namespace Cozmo {
 namespace Audio {
+  
+class RobotAudioBuffer;
   
 class AudioController : public Util::noncopyable
 {
@@ -67,12 +70,18 @@ public:
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
                      AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
+  // Get Audio Buffer Obj for robot
+  RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
+  
 
 private:
   
-  AudioEngine::AudioEngineController* _audioEngine   = nullptr;   // Audio Engine Lib
-  Util::Dispatch::Queue*              _dispatchQueue = nullptr;   // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle    = nullptr;   // Handle to our tick callback task
+  AudioEngine::AudioEngineController* _audioEngine      = nullptr;  // Audio Engine Lib
+  AudioEngine::CozmoPlugIn*           _cozmoPlugIn      = nullptr;  // Plugin Instance
+  RobotAudioBuffer*                   _robotAudioBuffer = nullptr;  // Audio Buffer for Robot Audio Clinet
+  
+  Util::Dispatch::Queue*              _dispatchQueue    = nullptr;  // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle              _taskHandle       = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   

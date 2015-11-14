@@ -45,12 +45,14 @@ public:
   // Transfer AduioClientConnection Ownership
   void RegisterClientConnection( AudioClientConnection* clientConnection );
   
+  
   // Client Connection Deletgate Methods
   void ProcessMessage( const PostAudioEvent& message, uint8_t connectionId );
   void ProcessMessage( const PostAudioGameState& message, uint8_t connectionId );
   void ProcessMessage( const PostAudioSwitchState& message, uint8_t connectionId );
   void ProcessMessage( const PostAudioParameter& message, uint8_t connectionId );
   
+  AudioController* GetAudioController() { return _audioController; }
   
 private:
   
