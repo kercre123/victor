@@ -663,7 +663,11 @@ namespace Anki {
                   if(enableModeIter == enableModes.end()) {
                     enableModeIter = enableModes.begin();
                   }
-                  
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  static bool enablePickupDetect = false;
+                  SendEnableRobotPickupDetect(enablePickupDetect);
+                  printf("Sent EnableRobotPickupDetect = %d\n", enablePickupDetect);
+                  enablePickupDetect = !enablePickupDetect;
                 } else {
                   static bool showObjects = false;
                   SendEnableDisplay(showObjects);
