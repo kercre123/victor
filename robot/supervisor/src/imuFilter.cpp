@@ -56,6 +56,7 @@ namespace Anki {
         const f32 ACCEL_FILT_COEFF = 0.1f;
         
         // ==== Pickup detection ===
+        bool pickupDetectEnabled_ = true;
         bool pickedUp_ = false;
         
         // Filter coefficient on z-axis accelerometer
@@ -288,7 +289,7 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_BLUE);
+          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
         } else {
           HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
         }
@@ -298,6 +299,12 @@ namespace Anki {
         pdRiseCnt_ = 0;
         pdLastHeadMoveCnt_ = 0;
         pdUnexpectedMotionCnt_ = 0;
+      }
+      
+      void EnablePickupDetect(bool enable)
+      {
+        SetPickupDetect(false);
+        pickupDetectEnabled_ = enable;
       }
       
       void Reset()
@@ -364,6 +371,8 @@ namespace Anki {
       //    is engaged is some never-ending head motions.
       void DetectPickup()
       {
+        if (!pickupDetectEnabled_)
+          return;
         
         // Compute the acceleration componenet aligned with the z-axis of the robot
         const f32 xzAccelMagnitude = sqrtf(pdFiltAccX_*pdFiltAccX_ + pdFiltAccZ_*pdFiltAccZ_);

@@ -1176,6 +1176,15 @@ namespace Anki {
       message.Set_IMURequest(m);
       SendMessage(message);
     }
+
+    void UiGameController::SendEnableRobotPickupDetect(bool enable)
+    {
+      ExternalInterface::EnableRobotPickupDetect m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableRobotPickupDetect(m);
+      SendMessage(message);
+    }
     
     void UiGameController::SendAnimation(const char* animName, u32 numLoops)
     {
