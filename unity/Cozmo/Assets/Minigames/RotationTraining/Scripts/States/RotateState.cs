@@ -33,22 +33,24 @@ namespace RotationTraining {
     // Value from 0 to 1
     private float _WheelSpeedDecayModifier = 0.75f;
 
+    private float _MarginOfErrorRad = 0.1f;
+    private float _TargetPoseAngleMinRad;
+    private float _TargetPoseAngleMaxRad;
+
     public override void Enter() {
       base.Enter();
-      LightCube.MovedAction += OnCubeMoved;
 
+      // Adjust robot
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
 
-      // PoseAngle gets reset to 0 automatically on state enter.
-      // Range is -PI to PI
-      // _CurrentRobot.PoseAngle = 0;
-
+      // Register cube movement
       foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
         _TurningCubeID = kvp.Key;
         _TurningCube = kvp.Value;
         break;
       }
+      LightCube.MovedAction += OnCubeMoved;
 
       // Pick a cube state randomly
       _RotateCubeState = Random.Range(0.0f, 1.0f) > 0.5f ? RotateCubeState.Left : RotateCubeState.Right;
@@ -62,6 +64,9 @@ namespace RotationTraining {
       _FlashCubeTimer.AutoReset = false;
       _FlashCubeTimer.Elapsed += HandleFlashCubeTimerStopped;
       _FlashCubeTimer.Stop();
+
+      // Select target angle
+      SetUpTargetAngle();
 
       // TODO: Start timer for lose state
     }
@@ -77,16 +82,20 @@ namespace RotationTraining {
       }
 
       // celebrate when he is at 180... TODO: don't let players cheat by rotating cozmo manually?
-      float marginOfError = 0.9f;
-      if (_CurrentRobot.PoseAngle > Mathf.PI * marginOfError || _CurrentRobot.PoseAngle < -Mathf.PI * marginOfError) {
+      bool inTarget = CheckIfInTargetAngle();
+      if (inTarget) {
         _StateMachine.SetNextState(new CelebrateState());
+
+        // Stop moving
+        _CurrentRobot.DriveWheels(0, 0);
       }
+      else {
+        // Decay the wheel speed over time if the cube doesn't move
+        _CurrentWheelLeftSpeed = Mathf.Lerp(_CurrentWheelLeftSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
+        _CurrentWheelRightSpeed = Mathf.Lerp(_CurrentWheelRightSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
 
-      // Decay the wheel speed over time if the cube doesn't move
-      _CurrentWheelLeftSpeed = Mathf.Lerp(_CurrentWheelLeftSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
-      _CurrentWheelRightSpeed = Mathf.Lerp(_CurrentWheelRightSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
-
-      _CurrentRobot.DriveWheels(_CurrentWheelLeftSpeed * Time.deltaTime, _CurrentWheelRightSpeed * Time.deltaTime);
+        _CurrentRobot.DriveWheels(_CurrentWheelLeftSpeed * Time.deltaTime, _CurrentWheelRightSpeed * Time.deltaTime);
+      }
     }
 
     public override void Exit() {
@@ -100,20 +109,21 @@ namespace RotationTraining {
       }
 
       if (_RotateCubeState == RotateCubeState.Left) {
-        if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
-          _CurrentWheelRightSpeed = 0;
-          _CurrentWheelLeftSpeed = 0;
-        }
+        HandleChangeDirection();
         _CurrentWheelRightSpeed += _CubeShakeWheelSpeedMmpsModifier;
         _CurrentWheelLeftSpeed -= _CubeShakeWheelSpeedMmpsModifier;
       }
       else {
-        if (_CurrentWheelRightSpeed > 0 || _CurrentWheelLeftSpeed < 0) {
-          _CurrentWheelRightSpeed = 0;
-          _CurrentWheelLeftSpeed = 0;
-        }
+        HandleChangeDirection();
         _CurrentWheelRightSpeed -= _CubeShakeWheelSpeedMmpsModifier;
         _CurrentWheelLeftSpeed += _CubeShakeWheelSpeedMmpsModifier;
+      }
+    }
+
+    private void HandleChangeDirection() {
+      if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
+        _CurrentWheelRightSpeed = 0;
+        _CurrentWheelLeftSpeed = 0;
       }
     }
 
@@ -183,6 +193,37 @@ namespace RotationTraining {
         break;
       }
       return ledId;
+    }
+
+    private void SetUpTargetAngle() {
+      // Get the target
+      float targetRadian = _CurrentRobot.PoseAngle + Mathf.PI;
+
+      // Offset the target by some amount so it's easier for the player
+      _TargetPoseAngleMaxRad = targetRadian + _MarginOfErrorRad;
+      _TargetPoseAngleMinRad = targetRadian - _MarginOfErrorRad;
+
+      // If range is over the pose angle limit, overflow to the other side
+      if (_TargetPoseAngleMaxRad > Mathf.PI) {
+        float diff = _TargetPoseAngleMaxRad - Mathf.PI;
+        _TargetPoseAngleMaxRad = -Mathf.PI + diff;
+      }
+      if (_TargetPoseAngleMinRad > Mathf.PI) {
+        float diff = _TargetPoseAngleMinRad - Mathf.PI;
+        _TargetPoseAngleMinRad = -Mathf.PI + diff;        
+      }
+    }
+
+    private bool CheckIfInTargetAngle() {
+      // Special case if the target range is near the limit
+      bool inTarget = false;
+      if (_TargetPoseAngleMinRad > _TargetPoseAngleMaxRad) {
+        inTarget = (_CurrentRobot.PoseAngle > _TargetPoseAngleMinRad || _CurrentRobot.PoseAngle < _TargetPoseAngleMaxRad);
+      }
+      else {
+        inTarget = (_CurrentRobot.PoseAngle > _TargetPoseAngleMinRad && _CurrentRobot.PoseAngle < _TargetPoseAngleMaxRad);
+      }
+      return inTarget;
     }
   }
 }

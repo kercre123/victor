@@ -73,7 +73,7 @@ public class Robot : IDisposable {
   // in radians
   public float HeadAngle { get; private set; }
 
-  // in radians
+  // in radians, from negative PI to positive PI
   public float PoseAngle { get; private set; }
 
   // in mm/s
