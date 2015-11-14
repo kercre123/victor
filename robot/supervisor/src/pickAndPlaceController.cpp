@@ -193,6 +193,7 @@ namespace Anki {
                 dockOffsetDistX_ += ORIGIN_TO_HIGH_PLACEMENT_DIST_MM;
                 break;
               case DA_ROLL_LOW:
+              case DA_POP_A_WHEELIE:
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                 dockOffsetDistX_ = ORIGIN_TO_LOW_ROLL_DIST_MM;
                 break;
@@ -336,6 +337,7 @@ namespace Anki {
                   case DA_PLACE_LOW_BLIND:
                   case DA_PLACE_HIGH:
                   case DA_ROLL_LOW:
+                  case DA_POP_A_WHEELIE:
                   {
                     SendBlockPlacedMessage(false);
                     break;
@@ -391,6 +393,15 @@ namespace Anki {
                 mode_ = MOVING_LIFT_FOR_ROLL;
                 break;
               }
+              case DA_POP_A_WHEELIE:
+                // Move lift down fast and drive forward fast
+                LiftController::SetMaxSpeedAndAccel(10, 200);         // TODO: Restore these afterwards?
+                LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
+                SpeedController::SetUserCommandedAcceleration(100);   // TODO: Restore this accel afterwards?
+                SteeringController::ExecuteDirectDrive(150, 150);
+                transitionTime_ = HAL::GetTimeStamp() + 1000;
+                mode_ = POPPING_A_WHEELIE;
+                break;
               default:
                 PRINT("ERROR: Unknown PickAndPlaceAction %d\n", action_);
                 mode_ = IDLE;
@@ -406,6 +417,13 @@ namespace Anki {
             }
             break;
           }
+          case POPPING_A_WHEELIE:
+            // Either the robot has pitched up, or timeout
+            if (IMUFilter::GetPitch() > 1.2 || HAL::GetTimeStamp() > transitionTime_) {
+              SteeringController::ExecuteDirectDrive(0, 0);
+              mode_ = IDLE;
+            }
+            break;
           case MOVING_LIFT_POSTDOCK:
             if (LiftController::IsInPosition()) {
               LiftController::SetMaxSpeedAndAccel(DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);

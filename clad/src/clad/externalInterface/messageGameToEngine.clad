@@ -288,6 +288,16 @@ message RollObject {
   bool useManualSpeed
 }
 
+// PopAWheelie
+message PopAWheelie {
+  int_32 objectID, // negative value means "currently selected object"
+  PathMotionProfile motionProf,
+  float_32 approachAngle_rad,
+  bool useApproachAngle,
+  bool usePreDockPose,
+  bool useManualSpeed
+}
+
 // TraverseObject
 message TraverseObject {
   PathMotionProfile motionProf,
@@ -557,6 +567,7 @@ union RobotActionUnion {
   PlaceOnObject      placeOnObject,
   PlaceRelObject     placeRelObject,
   RollObject         rollObject,
+  PopAWheelie        popAWheelie,
   SetLiftHeight      setLiftHeight,
   SetHeadAngle       setHeadAngle,
   TurnInPlace        turnInPlace

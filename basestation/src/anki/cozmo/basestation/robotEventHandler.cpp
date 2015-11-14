@@ -45,6 +45,7 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
       ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
       ExternalInterface::MessageGameToEngineTag::RollObject,
+      ExternalInterface::MessageGameToEngineTag::PopAWheelie,
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
       ExternalInterface::MessageGameToEngineTag::FaceObject,
@@ -245,6 +246,30 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
 }
   
+
+IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface::PopAWheelie& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    return new DriveToPopAWheelieAction(selectedObjectID,
+                                        msg.motionProf,
+                                        msg.useApproachAngle,
+                                        msg.approachAngle_rad,
+                                        msg.useManualSpeed);
+  } else {
+    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
+    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    return action;
+  }
+}
+
+  
 IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
 {
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
@@ -324,6 +349,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::rollObject:
       return GetRollObjectActionHelper(robot, actionUnion.Get_rollObject());
+      
+    case RobotActionUnionTag::popAWheelie:
+      return GetPopAWheelieActionHelper(robot, actionUnion.Get_popAWheelie());
       
     case RobotActionUnionTag::goToObject:
       return GetDriveToObjectActionHelper(robot, actionUnion.Get_goToObject());
@@ -456,6 +484,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     {
       numRetries = 1;
       newAction = GetRollObjectActionHelper(robot, event.GetData().Get_RollObject());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::PopAWheelie:
+    {
+      numRetries = 1;
+      newAction = GetPopAWheelieActionHelper(robot, event.GetData().Get_PopAWheelie());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TraverseObject:

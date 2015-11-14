@@ -184,6 +184,13 @@ protected:
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
+
+  void SendPopAWheelie(const s32 objectID,
+                       PathMotionProfile motionProf,
+                       const bool usePreDockPose,
+                       const bool useApproachAngle = false,
+                       const f32 approachAngle_rad = 0,
+                       const bool useManualSpeed = false);
   
   void SendTraverseSelectedObject(PathMotionProfile motionProf,
                                   const bool usePreDockPose,

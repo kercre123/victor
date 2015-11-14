@@ -1027,7 +1027,25 @@ namespace Anki {
                      approachAngle_rad,
                      useManualSpeed);
     }
-
+    
+    void UiGameController::SendPopAWheelie(const s32 objectID,
+                                           PathMotionProfile motionProf,
+                                           const bool usePreDockPose,
+                                           const bool useApproachAngle,
+                                           const f32 approachAngle_rad,
+                                           const bool useManualSpeed)
+    {
+      ExternalInterface::PopAWheelie m;
+      m.motionProf = motionProf;
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
+      m.objectID = -1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PopAWheelie(m);
+      SendMessage(message);
+    }
     
     void UiGameController::SendTraverseSelectedObject(PathMotionProfile motionProf,
                                                       const bool usePreDockPose,
