@@ -1,5 +1,5 @@
 /**
- * File: behaviorReactToMotion.cpp
+ * File: behaviorFollowMotion.cpp
  *
  * Author: Andrew Stein
  * Created: 11/13/15
@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToMotion.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -26,20 +26,20 @@ static std::vector<std::string> _animReactions = {
   "Demo_Motion_Reaction",
 };
 
-BehaviorReactToMotion::BehaviorReactToMotion(Robot& robot, const Json::Value& config)
+BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  _name = "ReactToMotion";
+  _name = "FollowMotion";
   
   SubscribeToTags({MessageEngineToGameTag::RobotObservedMotion});
 }
 
-bool BehaviorReactToMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   return true;
 }
 
-Result BehaviorReactToMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
   _interrupted = false;
   
@@ -54,7 +54,7 @@ Result BehaviorReactToMotion::InitInternal(Robot& robot, double currentTime_sec,
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToMotion::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   if(_interrupted) {
     // Restore original vision modes
@@ -65,12 +65,12 @@ IBehavior::Status BehaviorReactToMotion::UpdateInternal(Robot& robot, double cur
   }
 }
 
-Result BehaviorReactToMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   return Result::RESULT_OK;
 }
 
-void BehaviorReactToMotion::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch (event.GetData().GetTag())
   {
@@ -118,7 +118,7 @@ void BehaviorReactToMotion::HandleWhileRunning(const EngineToGameEvent& event, R
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorReactToMotion.HandleMotionEvent.UnknownEvent",
+      PRINT_NAMED_ERROR("BehaviorFollowMotion.HandleMotionEvent.UnknownEvent",
                         "Reached unknown state %hhu.", event.GetData().GetTag());
     }
   }

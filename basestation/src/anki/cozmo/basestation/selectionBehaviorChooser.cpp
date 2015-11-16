@@ -16,7 +16,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToMotion.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -108,9 +108,9 @@ IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
       newBehavior = new BehaviorInteractWithFaces(_robot, _config);
       break;
     }
-    case BehaviorType::ReactToMotion:
+    case BehaviorType::FollowMotion:
     {
-      newBehavior = new BehaviorReactToMotion(_robot, _config);
+      newBehavior = new BehaviorFollowMotion(_robot, _config);
       break;
     }
     default:

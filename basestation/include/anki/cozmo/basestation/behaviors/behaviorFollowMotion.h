@@ -1,5 +1,5 @@
 /**
- * File: behaviorReactToMotion.h
+ * File: behaviorFollowMotion.h
  *
  * Author: Andrew Stein
  * Created: 11/13/15
@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2015
  *
  **/
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToMotion_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorReactToMotion_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorFollowMotion_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorFollowMotion_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/math/point.h"
@@ -20,10 +20,10 @@
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorReactToMotion : public IBehavior
+class BehaviorFollowMotion : public IBehavior
 {
 public:
-  BehaviorReactToMotion(Robot& robot, const Json::Value& config);
+  BehaviorFollowMotion(Robot& robot, const Json::Value& config);
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
   
@@ -40,10 +40,10 @@ private:
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
-}; // class BehaviorReactToCliff
+}; // class BehaviorFollowMotion
   
 
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorReactToMotion_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorFollowMotion_H__

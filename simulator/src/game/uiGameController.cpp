@@ -1056,9 +1056,9 @@ namespace Anki {
       {
         return BehaviorType::InteractWithFaces;
       }
-      else if (behaviorName == EnumToString(BehaviorType::ReactToMotion))
+      else if (behaviorName == EnumToString(BehaviorType::FollowMotion))
       {
-        return BehaviorType::ReactToMotion;
+        return BehaviorType::FollowMotion;
       }
       return BehaviorType::NoneBehavior;
     }
