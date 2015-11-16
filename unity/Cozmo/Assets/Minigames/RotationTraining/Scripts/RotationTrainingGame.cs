@@ -19,7 +19,7 @@ namespace RotationTraining {
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
 
-      // TODO: Swap countdown state for rotate to prep player.
+      // TODO: Create a countdown state so that the player has a few seconds to prep.
 
       initCubeState.InitialCubeRequirements(new RotateState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -36,7 +36,7 @@ namespace RotationTraining {
     }
 
     void InitialCubesDone() {
-    
+      
     }
 
     public override void CleanUp() {
