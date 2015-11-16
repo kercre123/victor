@@ -599,7 +599,7 @@ message SetEmotion {
 
 message AddToEmotion {
   EmotionType emotionType,
-  float_32 newVal,
+  float_32 deltaVal,
   string uniqueIdString
 }
 

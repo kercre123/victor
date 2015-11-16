@@ -190,7 +190,7 @@ void MoodManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEn
           case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
           {
             const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
-            AddToEmotion(msg.emotionType, msg.newVal, msg.uniqueIdString.c_str());
+            AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str());
             break;
           }
           default:
