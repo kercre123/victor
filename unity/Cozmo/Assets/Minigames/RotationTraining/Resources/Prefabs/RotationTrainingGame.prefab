@@ -39,14 +39,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6771ab6140c0418e88cd775f9e717f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameName: Rotation Training
+  _GameId: rotationTraining
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _GameId
+      value: rotationTraining
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 194240}

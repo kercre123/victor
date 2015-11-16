@@ -30,10 +30,12 @@ namespace SpeedTap {
 
     public void SetScoreText(int cozmoScore, int playerScore) {
       if (_CozmoScoreField != null) {
-        _CozmoScoreField.text = "cozmo: " + cozmoScore.ToString();
+        string localizedText = Localization.Get("speedTap.score.cozmo");
+        _CozmoScoreField.text = string.Format(Localization.GetCultureInfo(), localizedText, cozmoScore);
       }
       if (_PlayerScoreField != null) {
-        _PlayerScoreField.text = "player: " + playerScore.ToString();
+        string localizedText = Localization.Get("speedTap.score.player");
+        _PlayerScoreField.text = string.Format(Localization.GetCultureInfo(), localizedText, playerScore);
       }
     }
 

@@ -6,10 +6,10 @@ namespace PatternPlay {
   public class CozmoCube : MonoBehaviour {
 
     [SerializeField]
-    private float _FacingCozmoAngle = -140f;
+    private float _FacingCozmoAngle = -90f;
 
     [SerializeField]
-    private float _AwayCozmoAngle = -50f;
+    private float _AwayCozmoAngle = 0f;
 
     public SolidColor leftColor;
     public SolidColor rightColor;

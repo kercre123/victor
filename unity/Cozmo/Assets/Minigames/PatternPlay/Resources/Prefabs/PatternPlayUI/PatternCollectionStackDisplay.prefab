@@ -2429,7 +2429,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: NEW!
+  m_Text: '#badge.new'
 --- !u!114 &11436852
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2468,8 +2468,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _FacingCozmoAngle: -140
-  _AwayCozmoAngle: -50
+  _FacingCozmoAngle: -90
+  _AwayCozmoAngle: 0
   leftColor: {fileID: 11413706}
   rightColor: {fileID: 11494286}
   frontColor: {fileID: 11457776}
@@ -2545,8 +2545,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _FacingCozmoAngle: -140
-  _AwayCozmoAngle: -50
+  _FacingCozmoAngle: -90
+  _AwayCozmoAngle: 0
   leftColor: {fileID: 11455510}
   rightColor: {fileID: 11406634}
   frontColor: {fileID: 11404002}
@@ -2562,8 +2562,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b52cf4a87b35482ebba388037970a90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _FacingCozmoAngle: -140
-  _AwayCozmoAngle: -50
+  _FacingCozmoAngle: -90
+  _AwayCozmoAngle: 0
   leftColor: {fileID: 11416842}
   rightColor: {fileID: 11489130}
   frontColor: {fileID: 11485276}

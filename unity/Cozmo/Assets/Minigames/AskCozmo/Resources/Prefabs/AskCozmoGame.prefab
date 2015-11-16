@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8fda23677481447a3ad3ea9f9d4b6e58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameName: Ask Cozmo
+  _GameId: askCozmo
   _GamePanelPrefab: {fileID: 11406622, guid: 3e7435a794d054aeba1d9076db357378, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -71,6 +71,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11406622, guid: 3e7435a794d054aeba1d9076db357378,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _GameId
+      value: askCozmo
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 189650}
