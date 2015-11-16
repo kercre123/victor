@@ -97,24 +97,24 @@ namespace PatternPlay {
       }
       else if (neatList.Count == 1) {
         // there is an anchor block. let's put it to the right of the block.
-        position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+        position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.kBlockLengthMM * 1.1f;
         dockID = neatList[0].ID;
-        offset = CozmoUtil.BLOCK_LENGTH_MM * 1.25f;
+        offset = CozmoUtil.kBlockLengthMM * 1.25f;
       }
       else {
         // there are two blocks. we need to figure out where to put the third block
         Vector3 relPos = neatList[1].WorldPosition - neatList[0].WorldPosition;
         if (Vector3.Dot(relPos, new Vector3(1.0f, 0.0f, 0.0f)) > 0.0f) {
           // place on the left of anchor block.
-          position = neatList[0].WorldPosition + new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+          position = neatList[0].WorldPosition + new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.kBlockLengthMM * 1.1f;
           dockID = neatList[0].ID;
-          offset = CozmoUtil.BLOCK_LENGTH_MM * 1.25f;
+          offset = CozmoUtil.kBlockLengthMM * 1.25f;
         }
         else {
           // place on right of anchor block.
-          position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.BLOCK_LENGTH_MM * 1.1f;
+          position = neatList[0].WorldPosition - new Vector3(1.0f, 0.0f, 0.0f) * CozmoUtil.kBlockLengthMM * 1.1f;
           dockID = neatList[0].ID;
-          offset = CozmoUtil.BLOCK_LENGTH_MM * 1.25f;
+          offset = CozmoUtil.kBlockLengthMM * 1.25f;
         }
       }
       dockAngleRad = FindApproachAngle();
