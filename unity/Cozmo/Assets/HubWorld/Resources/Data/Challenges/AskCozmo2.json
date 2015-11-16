@@ -1,12 +1,17 @@
 {
-  "MinigamePrefabPath" : "AskCozmo/Resources/Prefabs/AskCozmoGame",
+  "MinigamePrefabPath" : "Prefabs/AskCozmoGame",
   "ChallengeID" : "AskCozmo2",
-  "ChallengeTitleKey" : "Ask Cozmo Challenge 2",
+  "ChallengeTitleKey" : "hubWorld.askCozmo.askCozmo2",
 
   "ChallengeRequirements" : {
     "LevelLocks" : [
-      "AskCozmo2"
+      "AskCozmo1"
     ],
+    "StatLocks" : [
+      {
+        "Speed": "5"
+      }
+    ]
   },
 
   "MinigameParametersJSON": {

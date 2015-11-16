@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine.UI;
 
 public class HubWorldDialog : BaseDialog {
 
-  public delegate void ButtonClickedHandler(GameBase miniGameClicked);
+  public delegate void ButtonClickedHandler(ChallengeData challengeClicked);
 
   public event ButtonClickedHandler OnButtonClicked;
 
@@ -14,12 +15,11 @@ public class HubWorldDialog : BaseDialog {
   [SerializeField]
   private ScrollRect _ScrollRect;
 
-  [SerializeField]
-  private TextAsset _LevelJSON;
+  private List<ChallengeData> _ChallengeList;
 
-  public void Initialize() {
-    // TODO: Parse _LevelJSON and create a bunch of buttons and add it to the list.
-
+  public void Initialize(List<ChallengeData> challengeList) {
+    _ChallengeList = challengeList;
+    // TODO: populate UI with challenge list
     _ScrollRect.verticalNormalizedPosition = 1.0f;
   }
 
@@ -31,9 +31,9 @@ public class HubWorldDialog : BaseDialog {
 
   }
 
-  private void HandleOnDevButtonClicked(GameBase minigame) {
+  private void HandleOnButtonClicked(ChallengeData challengeClicked) {
     if (OnButtonClicked != null) {
-      OnButtonClicked(minigame);
+      OnButtonClicked(challengeClicked);
     }
   }
 }
