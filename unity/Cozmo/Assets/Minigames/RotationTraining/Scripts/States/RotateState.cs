@@ -17,7 +17,7 @@ namespace RotationTraining {
     private float _MinCubeChangeSeconds = 3f;
     private float _MaxCubeChangeSeconds = 5f;
 
-    private uint _FlashCubeLightMs = 700;
+    private uint _FlashCubeLightMs = 100;
 
     private float _CubeShakeWheelSpeedMmpsModifier = 300f;
 
@@ -40,6 +40,8 @@ namespace RotationTraining {
 
     private bool _CubeIsFlashing = false;
     private Timer _FlashCubeTimer;
+    private int _CurrentCubeFlashTimes = 0;
+    private int _NumFlashes = 4;
 
     private float _CurrentWheelLeftSpeed = 0.0f;
     private float _CurrentWheelRightSpeed = 0.0f;
@@ -77,7 +79,7 @@ namespace RotationTraining {
       // Set up flashing cube timer.
       _FlashCubeTimer = new Timer(_FlashCubeLightMs);
       _FlashCubeTimer.AutoReset = false;
-      _FlashCubeTimer.Elapsed += HandleFlashCubeTimerStopped;
+      //_FlashCubeTimer.Elapsed += HandleFlashCubeTimerStopped;
       _FlashCubeTimer.Stop();
 
       // Select target angle
@@ -165,14 +167,28 @@ namespace RotationTraining {
 
     private void StartFlashingCube() {
       _CubeIsFlashing = true;
-      _FlashCubeTimer.Start();
-
-      uint flashDuration = _FlashCubeLightMs / 7;
-      Color currentColor = GetRotateLightColor();
-      _TurningCube.SetFlashingLEDs(currentColor, flashDuration, flashDuration, 0);
+      _CurrentCubeFlashTimes = 0;
+      _FlashCubeTimer.Elapsed += HandleFlashCubeOnce;
+      HandleFlashCubeOnce(null, null);
 
       Anki.Cozmo.LEDId currentLedId = GetRotateLEDId();
-      _CurrentRobot.SetFlashingBackpackLED(currentLedId, currentColor, flashDuration, flashDuration, 0);
+      _CurrentRobot.SetFlashingBackpackLED(currentLedId, GetRotateLightColor(), _FlashCubeLightMs, _FlashCubeLightMs, 0);
+    }
+
+    private void HandleFlashCubeOnce(object source, ElapsedEventArgs e) {
+      _CurrentCubeFlashTimes++;
+      if (_CurrentCubeFlashTimes >= _NumFlashes * 2) {
+        StopFlashing();
+      }
+      else {
+        if (_CurrentCubeFlashTimes % 2 == 1) {
+          _TurningCube.SetLEDs(0);
+        }
+        else {
+          _TurningCube.SetLEDs(GetRotateLightColor());
+        }
+        _FlashCubeTimer.Start();
+      }
     }
 
     private void ChangeRotateCubeState() {
@@ -189,15 +205,17 @@ namespace RotationTraining {
       // set light cube color based on _RotateCubeState
       Color rotateColor = GetRotateLightColor();
       _TurningCube.SetLEDs(rotateColor);
-      _CurrentRobot.SetBackpackLED(GetRotateLEDId(), rotateColor);
+      _CurrentRobot.SetBackpackLEDs(0);
+      _CurrentRobot.SetBackpackLED(GetRotateLEDId(), Color.white);
     }
 
     private float GenerateNextChangeTime() {
       return Time.time + Random.Range(_MinCubeChangeSeconds, _MaxCubeChangeSeconds);
     }
 
-    private void HandleFlashCubeTimerStopped(object source, ElapsedEventArgs e) {
+    private void StopFlashing() {
       _CubeIsFlashing = false;
+      _FlashCubeTimer.Elapsed -= HandleFlashCubeOnce;
       ChangeRotateCubeState();
     }
 

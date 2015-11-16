@@ -987,12 +987,12 @@ public class Robot : IDisposable {
 
   public void SetBackpackLED(LEDId ledToChange, Color color) {
     uint colorUint = CozmoPalette.ColorToUInt(color);
-    SetBackpackLED((int)(byte)ledToChange, colorUint);
+    SetBackpackLED((int)ledToChange, colorUint);
   }
 
   public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs, uint offDurationMs, uint transitionDurationMs) {
     uint colorUint = CozmoPalette.ColorToUInt(color);
-    SetBackpackLED((int)(byte)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
+    SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
   public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
@@ -1004,6 +1004,13 @@ public class Robot : IDisposable {
 
   private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+    // Special case for arrow lights; they only accept white as a color
+    if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
+      uint whiteUint = CozmoPalette.ColorToUInt(Color.white);
+      onColor = (onColor > 0) ? whiteUint : 0;
+      offColor = (offColor > 0) ? whiteUint : 0;
+    }
+
     BackpackLights[index].OnColor = onColor;
     BackpackLights[index].OffColor = offColor;
     BackpackLights[index].OnPeriodMs = onPeriod_ms;
