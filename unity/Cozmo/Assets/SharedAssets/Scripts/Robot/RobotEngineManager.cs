@@ -462,24 +462,33 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.MoodState message) {
+    if (CurrentRobot == null)
+      return;
+    
     if (message.emotionValues.Length != (int)EmotionType.Count) {
       DAS.Error("MoodStateMessage.emotionValues.BadLength", "Expected " + EmotionType.Count + " entries but got " + message.emotionValues.Length);
     }
     else {
-      //for (EmotionType i = 0; i < EmotionType.Count; ++i) {
-      //  DAS.Info("Mood", "Robot " + message.robotID.ToString() + ": Emotion '" + i + "' = " + message.emotionValues[(int)i]);
-      //}
+      for (EmotionType i = 0; i < EmotionType.Count; ++i) {
+        //DAS.Info("Mood", "Robot " + message.robotID.ToString() + ": Emotion '" + i + "' = " + message.emotionValues[(int)i]);
+        CurrentRobot.UpdateEmotionFromEngineRobotManager(i, message.emotionValues[(int)i]);
+      }
     }
   }
 
   private void ReceivedSpecificMessage(G2U.ProgressionStats message) {
+    if (CurrentRobot == null)
+      return;
+
     if (message.statValues.Length != (int)ProgressionStatType.Count) {
       DAS.Error("ProgressionStats.statValues.BadLength", "Expected " + ProgressionStatType.Count + " entries but got " + message.statValues.Length);
     }
     else {
-      //for (ProgressionStatType i = 0; i < ProgressionStatType.Count; ++i) {
-      //  DAS.Info("Progression", "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
-      //}
+     
+      for (ProgressionStatType i = 0; i < ProgressionStatType.Count; ++i) {
+        // DAS.Info("Progression", "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
+        CurrentRobot.UpdateProgressionStatFromEngineRobotManager(i, message.statValues[(int)i]);
+      }
     }
   }
 
