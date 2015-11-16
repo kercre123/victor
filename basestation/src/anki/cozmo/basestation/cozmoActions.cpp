@@ -1765,8 +1765,8 @@ namespace Anki {
     {
       // Make sure we back to looking for markers (and stop tracking) whenever
       // and however this action finishes
-      robot.StartLookingForMarkers();
-      robot.StopDocking();
+      robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
+      robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
       
       // Also return the robot's head to level
       robot.GetMoveComponent().MoveHeadToAngle(0, 2.f, 6.f);
