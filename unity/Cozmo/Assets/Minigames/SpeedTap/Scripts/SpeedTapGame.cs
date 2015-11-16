@@ -13,8 +13,8 @@ namespace SpeedTap {
 
     public event Action PlayerTappedBlockEvent;
 
-    private StateMachineManager stateMachineManager_ = new StateMachineManager();
-    private StateMachine stateMachine_ = new StateMachine();
+    private StateMachineManager _StateMachineManager = new StateMachineManager();
+    private StateMachine _StateMachine = new StateMachine();
 
     [SerializeField]
     private SpeedTapPanel _GamePanelPrefab;
@@ -27,11 +27,11 @@ namespace SpeedTap {
     void Start() { 
       DAS.Info("SpeedTapGame", "Game Created");
 
-      stateMachine_.SetGameRef(this);
-      stateMachineManager_.AddStateMachine("FollowCubeStateMachine", stateMachine_);
+      _StateMachine.SetGameRef(this);
+      _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, InitialCubesDone);
-      stateMachine_.SetNextState(initCubeState);
+      _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
@@ -45,7 +45,7 @@ namespace SpeedTap {
     }
 
     void Update() {
-      stateMachineManager_.UpdateAllMachines();
+      _StateMachineManager.UpdateAllMachines();
     }
 
     public override void CleanUp() {

@@ -3,34 +3,68 @@ using System.Collections;
 
 namespace Vortex {
 
-  // This might just be a state showing hte rules or something..
+  /*
+   * This state comes up after we see the minimum amount of cupes ( 2 )
+   * This state should do things like: 
+   * show rules, 
+   * pick player numbers ( right now just total seen cubes + cozmo ),
+   * Wait for Cozmo to get to his block
+  */
   public class StateIntro : State {
 
-    private bool _AnimationPlaying = false;
+    private VortexGame _VortexGame = null;
+    private bool _DrivingToBlock = false;
+    private LightCube CozmoBlock;
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("StateIntro", "StateIntro");
-      _AnimationPlaying = true;
-      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
+
+      _VortexGame = _StateMachine.GetGame() as VortexGame;
+      // Stolen from SpeedTap so might want in a shared util?
+      CozmoBlock = GetClosestAvailableBlock();
     }
 
     public override void Update() {
       base.Update();
 
-      if (!_AnimationPlaying) {
-        _StateMachine.SetNextState(new StateRequestSpin());
-      }
+      DriveToBlock();
     }
 
     public override void Exit() {
       base.Exit();
     }
 
-    void HandleAnimationDone(bool success) {
-      _AnimationPlaying = false;
+    private void DriveToBlock() {
+      if (_DrivingToBlock)
+        return;
+      if (CozmoBlock.MarkersVisible) {
+        _DrivingToBlock = true;
+        _CurrentRobot.AlignWithObject(CozmoBlock, 90.0f, (bool success) => {
+          _DrivingToBlock = false;
+          if (success) {
+            _VortexGame.OnIntroComplete(CozmoBlock.ID);
+          }
+          else {
+            DAS.Debug("SpeedTapStateGoToCube", "AlignWithObject Failed");
+          }
+        });
+      }
     }
-      
-  }
 
+    private LightCube GetClosestAvailableBlock() {
+      float minDist = float.MaxValue;
+      ObservedObject closest = null;
+      for (int i = 0; i < _CurrentRobot.SeenObjects.Count; ++i) {
+        if (_CurrentRobot.SeenObjects[i] is LightCube) {
+          float d = Vector3.Distance(_CurrentRobot.SeenObjects[i].WorldPosition, _CurrentRobot.WorldPosition);
+          if (d < minDist) {
+            minDist = d;
+            closest = _CurrentRobot.SeenObjects[i];
+          }
+        }
+      }
+      return closest as LightCube;
+    }
+
+  }
 }
