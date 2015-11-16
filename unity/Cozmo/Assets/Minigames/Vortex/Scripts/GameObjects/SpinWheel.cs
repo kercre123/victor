@@ -29,8 +29,8 @@ namespace Vortex {
 
         Color imageColor = imageColors[i % imageColors.Length];
         PieSlice script_slice = slice.GetComponent<PieSlice>();
-        //script_slice.Init(fillAmount, sliceArc * i, sliceArc * 0.5f, (i % 4) + 1, imageColor);
-        script_slice.Init(fillAmount, sliceArc * i, sliceArc * 0.5f, i, imageColor);
+        script_slice.Init(fillAmount, sliceArc * i, sliceArc * 0.5f, (i % 4) + 1, imageColor);
+        //script_slice.Init(fillAmount, sliceArc * i, sliceArc * 0.5f, i, imageColor);
         _PieSliceList.Add(script_slice);
       }
     }

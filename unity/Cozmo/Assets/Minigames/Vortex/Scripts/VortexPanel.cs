@@ -2,7 +2,6 @@
 using System.Collections;
 using DG.Tweening;
 
-
 namespace Vortex {
 
   public class VortexPanel : BaseDialog {
@@ -10,7 +9,7 @@ namespace Vortex {
     [SerializeField]
     private UnityEngine.UI.Button _SpinButton;
     [SerializeField]
-    private UnityEngine.UI.Text _StatusText;
+    private Anki.UI.AnkiTextLabel _StatusText;
     [SerializeField]
     private UnityEngine.UI.Text _ScoreboardText;
     [SerializeField]
@@ -34,7 +33,6 @@ namespace Vortex {
       _DebugTap1Button.onClick.AddListener(HandleDebugClick);
       _ReplayButton.onClick.AddListener(HandleReplayClick);
       EnableReplayButton(false);
-      _StatusText.text = "Welcome to Vortex";
     }
 
     public void SetLockSpinner(bool spinnerLocked = false) {

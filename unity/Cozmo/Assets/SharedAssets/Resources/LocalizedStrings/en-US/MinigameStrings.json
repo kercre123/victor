@@ -71,5 +71,17 @@
     },
     "vortex.title" : {
         "translation" : "Vortex"
+    },
+    "vortex.spinButton" : {
+        "translation" : "Spin"
+    },
+    "vortex.replayButton" : {
+        "translation" : "Replay"
+    },
+    "vortex.vortexStatus" : {
+        "translation" : "Round: {0:D}"
+    },
+    "vortex.vortexWon" : {
+        "translation" : "{0} Won"
     }
 }
