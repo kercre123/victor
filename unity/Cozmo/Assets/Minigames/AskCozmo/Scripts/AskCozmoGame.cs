@@ -34,14 +34,14 @@ namespace AskCozmo {
 
       _AnimationPlaying = true;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
-        CurrentRobot.SendAnimation("majorWin", AnimationDone);
+        CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
       }
       else {
-        CurrentRobot.SendAnimation("shocked", AnimationDone);
+        CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
       }
     }
 
-    void AnimationDone(bool success) {
+    void HandleAnimationDone(bool success) {
       _AnimationPlaying = false;
     }
   }
