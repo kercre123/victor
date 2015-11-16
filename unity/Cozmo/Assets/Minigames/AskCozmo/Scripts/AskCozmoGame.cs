@@ -18,6 +18,11 @@ namespace AskCozmo {
       CreateDefaultQuitButton();
     }
 
+    public override void ParseMinigameParams(string paramsJSON) {
+      base.ParseMinigameParams(paramsJSON);
+
+    }
+
     public override void CleanUp() {
       if (_GamePanel != null) {
         UIManager.CloseDialogImmediately(_GamePanel);
