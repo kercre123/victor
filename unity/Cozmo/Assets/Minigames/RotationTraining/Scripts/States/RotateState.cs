@@ -121,6 +121,13 @@ namespace RotationTraining {
         if (newSecondsLeft != _SecondsRemaining) {
           _SecondsRemaining = newSecondsLeft;
           _GameInstance.SetTimeLeft(_SecondsRemaining);
+
+          if (_SecondsRemaining <= 0) {
+            _StateMachine.SetNextState(new LoseState());
+
+            // Stop moving
+            _CurrentRobot.DriveWheels(0, 0);
+          }
         }
       }
     }

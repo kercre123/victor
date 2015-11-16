@@ -6,12 +6,10 @@ namespace RotationTraining {
   public class RotationTrainingPanel : BaseDialog {
 
     [SerializeField]
-    private Text _timerText;
+    private TimeTextLabel _TimerText;
 
     public void SetTimeLeft(int secondsLeft) {
-      System.TimeSpan timeSpan = TimeUtility.TimeSpanFromSeconds(secondsLeft);
-      _timerText.text = string.Format(Localization.GetCultureInfo(),
-        "{0:g}", timeSpan);
+      _TimerText.SetTimeLeft(secondsLeft);
     }
 
     protected override void CleanUp() {

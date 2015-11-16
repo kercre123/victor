@@ -11,9 +11,6 @@ namespace RotationTraining {
     private RotationTrainingPanel _GamePanelPrefab;
     private RotationTrainingPanel _GamePanel;
 
-    [SerializeField]
-    private AudioClip _ChangeDirectionSound;
-
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
