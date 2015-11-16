@@ -897,13 +897,24 @@ namespace Anki {
               case (s32)'W':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool useManualSpeed = false;
                 
-                SendRollSelectedObject(pathMotionProfile_,
-                                       usePreDockPose,
-                                       useApproachAngle,
-                                       approachAngle_rad,
-                                       useManualSpeed);
+                if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendPopAWheelie(-1,
+                                  pathMotionProfile_,
+                                  usePreDockPose,
+                                  useApproachAngle,
+                                  approachAngle_rad,
+                                  useManualSpeed);
+                } else {
+                  SendRollSelectedObject(pathMotionProfile_,
+                                         usePreDockPose,
+                                         useApproachAngle,
+                                         approachAngle_rad,
+                                         useManualSpeed);
+                }
+                
+                
                 break;
               }
 
