@@ -15,6 +15,8 @@
 #ifndef __Basestation_Audio_AudioServer_H__
 #define __Basestation_Audio_AudioServer_H__
 
+#include <DriveAudioEngine/audioTypes.h>
+#include <DriveAudioEngine/audioCallback.h>
 #include <util/helpers/noncopyable.h>
 #include <stdio.h>
 #include <unordered_map>
@@ -29,10 +31,10 @@ struct PostAudioEvent;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
-struct PostCallbackEventBegin;
-struct PostCallbackEventMarker;
-struct PostCallbackEventComplete;
-
+struct AudioCallbackDuration;
+struct AudioCallbackMarker;
+struct AudioCallbackMarkerComplete;
+enum class AudioCallbackFlag : uint8_t;
   
 class AudioServer : public Util::noncopyable {
   
@@ -43,14 +45,16 @@ public:
   ~AudioServer();
 
   // Transfer AduioClientConnection Ownership
-  void RegisterClientConnection( AudioClientConnection* clientConnection );
+  using ConnectionIdType = uint8_t;
+  ConnectionIdType RegisterClientConnection( AudioClientConnection* clientConnection );
   
+  const AudioClientConnection* GetConnection( ConnectionIdType connectionId ) const;
   
   // Client Connection Deletgate Methods
-  void ProcessMessage( const PostAudioEvent& message, uint8_t connectionId );
-  void ProcessMessage( const PostAudioGameState& message, uint8_t connectionId );
-  void ProcessMessage( const PostAudioSwitchState& message, uint8_t connectionId );
-  void ProcessMessage( const PostAudioParameter& message, uint8_t connectionId );
+  void ProcessMessage( const PostAudioEvent& message, ConnectionIdType connectionId );
+  void ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId );
+  void ProcessMessage( const PostAudioSwitchState& message, ConnectionIdType connectionId );
+  void ProcessMessage( const PostAudioParameter& message, ConnectionIdType connectionId );
   
   AudioController* GetAudioController() { return _audioController; }
   
@@ -58,15 +62,21 @@ private:
   
   AudioController* _audioController = nullptr;
   
-  using ClientConnectionMap = std::unordered_map< uint8_t, AudioClientConnection* >;
+  using ClientConnectionMap = std::unordered_map< ConnectionIdType, AudioClientConnection* >;
   ClientConnectionMap _clientConnections;
   
   
   uint8_t _previousClientConnectionId = 0;
   
+  // Methods
   
-  uint8_t GetNewClientConnectionId();
+  ConnectionIdType GetNewClientConnectionId();
   
+  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags );
+  
+  void PerformCallback( ConnectionIdType connectionId,
+                        uint16_t callbackId,
+                        const AudioEngine::AudioCallbackInfo& callbackInfo );
 };
   
 } // Audio

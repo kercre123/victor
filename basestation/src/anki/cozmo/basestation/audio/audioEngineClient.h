@@ -40,11 +40,11 @@ public:
   
   void PostEvent( EventType event,
                   uint16_t gameObjectId,
-                  AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone ) const;
+                  AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
 
-  void PostGameState( GameStateType gameState ) const;
+  void PostGameState( GameStateType gameState );
   
-  void PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId ) const;
+  void PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId );
   
   void PostParameter( ParameterType parameter,
                       float parameterValue,
@@ -57,8 +57,14 @@ private:
   AudioEngineMessageHandler& _messageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
   
+  using CallbackIdType = uint16_t;
+  static constexpr CallbackIdType kInvalidCallbackId = 0;
+  CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
   void HandleEvents(const AnkiEvent<MessageAudioClient>& event);
+  
+  CallbackIdType GetNewCallbackId();
+  
 };
 
 } // Audio

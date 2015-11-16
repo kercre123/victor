@@ -14,11 +14,13 @@
 #ifndef __Basestation_Audio_AudioController_H__
 #define __Basestation_Audio_AudioController_H__
 
-#include <stdio.h>
-
 #include <DriveAudioEngine/audioTypes.h>
+#include <DriveAudioEngine/audioCallback.h>
 #include <util/helpers/noncopyable.h>
 #include <util/dispatchQueue/iTaskHandle.h>
+#include <unordered_map>
+#include <vector>
+
 
 namespace AudioEngine {
   class AudioEngineController;
@@ -50,12 +52,14 @@ public:
   
   ~AudioController();
 
-  // TODO: Add Callback stuff
+  // Note: Transfer's callback context ownership to Audio Controller
   AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
-                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
+                                              AudioEngine::AudioCallbackContext* callbackContext = nullptr );
   
   AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
+                                              AudioEngine::AudioCallbackContext* callbackContext = nullptr );
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
                  AudioEngine::AudioStateId stateId ) const;
@@ -73,6 +77,8 @@ public:
   // Get Audio Buffer Obj for robot
   RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
   
+  // Return true if successful
+//  bool SetAudioCallbackFunc( AudioEngine::AudioCallbackFunc callbackFunc );
 
 private:
   
@@ -85,8 +91,16 @@ private:
   
   bool _isInitialized = false;
   
+  using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingID, AudioEngine::AudioCallbackContext* >;
+  CallbackContextMap _eventCallbackContexts;
+  
+  std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
+
+  
   // Tick Audio Engine
   void Update();
+  
+  void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   
 };
 

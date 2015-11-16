@@ -35,21 +35,23 @@ AudioEngineClient::AudioEngineClient( AudioEngineMessageHandler& messageHandler 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag ) const
+void AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag )
 {
-  const MessageAudioClient msg( PostAudioEvent( event, gameObjectId, callbackFlag ) );
+  const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ?
+                                    GetNewCallbackId() : kInvalidCallbackId;
+  const MessageAudioClient msg( PostAudioEvent( event, gameObjectId, callbackFlag, callbackId ) );
   _messageHandler.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostGameState( GameStateType gameState ) const
+void AudioEngineClient::PostGameState( GameStateType gameState )
 {
   const MessageAudioClient msg( (PostAudioGameState( gameState )) );
   _messageHandler.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId ) const
+void AudioEngineClient::PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId )
 {
   const MessageAudioClient msg( PostAudioSwitchState( switchState, gameObjectId ));
   _messageHandler.Broadcast( std::move( msg ) );
@@ -78,15 +80,27 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
   switch ( event.GetData().GetTag() ) {
       
     case MessageAudioClientTag::AudioCallbackDuration:
-    // TODO: Handle Callback
+    {
+    // Handle Duration Callback
+      const AudioCallbackDuration& audioMsg = event.GetData().Get_AudioCallbackDuration();
+      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
+    }
       break;
       
     case MessageAudioClientTag::AudioCallbackMarker:
-    // TODO: Handle Callback
+    {
+      // Handle Marker Callback
+      const AudioCallbackMarker& audioMsg = event.GetData().Get_AudioCallbackMarker();
+      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
+    }
       break;
       
     case MessageAudioClientTag::AudioCallbackComplete:
-    // TODO: Handle Callback
+    {
+      // Handle Complete Callback
+      const AudioCallbackComplete& audioMsg = event.GetData().Get_AudioCallbackComplete();
+      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
+    }
       break;
       
     default:
@@ -96,6 +110,18 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
                         MessageAudioClientTagToString(event.GetData().GetTag()) );
     }
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()
+{
+  // We intentionally let the callback id roll over
+  CallbackIdType callbackId = ++_previousCallbackId;
+  if ( kInvalidCallbackId == callbackId ) {
+    ++callbackId;
+  }
+  
+  return callbackId;
 }
 
 } // Audio
