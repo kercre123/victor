@@ -47,15 +47,18 @@ public:
   template<class KeyFrameType>
   Result AddKeyFrame(const KeyFrameType& kf);
 
-  Result Init(uint8_t tag);
-  Result Update(Robot& robot);
+  template<class KeyFrameType>
+  Animations::Track<KeyFrameType>& GetTrack();
+  
+  Result Init();
 
+  bool IsInitialized() const { return _isInitialized; }
+  
   // An animation is Empty if *all* its tracks are empty
   bool IsEmpty() const;
 
-  // An animation is finished when none of its track have frames left to play
-  bool IsFinished() const;
-
+  bool HasFramesLeft() const;
+  
   void Clear();
 
   const std::string& GetName() const { return _name; }
@@ -66,19 +69,6 @@ private:
   // Name of this animation
   std::string _name;
   bool _isInitialized;
-  uint8_t _tag;
-  bool _startOfAnimationSent;
-
-  // When this animation started playing (was initialized) in milliseconds, in
-  // "real" basestation time
-  TimeStamp_t _startTime_ms;
-
-  // Where we are in the animation in terms of what has been streamed out, since
-  // we don't stream in real time. Each time we send an audio frame to the
-  // robot (silence or actual audio), this increments by one audio sample
-  // length, since that's what keeps time for streaming animations (not a
-  // clock)
-  TimeStamp_t _streamingTime_ms;
 
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;
@@ -92,33 +82,8 @@ private:
   Animations::Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
   Animations::Track<RobotAudioKeyFrame>     _robotAudioTrack;
 
-  template<class KeyFrameType>
-  Animations::Track<KeyFrameType>& GetTrack();
-
-  // TODO: Remove these once we aren't playing robot audio on the device
-  TimeStamp_t _playedRobotAudio_ms;
-  std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
-  const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
-
-  bool _endOfAnimationSent;
-
-  ProceduralFace _proceduralFace;
-
-  bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
-  Result SendBufferedMessages(Robot& robot);
-
-  bool AllTracksBuffered() const;
-  std::list<RobotInterface::EngineToRobot*> _sendBuffer;
-  s32 _numBytesToSend;
-
-  // Send larger keyframes "hot" for reliable transport (this includes
-  // audio samples and face images)
-  static const bool SEND_LARGE_KEYFRAMES_HOT = false;
-
-  // "Flow control" for not overrunning reliable transport in a single
-  // update tick
-  static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
-
+  //ProceduralFace _proceduralFace;
+  
 }; // class Animation
 
 
@@ -128,11 +93,6 @@ Result Animation::AddKeyFrame(const KeyFrameType& kf)
   Result addResult = GetTrack<KeyFrameType>().AddKeyFrame(kf);
   if(RESULT_OK != addResult) {
     PRINT_NAMED_ERROR("Animiation.AddKeyFrame.Failed", "");
-  } else {
-    // If we add a keyframe after initialization (at which time this animation
-    // could have been empty), make sure to mark that we haven't yet sent
-    // end of animation.
-    _endOfAnimationSent = false;
   }
 
   return addResult;
