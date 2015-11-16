@@ -26,10 +26,13 @@ namespace RotationTraining {
 
     private float _MarginOfErrorRad = 0.1f;
 
+    private int _GameTimerDurationSeconds = 30;
+
     #endregion
 
     #region State Variables
 
+    private RotationTrainingGame _GameInstance;
     private int _TurningCubeID = -1;
     private LightCube _TurningCube;
     private RotateCubeState _RotateCubeState = RotateCubeState.Left;
@@ -44,6 +47,9 @@ namespace RotationTraining {
 
     private float _TargetPoseAngleMinRad;
     private float _TargetPoseAngleMaxRad;
+
+    private float _FailGameTimestamp;
+    private int _SecondsRemaining;
 
     #endregion
 
@@ -78,7 +84,11 @@ namespace RotationTraining {
       // Select target angle
       SetUpTargetAngle();
 
-      // TODO: Start timer for lose state
+      // Start timer for lose state
+      _SecondsRemaining = _GameTimerDurationSeconds;
+      _FailGameTimestamp = Time.time + _GameTimerDurationSeconds;
+      _GameInstance = _StateMachine.GetGame() as RotationTrainingGame;
+      _GameInstance.SetTimeLeft(_SecondsRemaining);
     }
 
     public override void Update() {
@@ -105,6 +115,13 @@ namespace RotationTraining {
         _CurrentWheelRightSpeed = Mathf.Lerp(_CurrentWheelRightSpeed, 0.0f, _WheelSpeedDecayModifier * Time.deltaTime);
 
         _CurrentRobot.DriveWheels(_CurrentWheelLeftSpeed * Time.deltaTime, _CurrentWheelRightSpeed * Time.deltaTime);
+
+        // Update the timer
+        int newSecondsLeft = Mathf.FloorToInt(_FailGameTimestamp - Time.time);
+        if (newSecondsLeft != _SecondsRemaining) {
+          _SecondsRemaining = newSecondsLeft;
+          _GameInstance.SetTimeLeft(_SecondsRemaining);
+        }
       }
     }
 
