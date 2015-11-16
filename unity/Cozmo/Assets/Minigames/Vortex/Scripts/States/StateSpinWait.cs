@@ -3,26 +3,38 @@ using System.Collections;
 
 namespace Vortex {
 
+  /*
+   * This state controls when Cozmo Taps ( currently completely random )
+   * while the spinner is going in the spinpanel.
+   */
   public class StateSpinWait : State {
-
+    private float _WaitTime = 0;
+    private VortexGame _VortexGame = null;
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("StateSpinWait", "StateSpinWait");
+      _WaitTime = 1.0f;
+      _VortexGame = _StateMachine.GetGame() as VortexGame;
     }
 
     public override void Update() {
       base.Update();
-
+      if (_WaitTime > 0) {
+        _WaitTime -= Time.deltaTime;
+        if (_WaitTime < 0) {
+          CozmoTap();
+        }
+      }
     }
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     }
 
-    void SearchForAvailableBlock() {
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+    private void CozmoTap() {
+      // Can always add a bit more randomness here
+      _CurrentRobot.SendAnimation("tapCube");
+      _VortexGame.HandleBlockTapped(0, Random.Range(1, 4));
     }
   }
 
