@@ -67,12 +67,21 @@ namespace Cozmo {
     
   private:
     
+    // Initialize the streaming of an animation with a given tag
+    // (This will call anim->Init())
     Result InitStream(Animation* anim, u8 withTag);
-    Result Stream(Robot& robot, Animation* anim);
+    
+    // Actually stream the animation (called each tick)
+    Result UpdateStream(Robot& robot, Animation* anim);
+    
+    // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
     
+    // Update generate frames needed by the "live" idle animation and add them
+    // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation(Robot& robot);
     
+    // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
 
     Animation*  _idleAnimation; // default points to "live" animation
@@ -105,16 +114,16 @@ namespace Cozmo {
     std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
     const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
     
+    // Manage the send buffer, which is where we put keyframe messages ready to
+    // go to the robot, and parcel them out according to how many bytes the
+    // reliable UDP channel and the robot's animation buffer can handle on a
+    // given tick.
     bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
     Result SendBufferedMessages(Robot& robot);
     
     std::list<RobotInterface::EngineToRobot*> _sendBuffer;
     s32 _numBytesToSend;
     uint8_t _tag;
-    
-    // Send larger keyframes "hot" for reliable transport (this includes
-    // audio samples and face images)
-    static const bool SEND_LARGE_KEYFRAMES_HOT = false;
     
     // "Flow control" for not overrunning reliable transport in a single
     // update tick

@@ -233,7 +233,7 @@ namespace Cozmo {
   } // SendBufferedMessages()
 
   
-  Result AnimationStreamer::Stream(Robot& robot, Animation* anim)
+  Result AnimationStreamer::UpdateStream(Robot& robot, Animation* anim)
   {
     Result lastResult = RESULT_OK;
     
@@ -278,7 +278,9 @@ namespace Cozmo {
     s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
     if (overflow) {
       // Computation for minBytesFreeInRobotBuffer still works out in overflow case
-      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow", "free %d (streamed = %d, played %d)", minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
+      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow",
+                       "free %d (streamed = %d, played %d)",
+                       minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
     }
     assert(minBytesFreeInRobotBuffer >= 0);
     
@@ -315,7 +317,7 @@ namespace Cozmo {
          robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
       {
         
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
+#       if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
         // Queue up audio frame for playing locally if
         // it's not already in the queued and it wasn't already played.
         const RobotAudioKeyFrame* audioKF = &robotAudioTrack.GetCurrentKeyFrame();
@@ -323,7 +325,7 @@ namespace Cozmo {
             (_onDeviceRobotAudioKeyFrameQueue.empty() || audioKF != _onDeviceRobotAudioKeyFrameQueue.back())) {
           _onDeviceRobotAudioKeyFrameQueue.push_back(audioKF);
         }
-#   endif
+#       endif
         
         if(!BufferMessageToSend(robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage()))
         {
@@ -481,7 +483,7 @@ namespace Cozmo {
     }
     
     return RESULT_OK;
-  } // Stream()
+  } // UpdateStream()
   
   Result AnimationStreamer::Update(Robot& robot)
   {
@@ -516,7 +518,7 @@ namespace Cozmo {
         }
         
       } else {
-        lastResult = Stream(robot, _streamingAnimation);
+        lastResult = UpdateStream(robot, _streamingAnimation);
         _isIdling = false;
       }
     } else if(_idleAnimation != nullptr) {
@@ -546,7 +548,7 @@ namespace Cozmo {
         //InitIdleAnimation();
       }
       
-      lastResult = Stream(robot, _idleAnimation);
+      lastResult = UpdateStream(robot, _idleAnimation);
       _timeSpentIdling_ms += BS_TIME_STEP;
     }
     
