@@ -10,6 +10,8 @@
 #include "clad/types/demoBehaviorState.clad"
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
+#include "clad/types/emotionTypes.clad"
+#include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/externalInterface/messageShared.clad"
@@ -583,6 +585,59 @@ message SetDemoState {
 
 message ForceDelocalizeRobot {
   uint_8 robotID
+}
+
+// Mood / Emotions
+
+message GetEmotions {
+}
+
+message SetEmotion {
+  EmotionType emotionType,
+  float_32 newVal
+}
+
+message AddToEmotion {
+  EmotionType emotionType,
+  float_32 deltaVal,
+  string uniqueIdString
+}
+
+union MoodMessageUnion {
+  GetEmotions  GetEmotions,
+  SetEmotion   SetEmotion,
+  AddToEmotion AddToEmotion
+}
+
+message MoodMessage {
+  uint_8  robotID,
+  MoodMessageUnion  MoodMessageUnion
+}
+
+// Progression / Stats
+
+message GetProgressionStats {
+}
+
+message SetProgressionStat {
+  ProgressionStatType statType,
+  uint_32 newVal
+}
+
+message AddToProgressionStat {
+  ProgressionStatType statType,
+  uint_32 deltaVal
+}
+
+union ProgressionMessageUnion {
+  GetProgressionStats  GetProgressionStats,
+  SetProgressionStat   SetProgressionStat,
+  AddToProgressionStat AddToProgressionStat
+}
+
+message ProgressionMessage {
+  uint_8  robotID,
+  ProgressionMessageUnion  ProgressionMessageUnion
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

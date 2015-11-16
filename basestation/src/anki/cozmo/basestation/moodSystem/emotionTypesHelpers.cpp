@@ -13,9 +13,6 @@
 
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "util/enums/stringToEnumMapper.hpp"
-#include "util/logging/logging.h"
-#include <assert.h>
-#include <map>
 
 
 namespace Anki {

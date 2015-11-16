@@ -77,6 +77,18 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // Custom handler for ForceDelocalizeRobot
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
+    
+    // Custom handlers for Mood events
+    {
+      auto moodEventCallback = std::bind(&RobotEventHandler::HandleMoodEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::MoodMessage, moodEventCallback));
+    }
+
+    // Custom handlers for Progression events
+    {
+      auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
+    }
   }
 }
   
@@ -637,6 +649,42 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
       robot->Delocalize();
     }
   }
+  
+void RobotEventHandler::HandleMoodEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const RobotID_t robotID = eventData.Get_MoodMessage().robotID;
+  
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleMoodEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetMoodManager().HandleEvent(event);
+  }
+}
+  
+void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const RobotID_t robotID = eventData.Get_ProgressionMessage().robotID;
+  
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleProgressionEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetProgressionManager().HandleEvent(event);
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

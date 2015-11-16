@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "nrf.h"
 #include "nrf_gpio.h"
 
@@ -10,35 +12,28 @@
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
-#include "drop.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
-const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
+static const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+extern void EnterRecovery(void) {
+  __asm { SVC 0 };
+}
+
 int main(void)
 {
-  // 
-  u32 failedTransferCount = 0;
+  //u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
-  Drop::init();
   Battery::init();
   TimerInit();
   Motors::init();   // Must init before power goes on
   Head::init();
   Lights::init();
-
-  UART::print("\r\nUnbrick me now...");
-  u32 t = GetCounter();
-  while ((GetCounter() - t) < 500 * COUNT_PER_MS)  // 0.5 second unbrick time
-    ;
-  UART::print("too late!\r\n");
-
-  // Finish booting up
   Radio::init();
   Battery::powerOn();
 
@@ -48,6 +43,7 @@ int main(void)
   for (;;)
   {
     // Only call every loop through - not all the time
+    Head::manage();
     Motors::update();
     Battery::update();
 

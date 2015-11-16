@@ -44,7 +44,7 @@ enum e_nrf_gpio {
 
   // Power
   PIN_PWR_EN          = 15,
-  PIN_nVDDs_EN        = 7,
+  PIN_VDDs_EN         = 7,
   PIN_V_BAT_SENSE     = 5,
   PIN_V_EXT_SENSE     = 6,
 

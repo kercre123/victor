@@ -373,6 +373,7 @@
             ],
             'libraries': [
               'libCppController.dylib',
+              'libode.dylib',
               '<@(opencv_libs)',
               '$(SDKROOT)/System/Library/Frameworks/OpenGL.framework',
               '$(SDKROOT)/System/Library/Frameworks/GLUT.framework',              
