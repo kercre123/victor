@@ -142,8 +142,8 @@ bool FlashSector(int target, const uint32_t* data)
 static inline bool FlashBlock() {
   struct Packet {
     uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
-    uint16_t  blockOffset;
-    uint8_t   checkSum[SHA1_BLOCK_SIZE];
+    uint32_t   blockAddress;
+    uint8_t    checkSum[SHA1_BLOCK_SIZE];
   };
 
   static const int length = sizeof(Packet) / sizeof(spiWord);
@@ -166,7 +166,7 @@ static inline bool FlashBlock() {
   uint8_t sig[SHA1_BLOCK_SIZE];
   sha1_final(&ctx, sig);
 
-  int writeAdddress = packet.blockOffset * TRANSMIT_BLOCK_SIZE;
+  int writeAdddress = packet.blockAddress;
 
   // We will not override the boot loader
   if (writeAdddress < SECURE_SPACE) {
