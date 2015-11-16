@@ -12,7 +12,7 @@
 3) Use CST_ASSERT() and CST_EXPECT() macros to test conditions of interest. 
    Use CST_EXIT() to properly exit your test.
 
-4) Add the name of the test class and world file to project/buildServer/steps/webotsTests.cfg.
+4) Add the name of the test class and world file to project/build-scripts/webots/webotsTests.cfg.
    The world file should be added to simulator/worlds/ and must contain an instance of each of the following.
   
      BlockWorldComms (i.e. Cozmo engine)
@@ -27,7 +27,7 @@
 
 TIPS:
 
-i) The tests specified in webotsTest.cfg are run by calling project/buildServer/steps/webotsTest.py
+i) The tests specified in webotsTest.cfg are run by calling project/build-scripts/webots/webotsTest.py
    By default they run in 'minimized' mode which means there is no Webots window that actually appears.
    Run webotsTest.py with --showGraphics to enable the Webots window. 
 
