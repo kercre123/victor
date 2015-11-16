@@ -111,6 +111,10 @@ public class Robot : IDisposable {
 
   public List<Face> Faces { get; private set; }
 
+  public uint[] ProgressionStats { get; private set; }
+
+  public float[] EmotionValues { get; private set; }
+
   public Light[] Lights { get; private set; }
 
   private bool _LightsChanged {
@@ -175,6 +179,8 @@ public class Robot : IDisposable {
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
   private U2G.AlignWithObject AlignWithObjectMessage;
+  private U2G.ProgressionMessage ProgressionStatMessage;
+  private U2G.MoodMessage MoodStatMessage;
  
   private PathMotionProfile PathMotionProfileDefault;
 
@@ -272,6 +278,8 @@ public class Robot : IDisposable {
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
+    ProgressionStatMessage = new U2G.ProgressionMessage();
+    MoodStatMessage = new U2G.MoodMessage();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -286,6 +294,8 @@ public class Robot : IDisposable {
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
 
     Lights = new Light[SetBackpackLEDsMessage.onColor.Length];
+    ProgressionStats = new uint[(int)Anki.Cozmo.ProgressionStatType.Count];
+    EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
 
     for (int i = 0; i < Lights.Length; ++i) {
       Lights[i] = new Light();
@@ -364,6 +374,10 @@ public class Robot : IDisposable {
     for (int i = 0; i < Lights.Length; ++i) {
       Lights[i].ClearData();
     }
+
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; ++i) {
+      ProgressionStats[i] = 0;
+    }
   }
 
   public void ClearVisibleObjects() {
@@ -424,6 +438,60 @@ public class Robot : IDisposable {
       DirtyObjects.Add(dirty);
     }
   }
+
+  #region Progression and Mood Stats
+
+  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, uint deltaValue) {
+    ProgressionStatMessage.robotID = ID;
+    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.statType = index;
+    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
+
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue) {
+    MoodStatMessage.robotID = ID;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion.emotionType = type;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion.deltaVal = deltaValue;
+
+    RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  // Only debug panels should be using set.
+  // You should not be calling this from a minigame/challenge.
+  public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
+    MoodStatMessage.robotID = ID;
+    MoodStatMessage.MoodMessageUnion.SetEmotion.emotionType = type;
+    MoodStatMessage.MoodMessageUnion.SetEmotion.newVal = value;
+
+    RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  // Only debug panels should be using set.
+  // You should not be calling this from a minigame/challenge.
+  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, uint value) {
+    ProgressionStatMessage.robotID = ID;
+    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat.statType = type;
+    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat.newVal = value;
+
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  // This function should only be called by RobotEngineManager to update the internal Progression Stat values.
+  public void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, uint value) {
+    ProgressionStats[(int)index] = value;
+  }
+
+  // This function should only be called by RobotEngineManager to update the internal emotion Stat values.
+  public void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
+    EmotionValues[(int)index] = value;
+  }
+
+  #endregion
 
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
