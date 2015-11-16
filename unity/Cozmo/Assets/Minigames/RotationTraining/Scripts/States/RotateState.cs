@@ -21,12 +21,11 @@ namespace RotationTraining {
 
     private float _CubeShakeWheelSpeedMmpsModifier = 300f;
 
-    // Value from 0 to 1
-    private float _WheelSpeedDecayModifier = 0.75f;
+    private float _WheelSpeedDecayModifier = 2f;
 
     private float _MarginOfErrorRad = 0.1f;
 
-    private int _GameTimerDurationSeconds = 30;
+    private int _GameTimerDurationSeconds = 15;
 
     #endregion
 
