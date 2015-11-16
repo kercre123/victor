@@ -19,6 +19,8 @@ public class HubWorldDialog : BaseDialog {
 
   public void Initialize() {
     // TODO: Parse _LevelJSON and create a bunch of buttons and add it to the list.
+
+    _ScrollRect.verticalNormalizedPosition = 1.0f;
   }
 
   protected override void CleanUp() {
