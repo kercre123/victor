@@ -119,21 +119,24 @@ namespace RotationTraining {
       }
 
       if (_RotateCubeState == RotateCubeState.Left) {
-        HandleChangeDirection();
+        // If cozmo was turning the other way, reset his wheels
+        if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
+          _CurrentWheelRightSpeed = 0;
+          _CurrentWheelLeftSpeed = 0;
+        }
+        // Increase wheel speed with each shake
         _CurrentWheelRightSpeed += _CubeShakeWheelSpeedMmpsModifier;
         _CurrentWheelLeftSpeed -= _CubeShakeWheelSpeedMmpsModifier;
       }
       else {
-        HandleChangeDirection();
+        // If cozmo was turning the other way, reset his wheels
+        if (_CurrentWheelRightSpeed > 0 || _CurrentWheelLeftSpeed < 0) {
+          _CurrentWheelRightSpeed = 0;
+          _CurrentWheelLeftSpeed = 0;
+        }
+        // Increase wheel speed with each shake
         _CurrentWheelRightSpeed -= _CubeShakeWheelSpeedMmpsModifier;
         _CurrentWheelLeftSpeed += _CubeShakeWheelSpeedMmpsModifier;
-      }
-    }
-
-    private void HandleChangeDirection() {
-      if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
-        _CurrentWheelRightSpeed = 0;
-        _CurrentWheelLeftSpeed = 0;
       }
     }
 
