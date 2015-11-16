@@ -1161,7 +1161,7 @@ namespace Cozmo {
       }
       
 #     if DEBUG_FACE_DETECTION
-      _debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
+      //_debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
 #     endif
       
       _faceTracker->Update(maskedImage);

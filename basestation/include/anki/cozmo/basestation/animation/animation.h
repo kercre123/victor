@@ -43,13 +43,15 @@ public:
   // For reading canned animations from files
   Result DefineFromJson(const std::string& name, Json::Value& json);
 
-  // For defining animations at runtime (e.g. procedural faces)
+  // For defining animations at runtime (e.g. live animation)
   template<class KeyFrameType>
   Result AddKeyFrame(const KeyFrameType& kf);
 
+  // Get a track by KeyFrameType
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();
   
+  // Calls all tracks' Init() methods
   Result Init();
 
   bool IsInitialized() const { return _isInitialized; }
@@ -57,6 +59,7 @@ public:
   // An animation is Empty if *all* its tracks are empty
   bool IsEmpty() const;
 
+  // True if any track has has frames left to play
   bool HasFramesLeft() const;
   
   void Clear();
