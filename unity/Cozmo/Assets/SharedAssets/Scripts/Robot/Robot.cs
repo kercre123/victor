@@ -453,7 +453,7 @@ public class Robot : IDisposable {
   public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue) {
     MoodStatMessage.robotID = ID;
     MoodStatMessage.MoodMessageUnion.AddToEmotion.emotionType = type;
-    MoodStatMessage.MoodMessageUnion.AddToEmotion.newVal = deltaValue;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion.deltaVal = deltaValue;
 
     RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
     RobotEngineManager.Instance.SendMessage();
