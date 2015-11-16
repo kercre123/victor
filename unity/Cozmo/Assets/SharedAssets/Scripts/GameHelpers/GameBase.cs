@@ -21,9 +21,9 @@ public abstract class GameBase : MonoBehaviour {
   private Button _QuitButtonInstance;
   
   [SerializeField]
-  string _GameName;
+  string _GameId;
 
-  public string GameName { get { return _GameName; } private set { _GameName = value; } }
+  public string GameId { get { return _GameId; } private set { _GameId = value; } }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 

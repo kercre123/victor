@@ -145,7 +145,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Quit
+  m_Text: '#button.quit'
 --- !u!222 &22214732
 CanvasRenderer:
   m_ObjectHideFlags: 1

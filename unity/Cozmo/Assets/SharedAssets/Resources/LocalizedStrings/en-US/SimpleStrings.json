@@ -1,0 +1,33 @@
+{
+    "smartling": {
+        "translate_paths": [
+            "*/translation"
+        ],
+        "variants_enabled": true,
+        "translate_mode": "custom",
+        "placeholder_format_custom": [
+            "%%[^%]+?%%",
+            "%[^%]+?%",
+            "##[^#]+?##",
+            "__[^_]+?__",
+            "[$]\\{[^\\}\\{]+?\\}",
+            "\\{\\{[^\\}\\{]+?\\}\\}",
+            "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+        ],
+        "source_key_paths": [
+            "/{*}"
+        ]
+    },
+    "button.tap" : {
+        "translation" : "Tap"
+    },
+    "button.quit" : {
+        "translation" : "Quit"
+    },
+    "badge.new" : {
+        "translation" : "NEW!"
+    },
+    "label.percentComplete" : {
+        "translation" : "{0:P2} Complete"
+    }
+}

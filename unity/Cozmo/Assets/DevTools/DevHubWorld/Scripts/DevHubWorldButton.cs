@@ -24,7 +24,11 @@ public class DevHubWorldButton : MonoBehaviour {
 
   public void Initialize(GameBase minigame) {
     _Minigame = minigame;
-    _ButtonLabel.text = minigame.GameName;
+
+    string titleKey = string.Format("#{0}.title", minigame.GameId);
+    _ButtonLabel.text = titleKey;
+    gameObject.name = string.Format("{0}: {1}", minigame.GameId, _ButtonLabel.text);
+
     _ButtonScript.onClick.AddListener(HandleButtonClicked);
   }
 

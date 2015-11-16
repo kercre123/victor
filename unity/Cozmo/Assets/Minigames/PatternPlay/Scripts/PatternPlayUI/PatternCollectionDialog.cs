@@ -106,8 +106,8 @@ namespace PatternPlay {
 
     private void SetCompletionText(int numSeenPatterns, int numTotalPatterns) {
       float percentComplete = numSeenPatterns / (float)numTotalPatterns;
-      percentComplete *= 100;
-      _PercentCompleteLabel.text = string.Format("{0:N1}% Complete", percentComplete);
+      string percentString = Localization.Get("label.percentComplete");
+      _PercentCompleteLabel.text = string.Format(Localization.GetCultureInfo(), percentString, percentComplete);
     }
 
     public bool ScrollToFirstNewPattern() {

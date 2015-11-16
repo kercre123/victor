@@ -39,7 +39,7 @@ namespace PatternPlay {
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
       CurrentRobot.ExecuteBehavior(BehaviorType.NoneBehavior);
-      CurrentRobot.StopFaceAwareness();
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       patternMemory_.Initialize();
 
