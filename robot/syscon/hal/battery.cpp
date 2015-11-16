@@ -72,9 +72,13 @@ void Battery::init()
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
   // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_nVDDs_EN);
-  nrf_gpio_cfg_output(PIN_nVDDs_EN);
-  
+  nrf_gpio_pin_clear(PIN_VDDs_EN);
+  nrf_gpio_cfg_output(PIN_VDDs_EN);
+
+  // turn off headlight
+  nrf_gpio_pin_clear(PIN_IR_FORWARD);
+  nrf_gpio_cfg_output(PIN_IR_FORWARD);
+
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_NOPULL);
   nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_NOPULL);
@@ -102,16 +106,13 @@ void Battery::powerOn()
 {
   // Let power drain out - 10ms is plenty long enough
   MicroWait(10000);
-
-  nrf_gpio_pin_clear(PIN_nVDDs_EN);
+  nrf_gpio_pin_set(PIN_VDDs_EN);
 }
 
 void Battery::powerOff()
 {
   // Shutdown the extra things
-  MicroWait(10000);
-  nrf_gpio_pin_set(PIN_nVDDs_EN);
-
+  nrf_gpio_pin_clear(PIN_VDDs_EN);
   MicroWait(10000);
   nrf_gpio_pin_clear(PIN_PWR_EN);
 }
