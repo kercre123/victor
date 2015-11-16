@@ -60,8 +60,8 @@ public class LightCube : ObservedObject {
   public event Action<LightCube> OnAxisChange;
 
   public static Action<int, int> TappedAction;
-  public static Action<int, float, float, float> MovedAction;
-  public static Action<int> StoppedAction;
+  public static Action<int, float, float, float> OnMovedAction;
+  public static Action<int> OnStoppedAction;
 
   public LightCube(int objectID, ObjectFamily objectFamily, ObjectType objectType) {
     Constructor(objectID, objectFamily, objectType);
@@ -90,8 +90,8 @@ public class LightCube : ObservedObject {
     YAccel = message.accel.y;
     ZAccel = message.accel.z;
 
-    if (MovedAction != null) {
-      MovedAction(ID, XAccel, YAccel, ZAccel);
+    if (OnMovedAction != null) {
+      OnMovedAction(ID, XAccel, YAccel, ZAccel);
     }
   }
 
@@ -102,8 +102,8 @@ public class LightCube : ObservedObject {
       if (OnAxisChange != null)
         OnAxisChange(this);
     }
-    if (StoppedAction != null) {
-      StoppedAction(ID);
+    if (OnStoppedAction != null) {
+      OnStoppedAction(ID);
     }
   }
 

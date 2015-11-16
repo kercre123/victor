@@ -65,7 +65,7 @@ namespace RotationTraining {
         _TurningCube = kvp.Value;
         break;
       }
-      LightCube.MovedAction += OnCubeMoved;
+      LightCube.OnMovedAction += HandleCubeMoved;
 
       // Pick a cube state randomly
       _RotateCubeState = Random.Range(0.0f, 1.0f) > 0.5f ? RotateCubeState.Left : RotateCubeState.Right;
@@ -135,7 +135,7 @@ namespace RotationTraining {
       base.Exit();
     }
 
-    private void OnCubeMoved(int cubeID, float x, float y, float z) {
+    private void HandleCubeMoved(int cubeID, float x, float y, float z) {
 
       if (cubeID != _TurningCubeID) {
         return;

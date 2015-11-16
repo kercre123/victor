@@ -12,7 +12,7 @@ namespace Vortex {
       base.Enter();
       DAS.Info("StateIntro", "StateIntro");
       _AnimationPlaying = true;
-      _CurrentRobot.SendAnimation("majorWin", AnimationDone);
+      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
     }
 
     public override void Update() {
@@ -27,7 +27,7 @@ namespace Vortex {
       base.Exit();
     }
 
-    void AnimationDone(bool success) {
+    void HandleAnimationDone(bool success) {
       _AnimationPlaying = false;
     }
       
