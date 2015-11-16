@@ -9,18 +9,18 @@ namespace RobotInterface {
 message EraseFlash
 {
   uint_32 start, ///< Where to start
-  uint_32 size,  ///< Number of 32 bit words to erase
+  uint_32 size,  ///< Number of bytes
 }
 
 /// Writes data into robot flash storage
 message WriteFlash
 {
   uint_32 address, ///< Where to write data
-  uint_32 data[uint_32:256], ///< Data to write, must be uint_32 for Flash API alignment, address is uint_32 for alignment but must not be more than 256 for write size
+  uint_8  data[uint_32:1024], ///< Data to write, must be 4 byte aligned for Flash API alignment but must be uint8 for Python interface to be sane, size is uint_32 for alignment but must not be more than 1024 for write size
 }
 
 enum uint_8 OTACommand
-{
+{Ro
   OTA_none,
   OTA_asset,
   OTA_WiFi,

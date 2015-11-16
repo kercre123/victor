@@ -8,7 +8,7 @@ clear
 
 # Generate clad source 
 cd ../clad
-if ! make; then
+if ! make -j4; then
   exit
 fi
 cd -
