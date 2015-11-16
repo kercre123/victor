@@ -11,22 +11,13 @@ namespace RotationTraining {
       Right
     }
 
-    private int _TurningCubeID = -1;
-    private LightCube _TurningCube;
-    private RotateCubeState _RotateCubeState = RotateCubeState.Left;
-
-    private float _NextCubeChangeTime;
+    #region Tunable values
 
     // TODO: Get these from data
-    private float _MinChangeSeconds = 3f;
-    private float _MaxChangeSeconds = 5f;
+    private float _MinCubeChangeSeconds = 3f;
+    private float _MaxCubeChangeSeconds = 5f;
 
     private uint _FlashCubeLightMs = 700;
-    private bool _CubeIsFlashing = false;
-    private Timer _FlashCubeTimer;
-
-    private float _CurrentWheelLeftSpeed = 0.0f;
-    private float _CurrentWheelRightSpeed = 0.0f;
 
     private float _CubeShakeWheelSpeedMmpsModifier = 300f;
 
@@ -34,8 +25,27 @@ namespace RotationTraining {
     private float _WheelSpeedDecayModifier = 0.75f;
 
     private float _MarginOfErrorRad = 0.1f;
+
+    #endregion
+
+    #region State Variables
+
+    private int _TurningCubeID = -1;
+    private LightCube _TurningCube;
+    private RotateCubeState _RotateCubeState = RotateCubeState.Left;
+
+    private float _NextCubeChangeTimestamp;
+
+    private bool _CubeIsFlashing = false;
+    private Timer _FlashCubeTimer;
+
+    private float _CurrentWheelLeftSpeed = 0.0f;
+    private float _CurrentWheelRightSpeed = 0.0f;
+
     private float _TargetPoseAngleMinRad;
     private float _TargetPoseAngleMaxRad;
+
+    #endregion
 
     public override void Enter() {
       base.Enter();
@@ -57,7 +67,7 @@ namespace RotationTraining {
       UpdateRobotLEDs();
 
       // Set the next change time to sometime in the future.
-      _NextCubeChangeTime = GenerateNextChangeTime();
+      _NextCubeChangeTimestamp = GenerateNextChangeTime();
 
       // Set up flashing cube timer.
       _FlashCubeTimer = new Timer(_FlashCubeLightMs);
@@ -76,9 +86,9 @@ namespace RotationTraining {
       base.Update();
 
       // Change the cube light if it's time.
-      if (!_CubeIsFlashing && Time.time > _NextCubeChangeTime) {
+      if (!_CubeIsFlashing && Time.time > _NextCubeChangeTimestamp) {
         StartFlashingCube();
-        _NextCubeChangeTime = GenerateNextChangeTime();
+        _NextCubeChangeTimestamp = GenerateNextChangeTime();
       }
 
       // celebrate when he is at 180... TODO: don't let players cheat by rotating cozmo manually?
@@ -157,7 +167,7 @@ namespace RotationTraining {
     }
 
     private float GenerateNextChangeTime() {
-      return Time.time + Random.Range(_MinChangeSeconds, _MaxChangeSeconds);
+      return Time.time + Random.Range(_MinCubeChangeSeconds, _MaxCubeChangeSeconds);
     }
 
     private void HandleFlashCubeTimerStopped(object source, ElapsedEventArgs e) {
