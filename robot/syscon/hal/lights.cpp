@@ -43,7 +43,7 @@ static const charliePlex_s RGBLightPins[] =
 
 // Timing constants
 static const uint8_t colorMask = 0xFF;
-static const int tickDivider = 16;
+static const int tickDivider = 4;
 
 // Charlieplexing magic constants
 static const int numCharlieChannels = sizeof(RGBLightPins) / sizeof(RGBLightPins[0]);
@@ -82,6 +82,8 @@ extern "C" void RTC1_IRQHandler() {
   NRF_RTC1->EVENTS_TICK = 0;
 
   if (++divider < tickDivider)
+    return ;
+  else
     divider = 0;
   
   #ifdef RADIO_TIMING_TEST
