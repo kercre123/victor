@@ -25,7 +25,7 @@ public enum AnkiResult {
 
 public static class CozmoBinding {
 
-  private static readonly IDAS _DAS = DAS.GetInstance(typeof(CozmoBinding));
+  private static readonly IDAS sDAS = DAS.GetInstance(typeof(CozmoBinding));
 
   private static bool initialized = false;
 
@@ -40,7 +40,7 @@ public static class CozmoBinding {
 
   public static void Startup(string configurationData) {
     if (initialized) {
-      _DAS.Warn("Reinitializing because Startup was called twice...");
+      sDAS.Warn("Reinitializing because Startup was called twice...");
       Shutdown();
     }
 
@@ -52,7 +52,7 @@ public static class CozmoBinding {
 #endif
     
     if (result != AnkiResult.RESULT_OK) {
-      _DAS.Error("CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
+      sDAS.Error("CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
     }
     else {
       initialized = true;
@@ -71,7 +71,7 @@ public static class CozmoBinding {
 #endif
 
       if (result != AnkiResult.RESULT_OK) {
-        _DAS.Error("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
+        sDAS.Error("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
       }
     }
   }
@@ -85,7 +85,7 @@ public static class CozmoBinding {
       Profiler.EndSample();
 #endif
       if (result != AnkiResult.RESULT_OK) {
-        _DAS.Error("CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
+        sDAS.Error("CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
       }
     }
   }

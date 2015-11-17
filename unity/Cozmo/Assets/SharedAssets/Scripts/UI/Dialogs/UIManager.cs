@@ -7,20 +7,20 @@ using DG.Tweening;
 
 public class UIManager : MonoBehaviour {
 
-  private static readonly IDAS _DAS = DAS.GetInstance(typeof(UIManager));
+  private static readonly IDAS sDAS = DAS.GetInstance(typeof(UIManager));
 
   private static UIManager _Instance;
 
   public static UIManager Instance {
     get {
       if (_Instance == null) {
-        _DAS.Error("Don't access this until Start!");
+        sDAS.Error("Don't access this until Start!");
       }
       return _Instance;
     }
     private set {
       if (_Instance != null) {
-        _DAS.Error("There shouldn't be more than one UIManager");
+        sDAS.Error("There shouldn't be more than one UIManager");
       }
       _Instance = value;
     }
