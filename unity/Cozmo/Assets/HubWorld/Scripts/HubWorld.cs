@@ -12,10 +12,13 @@ public class HubWorld : HubWorldBase {
 
   private GameBase _MiniGameInstance;
 
-  private List<string> _UnlockedLevels = new List<string>();
+  private List<string> _UnlockedChallenges = new List<string>();
 
   [SerializeField]
   private TextAsset _TempLevelAsset;
+
+  [SerializeField]
+  private TextAsset _ChallengeListJSON;
 
   public override bool LoadHubWorld() {
     LoadChallengesJSON();
@@ -36,7 +39,12 @@ public class HubWorld : HubWorldBase {
   }
 
   private void LoadChallengesJSON() {
-    _ChallengeList.Add(ParseChallengeJSON(_TempLevelAsset.ToString()));
+    JSONObject challengeListObject = new JSONObject(_ChallengeListJSON.text);
+    JSONObject challengeListArray = challengeListObject.GetField("ChallengeList");
+    for (int i = 0; i < challengeListArray.list.Count; ++i) {
+      string challengeFileName = challengeListArray[i].str;
+      _ChallengeList.Add(ParseChallengeJSON((Resources.Load("Data/Challenges/" + challengeFileName) as TextAsset).text));
+    }
   }
 
   private ChallengeData ParseChallengeJSON(string challengeJSON) {
@@ -76,7 +84,7 @@ public class HubWorld : HubWorldBase {
 
   private void OnButtonClicked(ChallengeData challengeClicked) {
     // don't load the level if the level doesn't meet requirements
-    if (!challengeClicked.ChallengeReqs.MeetsRequirements(RobotEngineManager.Instance.CurrentRobot, _UnlockedLevels)) {
+    if (!challengeClicked.ChallengeReqs.MeetsRequirements(RobotEngineManager.Instance.CurrentRobot, _UnlockedChallenges)) {
       return;
     }
 

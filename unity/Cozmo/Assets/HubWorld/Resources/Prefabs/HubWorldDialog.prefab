@@ -169,7 +169,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b98745fd1773d41198f57475f1d28b70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dialogId: Dialog
+  _dialogId: HubWorldDialog
+  _HubWorldButtonPrefab: {fileID: 11474066, guid: a230b3f73f2b64e1395290df0cbe3585,
+    type: 2}
   _ButtonContainer: {fileID: 22422778}
   _ScrollRect: {fileID: 11415010}
 --- !u!114 &11415010
@@ -380,6 +382,15 @@ Prefab:
       propertyPath: _ScrollRect
       value: 
       objectReference: {fileID: 11415010}
+    - target: {fileID: 0}
+      propertyPath: _HubWorldButtonPrefab
+      value: 
+      objectReference: {fileID: 11474066, guid: a230b3f73f2b64e1395290df0cbe3585,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _dialogId
+      value: HubWorldDialog
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 101880}

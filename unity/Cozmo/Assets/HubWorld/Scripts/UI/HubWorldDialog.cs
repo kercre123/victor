@@ -27,6 +27,7 @@ public class HubWorldDialog : BaseDialog {
       newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _ButtonContainer);
       buttonScript = newButton.GetComponent<HubWorldButton>();
       buttonScript.Initialize(challengeList[i]);
+      buttonScript.OnButtonClicked += HandleOnButtonClicked;
     }
 
     _ScrollRect.verticalNormalizedPosition = 1.0f;
