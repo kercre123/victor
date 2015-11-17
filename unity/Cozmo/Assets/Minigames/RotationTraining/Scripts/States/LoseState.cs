@@ -5,7 +5,7 @@ namespace RotationTraining {
   public class LoseState : State {
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
+      _CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
     }
 
     public override void Update() {

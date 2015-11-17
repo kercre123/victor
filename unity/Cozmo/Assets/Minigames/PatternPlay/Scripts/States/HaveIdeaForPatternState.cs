@@ -28,7 +28,7 @@ namespace PatternPlay {
       }
 
       // TODO: Use "have idea" animation
-      _CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
+      _CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
     }
 
     public override void Update() {

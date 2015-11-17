@@ -48,7 +48,7 @@ namespace SpeedTap {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) {
               DAS.Info("SpeedTap.CozmoTapping", "" + _SpeedTapGame.CozmoScore);
-              _CurrentRobot.SendAnimation("tapCube");
+              _CurrentRobot.SendAnimation(AnimationName.kTapCube);
               _CozmoTapping = true;
             }
           }
@@ -80,17 +80,17 @@ namespace SpeedTap {
     void RobotCompletedTapAnimation(bool success, string animName) {
       DAS.Info("SpeedTapStatePlayNewHand.RobotCompletedTapAnimation", animName + " success = " + success);
       switch (animName) {
-      case "tapCube":
+      case AnimationName.kTapCube:
         DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
         // check for player tapped first here.
         CozmoDidTap();
         break;
-      case "finishTapCubeLose":
-        DAS.Info("SpeedTapStatePlayNewHand.tap_win", "");
+      case AnimationName.kFinishTabCubeLose:
+        DAS.Info("SpeedTapStatePlayNewHand.tap_lose", "");
         _GotMatch = false;
         _CozmoTapping = false;
         break;
-      case "finishTapCubeWin":
+      case AnimationName.kFinishTapCubeWin:
         DAS.Info("SpeedTapStatePlayNewHand.tap_win", "");
         _GotMatch = false;
         _CozmoTapping = false;
@@ -106,11 +106,11 @@ namespace SpeedTap {
         _SpeedTapGame.CozmoScore++;
         _SpeedTapGame.UpdateUI();
         // play sound, do dance
-        _CurrentRobot.SendAnimation("finishTapCubeWin");
+        _CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin);
       }
       // otherwise cozmo is too late!
       else {
-        _CurrentRobot.SendAnimation("finishTapCubeLose");
+        _CurrentRobot.SendAnimation(AnimationName.kFinishTabCubeLose);
       }
     }
 

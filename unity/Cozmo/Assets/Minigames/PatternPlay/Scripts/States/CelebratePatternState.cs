@@ -15,11 +15,11 @@ namespace PatternPlay {
       _PatternPlayGame.ClearBlockLights();
 
       if (_PatternPlayGame.ShouldCelebrateNew()) {
-        _CurrentRobot.SendAnimation("enjoyPattern", HandleAnimationDone);
+        _CurrentRobot.SendAnimation(AnimationName.kEnjoyPattern, HandleAnimationDone);
         _PatternPlayGame.SetShouldCelebrateNew(false);
       }
       else {
-        _CurrentRobot.SendAnimation("seeOldPattern", HandleAnimationDone);
+        _CurrentRobot.SendAnimation(AnimationName.kSeeOldPattern, HandleAnimationDone);
       }
     }
 
