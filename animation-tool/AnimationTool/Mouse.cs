@@ -162,11 +162,11 @@ namespace AnimationTool
                     }
                     else
                     {
-                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, faceAnimation.pictureBox));
+                        ActionManager.Do(new FaceAnimation.SelectDataPoint(curDataPoint, curChart, faceAnimation.PictureBox));
 
                         if (curPreviewBar != null)
                         {
-                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, faceAnimation.pictureBox));
+                            ActionManager.Do(new FaceAnimation.SelectDataPoint(curPreviewBar, null, faceAnimation.PictureBox));
                         }
                     }
                 }
@@ -279,7 +279,7 @@ namespace AnimationTool
                         bool left = curPreviewBar.YValues[0] > mouseXValue;
                         bool right = curPreviewBar.YValues[1] < mouseXValue;
 
-                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
+                        if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.PictureBox)))
                         {
                             faceAnimation.chart.Refresh();
                         }
@@ -469,7 +469,7 @@ namespace AnimationTool
                         }
                         else
                         {
-                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, faceAnimation.pictureBox, ModifierKeys != Keys.Shift);
+                            add = new Sequencer.AddDataPoint(curChart, extraData, mouseXValue, faceAnimation.PictureBox, ModifierKeys != Keys.Shift);
                         }
 
                         ActionManager.Do(add);
@@ -520,6 +520,10 @@ namespace AnimationTool
             if (faceForm.Open(previous != null ? previous : extraData) == DialogResult.OK)
             {
                 extraData.faceAngle = faceForm.faceAngle;
+                extraData.faceCenterX = faceForm.faceCenterX;
+                extraData.faceCenterY = faceForm.faceCenterY;
+                extraData.faceScaleX = faceForm.faceScaleX;
+                extraData.faceScaleY = faceForm.faceScaleY;
 
                 for (int i = 0; i < extraData.leftEye.Length && i < faceForm.eyes.Length; ++i)
                 {

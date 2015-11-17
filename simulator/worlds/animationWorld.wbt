@@ -35,6 +35,7 @@ DEF Cozmo_1 CozmoBot {
   enableVideo FALSE
 }
 WebotsKeyboardController {
+  idleAnimationName "_ANIM_TOOL_"
 }
 CozmoVizDisplay {
 }
