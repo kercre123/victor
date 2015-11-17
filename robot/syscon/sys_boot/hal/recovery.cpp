@@ -13,7 +13,7 @@
 
 static const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
 static const int SECURE_SPACE = 0x1000;
-static const int MAX_TIMEOUT = 10000;
+static const int MAX_TIMEOUT = 1000000;
 
 static bool UartWritting = false;
 
@@ -45,7 +45,15 @@ void setTransmit(bool tx) {
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-static inline int ReadUart(void) {
+static uint8_t ReadByte(void) {
+  while (!NRF_UART0->EVENTS_RXDRDY) ;
+
+  // We received a word
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  return NRF_UART0->RXD;
+}
+
+static int ReadUart(void) {
   setTransmit(false);
 
   // Wait with timeout
@@ -55,7 +63,7 @@ static inline int ReadUart(void) {
   }
 
   // We received a word
-  NRF_UART0->EVENTS_RXDRDY = 0;    
+  NRF_UART0->EVENTS_RXDRDY = 0;
   return NRF_UART0->RXD;
 }
 
@@ -150,8 +158,8 @@ bool FlashSector(int target, const uint32_t* data)
 static inline bool FlashBlock() {
   struct Packet {
     uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
-    uint16_t  blockOffset;
-    uint8_t   checkSum[SHA1_BLOCK_SIZE];
+    uint32_t   blockAddress;
+    uint8_t    checkSum[SHA1_BLOCK_SIZE];
   };
 
   static union {
@@ -161,7 +169,7 @@ static inline bool FlashBlock() {
 
   // Load raw packet into memory
   for (int i = 0; i < sizeof(raw); i++) {
-    raw[i] = ReadUart();
+    raw[i] = ReadByte();
   }
 
   // Check the SHA-1 of the packet to verify that transmission actually worked
@@ -172,7 +180,7 @@ static inline bool FlashBlock() {
   uint8_t sig[SHA1_BLOCK_SIZE];
   sha1_final(&ctx, sig);
 
-  int writeAdddress = packet.blockOffset * TRANSMIT_BLOCK_SIZE;
+  int writeAdddress = packet.blockAddress;
 
   // We will not override the boot loader
   if (writeAdddress < SECURE_SPACE) {
@@ -206,7 +214,7 @@ void EnterRecovery(void) {
     } while (!WaitWord(RECOVER_SOURCE_HEAD));
 
     // Receive command packet
-    switch (ReadUart()) {
+    switch (ReadByte()) {
       case COMMAND_DONE:
         state = STATE_IDLE;
         return ;

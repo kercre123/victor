@@ -12,7 +12,8 @@
 
 enum TRANSFER_MODE {
   TRANSMIT_RECEIVE,
-  TRANSMIT_SEND
+  TRANSMIT_SEND,
+  TRANSMIT_RECOVERY
 };
 
 #define max(a,b)  ((a > b) ? a : b)
@@ -22,15 +23,17 @@ static union {
   uint32_t  rx_source;
 };
 
-static int txRxIndex;
-static bool transmitting;
-static bool enter_recovery;
-static int reboot_timeout;
-static RECOVERY_STATE recoveryMode = STATE_UNKNOWN;
-
-inline void transmit_mode(bool tx);
-
+RECOVERY_STATE recoveryMode = STATE_UNKNOWN;
 bool Anki::Cozmo::HAL::HeadDataReceived = false;
+bool recoveryStateUpdated = false;
+
+static TRANSFER_MODE uart_mode;
+
+static int txRxIndex;
+static bool enter_recovery;
+
+inline void transmit_mode(TRANSFER_MODE mode);
+
 static const int uart_fifo_size = 8;
 static const int MAX_REBOOT_TIMEOUT = 10000;  // 1.3seconds
 
@@ -56,33 +59,41 @@ void Anki::Cozmo::HAL::UartInit() {
   g_dataToBody.source = (uint32_t)SPI_SOURCE_HEAD;
   
   MicroWait(1000);
-  transmit_mode(false);
+  transmit_mode(TRANSMIT_RECEIVE);
 }
 
-inline void transmit_mode(bool tx) { 
-  if (tx) {
-    // Special case mode where we force the head to enter recovery mode
-    if (enter_recovery) {
-      g_dataToBody.cubeStatus.ledDark = 0;
-      g_dataToBody.cubeStatus.secret = secret_code;
-      enter_recovery = false;
-    }
+inline void transmit_mode(TRANSFER_MODE mode) { 
+  switch (mode) {
+    case TRANSMIT_SEND:
+      // Special case mode where we force the head to enter recovery mode
+      if (enter_recovery) {
+        g_dataToBody.cubeStatus.ledDark = 0;
+        g_dataToBody.cubeStatus.secret = secret_code;
+        enter_recovery = false;
+      }
 
-    memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
+      memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
 
-    PORTD_PCR6 = PORT_PCR_MUX(0);
-    PORTD_PCR7 = PORT_PCR_MUX(3);
-    UART0_C2 = UART_C2_TE_MASK;
-  } else {
-    reboot_timeout = 0;
+      PORTD_PCR6 = PORT_PCR_MUX(0);
+      PORTD_PCR7 = PORT_PCR_MUX(3);
+      UART0_C2 = UART_C2_TE_MASK;
+      break ;
 
-    PORTD_PCR6 = PORT_PCR_MUX(3);
-    PORTD_PCR7 = PORT_PCR_MUX(0);
-    UART0_C2 = UART_C2_RE_MASK;
+    case TRANSMIT_RECOVERY:
+      PORTD_PCR6 = PORT_PCR_MUX(0);
+      PORTD_PCR7 = PORT_PCR_MUX(3);
+      UART0_C2 = UART_C2_TE_MASK;
+      break ;
+
+    case TRANSMIT_RECEIVE:
+      PORTD_PCR6 = PORT_PCR_MUX(3);
+      PORTD_PCR7 = PORT_PCR_MUX(0);
+      UART0_C2 = UART_C2_RE_MASK;
+      break ;
   }
   
+  uart_mode = mode;
   txRxIndex = 0;
-  transmitting = tx;
 }
 
 static inline void HUPFifo(void) {
@@ -92,12 +103,45 @@ static inline void HUPFifo(void) {
   UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
 }
 
-void Anki::Cozmo::HAL::EnterRecovery(void) {
+void Anki::Cozmo::HAL::EnterBodyRecovery(void) {
   enter_recovery = true;
 }
 
-void Anki::Cozmo::HAL::LeaveRecovery(void) {
-  // TODO!
+static uint8_t recovery_fifo[32];
+static int rec_count = 0;
+static int rec_first = 0;
+static int rec_last = 0;
+
+void Anki::Cozmo::HAL::SendRecoveryData(uint8_t* data, int bytes) {
+  while (bytes-- > 0 && rec_count < sizeof(recovery_fifo)) {
+    recovery_fifo[rec_last++] = *(data++);
+    
+    rec_count++;
+    if (rec_last > sizeof(recovery_fifo)) {
+      rec_last %= sizeof(recovery_fifo);
+    }
+  }
+}
+
+static bool HaveRecoveryData(void) {
+  return rec_count > 0;
+}
+
+static bool TransmitRecoveryData(void) {
+  if (!HaveRecoveryData()) {
+    return true;
+  }
+  
+  while (UART0_TCFIFO < uart_fifo_size && HaveRecoveryData()) {
+    UART0_D = recovery_fifo[rec_first++];
+
+    rec_count--;
+    if (rec_first > sizeof(recovery_fifo)) {
+      rec_first %= sizeof(recovery_fifo);
+    }
+  }
+  
+  return false;
 }
 
 void Anki::Cozmo::HAL::UartTransmit(void) { 
@@ -106,57 +150,70 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
     HUPFifo();
   }
 
-  while (UART0_RCFIFO) {
-    // TODO: DETECT WHEN WE ARE IN RECOVERY MODE
+  switch (uart_mode) {
+    case TRANSMIT_RECEIVE:
+      while (UART0_RCFIFO) {
+        txRxBuffer[txRxIndex] = UART0_D;
 
-    txRxBuffer[txRxIndex] = UART0_D;
+        // Re-sync
+        if (txRxIndex < 4) {
+          uint32_t mask = ~(0xFFFFFFFF << (txRxIndex * 8));
 
-    // Re-sync
-    if (txRxIndex < 4) {
-      uint32_t mask = ~(0xFFFFFFFF << (txRxIndex * 8));
+          const uint32_t fail_spine = (SPI_SOURCE_BODY ^ rx_source) & mask;
+          const uint32_t fail_recvr = (RECOVER_SOURCE_BODY ^ rx_source) & mask;
 
-      const uint32_t fail_spine = (SPI_SOURCE_BODY ^ rx_source) & mask;
-      const uint32_t fail_recvr = (RECOVER_SOURCE_BODY ^ rx_source) & mask;
+          if(fail_spine && fail_recvr) {
+            recoveryMode = STATE_UNKNOWN;
+            txRxIndex = 0;
+            continue ;
+          }
+        }
 
-      if(fail_spine && fail_recvr) {
-        recoveryMode = STATE_UNKNOWN;
-        txRxIndex = 0;
-        continue ;
+        if (txRxIndex == 4 && rx_source == RECOVER_SOURCE_BODY) {
+          // We received a recovery header
+          recoveryMode = (RECOVERY_STATE) txRxBuffer[txRxIndex];
+          recoveryStateUpdated = true;
+
+          continue ;
+        } else if (++txRxIndex >= sizeof(GlobalDataToHead)) {
+          // We received a full packet
+
+          recoveryMode = STATE_RUNNING;
+          memcpy(&g_dataToHead, txRxBuffer, sizeof(GlobalDataToHead));
+          HeadDataReceived = true;
+          
+          transmit_mode(TRANSMIT_SEND);
+        }
       }
-    }
-
-    if (txRxIndex == 4 && rx_source == RECOVER_SOURCE_BODY) {
-      recoveryMode = (RECOVERY_STATE) txRxBuffer[txRxIndex];
-  
-      // TODO: DEQUEUE RECOVERY MODE HERE!
-
-      txRxIndex = 0;
-      continue ;
-    }
-    
-    // We received a full packet
-    if (++txRxIndex >= sizeof(GlobalDataToHead)) {
-      recoveryMode = STATE_RUNNING;
       
-      memcpy(&g_dataToHead, txRxBuffer, sizeof(GlobalDataToHead));
-
-      HeadDataReceived = true;
-      transmit_mode(true);
-    }
-  }
-
-  if (transmitting) {
-    // Transmission was complete, start receiving bytes once transmission has completed
-    if (txRxIndex >= sizeof(GlobalDataToBody)) {
-      if (UART0_S1 & UART_S1_TC_MASK )
-        transmit_mode(false);
+      // We want to send data to the body
+      if (recoveryMode != STATE_RUNNING && recoveryMode != STATE_UNKNOWN) {
+        if (HaveRecoveryData()) {
+          transmit_mode(TRANSMIT_RECOVERY);
+        }
+      }
       
-      return ;
-    }
+      break ;
+    case TRANSMIT_SEND:
+      // Transmission was complete, start receiving bytes once transmission has completed
+      if (txRxIndex >= sizeof(GlobalDataToBody)) {
+        if (UART0_S1 & UART_S1_TC_MASK) {
+          transmit_mode(TRANSMIT_RECEIVE);
+        }
+        
+        return ;
+      }
 
-    // Enqueue transmissions
-    while (txRxIndex < sizeof(GlobalDataToBody) && UART0_TCFIFO < uart_fifo_size) {
-      UART0_D = txRxBuffer[txRxIndex++];
-    }
+      // Enqueue transmissions
+      while (txRxIndex < sizeof(GlobalDataToBody) && UART0_TCFIFO < uart_fifo_size) {
+        UART0_D = txRxBuffer[txRxIndex++];
+      }
+      break ;
+    case TRANSMIT_RECOVERY:
+      if (!TransmitRecoveryData() && UART0_S1 & UART_S1_TC_MASK) {
+        transmit_mode(TRANSMIT_RECEIVE);
+      }
+
+      break ;
   }
 }
