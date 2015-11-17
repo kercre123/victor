@@ -72,13 +72,13 @@ public static partial class DAS {
     if (eventString != null) {
       return eventString;
     }
-
+    
     var eventType = eventObject as System.Type;
     if (eventType != null) {
       return eventType.Name;
     }
 
-    return eventType.GetType().Name;
+    return eventObject.GetType().Name;
   }
 
   public static IDAS GetInstance(System.Type type) {

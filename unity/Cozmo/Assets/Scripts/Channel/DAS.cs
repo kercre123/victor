@@ -105,7 +105,7 @@ public static class DAS {
       return eventType.Name;
     }
 
-    return eventType.GetType().Name;
+    return eventObject.GetType().Name;
   }
 
   public static IDAS GetInstance(System.Type type) {
