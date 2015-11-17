@@ -1081,6 +1081,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = armv7;
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_BITCODE = NO;
@@ -1104,6 +1105,7 @@
 			baseConfigurationReference = F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */;
 			buildSettings = {
 				ARCHS = armv7;
+				CODE_SIGN_IDENTITY = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				ENABLE_BITCODE = NO;
 				GCC_C_LANGUAGE_STANDARD = c99;
