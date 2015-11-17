@@ -213,6 +213,48 @@ Transform:
 Transform:
   m_PrefabParentObject: {fileID: 488436, guid: 4c907f46693e946a28129e509372244a, type: 2}
   m_PrefabInternal: {fileID: 667513731}
+--- !u!1 &1343408284
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 106742, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1343408286}
+  - 114: {fileID: 1343408285}
+  m_Layer: 0
+  m_Name: IntroManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1343408285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 11464276, guid: d03a6b14c839047bc8ff52e543828227,
+    type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1343408284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
+  _HubWorldPrefab: {fileID: 11493130, guid: bfa7fd6aafe374445b17295977fa163f, type: 2}
+--- !u!4 &1343408286
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1343408284}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
 --- !u!1001 &1587630214
 Prefab:
   m_ObjectHideFlags: 0
@@ -406,57 +448,6 @@ AudioListener:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1601653688}
   m_Enabled: 1
---- !u!1001 &1880791465
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 106742, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_Name
-      value: DevIntroManager
-      objectReference: {fileID: 0}
-    - target: {fileID: 11464276, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _HubWorldPrefab
-      value: 
-      objectReference: {fileID: 11493130, guid: bfa7fd6aafe374445b17295977fa163f,
-        type: 2}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-  m_IsPrefabParent: 0
 --- !u!4 &2007970426 stripped
 Transform:
   m_PrefabParentObject: {fileID: 461244, guid: 66c2fdefd291b416c94c699822cbd062, type: 2}

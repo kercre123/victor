@@ -18,6 +18,10 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  public virtual void ParseMinigameParams(string paramsJSON) {
+    
+  }
+
   private Button _QuitButtonInstance;
   
   [SerializeField]
