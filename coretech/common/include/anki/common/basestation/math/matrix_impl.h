@@ -612,6 +612,13 @@ namespace Anki {
   }
   
   template<MatDimType DIM, typename T>
+  SmallSquareMatrix<DIM,T>::SmallSquareMatrix(std::initializer_list<T> valsList)
+  : SmallMatrix<DIM,DIM,T>(valsList)
+  {
+    
+  }
+  
+  template<MatDimType DIM, typename T>
   SmallSquareMatrix<DIM,T>::SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList)
   : SmallMatrix<DIM,DIM,T>(colsList)
   {

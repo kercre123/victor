@@ -98,8 +98,8 @@ namespace Anki {
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
     
-    SmallMatrix(std::initializer_list<T> valsList);
-    SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
+    explicit SmallMatrix(std::initializer_list<T> valsList);
+    explicit SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
     
     SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M);
     
@@ -137,14 +137,14 @@ namespace Anki {
     MatDimType GetNumRows() const;
     MatDimType GetNumCols() const;
     
-#if ANKICORETECH_USE_OPENCV
+# if ANKICORETECH_USE_OPENCV
   public:
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
     const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
     
     using cv::Matx<T,NROWS,NCOLS>::operator=;
-#endif
+# endif
     
   protected:
     
@@ -187,7 +187,8 @@ namespace Anki {
   public:
     SmallSquareMatrix();
     SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M);
-    SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
+    explicit SmallSquareMatrix(std::initializer_list<T> valsList); // DIMxDIM list of values
+    explicit SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
     
     using SmallMatrix<DIM,DIM,T>::operator();
     
