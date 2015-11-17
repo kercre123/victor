@@ -4,6 +4,8 @@ using UnityEditor;
 public class FindMissingScriptsRecursively : EditorWindow {
   static int go_count = 0, components_count = 0, missing_count = 0;
 
+  private static readonly IDAS sDAS = DAS.GetInstance(typeof(FindMissingScriptsRecursively));
+
   [MenuItem("Window/FindMissingScriptsRecursively")]
   public static void ShowWindow() {
     EditorWindow.GetWindow(typeof(FindMissingScriptsRecursively));
@@ -24,7 +26,7 @@ public class FindMissingScriptsRecursively : EditorWindow {
       GameObject g = it; // because foreach is borked
       FindInGO(g);
     }
-    DAS.Debug("FindMissingScriptsRecrusively", string.Format("Searched {0} GameObjects, {1} components, found {2} missing", go_count, components_count, missing_count));
+    sDAS.Debug(string.Format("Searched {0} GameObjects, {1} components, found {2} missing", go_count, components_count, missing_count));
   }
 
   private static void FindInGO(GameObject g) {
@@ -40,7 +42,7 @@ public class FindMissingScriptsRecursively : EditorWindow {
           s = t.parent.name + "/" + s;
           t = t.parent;
         }
-        DAS.Debug("FindMissingScriptsRecrusively", s + " has an empty script attached in position: " + i);
+        sDAS.Debug(s + " has an empty script attached in position: " + i);
       }
     }
     // Now recurse through each child GO (if there are any):

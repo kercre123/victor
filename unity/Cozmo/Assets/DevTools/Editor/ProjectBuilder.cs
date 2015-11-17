@@ -91,7 +91,7 @@ public class ProjectBuilder {
       }
     }
     
-    DAS.Debug("ProjectBuilder", String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, buildPath, enableDebugging));
+    DAS.Debug(this, String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, buildPath, enableDebugging));
     iOSSdkVersion saveIOSSDKVersion = PlayerSettings.iOS.sdkVersion;
     ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
 

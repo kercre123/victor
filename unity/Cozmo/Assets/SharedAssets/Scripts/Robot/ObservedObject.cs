@@ -103,16 +103,16 @@ public class ObservedObject {
     }
     else {
       CubeType = CubeType.UNKNOWN;
-      DAS.Warn("ObservedObject", "Object " + ID + " with type " + objectType + " is unsupported"); 
+      DAS.Warn(this, "Object " + ID + " with type " + objectType + " is unsupported"); 
     }
 
-    DAS.Debug("ObservedObject", "ObservedObject cubeType(" + CubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
+    DAS.Debug(this, "ObservedObject cubeType(" + CubeType + ") from objectFamily(" + objectFamily + ") objectType(" + objectType + ")");
 
   }
 
   public static implicit operator uint(ObservedObject observedObject) {
     if (observedObject == null) {
-      DAS.Warn("ObservedObject", "converting null ObservedObject into uint: returning uint.MaxValue");
+      DAS.Warn(typeof(ObservedObject), "converting null ObservedObject into uint: returning uint.MaxValue");
       return uint.MaxValue;
     }
     

@@ -108,7 +108,7 @@ public class LightCube : ObservedObject {
   }
 
   public void Tapped(ObjectTapped message) {
-    DAS.Debug("LightCube", "Tapped Message Received for LightCube(" + ID + "): " + message.numTaps + " taps");
+    DAS.Debug(this, "Tapped Message Received for LightCube(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
       TappedAction(ID, message.numTaps);
   }

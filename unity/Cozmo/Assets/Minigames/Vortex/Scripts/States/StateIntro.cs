@@ -45,7 +45,7 @@ namespace Vortex {
             _VortexGame.OnIntroComplete(_CozmoBlock.ID);
           }
           else {
-            DAS.Debug("SpeedTapStateGoToCube", "AlignWithObject Failed");
+            DAS.Debug(this, "AlignWithObject Failed");
           }
         });
       }

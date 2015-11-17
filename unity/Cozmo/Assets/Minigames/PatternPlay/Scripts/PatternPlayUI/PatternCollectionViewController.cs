@@ -69,7 +69,7 @@ namespace PatternPlay {
         CreateDialogButton();
       }
       else {
-        DAS.Error("PatternCollectionViewController", 
+        DAS.Error(this, 
           "Tried to Initialize with a new PatternMemory when one already exists!");
       }
     }
