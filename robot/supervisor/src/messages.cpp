@@ -24,6 +24,7 @@
 #include "testModeController.h"
 #include "animationController.h"
 #include "backpackLightController.h"
+#include "blockLightController.h"
 #include "clad/types/activeObjectTypes.h"
 #include "blockLightController.h"
 
@@ -535,7 +536,7 @@ namespace Anki {
 
       void Process_setCubeLights(const CubeLights& msg)
       {
-        HAL::SetBlockLight(msg.objectID, msg.lights);
+        BlockLightController::SetLights(msg.objectID, msg.lights);
       }
 
 
