@@ -258,18 +258,15 @@ namespace AnimationTool.Sequencer
     public class ExtraProceduralFaceData : ExtraData
     {
         public float faceAngle;
+        public int faceCenterX;
+        public int faceCenterY;
+        public float faceScaleX;
+        public float faceScaleY;
 
         public float[] leftEye;
         public float[] rightEye;
 
-        public ExtraProceduralFaceData()
-        {
-            Length = MoveSelectedDataPoints.DELTA_X;
-            Exists = true;
-
-            leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
-        }
+        public ExtraProceduralFaceData() : this (new ProceduralFacePointData()) { }
 
         public ExtraProceduralFaceData(ProceduralFacePointData data)
         {
@@ -280,6 +277,10 @@ namespace AnimationTool.Sequencer
             rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
 
             faceAngle = data.faceAngle;
+            faceCenterX = data.faceCenterX;
+            faceCenterY = data.faceCenterY;
+            faceScaleX = data.faceScaleX;
+            faceScaleY = data.faceScaleY;
 
             for (int i = 0; data.leftEye != null && i < data.leftEye.Length && i < leftEye.Length; ++i)
             {

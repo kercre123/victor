@@ -14,7 +14,7 @@ namespace AnimationTool
         public DisableChart(ChartForm form)
         {
             chart = form.chart;
-            checkBox = form.checkBox;
+            checkBox = form.CheckBox;
             unselectChart = new UnselectChart(chart);
         }
 

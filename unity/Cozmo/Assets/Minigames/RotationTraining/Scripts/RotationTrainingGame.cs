@@ -11,6 +11,12 @@ namespace RotationTraining {
     private RotationTrainingPanel _GamePanelPrefab;
     private RotationTrainingPanel _GamePanel;
 
+    [SerializeField]
+    private AudioClip _DirectionChangeSound;
+
+    [SerializeField]
+    private AudioClip _ColorChangeSound;
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
@@ -38,10 +44,19 @@ namespace RotationTraining {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+      _GamePanel.CloseDialogImmediately();
     }
 
     public void SetTimeLeft(int secondsLeft) {
       _GamePanel.SetTimeLeft(secondsLeft);
+    }
+
+    public void PlayDirectionChangeSound() {
+      AudioManager.PlayAudioClip(_DirectionChangeSound);
+    }
+
+    public void PlayColorChangeSound() {
+      AudioManager.PlayAudioClip(_ColorChangeSound);
     }
   }
 }

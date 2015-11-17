@@ -17,6 +17,6 @@ public class TimeTextLabel : Text {
     System.TimeSpan timeSpan = TimeUtility.TimeSpanFromSeconds(secondsLeft);
     this.text = string.Format(Localization.GetCultureInfo(),
       "{0:g}", timeSpan);
-    this.color = (secondsLeft > 5) ? Color.white : Color.red;
+    this.color = (secondsLeft > _WarningSecondsThreshold) ? _NormalTextColor : _WarningTextColor;
   }
 }

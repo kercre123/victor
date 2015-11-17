@@ -64,6 +64,10 @@ namespace AnimationTool
             displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
             displayProceduralFaceMessage.robotID = 1;
             displayProceduralFaceMessage.faceAngle = data.faceAngle;
+            displayProceduralFaceMessage.faceCenX = data.faceCenterX;
+            displayProceduralFaceMessage.faceCenY = data.faceCenterY;
+            displayProceduralFaceMessage.faceScaleX = data.faceScaleX;
+            displayProceduralFaceMessage.faceScaleY = data.faceScaleY;
 
             for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
             {
