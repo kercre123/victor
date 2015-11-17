@@ -99,7 +99,10 @@ static void checkAndClearBootloaderConfig(void)
   }
   
   // Clear the bootloader config to indicate we have successfully booted
-  spi_flash_erase_sector(BOOT_CONFIG_SECTOR);
+  if (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
+  {
+    os_printf("Error erasing bootloader config\r\n");
+  }
 }
 
 
@@ -118,11 +121,12 @@ void user_rf_pre_init(void)
  */
 static void system_init_done(void)
 {
+  // Check bootloader config and clear if nessisary
+  // Do this before i2spiInit so we don't desynchronize
+  checkAndClearBootloaderConfig();
+  
   // Setup Basestation client
   clientInit();
-
-  // Initalize i2SPI interface
-  i2spiInit();
 
   // Set up shared background tasks
   backgroundTaskInit();
@@ -130,11 +134,8 @@ static void system_init_done(void)
   // Set up shared foreground tasks
   foregroundTaskInit();
 
-  // Enable I2SPI start only after clientInit
-  i2spiStart();
-
-  // Check bootloader config and clear if nessisary
-  checkAndClearBootloaderConfig();
+  // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
+  i2spiInit();
 
   os_printf("CPU Freq: %d MHz\r\n", system_get_cpu_freq());
 

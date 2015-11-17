@@ -244,6 +244,10 @@ union EngineToRobot
   // Anim future expansion                                  = 0x9C,
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
+  
+  // WiFi to RTIP messages, not actually sent by engine
+  WiFiToRTIP::BodyUpgradeData   bodyUpgradeData             = 0xFD,
+  WiFiToRTIP::EnterBootloader   enterBootloader             = 0xFE,
 }
 
 } // namespace Robot Interface

@@ -48,7 +48,7 @@
 
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - MAX_AUDIO_BYTES_PER_DROP - MAX_SCREEN_BYTES_PER_DROP - 1)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - MAX_AUDIO_BYTES_PER_DROP - MAX_SCREEN_BYTES_PER_DROP - 1 - 1)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
@@ -63,6 +63,7 @@ typedef struct
   preambleType preamble; ///< Synchronization Preamble indicating drop destination
   uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
   uint8_t  screenData[MAX_SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
+  uint8_t  payloadLen;                            ///< Number of data bytes in payload
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data
   uint8_t  droplet; ///< Drop flags
 } DropToRTIP;
@@ -80,8 +81,8 @@ ct_assert(sizeof(DropToRTIP) == DROP_TO_RTIP_SIZE);
 typedef struct
 {
   preambleType preamble;
+  uint8_t payloadLen;  ///< Number of bytes of message data following JPEG data
   uint8_t payload[DROP_TO_WIFI_MAX_PAYLOAD]; ///< Variable payload for message
-  uint8_t msgLen;  ///< Number of bytes of message data following JPEG data
   uint8_t droplet; ///< Drop flags and bit fields
 } DropToWiFi;
 
@@ -91,13 +92,12 @@ ct_assert(sizeof(DropToWiFi) == DROP_TO_WIFI_SIZE);
 typedef enum
 {
 // To WiFi drop fields
-  jpegLenMask = ((1<<5)-1), ///< Mask for JPEG length data, legth is in 4 byte words
-  jpegEOF     = 1<<5,       ///< Flags this drop as containing the end of a JPEG frame
-  DRPLT_RSRVD = 1<<6,       ///< Reserved for future use
+  jpegLenMask       = ((1<<5)-1), ///< Mask for JPEG length data, legth is in 4 byte words
+  jpegEOF           = 1<<5,       ///< Flags this drop as containing the end of a JPEG frame
+  bootloaderStatus  = 1<<6,       ///< Payload contains bootloader status information
 // To RTIP drop fields
   audioDataValid    = 1<<0,    ///< Bytes in the iscochronous audio field are valid
   screenDataValid   = 1<<1,    ///< Bytes in the iscochronous screen field are valid
-  payloadCLAD       = 1<<2,    ///< Bytes in the payload field are valid and contain CLAD messages
 // Shared fields
   ToWiFi = 1<<7,       ///< Assert bit for this droplet value being on a drop from RTIP to WiFi
 } Droplet;

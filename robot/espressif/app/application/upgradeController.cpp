@@ -22,8 +22,6 @@ extern "C" {
 #define MAX_RETRIES 2
 #define SHA_CHECK_READ_LENGTH 512
 
-
-
 namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
@@ -104,6 +102,7 @@ LOCAL bool TaskEraseFlash(uint32 param)
     }
   }
   
+  i2spiSwitchMode(I2SPI_NORMAL);
   os_free(msg);
   return false;
 }
@@ -184,6 +183,7 @@ LOCAL bool TaskOtaWiFi(uint32 param)
   {
     case SPI_FLASH_RESULT_OK:
     {
+      // TODO tell RTIP we're going away
       os_printf("WiFi OTA rebooting for version %d\r\n", state->version);
       os_free(state);
       system_restart();
@@ -221,11 +221,11 @@ LOCAL bool TaskOtaRTIP(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
   
-  switch (i2spiGetBootloaderState())
+  switch (i2spiGetRtipBootloaderState())
   {
     case STATE_NACK:
     {
-      if (retries == 0)
+      if (retries-- == 0)
       {
         PRINT("RTIP OTA transfer failure! Aborting.\r\n");
         os_free(state);
@@ -282,7 +282,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
           }
           else // Done writing firmware
           {
-            i2spiDisableBootloader();
+            i2spiSwitchMode(I2SPI_NORMAL);
             PRINT("RTIP OTA transfer complete\r\n");
             os_free(state);
             return false;
@@ -302,10 +302,81 @@ LOCAL bool TaskOtaRTIP(uint32 param)
 LOCAL bool TaskOtaBody(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  // TODO Do something with this new body update
-  PRINT("Body OTA NOT IMPLEMENTED!\r\n");
-  os_free(state);
-  return false;
+  
+  switch (i2spiGetBodyBootloaderState())
+  {
+    case STATE_NACK:
+    {
+      if (retries-- == 0)
+      {
+        PRINT("Body OTA transfer failure! Aborting.\r\n");
+        os_free(state);
+        return false;
+      }
+      // Have retries left, fall through and try writing
+    }
+    case STATE_IDLE:
+    {
+      switch (state->phase)
+      {
+        case 0: // Really idle
+        {
+          RobotInterface::EngineToRobot msg;
+          msg.tag = RobotInterface::EngineToRobot::Tag_bodyUpgradeData;
+          switch (spi_flash_read(state->fwStart + state->index, msg.bodyUpgradeData.data, msg.Size()))
+          {
+            case SPI_FLASH_RESULT_OK:
+            {
+              retries = MAX_RETRIES;
+              state->index += sizeof(RecoveryPacket);
+              i2spiQueueMessage(msg.GetBuffer(), msg.Size());
+              state->phase = 1;
+              return true;
+            }
+            case SPI_FLASH_RESULT_ERR:
+            {
+              PRINT("Body OTA flash readback failure, aborting\r\n");
+              os_free(state);
+              return false;
+            }
+            case SPI_FLASH_RESULT_TIMEOUT:
+            {
+              if (retries-- > 0)
+              {
+                return true;
+              }
+              else
+              {
+                PRINT("Body OTA flash readback timeout, aborting\r\n");
+                os_free(state);
+                return false;
+              }
+            }
+          }
+        }
+        case 1: // Returning from writing a chunk
+        {
+          state->index += sizeof(RecoveryPacket);
+          if (static_cast<uint32>(state->index) < state->fwSize) // Have more firmware left to write
+          {
+            retries = MAX_RETRIES;
+            state->phase = 0;
+            return true;
+          }
+          else // Done writing firmware
+          {
+            PRINT("Body OTA transfer complete\r\n");
+            os_free(state);
+            return false;
+          }
+        }
+      }
+    }
+    default:
+    {
+      return true;
+    }
+  }
 }
 
 LOCAL bool TaskCheckSig(uint32 param)
@@ -389,13 +460,22 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       case RobotInterface::OTA_RTIP:
       {
-        i2spiEnableBootloader();
+        uint8_t msg[2]; // This is based on the EnterBootloader message which is defined in otaMessages.clad
+        msg[0] = RobotInterface::EngineToRobot::Tag_enterBootloader;
+        msg[1] = WiFiToRTIP::BOOTLOAD_RTIP;
+        i2spiQueueMessage(msg, 2); // Send message to put the RTIP in bootloader mode
+        i2spiSwitchMode(I2SPI_BOOTLOADER);
         retries = MAX_RETRIES;
         foregroundTaskPost(TaskOtaRTIP, param);
         return false;
       }
       case RobotInterface::OTA_body:
       {
+        uint8_t msg[2]; // This is based on the EnterBootloader message which is defined in otaMessages.clad
+        msg[0] = RobotInterface::EngineToRobot::Tag_enterBootloader;
+        msg[1] = WiFiToRTIP::BOOTLOAD_BODY;
+        i2spiQueueMessage(msg, 2); // Send message to put the RTIP in bootloader mode
+        retries = MAX_RETRIES;
         foregroundTaskPost(TaskOtaBody, param);
         return false;
       }
@@ -426,6 +506,7 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
     {
       os_memcpy(taskMsg, &msg, msg.Size());
       retries = MAX_RETRIES;
+      i2spiSwitchMode(I2SPI_PAUSED);
       foregroundTaskPost(TaskEraseFlash, reinterpret_cast<uint32>(taskMsg));
     }
   }
