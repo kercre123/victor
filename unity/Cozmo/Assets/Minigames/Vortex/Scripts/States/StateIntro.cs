@@ -14,14 +14,14 @@ namespace Vortex {
 
     private VortexGame _VortexGame = null;
     private bool _DrivingToBlock = false;
-    private LightCube CozmoBlock;
+    private LightCube _CozmoBlock;
 
     public override void Enter() {
       base.Enter();
 
       _VortexGame = _StateMachine.GetGame() as VortexGame;
       // Stolen from SpeedTap so might want in a shared util?
-      CozmoBlock = GetClosestAvailableBlock();
+      _CozmoBlock = GetClosestAvailableBlock();
     }
 
     public override void Update() {
@@ -37,12 +37,12 @@ namespace Vortex {
     private void DriveToBlock() {
       if (_DrivingToBlock)
         return;
-      if (CozmoBlock.MarkersVisible) {
+      if (_CozmoBlock.MarkersVisible) {
         _DrivingToBlock = true;
-        _CurrentRobot.AlignWithObject(CozmoBlock, 90.0f, (bool success) => {
+        _CurrentRobot.AlignWithObject(_CozmoBlock, 90.0f, (bool success) => {
           _DrivingToBlock = false;
           if (success) {
-            _VortexGame.OnIntroComplete(CozmoBlock.ID);
+            _VortexGame.OnIntroComplete(_CozmoBlock.ID);
           }
           else {
             DAS.Debug("SpeedTapStateGoToCube", "AlignWithObject Failed");

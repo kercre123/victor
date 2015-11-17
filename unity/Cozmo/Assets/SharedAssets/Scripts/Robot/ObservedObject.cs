@@ -30,7 +30,7 @@ public class ObservedObject {
 
   public int ID { get; private set; }
 
-  public bool MarkersVisible { get { return Time.time - TimeLastSeen < RemoveDelay; } }
+  public bool MarkersVisible { get { return Time.time - TimeLastSeen < kRemoveDelay; } }
 
   public Rect VizRect { get; private set; }
 
@@ -70,7 +70,7 @@ public class ObservedObject {
 
   public bool IsFace { get { return CubeType == CubeType.FACE; } }
 
-  public const float RemoveDelay = 0.33f;
+  public const float kRemoveDelay = 0.33f;
 
   public string InfoString { get; private set; }
 
@@ -139,7 +139,7 @@ public class ObservedObject {
     //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
     WorldPosition = newPos;
     Rotation = new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w);
-    Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
+    Size = Vector3.one * CozmoUtil.kBlockLengthMM;
 
     TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 

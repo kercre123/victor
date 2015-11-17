@@ -30,7 +30,9 @@ Move the OpenCV libraries inside of Webots out of the way:
 
 Instructions [here](https://github.com/anki/coretech-external).
 
-Important: Make sure you have your paths (eg. ~/.bash_profile) setup correctly.
+Important: Make sure you have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
+
+    export CORETECH_EXTERNAL_DIR="$HOME/coretech-external"
 
 Important: Once you set your paths you may need to restart your terminal for the settings to take effect. You can also refresh your environment:
 

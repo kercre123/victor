@@ -85,7 +85,7 @@ public class Robot : IDisposable {
   // in mm
   public float LiftHeight { get; private set; }
 
-  public float LiftHeightFactor { get { return (LiftHeight - CozmoUtil.MIN_LIFT_HEIGHT_MM) / (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM); } }
+  public float LiftHeightFactor { get { return (LiftHeight - CozmoUtil.kMinLiftHeightMM) / (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM); } }
 
   public Vector3 WorldPosition { get; private set; }
 
@@ -383,7 +383,7 @@ public class Robot : IDisposable {
 
   public void ClearVisibleObjects() {
     for (int i = 0; i < VisibleObjects.Count; ++i) {
-      if (VisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
+      if (VisibleObjects[i].TimeLastSeen + ObservedObject.kRemoveDelay < Time.time) {
         VisibleObjects.RemoveAt(i--);
       }
     }
@@ -397,7 +397,7 @@ public class Robot : IDisposable {
     LiftHeight = message.liftHeight_mm;
     RobotStatus = (RobotStatusFlag)message.status;
     GameStatus = (GameStatusFlag)message.gameStatus;
-    BatteryPercent = (message.batteryVoltage / CozmoUtil.MAX_VOLTAGE);
+    BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
     _CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
@@ -550,7 +550,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
@@ -624,10 +624,10 @@ public class Robot : IDisposable {
     float angle = IsHeadAngleRequestUnderway() ? _HeadAngleRequested : HeadAngle;
 
     if (angle >= 0f) {
-      angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad));
+      angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad));
     }
     else {
-      angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad));
+      angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad));
     }
 
     return angle;
@@ -635,13 +635,13 @@ public class Robot : IDisposable {
 
 
   public bool IsHeadAngleRequestUnderway() {
-    return Time.time < _LastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
+    return Time.time < _LastHeadAngleRequestTime + CozmoUtil.kHeadAngleRequestTime;
   }
 
   /// <summary>
   /// Sets the head angle.
   /// </summary>
-  /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
+  /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (kMaxHeadAngle)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
   public void SetHeadAngle(float angleFactor = -0.8f, 
                            Robot.RobotCallback onComplete = null,
@@ -653,10 +653,10 @@ public class Robot : IDisposable {
 
     if (!useExactAngle) {
       if (angleFactor >= 0f) {
-        radians = Mathf.Lerp(0f, CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad, angleFactor);
+        radians = Mathf.Lerp(0f, CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad, angleFactor);
       }
       else {
-        radians = Mathf.Lerp(0f, CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad, -angleFactor);
+        radians = Mathf.Lerp(0f, CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad, -angleFactor);
       }
     }
 
@@ -671,7 +671,7 @@ public class Robot : IDisposable {
     SetHeadAngleMessage.angle_rad = radians;
 
     SetHeadAngleMessage.accel_rad_per_sec2 = accelRadSec;
-    SetHeadAngleMessage.max_speed_rad_per_sec = maxSpeedFactor * CozmoUtil.MAX_SPEED_RAD_PER_SEC;
+    SetHeadAngleMessage.max_speed_rad_per_sec = maxSpeedFactor * CozmoUtil.kMaxSpeedRadPerSec;
 
     RobotEngineManager.Instance.Message.SetHeadAngle = SetHeadAngleMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -759,7 +759,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PickupObject = PickupObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
@@ -779,7 +779,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.RollObject = RollObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
     }
@@ -801,7 +801,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
     RobotEngineManager.Instance.SendMessage();
     
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
@@ -822,7 +822,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.GotoPose = GotoPoseMessage;
     RobotEngineManager.Instance.SendMessage();
     
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
@@ -839,7 +839,7 @@ public class Robot : IDisposable {
 
     RobotEngineManager.Instance.SendMessage();
     
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
     }
@@ -855,7 +855,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.AlignWithObject = AlignWithObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
     }
@@ -865,7 +865,7 @@ public class Robot : IDisposable {
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
     DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
-    if ((Time.time < _LastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == _LiftHeightRequested) || LiftHeightFactor == heightFactor)
+    if ((Time.time < _LastLiftHeightRequestTime + CozmoUtil.kLiftRequestTime && heightFactor == _LiftHeightRequested) || LiftHeightFactor == heightFactor)
       return;
 
     _LiftHeightRequested = heightFactor;
@@ -873,7 +873,7 @@ public class Robot : IDisposable {
 
     SetLiftHeightMessage.accel_rad_per_sec2 = 5f;
     SetLiftHeightMessage.max_speed_rad_per_sec = 10f;
-    SetLiftHeightMessage.height_mm = (heightFactor * (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM)) + CozmoUtil.MIN_LIFT_HEIGHT_MM;
+    SetLiftHeightMessage.height_mm = (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM;
 
     RobotEngineManager.Instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -947,7 +947,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.TraverseObject = TraverseObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
   public void SetVisionMode(VisionMode mode, bool enable) {

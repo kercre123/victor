@@ -44,7 +44,7 @@ public class Face {
     //dmdnote cozmo's space is Z up, keep in mind if we need to convert to unity's y up space.
     WorldPosition = newPos;
     Rotation = new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w);
-    // Size = Vector3.one * CozmoUtil.BLOCK_LENGTH_MM;
+    // Size = Vector3.one * CozmoUtil.kBlockLengthMM;
 
     // TopFaceNorthAngle = message.topFaceOrientation_rad + Mathf.PI * 0.5f;
 

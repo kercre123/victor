@@ -7,18 +7,18 @@ using System.Reflection;
 ///   much of these constants should migrate to clad ultimately
 /// </summary>
 public static class CozmoUtil {
-  public const float SMALL_SCREEN_MAX_HEIGHT = 3f;
-  public const float MAX_WHEEL_SPEED_MM = 160f;
-  public const float MIN_WHEEL_SPEED_MM = 10f;
-  public const float BLOCK_LENGTH_MM = 44f;
-  public const float LOCAL_BUSY_TIME = 1f;
-  public const float MAX_LIFT_HEIGHT_MM = 90f;
-  public const float MIN_LIFT_HEIGHT_MM = 32f;
-  public const float LIFT_REQUEST_TIME = 3f;
-  public const float MIN_HEAD_ANGLE = -25f;
-  public const float MAX_HEAD_ANGLE = 34f;
-  public const float MAX_SPEED_RAD_PER_SEC = 5f;
-  public const float HEAD_ANGLE_REQUEST_TIME = 3f;
-  public const float CARRIED_OBJECT_HEIGHT = 75f;
-  public const float MAX_VOLTAGE = 5f;
+  public const float kSmallScreenMaxHeight = 3f;
+  public const float kMaxWheelSpeedMM = 160f;
+  public const float kMinWheelSpeedMM = 10f;
+  public const float kBlockLengthMM = 44f;
+  public const float kLocalBusyTime = 1f;
+  public const float kMaxLiftHeightMM = 90f;
+  public const float kMinLiftHeightMM = 32f;
+  public const float kLiftRequestTime = 3f;
+  public const float kMinHeadAngle = -25f;
+  public const float kMaxHeadAngle = 34f;
+  public const float kMaxSpeedRadPerSec = 5f;
+  public const float kHeadAngleRequestTime = 3f;
+  public const float kCarriedObjectHeight = 75f;
+  public const float kMaxVoltage = 5f;
 }
