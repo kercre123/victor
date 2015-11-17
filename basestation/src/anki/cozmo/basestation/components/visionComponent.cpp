@@ -28,6 +28,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
@@ -194,6 +196,14 @@ namespace Cozmo {
 
     return t;
   }
+  
+  TimeStamp_t VisionComponent::GetProcessingPeriod()
+  {
+    Lock();
+    const TimeStamp_t t = _processingPeriod;
+    Unlock();
+    return t;
+  }
 
   void VisionComponent::Lock()
   {
@@ -211,6 +221,34 @@ namespace Cozmo {
       return _visionSystem->EnableMode(mode, enable);
     } else {
       PRINT_NAMED_ERROR("VisionComponent.EnableMode.NullVisionSystem", "");
+      return RESULT_FAIL;
+    }
+  }
+  
+  bool VisionComponent::IsModeEnabled(VisionMode mode) const
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->IsModeEnabled(mode);
+    } else {
+      return false;
+    }
+  }
+  
+  u32 VisionComponent::GetEnabledModes() const
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->GetEnabledModes();
+    } else {
+      return 0;
+    }
+  }
+  
+  Result VisionComponent::SetModes(u32 modes)
+  {
+    if(nullptr != _visionSystem) {
+      _visionSystem->SetModes(modes);
+      return RESULT_OK;
+    } else {
       return RESULT_FAIL;
     }
   }
@@ -248,6 +286,12 @@ namespace Cozmo {
         case RunMode::Asynchronous:
         {
           Lock();
+          
+          if(!_nextImg.IsEmpty()) {
+            PRINT_NAMED_INFO("VisionComponent.SetNextImage.DropedFrame",
+                             "Setting next image with t=%d, but existing next image from t=%d not yet processed.",
+                             image.GetTimestamp(), _nextImg.GetTimestamp());
+          }
           
           // TODO: Avoid the copying here (shared memory?)
           image.CopyTo(_nextImg);
@@ -304,6 +348,9 @@ namespace Cozmo {
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
         
         Lock();
+        // Store frame rate
+        _processingPeriod = _currentImg.GetTimestamp() - _lastImg.GetTimestamp();
+        
         // Save the image we just processed
         _lastImg = _currentImg;
         ASSERT_NAMED(_lastImg.GetTimestamp() == _currentImg.GetTimestamp(),
@@ -311,6 +358,8 @@ namespace Cozmo {
         
         // Clear it when done.
         _currentImg = {};
+        _nextImg = {};
+        
         Unlock();
         
       } else if(!_nextImg.IsEmpty()) {
@@ -479,38 +528,10 @@ namespace Cozmo {
       Point2f motionCentroid;
       if (true == _visionSystem->CheckMailbox(motionCentroid))
       {
+        using namespace ExternalInterface;
         motionCentroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
        
-        // TODO: Send motionCentroid as an event move the following to a new behaviorReactToMotion
-        
-        if(NEAR(motionCentroid.x(), 0.f, _camera.GetCalibration().GetNcols()/10) &&
-           NEAR(motionCentroid.y(), 0.f, _camera.GetCalibration().GetNrows()/10))
-        {
-          // Move towards the motion since it's centered
-          const f32 dist_mm = 20;
-          Pose3d newPose(robot.GetPose());
-          const f32 angleRad = newPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-          newPose.SetTranslation({newPose.GetTranslation().x() + dist_mm*std::cos(angleRad),
-            newPose.GetTranslation().y() + dist_mm*std::sin(angleRad),
-            newPose.GetTranslation().z()});
-          PathMotionProfile motionProfile(DEFAULT_PATH_MOTION_PROFILE);
-          motionProfile.speed_mmps *= 1.5f; // Drive forward a little faster than normal
-          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
-                                               new DriveToPoseAction(newPose, motionProfile,
-                                                                     false, false, 50, DEG_TO_RAD(45))
-                                               );
-          
-        } else {
-          // Turn to face the motion:
-          // Convert image positions to desired angles (in absolute coordinates)
-          RobotInterface::PanAndTilt msg;
-          const f32 relHeadAngle_rad = std::atan(-motionCentroid.y() / _camera.GetCalibration().GetFocalLength_y());
-          msg.headTiltAngle_rad = robot.GetHeadAngle() + relHeadAngle_rad;
-          const f32 relBodyPanAngle_rad = std::atan(-motionCentroid.x() / _camera.GetCalibration().GetFocalLength_x());
-          msg.bodyPanAngle_rad = (robot.GetPose().GetRotation().GetAngleAroundZaxis() + relBodyPanAngle_rad).ToFloat();
-          
-          robot.SendRobotMessage<RobotInterface::PanAndTilt>(std::move(msg));
-        }
+        robot.Broadcast(MessageEngineToGame(RobotObservedMotion(motionCentroid.x(), motionCentroid.y())));
       }
     } // if(_visionSystem != nullptr)
     return RESULT_OK;

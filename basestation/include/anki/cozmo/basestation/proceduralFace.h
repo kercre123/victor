@@ -2,6 +2,8 @@
 #define __Anki_Cozmo_ProceduralFace_H__
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/matrix.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "clad/types/proceduralEyeParameters.h"
 
@@ -31,15 +33,8 @@ namespace Cozmo {
     static constexpr Value NominalLeftEyeCenX    = 0.25f*static_cast<f32>(WIDTH);
     static constexpr Value NominalRightEyeCenX   = 0.75f*static_cast<f32>(WIDTH);
     static constexpr Value NominalEyeCenY        = 0.6f*static_cast<f32>(HEIGHT);
-    static constexpr Value EyebrowThickness      = 2.f;
-    static constexpr s32   MinEyeHeightPix       = 0;
-    static constexpr s32   MaxEyeHeightPix       = 3*HEIGHT/4;
-    static constexpr s32   MinEyeWidthPix        = WIDTH/5;
-    static constexpr s32   MaxEyeWidthPix        = 2*WIDTH/5;
-    static constexpr s32   MidBrowLengthPix      = (MaxEyeHeightPix + MinEyeWidthPix)/2;
-    static constexpr s32   MaxBrowLengthPix      = MaxEyeWidthPix;
-    static constexpr s32   MaxBrowAngle          = 15; // Degrees (symmtric, also used for -ve angle)
-    static constexpr s32   MaxFaceAngle          = 25; //   "
+    static constexpr s32   NominalEyeHeight      = 40;
+    static constexpr s32   NominalEyeWidth       = 30;
     
     using Parameter = ProceduralEyeParameter;
     
@@ -61,6 +56,14 @@ namespace Cozmo {
     void SetFaceAngle(Value value);
     Value GetFaceAngle() const;
     
+    // Get/Set the overall face position
+    void SetFacePosition(Point<2,Value> center);
+    Point<2,Value> const& GetFacePosition() const;
+    
+    // Get/Set the overall face scale
+    void SetFaceScale(Point<2,Value> scale);
+    Point<2,Value> const& GetFaceScale() const;
+    
     // Set this face's parameters to values interpolated from two other faces.
     //   When BlendFraction == 0.0, the parameters will be equal to face1's.
     //   When BlendFraction == 1.0, the parameters will be equal to face2's.
@@ -73,8 +76,11 @@ namespace Cozmo {
                      float fraction,
                      bool usePupilSaccades = false);
     
-    // Closes eyes and switches interlacing
-    void Blink();
+    // Closes eyes and switches interlacing. Call until it returns false, which
+    // indicates there are no more blink frames and the face is back in its
+    // original state. The output "offset" indicates the desired timing since
+    // the previous state.
+    bool GetNextBlinkFrame(TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
     cv::Mat_<u8> GetFace() const;
@@ -96,12 +102,16 @@ namespace Cozmo {
     static const cv::Rect imgRect;
     
     void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
-    s32 GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const;
+    
+    static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
+                                                        f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
     
     // Container for the parameters for both eyes
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
     
-    Value _faceAngle;
+    Value           _faceAngle;
+    Point<2,Value>  _faceScale;
+    Point<2,Value>  _faceCenter;
     
     static u8 _firstScanLine;
     bool _sentToRobot;
@@ -113,7 +123,7 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    _eyeParams[whichEye][static_cast<size_t>(param)] = std::max(-1.f, std::min(1.f, value));
+    _eyeParams[whichEye][static_cast<size_t>(param)] = value;
   }
   
   inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Parameter param) const
@@ -126,7 +136,23 @@ namespace Cozmo {
   }
   
   inline void ProceduralFace::SetFaceAngle(Value angle) {
-    _faceAngle = std::max(-1.f, std::min(1.f, angle));
+    _faceAngle = angle; //std::max(-1.f, std::min(1.f, angle));
+  }
+  
+  inline void ProceduralFace::SetFacePosition(Point<2, Value> center) {
+    _faceCenter = center;
+  }
+  
+  inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFacePosition() const {
+    return _faceCenter;
+  }
+  
+  inline void ProceduralFace::SetFaceScale(Point<2,Value> scale) {
+    _faceScale = scale;
+  }
+  
+  inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFaceScale() const {
+    return _faceScale;
   }
   
   inline bool ProceduralFace::HasBeenSentToRobot() const {

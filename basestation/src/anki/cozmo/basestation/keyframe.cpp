@@ -310,43 +310,20 @@ return RESULT_FAIL; \
     
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      
-      ProceduralFace::Value angle;
-      if(!JsonTools::GetValueOptional(jsonRoot, "faceAngle", angle)) {
-        if(JsonTools::GetValueOptional(jsonRoot, "faceAngle_deg", angle)) {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.OldAngleName",
-                              "Animation JSON memeber 'faceAngle_deg' is deprecated. "
-                              "Please update to 'faceAngle'.");
-        } else {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
-                              "Missing 'faceAngle' parameter - will use 0.");
-          angle = 0;
-        }
-      }
-      
-      _procFace.SetFaceAngle(angle);
-      
-      //
-      // Individual members for each parameter
-      // TODO: Remove support for these old-style Json files?
-      //
-      for(int iParam=0; iParam < static_cast<int>(ProceduralFace::Parameter::NumParameters); ++iParam)
+      auto getValueFromJson = [jsonRoot] (const std::string& name, float defaultValue) -> float
       {
-        ProceduralEyeParameter param = static_cast<ProceduralEyeParameter>(iParam);
-        
-        ProceduralFace::Value value;
-        std::string paramName = ProceduralEyeParameterToString(param);
-        
-        // Left
-        if(JsonTools::GetValueOptional(jsonRoot, "left" + paramName, value)) {
-          _procFace.SetParameter(ProceduralFace::Left, param, value);
+        float tempValue = defaultValue;
+        if(!JsonTools::GetValueOptional(jsonRoot, name, tempValue))
+        {
+          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
+                              "Missing '%s' parameter - will use %f.", name.c_str(), defaultValue);
         }
-        
-        // Right
-        if(JsonTools::GetValueOptional(jsonRoot, "right" + paramName, value)) {
-          _procFace.SetParameter(ProceduralFace::Right, param, value);
-        }
-      }
+        return tempValue;
+      };
+      
+      _procFace.SetFaceAngle(getValueFromJson("faceAngle", 0.0f));
+      _procFace.SetFacePosition({getValueFromJson("faceCenterX", 0.0f), getValueFromJson("faceCenterY", 0.0f)});
+      _procFace.SetFacePosition({getValueFromJson("faceScaleX", 1.0f), getValueFromJson("faceScaleY", 1.0f)});
       
       //
       // Single array for left and right eye, indexed by enum value
