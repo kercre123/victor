@@ -5,17 +5,13 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
-
-// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
-// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
-// and needing sound.
-#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -232,6 +228,20 @@ namespace Cozmo {
     return RESULT_OK;
   } // SendBufferedMessages()
 
+  Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
+  {
+    AnimKeyFrame::AudioSample audioSample;
+    if(AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
+                                     &(audioSample.sample[0])))
+    {
+       BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
+    } else if(sendSilence) {
+      // No audio sample available, so send silence
+      BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+    }
+       
+    return RESULT_OK;
+  } // UpdateAudio()
   
   Result AnimationStreamer::UpdateStream(Robot& robot, Animation* anim)
   {
@@ -267,31 +277,7 @@ namespace Cozmo {
       deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-    // Compute number of bytes free in robot animation buffer.
-    // This is a lower bound since this is computed from a delayed measure
-    // of the number of animation bytes already played on the robot.
-    s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
-    s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
-    bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
-    
-    s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
-    if (overflow) {
-      // Computation for minBytesFreeInRobotBuffer still works out in overflow case
-      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow",
-                       "free %d (streamed = %d, played %d)",
-                       minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
-    }
-    assert(minBytesFreeInRobotBuffer >= 0);
-    
-    // Reset the number of bytes we can send each Update() as a form of
-    // flow control: Don't send frames if robot has no space for them, and be
-    // careful not to overwhelm reliable transport either, in terms of bytes or
-    // sheer number of messages. These get decremenged on each call to
-    // SendBufferedMessages() below
-    _numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
-                               minBytesFreeInRobotBuffer);
-    
+    UpdateNumBytesToSend(robot);
     
     // Send anything still left in the buffer after last Update()
     lastResult = SendBufferedMessages(robot);
@@ -310,36 +296,33 @@ namespace Cozmo {
       //                 numBytesToSend);
 #     endif
       
-      // Have to always send an audio frame to keep time, whether that's the next
-      // audio sample or a silent frame. This increments "streamingTime"
-      // NOTE: Audio frame must be first!
-      if(robotAudioTrack.HasFramesLeft() &&
-         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
+      if(robotAudioTrack.HasFramesLeft())
       {
-        
+        RobotAudioKeyFrame& audioKF = robotAudioTrack.GetCurrentKeyFrame();
+        if(audioKF.IsTimeToPlay(_startTime_ms, _streamingTime_ms)) {
+          // Tell the audio manager to play the sound indicated by this track
+          auto & audioRef = audioKF.GetAudioRef();
+          AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+          
 #       if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-        // Queue up audio frame for playing locally if
-        // it's not already in the queued and it wasn't already played.
-        const RobotAudioKeyFrame* audioKF = &robotAudioTrack.GetCurrentKeyFrame();
-        if ((audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
-            (_onDeviceRobotAudioKeyFrameQueue.empty() || audioKF != _onDeviceRobotAudioKeyFrameQueue.back())) {
-          _onDeviceRobotAudioKeyFrameQueue.push_back(audioKF);
-        }
+          // Queue up audio frame for playing locally if
+          // it's not already in the queued and it wasn't already played.
+          if ((&audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
+              (_onDeviceRobotAudioKeyFrameQueue.empty() || &audioKF != _onDeviceRobotAudioKeyFrameQueue.back()))
+          {
+            _onDeviceRobotAudioKeyFrameQueue.push_back(&audioKF);
+          }
 #       endif
-        
-        if(!BufferMessageToSend(robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage()))
-        {
-          // No samples left to send for this keyframe. Move to next keyframe,
-          // and for now send silence.
-          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
+          
           robotAudioTrack.MoveToNextKeyFrame();
-          BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
         }
-      } else {
-        // No frames left or not time to play next frame yet, so send silence
-        //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
-        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
+      
+      // Stream a single audio sample from the audio manager (or silence if there isn't one)
+      // (Have to *always* send an audio frame to keep time, whether that's the next
+      // audio sample or a silent frame.)
+      // NOTE: Audio frame must be first!
+      BufferAudioToSend(true);
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
@@ -485,6 +468,7 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateStream()
   
+  
   Result AnimationStreamer::Update(Robot& robot)
   {
     Result lastResult = RESULT_OK;
@@ -550,10 +534,76 @@ namespace Cozmo {
       
       lastResult = UpdateStream(robot, _idleAnimation);
       _timeSpentIdling_ms += BS_TIME_STEP;
+      
+    } else {
+      // No animation (idle or not). Just stream available sound, if any.
+      
+      UpdateNumBytesToSend(robot);
+      
+      // Send anything still left in the buffer after last Update()
+      lastResult = SendBufferedMessages(robot);
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed", "");
+        return lastResult;
+      }
+      
+      // Add more stuff to the send buffer. Note that we are not counting individual
+      // keyframes here, but instead _audio_ keyframes (with which we will buffer
+      // any co-timed keyframes from other tracks).
+      while(_sendBuffer.empty())
+      {
+        // This buffers another audio sample to be sent
+        BufferAudioToSend(false);
+        
+        if(_sendBuffer.empty()) {
+          // No audio got buffered, just break
+          break;
+        }
+        
+        // Send out as much as we can from the send buffer. If we manage to send
+        // the entire buffer out, we will proceed with putting more audio into the buffer
+        // the next time through this while loop. Otherwise, we will exit the while
+        // loop and continue trying to empty the buffer on the next Update().
+        lastResult = SendBufferedMessages(robot);
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed", "");
+          return lastResult;
+        }
+      }
     }
     
     return lastResult;
   } // AnimationStreamer::Update()
+  
+  
+  void AnimationStreamer::UpdateNumBytesToSend(Robot& robot)
+  {
+    // Compute number of bytes free in robot animation buffer.
+    // This is a lower bound since this is computed from a delayed measure
+    // of the number of animation bytes already played on the robot.
+    s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
+    s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
+    bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
+    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
+    
+    s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
+    if (overflow) {
+      // Computation for minBytesFreeInRobotBuffer still works out in overflow case
+      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow",
+                       "free %d (streamed = %d, played %d)",
+                       minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
+    }
+    assert(minBytesFreeInRobotBuffer >= 0);
+    
+    // Reset the number of bytes we can send each Update() as a form of
+    // flow control: Don't send frames if robot has no space for them, and be
+    // careful not to overwhelm reliable transport either, in terms of bytes or
+    // sheer number of messages. These get decremenged on each call to
+    // SendBufferedMessages() below
+    _numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
+                               minBytesFreeInRobotBuffer);
+    
+  } // GetMinBytesFreeInRobotBuffer()
   
   
   Result StreamProceduralFace(Robot& robot,

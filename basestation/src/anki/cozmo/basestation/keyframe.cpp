@@ -423,6 +423,7 @@ return RESULT_FAIL; \
     // RobotAudioKeyFrame
     //
     
+    /*
     const std::string& RobotAudioKeyFrame::GetSoundName() const
     {
       static const std::string unknownName("UNKNOWN");
@@ -434,6 +435,7 @@ return RESULT_FAIL; \
       
       return _audioReferences[_selectedAudioIndex].name;
     }
+     */
     
     Result RobotAudioKeyFrame::AddAudioRef(const std::string& name, const f32 volume)
     {
@@ -441,19 +443,9 @@ return RESULT_FAIL; \
       // TODO: Catch failure if ID is invalid
       // _numSamples = wwise::GetNumSamples(_idMsg.audioID, SAMPLE_SIZE);
       
-      AudioRef audioRef;
-      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(name);
-      if(duration_ms == 0) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.AddAudioRef.InvalidName",
-                          "SoundManager could not find the sound associated with name '%s'.\n",
-                          name.c_str());
-        return RESULT_FAIL;
-      }
-      
-      audioRef.name = name;
-      audioRef.numSamples = duration_ms / SAMPLE_LENGTH_MS;
-      audioRef.volume = volume;
-      _audioReferences.push_back(audioRef);
+      // Make sure this is a valid sound name
+      // TODO: Query AudioManager and get actual Audio::EventType from name
+      _audioReferences.push_back({.audioEvent = Audio::EventType::Invalid, .volume = volume});
       
       return RESULT_OK;
     }
@@ -486,47 +478,27 @@ return RESULT_FAIL; \
         }
       }
       
-      _sampleIndex = 0;
-      
       return RESULT_OK;
     }
     
-    RobotInterface::EngineToRobot* RobotAudioKeyFrame::GetStreamMessage()
+    //RobotInterface::EngineToRobot* RobotAudioKeyFrame::GetStreamMessage()
+    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
     {
       if(_audioReferences.empty()) {
         PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
                           "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        return nullptr;
-      }
-        
-      if(_sampleIndex == 0) {
-        // Select one of the audio names to play
-        if(_audioReferences.size()==1) {
-          // Special case: there's only one audio option 
-          _selectedAudioIndex = 0;
-        } else {
-          _selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-        }
+        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid, .volume = 0.f};
+        return InvalidRef;
       }
       
-      // Populate the message with the next chunk of audio data and send it out
-      if(_sampleIndex < _audioReferences[_selectedAudioIndex].numSamples)
-      {
-        // TODO: Get next chunk of audio from wwise or something?
-        //wwise::GetNextSample(_audioSampleMsg.sample, 800);
-        
-        if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
-            (uint32_t)_sampleIndex, _audioReferences[_selectedAudioIndex].volume, _audioSampleMsg)) {
-          PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
-        }
-        
-        ++_sampleIndex;
-        
-        return new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSample(_audioSampleMsg));
-      } else {
-        _sampleIndex = 0;
-        return nullptr;
+      // Select one of the audio names to play
+      size_t selectedAudioIndex = 0;
+      if(_audioReferences.size()>1) {
+        // If there are more than one audio references
+        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
       }
+      
+      return _audioReferences[selectedAudioIndex];
     }
     
 #pragma mark -

@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/proceduralFace.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
+#include "clad/audio/audioEventTypes.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
@@ -82,7 +83,7 @@ namespace Anki {
       
       //void SetIsValid(bool isValid) { _isValid = isValid; }
       
-      Util::RandomGenerator& GetRNG();
+      Util::RandomGenerator& GetRNG() const;
       
     private:
       
@@ -95,7 +96,7 @@ namespace Anki {
       
     }; // class IKeyFrame
     
-    inline Util::RandomGenerator& IKeyFrame::GetRNG() {
+    inline Util::RandomGenerator& IKeyFrame::GetRNG() const {
       return sRNG;
     }
     
@@ -189,16 +190,25 @@ namespace Anki {
     class RobotAudioKeyFrame : public IKeyFrame
     {
     public:
-      RobotAudioKeyFrame() : _selectedAudioIndex(0), _sampleIndex(0) { }
+      RobotAudioKeyFrame() { }
       
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      // NOTE: Always returns nullptr for RobotAudioKeyframe!
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };
       
       static const std::string& GetClassName() {
         static const std::string ClassName("RobotAudioKeyFrame");
         return ClassName;
       }
       
-      const std::string& GetSoundName() const;
+      //const std::string& GetSoundName() const;
+      
+      struct AudioRef {
+        Audio::EventType audioEvent;
+        f32              volume;
+        // TODO: Any other parameters that need to be communicated to AudioManager?
+      };
+      
+      const AudioRef& GetAudioRef() const;
       
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
@@ -206,18 +216,8 @@ namespace Anki {
     private:
       
       Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
-      
-      struct AudioRef {
-        std::string name;
-        s32 numSamples;
-        f32 volume;
-      };
+
       std::vector<AudioRef> _audioReferences;
-      s32 _selectedAudioIndex;
-      
-      s32 _sampleIndex;
-      
-      AnimKeyFrame::AudioSample  _audioSampleMsg;
       
     }; // class RobotAudioKeyFrame
     

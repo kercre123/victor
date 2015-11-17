@@ -22,6 +22,11 @@
 #include "clad/types/liveIdleAnimationParameters.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
+// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
+// and needing sound.
+#define PLAY_ROBOT_AUDIO_ON_DEVICE 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -32,6 +37,16 @@ namespace Cozmo {
   namespace ExternalInterface {
     class MessageGameToEngine;
   }
+  
+  // Just a stub so I can compile
+  // TODO: Remove once Jordan's stuff is in
+  class AudioManager
+  {
+  public:
+    static void PlayEvent(Audio::EventType audioEvent, f32 volume) { }
+    static bool GetBufferedData(size_t numBytes, u8* buffer) { return false; }
+  };
+  
   
   class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
@@ -74,12 +89,19 @@ namespace Cozmo {
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim);
     
+    // Stream one audio sample from the AudioManager
+    // If sendSilence==true, will buffer an AudioSilence message if no audio is
+    // available (needed while streaming canned animations)
+    Result BufferAudioToSend(bool sendSilence);
+    
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
     
     // Update generate frames needed by the "live" idle animation and add them
     // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation(Robot& robot);
+    
+    void UpdateNumBytesToSend(Robot& robot);
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
@@ -109,10 +131,12 @@ namespace Cozmo {
     
     bool _endOfAnimationSent;
     
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
     // TODO: Remove these once we aren't playing robot audio on the device
     TimeStamp_t _playedRobotAudio_ms;
     std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
     const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
+#   endif
     
     // Manage the send buffer, which is where we put keyframe messages ready to
     // go to the robot, and parcel them out according to how many bytes the
