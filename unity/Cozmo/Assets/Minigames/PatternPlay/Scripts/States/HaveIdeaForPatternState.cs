@@ -28,7 +28,7 @@ namespace PatternPlay {
       }
 
       // TODO: Use "have idea" animation
-      _CurrentRobot.SendAnimation("shocked", AnimationDone);
+      _CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
     }
 
     public override void Update() {
@@ -44,7 +44,7 @@ namespace PatternPlay {
       }
     }
 
-    private void AnimationDone(bool success) {
+    private void HandleAnimationDone(bool success) {
       _StateMachine.SetNextState(new LookForCubesState());
     }
   }

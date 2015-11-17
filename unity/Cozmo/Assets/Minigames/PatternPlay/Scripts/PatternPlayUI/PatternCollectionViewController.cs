@@ -87,7 +87,7 @@ namespace PatternPlay {
       buttonScript.onClick.AddListener(OnDialogButtonTap);
 
       _ButtonBadgeDisplay = newButton.GetComponent<BadgeDisplay>();
-      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.kPatternMemoryBadgeTag);
     }
 
     public void OnDialogButtonTap() {
@@ -101,7 +101,7 @@ namespace PatternPlay {
       // Populate dialog with cards using memory
       _PatternCollectionDialog.Initialize(_PatternMemory);
 
-      if (BadgeManager.NumBadgesWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG) > 0) {
+      if (BadgeManager.NumBadgesWithTag(PatternMemory.kPatternMemoryBadgeTag) > 0) {
         bool scrollSuccess = _PatternCollectionDialog.ScrollToFirstNewPattern();
         if (!scrollSuccess) {
           _PatternCollectionDialog.SetScrollValue(_LastOpenedScrollValue);
@@ -115,7 +115,7 @@ namespace PatternPlay {
     }
 
     private void OnCollectionDialogClose() {
-      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.kPatternMemoryBadgeTag);
       _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
       _LastOpenedScrollValue = _PatternCollectionDialog.GetScrollValue();
     }
@@ -139,7 +139,7 @@ namespace PatternPlay {
 
     private void OnDiscoveryDialogClosed() {
       // Update badge visuals
-      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.PATTERN_MEMORY_BADGE_TAG);
+      _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.kPatternMemoryBadgeTag);
 
       float targetScale = 0.2f;
       if (_ButtonBadgeDisplayTweener == null) {

@@ -18,7 +18,70 @@
             "/{*}"
         ]
     },
+    "askCozmo.title" : {
+        "translation" : "Ask Cozmo"
+    },
+    "askCozmo.button" : {
+        "translation" : "GIVE ME ANSWER"
+    },
+    "dockTraining.title" : {
+        "translation" : "Dock Training"
+    },
+    "followCube.title" : {
+        "translation" : "Follow Cube"
+    },
+    "followCube.button.slow" : {
+        "translation" : "Slow"
+    },
+    "followCube.button.fast" : {
+        "translation" : "Fast"
+    },
+    "followCube.button.veryFast" : {
+        "translation" : "DEMON"
+    },
+    "patternPlay.title" : {
+        "translation" : "Pattern Play"
+    },
+    "patternPlay.button.openCollection" : {
+        "translation" : "Open Memory Banks"
+    },
+    "patternPlay.discoverView.okButton" : {
+        "translation" : "Save Pattern"
+    },
+    "patternPlay.discoverView.title" : {
+        "translation" : "NEW PATTERN DISCOVERED!"
+    },
+    "rotationTraining.title" : {
+        "translation" : "Rotation Training"
+    },
     "speedTap.title" : {
-        "translation" : "SPEED TAP"
+        "translation" : "Speed Tap"
+    },
+    "speedTap.score.cozmo" : {
+        "translation" : "cosmo: {0:N}"
+    },
+    "speedTap.score.player" : {
+        "translation" : "player: {0:N}"
+    },
+    "treasureHunt.title" : {
+        "translation" : "Treasure Hunt"
+    },
+    "visionTraining.title" : {
+        "translation" : "Vision Training"
+    },
+    "vortex.title" : {
+        "translation" : "Vortex"
+    },
+    "vortex.spinButton" : {
+        "translation" : "Spin"
+    },
+    "vortex.replayButton" : {
+        "translation" : "Replay"
+    },
+    "vortex.vortexStatus" : {
+        "translation" : "Round: {0:D}"
+    },
+    "vortex.vortexWon" : {
+        "translation" : "{0} Won"
     }
 }

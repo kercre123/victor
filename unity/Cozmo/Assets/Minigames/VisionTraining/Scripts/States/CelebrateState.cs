@@ -5,10 +5,10 @@ namespace VisionTraining {
   public class CelebrateState : State {
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("majorWin", AnimationDone);
+      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
     }
 
-    void AnimationDone(bool success) {
+    void HandleAnimationDone(bool success) {
       _StateMachine.SetNextState(new RecognizeCubeState());
     }
 
