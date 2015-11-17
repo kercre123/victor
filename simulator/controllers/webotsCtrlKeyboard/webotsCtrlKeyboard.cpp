@@ -663,7 +663,11 @@ namespace Anki {
                   if(enableModeIter == enableModes.end()) {
                     enableModeIter = enableModes.begin();
                   }
-                  
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  static bool enablePickupDetect = false;
+                  SendEnableRobotPickupDetect(enablePickupDetect);
+                  printf("Sent EnableRobotPickupDetect = %d\n", enablePickupDetect);
+                  enablePickupDetect = !enablePickupDetect;
                 } else {
                   static bool showObjects = false;
                   SendEnableDisplay(showObjects);
@@ -893,13 +897,24 @@ namespace Anki {
               case (s32)'W':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool useManualSpeed = false;
                 
-                SendRollSelectedObject(pathMotionProfile_,
-                                       usePreDockPose,
-                                       useApproachAngle,
-                                       approachAngle_rad,
-                                       useManualSpeed);
+                if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendPopAWheelie(-1,
+                                  pathMotionProfile_,
+                                  usePreDockPose,
+                                  useApproachAngle,
+                                  approachAngle_rad,
+                                  useManualSpeed);
+                } else {
+                  SendRollSelectedObject(pathMotionProfile_,
+                                         usePreDockPose,
+                                         useApproachAngle,
+                                         approachAngle_rad,
+                                         useManualSpeed);
+                }
+                
+                
                 break;
               }
 
@@ -1336,13 +1351,13 @@ namespace Anki {
               case (s32)'F':
               {
                 if (modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  SendStopFaceTracking();
+                  SendEnableVisionMode(VisionMode::DetectingFaces, false);
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   // Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %llu\n", _lastFace.faceID);
                   SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FacePose(_lastFace.world_x, _lastFace.world_y, _lastFace.world_z, DEG_TO_RAD(10), M_PI, 1)));
                 } else {
-                  SendStartFaceTracking(5);
+                  SendEnableVisionMode(VisionMode::DetectingFaces, true);
                 }
                 break;
               }

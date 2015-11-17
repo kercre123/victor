@@ -73,7 +73,7 @@ public class Robot : IDisposable {
   // in radians
   public float HeadAngle { get; private set; }
 
-  // in radians
+  // in radians, from negative PI to positive PI
   public float PoseAngle { get; private set; }
 
   // in mm/s
@@ -85,7 +85,7 @@ public class Robot : IDisposable {
   // in mm
   public float LiftHeight { get; private set; }
 
-  public float LiftHeightFactor { get { return (LiftHeight - CozmoUtil.MIN_LIFT_HEIGHT_MM) / (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM); } }
+  public float LiftHeightFactor { get { return (LiftHeight - CozmoUtil.kMinLiftHeightMM) / (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM); } }
 
   public Vector3 WorldPosition { get; private set; }
 
@@ -111,12 +111,16 @@ public class Robot : IDisposable {
 
   public List<Face> Faces { get; private set; }
 
-  public Light[] Lights { get; private set; }
+  public uint[] ProgressionStats { get; private set; }
+
+  public float[] EmotionValues { get; private set; }
+
+  public Light[] BackpackLights { get; private set; }
 
   private bool _LightsChanged {
     get {
-      for (int i = 0; i < Lights.Length; ++i) {
-        if (Lights[i].Changed)
+      for (int i = 0; i < BackpackLights.Length; ++i) {
+        if (BackpackLights[i].Changed)
           return true;
       }
 
@@ -164,8 +168,7 @@ public class Robot : IDisposable {
   private U2G.TurnInPlace TurnInPlaceMessage;
   private U2G.TraverseObject TraverseObjectMessage;
   private U2G.SetBackpackLEDs SetBackpackLEDsMessage;
-  private U2G.StartFaceTracking StartFaceTrackingMessage;
-  private U2G.StopFaceTracking StopFaceTrackingMessage;
+  private U2G.EnableVisionMode EnableVisionModeMessage;
   private U2G.ExecuteBehavior ExecuteBehaviorMessage;
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
@@ -176,6 +179,9 @@ public class Robot : IDisposable {
   private U2G.SetLiveIdleAnimationParameters SetLiveIdleAnimationParametersMessage;
   private U2G.SetRobotVolume SetRobotVolumeMessage;
   private U2G.AlignWithObject AlignWithObjectMessage;
+  private U2G.ProgressionMessage ProgressionStatMessage;
+  private U2G.MoodMessage MoodStatMessage;
+ 
   private PathMotionProfile PathMotionProfileDefault;
 
   private ObservedObject _CarryingObject;
@@ -261,8 +267,7 @@ public class Robot : IDisposable {
     TurnInPlaceMessage = new U2G.TurnInPlace();
     TraverseObjectMessage = new U2G.TraverseObject();
     SetBackpackLEDsMessage = new U2G.SetBackpackLEDs();
-    StartFaceTrackingMessage = new U2G.StartFaceTracking();
-    StopFaceTrackingMessage = new U2G.StopFaceTracking();
+    EnableVisionModeMessage = new U2G.EnableVisionMode();
     ExecuteBehaviorMessage = new U2G.ExecuteBehavior();
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
@@ -273,6 +278,8 @@ public class Robot : IDisposable {
     PlayAnimationMessages[1] = new U2G.PlayAnimation();
     SetRobotVolumeMessage = new U2G.SetRobotVolume();
     AlignWithObjectMessage = new U2G.AlignWithObject();
+    ProgressionStatMessage = new U2G.ProgressionMessage();
+    MoodStatMessage = new U2G.MoodMessage();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -286,10 +293,13 @@ public class Robot : IDisposable {
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
 
-    Lights = new Light[SetBackpackLEDsMessage.onColor.Length];
+    BackpackLights = new Light[SetBackpackLEDsMessage.onColor.Length];
 
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i] = new Light();
+    ProgressionStats = new uint[(int)Anki.Cozmo.ProgressionStatType.Count];
+    EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
+
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i] = new Light();
     }
 
     ClearData(true);
@@ -362,14 +372,18 @@ public class Robot : IDisposable {
     Rotation = Quaternion.identity;
     LocalBusyTimer = 0f;
 
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].ClearData();
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i].ClearData();
+    }
+
+    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; ++i) {
+      ProgressionStats[i] = 0;
     }
   }
 
   public void ClearVisibleObjects() {
     for (int i = 0; i < VisibleObjects.Count; ++i) {
-      if (VisibleObjects[i].TimeLastSeen + ObservedObject.RemoveDelay < Time.time) {
+      if (VisibleObjects[i].TimeLastSeen + ObservedObject.kRemoveDelay < Time.time) {
         VisibleObjects.RemoveAt(i--);
       }
     }
@@ -383,7 +397,7 @@ public class Robot : IDisposable {
     LiftHeight = message.liftHeight_mm;
     RobotStatus = (RobotStatusFlag)message.status;
     GameStatus = (GameStatusFlag)message.gameStatus;
-    BatteryPercent = (message.batteryVoltage / CozmoUtil.MAX_VOLTAGE);
+    BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
     _CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
@@ -395,27 +409,6 @@ public class Robot : IDisposable {
 
   }
 
-  public void UpdateLightMessages(bool now = false) {
-    if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnected)
-      return;
-
-    if (Time.time > LightCube.Light.MessageDelay || now) {
-      var enumerator = LightCubes.GetEnumerator();
-
-      while (enumerator.MoveNext()) {
-        LightCube lightCube = enumerator.Current.Value;
-
-        if (lightCube.LightsChanged)
-          lightCube.SetAllLEDs();
-      }
-    }
-
-    if (Time.time > Light.MessageDelay || now) {
-      if (_LightsChanged)
-        SetAllBackpackLEDs();
-    }
-  }
-
   // Object moved, so remove it from the seen list
   // and add it into the dirty list.
   public void UpdateDirtyList(ObservedObject dirty) {
@@ -425,6 +418,60 @@ public class Robot : IDisposable {
       DirtyObjects.Add(dirty);
     }
   }
+
+  #region Progression and Mood Stats
+
+  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, uint deltaValue) {
+    ProgressionStatMessage.robotID = ID;
+    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.statType = index;
+    ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
+
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue) {
+    MoodStatMessage.robotID = ID;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion.emotionType = type;
+    MoodStatMessage.MoodMessageUnion.AddToEmotion.deltaVal = deltaValue;
+
+    RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  // Only debug panels should be using set.
+  // You should not be calling this from a minigame/challenge.
+  public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
+    MoodStatMessage.robotID = ID;
+    MoodStatMessage.MoodMessageUnion.SetEmotion.emotionType = type;
+    MoodStatMessage.MoodMessageUnion.SetEmotion.newVal = value;
+
+    RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  // Only debug panels should be using set.
+  // You should not be calling this from a minigame/challenge.
+  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, uint value) {
+    ProgressionStatMessage.robotID = ID;
+    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat.statType = type;
+    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat.newVal = value;
+
+    RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  // This function should only be called by RobotEngineManager to update the internal Progression Stat values.
+  public void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, uint value) {
+    ProgressionStats[(int)index] = value;
+  }
+
+  // This function should only be called by RobotEngineManager to update the internal emotion Stat values.
+  public void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
+    EmotionValues[(int)index] = value;
+  }
+
+  #endregion
 
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
@@ -503,7 +550,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
@@ -577,10 +624,10 @@ public class Robot : IDisposable {
     float angle = IsHeadAngleRequestUnderway() ? _HeadAngleRequested : HeadAngle;
 
     if (angle >= 0f) {
-      angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad));
+      angle = Mathf.Lerp(0f, 1f, angle / (CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad));
     }
     else {
-      angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad));
+      angle = Mathf.Lerp(0f, -1f, angle / (CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad));
     }
 
     return angle;
@@ -588,13 +635,13 @@ public class Robot : IDisposable {
 
 
   public bool IsHeadAngleRequestUnderway() {
-    return Time.time < _LastHeadAngleRequestTime + CozmoUtil.HEAD_ANGLE_REQUEST_TIME;
+    return Time.time < _LastHeadAngleRequestTime + CozmoUtil.kHeadAngleRequestTime;
   }
 
   /// <summary>
   /// Sets the head angle.
   /// </summary>
-  /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (MAX_HEAD_ANGLE)
+  /// <param name="angleFactor">Angle factor.</param> usually from -1 (MIN_HEAD_ANGLE) to 1 (kMaxHeadAngle)
   /// <param name="useExactAngle">If set to <c>true</c> angleFactor is treated as an exact angle in radians.</param>
   public void SetHeadAngle(float angleFactor = -0.8f, 
                            Robot.RobotCallback onComplete = null,
@@ -606,10 +653,10 @@ public class Robot : IDisposable {
 
     if (!useExactAngle) {
       if (angleFactor >= 0f) {
-        radians = Mathf.Lerp(0f, CozmoUtil.MAX_HEAD_ANGLE * Mathf.Deg2Rad, angleFactor);
+        radians = Mathf.Lerp(0f, CozmoUtil.kMaxHeadAngle * Mathf.Deg2Rad, angleFactor);
       }
       else {
-        radians = Mathf.Lerp(0f, CozmoUtil.MIN_HEAD_ANGLE * Mathf.Deg2Rad, -angleFactor);
+        radians = Mathf.Lerp(0f, CozmoUtil.kMinHeadAngle * Mathf.Deg2Rad, -angleFactor);
       }
     }
 
@@ -624,7 +671,7 @@ public class Robot : IDisposable {
     SetHeadAngleMessage.angle_rad = radians;
 
     SetHeadAngleMessage.accel_rad_per_sec2 = accelRadSec;
-    SetHeadAngleMessage.max_speed_rad_per_sec = maxSpeedFactor * CozmoUtil.MAX_SPEED_RAD_PER_SEC;
+    SetHeadAngleMessage.max_speed_rad_per_sec = maxSpeedFactor * CozmoUtil.kMaxSpeedRadPerSec;
 
     RobotEngineManager.Instance.Message.SetHeadAngle = SetHeadAngleMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -712,7 +759,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PickupObject = PickupObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
@@ -732,7 +779,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.RollObject = RollObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
     }
@@ -754,7 +801,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
     RobotEngineManager.Instance.SendMessage();
     
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
@@ -775,7 +822,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.GotoPose = GotoPoseMessage;
     RobotEngineManager.Instance.SendMessage();
     
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
@@ -792,7 +839,7 @@ public class Robot : IDisposable {
 
     RobotEngineManager.Instance.SendMessage();
     
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
     }
@@ -808,7 +855,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.AlignWithObject = AlignWithObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
       _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
     }
@@ -818,7 +865,7 @@ public class Robot : IDisposable {
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
     DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
-    if ((Time.time < _LastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == _LiftHeightRequested) || LiftHeightFactor == heightFactor)
+    if ((Time.time < _LastLiftHeightRequestTime + CozmoUtil.kLiftRequestTime && heightFactor == _LiftHeightRequested) || LiftHeightFactor == heightFactor)
       return;
 
     _LiftHeightRequested = heightFactor;
@@ -826,7 +873,7 @@ public class Robot : IDisposable {
 
     SetLiftHeightMessage.accel_rad_per_sec2 = 5f;
     SetLiftHeightMessage.max_speed_rad_per_sec = 10f;
-    SetLiftHeightMessage.height_mm = (heightFactor * (CozmoUtil.MAX_LIFT_HEIGHT_MM - CozmoUtil.MIN_LIFT_HEIGHT_MM)) + CozmoUtil.MIN_LIFT_HEIGHT_MM;
+    SetLiftHeightMessage.height_mm = (heightFactor * (CozmoUtil.kMaxLiftHeightMM - CozmoUtil.kMinLiftHeightMM)) + CozmoUtil.kMinLiftHeightMM;
 
     RobotEngineManager.Instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -900,72 +947,15 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.TraverseObject = TraverseObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    LocalBusyTimer = CozmoUtil.LOCAL_BUSY_TIME;
+    LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  private void SetLastLEDs() {
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].SetLastInfo();
-    }
-  }
+  public void SetVisionMode(VisionMode mode, bool enable) {
+    EnableVisionModeMessage.mode = mode;
+    EnableVisionModeMessage.enable = enable;
 
-  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
-                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0, byte turnOffUnspecifiedLEDs = 1) {
-    for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].OnColor = onColor;
-      Lights[i].OffColor = offColor;
-      Lights[i].OnPeriodMs = onPeriod_ms;
-      Lights[i].OffPeriodMs = offPeriod_ms;
-      Lights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
-      Lights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
-    }
-  }
-
-  // should only be called from update loop
-  private void SetAllBackpackLEDs() {
-
-    SetBackpackLEDsMessage.robotID = ID;
-
-    for (int i = 0; i < Lights.Length; ++i) {
-      SetBackpackLEDsMessage.onColor[i] = Lights[i].OnColor;
-      SetBackpackLEDsMessage.offColor[i] = Lights[i].OffColor;
-      SetBackpackLEDsMessage.onPeriod_ms[i] = Lights[i].OnPeriodMs;
-      SetBackpackLEDsMessage.offPeriod_ms[i] = Lights[i].OffPeriodMs;
-      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = Lights[i].TransitionOnPeriodMs;
-      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = Lights[i].TransitionOffPeriodMs;
-    }
-    
-    RobotEngineManager.Instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
+    RobotEngineManager.Instance.Message.EnableVisionMode = EnableVisionModeMessage;
     RobotEngineManager.Instance.SendMessage();
-
-    SetLastLEDs();
-  }
-
-  public void StartFaceAwareness() {
-    StartFaceTrackingMessage.timeout_sec = byte.MaxValue;
-
-    RobotEngineManager.Instance.Message.StartFaceTracking = StartFaceTrackingMessage;
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void StopFaceAwareness() {
-    RobotEngineManager.Instance.Message.StopFaceTracking = StopFaceTrackingMessage;
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void TurnOffAllLights(bool now = false) {
-    var enumerator = LightCubes.GetEnumerator();
-    
-    while (enumerator.MoveNext()) {
-      LightCube lightCube = enumerator.Current.Value;
-      
-      lightCube.SetLEDs();
-    }
-
-    SetBackpackLEDs();
-
-    if (now)
-      UpdateLightMessages(now);
   }
 
   public void ExecuteBehavior(BehaviorType type) {
@@ -990,4 +980,108 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.ActivateBehaviorChooser = ActivateBehaviorChooserMessage;
     RobotEngineManager.Instance.SendMessage();
   }
+
+  #region Light manipulation
+
+  #region Backpack Lights
+
+  public void SetBackpackLED(LEDId ledToChange, Color color) {
+    uint colorUint = CozmoPalette.ColorToUInt(color);
+    SetBackpackLED((int)ledToChange, colorUint);
+  }
+
+  public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs, uint offDurationMs, uint transitionDurationMs) {
+    uint colorUint = CozmoPalette.ColorToUInt(color);
+    SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
+  }
+
+  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      SetBackpackLED(i, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+    }
+  }
+
+  private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+    // Special case for arrow lights; they only accept white as a color
+    if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
+      uint whiteUint = CozmoPalette.ColorToUInt(Color.white);
+      onColor = (onColor > 0) ? whiteUint : 0;
+      offColor = (offColor > 0) ? whiteUint : 0;
+    }
+
+    BackpackLights[index].OnColor = onColor;
+    BackpackLights[index].OffColor = offColor;
+    BackpackLights[index].OnPeriodMs = onPeriod_ms;
+    BackpackLights[index].OffPeriodMs = offPeriod_ms;
+    BackpackLights[index].TransitionOnPeriodMs = transitionOnPeriod_ms;
+    BackpackLights[index].TransitionOffPeriodMs = transitionOffPeriod_ms;
+  }
+
+  // should only be called from update loop
+  private void SetAllBackpackLEDs() {
+
+    SetBackpackLEDsMessage.robotID = ID;
+
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      SetBackpackLEDsMessage.onColor[i] = BackpackLights[i].OnColor;
+      SetBackpackLEDsMessage.offColor[i] = BackpackLights[i].OffColor;
+      SetBackpackLEDsMessage.onPeriod_ms[i] = BackpackLights[i].OnPeriodMs;
+      SetBackpackLEDsMessage.offPeriod_ms[i] = BackpackLights[i].OffPeriodMs;
+      SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = BackpackLights[i].TransitionOnPeriodMs;
+      SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = BackpackLights[i].TransitionOffPeriodMs;
+    }
+
+    RobotEngineManager.Instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
+    RobotEngineManager.Instance.SendMessage();
+
+    SetLastLEDs();
+  }
+
+  private void SetLastLEDs() {
+    for (int i = 0; i < BackpackLights.Length; ++i) {
+      BackpackLights[i].SetLastInfo();
+    }
+  }
+
+  #endregion
+
+  public void TurnOffAllLights(bool now = false) {
+    var enumerator = LightCubes.GetEnumerator();
+
+    while (enumerator.MoveNext()) {
+      LightCube lightCube = enumerator.Current.Value;
+
+      lightCube.SetLEDs();
+    }
+
+    SetBackpackLEDs();
+
+    if (now)
+      UpdateLightMessages(now);
+  }
+
+  public void UpdateLightMessages(bool now = false) {
+    if (RobotEngineManager.Instance == null || !RobotEngineManager.Instance.IsConnected)
+      return;
+
+    if (Time.time > LightCube.Light.MessageDelay || now) {
+      var enumerator = LightCubes.GetEnumerator();
+
+      while (enumerator.MoveNext()) {
+        LightCube lightCube = enumerator.Current.Value;
+
+        if (lightCube.LightsChanged)
+          lightCube.SetAllLEDs();
+      }
+    }
+
+    if (Time.time > Light.MessageDelay || now) {
+      if (_LightsChanged)
+        SetAllBackpackLEDs();
+    }
+  }
+
+  #endregion
 }

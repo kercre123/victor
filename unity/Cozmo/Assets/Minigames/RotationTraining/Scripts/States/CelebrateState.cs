@@ -5,7 +5,7 @@ namespace RotationTraining {
   public class CelebrateState : State {
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("majorWin", AnimationDone);
+      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
     }
 
     public override void Update() {
@@ -16,8 +16,8 @@ namespace RotationTraining {
       base.Exit();
     }
 
-    private void AnimationDone(bool success) {
-      _CurrentRobot.TurnInPlace(180.0f, TurnInPlaceDone);
+    private void HandleAnimationDone(bool success) {
+      _CurrentRobot.TurnInPlace(Random.Range(-90, 90), TurnInPlaceDone);
     }
 
     private void TurnInPlaceDone(bool success) {

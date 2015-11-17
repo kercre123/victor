@@ -11,9 +11,9 @@ public class FPSCalculator : MonoBehaviour {
   /// <summary>
   /// Number of frames to sample for the avg fps numbers
   /// </summary>
-  private const int AVG_FPS_SAMPLE_SIZE = 5;
+  private const int kAveFPSSampleSize = 5;
 
-  private const float SECONDS_PER_MINUTE = 60.0f;
+  private const float kSecondsPerMinute = 60.0f;
 
   private int _CurrentFPS = 0;
   private int _NumFramesInSecond = 0;
@@ -47,7 +47,7 @@ public class FPSCalculator : MonoBehaviour {
       _FpsSamples.Add(_CurrentFPS);
       
       // Truncate list of samples
-      while (_FpsSamples.Count > SECONDS_PER_MINUTE) {
+      while (_FpsSamples.Count > kSecondsPerMinute) {
         _FpsSamples.RemoveAt(0);
       }
 
@@ -104,7 +104,7 @@ public class FPSCalculator : MonoBehaviour {
 
   private float CalculateAvgFPS() {
     // Recalculate average fps according to sample size
-    int startIndex = _FpsSamples.Count - AVG_FPS_SAMPLE_SIZE;
+    int startIndex = _FpsSamples.Count - kAveFPSSampleSize;
     if (startIndex < 0) {
       startIndex = 0;
     }
@@ -112,7 +112,7 @@ public class FPSCalculator : MonoBehaviour {
     for (int i = startIndex; i < _FpsSamples.Count; i++) {
       framesInSample += _FpsSamples[i];
     }
-    int numSamples = Mathf.Min(AVG_FPS_SAMPLE_SIZE, _FpsSamples.Count);
+    int numSamples = Mathf.Min(kAveFPSSampleSize, _FpsSamples.Count);
     return ((float)framesInSample) / numSamples;
   }
 

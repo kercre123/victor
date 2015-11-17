@@ -13,19 +13,12 @@ public class StartupManager : MonoBehaviour {
 
   // Use this for initialization
   void Start() {
-    // Set up localization files.
-    Localization.LoadStrings();
-
-    // Add managers to this object here
-    // gameObject.AddComponent<ManagerTypeName>();
-  }
-
-  #if UNITY_EDITOR
-  private void OnEnable() {
-    if (!Application.isPlaying) {
+    if (Application.isPlaying) {
       // Set up localization files.
       Localization.LoadStrings();
+
+      // Add managers to this object here
+      // gameObject.AddComponent<ManagerTypeName>();
     }
   }
-  #endif
 }

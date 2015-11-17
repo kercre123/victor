@@ -20,13 +20,17 @@ namespace DockTraining {
     private float _DriveWheelLeftSpeed = 0.0f;
     private float _DriveWheelRightSpeed = 0.0f;
 
+    private float _DriveWheelRandMin = -10.0f;
+    private float _DriveWheelRandMax = 45.0f;
+
+
     DockTrainingGame _DockTrainingGame;
     LightCube _CurrentTarget = null;
 
     public override void Enter() {
       base.Enter();
       _LastRotateCubeStateChanged = Time.time;
-      LightCube.MovedAction += OnCubeMoved;
+      LightCube.OnMovedAction += HandleCubeMoved;
 
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
@@ -52,15 +56,22 @@ namespace DockTraining {
       }
       else {
         float distance = Vector3.Distance(_CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
-        if (distance < 40.0f) {
-          // decide if success or fail
-          float relDot = Vector3.Dot(_CurrentRobot.Forward, (_CurrentTarget.WorldPosition - _CurrentRobot.WorldPosition).normalized);
-          if (relDot > 0.95f) {
-            _StateMachine.SetNextState(new TrySuccessDockState());
-          }
-          else {
-            _StateMachine.SetNextState(new FailDockState());
-          }
+        float relDot = Vector2.Dot((Vector2)(_CurrentRobot.Forward).normalized, (Vector2)((_CurrentTarget.WorldPosition - _CurrentRobot.WorldPosition).normalized));
+
+        Debug.Log(distance);
+        Debug.Log(relDot);
+
+        if (distance < 60.0f) {
+          _DriveWheelRandMin = 0.0f;
+          _DriveWheelRandMax = 20.0f;
+        }
+        else {
+          _DriveWheelRandMin = -10.0f;
+          _DriveWheelRandMax = 45.0f;
+        }
+
+        if (distance < 53.0f && relDot > 0.88f && _CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
+          _StateMachine.SetNextState(new CelebrateState());
         }
         else {
           SteeringLogic();
@@ -83,24 +94,25 @@ namespace DockTraining {
       // set light cube color based on _RotateCubeState
       _CurrentRobot.LightCubes[_CubeID].SetLEDs(CozmoPalette.ColorToUInt(_RotateCubeColors[(int)_RotateCubeState]));
 
-      _DriveWheelLeftSpeed = Mathf.Lerp(_DriveWheelLeftSpeed, 10.0f, Time.deltaTime * 8.0f);
-      _DriveWheelRightSpeed = Mathf.Lerp(_DriveWheelRightSpeed, 10.0f, Time.deltaTime * 8.0f);
+      _DriveWheelLeftSpeed = Mathf.Lerp(_DriveWheelLeftSpeed, Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Time.deltaTime * 10.0f);
+      _DriveWheelRightSpeed = Mathf.Lerp(_DriveWheelRightSpeed, Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Time.deltaTime * 10.0f);
       _CurrentRobot.DriveWheels(_DriveWheelLeftSpeed, _DriveWheelRightSpeed);
+      //_CurrentRobot.DriveWheels(Random.Range(-10.0f, 45.0f), Random.Range(-10.0f, 45.0f));
     }
 
-    private void OnCubeMoved(int cubeID, float x, float y, float z) {
+    private void HandleCubeMoved(int cubeID, float x, float y, float z) {
 
       if (cubeID != _CubeID) {
         return;
       }
 
       if (_RotateCubeState == RotateCubeState.LEFT) {
-        _DriveWheelRightSpeed += Time.deltaTime * 500.0f;
-        _DriveWheelLeftSpeed -= Time.deltaTime * 500.0f;
+        _DriveWheelRightSpeed += Time.deltaTime * 1000.0f;
+        _DriveWheelLeftSpeed -= Time.deltaTime * 1000.0f;
       }
       else {
-        _DriveWheelLeftSpeed += Time.deltaTime * 500.0f;
-        _DriveWheelRightSpeed -= Time.deltaTime * 500.0f;
+        _DriveWheelLeftSpeed += Time.deltaTime * 1000.0f;
+        _DriveWheelRightSpeed -= Time.deltaTime * 1000.0f;
       }
     }
 

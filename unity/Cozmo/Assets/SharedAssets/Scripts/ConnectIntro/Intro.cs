@@ -14,7 +14,7 @@ public class Intro : MonoBehaviour {
   private string _CurrentScene;
   private string _CurrentVizHostIP;
 
-  private const int ROBOT_ID = 1;
+  private const int kRobotID = 1;
 
   private Robot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
@@ -134,7 +134,7 @@ public class Intro : MonoBehaviour {
   private void Connected(string connectionIdentifier) {
     _Error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
     RobotEngineManager.Instance.StartEngine(_CurrentVizHostIP);
-    RobotEngineManager.Instance.ForceAddRobot(ROBOT_ID, _CurrentRobotIP, _Simulated);
+    RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
   }
 
   private void Disconnected(DisconnectionReason reason) {
@@ -148,8 +148,7 @@ public class Intro : MonoBehaviour {
     }
 
     if (_Simulated && _Robot != null) {
-      _Robot.VisionWhileMoving(true);    
-      _Robot.StartFaceAwareness();
+      _Robot.VisionWhileMoving(true);
     }
 
     _Error.text = "";
