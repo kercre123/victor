@@ -83,13 +83,15 @@ namespace Anki
       }
 
       void OLEDInit(void) {
+        using namespace Anki::Cozmo::HAL;
+        
         GPIO_PIN_SOURCE(OLED_RST, PTA,  19);
         GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
         PORTA_PCR19  = PORT_PCR_MUX(1);
 
-        Anki::Cozmo::HAL::MicroWait(80);
+        MicroWait(80);
         GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
-        Anki::Cozmo::HAL::MicroWait(80);
+        MicroWait(80);
         GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
 
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)InitDisplay, sizeof(InitDisplay), NULL);

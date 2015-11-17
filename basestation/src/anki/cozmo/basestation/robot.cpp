@@ -80,7 +80,8 @@ namespace Anki {
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _audioClient( nullptr )
     , _animationStreamer(_externalInterface, _cannedAnimations)
-    , _moodManager()
+    , _moodManager(this)
+    , _progressionManager(this)
     , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
@@ -865,6 +866,8 @@ namespace Anki {
       
       _moodManager.Update(currentTime);
       
+      _progressionManager.Update(currentTime);
+      
       const char* behaviorChooserName = "";
       std::string behaviorName("<disabled>");
       if(_isBehaviorMgrEnabled) {
@@ -1146,21 +1149,33 @@ namespace Anki {
 
       if(distSquared < MAX_DISTANCE_FOR_SHORT_PLANNER * MAX_DISTANCE_FOR_SHORT_PLANNER) {
 
-        // if we are already at an angle which is close to the goal angle, then use the angle preserving
-        // planner, otherwise use the normal short planner
-        Radians angleDelta = targetPose.GetRotationAngle<'Z'>() - GetDriveCenterPose().GetRotationAngle<'Z'>();
-        if( angleDelta.getAbsoluteVal().ToFloat() <= 2 * PLANNER_MAINTAIN_ANGLE_THRESHOLD ) {
+        Radians finalAngleDelta = targetPose.GetRotationAngle<'Z'>() - GetDriveCenterPose().GetRotationAngle<'Z'>();
+        const bool withinFinalAngleTolerance = finalAngleDelta.getAbsoluteVal().ToFloat() <=
+          2 * PLANNER_MAINTAIN_ANGLE_THRESHOLD;
+
+        Radians initialTurnAngle = atan2( target2d.GetY() - GetDriveCenterPose().GetTranslation().y(),
+                                          target2d.GetX() - GetDriveCenterPose().GetTranslation().x()) -
+                                   GetDriveCenterPose().GetRotationAngle<'Z'>();
+
+        const bool initialTurnAngleLarge = initialTurnAngle.getAbsoluteVal().ToFloat() >
+          0.5 * PLANNER_MAINTAIN_ANGLE_THRESHOLD;
+
+        // if we would need to turn fairly far, but our current angle is fairly close to the goal, use the
+        // planner which backs up first to minimize the turn
+        if( withinFinalAngleTolerance && initialTurnAngleLarge ) {
           PRINT_NAMED_INFO("Robot.SelectPlanner.ShortMinAngle",
-                           "distance^2 is %f, angleDelta is %f, selecting short min_angle planner\n",
+                           "distance^2 is %f, angleDelta is %f, intiialTurnAngle is %f, selecting short min_angle planner\n",
                            distSquared,
-                           angleDelta.getAbsoluteVal().ToFloat());
+                           finalAngleDelta.getAbsoluteVal().ToFloat(),
+                           initialTurnAngle.getAbsoluteVal().ToFloat());
           _selectedPathPlanner = _shortMinAnglePathPlanner;
         }
         else {
           PRINT_NAMED_INFO("Robot.SelectPlanner.Short",
-                           "distance^2 is %f, angleDelta is %f, selecting short planner\n",
+                           "distance^2 is %f, angleDelta is %f, intiialTurnAngle is %f, selecting short planner\n",
                            distSquared,
-                           angleDelta.getAbsoluteVal().ToFloat());
+                           finalAngleDelta.getAbsoluteVal().ToFloat(),
+                           initialTurnAngle.getAbsoluteVal().ToFloat());
           _selectedPathPlanner = _shortPathPlanner;
         }
       }

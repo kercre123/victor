@@ -50,6 +50,7 @@
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -592,6 +593,9 @@ public:
     MoodManager& GetMoodManager() { return _moodManager; }
     const MoodManager& GetMoodManager() const { return _moodManager; }
   
+    inline const ProgressionManager& GetProgressionManager() const { return _progressionManager; }
+    inline ProgressionManager& GetProgressionManager() { return _progressionManager; }
+  
     // Handle various message types
     template<typename T>
     void HandleMessage(const T& msg);
@@ -785,6 +789,9 @@ public:
     
     ///////// Mood/Emotions ////////
     MoodManager      _moodManager;
+
+    ///////// Progression/Skills ////////
+    ProgressionManager  _progressionManager;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
