@@ -30,7 +30,9 @@ Move the OpenCV libraries inside of Webots out of the way:
 
 Instructions [here](https://github.com/anki/coretech-external).
 
-Important: Make sure you have your paths (eg. ~/.bash_profile) setup correctly.
+Important: Make sure you have your paths (eg. ~/.bash_profile) setup correctly it must include the line:
+
+    export CORETECH_EXTERNAL_DIR="$HOME/coretech-external"
 
 Important: Once you set your paths you may need to restart your terminal for the settings to take effect. You can also refresh your environment:
 
@@ -48,12 +50,13 @@ Run ./configure.py from the root of your cosmo-game folder.
     ./configure.py
     ./configure.py build
 
-Open <path-to-cozmo-repository>/Assets/Scenes/Shell.unity
+Open <path-to-cozmo-repository>/Assets/Scenes/Dev.unity
 You should be able to run the scene.
 
 ### Webots
 
 The Webots projects can be found in cozmo-game/simulator/worlds
+We are currently using Webots version 8.2.1.
 
 #### iOS Project
 

@@ -15,15 +15,15 @@ namespace PatternPlay {
       _PatternPlayGame.ClearBlockLights();
 
       if (_PatternPlayGame.ShouldCelebrateNew()) {
-        _CurrentRobot.SendAnimation("enjoyPattern", AnimationDone);
+        _CurrentRobot.SendAnimation("enjoyPattern", HandleAnimationDone);
         _PatternPlayGame.SetShouldCelebrateNew(false);
       }
       else {
-        _CurrentRobot.SendAnimation("seeOldPattern", AnimationDone);
+        _CurrentRobot.SendAnimation("seeOldPattern", HandleAnimationDone);
       }
     }
 
-    void AnimationDone(bool success) {
+    void HandleAnimationDone(bool success) {
       _PatternPlayGame.GetAutoBuild().ClearNeatList();
       _PatternPlayGame.ResetLookHeadForkLift();
       _StateMachine.SetNextState(new LookForPatternState());

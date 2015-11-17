@@ -30,7 +30,7 @@ namespace DockTraining {
     public override void Enter() {
       base.Enter();
       _LastRotateCubeStateChanged = Time.time;
-      LightCube.MovedAction += OnCubeMoved;
+      LightCube.OnMovedAction += HandleCubeMoved;
 
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
@@ -100,7 +100,7 @@ namespace DockTraining {
       //_CurrentRobot.DriveWheels(Random.Range(-10.0f, 45.0f), Random.Range(-10.0f, 45.0f));
     }
 
-    private void OnCubeMoved(int cubeID, float x, float y, float z) {
+    private void HandleCubeMoved(int cubeID, float x, float y, float z) {
 
       if (cubeID != _CubeID) {
         return;

@@ -111,8 +111,8 @@ namespace PatternPlay {
     public void InitialCubesDone() {
       initialCubesDone_ = true;
 
-      LightCube.MovedAction += BlockMoving;
-      LightCube.StoppedAction += BlockStopped;
+      LightCube.OnMovedAction += HandleBlockMoving;
+      LightCube.OnStoppedAction += HandleBlockStopped;
 
       foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
         blockPatternData_.Add(lightCube.Key, new BlockPatternData(new BlockLights(), 30.0f, 0.0f));
@@ -229,7 +229,7 @@ namespace PatternPlay {
       }
     }
 
-    private void BlockMoving(int blockID, float xAccel, float yAccel, float zAccel) {
+    private void HandleBlockMoving(int blockID, float xAccel, float yAccel, float zAccel) {
       blockPatternData_[blockID].Moving = true;
       blockPatternData_[blockID].LastFrameZAccel = zAccel;
       blockPatternData_[blockID].LastTimeTouched = Time.time;
@@ -237,7 +237,7 @@ namespace PatternPlay {
     }
 
 
-    private void BlockStopped(int blockID) {
+    private void HandleBlockStopped(int blockID) {
       blockPatternData_[blockID].Moving = false;
     }
 

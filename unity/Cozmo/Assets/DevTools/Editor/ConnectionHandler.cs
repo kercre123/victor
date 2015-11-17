@@ -27,7 +27,7 @@ using System.Threading;
 /// Processes TCP connection and stores data in global queue
 /// </summary>
 class ConnectionHandler {
-  public const int MAX_MSG_SIZE = 5000;
+  public const int kMaxMessageSize = 5000;
   private TcpClient _client;
   string buildResult = null;
 
@@ -49,7 +49,7 @@ class ConnectionHandler {
       // Get a stream object for reading and writing
       NetworkStream stream = _client.GetStream();
       int numReadTotal = 0;
-      Byte[] buffer = new Byte[MAX_MSG_SIZE];
+      Byte[] buffer = new Byte[kMaxMessageSize];
             
       while (stream.CanRead) {
         int numRead = stream.Read(buffer, numReadTotal, (int)buffer.Length - numReadTotal);
