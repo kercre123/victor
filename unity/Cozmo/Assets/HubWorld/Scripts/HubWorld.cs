@@ -8,11 +8,14 @@ public class HubWorld : HubWorldBase {
   private HubWorldDialog _HubWorldDialogPrefab;
   private HubWorldDialog _HubWorldDialogInstance;
 
-  private List<ChallengeData> ChallengeList = new List<ChallengeData>();
+  private List<ChallengeData> _ChallengeList = new List<ChallengeData>();
 
   private GameBase _MiniGameInstance;
 
   private List<string> _UnlockedLevels = new List<string>();
+
+  [SerializeField]
+  private TextAsset _TempLevelAsset;
 
   public override bool LoadHubWorld() {
     LoadChallengesJSON();
@@ -33,7 +36,7 @@ public class HubWorld : HubWorldBase {
   }
 
   private void LoadChallengesJSON() {
-    
+    _ChallengeList.Add(ParseChallengeJSON(_TempLevelAsset.ToString()));
   }
 
   private ChallengeData ParseChallengeJSON(string challengeJSON) {
@@ -68,7 +71,7 @@ public class HubWorld : HubWorldBase {
     // Create dialog with the game prefabs
     _HubWorldDialogInstance = UIManager.OpenDialog(_HubWorldDialogPrefab) as HubWorldDialog;
     _HubWorldDialogInstance.OnButtonClicked += OnButtonClicked;
-    _HubWorldDialogInstance.Initialize(ChallengeList);
+    _HubWorldDialogInstance.Initialize(_ChallengeList);
   }
 
   private void OnButtonClicked(ChallengeData challengeClicked) {

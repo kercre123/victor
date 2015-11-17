@@ -7,7 +7,9 @@
     "LevelLocks" : [
     ],
     "StatLocks" : [
-      "Speed": "5"
+      {
+        "Speed": "5"
+      }
     ]
   },
 
