@@ -34,6 +34,13 @@ int main(void)
   Motors::init();   // Must init before power goes on
   Head::init();
   Lights::init();
+
+  UART::print("\r\nUnbrick me now...");
+  u32 t = GetCounter();
+  while ((GetCounter() - t) < 500 * COUNT_PER_MS)  // 0.5 second unbrick time
+    ;
+  UART::print("too late!\r\n");
+
   Radio::init();
   Battery::powerOn();
 
