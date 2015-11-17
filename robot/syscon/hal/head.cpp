@@ -14,10 +14,7 @@
 
 #define MAX(a, b) ((a > b) ? a : b)
 
-static union {
-  uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
-  uint32_t  rxHeader;
-};
+uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
 
 enum TRANSMIT_MODE {
   TRANSMIT_SEND,
@@ -77,6 +74,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       debugSafeWords = 0;
 
       NRF_UART0->PSELRXD = 0xFFFFFFFF;
+      MicroWait(10);
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
 
       // Configure pin so it is open-drain
@@ -110,6 +108,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   NRF_UART0->EVENTS_RXDRDY = 0;
   NRF_UART0->EVENTS_TXDRDY = 0;
   uart_mode = mode;
+  txRxIndex = 0;
 }
 
 inline void transmitByte() { 
@@ -145,9 +144,9 @@ void UART0_IRQHandler()
     }
 
     // We received a full packet
-    if (++txRxIndex >= 64) {
-      txRxIndex = 0;
+    if (++txRxIndex >= sizeof(GlobalDataToBody)) {
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
+      Head::spokenTo = true;
       
       // Secret recovery flag, set dark byte to zero, and set secret to a magic number
       if (g_dataToBody.cubeStatus.secret == secret_code && g_dataToBody.cubeStatus.ledDark == 0) {
