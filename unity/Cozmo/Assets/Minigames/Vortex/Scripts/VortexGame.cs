@@ -17,7 +17,7 @@ namespace Vortex {
 
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("VortexStateMachine", _StateMachine);
-      DAS.Info("VortexGame", "VortexGame::Start");
+      DAS.Info(this, "VortexGame::Start");
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new StateIntro(), 1, OnIntroComplete);
       _StateMachine.SetNextState(initCubeState);
@@ -41,7 +41,7 @@ namespace Vortex {
     }
 
     public void OnIntroComplete() {
-      DAS.Info("VortexGame", "VortexGame::OnIntroComplete");
+      DAS.Info(this, "VortexGame::OnIntroComplete");
     }
   }
 

@@ -8,14 +8,16 @@ using System;
 
 public class CommandLineBuild {
 
+  private static readonly IDAS _DAS = DAS.GetInstance(typeof(CommandLineBuild));
+
   public static void Build() {
     string[] argv = new string[0];
     try {
       argv = System.Environment.GetCommandLineArgs();
-      DAS.Debug("LightCube", "args: " + System.Environment.CommandLine);
+      _DAS.Debug("args: " + System.Environment.CommandLine);
       for (int k = 0; k < argv.Length; ++k) {
         string arg = argv[k];
-        DAS.Debug("LightCube", "arg => " + arg);
+        _DAS.Debug("arg => " + arg);
       }
     }
     catch (UnityException ex) {

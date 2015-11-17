@@ -10,7 +10,7 @@ namespace Vortex {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("StateIntro", "StateIntro");
+      DAS.Info(this, "StateIntro");
       _AnimationPlaying = true;
       _CurrentRobot.SendAnimation("majorWin", AnimationDone);
     }

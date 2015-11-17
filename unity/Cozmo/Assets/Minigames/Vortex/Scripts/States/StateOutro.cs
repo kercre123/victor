@@ -7,7 +7,7 @@ namespace Vortex {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("StateOutro", "StateOutro");
+      DAS.Info(this, "StateOutro");
     }
 
     public override void Update() {

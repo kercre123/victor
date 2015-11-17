@@ -333,7 +333,7 @@ public class Robot : IDisposable {
   public void ClearData(bool initializing = false) {
     if (!initializing) {
       TurnOffAllLights(true);
-      DAS.Debug("Robot", "Robot data cleared");
+      DAS.Debug(this, "Robot data cleared");
     }
 
     SeenObjects.Clear();
@@ -427,7 +427,7 @@ public class Robot : IDisposable {
 
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
-      DAS.Warn("Robot", "UpdateObservedObjectInfo received message about the Mat!");
+      DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
       return;
     }
 
@@ -497,7 +497,7 @@ public class Robot : IDisposable {
   }
 
   public void PlaceObjectOnGroundHere(RobotCallback callback = null) {
-    DAS.Debug("Robot", "Place Object " + CarryingObject + " On Ground Here");
+    DAS.Debug(this, "Place Object " + CarryingObject + " On Ground Here");
 
     RobotEngineManager.Instance.Message.PlaceObjectOnGroundHere = PlaceObjectOnGroundHereMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -510,7 +510,7 @@ public class Robot : IDisposable {
   }
 
   public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null) {
-    DAS.Debug("Robot", "PlaceObjectRel" + target.ID);
+    DAS.Debug(this, "PlaceObjectRel" + target.ID);
 
     PlaceRelObjectMessage.approachAngle_rad = approachAngle;
     PlaceRelObjectMessage.placementOffsetX_mm = offsetFromMarker;
@@ -532,7 +532,7 @@ public class Robot : IDisposable {
     CancelActionMessage.robotID = ID;
     CancelActionMessage.actionType = actionType;
 
-    DAS.Debug("Robot", "CancelAction actionType(" + actionType + ")");
+    DAS.Debug(this, "CancelAction actionType(" + actionType + ")");
 
     RobotEngineManager.Instance.Message.CancelAction = CancelActionMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -540,7 +540,7 @@ public class Robot : IDisposable {
 
   public void SendAnimation(string animName, RobotCallback callback = null) {
 
-    DAS.Debug("CozmoEmotionManager", "Sending " + animName + " with " + 1 + " loop");
+    DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
     PlayAnimationMessage.animationName = animName;
     PlayAnimationMessage.numLoops = 1;
     PlayAnimationMessage.robotID = this.ID;
@@ -635,7 +635,7 @@ public class Robot : IDisposable {
 
   public void SetRobotVolume(float volume) {
     SetRobotVolumeMessage.volume = volume;
-    DAS.Debug("RobotEngineManager", "Set Robot Volume " + SetRobotVolumeMessage.volume);
+    DAS.Debug(this, "Set Robot Volume " + SetRobotVolumeMessage.volume);
 
     RobotEngineManager.Instance.Message.SetRobotVolume = SetRobotVolumeMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -666,7 +666,7 @@ public class Robot : IDisposable {
     TrackToObjectMessage.robotID = ID;
     TrackToObjectMessage.headOnly = headOnly;
 
-    DAS.Debug("Robot", "Track Head To Object " + TrackToObjectMessage.objectID);
+    DAS.Debug(this, "Track Head To Object " + TrackToObjectMessage.objectID);
 
     RobotEngineManager.Instance.Message.TrackToObject = TrackToObjectMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -680,7 +680,7 @@ public class Robot : IDisposable {
     FaceObjectMessage.turnAngleTol = Mathf.Deg2Rad; //one degree seems to work?
     FaceObjectMessage.headTrackWhenDone = System.Convert.ToByte(headTrackWhenDone);
     
-    DAS.Debug("Robot", "Face Object " + FaceObjectMessage.objectID);
+    DAS.Debug(this, "Face Object " + FaceObjectMessage.objectID);
 
     RobotEngineManager.Instance.Message.FaceObject = FaceObjectMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -706,7 +706,7 @@ public class Robot : IDisposable {
     PickupObjectMessage.approachAngle_rad = approachAngleRad;
     PickupObjectMessage.motionProf = PathMotionProfileDefault;
     
-    DAS.Debug("Robot", "Pick And Place Object " + PickupObjectMessage.objectID + " usePreDockPose " + PickupObjectMessage.usePreDockPose + " useManualSpeed " + PickupObjectMessage.useManualSpeed);
+    DAS.Debug(this, "Pick And Place Object " + PickupObjectMessage.objectID + " usePreDockPose " + PickupObjectMessage.usePreDockPose + " useManualSpeed " + PickupObjectMessage.useManualSpeed);
 
     RobotEngineManager.Instance.Message.PickupObject = PickupObjectMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -726,7 +726,7 @@ public class Robot : IDisposable {
     RollObjectMessage.useManualSpeed = useManualSpeed;
     RollObjectMessage.motionProf = PathMotionProfileDefault;
 
-    DAS.Debug("Robot", "Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed);
+    DAS.Debug(this, "Roll Object " + RollObjectMessage.objectID + " usePreDockPose " + RollObjectMessage.usePreDockPose + " useManualSpeed " + RollObjectMessage.useManualSpeed);
     
     RobotEngineManager.Instance.Message.RollObject = RollObjectMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -748,7 +748,7 @@ public class Robot : IDisposable {
     PlaceObjectOnGroundMessage.useManualSpeed = useManualSpeed;
     PlaceObjectOnGroundMessage.motionProf = PathMotionProfileDefault;
     
-    DAS.Debug("Robot", "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
+    DAS.Debug(this, "Drop Object At Pose " + position + " useManualSpeed " + useManualSpeed);
     
     RobotEngineManager.Instance.Message.PlaceObjectOnGround = PlaceObjectOnGroundMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -769,7 +769,7 @@ public class Robot : IDisposable {
     GotoPoseMessage.rad = rad;
     GotoPoseMessage.motionProf = PathMotionProfileDefault;
 
-    DAS.Debug("Robot", "Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level);
+    DAS.Debug(this, "Go to Pose: x: " + GotoPoseMessage.x_mm + " y: " + GotoPoseMessage.y_mm + " useManualSpeed: " + GotoPoseMessage.useManualSpeed + " level: " + GotoPoseMessage.level);
 
     RobotEngineManager.Instance.Message.GotoPose = GotoPoseMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -816,7 +816,7 @@ public class Robot : IDisposable {
   // Height factor should be between 0.0f and 1.0f
   // 0.0f being lowest and 1.0f being highest.
   public void SetLiftHeight(float heightFactor, RobotCallback callback = null) {
-    DAS.Debug("Robot", "SetLiftHeight: " + heightFactor);
+    DAS.Debug(this, "SetLiftHeight: " + heightFactor);
     if ((Time.time < _LastLiftHeightRequestTime + CozmoUtil.LIFT_REQUEST_TIME && heightFactor == _LiftHeightRequested) || LiftHeightFactor == heightFactor)
       return;
 
@@ -836,7 +836,7 @@ public class Robot : IDisposable {
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
-    DAS.Debug("Robot", "Set Robot Carrying Object: " + objectID);
+    DAS.Debug(this, "Set Robot Carrying Object: " + objectID);
     
     SetRobotCarryingObjectMessage.robotID = ID;
     SetRobotCarryingObjectMessage.objectID = objectID;
@@ -851,7 +851,7 @@ public class Robot : IDisposable {
   }
 
   public void ClearAllBlocks() {
-    DAS.Debug("Robot", "Clear All Blocks");
+    DAS.Debug(this, "Clear All Blocks");
     ClearAllBlocksMessage.robotID = ID;
     RobotEngineManager.Instance.Message.ClearAllBlocks = ClearAllBlocksMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -891,7 +891,7 @@ public class Robot : IDisposable {
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {
-    DAS.Debug("Robot", "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
+    DAS.Debug(this, "Traverse Object " + objectID + " useManualSpeed " + useManualSpeed + " usePreDockPose " + usePreDockPose);
 
     TraverseObjectMessage.useManualSpeed = useManualSpeed;
     TraverseObjectMessage.usePreDockPose = usePreDockPose;
@@ -966,7 +966,7 @@ public class Robot : IDisposable {
   public void ExecuteBehavior(BehaviorType type) {
     ExecuteBehaviorMessage.behaviorType = type;
     
-    DAS.Debug("Robot", "Execute Behavior " + ExecuteBehaviorMessage.behaviorType);
+    DAS.Debug(this, "Execute Behavior " + ExecuteBehaviorMessage.behaviorType);
 
     RobotEngineManager.Instance.Message.ExecuteBehavior = ExecuteBehaviorMessage;
     RobotEngineManager.Instance.SendMessage();

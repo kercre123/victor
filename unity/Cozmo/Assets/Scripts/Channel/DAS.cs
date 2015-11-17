@@ -7,13 +7,13 @@ using UnityEngine;
 public interface IDAS {
   void Event(string eventValue, UnityEngine.Object context = null);
 
-  void Error(object eventObject, string eventValue, UnityEngine.Object context = null);
+  void Error(string eventValue, UnityEngine.Object context = null);
 
-  void Warn(object eventObject, string eventValue, UnityEngine.Object context = null);
+  void Warn(string eventValue, UnityEngine.Object context = null);
 
-  void Info(object eventObject, string eventValue, UnityEngine.Object context = null);
+  void Info(string eventValue, UnityEngine.Object context = null);
 
-  void Debug(object eventObject, string eventValue, UnityEngine.Object context = null);
+  void Debug(string eventValue, UnityEngine.Object context = null);
 }
 
 public static class DAS {
@@ -126,19 +126,19 @@ public static class DAS {
       DAS.Event(_EventName, eventValue, context);
     }
 
-    public void Error(object eventObject, string eventValue, UnityEngine.Object context = null) {
+    public void Error(string eventValue, UnityEngine.Object context = null) {
       DAS.Error(_EventName, eventValue, context);      
     }
 
-    public void Warn(object eventObject, string eventValue, UnityEngine.Object context = null) {
+    public void Warn(string eventValue, UnityEngine.Object context = null) {
       DAS.Warn(_EventName, eventValue, context);      
     }
 
-    public void Info(object eventObject, string eventValue, UnityEngine.Object context = null) {
+    public void Info(string eventValue, UnityEngine.Object context = null) {
       DAS.Info(_EventName, eventValue, context);      
     }
 
-    public void Debug(object eventObject, string eventValue, UnityEngine.Object context = null) {
+    public void Debug(string eventValue, UnityEngine.Object context = null) {
       DAS.Debug(_EventName, eventValue, context);            
     }
   }

@@ -13,7 +13,7 @@ namespace PatternPlay {
     public override void Enter() {
       base.Enter();
 
-      DAS.Info("PatternPlayState", "HaveIdeaForPattern");
+      DAS.Info(this, "HaveIdeaForPattern");
 
       // pick a pattern to build
       _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
@@ -23,7 +23,7 @@ namespace PatternPlay {
       _HasTargetToBuild = _PatternPlayAutoBuild.PickNewTargetPattern();
 
       if (_HasTargetToBuild == false) {
-        DAS.Info("PatternPlayState", "No new patterns to build, returning to look for pattern");
+        DAS.Info(this, "No new patterns to build, returning to look for pattern");
         return;
       }
 

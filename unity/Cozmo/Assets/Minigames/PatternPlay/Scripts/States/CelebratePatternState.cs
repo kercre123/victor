@@ -9,7 +9,7 @@ namespace PatternPlay {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("State", "CelebratePattern");
+      DAS.Info(this, "CelebratePattern");
       _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
 
       _PatternPlayGame.ClearBlockLights();

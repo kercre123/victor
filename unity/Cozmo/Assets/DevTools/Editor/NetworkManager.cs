@@ -54,7 +54,7 @@ class NetworkManager {
       isActive = true;
     }
     catch (Exception e) {
-      DAS.Debug("NetworkManager", "SocketException: " + e.ToString());
+      DAS.Debug(this, "SocketException: " + e.ToString());
     }
       
   }
@@ -67,7 +67,7 @@ class NetworkManager {
     if (_tcpServer != null) {
       _tcpServer.Stop();
     }
-    DAS.Debug("NetworkManager", String.Format("connection closed {0} : {1}", _listenAddressStr, _listenPort));
+    DAS.Debug(this, String.Format("connection closed {0} : {1}", _listenAddressStr, _listenPort));
   }
 
     
@@ -90,12 +90,12 @@ class NetworkManager {
         ThreadStart job = new ThreadStart(connectionHandler.ThreadEntry);
         Thread thread = new Thread(job);
         thread.Start();
-        DAS.Debug("NetworkManager", "new connection accepted");
+        DAS.Debug(this, "new connection accepted");
         _threads.Add(thread);
       }
     }
     catch (Exception e) {
-      DAS.Debug("NetworkManager", "SocketException: " + e.ToString());
+      DAS.Debug(this, "SocketException: " + e.ToString());
     }
       
   }

@@ -8,7 +8,7 @@ namespace Vortex {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("StateSpinWait", "StateSpinWait");
+      DAS.Info(this, "StateSpinWait");
     }
 
     public override void Update() {

@@ -25,7 +25,7 @@ namespace SpeedTap {
             _StateMachine.SetNextState(new SpeedTapStateBeginMatch());
           }
           else {
-            DAS.Debug("SpeedTapStateGoToCube", "AlignWithObject Failed");
+            DAS.Debug(this, "AlignWithObject Failed");
           }
         });
       }

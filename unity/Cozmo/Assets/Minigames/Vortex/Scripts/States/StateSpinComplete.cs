@@ -10,7 +10,7 @@ namespace Vortex {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("StateSpinComplete2", "StateSpinComplete2");
+      DAS.Info(this, "StateSpinComplete2");
       //_VortexGame = (VortexGame)_StateMachine.GetGame();
     }
 

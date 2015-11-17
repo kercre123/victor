@@ -12,7 +12,7 @@ namespace PatternPlay {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("PatternPlayState", "LookForCubes");
+      DAS.Info(this, "LookForCubes");
       _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
       _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
     }

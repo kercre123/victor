@@ -3,6 +3,8 @@ using System.Collections;
 
 public class AudioManager : MonoBehaviour {
   private static AudioManager instance = null;
+  private static readonly IDAS _DAS = DAS.GetInstance(typeof(AudioSource));
+
 
   [SerializeField]
   private AudioSource _AudioSource;
@@ -23,7 +25,7 @@ public class AudioManager : MonoBehaviour {
 
   public static AudioSource PlayAudioClip(AudioClip clip) {
     if (instance == null) {
-      DAS.Warn("AudioManager", "AudioManager is null");
+      _DAS.Warn("AudioManager is null");
       return null;
     }
     instance._AudioSource.clip = clip;
@@ -34,7 +36,7 @@ public class AudioManager : MonoBehaviour {
 
   public static void Stop() {
     if (instance == null) {
-      DAS.Warn("AudioManager", "AudioManager is null");
+      _DAS.Warn("AudioManager is null");
       return;
     }
     instance._AudioSource.Stop();
