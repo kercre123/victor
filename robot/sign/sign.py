@@ -12,6 +12,11 @@ from struct import pack
 from elftools.elf.elffile import ELFFile
 
 HEADER_LENGTH = 128
+BLOCK_LENGTH = 0x1000
+
+def chunk(i, size):
+	for x in range(0, len(i), size):
+		yield i[x:x+size]
 
 print "Building rom"
 with file(argv[1], "rb") as fo:
@@ -50,23 +55,30 @@ with file(argv[1], "rb+") as fo:
 
 print "Creating signed image"
 with file(argv[2], "wb") as fo:
-	# Pad out rom data to 16-byte blocks
-	rom_data += "\x00" * (16 - len(rom_data) % 16)
+	# Zero pad to a 4k block (flash area)
+	while len(rom_data) % BLOCK_LENGTH:
+		rom_data += "\x00"
 
-	aes_key = number.long_to_bytes(random.getrandbits(256))
-	cypher = AESCipher(aes_key)
-	encoded = cypher.encrypt(rom_data)
+	for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
+		fo.write(data)
+		fo.write(pack("<I", block*BLOCK_LENGTH+base_addr))
+		fo.write(SHA1Hash(data).digest())
 
-	checksum = SHA1Hash(encoded).digest()
+	# == TODO: UNCOMMENT THIS WHEN NEEDED
+	#aes_key = number.long_to_bytes(random.getrandbits(256))
+	#cypher = AESCipher(aes_key)
+	#encoded = cypher.encrypt(rom_data)
 
-	cert = checksum+aes_key
+	#checksum = SHA1Hash(encoded).digest()
 
-	key_path = path.join(path.dirname(argv[0]), 'mykey.pem')
+	#cert = checksum+aes_key
 
-	key = RSA.importKey(open(key_path).read())
-	cipher = PKCS1_OAEP.new(key)
-	ciphertext = cipher.encrypt(cert)
+	#key_path = path.join(path.dirname(argv[0]), 'mykey.pem')
 
-	fo.write(pack("<4sII", "CzmH", len(cert), len(encoded)))
-	fo.write(cert)
-	fo.write(encoded)
+	#key = RSA.importKey(open(key_path).read())
+	#cipher = PKCS1_OAEP.new(key)
+	#ciphertext = cipher.encrypt(cert)
+
+	#fo.write(pack("<4sII", "CzmH", len(cert), len(encoded)))
+	#fo.write(cert)	
+	#fo.write(encoded)
