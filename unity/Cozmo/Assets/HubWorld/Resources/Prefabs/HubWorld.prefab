@@ -40,6 +40,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _HubWorldDialogPrefab: {fileID: 0}
+  _TempLevelAsset: {fileID: 4900000, guid: 3b8f26d3e5db2431c9e274f6065b9548, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
