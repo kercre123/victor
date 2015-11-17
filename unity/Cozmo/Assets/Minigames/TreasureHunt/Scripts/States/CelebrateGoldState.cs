@@ -7,10 +7,10 @@ namespace TreasureHunt {
 
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("majorWin", AnimationDone);
+      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
     }
 
-    void AnimationDone(bool success) {
+    void HandleAnimationDone(bool success) {
       // play animation on phone screen
       (_StateMachine.GetGame() as TreasureHuntGame).ClearBlockLights();
       OnNextHunt();

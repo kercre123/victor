@@ -6,9 +6,9 @@ namespace PatternPlay {
 
   public class PatternMemory {
 
-    public const string PATTERN_MEMORY_BADGE_TAG = "PatternMemory";
+    public const string kPatternMemoryBadgeTag = "PatternMemory";
 
-    public delegate void PatternHandler(BlockPattern patternAdded, MemoryBank bankParent);
+    public delegate void PatternHandler(BlockPattern patternAdded,MemoryBank bankParent);
 
     public event PatternHandler PatternAdded;
 
@@ -90,7 +90,7 @@ namespace PatternPlay {
             newPattern = true;
 
             List<string> tags = new List<string>();
-            tags.Add(PATTERN_MEMORY_BADGE_TAG);
+            tags.Add(kPatternMemoryBadgeTag);
             tags.Add(memoryBanks[i].Name);
             BadgeManager.TryAddBadge(pattern, tags);
             RaisePatternAdded(pattern, memoryBanks[i]);

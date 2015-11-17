@@ -2,10 +2,10 @@
 using System.Collections;
 
 namespace RotationTraining {
-  public class CelebrateState : State {
+  public class LoseState : State {
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
+      _CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
     }
 
     public override void Update() {
@@ -26,3 +26,4 @@ namespace RotationTraining {
   }
 
 }
+
