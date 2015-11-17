@@ -984,9 +984,28 @@ public class Robot : IDisposable {
 
   #region Backpack Lights
 
-  public void SetBackpackLED(LEDId ledToChange, Color color) {
+  public void TurnOffBackpackLED(LEDId ledToChange) {
+    SetBackpackLED((int)ledToChange, 0);
+  }
+
+  public void SetBackpackBarLED(LEDId ledToChange, Color color) {
+    if (ledToChange == LEDId.LED_BACKPACK_LEFT || ledToChange == LEDId.LED_BACKPACK_RIGHT) {
+      DAS.Warn("Robot", "BackpackLighting - LEDId.LED_BACKPACK_LEFT or LEDId.LED_BACKPACK_RIGHT " +
+      "does not have the full range of color. Taking the highest RGB value to use as the light intensity.");
+      float highestIntensity = Mathf.Max(color.r, Mathf.Max(color.g, color.b));
+      SetBackbackArrowLED(ledToChange, highestIntensity);
+    }
+    else {
+      uint colorUint = CozmoPalette.ColorToUInt(color);
+      SetBackpackLED((int)ledToChange, colorUint);
+    }
+  }
+
+  public void SetBackbackArrowLED(LEDId ledId, float intensity) {
+    intensity = Mathf.Clamp(intensity, 0f, 1f);
+    Color color = new Color(intensity, intensity, intensity);
     uint colorUint = CozmoPalette.ColorToUInt(color);
-    SetBackpackLED((int)ledToChange, colorUint);
+    SetBackpackLED((int)ledId, colorUint);
   }
 
   public void SetFlashingBackpackLED(LEDId ledToChange, Color color, uint onDurationMs, uint offDurationMs, uint transitionDurationMs) {
@@ -994,8 +1013,8 @@ public class Robot : IDisposable {
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
-  public void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
-                              uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+  private void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     for (int i = 0; i < BackpackLights.Length; ++i) {
       SetBackpackLED(i, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
     }
@@ -1003,11 +1022,11 @@ public class Robot : IDisposable {
 
   private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
-    // Special case for arrow lights; they only accept white as a color
+    // Special case for arrow lights; they only accept red as a color
     if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
-      uint whiteUint = CozmoPalette.ColorToUInt(Color.white);
-      onColor = (onColor > 0) ? whiteUint : 0;
-      offColor = (offColor > 0) ? whiteUint : 0;
+      //uint whiteUint = CozmoPalette.ColorToUInt(Color.white);
+      //onColor = (onColor > 0) ? whiteUint : 0;
+      //offColor = (offColor > 0) ? whiteUint : 0;
     }
 
     BackpackLights[index].OnColor = onColor;
@@ -1016,14 +1035,17 @@ public class Robot : IDisposable {
     BackpackLights[index].OffPeriodMs = offPeriod_ms;
     BackpackLights[index].TransitionOnPeriodMs = transitionOnPeriod_ms;
     BackpackLights[index].TransitionOffPeriodMs = transitionOffPeriod_ms;
+
+    if (index == (int)LEDId.LED_BACKPACK_RIGHT) {
+      
+    }
   }
 
   // should only be called from update loop
   private void SetAllBackpackLEDs() {
 
     SetBackpackLEDsMessage.robotID = ID;
-
-    for (int i = 0; i < BackpackLights.Length; ++i) {
+    for (int i = 0; i < BackpackLights.Length; i++) {
       SetBackpackLEDsMessage.onColor[i] = BackpackLights[i].OnColor;
       SetBackpackLEDsMessage.offColor[i] = BackpackLights[i].OffColor;
       SetBackpackLEDsMessage.onPeriod_ms[i] = BackpackLights[i].OnPeriodMs;

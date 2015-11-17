@@ -94,10 +94,10 @@ namespace DockTraining {
       // set light cube color based on _RotateCubeState
       _CurrentRobot.LightCubes[_CubeID].SetLEDs(CozmoPalette.ColorToUInt(_RotateCubeColors[(int)_RotateCubeState]));
 
-      _DriveWheelLeftSpeed = Mathf.Lerp(_DriveWheelLeftSpeed, Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Time.deltaTime * 10.0f);
-      _DriveWheelRightSpeed = Mathf.Lerp(_DriveWheelRightSpeed, Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Time.deltaTime * 10.0f);
-      _CurrentRobot.DriveWheels(_DriveWheelLeftSpeed, _DriveWheelRightSpeed);
-      //_CurrentRobot.DriveWheels(Random.Range(-10.0f, 45.0f), Random.Range(-10.0f, 45.0f));
+      //_DriveWheelLeftSpeed = Mathf.Lerp(_DriveWheelLeftSpeed, Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Time.deltaTime * 10.0f);
+      //_DriveWheelRightSpeed = Mathf.Lerp(_DriveWheelRightSpeed, Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Time.deltaTime * 10.0f);
+      //_CurrentRobot.DriveWheels(_DriveWheelLeftSpeed, _DriveWheelRightSpeed);
+      _CurrentRobot.DriveWheels(Random.Range(_DriveWheelRandMin, _DriveWheelRandMax), Random.Range(_DriveWheelRandMin, _DriveWheelRandMax));
     }
 
     private void HandleCubeMoved(int cubeID, float x, float y, float z) {

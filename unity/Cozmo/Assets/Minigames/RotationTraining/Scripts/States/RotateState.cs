@@ -71,7 +71,7 @@ namespace RotationTraining {
 
       // Pick a cube state randomly
       _RotateCubeState = Random.Range(0.0f, 1.0f) > 0.5f ? RotateCubeState.Left : RotateCubeState.Right;
-      UpdateRobotLEDs();
+      UpdateRobotLEDs(_RotateCubeState);
 
       // Set the next change time to sometime in the future.
       _NextCubeChangeTimestamp = GenerateNextChangeTime();
@@ -79,7 +79,6 @@ namespace RotationTraining {
       // Set up flashing cube timer.
       _FlashCubeTimer = new Timer(_FlashCubeLightMs);
       _FlashCubeTimer.AutoReset = false;
-      //_FlashCubeTimer.Elapsed += HandleFlashCubeTimerStopped;
       _FlashCubeTimer.Stop();
 
       // Select target angle
@@ -148,6 +147,7 @@ namespace RotationTraining {
         if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
           _CurrentWheelRightSpeed = 0;
           _CurrentWheelLeftSpeed = 0;
+          _GameInstance.PlayDirectionChangeSound();
         }
         // Increase wheel speed with each shake
         _CurrentWheelRightSpeed += _CubeShakeWheelSpeedMmpsModifier;
@@ -158,6 +158,7 @@ namespace RotationTraining {
         if (_CurrentWheelRightSpeed > 0 || _CurrentWheelLeftSpeed < 0) {
           _CurrentWheelRightSpeed = 0;
           _CurrentWheelLeftSpeed = 0;
+          _GameInstance.PlayDirectionChangeSound();
         }
         // Increase wheel speed with each shake
         _CurrentWheelRightSpeed -= _CubeShakeWheelSpeedMmpsModifier;
@@ -171,8 +172,8 @@ namespace RotationTraining {
       _FlashCubeTimer.Elapsed += HandleFlashCubeOnce;
       HandleFlashCubeOnce(null, null);
 
-      Anki.Cozmo.LEDId currentLedId = GetRotateLEDId();
-      _CurrentRobot.SetFlashingBackpackLED(currentLedId, GetRotateLightColor(), _FlashCubeLightMs, _FlashCubeLightMs, 0);
+      Anki.Cozmo.LEDId currentLedId = GetRotateLEDId(_RotateCubeState);
+      _CurrentRobot.SetFlashingBackpackLED(currentLedId, Color.white, _FlashCubeLightMs, _FlashCubeLightMs, 0);
     }
 
     private void HandleFlashCubeOnce(object source, ElapsedEventArgs e) {
@@ -198,15 +199,19 @@ namespace RotationTraining {
       else {
         _RotateCubeState = RotateCubeState.Left;
       }
-      UpdateRobotLEDs();
+      UpdateRobotLEDs(_RotateCubeState);
+      _GameInstance.PlayColorChangeSound();
     }
 
-    private void UpdateRobotLEDs() {
+    private void UpdateRobotLEDs(RotateCubeState rotateState) {
       // set light cube color based on _RotateCubeState
       Color rotateColor = GetRotateLightColor();
       _TurningCube.SetLEDs(rotateColor);
-      _CurrentRobot.SetBackpackLEDs(0);
-      _CurrentRobot.SetBackpackLED(GetRotateLEDId(), Color.white);
+
+      RotateState.RotateCubeState oldState = (rotateState == RotateCubeState.Left) ? RotateCubeState.Right : RotateCubeState.Left;
+
+      _CurrentRobot.TurnOffBackpackLED(GetRotateLEDId(oldState));
+      _CurrentRobot.SetBackbackArrowLED(GetRotateLEDId(rotateState), 1f);
     }
 
     private float GenerateNextChangeTime() {
@@ -221,30 +226,22 @@ namespace RotationTraining {
 
     private Color GetRotateLightColor() {
       Color rotateColor = Color.white;
-      switch (_RotateCubeState) {
-      case RotateCubeState.Left:
+      if (_RotateCubeState == RotateCubeState.Left) {
         rotateColor = Color.green;
-        break;
-      case RotateCubeState.Right:
+      }
+      else {
         rotateColor = Color.blue;
-        break;
-      default:
-        break;
       }
       return rotateColor;
     }
 
-    private Anki.Cozmo.LEDId GetRotateLEDId() {
-      Anki.Cozmo.LEDId ledId = Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT;
-      switch (_RotateCubeState) {
-      case RotateCubeState.Left:
+    private Anki.Cozmo.LEDId GetRotateLEDId(RotateCubeState cubeState) {
+      Anki.Cozmo.LEDId ledId;
+      if (cubeState == RotateCubeState.Left) {
         ledId = Anki.Cozmo.LEDId.LED_BACKPACK_LEFT;
-        break;
-      case RotateCubeState.Right:
+      }
+      else {
         ledId = Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT;
-        break;
-      default:
-        break;
       }
       return ledId;
     }
