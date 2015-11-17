@@ -1,15 +1,15 @@
-#include "rec_protocol.h"
+#include "../../include/anki/cozmo/robot/rec_protocol.h"
 
 #include "MK02F12810.h"
 #include "recovery.h"
 #include "sha1.h"
+#include "timer.h"
 
 static const int FLASH_BLOCK_SIZE = 0x800;
 
-
-static inline spiWord WaitForWord(void) {
+static inline commandWord WaitForWord(void) {
   while(~SPI0_SR & SPI_SR_RFDF_MASK) ;  // Wait for a byte
-  spiWord ret = SPI0_POPR;
+  commandWord ret = SPI0_POPR;
   SPI0_SR = SPI0_SR;
   return ret;
 }
@@ -146,11 +146,11 @@ static inline bool FlashBlock() {
     uint8_t    checkSum[SHA1_BLOCK_SIZE];
   };
 
-  static const int length = sizeof(Packet) / sizeof(spiWord);
+  static const int length = sizeof(Packet) / sizeof(commandWord);
   
   static union {
     Packet packet;    
-    spiWord raw[length];
+    commandWord raw[length];
   };
 
   // Load raw packet into memory

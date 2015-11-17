@@ -9,10 +9,9 @@
 #include "../../hal/hardware.h"
 #include "../../../include/anki/cozmo/robot/spineData.h"
 
-#include "rec_protocol.h"
+#include "../../../include/anki/cozmo/robot/rec_protocol.h"
 
 static const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
-static const int SECURE_SPACE = 0x1000;
 static const int MAX_TIMEOUT = 1000000;
 
 static bool UartWritting = false;
@@ -45,54 +44,46 @@ void setTransmit(bool tx) {
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-static uint8_t ReadByte(void) {
-  while (!NRF_UART0->EVENTS_RXDRDY) ;
-
-  // We received a word
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  return NRF_UART0->RXD;
-}
-
-static int ReadUart(void) {
-  setTransmit(false);
-
-  // Wait with timeout
-  int waitTime = GetCounter() + MAX_TIMEOUT;
-  while (!NRF_UART0->EVENTS_RXDRDY) {
-    if (GetCounter() > waitTime) return -1;
+static commandWord ReadWord(void) {
+  commandWord word = 0;
+  
+  for (int i = 0; i < sizeof(commandWord); i++) {
+    while (!NRF_UART0->EVENTS_RXDRDY) ;    
+    word |= (NRF_UART0->RXD) << (i * 8);
   }
 
-  // We received a word
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  return NRF_UART0->RXD;
+  return word;
 }
 
-static bool WaitWord(uint32_t target) {
-  uint32_t word = 0;
-  
-  for (int i = 0; i < sizeof(target); i++) {
-    int read = ReadUart();
+static bool WaitWord(commandWord target) {
+  setTransmit(false);
 
-    if (read < 0) return false;
+  commandWord word = 0;
+  
+  while (target != word) {
+    // Wait with timeout
+    int waitTime = GetCounter() + MAX_TIMEOUT;
+    while (!NRF_UART0->EVENTS_RXDRDY) {
+      if (GetCounter() > waitTime) return false;
+    }
+
+    // We received a word
+    NRF_UART0->EVENTS_RXDRDY = 0;
     
-    word |= read << (i * 8);
+    word = (word << 8) | NRF_UART0->RXD;
   }
 
   return word == target;
 }
 
-static void WriteUart(uint8_t data) {
+static void WriteWord(commandWord word) {
   setTransmit(true);
 
-  NRF_UART0->EVENTS_TXDRDY = 0;    
-  NRF_UART0->TXD = data;
+  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
+    NRF_UART0->TXD = word >> (i * 8);
 
-  while (!NRF_UART0->EVENTS_TXDRDY) ;
-}
-
-static void WriteWord(uint32_t word) {
-  for (int i = 0; i < sizeof(word); i++) {
-    WriteUart((word >> (i * 8)) & 0xFF);
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+    NRF_UART0->EVENTS_TXDRDY = 0;
   }
 }
 
@@ -162,14 +153,16 @@ static inline bool FlashBlock() {
     uint8_t    checkSum[SHA1_BLOCK_SIZE];
   };
 
+  const int wordCount = sizeof(Packet) / sizeof(commandWord);
+  
   static union {
     Packet packet;    
-    uint8_t raw[sizeof(Packet)];
+    commandWord raw[wordCount];
   };
 
   // Load raw packet into memory
-  for (int i = 0; i < sizeof(raw); i++) {
-    raw[i] = ReadByte();
+  for (int i = 0; i < wordCount; i++) {
+    raw[i] = ReadWord();
   }
 
   // Check the SHA-1 of the packet to verify that transmission actually worked
@@ -209,12 +202,12 @@ void EnterRecovery(void) {
 
   for (;;) {
     do {
-      WriteWord(RECOVER_SOURCE_BODY);
-      WriteUart(state);
-    } while (!WaitWord(RECOVER_SOURCE_HEAD));
+      WriteWord(COMMAND_HEADER);
+      WriteWord(state);
+    } while (!WaitWord(COMMAND_HEADER));
 
     // Receive command packet
-    switch (ReadByte()) {
+    switch (ReadWord()) {
       case COMMAND_DONE:
         state = STATE_IDLE;
         return ;
