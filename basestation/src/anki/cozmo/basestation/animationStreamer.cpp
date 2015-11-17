@@ -297,10 +297,8 @@ namespace Cozmo {
     // Squint the current face while picking/placing to show concentration:
     if(robot.IsPickingOrPlacing()) {
       for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right}) {
-        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
+        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY,
                               GET_PARAM(f32, DockSquintEyeHeight));
-        nextFace.SetParameter(whichEye, ProceduralFace::Parameter::BrowCenY,
-                              GET_PARAM(f32, DockSquintEyebrowHeight));
       }
       // Make sure squinting face gets displayed:
       if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
@@ -332,23 +330,24 @@ namespace Cozmo {
       PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
 #     endif
       ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
+      
       ProceduralFace blinkFace(crntFace);
-      blinkFace.Blink();
       
-      // Close: interpolate from current face to blink face (eyes closed)
-      blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + GET_PARAM(s32, BlinkCloseTime_ms));
-      lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
-      
-      // Open: interpolate from blink face (eyes closed) back to current face
-      crntFace.SetTimeStamp(blinkFace.GetTimeStamp() + GET_PARAM(s32, BlinkOpenTime_ms));
-      lastResult = StreamProceduralFace(robot, blinkFace, crntFace, _liveAnimation);
-      if(RESULT_OK != lastResult) {
-        return lastResult;
-      }
-      
+      bool moreBlinkFrames = false;
+      do {
+        TimeStamp_t timeInc;
+        moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
+        
+        blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + timeInc);
+        
+        lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
+        if(RESULT_OK != lastResult) {
+          return lastResult;
+        }
+        crntFace = blinkFace;
+        
+      } while(moreBlinkFrames);
+
       // Pick random next time to blink
       _nextBlink_ms = _rng.RandIntInRange(GET_PARAM(s32, BlinkSpacingMinTime_ms),
                                           GET_PARAM(s32, BlinkSpacingMaxTime_ms));
@@ -388,11 +387,7 @@ namespace Cozmo {
             x = (speed < 0 ? _rng.RandDblInRange(-kMaxPupilMovement, 0.) : _rng.RandDblInRange(0., kMaxPupilMovement));
             y = _rng.RandDblInRange(-kMaxPupilMovement, kMaxPupilMovement);
           }
-          for(auto whichEye : {ProceduralFace::Left, ProceduralFace::Right})
-          {
-            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX, x);
-            crntFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY, y);
-          }
+          crntFace.SetFacePosition({x,y});
           
           ProceduralFaceKeyFrame kf(crntFace);
           kf.SetIsLive(true);
