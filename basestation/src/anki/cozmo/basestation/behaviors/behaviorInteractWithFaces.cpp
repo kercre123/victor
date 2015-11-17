@@ -601,23 +601,7 @@ namespace Cozmo {
       if(_baselineEyeHeight != 0.f) {
         proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleX,
                                     std::max(-.8f, std::min(.8f, eyeHeightFraction)));
-//        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-//                                    std::max(-.75f, std::min(.75f, eyeHeightFraction)));
       }
-
-      /*
-      // To get saccade-like movement, only update the pupils if they new position is
-      // different enough
-      Point2f pupilChange(newPupilPos);
-      pupilChange.x() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
-      pupilChange.y() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
-      //if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
-                                         -newPupilPos.x());
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
-                                         newPupilPos.y());
-      //}
-       */
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)

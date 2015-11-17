@@ -119,7 +119,7 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetParameter(WhichEye whichEye, Parameter param, Value value)
   {
-    _eyeParams[whichEye][static_cast<size_t>(param)] = value; //std::max(-1.f, std::min(1.f, value));
+    _eyeParams[whichEye][static_cast<size_t>(param)] = value;
   }
   
   inline ProceduralFace::Value ProceduralFace::GetParameter(WhichEye whichEye, Parameter param) const
@@ -137,8 +137,6 @@ namespace Cozmo {
   
   inline void ProceduralFace::SetFacePosition(Point<2, Value> center) {
     _faceCenter = center;
-    //    _faceCenter.x() = std::max(-1.f, std::min(1.f, center.x()));
-    //    _faceCenter.y() = std::max(-1.f, std::min(1.f, center.y()));
   }
   
   inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFacePosition() const {
