@@ -44,7 +44,7 @@ namespace Cozmo {
   {
   public:
     static void PlayEvent(Audio::EventType audioEvent, f32 volume) { }
-    static bool GetBufferedData(size_t numBytes, u8* buffer) { return false; }
+    static s32 GetBufferedData(size_t numBytes, u8* buffer) { return 0; }
   };
   
   

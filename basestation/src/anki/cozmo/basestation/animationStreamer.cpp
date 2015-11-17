@@ -231,10 +231,16 @@ namespace Cozmo {
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
   {
     AnimKeyFrame::AudioSample audioSample;
-    if(AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
-                                     &(audioSample.sample[0])))
+    const s32 numBytes = AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
+                                                       &(audioSample.sample[0]));
+    if(numBytes > 0)
     {
-       BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
+      // If we didn't get the requested number of bytes, fill the rest of the sample
+      // with zeros
+      if(numBytes < static_cast<s32>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
+        std::fill(audioSample.sample.begin()+numBytes, audioSample.sample.end(), 0);
+      }
+      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
     } else if(sendSilence) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
