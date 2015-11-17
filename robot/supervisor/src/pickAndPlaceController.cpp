@@ -161,7 +161,6 @@ namespace Anki {
         switch(mode_)
         {
           case IDLE:
-            ProxSensors::EnableCliffDetector(true);
             break;
             
           case SET_LIFT_PREDOCK:
@@ -388,6 +387,7 @@ namespace Anki {
               }
               case DA_ROLL_LOW:
               {
+                ProxSensors::EnableCliffDetector(false);
                 LiftController::SetMaxSpeedAndAccel(0.75, 100);
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 mode_ = MOVING_LIFT_FOR_ROLL;
@@ -395,6 +395,7 @@ namespace Anki {
               }
               case DA_POP_A_WHEELIE:
                 // Move lift down fast and drive forward fast
+                ProxSensors::EnableCliffDetector(false);
                 LiftController::SetMaxSpeedAndAccel(10, 200);         // TODO: Restore these afterwards?
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK);
                 SpeedController::SetUserCommandedAcceleration(100);   // TODO: Restore this accel afterwards?
@@ -421,6 +422,8 @@ namespace Anki {
             // Either the robot has pitched up, or timeout
             if (IMUFilter::GetPitch() > 1.2 || HAL::GetTimeStamp() > transitionTime_) {
               SteeringController::ExecuteDirectDrive(0, 0);
+              SendBlockPlacedMessage(true);  // TODO: Send different message?
+                                             //       Only doing this here so that the engine knows docking succeeded.
               mode_ = IDLE;
             }
             break;
@@ -490,6 +493,7 @@ namespace Anki {
               SteeringController::ExecuteDirectDrive(0,0);
               
               if (HeadController::IsInPosition()) {
+                ProxSensors::EnableCliffDetector(true);
                 mode_ = IDLE;
                 lastActionSucceeded_ = true;
               }
@@ -660,9 +664,6 @@ namespace Anki {
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
         
-        if (action_ == DA_ROLL_LOW) {
-          ProxSensors::EnableCliffDetector(false);
-        }
       }
 
       void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)

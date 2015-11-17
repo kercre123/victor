@@ -2500,7 +2500,7 @@ namespace Anki {
     {
       Pose3d objectPose;
       if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), objectPose) == false) {
-        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.PoseWrtFailed",
+        PRINT_NAMED_WARNING("PopAWheelieAction.SelectDockAction.PoseWrtFailed",
                             "Could not get pose of dock object w.r.t. robot's parent.");
         return RESULT_FAIL;
       }
@@ -2535,18 +2535,26 @@ namespace Anki {
         case DockAction::DA_POP_A_WHEELIE:
         {
           if(robot.GetLastPickOrPlaceSucceeded()) {
-            
+            // Check that the robot is sufficiently pitched up
+            if (robot.GetPitchAngle() < 1.f) {
+              PRINT_NAMED_INFO("PopAWheelieAction.Verify.PitchAngleTooSmall",
+                               "Robot pitch angle expected to be higher (measured %f rad)",
+                               robot.GetPitchAngle());
+              result = ActionResult::FAILURE_RETRY;
+            } else {
+              result = ActionResult::SUCCESS;
+            }
             
           } else {
             // If the robot thinks it failed last pick-and-place, it is because it
             // failed to dock/track.
-            PRINT_NAMED_INFO("PopAWheelieAction.Verify",
+            PRINT_NAMED_INFO("PopAWheelieAction.Verify.DockingFailed",
                              "Robot reported pop-a-wheelie failure. Assuming docking failed");
             result = ActionResult::FAILURE_RETRY;
           }
           
           break;
-        } // ROLL_LOW
+        } // DA_POP_A_WHEELIE
           
           
         default:

@@ -358,6 +358,10 @@ namespace Anki {
       
       // Update lift angle
       SetLiftAngle(msg.liftAngle);
+      
+      // Update robot pitch angle
+      _pitchAngle = msg.pose.pitch_angle;
+      
 
       // TODO: (KY/DS) remove SetProxSensorData
       //// Update proximity sensor values
@@ -1128,6 +1132,11 @@ namespace Anki {
       Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
       CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
+    }
+    
+    f32 Robot::GetPitchAngle()
+    {
+      return _pitchAngle;
     }
         
     void Robot::SelectPlanner(const Pose3d& targetPose)
@@ -2229,7 +2238,7 @@ namespace Anki {
     {
       if(IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
-                            "Robot not carrying object, but told to place one. (Possibly actually rolling.\n");
+                            "Robot not carrying object, but told to place one. (Possibly actually rolling or balancing or popping a wheelie.\n");
         return RESULT_FAIL;
       }
       
