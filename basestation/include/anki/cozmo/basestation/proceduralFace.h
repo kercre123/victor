@@ -3,6 +3,7 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/matrix.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "clad/types/proceduralEyeParameters.h"
 
@@ -101,6 +102,9 @@ namespace Cozmo {
     static const cv::Rect imgRect;
     
     void DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
+    
+    static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
+                                                        f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
     
     // Container for the parameters for both eyes
     std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;

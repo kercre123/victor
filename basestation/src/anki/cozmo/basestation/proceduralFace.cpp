@@ -68,6 +68,42 @@ namespace Cozmo {
     }
   }
   
+  SmallMatrix<2,3,f32> ProceduralFace::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
+                                                               f32 tX, f32 tY, f32 x0, f32 y0)
+  {
+    //
+    // Create a 2x3 warp matrix which incorporates scale, rotation, and translation
+    //    W = R * [scale_x    0   ] * [x - x0] + [x0] + [tx]
+    //            [   0    scale_y]   [y - y0] + [y0] + [ty]
+    //
+    // So a given point gets scaled (first!) and then rotated around the given center
+    // (x0,y0)and then translated by (tx,ty).
+    //
+    // Note: can't use cv::getRotationMatrix2D, b/c it only incorporates one
+    // scale factor, not separate scaling in x and y. Otherwise, this is
+    // exactly the same thing
+    //
+    f32 cosAngle = 1, sinAngle = 0;
+    if(angleDeg != 0) {
+      const f32 angleRad = DEG_TO_RAD(angleDeg);
+      cosAngle = std::cos(angleRad);
+      sinAngle = std::sin(angleRad);
+    }
+    
+    const f32 alpha_x = scaleX * cosAngle;
+    const f32 beta_x  = scaleX * sinAngle;
+    const f32 alpha_y = scaleY * cosAngle;
+    const f32 beta_y  = scaleY * sinAngle;
+
+    SmallMatrix<2, 3, float> W{
+      alpha_x, beta_y,  (1.f - alpha_x)*x0 - beta_y*y0 + tX,
+      -beta_x, alpha_y, beta_x*x0 + (1.f - alpha_y)*y0 + tY
+    };
+
+    return W;
+  } // GetTransformationMatrix()
+
+  
   void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
   {
     assert(faceImg.rows == ProceduralFace::HEIGHT &&
@@ -191,17 +227,11 @@ namespace Cozmo {
     }
     
     // Apply rotation, translation, and scaling to the eye and lid polygons:
-    
-    // TODO: apply transformation to poly before filling it
-    const f32 angleRad = DEG_TO_RAD(GetParameter(whichEye, Parameter::EyeAngle));
-    const f32 cosTheta = std::cos(angleRad);
-    const f32 sinTheta = std::sin(angleRad);
-    const f32 scaleX = GetParameter(whichEye, Parameter::EyeScaleX);
-    const f32 scaleY = GetParameter(whichEye, Parameter::EyeScaleY);
-    SmallMatrix<2, 3, f32> W{
-       scaleX * cosTheta, scaleX * sinTheta, GetParameter(whichEye, Parameter::EyeCenterX),
-      -scaleY * sinTheta, scaleY * cosTheta, GetParameter(whichEye, Parameter::EyeCenterY)
-    };
+    SmallMatrix<2, 3, f32> W = GetTransformationMatrix(GetParameter(whichEye, Parameter::EyeAngle),
+                                                       GetParameter(whichEye, Parameter::EyeScaleX),
+                                                       GetParameter(whichEye, Parameter::EyeScaleY),
+                                                       GetParameter(whichEye, Parameter::EyeCenterX),
+                                                       GetParameter(whichEye, Parameter::EyeCenterY));
     
     for(auto poly : {&eyePoly, &lowerLidPoly, &upperLidPoly})
     {
@@ -237,36 +267,12 @@ namespace Cozmo {
     
     // Apply whole-face params
     if(_faceAngle != 0 || !(_faceCenter == 0) || !(_faceScale == 1.f)) {
-      //
-      // Create a 2x3 warp matrix which incorporates scale, rotation, and translation
-      //    W = [scale_x    0   ] * R * [x - x0] + [x0] + [tx]
-      //        [   0    scale_y]       [y - y0] + [y0] + [ty]
-      //
-      // So a given point gets scaled and rotated around the center of the image
-      // ((x0,y0) is the image center) and then translated by (tx,ty), which is
-      // stored in _faceCenter.
-      //
-      // Note: can't use cv::getRotationMatrix2D, b/c it only incorporates one
-      // scale factor, not separate scaling in x and y. Otherwise, this is
-      // exactly the same thing
-      //
-      f32 cosAngle = 1, sinAngle = 0;
-      if(_faceAngle != 0) {
-        const f32 angleRad = DEG_TO_RAD(_faceAngle);
-        cosAngle = std::cos(angleRad);
-        sinAngle = std::sin(angleRad);
-      }
       
-      const f32 alpha_x = _faceScale.x() * cosAngle;
-      const f32 beta_x  = _faceScale.x() * sinAngle;
-      const f32 alpha_y = _faceScale.y() * cosAngle;
-      const f32 beta_y  = _faceScale.y() * sinAngle;
-      const f32 x0 = static_cast<f32>(WIDTH) * 0.5f;
-      const f32 y0 = static_cast<f32>(HEIGHT) * 0.5f;
-      SmallMatrix<2, 3, float> W{
-        alpha_x, beta_x,  (1.f - alpha_x)*x0 - beta_x*y0 + _faceCenter.x(),
-        -beta_y, alpha_y, beta_y*x0 + (1.f - alpha_y)*y0 + _faceCenter.y()
-      };
+      SmallMatrix<2, 3, float> W = GetTransformationMatrix(_faceAngle,
+                                                           _faceScale.x(), _faceScale.y(),
+                                                           _faceCenter.x(), _faceCenter.y(),
+                                                           static_cast<f32>(WIDTH)*0.5f,
+                                                           static_cast<f32>(HEIGHT)*0.5f);
       
       cv::warpAffine(faceImg, faceImg, W.get_CvMatx_(), cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
