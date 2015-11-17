@@ -80,7 +80,8 @@ public static class Localization {
     // TODO(BRC) Dynamically read variable number of strings files
     string[] resources = {
       "SimpleStrings",
-      "MinigameStrings"
+      "MinigameStrings",
+      "ChallengeTitleStrings"
     };
 
     string locale = GetStringsLocale();

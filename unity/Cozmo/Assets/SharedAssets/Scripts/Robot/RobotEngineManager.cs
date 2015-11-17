@@ -42,6 +42,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
+  public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
+  public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
 
   // Audio Callback events
   public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
@@ -70,7 +72,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
 
   private void OnEnable() {
-    DAS.Info(this, "Enabling Robot Engine Manager");
+    DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
     if (Instance != null && Instance != this) {
       Destroy(gameObject);
       return;
@@ -87,7 +89,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (config == null) {
-      DAS.Error(this, "Error initializing CozmoBinding: No configuration.");
+      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.");
     }
     else {
       CozmoBinding.Startup(config.text);
@@ -164,7 +166,7 @@ public class RobotEngineManager : MonoBehaviour {
       float limit = Time.realtimeSinceStartup + 2.0f;
       while (_Channel.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
-          DAS.Warn(this, "Not waiting for disconnect to finish sending.");
+          DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
           break;
         }
         System.Threading.Thread.Sleep(500);
@@ -186,7 +188,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    DAS.Debug(this, "Disconnected: " + reason.ToString());
+    DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
     _IsRobotConnected = false;
 
     _LastDisconnectionReason = reason;
@@ -197,7 +199,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendMessage() {
     if (!IsConnected) {
-      DAS.Warn(this, "Message not sent because not connected");
+      DAS.Warn("RobotEngineManager", "Message not sent because not connected");
       return;
     }
 
@@ -288,7 +290,7 @@ public class RobotEngineManager : MonoBehaviour {
       break;
 
     default:
-      DAS.Warn(this, message.GetTag() + " is not supported");
+      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
     }
   }
@@ -312,11 +314,11 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
-    DAS.Debug(this, "Device connected: " + message.deviceID.ToString());
+    DAS.Debug("RobotEngineManager", "Device connected: " + message.deviceID.ToString());
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    DAS.Error(this, "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
+    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
@@ -382,7 +384,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
 
-    DAS.Debug(this, "Deleted object with ID " + message.objectID);
+    DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
 
     ObservedObject deleted = CurrentRobot.SeenObjects.Find(x => x == message.objectID);
 
@@ -409,7 +411,7 @@ public class RobotEngineManager : MonoBehaviour {
     Face deleted = CurrentRobot.Faces.Find(x => x == message.faceID);
 
     if (deleted != null) {
-      DAS.Debug(this, "Deleted face with ID " + message.faceID);
+      DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
       CurrentRobot.Faces.Remove(deleted);
     }
 
@@ -470,8 +472,10 @@ public class RobotEngineManager : MonoBehaviour {
     }
     else {
       for (EmotionType i = 0; i < EmotionType.Count; ++i) {
-        //DAS.Info(this, "Robot " + message.robotID.ToString() + ": Emotion '" + i + "' = " + message.emotionValues[(int)i]);
-        CurrentRobot.UpdateEmotionFromEngineRobotManager(i, message.emotionValues[(int)i]);
+        //DAS.Info("Mood", "Robot " + message.robotID.ToString() + ": Emotion '" + i + "' = " + message.emotionValues[(int)i]);
+        if (OnEmotionRecieved != null) {
+          OnEmotionRecieved(i, message.emotionValues[(int)i]);
+        }
       }
     }
   }
@@ -486,8 +490,10 @@ public class RobotEngineManager : MonoBehaviour {
     else {
      
       for (ProgressionStatType i = 0; i < ProgressionStatType.Count; ++i) {
-        // DAS.Info(this, "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
-        CurrentRobot.UpdateProgressionStatFromEngineRobotManager(i, message.statValues[(int)i]);
+        // DAS.Info("Progression", "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
+        if (OnProgressionStatRecieved != null) {
+          OnProgressionStatRecieved(i, message.statValues[(int)i]);
+        }
       }
     }
   }
