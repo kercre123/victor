@@ -1,0 +1,27 @@
+{
+    "smartling": {
+        "translate_paths": [
+            "*/translation"
+        ],
+        "variants_enabled": true,
+        "translate_mode": "custom",
+        "placeholder_format_custom": [
+            "%%[^%]+?%%",
+            "%[^%]+?%",
+            "##[^#]+?##",
+            "__[^_]+?__",
+            "[$]\\{[^\\}\\{]+?\\}",
+            "\\{\\{[^\\}\\{]+?\\}\\}",
+            "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+        ],
+        "source_key_paths": [
+            "/{*}"
+        ]
+    },
+    "hubWorld.askCozmo.askCozmo1" : {
+        "translation" : "Ask Cozmo Challenge 1"
+    },
+    "hubWorld.askCozmo.askCozmo2" : {
+        "translation" : "Ask Cozmo Challenge 2"
+    }
+}

@@ -10,16 +10,25 @@ public class HubWorldDialog : BaseDialog {
   public event ButtonClickedHandler OnButtonClicked;
 
   [SerializeField]
+  private HubWorldButton _HubWorldButtonPrefab;
+
+  [SerializeField]
   private RectTransform _ButtonContainer;
 
   [SerializeField]
   private ScrollRect _ScrollRect;
 
-  private List<ChallengeData> _ChallengeList;
-
   public void Initialize(List<ChallengeData> challengeList) {
-    _ChallengeList = challengeList;
-    // TODO: populate UI with challenge list
+
+    GameObject newButton;
+    HubWorldButton buttonScript;
+
+    for (int i = 0; i < challengeList.Count; ++i) {
+      newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _ButtonContainer);
+      buttonScript = newButton.GetComponent<HubWorldButton>();
+      buttonScript.Initialize(challengeList[i]);
+    }
+
     _ScrollRect.verticalNormalizedPosition = 1.0f;
   }
 

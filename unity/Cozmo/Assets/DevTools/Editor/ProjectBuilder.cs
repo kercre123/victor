@@ -121,6 +121,9 @@ public class ProjectBuilder {
       }
     }
 
+    // Generates the list of challenges
+    ChallengeCompiler.GenerateChallengeList();
+
     // Later on use this to switch between building for different targets
     // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
     
