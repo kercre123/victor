@@ -41,7 +41,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _GameId: rotationTraining
   _GamePanelPrefab: {fileID: 11487520, guid: 8554dffa5734f4846b69ee00b7373202, type: 2}
-  _ChangeDirectionSound: {fileID: 0}
+  _ColorChangeSound: {fileID: 8300000, guid: 5867bf7a6b7d24d38bde2720e193f07d, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -58,6 +58,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11487520, guid: 8554dffa5734f4846b69ee00b7373202,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ColorChangeSound
+      value: 
+      objectReference: {fileID: 8300000, guid: 5867bf7a6b7d24d38bde2720e193f07d, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 194240}

@@ -11,6 +11,9 @@ namespace RotationTraining {
     private RotationTrainingPanel _GamePanelPrefab;
     private RotationTrainingPanel _GamePanel;
 
+    [SerializeField]
+    private AudioClip _ColorChangeSound;
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
@@ -42,6 +45,10 @@ namespace RotationTraining {
 
     public void SetTimeLeft(int secondsLeft) {
       _GamePanel.SetTimeLeft(secondsLeft);
+    }
+
+    public void PlayColorChangeSound() {
+      AudioManager.PlayAudioClip(_ColorChangeSound);
     }
   }
 }

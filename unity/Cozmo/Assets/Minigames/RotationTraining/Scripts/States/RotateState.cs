@@ -147,6 +147,7 @@ namespace RotationTraining {
         if (_CurrentWheelRightSpeed < 0 || _CurrentWheelLeftSpeed > 0) {
           _CurrentWheelRightSpeed = 0;
           _CurrentWheelLeftSpeed = 0;
+          (_StateMachine.GetGame() as RotationTrainingGame).PlayColorChangeSound();
         }
         // Increase wheel speed with each shake
         _CurrentWheelRightSpeed += _CubeShakeWheelSpeedMmpsModifier;
@@ -157,6 +158,7 @@ namespace RotationTraining {
         if (_CurrentWheelRightSpeed > 0 || _CurrentWheelLeftSpeed < 0) {
           _CurrentWheelRightSpeed = 0;
           _CurrentWheelLeftSpeed = 0;
+          (_StateMachine.GetGame() as RotationTrainingGame).PlayColorChangeSound();
         }
         // Increase wheel speed with each shake
         _CurrentWheelRightSpeed -= _CubeShakeWheelSpeedMmpsModifier;

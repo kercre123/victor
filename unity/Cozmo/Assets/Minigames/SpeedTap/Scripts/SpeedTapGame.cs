@@ -115,5 +115,4 @@ namespace SpeedTap {
       return farthest as LightCube;
     }
   }
-
 }
