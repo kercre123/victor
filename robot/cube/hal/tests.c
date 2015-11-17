@@ -9,7 +9,7 @@
 void StreamAccelerometer()
 {
   #ifdef STREAM_ACCELEROMETER
-  volatile s8 accData[8];
+  volatile s8 accData[6];
   InitUart();
   InitAcc();
   while(1)
@@ -89,6 +89,7 @@ void SimpleLedTest(bool loop)
     }
   }
   #endif
+  loop++;
 }
 
 
@@ -137,20 +138,67 @@ void SelfTest()
   #endif
 }
 
+static void RunStartupLights()
+{
+  // Do startup light sequence //
+  // All R, G, B, 0.25 sec each
+  u8 i,j;
+  for(j = 0; j<3; j++)
+  {
+    for(i = 0; i<62; i++)
+    {
+      LightOn(0+j);
+      delay_ms(1);
+      LightOn(3+j);
+      delay_ms(1);
+      LightOn(6+j);
+      delay_ms(1);
+      LightOn(9+j);
+      delay_ms(1);
+    }
+  }
+  // All IR 0.25s
+  for(i = 0; i<62; i++)
+  {
+    LightOn(12);
+    delay_ms(1);
+    LightOn(13);
+    delay_ms(1);
+    LightOn(14);
+    delay_ms(1);
+    LightOn(15);
+    delay_ms(1);
+  }
+  // Cube ID
+  j = (CBYTE[0x3FF0] & 0x3)+1;
+  for(i = 0; i<62; i++)
+  {
+    LightOn(1);
+    delay_ms(1);
+    LightsOff();
+    if(j==2)
+      LightOn(4);
+    delay_ms(1);
+    LightsOff();
+    if(j==3)
+      LightOn(7);
+    delay_ms(1);
+    LightsOff();
+    if(j==4)
+      LightOn(10);
+    delay_ms(1);
+    LightsOff();
+  }
+  // All off
+  LightsOff();
+
+  
+}
 
 // Run tests
 void RunTests()
 {
-#ifndef DISABLE_PINWHEEL
-  // Do startup light sequence //
-  u8 i;
-  for(i = 0; i<12; i++)
-  {
-    LightOn(i);
-    delay_ms(50);
-  }
-#endif  
-  LightsOff();
+  RunStartupLights();
   SelfTest();
   StreamAccelerometer();
   TapsTest();

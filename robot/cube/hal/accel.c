@@ -2,14 +2,15 @@
 #include "hal_delay.h"
 #include <intrins.h>  // for _nop_() delay
 
-//GPIO_PIN_SOURCE(SDA, P0, 0)
-//GPIO_PIN_SOURCE(SCL, P0, 1)
+#define SOURCE_PWR      0
+#define PIN_PWR         (1 << SOURCE_PWR)
+#define GPIO_PWR        P0
 
-#define SOURCE_SDA      0
+#define SOURCE_SDA      2
 #define PIN_SDA         (1 << SOURCE_SDA)
 #define GPIO_SDA        P0
 
-#define SOURCE_SCL      1
+#define SOURCE_SCL      3
 #define PIN_SCL         (1 << SOURCE_SCL)
 #define GPIO_SCL        P0
 
@@ -104,18 +105,16 @@
 
 #define ACC_INT_OPEN_DRAIN  0x0F  // Active high, open drain
 
-const u8 I2C_ACK  = 0;
-const u8 I2C_NACK  = 1;
-const u8 I2C_READ_BIT = 1;    
-const u8 I2C_WRITE_BIT = 0;
+const u8 code I2C_ACK  = 0;
+const u8 code I2C_NACK  = 1;
+const u8 code I2C_READ_BIT = 1;    
+const u8 code I2C_WRITE_BIT = 0;
 
-const u8 I2C_WAIT = 1;    
+//const u8 I2C_WAIT = 1;    
 
 static s8 newAcc[3];
-//static s8 oldAcc[3];
-static diffBufferX[5];
-static diffBufferY[5];
-static diffBufferZ[5];
+
+
 
 
 static void DriveSCL(u8 b)
@@ -219,10 +218,10 @@ static void VerifyAck(ack)
     while(1)
     {
       LightOn(0); // ERROR (RED)
-      delay_ms(100);
+      delay_ms(50);
       LightsOff();
       LightOn(1);
-      delay_ms(100);
+      delay_ms(50);
       LightsOff();
     }
   }
@@ -407,6 +406,10 @@ static void DataWrite(u8 ctrlByte, u8 dataByte)
 // Initialize I2C
 static void InitI2C()
 { 
+  // Set pull up on I2C
+  PIN_OUT(P0DIR, PIN_PWR);
+  GPIO_SET(GPIO_PWR, PIN_PWR);
+  
   // SDA output, normal drive strength
   P0CON = (0x000 << 5) | (0 << 4) | (0 << 3) | (SOURCE_SDA << 0);
   // SDA input, pull up
@@ -441,11 +444,7 @@ static void WriteVerify(u8 ctrlByte, u8 dataByte)
 // Initialize accelerometer
 void InitAcc()
 {
-  memset(newAcc, 0, sizeof(newAcc));
-//  memset(oldAcc, 0, sizeof(oldAcc));
-  memset(diffBufferX, 0, sizeof(diffBufferX));
-  memset(diffBufferY, 0, sizeof(diffBufferY));
-  memset(diffBufferZ, 0, sizeof(diffBufferZ));
+  simple_memset(newAcc, 0, sizeof(newAcc));
   
   delay_ms(5);
   InitI2C();
@@ -454,7 +453,7 @@ void InitAcc()
   DataReadPrime(BGW_CHIPID);
   if(DataRead(BGW_CHIPID) != CHIPID)
   {
-    LightOn(0); // ERROR (RED)
+    LightOn(0); // ERROR (RED) // XXX fix this
   }
   delay_ms(1);
 
@@ -497,19 +496,13 @@ void InitAcc()
 
 void ReadAcc(s8 *accData)
 {
-  static u8 buffer[6];
-  DataReadMultiple(ACCD_X_LSB, 6, buffer);
+  DataReadMultiple(ACCD_X_LSB, 6, accData);
   #ifdef STREAM_ACCELEROMETER
-  accData[0] = (s8)buffer[0];
-  accData[1] = (s8)buffer[1];
-  accData[2] = (s8)buffer[2]; 
-  accData[3] = (s8)buffer[3];
-  accData[4] = (s8)buffer[4];
-  accData[5] = (s8)buffer[5];  
+  return;
   #else
-  accData[0] = (s8)buffer[1];
-  accData[1] = (s8)buffer[3];
-  accData[2] = (s8)buffer[5];  
+  accData[0] = (s8)accData[1];
+  accData[1] = (s8)accData[3];
+  accData[2] = (s8)accData[5];  
   #endif
 }
 
@@ -546,7 +539,7 @@ u8 ReadFifoTaps()
   accData[1] = (s8)buffer[3];
   accData[2] = (s8)buffer[5];
   */
-  
+  return 0;
 }
 
 u8 GetTaps()
@@ -562,6 +555,7 @@ u8 GetTaps()
     howMany++;
     if(howMany > 1) // reset if we've had more than 1 overrun. expect 1 during startup
     {  
+      // TODO XXX don't reset, go back to advertising
       #ifndef DO_MISSED_PACKET_TEST
       // Pet watchdog (reset block)
       WDSV = 1;
@@ -574,62 +568,5 @@ u8 GetTaps()
   {
     return DataReadFifoTaps(FIFO_DATA, (dat & 0x7F));
   }
-  return 0;
-  
-  //static u8 buffPtr = 0;
-  /*static u8 debounceCounter = 0;
-  u8 i;
-  
-  ReadAcc(newAcc);
-  diffBufferX[4] = newAcc[0] >> 2;
-  diffBufferY[4] = newAcc[1] >> 2;
-  diffBufferZ[4] = newAcc[2] >> 2;
-  
-  if(debounceCounter == 0)
-  {
-    s8 sum;
-    s8 maxX = 0;
-    s8 maxY = 0;
-    s8 maxZ = 0;
-    for(i=0; i<3; i++)
-    {
-      sum = diffBufferX[i+2] - diffBufferX[i+1] - diffBufferX[i+1] + diffBufferX[i];
-      if ( sum > maxX )
-      {
-        maxX = sum;
-      }
-      sum = diffBufferY[i+2] - diffBufferY[i+1] - diffBufferY[i+1] + diffBufferY[i];
-      if ( sum > maxY )
-      {
-        maxY = sum;
-      }
-      sum = diffBufferZ[i+2] - diffBufferZ[i+1] - diffBufferZ[i+1] + diffBufferZ[i];
-      if ( sum > maxZ )
-      {
-        maxZ = sum;
-      }
-    }
-    sum = maxX + maxY + maxZ;
-    if (sum > 37)// XXX tap condition
-    {
-      debounceCounter = 10;
-    }
-  }
-  else
-  {
-    debounceCounter--;
-  }
-  
-  for(i=0; i<4; i++)
-  {
-    diffBufferX[i] = diffBufferX[i+1];
-    diffBufferY[i] = diffBufferY[i+1];
-    diffBufferZ[i] = diffBufferZ[i+1];
-  }
-  
-  if(debounceCounter == 10)
-  {
-    return 1;
-  }
-  return 0;*/
+  return 0;  
 }

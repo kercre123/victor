@@ -1,62 +1,80 @@
-#include <string.h>
+//#include <string.h>
 #include "hal.h"
 #include "portable.h"
 
 
 #define GAMMA_CORRECT(x)           ((x)*(x) >> 8)
 
-/*
-struct charlieChannel
-{
-  ledColor color;
-  char anode;
-  char cathode;
+#define NUM_LEDS      17
+#define DARK_BYTE     NUM_LEDS-1
+#define NUM_LED_PINS
+
+static const u8 code ledPins[NUM_LED_PINS] = {1<<1, 1<<6, 1<<5, 1<<7, 1<<0, 1<<1};
+static volatile u8 ledValues[NUM_LEDS] = {0,0,0, 0,0,0, 0,0,0, 0,0,0, 0,0,0,0, 128};
+static volatile u8 gCurrentLed = 0;
+
+struct s_led {
+  u8 anode : 3;
+  u8 anode_port : 1;  
+  u8 cathode : 3;
+  u8 cathode_port : 1;  
 };
 
-struct charlieLeds
+const struct s_led code s_leds[NUM_LEDS] = 
 {
-  struct charlieChannel channels[13];
-  const char ledPins[4];
+  {0, 0, 4, 1}, // R1
+  {0, 0, 1, 0}, // G1
+  {0, 0, 2, 0}, // B1
+  
+  {1, 0, 4, 1}, // R2
+  {1, 0, 0, 0}, // G2
+  {1, 0, 3, 0}, // B2
+  
+  {2, 0, 5, 1}, // R3
+  {2, 0, 0, 0}, // G3
+  {2, 0, 3, 0}, // B3
+  
+  {3, 0, 5, 1}, // R4
+  {3, 0, 2, 0}, // G4
+  {3, 0, 1, 0}, // B4
+  
+  {4, 1, 0, 0}, // IR1
+  {4, 1, 1, 0}, // IR2 
+  
+  {5, 1, 2, 0}, // IR3
+  {5, 1, 3, 0}, // IR4
+  
+  {0, 0, 0, 0}  // Dark
 };
-*/
 
-typedef enum color
+
+
+void ValidateDarkByte()
 {
-  red,
-  green,
-  blue,
-  black
-};
-
-const u8 ledPins[4] = {1<<2, 1<<3, 1<<4, 1<<5};
-const u8 ledAnode[13] = {0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 0};
-const u8 ledCathode[13] = {1, 2, 3, 0, 2, 3, 0, 1, 3, 0, 1, 2, 0};
-
-volatile u8 xdata ledValues[13] = {0,0,0,0,0,0,0,0,0,0,0,0,128};
-
-volatile u8 gCurrentLed = 0;
+  if(ledValues[DARK_BYTE] < 16) // dark byte must be at least 16 to avoid errors
+  ledValues[DARK_BYTE] = 16;
+}
 
 void SetLedValue(char led, char value)
 {
   ledValues[led] = value;
-  if(ledValues[12] == 0)
-    ledValues[12] = 16;
+  ValidateDarkByte();
 }
 
 void SetLedValues(char *newValues)
 {
-  memcpy(ledValues, newValues, sizeof(ledValues));
-  if(ledValues[12] == 0)
-    ledValues[12] = 1;
+  simple_memcpy(ledValues, newValues, sizeof(ledValues));
+  ValidateDarkByte();
 } 
 
 void SetLedValuesByDelta()
 {
-  
+  // TODO //
 }  
 
 void InitTimer2()
 {  
+  #ifndef USE_UART
   T2PS = 0; // prescaler 1/12 of ckCpu
   T2R1 = 0;
   T2R0 = 0; // reload disabled
@@ -66,43 +84,42 @@ void InitTimer2()
   
   ET2 = 1; // enable timer 2 interrupt
   EA = 1; // enable global interrupts
+  #endif
 }
 
 void StartTimer2()
 {
+  #ifndef USE_UART
   // Turn on current light
-  PIN_OUT(P0DIR, ledPins[ledAnode[gCurrentLed]] | ledPins[ledCathode[gCurrentLed]]);
-  GPIO_SET(P0, ledPins[ledAnode[gCurrentLed]]);
-  GPIO_RESET(P0, ledPins[ledCathode[gCurrentLed]]);
-  
+  LightOn(gCurrentLed);
   T2I0 = 1;
   ET2 = 1;
+  #endif
 }
 
 void StopTimer2()
 {
+  #ifndef USE_UART
   T2I0 = 0; // turn off timer2 interrupt
   ET2 = 0; // turn off timer
-  // Turn off all lights
-  PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]);   
-  /*
-  TL2 = 0xFF - (waitTime & 0xFF); // XXX do I need to save these values?
-  TH2 = 0xFF;
-  */
+  LightsOff();
+  #endif
 }
 
 
-void LightsOff()
+void LightsOff() // hardcoded for speed (TODO: figure out if this is necessary)
 {
   PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]);
+  PIN_IN(P1DIR, ledPins[4] | ledPins[5]);
 }
 
 void LightOn(char i)
 {
   LightsOff(); // first turn everything off
-  PIN_OUT(P0DIR, ledPins[ledAnode[i]] | ledPins[ledCathode[i]]);
-  GPIO_SET(P0, ledPins[ledAnode[i]]);
-  GPIO_RESET(P0, ledPins[ledCathode[i]]);
+  PIN_OUT_MP(s_leds[i].anode_port, ledPins[s_leds[i].anode]);
+  PIN_OUT_MP(s_leds[i].cathode_port, ledPins[s_leds[i].cathode]);
+  GPIO_SET_MP(s_leds[i].anode_port, ledPins[s_leds[i].anode]);
+  GPIO_RESET_MP(s_leds[i].cathode_port, ledPins[s_leds[i].cathode]);
 }
 
 T2_ISR()
@@ -116,7 +133,7 @@ T2_ISR()
   // Turn on an LED
   do
   {
-    if(gCurrentLed<12)
+    if(gCurrentLed<12) // XXX NUM_LEDS
     {
       gCurrentLed++;
     }
@@ -124,15 +141,16 @@ T2_ISR()
     {
       gCurrentLed=0;
     }
-  }while(ledValues[gCurrentLed] < 16 && gCurrentLed != 12); // need a way to break out
+  }while(ledValues[gCurrentLed] < 16 && gCurrentLed != 12); // need a way to break out // XXX NUM_LEDS
   
   waitTime = (unsigned int)(ledValues[gCurrentLed]);
   waitTime = (waitTime*waitTime)>>8;
   
   // Turn on LED
-  PIN_OUT(P0DIR, ledPins[ledAnode[gCurrentLed]] | ledPins[ledCathode[gCurrentLed]]);
-  GPIO_SET(P0, ledPins[ledAnode[gCurrentLed]]);
-  GPIO_RESET(P0, ledPins[ledCathode[gCurrentLed]]);
+  PIN_OUT_MP(s_leds[gCurrentLed].anode_port, ledPins[s_leds[gCurrentLed].anode]);
+  PIN_OUT_MP(s_leds[gCurrentLed].cathode_port, ledPins[s_leds[gCurrentLed].cathode]);
+  GPIO_SET_MP(s_leds[gCurrentLed].anode_port, ledPins[s_leds[gCurrentLed].anode]);
+  GPIO_RESET_MP(s_leds[gCurrentLed].cathode_port, ledPins[s_leds[gCurrentLed].cathode]);
 
   if (waitTime<32)
     waitTime = 32;
