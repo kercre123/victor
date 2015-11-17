@@ -111,7 +111,7 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
   {
     uint8_t* msg = &(connection->pendingMessages[connection->pendingReliableBytes]);
     PendingReliableMessageMetaData* meta = &(connection->pendingMsgMeta[connection->numPendingReliableMessages]);
-    uint16_t msgSubHeaderSizeField = bufferSize;
+    const uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
 
     // Update the connection status
     connection->pendingReliableBytes += ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
@@ -424,7 +424,7 @@ bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferS
   }
   else // Unreliable message
   {
-    uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
+    const uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
     if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > // + 1 for tag byte. Easier to assume it's there than check
         (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->txQueued))
     { // No room in the current packet
