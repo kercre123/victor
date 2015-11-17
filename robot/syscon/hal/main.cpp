@@ -26,7 +26,7 @@ extern void EnterRecovery(void) {
 
 int main(void)
 {
-  //u32 failedTransferCount = 0;
+  u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
   Battery::init();
@@ -51,19 +51,14 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
     #endif
 
-    // Update at 200Hz (5ms delay)
-    timerStart += CYCLES_MS(5.0f);
-    while ( timerStart > GetCounter()) ;
- 
     // Update at 200Hz (5ms delay) - with unsigned subtract to handle wraparound
     const u32 DELAY = CYCLES_MS(5.0f);
     while (GetCounter() - timerStart < DELAY)
       ;
     timerStart += DELAY;
 
-    /*
     // Verify the source
-    if (Head::spokenTo)
+    if (!Head::spokenTo)
     {
       // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
@@ -81,6 +76,5 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
-    */
   }
 }
