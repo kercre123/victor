@@ -524,7 +524,7 @@ void GPIOTE_IRQHandler()
   u32 state;
   while (m_lastState != (state = NRF_GPIO->IN))
   {
-    u32 whatChanged = state ^ m_lastState;     
+    u32 whatChanged = state ^ m_lastState;
     m_lastState = state;
     u32 count = GetCounter();
     

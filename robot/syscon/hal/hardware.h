@@ -8,6 +8,10 @@
 //#define RADIO_TIMING_TEST
 
 // Updated for EP1
+#define ROBOT_41_BODY
+//#define ROBOT_EP1_BODY
+
+#ifdef ROBOT_EP1_BODY
 enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1
@@ -44,7 +48,7 @@ enum e_nrf_gpio {
 
   // Power
   PIN_PWR_EN          = 15,
-  PIN_nVDDs_EN        = 7,
+  PIN_VDDs_EN         = 7,
   PIN_V_BAT_SENSE     = 5,
   PIN_V_EXT_SENSE     = 6,
 
@@ -63,6 +67,63 @@ enum AnalogInput {
   ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput7,  // P6
   ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput6   // P5
 };
+#else
+enum e_nrf_gpio {
+  // Encoders
+  PIN_ENCODER_LEFT    = 14, // ENC1
+  PIN_ENCODER_RIGHT   = 4,  // ENC2
+  PIN_ENCODER_HEADA   = 27, // ENC3
+  PIN_ENCODER_HEADB   = 24,
+  PIN_ENCODER_LIFTA   = 30, // ENC4
+  PIN_ENCODER_LIFTB   = 29,
+  
+
+  // Motors + charge OK signal
+  PIN_LEFT_P          = 19,
+  PIN_LEFT_N1         = 18,
+  PIN_LEFT_N2         = 16,
+  PIN_RIGHT_P         = 8,
+  PIN_RIGHT_N1        = 1,
+  PIN_RIGHT_N2        = 0,
+  PIN_HEAD_P          = 9, 
+  PIN_HEAD_N1         = 7,
+  PIN_HEAD_N2         = 13,
+  PIN_LIFT_P          = 28,
+  PIN_LIFT_N1         = 25,
+  PIN_LIFT_N2         = 23,
+
+  // Backpack leds
+  PIN_LED1            = 17,
+  PIN_LED2            = 12,
+  PIN_LED3            = 11,
+  PIN_LED4            = 10,
+
+  // Charging
+  PIN_CHARGE_EN       = 20,  // TODO
+  PIN_nCHGOK          = 8,   // TODO
+
+  // Power
+  PIN_PWR_EN          = 2,
+  PIN_VDDs_EN        = 3,
+  PIN_V_BAT_SENSE     = 6,
+  PIN_V_EXT_SENSE     = 5,
+
+  // IR drop sensor
+  PIN_CLIFF_SENSE     = 26,
+  PIN_IR_DROP         = 21,
+  PIN_IR_FORWARD      = 22,   // TODO
+
+  // Spine
+  PIN_TX_HEAD         = 15,
+  PIN_TX_VEXT         = 5,    // This is the debug port on the battery charger
+};
+
+enum AnalogInput {
+  ANALOG_CLIFF_SENSE = ADC_CONFIG_PSEL_AnalogInput0,
+  ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput6,
+  ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput7
+};
+#endif
 
 enum e_ppi_channel {
   PPI_MOTOR_CHANNEL_0,

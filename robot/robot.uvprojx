@@ -367,7 +367,7 @@
             <v6LangP>0</v6LangP>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
+              <Define>COZMO_ROBOT_3A97,USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;.\generated\clad\robot</IncludePath>
             </VariousControls>

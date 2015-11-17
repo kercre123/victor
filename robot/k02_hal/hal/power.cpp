@@ -44,7 +44,7 @@ namespace Anki
         // Turn on 2v8 and 3v3 rails
         GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
         GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
-        SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);    
+        SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
       }
     }
   }

@@ -230,6 +230,24 @@ message AnimationAvailable {
 string animName
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// Mood / Emotions
+///////////////////////////////////////////////////////////////////////////////
+
+message MoodState {
+  uint_8  robotID,
+  float_32 emotionValues[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Progression / Stats
+///////////////////////////////////////////////////////////////////////////////
+
+message ProgressionStats {
+  uint_8  robotID,
+  uint_32 statValues[uint_8]
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union MessageEngineToGame { }

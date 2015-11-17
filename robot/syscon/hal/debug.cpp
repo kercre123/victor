@@ -9,8 +9,28 @@
 
 #include "hardware.h"
 
+static const int MAX_DEBUG_PRINT = 512;
+static uint8_t debug_print_out[MAX_DEBUG_PRINT];
+static int debug_print_first = 0;
+static int debug_print_last = 0;
+static int debug_print_count = 0;
+
+int UART::DebugQueue() {
+  return debug_print_count;
+}
+
+uint8_t UART::DebugChar() {
+  if (debug_print_count <= 0) return -1;
+  
+  uint8_t o = debug_print_out[debug_print_first];
+  debug_print_first = (debug_print_first+1) % MAX_DEBUG_PRINT;
+  debug_print_count++;
+  
+  return o;
+}
+
 int UART::get() {
-  return ;
+  return -1;
 
   // Configure for read
   NRF_UART0->PSELRXD = PIN_TX_VEXT;
@@ -25,16 +45,11 @@ int UART::get() {
 }
 
 static inline void put(unsigned char c) {
-  return ;
-
-  // Configure port for transmission
-  NRF_UART0->PSELRXD = 0xFFFFFFFF;
-  NRF_UART0->PSELTXD = PIN_TX_VEXT;
-  nrf_gpio_cfg_output(PIN_TX_VEXT);
-
-  NRF_UART0->TXD=c;
-  while (!NRF_UART0->EVENTS_TXDRDY);
-  NRF_UART0->EVENTS_TXDRDY = 0; 
+  if (debug_print_count >= MAX_DEBUG_PRINT) return ;
+  
+  debug_print_out[debug_print_last] = c;
+  debug_print_last = (debug_print_last+1) % MAX_DEBUG_PRINT;
+  debug_print_count++;
 }
 
 void UART::print( const char* fmt, ...)
@@ -42,11 +57,11 @@ void UART::print( const char* fmt, ...)
   va_list vl;
   va_start(vl, fmt);
 
-  char out[256];
-  char *p = out;
-   
-  vsnprintf(out, sizeof(out), fmt, vl);
-  while (*p) put(*(p++));
+  char buffer[MAX_DEBUG_PRINT];
+  char* p = buffer;
+
+  int buffered = vsnprintf(buffer, MAX_DEBUG_PRINT - debug_print_count, fmt, vl);
+  while (buffered-- > 0) put(*(p++));
 }
 
 void UART::dump(int count, char* data) {
