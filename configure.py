@@ -100,10 +100,10 @@ def parse_game_arguments():
                         help='builds mathlab\'s mex project')
 
     # signing_group = parser.add_mutually_exclusive_group(required=False)
+
     parser.add_argument(
         '--provision-profile',
         metavar='string',
-        default='',
         required=False,
         help='Provide the mobile provisioning profile name for signing')
 
@@ -142,13 +142,12 @@ class GamePlatformConfiguration(object):
                                                          'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
 
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
-            if hasattr(self.options, 'provision_profile'):
+            try:
                 tmp_pp = CERT_ROOT + '/' + self.options.provision_profile + '.mobileprovision'
                 self.provision_profile_uuid = subprocess.check_output('{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True)
                 self.codesign_identity = subprocess.check_output(
                     '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True)
-                print_status('DNW: {0}'.format(self.codesign_identity))
-            else:
+            except TypeError or AttributeError:
                 self.provision_profile_uuid = ''
                 self.codesign_identity = ''
 

@@ -23,10 +23,10 @@ if [ -z ${ANKI_BUILD_ROOT+x} ]; then ANKI_BUILD_ROOT="${ANKI_REPO_ROOT}/build"; 
 
 #if [ -z ${ANKI_BUILD_CONFIGURATION+x} ]; then ANKI_BUILD_CONFIGURATION="Release"; fi
 if [ -z ${ANKI_BUILD_KEYCHAIN+x} ]; then ANKI_BUILD_KEYCHAIN="${HOME}/Library/Keychains/login.keychain"; fi
-#if [ -z ${ANKI_BUILD_PROVISIONING_PROFILE_NAME+x} ]; then ANKI_BUILD_PROVISIONING_PROFILE_NAME="OverDrive"; fi
-#if [ -z ${ANKI_BUILD_XCWORKSPACE+x} ]; then ANKI_BUILD_XCWORKSPACE="${ANKI_REPO_ROOT}/generated/OverDrive-iOS.xcworkspace"; fi
+#if [ -z ${ANKI_BUILD_PROVISIONING_PROFILE_NAME+x} ]; then ANKI_BUILD_PROVISIONING_PROFILE_NAME="Cozmo"; fi
+#if [ -z ${ANKI_BUILD_XCWORKSPACE+x} ]; then ANKI_BUILD_XCWORKSPACE="${ANKI_REPO_ROOT}/generated/Cozmo-iOS.xcworkspace"; fi
 #if [ -z ${ANKI_BUILD_TYPE+x} ]; then ANKI_BUILD_TYPE="dev"; fi
-#if [ -z ${ANKI_BUILD_BUNDLE_NAME+x} ]; then ANKI_BUILD_BUNDLE_NAME="OverDrive"; fi
+#if [ -z ${ANKI_BUILD_BUNDLE_NAME+x} ]; then ANKI_BUILD_BUNDLE_NAME="Cozmo"; fi
 #if [ -z ${ANKI_BUILD_PREBUILT_BS_ROOT+x} ]; then ANKI_BUILD_PREBUILT_BS_ROOT="${TOPLEVEL}/basestation-prebuilt"; fi
 
 #
