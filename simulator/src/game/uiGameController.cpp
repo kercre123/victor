@@ -1027,7 +1027,25 @@ namespace Anki {
                      approachAngle_rad,
                      useManualSpeed);
     }
-
+    
+    void UiGameController::SendPopAWheelie(const s32 objectID,
+                                           PathMotionProfile motionProf,
+                                           const bool usePreDockPose,
+                                           const bool useApproachAngle,
+                                           const f32 approachAngle_rad,
+                                           const bool useManualSpeed)
+    {
+      ExternalInterface::PopAWheelie m;
+      m.motionProf = motionProf;
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
+      m.objectID = -1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PopAWheelie(m);
+      SendMessage(message);
+    }
     
     void UiGameController::SendTraverseSelectedObject(PathMotionProfile motionProf,
                                                       const bool usePreDockPose,
@@ -1174,6 +1192,15 @@ namespace Anki {
       m.length_ms = length_ms;
       ExternalInterface::MessageGameToEngine message;
       message.Set_IMURequest(m);
+      SendMessage(message);
+    }
+
+    void UiGameController::SendEnableRobotPickupDetect(bool enable)
+    {
+      ExternalInterface::EnableRobotPickupDetect m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableRobotPickupDetect(m);
       SendMessage(message);
     }
     

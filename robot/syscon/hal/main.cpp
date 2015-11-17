@@ -26,7 +26,7 @@ extern void EnterRecovery(void) {
 
 int main(void)
 {
-  //u32 failedTransferCount = 0;
+  u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
   Battery::init();
@@ -34,6 +34,13 @@ int main(void)
   Motors::init();   // Must init before power goes on
   Head::init();
   Lights::init();
+
+  UART::print("\r\nUnbrick me now...");
+  u32 t = GetCounter();
+  while ((GetCounter() - t) < 500 * COUNT_PER_MS)  // 0.5 second unbrick time
+    ;
+  UART::print("too late!\r\n");
+
   Radio::init();
   Battery::powerOn();
 
@@ -51,19 +58,14 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
     #endif
 
-    // Update at 200Hz (5ms delay)
-    timerStart += CYCLES_MS(5.0f);
-    while ( timerStart > GetCounter()) ;
- 
     // Update at 200Hz (5ms delay) - with unsigned subtract to handle wraparound
     const u32 DELAY = CYCLES_MS(5.0f);
     while (GetCounter() - timerStart < DELAY)
       ;
     timerStart += DELAY;
 
-    /*
     // Verify the source
-    if (Head::spokenTo)
+    if (!Head::spokenTo)
     {
       // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
@@ -81,6 +83,5 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
-    */
   }
 }
