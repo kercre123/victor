@@ -30,17 +30,17 @@ namespace Cozmo {
     _eyeParams[Right].fill(0);
     
     for(auto whichEye : {Left, Right}) {
-      SetParameter(whichEye, Parameter::EyeScaleX, 1.f);
-      SetParameter(whichEye, Parameter::EyeScaleY, 1.f);
-      SetParameter(whichEye, Parameter::EyeCenterX, whichEye == Left ? WIDTH/3 : 2*WIDTH/3);
-      SetParameter(whichEye, Parameter::EyeCenterY, HEIGHT/2);
+      SetParameter(whichEye, Parameter::EyeScaleX, whichEye == Left ? 1.01f : 1.19f);
+      SetParameter(whichEye, Parameter::EyeScaleY, whichEye == Left ? 0.87f : 1.0f);
+      SetParameter(whichEye, Parameter::EyeCenterX, whichEye == Left ? 42 : 83);
+      SetParameter(whichEye, Parameter::EyeCenterY, whichEye == Left ? 36 : 35);
       
       for(auto radius : {Parameter::UpperInnerRadiusX, Parameter::UpperInnerRadiusY,
         Parameter::UpperOuterRadiusX, Parameter::UpperOuterRadiusY,
         Parameter::LowerInnerRadiusX, Parameter::LowerInnerRadiusY,
         Parameter::LowerOuterRadiusX, Parameter::LowerOuterRadiusY})
       {
-        SetParameter(whichEye, radius, 0.25f);
+        SetParameter(whichEye, radius, 0.61f);
       }
     }
   }
