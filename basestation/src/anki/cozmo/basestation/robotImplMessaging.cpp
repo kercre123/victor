@@ -522,6 +522,7 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
   helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
   helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
+  helper.SubscribeInternal<MessageGameToEngineTag::EnableRobotPickupDetect>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
   helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
@@ -563,6 +564,11 @@ void Robot::HandleMessage(const ExternalInterface::IMURequest& msg)
   RequestIMU(msg.length_ms);
 }
   
+template<>
+void Robot::HandleMessage(const ExternalInterface::EnableRobotPickupDetect& msg)
+{
+  SendEnablePickupDetect(msg.enable);
+}
   
 template<>
 void Robot::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)

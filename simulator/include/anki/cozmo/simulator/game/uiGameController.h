@@ -184,6 +184,13 @@ protected:
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
+
+  void SendPopAWheelie(const s32 objectID,
+                       PathMotionProfile motionProf,
+                       const bool usePreDockPose,
+                       const bool useApproachAngle = false,
+                       const f32 approachAngle_rad = 0,
+                       const bool useManualSpeed = false);
   
   void SendTraverseSelectedObject(PathMotionProfile motionProf,
                                   const bool usePreDockPose,
@@ -204,6 +211,7 @@ protected:
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
+  void SendEnableRobotPickupDetect(bool enable);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
   void SendReadAnimationFile();

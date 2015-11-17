@@ -276,7 +276,7 @@ void Motors::init()
   
   // Clear pending interrupts and enable the GPIOTE interrupt
   NVIC_ClearPendingIRQ(GPIOTE_IRQn);
-  NVIC_SetPriority(GPIOTE_IRQn, IRQ_PRIORITY);
+  NVIC_SetPriority(GPIOTE_IRQn, 0);//IRQ_PRIORITY);
   NVIC_EnableIRQ(GPIOTE_IRQn);
   
   // Clear pending events

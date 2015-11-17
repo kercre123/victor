@@ -525,6 +525,12 @@ namespace Anki {
                                              msg.lights[i].transitionOnPeriod_ms, msg.lights[i].transitionOffPeriod_ms);
         }
       }
+      
+      void Process_enablePickupDetect(const RobotInterface::EnablePickupDetect& msg)
+      {
+        IMUFilter::EnablePickupDetect(msg.enable);
+      }
+      
 
       // --------- Block control messages ----------
 
