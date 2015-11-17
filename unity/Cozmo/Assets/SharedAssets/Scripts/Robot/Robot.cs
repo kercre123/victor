@@ -443,8 +443,8 @@ public class Robot : IDisposable {
   // You should not be calling this from a minigame/challenge.
   public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
     MoodStatMessage.robotID = ID;
-    MoodStatMessage.MoodMessageUnion.SetEmotion.emotionType = type;
-    MoodStatMessage.MoodMessageUnion.SetEmotion.newVal = value;
+    // We can't call SetEmotion.Type because that would call a Getter on SetEmotion.
+    MoodStatMessage.MoodMessageUnion.SetEmotion = new G2U.SetEmotion(type, value);
 
     RobotEngineManager.Instance.Message.MoodMessage = MoodStatMessage;
     RobotEngineManager.Instance.SendMessage();
@@ -454,8 +454,7 @@ public class Robot : IDisposable {
   // You should not be calling this from a minigame/challenge.
   public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, uint value) {
     ProgressionStatMessage.robotID = ID;
-    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat.statType = type;
-    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat.newVal = value;
+    ProgressionStatMessage.ProgressionMessageUnion.SetProgressionStat = new G2U.SetProgressionStat(type, value);
 
     RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
     RobotEngineManager.Instance.SendMessage();
