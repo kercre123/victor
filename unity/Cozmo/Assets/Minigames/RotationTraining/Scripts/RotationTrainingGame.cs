@@ -44,6 +44,7 @@ namespace RotationTraining {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+      _GamePanel.CloseDialogImmediately();
     }
 
     public void SetTimeLeft(int secondsLeft) {

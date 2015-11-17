@@ -1046,7 +1046,6 @@ public class Robot : IDisposable {
   private void SetAllBackpackLEDs() {
 
     SetBackpackLEDsMessage.robotID = ID;
-    string warning = "";
     for (int i = 0; i < BackpackLights.Length; i++) {
       SetBackpackLEDsMessage.onColor[i] = BackpackLights[i].OnColor;
       SetBackpackLEDsMessage.offColor[i] = BackpackLights[i].OffColor;
@@ -1054,33 +1053,7 @@ public class Robot : IDisposable {
       SetBackpackLEDsMessage.offPeriod_ms[i] = BackpackLights[i].OffPeriodMs;
       SetBackpackLEDsMessage.transitionOnPeriod_ms[i] = BackpackLights[i].TransitionOnPeriodMs;
       SetBackpackLEDsMessage.transitionOffPeriod_ms[i] = BackpackLights[i].TransitionOffPeriodMs;
-
-      switch (i) {
-      case (int)LEDId.LED_BACKPACK_LEFT:
-        warning += "" + LEDId.LED_BACKPACK_LEFT + "  : ";
-        break;
-      case (int)LEDId.LED_BACKPACK_RIGHT:
-        warning += "" + LEDId.LED_BACKPACK_RIGHT + " : ";
-        break;
-      case (int)LEDId.LED_BACKPACK_FRONT:
-        warning += "" + LEDId.LED_BACKPACK_FRONT + " : ";
-        break;
-      case (int)LEDId.LED_BACKPACK_MIDDLE:
-        warning += "" + LEDId.LED_BACKPACK_MIDDLE + ": ";
-        break;
-      case (int)LEDId.LED_BACKPACK_BACK:
-        warning += "" + LEDId.LED_BACKPACK_BACK + "  : ";
-        break;
-      default:
-        break;
-      }
-
-      warning += "onColor: " + SetBackpackLEDsMessage.onColor[i] + "    offColor: " + SetBackpackLEDsMessage.offColor[i]
-      + "    onPeriod: " + SetBackpackLEDsMessage.onPeriod_ms[i] + "   offPeriod: " + SetBackpackLEDsMessage.offPeriod_ms[i]
-      + "   tranOnPer: " + SetBackpackLEDsMessage.transitionOnPeriod_ms[i] + "   tranOffPer: " + SetBackpackLEDsMessage.transitionOffPeriod_ms[i] + "\n";
-     
     }
-    Debug.LogWarning(warning);
 
     RobotEngineManager.Instance.Message.SetBackpackLEDs = SetBackpackLEDsMessage;
     RobotEngineManager.Instance.SendMessage();
