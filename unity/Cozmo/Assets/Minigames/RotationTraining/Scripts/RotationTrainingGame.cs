@@ -12,6 +12,9 @@ namespace RotationTraining {
     private RotationTrainingPanel _GamePanel;
 
     [SerializeField]
+    private AudioClip _DirectionChangeSound;
+
+    [SerializeField]
     private AudioClip _ColorChangeSound;
 
     void Start() {
@@ -45,6 +48,10 @@ namespace RotationTraining {
 
     public void SetTimeLeft(int secondsLeft) {
       _GamePanel.SetTimeLeft(secondsLeft);
+    }
+
+    public void PlayDirectionChangeSound() {
+      AudioManager.PlayAudioClip(_DirectionChangeSound);
     }
 
     public void PlayColorChangeSound() {
