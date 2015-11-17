@@ -38,7 +38,7 @@ namespace PatternPlay {
       bool hasVerticalBlock = _PatternPlayGameRef.HasVerticalStack();
 
       if (seenThreshold > _LastSeenThresholdCount) {
-        _CurrentRobot.SendAnimation("enjoyLight", HandleAnimationDone);
+        _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleAnimationDone);
         _AnimationPlaying = true;
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
       }

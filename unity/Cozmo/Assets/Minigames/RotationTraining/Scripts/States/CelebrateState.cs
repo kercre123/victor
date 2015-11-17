@@ -5,7 +5,7 @@ namespace RotationTraining {
   public class CelebrateState : State {
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
+      _CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
     }
 
     public override void Update() {

@@ -15,10 +15,10 @@ namespace Vortex {
     public override void Enter() {
       base.Enter();
       if (_DidCozmoWin) {
-        _CurrentRobot.SendAnimation("majorWin", AnimationDone);
+        _CurrentRobot.SendAnimation(AnimationName.kMajorWin, AnimationDone);
       }
       else {
-        _CurrentRobot.SendAnimation("shocked", AnimationDone);
+        _CurrentRobot.SendAnimation(AnimationName.kShocked, AnimationDone);
       }
     }
 
