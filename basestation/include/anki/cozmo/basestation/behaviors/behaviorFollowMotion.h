@@ -38,6 +38,11 @@ private:
   bool _interrupted = false;
   u8   _originalVisionModes = 0;
   
+  // TODO: Read these from json config
+  f32 _moveForwardDist_mm = 20.f;
+  f32 _moveForwardSpeedIncrease = 1.5f;
+  f32 _imageCenterFraction = .1f;
+  
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
 }; // class BehaviorFollowMotion

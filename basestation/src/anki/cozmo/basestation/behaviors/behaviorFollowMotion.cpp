@@ -80,23 +80,25 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
       
       const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
       
+      // Robot gets more happy/excited and less calm when he sees motion.
+      // (May not want to do this every time he sees motion, since it'll increase
+      //  pretty fast)
       robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
                                            EmotionType::Excited, kEmotionChangeSmall,
                                            EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
       
       const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-      if(NEAR(motionCentroid.x(), 0.f, calibration.GetNcols()/10) &&
-         NEAR(motionCentroid.y(), 0.f, calibration.GetNrows()/10))
+      if(NEAR(motionCentroid.x(), 0.f, static_cast<f32>(calibration.GetNcols())*_imageCenterFraction) &&
+         NEAR(motionCentroid.y(), 0.f, static_cast<f32>(calibration.GetNrows())*_imageCenterFraction))
       {
         // Move towards the motion since it's centered
-        const f32 dist_mm = 20;
         Pose3d newPose(robot.GetPose());
         const f32 angleRad = newPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-        newPose.SetTranslation({newPose.GetTranslation().x() + dist_mm*std::cos(angleRad),
-          newPose.GetTranslation().y() + dist_mm*std::sin(angleRad),
+        newPose.SetTranslation({newPose.GetTranslation().x() + _moveForwardDist_mm*std::cos(angleRad),
+          newPose.GetTranslation().y() + _moveForwardDist_mm*std::sin(angleRad),
           newPose.GetTranslation().z()});
         PathMotionProfile motionProfile(DEFAULT_PATH_MOTION_PROFILE);
-        motionProfile.speed_mmps *= 1.5f; // Drive forward a little faster than normal
+        motionProfile.speed_mmps *= _moveForwardSpeedIncrease; // Drive forward a little faster than normal
         robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
                                              new DriveToPoseAction(newPose, motionProfile,
                                                                    false, false, 50, DEG_TO_RAD(45))
