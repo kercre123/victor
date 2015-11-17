@@ -229,6 +229,10 @@ namespace AnimationTool
             pointData.durationTime_ms = 0;
 
             pointData.faceAngle = extraData.faceAngle;
+            pointData.faceCenterX = extraData.faceCenterX;
+            pointData.faceCenterY = extraData.faceCenterY;
+            pointData.faceScaleX = extraData.faceScaleX;
+            pointData.faceScaleY = extraData.faceScaleY;
 
             for (int i = 0; i < extraData.leftEye.Length && i < pointData.leftEye.Length; ++i)
             {

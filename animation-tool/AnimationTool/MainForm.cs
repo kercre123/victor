@@ -248,7 +248,7 @@ namespace AnimationTool
             {
                 if (curDataPoint != null && curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor)
                 {
-                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.pictureBox)))
+                    if (ActionManager.Do(new FaceAnimation.MoveSelectedPreviewBar(curPreviewBar, curDataPoint, left, right, faceAnimation.PictureBox)))
                     {
                         faceAnimation.chart.Refresh();
                     }

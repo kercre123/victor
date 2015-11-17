@@ -54,14 +54,14 @@ class ConnectionHandler {
       while (stream.CanRead) {
         int numRead = stream.Read(buffer, numReadTotal, (int)buffer.Length - numReadTotal);
         numReadTotal += numRead;
-        DAS.Debug("ConnectionHandler", String.Format("received bytes {0} total {1}", numRead, numReadTotal));
+        DAS.Debug(this, String.Format("received bytes {0} total {1}", numRead, numReadTotal));
         if (numRead > 0) // for now all data gets in at once. in the future, we might have to indicate "end of data"
           break;
       } // while
 
       // parse message
       string message = System.Text.Encoding.Default.GetString(buffer);
-      DAS.Debug("ConnectionHandler", "message " + message);
+      DAS.Debug(this, "message " + message);
             
       // run build
       BuildServer.DispatchMain(() => {
@@ -100,7 +100,7 @@ class ConnectionHandler {
       buildResult = null;
     }  // try
     catch (Exception e) {
-      DAS.Debug("ConnectionHandler", "Exception: " + e.ToString());
+      DAS.Debug(this, "Exception: " + e.ToString());
     }
     finally {
       _client.Close();

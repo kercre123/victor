@@ -47,7 +47,7 @@ namespace Vortex {
     private int _RoundNumber;
 
     void Start() {
-      DAS.Info("VortexGame", "VortexGame::Start");
+      DAS.Info(this, "VortexGame::Start");
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("VortexStateMachine", _StateMachine);
 
@@ -167,7 +167,7 @@ namespace Vortex {
     }
 
     public void HandleBlockTapped(int blockID, int tappedTimes) {
-      DAS.Info("VortexGame", "Player Block Tapped. " + blockID);
+      DAS.Info(this, "Player Block Tapped. " + blockID);
       PlayerData player = null;
       for (int i = 0; i < kMaxPlayers; ++i) {
         if (_PlayerDataList[i].blockID == blockID) {

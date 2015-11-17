@@ -8,7 +8,7 @@ public class StateMachineManager {
 
   public void AddStateMachine(string stateMachineName, StateMachine stateMachine) {
     if (_StateMachines.ContainsKey(stateMachineName)) {
-      DAS.Error("StateMachineManager", "Duplicate State Machine Name");
+      DAS.Error(this, "Duplicate State Machine Name");
     }
     _StateMachines.Add(stateMachineName, stateMachine);
   }

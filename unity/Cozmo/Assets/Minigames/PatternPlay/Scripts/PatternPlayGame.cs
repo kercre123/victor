@@ -29,7 +29,7 @@ namespace PatternPlay {
     private PatternPlayAudio patternPlayAudio_;
 
     void Start() {
-      DAS.Info("PatternPlayGame", "Game Created");
+      DAS.Info(this, "Game Created");
       patternPlayStateMachine_.SetGameRef(this);
       patternPlayStateMachineManager_.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine_);
       InitialCubesState initCubeState = new InitialCubesState();

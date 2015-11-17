@@ -79,9 +79,16 @@ namespace AnimationTool
     [Serializable]
     public class ProceduralFacePointData : PointData
     {
+        // NOTE: Initialization done here is used in the tool at runtime.
+        // Duplicate initialization is done in FaceForm.cs, so that realistic values
+        // are set as defaults when editing the tool.
         public const string NAME = "ProceduralFaceKeyFrame";
 
-        public float faceAngle;
+        public float faceAngle = 0f;
+        public int faceCenterX = 0;
+        public int faceCenterY = 0;
+        public float faceScaleX = 1.0f;
+        public float faceScaleY = 1.0f;
 
         public float[] leftEye;
         public float[] rightEye;
@@ -92,6 +99,38 @@ namespace AnimationTool
 
             leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
             rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+
+            // Init some parameters with nonzero values
+            int curIndex = (int)ProceduralEyeParameter.EyeScaleX;
+            leftEye[curIndex] = rightEye[curIndex] = 1.0f;
+
+            curIndex = (int)ProceduralEyeParameter.EyeScaleY;
+            leftEye[curIndex] = rightEye[curIndex] = 1.0f;
+
+            curIndex = (int)ProceduralEyeParameter.EyeCenterX;
+            leftEye[curIndex] = 32f;
+            rightEye[curIndex] = 96f;
+
+            curIndex = (int)ProceduralEyeParameter.EyeCenterY;
+            leftEye[curIndex] = rightEye[curIndex] = 32f;
+
+            // Make a quick list to init all the radius params to the same value
+            var radiusParamList = new[]
+            {
+                (int)ProceduralEyeParameter.LowerInnerRadiusX,
+                (int)ProceduralEyeParameter.LowerInnerRadiusY,
+                (int)ProceduralEyeParameter.UpperInnerRadiusX,
+                (int)ProceduralEyeParameter.UpperInnerRadiusY,
+                (int)ProceduralEyeParameter.UpperOuterRadiusX,
+                (int)ProceduralEyeParameter.UpperOuterRadiusY,
+                (int)ProceduralEyeParameter.LowerOuterRadiusX,
+                (int)ProceduralEyeParameter.LowerOuterRadiusY
+            };
+
+            foreach (var param in radiusParamList)
+            {
+                leftEye[param] = rightEye[param] = 0.5f;
+            }
         }
     }
 

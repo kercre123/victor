@@ -12,7 +12,7 @@ namespace PatternPlay {
 
     public override void Enter() {
       base.Enter();
-      DAS.Info("PatternPlayState", "PickUpCube");
+      DAS.Info(this, "PickUpCube");
       _PatternPlayGame = (PatternPlayGame)_StateMachine.GetGame();
       _PatternPlayAutoBuild = _PatternPlayGame.GetAutoBuild();
 
@@ -33,7 +33,7 @@ namespace PatternPlay {
     public override void Update() {
       base.Update();
       if (_HasTarget == false) {
-        DAS.Info("PatternPlayPickUpCube", "No Cubes To Pickup");
+        DAS.Info(this, "No Cubes To Pickup");
         _StateMachine.SetNextState(new LookForCubesState());
         _PatternPlayAutoBuild.SetObjectHeld(null);
       }
@@ -48,7 +48,7 @@ namespace PatternPlay {
         _StateMachine.SetNextState(new PlaceCubeState());
       }
       else {
-        DAS.Info("PatternPlay", "PickUp Failed!");
+        DAS.Info(this, "PickUp Failed!");
         _StateMachine.SetNextState(new LookForCubesState());
         if (_PatternPlayAutoBuild.GetHeldObject() != null) {
           _CurrentRobot.UpdateDirtyList(_PatternPlayAutoBuild.GetHeldObject());

@@ -141,7 +141,7 @@ def runAll(options):
   
   # Get list of tests and world files from config
   config = ConfigParser.ConfigParser()
-  webotsTestCfgPath = 'project/buildServer/steps/webotsTests.cfg'
+  webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
   config.read(webotsTestCfgPath)
   testNames = config.sections()
   testStatuses = {}

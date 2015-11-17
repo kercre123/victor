@@ -29,8 +29,8 @@ namespace AskCozmo {
       _Param1 = minigameParamsObject.GetField("AskGameParam1").str;
       _Param2 = minigameParamsObject.GetField("AskGameParam2").str;
 
-      DAS.Debug("AskCozmoGame", _Param1);
-      DAS.Debug("AskCozmoGame", _Param2);
+      DAS.Debug(this, _Param1);
+      DAS.Debug(this, _Param2);
 
       JSONObject arrayParam1 = minigameParamsObject.GetField("AskGameArrayParam1");
       for (int i = 0; i < arrayParam1.list.Count; ++i) {
@@ -38,7 +38,7 @@ namespace AskCozmo {
       }
 
       for (int i = 0; i < _ListParam.Count; ++i) {
-        DAS.Debug("AskCozmoGame", _ListParam[i].ToString());
+        DAS.Debug(this, _ListParam[i].ToString());
       }
     }
 

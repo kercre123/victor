@@ -512,7 +512,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
     if (!_IsRobotConnected) {
-      DAS.Debug("RobotEngineManager", "Robot " + message.robotID.ToString() + " sent first state message.");
+      DAS.Debug(this, "Robot " + message.robotID.ToString() + " sent first state message.");
       _IsRobotConnected = true;
 
       AddRobot(message.robotID);
@@ -523,7 +523,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (!Robots.ContainsKey(message.robotID)) {
-      DAS.Debug("RobotEngineManager", "adding robot with ID: " + message.robotID);
+      DAS.Debug(this, "adding robot with ID: " + message.robotID);
       
       AddRobot(message.robotID);
     }

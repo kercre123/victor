@@ -760,8 +760,8 @@ namespace AnimationTool
             this.headAngle.Size = new System.Drawing.Size(1280, 135);
             this.headAngle.TabIndex = 9;
             this.headAngle.chart = cHeadAngle;
-            this.headAngle.panel.Controls.Add(headAngle.chart);
-            this.headAngle.checkBox.CheckedChanged += HeadAngleCheckBox;
+            this.headAngle.Panel.Controls.Add(headAngle.chart);
+            this.headAngle.CheckBox.CheckedChanged += HeadAngleCheckBox;
             // 
             // liftHeight
             // 
@@ -770,8 +770,8 @@ namespace AnimationTool
             this.liftHeight.Size = new System.Drawing.Size(1280, 135);
             this.liftHeight.TabIndex = 9;
             this.liftHeight.chart = cLiftHeight;
-            this.liftHeight.panel.Controls.Add(liftHeight.chart);
-            this.liftHeight.checkBox.CheckedChanged += LiftHeightCheckBox;
+            this.liftHeight.Panel.Controls.Add(liftHeight.chart);
+            this.liftHeight.CheckBox.CheckedChanged += LiftHeightCheckBox;
             // 
             // bodyMotion
             // 
@@ -780,8 +780,8 @@ namespace AnimationTool
             this.bodyMotion.Size = new System.Drawing.Size(1280, 100);
             this.bodyMotion.TabIndex = 9;
             this.bodyMotion.chart = cBodyMotion;
-            this.bodyMotion.panel.Controls.Add(bodyMotion.chart);
-            this.bodyMotion.checkBox.CheckedChanged += BodyMotionCheckBox;
+            this.bodyMotion.Panel.Controls.Add(bodyMotion.chart);
+            this.bodyMotion.CheckBox.CheckedChanged += BodyMotionCheckBox;
             // 
             // proceduralFace
             // 
@@ -790,8 +790,8 @@ namespace AnimationTool
             this.proceduralFace.Size = new System.Drawing.Size(1280, 100);
             this.proceduralFace.TabIndex = 9;
             this.proceduralFace.chart = cProceduralFace;
-            this.proceduralFace.panel.Controls.Add(proceduralFace.chart);
-            this.proceduralFace.checkBox.CheckedChanged += ProceduralFaceCheckBox;
+            this.proceduralFace.Panel.Controls.Add(proceduralFace.chart);
+            this.proceduralFace.CheckBox.CheckedChanged += ProceduralFaceCheckBox;
             // 
             // faceAnimation
             // 
@@ -800,8 +800,8 @@ namespace AnimationTool
             this.faceAnimation.Size = new System.Drawing.Size(1280, 100);
             this.faceAnimation.TabIndex = 9;
             this.faceAnimation.chart = cFaceAnimation;
-            this.faceAnimation.panel.Controls.Add(faceAnimation.chart);
-            this.faceAnimation.checkBox.CheckedChanged += FaceAnimationCheckBox;
+            this.faceAnimation.Panel.Controls.Add(faceAnimation.chart);
+            this.faceAnimation.CheckBox.CheckedChanged += FaceAnimationCheckBox;
             // 
             // audioRobot
             // 
@@ -810,8 +810,8 @@ namespace AnimationTool
             this.audioRobot.Size = new System.Drawing.Size(1280, 100);
             this.audioRobot.TabIndex = 9;
             this.audioRobot.chart = cAudioRobot;
-            this.audioRobot.panel.Controls.Add(audioRobot.chart);
-            this.audioRobot.checkBox.CheckedChanged += AudioRobotCheckBox;
+            this.audioRobot.Panel.Controls.Add(audioRobot.chart);
+            this.audioRobot.CheckBox.CheckedChanged += AudioRobotCheckBox;
             // 
             // audioDevice
             // 
@@ -820,8 +820,8 @@ namespace AnimationTool
             this.audioDevice.Size = new System.Drawing.Size(1280, 100);
             this.audioDevice.TabIndex = 9;
             this.audioDevice.chart = cAudioDevice;
-            this.audioDevice.panel.Controls.Add(audioDevice.chart);
-            this.audioDevice.checkBox.CheckedChanged += AudioDeviceCheckBox;
+            this.audioDevice.Panel.Controls.Add(audioDevice.chart);
+            this.audioDevice.CheckBox.CheckedChanged += AudioDeviceCheckBox;
             // 
             // MainForm
             // 

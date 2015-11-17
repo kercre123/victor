@@ -25,7 +25,7 @@ namespace SpeedTap {
 
     // Use this for initialization
     void Start() { 
-      DAS.Info("SpeedTapGame", "Game Created");
+      DAS.Info(this, "Game Created");
 
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
@@ -75,7 +75,7 @@ namespace SpeedTap {
     }
 
     private void BlockTapped(int blockID, int tappedTimes) {
-      DAS.Info("SpeedTapGame", "Player Block Tapped.");
+      DAS.Info(this, "Player Block Tapped.");
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
           PlayerTappedBlockEvent();
