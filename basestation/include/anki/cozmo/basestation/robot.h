@@ -210,8 +210,11 @@ public:
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
-    u32 GetAverageImagePeriodMS();
-    
+    u32 GetAverageImagePeriodMS() const;
+  
+    // Returns the average period of image processing
+    u32 GetAverageImageProcPeriodMS() const;
+  
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
     void SetPhysicalRobot(bool isPhysical);
@@ -756,8 +759,9 @@ public:
     // Save mode for robot images
     SaveMode_t _imageSaveMode = SAVE_OFF;
     
-    // Maintains an average period of incoming robot images
+    // Maintains an average period of incoming robot images and processing speed
     u32         _imgFramePeriod        = 0;
+    u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
 
