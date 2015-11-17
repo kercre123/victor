@@ -31,7 +31,7 @@ public static class DAS {
     Console.Out.WriteLine(eventName + ": " + eventValue);
 
 #else
-    UnitysDAS_Event(eventName, eventValue);
+    Unity_DAS_Event(eventName, eventValue);
     if (OnEventLogged != null){
       OnEventLogged(eventName, eventValue, context);
     }
@@ -44,7 +44,7 @@ public static class DAS {
     Console.Out.WriteLine(eventName + ": " + eventValue);
 
 #else
-    UnitysDAS_LogE(eventName, eventValue);
+    Unity_DAS_LogE(eventName, eventValue);
     if (OnErrorLogged != null){
       OnErrorLogged(eventName, eventValue, context);
     }
@@ -57,7 +57,7 @@ public static class DAS {
       Console.Out.WriteLine(eventName + ": " + eventValue);
 
 #else
-      UnitysDAS_LogW(eventName, eventValue);
+      Unity_DAS_LogW(eventName, eventValue);
     if (OnWarningLogged != null){
       OnWarningLogged(eventName, eventValue, context);
     }
@@ -70,7 +70,7 @@ public static class DAS {
     Console.Out.WriteLine(eventName + ": " + eventValue);
 
 #else
-    UnitysDAS_LogI(eventName, eventValue);
+    Unity_DAS_LogI(eventName, eventValue);
     if (OnInfoLogged != null){
       OnInfoLogged(eventName, eventValue, context);
     }
@@ -83,7 +83,7 @@ public static class DAS {
     Console.Out.WriteLine(eventName + ": " + eventValue);
 
 #else
-    UnitysDAS_LogD(eventName, eventValue);
+    Unity_DAS_LogD(eventName, eventValue);
     if (OnDebugLogged != null){
       OnDebugLogged(eventName, eventValue, context);
     }
@@ -146,18 +146,18 @@ public static class DAS {
 
   // TODO: __Internal only works on certain platforms (iOS, but not Android, etc)
   [DllImport("__Internal")]
-  private static extern void UnitysDAS_Event(string eventName, string eventValue);
+  private static extern void Unity_DAS_Event(string eventName, string eventValue);
 
   [DllImport("__Internal")]
-  private static extern void UnitysDAS_LogE(string eventName, string eventValue);
+  private static extern void Unity_DAS_LogE(string eventName, string eventValue);
 
   [DllImport("__Internal")]
-  private static extern void UnitysDAS_LogW(string eventName, string eventValue);
+  private static extern void Unity_DAS_LogW(string eventName, string eventValue);
 
   [DllImport("__Internal")]
-  private static extern void UnitysDAS_LogI(string eventName, string eventValue);
+  private static extern void Unity_DAS_LogI(string eventName, string eventValue);
 
   [DllImport("__Internal")]
-  private static extern void UnitysDAS_LogD(string eventName, string eventValue);
+  private static extern void Unity_DAS_LogD(string eventName, string eventValue);
 }
 #endif
