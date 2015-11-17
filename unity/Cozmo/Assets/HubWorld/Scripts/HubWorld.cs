@@ -62,7 +62,7 @@ public class HubWorld : HubWorldBase {
       challengeData.ChallengeReqs.StatLocks.Add(statLockObject.keys[0], (uint)statLockObject.i);
     }
 
-    challengeData.MinigameParametersJSON = challengeDataObject.GetField("MinigameParametersJSON").str;
+    challengeData.MinigameParametersJSON = challengeDataObject.GetField("MinigameParametersJSON").ToString();
 
     return challengeData;
   }
