@@ -9,6 +9,7 @@ extern "C" {
 #include "mem.h"
 #include "client.h"
 #include "foregroundTask.h"
+#include "driver/i2spi.h"
 #include "sha1.h"
 #include "rboot.h"
 }
@@ -48,7 +49,8 @@ LOCAL bool TaskEraseFlash(uint32 param)
   // TODO: Add block based erase
   const uint16 sector = msg->start / SECTOR_SIZE;
   RobotInterface::FlashWriteAcknowledge resp;
-  switch (spi_flash_erase_sector(sector))
+  const SpiFlashOpResult rslt = spi_flash_erase_sector(sector);
+  switch (rslt)
   {
     case SPI_FLASH_RESULT_OK:
     {
@@ -173,8 +175,8 @@ LOCAL bool TaskOtaWiFi(uint32 param)
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
   
   blcfg.header = BOOT_CONFIG_HEADER;
-  blcfg.newImageStart = state->fwStart;
-  blcfg.newImageSize  = state->fwSize / SECTOR_SIZE;
+  blcfg.newImageStart = state->fwStart / SECTOR_SIZE;
+  blcfg.newImageSize  = state->fwSize  / SECTOR_SIZE;
   blcfg.version       = state->version;
   blcfg.chksum        = calc_chksum((uint8*)&blcfg, &blcfg.chksum);
   
@@ -218,17 +220,90 @@ LOCAL bool TaskOtaWiFi(uint32 param)
 LOCAL bool TaskOtaRTIP(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  // TODO Do something with this new RTIP update
-  PRINT("RTIP OTA successful\r\n");
-  os_free(state);
-  return false;
+  
+  switch (i2spiGetBootloaderState())
+  {
+    case STATE_NACK:
+    {
+      if (retries == 0)
+      {
+        PRINT("RTIP OTA transfer failure! Aborting.\r\n");
+        os_free(state);
+        return false;
+      }
+      // Have retries left, fall through and try writing
+    }
+    case STATE_IDLE:
+    {
+      switch (state->phase)
+      {
+        case 0: // Really idle
+        {
+          RecoveryPacket chunk;
+          switch (spi_flash_read(state->fwStart + state->index, reinterpret_cast<uint32*>(&chunk), sizeof(RecoveryPacket)))
+          {
+            case SPI_FLASH_RESULT_OK:
+            {
+              retries = MAX_RETRIES;
+              state->index += sizeof(RecoveryPacket);
+              i2spiBootloaderPushChunk(&chunk);
+              state->phase = 1;
+              return true;
+            }
+            case SPI_FLASH_RESULT_ERR:
+            {
+              PRINT("RTIP OTA flash readback failure, aborting\r\n");
+              os_free(state);
+              return false;
+            }
+            case SPI_FLASH_RESULT_TIMEOUT:
+            {
+              if (retries-- > 0)
+              {
+                return true;
+              }
+              else
+              {
+                PRINT("RTIP OTA flash readback timeout, aborting\r\n");
+                os_free(state);
+                return false;
+              }
+            }
+          }
+        }
+        case 1: // Returning from writing a chunk
+        {
+          state->index += sizeof(RecoveryPacket);
+          if (static_cast<uint32>(state->index) < state->fwSize) // Have more firmware left to write
+          {
+            retries = MAX_RETRIES;
+            state->phase = 0;
+            return true;
+          }
+          else // Done writing firmware
+          {
+            i2spiDisableBootloader();
+            PRINT("RTIP OTA transfer complete\r\n");
+            os_free(state);
+            return false;
+          }
+        }
+      }
+    }
+    case STATE_BUSY: // Just waiting
+    case STATE_SYNC: // We will read garbage instead of sync so default is the same
+    default:
+    {
+      return true;
+    }
+  }
 }
 
 LOCAL bool TaskOtaBody(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
   // TODO Do something with this new body update
-  PRINT("Body OTA successful\r\n");
+  PRINT("Body OTA NOT IMPLEMENTED!\r\n");
   os_free(state);
   return false;
 }
@@ -314,6 +389,8 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       case RobotInterface::OTA_RTIP:
       {
+        i2spiEnableBootloader();
+        retries = MAX_RETRIES;
         foregroundTaskPost(TaskOtaRTIP, param);
         return false;
       }
@@ -385,6 +462,8 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
     }
     else
     {
+      os_printf("OTA finish: fwStart=%x, fwSize=%x, version=%d, command=%d\r\n",
+                msg.start, msg.size, msg.version, msg.command);
       retries = MAX_RETRIES;
       SHA1Init(&(otaState->ctx)); // Initalize the SHA1
       otaState->fwStart = msg.start;

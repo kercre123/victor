@@ -43,6 +43,7 @@ namespace Anki {
               case RobotInterface::EngineToRobot::Tag_eraseFlash:
               {
                 UpgradeController::EraseFlash(msg.eraseFlash);
+                break;
               }
               case RobotInterface::EngineToRobot::Tag_writeFlash:
               {

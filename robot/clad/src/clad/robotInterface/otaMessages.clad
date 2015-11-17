@@ -20,7 +20,7 @@ message WriteFlash
 }
 
 enum uint_8 OTACommand
-{Ro
+{
   OTA_none,
   OTA_asset,
   OTA_WiFi,

@@ -5,6 +5,7 @@
 
 #include "os_type.h"
 #include "anki/cozmo/robot/drop.h" ///< I2SPI transaction contract
+#include "anki/cozmo/robot/rec_protocol.h" ///< Protocol for upgrades
 
 /// Buffer size must match I2S TX FIFO depth
 #define DMA_BUF_SIZE (512) /// This must be 512 Espressif DMA to work and for logic in i2spi.c to work
@@ -37,6 +38,25 @@ void i2spiStop(void);
  * @return true if the data was successfully queued or false if it could not be queued.
  */
 bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen);
+
+/** Switch the I2SPI driver to RTIP bootloader mode.
+ * Suspends normal drop transmission / reception firmware to bootloader instead.
+ */
+void i2spiEnableBootloader(void);
+
+/** Sends reboot command to the RTIP and exists the RTIP bootloader communication mode
+ * Resets to synchronizing state and re-enables drop transmission / reception once synchronized.
+ */
+void i2spiDisableBootloader(void);
+
+/** Check the status of the RTIP bootloader
+ */
+uint16_t i2spiGetBootloaderState(void);
+
+/** Push a chunk of firmware to the RTIP
+ * @param chunk a Pointer to data to be sent
+ */
+void i2spiBootloaderPushChunk(RecoveryPacket* chunk);
 
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;

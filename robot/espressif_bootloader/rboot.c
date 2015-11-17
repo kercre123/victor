@@ -158,7 +158,7 @@ void NOINLINE copyNewImage(void)
     uint32 sector;
     SpiFlashOpResult rslt;
     
-    ets_printf("Found new image: %x[%x]\r\n", config.newImageStart, config.newImageSize);
+    ets_printf("Found new image: %x[%d]\r\n", config.newImageStart, config.newImageSize);
     
     ets_printf("\tErasing old firmware\r\n");
     for (sector = FIRMWARE_START_SECTOR; sector < FIRMWARE_START_SECTOR + config.newImageSize; sector++)
@@ -201,7 +201,7 @@ void NOINLINE setupSerial(void)
   // Update the clock rate here since it's the first function we call
   //uart_div_modify(0, CPU_CLK_FREQ/115200);
   // Debugging delay
-  ets_delay_us(2000000);
+  //ets_delay_us(2000000);
   
   ets_printf("Welcome to rboot\r\n");
 }

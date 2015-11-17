@@ -23,7 +23,13 @@ uint32 PumpScreenData(void);
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
 
-#define UNINITALIZED_PHASE (-32768)
+/// Flags to control the DMA mode
+enum {
+  PHASE_FLAGS = -32000, ///< Anything below this value is a flag, not a valid phase value
+  UNINITALIZED_PHASE    = PHASE_FLAGS-1, ///< Haven't achieved sync
+  BOOTLOADER_SYNC_PHASE = PHASE_FLAGS-2, ///< Synchronizing with RTIP bootloader
+  BOOTLOADER_XFER_PHASE = PHASE_FLAGS-3, ///< Bootloader mode
+};
 
 uint32_t i2spiTxUnderflowCount;
 uint32_t i2spiTxOverflowCount;
@@ -58,6 +64,8 @@ static struct sdio_queue* nextOutgoingDesc;
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+/// The last state we've received from the RTIP bootloader regarding it's state
+static int16_t rtipBootloaderState;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -201,7 +209,7 @@ void i2spiTask(os_event_t *event)
           dropPhase++;
           drift++;
         }
-        if (dropPhase < DMA_BUF_SIZE/2) // If we found a header
+        if (likely(dropPhase < DMA_BUF_SIZE/2)) // If we found a header
         {
           const int8 halfWordsToRead = min(DROP_TO_WIFI_SIZE-(dropWrInd*2), DMA_BUF_SIZE - (dropPhase*2))/2;
           halfWordCopy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead);
@@ -214,6 +222,12 @@ void i2spiTask(os_event_t *event)
           }
           else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
+        else if (outgoingPhase == BOOTLOADER_SYNC_PHASE || outgoingPhase == BOOTLOADER_XFER_PHASE)
+        {
+          rtipBootloaderState = buf[(DMA_BUF_SIZE/2) - 1]; // Last half-word in buffer is latest state we know
+          if (rtipBootloaderState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
+          break;
+        }
         else break; // Didn't find the next header in this one
       }
       dropPhase -= DMA_BUF_SIZE/2; // Now looking in next buffer
@@ -222,11 +236,14 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_TX:
     {
-      if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) { // Durring startup
-        uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
-        int w;
-        for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
-        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      if (unlikely(outgoingPhase < PHASE_FLAGS)) { // Not normal mode
+        if (outgoingPhase == UNINITALIZED_PHASE || outgoingPhase == BOOTLOADER_SYNC_PHASE)
+        {
+          int w;
+          uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        }
       }
       else // When running
       {
@@ -446,4 +463,44 @@ bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
     queued += payloadLen;
   }
   return true;
+}
+
+void ICACHE_FLASH_ATTR i2spiEnableBootloader(void)
+{
+  outgoingPhase = BOOTLOADER_SYNC_PHASE;
+  rtipBootloaderState = STATE_UNKNOWN;
+}
+
+void ICACHE_FLASH_ATTR i2spiDisableBootloader(void)
+{
+  outgoingPhase = UNINITALIZED_PHASE;
+  txFillCount = 0;
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  txBuf[0] = COMMAND_HEADER;
+  txBuf[1] = COMMAND_DONE;
+}
+
+uint16_t ICACHE_FLASH_ATTR i2spiGetBootloaderState(void)
+{
+  return rtipBootloaderState;
+}
+
+void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(RecoveryPacket* chunk)
+{
+  int wInd = 0;
+  int rInd = 0;
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  uint16_t* data  = (uint16_t*)(chunk);
+  txBuf[wInd++] = COMMAND_HEADER;
+  txBuf[wInd++] = COMMAND_FLASH;
+  while (rInd < (sizeof(RecoveryPacket)/2))
+  {
+    while (wInd < DMA_BUF_SIZE/2)
+    {
+      txBuf[wInd++] = data[rInd++];
+    }
+    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    wInd = 0;
+  }
 }

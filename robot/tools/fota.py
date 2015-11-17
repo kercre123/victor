@@ -51,7 +51,7 @@ class Upgrader(IDataReceiver):
         self.robot = robotAddress
         self.acked = False
         self.connected = False
-        ut = UDPTransport()
+        ut = UDPTransport(logInPackets="fotaInPackets.bin")
         ut.OpenSocket()
         self.transport = ReliableTransport(ut, self)
         self.transport.Connect(self.robot)
@@ -78,8 +78,9 @@ class Upgrader(IDataReceiver):
         "Callback for received messages from robot"
         msg = RobotInterface.RobotToEngine.unpack(buffer)
         if msg.tag == msg.Tag.printText:
-            sys.stdout.write(msg.printText.text)
+            sys.stdout.write("ROBOT: " + msg.printText.text)
         elif msg.tag == msg.Tag.flashWriteAck:
+            sys.stdout.write("Received ACK {}\r\n".format(str(msg.flashWriteAck)))
             self.acked = True
         else:
             sys.stderr.write("Upgrader received unexpected message from robot:\r\n\t{}\r\n".format(str(msg)))
@@ -105,7 +106,7 @@ class Upgrader(IDataReceiver):
             raise inst
         else:
             fwSize    = len(fw)
-            sys.stdout.write("Loading \"{}\", {:d} bytes,")
+            sys.stdout.write("Loading \"{}\", {:d} bytes.\r\n".format(filePathName, fwSize))
             # Calculate signature
             sig = hashlib.sha1(fw).digest()
             # Wait for connection
@@ -132,19 +133,19 @@ class Upgrader(IDataReceiver):
     
 def UpgradeWiFi(up, fwPathName, version=0):
     "Sends a WiFi firmware upgrade"
-    up.ota(fwPathName, version, RobotInterface.OTACommand.OTA_WiFi)
+    up.ota(fwPathName, RobotInterface.OTACommand.OTA_WiFi, version)
 
 def UpgradeRTIP(up, fwPathName, version=0):
     "Sends an RTIP firmware upgrade"
-    up.ota(fwPathName, version, RobotInterface.OTACommand.OTA_RTIP)
+    up.ota(fwPathName, RobotInterface.OTACommand.OTA_RTIP, version)
 
 def UpgradeBody(up, fwPathName, version=0):
-    up.ota(fwPathName, version, RobotInterface.OTACommand.OTA_body)
+    up.ota(fwPathName, RobotInterface.OTACommand.OTA_body, version)
 
 def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
     "Sends an asset to flash"
     for f, a in zip(flashAddresss, assetPathName):
-        up.ota(a, version, f, RobotInterface.OTACommand.OTA_RTIP)
+        up.ota(a, RobotInterface.OTACommand.OTA_RTIP, version, f)
         time.sleep(1.0) # Wait for finish
 
 def WaitForUserEnd():
