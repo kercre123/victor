@@ -39,7 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c959f61d2c3bf45fc8dddf5d4394f99a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _HubWorldDialogPrefab: {fileID: 0}
+  _HubWorldDialogPrefab: {fileID: 11412438, guid: ef5f2743dc0e248b4a2c991eb563e57d,
+    type: 2}
   _TempLevelAsset: {fileID: 4900000, guid: 3b8f26d3e5db2431c9e274f6065b9548, type: 3}
 --- !u!1001 &100100000
 Prefab:
@@ -47,7 +48,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _HubWorldDialogPrefab
+      value: 
+      objectReference: {fileID: 11412438, guid: ef5f2743dc0e248b4a2c991eb563e57d,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 128992}
