@@ -307,6 +307,8 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.DisconnectedFromClient += Reset;
 
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
+    RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
+    RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
   }
 
   public void Dispose() {
@@ -461,13 +463,11 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  // This function should only be called by RobotEngineManager to update the internal Progression Stat values.
-  public void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, uint value) {
+  private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, uint value) {
     ProgressionStats[(int)index] = value;
   }
 
-  // This function should only be called by RobotEngineManager to update the internal emotion Stat values.
-  public void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
+  private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
     EmotionValues[(int)index] = value;
   }
 

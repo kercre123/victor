@@ -42,6 +42,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
+  public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
+  public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
 
   // Audio Callback events
   public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
@@ -471,7 +473,9 @@ public class RobotEngineManager : MonoBehaviour {
     else {
       for (EmotionType i = 0; i < EmotionType.Count; ++i) {
         //DAS.Info("Mood", "Robot " + message.robotID.ToString() + ": Emotion '" + i + "' = " + message.emotionValues[(int)i]);
-        CurrentRobot.UpdateEmotionFromEngineRobotManager(i, message.emotionValues[(int)i]);
+        if (OnEmotionRecieved != null) {
+          OnEmotionRecieved(i, message.emotionValues[(int)i]);
+        }
       }
     }
   }
@@ -487,7 +491,9 @@ public class RobotEngineManager : MonoBehaviour {
      
       for (ProgressionStatType i = 0; i < ProgressionStatType.Count; ++i) {
         // DAS.Info("Progression", "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
-        CurrentRobot.UpdateProgressionStatFromEngineRobotManager(i, message.statValues[(int)i]);
+        if (OnProgressionStatRecieved != null) {
+          OnProgressionStatRecieved(i, message.statValues[(int)i]);
+        }
       }
     }
   }
