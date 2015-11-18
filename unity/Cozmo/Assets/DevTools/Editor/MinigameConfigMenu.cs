@@ -20,8 +20,8 @@ namespace AssemblyCSharpEditor {
     static MinigameConfigMenu()
     {
       var types = Assembly.GetAssembly(typeof(MinigameConfigBase)).GetTypes().Where(t => typeof(MinigameConfigBase).IsAssignableFrom(t) && t != typeof(MinigameConfigBase));
-      _types = types.ToArray();
-      _typeNames = types.Select(x => x.Name).ToArray();
+      _types = types.Concat(new System.Type[1]{null}).ToArray();
+      _typeNames = _types.Select(x => x != null ? x.Name : "None").ToArray();
 
       _indices = new int[_typeNames.Length];
       for (int i = 0; i < _indices.Length; i++) {
@@ -36,17 +36,19 @@ namespace AssemblyCSharpEditor {
       var type = _types[_selectedIndex];
 
       if (GUILayout.Button("Create")) {
-        var path = EditorUtility.SaveFilePanel("New Config", "Assets/SharedAssets/Resources/Challenges", type.Name.Replace("Config","")+"Challenge", "asset");
+        var path = EditorUtility.SaveFilePanel("New Config", "Assets/SharedAssets/Resources/Challenges", (type != null ? type.Name.Replace("Config","") : "")+"Challenge", "asset");
 
         if (!string.IsNullOrEmpty(path)) {
           var challengeDataInstance = ScriptableObject.CreateInstance(typeof(ChallengeData)) as ChallengeData;
-          var configInstance = ScriptableObject.CreateInstance(type) as MinigameConfigBase;
+          var configInstance = type != null ? ScriptableObject.CreateInstance(type) as MinigameConfigBase : null;
             
           if (path.StartsWith(Application.dataPath) && path.Contains("Resources")) {
             path = "Assets" + path.Substring(Application.dataPath.Length);
             string path2 = path.Replace(".asset", "_Config.asset");
 
-            AssetDatabase.CreateAsset(configInstance, path2);
+            if (type != null) {
+              AssetDatabase.CreateAsset(configInstance, path2);
+            }
 
             challengeDataInstance.MinigameConfig = configInstance;
 
