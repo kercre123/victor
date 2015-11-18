@@ -239,13 +239,13 @@ LOCAL bool TaskOtaRTIP(uint32 param)
       {
         case 0: // Really idle
         {
-          RecoveryPacket chunk;
-          switch (spi_flash_read(state->fwStart + state->index, reinterpret_cast<uint32*>(&chunk), sizeof(RecoveryPacket)))
+          FirmwareBlock chunk;
+          switch (spi_flash_read(state->fwStart + state->index, reinterpret_cast<uint32*>(&chunk), sizeof(FirmwareBlock)))
           {
             case SPI_FLASH_RESULT_OK:
             {
               retries = MAX_RETRIES;
-              state->index += sizeof(RecoveryPacket);
+              state->index += sizeof(FirmwareBlock);
               i2spiBootloaderPushChunk(&chunk);
               state->phase = 1;
               return true;
@@ -273,7 +273,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         }
         case 1: // Returning from writing a chunk
         {
-          state->index += sizeof(RecoveryPacket);
+          state->index += sizeof(FirmwareBlock);
           if (static_cast<uint32>(state->index) < state->fwSize) // Have more firmware left to write
           {
             retries = MAX_RETRIES;
@@ -328,7 +328,7 @@ LOCAL bool TaskOtaBody(uint32 param)
             case SPI_FLASH_RESULT_OK:
             {
               retries = MAX_RETRIES;
-              state->index += sizeof(RecoveryPacket);
+              state->index += sizeof(FirmwareBlock);
               i2spiQueueMessage(msg.GetBuffer(), msg.Size());
               state->phase = 1;
               return true;
@@ -356,7 +356,7 @@ LOCAL bool TaskOtaBody(uint32 param)
         }
         case 1: // Returning from writing a chunk
         {
-          state->index += sizeof(RecoveryPacket);
+          state->index += sizeof(FirmwareBlock);
           if (static_cast<uint32>(state->index) < state->fwSize) // Have more firmware left to write
           {
             retries = MAX_RETRIES;

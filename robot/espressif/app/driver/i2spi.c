@@ -505,7 +505,7 @@ int16_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderState(void)
   return bodyBootloaderState;
 }
 
-void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(RecoveryPacket* chunk)
+void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
   int wInd = 0;
   int rInd = 0;
@@ -513,7 +513,7 @@ void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(RecoveryPacket* chunk)
   uint16_t* data  = (uint16_t*)(chunk);
   txBuf[wInd++] = COMMAND_HEADER;
   txBuf[wInd++] = COMMAND_FLASH;
-  while (rInd < (sizeof(RecoveryPacket)/2))
+  while (rInd < (sizeof(FirmwareBlock)/2))
   {
     while (wInd < DMA_BUF_SIZE/2)
     {
