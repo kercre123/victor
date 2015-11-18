@@ -66,19 +66,22 @@ namespace Vision {
 #   endif
   }
 
+  inline cv::Scalar GetCvColor(const ColorRGBA& color) {
+    return CV_RGB(color.b(), color.g(), color.r());
+  }
+  
   template<typename T>
   void ImageBase<T>::DrawLine(const Point2f& start, const Point2f& end,
                               const ColorRGBA& color, const s32 thickness)
   {
     cv::line(this->get_CvMat_(), start.get_CvPoint_(), end.get_CvPoint_(),
-             CV_RGB(color.r(), color.g(), color.b()), thickness);
+             GetCvColor(color), thickness);
   }
   
   template<typename T>
   void ImageBase<T>::DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size)
   {
-    cv::circle(this->get_CvMat_(), point.get_CvPoint_(), size,
-               CV_RGB(color.r(), color.g(), color.b()));
+    cv::circle(this->get_CvMat_(), point.get_CvPoint_(), size, GetCvColor(color));
   }
   
   template<typename T>
