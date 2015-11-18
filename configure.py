@@ -104,6 +104,7 @@ def parse_game_arguments():
     parser.add_argument(
         '--provision-profile',
         metavar='string',
+        default='Cozmo',
         required=False,
         help='Provide the mobile provisioning profile name for signing')
 
