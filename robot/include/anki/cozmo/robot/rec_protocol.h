@@ -1,28 +1,32 @@
 #ifndef __REC_PROTOCOL_H
 #define __REC_PROTOCOL_H
 
-#define TRANSMIT_BLOCK_SIZE (0x1000)
-#define SECURE_SPACE (0x1000)
-#define SHA1_DIGEST_LENGTH		20
+#include <stdint.h>
+#include <stdint.h>
+
+typedef uint16_t commandWord;
+
+static const int TRANSMIT_BLOCK_SIZE = 0x1000;
+static const int SECURE_SPACE = 0x1000;
+
+// These are used for the Head communication protocol
+static const commandWord COMMAND_HEADER = 0x5478;
 
 enum RECOVERY_COMMAND {
-  COMMAND_HEADER = 0x5478,
   COMMAND_DONE  = 0x00,
   COMMAND_FLASH = 0x01
 };
 
 enum RECOVERY_STATE {
-  STATE_SYNC = 0x5278,
-  STATE_IDLE = 0x5230,
-  STATE_NACK = 0x5231,
-  STATE_BUSY = 0x523F,
-  STATE_UNKNOWN = 0xFFFF,
+  STATE_SYNC,
+  STATE_IDLE,
+  STATE_NACK,
+  STATE_BUSY,
+  STATE_RUNNING,
+  STATE_BUSY,
+  STATE_SYNC,
+  STATE_UNKNOWN
 };
 
-typedef struct {
-  uint32_t  flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
-  uint32_t  blockOffset;
-  uint8_t   checkSum[SHA1_DIGEST_LENGTH];
-} RecoveryPacket;
 
 #endif

@@ -210,8 +210,11 @@ public:
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
-    u32 GetAverageImagePeriodMS();
-    
+    u32 GetAverageImagePeriodMS() const;
+  
+    // Returns the average period of image processing
+    u32 GetAverageImageProcPeriodMS() const;
+  
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
     void SetPhysicalRobot(bool isPhysical);
@@ -233,7 +236,7 @@ public:
     void SetPose(const Pose3d &newPose);
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
-    
+  
     // Get 3D bounding box of the robot at its current pose or a given pose
     void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
     void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
@@ -244,7 +247,10 @@ public:
     
     // Return current height of lift's gripper
     f32 GetLiftHeight() const;
-    
+  
+    // Get pitch angle of robot
+    f32 GetPitchAngle();
+  
     // Return current bounding height of the robot, taking into account whether lift
     // is raised
     f32 GetHeight() const;
@@ -689,7 +695,8 @@ public:
 
     f32              _currentHeadAngle;
     f32              _currentLiftAngle = 0;
-    
+    f32              _pitchAngle;
+  
     f32              _leftWheelSpeed_mmps;
     f32              _rightWheelSpeed_mmps;
     
@@ -752,8 +759,9 @@ public:
     // Save mode for robot images
     SaveMode_t _imageSaveMode = SAVE_OFF;
     
-    // Maintains an average period of incoming robot images
+    // Maintains an average period of incoming robot images and processing speed
     u32         _imgFramePeriod        = 0;
+    u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
 
@@ -850,6 +858,8 @@ public:
 
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
+  
+    Result SendEnablePickupDetect(const bool enable) const;
 
     Result SendAbortDocking();
     Result SendAbortAnimation();

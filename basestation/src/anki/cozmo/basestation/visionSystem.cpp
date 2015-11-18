@@ -1428,7 +1428,8 @@ namespace Cozmo {
       //
       
       EnableMode(VisionMode::DetectingMarkers, true);
-      EnableMode(VisionMode::DetectingFaces,   true);
+      EnableMode(VisionMode::DetectingMotion,  true);
+      //EnableMode(VisionMode::DetectingFaces,   true);
 
       _markerToTrack.Clear();
       _numTrackFailures          = 0;
@@ -1437,9 +1438,7 @@ namespace Cozmo {
       _havePreviousRobotState    = false;
       
       //_headCamInfo = HAL::GetHeadCamInfo();
-      if(_headCamInfo == nullptr) {
-        delete _headCamInfo;
-      }
+      delete _headCamInfo;
       _headCamInfo = new CameraInfo(camCalib);
       if(_headCamInfo == nullptr) {
         PRINT_STREAM_INFO("VisionSystem.Init", "Initialize() - HeadCam Info pointer is NULL!");

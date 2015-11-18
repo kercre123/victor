@@ -184,6 +184,13 @@ message AbortAnimation
 {
 }
 
+message EnablePickupDetect
+{
+  bool enable
+}
+
+
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot.
@@ -224,6 +231,7 @@ union EngineToRobot
   CubeLights                    setCubeLights               = 0x1D,
   FlashObjectIDs                flashObjectIDs              = 0x1E,
   ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
+  EnablePickupDetect            enablePickupDetect          = 0x20,
   
   // To WiFi 0x80 to 0xFE
   EraseFlash                    eraseFlash                  = 0x80,

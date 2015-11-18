@@ -359,6 +359,10 @@ namespace Anki {
       
       // Update lift angle
       SetLiftAngle(msg.liftAngle);
+      
+      // Update robot pitch angle
+      _pitchAngle = msg.pose.pitch_angle;
+      
 
       // TODO: (KY/DS) remove SetProxSensorData
       //// Update proximity sensor values
@@ -517,7 +521,9 @@ namespace Anki {
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
-                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX), _animationTag);
+                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
+                                                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                _animationTag);
       
       return lastResult;
       
@@ -1052,9 +1058,14 @@ namespace Anki {
       return false;
     }
     
-    u32 Robot::GetAverageImagePeriodMS()
+    u32 Robot::GetAverageImagePeriodMS() const
     {
       return _imgFramePeriod;
+    }
+    
+    u32 Robot::GetAverageImageProcPeriodMS() const
+    {
+      return _imgProcPeriod;
     }
       
     static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
@@ -1131,6 +1142,11 @@ namespace Anki {
       Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
 
       CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
+    }
+    
+    f32 Robot::GetPitchAngle()
+    {
+      return _pitchAngle;
     }
         
     void Robot::SelectPlanner(const Pose3d& targetPose)
@@ -2244,7 +2260,7 @@ namespace Anki {
     {
       if(IsCarryingObject() == false) {
         PRINT_NAMED_WARNING("Robot.SetCarriedObjectAsUnattached.CarryingObjectNotSpecified",
-                            "Robot not carrying object, but told to place one. (Possibly actually rolling.\n");
+                            "Robot not carrying object, but told to place one. (Possibly actually rolling or balancing or popping a wheelie.\n");
         return RESULT_FAIL;
       }
       
@@ -2384,6 +2400,11 @@ namespace Anki {
       return SendRobotMessage<RobotInterface::ImuRequest>(length_ms);
     }
 
+    Result Robot::SendEnablePickupDetect(const bool enable) const
+    {
+      return SendRobotMessage<RobotInterface::EnablePickupDetect>(enable);
+    }
+    
     void Robot::SetSaveStateMode(const SaveMode_t mode)
     {
       _stateSaveMode = mode;
@@ -2428,6 +2449,9 @@ namespace Anki {
       }
       _lastImgTimeStamp = image.GetTimestamp();
       
+      const f32 imgProcrateAvgCoeff = 0.9f;
+      _imgProcPeriod = (_imgProcPeriod * (1.f-imgProcrateAvgCoeff) +
+                        _visionComponent.GetProcessingPeriod() * imgProcrateAvgCoeff);
       
       // For now, we need to reassemble a RobotState message to provide the
       // vision system (because it is just copied from the embedded vision

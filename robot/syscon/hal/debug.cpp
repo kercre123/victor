@@ -45,6 +45,8 @@ int UART::get() {
 }
 
 static inline void put(unsigned char c) {
+  return ;
+
   if (debug_print_count >= MAX_DEBUG_PRINT) return ;
   
   debug_print_out[debug_print_last] = c;
@@ -54,6 +56,8 @@ static inline void put(unsigned char c) {
 
 void UART::print( const char* fmt, ...)
 {
+  return ;
+
   va_list vl;
   va_start(vl, fmt);
 
@@ -65,6 +69,8 @@ void UART::print( const char* fmt, ...)
 }
 
 void UART::dump(int count, char* data) {
+  return ;
+
   const char hex[] = "0123456789ABCDEF";
   while(count-- > 0) {
     char ch = *(data++);

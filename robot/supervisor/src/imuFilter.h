@@ -44,6 +44,8 @@ namespace Anki {
       // Starts recording a buffer of data for the specified time and sends it to basestation
       void RecordAndSend( const u32 length_ms );
       
+      void EnablePickupDetect(bool enable);
+      
       // Returns true when pickup detected.
       // Pickup detect is reset when the robot stops moving.
       bool IsPickedUp();

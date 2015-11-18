@@ -290,6 +290,16 @@ message RollObject {
   bool useManualSpeed
 }
 
+// PopAWheelie
+message PopAWheelie {
+  int_32 objectID, // negative value means "currently selected object"
+  PathMotionProfile motionProf,
+  float_32 approachAngle_rad,
+  bool useApproachAngle,
+  bool usePreDockPose,
+  bool useManualSpeed
+}
+
 // TraverseObject
 message TraverseObject {
   PathMotionProfile motionProf,
@@ -426,6 +436,12 @@ message IMURequest {
     uint_32 length_ms
 }
 
+// Robot pickup detection
+message EnableRobotPickupDetect
+{
+    bool enable
+}
+
 // PlayAnimation
 message PlayAnimation {
     uint_8  robotID,
@@ -504,6 +520,10 @@ message SetBackpackLEDs {
 // DisplayProceduralFace
 message DisplayProceduralFace {
   float_32 faceAngle,        // Degrees
+  float_32 faceCenX,
+  float_32 faceCenY,
+  float_32 faceScaleX,
+  float_32 faceScaleY,
   float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
   float_32 rightEye[uint_8], //
   uint_8   robotID
@@ -553,6 +573,7 @@ union RobotActionUnion {
   PlaceOnObject      placeOnObject,
   PlaceRelObject     placeRelObject,
   RollObject         rollObject,
+  PopAWheelie        popAWheelie,
   SetLiftHeight      setLiftHeight,
   SetHeadAngle       setHeadAngle,
   TurnInPlace        turnInPlace
