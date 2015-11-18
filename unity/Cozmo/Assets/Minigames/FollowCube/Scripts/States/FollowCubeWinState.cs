@@ -2,10 +2,11 @@
 using System.Collections;
 
 namespace FollowCube {
-  public class FollowCubeFailState : State {
+
+  public class FollowCubeWinState : State {
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
+      _CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
     }
 
     private void HandleAnimationDone(bool success) {

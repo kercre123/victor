@@ -50,7 +50,7 @@ namespace FollowCube {
     }
 
     void SetSpeed() {
-      ForwardSpeed = 50.0f;
+      ForwardSpeed = 30.0f;
       DistanceMax = 130.0f;
       DistanceMin = 90.0f;
     }

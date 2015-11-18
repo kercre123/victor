@@ -7,8 +7,8 @@ namespace FollowCube {
 
     #region Tunable values
 
-    private int _AttemptsLeft = 3;
-    private float _UnseenForgivenessSeconds = 2f;
+    private int _AttemptsLeft = 100;
+    private float _UnseenForgivenessSeconds = 1f;
 
     #endregion
 
@@ -19,16 +19,22 @@ namespace FollowCube {
 
     private bool _IsAnimatingFail = false;
 
+    private float _PreviousAnglePose;
+    private float _TotalRadiansTraveled;
+
     public override void Enter() {
       base.Enter();
 
       _GameInstance = _StateMachine.GetGame() as FollowCubeGame;
       _IsAnimatingFail = false;
-      _AttemptsLeft = 3;
+      _AttemptsLeft = 100;
       _GameInstance.SetAttemptsLeft(_AttemptsLeft);
 
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
+
+      _PreviousAnglePose = _CurrentRobot.PoseAngle;
+      _TotalRadiansTraveled = 0;
     }
 
     public override void Update() {
@@ -46,12 +52,24 @@ namespace FollowCube {
       // If there is a target, and it's currently in view, follow it.
       if (_TargetCube != null) {
         if (IsCubeVisible(_TargetCube)) {
+          ResetUnseenTimestamp();
+
           _TargetCube.SetLEDs(Color.white);
           FollowCube(_TargetCube);
 
-          // TODO: Keep track of any change in direction.
+          // Keep track of any change in direction.
+          float deltaRadians = _PreviousAnglePose - _CurrentRobot.PoseAngle;
+          // Disregard a huge change in rotation, because that means he's passing the 
+          // border from -pi to pi.
+          if (Mathf.Abs(deltaRadians) < 1) {
+            _TotalRadiansTraveled += deltaRadians;
+          }
+          _PreviousAnglePose = _CurrentRobot.PoseAngle;
 
-          // TODO: If we have turned fully around in either direction, the player wins.
+          // If we have turned fully around in either direction, the player wins.
+          if (Mathf.Abs(_TotalRadiansTraveled) > Mathf.PI * 2) {
+            _StateMachine.SetNextState(new FollowCubeWinState());
+          }
         }
         else {
           // Keep track of when Cozmo first loses track of the block
@@ -146,10 +164,10 @@ namespace FollowCube {
         // we need to turn to face it
         bool shouldTurnRight = ShouldTurnRight(target);
         if (shouldTurnRight) {
-          _CurrentRobot.DriveWheels(speed * 0.5f, -speed * 0.25f);
+          _CurrentRobot.DriveWheels(speed, -speed);
         }
         else {
-          _CurrentRobot.DriveWheels(-speed * 0.25f, speed * 0.5f);
+          _CurrentRobot.DriveWheels(-speed, speed);
         }
       }
 
