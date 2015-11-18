@@ -25,13 +25,6 @@ public class ChallengeRequirements : ISerializationCallbackReceiver {
     }
   }
 
-  public bool TryGetStatLock(Anki.Cozmo.ProgressionStatType type, out uint value) {
-    if (StatLocks.TryGetValue(type, out value)) {
-      return true;
-    }
-    return false;
-  }
-
   public bool MeetsRequirements(Robot robot, List<string> unlockedLevels) {
     for (int i = 0; i < LevelLocks.Length; ++i) {
       if (unlockedLevels.Contains(LevelLocks[i]) == false) {
@@ -41,7 +34,7 @@ public class ChallengeRequirements : ISerializationCallbackReceiver {
 
     for (Anki.Cozmo.ProgressionStatType i = 0; i < Anki.Cozmo.ProgressionStatType.Count; ++i) {
       uint statValue = 0;
-      if (TryGetStatLock(i, out statValue)) {
+      if (StatLocks.TryGetValue(i, out statValue)) {
         if (robot.ProgressionStats[(int)i] < statValue) {
           return false;
         }

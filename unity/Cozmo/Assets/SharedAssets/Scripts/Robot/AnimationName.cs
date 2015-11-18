@@ -12,7 +12,5 @@ public static class AnimationName {
   public const string kEnjoyLight = "enjoyLight";
   public const string kSeeOldPattern = "seeOldPattern";
 
-  public const string kInvestorDemo1 = "demoCh2p01WakeUp";
-  public const string kInvestorDemo2 = "demoCh2p02GetOffCharger";
 }
 

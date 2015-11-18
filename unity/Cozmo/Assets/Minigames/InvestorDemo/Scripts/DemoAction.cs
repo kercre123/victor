@@ -2,15 +2,9 @@
 using System.Collections;
 
 namespace InvestorDemo {
+  [System.Serializable]
   public class DemoAction {
-    public DemoAction(string animationName, Anki.Cozmo.BehaviorType behavior) {
-      AnimationName = animationName;
-      Behavior = behavior;
-    }
-
-    public string AnimationName { get; set; }
-
-    public Anki.Cozmo.BehaviorType Behavior { get; set; }
-
+    public string AnimationName;
+    public Anki.Cozmo.BehaviorType Behavior;
   }
 }
