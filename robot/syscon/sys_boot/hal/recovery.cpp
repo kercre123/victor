@@ -152,19 +152,13 @@ bool FlashSector(int target, const uint32_t* data)
 
 
 static inline bool FlashBlock() {
-  struct Packet {
-    uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
-    uint32_t   blockAddress;
-    uint8_t    checkSum[SHA1_BLOCK_SIZE];
-  };
-
   static union {
-    Packet packet;    
-    uint8_t raw[sizeof(Packet)];
+    FirmwareBlock packet;    
+    uint8_t raw[sizeof(FirmwareBlock)];
   };
 
   // Load raw packet into memory
-  for (int i = 0; i < sizeof(Packet); i++) {
+  for (int i = 0; i < sizeof(FirmwareBlock); i++) {
     raw[i] = ReadByte();
   }
 

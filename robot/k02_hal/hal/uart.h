@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "hal/portable.h"
-#include "robot_boot/hal/rec_protocol.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/spineData.h"
 
 static const uint32_t debug_baud_rate = 3000000;

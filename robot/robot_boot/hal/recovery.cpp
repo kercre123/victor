@@ -140,16 +140,10 @@ bool FlashSector(int target, const uint32_t* data)
 
 
 static inline bool FlashBlock() {
-  struct Packet {
-    uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
-    uint32_t   blockAddress;
-    uint8_t    checkSum[SHA1_BLOCK_SIZE];
-  };
-
-  static const int length = sizeof(Packet) / sizeof(commandWord);
+  static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
   
   static union {
-    Packet packet;    
+    FirmwareBlock packet;    
     commandWord raw[length];
   };
 
