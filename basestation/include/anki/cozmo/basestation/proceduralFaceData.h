@@ -17,9 +17,19 @@
 #include "anki/common/basestation/math/point.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include <array>
+#include <vector>
+
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
 namespace Cozmo {
+  
+// Forward declarations
+namespace ExternalInterface {
+  struct DisplayProceduralFace;
+}
   
 class ProceduralFaceData
 {
@@ -32,8 +42,15 @@ public:
     Right
   };
   
+  ProceduralFaceData();
+  
   // Reset parameters to their nominal values
   void Reset();
+  
+  // Read in available parameters from Json
+  void SetFromJson(const Json::Value &jsonRoot);
+  
+  void SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg);
   
   // Get/Set each of the above procedural parameters, for each eye
   void  SetParameter(WhichEye whichEye, Parameter param, Value value);
@@ -70,6 +87,8 @@ private:
   Value           _faceAngle;
   Point<2,Value>  _faceScale;
   Point<2,Value>  _faceCenter;
+  
+  void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   
 }; // class ProceduralFaceData
   

@@ -8,7 +8,6 @@
 namespace Anki {
 namespace Cozmo {
 
-  //const ProceduralFaceData::Value ProceduralFace::MaxFaceAngle = 30.f; // Not sure why I can't set this one here
   u8 ProceduralFace::_firstScanLine = 0;
   
   ProceduralFace::ProceduralFace()
@@ -23,29 +22,6 @@ namespace Cozmo {
     _timestamp = 0;
   }
 
-  
-
-  inline const s32 GetScaledValue(ProceduralFaceData::Value value, s32 min, s32 max)
-  {
-    // Input is [-1,1]. Make [0,1]
-    value += 1;
-    value *= .5f;
-    
-    return static_cast<s32>(value * static_cast<ProceduralFaceData::Value>(max-min)) + min;
-  }
-  
-  inline const s32 GetScaledValue(ProceduralFaceData::Value value, s32 min, s32 mid, s32 max)
-  {
-    if(value == 0) {
-      return mid;
-    } else if(value < 0) {
-      return (value + 1.f)*static_cast<ProceduralFaceData::Value>(mid-min) + min;
-    } else {
-      assert(value > 0);
-      return value*static_cast<ProceduralFaceData::Value>(max-mid) + mid;
-    }
-  }
-  
   SmallMatrix<2,3,f32> ProceduralFace::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                                f32 tX, f32 tY, f32 x0, f32 y0)
   {

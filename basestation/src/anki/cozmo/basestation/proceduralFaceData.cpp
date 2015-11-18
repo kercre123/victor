@@ -10,9 +10,17 @@
  *
  **/
 #include "anki/cozmo/basestation/proceduralFaceData.h"
+#include "anki/common/basestation/jsonTools.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+ProceduralFaceData::ProceduralFaceData()
+{
+  Reset();
+}
 
 void ProceduralFaceData::Reset()
 {
@@ -38,7 +46,84 @@ void ProceduralFaceData::Reset()
     }
   }
 }
+  
+static const char* kFaceAngleKey = "faceAngle";
+static const char* kFaceCenterXKey = "faceCenterX";
+static const char* kFaceCenterYKey = "faceCenterY";
+static const char* kFaceScaleXKey = "faceScaleX";
+static const char* kFaceScaleYKey = "faceScaleY";
+static const char* kLeftEyeKey = "leftEye";
+static const char* kRightEyeKey = "rightEye";
 
+void ProceduralFaceData::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray)
+{
+  const char* eyeStr = (eye == WhichEye::Left) ? kLeftEyeKey : kRightEyeKey;
+
+  const size_t N = static_cast<size_t>(Parameter::NumParameters);
+  if(eyeArray.size() != N) {
+    PRINT_NAMED_WARNING("ProceduralFaceData.SetEyeArrayHelper.WrongNumParams",
+                        "Unexpected number of parameters for %s array (%lu vs. %lu)",
+                        eyeStr, eyeArray.size(), N);
+    return;
+  }
+  
+  for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
+  {
+    SetParameter(eye, static_cast<ProceduralFaceData::Parameter>(i),eyeArray[i]);
+  }
+}
+  
+void ProceduralFaceData::SetFromJson(const Json::Value &jsonRoot)
+{
+  Value tempValue;
+  if (JsonTools::GetValueOptional(jsonRoot, kFaceAngleKey, tempValue))
+  {
+    _faceAngle = tempValue;
+  }
+  
+  if (JsonTools::GetValueOptional(jsonRoot, kFaceCenterXKey, tempValue))
+  {
+    _faceCenter.x() = tempValue;
+  }
+  
+  if (JsonTools::GetValueOptional(jsonRoot, kFaceCenterYKey, tempValue))
+  {
+    _faceCenter.y() = tempValue;
+  }
+  
+  if (JsonTools::GetValueOptional(jsonRoot, kFaceScaleXKey, tempValue))
+  {
+    _faceScale.x() = tempValue;
+  }
+  
+  if (JsonTools::GetValueOptional(jsonRoot, kFaceScaleYKey, tempValue))
+  {
+    _faceScale.y() = tempValue;
+  }
+  
+  std::vector<Value> eyeArray;
+  if (JsonTools::GetVectorOptional(jsonRoot, kLeftEyeKey, eyeArray))
+  {
+    SetEyeArrayHelper(WhichEye::Left, eyeArray);
+  }
+  
+  eyeArray.clear();
+  if (JsonTools::GetVectorOptional(jsonRoot, kRightEyeKey, eyeArray))
+  {
+    SetEyeArrayHelper(WhichEye::Right, eyeArray);
+  }
+}
+  
+void ProceduralFaceData::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
+{
+  SetFaceAngle(msg.faceAngle);
+  SetFacePosition({msg.faceCenX, msg.faceCenY});
+  SetFaceScale({msg.faceScaleX, msg.faceScaleY});
+  
+  SetEyeArrayHelper(WhichEye::Left, msg.leftEye);
+  SetEyeArrayHelper(WhichEye::Right, msg.rightEye);
+}
+  
 template<typename T>
 inline static T LinearBlendHelper(const T value1, const T value2, const float blendFraction)
 {

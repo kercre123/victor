@@ -644,23 +644,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   }
   
   ProceduralFace procFace;
-  using Param = ProceduralFace::Parameter;
-  const size_t N = static_cast<size_t>(Param::NumParameters);
-  if(msg.leftEye.size() < N || msg.rightEye.size() < N) {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleDisplayProceduralFace.WrongArrayLength",
-                      "Expecting leftEye / rightEye array lengths to be %lu, not %lu / %lu.",
-                      N, msg.leftEye.size(), msg.rightEye.size());
-    return;
-  }
-    
-  for(int iParam = 0; iParam < N; ++iParam) {
-    procFace.GetData().SetParameter(ProceduralFace::WhichEye::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
-    procFace.GetData().SetParameter(ProceduralFace::WhichEye::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
-  }
-  
-  procFace.GetData().SetFaceAngle(msg.faceAngle);
-  procFace.GetData().SetFacePosition({msg.faceCenX, msg.faceCenY});
-  procFace.GetData().SetFaceScale({msg.faceScaleX, msg.faceScaleY});
+  procFace.GetData().SetFromMessage(msg);
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
   
   robot->SetProceduralFace(procFace);
