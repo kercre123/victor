@@ -8,7 +8,6 @@ namespace InvestorDemo {
   public class InvestorDemoGame : GameBase {
     
     private int _ActionIndex = -1;
-    private bool _ActionDone = false;
 
     [SerializeField]
     private InvestorDemoPanel _GamePanelPrefab;
@@ -38,19 +37,18 @@ namespace InvestorDemo {
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
 
-      _ActionDone = true;
-    }
-
-    void Update() {
-      if (_ActionDone) {
-        NextAction();
-      }
+      NextAction();
     }
 
     private void OnAnimationDone(bool success) {
       // not calling NextAction here directly because we need to wait a frame for the
       // RobotCallbacks to be updated correctly.
-      _ActionDone = true;
+      StartCoroutine(DelayedNextAction());
+    }
+
+    private IEnumerator DelayedNextAction() {
+      yield return new WaitForEndOfFrame();
+      NextAction();
     }
 
     private void NextAction() {
@@ -76,7 +74,6 @@ namespace InvestorDemo {
     }
 
     private void DoCurrentAction() {
-      _ActionDone = false;
       if (_ActionIndex >= 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
         if (!_DemoConfig.DemoActions[_ActionIndex].AnimationName.Equals("")) {
           CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName, OnAnimationDone);
