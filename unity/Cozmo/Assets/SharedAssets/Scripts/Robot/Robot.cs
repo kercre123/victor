@@ -650,6 +650,10 @@ public class Robot : IDisposable {
     }
   }
 
+  public void CancelAllCallbacks() {
+    _RobotCallbacks.Clear();
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");

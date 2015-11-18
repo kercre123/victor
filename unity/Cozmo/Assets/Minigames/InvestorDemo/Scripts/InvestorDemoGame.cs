@@ -93,6 +93,10 @@ namespace InvestorDemo {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+      CurrentRobot.CancelAllCallbacks();
+      if (_GamePanel != null) {
+        UIManager.CloseDialogImmediately(_GamePanel);
+      }
     }
   }
 
