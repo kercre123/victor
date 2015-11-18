@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-#if (!UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE || UNITY_STANDALONE)) || ANIMATION_TOOL
+#if (!UNITY_EDITOR && (UNITY_ANDROID || UNITY_IPHONE)) || ANIMATION_TOOL
 
 public interface IDAS {
   void Event(string eventValue, UnityEngine.Object context = null);
@@ -27,8 +27,10 @@ public static class DAS {
 
   public static void Event(object eventObject, string eventValue, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
+
 #if ANIMATION_TOOL
     Console.Out.WriteLine(eventName + ": " + eventValue);
+
 
 #else
     Unity_DAS_Event(eventName, eventValue);
@@ -40,8 +42,10 @@ public static class DAS {
  
   public static void Error(object eventObject, string eventValue, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
+
 #if ANIMATION_TOOL
     Console.Out.WriteLine(eventName + ": " + eventValue);
+
 
 #else
     Unity_DAS_LogE(eventName, eventValue);
@@ -53,8 +57,10 @@ public static class DAS {
 
   public static void Warn(object eventObject, string eventValue, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
+
 #if ANIMATION_TOOL
       Console.Out.WriteLine(eventName + ": " + eventValue);
+
 
 #else
       Unity_DAS_LogW(eventName, eventValue);
@@ -66,8 +72,10 @@ public static class DAS {
 
   public static void Info(object eventObject, string eventValue, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
+
 #if ANIMATION_TOOL
     Console.Out.WriteLine(eventName + ": " + eventValue);
+
 
 #else
     Unity_DAS_LogI(eventName, eventValue);
@@ -79,8 +87,10 @@ public static class DAS {
 
   public static void Debug(object eventObject, string eventValue, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
+
 #if ANIMATION_TOOL
     Console.Out.WriteLine(eventName + ": " + eventValue);
+
 
 #else
     Unity_DAS_LogD(eventName, eventValue);

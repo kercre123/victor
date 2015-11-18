@@ -75,15 +75,13 @@ public class Robot : IDisposable {
     private readonly RobotCallback _Callback;
     private readonly RobotActionType[] _ActionTypes;
 
-    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback)
-    {
+    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback) {
       _ActionType = actionType;
       _Callback = callback;
       _ActionTypes = null;
     }
 
-    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes)
-    {
+    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes) {
       _ActionType = RobotActionType.UNKNOWN;
       _Callback = callback;
       _ActionTypes = actionTypes;
@@ -650,6 +648,10 @@ public class Robot : IDisposable {
         _RobotCallbacks.RemoveAt(i);
       }
     }
+  }
+
+  public void CancelAllCallbacks() {
+    _RobotCallbacks.Clear();
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null) {

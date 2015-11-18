@@ -13,3 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ChallengeData:
   - {fileID: 11400000, guid: 83404e274f1bb4124b2e2a43f6192d8a, type: 2}
+  - {fileID: 11400000, guid: 7135ed987d6e64971b67f3056b725701, type: 2}

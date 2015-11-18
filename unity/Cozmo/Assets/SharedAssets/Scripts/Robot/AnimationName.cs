@@ -11,5 +11,6 @@ public static class AnimationName {
   public const string kEnjoyPattern = "enjoyPattern";
   public const string kEnjoyLight = "enjoyLight";
   public const string kSeeOldPattern = "seeOldPattern";
+
 }
 
