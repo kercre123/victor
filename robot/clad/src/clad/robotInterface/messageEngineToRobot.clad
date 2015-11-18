@@ -11,6 +11,7 @@
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
 #include "clad/robotInterface/messageToActiveObject.clad"
+#include "clad/robotInterface/otaMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -233,6 +234,9 @@ union EngineToRobot
   EnablePickupDetect            enablePickupDetect          = 0x20,
   
   // To WiFi 0x80 to 0xFE
+  EraseFlash                    eraseFlash                  = 0x80,
+  WriteFlash                    writeFlash                  = 0x81,
+  OTAUpgrade                    triggerOTAUpgrade           = 0x82,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
@@ -248,6 +252,10 @@ union EngineToRobot
   // Anim future expansion                                  = 0x9C,
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
+  
+  // WiFi to RTIP messages, not actually sent by engine
+  WiFiToRTIP::BodyUpgradeData   bodyUpgradeData             = 0xFD,
+  WiFiToRTIP::EnterBootloader   enterBootloader             = 0xFE,
 }
 
 } // namespace Robot Interface

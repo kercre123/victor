@@ -166,7 +166,7 @@ CSRCS ?= $(wildcard *.c)
 CXXSRCS ?= $(wildcard *.cpp)
 ASRCs ?= $(wildcard *.s)
 ASRCS ?= $(wildcard *.S)
-SUBDIRS ?= $(patsubst %/,%,$(dir $(wildcard */Makefile)))
+SUBDIRS ?= $(patsubst app/%/,%,$(dir $(wildcard */Makefile)))
 
 ODIR := .output
 OBJODIR := $(ODIR)/$(TARGET)/$(FLAVOR)/obj

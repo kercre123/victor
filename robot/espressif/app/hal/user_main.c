@@ -13,8 +13,8 @@
 #include "nv_params.h"
 #include "backgroundTask.h"
 #include "foregroundTask.h"
-#include "upgrade_controller.h"
 #include "user_config.h"
+#include "rboot.h"
 
 /** Handle wifi events passed by the OS
  */
@@ -83,6 +83,28 @@ void wifi_event_callback(System_Event_t *evt)
   }
 }
 
+static void checkAndClearBootloaderConfig(void)
+{
+  BootloaderConfig bootConfig;
+  if (spi_flash_read(BOOT_CONFIG_SECTOR * SECTOR_SIZE, (uint32*)&bootConfig, sizeof(BootloaderConfig)) == SPI_FLASH_RESULT_OK)
+  {
+    if (bootConfig.header != 0xe1df0c05)
+    {
+      return; // No need to erase
+    }
+  }
+  else
+  {
+    os_printf("Error reading back bootloader config\r\n");
+  }
+  
+  // Clear the bootloader config to indicate we have successfully booted
+  if (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
+  {
+    os_printf("Error erasing bootloader config\r\n");
+  }
+}
+
 
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
@@ -99,14 +121,12 @@ void user_rf_pre_init(void)
  */
 static void system_init_done(void)
 {
-  // Enable upgrade controller
-  upgradeControllerInit();
-
+  // Check bootloader config and clear if nessisary
+  // Do this before i2spiInit so we don't desynchronize
+  checkAndClearBootloaderConfig();
+  
   // Setup Basestation client
   clientInit();
-
-  // Initalize i2SPI interface
-  i2spiInit();
 
   // Set up shared background tasks
   backgroundTaskInit();
@@ -114,8 +134,8 @@ static void system_init_done(void)
   // Set up shared foreground tasks
   foregroundTaskInit();
 
-  // Enable I2SPI start only after clientInit
-  i2spiStart();
+  // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
+  i2spiInit();
 
   os_printf("CPU Freq: %d MHz\r\n", system_get_cpu_freq());
 

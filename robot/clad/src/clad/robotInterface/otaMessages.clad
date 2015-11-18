@@ -1,0 +1,65 @@
+/** Clad definitions of firmware / asset upgrade over the air messages
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+  /// Erases flash
+  message EraseFlash
+  {
+    uint_32 start, ///< Where to start
+    uint_32 size,  ///< Number of bytes
+  }
+
+  /// Writes data into robot flash storage
+  message WriteFlash
+  {
+    uint_32 address, ///< Where to write data
+    uint_8  data[uint_32:1024], ///< Data to write, must be 4 byte aligned for Flash API alignment but must be uint8 for Python interface to be sane, size is uint_32 for alignment but must not be more than 1024 for write size
+  }
+
+  enum uint_8 OTACommand
+  {
+    OTA_none,
+    OTA_asset,
+    OTA_WiFi,
+    OTA_RTIP,
+    OTA_body,
+  }
+
+  /// Trigger a firmware upgrade from flash
+  message OTAUpgrade
+  {
+    uint_32    start,   ///< New firmware starting address
+    uint_32    size,    ///< Size of the new firmware
+    uint_32    version, ///< Version number for the new firmware
+    uint_8     sig[20], ///< Cryptographic signature / checksum for the firmware upgrade
+    OTACommand command, ///< What upgrade to do
+  }
+
+} // RobotInterface
+
+/// A namespace for messages that aren't actually from the engine but originate in the WiFi and are sent to RTIP
+namespace WiFiToRTIP
+{
+  enum uint_8 EnterBootloaderWhich
+  {
+    BOOTLOAD_RTIP,
+    BOOTLOAD_BODY,
+  }
+  
+  structure EnterBootloader
+  {
+    EnterBootloaderWhich which
+  }
+  
+  structure BodyUpgradeData
+  {
+    uint_32 data[16]
+  }
+  
+} // WiFiToRTIP
+
+} // Cozmo
+} // Anki

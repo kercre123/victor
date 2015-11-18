@@ -2,12 +2,12 @@
 #define __REC_PROTOCOL_H
 
 #include <stdint.h>
-#include <stdint.h>
 
 typedef uint16_t commandWord;
 
-static const int TRANSMIT_BLOCK_SIZE = 0x1000;
-static const int SECURE_SPACE = 0x1000;
+#define SHA1_DIGEST_LENGTH 20
+#define TRANSMIT_BLOCK_SIZE 0x1000
+#define SECURE_SPACE 0x1000
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;
