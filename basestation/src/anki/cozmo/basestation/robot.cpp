@@ -49,6 +49,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include "opencv2/calib3d/calib3d.hpp"
+
 #include <fstream>
 #include <regex>
 #include <dirent.h>
@@ -2471,6 +2473,91 @@ namespace Anki {
       
       _visionComponent.SetNextImage(image, robotState);
       
+      // TEST:
+      // Draw ground plane
+      {
+        const f32 d0 = 50.f;  // distance to close side of ground quad
+        const f32 d  = 100.f; // size of quad along robot's X direction
+        const f32 w_close  = 30.f;  // size of quad along robot's Y direction
+        const f32 w_far    = 80.f;
+        
+        // Ground plane quad in robot coordinates
+        Quad3f groundQuad({d0 + d, 0.5f*w_far,   0.f},
+                          {d0    , 0.5f*w_close, 0.f},
+                          {d0 + d,-0.5f*w_far,   0.f},
+                          {d0    ,-0.5f*w_close, 0.f});
+        
+        
+        Pose3d robotPoseWrtCamera;
+        bool result = GetPose().GetWithRespectTo(GetVisionComponent().GetCamera().GetPose(), robotPoseWrtCamera);
+        assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
+        
+        // Put ground quad in camera frame
+        Quad3f groundQuadWrtCamera;
+        robotPoseWrtCamera.ApplyTo(groundQuad, groundQuadWrtCamera);
+
+        Quad2f imgQuad;
+        GetVisionComponent().GetCamera().Project3dPoints(groundQuadWrtCamera, imgQuad);
+        
+        Vision::ImageRGB dispImg;
+        image.CopyTo(dispImg);
+        dispImg.DrawQuad(imgQuad, NamedColors::RED, 1);
+        dispImg.Display("GroundQuad");
+        
+        // TODO: Create overhead image, mapping ground pixels into flat map
+        
+        Vision::ImageRGB overheadMap;
+        
+        // TODO: Directly compute H in closed form from R, t, etc.
+        
+        // For now, just compute the homography from the correspondences we just created.
+        // NOTE: this is totally ridiculous
+        std::vector<cv::Point2f> cvImgPoints(4), cvGroundPoints(4);
+        for(s32 i=0; i<4; ++i) {
+          cvImgPoints[i] = imgQuad[static_cast<Quad::CornerName>(i)].get_CvPoint_();
+          cvGroundPoints[i].x = groundQuad[static_cast<Quad::CornerName>(i)].x();
+          cvGroundPoints[i].y = groundQuad[static_cast<Quad::CornerName>(i)].y();
+        }
+        cv::Matx<f32,3,3> H = cv::findHomography(cvImgPoints, cvGroundPoints);
+/*
+        SmallMatrix<3,3,f32> K = GetVisionComponent().GetCameraCalibration().GetCalibrationMatrix();
+        RotationMatrix3d R = robotPoseWrtCamera.GetRotationMatrix();
+        Rotation
+ */
+        // Need to apply a shift after the homography to put things in image
+        // coordinates with (0,0) at the upper left (since groundQuad's origin
+        // is not upper left). Also mirror Y coordinates since we are looking
+        // from above, not below
+        SmallSquareMatrix<3,f32> Shift{
+          1.f, 0.f, -d0,
+          0.f,-1.f, w_far*0.5f,
+          0.f, 0.f, 1.f};
+
+        cv::warpPerspective(image.get_CvMat_(), overheadMap.get_CvMat_(), Shift.get_CvMatx_() * H,
+                            cv::Size(d, w_far),
+                            cv::INTER_LINEAR);
+        
+        overheadMap.Display("OverheadMap");
+        
+        SmallSquareMatrix<3, f32> K = GetVisionComponent().GetCameraCalibration().GetCalibrationMatrix();
+        
+        const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
+        const Vec3f& T = robotPoseWrtCamera.GetTranslation();
+        
+        SmallSquareMatrix<3,f32> H2 = K*SmallSquareMatrix<3,f32>{R.GetColumn(0),R.GetColumn(1),T};
+        
+        H2.Invert();
+        H2 *= 1.f/H2(2,2);
+        
+        cv::warpPerspective(image.get_CvMat_(), overheadMap.get_CvMat_(), (Shift*H2).get_CvMatx_(),
+                            cv::Size(d, w_far), cv::INTER_LINEAR);
+        
+        overheadMap.Display("OverheadMapDirect");
+        
+        imgQuad.Contains(<#const Point<2, float> &point#>)
+        
+      }
+                       
       return lastResult;
     }
     
