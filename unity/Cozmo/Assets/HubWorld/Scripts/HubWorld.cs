@@ -8,8 +8,6 @@ public class HubWorld : HubWorldBase {
   private HubWorldDialog _HubWorldDialogPrefab;
   private HubWorldDialog _HubWorldDialogInstance;
 
-  private List<ChallengeData> _ChallengeList = new List<ChallengeData>();
-
   private GameBase _MiniGameInstance;
 
   private List<string> _UnlockedChallenges = new List<string>();
@@ -18,10 +16,9 @@ public class HubWorld : HubWorldBase {
   private TextAsset _TempLevelAsset;
 
   [SerializeField]
-  private TextAsset _ChallengeListJSON;
+  private ChallengeDataList _ChallengeDataList;
 
   public override bool LoadHubWorld() {
-    LoadChallengesJSON();
     ShowHubWorldDialog();
     return true;
   }
@@ -37,49 +34,12 @@ public class HubWorld : HubWorldBase {
     CloseMiniGame();
     return true;
   }
-
-  private void LoadChallengesJSON() {
-    JSONObject challengeListObject = new JSONObject(_ChallengeListJSON.text);
-    JSONObject challengeListArray = challengeListObject.GetField("ChallengeList");
-    for (int i = 0; i < challengeListArray.list.Count; ++i) {
-      string challengeFileName = challengeListArray[i].str;
-      _ChallengeList.Add(ParseChallengeJSON((Resources.Load("Data/Challenges/" + challengeFileName) as TextAsset).text));
-    }
-  }
-
-  private ChallengeData ParseChallengeJSON(string challengeJSON) {
-    ChallengeData challengeData = new ChallengeData();
-
-    JSONObject challengeDataObject = new JSONObject(challengeJSON);
-    Debug.Assert(challengeDataObject.IsObject);
-    challengeData.MinigamePrefabPath = challengeDataObject.GetField("MinigamePrefabPath").str;
-    challengeData.ChallengeID = challengeDataObject.GetField("ChallengeID").str;
-    challengeData.ChallengeTitleKey = challengeDataObject.GetField("ChallengeTitleKey").str;
-
-    challengeData.ChallengeReqs = new ChallengeRequirements();
-
-    JSONObject levelLockListData = challengeDataObject.GetField("ChallengeRequirements").GetField("LevelLocks");
-    JSONObject statLockListData = challengeDataObject.GetField("ChallengeRequirements").GetField("StatLocks");
-
-    for (int i = 0; i < levelLockListData.list.Count; ++i) {
-      challengeData.ChallengeReqs.LevelLocks.Add(levelLockListData[i].str);
-    }
-
-    for (int i = 0; i < statLockListData.list.Count; ++i) {
-      JSONObject statLockObject = statLockListData.list[i];
-      challengeData.ChallengeReqs.StatLocks.Add(statLockObject.keys[0], (uint)statLockObject.i);
-    }
-
-    challengeData.MinigameParametersJSON = challengeDataObject.GetField("MinigameParametersJSON").ToString();
-
-    return challengeData;
-  }
-
+    
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
     _HubWorldDialogInstance = UIManager.OpenDialog(_HubWorldDialogPrefab) as HubWorldDialog;
     _HubWorldDialogInstance.OnButtonClicked += OnButtonClicked;
-    _HubWorldDialogInstance.Initialize(_ChallengeList);
+    _HubWorldDialogInstance.Initialize(_ChallengeDataList.ChallengeData);
   }
 
   private void OnButtonClicked(ChallengeData challengeClicked) {
@@ -92,9 +52,9 @@ public class HubWorld : HubWorldBase {
     _HubWorldDialogInstance.OnButtonClicked -= OnButtonClicked;
     _HubWorldDialogInstance.CloseDialog();
 
-    GameObject newMiniGameObject = GameObject.Instantiate(Resources.Load(challengeClicked.MinigamePrefabPath)) as GameObject;
+    GameObject newMiniGameObject = GameObject.Instantiate(challengeClicked.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.ParseMinigameParams(challengeClicked.MinigameParametersJSON);
+    _MiniGameInstance.LoadMinigameConfig(challengeClicked.MinigameConfig);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
   }
 

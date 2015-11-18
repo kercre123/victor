@@ -18,12 +18,12 @@ public class HubWorldDialog : BaseDialog {
   [SerializeField]
   private ScrollRect _ScrollRect;
 
-  public void Initialize(List<ChallengeData> challengeList) {
+  public void Initialize(ChallengeData[] challengeList) {
 
     GameObject newButton;
     HubWorldButton buttonScript;
 
-    for (int i = 0; i < challengeList.Count; ++i) {
+    for (int i = 0; i < challengeList.Length; ++i) {
       newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _ButtonContainer);
       buttonScript = newButton.GetComponent<HubWorldButton>();
       buttonScript.Initialize(challengeList[i]);
