@@ -9,14 +9,11 @@ namespace InvestorDemo {
     
     private int _ActionIndex = -1;
 
-    [SerializeField]
-    private UnityEngine.UI.Text _CurrentActionText;
 
     [SerializeField]
-    private Button _NextButton;
+    private InvestorDemoPanel _GamePanelPrefab;
 
-    [SerializeField]
-    private Button _PrevButton;
+    private InvestorDemoPanel _GamePanel;
 
     private InvestorDemoConfig _DemoConfig;
 
@@ -29,20 +26,16 @@ namespace InvestorDemo {
       }
 
       _DemoConfig = demoConfig;
-
-      ConfigLoaded();
-
     }
 
     void Start() {
       CreateDefaultQuitButton();
-    }
 
-    private void ConfigLoaded() {
+      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
+      _GamePanel.OnNextButtonPressed += NextAction;
+      _GamePanel.OnPrevButtonPressed += PrevAction;
+
       NextAction();
-
-      _NextButton.onClick.AddListener(NextAction);
-      _NextButton.onClick.AddListener(PrevAction);
     }
 
     private void OnAnimationDone(bool success) {
@@ -60,16 +53,16 @@ namespace InvestorDemo {
     }
 
     private void DoCurrentAction() {
-      if (_ActionIndex > 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
+      if (_ActionIndex >= 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
         if (!_DemoConfig.DemoActions[_ActionIndex].AnimationName.Equals("")) {
           CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName, OnAnimationDone);
           CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-          _CurrentActionText.text = "Playing Animation: " + _DemoConfig.DemoActions[_ActionIndex].AnimationName;
+          _GamePanel.SetActionText("Playing Animation: " + _DemoConfig.DemoActions[_ActionIndex].AnimationName);
 
         }
         else {
           CurrentRobot.ExecuteBehavior(_DemoConfig.DemoActions[_ActionIndex].Behavior);
-          _CurrentActionText.text = "Doing: " + _DemoConfig.DemoActions[_ActionIndex].Behavior.ToString();
+          _GamePanel.SetActionText("Doing: " + _DemoConfig.DemoActions[_ActionIndex].Behavior.ToString());
         }
       }
     }

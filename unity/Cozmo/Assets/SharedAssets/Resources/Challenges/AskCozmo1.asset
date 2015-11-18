@@ -15,7 +15,6 @@ MonoBehaviour:
   ChallengeID: AzkCozmoChallenge
   ChallengeTitleKey: hubWorld.askCozmo.askCozmo1
   ChallengeReqs:
-    LevelLocks: []
-    StatKeys: 00
-    StatValues: 05000000
+    ChallengeGateKeys: []
+    StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: ab054c57772e9435e9f091ac02533134, type: 2}

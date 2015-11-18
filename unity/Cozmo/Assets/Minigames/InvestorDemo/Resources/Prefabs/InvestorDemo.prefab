@@ -40,16 +40,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _GameId: Investor Demo
-  _CurrentActionText: {fileID: 0}
-  _NextButton: {fileID: 0}
-  _PrevButton: {fileID: 0}
+  _GamePanelPrefab: {fileID: 11469786, guid: 3d27a0b8900804d01b5432e17dc1eb4f, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _GamePanelPrefab
+      value: 
+      objectReference: {fileID: 11469786, guid: 3d27a0b8900804d01b5432e17dc1eb4f,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 129546}

@@ -5,36 +5,44 @@ using System.Collections.Generic;
 [System.Serializable] 
 public class ChallengeRequirements : ISerializationCallbackReceiver {
   // list of challenge ids that are required to be unlocked
-  public string[] LevelLocks;
+  public string[] ChallengeGateKeys;
 
   // list of stat requirements required to be unlocked
-  public Dictionary<Anki.Cozmo.ProgressionStatType, uint> StatLocks = new Dictionary<Anki.Cozmo.ProgressionStatType, uint>();
+  public Dictionary<Anki.Cozmo.ProgressionStatType, uint> StatGateKeys = new Dictionary<Anki.Cozmo.ProgressionStatType, uint>();
+
+
+  [System.Serializable] 
+  public class StatGate {
+    public Anki.Cozmo.ProgressionStatType StatType;
+    public uint StatValue;
+  }
+
 
   // this exists because unity doesn't know how to serialize dictionaries.
-  public Anki.Cozmo.ProgressionStatType[] StatKeys;
-  public uint[] StatValues;
+  [SerializeField]
+  private StatGate[] StatGateArray;
 
   public void OnBeforeSerialize() {
 
   }
 
   public void OnAfterDeserialize() {
-    StatLocks = new Dictionary<Anki.Cozmo.ProgressionStatType, uint>();
-    for (int i = 0; i != System.Math.Min(StatKeys.Length, StatValues.Length); ++i) {
-      StatLocks.Add(StatKeys[i], StatValues[i]);
+    StatGateKeys = new Dictionary<Anki.Cozmo.ProgressionStatType, uint>();
+    for (int i = 0; i < StatGateArray.Length; ++i) {
+      StatGateKeys.Add(StatGateArray[i].StatType, StatGateArray[i].StatValue);
     }
   }
 
-  public bool MeetsRequirements(Robot robot, List<string> unlockedLevels) {
-    for (int i = 0; i < LevelLocks.Length; ++i) {
-      if (unlockedLevels.Contains(LevelLocks[i]) == false) {
+  public bool MeetsRequirements(Robot robot, List<string> unlockedChallenges) {
+    for (int i = 0; i < ChallengeGateKeys.Length; ++i) {
+      if (unlockedChallenges.Contains(ChallengeGateKeys[i]) == false) {
         return false;
       }
     }
 
     for (Anki.Cozmo.ProgressionStatType i = 0; i < Anki.Cozmo.ProgressionStatType.Count; ++i) {
       uint statValue = 0;
-      if (StatLocks.TryGetValue(i, out statValue)) {
+      if (StatGateKeys.TryGetValue(i, out statValue)) {
         if (robot.ProgressionStats[(int)i] < statValue) {
           return false;
         }

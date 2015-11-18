@@ -15,7 +15,6 @@ MonoBehaviour:
   ChallengeID: InvestorDemoScene1
   ChallengeTitleKey: hubWorld.investorDemo.investorDemoScene1
   ChallengeReqs:
-    LevelLocks: []
-    StatKeys: 
-    StatValues: 
+    ChallengeGateKeys: []
+    StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 515c8ff39e50941faa9ee82aa315ed66, type: 2}
