@@ -85,6 +85,7 @@ public class HubWorld : HubWorldBase {
   private void OnButtonClicked(ChallengeData challengeClicked) {
     // don't load the level if the level doesn't meet requirements
     if (!challengeClicked.ChallengeReqs.MeetsRequirements(RobotEngineManager.Instance.CurrentRobot, _UnlockedChallenges)) {
+      DAS.Info(this, "Level Requirements not met");
       return;
     }
 

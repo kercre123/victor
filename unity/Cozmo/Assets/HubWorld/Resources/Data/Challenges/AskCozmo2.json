@@ -9,7 +9,7 @@
     ],
     "StatLocks" : [
       {
-        "Speed": "5"
+        "Speed": 5
       }
     ]
   },
@@ -18,10 +18,10 @@
     "AskGameParam1": "Value1",
     "AskGameParam2": "Value2",
     "AskGameArrayParam1": [
-      "1",
-      "3",
-      "5",
-      "7"
+      1,
+      3,
+      4,
+      5
     ]
   }
 }

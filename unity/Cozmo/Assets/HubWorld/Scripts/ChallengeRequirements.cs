@@ -21,8 +21,8 @@ public class ChallengeRequirements {
   }
 
   public bool MeetsRequirements(Robot robot, List<string> unlockedLevels) {
-    for (int i = 0; i < unlockedLevels.Count; ++i) {
-      if (LevelLocks.Contains(unlockedLevels[i]) == false) {
+    for (int i = 0; i < LevelLocks.Count; ++i) {
+      if (unlockedLevels.Contains(LevelLocks[i]) == false) {
         return false;
       }
     }

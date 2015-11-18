@@ -7,9 +7,6 @@
     "LevelLocks" : [
     ],
     "StatLocks" : [
-      {
-        "Speed": "5"
-      }
     ]
   },
 
@@ -17,10 +14,10 @@
     "AskGameParam1": "Value1",
     "AskGameParam2": "Value2",
     "AskGameArrayParam1": [
-      "41",
-      "23",
-      "25",
-      "17"
+      32,
+      44,
+      55,
+      116
     ]
   }
 }
