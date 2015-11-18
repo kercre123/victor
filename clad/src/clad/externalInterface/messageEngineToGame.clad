@@ -146,6 +146,12 @@ message RobotObservedFace {
 // TODO: Add expression / landmark locations
 }
 
+// RobotObservedMotion
+message RobotObservedMotion {
+    int_16   img_x,  // Motion centroid in the image
+    int_16   img_y
+}
+
 // RobotDeletedFace
 message RobotDeletedFace {
     int_64  faceID,

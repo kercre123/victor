@@ -659,6 +659,8 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   }
   
   procFace.SetFaceAngle(msg.faceAngle);
+  procFace.SetFacePosition({msg.faceCenX, msg.faceCenY});
+  procFace.SetFaceScale({msg.faceScaleX, msg.faceScaleY});
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
   
   robot->SetProceduralFace(procFace);
