@@ -19,21 +19,21 @@ namespace InvestorDemo {
     public ButtonHandler OnPrevButtonPressed;
 
     void Start() {
-      _NextButton.onClick.AddListener(OnNextButton);
-      _PrevButton.onClick.AddListener(OnPrevButton);
+      _NextButton.onClick.AddListener(HandleNextButton);
+      _PrevButton.onClick.AddListener(HandlePrevButton);
     }
 
     public void SetActionText(string text) {
       _CurrentActionText.text = text;
     }
 
-    private void OnNextButton() {
+    private void HandleNextButton() {
       if (OnNextButtonPressed != null) {
         OnNextButtonPressed();
       }
     }
 
-    private void OnPrevButton() {
+    private void HandlePrevButton() {
       if (OnPrevButtonPressed != null) {
         OnPrevButtonPressed();
       }

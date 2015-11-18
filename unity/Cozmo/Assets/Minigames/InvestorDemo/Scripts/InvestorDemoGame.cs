@@ -52,7 +52,6 @@ namespace InvestorDemo {
     }
 
     private void NextAction() {
-      _ActionIndex++;
       DoCurrentAction();
     }
 
@@ -85,6 +84,9 @@ namespace InvestorDemo {
           CurrentRobot.ExecuteBehavior(_DemoConfig.DemoActions[_ActionIndex].Behavior);
           _GamePanel.SetActionText("Doing: " + _DemoConfig.DemoActions[_ActionIndex].Behavior.ToString());
         }
+      }
+      else {
+        _ActionIndex = Mathf.Clamp(_ActionIndex, 0, _DemoConfig.DemoActions.Length);
       }
     }
 
