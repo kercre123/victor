@@ -2,6 +2,6 @@
 using UnityEngine;
 
 public class ChallengeDataList : ScriptableObject {
-  public string[] ChallengeDataNames;
+  public ChallengeData[] ChallengeData;
 }
 

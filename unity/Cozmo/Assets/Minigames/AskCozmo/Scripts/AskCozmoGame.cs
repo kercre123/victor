@@ -21,9 +21,9 @@ namespace AskCozmo {
       CreateDefaultQuitButton();
     }
 
-    public override void LoadMinigameConfig(string minigameConfigPath) {
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
       
-      var askCosmoConfig = Resources.Load(minigameConfigPath) as AskCozmoConfig;
+      var askCosmoConfig = minigameConfig as AskCozmoConfig;
 
       if (askCosmoConfig == null) {
         DAS.Error(this, "Failed to load config as AskCosmoConfig!");

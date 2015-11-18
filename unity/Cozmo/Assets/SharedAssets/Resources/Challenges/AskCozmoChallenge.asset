@@ -14,4 +14,4 @@ MonoBehaviour:
   MinigamePrefab: {fileID: 0}
   ChallengeID: 
   ChallengeTitleKey: 
-  MinigameConfigPath: Challenges/AskCozmoChallenge_Config
+  MinigameConfig: {fileID: 11400000, guid: ab054c57772e9435e9f091ac02533134, type: 2}

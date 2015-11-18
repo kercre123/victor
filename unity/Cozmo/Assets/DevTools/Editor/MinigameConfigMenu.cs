@@ -40,16 +40,17 @@ namespace AssemblyCSharpEditor {
 
         if (!string.IsNullOrEmpty(path)) {
           var challengeDataInstance = ScriptableObject.CreateInstance(typeof(ChallengeData)) as ChallengeData;
-          var configInstance = ScriptableObject.CreateInstance(type);
+          var configInstance = ScriptableObject.CreateInstance(type) as MinigameConfigBase;
             
           if (path.StartsWith(Application.dataPath) && path.Contains("Resources")) {
             path = "Assets" + path.Substring(Application.dataPath.Length);
             string path2 = path.Replace(".asset", "_Config.asset");
 
-            challengeDataInstance.MinigameConfigPath = path2.Substring(path2.LastIndexOf("Resources") + "Resources/".Length).Replace(".asset","");
+            AssetDatabase.CreateAsset(configInstance, path2);
+
+            challengeDataInstance.MinigameConfig = configInstance;
 
             AssetDatabase.CreateAsset(challengeDataInstance, path);
-            AssetDatabase.CreateAsset(configInstance, path2);
 
             UnityEditor.Selection.activeObject = challengeDataInstance;
           }

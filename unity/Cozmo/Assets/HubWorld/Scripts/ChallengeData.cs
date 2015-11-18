@@ -18,5 +18,5 @@ public class ChallengeData : ScriptableObject {
   public ChallengeRequirements ChallengeReqs;
 
   // string path to MinigameConfig
-  public string MinigameConfigPath;
+  public MinigameConfigBase MinigameConfig;
 }

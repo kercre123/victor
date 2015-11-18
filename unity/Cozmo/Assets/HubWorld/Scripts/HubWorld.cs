@@ -18,7 +18,7 @@ public class HubWorld : HubWorldBase {
   private TextAsset _TempLevelAsset;
 
   [SerializeField]
-  private string _ChallengeListPath;
+  private ChallengeDataList _ChallengeDataList;
 
   public override bool LoadHubWorld() {
     LoadChallenges();
@@ -39,12 +39,9 @@ public class HubWorld : HubWorldBase {
   }
 
   private void LoadChallenges() {
-    ChallengeDataList list = Resources.Load(_ChallengeListPath) as ChallengeDataList;
+    ChallengeDataList list = _ChallengeDataList;
 
-    for (int i = 0; i < list.ChallengeDataNames.Length; ++i) {
-      string challengeFileName = list.ChallengeDataNames[i];
-      _ChallengeList.Add(Resources.Load("Data/Challenges/" + challengeFileName) as ChallengeData);
-    }
+    _ChallengeList.AddRange(list.ChallengeData);
   }
 
   private void ShowHubWorldDialog() {
@@ -66,7 +63,7 @@ public class HubWorld : HubWorldBase {
 
     GameObject newMiniGameObject = GameObject.Instantiate(challengeClicked.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.LoadMinigameConfig(challengeClicked.MinigameConfigPath);
+    _MiniGameInstance.LoadMinigameConfig(challengeClicked.MinigameConfig);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
   }
 

@@ -10,7 +10,7 @@ public class ChallengeCompiler {
 
     var list = ScriptableObject.CreateInstance(typeof(ChallengeDataList)) as ChallengeDataList;
 
-    list.ChallengeDataNames = assets.Select(x => AssetDatabase.GUIDToAssetPath(x)).Where(x => x.Contains("Resources/")).Select(x => x.Substring(x.LastIndexOf("Resources/") + "Resources/".Length).Replace(".asset","")).ToArray();
+    list.ChallengeData = assets.Select(x => AssetDatabase.LoadAssetAtPath<ChallengeData>(AssetDatabase.GUIDToAssetPath(x))).ToArray();
 
     AssetDatabase.CreateAsset(list, "Assets/SharedAssets/Resources/Challenges/ChallengeList.asset");
   }
