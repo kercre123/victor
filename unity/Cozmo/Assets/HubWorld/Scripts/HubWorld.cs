@@ -8,8 +8,6 @@ public class HubWorld : HubWorldBase {
   private HubWorldDialog _HubWorldDialogPrefab;
   private HubWorldDialog _HubWorldDialogInstance;
 
-  private List<ChallengeData> _ChallengeList = new List<ChallengeData>();
-
   private GameBase _MiniGameInstance;
 
   private List<string> _UnlockedChallenges = new List<string>();
@@ -21,7 +19,6 @@ public class HubWorld : HubWorldBase {
   private ChallengeDataList _ChallengeDataList;
 
   public override bool LoadHubWorld() {
-    LoadChallenges();
     ShowHubWorldDialog();
     return true;
   }
@@ -37,18 +34,12 @@ public class HubWorld : HubWorldBase {
     CloseMiniGame();
     return true;
   }
-
-  private void LoadChallenges() {
-    ChallengeDataList list = _ChallengeDataList;
-
-    _ChallengeList.AddRange(list.ChallengeData);
-  }
-
+    
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
     _HubWorldDialogInstance = UIManager.OpenDialog(_HubWorldDialogPrefab) as HubWorldDialog;
     _HubWorldDialogInstance.OnButtonClicked += OnButtonClicked;
-    _HubWorldDialogInstance.Initialize(_ChallengeList);
+    _HubWorldDialogInstance.Initialize(_ChallengeDataList.ChallengeData);
   }
 
   private void OnButtonClicked(ChallengeData challengeClicked) {

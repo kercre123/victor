@@ -42,7 +42,7 @@ MonoBehaviour:
   _HubWorldDialogPrefab: {fileID: 11412438, guid: ef5f2743dc0e248b4a2c991eb563e57d,
     type: 2}
   _TempLevelAsset: {fileID: 4900000, guid: 3b8f26d3e5db2431c9e274f6065b9548, type: 3}
-  _ChallengeListPath: Challenges/ChallengeList
+  _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -59,6 +59,11 @@ Prefab:
       propertyPath: _ChallengeListPath
       value: Challenges/ChallengeList
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _ChallengeDataList
+      value: 
+      objectReference: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 128992}
