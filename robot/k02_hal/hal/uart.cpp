@@ -156,8 +156,24 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
 
         // Re-sync
         if (txRxIndex < 4) {
+          uint32_t body_mask = ~(0xFFFFFFFF << (txRxIndex * 8));
+          uint32_t recv_mask = body_mask & 0xFFFF; // we only care about the bottom two bits here
+          
+          // Verify that the header is valid (resync)
+          if ((rx_source & body_mask) != (SPI_SOURCE_BODY & body_mask) &&
+              (rx_source & recv_mask) == (COMMAND_HEADER & recv_mask)) {
+            txRxIndex = 0;
+            recoveryMode = STATE_UNKNOWN;
+            continue ;
+          }
         }
 
+        if (txRxIndex == 4) {
+          if ((rx_source & 0xFFFF) == COMMAND_HEADER) {
+            recoveryMode = (RECOVERY_STATE)(rx_source >> 16);
+          }
+        }
+        
         txRxIndex++;
         
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
