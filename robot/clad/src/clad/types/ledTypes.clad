@@ -39,12 +39,12 @@ enum uint_8 LEDState {
  
 structure LightState
 {
-  uint_32  onColor,
-  uint_32  offColor,
-  uint_32  onPeriod_ms,
-  uint_32  offPeriod_ms,
-  uint_32  transitionOnPeriod_ms,
-  uint_32  transitionOffPeriod_ms,
+  uint_32  onColor = 0,
+  uint_32  offColor = 0,
+  uint_32  onPeriod_ms = 0,
+  uint_32  offPeriod_ms = 0,
+  uint_32  transitionOnPeriod_ms = 0,
+  uint_32  transitionOffPeriod_ms = 0,
   uint_32  nextSwitchTime,
   LEDState state,
   uint_8   PADDING[3],
