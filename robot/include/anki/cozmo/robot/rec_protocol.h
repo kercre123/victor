@@ -12,6 +12,16 @@ static const int SECURE_SPACE = 0x1000;
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;
 
+#ifndef SHA1_BLOCK_SIZE
+#define SHA1_BLOCK_SIZE 20
+#endif
+
+struct FirmwareBlock {
+  uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
+  uint32_t   blockAddress;
+  uint8_t    checkSum[SHA1_BLOCK_SIZE];
+};
+
 enum RECOVERY_COMMAND {
   COMMAND_DONE  = 0x00,
   COMMAND_FLASH = 0x01
@@ -25,6 +35,5 @@ enum RECOVERY_STATE {
   STATE_RUNNING,
   STATE_UNKNOWN
 };
-
 
 #endif

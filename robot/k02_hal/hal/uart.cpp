@@ -1,7 +1,6 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
-#include "syscon/sys_boot/hal/rec_protocol.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "MK02F12810.h"
 
@@ -157,27 +156,12 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
 
         // Re-sync
         if (txRxIndex < 4) {
-          uint32_t mask = ~(0xFFFFFFFF << (txRxIndex * 8));
-
-          const uint32_t fail_spine = (SPI_SOURCE_BODY ^ rx_source) & mask;
-          const uint32_t fail_recvr = (RECOVER_SOURCE_BODY ^ rx_source) & mask;
-
-          if(fail_spine && fail_recvr) {
-            recoveryMode = STATE_UNKNOWN;
-            txRxIndex = 0;
-            continue ;
-          }
         }
 
-        if (txRxIndex == 4 && rx_source == RECOVER_SOURCE_BODY) {
-          // We received a recovery header
-          recoveryMode = (RECOVERY_STATE) txRxBuffer[txRxIndex];
-          recoveryStateUpdated = true;
-
-          continue ;
-        } else if (++txRxIndex >= sizeof(GlobalDataToHead)) {
+        txRxIndex++;
+        
+        if (txRxIndex >= sizeof(GlobalDataToHead)) {
           // We received a full packet
-
           recoveryMode = STATE_RUNNING;
           memcpy(&g_dataToHead, txRxBuffer, sizeof(GlobalDataToHead));
           HeadDataReceived = true;
