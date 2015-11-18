@@ -30,7 +30,7 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   eoftime++;
   drop_tx.preamble = TO_WIFI_PREAMBLE;
   memcpy(drop_tx.payload, "0123456789ABCDEF", 16);
-  drop_tx.msgLen  = 0;
+  drop_tx.payloadLen  = 0;
   drop_tx.droplet = JPEG_LENGTH(16) | (eoftime & 63 ? 0 : jpegEOF);
 }
 
