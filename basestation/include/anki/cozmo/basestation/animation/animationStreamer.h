@@ -38,15 +38,9 @@ namespace Cozmo {
     class MessageGameToEngine;
   }
   
-  // Just a stub so I can compile
-  // TODO: Remove once Jordan's stuff is in
-  class AudioManager
-  {
-  public:
-    static void PlayEvent(Audio::EventType audioEvent, f32 volume) { }
-    static s32 GetBufferedData(size_t numBytes, u8* buffer) { return 0; }
-  };
-  
+  namespace Audio {
+    class RobotAudioClient;
+  }  
   
   class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
@@ -79,6 +73,8 @@ namespace Cozmo {
     
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
+    
+    void SetAudioClient(Audio::RobotAudioClient* audioClient);
     
   private:
     
@@ -166,6 +162,8 @@ namespace Cozmo {
     s32            _bodyMoveSpacing_ms;
     s32            _liftMoveSpacing_ms;
     s32            _headMoveSpacing_ms;
+    
+    Audio::RobotAudioClient* _audioClient;
     
   }; // class AnimationStreamer
   

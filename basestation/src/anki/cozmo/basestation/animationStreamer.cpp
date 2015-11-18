@@ -7,15 +7,16 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
-
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
 
+
 namespace Anki {
 namespace Cozmo {
-
+  
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
@@ -42,6 +43,7 @@ namespace Cozmo {
   , _bodyMoveSpacing_ms(0)
   , _liftMoveSpacing_ms(0)
   , _headMoveSpacing_ms(0)
+  , _audioClient( nullptr )
   {
 
   }
@@ -231,8 +233,13 @@ namespace Cozmo {
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
   {
     AnimKeyFrame::AudioSample audioSample;
-    const s32 numBytes = AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
-                                                       &(audioSample.sample[0]));
+    
+    
+    s32 numBytes = 0;
+    if ( nullptr != _audioClient && _audioClient->IsReadyToStartAudioStream() ) {
+      numBytes = _audioClient->GetSoundSample(&(audioSample.sample[0]), static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE));
+    }
+    
     if(numBytes > 0)
     {
       // If we didn't get the requested number of bytes, fill the rest of the sample
@@ -308,7 +315,10 @@ namespace Cozmo {
         if(audioKF.IsTimeToPlay(_startTime_ms, _streamingTime_ms)) {
           // Tell the audio manager to play the sound indicated by this track
           auto & audioRef = audioKF.GetAudioRef();
-          AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+          if (nullptr != _audioClient) {
+            _audioClient->PostCozmoEvent( audioRef.audioEvent );
+            //  AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+          }
           
 #       if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
           // Queue up audio frame for playing locally if
@@ -700,6 +710,13 @@ namespace Cozmo {
     SET_DEFAULT(DockSquintEyebrowHeight, -0.4f);
     
 #    undef SET_DEFAULT
+  }
+  
+  void AnimationStreamer::SetAudioClient(Audio::RobotAudioClient* audioClient)
+  {
+    _audioClient = audioClient;
+    // This value has no meaning, need to tune - JMR
+    _audioClient->SetPreBufferSize(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE) * 12);
   }
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)

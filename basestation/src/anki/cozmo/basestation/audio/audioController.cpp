@@ -237,9 +237,9 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
   PRINT_NAMED_INFO( "AudioController.MoveCallbackContextToGarbageCollector", "Add PlayId: %d Callback Context to \
                     garbagecollector", callbackContext->GetPlayId() );
   // FIXME: Is there a better way of doing this?
-  for ( auto& aCallbackContext : _callbackGarbageCollector ) {
-    Util::SafeDelete( aCallbackContext );
-  }
+  std::for_each(_callbackGarbageCollector.begin(),
+                _callbackGarbageCollector.end(),
+                [](AudioEngine::AudioCallbackContext* aContext){ Util::SafeDelete( aContext ); } );
   _callbackGarbageCollector.empty();
   
   // Move context from EventCallbackMap to CallbackGarbageCollector

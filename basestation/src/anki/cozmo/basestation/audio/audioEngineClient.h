@@ -35,12 +35,13 @@ class MessageAudioClient;
 class AudioEngineClient : Util::noncopyable
 {
 public:
+  using CallbackIdType = uint16_t;
   
   AudioEngineClient( AudioEngineMessageHandler& messageHandler );
   
-  void PostEvent( EventType event,
-                  uint16_t gameObjectId,
-                  AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
+  CallbackIdType PostEvent( EventType event,
+                            uint16_t gameObjectId,
+                            AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
 
   void PostGameState( GameStateType gameState );
   
@@ -52,16 +53,15 @@ public:
                       int32_t timeInMilliSeconds,
                       CurveType curve ) const;
   
-private:
+protected:
   
   AudioEngineMessageHandler& _messageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
   
-  using CallbackIdType = uint16_t;
   static constexpr CallbackIdType kInvalidCallbackId = 0;
   CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
-  void HandleEvents(const AnkiEvent<MessageAudioClient>& event);
+  virtual void HandleEvents(const AnkiEvent<MessageAudioClient>& event);
   
   CallbackIdType GetNewCallbackId();
   

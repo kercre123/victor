@@ -1,33 +1,55 @@
-//
-//  RobotAudioBuffer.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 11/13/15.
-//
-//
+/*
+ * File: robotAudioBuffer.h
+ *
+ * Author: Jordan Rivas
+ * Created: 11/13/2015
+ *
+ * Description: This a circular buffer to hold audio samples from the Cozmo Plugin for the animation stream to pull out.
+ *
+ * Copyright: Anki, Inc. 2015
+ */
 
-#ifndef RobotAudioBuffer_h
-#define RobotAudioBuffer_h
+#ifndef __Basestation_Audio_RobotAudioBuffer_H__
+#define __Basestation_Audio_RobotAudioBuffer_H__
 
+#include <util/container/circularBuffer.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <mutex>
+
 
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+  
 
 class RobotAudioBuffer
 {
   
 public:
   
-  bool hasBuffer() { return false; }
+  RobotAudioBuffer();
   
-  void UpdateBuffer( uint8_t* samples, uint32_t sampleCount );
+  // Write samples to buffer
+  void UpdateBuffer( const uint8_t* samples, size_t sampleCount );
+  
+  // Read samples from buffer
+  // Return the sample count added to out buffer array
+  size_t GetAudioSamples( uint8_t* outBuffer, size_t sampleCount );
+  
+  size_t GetBufferSize() const { return _buffer.size(); }
+  
+  uint32_t GetEmptyUpdateCount() const { return _emptyUpdateCount; }
   
 private:
   
+  static constexpr size_t kSampleBufferSize = 48000;
   
+  Util::CircularBuffer<uint8_t> _buffer;
+  
+  std::mutex _bufferLock;
+  
+  uint32_t _emptyUpdateCount = 0;
 };
 
 
@@ -35,4 +57,4 @@ private:
 } // Cozmo
 } // Anki
 
-#endif /* RobotAudioBuffer_h */
+#endif /* __Basestation_Audio_RobotAudioBuffer_H__ */

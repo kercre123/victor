@@ -427,7 +427,7 @@ public:
   
     // =========== Audio =============
     const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient; }
-    void SetRobotAudioClient( Audio::RobotAudioClient* audioClient ) { _audioClient = audioClient; }
+    void SetRobotAudioClient( Audio::RobotAudioClient* audioClient );
   
     // Ask the UI to play a sound for us
     // TODO: REMOVE OLD AUDIO SYSTEM

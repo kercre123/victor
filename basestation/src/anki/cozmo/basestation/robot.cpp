@@ -1309,6 +1309,12 @@ namespace Anki {
       return _animationStreamer.GetStreamingAnimationName();
     }
     
+    void Robot::SetRobotAudioClient( Audio::RobotAudioClient* audioClient )
+    {
+      _audioClient = audioClient;
+      _animationStreamer.SetAudioClient( _audioClient );
+    }
+    
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));

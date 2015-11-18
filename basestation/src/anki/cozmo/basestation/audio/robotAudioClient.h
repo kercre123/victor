@@ -13,6 +13,7 @@
 #define __Basestation_Audio_RobotAudioClient_H__
 
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
+#include <unordered_map>
 
 
 namespace Anki {
@@ -29,15 +30,34 @@ class RobotAudioBuffer;
 class RobotAudioClient : public AudioEngineClient
 {
 public:
-  
+
   RobotAudioClient( AudioEngineMessageHandler& messageHandler, RobotAudioBuffer& audioBuffer );
   
-  bool GetSoundSample(const uint32_t sampleIdx, AnimKeyFrame::AudioSample &msg);
+  // Post Cozmo specific Audio events
+  CallbackIdType PostCozmoEvent( EventType event,
+                                 AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
+
+  // Get audio samples from buffer
+  // Return: Number of samples returned
+  uint32_t GetSoundSample( uint8_t* outArray, uint32_t requestedSize );
+
+  // Return true when when pre buffer is ready
+  bool IsReadyToStartAudioStream();
   
+  void SetPreBufferSize( uint32_t bufferSize ) { _preBufferSize = bufferSize; }
+  
+  uint32_t GetBufferSize() const;
+
 private:
   
-  RobotAudioBuffer& _audioBuffer;
+  std::unordered_map<CallbackIdType, EventType> _currentEvents;
   
+  RobotAudioBuffer& _audioBuffer;
+  uint32_t _preBufferSize = 0;
+  bool _isStreaming = false;
+  
+  virtual void HandleEvents(const AnkiEvent<MessageAudioClient>& event) override;
+
 };
   
 } // Audio

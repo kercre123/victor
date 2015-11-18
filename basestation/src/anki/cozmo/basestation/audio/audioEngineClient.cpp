@@ -35,12 +35,14 @@ AudioEngineClient::AudioEngineClient( AudioEngineMessageHandler& messageHandler 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag )
+AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag )
 {
   const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ?
                                     GetNewCallbackId() : kInvalidCallbackId;
   const MessageAudioClient msg( PostAudioEvent( event, gameObjectId, callbackFlag, callbackId ) );
   _messageHandler.Broadcast( std::move( msg ) );
+
+  return callbackId;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
