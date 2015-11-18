@@ -52,6 +52,7 @@ namespace InvestorDemo {
     }
 
     private void NextAction() {
+      _ActionIndex++;
       DoCurrentAction();
     }
 
