@@ -2511,21 +2511,25 @@ namespace Anki {
         // and Pz == 0 and we thus drop out the third column, making it
         // K[R t] * [Px Py 0 1]' or H * [Px Py 1]', so for convenience, we just
         // go ahead and fill in that 1 here:
-        Quad3f groundQuad({d0 + d,  0.5f*w_far,   1.f},
-                          {d0    ,  0.5f*w_close, 1.f},
-                          {d0 + d, -0.5f*w_far,   1.f},
-                          {d0    , -0.5f*w_close, 1.f});
+        const Quad3f groundQuad({d0 + d,  0.5f*w_far,   1.f},
+                                {d0    ,  0.5f*w_close, 1.f},
+                                {d0 + d, -0.5f*w_far,   1.f},
+                                {d0    , -0.5f*w_close, 1.f});
         
+        RobotPoseStamp histPoseStamp;
+        TimeStamp_t t;
+        _poseHistory->GetRawPoseAt(image.GetTimestamp(), t, histPoseStamp);
+        Vision::Camera histCamera = GetHistoricalCamera(&histPoseStamp, t);
+
         // Get the robot origin w.r.t. the camera position at the time the image
         // was captured (this takes into account the head angle at that time)
-        // TODO: Use historical camera
         Pose3d robotPoseWrtCamera;
-        bool result = GetPose().GetWithRespectTo(GetVisionComponent().GetCamera().GetPose(), robotPoseWrtCamera);
+        bool result = histPoseStamp.GetPose().GetWithRespectTo(histCamera.GetPose(), robotPoseWrtCamera);
         assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
         const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
         const Vec3f& T = robotPoseWrtCamera.GetTranslation();
         
-        const Matrix_3x3f K = GetVisionComponent().GetCameraCalibration().GetCalibrationMatrix();
+        const Matrix_3x3f K = histCamera.GetCalibration().GetCalibrationMatrix();
         
         // Construct the homography mapping points on the ground plane into the
         // image plane
@@ -2545,7 +2549,6 @@ namespace Anki {
           imgGroundQuad[iCorner].y() = temp.y() * divisor;
         }
         
-
         Vision::ImageRGB overheadImg;
         
         // Need to apply a shift after the homography to put things in image
