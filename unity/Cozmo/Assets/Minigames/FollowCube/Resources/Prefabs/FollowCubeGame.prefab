@@ -40,7 +40,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _GameId: followCube
-  gamePanelPrefab_: {fileID: 11463664, guid: 7938bdc58b9924280aa2204784042d99, type: 2}
+  _GamePanelPrefab: {fileID: 11463664, guid: 7938bdc58b9924280aa2204784042d99, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -65,6 +65,11 @@ Prefab:
       propertyPath: _GameId
       value: followCube
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GamePanelPrefab
+      value: 
+      objectReference: {fileID: 11463664, guid: 7938bdc58b9924280aa2204784042d99,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 171818}
