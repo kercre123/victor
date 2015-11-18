@@ -149,7 +149,7 @@ class GamePlatformConfiguration(object):
                     '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True)
             except TypeError or AttributeError:
                 self.provision_profile_uuid = ''
-                self.codesign_identity = ''
+                self.codesign_identity = "iPhone Developer"
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
 
