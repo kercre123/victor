@@ -654,13 +654,13 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   }
     
   for(int iParam = 0; iParam < N; ++iParam) {
-    procFace.SetParameter(ProceduralFace::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
-    procFace.SetParameter(ProceduralFace::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
+    procFace.GetData().SetParameter(ProceduralFace::WhichEye::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
+    procFace.GetData().SetParameter(ProceduralFace::WhichEye::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
   }
   
-  procFace.SetFaceAngle(msg.faceAngle);
-  procFace.SetFacePosition({msg.faceCenX, msg.faceCenY});
-  procFace.SetFaceScale({msg.faceScaleX, msg.faceScaleY});
+  procFace.GetData().SetFaceAngle(msg.faceAngle);
+  procFace.GetData().SetFacePosition({msg.faceCenX, msg.faceCenY});
+  procFace.GetData().SetFaceScale({msg.faceScaleX, msg.faceScaleY});
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
   
   robot->SetProceduralFace(procFace);

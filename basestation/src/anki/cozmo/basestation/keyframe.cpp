@@ -299,9 +299,9 @@ return RESULT_FAIL; \
         
         for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
         {
-          face.SetParameter(whichEye,
-                            static_cast<ProceduralFace::Parameter>(i),
-                            eyeArray[i]);
+          face.GetData().SetParameter(whichEye,
+                                      static_cast<ProceduralFace::Parameter>(i),
+                                      eyeArray[i]);
         }
       }
       
@@ -321,9 +321,9 @@ return RESULT_FAIL; \
         return tempValue;
       };
       
-      _procFace.SetFaceAngle(getValueFromJson("faceAngle", 0.0f));
-      _procFace.SetFacePosition({getValueFromJson("faceCenterX", 0.0f), getValueFromJson("faceCenterY", 0.0f)});
-      _procFace.SetFacePosition({getValueFromJson("faceScaleX", 1.0f), getValueFromJson("faceScaleY", 1.0f)});
+      _procFace.GetData().SetFaceAngle(getValueFromJson("faceAngle", 0.0f));
+      _procFace.GetData().SetFacePosition({getValueFromJson("faceCenterX", 0.0f), getValueFromJson("faceCenterY", 0.0f)});
+      _procFace.GetData().SetFacePosition({getValueFromJson("faceScaleX", 1.0f), getValueFromJson("faceScaleY", 1.0f)});
       
       //
       // Single array for left and right eye, indexed by enum value
@@ -383,7 +383,7 @@ return RESULT_FAIL; \
       const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
       
       ProceduralFace interpFace;
-      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      interpFace.GetData().Interpolate(_procFace.GetData(), nextFrame._procFace.GetData(), fraction);
       
       _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
       if(_currentTime_ms >= nextFrame.GetTriggerTime()) {

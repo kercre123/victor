@@ -570,13 +570,13 @@ namespace Cozmo {
       const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
       
       // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-      proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralFace::Parameter::UpperLidY,
-                                  leftEyebrowHeightScale);
+      proceduralFace.GetData().SetParameter(ProceduralFace::WhichEye::Left,
+                                            ProceduralFace::Parameter::UpperLidY,
+                                            leftEyebrowHeightScale);
       
-      proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralFace::Parameter::UpperLidY,
-                                  rightEyebrowHeightScale);
+      proceduralFace.GetData().SetParameter(ProceduralFace::WhichEye::Right,
+                                            ProceduralFace::Parameter::UpperLidY,
+                                            rightEyebrowHeightScale);
       
     }
     
@@ -599,20 +599,20 @@ namespace Cozmo {
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
       if(_baselineEyeHeight != 0.f) {
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleX,
-                                    std::max(-.8f, std::min(.8f, eyeHeightFraction)));
+        proceduralFace.GetData().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleX,
+                                              std::max(-.8f, std::min(.8f, eyeHeightFraction)));
       }
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)
     if(std::abs(faceAngle.getDegrees()) > 5) {
-      proceduralFace.SetFaceAngle(faceAngle.getDegrees());
+      proceduralFace.GetData().SetFaceAngle(faceAngle.getDegrees());
     } else {
-      proceduralFace.SetFaceAngle(0);
+      proceduralFace.GetData().SetFaceAngle(0);
     }
     
     // Smoothing
-    proceduralFace.Interpolate(prevProcFace, proceduralFace, 0.9f);
+    proceduralFace.GetData().Interpolate(prevProcFace.GetData(), proceduralFace.GetData(), 0.9f);
     
     proceduralFace.SetTimeStamp(face.GetTimeStamp());
     proceduralFace.MarkAsSentToRobot(false);
