@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+  m_Name: DockTrainingChallenge1
+  m_EditorClassIdentifier: 
+  MinigamePrefab: {fileID: 171318, guid: d0931a28541c84b619f43ef72d5bafe5, type: 2}
+  ChallengeID: DockTrainingChallenge1
+  EnableChallenge: 1
+  ChallengeTitleKey: hubWorld.dockTraining.challenge1
+  MinigameConfig: {fileID: 11400000, guid: c30d888e7c1e849bab907e912c2af019, type: 2}
