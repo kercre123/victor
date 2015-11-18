@@ -45,11 +45,11 @@ public static class CozmoBinding {
     }
 
     AnkiResult result = AnkiResult.RESULT_OK;
-#if !UNITY_EDITOR
+    #if !UNITY_EDITOR && !UNITY_STANDALONE
     Profiler.BeginSample ("CozmoBinding.cozmo_startup");
     result = (AnkiResult)CozmoBinding.cozmo_startup (configurationData);
     Profiler.EndSample ();
-#endif
+    #endif
     
     if (result != AnkiResult.RESULT_OK) {
       sDAS.Error("CozmoBinding.Startup [cozmo_startup]: error code " + result.ToString());
@@ -64,11 +64,11 @@ public static class CozmoBinding {
       initialized = false;
       
       AnkiResult result = AnkiResult.RESULT_OK;
-#if !UNITY_EDITOR
+      #if !UNITY_EDITOR && !UNITY_STANDALONE
       Profiler.BeginSample("CozmoBinding.cozmo_shutdown");
       result = (AnkiResult)CozmoBinding.cozmo_shutdown();
       Profiler.EndSample();
-#endif
+      #endif
 
       if (result != AnkiResult.RESULT_OK) {
         sDAS.Error("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
@@ -79,11 +79,11 @@ public static class CozmoBinding {
   public static void Update(float frameTime) {
     if (initialized) {
       AnkiResult result = AnkiResult.RESULT_OK;
-#if !UNITY_EDITOR
+      #if !UNITY_EDITOR && !UNITY_STANDALONE
       Profiler.BeginSample("CozmoBinding.cozmo_update");
       result = (AnkiResult)CozmoBinding.cozmo_update (frameTime);
       Profiler.EndSample();
-#endif
+      #endif
       if (result != AnkiResult.RESULT_OK) {
         sDAS.Error("CozmoBinding.Update [cozmo_update]: error code " + result.ToString());
       }

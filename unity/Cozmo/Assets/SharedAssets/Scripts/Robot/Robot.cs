@@ -75,15 +75,13 @@ public class Robot : IDisposable {
     private readonly RobotCallback _Callback;
     private readonly RobotActionType[] _ActionTypes;
 
-    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback)
-    {
+    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback) {
       _ActionType = actionType;
       _Callback = callback;
       _ActionTypes = null;
     }
 
-    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes)
-    {
+    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes) {
       _ActionType = RobotActionType.UNKNOWN;
       _Callback = callback;
       _ActionTypes = actionTypes;

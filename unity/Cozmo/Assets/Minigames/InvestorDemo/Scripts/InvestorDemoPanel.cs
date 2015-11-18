@@ -3,8 +3,7 @@ using System.Collections;
 
 namespace InvestorDemo {
   public class InvestorDemoPanel : BaseDialog {
-
-
+    
     [SerializeField]
     private UnityEngine.UI.Button _NextButton;
 

@@ -8,7 +8,7 @@ namespace InvestorDemo {
   public class InvestorDemoGame : GameBase {
     
     private int _ActionIndex = -1;
-
+    private bool _ActionDone = false;
 
     [SerializeField]
     private InvestorDemoPanel _GamePanelPrefab;
@@ -32,14 +32,25 @@ namespace InvestorDemo {
       CreateDefaultQuitButton();
 
       _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
-      _GamePanel.OnNextButtonPressed += NextAction;
-      _GamePanel.OnPrevButtonPressed += PrevAction;
+      _GamePanel.OnNextButtonPressed += NextActionFromButton;
+      _GamePanel.OnPrevButtonPressed += PrevActionFromButton;
 
-      NextAction();
+      CurrentRobot.SetBehaviorSystem(true);
+      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+
+      _ActionDone = true;
+    }
+
+    void Update() {
+      if (_ActionDone) {
+        NextAction();
+      }
     }
 
     private void OnAnimationDone(bool success) {
-      NextAction();
+      // not calling NextAction here directly because we need to wait a frame for the
+      // RobotCallbacks to be updated correctly.
+      _ActionDone = true;
     }
 
     private void NextAction() {
@@ -52,7 +63,20 @@ namespace InvestorDemo {
       DoCurrentAction();
     }
 
+    private void NextActionFromButton() {
+      CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+      CurrentRobot.CancelCallback(OnAnimationDone);
+      NextAction();
+    }
+
+    private void PrevActionFromButton() {
+      CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+      CurrentRobot.CancelCallback(OnAnimationDone);
+      PrevAction();
+    }
+
     private void DoCurrentAction() {
+      _ActionDone = false;
       if (_ActionIndex >= 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
         if (!_DemoConfig.DemoActions[_ActionIndex].AnimationName.Equals("")) {
           CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName, OnAnimationDone);
