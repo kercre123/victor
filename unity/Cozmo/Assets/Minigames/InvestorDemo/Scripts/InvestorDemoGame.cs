@@ -31,8 +31,8 @@ namespace InvestorDemo {
       CreateDefaultQuitButton();
 
       _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
-      _GamePanel.OnNextButtonPressed += NextActionFromButton;
-      _GamePanel.OnPrevButtonPressed += PrevActionFromButton;
+      _GamePanel.OnNextButtonPressed += HandleNextActionFromButton;
+      _GamePanel.OnPrevButtonPressed += HandlePrevActionFromButton;
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -61,13 +61,13 @@ namespace InvestorDemo {
       DoCurrentAction();
     }
 
-    private void NextActionFromButton() {
+    private void HandleNextActionFromButton() {
       CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
       CurrentRobot.CancelCallback(OnAnimationDone);
       NextAction();
     }
 
-    private void PrevActionFromButton() {
+    private void HandlePrevActionFromButton() {
       CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
       CurrentRobot.CancelCallback(OnAnimationDone);
       PrevAction();
