@@ -787,6 +787,10 @@ public class Robot : IDisposable {
 
   }
 
+  public void StopTrackToObject() {
+    TrackToObject(null);
+  }
+
   public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true) {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
