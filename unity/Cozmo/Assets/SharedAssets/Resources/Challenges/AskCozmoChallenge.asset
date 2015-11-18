@@ -14,4 +14,8 @@ MonoBehaviour:
   MinigamePrefab: {fileID: 189650, guid: 3f51dcc1802bc49b4b436d61e498310b, type: 2}
   ChallengeID: 1
   ChallengeTitleKey: Ask Cozmo
+  ChallengeReqs:
+    LevelLocks: []
+    StatKeys: 00
+    StatValues: 05000000
   MinigameConfig: {fileID: 11400000, guid: ab054c57772e9435e9f091ac02533134, type: 2}
