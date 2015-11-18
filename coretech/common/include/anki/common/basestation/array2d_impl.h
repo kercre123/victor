@@ -25,6 +25,7 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 
 #include "anki/common/basestation/array2d.h"
+#include "util/logging/logging.h"
 
 #include "anki/common/types.h"
 
