@@ -44,12 +44,17 @@ void setTransmit(bool tx) {
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
+static uint8_t ReadByte(void) {
+  while (!NRF_UART0->EVENTS_RXDRDY) ;
+  return NRF_UART0->RXD;
+}
+
 static commandWord ReadWord(void) {
   commandWord word = 0;
   
   for (int i = 0; i < sizeof(commandWord); i++) {
     while (!NRF_UART0->EVENTS_RXDRDY) ;    
-    word |= (NRF_UART0->RXD) << (i * 8);
+    word = (word << 8) | ReadByte();
   }
 
   return word;
@@ -153,16 +158,14 @@ static inline bool FlashBlock() {
     uint8_t    checkSum[SHA1_BLOCK_SIZE];
   };
 
-  const int wordCount = sizeof(Packet) / sizeof(commandWord);
-  
   static union {
     Packet packet;    
-    commandWord raw[wordCount];
+    uint8_t raw[sizeof(Packet)];
   };
 
   // Load raw packet into memory
-  for (int i = 0; i < wordCount; i++) {
-    raw[i] = ReadWord();
+  for (int i = 0; i < sizeof(Packet); i++) {
+    raw[i] = ReadByte();
   }
 
   // Check the SHA-1 of the packet to verify that transmission actually worked
