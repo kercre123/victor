@@ -7,6 +7,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -52,6 +53,9 @@ extern "C" void HardFault_Handler(void) {
   for(;;) ;
 }
 
+extern void DacInit();
+extern bool recoveryStateUpdated;
+
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
@@ -67,6 +71,8 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
+  //DacInit(); // This just plays a tone.
+
   I2CInit();
   
   // Wait for Espressif to boot
@@ -86,13 +92,13 @@ int main (void)
   //IMUInit();
   OLEDInit();
   SPIInit();
-  //DacInit(); // This just plays a tone.
 
   CameraInit();
   UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
-  for(;;)
+
+  for(;;) 
     ;
 }

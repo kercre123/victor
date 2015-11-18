@@ -39,6 +39,7 @@ static void setTransmitMode(TRANSMIT_MODE mode);
 void Head::init() 
 {
   // Sync pattern
+  memset(&g_dataToBody, 0, sizeof(g_dataToBody));
   g_dataToHead.source = SPI_SOURCE_BODY;
   Head::spokenTo = false;
   txRxIndex = 0;
@@ -149,7 +150,7 @@ void UART0_IRQHandler()
       Head::spokenTo = true;
       
       // Secret recovery flag, set dark byte to zero, and set secret to a magic number
-      if (g_dataToBody.cubeStatus.secret == secret_code && g_dataToBody.cubeStatus.ledDark == 0) {
+      if (g_dataToBody.recover == recovery_secret_code) {
         EnterRecovery();
       } else {
         setTransmitMode(TRANSMIT_DEBUG);

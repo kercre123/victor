@@ -14,83 +14,10 @@
 static const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
 static const int MAX_TIMEOUT = 1000000;
 
+static int target_pin = PIN_TX_HEAD;
 static bool UartWritting = false;
 
-void setTransmit(bool tx) {
-  if (UartWritting == tx) return ;
-
-  UartWritting = tx;
-  
-  if (tx) {
-    NRF_UART0->PSELRXD = 0xFFFFFFFF;
-    NRF_UART0->PSELTXD = PIN_TX_HEAD;
-
-    // Configure pin so it is open-drain
-    nrf_gpio_cfg_output(PIN_TX_HEAD);
-
-    NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = 
-      (NRF_GPIO->PIN_CNF[PIN_TX_HEAD] & ~GPIO_PIN_CNF_DRIVE_Msk) |
-      (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
-  } else {
-    nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
-
-    NRF_UART0->PSELTXD = 0xFFFFFFFF;
-    MicroWait(10);
-    NRF_UART0->PSELRXD = PIN_TX_HEAD;
-  }
-
-  // Clear our UART interrupts
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  NRF_UART0->EVENTS_TXDRDY = 0;
-}
-
-static uint8_t ReadByte(void) {
-  while (!NRF_UART0->EVENTS_RXDRDY) ;
-  return NRF_UART0->RXD;
-}
-
-static commandWord ReadWord(void) {
-  commandWord word = 0;
-  
-  for (int i = 0; i < sizeof(commandWord); i++) {
-    while (!NRF_UART0->EVENTS_RXDRDY) ;    
-    word = (word << 8) | ReadByte();
-  }
-
-  return word;
-}
-
-static bool WaitWord(commandWord target) {
-  setTransmit(false);
-
-  commandWord word = 0;
-  
-  while (target != word) {
-    // Wait with timeout
-    int waitTime = GetCounter() + MAX_TIMEOUT;
-    while (!NRF_UART0->EVENTS_RXDRDY) {
-      if (GetCounter() > waitTime) return false;
-    }
-
-    // We received a word
-    NRF_UART0->EVENTS_RXDRDY = 0;
-    
-    word = (word << 8) | NRF_UART0->RXD;
-  }
-
-  return word == target;
-}
-
-static void WriteWord(commandWord word) {
-  setTransmit(true);
-
-  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
-    NRF_UART0->TXD = word >> (i * 8);
-
-    while (!NRF_UART0->EVENTS_TXDRDY) ;
-    NRF_UART0->EVENTS_TXDRDY = 0;
-  }
-}
+void setTransmit(bool tx);
 
 void UARTInit(void) {
   // Power on the peripheral
@@ -109,6 +36,88 @@ void UARTInit(void) {
 
   // We begin in receive mode (slave)
   setTransmit(false);
+}
+
+void toggleTargetPin(void) {
+  target_pin = (target_pin == PIN_TX_HEAD) ? PIN_TX_VEXT : PIN_TX_HEAD;
+}
+
+void setTransmit(bool tx) {
+  if (UartWritting == tx) return ;
+
+  UartWritting = tx;
+  
+  if (tx) {
+    NRF_UART0->PSELRXD = 0xFFFFFFFF;
+    MicroWait(10);
+    NRF_UART0->PSELTXD = target_pin;
+
+    // Configure pin so it is open-drain
+    nrf_gpio_cfg_output(target_pin);
+
+    NRF_GPIO->PIN_CNF[target_pin] = 
+      (NRF_GPIO->PIN_CNF[target_pin] & ~GPIO_PIN_CNF_DRIVE_Msk) |
+      (GPIO_PIN_CNF_DRIVE_S0D1 << GPIO_PIN_CNF_DRIVE_Pos);
+  } else {
+    nrf_gpio_cfg_input(target_pin, NRF_GPIO_PIN_NOPULL);
+
+    NRF_UART0->PSELTXD = 0xFFFFFFFF;
+    MicroWait(10);
+    NRF_UART0->PSELRXD = target_pin;
+  }
+
+  // Clear our UART interrupts
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  uint8_t test = NRF_UART0->RXD;
+  NRF_UART0->EVENTS_TXDRDY = 0;
+}
+
+static uint8_t ReadByte(void) {
+  while (!NRF_UART0->EVENTS_RXDRDY) ;
+  NRF_UART0->EVENTS_RXDRDY = 0;
+  return NRF_UART0->RXD;
+}
+
+static commandWord ReadWord(void) {
+  commandWord word = 0;
+  
+  for (int i = 0; i < sizeof(commandWord); i++) {
+    word = (word << 8) | ReadByte();
+  }
+
+  return word;
+}
+
+static bool WaitWord(commandWord target) {
+  setTransmit(false);
+
+  commandWord word = 0;
+  
+  while (target != word) {
+    // Wait with timeout
+    int waitTime = GetCounter() + MAX_TIMEOUT;
+    while (!NRF_UART0->EVENTS_RXDRDY) {
+      signed int remaining = waitTime - GetCounter();
+      if (remaining <= 0) return false;
+    }
+
+    // We received a word
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    word = (word << 8) | NRF_UART0->RXD;
+  }
+
+  return word == target;
+}
+
+static void WriteWord(commandWord word) {
+  setTransmit(true);
+
+  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
+    NRF_UART0->TXD = word >> (i * 8);
+
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+    NRF_UART0->EVENTS_TXDRDY = 0;
+  }
 }
 
 bool FlashSector(int target, const uint32_t* data)
@@ -161,7 +170,7 @@ static inline bool FlashBlock() {
   for (int i = 0; i < sizeof(FirmwareBlock); i++) {
     raw[i] = ReadByte();
   }
-
+ 
   // Check the SHA-1 of the packet to verify that transmission actually worked
   SHA1_CTX ctx;
   sha1_init(&ctx);
@@ -199,6 +208,7 @@ void EnterRecovery(void) {
 
   for (;;) {
     do {
+      toggleTargetPin();
       WriteWord(COMMAND_HEADER);
       WriteWord(state);
     } while (!WaitWord(COMMAND_HEADER));
@@ -211,6 +221,9 @@ void EnterRecovery(void) {
      
       case COMMAND_FLASH:
         state = FlashBlock() ? STATE_IDLE : STATE_NACK;
+        break ;
+      
+      default:
         break ;
     }
   }

@@ -20,7 +20,7 @@ typedef s64 Fixed64;
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
 static const int spine_baud_rate = 350000;
-static const uint32_t secret_code = 0x444d7852;
+static const uint32_t recovery_secret_code = 0x444d7852;
 
 enum SPISource
 {
@@ -35,10 +35,7 @@ struct AcceleratorPacket {
 };
 
 struct LEDPacket {
-  union {
-    uint8_t ledStatus[12]; // 4-LEDs, three colors
-    uint32_t secret;
-  };
+  uint8_t ledStatus[12]; // 4-LEDs, three colors
   uint8_t ledDark;       // Dark byte
 };
 
@@ -72,6 +69,7 @@ union GlobalDataToBody
     
     u8          cubeToUpdate;
     LEDPacket   cubeStatus;
+    uint32_t    recover;
   };
   
   // Force alignment

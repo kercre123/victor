@@ -21,6 +21,7 @@ GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
 extern void EnterRecovery(void) {
+  __enable_irq();
   __asm { SVC 0 };
 }
 

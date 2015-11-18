@@ -16,24 +16,24 @@ namespace Anki
         GPIO_PIN_SOURCE(SCK,        PTE, 17);
         GPIO_PIN_SOURCE(MOSI,       PTE, 18);
         GPIO_PIN_SOURCE(CAM_PWDN,   PTA, 1);
-       
+
         // Clear any I/Os that are default driven in K02
         // PTA0-3 are taken care of (SWD and POWER pins)
         // PTA18 and 19 are driven by default
         GPIO_IN(PTA, (1<<18) | (1<<19));
         SOURCE_SETUP(PTA, 18, SourceGPIO);
         SOURCE_SETUP(PTA, 19, SourceGPIO);
-        
+
         // Drive CAM_PWDN once analog power comes on
         GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
         GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
         SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
-        
+
         // Pull-down SCK during ESP8266 boot
         GPIO_RESET(GPIO_SCK, PIN_SCK);
         GPIO_OUT(GPIO_SCK, PIN_SCK);
         SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
-        
+
         // Pull MOSI low to put ESP8266 into bootloader mode
         // XXX: Normally, you should drive this high and rely on the cable to enter debug mode!
         GPIO_IN(GPIO_MOSI, PIN_MOSI);

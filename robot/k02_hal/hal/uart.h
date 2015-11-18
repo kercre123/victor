@@ -15,8 +15,6 @@ static const uint32_t debug_baud_rate = 3000000;
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 extern bool recoveryStateUpdated;
-extern RECOVERY_STATE recoveryMode;
-extern bool recoveryStateUpdated;
 
 namespace Anki
 {
@@ -28,12 +26,14 @@ namespace Anki
       void UartTransmit(void);
 
       void EnterBodyRecovery(void);
-      void SendRecoveryData(uint8_t* data, int bytes);
+      void SendRecoveryData(const uint8_t* data, int bytes);
 
       void DebugInit(void);
       void DebugPrintf(const char *format, ...);
       void DebugPutc(char c);
-      extern bool HeadDataReceived;
+      extern volatile bool HeadDataReceived;
+      extern volatile bool RecoveryStateUpdated;
+      extern volatile RECOVERY_STATE recoveryMode;
     }
   }
 }
