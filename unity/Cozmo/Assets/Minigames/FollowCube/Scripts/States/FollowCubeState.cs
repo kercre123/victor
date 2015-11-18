@@ -26,6 +26,9 @@ namespace FollowCube {
       _IsAnimatingFail = false;
       _AttemptsLeft = 3;
       _GameInstance.SetAttemptsLeft(_AttemptsLeft);
+
+      _CurrentRobot.SetHeadAngle(0);
+      _CurrentRobot.SetLiftHeight(0);
     }
 
     public override void Update() {
@@ -68,7 +71,8 @@ namespace FollowCube {
             _GameInstance.SetAttemptsLeft(_AttemptsLeft);
 
             if (_AttemptsLeft <= 0) {
-              // TODO: Player lost; Move into fail state, then restart this state
+              // Player lost; Move into fail state
+              _StateMachine.SetNextState(new FollowCubeFailState());
             }
             else {
               _IsAnimatingFail = true;
