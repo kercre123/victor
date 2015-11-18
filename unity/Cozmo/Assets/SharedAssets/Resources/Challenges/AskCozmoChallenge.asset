@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+  m_Name: AskCozmoChallenge
+  m_EditorClassIdentifier: 
+  MinigamePrefab: {fileID: 189650, guid: 3f51dcc1802bc49b4b436d61e498310b, type: 2}
+  ChallengeID: 1
+  ChallengeTitleKey: Ask Cozmo
+  MinigameConfig: {fileID: 11400000, guid: ab054c57772e9435e9f091ac02533134, type: 2}

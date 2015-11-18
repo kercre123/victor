@@ -18,8 +18,7 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  public virtual void ParseMinigameParams(string paramsJSON) {
-    
+  public virtual void LoadMinigameConfig(MinigameConfigBase minigameConfigPath) {
   }
 
   private Button _QuitButtonInstance;
