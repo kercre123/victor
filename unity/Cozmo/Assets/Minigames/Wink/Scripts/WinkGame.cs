@@ -6,6 +6,8 @@ namespace Wink {
     
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
+    private bool _WinkWaveCompleted = false;
+    private float _WinkWaveAccumulator = 0.0f;
 
     public enum WinkStatus {
       Left,
@@ -25,6 +27,7 @@ namespace Wink {
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
+      CheckWinkComplete();
     }
 
     public void PickNewWinkSide() {
@@ -40,8 +43,21 @@ namespace Wink {
       return _WinkStatus;
     }
 
+    public bool GetWinkCompleted() {
+      return _WinkWaveCompleted;
+    }
+
+    public void DoneWink() {
+      _WinkWaveCompleted = false;
+      _WinkStatus = WinkStatus.Neutral;
+    }
+
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+    }
+
+    private void CheckWinkComplete() {
+      
     }
   }
 }
