@@ -15,12 +15,13 @@
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -112,7 +113,7 @@ namespace Cozmo {
     // Callback for EngineToGame event that a reactionary behavior (possibly) cares about
     auto reactionsEngineToGameCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
-      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(event);
+      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
     };
     
     // Subscribe our own callback to these events
@@ -125,7 +126,7 @@ namespace Cozmo {
     // Callback for GameToEngine event that a reactionary behavior (possibly) cares about
     auto reactionsGameToEngineCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
-      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(event);
+      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
     };
     
     // Subscribe our own callback to these events
