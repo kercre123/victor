@@ -13,9 +13,7 @@ namespace AskCozmo {
 
     private AskCozmoPanel _GamePanel;
 
-    private string _Param1;
-    private string _Param2;
-    private List<int> _ListParam = new List<int>();
+    private AskCozmoConfig _Config;
 
     void Start() {
       _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
@@ -23,22 +21,22 @@ namespace AskCozmo {
       CreateDefaultQuitButton();
     }
 
-    public override void ParseMinigameParams(string paramsJSON) {
-      base.ParseMinigameParams(paramsJSON);
-      JSONObject minigameParamsObject = new JSONObject(paramsJSON);
-      _Param1 = minigameParamsObject.GetField("AskGameParam1").str;
-      _Param2 = minigameParamsObject.GetField("AskGameParam2").str;
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      
+      var askCozmoConfig = minigameConfig as AskCozmoConfig;
 
-      DAS.Debug(this, _Param1);
-      DAS.Debug(this, _Param2);
-
-      JSONObject arrayParam1 = minigameParamsObject.GetField("AskGameArrayParam1");
-      for (int i = 0; i < arrayParam1.list.Count; ++i) {
-        _ListParam.Add((int)arrayParam1[i].i);
+      if (askCozmoConfig == null) {
+        DAS.Error(this, "Failed to load config as AskCozmoConfig!");
+        // TODO: Handle this error
+        return;
       }
+      _Config = askCozmoConfig;
 
-      for (int i = 0; i < _ListParam.Count; ++i) {
-        DAS.Debug(this, _ListParam[i].ToString());
+      DAS.Debug(this, _Config.Param1);
+      DAS.Debug(this, _Config.Param2);
+
+      for (int i = 0; i < _Config.ParamList.Length; ++i) {
+        DAS.Debug(this, _Config.ParamList[i].ToString());
       }
     }
 
@@ -58,10 +56,10 @@ namespace AskCozmo {
 
       _AnimationPlaying = true;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
-        CurrentRobot.SendAnimation("majorWin", HandleAnimationDone);
+        CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
       }
       else {
-        CurrentRobot.SendAnimation("shocked", HandleAnimationDone);
+        CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
       }
     }
 

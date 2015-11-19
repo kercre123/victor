@@ -23,5 +23,8 @@
     },
     "hubWorld.askCozmo.askCozmo2" : {
         "translation" : "Ask Cozmo Challenge 2"
+    },
+    "hubWorld.investorDemo.investorDemoScene1" : {
+        "translation" : "Investor Scene 1"
     }
 }

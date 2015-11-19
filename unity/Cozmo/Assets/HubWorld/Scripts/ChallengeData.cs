@@ -1,9 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using AskCozmo;
+using System;
 
-public class ChallengeData {
+public class ChallengeData : ScriptableObject {
   // the mini game prefab to load for this challenge
-  public string MinigamePrefabPath;
+  public GameObject MinigamePrefab;
 
   // the key used to find this specific challenge
   public string ChallengeID;
@@ -15,7 +17,6 @@ public class ChallengeData {
   // The set of requirements needed to unlock this challenge
   public ChallengeRequirements ChallengeReqs;
 
-  // JSON passed to the specific mini game to be serialized
-  // for this specific challenge.
-  public string MinigameParametersJSON;
+  // string path to MinigameConfig
+  public MinigameConfigBase MinigameConfig;
 }

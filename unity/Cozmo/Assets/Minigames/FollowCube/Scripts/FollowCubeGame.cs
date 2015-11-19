@@ -15,9 +15,9 @@ namespace FollowCube {
     public float DistanceMax { get; set; }
 
     [SerializeField]
-    private FollowCubeGamePanel gamePanelPrefab_;
+    private FollowCubeGamePanel _GamePanelPrefab;
 
-    private FollowCubeGamePanel gamePanel_;
+    private FollowCubeGamePanel _GamePanel;
 
     void Start() {
       _StateMachine.SetGameRef(this);
@@ -27,17 +27,14 @@ namespace FollowCube {
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      gamePanel_ = UIManager.OpenDialog(gamePanelPrefab_).GetComponent<FollowCubeGamePanel>();
-      gamePanel_.OnSlowSpeedPressed += SetSlowSpeed;
-      gamePanel_.OnFastSpeedPressed += SetFastSpeed;
-      gamePanel_.OnDemonSpeedPressed += SetDemonSpeed;
+      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
 
       CreateDefaultQuitButton();
     }
 
     public override void CleanUp() {
-      if (gamePanel_ != null) {
-        UIManager.CloseDialogImmediately(gamePanel_);
+      if (_GamePanel != null) {
+        UIManager.CloseDialogImmediately(_GamePanel);
       }
 
       DestroyDefaultQuitButton();
@@ -49,25 +46,17 @@ namespace FollowCube {
     }
 
     void InitialCubesDone() {
-      SetSlowSpeed();
+      SetSpeed();
     }
 
-    void SetSlowSpeed() {
-      ForwardSpeed = 25.0f;
-      DistanceMax = 120.0f;
-      DistanceMin = 80.0f;
-    }
-
-    void SetFastSpeed() {
-      ForwardSpeed = 50.0f;
+    void SetSpeed() {
+      ForwardSpeed = 30.0f;
       DistanceMax = 130.0f;
       DistanceMin = 90.0f;
     }
 
-    void SetDemonSpeed() {
-      ForwardSpeed = 200.0f;
-      DistanceMax = 200.0f;
-      DistanceMin = 0.0f;
+    public void SetAttemptsLeft(int attemptsLeft) {
+      _GamePanel.SetAttemptsLeft(attemptsLeft);
     }
   }
 

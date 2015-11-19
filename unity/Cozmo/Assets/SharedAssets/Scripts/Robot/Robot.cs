@@ -68,6 +68,64 @@ public class Robot : IDisposable {
 
   public delegate void RobotCallback(bool success);
 
+  private struct RobotCallbackWrapper {
+    // Most callbacks are triggered by a single action, in which case we can avoid the allocation
+    // of the array
+    private readonly RobotActionType _ActionType;
+    private readonly RobotCallback _Callback;
+    private readonly RobotActionType[] _ActionTypes;
+
+    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback) {
+      _ActionType = actionType;
+      _Callback = callback;
+      _ActionTypes = null;
+    }
+
+    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes) {
+      _ActionType = RobotActionType.UNKNOWN;
+      _Callback = callback;
+      _ActionTypes = actionTypes;
+    }
+
+    public bool MatchesType(RobotActionType actionType) {
+      if (_ActionTypes == null) {
+        return _ActionType == actionType;
+      }
+      else {
+        foreach (var at in _ActionTypes) {
+          if (at == actionType) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }
+
+    public void Invoke(bool success) {
+      if (_Callback != null) {
+        var target = _Callback.Target;
+
+        // Unity Overrides the == operator to return null if the object has been
+        // destroyed, but the callback will still be registered.
+        // By casting to UnityEngine.Object, we can test if it has been destroyed
+        // and not invoke the callback.
+        if (target is UnityEngine.Object) {
+
+          if (((UnityEngine.Object)target) == null) {
+            DAS.Error(this, "Tried to invoke callback on destroyed object of type " + target.GetType().Name);
+            return;
+          }
+        }
+
+        _Callback(success);
+      }
+    }
+
+    public bool MatchesCallback(RobotCallback callback) {
+      return _Callback.Equals(callback);
+    }
+  }
+
   public byte ID { get; private set; }
 
   // in radians
@@ -181,7 +239,8 @@ public class Robot : IDisposable {
   private U2G.AlignWithObject AlignWithObjectMessage;
   private U2G.ProgressionMessage ProgressionStatMessage;
   private U2G.MoodMessage MoodStatMessage;
- 
+  private U2G.VisualizeQuad VisualizeQuadMessage;
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private ObservedObject _CarryingObject;
@@ -206,7 +265,7 @@ public class Robot : IDisposable {
     }
   }
 
-  private List<KeyValuePair<RobotActionType, RobotCallback>> _RobotCallbacks = new List<KeyValuePair<RobotActionType, RobotCallback>>();
+  private List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
 
   [System.NonSerialized] public float LocalBusyTimer = 0f;
   [System.NonSerialized] public bool LocalBusyOverride = false;
@@ -280,6 +339,7 @@ public class Robot : IDisposable {
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
     MoodStatMessage = new U2G.MoodMessage();
+    VisualizeQuadMessage = new U2G.VisualizeQuad();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -322,11 +382,17 @@ public class Robot : IDisposable {
     }
   }
 
+  public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
+    Vector3 offset = worldSpacePosition - this.WorldPosition;
+    offset = Quaternion.Inverse(this.Rotation) * offset;
+    return offset;
+  }
+
   private void RobotEngineMessages(bool success, RobotActionType messageType) {
     DAS.Info("Robot.ActionCallback", "Type = " + messageType + " success = " + success);
     for (int i = 0; i < _RobotCallbacks.Count; ++i) {
-      if (messageType == _RobotCallbacks[i].Key) {
-        _RobotCallbacks[i].Value(success);
+      if (_RobotCallbacks[i].MatchesType(messageType)) {
+        _RobotCallbacks[i].Invoke(success);
         _RobotCallbacks.RemoveAt(i);
         i--;
       }
@@ -429,6 +495,20 @@ public class Robot : IDisposable {
     ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
 
     RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
+    VisualizeQuadMessage.color = CozmoPalette.ColorToUInt(Color.black);
+    VisualizeQuadMessage.xLowerLeft = lowerLeft.x;
+    VisualizeQuadMessage.yLowerLeft = lowerLeft.y;
+    VisualizeQuadMessage.zLowerLeft = lowerLeft.z;
+
+    VisualizeQuadMessage.xUpperRight = upperRight.x;
+    VisualizeQuadMessage.yUpperRight = upperRight.y;
+    VisualizeQuadMessage.zUpperRight = upperRight.z;
+
+    RobotEngineManager.Instance.Message.VisualizeQuad = VisualizeQuadMessage;
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -551,8 +631,7 @@ public class Robot : IDisposable {
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_HIGH, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.PLACE_OBJECT_LOW, RobotActionType.PLACE_OBJECT_HIGH));
     }
   }
 
@@ -571,7 +650,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
     }
   }
 
@@ -585,6 +664,18 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void CancelCallback(RobotCallback callback) {
+    for (int i = _RobotCallbacks.Count - 1; i >= 0; i--) {
+      if (_RobotCallbacks[i].MatchesCallback(callback)) {
+        _RobotCallbacks.RemoveAt(i);
+      }
+    }
+  }
+
+  public void CancelAllCallbacks() {
+    _RobotCallbacks.Clear();
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
@@ -596,7 +687,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLAY_ANIMATION, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLAY_ANIMATION, callback));
     }
   }
 
@@ -676,7 +767,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     if (onComplete != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
     }
   }
 
@@ -720,6 +811,10 @@ public class Robot : IDisposable {
 
   }
 
+  public void StopTrackToObject() {
+    TrackToObject(null);
+  }
+
   public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true) {
     FaceObjectMessage.objectID = observedObject;
     FaceObjectMessage.robotID = ID;
@@ -761,9 +856,7 @@ public class Robot : IDisposable {
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_LOW, callback));
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICK_AND_PLACE_INCOMPLETE, callback));
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PICKUP_OBJECT_HIGH, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.PICKUP_OBJECT_LOW, RobotActionType.PICK_AND_PLACE_INCOMPLETE, RobotActionType.PICKUP_OBJECT_HIGH));
     }
   }
 
@@ -780,7 +873,7 @@ public class Robot : IDisposable {
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ROLL_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.ROLL_OBJECT_LOW, callback));
     }
   }
 
@@ -803,7 +896,7 @@ public class Robot : IDisposable {
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.PLACE_OBJECT_LOW, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
     }
 
   }
@@ -824,7 +917,7 @@ public class Robot : IDisposable {
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_POSE, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.DRIVE_TO_POSE, callback));
     }
   }
 
@@ -840,7 +933,7 @@ public class Robot : IDisposable {
     
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.DRIVE_TO_OBJECT, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.DRIVE_TO_OBJECT, callback));
     }
   }
 
@@ -856,7 +949,7 @@ public class Robot : IDisposable {
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.ALIGN_WITH_OBJECT, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.ALIGN_WITH_OBJECT, callback));
     }
   }
 
@@ -878,7 +971,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
     }
   }
 
@@ -933,7 +1026,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     if (callback != null) {
-      _RobotCallbacks.Add(new KeyValuePair<RobotActionType, RobotCallback>(RobotActionType.TURN_IN_PLACE, callback));
+      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.TURN_IN_PLACE, callback));
     }
   }
 
