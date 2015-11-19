@@ -625,10 +625,15 @@ message AddToEmotion {
   string uniqueIdString
 }
 
+message TriggerEmotionEvent {
+  string emotionEventName
+}
+
 union MoodMessageUnion {
   GetEmotions  GetEmotions,
   SetEmotion   SetEmotion,
-  AddToEmotion AddToEmotion
+  AddToEmotion AddToEmotion,
+  TriggerEmotionEvent TriggerEmotionEvent
 }
 
 message MoodMessage {

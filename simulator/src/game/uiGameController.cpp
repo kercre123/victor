@@ -1062,19 +1062,22 @@ namespace Anki {
     
     BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {
-      if (behaviorName == "LookAround")
+      if (behaviorName == EnumToString(BehaviorType::LookAround))
       {
         return BehaviorType::LookAround;
       }
-      else if (behaviorName == "OCD")
+      else if (behaviorName == EnumToString(BehaviorType::OCD))
       {
         return BehaviorType::OCD;
       }
-      else if (behaviorName == "InteractWithFaces")
+      else if (behaviorName == EnumToString(BehaviorType::InteractWithFaces))
       {
         return BehaviorType::InteractWithFaces;
       }
-      
+      else if (behaviorName == EnumToString(BehaviorType::FollowMotion))
+      {
+        return BehaviorType::FollowMotion;
+      }
       return BehaviorType::NoneBehavior;
     }
     

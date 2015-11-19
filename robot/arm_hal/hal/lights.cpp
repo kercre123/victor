@@ -37,10 +37,10 @@ namespace Anki
         volatile u32* channel = &g_dataToBody.backpackColors[ led_channel ];
         if (led_id == LED_BACKPACK_LEFT) {
           // Use red color channel for intensity
-          *channel = (*channel & 0xffff00ff) | (color>>8);
+          *channel = (*channel & 0xffff00ff) | ((color & 0x00ff0000) >> 8);
         } else if (led_id == LED_BACKPACK_RIGHT) {
           // Use red color channel for intensity
-          *channel = (*channel & 0xff00ffff) | (color);
+          *channel = (*channel & 0xff00ffff) |  (color & 0x00ff0000);
         } else {
           // RGB -> BGR
           *channel = ((color & 0xff) << 16) |  (color & 0xff00) | ((color & 0xff0000) >> 16) ;

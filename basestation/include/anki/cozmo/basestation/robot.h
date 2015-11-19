@@ -49,8 +49,6 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -91,7 +89,9 @@ namespace Cozmo {
 // Forward declarations:
 class IPathPlanner;
 class MatPiece;
+class MoodManager;
 class PathDolerOuter;
+class ProgressionManager;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -128,7 +128,10 @@ public:
     Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
           IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
     ~Robot();
-    
+    // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
+    Robot(const Robot&) = delete;
+    Robot& operator=(const Robot&) = delete;
+  
     Result Update();
     
     Result UpdateFullRobotState(const RobotState& msg);
@@ -210,8 +213,11 @@ public:
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
-    u32 GetAverageImagePeriodMS();
-    
+    u32 GetAverageImagePeriodMS() const;
+  
+    // Returns the average period of image processing
+    u32 GetAverageImageProcPeriodMS() const;
+  
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
     void SetPhysicalRobot(bool isPhysical);
@@ -590,11 +596,11 @@ public:
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    MoodManager& GetMoodManager() { return _moodManager; }
-    const MoodManager& GetMoodManager() const { return _moodManager; }
+    MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
+    const MoodManager& GetMoodManager() const {  assert(_moodManager); return *_moodManager; }
   
-    inline const ProgressionManager& GetProgressionManager() const { return _progressionManager; }
-    inline ProgressionManager& GetProgressionManager() { return _progressionManager; }
+    inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
+    inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
   
     // Handle various message types
     template<typename T>
@@ -756,8 +762,9 @@ public:
     // Save mode for robot images
     SaveMode_t _imageSaveMode = SAVE_OFF;
     
-    // Maintains an average period of incoming robot images
+    // Maintains an average period of incoming robot images and processing speed
     u32         _imgFramePeriod        = 0;
+    u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
 
@@ -788,10 +795,10 @@ public:
     u8  _animationTag              = 0;
     
     ///////// Mood/Emotions ////////
-    MoodManager      _moodManager;
+    MoodManager*         _moodManager;
 
     ///////// Progression/Skills ////////
-    ProgressionManager  _progressionManager;
+    ProgressionManager*  _progressionManager;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending

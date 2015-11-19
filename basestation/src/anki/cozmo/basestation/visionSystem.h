@@ -75,6 +75,8 @@ namespace Cozmo {
     
     Result EnableMode(VisionMode whichMode, bool enabled);
     bool IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
+    u32 GetEnabledModes() const { return _mode; }
+    void SetModes(u32 modes) { _mode = modes; }
     
     // Accessors
     f32 GetTrackingMarkerWidth();
@@ -249,8 +251,8 @@ namespace Cozmo {
     f32 _headCamFOV_hor;
     Embedded::Array<f32> _RcamWrtRobot;
     
-    u32 _mode;
-    u32 _modeBeforeTracking;
+    u32 _mode = static_cast<u32>(VisionMode::Idle);
+    u32 _modeBeforeTracking = static_cast<u32>(VisionMode::Idle);
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?

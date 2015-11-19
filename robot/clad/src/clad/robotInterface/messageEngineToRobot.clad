@@ -188,7 +188,10 @@ message EnablePickupDetect
   bool enable
 }
 
-
+message EnableLiftPower
+{
+  bool enable
+}
 
 /// *************** Overall message pipe ******************************* ///
 
@@ -231,6 +234,7 @@ union EngineToRobot
   FlashObjectIDs                flashObjectIDs              = 0x1E,
   ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
   EnablePickupDetect            enablePickupDetect          = 0x20,
+  EnableLiftPower               enableLiftPower             = 0x21,
   
   // To WiFi 0x80 to 0xFE
   AbortAnimation                abortAnimation              = 0x90,
