@@ -1,5 +1,7 @@
 fileFormatVersion: 2
 guid: 83404e274f1bb4124b2e2a43f6192d8a
+labels:
+- Challenges
 timeCreated: 1447813884
 licenseType: Pro
 NativeFormatImporter:
