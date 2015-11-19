@@ -6,16 +6,21 @@
 #include "anki/cozmo/robot/hal.h"
 #include "MK02F12810.h"
 
-void DacInit() {
+#include "dac.h"
+
+void Anki::Cozmo::HAL::DACInit(void) {
+  /* THIS IS FOR EP1
   GPIO_PIN_SOURCE(STANDBY, PTE, 25);
   SOURCE_SETUP(PTE, 25, SourceGPIO);
   GPIO_SET(GPIO_STANDBY, PIN_STANDBY);
   GPIO_OUT(GPIO_STANDBY, PIN_STANDBY);
-
+  */
 
   SIM_SCGC6 |= SIM_SCGC6_DAC0_MASK;
   DAC0_C0 = DAC_C0_DACEN_MASK | DAC_C0_DACRFS_MASK;
+}
 
+void Anki::Cozmo::HAL::DACTone(void) {
   unsigned short k[220];
   
   for (int i = 0; i < 220; i++) {

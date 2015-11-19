@@ -19,6 +19,9 @@
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+extern void DacInit();
+extern bool recoveryStateUpdated;
+
 namespace Anki
 {
   namespace Cozmo
@@ -44,6 +47,65 @@ namespace Anki
   }
 }
 
+static inline void TestPause(const int duration) {
+  using namespace Anki::Cozmo::HAL;
+  MicroWait(100000*duration);
+  WaitForSync();
+}
+
+void StartupSelfTest(void) {
+  using namespace Anki::Cozmo::HAL;
+
+  // TODO: TEST IMU / OLED
+  DACTone();
+
+  TestPause(1);
+  
+  Fixed start[4], forward[4], backward[4];
+  
+  memcpy(start, g_dataToHead.positions, sizeof(g_dataToHead.positions));
+  for (int i = 0; i < 4; i++) {
+    g_dataToBody.motorPWM[i] = 0x3FFF;
+  }
+  TestPause(3);
+  
+  memcpy(forward, g_dataToHead.positions, sizeof(g_dataToHead.positions));
+  for (int i = 0; i < 4; i++) {
+    g_dataToBody.motorPWM[i] = -0x3FFF;
+  }
+  TestPause(3);
+
+  memcpy(backward, g_dataToHead.positions, sizeof(g_dataToHead.positions));
+  for (int i = 0; i < 4; i++) {
+    g_dataToBody.motorPWM[i] = 0;
+  }
+  TestPause(3);
+
+  // Light test!
+  uint32_t *lightValue = (uint32_t*) &g_dataToBody.backpackColors;
+  
+  memset(g_dataToBody.backpackColors, 0, sizeof(g_dataToBody.backpackColors));
+  
+  lightValue[0] = 0;
+  for (int i = 1; i < 4; i++) lightValue[i] = 0x0000FF;
+  TestPause(5);
+  
+  lightValue[0] = 0xFFFFFF;
+  for (int i = 1; i < 4; i++) lightValue[i] = 0x00FF00;
+  TestPause(5);
+  
+  lightValue[0] = 0;
+  for (int i = 1; i < 4; i++) lightValue[i] = 0xFF0000;
+  TestPause(5);
+
+  for (int i = 0; i < 4; i++) {
+    backward[i] -= forward[i];
+    forward[i] -= start[i];
+  }
+  
+  memset(g_dataToBody.backpackColors, 0, sizeof(g_dataToBody.backpackColors));
+}
+
 void EnterRecoveryMode(void) {
   SCB->VTOR = 0;
   __asm { SVC 0 }
@@ -52,9 +114,6 @@ void EnterRecoveryMode(void) {
 extern "C" void HardFault_Handler(void) {
   for(;;) ;
 }
-
-extern void DacInit();
-extern bool recoveryStateUpdated;
 
 int main (void)
 {
@@ -71,7 +130,7 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
-  //DacInit(); // This just plays a tone.
+  DACInit();
 
   I2CInit();
   
@@ -99,6 +158,12 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
 
-  for(;;) 
-    ;
+  StartupSelfTest();
+
+  static int loops = 0;
+  for(;;) {
+    // Wait for head body sync to occur
+    WaitForSync() ;
+    loops++;
+  }
 }

@@ -31,6 +31,8 @@ namespace Anki
       void DebugInit(void);
       void DebugPrintf(const char *format, ...);
       void DebugPutc(char c);
+      void WaitForSync();
+      
       extern volatile bool HeadDataReceived;
       extern volatile bool RecoveryStateUpdated;
       extern volatile RECOVERY_STATE recoveryMode;

@@ -421,46 +421,6 @@
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>k02_hal/hal/main.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>camera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\camera.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>i2c.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\i2c.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\timer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>enjpeg.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dac.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>oled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -506,6 +466,46 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>camera.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\camera.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\i2c.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timer.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\timer.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>enjpeg.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dac.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>oled.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>uart.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
               <FileName>power.cpp</FileName>
