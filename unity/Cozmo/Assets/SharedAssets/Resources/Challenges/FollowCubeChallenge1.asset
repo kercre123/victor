@@ -9,13 +9,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
-  m_Name: AskCozmo1
+  m_Name: FollowCubeChallenge1
   m_EditorClassIdentifier: 
-  MinigamePrefab: {fileID: 189650, guid: 3f51dcc1802bc49b4b436d61e498310b, type: 2}
-  ChallengeID: AzkCozmoChallenge
-  EnableChallenge: 0
-  ChallengeTitleKey: hubWorld.askCozmo.askCozmo1
+  MinigamePrefab: {fileID: 171818, guid: 1e70a0fe6f9ce40d5a83bd8d69d54094, type: 2}
+  ChallengeID: FollowCubeChallenge1
+  EnableChallenge: 1
+  ChallengeTitleKey: hubWorld.followCube.challenge1
   ChallengeReqs:
-    ChallengeGateKeys: []
+    ChallengeGateKeys:
+    - DockTrainingChallenge1
     StatGateArray: []
-  MinigameConfig: {fileID: 11400000, guid: ab054c57772e9435e9f091ac02533134, type: 2}
+  MinigameConfig: {fileID: 11400000, guid: bc9420ca9e5f74845a9dce0693807a6f, type: 2}

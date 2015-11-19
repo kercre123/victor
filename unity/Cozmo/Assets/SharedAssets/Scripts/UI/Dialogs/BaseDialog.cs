@@ -6,7 +6,7 @@ public abstract class BaseDialog : MonoBehaviour {
   
   public delegate void SimpleBaseDialogHandler();
 
-  public delegate void BaseDialogHandler(string dialogId, BaseDialog dialog);
+  public delegate void BaseDialogHandler(string dialogId,BaseDialog dialog);
 
   public event SimpleBaseDialogHandler DialogOpened;
   public static event BaseDialogHandler BaseDialogOpened;

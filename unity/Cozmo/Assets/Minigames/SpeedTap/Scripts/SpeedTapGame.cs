@@ -23,6 +23,10 @@ namespace SpeedTap {
     [SerializeField]
     private AudioClip _RollSound;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     // Use this for initialization
     void Start() { 
       DAS.Info(this, "Game Created");
