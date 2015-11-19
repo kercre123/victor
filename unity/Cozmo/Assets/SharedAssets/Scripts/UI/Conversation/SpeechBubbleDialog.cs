@@ -18,7 +18,7 @@ namespace Cutscenes {
     private float _Duration;
 
     // Initializes this SpeechBubble with the specified line data
-    public void Initialize(CutsceneData.CutsceneLine data) {
+    public void Initialize(ConversationData.ConversationLine data) {
       _DialogID = data.lineID;
       _Text.text = data.text;
       // TODO: Set speaker image to the appropriate sprite

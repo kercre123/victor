@@ -3,29 +3,29 @@ using System.Collections;
 using System.Collections.Generic;
 
 // Static data class for reading Cutscenes in from json.
-public static class CutsceneData {
+public static class ConversationData {
 
-  public static Dictionary<string, Cutscene> Cutscenes;
+  public static Dictionary<string, Conversation> Conversations;
 
 
-  public struct Cutscene {
+  public struct Conversation {
     public readonly string SceneName;
-    public readonly List<CutsceneLine> Lines;
+    public readonly List<ConversationLine> Lines;
 
-    public Cutscene (string name, List<CutsceneLine> cutsceneList) {
+    public Conversation (string name, List<ConversationLine> convoList) {
       SceneName = name;
-      Lines = new List<CutsceneLine>();
-      Lines.AddRange(cutsceneList);
+      Lines = new List<ConversationLine>();
+      Lines.AddRange(convoList);
       // Only add this scene if it is unique, output error otherwise.
-      if (!Cutscenes.ContainsKey(SceneName)) {
-        Cutscenes.Add(SceneName,this);
+      if (!Conversations.ContainsKey(SceneName)) {
+        Conversations.Add(SceneName,this);
       }else {
         Debug.LogError(string.Format("Scene : {0} : already exists. All Scenes need a unique ID", name));
       }
     }
   }
 
-  public struct CutsceneLine {
+  public struct ConversationLine {
     public readonly string lineID; // the ID of the line
     public readonly string text;  // Text shown in the Overlay
     public readonly string characterSprite; // The filepath of the sprite that the Overlay uses
@@ -33,7 +33,7 @@ public static class CutsceneData {
     public readonly string voID; // Name of the VO event to be played when the line appears
     public readonly bool isRight; // Whether or not its oriented to the right side of the screen or left
 
-    public CutsceneLine(string ID, string txt, string sprt, float dur, string voString, bool right) {
+    public ConversationLine(string ID, string txt, string sprt, float dur, string voString, bool right) {
       lineID = ID;
       text = txt;
       characterSprite = sprt;
@@ -59,17 +59,17 @@ public static class CutsceneData {
   // "isRight" : bool : whether the popup is left or right oriented
   public static void ParseJSON(JSONObject json) {
     
-    if (Cutscenes == null) {
-      Cutscenes = new Dictionary<string, Cutscene>();
+    if (Conversations == null) {
+      Conversations = new Dictionary<string, Conversation>();
     }
     else {
-      Cutscenes.Clear();
+      Conversations.Clear();
     }
 
     if (json.IsArray) {
       foreach (JSONObject sceneJson in json.list) {
         
-        List<CutsceneLine> newScene = new List<CutsceneLine>();
+        List<ConversationLine> newScene = new List<ConversationLine>();
         JSONObject linesJson = sceneJson.GetField("lines");
 
         if (linesJson.IsArray) {
@@ -105,7 +105,7 @@ public static class CutsceneData {
               newRight = line.GetField("isRight").b;
             }
 
-            CutsceneLine newLine = new CutsceneLine(newID, newText, newSprite, newDuration, newVO, newRight);
+            ConversationLine newLine = new ConversationLine(newID, newText, newSprite, newDuration, newVO, newRight);
             newScene.Add(newLine);
           }
         }
@@ -115,7 +115,7 @@ public static class CutsceneData {
           newName = sceneJson.GetField("name").str;
         }
 
-        Cutscene scene = new Cutscene(newName, newScene);
+        Conversation scene = new Conversation(newName, newScene);
       }
     }
   }
