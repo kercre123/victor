@@ -8,6 +8,7 @@ namespace InvestorDemo {
   public class InvestorDemoGame : GameBase {
     
     private int _ActionIndex = -1;
+    private bool _WaitingForCancel = true;
 
     [SerializeField]
     private InvestorDemoPanel _GamePanelPrefab;
@@ -36,18 +37,18 @@ namespace InvestorDemo {
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+
+      RobotEngineManager.Instance.RobotCompletedAnimation += OnAnimationDone;
 
       NextAction();
     }
 
-    private void OnAnimationDone(bool success) {
-      // not calling NextAction here directly because we need to wait a frame for the
-      // RobotCallbacks to be updated correctly.
-      StartCoroutine(DelayedNextAction());
-    }
-
-    private IEnumerator DelayedNextAction() {
-      yield return new WaitForEndOfFrame();
+    private void OnAnimationDone(bool success, string animationName) {
+      if (_WaitingForCancel) {
+        _WaitingForCancel = false;
+        return;
+      }
       NextAction();
     }
 
@@ -63,20 +64,20 @@ namespace InvestorDemo {
 
     private void HandleNextActionFromButton() {
       CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-      CurrentRobot.CancelCallback(OnAnimationDone);
+      _WaitingForCancel = true;
       NextAction();
     }
 
     private void HandlePrevActionFromButton() {
       CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-      CurrentRobot.CancelCallback(OnAnimationDone);
+      _WaitingForCancel = true;
       PrevAction();
     }
 
     private void DoCurrentAction() {
       if (_ActionIndex >= 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
         if (!_DemoConfig.DemoActions[_ActionIndex].AnimationName.Equals("")) {
-          CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName, OnAnimationDone);
+          CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName);
           CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
           _GamePanel.SetActionText("Playing Animation: " + _DemoConfig.DemoActions[_ActionIndex].AnimationName);
 
