@@ -1,5 +1,7 @@
 fileFormatVersion: 2
 guid: 1f97977e1561a4d43b6da7aa8e6ed02c
+labels:
+- UiPrefabs
 timeCreated: 1445559134
 licenseType: Pro
 NativeFormatImporter:
