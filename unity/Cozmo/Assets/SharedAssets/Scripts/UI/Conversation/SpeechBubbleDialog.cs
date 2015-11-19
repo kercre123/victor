@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using DG.Tweening;
 
-namespace Cutscenes {
+namespace Conversations {
   public class SpeechBubbleDialog : BaseDialog {
 
     private string _DialogID;
@@ -14,15 +14,13 @@ namespace Cutscenes {
     [SerializeField]
     private Text _Text;
 
-    [SerializeField]
-    private float _Duration;
-
     // Initializes this SpeechBubble with the specified line data
     public void Initialize(ConversationData.ConversationLine data) {
       _DialogID = data.lineID;
       _Text.text = data.text;
-      // TODO: Set speaker image to the appropriate sprite
-      // TODO: Play VO
+      // TODO: Set speaker image to the appropriate sprite 
+      // (speaker images need to fall within the same folder and naming convention.)
+      // TODO: Play VO - 
     }
 
 

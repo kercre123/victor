@@ -29,7 +29,7 @@ public static class ConversationData {
     public readonly string lineID; // the ID of the line
     public readonly string text;  // Text shown in the Overlay
     public readonly string characterSprite; // The filepath of the sprite that the Overlay uses
-    public readonly float duration; // Line Lifespan, if duration is <= 0, will need to be dismissed by other means
+    public readonly float duration; // Line Lifespan, if duration is <= 0, will not dismiss
     public readonly string voID; // Name of the VO event to be played when the line appears
     public readonly bool isRight; // Whether or not its oriented to the right side of the screen or left
 

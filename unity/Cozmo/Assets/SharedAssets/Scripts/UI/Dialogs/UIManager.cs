@@ -4,6 +4,7 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
+using Conversations;
 
 public class UIManager : MonoBehaviour {
 
@@ -27,6 +28,9 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
+  private ConversationManager _conversationManager;
+
+  [SerializeField]
   private Canvas _orthoUiCanvas;
   
   [SerializeField]
@@ -40,6 +44,7 @@ public class UIManager : MonoBehaviour {
   void Awake() {
     _Instance = this;
     _openViews = new List<BaseView>();
+    _conversationManager = gameObject.AddComponent<ConversationManager>();
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
