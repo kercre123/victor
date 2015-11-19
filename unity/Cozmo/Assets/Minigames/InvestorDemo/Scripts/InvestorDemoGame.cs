@@ -37,6 +37,7 @@ namespace InvestorDemo {
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
       RobotEngineManager.Instance.RobotCompletedAnimation += OnAnimationDone;
 
