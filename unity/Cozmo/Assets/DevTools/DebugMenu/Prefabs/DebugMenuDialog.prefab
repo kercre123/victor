@@ -386,6 +386,8 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: 69c14fed52e2f4774aa9f99538c997a2, type: 2}
   - name: Progression Stat
     panePrefab: {fileID: 113112, guid: 58ea6632f74e84ddb86cbf44b0ed57fd, type: 2}
+  - name: Debug Console
+    panePrefab: {fileID: 113112, guid: 3bd508acfffff402bb84d7e68c9e2964, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
@@ -557,7 +559,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 6
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -592,6 +594,14 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[4].name
       value: Emotion
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[6].panePrefab
+      value: 
+      objectReference: {fileID: 113112, guid: 3bd508acfffff402bb84d7e68c9e2964, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[6].name
+      value: Debug Console
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
