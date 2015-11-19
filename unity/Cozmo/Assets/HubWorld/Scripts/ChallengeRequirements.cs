@@ -33,9 +33,9 @@ public class ChallengeRequirements : ISerializationCallbackReceiver {
     }
   }
 
-  public bool MeetsRequirements(Robot robot, List<string> unlockedChallenges) {
+  public bool MeetsRequirements(Robot robot, List<string> completedChallengeIds) {
     for (int i = 0; i < ChallengeGateKeys.Length; ++i) {
-      if (unlockedChallenges.Contains(ChallengeGateKeys[i]) == false) {
+      if (completedChallengeIds.Contains(ChallengeGateKeys[i]) == false) {
         return false;
       }
     }

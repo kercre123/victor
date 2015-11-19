@@ -18,17 +18,34 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  public virtual void LoadMinigameConfig(MinigameConfigBase minigameConfigPath) {
+  public delegate void MiniGameWinHandler();
+
+  public event MiniGameWinHandler OnMiniGameWin;
+
+  protected void RaiseMiniGameWin() {
+    if (OnMiniGameWin != null) {
+      OnMiniGameWin();
+    }
   }
 
-  private Button _QuitButtonInstance;
-  
+  public delegate void MiniGameLoseHandler();
+
+  public event MiniGameWinHandler OnMiniGameLose;
+
+  protected void RaiseMiniGameLose() {
+    if (OnMiniGameLose != null) {
+      OnMiniGameLose();
+    }
+  }
+
   [SerializeField]
   string _GameId;
 
   public string GameId { get { return _GameId; } private set { _GameId = value; } }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
+
+  private Button _QuitButtonInstance;
 
   protected void CreateDefaultQuitButton() {
     // Resources.Load can be pretty slow, so cache the prefab for future use.
@@ -56,4 +73,6 @@ public abstract class GameBase : MonoBehaviour {
   /// destroyed when the player quits or the robot loses connection.
   /// </summary>
   public abstract void CleanUp();
+
+  public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
 }

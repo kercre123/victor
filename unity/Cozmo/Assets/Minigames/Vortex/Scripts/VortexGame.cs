@@ -46,6 +46,10 @@ namespace Vortex {
     private PlayerData[] _PlayerDataList;
     private int _RoundNumber;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       DAS.Info(this, "VortexGame::Start");
       _StateMachine.SetGameRef(this);

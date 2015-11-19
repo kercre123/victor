@@ -5,32 +5,52 @@ using UnityEngine.UI;
 
 public class HubWorldDialog : BaseDialog {
 
-  public delegate void ButtonClickedHandler(ChallengeData challengeClicked);
+  public delegate void ButtonClickedHandler(string challengeClicked);
 
-  public event ButtonClickedHandler OnButtonClicked;
+  public event ButtonClickedHandler OnLockedChallengeClicked;
+  public event ButtonClickedHandler OnUnlockedChallengeClicked;
+  public event ButtonClickedHandler OnCompletedChallengeClicked;
 
   [SerializeField]
   private HubWorldButton _HubWorldButtonPrefab;
 
   [SerializeField]
-  private RectTransform _ButtonContainer;
+  private RectTransform _LockedButtonContainer;
 
   [SerializeField]
-  private ScrollRect _ScrollRect;
+  private ScrollRect _LockedScrollRect;
 
-  public void Initialize(ChallengeData[] challengeList) {
+  [SerializeField]
+  private RectTransform _UnlockedButtonContainer;
+
+  [SerializeField]
+  private ScrollRect _UnlockedScrollRect;
+
+  [SerializeField]
+  private RectTransform _CompletedButtonContainer;
+
+  [SerializeField]
+  private ScrollRect _CompletedScrollRect;
+
+  public void Initialize(Dictionary<string, ChallengeStatePacket> _challengeStatesById) {
 
     GameObject newButton;
     HubWorldButton buttonScript;
 
-    for (int i = 0; i < challengeList.Length; ++i) {
-      newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _ButtonContainer);
-      buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeList[i]);
-      buttonScript.OnButtonClicked += HandleOnButtonClicked;
-    }
+    // TODO: For all the challenges
+    // Create the correct button at the correct spot based on current state
 
-    _ScrollRect.verticalNormalizedPosition = 1.0f;
+    /*for (int i = 0; i < unlockedChallenges.Count; ++i) {
+      newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _UnlockedButtonContainer);
+      buttonScript = newButton.GetComponent<HubWorldButton>();
+      buttonScript.Initialize(unlockedChallenges[i]);
+      buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
+    }*/
+
+    // Slide all teh
+    _LockedScrollRect.verticalNormalizedPosition = 1.0f;
+    _UnlockedScrollRect.verticalNormalizedPosition = 1.0f;
+    _CompletedScrollRect.verticalNormalizedPosition = 1.0f;
   }
 
   protected override void CleanUp() {
@@ -41,9 +61,33 @@ public class HubWorldDialog : BaseDialog {
 
   }
 
-  private void HandleOnButtonClicked(ChallengeData challengeClicked) {
-    if (OnButtonClicked != null) {
-      OnButtonClicked(challengeClicked);
+  private void CreateLockedButton(ChallengeData challengeData) {
+    // TODO: Create the button
+  }
+
+  private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {
+    // TODO: Create the button
+  }
+
+  private void CreateCompletedButton(ChallengeData challengeData) {
+    // TODO; Create the button
+  }
+
+  private void HandleLockedChallengeClicked(string challengeClicked) {
+    if (OnLockedChallengeClicked != null) {
+      OnLockedChallengeClicked(challengeClicked);
+    }
+  }
+
+  private void HandleUnlockedChallengeClicked(string challengeClicked) {
+    if (OnUnlockedChallengeClicked != null) {
+      OnUnlockedChallengeClicked(challengeClicked);
+    }
+  }
+
+  private void HandleCompletedChallengeClicked(string challengeClicked) {
+    if (OnCompletedChallengeClicked != null) {
+      OnCompletedChallengeClicked(challengeClicked);
     }
   }
 }

@@ -11,6 +11,10 @@ namespace TreasureHunt {
 
     public Vector2 GoldPosition { get; set; }
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("TreasureHuntStateMachine", _StateMachine);
