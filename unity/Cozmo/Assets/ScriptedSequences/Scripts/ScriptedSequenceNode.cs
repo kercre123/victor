@@ -12,7 +12,7 @@ namespace ScriptedSequences
 
     public uint Id;
 
-    public bool Sequencial;
+    public bool Sequencial = true;
 
     public bool Final;
 

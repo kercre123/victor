@@ -28,10 +28,16 @@ public class ScriptedSequenceEditor : Editor {
 
   private int _SelectedActionIndex = 0;
 
+  private static Dictionary<System.Type, System.Type> _HelperLookup;
+
 
   static ScriptedSequenceEditor()
   {
-    var ctypes = Assembly.GetAssembly(typeof(ScriptedSequenceCondition)).GetTypes().Where(t => typeof(ScriptedSequenceCondition).IsAssignableFrom(t) && t != typeof(ScriptedSequenceCondition));
+    // get all conditions
+    var ctypes = Assembly.GetAssembly(typeof(ScriptedSequenceCondition))
+                         .GetTypes()
+                         .Where(t => typeof(ScriptedSequenceCondition).IsAssignableFrom(t) && 
+                                     t != typeof(ScriptedSequenceCondition));
     _ConditionTypes = ctypes.ToArray();
     _ConditionTypeNames = _ConditionTypes.Select(x => x.Name).ToArray();
 
@@ -40,7 +46,11 @@ public class ScriptedSequenceEditor : Editor {
       _ConditionIndices[i] = i;
     }
 
-    var atypes = Assembly.GetAssembly(typeof(ScriptedSequenceAction)).GetTypes().Where(t => typeof(ScriptedSequenceAction).IsAssignableFrom(t) && t != typeof(ScriptedSequenceAction));
+    // get all actions
+    var atypes = Assembly.GetAssembly(typeof(ScriptedSequenceAction))
+                         .GetTypes()
+                         .Where(t => typeof(ScriptedSequenceAction).IsAssignableFrom(t) && 
+                                     t != typeof(ScriptedSequenceAction));
     _ActionTypes = atypes.ToArray();
     _ActionTypeNames = _ActionTypes.Select(x => x.Name).ToArray();
 
@@ -48,7 +58,19 @@ public class ScriptedSequenceEditor : Editor {
     for (int i = 0; i < _ActionIndices.Length; i++) {
       _ActionIndices[i] = i;
     }
+
+    // get all attributed helpers
+    var htypes = Assembly.GetAssembly(typeof(ScriptedSequenceHelper<>))
+                          .GetTypes()
+      .Where(t => t.GetCustomAttributes(typeof(ScriptedSequenceHelperAttribute), false).Length > 0);
+
+    // make a dictionary from the type in the attribute to the helper type
+    _HelperLookup = htypes
+      .ToDictionary(x => ((ScriptedSequenceHelperAttribute)x
+                            .GetCustomAttributes(typeof(ScriptedSequenceHelperAttribute), false)[0]).Type,
+                    x => x);
   }
+
 
 
   private bool _EditingName = false;
@@ -59,9 +81,32 @@ public class ScriptedSequenceEditor : Editor {
 
   private int _DraggingNodeIndex = -1;
 
-  public ScriptedSequenceConditionHelper _DraggingConditionHelper;
+  private ScriptedSequenceHelper<ScriptedSequenceCondition> _DraggingConditionHelper;
+  private ScriptedSequenceHelper<ScriptedSequenceAction> _DraggingActionHelper;
 
-  public ScriptedSequenceActionHelper _DraggingActionHelper;
+  public void SetDraggingHelper<T>(ScriptedSequenceHelper<T> val) where T : ScriptableObject
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      _DraggingConditionHelper = (ScriptedSequenceHelper<ScriptedSequenceCondition>)(object)val;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      _DraggingActionHelper = (ScriptedSequenceHelper<ScriptedSequenceAction>)(object)val;
+    }
+  }
+
+  public ScriptedSequenceHelper<T> GetDraggingHelper<T>() where T : ScriptableObject
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return (ScriptedSequenceHelper<T>)(object)_DraggingConditionHelper;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return (ScriptedSequenceHelper<T>)(object)_DraggingActionHelper;
+    }
+    return null;
+  }
+
 
   public Vector2 _DragOffset;
 
@@ -77,15 +122,93 @@ public class ScriptedSequenceEditor : Editor {
 
   private Vector2 _LastMouseUpPosition;
 
-  private Dictionary<ScriptedSequenceCondition, ScriptedSequenceConditionHelper> _ConditionHelpers = new Dictionary<ScriptedSequenceCondition, ScriptedSequenceConditionHelper>();
+  private Dictionary<ScriptedSequenceCondition, ScriptedSequenceHelper<ScriptedSequenceCondition>> _ConditionHelpers = new Dictionary<ScriptedSequenceCondition, ScriptedSequenceHelper<ScriptedSequenceCondition>>();
+  private Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>> _ActionHelpers = new Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>>();
 
-  private Dictionary<ScriptedSequenceAction, ScriptedSequenceActionHelper> _ActionHelpers = new Dictionary<ScriptedSequenceAction, ScriptedSequenceActionHelper>();
+  private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : ScriptableObject
+  {
+    Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ConditionHelpers;
+    }
+    else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ActionHelpers;
+    }
+    if(helpers == null) {
+      helper = null;
+      return false;
+    } else {
+      return helpers.TryGetValue(key, out helper);
+    }
+  }
+
+  private void SetHelper<T>(T key, ScriptedSequenceHelper<T> helper)  where T : ScriptableObject
+  {
+    Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ConditionHelpers;
+    }
+    else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ActionHelpers;
+    }
+    if(helpers != null) {
+      helpers[key] = helper;
+    }
+  }
+
+  private T ShowAddPopup<T>(Rect rect) where T : ScriptableObject {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
+      return ShowAddPopupInternal<T>(rect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
+      return ShowAddPopupInternal<T>(rect, ref _SelectedActionIndex, _ActionTypeNames, _ActionIndices, _ActionTypes);
+    }
+    return null;
+  }
+
+  private T ShowAddPopupInternal<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : ScriptableObject {
+    var popupRect = new Rect(rect.x, rect.y, rect.width - 50, rect.height);
+    var plusRect = new Rect(rect.x + rect.width - 50, rect.y, 50, rect.height);
+    index = EditorGUI.IntPopup(popupRect, index, names, indices);
+
+    if (GUI.Button(plusRect, "+", ButtonStyle)) {
+      return (ScriptableObject.CreateInstance(types[index]) as T);
+    }
+    return null;
+  }
 
   private ScriptedSequenceNode _CopiedNode;
 
-  public ScriptedSequenceCondition CopiedCondition;
+  private ScriptedSequenceCondition _CopiedCondition;
+  private ScriptedSequenceAction _CopiedAction;
 
-  public ScriptedSequenceAction CopiedAction;
+  public void SetCopiedValue<T>(T val)
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      _CopiedCondition = (ScriptedSequenceCondition)(object)val;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      _CopiedAction = (ScriptedSequenceAction)(object)val;
+    }
+  }
+
+  public T GetCopiedValue<T>()
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return (T)(object)_CopiedCondition;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return (T)(object)_CopiedAction;
+    }
+    return default(T);
+  }
+
 
   public ScriptedSequenceNode CopyNode(ScriptedSequenceNode node) {
     ScriptedSequence a = ScriptedSequence.CreateInstance<ScriptedSequence>(); 
@@ -95,16 +218,18 @@ public class ScriptedSequenceEditor : Editor {
     return b.Nodes[0];
   }
 
-  public ScriptedSequenceCondition CopyCondition(ScriptedSequenceCondition condition) {
-    ScriptedSequenceCondition copy = ScriptableObject.CreateInstance(condition.GetType()) as ScriptedSequenceCondition;
+  public T Copy<T>(T condition) where T : ScriptableObject {
+    T copy = (T)ScriptableObject.CreateInstance(condition.GetType());
     EditorUtility.CopySerialized(condition, copy);
     return copy;
   }
 
-  public ScriptedSequenceAction CopyAction(ScriptedSequenceAction action) {
-    ScriptedSequenceAction copy = ScriptableObject.CreateInstance(action.GetType()) as ScriptedSequenceAction;
-    EditorUtility.CopySerialized(action, copy);
-    return copy;
+  public static System.Type GetHelperType<T>(System.Type type) {
+    Type returnType;
+    if (!_HelperLookup.TryGetValue(type, out returnType)) {
+      returnType = typeof(ScriptedSequenceHelper<,>).MakeGenericType(type, typeof(T));
+    }
+    return returnType;
   }
 
   private static GUIStyle _LabelStyle;
@@ -203,55 +328,9 @@ public class ScriptedSequenceEditor : Editor {
       }
     }
 
-    GUILayout.Label("Sequence Condition", LabelStyle);
-    EditorGUI.indentLevel++;
-    ScriptedSequenceConditionHelper helper = null;
-    Rect nextRect, plusRect;
-    if (sequence.Condition != null) {
-
-      if (!_ConditionHelpers.TryGetValue(sequence.Condition, out helper)) {
-        Action<ScriptedSequenceCondition> setAction = (ScriptedSequenceCondition x) => {
-          sequence.Condition = x;
-        };
-        helper = Activator.CreateInstance(typeof(ScriptedSequenceConditionHelper<>).MakeGenericType(sequence.Condition.GetType()), sequence.Condition, this, setAction) as ScriptedSequenceConditionHelper;
-        _ConditionHelpers[sequence.Condition] = helper;
-      }
-
-      helper.OnGUI(mousePosition, mouseEvent);
-
-      if (GUILayout.Button("Clear Condition", LabelStyle)) {
-        sequence.Condition = null;
-      }
-    }
-    else
-    {
-      nextRect = EditorGUILayout.GetControlRect();
-
-      var popupRect = new Rect(nextRect.x, nextRect.y, nextRect.width - 50, nextRect.height);
-      plusRect = new Rect(nextRect.x + nextRect.width - 50, nextRect.y, 50, nextRect.height);
-
-      _SelectedConditionIndex = EditorGUI.IntPopup(popupRect, _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices);
-
-      if (GUI.Button(plusRect, "+", ButtonStyle)) {
-        sequence.Condition = (ScriptableObject.CreateInstance(_ConditionTypes[_SelectedConditionIndex]) as ScriptedSequenceCondition);
-      }
-
-      if (nextRect.Contains(mousePosition) && mouseEvent == EventType.mouseUp && _DraggingConditionHelper != null) {
-        sequence.Condition = _DraggingConditionHelper.ConditionBase;
-        if (_DraggingConditionHelper._ReplaceInsteadOfInsert) {
-          _DraggingConditionHelper._ReplaceAction(null);
-        }
-        else {
-          _DraggingConditionHelper._ConditionList.RemoveAt(_DraggingConditionHelper.Index);
-          _DraggingConditionHelper._ConditionList = null;
-          _DraggingConditionHelper._ReplaceInsteadOfInsert = true;
-        }
-        _DraggingConditionHelper._ReplaceAction = x => {
-          sequence.Condition = x;
-        };
-      }
-    }
-    EditorGUI.indentLevel--;
+    DrawConditionOrActionEntry("Sequence Condition", sequence.Condition, (x) => {
+      sequence.Condition = x;
+    }, mousePosition, mouseEvent);
 
 
     GUILayout.Label("Sequence Nodes", LabelStyle);
@@ -268,9 +347,9 @@ public class ScriptedSequenceEditor : Editor {
       DrawScriptedSequenceNode(i, sequence.Nodes[i], sequence, mousePosition, mouseEvent);
     }
 
-    nextRect = EditorGUILayout.GetControlRect();
+    var nextRect = EditorGUILayout.GetControlRect();
 
-    plusRect = new Rect(nextRect.x + nextRect.width - 50, nextRect.y, 50, nextRect.height);
+    var plusRect = new Rect(nextRect.x + nextRect.width - 50, nextRect.y, 50, nextRect.height);
 
     if (GUI.Button(plusRect, "+", ButtonStyle)) {
       AddNode(sequence.Nodes.Count);
@@ -449,21 +528,32 @@ public class ScriptedSequenceEditor : Editor {
       return;
     }
 
-    GUILayout.Label("Conditions", LabelStyle);
+    node.Sequencial = EditorGUILayout.Toggle("Sequencial", node.Sequencial);
+    node.Final = EditorGUILayout.Toggle("Final", node.Final);
+    node.FailOnError = EditorGUILayout.Toggle("Fail On Error", node.FailOnError);
+    node.CheckPoint = EditorGUILayout.Toggle("Check Point", node.CheckPoint);
 
-    for (int i = 0; i < node.Conditions.Count; i++) {
-      var cond = node.Conditions[i];
+    DrawConditionOrActionList("Conditions", node.Conditions, mousePosition, eventType);
+
+    DrawConditionOrActionList("Actions", node.Actions, mousePosition, eventType);
+  }
+
+  public void DrawConditionOrActionList<T>(string label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : ScriptableObject {    
+    GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
+
+    for (int i = 0; i < conditions.Count; i++) {
+      var cond = conditions[i];
       if (cond == null) {
-        node.Conditions.RemoveAt(i);
+        conditions.RemoveAt(i);
         i--;
         continue;
       }
 
-      ScriptedSequenceConditionHelper helper = null;
+      ScriptedSequenceHelper<T> helper = null;
 
-      if (!_ConditionHelpers.TryGetValue(cond, out helper)) {
-        helper = Activator.CreateInstance(typeof(ScriptedSequenceConditionHelper<>).MakeGenericType(cond.GetType()), cond, this, node.Conditions) as ScriptedSequenceConditionHelper;
-        _ConditionHelpers[cond] = helper;
+      if (!TryGetHelper<T>(cond, out helper)) {
+        helper = Activator.CreateInstance(GetHelperType<T>(cond.GetType()), cond, this, conditions) as ScriptedSequenceHelper<T>;
+        SetHelper<T>(cond, helper);
       }
 
       helper.OnGUI(mousePosition, eventType);
@@ -471,45 +561,86 @@ public class ScriptedSequenceEditor : Editor {
 
     var nextRect = EditorGUILayout.GetControlRect();
 
-    var popupRect = new Rect(nextRect.x, nextRect.y, nextRect.width - 50, nextRect.height);
-    var plusRect = new Rect(nextRect.x + nextRect.width - 50, nextRect.y, 50, nextRect.height);
+    var newObject = ShowAddPopup<T>(nextRect);
 
-    _SelectedConditionIndex = EditorGUI.IntPopup(popupRect, _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices);
-
-    if (GUI.Button(plusRect, "+", ButtonStyle)) {
-      node.Conditions.Add(ScriptableObject.CreateInstance(_ConditionTypes[_SelectedConditionIndex]) as ScriptedSequenceCondition);
+    if (newObject != default(T)) {
+      conditions.Add(newObject);
     }
+    var draggingHelper = GetDraggingHelper<T>();
 
-    GUILayout.Label("Actions", LabelStyle);
+    if (nextRect.Contains(mousePosition) && eventType == EventType.mouseUp && draggingHelper != null) {
+      if (conditions != draggingHelper.List) {
 
-    for (int i = 0; i < node.Actions.Count; i++) {
-      var cond = node.Actions[i];
-      if (cond == null) {
-        node.Actions.RemoveAt(i);
-        i--;
-        continue;
+        conditions.Add(draggingHelper.ValueBase);
+        if (draggingHelper.ReplaceInsteadOfInsert) {
+          draggingHelper.ReplaceAction(null);
+          draggingHelper.ReplaceAction = null;
+          draggingHelper.ReplaceInsteadOfInsert = false;
+        }
+        else {
+          draggingHelper.List.RemoveAt(_DraggingConditionHelper.Index);
+        }
+        draggingHelper.List = conditions;
       }
+      else {
+        int oldIndex = _DraggingConditionHelper.Index;
+        conditions.RemoveAt(oldIndex);
+        conditions.Add(draggingHelper.ValueBase);
+      }
+    }
+  }
 
-      ScriptedSequenceActionHelper helper = null;
+  public Rect GetIndentedLabelRect()
+  {
+    var rect = EditorGUILayout.GetControlRect();
+    rect.x += 15 * (EditorGUI.indentLevel - 1);
+    rect.width -= 15 * (EditorGUI.indentLevel - 1);
+    return rect;
+  }
 
-      if (!_ActionHelpers.TryGetValue(cond, out helper)) {
-        helper = Activator.CreateInstance(typeof(ScriptedSequenceActionHelper<>).MakeGenericType(cond.GetType()), cond, this, node.Actions) as ScriptedSequenceActionHelper;
-        _ActionHelpers[cond] = helper;
+  public void DrawConditionOrActionEntry<T>(string label, T value, Action<T> setAction, Vector2 mousePosition, EventType eventType) where T : ScriptableObject {
+    GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
+    EditorGUI.indentLevel++;
+    ScriptedSequenceHelper<T> helper = null;
+    if (value != null) {
+      if (!TryGetHelper<T>(value, out helper)) {        
+        helper = Activator.CreateInstance(GetHelperType<T>(value.GetType()), value, this, setAction) as ScriptedSequenceHelper<T>;
+        SetHelper<T>(value, helper);
       }
 
       helper.OnGUI(mousePosition, eventType);
+
+      if (GUILayout.Button("Clear", LabelStyle)) {
+        setAction(null);
+      }
     }
+    else
+    {
+      var nextRect = EditorGUILayout.GetControlRect();
 
-    nextRect = EditorGUILayout.GetControlRect();
+      var newObject = ShowAddPopup<T>(nextRect);
+      if (newObject != null) {
+        value = newObject;
+        setAction(newObject);
+      }
 
-    popupRect = new Rect(nextRect.x, nextRect.y, nextRect.width - 50, nextRect.height);
-    plusRect = new Rect(nextRect.x + nextRect.width - 50, nextRect.y, 50, nextRect.height);
+      var draggingHelper = GetDraggingHelper<T>();
+      if (nextRect.Contains(mousePosition) && eventType == EventType.mouseUp && draggingHelper != null) {
+        value = draggingHelper.ValueBase;
+        setAction(value);
 
-    _SelectedActionIndex = EditorGUI.IntPopup(popupRect, _SelectedActionIndex, _ActionTypeNames, _ActionIndices);
-
-    if (GUI.Button(plusRect, "+", ButtonStyle)) {
-      node.Actions.Add(ScriptableObject.CreateInstance(_ActionTypes[_SelectedActionIndex]) as ScriptedSequenceAction);
+        if (draggingHelper.ReplaceInsteadOfInsert) {
+          draggingHelper.ReplaceAction(null);
+        }
+        else {
+          draggingHelper.List.RemoveAt(draggingHelper.Index);
+          draggingHelper.List = null;
+          draggingHelper.ReplaceInsteadOfInsert = true;
+        }
+        draggingHelper.ReplaceAction = setAction;
+      }
     }
+    EditorGUI.indentLevel--;
   }
 
   [MenuItem("Assets/Create/Cozmo/Scripted Sequence")]
