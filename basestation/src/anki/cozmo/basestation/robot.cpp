@@ -1195,10 +1195,10 @@ namespace Anki {
         }
       }
       
-      PRINT_NAMED_DEBUG("Robot.LookupGroundPlaneHomography.HeadAngleDiff",
-                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
-                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
-                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
+      //      PRINT_NAMED_DEBUG("Robot.LookupGroundPlaneHomography.HeadAngleDiff",
+      //                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
+      //                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
+      //                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
       
       H = iter->second;
       return true;
@@ -2613,7 +2613,7 @@ namespace Anki {
             imgGroundQuad[iCorner].y() = temp.y() * divisor;
           }
           
-          Vision::ImageRGB overheadImg;
+          static Vision::ImageRGB overheadMap(1000.f, 1000.f);
           
           // Need to apply a shift after the homography to put things in image
           // coordinates with (0,0) at the upper left (since groundQuad's origin
@@ -2623,6 +2623,63 @@ namespace Anki {
             1.f, 0.f, roi.dist, // Negated b/c we're using inv(Shift)
             0.f,-1.f, roi.widthFar*0.5f,
             0.f, 0.f, 1.f};
+          
+          static Vision::Image roiMask(roi.widthFar, roi.length);
+          static bool maskFilled = false;
+          if(!maskFilled) {
+            const f32 w = 0.5f*(roi.widthFar - roi.widthClose);
+            const f32 invTanAngle = roi.length / w;
+            for(s32 i=0; i<roi.widthFar; ++i) {
+              u8* row_i = roiMask.GetRow(i);
+              
+              s32 xmax = 0;
+              if(i < w) {
+                xmax = std::round(roi.length - static_cast<f32>(i) * invTanAngle);
+              } else if(i > w + roi.widthClose) {
+                xmax = std::round(roi.length - (roi.widthFar - static_cast<f32>(i)) * invTanAngle);
+              }
+              
+              for(s32 j=0; j<xmax; ++j) {
+                row_i[j] = 0;
+              }
+              for(s32 j=xmax; j<roi.length; ++j) {
+                row_i[j] = 255;
+              }
+            }
+            maskFilled = true;
+            
+            roiMask.Display("RoiMask");
+          }
+          
+          Pose3d worldPoseWrtRobot = histPoseStamp.GetPose().GetInverse();
+          for(s32 i=0; i<roi.widthFar; ++i) {
+            const u8* mask_i = roiMask.GetRow(i);
+            const f32 y = static_cast<f32>(i) - 0.5f*roi.widthFar;
+            for(s32 j=0; j<roi.length; ++j) {
+              if(mask_i[j] > 0) {
+                // Project ground plane point in robot frame to image
+                const f32 x = static_cast<f32>(j) + roi.dist;
+                Point3f imgPoint = H * Point3f(x,y,1.f);
+                assert(imgPoint.z() > 0.f);
+                const f32 divisor = 1.f / imgPoint.z();
+                imgPoint.x() *= divisor;
+                imgPoint.y() *= divisor;
+                const Vision::PixelRGB value = image(std::round(imgPoint.y()), std::round(imgPoint.x()));
+                
+                // Get corresponding map point in world coords
+                Point3f mapPoint = histPoseStamp.GetPose() * Point3f(x,y,0.f);
+                const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
+                const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
+                if(x_map >= 0 && y_map >= 0 &&
+                   x_map < overheadMap.GetNumCols() && y_map < overheadMap.GetNumRows())
+                {
+                  overheadMap(y_map, x_map) = value;
+                }
+              }
+            }
+          }
+          
+          Vision::ImageRGB overheadImg;
           
           // Note that we're applying the inverse homography, so we're doing
           //  inv(Shift * inv(H)), which is the same as  (H * inv(Shift))
@@ -2635,6 +2692,19 @@ namespace Anki {
             dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
             dispImg.Display("GroundQuad");
             overheadImg.Display("OverheadView");
+            
+            // Display current map with the last updated region highlighted with
+            // a red border
+            overheadMap.CopyTo(dispImg);
+            Quad3f lastUpdate;
+            histPoseStamp.GetPose().ApplyTo(groundQuad, lastUpdate);
+            for(auto & point : lastUpdate) {
+              point.x() += static_cast<f32>(overheadMap.GetNumCols()*0.5f);
+              point.y() *= -1.f;
+              point.y() += static_cast<f32>(overheadMap.GetNumRows()*0.5f);
+            }
+            dispImg.DrawQuad(lastUpdate, NamedColors::RED, 2);
+            dispImg.Display("OverheadMap");
           }
         } // if LookupGroundPlaneHomgraphy succeeded
       }
