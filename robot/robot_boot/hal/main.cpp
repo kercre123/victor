@@ -36,7 +36,12 @@ extern void PowerInit();
 static inline void StopDevices() {
   // Magic numbers taken from inital boot settings
   SIM_SCGC4 = 0xF0100030;
-  SIM_SCGC5 = 0x00040380;
+  SIM_SCGC5 = 0x00040380 |
+    SIM_SCGC5_PORTA_MASK |
+    SIM_SCGC5_PORTB_MASK |
+    SIM_SCGC5_PORTC_MASK |
+    SIM_SCGC5_PORTD_MASK |
+    SIM_SCGC5_PORTE_MASK;
   SIM_SCGC6 = 0x00000001;
   SIM_SCGC7 = 0x00000002;
 }
@@ -59,7 +64,7 @@ bool CheckSig(void) {
 }
 
 // This is the remote entry point recovery mode
-extern "C" void SVC_Handler(void) {
+extern "C" void SVC_Handler(void) { 
   __disable_irq();
   StopDevices();
   GoSlow();
@@ -73,7 +78,7 @@ int main (void) {
   TimerInit();
 
   if (!CheckSig()) {
-    __asm { SVC 0 };
+    SVC_Handler();
   }
   
   SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
