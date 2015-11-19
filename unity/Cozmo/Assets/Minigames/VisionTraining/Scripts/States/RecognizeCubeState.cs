@@ -20,9 +20,6 @@ namespace VisionTraining {
 
       _VisionRect.size = new Vector2(100.0f, 50.0f);
       _VisionRect.center = new Vector2(120.0f, 0.0f);
-      Debug.Log(_VisionRect.position);
-
-
     }
 
     public override void Update() {
@@ -34,7 +31,6 @@ namespace VisionTraining {
       for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
           Vector2 cubePositionCozmoSpace = (Vector2)_CurrentRobot.WorldToCozmo(_CurrentRobot.VisibleObjects[i].WorldPosition);
-          Debug.Log(cubePositionCozmoSpace);
           if (_VisionRect.Contains(cubePositionCozmoSpace)) {
             cubeInRectNow = true;
           }
