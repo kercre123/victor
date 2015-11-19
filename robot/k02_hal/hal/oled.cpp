@@ -1,5 +1,7 @@
 #include <string.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 #include "MK02F12810.h"
 
@@ -8,7 +10,9 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
-const uint8_t SLAVE_ADDRESS     = 0x78; // Or 0x78 if SA is 0.
+#include "font.h"
+
+const uint8_t SLAVE_ADDRESS     = 0x78;
 
 const uint8_t I2C_READ          = 0x01;
 const uint8_t I2C_WRITE         = 0x00;
@@ -17,6 +21,9 @@ const uint8_t I2C_COMMAND       = 0x00;
 const uint8_t I2C_DATA          = 0x40;
 const uint8_t I2C_CONTINUATION  = 0x00;
 const uint8_t I2C_SINGLE        = 0x80;
+
+const int SCREEN_WIDTH = 128;
+const int SCREEN_HEIGHT = 64;
 
 // Display constants
 static const uint8_t InitDisplay[] = {
@@ -64,24 +71,51 @@ static uint8_t ResetCursor[FramePrefixLength+FrameBufferLength] = {
 
 static uint8_t *FrameBuffer = &ResetCursor[FramePrefixLength];
 
-
 namespace Anki
 {
   namespace Cozmo
   {
     namespace HAL
     {
-      static void invert(void *data, int count) {
-        uint8_t *px = (uint8_t*) FrameBuffer;
-        int length = FrameBufferLength;
-        while(length--) *(px++) ^= 0xFF;
+      void OLEDFlip(void) {
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, ResetCursor, sizeof(ResetCursor), NULL);
+      }
+
+      void FacePrintf(const char *format, ...) {
+        const int MAX_CHARS = SCREEN_WIDTH / (CHAR_WIDTH + 1);
+        char buffer[MAX_CHARS];
+        
+        va_list aptr;
+        int chars;
+
+        va_start(aptr, format);
+        vsnprintf(buffer, sizeof(buffer), format, aptr);
+        va_end(aptr);
+
+        char *write = buffer;
+        int px_ptr = 0;
+        
+        memset(FrameBuffer, 0, FrameBufferLength);
+        
+        while (*write) {
+          int idx = *(write++) - CHAR_START;
+          if (idx < 0 || idx >= CHAR_END) {
+            idx = 0;
+          }
+
+          const uint8_t* pixels = (const uint8_t*)&FONT[idx];
+          
+          for (int i = 0; i < CHAR_WIDTH; i++) {
+            FrameBuffer[px_ptr] = pixels[i];
+            px_ptr += 8;
+          }
+          FrameBuffer[px_ptr] = 0;
+          px_ptr += 8;
+        }
+        
         OLEDFlip();
       }
-
-      void OLEDFlip(void) {
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, ResetCursor, sizeof(ResetCursor), invert);
-      }
-
+      
       void OLEDInit(void) {
         using namespace Anki::Cozmo::HAL;
         
