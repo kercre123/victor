@@ -8,13 +8,21 @@ namespace VisionTraining {
     private float _CubeInRectTime = 0.0f;
     private int _SelectedCubeId = -1;
 
-    private Rect _VisionRect = new Rect(new Vector2(100.0f, 0.0f), new Vector2(50.0f, 50.0f));
+    // don't use the rect constructor position because
+    // it is top left and not center of the rect.
+    private Rect _VisionRect = new Rect();
 
     public override void Enter() {
       base.Enter();
       _SelectedCubeId = (_StateMachine.GetGame() as VisionTrainingGame).PickCube();
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _VisionRect.size = new Vector2(100.0f, 50.0f);
+      _VisionRect.center = new Vector2(120.0f, 0.0f);
+      Debug.Log(_VisionRect.position);
+
+
     }
 
     public override void Update() {
@@ -25,7 +33,9 @@ namespace VisionTraining {
 
       for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
-          if (_VisionRect.Contains((Vector2)_CurrentRobot.VisibleObjects[i].WorldPosition)) {
+          Vector2 cubePositionCozmoSpace = (Vector2)_CurrentRobot.WorldToCozmo(_CurrentRobot.VisibleObjects[i].WorldPosition);
+          Debug.Log(cubePositionCozmoSpace);
+          if (_VisionRect.Contains(cubePositionCozmoSpace)) {
             cubeInRectNow = true;
           }
           cubeInViewNow = true;

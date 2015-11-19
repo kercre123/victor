@@ -239,7 +239,8 @@ public class Robot : IDisposable {
   private U2G.AlignWithObject AlignWithObjectMessage;
   private U2G.ProgressionMessage ProgressionStatMessage;
   private U2G.MoodMessage MoodStatMessage;
- 
+  private U2G.VisualizeQuad VisualizeQuadMessage;
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private ObservedObject _CarryingObject;
@@ -338,6 +339,7 @@ public class Robot : IDisposable {
     AlignWithObjectMessage = new U2G.AlignWithObject();
     ProgressionStatMessage = new U2G.ProgressionMessage();
     MoodStatMessage = new U2G.MoodMessage();
+    VisualizeQuadMessage = new U2G.VisualizeQuad();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -378,6 +380,12 @@ public class Robot : IDisposable {
     if (LocalBusyTimer > 0f) {
       LocalBusyTimer -= delta;
     }
+  }
+
+  public Vector3 WorldToCozmo(Vector3 worldSpacePosition) {
+    Vector3 offset = worldSpacePosition - this.WorldPosition;
+    offset = Quaternion.Inverse(this.Rotation) * offset;
+    return offset;
   }
 
   private void RobotEngineMessages(bool success, RobotActionType messageType) {
@@ -487,6 +495,20 @@ public class Robot : IDisposable {
     ProgressionStatMessage.ProgressionMessageUnion.AddToProgressionStat.deltaVal = deltaValue;
 
     RobotEngineManager.Instance.Message.ProgressionMessage = ProgressionStatMessage;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
+    VisualizeQuadMessage.color = CozmoPalette.ColorToUInt(Color.black);
+    VisualizeQuadMessage.xLowerLeft = lowerLeft.x;
+    VisualizeQuadMessage.yLowerLeft = lowerLeft.y;
+    VisualizeQuadMessage.zLowerLeft = lowerLeft.z;
+
+    VisualizeQuadMessage.xUpperRight = upperRight.x;
+    VisualizeQuadMessage.yUpperRight = upperRight.y;
+    VisualizeQuadMessage.zUpperRight = upperRight.z;
+
+    RobotEngineManager.Instance.Message.VisualizeQuad = VisualizeQuadMessage;
     RobotEngineManager.Instance.SendMessage();
   }
 
