@@ -48,6 +48,8 @@ namespace Vision {
     bool IsBrighterThan(u8 value, bool any = false) const;
     bool IsDarkerThan(u8 value, bool any = false) const;
     
+    PixelRGB& AlphaBlendWith(const PixelRGB& other, f32 alpha);
+    
   }; // class PixelRGB
   
   static_assert(sizeof(PixelRGB)==3, "PixelRGB not 3 bytes!");
@@ -130,6 +132,13 @@ namespace Vision {
     }
   }
 
+  inline PixelRGB& PixelRGB::AlphaBlendWith(const PixelRGB& other, f32 alpha)
+  {
+    r() = static_cast<u8>(alpha*static_cast<f32>(r()) + (1.f-alpha)*static_cast<f32>(other.r()));
+    g() = static_cast<u8>(alpha*static_cast<f32>(g()) + (1.f-alpha)*static_cast<f32>(other.g()));
+    b() = static_cast<u8>(alpha*static_cast<f32>(b()) + (1.f-alpha)*static_cast<f32>(other.b()));
+    return *this;
+  }
  
 } // namespace Vision
 } // namespace Anki
