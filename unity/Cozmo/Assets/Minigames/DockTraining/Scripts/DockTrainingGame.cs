@@ -12,6 +12,10 @@ namespace DockTraining {
     private LightCube _CurrentTarget = null;
     private float _LastSeenTargetTime = 0.0f;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);

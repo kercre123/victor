@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine.UI;
 
 public class HubWorldButton : MonoBehaviour {
-  public delegate void ButtonClickedHandler(ChallengeData challengeClicked);
+  public delegate void ButtonClickedHandler(string challengeClickedId);
 
   public event ButtonClickedHandler OnButtonClicked;
 
@@ -13,22 +13,23 @@ public class HubWorldButton : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _ButtonLabel;
 
-  private ChallengeData _Challenge;
+  private string _ChallengeId;
 
-  private void RaiseButtonClicked(ChallengeData challenge) {
-    if (OnButtonClicked != null) { 
-      OnButtonClicked(challenge);
-    }
-  }
-
-  public void Initialize(ChallengeData challenge) {
-    _Challenge = challenge;
+  public void Initialize(string challengeId, string challengeTitleLocKey) {
+    
+    _ChallengeId = challengeId;
     _ButtonScript.onClick.AddListener(HandleButtonClicked);
-    _ButtonLabel.text = Localization.Get(challenge.ChallengeTitleKey);
+    _ButtonLabel.text = Localization.Get(challengeTitleLocKey);
   }
 
   private void HandleButtonClicked() {
-    RaiseButtonClicked(_Challenge);
+    RaiseButtonClicked(_ChallengeId);
+  }
+
+  private void RaiseButtonClicked(string challenge) {
+    if (OnButtonClicked != null) { 
+      OnButtonClicked(challenge);
+    }
   }
 
 }
