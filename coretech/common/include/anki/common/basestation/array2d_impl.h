@@ -439,6 +439,16 @@ namespace Anki
     return *this;
   }
   
+  template<typename T>
+  void Array2d<T>::FillWith(T value)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->setTo(value);
+#   else
+    assert(false);
+#   endif
+  }
+  
   /* OLD: Inherit from unmanaged
 
   // This constructor uses the OpenCv managedData matrix to allocate the data,
