@@ -44,6 +44,10 @@ namespace InvestorDemo {
       NextAction();
     }
 
+    private bool CurrentActionIsAnimation() {
+      return !_DemoConfig.DemoActions[_ActionIndex].AnimationName.Equals("");
+    }
+
     private void OnAnimationDone(bool success, string animationName) {
       if (_WaitingForCancel) {
         _WaitingForCancel = false;
@@ -63,22 +67,26 @@ namespace InvestorDemo {
     }
 
     private void HandleNextActionFromButton() {
-      CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-      _WaitingForCancel = true;
+      if (CurrentActionIsAnimation()) {
+        CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+        _WaitingForCancel = true;
+      }
       NextAction();
     }
 
     private void HandlePrevActionFromButton() {
-      CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-      _WaitingForCancel = true;
+      if (CurrentActionIsAnimation()) {
+        CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+        _WaitingForCancel = true;
+      }
       PrevAction();
     }
 
     private void DoCurrentAction() {
       if (_ActionIndex >= 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
-        if (!_DemoConfig.DemoActions[_ActionIndex].AnimationName.Equals("")) {
-          CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName);
+        if (CurrentActionIsAnimation()) {
           CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+          CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName);
           _GamePanel.SetActionText("Playing Animation: " + _DemoConfig.DemoActions[_ActionIndex].AnimationName);
 
         }
