@@ -8,7 +8,8 @@ namespace InvestorDemo {
   public class InvestorDemoGame : GameBase {
     
     private int _ActionIndex = -1;
-    private bool _WaitingForCancel = true;
+    private bool _WaitingForCancel = false;
+    private bool _WaitingForDelayed = false;
 
     [SerializeField]
     private InvestorDemoPanel _GamePanelPrefab;
@@ -56,6 +57,19 @@ namespace InvestorDemo {
       NextAction();
     }
 
+    private IEnumerator DelayedNextAction() {
+      yield return new WaitForSeconds(0.2f);
+      _WaitingForDelayed = false;
+      NextAction();
+    }
+
+    private IEnumerator DelayedPrevAction() {
+      yield return new WaitForSeconds(0.2f);
+      _WaitingForDelayed = false;
+      PrevAction();
+    }
+
+
     private void NextAction() {
       _ActionIndex++;
       DoCurrentAction();
@@ -67,25 +81,28 @@ namespace InvestorDemo {
     }
 
     private void HandleNextActionFromButton() {
-      if (CurrentActionIsAnimation()) {
-        CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-        _WaitingForCancel = true;
-      }
-      NextAction();
+      if (_WaitingForDelayed)
+        return;
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+      _WaitingForCancel = true;
+      _WaitingForDelayed = true;
+      StartCoroutine(DelayedNextAction());
     }
 
     private void HandlePrevActionFromButton() {
-      if (CurrentActionIsAnimation()) {
-        CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
-        _WaitingForCancel = true;
-      }
-      PrevAction();
+      if (_WaitingForDelayed)
+        return;
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      CurrentRobot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);
+      _WaitingForCancel = true;
+      _WaitingForDelayed = true;
+      StartCoroutine(DelayedPrevAction());
     }
 
     private void DoCurrentAction() {
       if (_ActionIndex >= 0 && _ActionIndex < _DemoConfig.DemoActions.Length) {
         if (CurrentActionIsAnimation()) {
-          CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
           CurrentRobot.SendAnimation(_DemoConfig.DemoActions[_ActionIndex].AnimationName);
           _GamePanel.SetActionText("Playing Animation: " + _DemoConfig.DemoActions[_ActionIndex].AnimationName);
 
@@ -102,6 +119,7 @@ namespace InvestorDemo {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       CurrentRobot.CancelAllCallbacks();
       if (_GamePanel != null) {
         UIManager.CloseDialogImmediately(_GamePanel);
