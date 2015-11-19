@@ -526,9 +526,9 @@ namespace Anki {
         }
       }
       
-      void Process_enablePickupDetect(const RobotInterface::EnablePickupDetect& msg)
+      void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
-        IMUFilter::EnablePickupDetect(msg.enable);
+        IMUFilter::EnablePickupParalysis(msg.enable);
       }
       
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)

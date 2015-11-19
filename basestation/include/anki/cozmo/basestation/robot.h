@@ -862,7 +862,7 @@ public:
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
   
-    Result SendEnablePickupDetect(const bool enable) const;
+    Result SendEnablePickupParalysis(const bool enable) const;
 
     Result SendAbortDocking();
     Result SendAbortAnimation();

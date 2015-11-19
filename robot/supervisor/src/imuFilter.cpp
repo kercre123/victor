@@ -19,6 +19,8 @@
 #include "headController.h"
 #include "liftController.h"
 #include "wheelController.h"
+#include "pathFollower.h"
+#include "pickAndPlaceController.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -58,6 +60,8 @@ namespace Anki {
         // ==== Pickup detection ===
         bool pickupDetectEnabled_ = true;
         bool pickedUp_ = false;
+        
+        bool enablePickupParalysis_ = false;
         
         // Filter coefficient on z-axis accelerometer
         const f32 ACCEL_PICKUP_FILT_COEFF = 0.1f;
@@ -306,6 +310,40 @@ namespace Anki {
         SetPickupDetect(false);
         pickupDetectEnabled_ = enable;
       }
+      
+      void EnablePickupParalysis(bool enable)
+      {
+        PRINT("Pickup paralysis %s", enable ? "ENABLED\n" : "DISABLED\n");
+        enablePickupParalysis_ = enable;
+      }
+      
+      void HandlePickupParalysis()
+      {
+        static bool wasParalyzed = false;
+        if (enablePickupParalysis_) {
+          if (IsPickedUp() && !wasParalyzed) {
+            // Stop all movement (so we don't hurt people's hands)
+            PickAndPlaceController::Reset();
+            PathFollower::ClearPath();
+            
+            LiftController::Disable();
+            HeadController::Disable();
+            WheelController::Disable();
+            wasParalyzed = true;
+          }
+        }
+        
+        if((!IsPickedUp() || !enablePickupParalysis_) && wasParalyzed) {
+          // Just got put back down
+          LiftController::Enable();
+          HeadController::Enable();
+          WheelController::Enable();
+          wasParalyzed = false;
+        }
+        
+      }
+      
+
       
       void Reset()
       {
@@ -672,6 +710,7 @@ namespace Anki {
         
         //UpdateEventDetection();
         
+        HandlePickupParalysis();
         
         // Recording IMU data for sending to basestation
         if (isRecording_) {
