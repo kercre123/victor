@@ -9,6 +9,8 @@ extern volatile u8 xdata radioPayload[13];
 extern volatile enum eRadioTimerState radioTimerState;
 extern volatile u8 gMissedPacketCount;
 extern volatile u8 cumMissedPacketCount;
+extern volatile struct RadioStruct radioStruct;
+extern volatile u8 ADDRESS_RX_DAT[5];
 
 
 #define SOURCE_PWR      6
@@ -119,6 +121,11 @@ void Advertise()
       delay_ms(1000);
     }
   }
+  LightOn(debugLedI2CError); // advertising light on
+  while(1) // xxx remove
+  {
+    
+  }
   
   // Set up new comm channel parameters
   radioStruct.COMM_CHANNEL = radioPayload[0];
@@ -173,15 +180,17 @@ void main(void)
   // Run tests
   RunTests();
 
+  #ifndef EMULATE_BODY
   // Initialize watchdog watchdog
   WDSV = 0; // 2 seconds to get through startup
   WDSV = 1;  
+  #endif
   
   // Initalize Radio Timer 
   InitTimer0();
   TR0 = 1; // Start radio timer 
   
-  
+  #ifndef EMULATE_BODY
   // Cube radio state machine
   gCubeState = eAdvertise;
   while(1)
@@ -224,7 +233,42 @@ void main(void)
         gCubeState = eAdvertise;
     }
   }
+  #else
+  InitUart();
+  gDataReceived = false;
+  gCubeState = eSync;
   
+    // Cube radio state machine
+  gCubeState = eScan;
+  while(1){
+    switch(gCubeState)
+    {
+      case eScan:
+        // Set up advertising parameters
+        radioStruct.ADDRESS_RX_PTR = ADDRESS_TX;
+        radioStruct.ADDRESS_TX_PTR = ADDRESS_RX_ADV;
+        radioStruct.COMM_CHANNEL = ADV_CHANNEL;
+        ReceiveData(200);
+        WDSV = 128; // 1 seconds // TODO: update this value // TODO add a macro for watchdog
+        WDSV = 0;
+        if(gDataReceived)
+        {
+          gCubeState = eRespond;
+          gDataReceived = 0;
+        }
+        break;
+      case eRespond:
+        delay_us(200);
+        TransmitData();
+        WDSV = 128; // 1 seconds // TODO: update this value // TODO add a macro for watchdog
+        WDSV = 0;
+        //PutString("Responded\r\n");
+        gCubeState = eScan;
+        break;
+    }
+  }
+  #endif
+
   return;
 }
 

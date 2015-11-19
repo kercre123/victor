@@ -9,6 +9,16 @@ volatile enum eRadioTimerState radioTimerState = radioSleep;
 volatile u8 gMissedPacketCount = 0;
 volatile u8 cumMissedPacketCount = 0;
 volatile u8 radioTimerCounter;
+volatile u8 ADDRESS_RX_DAT[5];
+volatile struct RadioStruct radioStruct = 
+{
+  ADV_CHANNEL, // COMM_CHANNEL
+  0xB6, // RADIO_INTERVAL_DELAY
+  5, // RADIO_TIMEOUT_MSB ~ 1ms
+  8, // RADIO_WAKUP_OFFSET
+  ADDRESS_TX, // ADDRESS_TX_PTR 
+  ADDRESS_RX_ADV // ADDRESS_RX_PTR
+};
 
 void InitTimer0()
 {  
@@ -123,6 +133,10 @@ Returns true if sync established
 void ReceiveData(u8 timerMsbTimeout) 
 {
   u8 now;
+  #ifdef EMULATE_BODY
+  u8 addr[5];
+  u8 i;
+  #endif
   
   // Get timer MSB
   now = TH0;
@@ -132,11 +146,21 @@ void ReceiveData(u8 timerMsbTimeout)
   
   // Initialize as primary receiver
   InitPRX();
+  
+  #ifdef EMULATE_BODY
+  hal_nrf_get_address(HAL_NRF_PIPE1, addr);
+  /*PutString("Receiving on PIPE1 address: ");
+  for(i=0; i<5; i++)
+  {
+    PutHex(addr[i]);
+  }
+  PutString("\r\n");*/
+  #endif
 
   // Wait for received data, or timeout
   while(radioBusy)
   {   
-    if((TH0-now+1)>(timerMsbTimeout))  // timeout condition
+    if((TH0-now+1)>(timerMsbTimeout) && timerMsbTimeout !=0)  // timeout condition
     {
       gMissedPacketCount++; // increment missed packet counters 
       cumMissedPacketCount++; 
@@ -163,18 +187,14 @@ void InitPTX()
   // Enable global interrupt
   EA = 1U;
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
-  // Set address
-  #ifdef EMULATE_BODY
-  hal_nrf_set_address(HAL_NRF_PIPE1, radioStruct.ADDRESS_RX_ADV); // body to cube
-  #else 
-  hal_nrf_set_address(HAL_NRF_PIPE1, radioStruct.ADDRESS_TX_PTR); // cube to body
-  #endif
   // Set datarate
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Turn off auto-retransmit
   hal_nrf_set_auto_retr(0, 0);
   // Set power
   hal_nrf_set_output_power(HAL_NRF_0DBM);
+    // Set address
+  hal_nrf_set_address(HAL_NRF_TX, radioStruct.ADDRESS_TX_PTR); // cube to body
   // Set channel
   hal_nrf_set_rf_channel(radioStruct.COMM_CHANNEL);
   // Power up radio

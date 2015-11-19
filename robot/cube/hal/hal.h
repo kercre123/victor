@@ -27,12 +27,26 @@
 // Board definition
 //#define IS_CHARGER
 //#define EMULATE_BODY
-//#define USE_EVAL_BOARD
 
-#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD) || defined(DO_MISSED_PACKET_TEST) || defined(VERIFY_TRANSMITTER)
+#if defined(EMULATE_BODY)
+#define USE_EVAL_BOARD
 #define USE_UART
 #endif
 
+#if defined(STREAM_ACCELEROMETER) || defined(DO_TAPS_TEST) || defined(DEBUG_PAYLOAD) || defined(DO_MISSED_PACKET_TEST) || defined(VERIFY_TRANSMITTER) || defined(EMULATE_BODY)
+#define USE_UART
+#endif
+
+#ifdef EMULATE_BODY
+static enum cubeState
+{
+  eScan,
+  eSync, // dummy state
+  eRespond,
+  eMainLoop
+  
+}gCubeState;
+#else
 static enum cubeState
 {
   eAdvertise, 
@@ -40,7 +54,7 @@ static enum cubeState
   eInitializeMain,
   eMainLoop
 }gCubeState;
-
+#endif
 
 // lights.c
 
@@ -83,7 +97,6 @@ void RunTests();
 
 static const u8 code ADDRESS_TX[5] = {0x52, 0x41, 0x43, 0x48, 0x4C}; // RACHL
 static const u8 code ADDRESS_RX_ADV[5] = {0x42, 0x52, 0x59, 0x41, 0x4E}; // BRYAN
-static volatile u8 ADDRESS_RX_DAT[5];
   
 static struct RadioStruct
 {
@@ -91,18 +104,8 @@ static struct RadioStruct
   u8 RADIO_INTERVAL_DELAY;
   const u8 RADIO_TIMEOUT_MSB;
   const u8 RADIO_WAKEUP_OFFSET;
-  const u8* ADDRESS_TX_PTR;
-  const u8* ADDRESS_RX_PTR;
-};
-
-static struct RadioStruct radioStruct = 
-{
-  ADV_CHANNEL, // COMM_CHANNEL
-  0xB6, // RADIO_INTERVAL_DELAY
-  5, // RADIO_TIMEOUT_MSB ~ 1ms
-  8, // RADIO_WAKUP_OFFSET
-  ADDRESS_TX, // ADDRESS_TX 
-  ADDRESS_RX_ADV // ADDRESS_RX
+  volatile const u8* ADDRESS_TX_PTR;
+  volatile const u8* ADDRESS_RX_PTR;
 };
 
 
