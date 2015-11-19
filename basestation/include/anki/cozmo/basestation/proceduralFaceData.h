@@ -42,7 +42,8 @@ public:
     Right
   };
   
-  ProceduralFaceData();
+  // Allows setting an instance of ProceduralFaceData to be used as reset values
+  static void SetResetData(ProceduralFaceData* newResetData);
   
   // Reset parameters to their nominal values
   void Reset();
@@ -82,13 +83,15 @@ public:
   
 private:
   // Container for the parameters for both eyes
-  std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams;
+  std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams{{}};
   
-  Value           _faceAngle;
+  Value           _faceAngle = 0.0f;
   Point<2,Value>  _faceScale;
   Point<2,Value>  _faceCenter;
   
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
+  
+  static ProceduralFaceData* _resetData;
   
 }; // class ProceduralFaceData
   

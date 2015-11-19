@@ -59,6 +59,12 @@ public:
   void Clear();
 
   const std::string& GetName() const { return _name; }
+  
+  template<class KeyFrameType>
+  const Animations::Track<KeyFrameType>& GetTrack_Const()
+  {
+    return GetTrack<KeyFrameType>();
+  }
 
 private:
 

@@ -13,17 +13,27 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
   
-ProceduralFaceData::ProceduralFaceData()
+ProceduralFaceData* ProceduralFaceData::_resetData = nullptr;
+  
+void ProceduralFaceData::SetResetData(ProceduralFaceData* newResetData)
 {
-  Reset();
+  ProceduralFaceData* oldPointer = _resetData;
+  _resetData = newResetData;
+  Util::SafeDelete(oldPointer);
 }
-
+  
 void ProceduralFaceData::Reset()
 {
+  if (nullptr != _resetData)
+  {
+    *this = *_resetData;
+  }
+  /*
   _faceAngle = 0;
   _faceCenter = {0,0};
   _faceScale = {1.f,1.f};
@@ -45,6 +55,7 @@ void ProceduralFaceData::Reset()
       SetParameter(whichEye, radius, 0.61f);
     }
   }
+   */
 }
   
 static const char* kFaceAngleKey = "faceAngle";
