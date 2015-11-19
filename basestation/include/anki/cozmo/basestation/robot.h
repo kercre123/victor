@@ -693,7 +693,20 @@ public:
     const Pose3d     _liftBasePose; // around which the base rotates/lifts
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
-    f32              _currentHeadAngle;
+    f32                       _currentHeadAngle;
+
+    std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
+    void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
+    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
+  
+    struct GroundPlaneROI {
+      // In mm
+       f32 dist = 50.f;
+       f32 length = 100.f;
+       f32 widthFar = 80.f;
+       f32 widthClose = 30.f;
+    } _groundPlaneROI;
+  
     f32              _currentLiftAngle = 0;
     f32              _pitchAngle;
   

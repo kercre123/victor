@@ -134,6 +134,9 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
 
   _visionComponent.SetCameraCalibration(calib);
   SetPhysicalRobot(payload.isPhysicalRobots);
+  
+  // Got a new calibration: rebuild the LUT for ground plane homographies
+  PopulateGroundPlaneHomographyLUT();
 }
 
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)

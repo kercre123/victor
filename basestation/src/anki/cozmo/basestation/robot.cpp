@@ -1124,6 +1124,86 @@ namespace Anki {
       _visionComponent.GetCamera().SetPose(newHeadPose);
       
     } // set_headAngle()
+    
+    void Robot::PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad)
+    {
+      // Store what the current head angle is
+      f32 origHeadAngle = _currentHeadAngle;
+      
+      const Pose3d& robotPose = GetPose();
+      const Vision::Camera& camera = GetVisionComponent().GetCamera();
+      
+      ASSERT_NAMED(camera.IsCalibrated(), "Camera must be calibrated to populate homography LUT.");
+      
+      const Matrix_3x3f K = camera.GetCalibration().GetCalibrationMatrix();
+      
+      // Loop over all possible head angles at the specified resolution and store
+      // the ground plane homography for each.
+      for(f32 headAngle_rad = MIN_HEAD_ANGLE; headAngle_rad <= MAX_HEAD_ANGLE;
+          headAngle_rad += angleResolution_rad)
+      {
+        SetHeadAngle(headAngle_rad);
+        
+        // Get the robot origin w.r.t. the camera position with the camera at
+        // the current head angle
+        Pose3d robotPoseWrtCamera;
+        bool result = robotPose.GetWithRespectTo(camera.GetPose(), robotPoseWrtCamera);
+        assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
+        
+        const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
+        const Vec3f&            T = robotPoseWrtCamera.GetTranslation();
+        
+        // Construct the homography mapping points on the ground plane into the
+        // image plane
+        const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
+        
+        Point3f temp = H * Point3f(_groundPlaneROI.dist + _groundPlaneROI.length, 0.f, 1.f);
+        if(temp.z() > 0.f && temp.y()/temp.z() < camera.GetCalibration().GetNrows()) {
+            // Only store this homography if the ROI still projects into the image
+            _groundPlaneHomographyLUT[headAngle_rad] = H;
+        } else {
+          PRINT_NAMED_INFO("Robot.PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
+                           "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
+          break;
+        }
+      }
+      
+      // Restore the current head angle back to what it was
+      SetHeadAngle(origHeadAngle);
+    } // PopulateGroundPlaneHomographyLUT()
+    
+    bool Robot::LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const
+    {
+      if(atHeadAngle > _groundPlaneHomographyLUT.rbegin()->first) {
+        // Head angle too large
+        return false;
+      }
+      
+      auto iter = _groundPlaneHomographyLUT.lower_bound(atHeadAngle);
+      
+      if(iter == _groundPlaneHomographyLUT.end()) {
+        PRINT_NAMED_WARNING("Robot.LookupGroundPlaneHomography.KeyNotFound",
+                            "Failed to find homogrphay using headangle of %.2frad (%.1fdeg) as lower bound",
+                            atHeadAngle, RAD_TO_DEG(atHeadAngle));
+        --iter;
+      } else {
+        auto nextIter = iter; ++nextIter;
+        if(nextIter != _groundPlaneHomographyLUT.end()) {
+          if(std::abs(atHeadAngle - iter->first) > std::abs(atHeadAngle - nextIter->first)) {
+            iter = nextIter;
+          }
+        }
+      }
+      
+      PRINT_NAMED_DEBUG("Robot.LookupGroundPlaneHomography.HeadAngleDiff",
+                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
+                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
+                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
+      
+      H = iter->second;
+      return true;
+      
+    } // LookupGroundPlaneHomography()
 
     void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
     {
@@ -2498,80 +2578,65 @@ namespace Anki {
         //  +---------+           ------_____|
         //
         //          |<--->|<---------------->|
-        //            d0           d
+        //           dist         length
         //
-        const f32 d0       = 50.f;  // distance to close side of ground quad
-        const f32 d        = 100.f; // size of quad along robot's X direction
-        const f32 w_close  = 30.f;  // size of quad along robot's Y direction
-        const f32 w_far    = 80.f;
         
-        // Ground plane quad in robot coordinates
         // Note that the z coordinate is actually 0, but in the mapping to the
         // image plane below, we are actually doing K[R t]* [Px Py Pz 1]',
         // and Pz == 0 and we thus drop out the third column, making it
         // K[R t] * [Px Py 0 1]' or H * [Px Py 1]', so for convenience, we just
         // go ahead and fill in that 1 here:
-        const Quad3f groundQuad({d0 + d,  0.5f*w_far,   1.f},
-                                {d0    ,  0.5f*w_close, 1.f},
-                                {d0 + d, -0.5f*w_far,   1.f},
-                                {d0    , -0.5f*w_close, 1.f});
+        const GroundPlaneROI& roi = _groundPlaneROI;
+        const Quad3f groundQuad({roi.dist + roi.length,  0.5f*roi.widthFar,   1.f},
+                                {roi.dist             ,  0.5f*roi.widthClose, 1.f},
+                                {roi.dist + roi.length, -0.5f*roi.widthFar,   1.f},
+                                {roi.dist             , -0.5f*roi.widthClose, 1.f});
         
         RobotPoseStamp histPoseStamp;
         TimeStamp_t t;
         _poseHistory->GetRawPoseAt(image.GetTimestamp(), t, histPoseStamp);
-        Vision::Camera histCamera = GetHistoricalCamera(&histPoseStamp, t);
-
-        // Get the robot origin w.r.t. the camera position at the time the image
-        // was captured (this takes into account the head angle at that time)
-        Pose3d robotPoseWrtCamera;
-        bool result = histPoseStamp.GetPose().GetWithRespectTo(histCamera.GetPose(), robotPoseWrtCamera);
-        assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
-        const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
-        const Vec3f& T = robotPoseWrtCamera.GetTranslation();
-        
-        const Matrix_3x3f K = histCamera.GetCalibration().GetCalibrationMatrix();
-        
-        // Construct the homography mapping points on the ground plane into the
-        // image plane
-        Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
-        
-        // Project ground quad in camera image
-        // (This could be done by Camera::ProjectPoints, but that would duplicate
-        //  the computation of H we did above, which here we need to use below)
-        Quad2f imgGroundQuad;
-        for(Quad::CornerName iCorner = Quad::CornerName::FirstCorner;
-            iCorner != Quad::CornerName::NumCorners; ++iCorner)
+       
+        Matrix_3x3f H;
+        if(true == LookupGroundPlaneHomography(histPoseStamp.GetHeadAngle(), H))
         {
-          Point3f temp = H * groundQuad[iCorner];
-          ASSERT_NAMED(temp.z() > 0.f, "Projected ground quad points should have z > 0.");
-          const f32 divisor = 1.f / temp.z();
-          imgGroundQuad[iCorner].x() = temp.x() * divisor;
-          imgGroundQuad[iCorner].y() = temp.y() * divisor;
-        }
-        
-        Vision::ImageRGB overheadImg;
-        
-        // Need to apply a shift after the homography to put things in image
-        // coordinates with (0,0) at the upper left (since groundQuad's origin
-        // is not upper left). Also mirror Y coordinates since we are looking
-        // from above, not below
-        Matrix_3x3f InvShift{
-          1.f, 0.f, d0, // Negated b/c we're using inv(Shift)
-          0.f,-1.f, w_far*0.5f,
-          0.f, 0.f, 1.f};
-        
-        // Note that we're applying the inverse homography, so we're doing
-        //  inv(Shift * inv(H)), which is the same as  (H * inv(Shift))
-        cv::warpPerspective(image.get_CvMat_(), overheadImg.get_CvMat_(), (H*InvShift).get_CvMatx_(),
-                            cv::Size(d, w_far), cv::INTER_LINEAR | cv::WARP_INVERSE_MAP);
-        
-        { // DEBUG
-          Vision::ImageRGB dispImg;
-          image.CopyTo(dispImg);
-          dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
-          dispImg.Display("GroundQuad");
-          overheadImg.Display("OverheadView");
-        }
+          // Project ground quad in camera image
+          // (This could be done by Camera::ProjectPoints, but that would duplicate
+          //  the computation of H we did above, which here we need to use below)
+          Quad2f imgGroundQuad;
+          for(Quad::CornerName iCorner = Quad::CornerName::FirstCorner;
+              iCorner != Quad::CornerName::NumCorners; ++iCorner)
+          {
+            Point3f temp = H * groundQuad[iCorner];
+            ASSERT_NAMED(temp.z() > 0.f, "Projected ground quad points should have z > 0.");
+            const f32 divisor = 1.f / temp.z();
+            imgGroundQuad[iCorner].x() = temp.x() * divisor;
+            imgGroundQuad[iCorner].y() = temp.y() * divisor;
+          }
+          
+          Vision::ImageRGB overheadImg;
+          
+          // Need to apply a shift after the homography to put things in image
+          // coordinates with (0,0) at the upper left (since groundQuad's origin
+          // is not upper left). Also mirror Y coordinates since we are looking
+          // from above, not below
+          Matrix_3x3f InvShift{
+            1.f, 0.f, roi.dist, // Negated b/c we're using inv(Shift)
+            0.f,-1.f, roi.widthFar*0.5f,
+            0.f, 0.f, 1.f};
+          
+          // Note that we're applying the inverse homography, so we're doing
+          //  inv(Shift * inv(H)), which is the same as  (H * inv(Shift))
+          cv::warpPerspective(image.get_CvMat_(), overheadImg.get_CvMat_(), (H*InvShift).get_CvMatx_(),
+                              cv::Size(roi.length, roi.widthFar), cv::INTER_LINEAR | cv::WARP_INVERSE_MAP);
+          
+          { // DEBUG
+            Vision::ImageRGB dispImg;
+            image.CopyTo(dispImg);
+            dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
+            dispImg.Display("GroundQuad");
+            overheadImg.Display("OverheadView");
+          }
+        } // if LookupGroundPlaneHomgraphy succeeded
       }
                        
       return lastResult;
