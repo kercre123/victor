@@ -531,6 +531,15 @@ namespace Anki {
         IMUFilter::EnablePickupDetect(msg.enable);
       }
       
+      void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
+      {
+        if (msg.enable) {
+          LiftController::Enable();
+        } else {
+          LiftController::Disable();
+        }
+      }
+      
 
       // --------- Block control messages ----------
 
