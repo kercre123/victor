@@ -60,6 +60,25 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
+  
+  // Custom handlers for DebugConsole events
+  {
+    _debugConsoleManager.Init(this);
+    auto debugConsoleEventCallback = std::bind(&CozmoEngineHostImpl::HandleDebugConsoleEvent, this, std::placeholders::_1);
+    std::vector<ExternalInterface::MessageGameToEngineTag> tagList =
+    {
+      ExternalInterface::MessageGameToEngineTag::GetAllDebugConsoleVarMessage,
+      ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage,
+      ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage,
+      ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage,
+    };
+    
+    // Subscribe to desired events
+    for (auto tag : tagList)
+    {
+      _signalHandles.push_back(_externalInterface->Subscribe(tag, debugConsoleEventCallback));
+    }
+  }
 }
 
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
@@ -364,6 +383,21 @@ void CozmoEngineHostImpl::ReadAnimationsFromDisk() {
     PRINT_NAMED_INFO("CozmoEngineHostImpl.ReloadAnimations", "ReadAnimationDir");
     robot->ReadAnimationDir();
   }
+}
+  
+bool CozmoEngineHostImpl::Broadcast(ExternalInterface::MessageEngineToGame&& event)
+{
+  if(_externalInterface) {
+    _externalInterface->Broadcast(event);
+    return true;
+  } else {
+    return false;
+  }
+}
+  
+void CozmoEngineHostImpl::HandleDebugConsoleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  _debugConsoleManager.HandleEvent(event);
 }
 
 void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

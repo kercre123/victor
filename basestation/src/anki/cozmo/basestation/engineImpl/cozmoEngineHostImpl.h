@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
 #include "clad/types/imageTypes.h"
+#include "anki/cozmo/basestation/debug/debugConsoleManager.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -59,6 +60,8 @@ public:
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
   void ReadAnimationsFromDisk() override;
+  
+  bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
 protected:
 
   virtual Result InitInternal() override;
@@ -85,6 +88,9 @@ protected:
   IRecordingPlaybackModule *recordingPlaybackModule_;
   IRecordingPlaybackModule *uiRecordingPlaybackModule_;
 #endif
+  
+  Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
+  void HandleDebugConsoleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 
 }; // class CozmoEngineHostImpl
 

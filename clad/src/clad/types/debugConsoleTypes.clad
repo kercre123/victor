@@ -1,0 +1,29 @@
+// File: debugConsoleType
+// Author: Molly
+// Created: 10/14/15
+// Copyright: Anki, inc. 2015
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 debugConsoleType {
+
+    Double = 0,
+    Uint64,
+    Int64,
+    Bool,
+    Function,
+    Count
+}
+
+union consoleVarUnion {
+  float_64 varDouble,
+  uint_64  varUint,
+  int_64   varInt,
+  int_8   WorkAroundBecauseSameSizeUnionsGenerateCompileErrorInCSharpWillFixLater,
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

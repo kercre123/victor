@@ -10,6 +10,7 @@
 #include "clad/types/objectFamilies.clad"
 #include "clad/types/proxMessages.clad"
 #include "clad/types/powerMessages.clad"
+#include "clad/types/debugConsoleTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -247,6 +248,27 @@ message ProgressionStats {
   uint_8  robotID,
   uint_32 statValues[uint_8]
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Debug / Console
+///////////////////////////////////////////////////////////////////////////////
+
+structure DebugConsoleVar {
+  string varName,
+  string category,
+  debugConsoleType varType,
+  consoleVarUnion varValue
+}
+
+
+message InitDebugConsoleVarMessage {
+  DebugConsoleVar varData[uint_8]
+}
+message VerifyDebugConsoleVarMessage {
+  string varName,
+  consoleVarUnion varValue
+}
+
 
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"

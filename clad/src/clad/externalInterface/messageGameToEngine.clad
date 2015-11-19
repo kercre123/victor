@@ -11,6 +11,7 @@
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
 #include "clad/types/emotionTypes.clad"
+#include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -659,6 +660,23 @@ union ProgressionMessageUnion {
 message ProgressionMessage {
   uint_8  robotID,
   ProgressionMessageUnion  ProgressionMessageUnion
+}
+
+
+// Debug console set
+message SetDebugConsoleVarMessage {
+  string varName,
+  string tryValue
+}
+message RunDebugConsoleFuncMessage {
+  string funcName,
+  string funcArgs
+}
+message GetDebugConsoleVarMessage {
+  string varName,
+  consoleVarUnion varValue
+}
+message GetAllDebugConsoleVarMessage {
 }
 
 // keep empty to generate an auto-union that includes all messages in this file
