@@ -75,15 +75,13 @@ public class Robot : IDisposable {
     private readonly RobotCallback _Callback;
     private readonly RobotActionType[] _ActionTypes;
 
-    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback)
-    {
+    public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback) {
       _ActionType = actionType;
       _Callback = callback;
       _ActionTypes = null;
     }
 
-    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes)
-    {
+    public RobotCallbackWrapper(RobotCallback callback, params RobotActionType[] actionTypes) {
       _ActionType = RobotActionType.UNKNOWN;
       _Callback = callback;
       _ActionTypes = actionTypes;
@@ -652,6 +650,10 @@ public class Robot : IDisposable {
     }
   }
 
+  public void CancelAllCallbacks() {
+    _RobotCallbacks.Clear();
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
@@ -785,6 +787,10 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.TrackToObject = TrackToObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
+  }
+
+  public void StopTrackToObject() {
+    TrackToObject(null);
   }
 
   public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true) {

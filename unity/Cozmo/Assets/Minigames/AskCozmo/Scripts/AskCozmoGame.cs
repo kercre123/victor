@@ -23,18 +23,17 @@ namespace AskCozmo {
 
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
       
-      var askCosmoConfig = minigameConfig as AskCozmoConfig;
+      var askCozmoConfig = minigameConfig as AskCozmoConfig;
 
-      if (askCosmoConfig == null) {
-        DAS.Error(this, "Failed to load config as AskCosmoConfig!");
+      if (askCozmoConfig == null) {
+        DAS.Error(this, "Failed to load config as AskCozmoConfig!");
         // TODO: Handle this error
         return;
       }
-      _Config = askCosmoConfig;
+      _Config = askCozmoConfig;
 
       DAS.Debug(this, _Config.Param1);
       DAS.Debug(this, _Config.Param2);
-
 
       for (int i = 0; i < _Config.ParamList.Length; ++i) {
         DAS.Debug(this, _Config.ParamList[i].ToString());

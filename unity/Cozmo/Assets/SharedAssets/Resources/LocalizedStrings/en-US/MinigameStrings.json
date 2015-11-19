@@ -28,16 +28,10 @@
         "translation" : "Dock Training"
     },
     "followCube.title" : {
-        "translation" : "Follow Cube"
+        "translation" : "Follow Cube Training"
     },
-    "followCube.button.slow" : {
-        "translation" : "Slow"
-    },
-    "followCube.button.fast" : {
-        "translation" : "Fast"
-    },
-    "followCube.button.veryFast" : {
-        "translation" : "DEMON"
+    "followCube.label.attempts" : {
+        "translation" : "Lives: {0}"
     },
     "patternPlay.title" : {
         "translation" : "Pattern Play"

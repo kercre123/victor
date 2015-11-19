@@ -6,43 +6,12 @@ namespace FollowCube {
   public class FollowCubeGamePanel : BaseDialog {
 
     [SerializeField]
-    private UnityEngine.UI.Button _SlowSpeedButton;
-
-    [SerializeField]
-    private UnityEngine.UI.Button _FastSpeedButton;
-
-    [SerializeField]
-    private UnityEngine.UI.Button _DemonSpeedButton;
-
-    public delegate void FollowCubeGameButtonHandler();
-
-    public FollowCubeGameButtonHandler OnSlowSpeedPressed;
-    public FollowCubeGameButtonHandler OnFastSpeedPressed;
-    public FollowCubeGameButtonHandler OnDemonSpeedPressed;
+    private Anki.UI.AnkiTextLabel _AttemptsLeftLabel;
 
     // Use this for initialization
-    void Start() {
-      _SlowSpeedButton.onClick.AddListener(OnSlowButton);
-      _FastSpeedButton.onClick.AddListener(OnFastButton);
-      _DemonSpeedButton.onClick.AddListener(OnDemonButton);
-    }
-
-    void OnSlowButton() {
-      if (OnSlowSpeedPressed != null) {
-        OnSlowSpeedPressed();
-      }
-    }
-
-    void OnFastButton() {
-      if (OnFastSpeedPressed != null) {
-        OnFastSpeedPressed();
-      }
-    }
-
-    void OnDemonButton() {
-      if (OnDemonSpeedPressed != null) {
-        OnDemonSpeedPressed();
-      }
+    public void SetAttemptsLeft(int attemptsLeft) {
+      string attemptsLocalized = Localization.Get("followCube.label.attempts");
+      _AttemptsLeftLabel.text = string.Format(Localization.GetCultureInfo(), attemptsLocalized, attemptsLeft);
     }
 
     protected override void CleanUp() {
