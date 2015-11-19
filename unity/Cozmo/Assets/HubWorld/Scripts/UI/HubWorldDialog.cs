@@ -33,19 +33,24 @@ public class HubWorldDialog : BaseDialog {
   private ScrollRect _CompletedScrollRect;
 
   public void Initialize(Dictionary<string, ChallengeStatePacket> _challengeStatesById) {
-
-    GameObject newButton;
-    HubWorldButton buttonScript;
-
-    // TODO: For all the challenges
-    // Create the correct button at the correct spot based on current state
-
-    /*for (int i = 0; i < unlockedChallenges.Count; ++i) {
-      newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _UnlockedButtonContainer);
-      buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(unlockedChallenges[i]);
-      buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
-    }*/
+    // For all the challenges
+    foreach (ChallengeStatePacket challengeState in _challengeStatesById.Values) {
+      // Create the correct button at the correct spot based on current state
+      switch (challengeState.currentState) {
+      case ChallengeState.LOCKED:
+        CreateLockedButton(challengeState.data);
+        break;
+      case ChallengeState.UNLOCKED:
+        CreateUnlockedButton(challengeState.data, challengeState.unlockProgress);
+        break;
+      case ChallengeState.COMPLETED:
+        CreateCompletedButton(challengeState.data);
+        break;
+      default:
+        DAS.Error("HubWorldDialog", "ChallengeState view not implemented! " + challengeState);
+        break;
+      }
+    }
 
     // Slide all teh
     _LockedScrollRect.verticalNormalizedPosition = 1.0f;
@@ -62,15 +67,24 @@ public class HubWorldDialog : BaseDialog {
   }
 
   private void CreateLockedButton(ChallengeData challengeData) {
-    // TODO: Create the button
+    GameObject newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _LockedButtonContainer);
+    HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+    buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
+    buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
   }
 
   private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {
-    // TODO: Create the button
+    GameObject newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _UnlockedButtonContainer);
+    HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+    buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
+    buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
   }
 
   private void CreateCompletedButton(ChallengeData challengeData) {
-    // TODO; Create the button
+    GameObject newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _CompletedButtonContainer);
+    HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+    buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
+    buttonScript.OnButtonClicked += HandleCompletedChallengeClicked;
   }
 
   private void HandleLockedChallengeClicked(string challengeClicked) {

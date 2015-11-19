@@ -40,11 +40,13 @@ public class ChallengeRequirements : ISerializationCallbackReceiver {
       }
     }
 
-    for (Anki.Cozmo.ProgressionStatType i = 0; i < Anki.Cozmo.ProgressionStatType.Count; ++i) {
-      uint statValue = 0;
-      if (StatGateKeys.TryGetValue(i, out statValue)) {
-        if (robot.ProgressionStats[(int)i] < statValue) {
-          return false;
+    if (robot != null) {
+      for (Anki.Cozmo.ProgressionStatType i = 0; i < Anki.Cozmo.ProgressionStatType.Count; ++i) {
+        uint statValue = 0;
+        if (StatGateKeys.TryGetValue(i, out statValue)) {
+          if (robot.ProgressionStats[(int)i] < statValue) {
+            return false;
+          }
         }
       }
     }

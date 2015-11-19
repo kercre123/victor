@@ -15,4 +15,9 @@ MonoBehaviour:
   ChallengeID: DockTrainingChallenge1
   EnableChallenge: 1
   ChallengeTitleKey: hubWorld.dockTraining.challenge1
+  ChallengeReqs:
+    ChallengeGateKeys:
+    - RotationTrainingChallenge1
+    - VisionTrainingChallenge1
+    StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: c30d888e7c1e849bab907e912c2af019, type: 2}

@@ -20,6 +20,8 @@ public class HubWorld : HubWorldBase {
   private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
   private List<string> _CompletedChallengeIds;
 
+  private string _CurrentChallengePlaying;
+
   private void Awake() {
     HubWorldPane.HubWorldPaneOpened += HandleHubWorldPaneOpenHandler;
   }
@@ -60,7 +62,8 @@ public class HubWorld : HubWorldBase {
   }
 
   private void HandleUnlockedChallengeClicked(string challengeClicked) {
-    // TODO: Keep track of the current challenge
+    // Keep track of the current challenge
+    _CurrentChallengePlaying = challengeClicked;
 
     // Close dialog
     CloseHubWorldDialog();
@@ -79,21 +82,27 @@ public class HubWorld : HubWorldBase {
   }
 
   private void HandleMiniGameLose() {
-    // TODO: Reset the current challenge
+    // Reset the current challenge
+    _CurrentChallengePlaying = null;
 
     CloseMiniGame();
     ShowHubWorldDialog();
   }
 
   private void HandleMiniGameWin() {
-    // TODO: If we are in a challenge that needs to be completed, complete it
+    // If we are in a challenge that needs to be completed, complete it
+    if (_CurrentChallengePlaying != null) {
+      CompleteChallenge(_CurrentChallengePlaying);
+      _CurrentChallengePlaying = null;
+    }
 
     CloseMiniGame();
     ShowHubWorldDialog();
   }
 
   private void HandleMiniGameQuit() {
-    // TODO: Reset the current challenge
+    // Reset the current challenge
+    _CurrentChallengePlaying = null;
 
     CloseMiniGame();
     ShowHubWorldDialog();
@@ -137,30 +146,59 @@ public class HubWorld : HubWorldBase {
 
   private void LoadChallengeData(ChallengeDataList sourceChallenges, 
                                  out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
-    // TODO: STUB
     // Initial load of what's unlocked and completed from data
     challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
 
     // TODO: Get the list of completed challenges from data (for now, use empty list)
+    _CompletedChallengeIds = new List<string>();
 
     // For each challenge
-    // Create a new data packet
-    // Determine the current state of the challenge
-    // TODO: Set the unlock progress from persistant data (for now, use 0)
-    // Add the challenge to the dictionary
+    ChallengeStatePacket statePacket;
+    foreach (ChallengeData data in sourceChallenges.ChallengeData) {
+      // Create a new data packet
+      statePacket = new ChallengeStatePacket();
+      statePacket.data = data;
+
+      // Determine the current state of the challenge
+      statePacket.currentState = DetermineCurrentChallengeState(data, _CompletedChallengeIds);
+      // TODO: Set the unlock progress from persistant data (for now, use 0)
+      statePacket.unlockProgress = 0;
+      // Add the challenge to the dictionary
+      challengeStateByKey.Add(data.ChallengeID, statePacket);
+    }
   }
 
   private ChallengeState DetermineCurrentChallengeState(ChallengeData dataToTest, List<string> completedChallenges) {
     // If the challenge is in the completed challenges list, it has been completed
-    // Otherwise, it is locked or unlocked based on its requirements
-    // TODO: Add case for when the challenge is unlocked, but not actionable
-    return ChallengeState.LOCKED;
+    ChallengeState challengeState = ChallengeState.LOCKED;
+    if (completedChallenges.Contains(dataToTest.ChallengeID)) {
+      challengeState = ChallengeState.COMPLETED;
+    }
+    else {
+      Robot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
+      if (dataToTest.ChallengeReqs.MeetsRequirements(currentRobot, completedChallenges)) {
+        // Otherwise, it is locked or unlocked based on its requirements
+        // TODO: Add case for when the challenge is unlocked, but not actionable
+        challengeState = ChallengeState.UNLOCKED;
+      }
+    }
+    return challengeState;
   }
 
   private void CompleteChallenge(string completedChallengeId) { 
     // If the completed challenge is not already complete
-    // TODO: Add the current challenge to the completed list
-    // TODO: Check all the locked challenges to see if any new ones unlocked.
+    if (!_CompletedChallengeIds.Contains(completedChallengeId)) {
+      // Add the current challenge to the completed list
+      _CompletedChallengeIds.Add(completedChallengeId);
+      _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.COMPLETED;
+
+      // Check all the locked challenges to see if any new ones unlocked.
+      foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
+        if (challengeState.currentState == ChallengeState.LOCKED) {
+          challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, _CompletedChallengeIds);
+        }
+      }
+    }
   }
 
   // TODO: Pragma out for production
@@ -190,7 +228,7 @@ public class HubWorld : HubWorldBase {
   #endregion
 }
 
-public struct ChallengeStatePacket {
+public class ChallengeStatePacket {
   public ChallengeData data;
   public ChallengeState currentState;
   public float unlockProgress;

@@ -15,4 +15,8 @@ MonoBehaviour:
   ChallengeID: FollowCubeChallenge1
   EnableChallenge: 1
   ChallengeTitleKey: hubWorld.followCube.challenge1
+  ChallengeReqs:
+    ChallengeGateKeys:
+    - DockTrainingChallenge1
+    StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: bc9420ca9e5f74845a9dce0693807a6f, type: 2}
