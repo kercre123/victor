@@ -16,11 +16,11 @@ static const commandWord COMMAND_HEADER = 0x5478;
 #define SHA1_BLOCK_SIZE 20
 #endif
 
-struct FirmwareBlock {
+typedef struct {
   uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
   uint32_t   blockAddress;
   uint8_t    checkSum[SHA1_BLOCK_SIZE];
-};
+} FirmwareBlock;
 
 enum RECOVERY_COMMAND {
   COMMAND_DONE  = 0x00,
