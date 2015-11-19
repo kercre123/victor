@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
+
 public class HubWorld : HubWorldBase {
 
   [SerializeField]
@@ -17,6 +18,11 @@ public class HubWorld : HubWorldBase {
   private ChallengeDataList _ChallengeDataList;
 
   private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
+  private List<string> _CompletedChallengeIds;
+
+  private void Awake() {
+    HubWorldPane.HubWorldPaneOpened += HandleHubWorldPaneOpenHandler;
+  }
 
   public override bool LoadHubWorld() {
     LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
@@ -33,6 +39,8 @@ public class HubWorld : HubWorldBase {
       DeregisterDialogEvents();
       _HubWorldDialogInstance.CloseDialogImmediately();
     }
+
+    HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
     return true;
   }
 
@@ -71,23 +79,21 @@ public class HubWorld : HubWorldBase {
   }
 
   private void HandleMiniGameLose() {
-    // TODO: Set the current challenge to null
+    // TODO: Reset the current challenge
 
     CloseMiniGame();
     ShowHubWorldDialog();
   }
 
   private void HandleMiniGameWin() {
-    // TODO: If the current challenge is not null
-    // TODO: Add the current challenge to the completed list, if it is not already
-    // TODO: Check all the locked challenges to see if any new ones unlocked.
+    // TODO: If we are in a challenge that needs to be completed, complete it
 
     CloseMiniGame();
     ShowHubWorldDialog();
   }
 
   private void HandleMiniGameQuit() {
-    // TODO: Set the current challenge to null
+    // TODO: Reset the current challenge
 
     CloseMiniGame();
     ShowHubWorldDialog();
@@ -134,7 +140,54 @@ public class HubWorld : HubWorldBase {
     // TODO: STUB
     // Initial load of what's unlocked and completed from data
     challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
+
+    // TODO: Get the list of completed challenges from data (for now, use empty list)
+
+    // For each challenge
+    // Create a new data packet
+    // Determine the current state of the challenge
+    // TODO: Set the unlock progress from persistant data (for now, use 0)
+    // Add the challenge to the dictionary
   }
+
+  private ChallengeState DetermineCurrentChallengeState(ChallengeData dataToTest, List<string> completedChallenges) {
+    // If the challenge is in the completed challenges list, it has been completed
+    // Otherwise, it is locked or unlocked based on its requirements
+    // TODO: Add case for when the challenge is unlocked, but not actionable
+    return ChallengeState.LOCKED;
+  }
+
+  private void CompleteChallenge(string completedChallengeId) { 
+    // If the completed challenge is not already complete
+    // TODO: Add the current challenge to the completed list
+    // TODO: Check all the locked challenges to see if any new ones unlocked.
+  }
+
+  // TODO: Pragma out for production
+
+  #region Testing
+
+  private void HandleHubWorldPaneOpenHandler(HubWorldPane hubWorldPane) {
+    hubWorldPane.Initialize(this);
+  }
+
+  public void TestLoadHubWorld() {
+    DestroyHubWorld();
+    LoadHubWorld();
+  }
+
+  public void TestCompleteChallenge(string completedChallengeId) {
+    if (_HubWorldDialogInstance != null) {
+      CompleteChallenge(completedChallengeId);
+
+      // Force refresh of the dialog
+      DeregisterDialogEvents();
+      _HubWorldDialogInstance.CloseDialogImmediately();
+      ShowHubWorldDialog();
+    }
+  }
+
+  #endregion
 }
 
 public struct ChallengeStatePacket {
