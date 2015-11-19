@@ -2565,7 +2565,7 @@ namespace Anki {
       
       // TEST:
       // Draw ground plane
-      {
+      if(true){
         // Define ROI quad on ground plane, in robot-centric coordinates (origin is *)
         // The region is "d" mm long and starts "d0" mm from the robot origin.
         // It is "w_close" mm wide at the end close to the robot and "w_far" mm
@@ -2664,16 +2664,22 @@ namespace Anki {
                 const f32 divisor = 1.f / imgPoint.z();
                 imgPoint.x() *= divisor;
                 imgPoint.y() *= divisor;
-                const Vision::PixelRGB value = image(std::round(imgPoint.y()), std::round(imgPoint.x()));
-                
-                // Get corresponding map point in world coords
-                Point3f mapPoint = histPoseStamp.GetPose() * Point3f(x,y,0.f);
-                const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
-                const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
-                if(x_map >= 0 && y_map >= 0 &&
-                   x_map < overheadMap.GetNumCols() && y_map < overheadMap.GetNumRows())
+                const s32 x_img = std::round(imgPoint.x());
+                const s32 y_img = std::round(imgPoint.y());
+                if(x_img >= 0 && y_img >= 0 &&
+                   x_img < image.GetNumCols() && y_img < image.GetNumRows())
                 {
-                  overheadMap(y_map, x_map) = value;
+                  const Vision::PixelRGB value = image(y_img, x_img);
+                  
+                  // Get corresponding map point in world coords
+                  Point3f mapPoint = histPoseStamp.GetPose() * Point3f(x,y,0.f);
+                  const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
+                  const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
+                  if(x_map >= 0 && y_map >= 0 &&
+                     x_map < overheadMap.GetNumCols() && y_map < overheadMap.GetNumRows())
+                  {
+                    overheadMap(y_map, x_map).AlphaBlendWith(value, 0.5f);
+                  }
                 }
               }
             }
@@ -2686,7 +2692,9 @@ namespace Anki {
           cv::warpPerspective(image.get_CvMat_(), overheadImg.get_CvMat_(), (H*InvShift).get_CvMatx_(),
                               cv::Size(roi.length, roi.widthFar), cv::INTER_LINEAR | cv::WARP_INVERSE_MAP);
           
-          { // DEBUG
+          static s32 updateFreq = 0;
+          if(updateFreq++ == 8){ // DEBUG
+            updateFreq = 0;
             Vision::ImageRGB dispImg;
             image.CopyTo(dispImg);
             dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
