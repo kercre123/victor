@@ -35,6 +35,7 @@
 #include "anki/common/robot/fixedLengthList.h"
 #include "anki/common/robot/geometry_declarations.h"
 
+#include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/common/basestation/matlabInterface.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
@@ -71,22 +72,29 @@ namespace Cozmo {
     //
     
     Result Init(const Vision::CameraCalibration& camCalib);
+    void UnInit() { _isInitialized = false; };
+    
     bool IsInitialized() const;
     
     Result EnableMode(VisionMode whichMode, bool enabled);
-    bool IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
-    u32 GetEnabledModes() const { return _mode; }
-    void SetModes(u32 modes) { _mode = modes; }
+    bool   IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
+    u32    GetEnabledModes() const { return _mode; }
+    void   SetModes(u32 modes) { _mode = modes; }
     
     // Accessors
     f32 GetTrackingMarkerWidth();
     
+    struct PoseData {
+      TimeStamp_t      timeStamp;
+      RobotPoseStamp   poseStamp;  // contains historical head/lift/pose info
+      Pose3d           cameraPose; // w.r.t. pose in poseStamp
+      bool             groundPlaneVisible;
+      Matrix_3x3f      groundPlaneHomography;
+    };
+    
     // This is main Update() call to be called in a loop from above.
-    //
-    // NOTE: It is important the passed-in robot state message be passed by
-    //   value and NOT by reference, since the vision system can be interrupted
-    //   by main execution (which updates the state).
-    Result Update(const RobotState robotState,
+
+    Result Update(const PoseData&            robotState,
                   const Vision::ImageRGB&    inputImg);
     
     void StopTracking();
@@ -219,19 +227,6 @@ namespace Cozmo {
     bool _isInitialized;
     const std::string _dataPath;
     
-    // Just duplicating this from HAL for vision functions to work with less re-writing
-    struct CameraInfo {
-      f32 focalLength_x, focalLength_y;
-      f32 center_x, center_y;
-      f32 skew;
-      u16 nrows, ncols;
-      f32 distortionCoeffs[NUM_RADIAL_DISTORTION_COEFFS];
-      
-      CameraInfo(const Vision::CameraCalibration& camCalib);
-    } *_headCamInfo;
-    
-    // Bogus camera object to reference in Vision::ObservedMarkers until we have
-    // fully moved embedded vision code into basestation
     Vision::Camera _camera;
     
     enum VignettingCorrection
@@ -260,11 +255,6 @@ namespace Cozmo {
     
     VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
 
-    // For OV7725 (cozmo 2.0)
-    //static const f32 _vignettingCorrectionParameters[5] = {1.56852140958887f, -0.00619880766167132f, -0.00364222219719291f, 2.75640497906470e-05f, 1.75476361058157e-05f}; //< for _vignettingCorrection == VignettingCorrection_Software, computed by fit2dCurve.m
-    
-    // For OV7739 (cozmo 2.1)
-    // TODO: figure these out
     const f32 _vignettingCorrectionParameters[5] = {0,0,0,0,0};
     
     s32 _frameNumber;
@@ -368,7 +358,7 @@ namespace Cozmo {
     VisionMemory _memory;
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
-    Result UpdateRobotState(const RobotState newRobotState);
+    Result UpdateRobotState(const PoseData& newRobotState);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();

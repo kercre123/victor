@@ -195,8 +195,9 @@ public:
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
     const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
     void                     EnableVisionWhileMoving(bool enable);
-    Vision::Camera           GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
-    Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request);
+    Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
+    Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
+    Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
     Result ProcessImage(const Vision::ImageRGB& image);
   
@@ -229,7 +230,8 @@ public:
     const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
     const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
     const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
-
+    Pose3d                 GetCameraPose(f32 atAngle) const;
+  
     // These change the robot's internal (basestation) representation of its
     // pose, head angle, and lift angle, but do NOT actually command the
     // physical robot to do anything!
@@ -471,6 +473,7 @@ public:
     // =========== Pose history =============
   
     RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
+    const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
   
     Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                    const PoseFrameID_t frameID,
@@ -694,18 +697,6 @@ public:
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
     f32                       _currentHeadAngle;
-
-    std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
-    void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
-    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
-  
-    struct GroundPlaneROI {
-      // In mm
-       f32 dist = 50.f;
-       f32 length = 100.f;
-       f32 widthFar = 80.f;
-       f32 widthClose = 30.f;
-    } _groundPlaneROI;
   
     f32              _currentLiftAngle = 0;
     f32              _pitchAngle;

@@ -23,6 +23,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "util/helpers/templateHelpers.h"
 
 //
 // Embedded implementation holdovers:
@@ -63,7 +64,6 @@ namespace Cozmo {
   VisionSystem::VisionSystem(const std::string& dataPath)
   : _isInitialized(false)
   , _dataPath(dataPath)
-  , _headCamInfo(nullptr)
   , _faceTracker(nullptr)
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
@@ -72,12 +72,7 @@ namespace Cozmo {
   
   VisionSystem::~VisionSystem()
   {
-    if(_headCamInfo != nullptr) {
-      delete _headCamInfo;
-    }
-    if(_faceTracker != nullptr) {
-      delete _faceTracker;
-    }
+    Util::SafeDelete(_faceTracker);
   }
   
   
@@ -242,10 +237,18 @@ namespace Cozmo {
 #endif
   } // GetTrackerQuad()
   
-  Result VisionSystem::UpdateRobotState(const RobotState newRobotState)
+  Result VisionSystem::UpdateRobotState(const PoseData& poseData)
   {
     _prevRobotState = _robotState;
-    _robotState     = newRobotState;
+    
+    _robotState.pose_frame_id = poseData.poseStamp.GetFrameId();
+    _robotState.timestamp     = poseData.timeStamp;
+    _robotState.pose.x        = poseData.poseStamp.GetPose().GetTranslation().x();
+    _robotState.pose.y        = poseData.poseStamp.GetPose().GetTranslation().y();
+    _robotState.pose.z        = poseData.poseStamp.GetPose().GetTranslation().z();
+    _robotState.pose.angle    = poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat();
+    _robotState.headAngle     = poseData.poseStamp.GetHeadAngle();
+    _robotState.liftAngle     = poseData.poseStamp.GetLiftAngle();
     
     if(_wasCalledOnce) {
       _havePreviousRobotState = true;
@@ -713,6 +716,10 @@ namespace Cozmo {
     
 #   else
     
+    AnkiConditionalErrorAndReturnValue(_camera.IsCalibrated(), RESULT_FAIL, "VisionSystem.Update.", "Camera not calibrated");
+    
+    auto const& calib = _camera.GetCalibration();
+    
     _tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     trackingQuad,
                                                                     _trackerParameters.scaleTemplateRegionPercent,
@@ -722,10 +729,10 @@ namespace Cozmo {
                                                                     FIDUCIAL_SQUARE_WIDTH_FRACTION,
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
-                                                                    _headCamInfo->focalLength_x,
-                                                                    _headCamInfo->focalLength_y,
-                                                                    _headCamInfo->center_x,
-                                                                    _headCamInfo->center_y,
+                                                                    calib.GetFocalLength_x(),
+                                                                    calib.GetFocalLength_y(),
+                                                                    calib.GetCenter_x(),
+                                                                    calib.GetCenter_y(),
                                                                     _markerToTrack.width_mm,
                                                                     ccmScratch,
                                                                     onchipMemory,
@@ -1175,6 +1182,12 @@ namespace Cozmo {
     {
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
                    "Timestamp error.");
+      
+      // Use a camera from the robot's pose history to estimate the head's
+      // 3D translation, w.r.t. that camera. Also puts the face's pose in
+      // the camera's pose chain.
+      currentFace.UpdateTranslation(_camera);
+      
       _faceMailbox.putMessage(currentFace);
     }
 
@@ -1312,13 +1325,6 @@ namespace Cozmo {
     return downsampleFactor;
   }
   
-  /*
-   const HAL::CameraInfo* VisionSystem::GetCameraCalibration() {
-   // TODO: is just returning the pointer to HAL's camera info struct kosher?
-   return _headCamInfo;
-   }
-   */
-  
   f32 VisionSystem::GetTrackingMarkerWidth() {
     return _markerToTrack.width_mm;
   }
@@ -1370,141 +1376,104 @@ namespace Cozmo {
     
   } // GetModeName()
   
-  VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
-  : focalLength_x(camCalib.GetFocalLength_x())
-  , focalLength_y(camCalib.GetFocalLength_y())
-  , center_x(camCalib.GetCenter_x())
-  , center_y(camCalib.GetCenter_y())
-  , skew(camCalib.GetSkew())
-  , nrows(camCalib.GetNrows())
-  , ncols(camCalib.GetNcols())
-  {
-    
-    // TODO: Set distortion coefficients too
-    
-  }
-  
   Result VisionSystem::Init(const Vision::CameraCalibration& camCalib)
   {
     Result result = RESULT_OK;
     
-    bool gotNewCalibration = true;
-    if(_isInitialized) {
-      gotNewCalibration = (camCalib.GetFocalLength_x() != _headCamInfo->focalLength_x ||
-                           camCalib.GetFocalLength_y() != _headCamInfo->focalLength_y ||
-                           camCalib.GetCenter_x()      != _headCamInfo->center_x      ||
-                           camCalib.GetCenter_y()      != _headCamInfo->center_y      ||
-                           camCalib.GetSkew()          != _headCamInfo->skew          ||
-                           camCalib.GetNrows()         != _headCamInfo->nrows         ||
-                           camCalib.GetNcols()         != _headCamInfo->ncols);
+    bool calibSizeValid = false;
+    switch(camCalib.GetNcols())
+    {
+      case 640:
+        calibSizeValid = camCalib.GetNrows() == 480;
+        _captureResolution = ImageResolution::VGA;
+        break;
+      case 400:
+        calibSizeValid = camCalib.GetNrows() == 296;
+        _captureResolution = ImageResolution::CVGA;
+        break;
+      case 320:
+        calibSizeValid = camCalib.GetNrows() == 240;
+        _captureResolution = ImageResolution::QVGA;
+        break;
     }
+    AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
+                                       "VisionSystem.InvalidCalibrationResolution",
+                                       "Unexpected calibration resolution (%dx%d)\n",
+                                       camCalib.GetNcols(), camCalib.GetNrows());
     
-    if(gotNewCalibration) {
-      bool calibSizeValid = false;
-      switch(camCalib.GetNcols())
-      {
-        case 640:
-          calibSizeValid = camCalib.GetNrows() == 480;
-          _captureResolution = ImageResolution::VGA;
-          break;
-        case 400:
-          calibSizeValid = camCalib.GetNrows() == 296;
-          _captureResolution = ImageResolution::CVGA;
-          break;
-        case 320:
-          calibSizeValid = camCalib.GetNrows() == 240;
-          _captureResolution = ImageResolution::QVGA;
-          break;
-      }
-      AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
-                                         "VisionSystem.InvalidCalibrationResolution",
-                                         "Unexpected calibration resolution (%dx%d)\n",
-                                         camCalib.GetNcols(), camCalib.GetNrows());
-      
-      // WARNING: the order of these initializations matter!
-      
-      //
-      // Initialize the VisionSystem's state (i.e. its "private member variables")
-      //
-      
-      EnableMode(VisionMode::DetectingMarkers, true);
-      EnableMode(VisionMode::DetectingMotion,  true);
-      //EnableMode(VisionMode::DetectingFaces,   true);
-
-      _markerToTrack.Clear();
-      _numTrackFailures          = 0;
-      
-      _wasCalledOnce             = false;
-      _havePreviousRobotState    = false;
-      
-      //_headCamInfo = HAL::GetHeadCamInfo();
-      delete _headCamInfo;
-      _headCamInfo = new CameraInfo(camCalib);
-      if(_headCamInfo == nullptr) {
-        PRINT_STREAM_INFO("VisionSystem.Init", "Initialize() - HeadCam Info pointer is NULL!");
-        return RESULT_FAIL;
-      }
-      
-      
-      PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
-                       "With model path %s.", _dataPath.c_str());
-      _faceTracker = new Vision::FaceTracker(_dataPath);
-      PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
-      
-      
-      // Compute FOV from focal length (currently used for tracker prediciton)
-      _headCamFOV_ver = 2.f * atanf(static_cast<f32>(_headCamInfo->nrows) /
-                                    (2.f * _headCamInfo->focalLength_y));
-      _headCamFOV_hor = 2.f * atanf(static_cast<f32>(_headCamInfo->ncols) /
-                                    (2.f * _headCamInfo->focalLength_x));
-      
-      _exposureTime = 0.2f; // TODO: pick a reasonable start value
-      _frameNumber = 0;
-      
-      // Just make all the vision parameters' resolutions match capture resolution:
-      _detectionParameters.Initialize(_captureResolution);
-      _trackerParameters.Initialize(_captureResolution);
-      _faceDetectionParameters.Initialize(_captureResolution);
-      
-      Simulator::Initialize();
-      
-#ifdef RUN_SIMPLE_TRACKING_TEST
-      Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_FIRE, DEFAULT_BLOCK_MARKER_WIDTH_MM);
-#endif
-      
-      result = _memory.Initialize();
-      if(result != RESULT_OK) { return result; }
-      
-      // TODO: Re-enable debugstream/MatlabViz on Basestation visionSystem
-      /*
-       result = DebugStream::Initialize();
-       if(result != RESULT_OK) { return result; }
-       
-       result = MatlabVisualization::Initialize();
-       if(result != RESULT_OK) { return result; }
-       */
-      
-#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
-      result = MatlabVisionProcessor::Initialize();
-      if(result != RESULT_OK) { return result; }
-#endif
-      
-      _RcamWrtRobot = Array<f32>(3,3,_memory._onchipScratch);
-      
-      _markerToTrack.Clear();
-      _newMarkerToTrack.Clear();
-      _newMarkerToTrackWasProvided = false;
-      
-      // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
-      // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
-      // the main engine thread. We don't want it referring to any memory allocated
-      // here.
-      _camera.SetSharedCalibration(&camCalib);
-      
-      VisionMarker::SetDataPath(_dataPath);
-      
-      _isInitialized = true;
-    }
+    // WARNING: the order of these initializations matter!
+    
+    //
+    // Initialize the VisionSystem's state (i.e. its "private member variables")
+    //
+    
+    EnableMode(VisionMode::DetectingMarkers, true);
+    EnableMode(VisionMode::DetectingMotion,  true);
+    //EnableMode(VisionMode::DetectingFaces,   true);
+    
+    _markerToTrack.Clear();
+    _numTrackFailures          = 0;
+    
+    _wasCalledOnce             = false;
+    _havePreviousRobotState    = false;
+    
+    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                     "With model path %s.", _dataPath.c_str());
+    _faceTracker = new Vision::FaceTracker(_dataPath);
+    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+    
+    _camera.SetCalibration(camCalib);
+    
+    // Compute FOV from focal length (currently used for tracker prediciton)
+    _headCamFOV_ver = _camera.GetCalibration().ComputeVerticalFOV().ToFloat();
+    _headCamFOV_hor = _camera.GetCalibration().ComputeHorizontalFOV().ToFloat();
+    
+    _exposureTime = 0.2f; // TODO: pick a reasonable start value
+    _frameNumber = 0;
+    
+    // Just make all the vision parameters' resolutions match capture resolution:
+    _detectionParameters.Initialize(_captureResolution);
+    _trackerParameters.Initialize(_captureResolution);
+    _faceDetectionParameters.Initialize(_captureResolution);
+    
+    Simulator::Initialize();
+    
+#   ifdef RUN_SIMPLE_TRACKING_TEST
+    Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_FIRE, DEFAULT_BLOCK_MARKER_WIDTH_MM);
+#   endif
+    
+    result = _memory.Initialize();
+    if(result != RESULT_OK) { return result; }
+    
+    // TODO: Re-enable debugstream/MatlabViz on Basestation visionSystem
+    /*
+     result = DebugStream::Initialize();
+     if(result != RESULT_OK) { return result; }
+     
+     result = MatlabVisualization::Initialize();
+     if(result != RESULT_OK) { return result; }
+     */
+    
+#   if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+    result = MatlabVisionProcessor::Initialize();
+    if(result != RESULT_OK) { return result; }
+#   endif
+    
+    _RcamWrtRobot = Array<f32>(3,3,_memory._onchipScratch);
+    
+    _markerToTrack.Clear();
+    _newMarkerToTrack.Clear();
+    _newMarkerToTrackWasProvided = false;
+    
+    // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
+    // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
+    // the main engine thread. We don't want it referring to any memory allocated
+    // here.
+    _camera.SetSharedCalibration(&camCalib);
+    
+    VisionMarker::SetDataPath(_dataPath);
+    
+    _isInitialized = true;
     
     return result;
   } // Init()
@@ -1563,11 +1532,13 @@ namespace Cozmo {
       sortedQuad = marker.corners;
     }
     
+    auto const& calib = _camera.GetCalibration();
+    
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
                             _canonicalMarker3d[2], _canonicalMarker3d[3],
-                            _headCamInfo->focalLength_x, _headCamInfo->focalLength_y,
-                            _headCamInfo->center_x, _headCamInfo->center_y,
+                            calib.GetFocalLength_x(), calib.GetFocalLength_y(),
+                            calib.GetCenter_x(), calib.GetCenter_y(),
                             rotation, translation);
   } // GetVisionMarkerPose()
   
@@ -1638,7 +1609,7 @@ namespace Cozmo {
   } // PreprocessImage()
   
   // This is the regular Update() call
-  Result VisionSystem::Update(const RobotState robotState,
+  Result VisionSystem::Update(const PoseData&            poseData,
                               const Vision::ImageRGB&    inputImage)
   {
     Result lastResult = RESULT_OK;
@@ -1660,7 +1631,7 @@ namespace Cozmo {
      */
     
     // Store the new robot state and keep a copy of the previous one
-    UpdateRobotState(robotState);
+    UpdateRobotState(poseData);
     
     // prevent us from trying to update a tracker we just initialized in the same
     // frame
