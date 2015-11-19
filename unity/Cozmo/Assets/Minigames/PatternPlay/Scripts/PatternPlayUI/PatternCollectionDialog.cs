@@ -6,7 +6,7 @@ using DG.Tweening;
 
 namespace PatternPlay {
 
-  public class PatternCollectionDialog : BaseDialog {
+  public class PatternCollectionDialog : BaseView {
 
     [SerializeField]
     private PatternCollectionBankCard _MemoryBankCardPrefab;
@@ -101,7 +101,7 @@ namespace PatternPlay {
 
     public void OnCloseButtonTap() {
       RemoveBadgesIfSeen();
-      UIManager.CloseDialog(this);
+      UIManager.CloseView(this);
     }
 
     private void SetCompletionText(int numSeenPatterns, int numTotalPatterns) {

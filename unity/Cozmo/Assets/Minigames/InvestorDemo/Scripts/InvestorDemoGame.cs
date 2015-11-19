@@ -31,7 +31,7 @@ namespace InvestorDemo {
     void Start() {
       CreateDefaultQuitButton();
 
-      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
       _GamePanel.OnNextButtonPressed += HandleNextActionFromButton;
       _GamePanel.OnPrevButtonPressed += HandlePrevActionFromButton;
 
@@ -96,7 +96,7 @@ namespace InvestorDemo {
       DestroyDefaultQuitButton();
       CurrentRobot.CancelAllCallbacks();
       if (_GamePanel != null) {
-        UIManager.CloseDialogImmediately(_GamePanel);
+        UIManager.CloseViewImmediately(_GamePanel);
       }
     }
   }
