@@ -1,6 +1,13 @@
-#ifndef SPI_H
-#define SPI_H
+#ifndef __DAC_H
+#define __DAC_H
 
-void DacInit(void);
+namespace Anki {
+  namespace Cozmo {
+    namespace HAL {
+      void DACInit(void);
+      void DACTone(void);
+    }
+  }
+}
 
 #endif

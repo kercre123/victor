@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Crypto.Hash.SHA import SHA1Hash
 from Crypto.Cipher.AES import AESCipher
 from Crypto.Random import random
@@ -18,8 +19,8 @@ def chunk(i, size):
 	for x in range(0, len(i), size):
 		yield i[x:x+size]
 
-print "Building rom"
-with file(argv[1], "rb") as fo:
+print("Building rom")
+with open(argv[1], "rb") as fo:
 	elffile = ELFFile(fo)
 
 	segments = {}
@@ -31,33 +32,33 @@ with file(argv[1], "rb") as fo:
 
 	# Locate vector table + magic header
 	for section in elffile.iter_sections():
-		if section.name == "HEADER_ROM":
+		if section.name == b"HEADER_ROM":
 			magic_location = section.header.sh_offset + 12
 
 	# flatten rom image
 	first = min(segments.keys())
-	last = max([addr+len(data) for addr, data in segments.iteritems()])
+	last = max([addr+len(data) for addr, data in segments.items()])
 
 	base_addr = first
-	rom_data = "\xFF" * (last-first)
+	rom_data = b"\xFF" * (last-first)
 
-	for addr, data in segments.iteritems():
+	for addr, data in segments.items():
 		addr = addr - first
 		rom_data = rom_data[:addr] + data + rom_data[addr+len(data):]
 
 # Save modified ELF
-print "Fixing header rom"
-with file(argv[1], "rb+") as fo:
+print("Fixing header rom")
+with open(argv[1], "rb+") as fo:
 	checksum = SHA1Hash(rom_data[HEADER_LENGTH:]).digest()
 
 	fo.seek(magic_location)
 	fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
 
-print "Creating signed image"
-with file(argv[2], "wb") as fo:
+print("Creating signed image")
+with open(argv[2], "wb") as fo:
 	# Zero pad to a 4k block (flash area)
 	while len(rom_data) % BLOCK_LENGTH:
-		rom_data += "\x00"
+		rom_data += b"\x00"
 
 	for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
 		fo.write(data)

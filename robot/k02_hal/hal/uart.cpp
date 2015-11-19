@@ -152,6 +152,13 @@ static void ChangeRecoveryState(RECOVERY_STATE mode) {
   recoveryMode = mode;
 }
 
+void Anki::Cozmo::HAL::WaitForSync() {
+  while (recoveryMode != STATE_RUNNING || !HeadDataReceived) {
+    __asm { WFI }
+  }
+  HeadDataReceived = false;
+}
+
 void Anki::Cozmo::HAL::UartTransmit(void) { 
   // Attempt to clear out buffer overruns
   if (UART0_S1 & UART_S1_OR_MASK) {

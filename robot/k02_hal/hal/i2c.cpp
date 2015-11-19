@@ -60,7 +60,7 @@ namespace Anki
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, &data, sizeof(data), NULL);
         I2CCmd(I2C_DIR_READ | I2C_SEND_NACK | I2C_SEND_STOP, &resp, sizeof(resp), i2cRegCallback);
 
-        while(i2c_data_active) __asm { WFI } ;
+        while(i2c_data_active)  ;
         
         return resp;
       }

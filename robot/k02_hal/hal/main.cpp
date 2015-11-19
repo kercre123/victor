@@ -19,6 +19,8 @@
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+extern int StartupSelfTest(void);
+
 namespace Anki
 {
   namespace Cozmo
@@ -43,7 +45,6 @@ namespace Anki
     }
   }
 }
-
 void EnterRecoveryMode(void) {
   SCB->VTOR = 0;
   __asm { SVC 0 }
@@ -52,9 +53,6 @@ void EnterRecoveryMode(void) {
 extern "C" void HardFault_Handler(void) {
   for(;;) ;
 }
-
-extern void DacInit();
-extern bool recoveryStateUpdated;
 
 int main (void)
 {
@@ -71,7 +69,7 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
-  //DacInit(); // This just plays a tone.
+  DACInit();
 
   I2CInit();
   
@@ -99,6 +97,12 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
 
-  for(;;) 
-    ;
+  StartupSelfTest();
+
+  static int loops = 0;
+  for(;;) {
+    // Wait for head body sync to occur
+    WaitForSync() ;
+    loops++;
+  }
 }

@@ -71,7 +71,7 @@ union GlobalDataToBody
     LEDPacket   cubeStatus;
     uint32_t    recover;
   };
-  
+
   // Force alignment
   uint8_t _RESERVED[64];  // Pad out to 64 bytes
 };
