@@ -17,10 +17,11 @@ public static class ConversationData {
       Lines = new List<ConversationLine>();
       Lines.AddRange(convoList);
       // Only add this conversation if it is unique, output error otherwise.
-      if (!Conversations.ContainsKey(SceneName)) {
+      // Conversations should never be null if data has loaded properly
+      if (Conversations != null && !Conversations.ContainsKey(SceneName)) {
         Conversations.Add(SceneName,this);
       }else {
-        Debug.LogError(string.Format("Scene : {0} : already exists. All Scenes need a unique ID", name));
+        Debug.LogWarning(string.Format("ConversationData.Conversation : {0} : already exists. All Scenes need a unique ID", name));
       }
     }
   }
@@ -31,7 +32,7 @@ public static class ConversationData {
       return toGet;
     }
     else {
-      Debug.LogError(string.Format("Scene : {0} : doesn't exist. Returning NULL", name));
+      Debug.LogError(string.Format("ConversationData.Conversation : {0} : doesn't exist. Returning NULL", name));
     }
     return toGet;
   }
@@ -40,15 +41,13 @@ public static class ConversationData {
     public readonly string lineID; // the ID of the line
     public readonly string text;  // Text shown in the Overlay
     public readonly string characterSprite; // The filepath of the sprite that the Overlay uses
-    public readonly float duration; // Line Lifespan, if duration is <= 0, will not dismiss
     public readonly string voID; // Name of the VO event to be played when the line appears
     public readonly bool isRight; // Whether or not its oriented to the right side of the screen or left
 
-    public ConversationLine(string ID, string txt, string sprt, float dur, string voString, bool right) {
+    public ConversationLine(string ID, string txt, string sprt, string voString, bool right) {
       lineID = ID;
       text = txt;
       characterSprite = sprt;
-      duration = dur;
       voID = voString;
       isRight = right;
     }
@@ -65,7 +64,6 @@ public static class ConversationData {
   // "lineID" : string : name of the Line, used for debugging mostly
   // "text" : string : actual text to be displayed for this line
   // "sprite" : string : name of the file corresponding to the character sprite
-  // "duration" : float : how long line remains up naturally TODO: Potentially always use VO timing for duration
   // "voID" : string : the string key for the VO to play when this line appears
   // "isRight" : bool : whether the popup is left or right oriented
   public static void ParseJSON(JSONObject json) {
@@ -101,11 +99,6 @@ public static class ConversationData {
               newSprite = line.GetField("sprite").str;
             }
 
-            float newDuration = 0.0f;
-            if (line.HasField("duration")) {
-              newDuration = line.GetField("duration").n;
-            }
-
             string newVO = "";
             if (line.HasField("voID")) {
               newVO = line.GetField("voID").str;
@@ -116,7 +109,7 @@ public static class ConversationData {
               newRight = line.GetField("isRight").b;
             }
 
-            ConversationLine newLine = new ConversationLine(newID, newText, newSprite, newDuration, newVO, newRight);
+            ConversationLine newLine = new ConversationLine(newID, newText, newSprite, newVO, newRight);
             newScene.Add(newLine);
           }
         }
@@ -126,7 +119,7 @@ public static class ConversationData {
           newName = sceneJson.GetField("name").str;
         }
 
-        Conversation scene = new Conversation(newName, newScene);
+        new Conversation(newName, newScene);
       }
     }
   }

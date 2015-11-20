@@ -155,7 +155,7 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: bfa7fd6aafe374445b17295977fa163f, type: 2}
   m_IsPrefabParent: 0
---- !u!1001 &345073472
+--- !u!1001 &205822409
 Prefab:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -338,7 +338,7 @@ Transform:
 --- !u!4 &1547278547 stripped
 Transform:
   m_PrefabParentObject: {fileID: 488436, guid: 4c907f46693e946a28129e509372244a, type: 2}
-  m_PrefabInternal: {fileID: 345073472}
+  m_PrefabInternal: {fileID: 205822409}
 --- !u!1 &1915913850
 GameObject:
   m_ObjectHideFlags: 0

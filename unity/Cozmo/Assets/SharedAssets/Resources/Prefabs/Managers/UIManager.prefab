@@ -269,6 +269,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2fad616075162431c9537d5d28f70a6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LeftBubble: {fileID: 11482668, guid: 686f2b7feed7840c8ac5f7336f5dcbf7, type: 2}
+  _RightBubble: {fileID: 11482668, guid: dbc8d8b13a20749b98ddb424e2c7668b, type: 2}
 --- !u!114 &11443190
 MonoBehaviour:
   m_ObjectHideFlags: 1
