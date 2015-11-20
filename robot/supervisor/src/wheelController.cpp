@@ -282,6 +282,11 @@ namespace Anki {
       right = filterWheelSpeedR_;
     }
     
+    f32 GetAverageFilteredWheelSpeed()
+    {
+      return 0.5f * (filterWheelSpeedL_ + filterWheelSpeedR_);
+    }
+    
     //Get the wheel speeds in mm/sec
     void GetDesiredWheelSpeeds(f32 &leftws, f32 &rightws)
     {

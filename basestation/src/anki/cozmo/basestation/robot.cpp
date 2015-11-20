@@ -2419,9 +2419,9 @@ namespace Anki {
       return SendRobotMessage<RobotInterface::ImuRequest>(length_ms);
     }
 
-    Result Robot::SendEnablePickupDetect(const bool enable) const
+    Result Robot::SendEnablePickupParalysis(const bool enable) const
     {
-      return SendRobotMessage<RobotInterface::EnablePickupDetect>(enable);
+      return SendRobotMessage<RobotInterface::EnablePickupParalysis>(enable);
     }
     
     void Robot::SetSaveStateMode(const SaveMode_t mode)
