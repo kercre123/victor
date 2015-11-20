@@ -188,7 +188,7 @@ public class Robot : IDisposable {
 
   private ObservedObject _targetLockedObject = null;
 
-  public ObservedObject targetLockedObject {
+  public ObservedObject TargetLockedObject {
     get { return _targetLockedObject; }
     set {
       _targetLockedObject = value;
@@ -427,7 +427,7 @@ public class Robot : IDisposable {
     _CarryingObjectID = -1;
     HeadTrackingObjectID = -1;
     _LastHeadTrackingObjectID = -1;
-    targetLockedObject = null;
+    TargetLockedObject = null;
     _CarryingObject = null;
     _HeadTrackingObject = null;
     _HeadAngleRequested = float.MaxValue;
@@ -1001,7 +1001,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.SetRobotCarryingObject = SetRobotCarryingObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    targetLockedObject = null;
+    TargetLockedObject = null;
     
     SetLiftHeight(0f);
     SetHeadAngle();

@@ -44,11 +44,15 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,uint> RobotCompletedTaggedAction;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
+  public event Action<float, float> OnObservedMotion;
 
-  // Audio Callback events
+  #region Audio Callback events
+
   public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
   public event Action<AudioCallbackMarker> ReceivedAudioCallbackMarker;
   public event Action<AudioCallbackComplete> ReceivedAudioCallbackComplete;
+
+  #endregion
 
   private bool _CozmoBindingStarted = false;
   private ChannelBase _Channel = null;
@@ -343,6 +347,9 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
 
+    if (OnObservedMotion != null) {
+      OnObservedMotion(message.img_x, message.img_y);
+    }
 
   }
 
@@ -432,7 +439,7 @@ public class RobotEngineManager : MonoBehaviour {
     
     RobotActionType actionType = (RobotActionType)message.actionType;
     bool success = (message.result == ActionResult.SUCCESS) || ((actionType == RobotActionType.PLAY_ANIMATION || actionType == RobotActionType.COMPOUND) && message.result == ActionResult.CANCELLED);
-    CurrentRobot.targetLockedObject = null;
+    CurrentRobot.TargetLockedObject = null;
 
     CurrentRobot.LocalBusyTimer = 0f;
 

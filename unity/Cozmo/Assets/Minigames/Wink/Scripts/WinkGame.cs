@@ -8,6 +8,8 @@ namespace Wink {
     private StateMachine _StateMachine = new StateMachine();
     private bool _WinkWaveCompleted = false;
     private float _WinkWaveAccumulator = 0.0f;
+    private Vector2 _LastMotionDetected = Vector2.zero;
+    private bool _LastMotionDetectedValid = false;
 
     public enum WinkStatus {
       Left,
@@ -27,11 +29,14 @@ namespace Wink {
       _StateMachine.SetNextState(new WinkState());
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CreateDefaultQuitButton();
+      RobotEngineManager.Instance.OnObservedMotion += OnMotionDetected;
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
-      CheckWaveComplete();
+      if (_WinkWaveAccumulator > 20.0f) {
+        _WinkWaveCompleted = true;
+      }
     }
 
     public void PickNewWinkSide() {
@@ -60,23 +65,11 @@ namespace Wink {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+      RobotEngineManager.Instance.OnObservedMotion -= OnMotionDetected;
     }
 
-    private void CheckWaveComplete() {
-      if ((WaveLeft() && _WinkStatus == WinkStatus.Left) || (WaveRight() && _WinkStatus == WinkStatus.Right)) {
-        _WinkWaveAccumulator += Time.deltaTime;
-      }
-      else {
-        _WinkWaveAccumulator -= Time.deltaTime;
-      }
-    }
-
-    private bool WaveLeft() {
-      return false;
-    }
-
-    private bool WaveRight() {
-      return false;
+    private void OnMotionDetected(float x, float y) {
+      
     }
 
     private void SetProceduralFace() {
