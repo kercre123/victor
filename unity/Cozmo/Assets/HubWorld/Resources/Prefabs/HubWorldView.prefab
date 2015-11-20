@@ -12,7 +12,7 @@ GameObject:
   - 114: {fileID: 11415898}
   - 114: {fileID: 11412438}
   m_Layer: 5
-  m_Name: HubWorldDialog
+  m_Name: HubWorldView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -384,7 +384,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b98745fd1773d41198f57475f1d28b70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dialogId: HubWorldDialog
   _HubWorldButtonPrefab: {fileID: 11474066, guid: a230b3f73f2b64e1395290df0cbe3585,
     type: 2}
   _LockedButtonContainer: {fileID: 22404898}

@@ -27,10 +27,7 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private Canvas _orthoUiCanvas;
-  
-  [SerializeField]
-  private Canvas _perspUiCanvas;
+  private Canvas _overlayCanvas;
   
   [SerializeField]
   private EventSystem _eventSystemScript;
@@ -45,21 +42,7 @@ public class UIManager : MonoBehaviour {
   }
 
   public static GameObject CreateUIElement(GameObject uiPrefab) {
-    return CreateUIElement(uiPrefab, Instance._orthoUiCanvas.transform);
-  }
-
-  /// <summary>
-  /// TODO: Evaluate if we still need perspective UI. 
-  /// Use to create a UI element that has 3D objects that you want rendered with
-  /// perspective (as opposed to orthographic)
-  /// </summary>
-  /// <returns>The perspective UI created.</returns>
-  /// <param name="uiPrefab">User interface prefab.</param>
-  public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
-    GameObject newUi = GameObject.Instantiate(uiPrefab);
-    newUi.transform.SetParent(Instance._perspUiCanvas.transform, false);
-    newUi.layer = LayerMask.NameToLayer("3DUI");
-    return newUi;
+    return CreateUIElement(uiPrefab, Instance._overlayCanvas.transform);
   }
 
   public static GameObject CreateUIElement(GameObject uiPrefab, Transform parentTransform) {
@@ -70,7 +53,7 @@ public class UIManager : MonoBehaviour {
 
   public static BaseView OpenView(BaseView viewPrefab) {
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
-    newView.transform.SetParent(Instance._orthoUiCanvas.transform, false);
+    newView.transform.SetParent(Instance._overlayCanvas.transform, false);
 
     BaseView baseViewScript = newView.GetComponent<BaseView>();
     baseViewScript.OpenView();
@@ -104,7 +87,7 @@ public class UIManager : MonoBehaviour {
   }
 
   public static Camera GetUICamera() {
-    return _Instance._orthoUiCanvas.worldCamera;
+    return _Instance._overlayCanvas.worldCamera;
   }
 
   public static void DisableTouchEvents() {

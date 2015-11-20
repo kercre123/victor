@@ -6,8 +6,8 @@ using System.Collections.Generic;
 public class HubWorld : HubWorldBase {
 
   [SerializeField]
-  private HubWorldDialog _HubWorldDialogPrefab;
-  private HubWorldDialog _HubWorldDialogInstance;
+  private HubWorldView _HubWorldDialogPrefab;
+  private HubWorldView _HubWorldDialogInstance;
 
   private GameBase _MiniGameInstance;
 
@@ -48,7 +48,7 @@ public class HubWorld : HubWorldBase {
 
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
-    _HubWorldDialogInstance = UIManager.OpenView(_HubWorldDialogPrefab) as HubWorldDialog;
+    _HubWorldDialogInstance = UIManager.OpenView(_HubWorldDialogPrefab) as HubWorldView;
     _HubWorldDialogInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
     _HubWorldDialogInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
     _HubWorldDialogInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;

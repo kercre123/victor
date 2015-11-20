@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-public class HubWorldDialog : BaseView {
+public class HubWorldView : BaseView {
 
   public delegate void ButtonClickedHandler(string challengeClicked);
 
@@ -47,7 +47,7 @@ public class HubWorldDialog : BaseView {
         CreateCompletedButton(challengeState.data);
         break;
       default:
-        DAS.Error("HubWorldDialog", "ChallengeState view not implemented! " + challengeState);
+        DAS.Error("HubWorldView", "ChallengeState view not implemented! " + challengeState);
         break;
       }
     }
