@@ -1167,5 +1167,17 @@ namespace Anki {
       // Stub
     }
 
+    void HAL::FacePrintf(const char *format, ...)
+    {
+      // Stub
+    }
+    
+    void HAL::FaceUnPrintf()
+    {
+      // Stub
+    }
+
+    
+    
   } // namespace Cozmo
 } // namespace Anki
