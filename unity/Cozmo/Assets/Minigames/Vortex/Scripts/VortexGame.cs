@@ -46,12 +46,16 @@ namespace Vortex {
     private PlayerData[] _PlayerDataList;
     private int _RoundNumber;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       DAS.Info(this, "VortexGame::Start");
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("VortexStateMachine", _StateMachine);
 
-      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<VortexPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<VortexPanel>();
       CreateDefaultQuitButton();
 
       _GamePanel.HandleSpinEnded = HandleSpinEnded;
@@ -76,7 +80,7 @@ namespace Vortex {
 
     public override void CleanUp() {
       if (_GamePanel != null) {
-        UIManager.CloseDialogImmediately(_GamePanel);
+        UIManager.CloseViewImmediately(_GamePanel);
       }
       DestroyDefaultQuitButton();
     }

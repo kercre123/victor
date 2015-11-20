@@ -10,6 +10,10 @@ namespace VisionTraining {
     private StateMachine _StateMachine = new StateMachine();
     private int _LastSelectedId = -1;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);

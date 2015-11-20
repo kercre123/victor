@@ -26,7 +26,7 @@ public class DebugConsolePane : MonoBehaviour {
       for (int i = 0; i < count; ++i) {
         DebugConsoleData.DebugConsoleVarData singleVar = DebugConsoleData.Instance.GetDataAtIndex(i);
 
-        GameObject statLine = UIManager.CreateUI(_SingleLinePrefab.gameObject, _UIContainer);
+        GameObject statLine = UIManager.CreateUIElement(_SingleLinePrefab.gameObject, _UIContainer);
         ConsoleVarLine uiLine = statLine.GetComponent<ConsoleVarLine>();
         uiLine.Init(singleVar);
       }

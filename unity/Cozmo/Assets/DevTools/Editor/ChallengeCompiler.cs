@@ -12,6 +12,8 @@ public class ChallengeCompiler {
 
     list.ChallengeData = assets.Select(x => AssetDatabase.LoadAssetAtPath<ChallengeData>(AssetDatabase.GUIDToAssetPath(x))).ToArray();
 
+    list.ChallengeData = list.ChallengeData.Where((x, index) => x.EnableChallenge).ToArray();
+
     AssetDatabase.CreateAsset(list, "Assets/SharedAssets/Resources/Challenges/ChallengeList.asset");
   }
 }

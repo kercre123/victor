@@ -37,13 +37,13 @@ public class IntroManager : MonoBehaviour {
       Destroy(_HubWorldInstance);
     }
 
-    UIManager.CloseAllDialogsImmediately();
+    UIManager.CloseAllViewsImmediately();
     ShowDevConnectDialog();
   }
 
   private void ShowDevConnectDialog() {
     if (_DevConnectDialogInstance == null) {
-      _DevConnectDialogInstance = UIManager.CreateUI(_DevConnectDialog.gameObject);
+      _DevConnectDialogInstance = UIManager.CreateUIElement(_DevConnectDialog.gameObject);
     }
   }
 

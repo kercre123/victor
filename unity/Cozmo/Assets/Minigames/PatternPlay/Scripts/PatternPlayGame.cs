@@ -28,6 +28,10 @@ namespace PatternPlay {
 
     private PatternPlayAudio patternPlayAudio_;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       DAS.Info(this, "Game Created");
       patternPlayStateMachine_.SetGameRef(this);
