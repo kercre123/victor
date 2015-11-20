@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"

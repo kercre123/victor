@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/config.h"

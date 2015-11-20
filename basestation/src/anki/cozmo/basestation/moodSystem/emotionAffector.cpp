@@ -22,17 +22,40 @@ namespace Anki {
 namespace Cozmo {
 
   
-EmotionAffector::EmotionAffector(const Json::Value& inJson)
-  : _emotionType(EmotionType::Count)
-  , _baseValue(0.0f)
+static const char* kEmotionTypeKey = "emotionType";
+static const char* kValueKey       = "value";
+
+  
+void EmotionAffector::Reset()
 {
-  ReadFromJson(inJson);
+  _emotionType = EmotionType::Count;
+  _baseValue = 0.0;
 }
 
   
 bool EmotionAffector::ReadFromJson(const Json::Value& inJson)
 {
-  // [MARKW:TODO] Implementation required
+  const Json::Value& emotionType = inJson[kEmotionTypeKey];
+  const Json::Value& value       = inJson[kValueKey];
+  
+  const char* emotionTypeString = emotionType.isString() ? emotionType.asCString() : "";
+  _emotionType  = EmotionTypeFromString( emotionTypeString );
+  
+  if (_emotionType == EmotionType::Count)
+  {
+    PRINT_NAMED_WARNING("EmotionAffector.ReadFromJson.BadType", "Bad '%s' = '%s'", kEmotionTypeKey, emotionTypeString);
+    Reset();
+    return false;
+  }
+  
+  if (value.isNull())
+  {
+    PRINT_NAMED_WARNING("EmotionAffector.ReadFromJson.MissingValue", "Missing '%s' entry", kValueKey);
+    Reset();
+    return false;
+  }
+  
+  _baseValue = value.asFloat();
   
   return true;
 }
@@ -43,7 +66,8 @@ bool EmotionAffector::WriteToJson(Json::Value& outJson) const
   assert( outJson.empty() );
   outJson.clear();
   
-  // [MARKW:TODO] Implementation required
+  outJson[kEmotionTypeKey] = EmotionTypeToString(_emotionType);
+  outJson[kValueKey]       = _baseValue;
 
   return true;
 }
