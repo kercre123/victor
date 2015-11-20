@@ -121,7 +121,7 @@ namespace Anki {
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
-      const Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
+      Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
       if (nullptr != neutralFaceAnim)
       {
         auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();

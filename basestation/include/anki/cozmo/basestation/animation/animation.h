@@ -62,12 +62,6 @@ public:
   
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();
-  
-  template<class KeyFrameType>
-  const Animations::Track<KeyFrameType>& GetTrack() const
-  {
-    return GetTrack<KeyFrameType>();
-  }
 
 private:
 
