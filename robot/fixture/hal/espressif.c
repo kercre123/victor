@@ -8,6 +8,7 @@
 #include "../app/binaries.h"
 
 #include "hal/espressif.h"
+#include "hal/uart.h"
 
 #define TESTPORT_TX       UART5
 #define TESTPORT_RX       USART3
@@ -18,7 +19,7 @@
 #define PINC_RX           10
 #define GPIOC_RX          (1 << PINC_RX)
 
-static const int MAX_TIMEOUT = 1000000; // 1sec
+static const int MAX_TIMEOUT = 100000; // 100ms - will retry if needed
 
 // These are the currently known commands supported by the ROM
 static const uint8_t ESP_FLASH_BEGIN = 0x02;
@@ -77,7 +78,7 @@ struct FlashLoadLocation {
   
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
   { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
-  // { "USER",  0x001000, g_EspUserEnd - g_EspUser, g_EspUser },
+  { "USER",  0x003000, g_EspUserEnd - g_EspUser, g_EspUser },
   { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
   { "BLANK", 0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
   { 0, 0, NULL }
@@ -250,7 +251,7 @@ bool ESPSync(void) {
   uint8_t read[256];
 
   // Attempt 16 times to get sync
-  for (int i = 0; i < 0x10; i++) {
+  for (int i = 0; i < 0x40; i++) {
     ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA));
     int size = ESPRead(read, sizeof(read), MAX_TIMEOUT);
     
@@ -267,9 +268,31 @@ bool ESPSync(void) {
   return false;
 }
 
-static int Command(uint8_t cmd, const uint8_t* data, int length, uint8_t *reply, int max, int timeout = -1) {
+static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int length, uint8_t *reply, int max, int timeout = -1) {
+  SlowPrintf("%s=%02X {", debug, cmd);
+  for (int i = 0; i < length && i < 4; i++)
+    SlowPrintf("%02X ", data[i]);
   ESPCommand(cmd, data, length);
-  return ESPRead(reply, max, timeout);
+  
+  for (int retry = 0 ; retry < 100; retry++)
+  {    
+    int replySize = ESPRead(reply, max, timeout);
+
+    // esptool says retry a command until it at least acks the command
+    if (replySize < 2 || reply[1] != cmd) {
+      SlowPrintf("retry..");
+      continue;
+    }
+    
+    SlowPrintf("..} <- %d { ", replySize);
+    for (int i = 0; i < replySize; i++)
+      SlowPrintf("%02X ", reply[i]);
+    SlowPrintf("}\n");
+
+    return replySize;
+  }
+  SlowPrintf("\nGAVE UP\n");
+  return -1;
 }
 
 static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
@@ -294,17 +317,20 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     uint32_t data[ESP_FLASH_BLOCK];
   };
 
+  // This locks the flash chip - not really what we want!
   struct FlashEnd {
     uint32_t not_reboot;
   };
   
   const FlashBegin begin = { length, BlockCount(length), ESP_FLASH_BLOCK, address };
-  const FlashEnd finish = { 1 };
+  const FlashEnd finish = { 1 };  // !reboot - 0 means reboot, 1 means don't - WARNING will lock flash chip
   FlashWrite block = { ESP_FLASH_BLOCK, 0, 0, 0 };
+  
+  // This is copied wholesale from esptool.py - a useful hack to leave chip erased
+  const FlashBegin hack_begin = { 0, 0, ESP_FLASH_BLOCK, 0 };
 
   // Write BEGIN command (erase, wait 1 second for flash to blank)
-  DisplayPrintf("\nErasing");
-  int replySize = Command(ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  int replySize = Command("Flash Begin", ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
   
   while (length > 0) {
     int copyLength = (length > ESP_FLASH_BLOCK) ? ESP_FLASH_BLOCK : length;
@@ -313,34 +339,35 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     }
     memcpy(block.data, data, copyLength);
 
-    DisplayPrintf("\nBlock %i", block.seq);
-    int replySize = Command(ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
-
+    replySize = Command("Flash Block", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+    
     data += ESP_FLASH_BLOCK;
     length -= ESP_FLASH_BLOCK;
     block.seq++;
   }
 
+  // This is a hack from esptool.py - to prevent chip locking?
+  //replySize = Command("Hack  Begin", ESP_FLASH_BEGIN, (uint8_t*) &hack_begin, sizeof(hack_begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  
   // Write FINISH command
-  DisplayPrintf("\nFinishing", block.seq);
-  replySize = Command(ESP_FLASH_END, (uint8_t*) &finish, sizeof(finish), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  replySize = Command("Flash End  ", ESP_FLASH_END, (uint8_t*) &finish, sizeof(finish), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
   
   return true;
 }
 
 ESP_PROGRAM_ERROR ProgramEspressif(void) {
-  DisplayPrintf("ESP Syncronizing...");
+  SlowPrintf("ESP Syncronizing...");
 
   EnableBAT();
   
   if (!ESPSync()) { 
-    DisplayPrintf("\nSync Failed.");
+    SlowPrintf("Sync Failed.\n");
     return ESP_ERROR_NO_COMMUNICATION;
   }
 
   for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
     DisplayClear();
-    DisplayPrintf("Load ROM %s", rom->name);
+    SlowPrintf("Load ROM %s\n", rom->name);
     if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
       return ESP_ERROR_BLOCK_FAILED;
     }

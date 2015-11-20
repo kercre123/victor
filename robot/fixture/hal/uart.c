@@ -60,8 +60,11 @@ void SlowPutChar(char c)
 
 void SlowPutString(char *s)
 {
-  while (*s)
+  while (*s) {
+    if (*s == '\n')
+      SlowPutChar('\r');
     SlowPutChar(*s++);
+  }
 }
 
 void SlowPutInt(int i)
