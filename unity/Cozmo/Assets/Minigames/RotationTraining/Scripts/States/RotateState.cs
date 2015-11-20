@@ -104,7 +104,9 @@ namespace RotationTraining {
       // celebrate when he is at 180... TODO: don't let players cheat by rotating cozmo manually?
       bool inTarget = CheckIfInTargetAngle();
       if (inTarget) {
-        _StateMachine.SetNextState(new CelebrateState());
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
+        _StateMachine.SetNextState(animState);
 
         // Stop moving
         _CurrentRobot.DriveWheels(0, 0);
@@ -134,6 +136,10 @@ namespace RotationTraining {
 
     public override void Exit() {
       base.Exit();
+    }
+
+    private void HandleWinAnimationDoneHandler(bool success) {
+      _StateMachine.GetGame().RaiseMiniGameWin();
     }
 
     private void HandleCubeMoved(int cubeID, float x, float y, float z) {
