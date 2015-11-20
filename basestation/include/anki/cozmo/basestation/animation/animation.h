@@ -61,7 +61,10 @@ public:
   const std::string& GetName() const { return _name; }
   
   template<class KeyFrameType>
-  const Animations::Track<KeyFrameType>& GetTrack_Const()
+  Animations::Track<KeyFrameType>& GetTrack();
+  
+  template<class KeyFrameType>
+  const Animations::Track<KeyFrameType>& GetTrack() const
   {
     return GetTrack<KeyFrameType>();
   }
@@ -97,9 +100,6 @@ private:
   Animations::Track<BodyMotionKeyFrame>     _bodyPosTrack;
   Animations::Track<DeviceAudioKeyFrame>    _deviceAudioTrack;
   Animations::Track<RobotAudioKeyFrame>     _robotAudioTrack;
-
-  template<class KeyFrameType>
-  Animations::Track<KeyFrameType>& GetTrack();
 
   // TODO: Remove these once we aren't playing robot audio on the device
   TimeStamp_t _playedRobotAudio_ms;

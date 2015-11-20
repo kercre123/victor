@@ -284,7 +284,7 @@ return RESULT_FAIL; \
     
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      _procFace.GetData().SetFromJson(jsonRoot);
+      _procFace.GetParams().SetFromJson(jsonRoot);
       Reset();
       return RESULT_OK;
     }
@@ -332,7 +332,7 @@ return RESULT_FAIL; \
       const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
       
       ProceduralFace interpFace;
-      interpFace.GetData().Interpolate(_procFace.GetData(), nextFrame._procFace.GetData(), fraction);
+      interpFace.GetParams().Interpolate(_procFace.GetParams(), nextFrame._procFace.GetParams(), fraction);
       
       _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
       if(_currentTime_ms >= nextFrame.GetTriggerTime()) {

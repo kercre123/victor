@@ -229,7 +229,7 @@ namespace Cozmo {
       }
       
       const bool useSaccades = true;
-      proceduralFace.GetData().Interpolate(lastFace.GetData(), nextFace.GetData(), blendFraction, useSaccades);
+      proceduralFace.GetParams().Interpolate(lastFace.GetParams(), nextFace.GetParams(), blendFraction, useSaccades);
       
       // Add this procedural face as a keyframe in the live animation
       ProceduralFaceKeyFrame kf(proceduralFace);
@@ -297,7 +297,7 @@ namespace Cozmo {
     // Squint the current face while picking/placing to show concentration:
     if(robot.IsPickingOrPlacing()) {
       for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-        nextFace.GetData().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY,
+        nextFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY,
                               GET_PARAM(f32, DockSquintEyeHeight));
       }
       // Make sure squinting face gets displayed:
@@ -387,7 +387,7 @@ namespace Cozmo {
             x = (speed < 0 ? _rng.RandDblInRange(-kMaxPupilMovement, 0.) : _rng.RandDblInRange(0., kMaxPupilMovement));
             y = _rng.RandDblInRange(-kMaxPupilMovement, kMaxPupilMovement);
           }
-          crntFace.GetData().SetFacePosition({x,y});
+          crntFace.GetParams().SetFacePosition({x,y});
           
           ProceduralFaceKeyFrame kf(crntFace);
           kf.SetIsLive(true);

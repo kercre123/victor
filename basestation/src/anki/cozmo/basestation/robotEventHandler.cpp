@@ -646,7 +646,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   }
   
   ProceduralFace procFace;
-  procFace.GetData().SetFromMessage(msg);
+  procFace.GetParams().SetFromMessage(msg);
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
   
   robot->SetProceduralFace(procFace);

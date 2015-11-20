@@ -251,7 +251,7 @@ namespace Cozmo {
     };
     
     struct BlinkParams {
-      ProceduralFaceData::Value height, width;
+      ProceduralFaceParams::Value height, width;
       TimeStamp_t t;
       BlinkState blinkState;
     };
@@ -306,7 +306,7 @@ namespace Cozmo {
           
           // In case eyes are at different height, get the average height so the
           // blink line when completely closed is nice and horizontal
-          const ProceduralFaceData::Value blinkHeight = (originalFace._faceData.GetParameter(WhichEye::Left,  Parameter::EyeCenterY) +
+          const ProceduralFaceParams::Value blinkHeight = (originalFace._faceData.GetParameter(WhichEye::Left,  Parameter::EyeCenterY) +
                                      originalFace._faceData.GetParameter(WhichEye::Right, Parameter::EyeCenterY))/2;
           
           // Zero out the lids so they don't interfere with the "closed" line

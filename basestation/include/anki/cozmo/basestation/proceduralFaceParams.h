@@ -1,5 +1,5 @@
 /**
- * File: proceduralFaceData.h
+ * File: proceduralFaceParams.h
  *
  * Author: Lee Crippen
  * Created: 11/17/15
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Anki_Cozmo_ProceduralFaceData_H__
-#define __Anki_Cozmo_ProceduralFaceData_H__
+#ifndef __Anki_Cozmo_ProceduralFaceParams_H__
+#define __Anki_Cozmo_ProceduralFaceParams_H__
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
@@ -31,7 +31,7 @@ namespace ExternalInterface {
   struct DisplayProceduralFace;
 }
   
-class ProceduralFaceData
+class ProceduralFaceParams
 {
 public:
   using Value = f32;
@@ -42,8 +42,8 @@ public:
     Right
   };
   
-  // Allows setting an instance of ProceduralFaceData to be used as reset values
-  static void SetResetData(const ProceduralFaceData& newResetData);
+  // Allows setting an instance of ProceduralFaceParams to be used as reset values
+  static void SetResetData(const ProceduralFaceParams& newResetData);
   
   // Reset parameters to their nominal values
   void Reset();
@@ -76,8 +76,8 @@ public:
   //   Note: 0.0 <= BlendFraction <= 1.0!
   // If usePupilSaccades==true, pupil positions don't interpolate smoothly but
   //   instead jump when fraction crossed 0.5.
-  void Interpolate(const ProceduralFaceData& face1,
-                   const ProceduralFaceData& face2,
+  void Interpolate(const ProceduralFaceParams& face1,
+                   const ProceduralFaceParams& face2,
                    float fraction,
                    bool usePupilSaccades = false);
   
@@ -91,43 +91,43 @@ private:
   
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   
-  static ProceduralFaceData* _resetData;
+  static ProceduralFaceParams* _resetData;
   
-}; // class ProceduralFaceData
+}; // class ProceduralFaceParams
   
 #pragma mark Inlined Methods
   
-inline void ProceduralFaceData::SetParameter(WhichEye whichEye, Parameter param, Value value)
+inline void ProceduralFaceParams::SetParameter(WhichEye whichEye, Parameter param, Value value)
 {
   _eyeParams[whichEye][static_cast<size_t>(param)] = value;
 }
 
-inline ProceduralFaceData::Value ProceduralFaceData::GetParameter(WhichEye whichEye, Parameter param) const
+inline ProceduralFaceParams::Value ProceduralFaceParams::GetParameter(WhichEye whichEye, Parameter param) const
 {
   return _eyeParams[whichEye][static_cast<size_t>(param)];
 }
 
-inline ProceduralFaceData::Value ProceduralFaceData::GetFaceAngle() const {
+inline ProceduralFaceParams::Value ProceduralFaceParams::GetFaceAngle() const {
   return _faceAngle;
 }
 
-inline void ProceduralFaceData::SetFaceAngle(Value angle) {
+inline void ProceduralFaceParams::SetFaceAngle(Value angle) {
   _faceAngle = angle; //std::max(-1.f, std::min(1.f, angle));
 }
 
-inline void ProceduralFaceData::SetFacePosition(Point<2, Value> center) {
+inline void ProceduralFaceParams::SetFacePosition(Point<2, Value> center) {
   _faceCenter = center;
 }
 
-inline Point<2,ProceduralFaceData::Value> const& ProceduralFaceData::GetFacePosition() const {
+inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFacePosition() const {
   return _faceCenter;
 }
 
-inline void ProceduralFaceData::SetFaceScale(Point<2,Value> scale) {
+inline void ProceduralFaceParams::SetFaceScale(Point<2,Value> scale) {
   _faceScale = scale;
 }
 
-inline Point<2,ProceduralFaceData::Value> const& ProceduralFaceData::GetFaceScale() const {
+inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFaceScale() const {
   return _faceScale;
 }
 
@@ -135,4 +135,4 @@ inline Point<2,ProceduralFaceData::Value> const& ProceduralFaceData::GetFaceScal
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Anki_Cozmo_ProceduralFaceData_H__
+#endif // __Anki_Cozmo_ProceduralFaceParams_H__

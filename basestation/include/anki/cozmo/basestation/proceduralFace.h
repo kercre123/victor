@@ -5,7 +5,7 @@
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/matrix.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
-#include "anki/cozmo/basestation/proceduralFaceData.h"
+#include "anki/cozmo/basestation/proceduralFaceParams.h"
 #include "clad/types/proceduralEyeParameters.h"
 
 #include <opencv2/core/core.hpp>
@@ -33,8 +33,8 @@ namespace Cozmo {
     static constexpr s32   NominalEyeWidth       = 30;
     
     using Parameter = ProceduralEyeParameter;
-    using WhichEye = ProceduralFaceData::WhichEye;
-    using Value = ProceduralFaceData::Value;
+    using WhichEye = ProceduralFaceParams::WhichEye;
+    using Value = ProceduralFaceParams::Value;
     
     ProceduralFace();
     
@@ -62,18 +62,18 @@ namespace Cozmo {
     // to be called each time we blink.
     static void SwitchInterlacing();
     
-    const ProceduralFaceData& GetData() const { return _faceData; }
-    ProceduralFaceData& GetData() { return _faceData; }
-    void SetData(const ProceduralFaceData& newData) { _faceData = newData; }
-    void SetData(ProceduralFaceData&& newData) { _faceData = std::move(newData); }
+    const ProceduralFaceParams& GetParams() const { return _faceData; }
+    ProceduralFaceParams& GetParams() { return _faceData; }
+    void SetParams(const ProceduralFaceParams& newData) { _faceData = newData; }
+    void SetParams(ProceduralFaceParams&& newData) { _faceData = std::move(newData); }
     
   private:
 
-    void DrawEye(ProceduralFaceData::WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
+    void DrawEye(ProceduralFaceParams::WhichEye whichEye, cv::Mat_<u8>& faceImg) const;
     
     static SmallMatrix<2,3,f32> GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
                                                         f32 tX, f32 tY, f32 x0 = 0.f, f32 y0 = 0.f);
-    ProceduralFaceData _faceData;
+    ProceduralFaceParams _faceData;
     static u8 _firstScanLine;
     bool _sentToRobot;
     TimeStamp_t _timestamp;

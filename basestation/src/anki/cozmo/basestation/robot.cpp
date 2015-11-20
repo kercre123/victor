@@ -121,11 +121,11 @@ namespace Anki {
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
-      Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
+      const Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
       if (nullptr != neutralFaceAnim)
       {
-        auto frameIter = neutralFaceAnim->GetTrack_Const<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
-        ProceduralFaceData::SetResetData(frameIter->GetFace().GetData());
+        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
+        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
       }
       else
       {
@@ -135,8 +135,8 @@ namespace Anki {
       }
       
       // Now that the reference neutral face has been set up, reset our local faces to start from neutral
-      _proceduralFace.GetData().Reset();
-      _lastProceduralFace.GetData().Reset();
+      _proceduralFace.GetParams().Reset();
+      _lastProceduralFace.GetParams().Reset();
       
       // Read in Mood Manager Json
       if (nullptr != _dataPlatform)

@@ -1,5 +1,5 @@
 /**
- * File: proceduralFaceData.cpp
+ * File: ProceduralFaceParams.cpp
  *
  * Author: Lee Crippen
  * Created: 11/17/15
@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2015
  *
  **/
-#include "anki/cozmo/basestation/proceduralFaceData.h"
+#include "anki/cozmo/basestation/proceduralFaceParams.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
@@ -18,16 +18,16 @@
 namespace Anki {
 namespace Cozmo {
   
-ProceduralFaceData* ProceduralFaceData::_resetData = nullptr;
+ProceduralFaceParams* ProceduralFaceParams::_resetData = nullptr;
   
-void ProceduralFaceData::SetResetData(const ProceduralFaceData& newResetData)
+void ProceduralFaceParams::SetResetData(const ProceduralFaceParams& newResetData)
 {
-  ProceduralFaceData* oldPointer = _resetData;
-  _resetData = new ProceduralFaceData(newResetData);
+  ProceduralFaceParams* oldPointer = _resetData;
+  _resetData = new ProceduralFaceParams(newResetData);
   Util::SafeDelete(oldPointer);
 }
   
-void ProceduralFaceData::Reset()
+void ProceduralFaceParams::Reset()
 {
   if (nullptr != _resetData)
   {
@@ -43,13 +43,13 @@ static const char* kFaceScaleYKey = "faceScaleY";
 static const char* kLeftEyeKey = "leftEye";
 static const char* kRightEyeKey = "rightEye";
 
-void ProceduralFaceData::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray)
+void ProceduralFaceParams::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray)
 {
   const char* eyeStr = (eye == WhichEye::Left) ? kLeftEyeKey : kRightEyeKey;
 
   const size_t N = static_cast<size_t>(Parameter::NumParameters);
   if(eyeArray.size() != N) {
-    PRINT_NAMED_WARNING("ProceduralFaceData.SetEyeArrayHelper.WrongNumParams",
+    PRINT_NAMED_WARNING("ProceduralFaceParams.SetEyeArrayHelper.WrongNumParams",
                         "Unexpected number of parameters for %s array (%lu vs. %lu)",
                         eyeStr, eyeArray.size(), N);
     return;
@@ -57,52 +57,32 @@ void ProceduralFaceData::SetEyeArrayHelper(WhichEye eye, const std::vector<Value
   
   for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
   {
-    SetParameter(eye, static_cast<ProceduralFaceData::Parameter>(i),eyeArray[i]);
+    SetParameter(eye, static_cast<ProceduralFaceParams::Parameter>(i),eyeArray[i]);
   }
 }
   
-void ProceduralFaceData::SetFromJson(const Json::Value &jsonRoot)
+void ProceduralFaceParams::SetFromJson(const Json::Value &jsonRoot)
 {
-  Value tempValue;
-  if (JsonTools::GetValueOptional(jsonRoot, kFaceAngleKey, tempValue))
-  {
-    _faceAngle = tempValue;
-  }
-  
-  if (JsonTools::GetValueOptional(jsonRoot, kFaceCenterXKey, tempValue))
-  {
-    _faceCenter.x() = tempValue;
-  }
-  
-  if (JsonTools::GetValueOptional(jsonRoot, kFaceCenterYKey, tempValue))
-  {
-    _faceCenter.y() = tempValue;
-  }
-  
-  if (JsonTools::GetValueOptional(jsonRoot, kFaceScaleXKey, tempValue))
-  {
-    _faceScale.x() = tempValue;
-  }
-  
-  if (JsonTools::GetValueOptional(jsonRoot, kFaceScaleYKey, tempValue))
-  {
-    _faceScale.y() = tempValue;
-  }
+  JsonTools::GetValueOptional(jsonRoot, kFaceAngleKey, _faceAngle);
+  JsonTools::GetValueOptional(jsonRoot, kFaceCenterXKey, _faceCenter.x());
+  JsonTools::GetValueOptional(jsonRoot, kFaceCenterYKey, _faceCenter.y());
+  JsonTools::GetValueOptional(jsonRoot, kFaceScaleXKey, _faceScale.x());
+  JsonTools::GetValueOptional(jsonRoot, kFaceScaleYKey, _faceScale.y());
   
   std::vector<Value> eyeArray;
   if (JsonTools::GetVectorOptional(jsonRoot, kLeftEyeKey, eyeArray))
   {
     SetEyeArrayHelper(WhichEye::Left, eyeArray);
+    eyeArray.clear();
   }
   
-  eyeArray.clear();
   if (JsonTools::GetVectorOptional(jsonRoot, kRightEyeKey, eyeArray))
   {
     SetEyeArrayHelper(WhichEye::Right, eyeArray);
   }
 }
   
-void ProceduralFaceData::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
+void ProceduralFaceParams::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
 {
   SetFaceAngle(msg.faceAngle);
   SetFacePosition({msg.faceCenX, msg.faceCenY});
@@ -125,8 +105,8 @@ inline static T LinearBlendHelper(const T value1, const T value2, const float bl
   return blendValue;
 }
 
-inline static ProceduralFaceData::Value BlendAngleHelper(const ProceduralFaceData::Value angle1,
-                                                         const ProceduralFaceData::Value angle2,
+inline static ProceduralFaceParams::Value BlendAngleHelper(const ProceduralFaceParams::Value angle1,
+                                                         const ProceduralFaceParams::Value angle2,
                                                          const float blendFraction)
 {
   if(angle1 == angle2) {
@@ -140,11 +120,11 @@ inline static ProceduralFaceData::Value BlendAngleHelper(const ProceduralFaceDat
   const float x = LinearBlendHelper(std::cos(angle1_rad), std::cos(angle2_rad), blendFraction);
   const float y = LinearBlendHelper(std::sin(angle1_rad), std::sin(angle2_rad), blendFraction);
   
-  return static_cast<ProceduralFaceData::Value>(RAD_TO_DEG(std::atan2(y,x)));
+  return static_cast<ProceduralFaceParams::Value>(RAD_TO_DEG(std::atan2(y,x)));
 }
 
 
-void ProceduralFaceData::Interpolate(const ProceduralFaceData& face1, const ProceduralFaceData& face2,
+void ProceduralFaceParams::Interpolate(const ProceduralFaceParams& face1, const ProceduralFaceParams& face2,
                                      float blendFraction, bool usePupilSaccades)
 {
   assert(blendFraction >= 0.f && blendFraction <= 1.f);
