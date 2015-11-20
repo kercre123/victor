@@ -14,10 +14,10 @@
         <TargetCommonOption>
           <Device>nRF51822_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x4000) CPUTYPE("Cortex-M0") CLOCK(16000000) ELITTLE</Cpu>
+          <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x4000) CPUTYPE("Cortex-M0") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
-          <FlashDriverDll></FlashDriverDll>
+          <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0nrf51xxx -FS00 -FL0200000 -FP0($$Device:nRF51822_xxAA$Flash\nrf51xxx.flm))</FlashDriverDll>
           <DeviceId>0</DeviceId>
           <RegisterFile>$$Device:nRF51822_xxAA$Device\Include\nrf.h</RegisterFile>
           <MemoryEnv></MemoryEnv>
@@ -45,10 +45,10 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\build\</OutputDirectory>
-          <OutputName>syscon</OutputName>
+          <OutputName>syscon.out</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>0</CreateHexFile>
+          <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath>.\</ListingPath>
@@ -74,9 +74,9 @@
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name></UserProg1Name>
+            <UserProg1Name>c:\cygwin\bin\python2.7 ../sign/sign.py ./build/syscon.out ./build/syscon.safe</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -190,7 +190,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>1</AdsALst>
+            <AdsALst>0</AdsALst>
             <AdsACrf>1</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -354,8 +354,8 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define>NRF51,COZMO_ROBOT,ROBOT41</Define>
+              <MiscControls>-DROBOT41</MiscControls>
+              <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
               <IncludePath>.\lib\Include;.\lib\Include\app_common;.\lib\Include\ble;.\lib\Include\ble\ble_services;.\lib\Include\ble\rpc;.\lib\Include\gcc;..\..\include;..\..\coretech\common\include;..\supervisor\src;..\include;..\syscon;..\syscon\common</IncludePath>
             </VariousControls>
@@ -377,7 +377,7 @@
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>1</umfTarg>
+            <umfTarg>0</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -385,7 +385,7 @@
             <useFile>0</useFile>
             <TextAddressRange>0x00000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
-            <ScatterFile></ScatterFile>
+            <ScatterFile>.\scatter.scf</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc></Misc>
@@ -419,14 +419,14 @@
               <FilePath>.\hal\battery.cpp</FilePath>
             </File>
             <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\lights.cpp</FilePath>
-            </File>
-            <File>
               <FileName>head.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\head.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\lights.cpp</FilePath>
             </File>
             <File>
               <FileName>radio.cpp</FileName>
@@ -434,19 +434,14 @@
               <FilePath>.\hal\radio.cpp</FilePath>
             </File>
             <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\debug.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>drop.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\drop.cpp</FilePath>
-            </File>
-            <File>
               <FileName>tests.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\tests.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\debug.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -520,6 +515,9 @@
               <FilePath>.\startup\startup_nrf51.s</FilePath>
             </File>
           </Files>
+        </Group>
+        <Group>
+          <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
     </Target>
