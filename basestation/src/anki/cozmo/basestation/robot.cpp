@@ -123,7 +123,7 @@ namespace Anki {
       if (nullptr != neutralFaceAnim)
       {
         auto frameIter = neutralFaceAnim->GetTrack_Const<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
-        ProceduralFaceData::SetResetData(new ProceduralFaceData(frameIter->GetFace().GetData()));
+        ProceduralFaceData::SetResetData(frameIter->GetFace().GetData());
       }
       else
       {

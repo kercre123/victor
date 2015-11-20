@@ -4,7 +4,7 @@
  * Author: Lee Crippen
  * Created: 11/17/15
  *
- * Description:
+ * Description: Holds and sets the face rig data used by ProceduralFace.
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -43,7 +43,7 @@ public:
   };
   
   // Allows setting an instance of ProceduralFaceData to be used as reset values
-  static void SetResetData(ProceduralFaceData* newResetData);
+  static void SetResetData(const ProceduralFaceData& newResetData);
   
   // Reset parameters to their nominal values
   void Reset();

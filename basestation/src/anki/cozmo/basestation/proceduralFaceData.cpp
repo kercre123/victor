@@ -4,7 +4,7 @@
  * Author: Lee Crippen
  * Created: 11/17/15
  *
- * Description:
+ * Description: Holds and sets the face rig data used by ProceduralFace.
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -20,10 +20,10 @@ namespace Cozmo {
   
 ProceduralFaceData* ProceduralFaceData::_resetData = nullptr;
   
-void ProceduralFaceData::SetResetData(ProceduralFaceData* newResetData)
+void ProceduralFaceData::SetResetData(const ProceduralFaceData& newResetData)
 {
   ProceduralFaceData* oldPointer = _resetData;
-  _resetData = newResetData;
+  _resetData = new ProceduralFaceData(newResetData);
   Util::SafeDelete(oldPointer);
 }
   
@@ -33,29 +33,6 @@ void ProceduralFaceData::Reset()
   {
     *this = *_resetData;
   }
-  /*
-  _faceAngle = 0;
-  _faceCenter = {0,0};
-  _faceScale = {1.f,1.f};
-  
-  _eyeParams[Left].fill(0);
-  _eyeParams[Right].fill(0);
-  
-  for(auto whichEye : {Left, Right}) {
-    SetParameter(whichEye, Parameter::EyeScaleX, whichEye == Left ? 1.01f : 1.19f);
-    SetParameter(whichEye, Parameter::EyeScaleY, whichEye == Left ? 0.87f : 1.0f);
-    SetParameter(whichEye, Parameter::EyeCenterX, whichEye == Left ? 42 : 83);
-    SetParameter(whichEye, Parameter::EyeCenterY, whichEye == Left ? 36 : 35);
-    
-    for(auto radius : {Parameter::UpperInnerRadiusX, Parameter::UpperInnerRadiusY,
-      Parameter::UpperOuterRadiusX, Parameter::UpperOuterRadiusY,
-      Parameter::LowerInnerRadiusX, Parameter::LowerInnerRadiusY,
-      Parameter::LowerOuterRadiusX, Parameter::LowerOuterRadiusY})
-    {
-      SetParameter(whichEye, radius, 0.61f);
-    }
-  }
-   */
 }
   
 static const char* kFaceAngleKey = "faceAngle";
