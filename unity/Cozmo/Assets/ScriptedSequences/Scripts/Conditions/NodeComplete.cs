@@ -5,6 +5,15 @@ namespace ScriptedSequences.Conditions {
 
     public uint NodeId;
 
+    [Flags]
+    public enum CompletionState {
+      Success = 1,
+      Failure = 2,
+      Any = 3
+    }
+
+    public CompletionState State = CompletionState.Any;
+
     #region implemented abstract members of ScriptedSequenceCondition
     protected override void EnableChanged(bool enabled) {
       var node = _Parent.GetNode(NodeId);
@@ -16,7 +25,10 @@ namespace ScriptedSequences.Conditions {
 
       if (enabled) {
         if (node.IsComplete) {
-          IsMet = true;
+          if ((node.Succeeded && (State & CompletionState.Success) != 0) ||
+             (!node.Succeeded && (State & CompletionState.Failure) != 0)) {
+            IsMet = true;
+          }
         } else {
           node.OnComplete += HandleNodeComplete;
         }

@@ -74,6 +74,8 @@ namespace ScriptedSequences
       }
     }
 
+    public bool Succeeded { get; private set; }
+
     public event Action OnComplete;
 
     public void Initialize(ScriptedSequence parent, ScriptedSequenceNode previous) {
@@ -179,12 +181,14 @@ namespace ScriptedSequences
             _Parent.Fail(result.Error);
             return;
           }
+          Succeeded = true;
           IsComplete = true;
         });
       } else {
         var token = SimpleAsyncToken.PessimisticReduce(actingTokens);
         _ActToken = token;
         token.Ready(result => {
+          Succeeded = result.Success;
           IsComplete = true;
         });
       }

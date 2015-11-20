@@ -426,6 +426,12 @@ public class ScriptedSequenceEditor : Editor {
       }
     }
 
+    EditorGUIUtility.labelWidth = 200;
+    sequence.Repeatable = EditorGUILayout.Toggle("Repeatable", sequence.Repeatable);
+    sequence.CanResume = EditorGUILayout.Toggle("Can Resume From Check Point", sequence.CanResume);
+    sequence.RequiresConditionRemainsMet = EditorGUILayout.Toggle("Condition Must Stay Met", sequence.RequiresConditionRemainsMet);
+    EditorGUIUtility.labelWidth = 0;
+
     // draw the sequence condition
     DrawConditionOrActionEntry("Sequence Condition", sequence.Condition, (x) => {
       sequence.Condition = x;

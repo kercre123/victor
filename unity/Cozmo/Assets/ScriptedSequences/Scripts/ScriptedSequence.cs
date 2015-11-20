@@ -6,6 +6,12 @@ namespace ScriptedSequences {
   public class ScriptedSequence : ScriptableObject, IScriptedSequenceParent {
     public string Name;
 
+    public bool RequiresConditionRemainsMet;
+
+    public bool Repeatable;
+
+    public bool CanResume;
+
     public ScriptedSequenceCondition Condition;
 
     public List<ScriptedSequenceNode> Nodes = new List<ScriptedSequenceNode>();
@@ -65,7 +71,7 @@ namespace ScriptedSequences {
       if (Condition.IsMet) {
         Enable();
       }
-      else {
+      else if(RequiresConditionRemainsMet) {
         ResetSequence();
       }
     }

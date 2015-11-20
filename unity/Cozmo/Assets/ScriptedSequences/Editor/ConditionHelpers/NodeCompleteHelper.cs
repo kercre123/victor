@@ -27,6 +27,8 @@ namespace ScriptedSequences.Editor.ConditionHelpers {
       var ids = sequence.Nodes.Select(x => (int)x.Id).ToArray();
 
       Value.NodeId = (uint)EditorGUILayout.IntPopup("Node", (int)Value.NodeId, labels, ids);
+
+      Value.State = (NodeComplete.CompletionState)EditorGUILayout.EnumPopup("Completion State", Value.State);
     }
   }
 }

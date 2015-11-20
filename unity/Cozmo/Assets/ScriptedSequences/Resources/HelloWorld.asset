@@ -12,6 +12,9 @@ MonoBehaviour:
   m_Name: HelloWorld
   m_EditorClassIdentifier: 
   Name: Hello World
+  RequiresConditionRemainsMet: 0
+  Repeatable: 0
+  CanResume: 0
   Condition: {fileID: 11400000, guid: abcaba78cd27b49cd9d689999d0625cf, type: 2}
   Nodes:
   - Name: Hello
