@@ -22,7 +22,7 @@ public class DebugConsoleData {
 
     public string _varName;
     public string _category;
-    public debugConsoleType _nativeType;
+    public consoleVarUnion.Tag _tagType;
 
     public double _minValue;
     public double _maxValue;
@@ -35,22 +35,24 @@ public class DebugConsoleData {
 
   private bool _NeedsUIUpdate;
   private List<DebugConsoleVarData> _DataListVar;
+  //private Dictionary<string, List<DebugConsoleVar> > _DataByCategory;
 
   public void AddConsoleVar(DebugConsoleVar singleVar) {
     _NeedsUIUpdate = true;
 
+
     // TODO: check for dupes.
     DebugConsoleVarData varData = new DebugConsoleVarData();
 
-    varData._nativeType = singleVar.varType;
-    switch (varData._nativeType) {
-    case debugConsoleType.Double:
+    varData._tagType = singleVar.varValue.GetTag();
+    switch (varData._tagType) {
+    case consoleVarUnion.Tag.varDouble:
       varData._valueAsDouble = singleVar.varValue.varDouble;
       break;
-    case debugConsoleType.Int64:
+    case consoleVarUnion.Tag.varInt:
       varData._valueAsInt64 = singleVar.varValue.varInt;
       break;
-    case debugConsoleType.Uint64:
+    case consoleVarUnion.Tag.varUint:
       varData._valueAsUInt64 = singleVar.varValue.varUint;
       break;
     }
@@ -59,11 +61,17 @@ public class DebugConsoleData {
 
     _DataListVar.Add(varData);
   }
+
+  public bool InitUI(GameObject uiPrefab, Transform parentTransform) {
+    
+    return true;
+  }
     
   // Get with the singleton pattern, no creating ones outside instance
   private DebugConsoleData() { 
     _NeedsUIUpdate = false;
     _DataListVar = new List<DebugConsoleVarData>();
+    //_DataByCategory = new Dictionary<string, List<DebugConsoleVar> >();
   }
 
   public int GetCountVars() {

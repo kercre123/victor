@@ -15,14 +15,14 @@ public class ConsoleVarLine : MonoBehaviour {
   public void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
     _StatLabel.text = singleVar._varName;
 
-    switch (singleVar._nativeType) {
-    case debugConsoleType.Double:
+    switch (singleVar._tagType) {
+    case consoleVarUnion.Tag.varDouble:
       _StatInputField.text = singleVar._valueAsDouble.ToString();
       break;
-    case debugConsoleType.Int64:
+    case consoleVarUnion.Tag.varInt:
       _StatInputField.text = singleVar._valueAsInt64.ToString();
       break;
-    case debugConsoleType.Uint64:
+    case consoleVarUnion.Tag.varUint:
       _StatInputField.text = singleVar._valueAsUInt64.ToString();
       break;
     }

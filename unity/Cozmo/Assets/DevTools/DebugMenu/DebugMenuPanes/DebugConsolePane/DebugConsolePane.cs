@@ -22,8 +22,10 @@ public class DebugConsolePane : MonoBehaviour {
     // if the static class is up, do a refresh of data.
     if (DebugConsoleData.Instance.NeedsUIUpdate()) {
       int count = DebugConsoleData.Instance.GetCountVars();
+      // TODO: sort by categories.
       for (int i = 0; i < count; ++i) {
         DebugConsoleData.DebugConsoleVarData singleVar = DebugConsoleData.Instance.GetDataAtIndex(i);
+
         GameObject statLine = UIManager.CreateUI(_SingleLinePrefab.gameObject, _UIContainer);
         ConsoleVarLine uiLine = statLine.GetComponent<ConsoleVarLine>();
         uiLine.Init(singleVar);
