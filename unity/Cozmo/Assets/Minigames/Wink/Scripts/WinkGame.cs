@@ -31,7 +31,7 @@ namespace Wink {
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
-      CheckWinkComplete();
+      CheckWaveComplete();
     }
 
     public void PickNewWinkSide() {
@@ -62,22 +62,29 @@ namespace Wink {
       DestroyDefaultQuitButton();
     }
 
-    private void CheckWinkComplete() {
+    private void CheckWaveComplete() {
+      
+    }
+
+    private bool WaveLeft() {
+      
+    }
+
+    private bool WaveRight() {
       
     }
 
     private void SetProceduralFace() {
-      float[] leftEyeParams = new float[(int)Anki.Cozmo.ProceduralEyeParameter.NumParameters];
-      float[] rightEyeParams = new float[(int)Anki.Cozmo.ProceduralEyeParameter.NumParameters];
+      // TODO : Play animations
       switch (_WinkStatus) {
       case WinkStatus.Left:
         break;
       case WinkStatus.Right:
         break;
       case WinkStatus.Neutral:
+        CurrentRobot.SendAnimation(AnimationName.kDefaultFace);
         break;
       }
-      CurrentRobot.DisplayProceduralFace(0.0f, Vector2.zero, Vector2.one, leftEyeParams, rightEyeParams);
     }
   }
 }

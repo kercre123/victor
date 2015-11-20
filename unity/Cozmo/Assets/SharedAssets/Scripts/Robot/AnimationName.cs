@@ -12,5 +12,7 @@ public static class AnimationName {
   public const string kEnjoyLight = "enjoyLight";
   public const string kSeeOldPattern = "seeOldPattern";
 
+  public const string kDefaultFace = "neutral_face";
+
 }
 
