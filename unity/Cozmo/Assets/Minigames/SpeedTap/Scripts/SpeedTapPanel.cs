@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace SpeedTap {
 
-  public class SpeedTapPanel : BaseDialog {
+  public class SpeedTapPanel : BaseView {
 
     [SerializeField]
     private UnityEngine.UI.Text _CozmoScoreField;

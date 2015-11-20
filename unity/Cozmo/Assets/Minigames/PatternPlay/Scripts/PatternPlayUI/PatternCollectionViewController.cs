@@ -38,8 +38,8 @@ namespace PatternPlay {
       //_patternPlayInstructions.InstructionsFinished -= OnInstructionsFinished;
 
       if (_PatternCollectionDialog != null) {
-        _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
-        UIManager.CloseDialogImmediately(_PatternCollectionDialog);
+        _PatternCollectionDialog.ViewClosed -= OnCollectionDialogClose;
+        UIManager.CloseViewImmediately(_PatternCollectionDialog);
       }
 
       if (_PatternMemory != null) {
@@ -54,8 +54,8 @@ namespace PatternPlay {
       }
 
       if (_PatternDiscoveredDialog != null) {
-        _PatternDiscoveredDialog.DialogCloseAnimationFinished -= OnDiscoveryDialogClosed;
-        UIManager.CloseDialogImmediately(_PatternDiscoveredDialog);
+        _PatternDiscoveredDialog.ViewCloseAnimationFinished -= OnDiscoveryDialogClosed;
+        UIManager.CloseViewImmediately(_PatternDiscoveredDialog);
       }
     }
 
@@ -79,7 +79,7 @@ namespace PatternPlay {
     #region Memory Bank Dialog
 
     private void CreateDialogButton() {
-      GameObject newButton = UIManager.CreateUI(_OpenPatternCollectionDialogButtonPrefab.gameObject);
+      GameObject newButton = UIManager.CreateUIElement(_OpenPatternCollectionDialogButtonPrefab.gameObject);
 
       Button buttonScript = newButton.GetComponent<Button>();
       buttonScript.enabled = false;
@@ -95,7 +95,7 @@ namespace PatternPlay {
     }
 
     private void ShowCollectionDialog() {
-      BaseDialog newDialog = UIManager.OpenDialog(_PatternCollectionDialogPrefab);
+      BaseView newDialog = UIManager.OpenView(_PatternCollectionDialogPrefab);
       _PatternCollectionDialog = newDialog as PatternCollectionDialog;
 
       // Populate dialog with cards using memory
@@ -111,12 +111,12 @@ namespace PatternPlay {
         _PatternCollectionDialog.SetScrollValue(_LastOpenedScrollValue);
       }
 
-      _PatternCollectionDialog.DialogClosed += OnCollectionDialogClose;
+      _PatternCollectionDialog.ViewClosed += OnCollectionDialogClose;
     }
 
     private void OnCollectionDialogClose() {
       _ButtonBadgeDisplay.UpdateDisplayWithTag(PatternMemory.kPatternMemoryBadgeTag);
-      _PatternCollectionDialog.DialogClosed -= OnCollectionDialogClose;
+      _PatternCollectionDialog.ViewClosed -= OnCollectionDialogClose;
       _LastOpenedScrollValue = _PatternCollectionDialog.GetScrollValue();
     }
 
@@ -125,16 +125,16 @@ namespace PatternPlay {
     #region Pattern Unlock Moment
 
     private void OnPatternAdded(BlockPattern pattern, MemoryBank bank) {
-      UIManager.CloseAllDialogsImmediately();
+      UIManager.CloseAllViewsImmediately();
       ShowUnlockMomentDialog(pattern);
     }
 
     private void ShowUnlockMomentDialog(BlockPattern pattern) {
-      BaseDialog newDialog = UIManager.OpenDialog(_PatternDiscoveredDialogPrefab);
+      BaseView newDialog = UIManager.OpenView(_PatternDiscoveredDialogPrefab);
       _PatternDiscoveredDialog = newDialog as PatternDiscoveredDialog;
       _PatternDiscoveredDialog.Initialize(pattern);
 
-      _PatternDiscoveredDialog.DialogCloseAnimationFinished += OnDiscoveryDialogClosed;
+      _PatternDiscoveredDialog.ViewCloseAnimationFinished += OnDiscoveryDialogClosed;
     }
 
     private void OnDiscoveryDialogClosed() {
