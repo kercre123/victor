@@ -41,6 +41,7 @@ namespace Wink {
       else {
         _WinkStatus = WinkStatus.Right;
       }
+      SetProceduralFace();
     }
 
     public WinkStatus GetWinkStatus() {
@@ -54,6 +55,7 @@ namespace Wink {
     public void DoneWink() {
       _WinkWaveCompleted = false;
       _WinkStatus = WinkStatus.Neutral;
+      SetProceduralFace();
     }
 
     public override void CleanUp() {
@@ -62,6 +64,20 @@ namespace Wink {
 
     private void CheckWinkComplete() {
       
+    }
+
+    private void SetProceduralFace() {
+      float[] leftEyeParams = new float[(int)Anki.Cozmo.ProceduralEyeParameter.NumParameters];
+      float[] rightEyeParams = new float[(int)Anki.Cozmo.ProceduralEyeParameter.NumParameters];
+      switch (_WinkStatus) {
+      case WinkStatus.Left:
+        break;
+      case WinkStatus.Right:
+        break;
+      case WinkStatus.Neutral:
+        break;
+      }
+      CurrentRobot.DisplayProceduralFace(0.0f, Vector2.zero, Vector2.one, leftEyeParams, rightEyeParams);
     }
   }
 }
