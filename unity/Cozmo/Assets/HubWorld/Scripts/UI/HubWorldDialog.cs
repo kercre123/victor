@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-public class HubWorldDialog : BaseDialog {
+public class HubWorldDialog : BaseView {
 
   public delegate void ButtonClickedHandler(string challengeClicked);
 
@@ -67,21 +67,21 @@ public class HubWorldDialog : BaseDialog {
   }
 
   private void CreateLockedButton(ChallengeData challengeData) {
-    GameObject newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _LockedButtonContainer);
+    GameObject newButton = UIManager.CreateUIElement(_HubWorldButtonPrefab.gameObject, _LockedButtonContainer);
     HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
     buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
     buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
   }
 
   private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {
-    GameObject newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _UnlockedButtonContainer);
+    GameObject newButton = UIManager.CreateUIElement(_HubWorldButtonPrefab.gameObject, _UnlockedButtonContainer);
     HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
     buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
     buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
   }
 
   private void CreateCompletedButton(ChallengeData challengeData) {
-    GameObject newButton = UIManager.CreateUI(_HubWorldButtonPrefab.gameObject, _CompletedButtonContainer);
+    GameObject newButton = UIManager.CreateUIElement(_HubWorldButtonPrefab.gameObject, _CompletedButtonContainer);
     HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
     buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
     buttonScript.OnButtonClicked += HandleCompletedChallengeClicked;

@@ -25,7 +25,7 @@ public class DevHubWorld : HubWorldBase {
     // Destroy dialog if it exists
     if (_DevHubWorldDialogInstance != null) {
       _DevHubWorldDialogInstance.OnDevButtonClicked -= OnDevButtonClicked;
-      _DevHubWorldDialogInstance.CloseDialogImmediately();
+      _DevHubWorldDialogInstance.CloseViewImmediately();
     }
     
     CloseMiniGame();
@@ -34,7 +34,7 @@ public class DevHubWorld : HubWorldBase {
 
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
-    _DevHubWorldDialogInstance = UIManager.OpenDialog(_DevHubWorldDialogPrefab) as DevHubWorldDialog;
+    _DevHubWorldDialogInstance = UIManager.OpenView(_DevHubWorldDialogPrefab) as DevHubWorldDialog;
     _DevHubWorldDialogInstance.Initialize(_GamePrefabs);
     
     // Listen for dialog button tap events
@@ -43,7 +43,7 @@ public class DevHubWorld : HubWorldBase {
 
   private void OnDevButtonClicked(GameBase miniGameClicked) {
     _DevHubWorldDialogInstance.OnDevButtonClicked -= OnDevButtonClicked;
-    _DevHubWorldDialogInstance.CloseDialog();
+    _DevHubWorldDialogInstance.CloseView();
     
     GameObject newMiniGameObject = GameObject.Instantiate(miniGameClicked.gameObject);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();

@@ -16,7 +16,7 @@ namespace AskCozmo {
     private AskCozmoConfig _Config;
 
     void Start() {
-      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
       CreateDefaultQuitButton();
     }
@@ -42,7 +42,7 @@ namespace AskCozmo {
 
     public override void CleanUp() {
       if (_GamePanel != null) {
-        UIManager.CloseDialogImmediately(_GamePanel);
+        UIManager.CloseViewImmediately(_GamePanel);
       }
       DestroyDefaultQuitButton();
     }

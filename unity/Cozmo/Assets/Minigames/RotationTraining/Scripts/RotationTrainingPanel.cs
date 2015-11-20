@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 
 namespace RotationTraining {
-  public class RotationTrainingPanel : BaseDialog {
+  public class RotationTrainingPanel : BaseView {
 
     [SerializeField]
     private TimeTextLabel _TimerText;

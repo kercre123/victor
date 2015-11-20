@@ -32,7 +32,7 @@ namespace RotationTraining {
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<RotationTrainingPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<RotationTrainingPanel>();
       _GamePanel.SetTimeLeft(0);
       CreateDefaultQuitButton();
     }
@@ -48,7 +48,7 @@ namespace RotationTraining {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
-      _GamePanel.CloseDialogImmediately();
+      _GamePanel.CloseViewImmediately();
     }
 
     public void SetTimeLeft(int secondsLeft) {

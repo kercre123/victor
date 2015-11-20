@@ -2,7 +2,7 @@
 using System.Collections;
 
 namespace InvestorDemo {
-  public class InvestorDemoPanel : BaseDialog {
+  public class InvestorDemoPanel : BaseView {
     
     [SerializeField]
     private UnityEngine.UI.Button _NextButton;

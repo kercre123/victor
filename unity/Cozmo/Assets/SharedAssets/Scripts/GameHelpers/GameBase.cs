@@ -52,7 +52,7 @@ public abstract class GameBase : MonoBehaviour {
     if (sDefaultQuitGameButtonPrefab == null) {
       sDefaultQuitGameButtonPrefab = Resources.Load("Prefabs/UI/DefaultQuitMiniGameButton") as GameObject;
     }
-    GameObject newButton = UIManager.CreateUI(sDefaultQuitGameButtonPrefab);
+    GameObject newButton = UIManager.CreateUIElement(sDefaultQuitGameButtonPrefab);
     
     _QuitButtonInstance = newButton.GetComponent<Button>();
     _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);

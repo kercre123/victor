@@ -39,7 +39,7 @@ public class HubWorld : HubWorldBase {
     // Destroy dialog if it exists
     if (_HubWorldDialogInstance != null) {
       DeregisterDialogEvents();
-      _HubWorldDialogInstance.CloseDialogImmediately();
+      _HubWorldDialogInstance.CloseViewImmediately();
     }
 
     HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
@@ -48,7 +48,7 @@ public class HubWorld : HubWorldBase {
 
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
-    _HubWorldDialogInstance = UIManager.OpenDialog(_HubWorldDialogPrefab) as HubWorldDialog;
+    _HubWorldDialogInstance = UIManager.OpenView(_HubWorldDialogPrefab) as HubWorldDialog;
     _HubWorldDialogInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
     _HubWorldDialogInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
     _HubWorldDialogInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
@@ -132,7 +132,7 @@ public class HubWorld : HubWorldBase {
   private void CloseHubWorldDialog() {
     if (_HubWorldDialogInstance != null) {
       DeregisterDialogEvents();
-      _HubWorldDialogInstance.CloseDialog();
+      _HubWorldDialogInstance.CloseView();
     }
   }
 
@@ -220,7 +220,7 @@ public class HubWorld : HubWorldBase {
 
       // Force refresh of the dialog
       DeregisterDialogEvents();
-      _HubWorldDialogInstance.CloseDialogImmediately();
+      _HubWorldDialogInstance.CloseViewImmediately();
       ShowHubWorldDialog();
     }
   }

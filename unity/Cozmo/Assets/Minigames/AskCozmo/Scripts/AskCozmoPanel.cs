@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace AskCozmo {
 
-  public class AskCozmoPanel : BaseDialog {
+  public class AskCozmoPanel : BaseView {
 
     [SerializeField]
     private UnityEngine.UI.Button _AskButton;

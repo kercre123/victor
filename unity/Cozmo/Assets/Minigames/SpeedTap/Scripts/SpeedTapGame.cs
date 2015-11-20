@@ -41,7 +41,7 @@ namespace SpeedTap {
       LightCube.TappedAction += BlockTapped;
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetBehaviorSystem(false);
-      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
 
@@ -54,7 +54,7 @@ namespace SpeedTap {
 
     public override void CleanUp() {
       if (_GamePanel != null) {
-        UIManager.CloseDialogImmediately(_GamePanel);
+        UIManager.CloseViewImmediately(_GamePanel);
       }
       DestroyDefaultQuitButton();
     }
