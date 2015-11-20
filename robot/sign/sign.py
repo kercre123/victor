@@ -54,6 +54,11 @@ with open(argv[1], "rb+") as fo:
 	fo.seek(magic_location)
 	fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
 
+
+# Zero pad to a 4k block (flash area)
+while len(rom_data) % BLOCK_LENGTH:
+	rom_data += b"\x00"
+
 if len(argv) >= 4:
 	print("Outputting raw image")
 	with open(argv[3], "wb") as fo:
@@ -62,10 +67,6 @@ if len(argv) >= 4:
 if len(argv) >= 3:
 	print("Creating signed image")
 	with open(argv[2], "wb") as fo:
-		# Zero pad to a 4k block (flash area)
-		while len(rom_data) % BLOCK_LENGTH:
-			rom_data += b"\x00"
-
 		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
 			fo.write(data)
 			fo.write(pack("<I", block*BLOCK_LENGTH+base_addr))
