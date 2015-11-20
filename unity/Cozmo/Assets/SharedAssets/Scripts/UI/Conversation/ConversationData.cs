@@ -16,13 +16,24 @@ public static class ConversationData {
       SceneName = name;
       Lines = new List<ConversationLine>();
       Lines.AddRange(convoList);
-      // Only add this scene if it is unique, output error otherwise.
+      // Only add this conversation if it is unique, output error otherwise.
       if (!Conversations.ContainsKey(SceneName)) {
         Conversations.Add(SceneName,this);
       }else {
         Debug.LogError(string.Format("Scene : {0} : already exists. All Scenes need a unique ID", name));
       }
     }
+  }
+
+  public static Conversation GetConversationFromData(string name) {
+    Conversation toGet;
+    if (Conversations.TryGetValue(name, out toGet)) {
+      return toGet;
+    }
+    else {
+      Debug.LogError(string.Format("Scene : {0} : doesn't exist. Returning NULL", name));
+    }
+    return toGet;
   }
 
   public struct ConversationLine {

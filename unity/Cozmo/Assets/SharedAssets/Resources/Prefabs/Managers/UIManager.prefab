@@ -45,6 +45,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 488436}
   - 114: {fileID: 11491764}
+  - 114: {fileID: 11439348}
   m_Layer: 0
   m_Name: UIManager
   m_TagString: Untagged
@@ -257,6 +258,17 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &11439348
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 144758}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2fad616075162431c9537d5d28f70a6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11443190
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -349,6 +361,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 909c585ba1f764677a93af23393d9cd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _conversationManager: {fileID: 11439348}
   _orthoUiCanvas: {fileID: 22391958}
   _perspUiCanvas: {fileID: 22364578}
   _eventSystemScript: {fileID: 11485194}

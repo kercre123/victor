@@ -44,7 +44,9 @@ public class UIManager : MonoBehaviour {
   void Awake() {
     _Instance = this;
     _openViews = new List<BaseView>();
-    _conversationManager = gameObject.AddComponent<ConversationManager>();
+    if (_conversationManager == null) {
+      _conversationManager = gameObject.AddComponent<ConversationManager>();
+    }
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
