@@ -77,8 +77,12 @@ public:
   // Get Audio Buffer Obj for robot
   RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
   
-  // Return true if successful
-//  bool SetAudioCallbackFunc( AudioEngine::AudioCallbackFunc callbackFunc );
+  // TODO: Add / Remove GameObj.
+  
+  
+  // TEMP: Set Cozmo Speaker Volumes
+  void StartUpSetDefaults();
+  
 
 private:
   

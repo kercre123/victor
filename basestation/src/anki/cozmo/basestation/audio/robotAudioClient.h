@@ -47,6 +47,8 @@ public:
   void SetPreBufferSize( uint32_t bufferSize ) { _preBufferSize = bufferSize; }
   
   uint32_t GetBufferSize() const;
+  
+  bool IsStreaming() const { return _isStreaming; }
 
 private:
   

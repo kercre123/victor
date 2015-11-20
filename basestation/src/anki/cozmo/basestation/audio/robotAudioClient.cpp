@@ -46,18 +46,18 @@ uint32_t RobotAudioClient::GetSoundSample( uint8_t* outArray, uint32_t requested
 {
 
   if ( requestedSize > _audioBuffer.GetBufferSize() ) {
-    if ( 0 == _audioBuffer.GetEmptyUpdateCount() ) {
+    if ( !_audioBuffer.ShouldClearBuffer() ) {
       PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", "Not Enough bytes %zu", _audioBuffer.GetBufferSize() );
       return 0;
     }
-    PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", " End of event bytes left %zu -- EmptyUpdateCount: %d", _audioBuffer.GetBufferSize(), _audioBuffer.GetEmptyUpdateCount() );
+    PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", " End of event bytes left %zu", _audioBuffer.GetBufferSize() );
     _isStreaming = false;
   }
   
   
   uint32_t returnSize = (uint32_t)_audioBuffer.GetAudioSamples(outArray, requestedSize);
   
-//  PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", "returnSize %d  - Post bufferSize %zu", returnSize, _audioBuffer.GetBufferSize());
+  PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", "returnSize %d  - Post bufferSize %zu", returnSize, _audioBuffer.GetBufferSize());
   
   return returnSize;
 }
@@ -65,7 +65,7 @@ uint32_t RobotAudioClient::GetSoundSample( uint8_t* outArray, uint32_t requested
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::IsReadyToStartAudioStream()
 {
-  if (_audioBuffer.GetBufferSize() >= _preBufferSize) {
+  if ( !_isStreaming && _audioBuffer.GetBufferSize() >= _preBufferSize) {
     _isStreaming = true;
   }
   

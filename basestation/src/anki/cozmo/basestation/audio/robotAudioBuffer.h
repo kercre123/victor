@@ -39,7 +39,9 @@ public:
   
   size_t GetBufferSize() const { return _buffer.size(); }
   
-  uint32_t GetEmptyUpdateCount() const { return _emptyUpdateCount; }
+  void ClearBuffer();
+  
+  bool ShouldClearBuffer() const { return _clearBuffer; }
   
 private:
   
@@ -49,7 +51,7 @@ private:
   
   std::mutex _bufferLock;
   
-  uint32_t _emptyUpdateCount = 0;
+  bool _clearBuffer = false;
 };
 
 

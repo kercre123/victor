@@ -6,6 +6,10 @@ namespace Audio {
 enum uint_32 ParameterType
 {
   Invalid = 0,
+
+  ROBOT_MASTER_VOLUME = 562892825,
+  ROBOT_VOLUME = 1669075520
+
 }
 
 }

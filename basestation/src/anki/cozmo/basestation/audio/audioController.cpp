@@ -76,12 +76,16 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
     } );
-    // Not yet working
+
     _cozmoPlugIn->SetDestroyPluginCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
+      
+      // Done with voice clear audio buffer
+      _robotAudioBuffer->ClearBuffer();
+      
     } );
     
-    _cozmoPlugIn->SetProcessCallback( [this] (AudioEngine::CozmoPlugIn::CozmoAudioBuffer& buffer )
+    _cozmoPlugIn->SetProcessCallback( [this] ( const AudioEngine::CozmoPlugIn::CozmoAudioBuffer& buffer )
     {
       if ( nullptr != _robotAudioBuffer ) {
        _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
@@ -107,6 +111,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _audioEngine->RegisterAudioScene( std::move(initScene) );
     
     _audioEngine->LoadAudioScene( sceneTitle );
+    
+    StartUpSetDefaults();
 
 #endif
   
@@ -212,13 +218,28 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
+    if ( AudioEngine::kInvalidAudioGameObject == gameObject ) {
+      // Set Global RTPC values
+      gameObject = _audioEngine->GetDefaultGameObjectId();
+    }
     _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
   }
 #endif
   return success;
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// THIS IS TEMP
+void AudioController::StartUpSetDefaults()
+{
+  AudioEngine::AudioParameterId ROBOT_MASTER_VOLUME = 562892825;
+  AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
+
+  SetParameter( ROBOT_MASTER_VOLUME, 0.5, kInvalidAudioGameObject);
+  SetParameter( ROBOT_VOLUME, 0.3, kInvalidAudioGameObject);
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Private
   
@@ -240,7 +261,7 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
   std::for_each(_callbackGarbageCollector.begin(),
                 _callbackGarbageCollector.end(),
                 [](AudioEngine::AudioCallbackContext* aContext){ Util::SafeDelete( aContext ); } );
-  _callbackGarbageCollector.empty();
+  _callbackGarbageCollector.clear();
   
   // Move context from EventCallbackMap to CallbackGarbageCollector
   const auto it = _eventCallbackContexts.find( callbackContext->GetPlayId() );
@@ -248,6 +269,7 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
     ASSERT_NAMED( it->second == callbackContext, "AudioController.MoveCallbackContextToGarbageCollector PlayId dose \
                   NOT match Callback Context" );
     // Move to GarbageCollector
+    it->second->ClearCallbacks();
     _callbackGarbageCollector.emplace_back( it->second );
     _eventCallbackContexts.erase( it );
   }
