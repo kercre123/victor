@@ -449,10 +449,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
   sprintf(txt, "AnimBufFree: %d", payload.numAnimBytesFree);
   DrawText(VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
   
-  sprintf(txt, "Status: %5s %5s %7s",
+  sprintf(txt, "Status: %5s %5s %7s %5s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
+    payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED ? "CLIFF" : "");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
   char animLabel[16] = {0};
