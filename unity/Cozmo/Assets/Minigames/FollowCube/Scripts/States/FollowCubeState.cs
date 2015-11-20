@@ -68,7 +68,9 @@ namespace FollowCube {
 
           // If we have turned fully around in either direction, the player wins.
           if (Mathf.Abs(_TotalRadiansTraveled) > Mathf.PI * 2) {
-            _StateMachine.SetNextState(new FollowCubeWinState());
+            AnimationState animState = new AnimationState();
+            animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
+            _StateMachine.SetNextState(animState);
           }
         }
         else {
@@ -114,12 +116,16 @@ namespace FollowCube {
       return _IsAnimatingFail;
     }
 
-    void HandleLostCubeAnimationEnd(bool success) {
+    private void HandleLostCubeAnimationEnd(bool success) {
       _IsAnimatingFail = false;
 
       // Set the head level
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
+    }
+
+    private void HandleWinAnimationDoneHandler(bool success) {
+      _StateMachine.GetGame().RaiseMiniGameWin();
     }
 
     private LightCube FindClosestLightCube() {
