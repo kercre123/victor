@@ -73,6 +73,7 @@ class Upgrader(IDataReceiver):
         "Callback if robot disconnects"
         sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
         self.connected = False
+        sys.exit("Shutting down")
 
     def ReceiveData(self, buffer, sourceAddress):
         "Callback for received messages from robot"
@@ -94,10 +95,13 @@ class Upgrader(IDataReceiver):
         self.acked = False
         self.send(msg)
         while self.acked == False:
-            time.sleep(0.005)
+            time.sleep(0.0005)
 
     def ota(self, filePathName, command, version=0, flashAddress=0x100000):
-        "Load a file and send it to the robot for flash"
+        """Load a file and send it to the robot for flash
+        Note that flashAddress must be a multiple of 0x1000
+        """
+        assert (flashAddress % 0x1000) == 0, "Flash address must be a multiple of sector size"
         FW_CHUNK_SIZE = 1024
         try:
             fw = open(filePathName, "rb").read()
@@ -121,6 +125,7 @@ class Upgrader(IDataReceiver):
                 self.sendAndWait(RobotInterface.EngineToRobot(writeFlash=RobotInterface.WriteFlash(flashAddress+written, chunk)))
                 written += len(chunk)
             # Finish OTA
+            input("Done loading, press enter to trigger")
             self.send(RobotInterface.EngineToRobot(
                 triggerOTAUpgrade=RobotInterface.OTAUpgrade(
                     start   = flashAddress,
@@ -155,7 +160,7 @@ def WaitForUserEnd():
         return
 
 DEFAULT_BODY_IMAGE=os.path.join("syscon", "???")
-DEFAULT_RTIP_IMAGE=os.path.join("k02_hal", "???")
+DEFAULT_RTIP_IMAGE=os.path.join("build", "41", "robot.safe")
 DEFAULT_WIFI_IMAGE=os.path.join("espressif", "bin", "upgrade", "user1.2048.new.3.bin")
 
 # Script entry point

@@ -26,6 +26,8 @@ namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
 
+#define DEBUG_OTA
+
 static uint8 retries;
 
 /// Stores the state nessisary for the over the air upgrade task
@@ -52,7 +54,9 @@ LOCAL bool TaskEraseFlash(uint32 param)
   {
     case SPI_FLASH_RESULT_OK:
     {
+#ifdef DEBUG_OTA
       os_printf("Erased sector %x\r\n", sector);
+#endif
       if (msg->size > SECTOR_SIZE) // This wasn't the last sector
       {
         msg->start += SECTOR_SIZE;
@@ -71,7 +75,9 @@ LOCAL bool TaskEraseFlash(uint32 param)
     }
     case SPI_FLASH_RESULT_ERR:
     {
+#ifdef DEBUG_OTA
       os_printf("Failed to erase sector %x\r\n", sector);
+#endif
       resp.address = msg->start;
       resp.length  = 0; // Indicates failure
       resp.writeNotErase = false;
@@ -102,7 +108,6 @@ LOCAL bool TaskEraseFlash(uint32 param)
     }
   }
   
-  i2spiSwitchMode(I2SPI_NORMAL);
   os_free(msg);
   return false;
 }
@@ -115,7 +120,9 @@ LOCAL bool TaskWriteFlash(uint32 param)
   {
     case SPI_FLASH_RESULT_OK:
     {
+#ifdef DEBUG_OTA
       os_printf("Wrote to flash %x[%d]\r\n", msg->address, msg->data_length);
+#endif
       resp.address = msg->address;
       resp.length  = msg->data_length;
       resp.writeNotErase = true;
@@ -173,9 +180,13 @@ LOCAL bool TaskOtaWiFi(uint32 param)
   BootloaderConfig blcfg;
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
   
+#ifdef DEBUG_OTA
+  os_printf("TaskOtaWiFi\r\n");
+#endif
+  
   blcfg.header = BOOT_CONFIG_HEADER;
   blcfg.newImageStart = state->fwStart / SECTOR_SIZE;
-  blcfg.newImageSize  = state->fwSize  / SECTOR_SIZE;
+  blcfg.newImageSize  = state->fwSize  / SECTOR_SIZE + 1;
   blcfg.version       = state->version;
   blcfg.chksum        = calc_chksum((uint8*)&blcfg, &blcfg.chksum);
   
@@ -220,6 +231,10 @@ LOCAL bool TaskOtaWiFi(uint32 param)
 LOCAL bool TaskOtaRTIP(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
+  
+#ifdef DEBUG_OTA
+  os_printf("TaskOtaRTIP: state = %d\tphase = %d\tindex = %d\r\n", i2spiGetRtipBootloaderState(), state->phase, state->index);
+#endif
   
   switch (i2spiGetRtipBootloaderState())
   {
@@ -427,6 +442,9 @@ LOCAL bool TaskCheckSig(uint32 param)
   {
     int i;
     uint8 digest[SHA1_DIGEST_LENGTH];
+#ifdef DEBUG_OTA
+    os_printf("SHA1 Final\r\n");
+#endif
     SHA1Final(digest, &(state->ctx));
     for (i=0; i<SHA1_DIGEST_LENGTH; i++)
     {
@@ -437,6 +455,9 @@ LOCAL bool TaskCheckSig(uint32 param)
         return false;
       }
     }
+#ifdef DEBUG_OTA
+    os_printf("Signature matches\r\n");
+#endif
     // If we got here, the signature matched
     retries = MAX_RETRIES;
     state->index = 0;
@@ -455,22 +476,31 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       case RobotInterface::OTA_WiFi:
       {
+#ifdef DEBUG_OTA
+        os_printf("WiFi signature OKAY, posting task\r\n");
+#endif
         foregroundTaskPost(TaskOtaWiFi, param);
         return false;
       }
       case RobotInterface::OTA_RTIP:
       {
+#ifdef DEBUG_OTA
+        os_printf("RTIP signature OKAY, switching modes and posting task\r\n");
+#endif
         uint8_t msg[2]; // This is based on the EnterBootloader message which is defined in otaMessages.clad
         msg[0] = RobotInterface::EngineToRobot::Tag_enterBootloader;
         msg[1] = WiFiToRTIP::BOOTLOAD_RTIP;
         i2spiQueueMessage(msg, 2); // Send message to put the RTIP in bootloader mode
-        i2spiSwitchMode(I2SPI_BOOTLOADER);
         retries = MAX_RETRIES;
         foregroundTaskPost(TaskOtaRTIP, param);
+        i2spiSwitchMode(I2SPI_BOOTLOADER);
         return false;
       }
       case RobotInterface::OTA_body:
       {
+#ifdef DEBUG_OTA
+        os_printf("Body signature OKAY, switching mode and posting task\r\n");
+#endif
         uint8_t msg[2]; // This is based on the EnterBootloader message which is defined in otaMessages.clad
         msg[0] = RobotInterface::EngineToRobot::Tag_enterBootloader;
         msg[1] = WiFiToRTIP::BOOTLOAD_BODY;
@@ -543,8 +573,10 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
     }
     else
     {
+#ifdef DEBUG_OTA
       os_printf("OTA finish: fwStart=%x, fwSize=%x, version=%d, command=%d\r\n",
                 msg.start, msg.size, msg.version, msg.command);
+#endif
       retries = MAX_RETRIES;
       SHA1Init(&(otaState->ctx)); // Initalize the SHA1
       otaState->fwStart = msg.start;
@@ -556,6 +588,7 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
       os_memcpy(&(otaState->sig), msg.sig, SHA1_DIGEST_LENGTH);
       foregroundTaskPost(TaskCheckSig, reinterpret_cast<uint32>(otaState));
     }
+    i2spiSwitchMode(I2SPI_NORMAL);
   }
 }
 }
