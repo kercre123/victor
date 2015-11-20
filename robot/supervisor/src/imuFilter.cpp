@@ -337,7 +337,7 @@ namespace Anki {
       {
         static bool infoDisplayed = false;
         
-        if (infoDisplayed) {
+        if (!infoDisplayed) {
           
           HAL::FacePrintf("Motors DISABLED\n"
                           "Batt: %.1fV\n",
