@@ -288,7 +288,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
       ReceivedSpecificMessage(message.AudioCallbackComplete);
       break;
-
+    case G2U.MessageEngineToGame.Tag.RobotObservedMotion:
+      ReceivedSpecificMessage(message.RobotObservedMotion);
+      break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -335,6 +337,13 @@ public class RobotEngineManager : MonoBehaviour {
       lightCube.Moving(message);
       CurrentRobot.UpdateDirtyList(lightCube);
     }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotObservedMotion message) {
+    if (CurrentRobot == null)
+      return;
+
+
   }
 
   private void ReceivedSpecificMessage(ObjectStoppedMoving message) {

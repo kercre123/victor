@@ -17,11 +17,19 @@ namespace Wink {
     public override void Update() {
       base.Update();
       if (_WinkGame.GetWinkCompleted()) {
-        _StateMachine.SetNextState(new CelebrateState());
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kMajorWin, OnAnimationFinished);
+        _StateMachine.SetNextState(animState);
       }
       else if (Time.time - _EnterWinkStateTime > 10.0f) {
-        _StateMachine.SetNextState(new AngryState());
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kShocked, OnAnimationFinished);
+        _StateMachine.SetNextState(animState);
       }
+    }
+
+    private void OnAnimationFinished(bool success) {
+      _StateMachine.SetNextState(new WinkState());
     }
 
     public override void Exit() {

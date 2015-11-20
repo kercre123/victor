@@ -86,7 +86,6 @@ namespace Wink {
       case WinkStatus.Right:
         break;
       case WinkStatus.Neutral:
-        CurrentRobot.SendAnimation(AnimationName.kDefaultFace);
         break;
       }
     }
