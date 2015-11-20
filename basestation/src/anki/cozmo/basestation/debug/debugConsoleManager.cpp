@@ -49,18 +49,15 @@ namespace Cozmo {
       {
         if( consoleVar->IsSignedType())
         {
-          varObject.varType = debugConsoleType::Int64;
           varObject.varValue.Set_varInt( consoleVar->GetAsInt64() );
         }
         else
         {
-          varObject.varType = debugConsoleType::Uint64;
           varObject.varValue.Set_varUint( consoleVar->GetAsUInt64() );
         }
       }
       else
       {
-        varObject.varType = debugConsoleType::Double;
         varObject.varValue.Set_varDouble( consoleVar->GetAsDouble() );
       }
       
