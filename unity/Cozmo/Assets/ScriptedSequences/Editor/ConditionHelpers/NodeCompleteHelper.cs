@@ -21,7 +21,7 @@ namespace ScriptedSequences.Editor.ConditionHelpers {
     public NodeCompleteHelper(NodeComplete condition, ScriptedSequenceEditor editor, Action<ScriptedSequenceCondition> replaceAction) : base(condition, editor, replaceAction){}
 
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
-      var sequence = _Editor.target as ScriptedSequence;
+      var sequence = _Editor.CurrentSequence as ScriptedSequence;
 
       var labels = sequence.Nodes.Select(x => x.Name).ToArray();
       var ids = sequence.Nodes.Select(x => (int)x.Id).ToArray();

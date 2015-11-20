@@ -25,4 +25,24 @@ public static class TimeUtility {
     int minutes = MinutesFromSeconds(remainder, out secondsLeftover);
     return new TimeSpan(hours, minutes, secondsLeftover);
   }
+
+  private static readonly DateTime _Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
+  public static long ToUtcMs(this DateTime date) {
+    return (long)(date - _Epoch).TotalMilliseconds;
+  }
+
+  public static DateTime FromUtcMs(this long utcMs) {
+    const long ticksPerMs = 10000;
+    return _Epoch + new TimeSpan(utcMs * ticksPerMs);
+  }
+
+  public static long ToUtc(this DateTime date) {
+    return (long)(date - _Epoch).TotalSeconds;
+  }
+
+  public static DateTime FromUtc(this long utc) {
+    const long ticksPerSecond = 10000 * 1000;
+    return _Epoch + new TimeSpan(utc * ticksPerSecond);
+  }
 }

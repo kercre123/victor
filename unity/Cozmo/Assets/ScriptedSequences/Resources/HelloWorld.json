@@ -1,0 +1,66 @@
+{
+  "Name": "HelloWorld",
+  "RequiresConditionRemainsMet": false,
+  "Repeatable": true,
+  "CanResume": false,
+  "Condition": null,
+  "Nodes": [
+    {
+      "Name": "Hello",
+      "Id": 1,
+      "Sequencial": true,
+      "Final": false,
+      "CheckPoint": false,
+      "FailOnError": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.DebugLogAction, Assembly-CSharp",
+          "StringToLog": "Hello"
+        }
+      ]
+    },
+    {
+      "Name": "Wait",
+      "Id": 2,
+      "Sequencial": true,
+      "Final": false,
+      "CheckPoint": false,
+      "FailOnError": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
+          "TimeInSeconds": 5.0
+        }
+      ]
+    },
+    {
+      "Name": "World",
+      "Id": 3,
+      "Sequencial": false,
+      "Final": true,
+      "CheckPoint": false,
+      "FailOnError": false,
+      "Conditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.NodeComplete, Assembly-CSharp",
+          "NodeId": 2,
+          "State": "Any"
+        }
+      ],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.DebugLogAction, Assembly-CSharp",
+          "StringToLog": "World"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "majorWin",
+          "WaitToEnd": true
+        }
+      ]
+    }
+  ],
+  "DebugName": "HelloWorld"
+}

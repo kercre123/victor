@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
+using System.ComponentModel;
+using Newtonsoft.Json;
 
 namespace ScriptedSequences
 {
@@ -12,6 +14,7 @@ namespace ScriptedSequences
 
     public uint Id;
 
+    [DefaultValue(true)]
     public bool Sequencial = true;
 
     public bool Final;
@@ -24,17 +27,16 @@ namespace ScriptedSequences
 
     public List<ScriptedSequenceAction> Actions = new List<ScriptedSequenceAction>();
 
-    [NonSerialized]
     private ScriptedSequence _Parent;
 
-    [NonSerialized]
     private ScriptedSequenceNode _Previous;
 
+    [JsonIgnore]
     public string DebugName { get { return _Parent.DebugName + "::" + Name; } }
 
-    [NonSerialized]
     private bool _IsComplete;
 
+    [JsonIgnore]
     public bool IsComplete { 
       get { return _IsComplete; } 
       private set { 
@@ -50,13 +52,13 @@ namespace ScriptedSequences
       }
     }
 
-    [NonSerialized]
     private IAsyncToken _ActToken;
+    [JsonIgnore]
     public bool IsActive { get { return _ActToken != null && !_ActToken.IsReady; } }
 
-    [NonSerialized]
     private bool _IsEnabled;
 
+    [JsonIgnore]
     public bool IsEnabled { 
       get {
         return _IsEnabled;
@@ -74,6 +76,7 @@ namespace ScriptedSequences
       }
     }
 
+    [JsonIgnore]
     public bool Succeeded { get; private set; }
 
     public event Action OnComplete;

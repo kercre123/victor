@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace ScriptedSequences {
-  public class ScriptedSequence : ScriptableObject, IScriptedSequenceParent {
+  public class ScriptedSequence : IScriptedSequenceParent {
     public string Name;
 
     public bool RequiresConditionRemainsMet;

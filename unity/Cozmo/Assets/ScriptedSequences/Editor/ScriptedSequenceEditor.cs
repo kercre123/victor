@@ -8,9 +8,15 @@ using System.IO;
 using System;
 using ScriptedSequences.Editor;
 using System.Reflection;
+using Newtonsoft.Json;
 
-[CustomEditor(typeof(ScriptedSequence))]
-public class ScriptedSequenceEditor : Editor {
+public class ScriptedSequenceEditor : EditorWindow {
+
+  public string CurrentSequenceFile;
+  public ScriptedSequence CurrentSequence;
+
+  private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
+
 
   // Required to display the Condition Select Popup
   private static string[] _ConditionTypeNames;
@@ -84,7 +90,7 @@ public class ScriptedSequenceEditor : Editor {
   private ScriptedSequenceHelper<ScriptedSequenceAction> _DraggingActionHelper;
 
   // generic way to get start dragging a condition or action
-  public void SetDraggingHelper<T>(ScriptedSequenceHelper<T> val) where T : ScriptableObject
+  public void SetDraggingHelper<T>(ScriptedSequenceHelper<T> val) where T : IScriptedSequenceItem
   {
     if(typeof(T) == typeof(ScriptedSequenceCondition))
     {
@@ -96,7 +102,7 @@ public class ScriptedSequenceEditor : Editor {
   }
 
   // generic way to get the dragging condition or action
-  public ScriptedSequenceHelper<T> GetDraggingHelper<T>() where T : ScriptableObject
+  public ScriptedSequenceHelper<T> GetDraggingHelper<T>() where T : IScriptedSequenceItem
   {
     if(typeof(T) == typeof(ScriptedSequenceCondition))
     {
@@ -136,7 +142,7 @@ public class ScriptedSequenceEditor : Editor {
   private Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>> _ActionHelpers = new Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>>();
 
   // generic way to retrieve the helper for a condition/action if it exists
-  private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : ScriptableObject
+  private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem
   {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
     if(typeof(T) == typeof(ScriptedSequenceCondition))
@@ -156,7 +162,7 @@ public class ScriptedSequenceEditor : Editor {
   }
 
   // generic way to set the helper for a condition/action
-  private void SetHelper<T>(T key, ScriptedSequenceHelper<T> helper)  where T : ScriptableObject
+  private void SetHelper<T>(T key, ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem
   {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
     if(typeof(T) == typeof(ScriptedSequenceCondition))
@@ -174,29 +180,27 @@ public class ScriptedSequenceEditor : Editor {
 
   // shows a popup for a new condition or action, returns the created
   // condition/action on button press or null if button is not pressed
-  private T ShowAddPopup<T>(Rect rect) where T : ScriptableObject {
+  private T ShowAddPopup<T>(Rect rect) where T : IScriptedSequenceItem {
     if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return ShowAddPopupInternal<T>(rect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
     }
     else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       return ShowAddPopupInternal<T>(rect, ref _SelectedActionIndex, _ActionTypeNames, _ActionIndices, _ActionTypes);
     }
-    return null;
+    return default(T);
   }
 
   // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
-  private T ShowAddPopupInternal<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : ScriptableObject {
+  private T ShowAddPopupInternal<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : IScriptedSequenceItem {
     var popupRect = new Rect(rect.x, rect.y, rect.width - 50, rect.height);
     var plusRect = new Rect(rect.x + rect.width - 50, rect.y, 50, rect.height);
     index = EditorGUI.IntPopup(popupRect, index, names, indices);
 
     if (GUI.Button(plusRect, "+", ButtonStyle)) {
-      var result = (ScriptableObject.CreateInstance(types[index]) as T);
-      result.hideFlags = HideFlags.HideInInspector;
-      AssetDatabase.CreateAsset(result, Path.Combine(SequenceFolder, Guid.NewGuid().ToString() + ".asset"));
+      var result = (T)(Activator.CreateInstance(types[index]));
       return result;
     }
-    return null;
+    return default(T);
   }
 
   // if we copy a node, it is saved here. The actual copy is made when pasting
@@ -233,19 +237,20 @@ public class ScriptedSequenceEditor : Editor {
 
   // copy a node by creating a new sequence and using CopySerialized
   public ScriptedSequenceNode CopyNode(ScriptedSequenceNode node) {
-    ScriptedSequence a = ScriptedSequence.CreateInstance<ScriptedSequence>(); 
-    ScriptedSequence b = ScriptedSequence.CreateInstance<ScriptedSequence>();
-    a.Nodes.Add(node);   
-    EditorUtility.CopySerialized(a, b); 
-    return b.Nodes[0];
+    return JsonConvert.DeserializeObject<ScriptedSequenceNode>(
+          JsonConvert.SerializeObject(node, 
+                                      Formatting.None, 
+                                      ScriptedSequenceManager.JsonSettings), 
+          ScriptedSequenceManager.JsonSettings);
   }
 
   // copy a condition
-  public T Copy<T>(T condition) where T : ScriptableObject {
-    T copy = (T)ScriptableObject.CreateInstance(condition.GetType());
-    // save the copied asset
-    AssetDatabase.CreateAsset(copy, Path.Combine(SequenceFolder, Guid.NewGuid().ToString() + ".asset"));
-    EditorUtility.CopySerialized(condition, copy);
+  public T Copy<T>(T value) where T : IScriptedSequenceItem {
+    T copy = (T)JsonConvert.DeserializeObject(
+          JsonConvert.SerializeObject(value, 
+                                      Formatting.None, 
+                                      ScriptedSequenceManager.JsonSettings),
+          value.GetType());
     return copy;
   }
 
@@ -325,6 +330,36 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // custom Unity Style for a toolbar button
+  private static GUIStyle _ToolbarButtonStyle;
+  public static GUIStyle ToolbarButtonStyle
+  {
+    get
+    {
+      if (_ToolbarButtonStyle == null) {
+        _ToolbarButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
+        _ToolbarButtonStyle.normal.textColor = Color.white;
+        _ToolbarButtonStyle.active.textColor = Color.white;
+      }
+      return _ToolbarButtonStyle;
+    }
+  }
+
+  // custom Unity Style for a toolbar button
+  private static GUIStyle _ToolbarStyle;
+  public static GUIStyle ToolbarStyle
+  {
+    get
+    {
+      if (_ToolbarStyle == null) {
+        _ToolbarStyle = new GUIStyle(EditorStyles.toolbar);
+        _ToolbarStyle.normal.textColor = Color.white;
+        _ToolbarStyle.active.textColor = Color.white;
+      }
+      return _ToolbarStyle;
+    }
+  }
+
   private static GUIStyle _FoldoutStyle;
   public static GUIStyle FoldoutStyle
   {
@@ -348,27 +383,134 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
-  // Gets the folder associated with a sequence that contains all of serialized its conditions/actions
-  public string SequenceFolder {
-    get {
-      var path = AssetDatabase.GetAssetPath(target);
+  private Vector2 _ScrollPosition;
 
-      var dir = Path.GetDirectoryName(path);
-      var fileName = Path.GetFileNameWithoutExtension(path);
+  public void OnGUI()
+  {
 
-      string dirPath = Path.Combine(dir, fileName);
-      if(!Directory.Exists(dirPath))
-      {
-        AssetDatabase.CreateFolder(dir, fileName);
-      }
-      return dirPath;
+    DrawToolbar();
+
+    _ScrollPosition = EditorGUILayout.BeginScrollView(_ScrollPosition);
+
+    DrawSequenceEditor();
+
+    EditorGUILayout.EndScrollView();
+  }
+
+  private bool CheckDiscardUnsavedSequence()
+  {
+    bool canOpen = true;
+    if (CurrentSequence != null && (string.IsNullOrEmpty(CurrentSequenceFile) || JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings) != File.ReadAllText(CurrentSequenceFile)))
+    {
+      canOpen = EditorUtility.DisplayDialog("Warning","Opening a Sequence will Discard Unsaved Changes. Are you Sure?", "Yes");
     }
+    return canOpen;
+  }
+
+  public void DrawToolbar() {
+
+    EditorGUILayout.BeginHorizontal(ToolbarStyle);
+
+    if (GUILayout.Button("Load", ToolbarButtonStyle)) {
+      GenericMenu menu = new GenericMenu();
+
+      foreach (var file in Directory.GetFiles("Assets/ScriptedSequences/Resources", "*.json")) {
+        Action<string> closureAction = (string f) => {
+
+          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
+            if (CheckDiscardUnsavedSequence()) {
+              try {
+                CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(f), ScriptedSequenceManager.JsonSettings);
+                CurrentSequenceFile = f;
+                _RecentFiles.Add(f);
+              }
+              catch (Exception ex) {
+                DAS.Error(this, ex.ToString());
+              }
+            }
+          });
+        };
+        closureAction(file);
+      }
+      menu.ShowAsContext();
+    }
+
+    if (GUILayout.Button("Find and Load", ToolbarButtonStyle)) {
+      if(CheckDiscardUnsavedSequence())
+      {
+        string path = EditorUtility.OpenFilePanel("Open Sequence", "Assets", "json");
+
+        if(!string.IsNullOrEmpty(path))
+        {
+          try
+          {
+            CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(path), ScriptedSequenceManager.JsonSettings);
+            CurrentSequenceFile = path;
+            _RecentFiles.Add(path);
+          }
+          catch(Exception ex) {
+            DAS.Error(this, ex.ToString());
+          }
+        }
+      }
+    }
+
+    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", ToolbarButtonStyle)) {
+
+      GenericMenu menu = new GenericMenu();
+
+      foreach (var file in _RecentFiles) {
+        Action<string> closureAction = (string f) => {
+
+          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
+            if (CheckDiscardUnsavedSequence()) {
+              try {
+                CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(f), ScriptedSequenceManager.JsonSettings);
+                CurrentSequenceFile = f;
+              }
+              catch (Exception ex) {
+                DAS.Error(this, ex.ToString());
+              }
+            }
+          });
+        };
+        closureAction(file);
+      }
+      menu.ShowAsContext();
+
+    }
+
+    if (GUILayout.Button("New Sequence", ToolbarButtonStyle)) {
+      if (CheckDiscardUnsavedSequence()) {
+        CurrentSequence = new ScriptedSequence();
+        _EditingName = true;
+        CurrentSequenceFile = null;
+      }
+    }
+
+
+    if (CurrentSequence != null && GUILayout.Button("Save", ToolbarButtonStyle)) {         
+      if (string.IsNullOrEmpty(CurrentSequenceFile)) {
+        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", "Assets/ScriptedSequences/Resources", CurrentSequence.Name, ".json");
+      }
+
+      if(!string.IsNullOrEmpty(CurrentSequenceFile))
+      {
+        _RecentFiles.Add(CurrentSequenceFile);
+        File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
+
+        EditorUtility.DisplayDialog("Save Successful!", "Sequence " + CurrentSequence.Name + " Has been saved to " + CurrentSequenceFile, "OK");
+      }
+    }
+
+    GUILayout.FlexibleSpace();
+    EditorGUILayout.EndHorizontal();
   }
 
   // draw the editor for the ScriptedSequence
-  public override void OnInspectorGUI() {
+  public void DrawSequenceEditor() {
 
-    var sequence = target as ScriptedSequence;
+    var sequence = CurrentSequence;
 
     var evt = Event.current;
 
@@ -394,11 +536,6 @@ public class ScriptedSequenceEditor : Editor {
       sequence.Nodes = new System.Collections.Generic.List<ScriptedSequenceNode>();
     }
 
-    // quick way to save everything without doing File > Save Project
-    if (GUILayout.Button("Save")) {
-      AssetDatabase.SaveAssets();
-    }
-
     var titleRect = EditorGUILayout.GetControlRect();
 
     if (_EditingName) {
@@ -411,7 +548,6 @@ public class ScriptedSequenceEditor : Editor {
       sequence.Name = EditorGUI.TextField(leftRect, sequence.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
         _EditingName = false;
-        EditorUtility.SetDirty(target);
       }
     }
     else {
@@ -421,7 +557,6 @@ public class ScriptedSequenceEditor : Editor {
       if (mouseEvent == EventType.ContextClick) {
         if (titleRect.Contains(mousePosition)) {
           _EditingName = true;
-          EditorUtility.SetDirty(target);
         }
       }
     }
@@ -478,7 +613,6 @@ public class ScriptedSequenceEditor : Editor {
       if (!_LastMouseUp) {
         _LastMouseUp = true;
         _LastMouseUpPosition = mousePosition;
-        EditorUtility.SetDirty(target);
       }
       else {
         _DraggingNodeIndex = -1;
@@ -497,15 +631,12 @@ public class ScriptedSequenceEditor : Editor {
       GUI.Box(new Rect(evt.mousePosition + DragOffset, DragSize), "  "+DragTitle, BoxStyle);
       GUI.backgroundColor = lastColor;
       GUI.contentColor = lastTextColor;
-      EditorUtility.SetDirty(target);
     }
-
-    serializedObject.ApplyModifiedProperties();
   }
 
   // function to insert a new node
   private void AddNode(int index) {
-    var sequence = target as ScriptedSequence;
+    var sequence = CurrentSequence;
 
     if (sequence == null) {
       return;
@@ -517,7 +648,7 @@ public class ScriptedSequenceEditor : Editor {
   // get a uint 1 higher than the highest node's Id
   private uint GetNextId()
   {
-    var sequence = target as ScriptedSequence;
+    var sequence = CurrentSequence;
 
     if (sequence == null) {
       return 0;
@@ -534,7 +665,7 @@ public class ScriptedSequenceEditor : Editor {
 
   // remove a node
   private void RemoveNode(int index) {
-    var sequence = target as ScriptedSequence;
+    var sequence = CurrentSequence;
 
     if (sequence == null) {
       return;
@@ -575,7 +706,6 @@ public class ScriptedSequenceEditor : Editor {
       node.Name = EditorGUI.TextField(leftRect, node.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
         _EditingNodeNames[node.Id] = false;
-        EditorUtility.SetDirty(target);
       }
       GUI.contentColor = Color.black;
 
@@ -592,7 +722,6 @@ public class ScriptedSequenceEditor : Editor {
 
           menu.AddItem(new GUIContent("Change Name"), false, () => {
             _EditingNodeNames[node.Id] = true;
-            EditorUtility.SetDirty(target);
           });
 
           menu.AddItem(new GUIContent("Copy"), false, () => {
@@ -645,7 +774,6 @@ public class ScriptedSequenceEditor : Editor {
               sequence.Nodes[index] = tmpNode;
             }
             _DraggingNodeIndex = -1;
-            EditorUtility.SetDirty(target);
           }
         }
       }
@@ -673,7 +801,7 @@ public class ScriptedSequenceEditor : Editor {
   }
 
   // Draws a list of Conditions or Actions
-  public void DrawConditionOrActionList<T>(string label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : ScriptableObject {    
+  public void DrawConditionOrActionList<T>(string label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : IScriptedSequenceItem {    
     GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
 
     for (int i = 0; i < conditions.Count; i++) {
@@ -702,7 +830,7 @@ public class ScriptedSequenceEditor : Editor {
     // show the add condition/action box at the bottom of the list
     var newObject = ShowAddPopup<T>(nextRect);
 
-    if (newObject != default(T)) {
+    if (!EqualityComparer<T>.Default.Equals(newObject, default(T))) {
       conditions.Add(newObject);
     }
     var draggingHelper = GetDraggingHelper<T>();
@@ -713,7 +841,7 @@ public class ScriptedSequenceEditor : Editor {
 
         conditions.Add(draggingHelper.ValueBase);
         if (draggingHelper.ReplaceInsteadOfInsert) {
-          draggingHelper.ReplaceAction(null);
+          draggingHelper.ReplaceAction(default(T));
           draggingHelper.ReplaceAction = null;
           draggingHelper.ReplaceInsteadOfInsert = false;
         }
@@ -734,13 +862,13 @@ public class ScriptedSequenceEditor : Editor {
   public Rect GetIndentedLabelRect()
   {
     var rect = EditorGUILayout.GetControlRect();
-    rect.x += 15 * (EditorGUI.indentLevel - 1);
-    rect.width -= 15 * (EditorGUI.indentLevel - 1);
+    rect.x += 15 * (EditorGUI.indentLevel);
+    rect.width -= 15 * (EditorGUI.indentLevel);
     return rect;
   }
 
   // If there is a field that is a condition/action, we can't use the list drawer. This gets around it using a setAction
-  public void DrawConditionOrActionEntry<T>(string label, T value, Action<T> setAction, Vector2 mousePosition, EventType eventType) where T : ScriptableObject {
+  public void DrawConditionOrActionEntry<T>(string label, T value, Action<T> setAction, Vector2 mousePosition, EventType eventType) where T : IScriptedSequenceItem {
     GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
     EditorGUI.indentLevel++;
     ScriptedSequenceHelper<T> helper = null;
@@ -753,7 +881,7 @@ public class ScriptedSequenceEditor : Editor {
       helper.OnGUI(mousePosition, eventType);
 
       if (GUILayout.Button("Clear", LabelStyle)) {
-        setAction(null);
+        setAction(default(T));
       }
     }
     else
@@ -773,7 +901,7 @@ public class ScriptedSequenceEditor : Editor {
         setAction(value);
 
         if (draggingHelper.ReplaceInsteadOfInsert) {
-          draggingHelper.ReplaceAction(null);
+          draggingHelper.ReplaceAction(default(T));
         }
         else {
           draggingHelper.List.RemoveAt(draggingHelper.Index);
@@ -786,29 +914,11 @@ public class ScriptedSequenceEditor : Editor {
     EditorGUI.indentLevel--;
   }
 
-  [MenuItem("Assets/Create/Cozmo/Scripted Sequence")]
+  [MenuItem("Cozmo/Scripted Sequence Editor %t")]
   public static void CreateScriptedSequence()
   {
-    var selected = Selection.objects.FirstOrDefault();
-
-    var path = selected == null ? "Assets" : AssetDatabase.GetAssetPath(selected);
-
-    path = Directory.Exists(path) ? path : Path.GetDirectoryName(path);
-
-    var instance = ScriptableObject.CreateInstance<ScriptedSequence>();
-
-    string fileNameBase = "NewSequence";
-
-    int i = 0;
-    string suffix = "";
-
-    while(File.Exists(Path.Combine(path, fileNameBase + suffix + ".asset")))
-    {
-      i++;
-      suffix = i.ToString();
-    }
-    instance.name = fileNameBase + suffix;
-
-    AssetDatabase.CreateAsset(instance, Path.Combine(path, fileNameBase + suffix + ".asset"));
+    ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow (typeof (ScriptedSequenceEditor));
+    window.titleContent = new GUIContent("Scripted Sequence Editor");
+    window.Show();
   }
 }

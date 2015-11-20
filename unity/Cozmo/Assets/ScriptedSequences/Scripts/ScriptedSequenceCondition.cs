@@ -1,12 +1,15 @@
 using System;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace ScriptedSequences
 {
-	public abstract class ScriptedSequenceCondition : ScriptableObject
+  public abstract class ScriptedSequenceCondition : IScriptedSequenceItem
 	{
+    [JsonIgnore]
     protected IScriptedSequenceParent _Parent { get; private set; }
 
+    [JsonIgnore]
     public string DebugName { get { return _Parent.DebugName + "::" + GetType().Name; } }
 
     public virtual void Initialize(IScriptedSequenceParent parent)
@@ -16,8 +19,8 @@ namespace ScriptedSequences
       _Parent = parent;
     }
 
-    [NonSerialized]
     private bool _IsEnabled;
+    [JsonIgnore]
     public bool IsEnabled { 
       get { return _IsEnabled; } 
       set { 
@@ -36,8 +39,8 @@ namespace ScriptedSequences
 
     public event Action OnConditionChanged;
 
-    [NonSerialized]
     private bool _IsMet;
+    [JsonIgnore]
     public bool IsMet { 
       get { return _IsMet; } 
       protected set { 

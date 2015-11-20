@@ -7,7 +7,7 @@ using System.Linq;
 namespace ScriptedSequences.Editor {
   // Base class which has should have a generic argument of either
   // ScriptedSequenceCondition or ScriptedSequenceAction
-  public abstract class ScriptedSequenceHelper<T> where T : ScriptableObject {
+  public abstract class ScriptedSequenceHelper<T> where T : IScriptedSequenceItem {
 
     public readonly T ValueBase;
 
@@ -49,7 +49,7 @@ namespace ScriptedSequences.Editor {
   }
 
   // Generic class for a specific class of Condition or Action
-  public class ScriptedSequenceHelper<T, U> : ScriptedSequenceHelper<U> where T : U  where U : ScriptableObject {
+  public class ScriptedSequenceHelper<T, U> : ScriptedSequenceHelper<U> where T : U  where U : IScriptedSequenceItem {
 
     public T Value { get { return (T)ValueBase; } }
 
@@ -142,8 +142,6 @@ namespace ScriptedSequences.Editor {
             {
               _OnDestroy();
             }
-
-            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(Value));
           });
 
           menu.ShowAsContext();
@@ -228,7 +226,6 @@ namespace ScriptedSequences.Editor {
             }
 
             _Editor.SetDraggingHelper<U>(null);
-            EditorUtility.SetDirty(_Editor.target);
           }
         }
       }
@@ -251,7 +248,6 @@ namespace ScriptedSequences.Editor {
         EditorGUI.indentLevel++;
         DrawControls(mousePosition, eventType);
         EditorGUI.indentLevel--;
-        EditorUtility.SetDirty(Value);
       }
     }
 
