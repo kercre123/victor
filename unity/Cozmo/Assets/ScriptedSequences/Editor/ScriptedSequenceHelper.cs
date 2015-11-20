@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace ScriptedSequences.Editor {
+  // Base class which has should have a generic argument of either
+  // ScriptedSequenceCondition or ScriptedSequenceAction
   public abstract class ScriptedSequenceHelper<T> where T : ScriptableObject {
 
     public readonly T ValueBase;
@@ -46,12 +48,14 @@ namespace ScriptedSequences.Editor {
 
   }
 
+  // Generic class for a specific class of Condition or Action
   public class ScriptedSequenceHelper<T, U> : ScriptedSequenceHelper<U> where T : U  where U : ScriptableObject {
 
     public T Value { get { return (T)ValueBase; } }
 
+    // By Default, we generate an editor for all fields that are int, float, string or bool
+    // which lets us not write a custom editor for every single condition or action
     private System.Reflection.FieldInfo[] _Fields;
-
     private System.Reflection.FieldInfo[] Fields { 
       get
       {
@@ -69,21 +73,19 @@ namespace ScriptedSequences.Editor {
       }
     }
 
+    // Some conditions/actions don't have any parameters, so we don't need to draw the foldout
     protected override bool _Expandable {
       get {
         return Fields.Length > 0;
       }
     }
 
-    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, List<U> list) : base(condition, editor, list)
-    {
-    }
-
-    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, Action<U> replaceAction) : base(condition, editor, replaceAction)
-    {
-    }
+    // Constructors
+    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, List<U> list) : base(condition, editor, list) {}
+    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, Action<U> replaceAction) : base(condition, editor, replaceAction) {}
 
 
+    // Function to draw the controls for this Condition/Action
     public override void OnGUI(Vector2 mousePosition, EventType eventType)
     {
       var rect = EditorGUILayout.GetControlRect();
@@ -101,6 +103,7 @@ namespace ScriptedSequences.Editor {
       GUI.DrawTexture(textureRect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
       GUI.color = Color.white;
 
+      // Handle Right Click, Drag, or Drop
       if (rect.Contains(mousePosition)) {
         if (eventType == EventType.ContextClick) {
 
@@ -229,6 +232,7 @@ namespace ScriptedSequences.Editor {
           }
         }
       }
+      // if this condition/action is expandable, draw a foldout. Otherwise just draw a label
       if (_Expandable) {
         _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name, ScriptedSequenceEditor.FoldoutStyle);
       }
@@ -242,6 +246,7 @@ namespace ScriptedSequences.Editor {
       GUI.backgroundColor = lastBackgroundColor;
       GUI.contentColor = lastContentColor;
 
+      // if this condition/action is expanded, Draw the Controls for it
       if (_Expanded) {
         EditorGUI.indentLevel++;
         DrawControls(mousePosition, eventType);
@@ -275,6 +280,7 @@ namespace ScriptedSequences.Editor {
     }
   }
 
+  // An Attribute used to mark the editor you want to use for an Action/Condition
   public class ScriptedSequenceHelperAttribute : Attribute {
 
     public readonly Type Type;

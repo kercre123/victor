@@ -11,23 +11,18 @@ using System.Reflection;
 
 [CustomEditor(typeof(ScriptedSequence))]
 public class ScriptedSequenceEditor : Editor {
-  
+
+  // Required to display the Condition Select Popup
   private static string[] _ConditionTypeNames;
-
   private static Type[] _ConditionTypes;
-
   private static int[] _ConditionIndices;
-
   private int _SelectedConditionIndex = 0;
 
+  // Required to display the Action Select Popup
   private static string[] _ActionTypeNames;
-
   private static Type[] _ActionTypes;
-
   private static int[] _ActionIndices;
-
   private int _SelectedActionIndex = 0;
-
   private static Dictionary<System.Type, System.Type> _HelperLookup;
 
 
@@ -72,18 +67,23 @@ public class ScriptedSequenceEditor : Editor {
   }
 
 
-
+  // whether we should display the text field for the Sequence Name
   private bool _EditingName = false;
 
+  // toggle state for node foldouts
   private Dictionary<uint, bool> _ExpandedNodes = new Dictionary<uint, bool>();
 
+  // whether we are editing the name of each node
   private Dictionary<uint, bool> _EditingNodeNames = new Dictionary<uint, bool>();
 
+  // when dragging a node, this tells us which one
   private int _DraggingNodeIndex = -1;
 
+  // when dragging a condition or action, this is how we identify it
   private ScriptedSequenceHelper<ScriptedSequenceCondition> _DraggingConditionHelper;
   private ScriptedSequenceHelper<ScriptedSequenceAction> _DraggingActionHelper;
 
+  // generic way to get start dragging a condition or action
   public void SetDraggingHelper<T>(ScriptedSequenceHelper<T> val) where T : ScriptableObject
   {
     if(typeof(T) == typeof(ScriptedSequenceCondition))
@@ -95,6 +95,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // generic way to get the dragging condition or action
   public ScriptedSequenceHelper<T> GetDraggingHelper<T>() where T : ScriptableObject
   {
     if(typeof(T) == typeof(ScriptedSequenceCondition))
@@ -107,25 +108,34 @@ public class ScriptedSequenceEditor : Editor {
     return null;
   }
 
-
+  // where on the field we started dragging
   public Vector2 DragOffset;
 
+  // the size of the rect to drag
   public Vector2 DragSize;
 
+  // the name to display in the drag box
   public string DragTitle;
 
+  // the color of the drag box
   public Color DragColor;
+  // the text color in the drag box
   public Color DragTextColor;
 
+  // the position we started dragging from
   public Vector2 DragStart;
 
+  // if we got a mouse up and need to wait for a Layout and Repaint to determine what it was over
   private bool _LastMouseUp;
 
+  // the position of the last mouse up
   private Vector2 _LastMouseUpPosition;
 
+  // dictionary from condition/action to the helper for that condition used for drawing controls
   private Dictionary<ScriptedSequenceCondition, ScriptedSequenceHelper<ScriptedSequenceCondition>> _ConditionHelpers = new Dictionary<ScriptedSequenceCondition, ScriptedSequenceHelper<ScriptedSequenceCondition>>();
   private Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>> _ActionHelpers = new Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>>();
 
+  // generic way to retrieve the helper for a condition/action if it exists
   private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : ScriptableObject
   {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
@@ -145,6 +155,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // generic way to set the helper for a condition/action
   private void SetHelper<T>(T key, ScriptedSequenceHelper<T> helper)  where T : ScriptableObject
   {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
@@ -161,6 +172,8 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // shows a popup for a new condition or action, returns the created
+  // condition/action on button press or null if button is not pressed
   private T ShowAddPopup<T>(Rect rect) where T : ScriptableObject {
     if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return ShowAddPopupInternal<T>(rect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
@@ -171,6 +184,7 @@ public class ScriptedSequenceEditor : Editor {
     return null;
   }
 
+  // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
   private T ShowAddPopupInternal<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : ScriptableObject {
     var popupRect = new Rect(rect.x, rect.y, rect.width - 50, rect.height);
     var plusRect = new Rect(rect.x + rect.width - 50, rect.y, 50, rect.height);
@@ -185,11 +199,14 @@ public class ScriptedSequenceEditor : Editor {
     return null;
   }
 
+  // if we copy a node, it is saved here. The actual copy is made when pasting
   private ScriptedSequenceNode _CopiedNode;
 
+  // Copied Condition and Action
   private ScriptedSequenceCondition _CopiedCondition;
   private ScriptedSequenceAction _CopiedAction;
 
+  // generic method to set the copied condition/action
   public void SetCopiedValue<T>(T val)
   {
     if(typeof(T) == typeof(ScriptedSequenceCondition))
@@ -201,6 +218,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // generic method to get the copied condition/action
   public T GetCopiedValue<T>()
   {
     if(typeof(T) == typeof(ScriptedSequenceCondition))
@@ -213,7 +231,7 @@ public class ScriptedSequenceEditor : Editor {
     return default(T);
   }
 
-
+  // copy a node by creating a new sequence and using CopySerialized
   public ScriptedSequenceNode CopyNode(ScriptedSequenceNode node) {
     ScriptedSequence a = ScriptedSequence.CreateInstance<ScriptedSequence>(); 
     ScriptedSequence b = ScriptedSequence.CreateInstance<ScriptedSequence>();
@@ -222,12 +240,16 @@ public class ScriptedSequenceEditor : Editor {
     return b.Nodes[0];
   }
 
+  // copy a condition
   public T Copy<T>(T condition) where T : ScriptableObject {
     T copy = (T)ScriptableObject.CreateInstance(condition.GetType());
+    // save the copied asset
+    AssetDatabase.CreateAsset(copy, Path.Combine(SequenceFolder, Guid.NewGuid().ToString() + ".asset"));
     EditorUtility.CopySerialized(condition, copy);
     return copy;
   }
 
+  // Generic method to get the type we should use for a condition or action
   public static System.Type GetHelperType<T>(System.Type type) {
     Type returnType;
     if (!_HelperLookup.TryGetValue(type, out returnType)) {
@@ -236,6 +258,7 @@ public class ScriptedSequenceEditor : Editor {
     return returnType;
   }
 
+  // custom Unity Style for a label
   private static GUIStyle _LabelStyle;
   public static GUIStyle LabelStyle
   {
@@ -251,6 +274,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // custom Unity Style for a box
   private static GUIStyle _BoxStyle;
   public static GUIStyle BoxStyle
   {
@@ -266,6 +290,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // custom Unity Style for a text field
   private static GUIStyle _TextFieldStyle;
   public static GUIStyle TextFieldStyle
   {
@@ -285,6 +310,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // custom Unity Style for a button
   private static GUIStyle _ButtonStyle;
   public static GUIStyle ButtonStyle
   {
@@ -322,6 +348,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // Gets the folder associated with a sequence that contains all of serialized its conditions/actions
   public string SequenceFolder {
     get {
       var path = AssetDatabase.GetAssetPath(target);
@@ -338,6 +365,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // draw the editor for the ScriptedSequence
   public override void OnInspectorGUI() {
 
     var sequence = target as ScriptedSequence;
@@ -361,10 +389,12 @@ public class ScriptedSequenceEditor : Editor {
       return;
     }
 
+    // make sure Nodes is not null
     if (sequence.Nodes == null) {
       sequence.Nodes = new System.Collections.Generic.List<ScriptedSequenceNode>();
     }
 
+    // quick way to save everything without doing File > Save Project
     if (GUILayout.Button("Save")) {
       AssetDatabase.SaveAssets();
     }
@@ -385,8 +415,9 @@ public class ScriptedSequenceEditor : Editor {
       }
     }
     else {
-      GUI.Label(titleRect, sequence.Name, LabelStyle);
+      GUI.Label(titleRect, "Sequence: "+sequence.Name, LabelStyle);
 
+      // if you right click the sequence name, it goes to edit mode
       if (mouseEvent == EventType.ContextClick) {
         if (titleRect.Contains(mousePosition)) {
           _EditingName = true;
@@ -395,6 +426,7 @@ public class ScriptedSequenceEditor : Editor {
       }
     }
 
+    // draw the sequence condition
     DrawConditionOrActionEntry("Sequence Condition", sequence.Condition, (x) => {
       sequence.Condition = x;
     }, mousePosition, mouseEvent);
@@ -404,6 +436,7 @@ public class ScriptedSequenceEditor : Editor {
 
     EditorGUI.indentLevel++;
 
+    // Draw the nodes in the sequence
     for (int i = 0; i < sequence.Nodes.Count; i++) {
       if (sequence.Nodes[i] == null) {
         sequence.Nodes.RemoveAt(i);
@@ -415,16 +448,26 @@ public class ScriptedSequenceEditor : Editor {
     }
 
     var nextRect = EditorGUILayout.GetControlRect();
-
+    // plus button to add more nodes
     var plusRect = new Rect(nextRect.x + nextRect.width - 50, nextRect.y, 50, nextRect.height);
 
     if (GUI.Button(plusRect, "+", ButtonStyle)) {
       AddNode(sequence.Nodes.Count);
     }
 
+    if (nextRect.Contains(mousePosition) && _DraggingNodeIndex != -1) {
+      if (mouseEvent == EventType.mouseUp) {
+        var node = sequence.Nodes[_DraggingNodeIndex];
+        sequence.Nodes.RemoveAt(_DraggingNodeIndex);
+        sequence.Nodes.Add(node);
+      }
+    }
+
 
     EditorGUI.indentLevel--;
 
+    // clear out anything being dragged on mouse up 
+    //(if it was over something the drop would have been handled already)
     if (mouseEvent == EventType.mouseUp) {
       if (!_LastMouseUp) {
         _LastMouseUp = true;
@@ -439,6 +482,7 @@ public class ScriptedSequenceEditor : Editor {
       }
     }
 
+    // draw a box so you can see what you are dragging.
     if ((_DraggingNodeIndex != -1 || _DraggingConditionHelper != null || _DraggingActionHelper != null) && !_LastMouseUp && Mathf.Abs(DragStart.y - mousePosition.y) > 5) {
       var lastColor = GUI.backgroundColor;
       var lastTextColor = GUI.color;
@@ -453,6 +497,7 @@ public class ScriptedSequenceEditor : Editor {
     serializedObject.ApplyModifiedProperties();
   }
 
+  // function to insert a new node
   private void AddNode(int index) {
     var sequence = target as ScriptedSequence;
 
@@ -463,6 +508,7 @@ public class ScriptedSequenceEditor : Editor {
     sequence.Nodes.Insert(index, new ScriptedSequenceNode(){ Id = id, Name = "Node "+id });
   }
 
+  // get a uint 1 higher than the highest node's Id
   private uint GetNextId()
   {
     var sequence = target as ScriptedSequence;
@@ -480,6 +526,7 @@ public class ScriptedSequenceEditor : Editor {
     return maxId + 1;
   }
 
+  // remove a node
   private void RemoveNode(int index) {
     var sequence = target as ScriptedSequence;
 
@@ -490,6 +537,7 @@ public class ScriptedSequenceEditor : Editor {
     sequence.Nodes.RemoveAt(index);
   }
 
+  // method to draw the controls for a node
   private void DrawScriptedSequenceNode(int index, ScriptedSequenceNode node, ScriptedSequence sequence, Vector2 mousePosition, EventType eventType) {
 
     bool expanded, editingName;
@@ -561,6 +609,7 @@ public class ScriptedSequenceEditor : Editor {
 
           menu.ShowAsContext();
         }
+        // handle drag start
         else if (eventType == EventType.mouseDown) {
           _DraggingNodeIndex = index;
           DragOffset = rect.position - mousePosition;
@@ -570,6 +619,7 @@ public class ScriptedSequenceEditor : Editor {
           DragColor = Color.yellow;
           DragTextColor = Color.black;
         }
+        // handle drag end (drop)
         else if (eventType == EventType.mouseUp) {
           if (_DraggingNodeIndex != -1) {
             if (_DraggingNodeIndex < index) {
@@ -616,11 +666,13 @@ public class ScriptedSequenceEditor : Editor {
     DrawConditionOrActionList("Actions", node.Actions, mousePosition, eventType);
   }
 
+  // Draws a list of Conditions or Actions
   public void DrawConditionOrActionList<T>(string label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : ScriptableObject {    
     GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
 
     for (int i = 0; i < conditions.Count; i++) {
       var cond = conditions[i];
+      // clear out any null conditions
       if (cond == null) {
         conditions.RemoveAt(i);
         i--;
@@ -629,16 +681,19 @@ public class ScriptedSequenceEditor : Editor {
 
       ScriptedSequenceHelper<T> helper = null;
 
+      // get the helper for this condition/action type
       if (!TryGetHelper<T>(cond, out helper)) {
         helper = Activator.CreateInstance(GetHelperType<T>(cond.GetType()), cond, this, conditions) as ScriptedSequenceHelper<T>;
         SetHelper<T>(cond, helper);
       }
 
+      // use the helper to draw the gui for the item
       helper.OnGUI(mousePosition, eventType);
     }
 
     var nextRect = EditorGUILayout.GetControlRect();
 
+    // show the add condition/action box at the bottom of the list
     var newObject = ShowAddPopup<T>(nextRect);
 
     if (newObject != default(T)) {
@@ -646,6 +701,7 @@ public class ScriptedSequenceEditor : Editor {
     }
     var draggingHelper = GetDraggingHelper<T>();
 
+    // dropping on the add field inserts at the end
     if (nextRect.Contains(mousePosition) && eventType == EventType.mouseUp && draggingHelper != null) {
       if (conditions != draggingHelper.List) {
 
@@ -668,6 +724,7 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  // some things ignore indent. This is a work around
   public Rect GetIndentedLabelRect()
   {
     var rect = EditorGUILayout.GetControlRect();
@@ -676,6 +733,7 @@ public class ScriptedSequenceEditor : Editor {
     return rect;
   }
 
+  // If there is a field that is a condition/action, we can't use the list drawer. This gets around it using a setAction
   public void DrawConditionOrActionEntry<T>(string label, T value, Action<T> setAction, Vector2 mousePosition, EventType eventType) where T : ScriptableObject {
     GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
     EditorGUI.indentLevel++;
@@ -702,6 +760,7 @@ public class ScriptedSequenceEditor : Editor {
         setAction(newObject);
       }
 
+      // Dropping on a single field swaps out the field for the dragging one
       var draggingHelper = GetDraggingHelper<T>();
       if (nextRect.Contains(mousePosition) && eventType == EventType.mouseUp && draggingHelper != null) {
         value = draggingHelper.ValueBase;
