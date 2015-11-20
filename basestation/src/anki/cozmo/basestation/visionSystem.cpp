@@ -237,21 +237,13 @@ namespace Cozmo {
 #endif
   } // GetTrackerQuad()
   
-  Result VisionSystem::UpdateRobotState(const PoseData& poseData)
+  Result VisionSystem::UpdatePoseData(const PoseData& poseData)
   {
-    _prevRobotState = _robotState;
-    
-    _robotState.pose_frame_id = poseData.poseStamp.GetFrameId();
-    _robotState.timestamp     = poseData.timeStamp;
-    _robotState.pose.x        = poseData.poseStamp.GetPose().GetTranslation().x();
-    _robotState.pose.y        = poseData.poseStamp.GetPose().GetTranslation().y();
-    _robotState.pose.z        = poseData.poseStamp.GetPose().GetTranslation().z();
-    _robotState.pose.angle    = poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat();
-    _robotState.headAngle     = poseData.poseStamp.GetHeadAngle();
-    _robotState.liftAngle     = poseData.poseStamp.GetLiftAngle();
+    std::swap(_prevPoseData, _poseData);
+    _poseData = poseData;
     
     if(_wasCalledOnce) {
-      _havePreviousRobotState = true;
+      _havePrevPoseData = true;
     } else {
       _wasCalledOnce = true;
     }
@@ -262,19 +254,26 @@ namespace Cozmo {
   
   void VisionSystem::GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
   {
-    AnkiAssert(_havePreviousRobotState);
+    AnkiAssert(_havePrevPoseData);
     
-    angleChange = Radians(_robotState.pose.angle) - Radians(_prevRobotState.pose.angle);
+    const Pose3d& crntPose = _poseData.poseStamp.GetPose();
+    const Pose3d& prevPose = _prevPoseData.poseStamp.GetPose();
+    const Radians crntAngle = crntPose.GetRotation().GetAngleAroundZaxis();
+    const Radians prevAngle = prevPose.GetRotation().GetAngleAroundZaxis();
+    const Vec3f& crntT = crntPose.GetTranslation();
+    const Vec3f& prevT = prevPose.GetTranslation();
+    
+    angleChange = crntAngle - prevAngle;
     
     //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
-    const f32 dx = _robotState.pose.x - _prevRobotState.pose.x;
-    const f32 dy = _robotState.pose.y - _prevRobotState.pose.y;
+    const f32 dx = crntT.x() - prevT.x();
+    const f32 dy = crntT.y() - prevT.y();
     
     // Get change in robot coordinates
-    const f32 cosAngle = cosf(-_prevRobotState.pose.angle);
-    const f32 sinAngle = sinf(-_prevRobotState.pose.angle);
+    const f32 cosAngle = cosf(-prevAngle.ToFloat());
+    const f32 sinAngle = sinf(-prevAngle.ToFloat());
     xChange = dx*cosAngle - dy*sinAngle;
     yChange = dx*sinAngle + dy*cosAngle;
   } // GetPoseChange()
@@ -319,13 +318,13 @@ namespace Cozmo {
   
   Radians VisionSystem::GetCurrentHeadAngle()
   {
-    return _robotState.headAngle;
+    return _poseData.poseStamp.GetHeadAngle();
   }
   
   
   Radians VisionSystem::GetPreviousHeadAngle()
   {
-    return _prevRobotState.headAngle;
+    return _prevPoseData.poseStamp.GetHeadAngle();
   }
   
 
@@ -1197,10 +1196,15 @@ namespace Cozmo {
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
   {
-    const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(0.1));
-    const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    .5f) &&
-                           NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    .5f) &&
-                           NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(0.1)));
+    const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
+                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+    const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
+                                _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
+                           NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
+                                _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
+                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
+                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
+                                DEG_TO_RAD(0.1)));
     
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
@@ -1415,7 +1419,7 @@ namespace Cozmo {
     _numTrackFailures          = 0;
     
     _wasCalledOnce             = false;
-    _havePreviousRobotState    = false;
+    _havePrevPoseData          = false;
     
     PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
                      "With model path %s.", _dataPath.c_str());
@@ -1624,14 +1628,8 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
-    /* Not necessary on basestation
-     // Make sure that we send the robot state message associated with the
-     // image we are about to process.
-     Messages::SendRobotStateMsg(&robotState);
-     */
-    
     // Store the new robot state and keep a copy of the previous one
-    UpdateRobotState(poseData);
+    UpdatePoseData(poseData);
     
     // prevent us from trying to update a tracker we just initialized in the same
     // frame

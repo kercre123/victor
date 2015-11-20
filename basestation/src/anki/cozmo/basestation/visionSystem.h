@@ -310,8 +310,9 @@ namespace Cozmo {
     Embedded::Point3<P3P_PRECISION> _canonicalMarker3d[4];
     
     // Snapshots of robot state
-    bool _wasCalledOnce, _havePreviousRobotState;
-    RobotState _robotState, _prevRobotState;
+    bool _wasCalledOnce = false;
+    bool _havePrevPoseData = false;
+    PoseData _poseData, _prevPoseData;
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
@@ -358,7 +359,7 @@ namespace Cozmo {
     VisionMemory _memory;
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
-    Result UpdateRobotState(const PoseData& newRobotState);
+    Result UpdatePoseData(const PoseData& newPoseData);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();
