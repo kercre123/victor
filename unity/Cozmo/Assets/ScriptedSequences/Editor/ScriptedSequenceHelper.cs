@@ -233,7 +233,9 @@ namespace ScriptedSequences.Editor {
         _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name, ScriptedSequenceEditor.FoldoutStyle);
       }
       else {
+        EditorGUI.indentLevel++;
         GUI.Label(rect, typeof(T).Name, ScriptedSequenceEditor.LabelStyle);
+        EditorGUI.indentLevel--;
       }
 
       GUI.color = lastColor;
@@ -244,6 +246,7 @@ namespace ScriptedSequences.Editor {
         EditorGUI.indentLevel++;
         DrawControls(mousePosition, eventType);
         EditorGUI.indentLevel--;
+        EditorUtility.SetDirty(Value);
       }
     }
 

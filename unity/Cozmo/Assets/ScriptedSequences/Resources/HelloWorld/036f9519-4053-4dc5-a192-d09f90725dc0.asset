@@ -11,4 +11,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a95bbc466539748c9b296016492d2221, type: 3}
   m_Name: 036f9519-4053-4dc5-a192-d09f90725dc0
   m_EditorClassIdentifier: 
-  StringToLog: 
+  StringToLog: World

@@ -243,6 +243,7 @@ public class ScriptedSequenceEditor : Editor {
     {
       if (_LabelStyle == null) {
         _LabelStyle = new GUIStyle();
+        _LabelStyle.fontStyle = FontStyle.Bold;
         _LabelStyle.normal.textColor = Color.white;
         _LabelStyle.active.textColor = Color.white;
       }
@@ -262,6 +263,25 @@ public class ScriptedSequenceEditor : Editor {
         _BoxStyle.normal.background = Texture2D.whiteTexture;
       }
       return _BoxStyle;
+    }
+  }
+
+  private static GUIStyle _TextFieldStyle;
+  public static GUIStyle TextFieldStyle
+  {
+    get
+    {
+      if (_TextFieldStyle == null) {
+        _TextFieldStyle = new GUIStyle(EditorStyles.textField);
+        _TextFieldStyle.normal.textColor = Color.white;
+        _TextFieldStyle.active.textColor = Color.white;
+
+        _TextFieldStyle.normal.background = GUI.skin.textField.normal.background;
+        _TextFieldStyle.active.background = GUI.skin.textField.active.background;
+        _TextFieldStyle.hover.background = GUI.skin.textField.hover.background;
+        _TextFieldStyle.focused.background = GUI.skin.textField.hover.background;
+      }
+      return _TextFieldStyle;
     }
   }
 
@@ -344,7 +364,11 @@ public class ScriptedSequenceEditor : Editor {
     if (sequence.Nodes == null) {
       sequence.Nodes = new System.Collections.Generic.List<ScriptedSequenceNode>();
     }
-      
+
+    if (GUILayout.Button("Save")) {
+      AssetDatabase.SaveAssets();
+    }
+
     var titleRect = EditorGUILayout.GetControlRect();
 
     if (_EditingName) {
@@ -354,7 +378,7 @@ public class ScriptedSequenceEditor : Editor {
 
       rightRect.x += leftRect.width;
       rightRect.width = 35;
-      sequence.Name = EditorGUI.TextField(leftRect, sequence.Name, LabelStyle);
+      sequence.Name = EditorGUI.TextField(leftRect, sequence.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
         _EditingName = false;
         EditorUtility.SetDirty(target);
@@ -484,7 +508,6 @@ public class ScriptedSequenceEditor : Editor {
     GUI.contentColor = Color.black;
     GUI.backgroundColor = Color.yellow;
     GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
-    GUI.color = Color.black;
 
     if (editingName) {
       var leftRect = rect;
@@ -494,10 +517,17 @@ public class ScriptedSequenceEditor : Editor {
       rightRect.x += leftRect.width;
       rightRect.width = 35;
 
-      node.Name = EditorGUI.TextField(leftRect, node.Name, LabelStyle);
+      GUI.contentColor = Color.white;
+      node.Name = EditorGUI.TextField(leftRect, node.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
         _EditingNodeNames[node.Id] = false;
         EditorUtility.SetDirty(target);
+      }
+      GUI.contentColor = Color.black;
+
+      // sometimes it starts dragging when we change names. Cancel that.
+      if (_DraggingNodeIndex == index) {
+        _DraggingNodeIndex = -1;
       }
     }
     else {

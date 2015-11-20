@@ -11,5 +11,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43c17d2964b344f538faa4a23ea00ca8, type: 3}
   m_Name: b7bea34a-76e7-48f8-8edc-57b3c3c924c4
   m_EditorClassIdentifier: 
-  AnimationName: 
+  AnimationName: majorWin
   WaitToEnd: 1
