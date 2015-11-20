@@ -63,19 +63,23 @@ namespace Wink {
     }
 
     private void CheckWaveComplete() {
-      
+      if ((WaveLeft() && _WinkStatus == WinkStatus.Left) || (WaveRight() && _WinkStatus == WinkStatus.Right)) {
+        _WinkWaveAccumulator += Time.deltaTime;
+      }
+      else {
+        _WinkWaveAccumulator -= Time.deltaTime;
+      }
     }
 
     private bool WaveLeft() {
-      
+      return false;
     }
 
     private bool WaveRight() {
-      
+      return false;
     }
 
     private void SetProceduralFace() {
-      // TODO : Play animations
       switch (_WinkStatus) {
       case WinkStatus.Left:
         break;
