@@ -71,7 +71,9 @@ namespace DockTraining {
         }
 
         if (distance < 53.0f && relDot > 0.88f && _CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
-          _StateMachine.SetNextState(new CelebrateState());
+          AnimationState animState = new AnimationState();
+          animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
+          _StateMachine.SetNextState(animState);
         }
         else {
           SteeringLogic();
@@ -79,6 +81,10 @@ namespace DockTraining {
 
       }
 
+    }
+
+    private void HandleWinAnimationDoneHandler(bool success) {
+      _StateMachine.GetGame().RaiseMiniGameWin();
     }
 
     public override void Exit() {

@@ -57,8 +57,14 @@ namespace VisionTraining {
       }
 
       if (CubeInRect()) {
-        _StateMachine.SetNextState(new CelebrateState());
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
+        _StateMachine.SetNextState(animState);
       }
+    }
+
+    private void HandleWinAnimationDoneHandler(bool success) {
+      _StateMachine.GetGame().RaiseMiniGameWin();
     }
 
     public void SetDistanceBackpackLights() {
