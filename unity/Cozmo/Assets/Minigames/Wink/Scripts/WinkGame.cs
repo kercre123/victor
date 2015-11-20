@@ -83,8 +83,10 @@ namespace Wink {
     private void SetProceduralFace() {
       switch (_WinkStatus) {
       case WinkStatus.Left:
+        CurrentRobot.SendAnimation(AnimationName.kFaceWinkL);
         break;
       case WinkStatus.Right:
+        CurrentRobot.SendAnimation(AnimationName.kFaceWinkR);
         break;
       case WinkStatus.Neutral:
         break;

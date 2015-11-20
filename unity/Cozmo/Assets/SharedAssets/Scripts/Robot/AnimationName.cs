@@ -14,5 +14,8 @@ public static class AnimationName {
 
   public const string kDefaultFace = "neutral_face";
 
+  public const string kFaceWinkL = "face_wink_L";
+  public const string kFaceWinkR = "face_wink_R";
+
 }
 
