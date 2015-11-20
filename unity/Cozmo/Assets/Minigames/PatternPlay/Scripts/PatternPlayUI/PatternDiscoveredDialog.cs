@@ -5,7 +5,7 @@ using DG.Tweening;
 
 namespace PatternPlay {
 
-  public class PatternDiscoveredDialog : BaseDialog {
+  public class PatternDiscoveredDialog : BaseView {
 
     [SerializeField]
     private PatternDiscoveryDisplay _PatternDiscoveryDisplayPrefab;
@@ -28,7 +28,7 @@ namespace PatternPlay {
     }
 
     public void OnCloseButtonTap() {
-      UIManager.CloseDialog(this);
+      UIManager.CloseView(this);
     }
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {

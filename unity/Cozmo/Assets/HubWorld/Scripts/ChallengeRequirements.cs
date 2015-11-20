@@ -33,18 +33,20 @@ public class ChallengeRequirements : ISerializationCallbackReceiver {
     }
   }
 
-  public bool MeetsRequirements(Robot robot, List<string> unlockedChallenges) {
+  public bool MeetsRequirements(Robot robot, List<string> completedChallengeIds) {
     for (int i = 0; i < ChallengeGateKeys.Length; ++i) {
-      if (unlockedChallenges.Contains(ChallengeGateKeys[i]) == false) {
+      if (completedChallengeIds.Contains(ChallengeGateKeys[i]) == false) {
         return false;
       }
     }
 
-    for (Anki.Cozmo.ProgressionStatType i = 0; i < Anki.Cozmo.ProgressionStatType.Count; ++i) {
-      uint statValue = 0;
-      if (StatGateKeys.TryGetValue(i, out statValue)) {
-        if (robot.ProgressionStats[(int)i] < statValue) {
-          return false;
+    if (robot != null) {
+      for (Anki.Cozmo.ProgressionStatType i = 0; i < Anki.Cozmo.ProgressionStatType.Count; ++i) {
+        uint statValue = 0;
+        if (StatGateKeys.TryGetValue(i, out statValue)) {
+          if (robot.ProgressionStats[(int)i] < statValue) {
+            return false;
+          }
         }
       }
     }

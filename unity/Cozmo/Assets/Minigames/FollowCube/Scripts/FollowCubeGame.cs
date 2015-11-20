@@ -19,6 +19,10 @@ namespace FollowCube {
 
     private FollowCubeGamePanel _GamePanel;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+      // TODO
+    }
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
@@ -27,14 +31,14 @@ namespace FollowCube {
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      _GamePanel = UIManager.OpenDialog(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
 
       CreateDefaultQuitButton();
     }
 
     public override void CleanUp() {
       if (_GamePanel != null) {
-        UIManager.CloseDialogImmediately(_GamePanel);
+        UIManager.CloseViewImmediately(_GamePanel);
       }
 
       DestroyDefaultQuitButton();

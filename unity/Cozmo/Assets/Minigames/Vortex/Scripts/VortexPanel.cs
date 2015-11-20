@@ -4,7 +4,7 @@ using DG.Tweening;
 
 namespace Vortex {
 
-  public class VortexPanel : BaseDialog {
+  public class VortexPanel : BaseView {
 
     [SerializeField]
     private UnityEngine.UI.Button _SpinButton;

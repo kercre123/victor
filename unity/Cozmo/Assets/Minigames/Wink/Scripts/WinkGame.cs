@@ -17,6 +17,10 @@ namespace Wink {
 
     private WinkStatus _WinkStatus = WinkStatus.Neutral;
 
+    public override void LoadMinigameConfig(MinigameConfigBase minigameConfigData) {
+      
+    }
+
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("WinkGameStateMachine", _StateMachine);

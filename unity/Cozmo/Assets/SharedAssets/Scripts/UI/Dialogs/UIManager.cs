@@ -35,19 +35,26 @@ public class UIManager : MonoBehaviour {
   [SerializeField]
   private EventSystem _eventSystemScript;
 
-  private List<BaseDialog> _openDialogs;
+  private List<BaseView> _openViews;
 
   void Awake() {
     _Instance = this;
-    _openDialogs = new List<BaseDialog>();
+    _openViews = new List<BaseView>();
     DOTween.Init();
-    BaseDialog.BaseDialogCloseAnimationFinished += HandleBaseDialogCloseAnimationFinished;
+    BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
 
-  public static GameObject CreateUI(GameObject uiPrefab) {
-    return CreateUI(uiPrefab, Instance._orthoUiCanvas.transform);
+  public static GameObject CreateUIElement(GameObject uiPrefab) {
+    return CreateUIElement(uiPrefab, Instance._orthoUiCanvas.transform);
   }
 
+  /// <summary>
+  /// TODO: Evaluate if we still need perspective UI. 
+  /// Use to create a UI element that has 3D objects that you want rendered with
+  /// perspective (as opposed to orthographic)
+  /// </summary>
+  /// <returns>The perspective UI created.</returns>
+  /// <param name="uiPrefab">User interface prefab.</param>
   public static GameObject CreatePerspectiveUI(GameObject uiPrefab) {
     GameObject newUi = GameObject.Instantiate(uiPrefab);
     newUi.transform.SetParent(Instance._perspUiCanvas.transform, false);
@@ -55,43 +62,43 @@ public class UIManager : MonoBehaviour {
     return newUi;
   }
 
-  public static GameObject CreateUI(GameObject uiPrefab, Transform parentTransform) {
+  public static GameObject CreateUIElement(GameObject uiPrefab, Transform parentTransform) {
     GameObject newUi = GameObject.Instantiate(uiPrefab);
     newUi.transform.SetParent(parentTransform, false);
     return newUi;
   }
 
-  public static BaseDialog OpenDialog(BaseDialog dialogPrefab) {
-    GameObject newDialog = GameObject.Instantiate(dialogPrefab.gameObject);
-    newDialog.transform.SetParent(Instance._orthoUiCanvas.transform, false);
+  public static BaseView OpenView(BaseView viewPrefab) {
+    GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
+    newView.transform.SetParent(Instance._orthoUiCanvas.transform, false);
 
-    BaseDialog baseDialogScript = newDialog.GetComponent<BaseDialog>();
-    baseDialogScript.OpenDialog();
-    Instance._openDialogs.Add(baseDialogScript);
+    BaseView baseViewScript = newView.GetComponent<BaseView>();
+    baseViewScript.OpenView();
+    Instance._openViews.Add(baseViewScript);
 
-    return baseDialogScript;
+    return baseViewScript;
   }
 
-  public static void CloseDialog(BaseDialog dialogObject) {
-    dialogObject.CloseDialog();
+  public static void CloseView(BaseView viewObject) {
+    viewObject.CloseView();
   }
 
-  public static void CloseDialogImmediately(BaseDialog dialogObject) {
-    dialogObject.CloseDialogImmediately();
+  public static void CloseViewImmediately(BaseView viewObject) {
+    viewObject.CloseViewImmediately();
   }
 
-  public static void CloseAllDialogs() {
-    while (Instance._openDialogs.Count > 0) {
-      if (Instance._openDialogs[0] != null) {
-        Instance._openDialogs[0].CloseDialog();
+  public static void CloseAllViews() {
+    while (Instance._openViews.Count > 0) {
+      if (Instance._openViews[0] != null) {
+        Instance._openViews[0].CloseView();
       }
     }
   }
 
-  public static void CloseAllDialogsImmediately() {
-    while (Instance._openDialogs.Count > 0) {
-      if (Instance._openDialogs[0] != null) {
-        Instance._openDialogs[0].CloseDialogImmediately();
+  public static void CloseAllViewsImmediately() {
+    while (Instance._openViews.Count > 0) {
+      if (Instance._openViews[0] != null) {
+        Instance._openViews[0].CloseViewImmediately();
       }
     }
   }
@@ -108,8 +115,8 @@ public class UIManager : MonoBehaviour {
     _Instance._eventSystemScript.gameObject.SetActive(true);
   }
 
-  private void HandleBaseDialogCloseAnimationFinished(string dialogId, BaseDialog dialog) {
-    Instance._openDialogs.Remove(dialog);
+  private void HandleBaseViewCloseAnimationFinished(BaseView view) {
+    Instance._openViews.Remove(view);
   }
 
 }
