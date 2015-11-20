@@ -42,7 +42,9 @@ int32_t  i2spiIntegralDrift;
 enum
 {
   TASK_SIG_I2SPI_RX,
-  TASK_SIG_I2SPI_TX
+  TASK_SIG_I2SPI_TX,
+  TASK_SIG_I2SPI_BL_RX,
+  TASK_SIG_I2SPI_BL_TX,
 };
 
 #define I2SPI_TASK_QUEUE_LEN (DMA_BUF_COUNT * 2)
@@ -223,12 +225,6 @@ void i2spiTask(os_event_t *event)
           }
           else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
-        else if (outgoingPhase == BOOTLOADER_SYNC_PHASE || outgoingPhase == BOOTLOADER_XFER_PHASE)
-        {
-          rtipBootloaderState = buf[(DMA_BUF_SIZE/2) - 1]; // Last half-word in buffer is latest state we know
-          if (rtipBootloaderState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
-          break;
-        }
         else break; // Didn't find the next header in this one
       }
       dropPhase -= DMA_BUF_SIZE/2; // Now looking in next buffer
@@ -237,14 +233,12 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_TX:
     {
-      if (unlikely(outgoingPhase < PHASE_FLAGS)) { // Not normal mode
-        if (outgoingPhase == UNINITALIZED_PHASE || outgoingPhase == BOOTLOADER_SYNC_PHASE)
-        {
-          int w;
-          uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
-          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
-          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-        }
+      if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Durring startup
+      {
+        uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+        int w;
+        for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
       }
       else // When running
       {
@@ -254,6 +248,38 @@ void i2spiTask(os_event_t *event)
         {
           i2spiTxUnderflowCount++; // Keep track of the underflow
           makeDrop(NULL, 0);
+        }
+      }
+      break;
+    }
+    case TASK_SIG_I2SPI_BL_RX:
+    {
+      uint16_t* buf = (uint16_t*)(desc->buf_ptr);
+      rtipBootloaderState = buf[DMA_BUF_SIZE/2 - 1]; // Last half-word in buffer is latest state we know
+      if (rtipBootloaderState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
+      prepSdioQueue(desc, 0);
+      break;
+    }
+    case TASK_SIG_I2SPI_BL_TX:
+    {
+      if (outgoingPhase == BOOTLOADER_SYNC_PHASE)
+      {
+        uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+        int w;
+        for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      }
+      else // When running
+      {
+        if (txFillCount > 0) txFillCount--; // We just transmitted one 
+        struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
+        if (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
+        {
+          int w;
+          uint32_t* txBuf = (uint32_t*)newOut->buf_ptr;
+          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0;
+          i2spiTxUnderflowCount++; // Keep track of the underflow
+          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         }
       }
       break;
@@ -281,11 +307,29 @@ void dmaisr(void* arg) {
   if (slc_intr_status & SLC_TX_EOF_INT_ST) // Receive complete interrupt
   {
     uint32_t eofDesAddr = READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
-    if (likely(outgoingPhase != PAUSED_PHASE))
+    switch (outgoingPhase)
     {
-      if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, eofDesAddr) == false)
+      case PAUSED_PHASE:
       {
-        os_put_char('!'); os_put_char('I'); os_put_char('R');
+        prepSdioQueue(asDesc(eofDesAddr), 0);
+        break;
+      }
+      case BOOTLOADER_SYNC_PHASE:
+      case BOOTLOADER_XFER_PHASE:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_BL_RX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('F');
+        }
+        break;
+      }
+      default:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('R');
+        }
+        break;
       }
     }
   }
@@ -293,15 +337,32 @@ void dmaisr(void* arg) {
   if (slc_intr_status & SLC_RX_EOF_INT_ST) // Transmit complete interrupt
   {
     const uint32_t eofDesAddr = READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-    if (unlikely(outgoingPhase = PAUSED_PHASE))
+    switch (outgoingPhase)
     {
-      uint32_t* buf = (uint32_t*)(asDesc(eofDesAddr)->buf_ptr);
-      int w;
-      for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = 0xFFFFffff;
-    }
-    else if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, eofDesAddr) == false)
-    {
-      os_put_char('!'); os_put_char('I'); os_put_char('T');
+      case PAUSED_PHASE:
+      {
+        uint32_t* buf = (uint32_t*)(asDesc(eofDesAddr)->buf_ptr);
+        int w;
+        for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = 0xFFFFffff;
+        break;
+      }
+      case BOOTLOADER_SYNC_PHASE:
+      case BOOTLOADER_XFER_PHASE:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_BL_TX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('G');
+        }
+        break;
+      }
+      default:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('T');
+        }
+        break;
+      }
     }
   }
 }
@@ -449,19 +510,25 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
 
 bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
 {
-  uint16_t queued = 0;
-  if (unlikely(outgoingPhase < PHASE_FLAGS)) return false;
-  while (queued < msgLen)
+  if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
-    uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-    if (makeDrop(msgData + queued, payloadLen) == false)
-    {
-      os_printf("FATAL: Couldn't queue message to RTIP\r\n");
-      return false;
-    }
-    queued += payloadLen;
+    return false;
   }
-  return true;
+  else
+  {
+    uint16_t queued = 0;
+    while (queued < msgLen)
+    {
+      uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+      if (makeDrop(msgData + queued, payloadLen) == false)
+      {
+        os_printf("FATAL: Couldn't queue message to RTIP\r\n");
+        return false;
+      }
+      queued += payloadLen;
+    }
+    return true;
+  }
 }
 
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
@@ -470,6 +537,7 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
   {
     case I2SPI_NORMAL:
     {
+      os_printf("I2Spi mode Normal\r\n");
       if (outgoingPhase == BOOTLOADER_XFER_PHASE)
       {
         uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
@@ -483,6 +551,7 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     }
     case I2SPI_BOOTLOADER:
     {
+      os_printf("I2Spi mode bootloader sync\r\n");
       outgoingPhase = BOOTLOADER_SYNC_PHASE;
       rtipBootloaderState = STATE_UNKNOWN;
       return;
@@ -490,6 +559,7 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     case I2SPI_PAUSED:
     {
       outgoingPhase = PAUSED_PHASE;
+      os_printf("I2Spi mode paused\r\n");
       return;
     }
   }
@@ -515,7 +585,7 @@ void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
   txBuf[wInd++] = COMMAND_FLASH;
   while (rInd < (sizeof(FirmwareBlock)/2))
   {
-    while (wInd < DMA_BUF_SIZE/2)
+    while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
     {
       txBuf[wInd++] = data[rInd++];
     }

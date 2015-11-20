@@ -169,6 +169,10 @@ void NOINLINE copyNewImage(void)
         ets_printf("\tError erasing sector %x: %d\r\n", sector, rslt);
         sector--; // Try this sector again
       }
+      else
+      {
+        ets_printf("_");
+      }
     }
     
     ets_printf("\tCopying in new firmware\r\n");
@@ -187,6 +191,10 @@ void NOINLINE copyNewImage(void)
         {
           ets_printf("\tError writing sector %x: %d\r\n", sector + FIRMWARE_START_SECTOR, rslt);
           sector--; // Retry the same sector
+        }
+        else
+        {
+          ets_printf(".");
         }
       }
     }
