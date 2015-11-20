@@ -2,6 +2,8 @@
 #include "hal/portable.h"
 #include "MK02F12810.h"
 
+#include "hardware.h"
+
 namespace Anki
 {
   namespace Cozmo
@@ -11,12 +13,6 @@ namespace Anki
       // This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
       void PowerInit()
       {  
-        // I/Os used during startup
-        GPIO_PIN_SOURCE(POWEREN,    PTA, 2);
-        GPIO_PIN_SOURCE(SCK,        PTE, 17);
-        GPIO_PIN_SOURCE(MOSI,       PTE, 18);
-        GPIO_PIN_SOURCE(CAM_PWDN,   PTA, 1);
-
         // Clear any I/Os that are default driven in K02
         // PTA0-3 are taken care of (SWD and POWER pins)
         // PTA18 and 19 are driven by default
