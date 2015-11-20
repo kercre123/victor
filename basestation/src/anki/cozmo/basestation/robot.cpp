@@ -119,6 +119,25 @@ namespace Anki {
 
       ReadAnimationDir();
       
+      // Set up the neutral face to use when resetting procedural animations
+      static const char* neutralFaceAnimName = "neutral_face";
+      Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
+      if (nullptr != neutralFaceAnim)
+      {
+        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
+        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("Robot.NeutralFaceDataNotFound",
+                            "Could not find expected neutral face animation file called %s",
+                            neutralFaceAnimName);
+      }
+      
+      // Now that the reference neutral face has been set up, reset our local faces to start from neutral
+      _proceduralFace.GetParams().Reset();
+      _lastProceduralFace.GetParams().Reset();
+      
       // Read in Mood Manager Json
       if (nullptr != _dataPlatform)
       {
