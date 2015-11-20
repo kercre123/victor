@@ -22,7 +22,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  protected void RaiseMiniGameWin() {
+  public void RaiseMiniGameWin() {
     if (OnMiniGameWin != null) {
       OnMiniGameWin();
     }
