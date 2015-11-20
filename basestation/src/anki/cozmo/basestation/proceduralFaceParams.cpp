@@ -68,18 +68,8 @@ void ProceduralFaceParams::SetFromJson(const Json::Value &jsonRoot)
   JsonTools::GetValueOptional(jsonRoot, kFaceCenterYKey, _faceCenter.y());
   JsonTools::GetValueOptional(jsonRoot, kFaceScaleXKey, _faceScale.x());
   JsonTools::GetValueOptional(jsonRoot, kFaceScaleYKey, _faceScale.y());
-  
-  std::vector<Value> eyeArray;
-  if (JsonTools::GetVectorOptional(jsonRoot, kLeftEyeKey, eyeArray))
-  {
-    SetEyeArrayHelper(WhichEye::Left, eyeArray);
-    eyeArray.clear();
-  }
-  
-  if (JsonTools::GetVectorOptional(jsonRoot, kRightEyeKey, eyeArray))
-  {
-    SetEyeArrayHelper(WhichEye::Right, eyeArray);
-  }
+  JsonTools::GetArrayOptional(jsonRoot, kLeftEyeKey, _eyeParams[WhichEye::Left]);
+  JsonTools::GetArrayOptional(jsonRoot, kRightEyeKey, _eyeParams[WhichEye::Right]);
 }
   
 void ProceduralFaceParams::SetFromMessage(const ExternalInterface::DisplayProceduralFace& msg)
@@ -87,7 +77,6 @@ void ProceduralFaceParams::SetFromMessage(const ExternalInterface::DisplayProced
   SetFaceAngle(msg.faceAngle);
   SetFacePosition({msg.faceCenX, msg.faceCenY});
   SetFaceScale({msg.faceScaleX, msg.faceScaleY});
-  
   SetEyeArrayHelper(WhichEye::Left, msg.leftEye);
   SetEyeArrayHelper(WhichEye::Right, msg.rightEye);
 }
