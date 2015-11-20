@@ -257,6 +257,12 @@ static void SetMode(void)
   if (!strcasecmp(arg, "body"))
   {
     g_fixtureType = FIXTURE_BODY_TEST;
+  } else if (!strcasecmp(arg, "head")) {
+    g_fixtureType = FIXTURE_HEAD_TEST;
+  } else if (!strcasecmp(arg, "charge")) {
+    g_fixtureType = FIXTURE_CHARGER_TEST;
+  } else if (!strcasecmp(arg, "cube")) {
+    g_fixtureType = FIXTURE_CUBE_TEST;
   } else if (!strcasecmp(arg, "debug")) {
     g_fixtureType = FIXTURE_DEBUG;
   } else {

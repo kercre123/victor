@@ -20,6 +20,8 @@
 #include "util/global/globalDefinitions.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include <assert.h>
+#include <map>
+#include <string>
 #include <vector>
 
 
@@ -57,6 +59,7 @@ namespace ExternalInterface {
   
   
 class Robot;
+class StaticMoodData;
 
   
 class MoodManager
@@ -65,9 +68,15 @@ public:
   
   explicit MoodManager(Robot* inRobot = nullptr);
   
+  void Init(const Json::Value& inJson);
+  
   void Reset();
   
   void Update(double currentTime);
+  
+  // ==================== Modify Emotions ====================
+  
+  void TriggerEmotionEvent(const std::string& eventName);
   
   void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString); // , bool dropOff?
   
@@ -80,11 +89,22 @@ public:
                      const char* uniqueIdString);
   
   void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
+  
+  // ==================== GetEmotion... ====================
 
   float GetEmotionValue(EmotionType emotionType) const { return GetEmotion(emotionType).GetValue(); }
 
-  float GetEmotionDeltaRecentTicks(EmotionType emotionType, uint32_t numTicksBackwards) const { return GetEmotion(emotionType).GetDeltaRecentTicks(numTicksBackwards); }
-  float GetEmotionDeltaRecentSeconds(EmotionType emotionType, float secondsBackwards)   const { return GetEmotion(emotionType).GetDeltaRecentSeconds(secondsBackwards); }
+  float GetEmotionDeltaRecentTicks(EmotionType emotionType, uint32_t numTicksBackwards) const
+  {
+    return GetEmotion(emotionType).GetDeltaRecentTicks(numTicksBackwards);
+  }
+  
+  float GetEmotionDeltaRecentSeconds(EmotionType emotionType, float secondsBackwards)   const
+  {
+    return GetEmotion(emotionType).GetDeltaRecentSeconds(secondsBackwards);
+  }
+  
+  // ==================== Event/Message Handling ====================
   
   void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
@@ -92,10 +112,8 @@ public:
 
   // ============================== Public Static Member Funcs ==============================
   
-  static void  InitDecayGraphs();
-  static void  SetDecayGraph(EmotionType emotionType, const Anki::Util::GraphEvaluator2d& newGraph);
-  static const Anki::Util::GraphEvaluator2d& GetDecayGraph(EmotionType emotionType);
-
+  static StaticMoodData& GetStaticMoodData();
+  
 private:
   
   // ============================== Private Member Funcs ==============================
@@ -118,11 +136,7 @@ private:
   }
   
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
-  
-  // ============================== Private Static Member Vars ==============================
-
-  static Anki::Util::GraphEvaluator2d    sEmotionDecayGraphs[(size_t)EmotionType::Count];
-  
+    
   // ============================== Private Member Vars ==============================
   
   Emotion     _emotions[(size_t)EmotionType::Count];

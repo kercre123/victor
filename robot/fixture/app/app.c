@@ -99,24 +99,28 @@ void SetFixtureText(void)
 {
   DisplayClear();
   
-  if (g_fixtureType == FIXTURE_BODY_TEST) {    
-    DisplayMoveCursor(3, 1);
-    DisplayTextWidthMultiplier(3);
-    DisplayTextHeightMultiplier(3);
-    DisplayPutString("LENS");
-  } else if (g_fixtureType & FIXTURE_DEBUG) {    
-    DisplayMoveCursor(3, 2);
-    DisplayTextWidthMultiplier(2);
-    DisplayTextHeightMultiplier(2);
-    DisplayPutString("DEBUG");
+  if (g_fixtureType == FIXTURE_CHARGER_TEST) {    
+    DisplayBigCenteredText("CHARGE");
+  } else if (g_fixtureType == FIXTURE_CUBE_TEST) {    
+    DisplayBigCenteredText("CUBE");
+  } else if (g_fixtureType == FIXTURE_HEAD_TEST) {    
+    DisplayBigCenteredText("HEAD");  
+  } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
+    DisplayBigCenteredText("BODY");
+  } else if (g_fixtureType == FIXTURE_NONE) {    
+    DisplayBigCenteredText("NO ID");
+  } else if (g_fixtureType == FIXTURE_DEBUG) {    
+    DisplayBigCenteredText("DEBUG");
   }
   
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-  DisplayMoveCursor(7, 1);
-  DisplayPutChar('R');
+  DisplayMoveCursor(7, 0);
+  DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  
+  DisplayFlip();
 }
 
 void SetTestCounterText(u32 current, u32 count)
@@ -551,11 +555,6 @@ static void MainExecution()
       }
     }
   }
-  
-  if (getMicroCounter() - startTime > 250000)  // 250 ms
-  {
-    SetFixtureText();
-  }
 }
 
 // Fetch flash parameters - done once on boot up
@@ -705,5 +704,6 @@ int main(void)
   while (1)
   {  
     MainExecution();
+    DisplayUpdate();
   }
 }

@@ -44,15 +44,15 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\41\</OutputDirectory>
-          <OutputName>robot.out</OutputName>
+          <OutputDirectory>.\build\</OutputDirectory>
+          <OutputName>robot_boot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\41\</ListingPath>
-          <HexFormatSelection>1</HexFormatSelection>
+          <ListingPath>.\build\</ListingPath>
+          <HexFormatSelection>0</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
           <BeforeCompile>
@@ -74,9 +74,9 @@
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>c:\cygwin\bin\python2.7 ./sign/sign.py ./build/41/robot.out ./build/41/robot.safe</UserProg1Name>
+            <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -112,7 +112,7 @@
         </DllOption>
         <DebugOption>
           <OPTHX>
-            <HexSelection>1</HexSelection>
+            <HexSelection>0</HexSelection>
             <HexRangeLowAddress>0</HexRangeLowAddress>
             <HexRangeHighAddress>0</HexRangeHighAddress>
             <HexOffset>0</HexOffset>
@@ -190,7 +190,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
+            <AdsALst>1</AdsALst>
             <AdsACrf>0</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -203,7 +203,7 @@
             <AdsLsun>1</AdsLsun>
             <AdsLven>1</AdsLven>
             <AdsLsxf>1</AdsLsxf>
-            <RvctClst>0</RvctClst>
+            <RvctClst>1</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M4"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
@@ -354,10 +354,12 @@
             <uThumb>0</uThumb>
             <uSurpInc>1</uSurpInc>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define>COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM,COZMO_ROBOT_V41</Define>
+              <MiscControls>  --library_type=standardlib --diag_suppress=1296,186 
+ --library_interface=armcc  
+--gnu</MiscControls>
+              <Define>COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;../coretech/common/include;../coretech/vision/include;../include;include;k02_hal/lib;k02_hal/;k02_hal/startup;generated/clad/robot/</IncludePath>
+              <IncludePath>.;include;lib;startup;lib/device;lib/drivers;lib/hal;..;hal</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -370,8 +372,8 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define></Define>
+              <MiscControls>--cpreproc --diag_suppress=1609,1581 </MiscControls>
+              <Define>DEBUG</Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
@@ -385,7 +387,7 @@
             <useFile>0</useFile>
             <TextAddressRange>0x00000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
-            <ScatterFile>.\k02_hal\scatter.scf</ScatterFile>
+            <ScatterFile>.\scatter.scf</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc>--remove 
@@ -404,98 +406,27 @@
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>k02_hal/hal/main.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>camera.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\camera.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>i2c.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\i2c.cpp</FilePath>
+              <FilePath>.\hal\main.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\timer.cpp</FilePath>
+              <FilePath>.\hal\timer.cpp</FilePath>
             </File>
             <File>
-              <FileName>enjpeg.cpp</FileName>
+              <FileName>sha1.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\enjpeg.cpp</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>2</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>4</Optim>
-                    <oTime>1</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
+              <FilePath>.\hal\sha1.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>recovery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\recovery.cpp</FilePath>
             </File>
             <File>
               <FileName>power.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>dac.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>oled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
+              <FilePath>.\hal\power.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -503,21 +434,24 @@
           <GroupName>startup</GroupName>
           <Files>
             <File>
+              <FileName>startup.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\startup\startup.c</FilePath>
+            </File>
+            <File>
               <FileName>startup_MK02F12810.s</FileName>
               <FileType>2</FileType>
-              <FilePath>k02_hal/startup/startup_MK02F12810.s</FilePath>
+              <FilePath>.\startup\startup_MK02F12810.s</FilePath>
             </File>
             <File>
               <FileName>system_MK02F12810.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>k02_hal/startup/system_MK02F12810.c</FilePath>
-            </File>
-            <File>
-              <FileName>startup.c</FileName>
               <FileType>1</FileType>
-              <FilePath>k02_hal/startup/startup.c</FilePath>
+              <FilePath>.\startup\system_MK02F12810.c</FilePath>
             </File>
           </Files>
+        </Group>
+        <Group>
+          <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
     </Target>

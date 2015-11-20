@@ -163,7 +163,7 @@ namespace Anki {
             ledParams_[i].state = LED_STATE_OFF;
           }
         } else {
-          printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
+          //printf("Ignoring SetBlockLights message with parameters identical to current state.\n");
         }
         
         
