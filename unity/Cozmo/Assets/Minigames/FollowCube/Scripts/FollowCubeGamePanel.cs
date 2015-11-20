@@ -3,7 +3,7 @@ using System.Collections;
 
 namespace FollowCube {
 
-  public class FollowCubeGamePanel : BaseDialog {
+  public class FollowCubeGamePanel : BaseView {
 
     [SerializeField]
     private Anki.UI.AnkiTextLabel _AttemptsLeftLabel;

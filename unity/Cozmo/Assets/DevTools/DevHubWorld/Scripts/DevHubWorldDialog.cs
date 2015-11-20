@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
 
-public class DevHubWorldDialog : BaseDialog {
+public class DevHubWorldDialog : BaseView {
 
   public delegate void DevButtonClickedHandler(GameBase miniGameClicked);
 
@@ -28,7 +28,7 @@ public class DevHubWorldDialog : BaseDialog {
     GameObject newButton;
     DevHubWorldButton buttonScript;
     foreach (GameBase game in minigames) {
-      newButton = UIManager.CreateUI(_DevHubWorldButtonPrefab.gameObject, _ButtonContainer);
+      newButton = UIManager.CreateUIElement(_DevHubWorldButtonPrefab.gameObject, _ButtonContainer);
       buttonScript = newButton.GetComponent<DevHubWorldButton>();
       buttonScript.Initialize(game);
       buttonScript.OnDevButtonClicked += HandleOnDevButtonClicked;

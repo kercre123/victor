@@ -21,10 +21,19 @@
     "hubWorld.askCozmo.askCozmo1" : {
         "translation" : "Ask Cozmo Challenge 1"
     },
-    "hubWorld.askCozmo.askCozmo2" : {
-        "translation" : "Ask Cozmo Challenge 2"
-    },
     "hubWorld.investorDemo.investorDemoScene1" : {
         "translation" : "Investor Scene 1"
+    },
+    "hubWorld.dockTraining.challenge1" : {
+        "translation" : "Docking Challenge 1"
+    },
+    "hubWorld.followCube.challenge1" : {
+        "translation" : "Follow Cube Challenge 1"
+    },
+    "hubWorld.rotationTraining.challenge1" : {
+        "translation" : "Turning Challenge 1"
+    },
+    "hubWorld.visionTraining.challenge1" : {
+        "translation" : "Vision Challenge 1"
     }
 }
