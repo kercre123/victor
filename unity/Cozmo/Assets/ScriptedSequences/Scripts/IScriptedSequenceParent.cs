@@ -6,6 +6,8 @@ namespace ScriptedSequences {
     ScriptedSequence GetSequence();
 
     ScriptedSequenceNode GetNode(uint id);
+
+    string DebugName { get; }
   }
 }
 

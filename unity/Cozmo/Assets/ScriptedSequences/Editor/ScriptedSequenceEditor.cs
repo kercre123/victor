@@ -108,15 +108,16 @@ public class ScriptedSequenceEditor : Editor {
   }
 
 
-  public Vector2 _DragOffset;
+  public Vector2 DragOffset;
 
-  public Vector2 _DragSize;
+  public Vector2 DragSize;
 
-  public string _DragTitle;
+  public string DragTitle;
 
-  public Color _DragColor;
+  public Color DragColor;
+  public Color DragTextColor;
 
-  public Vector2 _DragStart;
+  public Vector2 DragStart;
 
   private bool _LastMouseUp;
 
@@ -176,7 +177,10 @@ public class ScriptedSequenceEditor : Editor {
     index = EditorGUI.IntPopup(popupRect, index, names, indices);
 
     if (GUI.Button(plusRect, "+", ButtonStyle)) {
-      return (ScriptableObject.CreateInstance(types[index]) as T);
+      var result = (ScriptableObject.CreateInstance(types[index]) as T);
+      result.hideFlags = HideFlags.HideInInspector;
+      AssetDatabase.CreateAsset(result, Path.Combine(SequenceFolder, Guid.NewGuid().ToString() + ".asset"));
+      return result;
     }
     return null;
   }
@@ -246,6 +250,21 @@ public class ScriptedSequenceEditor : Editor {
     }
   }
 
+  private static GUIStyle _BoxStyle;
+  public static GUIStyle BoxStyle
+  {
+    get
+    {
+      if (_BoxStyle == null) {
+        _BoxStyle = new GUIStyle();
+        _BoxStyle.normal.textColor = Color.white;
+        _BoxStyle.active.textColor = Color.white;
+        _BoxStyle.normal.background = Texture2D.whiteTexture;
+      }
+      return _BoxStyle;
+    }
+  }
+
   private static GUIStyle _ButtonStyle;
   public static GUIStyle ButtonStyle
   {
@@ -267,13 +286,37 @@ public class ScriptedSequenceEditor : Editor {
     {
       if (_FoldoutStyle == null) {
         _FoldoutStyle = new GUIStyle(EditorStyles.foldout);
-        _FoldoutStyle.normal.textColor = Color.white;
-        _FoldoutStyle.active.textColor = Color.white;
+        Color white = Color.white;
+        _FoldoutStyle.fontStyle = FontStyle.Bold;
+        _FoldoutStyle.normal.textColor = white;
+        _FoldoutStyle.onNormal.textColor = white;
+        _FoldoutStyle.hover.textColor = white;
+        _FoldoutStyle.onHover.textColor = white;
+        _FoldoutStyle.focused.textColor = white;
+        _FoldoutStyle.onFocused.textColor = white;
+        _FoldoutStyle.active.textColor = white;
+        _FoldoutStyle.onActive.textColor = white;
+
       }
       return _FoldoutStyle;
     }
   }
 
+  public string SequenceFolder {
+    get {
+      var path = AssetDatabase.GetAssetPath(target);
+
+      var dir = Path.GetDirectoryName(path);
+      var fileName = Path.GetFileNameWithoutExtension(path);
+
+      string dirPath = Path.Combine(dir, fileName);
+      if(!Directory.Exists(dirPath))
+      {
+        AssetDatabase.CreateFolder(dir, fileName);
+      }
+      return dirPath;
+    }
+  }
 
   public override void OnInspectorGUI() {
 
@@ -372,11 +415,15 @@ public class ScriptedSequenceEditor : Editor {
       }
     }
 
-    if ((_DraggingNodeIndex != -1 || _DraggingConditionHelper != null || _DraggingActionHelper != null) && !_LastMouseUp && (_DragStart - mousePosition).sqrMagnitude > 25) {
+    if ((_DraggingNodeIndex != -1 || _DraggingConditionHelper != null || _DraggingActionHelper != null) && !_LastMouseUp && Mathf.Abs(DragStart.y - mousePosition.y) > 5) {
       var lastColor = GUI.backgroundColor;
-      GUI.backgroundColor = _DragColor;
-      GUI.Box(new Rect(evt.mousePosition + _DragOffset, _DragSize), _DragTitle, LabelStyle);
+      var lastTextColor = GUI.color;
+      GUI.backgroundColor = DragColor;
+      GUI.contentColor = DragTextColor;
+      GUI.Box(new Rect(evt.mousePosition + DragOffset, DragSize), "  "+DragTitle, BoxStyle);
       GUI.backgroundColor = lastColor;
+      GUI.contentColor = lastTextColor;
+      EditorUtility.SetDirty(target);
     }
 
     serializedObject.ApplyModifiedProperties();
@@ -434,10 +481,10 @@ public class ScriptedSequenceEditor : Editor {
     var lastContentColor = GUI.contentColor;
 
     GUI.color = Color.yellow;
-    GUI.contentColor = Color.white;
+    GUI.contentColor = Color.black;
     GUI.backgroundColor = Color.yellow;
     GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
-    GUI.color = Color.white;
+    GUI.color = Color.black;
 
     if (editingName) {
       var leftRect = rect;
@@ -486,11 +533,12 @@ public class ScriptedSequenceEditor : Editor {
         }
         else if (eventType == EventType.mouseDown) {
           _DraggingNodeIndex = index;
-          _DragOffset = rect.position - mousePosition;
-          _DragStart = mousePosition;
-          _DragSize = rect.size;
-          _DragTitle = node.Name;
-          _DragColor = Color.yellow;
+          DragOffset = rect.position - mousePosition;
+          DragStart = mousePosition;
+          DragSize = rect.size;
+          DragTitle = node.Name;
+          DragColor = Color.yellow;
+          DragTextColor = Color.black;
         }
         else if (eventType == EventType.mouseUp) {
           if (_DraggingNodeIndex != -1) {

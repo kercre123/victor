@@ -10,12 +10,17 @@ namespace ScriptedSequences {
 
     public List<ScriptedSequenceNode> Nodes = new List<ScriptedSequenceNode>();
 
+    public string DebugName { get { return Name; } }
+
     public void Fail(Exception error) {
       DAS.Error(this, error.ToString());
       ResetSequence();
     }
 
     public void ResetSequence() {
+      #if DEBUG_SCRIPTED_SEQUENCES
+      DAS.Debug(this, "Reset Called on Scripted Sequence " +Name);
+      #endif
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].Reset();
       }
@@ -23,8 +28,12 @@ namespace ScriptedSequences {
 
     public void Initialize()
     {
-      bool canEnable = true;
+      #if DEBUG_SCRIPTED_SEQUENCES
+      DAS.Debug(this, "Initialize Called on Scripted Sequence " +Name);
+      #endif
+      bool canEnable = false;
       if (Condition != null) {
+        Condition.Initialize(this);
         Condition.OnConditionChanged += HandleConditionChanged;
         Condition.IsEnabled = true;
         canEnable = Condition.IsMet;
@@ -61,8 +70,11 @@ namespace ScriptedSequences {
       }
     }
 
-    private void Enable()
+    public void Enable()
     {
+      #if DEBUG_SCRIPTED_SEQUENCES
+      DAS.Debug(this, "Enable Called on Scripted Sequence " +Name);
+      #endif
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].TryEnable();
       }

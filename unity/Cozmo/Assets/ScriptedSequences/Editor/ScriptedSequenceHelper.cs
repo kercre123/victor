@@ -126,7 +126,7 @@ namespace ScriptedSequences.Editor {
             menu.AddDisabledItem(new GUIContent("Paste"));
           }
 
-          menu.AddItem(new GUIContent("Delete Condition"), false, () => {
+          menu.AddItem(new GUIContent("Delete"), false, () => {
             if(ReplaceInsteadOfInsert)
             {
               ReplaceAction(default(U));
@@ -134,23 +134,25 @@ namespace ScriptedSequences.Editor {
             else
             { 
               List.RemoveAt(Index);
-
-              if(_OnDestroy != null)
-              {
-                _OnDestroy();
-              }
             }
+            if(_OnDestroy != null)
+            {
+              _OnDestroy();
+            }
+
+            AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(Value));
           });
 
           menu.ShowAsContext();
         }
         else if (eventType == EventType.mouseDown) {  
           _Editor.SetDraggingHelper<U>(this);
-          _Editor._DragOffset = rect.position - mousePosition;
-          _Editor._DragStart = mousePosition;
-          _Editor._DragSize = rect.size;
-          _Editor._DragTitle = Value.GetType().Name;
-          _Editor._DragColor = Color;
+          _Editor.DragOffset = rect.position - mousePosition;
+          _Editor.DragStart = mousePosition;
+          _Editor.DragSize = rect.size;
+          _Editor.DragTitle = Value.GetType().Name;
+          _Editor.DragColor = Color;
+          _Editor.DragTextColor = Color.white;
         }
         else if (eventType == EventType.mouseUp) {
           var otherHelper = _Editor.GetDraggingHelper<U>();
@@ -203,6 +205,7 @@ namespace ScriptedSequences.Editor {
                 if (ReplaceInsteadOfInsert) {
                   // dragged from a list onto a single point. Send this guy to the list
                   otherHelper.List.Insert(otherHelper.Index, Value);
+                  otherHelper.List.Remove(otherHelper.ValueBase);
                   this.ReplaceAction(otherHelper.ValueBase);
 
                   ReplaceInsteadOfInsert = false;

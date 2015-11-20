@@ -24,16 +24,24 @@ namespace ScriptedSequences
 
     public List<ScriptedSequenceAction> Actions = new List<ScriptedSequenceAction>();
 
+    [NonSerialized]
     private ScriptedSequence _Parent;
 
+    [NonSerialized]
     private ScriptedSequenceNode _Previous;
 
+    public string DebugName { get { return _Parent.DebugName + "::" + Name; } }
+
+    [NonSerialized]
     private bool _IsComplete;
 
     public bool IsComplete { 
       get { return _IsComplete; } 
       private set { 
         if (value && !_IsComplete) {
+          #if DEBUG_SCRIPTED_SEQUENCES
+          DAS.Debug(this, DebugName +" Is Now Complete!");
+          #endif
           if (OnComplete != null) {
             OnComplete();
           }
@@ -42,9 +50,11 @@ namespace ScriptedSequences
       }
     }
 
+    [NonSerialized]
     private IAsyncToken _ActToken;
-    public bool IsActive { get { return _ActToken == null || _ActToken.IsReady; } }
+    public bool IsActive { get { return _ActToken != null && !_ActToken.IsReady; } }
 
+    [NonSerialized]
     private bool _IsEnabled;
 
     public bool IsEnabled { 
@@ -54,6 +64,10 @@ namespace ScriptedSequences
 
       private set {
         _IsEnabled = value;
+
+        #if DEBUG_SCRIPTED_SEQUENCES
+        DAS.Debug(this, DebugName +" Is "+(_IsEnabled ? "Enabled" : "Disabled")+"!");
+        #endif
         if (UpdateConditions(_IsEnabled)) {
           Act();
         }
@@ -82,6 +96,9 @@ namespace ScriptedSequences
 
     public void TryEnable()
     {      
+      #if DEBUG_SCRIPTED_SEQUENCES
+      DAS.Debug(this, "TryEnable Called on " + DebugName);
+      #endif
       if (_Previous != null && !_Previous.IsComplete) {
         return;
       }
@@ -91,6 +108,9 @@ namespace ScriptedSequences
 
     public void Reset()
     {
+      #if DEBUG_SCRIPTED_SEQUENCES
+      DAS.Debug(this, "Reset Called on " + DebugName);
+      #endif
       if (_ActToken != null) {
         _ActToken.Abort();
         _ActToken = null;
@@ -139,7 +159,17 @@ namespace ScriptedSequences
     }
 
     public void Act() {
-      var actingTokens = Actions.Select(action => action.Act());
+      #if DEBUG_SCRIPTED_SEQUENCES
+      DAS.Debug(this, "Act Called on "+DebugName);
+      #endif
+      var actingTokens = new ISimpleAsyncToken[Actions.Count];
+
+      for (int i = 0; i < Actions.Count; i++) {
+        #if DEBUG_SCRIPTED_SEQUENCES
+        DAS.Debug(this, "Calling Act on " + Actions[i].DebugName);
+        #endif
+        actingTokens[i] = Actions[i].Act();
+      }
       if (FailOnError) {
         var token = SimpleAsyncToken.Reduce(actingTokens);
         _ActToken = token;
