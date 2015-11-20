@@ -7,22 +7,24 @@ namespace Cozmo {
   
 enum uint_8 IMUConstants
 {
-    IMU_CHUNK_SIZE = 32,
+    IMU_CHUNK_SIZE = 8,
 }
   
 namespace RobotInterface {
 
 structure IMUDataChunk
 {
+  float_32  aX[8], // IMU_CHUNK_SIZE
+  float_32  aY[8],
+  float_32  aZ[8],
+  float_32  gX[8],
+  float_32  gY[8],
+  float_32  gZ[8],
+
   uint_8 seqId,
   uint_8 chunkId,
   uint_8 totalNumChunks,
-  int_8  aX[32], // IMU_CHUNK_SIZE
-  int_8  aY[32],
-  int_8  aZ[32],
-  int_8  gX[32],
-  int_8  gY[32],
-  int_8  gZ[32],
+
 }
 
 structure ImuRequest

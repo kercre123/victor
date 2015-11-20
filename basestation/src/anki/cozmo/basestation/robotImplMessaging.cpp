@@ -463,47 +463,39 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
 {
   const RobotInterface::IMUDataChunk& payload = message.GetData().Get_imuDataChunk();
 
-  // If seqID has changed, then start over.
+  // If seqID has changed, then start a new log file
   if (payload.seqId != _imuSeqID) {
     _imuSeqID = payload.seqId;
-    _imuDataSize = 0;
-  }
-
-  // Msgs are guaranteed to be received in order so just append data to array
-  memcpy(_imuData[0] + _imuDataSize, payload.aX.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
-  memcpy(_imuData[1] + _imuDataSize, payload.aY.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
-  memcpy(_imuData[2] + _imuDataSize, payload.aZ.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
-
-  memcpy(_imuData[3] + _imuDataSize, payload.gX.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
-  memcpy(_imuData[4] + _imuDataSize, payload.gY.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
-  memcpy(_imuData[5] + _imuDataSize, payload.gZ.data(), (size_t)IMUConstants::IMU_CHUNK_SIZE);
-
-  _imuDataSize += (size_t)IMUConstants::IMU_CHUNK_SIZE;
-
-  // When dataSize matches the expected size, print to file
-  if (payload.chunkId == payload.totalNumChunks - 1) {
-
-    // Make sure image capture folder exists
+    
+    // Make sure imu capture folder exists
     std::string imuLogsDir = _dataPlatform->pathToResource(Util::Data::Scope::Cache, AnkiUtil::kP_IMU_LOGS_DIR);
     if (!Util::FileUtils::CreateDirectory(imuLogsDir, false, true)) {
-      PRINT_NAMED_ERROR("Robot.ProcessIMUDataChunk.CreateDirFailed","%s", imuLogsDir.c_str());
+      PRINT_NAMED_ERROR("Robot.HandleImuData.CreateDirFailed","%s", imuLogsDir.c_str());
     }
-
-    // Create image file
-    char logFilename[564];
-    snprintf(logFilename, sizeof(logFilename), "%s/robot%d_imu%d.m", imuLogsDir.c_str(), GetID(), _imuSeqID);
-    PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageIMUDataChunk",
-      "Printing imu log to %s (dataSize = %d)", logFilename, _imuDataSize);
-
-    std::ofstream oFile(logFilename);
-    for (u32 axis = 0; axis < 6; ++axis) {
-      oFile << "imuData" << axis << " = [";
-      for (u32 i=0; i<_imuDataSize; ++i) {
-        oFile << (s32)(_imuData[axis][i]) << " ";
-      }
-      oFile << "];\n\n";
-    }
-    oFile.close();
+    
+    // Open imu log file
+    std::string imuLogFileName = std::string(imuLogsDir.c_str()) + "/imuLog_" + std::to_string(_imuSeqID) + ".dat";
+    PRINT_NAMED_INFO("Robot.HandleImuData.OpeningLogFile",
+                     "%s", imuLogFileName.c_str());
+    
+    _imuLogFileStream.open(imuLogFileName.c_str());
+    _imuLogFileStream << "aX aY aZ gX gY gZ\n";
+  }
+  
+  
+  for (u32 s = 0; s < (u32)IMUConstants::IMU_CHUNK_SIZE; ++s) {
+    _imuLogFileStream << payload.aX.data()[s] << " "
+                      << payload.aY.data()[s] << " "
+                      << payload.aZ.data()[s] << " "
+                      << payload.gX.data()[s] << " "
+                      << payload.gY.data()[s] << " "
+                      << payload.gZ.data()[s] << "\n";
+  }
+  
+  // Close file when last chunk received
+  if (payload.chunkId == payload.totalNumChunks - 1) {
+    PRINT_NAMED_INFO("Robot.HandleImuData.ClosingLogFile", "");
+    _imuLogFileStream.close();
   }
 }
   
