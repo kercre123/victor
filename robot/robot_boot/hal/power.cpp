@@ -7,7 +7,7 @@
 
 // This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
 extern void PowerInit()
-{   
+{ 
   // Clear any I/Os that are default driven in K02
   // PTA0-3 are taken care of (SWD and POWER pins)
   // PTA18 and 19 are driven by default
