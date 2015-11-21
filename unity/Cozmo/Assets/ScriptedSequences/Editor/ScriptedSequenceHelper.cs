@@ -185,7 +185,6 @@ namespace ScriptedSequences.Editor {
               else if (otherHelper.ReplaceInsteadOfInsert) {
                 if (ReplaceInsteadOfInsert) {
                   // dragged from a single point to a different single point. Swap them.
-                  var tmp = Value;
                   ReplaceAction(otherHelper.ValueBase);
                   otherHelper.ReplaceAction(ValueBase);
                   // now swap the replace actions as the helpers need to point to the new thing

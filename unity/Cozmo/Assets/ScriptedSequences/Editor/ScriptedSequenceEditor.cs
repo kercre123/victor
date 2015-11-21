@@ -563,7 +563,6 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     EditorGUIUtility.labelWidth = 200;
     sequence.Repeatable = EditorGUILayout.Toggle("Repeatable", sequence.Repeatable);
-    sequence.CanResume = EditorGUILayout.Toggle("Can Resume From Check Point", sequence.CanResume);
     sequence.RequiresConditionRemainsMet = EditorGUILayout.Toggle("Condition Must Stay Met", sequence.RequiresConditionRemainsMet);
     EditorGUIUtility.labelWidth = 0;
 
@@ -793,7 +792,6 @@ public class ScriptedSequenceEditor : EditorWindow {
     node.Sequencial = EditorGUILayout.Toggle("Sequencial", node.Sequencial);
     node.Final = EditorGUILayout.Toggle("Final", node.Final);
     node.FailOnError = EditorGUILayout.Toggle("Fail On Error", node.FailOnError);
-    node.CheckPoint = EditorGUILayout.Toggle("Check Point", node.CheckPoint);
 
     DrawConditionOrActionList("Conditions", node.Conditions, mousePosition, eventType);
 

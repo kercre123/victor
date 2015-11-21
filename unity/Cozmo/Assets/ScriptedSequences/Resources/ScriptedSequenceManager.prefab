@@ -39,8 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2cf909c64d0b9446ea88f48bcd80805f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Sequences:
-  - {fileID: 11400000, guid: 8009ce32971944576b4e56ef01bdc83f, type: 2}
+  SequenceTextAssets:
+  - {fileID: 4900000, guid: 0cdcabb23064645edb9555c242724555, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

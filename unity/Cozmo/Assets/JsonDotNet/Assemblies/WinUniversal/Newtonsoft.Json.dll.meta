@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: e3b9438c5ad9d4e5aaeff1abc0064f07
-timeCreated: 1448046633
+guid: 1c2fda22323a62a43a52ff37988b0a1e
+timeCreated: 1444908853
 licenseType: Pro
 PluginImporter:
   serializedVersion: 1
@@ -13,7 +13,7 @@ PluginImporter:
       settings:
         CPU: AnyCPU
     Any:
-      enabled: 1
+      enabled: 0
       settings: {}
     Editor:
       enabled: 0
@@ -41,6 +41,12 @@ PluginImporter:
       enabled: 0
       settings:
         STV_MODEL: STANDARD_13
+    WP8:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
+        DontProcess: False
+        PlaceholderPath: 
     Win:
       enabled: 0
       settings:
@@ -49,6 +55,13 @@ PluginImporter:
       enabled: 0
       settings:
         CPU: AnyCPU
+    WindowsStoreApps:
+      enabled: 1
+      settings:
+        CPU: AnyCPU
+        DontProcess: False
+        PlaceholderPath: Assets/JsonDotNet/Assemblies/Standalone/Newtonsoft.Json.dll
+        SDK: AnySDK
     iOS:
       enabled: 0
       settings:

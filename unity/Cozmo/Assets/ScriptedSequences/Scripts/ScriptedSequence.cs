@@ -10,8 +10,6 @@ namespace ScriptedSequences {
 
     public bool Repeatable;
 
-    public bool CanResume;
-
     public ScriptedSequenceCondition Condition;
 
     public List<ScriptedSequenceNode> Nodes = new List<ScriptedSequenceNode>();

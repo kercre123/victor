@@ -19,8 +19,6 @@ namespace ScriptedSequences
 
     public bool Final;
 
-    public bool CheckPoint;
-
     public bool FailOnError;
 
     public List<ScriptedSequenceCondition> Conditions = new List<ScriptedSequenceCondition>();

@@ -1,9 +1,11 @@
 {
   "Name": "HelloWorld",
-  "RequiresConditionRemainsMet": false,
+  "RequiresConditionRemainsMet": true,
   "Repeatable": true,
   "CanResume": false,
-  "Condition": null,
+  "Condition": {
+    "$type": "ScriptedSequences.Conditions.RobotConnected, Assembly-CSharp"
+  },
   "Nodes": [
     {
       "Name": "Hello",
