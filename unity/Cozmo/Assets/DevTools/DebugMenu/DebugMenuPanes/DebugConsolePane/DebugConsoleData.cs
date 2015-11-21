@@ -35,15 +35,25 @@ public class DebugConsoleData {
 
   private bool _NeedsUIUpdate;
   private List<DebugConsoleVarData> _DataListVar;
-  //private Dictionary<string, List<DebugConsoleVar> > _DataByCategory;
+  private Dictionary<string, List<DebugConsoleVarData> > _DataByCategory;
+
+  public GameObject _PrefabVarUIText;
+  public GameObject _PrefabVarUICheckbox;
+  public GameObject _PrefabVarUIButton;
+  public GameObject _PrefabVarUISlider;
 
   public void AddConsoleVar(DebugConsoleVar singleVar) {
     _NeedsUIUpdate = true;
 
+    // check for dupes.
+    List<DebugConsoleVarData> categoryList;
+    if (!_DataByCategory.TryGetValue(singleVar.category, out categoryList)) {
+      categoryList = new List<DebugConsoleVarData>();
+      _DataByCategory.Add(singleVar.category, categoryList);
+    }
 
-    // TODO: check for dupes.
     DebugConsoleVarData varData = new DebugConsoleVarData();
-
+    DAS.Info("AddConsoleVar", "Type: " + singleVar.varValue.GetTag().ToString());
     varData._tagType = singleVar.varValue.GetTag();
     switch (varData._tagType) {
     case consoleVarUnion.Tag.varDouble:
@@ -55,23 +65,49 @@ public class DebugConsoleData {
     case consoleVarUnion.Tag.varUint:
       varData._valueAsUInt64 = singleVar.varValue.varUint;
       break;
+    case consoleVarUnion.Tag.varBool:
+      varData._valueAsUInt64 = singleVar.varValue.varBool;
+      break;
     }
     varData._varName = singleVar.varName;
     varData._category = singleVar.category;
 
+    categoryList.Add(varData);
     _DataListVar.Add(varData);
   }
 
-  public bool InitUI(GameObject uiPrefab, Transform parentTransform) {
-    
+  private GameObject GetPrefabForType(DebugConsoleVarData data) {
+    if (data._tagType == consoleVarUnion.Tag.varBool) {
+      return _PrefabVarUICheckbox;
+    }
+    return _PrefabVarUIText;
+  }
+
+  public bool AddCategory(Transform parentTransform, string category_name) {
+    // TODO: clear previous ones or at least diff they exist.
+
+    List<DebugConsoleVarData> lines;
+    if (_DataByCategory.TryGetValue(category_name, out lines)) {
+      for (int i = 0; i < lines.Count; ++i) {
+        GameObject statLine = UIManager.CreateUIElement(GetPrefabForType(lines[i]), parentTransform);
+        ConsoleVarLine uiLine = statLine.GetComponent<ConsoleVarLine>();
+        uiLine.Init(lines[i]);
+      }
+    }
+
+
     return true;
+  }
+
+  public List<string> GetCategories() {
+    return new List<string>(_DataByCategory.Keys);
   }
     
   // Get with the singleton pattern, no creating ones outside instance
   private DebugConsoleData() { 
     _NeedsUIUpdate = false;
     _DataListVar = new List<DebugConsoleVarData>();
-    //_DataByCategory = new Dictionary<string, List<DebugConsoleVar> >();
+    _DataByCategory = new Dictionary<string, List<DebugConsoleVarData> >();
   }
 
   public int GetCountVars() {

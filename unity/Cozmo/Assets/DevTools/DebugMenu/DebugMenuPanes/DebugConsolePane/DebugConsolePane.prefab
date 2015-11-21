@@ -137,6 +137,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _UIContainer: {fileID: 22440216}
   _SingleLinePrefab: {fileID: 11487808, guid: 5f4b80b853c9a4b0996569165ca75d57, type: 2}
+  _CategoryPanelPrefab: {fileID: 191946, guid: fbe44982d9117441a9341d5ef82d3496, type: 2}
 --- !u!114 &11428672
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -197,7 +198,7 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 3
-  m_Spacing: 100
+  m_Spacing: 50
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
 --- !u!114 &11479496
@@ -224,7 +225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_HorizontalFit: 0
-  m_VerticalFit: 1
+  m_VerticalFit: 2
 --- !u!222 &22207168
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -320,6 +321,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11487808, guid: 5f4b80b853c9a4b0996569165ca75d57,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _CategoryPanelPrefab
+      value: 
+      objectReference: {fileID: 191946, guid: fbe44982d9117441a9341d5ef82d3496, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 113112}
