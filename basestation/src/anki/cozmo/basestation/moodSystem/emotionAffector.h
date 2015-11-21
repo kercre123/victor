@@ -30,16 +30,19 @@ class EmotionAffector
 {
 public:
   
-  EmotionAffector(EmotionType type, float baseValue)
+  explicit EmotionAffector(EmotionType type = EmotionType::Count, float baseValue = 0.0f)
     : _emotionType(type)
     , _baseValue(baseValue)
   {  
   }
   
-  explicit EmotionAffector(const Json::Value& inJson);
+  void Reset();
 
   EmotionType GetType()  const { return _emotionType; }
   float       GetValue() const { return _baseValue; }
+  
+  void        SetType(EmotionType newVal)  { _emotionType = newVal; }
+  void        SetValue(float newVal)       { _baseValue = newVal; }
 
   // ===== Json =====
   

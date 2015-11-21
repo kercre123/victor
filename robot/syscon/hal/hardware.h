@@ -7,6 +7,9 @@
 //#define DEBUG_MESSAGES
 //#define RADIO_TIMING_TEST
 
+// Updated for EP1
+#define ROBOT_EP1_BODY
+
 enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1

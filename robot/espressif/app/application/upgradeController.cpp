@@ -231,12 +231,22 @@ LOCAL bool TaskOtaWiFi(uint32 param)
 LOCAL bool TaskOtaRTIP(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
+  const uint16_t rtipState = i2spiGetRtipBootloaderState();
   
 #ifdef DEBUG_OTA
-  os_printf("TaskOtaRTIP: state = %d\tphase = %d\tindex = %d\r\n", i2spiGetRtipBootloaderState(), state->phase, state->index);
+  static int32_t  prevIndex = 0xFFFF;
+  static int32_t  prevPhase = 0xFFFF;
+  static uint16_t prevState = 0xFFFF;
+  if ((rtipState != prevState) || (state->index != prevIndex) || (state->phase != prevPhase))
+  {
+    prevIndex = state->index;
+    prevPhase = state->phase;
+    prevState = rtipState;
+    os_printf("TaskOtaRTIP: state = %d\tphase = %d\tindex = %d\r\n", prevState, prevPhase, prevIndex);
+  }
 #endif
   
-  switch (i2spiGetRtipBootloaderState())
+  switch (rtipState)
   {
     case STATE_NACK:
     {
@@ -246,66 +256,71 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         os_free(state);
         return false;
       }
+      state->phase = 0;
       // Have retries left, fall through and try writing
     }
     case STATE_IDLE:
     {
-      switch (state->phase)
+      if (state->phase == 0)
       {
-        case 0: // Really idle
+        FirmwareBlock chunk;
+        switch (spi_flash_read(state->fwStart + state->index, reinterpret_cast<uint32*>(&chunk), sizeof(FirmwareBlock)))
         {
-          FirmwareBlock chunk;
-          switch (spi_flash_read(state->fwStart + state->index, reinterpret_cast<uint32*>(&chunk), sizeof(FirmwareBlock)))
-          {
-            case SPI_FLASH_RESULT_OK:
-            {
-              retries = MAX_RETRIES;
-              state->index += sizeof(FirmwareBlock);
-              i2spiBootloaderPushChunk(&chunk);
-              state->phase = 1;
-              return true;
-            }
-            case SPI_FLASH_RESULT_ERR:
-            {
-              PRINT("RTIP OTA flash readback failure, aborting\r\n");
-              os_free(state);
-              return false;
-            }
-            case SPI_FLASH_RESULT_TIMEOUT:
-            {
-              if (retries-- > 0)
-              {
-                return true;
-              }
-              else
-              {
-                PRINT("RTIP OTA flash readback timeout, aborting\r\n");
-                os_free(state);
-                return false;
-              }
-            }
-          }
-        }
-        case 1: // Returning from writing a chunk
-        {
-          state->index += sizeof(FirmwareBlock);
-          if (static_cast<uint32>(state->index) < state->fwSize) // Have more firmware left to write
+          case SPI_FLASH_RESULT_OK:
           {
             retries = MAX_RETRIES;
-            state->phase = 0;
+            i2spiBootloaderPushChunk(&chunk);
+            state->phase = 1;
             return true;
           }
-          else // Done writing firmware
+          case SPI_FLASH_RESULT_ERR:
           {
-            i2spiSwitchMode(I2SPI_NORMAL);
-            PRINT("RTIP OTA transfer complete\r\n");
+            PRINT("RTIP OTA flash readback failure, aborting\r\n");
             os_free(state);
             return false;
           }
+          case SPI_FLASH_RESULT_TIMEOUT:
+          {
+            if (retries-- > 0)
+            {
+              return true;
+            }
+            else
+            {
+              PRINT("RTIP OTA flash readback timeout, aborting\r\n");
+              os_free(state);
+              return false;
+            }
+          }
         }
+      }
+      else if (state->phase == 2)
+      {
+        state->index += sizeof(FirmwareBlock);
+        if (static_cast<uint32>(state->index) < state->fwSize) // Have more firmware left to write
+        {
+          retries = MAX_RETRIES;
+          state->phase = 0;
+          return true;
+        }
+        else // Done writing firmware
+        {
+          PRINT("RTIP OTA transfer complete\r\n");
+          i2spiSwitchMode(I2SPI_NORMAL);
+          os_free(state);
+          return false;
+        }
+      }
+      else
+      {
+        return true;
       }
     }
     case STATE_BUSY: // Just waiting
+    {
+      if (state->phase == 1) state->phase = 2;
+      return true;
+    }
     case STATE_SYNC: // We will read garbage instead of sync so default is the same
     default:
     {

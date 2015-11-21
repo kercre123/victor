@@ -282,62 +282,11 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     
-    static Result SetEyeArrayHelper(ProceduralFace::WhichEye whichEye,
-                                    const Json::Value& jsonRoot,
-                                    ProceduralFace& face)
-    {
-      std::vector<ProceduralFace::Value> eyeArray;
-      const char* eyeStr = (whichEye == ProceduralFace::WhichEye::Left ?
-                            "leftEye" : "rightEye");
-      if(JsonTools::GetVectorOptional(jsonRoot, eyeStr, eyeArray)) {
-        const size_t N = static_cast<size_t>(ProceduralFace::Parameter::NumParameters);
-        if(eyeArray.size() != N) {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetEyeArrayHelper.WrongNumParams",
-                              "Unexpected number of parameters for %s array (%lu vs. %lu)",
-                              eyeStr, eyeArray.size(), N);
-        }
-        
-        for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
-        {
-          face.SetParameter(whichEye,
-                            static_cast<ProceduralFace::Parameter>(i),
-                            eyeArray[i]);
-        }
-      }
-      
-      return RESULT_OK;
-    }
-    
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      auto getValueFromJson = [jsonRoot] (const std::string& name, float defaultValue) -> float
-      {
-        float tempValue = defaultValue;
-        if(!JsonTools::GetValueOptional(jsonRoot, name, tempValue))
-        {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
-                              "Missing '%s' parameter - will use %f.", name.c_str(), defaultValue);
-        }
-        return tempValue;
-      };
-      
-      _procFace.SetFaceAngle(getValueFromJson("faceAngle", 0.0f));
-      _procFace.SetFacePosition({getValueFromJson("faceCenterX", 0.0f), getValueFromJson("faceCenterY", 0.0f)});
-      _procFace.SetFacePosition({getValueFromJson("faceScaleX", 1.0f), getValueFromJson("faceScaleY", 1.0f)});
-      
-      //
-      // Single array for left and right eye, indexed by enum value
-      //  Note: these will overwrite any individual values found above.
-      Result lastResult = SetEyeArrayHelper(ProceduralFace::WhichEye::Left,
-                                            jsonRoot, _procFace);
-      if(RESULT_OK == lastResult) {
-        lastResult = SetEyeArrayHelper(ProceduralFace::WhichEye::Right,
-                                     jsonRoot, _procFace);
-      }
-
+      _procFace.GetParams().SetFromJson(jsonRoot);
       Reset();
-      
-      return lastResult;
+      return RESULT_OK;
     }
     
     void ProceduralFaceKeyFrame::Reset()
@@ -383,7 +332,7 @@ return RESULT_FAIL; \
       const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
       
       ProceduralFace interpFace;
-      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      interpFace.GetParams().Interpolate(_procFace.GetParams(), nextFrame._procFace.GetParams(), fraction);
       
       _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
       if(_currentTime_ms >= nextFrame.GetTriggerTime()) {

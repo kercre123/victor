@@ -158,8 +158,11 @@ robot/som/*.jpg
 
 # Ban .safe files, unless they're in the proper place (releases)
 *.safe
-!robot/releases/*.safe
+!robot/**/releases/*.safe
 !makesafe*.exe
+**.bin
+!robot/**/releases/*.bin
+fixture.build
 
 robot/fixture/ankilog/Release
 robot/fixture/ankilog/Debug
@@ -181,7 +184,6 @@ include/anki/cozmo/shared/msgIDs.txt
 
 
 **.output
-**.bin
 # **.S - Find a better way to keep your build artifacts out of the tree - .S is used by embedded team for ASM
 **.dump
 *.htm

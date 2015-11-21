@@ -163,9 +163,24 @@ void DisplayInvert(bool invert)
   DisplayWrite(true, command, sizeof(command));
 }
 
+static unsigned int lastUpdateTime_ = 0;
+
 void DisplayFlip(void) {
+  // When the display changes, stop scrolling for a moment
+  DisplaySetScroll(false);
+  lastUpdateTime_ = getMicroCounter();
+  
   DisplayWrite(true, ResetCursorCmd, sizeof(ResetCursorCmd));
   DisplayWrite(false, (u8*) &frame, sizeof(frame));
+}
+
+// Call this periodically to enable scrolling
+void DisplayUpdate(void) {
+  if (lastUpdateTime_ && getMicroCounter() - lastUpdateTime_ > 5000000)
+  {
+    DisplaySetScroll(true);
+    lastUpdateTime_ = 0;
+  }
 }
 
 // Clears the screen
@@ -184,16 +199,16 @@ void DisplayPutChar(char character)
   }
 
   if (character < CHAR_START || character > CHAR_END) {
-    display_x += CHAR_WIDTH + 1;
+    display_x += (CHAR_WIDTH + 1) * scale_x;
     return ;
   }
 
   const uint8_t *disp = FONT[character-CHAR_START];
 
   for (int x = 0; x < CHAR_WIDTH && display_x < DISPLAY_WIDTH; x++, disp++) {
-    uint64_t mask = (1 << (CHAR_HEIGHT * scale_y)) - 1;
-    uint64_t setbits = ((1 << scale_y) - 1) << display_y;
-    uint64_t setables = 0L;
+    uint64_t mask = (1LL << (CHAR_HEIGHT * scale_y)) - 1;
+    uint64_t setbits = ((1LL << scale_y) - 1) << display_y;
+    uint64_t setables = 0LL;
     uint8_t bits = *disp;
 
     for (int y = 0; y < CHAR_HEIGHT; y++, setbits <<= scale_y) {
@@ -208,7 +223,7 @@ void DisplayPutChar(char character)
     }
   }
   
-  display_x++;
+  display_x += scale_x;
 }
 
 void DisplayPutString(const char* string)
@@ -249,4 +264,18 @@ void DisplayPrintf(const char *format, ...)
   
   DisplayPutString(buffer);
   DisplayFlip();
+}
+
+// This is used to print codes and fixture names
+void DisplayBigCenteredText(char* text)
+{
+  int len = strlen(text);
+  const int scale = 3;
+  
+  DisplayTextHeightMultiplier(scale);
+  DisplayTextWidthMultiplier(scale);
+  
+  DisplayMoveCursor(32-scale*4, 64-len*scale*3);
+  
+  DisplayPutString(text);
 }

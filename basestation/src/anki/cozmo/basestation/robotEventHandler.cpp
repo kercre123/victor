@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -644,23 +646,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   }
   
   ProceduralFace procFace;
-  using Param = ProceduralFace::Parameter;
-  const size_t N = static_cast<size_t>(Param::NumParameters);
-  if(msg.leftEye.size() < N || msg.rightEye.size() < N) {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleDisplayProceduralFace.WrongArrayLength",
-                      "Expecting leftEye / rightEye array lengths to be %lu, not %lu / %lu.",
-                      N, msg.leftEye.size(), msg.rightEye.size());
-    return;
-  }
-    
-  for(int iParam = 0; iParam < N; ++iParam) {
-    procFace.SetParameter(ProceduralFace::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
-    procFace.SetParameter(ProceduralFace::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
-  }
-  
-  procFace.SetFaceAngle(msg.faceAngle);
-  procFace.SetFacePosition({msg.faceCenX, msg.faceCenY});
-  procFace.SetFaceScale({msg.faceScaleX, msg.faceScaleY});
+  procFace.GetParams().SetFromMessage(msg);
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
   
   robot->SetProceduralFace(procFace);
