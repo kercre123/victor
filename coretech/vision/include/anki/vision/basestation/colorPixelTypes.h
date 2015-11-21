@@ -23,7 +23,7 @@ namespace Vision {
   public:
     
     PixelRGB(u8 r, u8 g, u8 b) : cv::Vec3b(r,g,b) { }
-    PixelRGB() : PixelRGB(0,0,0) { }
+    PixelRGB(u8 value = 0) : PixelRGB(value, value, value) { }
     
     // Const accessors
     u8  r() const { return this->operator[](0); }

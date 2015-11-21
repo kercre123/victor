@@ -366,11 +366,11 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(Anki::Point2f& msg)
+  bool VisionSystem::CheckMailbox(ExternalInterface::RobotObservedMotion& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _motionCentroidMailbox.getMessage(msg);
+      retVal = _motionMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -1194,10 +1194,32 @@ namespace Cozmo {
   } // DetectFaces()
   
   
+  static size_t FindLargestRegionCentroid(const std::vector<std::vector<Anki::Point2i>>& regionPoints,
+                                        size_t minArea, Anki::Point2f& centroid)
+  {
+    size_t largestRegion = 0;
+    
+    for(auto & region : regionPoints) {
+      //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
+      //                 "Area=%lu", region.size());
+      if(region.size() > minArea) {
+        centroid = 0.f;
+        for(auto & point : region) {
+          centroid += point;
+        }
+        centroid /= static_cast<f32>(region.size());
+        largestRegion = region.size();
+      }
+    } // for each region
+    
+    return largestRegion;
+  }
+  
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
                                 _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+    
     const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
                            NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
@@ -1244,49 +1266,144 @@ namespace Cozmo {
       Vision::Image ratioImg(image.GetNumRows(), image.GetNumCols());
       image.ApplyScalarFunction(ratioTest, _prevImage, ratioImg);
       
-      size_t minArea = image.GetNumElements() / 225; // 1/15 of each image dimension
       Anki::Point2f centroid(0.f,0.f); // Not Embedded::
+      Anki::Point2f groundPlaneCentroid(0.f,0.f);
+      
+      // Get overall immge centroid
+      const size_t minArea = image.GetNumElements() / 225; // 1/15 of each image dimension
+      size_t imgRegionArea = 0;
+      f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea)
       {
         Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
         std::vector<std::vector<Point2<s32>>> regionPoints;
         ratioImg.GetConnectedComponents(motionRegions, regionPoints);
-        
-        for(auto & region : regionPoints) {
-          //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
-          //                 "Area=%lu", region.size());
-          if(region.size() > minArea) {
-            centroid = 0.f;
-            for(auto & point : region) {
-              centroid += point;
-            }
-            centroid /= static_cast<f32>(region.size());
-            minArea = region.size();
-          }
-        } // for each region
-        
-        if(centroid.x() > 0.f) {
-          ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < motionRegions.GetNumCols() &&
-                       centroid.y() > 0.f && centroid.y() < motionRegions.GetNumRows(),
-                       "Motion centroid should be within image bounds.");
 
-          PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
-                           "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
-                           "[out of %lu regions]",
-                           minArea, centroid.x(), centroid.y(), regionPoints.size());
-          
-          _lastMotionTime = image.GetTimestamp();
-          _motionCentroidMailbox.putMessage(centroid);
-          
+        imgRegionArea = FindLargestRegionCentroid(regionPoints, minArea, centroid);
+      }
+      
+      // Get centroid of all the motion within the ground plane, if we have one to reason about
+      if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
+      {
+        // Zero out everything in the ratio image that's not on the ground plane
+        Vision::Image mask(ratioImg.GetNumRows(), ratioImg.GetNumCols());
+        const Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        
+        mask.FillWith(0);
+        cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
+          imgQuad[Quad::CornerName::TopLeft].get_CvPoint_(),
+          imgQuad[Quad::CornerName::TopRight].get_CvPoint_(),
+          imgQuad[Quad::CornerName::BottomRight].get_CvPoint_(),
+          imgQuad[Quad::CornerName::BottomLeft].get_CvPoint_(),
+        }, 255);
+        
+        ASSERT_NAMED(ratioImg.IsContinuous() && mask.IsContinuous(),
+                     "RatioImg and ground mask should be continuous.");
+        const u8* maskData = mask.GetDataPointer();
+        u8* ratioData = ratioImg.GetDataPointer();
+        for(s32 i=0; i<image.GetNumElements(); ++i) {
+          if(maskData[i] == 0) {
+            ratioData[i] = 0;
+          }
         }
         
-      } // if(anyAboveThresh)
+        // Find centroid of largest connected component inside the ground plane
+        Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
+        std::vector<std::vector<Point2<s32>>> regionPoints;
+        ratioImg.GetConnectedComponents(motionRegions, regionPoints);
+        
+        const f32 imgQuadArea = imgQuad.ComputeArea();
+        groundRegionArea = FindLargestRegionCentroid(regionPoints, imgQuadArea/225.f,                                                         groundPlaneCentroid);
+        
+        /* Experimental: Try computing moments in an overhead warped view of the ratio image
+        groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
+        
+        cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
+        if(moments.m00 > 0) {
+          groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
+          groundPlaneCentroid.x() = moments.m10 / moments.m00;
+          groundPlaneCentroid.y() = moments.m01 / moments.m00;
+          groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
+          
+          // TODO: return other moments?
+        }
+        */
+        
+        if(groundRegionArea > 0.f)
+        {
+          // Make ground region area into a fraction of the ground ROI area
+          groundRegionArea /= imgQuadArea;
+          
+          // Map the centroid onto the ground plane
+          Matrix_3x3f invH;
+          _poseData.groundPlaneHomography.GetInverse(invH);
+          Point3f temp = invH * Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f};
+          ASSERT_NAMED(temp.z() > 0, "Projected 'z' should be > 0.");
+          const f32 divisor = 1.f/temp.z();
+          groundPlaneCentroid.x() = temp.x() * divisor;
+          groundPlaneCentroid.y() = temp.y() * divisor;
+          
+          ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
+                       "GroundQuad should contain the ground plane centroid.");
+        }
+      } // if(groundPlaneVisible)
+      
+      if(imgRegionArea > 0 || groundRegionArea > 0.f)
+      {
+        PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
+                         "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
+                         "-- (%.1f,%.1f) on the ground",
+                         minArea, centroid.x(), centroid.y(),
+                         groundPlaneCentroid.x(), groundPlaneCentroid.y());
+        
+        _lastMotionTime = image.GetTimestamp();
+        
+        ExternalInterface::RobotObservedMotion msg;
+        msg.timestamp = image.GetTimestamp();
+        
+        if(imgRegionArea > 0)
+        {
+          ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
+                       centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
+                       "Motion centroid should be within image bounds.");
+          centroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
+          msg.img_x = centroid.x();
+          msg.img_y = centroid.y();
+          msg.img_area = static_cast<s32>(imgRegionArea);
+        } else {
+          msg.img_area = 0;
+        }
+        
+        if(groundRegionArea > 0.f)
+        {
+          msg.ground_x = std::round(groundPlaneCentroid.x());
+          msg.ground_y = std::round(groundPlaneCentroid.y());
+          msg.ground_area = groundRegionArea;
+        } else {
+          msg.ground_area = 0;
+        }
+        
+        _motionMailbox.putMessage(std::move(msg));
+      }
       
 #     if DEBUG_MOTION_DETECTION
       {
         Vision::ImageRGB ratioImgDisp(ratioImg);
-        ratioImgDisp.DrawPoint(centroid, NamedColors::RED, 2);
+        ratioImgDisp.DrawPoint(centroid + _camera.GetCalibration().GetCenter(), NamedColors::RED, 2);
         _debugImageRGBMailbox.putMessage({"RatioImg", ratioImgDisp});
+        
+        
+        ratioImgDisp = Vision::ImageRGB(_poseData.groundPlaneROI.GetOverheadMask());
+        if(groundRegionArea > 0.f) {
+          ratioImgDisp.DrawPoint(groundPlaneCentroid-_poseData.groundPlaneROI.GetOverheadImageOrigin(),
+                                 NamedColors::RED, 2);
+          
+          cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(groundRegionArea),
+                      cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .5f,
+                      CV_RGB(0,255,0));
+        }
+        _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDisp});
+
         //_debugImageRGBMailbox.putMessage({"CurrentImg", image});
       }
 #     endif
@@ -1734,6 +1851,6 @@ namespace Cozmo {
     _faceDetectionParameters.maxHeight = maxObjectHeight;
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
-    
+  
 } // namespace Cozmo
 } // namespace Anki

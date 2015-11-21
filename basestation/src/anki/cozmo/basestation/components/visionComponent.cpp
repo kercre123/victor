@@ -39,7 +39,6 @@ namespace Cozmo {
   VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, Util::Data::DataPlatform* dataPlatform)
   : _camera(robotID)
   , _runMode(mode)
-  , _groundPlaneMask(_groundPlaneROI.widthFar, _groundPlaneROI.length)
   {
     std::string dataPath("");
     if(dataPlatform != nullptr) {
@@ -51,17 +50,6 @@ namespace Cozmo {
     }
     
     _visionSystem = new VisionSystem(dataPath);
-    
-    assert(false == _groundPlaneMask.IsEmpty());
-    
-    const s32 w = std::round(0.5f*(_groundPlaneROI.widthFar - _groundPlaneROI.widthClose));
-    _groundPlaneMask.FillWith(0);
-    cv::fillConvexPoly(_groundPlaneMask.get_CvMat_(), std::vector<cv::Point>{
-      cv::Point(0, w),
-      cv::Point(_groundPlaneROI.length-1,0),
-      cv::Point(_groundPlaneROI.length-1,_groundPlaneROI.widthFar-1),
-      cv::Point(0, w + _groundPlaneROI.widthClose)
-    }, 255);
     
   } // VisionSystem()
 
@@ -305,7 +293,8 @@ namespace Cozmo {
                                                                      _nextPoseData.groundPlaneHomography);
       Unlock();
       
-      UpdateOverheadMap(image, _nextPoseData);
+      // Experimental:
+      //UpdateOverheadMap(image, _nextPoseData);
       
       switch(_runMode)
       {
@@ -368,6 +357,8 @@ namespace Cozmo {
     
     const Matrix_3x3f K = _camera.GetCalibration().GetCalibrationMatrix();
     
+    GroundPlaneROI groundPlaneROI;
+    
     // Loop over all possible head angles at the specified resolution and store
     // the ground plane homography for each.
     for(f32 headAngle_rad = MIN_HEAD_ANGLE; headAngle_rad <= MAX_HEAD_ANGLE;
@@ -386,8 +377,11 @@ namespace Cozmo {
       // image plane
       const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
       
-      Point3f temp = H * Point3f(_groundPlaneROI.dist + _groundPlaneROI.length, 0.f, 1.f);
-      if(temp.z() > 0.f && temp.y()/temp.z() < _camera.GetCalibration().GetNrows()) {
+      Quad2f imgQuad = groundPlaneROI.GetImageQuad(H);
+      
+      if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
+         _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
+      {
         // Only store this homography if the ROI still projects into the image
         _groundPlaneHomographyLUT[headAngle_rad] = H;
       } else {
@@ -614,13 +608,10 @@ namespace Cozmo {
   {
     if(_visionSystem != nullptr)
     {
-      Point2f motionCentroid;
+      ExternalInterface::RobotObservedMotion motionCentroid;
       if (true == _visionSystem->CheckMailbox(motionCentroid))
       {
-        using namespace ExternalInterface;
-        motionCentroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
-       
-        robot.Broadcast(MessageEngineToGame(RobotObservedMotion(motionCentroid.x(), motionCentroid.y())));
+        robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
       }
     } // if(_visionSystem != nullptr)
     return RESULT_OK;
@@ -630,49 +621,13 @@ namespace Cozmo {
   Result VisionComponent::UpdateOverheadMap(const Vision::ImageRGB& image,
                                             const VisionSystem::PoseData& poseData)
   {
-    // Define ROI quad on ground plane, in robot-centric coordinates (origin is *)
-    // The region is "d" mm long and starts "d0" mm from the robot origin.
-    // It is "w_close" mm wide at the end close to the robot and "w_far" mm
-    // wide at the opposite end
-    //                              _____
-    //  +---------+    _______------     |
-    //  | Robot   |   |                  |
-    //  |       * |   | w_close          | w_far
-    //  |         |   |_______           |
-    //  +---------+           ------_____|
-    //
-    //          |<--->|<---------------->|
-    //           dist         length
-    //
-    
     if(poseData.groundPlaneVisible)
     {
       const Matrix_3x3f& H = poseData.groundPlaneHomography;
       
-      // Note that the z coordinate is actually 0, but in the mapping to the
-      // image plane below, we are actually doing K[R t]* [Px Py Pz 1]',
-      // and Pz == 0 and we thus drop out the third column, making it
-      // K[R t] * [Px Py 0 1]' or H * [Px Py 1]', so for convenience, we just
-      // go ahead and fill in that 1 here:
-      const GroundPlaneROI& roi = _groundPlaneROI;
-      const Quad3f groundQuad({roi.dist + roi.length,  0.5f*roi.widthFar,   1.f},
-                              {roi.dist             ,  0.5f*roi.widthClose, 1.f},
-                              {roi.dist + roi.length, -0.5f*roi.widthFar,   1.f},
-                              {roi.dist             , -0.5f*roi.widthClose, 1.f});
-
-      // Project ground quad in camera image
-      // (This could be done by Camera::ProjectPoints, but that would duplicate
-      //  the computation of H we did above, which here we need to use below)
-      Quad2f imgGroundQuad;
-      for(Quad::CornerName iCorner = Quad::CornerName::FirstCorner;
-          iCorner != Quad::CornerName::NumCorners; ++iCorner)
-      {
-        Point3f temp = H * groundQuad[iCorner];
-        ASSERT_NAMED(temp.z() > 0.f, "Projected ground quad points should have z > 0.");
-        const f32 divisor = 1.f / temp.z();
-        imgGroundQuad[iCorner].x() = temp.x() * divisor;
-        imgGroundQuad[iCorner].y() = temp.y() * divisor;
-      }
+      const GroundPlaneROI& roi = poseData.groundPlaneROI;
+      
+      Quad2f imgGroundQuad = roi.GetImageQuad(H);
       
       static Vision::ImageRGB overheadMap(1000.f, 1000.f);
       
@@ -681,45 +636,18 @@ namespace Cozmo {
       // is not upper left). Also mirror Y coordinates since we are looking
       // from above, not below
       Matrix_3x3f InvShift{
-        1.f, 0.f, roi.dist, // Negated b/c we're using inv(Shift)
-        0.f,-1.f, roi.widthFar*0.5f,
+        1.f, 0.f, roi.GetDist(), // Negated b/c we're using inv(Shift)
+        0.f,-1.f, roi.GetWidthFar()*0.5f,
         0.f, 0.f, 1.f};
 
-      static Vision::Image roiMask(roi.widthFar, roi.length);
-      static bool maskFilled = false;
-      if(!maskFilled) {
-        const f32 w = 0.5f*(roi.widthFar - roi.widthClose);
-        const f32 invTanAngle = roi.length / w;
-        for(s32 i=0; i<roi.widthFar; ++i) {
-          u8* row_i = roiMask.GetRow(i);
-          
-          s32 xmax = 0;
-          if(i < w) {
-            xmax = std::round(roi.length - static_cast<f32>(i) * invTanAngle);
-          } else if(i > w + roi.widthClose) {
-            xmax = std::round(roi.length - (roi.widthFar - static_cast<f32>(i)) * invTanAngle);
-          }
-          
-          for(s32 j=0; j<xmax; ++j) {
-            row_i[j] = 0;
-          }
-          for(s32 j=xmax; j<roi.length; ++j) {
-            row_i[j] = 255;
-          }
-        }
-        maskFilled = true;
-        
-        roiMask.Display("RoiMask");
-      }
-      
       Pose3d worldPoseWrtRobot = poseData.poseStamp.GetPose().GetInverse();
-      for(s32 i=0; i<roi.widthFar; ++i) {
-        const u8* mask_i = roiMask.GetRow(i);
-        const f32 y = static_cast<f32>(i) - 0.5f*roi.widthFar;
-        for(s32 j=0; j<roi.length; ++j) {
+      for(s32 i=0; i<roi.GetWidthFar(); ++i) {
+        const u8* mask_i = roi.GetOverheadMask().GetRow(i);
+        const f32 y = static_cast<f32>(i) - 0.5f*roi.GetWidthFar();
+        for(s32 j=0; j<roi.GetLength(); ++j) {
           if(mask_i[j] > 0) {
             // Project ground plane point in robot frame to image
-            const f32 x = static_cast<f32>(j) + roi.dist;
+            const f32 x = static_cast<f32>(j) + roi.GetDist();
             Point3f imgPoint = H * Point3f(x,y,1.f);
             assert(imgPoint.z() > 0.f);
             const f32 divisor = 1.f / imgPoint.z();
@@ -746,12 +674,7 @@ namespace Cozmo {
         }
       }
       
-      Vision::ImageRGB overheadImg;
-      
-      // Note that we're applying the inverse homography, so we're doing
-      //  inv(Shift * inv(H)), which is the same as  (H * inv(Shift))
-      cv::warpPerspective(image.get_CvMat_(), overheadImg.get_CvMat_(), (H*InvShift).get_CvMatx_(),
-                          cv::Size(roi.length, roi.widthFar), cv::INTER_LINEAR | cv::WARP_INVERSE_MAP);
+      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
       
       static s32 updateFreq = 0;
       if(updateFreq++ == 8){ // DEBUG
@@ -766,7 +689,7 @@ namespace Cozmo {
         // a red border
         overheadMap.CopyTo(dispImg);
         Quad3f lastUpdate;
-        poseData.poseStamp.GetPose().ApplyTo(groundQuad, lastUpdate);
+        poseData.poseStamp.GetPose().ApplyTo(roi.GetGroundQuad(), lastUpdate);
         for(auto & point : lastUpdate) {
           point.x() += static_cast<f32>(overheadMap.GetNumCols()*0.5f);
           point.y() *= -1.f;

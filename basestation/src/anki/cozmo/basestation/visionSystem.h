@@ -36,6 +36,8 @@
 #include "anki/common/robot/geometry_declarations.h"
 
 #include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/groundPlaneROI.h"
+
 #include "anki/common/basestation/matlabInterface.h"
 
 #include "anki/vision/robot/fiducialMarkers.h"
@@ -52,6 +54,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/visionModes.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 
 
 namespace Anki {  
@@ -90,6 +93,7 @@ namespace Cozmo {
       Pose3d           cameraPose; // w.r.t. pose in poseStamp
       bool             groundPlaneVisible;
       Matrix_3x3f      groundPlaneHomography;
+      GroundPlaneROI   groundPlaneROI;
     };
     
     // This is main Update() call to be called in a loop from above.
@@ -200,9 +204,9 @@ namespace Cozmo {
     //bool CheckMailbox(MessageFaceDetection&       msg);
     bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
     bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(VizInterface::TrackerQuad& msg);
+    bool CheckMailbox(VizInterface::TrackerQuad&  msg);
     //bool CheckMailbox(RobotInterface::PanAndTilt& msg);
-    bool CheckMailbox(Point2f& centroid);
+    bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
@@ -403,7 +407,7 @@ namespace Cozmo {
     // Mailboxes for different types of messages that the vision
     // system communicates back to the vision processing thread
     Mailbox<VizInterface::TrackerQuad>        _trackerMailbox;
-    Mailbox<Point2f>                          _motionCentroidMailbox;
+    Mailbox<ExternalInterface::RobotObservedMotion>  _motionMailbox;
     Mailbox<std::pair<Pose3d, TimeStamp_t> >  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
