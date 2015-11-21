@@ -76,7 +76,7 @@ void SPIInit(void) {
 extern int counterVolume;
 int counterVolume = 0;
 
-__attribute__((section("CAMRAM"))) int SendCommand()
+int SendCommand()
 {
   const int FSTAT_ERROR = FTFA_FSTAT_FPVIOL_MASK | FTFA_FSTAT_ACCERR_MASK | FTFA_FSTAT_FPVIOL_MASK;
 
@@ -92,7 +92,6 @@ __attribute__((section("CAMRAM"))) int SendCommand()
   return FTFA->FSTAT & FSTAT_ERROR;
 }
 
-__attribute__((section("CAMRAM"))) 
 bool FlashSector(int target, const uint32_t* data)
 {
   volatile const uint32_t* original = (uint32_t*)target;
