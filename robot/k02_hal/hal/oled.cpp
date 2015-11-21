@@ -10,6 +10,8 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 
+#include "hardware.h"
+
 #include "font.h"
 
 const uint8_t SLAVE_ADDRESS     = 0x78;
@@ -119,7 +121,6 @@ namespace Anki
       void OLEDInit(void) {
         using namespace Anki::Cozmo::HAL;
         
-        GPIO_PIN_SOURCE(OLED_RST, PTA,  19);
         GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
         PORTA_PCR19  = PORT_PCR_MUX(1);
 

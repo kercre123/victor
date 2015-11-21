@@ -10,6 +10,7 @@
 
 #include "hal/i2c.h"
 #include "uart.h"
+#include "hardware.h"
 
 //#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
 #define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
@@ -20,20 +21,6 @@ namespace Anki
   {
     namespace HAL
     {
-      // For headboard 4.1 - there is no D0
-      GPIO_PIN_SOURCE(D1, PTC, 1);
-      GPIO_PIN_SOURCE(D2, PTC, 2);
-      GPIO_PIN_SOURCE(D3, PTC, 3);
-      GPIO_PIN_SOURCE(D4, PTC, 4);
-      GPIO_PIN_SOURCE(D5, PTC, 5);
-      GPIO_PIN_SOURCE(D6, PTC, 6);
-      GPIO_PIN_SOURCE(D7, PTC, 7);
-      
-      GPIO_PIN_SOURCE(HSYNC,   PTD, 5);
-      GPIO_PIN_SOURCE(XCLK,    PTB, 0);
-      
-      GPIO_PIN_SOURCE(RESET_N, PTE, 25);
-      GPIO_PIN_SOURCE(PWDN,    PTA, 1);
 
       // Configuration for GC0329 camera chip
       const u8 I2C_ADDR = 0x31;
@@ -97,25 +84,25 @@ namespace Anki
       static void InitIO()
       {
         // Set up databus to all GPIO inputs
-        SOURCE_SETUP(GPIO_D1, SOURCE_D1, SourceGPIO);
-        SOURCE_SETUP(GPIO_D2, SOURCE_D2, SourceGPIO);
-        SOURCE_SETUP(GPIO_D3, SOURCE_D3, SourceGPIO);
-        SOURCE_SETUP(GPIO_D4, SOURCE_D4, SourceGPIO);
-        SOURCE_SETUP(GPIO_D5, SOURCE_D5, SourceGPIO);
-        SOURCE_SETUP(GPIO_D6, SOURCE_D6, SourceGPIO);
-        SOURCE_SETUP(GPIO_D7, SOURCE_D7, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D1, SOURCE_CAM_D1, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D2, SOURCE_CAM_D2, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D3, SOURCE_CAM_D3, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D4, SOURCE_CAM_D4, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D5, SOURCE_CAM_D5, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D6, SOURCE_CAM_D6, SourceGPIO);
+        SOURCE_SETUP(GPIO_CAM_D7, SOURCE_CAM_D7, SourceGPIO);
 
         // Drive PWDN and RESET to safe defaults
-        GPIO_SET(GPIO_PWDN, PIN_PWDN);
-        GPIO_OUT(GPIO_PWDN, PIN_PWDN);
-        SOURCE_SETUP(GPIO_PWDN, SOURCE_PWDN, SourceGPIO);
+        GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+        GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+        SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
         
-        GPIO_RESET(GPIO_RESET_N, PIN_RESET_N);
-        GPIO_OUT(GPIO_RESET_N, PIN_RESET_N);
-        SOURCE_SETUP(GPIO_RESET_N, SOURCE_RESET_N, SourceGPIO);
+        GPIO_RESET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
+        GPIO_OUT(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
+        SOURCE_SETUP(GPIO_CAM_RESET_N, SOURCE_CAM_RESET_N, SourceGPIO);
 
         // Set up HSYNC to trigger DMA start on rising edge
-        SOURCE_SETUP(GPIO_HSYNC, SOURCE_HSYNC, SourceGPIO | SourceDMARise);
+        SOURCE_SETUP(GPIO_CAM_HSYNC, SOURCE_CAM_HSYNC, SourceGPIO | SourceDMARise);
         
         // Configure XCLK (on FTM1) for bus clock / 2 - fastest we can go (24 MHz)
         SIM_SCGC6 |= SIM_SCGC6_FTM1_MASK;   // Enable FTM1
@@ -124,7 +111,7 @@ namespace Anki
         FTM1_C0SC = FTM_CnSC_ELSB_MASK|FTM_CnSC_MSB_MASK;   // Edge-aligned PWM on CH0
         FTM1_C0V = 1;                                       // 50% duty cycle on CH0
         FTM1_SC = FTM_SC_CLKS(1); // Use bus clock with a /1 prescaler
-        SOURCE_SETUP(GPIO_XCLK, SOURCE_XCLK, SourceAlt3);
+        SOURCE_SETUP(GPIO_CAM_XCLK, SOURCE_CAM_XCLK, SourceAlt3);
       }
       
       volatile u8 eof_ = 0;
@@ -148,9 +135,9 @@ namespace Anki
         
         // Power-up/reset the camera
         MicroWait(50);
-        GPIO_RESET(GPIO_PWDN, PIN_PWDN);
+        GPIO_RESET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
         MicroWait(50);
-        GPIO_SET(GPIO_RESET_N, PIN_RESET_N);
+        GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
           
         I2CReadReg(I2C_ADDR, 0xF0);
         I2CReadReg(I2C_ADDR, 0xF1);
@@ -194,7 +181,7 @@ namespace Anki
         DMA_TCD0_NBYTES_MLNO = sizeof(dmaBuff_);  // Number of transfers in minor loop
         DMA_TCD0_ATTR = DMA_ATTR_SSIZE(0)|DMA_ATTR_DSIZE(0);  // Source 8-bit, dest 8-bit
         DMA_TCD0_SOFF = 0;          // Source (register) doesn't increment
-        DMA_TCD0_SADDR = (uint32_t)&GPIOC_PDIR;
+        DMA_TCD0_SADDR = (uint32_t)&CAMERA_DATA_GPIO;
         DMA_TCD0_DOFF = 1;          // Destination (buffer) increments
         DMA_TCD0_DADDR = (uint32_t)dmaBuff_;
         DMA_TCD0_CITER_ELINKNO = 1; // Current major loop iteration (1 per interrupt)
@@ -203,7 +190,7 @@ namespace Anki
 
         // Hook DMA request 0 to HSYNC
         const int DMAMUX_PORTA = 49;    // This is not in the .h files for some reason
-        DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_HSYNC));     
+        DMAMUX_CHCFG0 = DMAMUX_CHCFG_ENBL_MASK | (DMAMUX_PORTA + PORT_INDEX(GPIO_CAM_HSYNC));     
         DMA_ERQ = DMA_ERQ_ERQ0_MASK;
       }
 
