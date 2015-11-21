@@ -455,9 +455,9 @@ namespace Cozmo {
                 
                 msg.batteryVoltage = robot->GetBatteryVoltage();
                 
-                ExternalInterface::MessageEngineToGame message;
-                message.Set_RobotState(msg);
-                _uiMsgHandler.Broadcast(message);
+                msg.lastImageTimeStamp = robot->GetVisionComponent().GetLastProcessedImageTimeStamp();
+                
+                _uiMsgHandler.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
               } else {
                 PRINT_NAMED_WARNING("CozmoGameImpl.UpdateAsHost",
                                     "Not sending robot %d state (none available).",
