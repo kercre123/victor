@@ -122,7 +122,6 @@ bool makeDrop(uint8_t* payload, uint8_t length)
       return false;
     }
   }
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   DropToRTIP drop;
   uint32 isocData;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
@@ -134,8 +133,10 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   os_memcpy(&drop.screenData, &isocData, MAX_SCREEN_BYTES_PER_DROP);
   drop.droplet = screenDataValid | audioDataValid;
   drop.payloadLen = length;
-  os_memcpy(&(drop.payload), payload, length); // Works even if length is 0
+  if (payload != NULL) os_memcpy(&(drop.payload), payload, length);
   // Copy into the DMA buffer
+  ets_intr_lock();
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
   {
     halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
@@ -160,6 +161,7 @@ bool makeDrop(uint8_t* payload, uint8_t length)
     halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
+  ets_intr_unlock();
   return true;
 }
 
@@ -233,12 +235,17 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_TX:
     {
-      if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Durring startup
+      if (unlikely(outgoingPhase < 0)) // Durring startup
       {
-        uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
-        int w;
-        for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
-        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        if (outgoingPhase == UNINITALIZED_PHASE)
+        {
+          uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+          int w;
+          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+          ets_intr_lock();
+          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+          ets_intr_unlock();
+        }
       }
       else // When running
       {
@@ -267,11 +274,14 @@ void i2spiTask(os_event_t *event)
         uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+        ets_intr_lock();
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        ets_intr_unlock();
       }
       else // When running
       {
-        if (txFillCount > 0) txFillCount--; // We just transmitted one 
+        if (txFillCount > 0) txFillCount--; // We just transmitted one
+        ets_intr_lock();
         struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
         if (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
         {
@@ -281,6 +291,7 @@ void i2spiTask(os_event_t *event)
           i2spiTxUnderflowCount++; // Keep track of the underflow
           nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         }
+        ets_intr_unlock();
       }
       break;
     }
@@ -344,6 +355,7 @@ void dmaisr(void* arg) {
         uint32_t* buf = (uint32_t*)(asDesc(eofDesAddr)->buf_ptr);
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = 0xFFFFffff;
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         break;
       }
       case BOOTLOADER_SYNC_PHASE:
@@ -540,10 +552,12 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
       os_printf("I2Spi mode Normal\r\n");
       if (outgoingPhase == BOOTLOADER_XFER_PHASE)
       {
+        ets_intr_lock();
         uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
         txBuf[0] = COMMAND_HEADER;
         txBuf[1] = COMMAND_DONE;
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        ets_intr_unlock();
       }
       outgoingPhase = UNINITALIZED_PHASE;
       txFillCount = 0;
@@ -579,6 +593,7 @@ void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
   int wInd = 0;
   int rInd = 0;
+  ets_intr_lock();
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   uint16_t* data  = (uint16_t*)(chunk);
   txBuf[wInd++] = COMMAND_HEADER;
@@ -593,4 +608,5 @@ void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
     txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
     wInd = 0;
   }
+  ets_intr_unlock();
 }
