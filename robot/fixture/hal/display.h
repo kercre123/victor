@@ -29,4 +29,13 @@ void DisplayTextWidthMultiplier(u16 multiplier);
 // Set the text height multiplier
 void DisplayTextHeightMultiplier(u16 multiplier);
 
+// Updates the display - must call after each rendering operation
+void DisplayFlip();
+
+// This is used to print codes and fixture names
+void DisplayBigCenteredText(char* text);
+
+// Call this periodically to enable scrolling
+void DisplayUpdate(void);
+
 #endif

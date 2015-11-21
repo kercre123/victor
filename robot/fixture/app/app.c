@@ -21,7 +21,7 @@
 u8 g_fixtureReleaseVersion = 1;
 
 BOOL g_isVehiclePresent = 0;
-FixtureType g_fixtureType = FIXTURE_NONE;
+FixtureType g_fixtureType = FIXTURE_HEAD_TEST;
 FlashParams g_flashParams;
 
 char g_lotCode[15] = {0};
@@ -99,24 +99,28 @@ void SetFixtureText(void)
 {
   DisplayClear();
   
-  if (g_fixtureType == FIXTURE_BODY_TEST) {    
-    DisplayMoveCursor(3, 1);
-    DisplayTextWidthMultiplier(3);
-    DisplayTextHeightMultiplier(3);
-    DisplayPutString("LENS");
-  } else if (g_fixtureType & FIXTURE_DEBUG) {    
-    DisplayMoveCursor(3, 2);
-    DisplayTextWidthMultiplier(2);
-    DisplayTextHeightMultiplier(2);
-    DisplayPutString("DEBUG");
+  if (g_fixtureType == FIXTURE_CHARGER_TEST) {    
+    DisplayBigCenteredText("CHARGE");
+  } else if (g_fixtureType == FIXTURE_CUBE_TEST) {    
+    DisplayBigCenteredText("CUBE");
+  } else if (g_fixtureType == FIXTURE_HEAD_TEST) {    
+    DisplayBigCenteredText("HEAD");  
+  } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
+    DisplayBigCenteredText("BODY");
+  } else if (g_fixtureType == FIXTURE_NONE) {    
+    DisplayBigCenteredText("NO ID");
+  } else if (g_fixtureType == FIXTURE_DEBUG) {    
+    DisplayBigCenteredText("DEBUG");
   }
   
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-  DisplayMoveCursor(7, 1);
-  DisplayPutChar('R');
+  DisplayMoveCursor(7, 0);
+  DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  
+  DisplayFlip();
 }
 
 void SetTestCounterText(u32 current, u32 count)
@@ -551,11 +555,6 @@ static void MainExecution()
       }
     }
   }
-  
-  if (getMicroCounter() - startTime > 250000)  // 250 ms
-  {
-    SetFixtureText();
-  }
 }
 
 // Fetch flash parameters - done once on boot up
@@ -659,6 +658,7 @@ int main(void)
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  // XXX - ENCHG was disabled because it interferes with full-duplex TX/RX on the headboard for Espressif
   //GPIO_Init(GPIOA, &GPIO_InitStructure);
   
   // Initialize PB13-PB15 as the ID inputs with pullups
@@ -697,13 +697,18 @@ int main(void)
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();
+  
+  InitEspressif();
 
   SlowPutString("Ready...\r\n");
 
   STM_EVAL_LEDOn(LEDRED);
 
+  ProgramEspressif();
+
   while (1)
   {  
     MainExecution();
+    DisplayUpdate();
   }
 }

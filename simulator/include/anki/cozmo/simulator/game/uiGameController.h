@@ -211,7 +211,7 @@ protected:
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
-  void SendEnableRobotPickupDetect(bool enable);
+  void SendEnableRobotPickupParalysis(bool enable);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
   void SendReadAnimationFile();

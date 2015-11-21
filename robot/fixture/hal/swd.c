@@ -421,7 +421,7 @@ int swd_write16(int addr, u16 data)
   return r;
 }
 
-extern u16 g_bodybin[], g_bodyend[];
+extern u16 g_Body[], g_BodyEnd[];
 //extern u16 g_appbin[], g_append[];
 
 int swd_flash_page(int destaddr, u16* image)
@@ -613,7 +613,7 @@ error_t SWDTest(void)
       
       good = 1;
       u8* bootBuffer = GetGlobalBuffer();
-      memcpy(bootBuffer, g_bodybin, (g_bodyend - g_bodybin) << 1);
+      memcpy(bootBuffer, g_Body, (g_BodyEnd - g_Body) << 1);
 
       // Personalize bootloader for this car
       *(u32*)&bootBuffer[0x20] = serialNumber;
@@ -622,7 +622,7 @@ error_t SWDTest(void)
       *(u32*)&bootBuffer[0xBC] -= uid2;
 
       // For reasons I don't understand, must flash one page at a time
-      int pagecount = ((g_bodyend - g_bodybin) + 511) >> 9;      
+      int pagecount = ((g_BodyEnd - g_Body) + 511) >> 9;      
       for (int pg = 0; pg < pagecount; pg++)
       {
         swd_flash_page(0x08000000 + (pg * 1024), (u16*)&bootBuffer[pg * 1024]);
@@ -630,7 +630,7 @@ error_t SWDTest(void)
       
       // Verify bootloader part
       u16* next = (u16*)bootBuffer;
-      u32 size = (u8*)g_bodyend - (u8*)g_bodybin;
+      u32 size = (u8*)g_BodyEnd - (u8*)g_Body;
       int addr = 0x08000000;
       while (next < (u16*)&bootBuffer[size])
       {

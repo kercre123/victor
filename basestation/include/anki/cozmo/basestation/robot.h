@@ -49,8 +49,6 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -91,7 +89,9 @@ namespace Cozmo {
 // Forward declarations:
 class IPathPlanner;
 class MatPiece;
+class MoodManager;
 class PathDolerOuter;
+class ProgressionManager;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -128,7 +128,10 @@ public:
     Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
           IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
     ~Robot();
-    
+    // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
+    Robot(const Robot&) = delete;
+    Robot& operator=(const Robot&) = delete;
+  
     Result Update();
     
     Result UpdateFullRobotState(const RobotState& msg);
@@ -593,11 +596,11 @@ public:
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    MoodManager& GetMoodManager() { return _moodManager; }
-    const MoodManager& GetMoodManager() const { return _moodManager; }
+    MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
+    const MoodManager& GetMoodManager() const {  assert(_moodManager); return *_moodManager; }
   
-    inline const ProgressionManager& GetProgressionManager() const { return _progressionManager; }
-    inline ProgressionManager& GetProgressionManager() { return _progressionManager; }
+    inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
+    inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
   
     // Handle various message types
     template<typename T>
@@ -792,10 +795,10 @@ public:
     u8  _animationTag              = 0;
     
     ///////// Mood/Emotions ////////
-    MoodManager      _moodManager;
+    MoodManager*         _moodManager;
 
     ///////// Progression/Skills ////////
-    ProgressionManager  _progressionManager;
+    ProgressionManager*  _progressionManager;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
@@ -859,7 +862,7 @@ public:
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
   
-    Result SendEnablePickupDetect(const bool enable) const;
+    Result SendEnablePickupParalysis(const bool enable) const;
 
     Result SendAbortDocking();
     Result SendAbortAnimation();

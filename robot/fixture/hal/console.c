@@ -257,6 +257,12 @@ static void SetMode(void)
   if (!strcasecmp(arg, "body"))
   {
     g_fixtureType = FIXTURE_BODY_TEST;
+  } else if (!strcasecmp(arg, "head")) {
+    g_fixtureType = FIXTURE_HEAD_TEST;
+  } else if (!strcasecmp(arg, "charge")) {
+    g_fixtureType = FIXTURE_CHARGER_TEST;
+  } else if (!strcasecmp(arg, "cube")) {
+    g_fixtureType = FIXTURE_CUBE_TEST;
   } else if (!strcasecmp(arg, "debug")) {
     g_fixtureType = FIXTURE_DEBUG;
   } else {
@@ -297,13 +303,14 @@ static void SetSerial(void)
 }
 
 const char* FIXTYPES[] = FIXTURE_TYPES;
+extern int g_canary;
 static void GetSerial(void)
 {
   // Serial number, fixture type, build version
   ConsolePrintf("serial,%i,%s,%i\r\n", 
     FIXTURE_SERIAL, 
     g_fixtureType & FIXTURE_DEBUG ? "DEBUG" : FIXTYPES[g_fixtureType],
-    FIXTURE_VERSION);
+    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
 }
 
 static void SetLotCode(void)
