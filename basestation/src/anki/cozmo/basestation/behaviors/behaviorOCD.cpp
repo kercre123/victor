@@ -18,6 +18,8 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/utils/timer.h"
@@ -1085,10 +1087,7 @@ namespace Cozmo {
               if (_neatObjects.size() == kNumBlocksForCelebration) {
                 UpdateBlockLights(robot);
                 
-                moodManager.AddToEmotions(EmotionType::Happy,     kEmotionChangeMedium,
-                                          EmotionType::Confident, kEmotionChangeLarge,
-                                          EmotionType::Calm,      kEmotionChangeSmall,   "OCD_Celebrate");
-
+                moodManager.TriggerEmotionEvent("OCD_Celebrate");
                 PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
               }
               break;
@@ -1100,10 +1099,7 @@ namespace Cozmo {
           // during pickup verification.
           if (robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
             
-            moodManager.AddToEmotions(EmotionType::Happy,     -kEmotionChangeSmall,
-                                      EmotionType::Confident, -kEmotionChangeSmall,
-                                      EmotionType::Calm,      -kEmotionChangeSmall,   "OCD_PickupFail");
-
+            moodManager.TriggerEmotionEvent("OCD_PickupFail");
             PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
           } else {
             lastResult = SelectNextObjectToPickUp(robot);

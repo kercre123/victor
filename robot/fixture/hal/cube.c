@@ -190,7 +190,7 @@ CUBE_PROGRAM_ERROR ProgramCube(void) {
   GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(100000);
 
-  CUBE_PROGRAM_ERROR result = LoadRom(g_Block, g_BlockEnd - g_Block);
+  CUBE_PROGRAM_ERROR result = LoadRom(g_Cube, g_CubeEnd - g_Cube);
 
   if (result != CUBE_ERROR_NONE) {
     DisplayPrintf("\nFailed      ");

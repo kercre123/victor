@@ -39,6 +39,8 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -82,8 +84,8 @@ namespace Anki {
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _audioClient( nullptr )
     , _animationStreamer(_externalInterface, _cannedAnimations)
-    , _moodManager(this)
-    , _progressionManager(this)
+    , _moodManager(new MoodManager(this))
+    , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())
     {
       _poseHistory = new RobotPoseHistory();
@@ -119,6 +121,41 @@ namespace Anki {
 
       ReadAnimationDir();
       
+      // Set up the neutral face to use when resetting procedural animations
+      static const char* neutralFaceAnimName = "neutral_face";
+      Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
+      if (nullptr != neutralFaceAnim)
+      {
+        auto frameIter = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetKeyFrameBegin();
+        ProceduralFaceParams::SetResetData(frameIter->GetFace().GetParams());
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("Robot.NeutralFaceDataNotFound",
+                            "Could not find expected neutral face animation file called %s",
+                            neutralFaceAnimName);
+      }
+      
+      // Now that the reference neutral face has been set up, reset our local faces to start from neutral
+      _proceduralFace.GetParams().Reset();
+      _lastProceduralFace.GetParams().Reset();
+      
+      // Read in Mood Manager Json
+      if (nullptr != _dataPlatform)
+      {
+        Json::Value moodConfig;
+        std::string jsonFilename = "config/basestation/config/mood_config.json";
+        bool success = _dataPlatform->readAsJson(Util::Data::Scope::Resources, jsonFilename, moodConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.MoodConfigJsonNotFound",
+                            "Mood Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+        
+        _moodManager->Init(moodConfig);
+      }
+      
       // Read in behavior manager Json
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
@@ -132,7 +169,6 @@ namespace Anki {
                             jsonFilename.c_str());
         }
       }
-      //_moodManager.Init(moodConfig); // [MarkW:TODO] Replace emotion_config.json, also, wouldn't this be the same config for each robot? Load once earlier?
       _behaviorMgr.Init(behaviorConfig);
       
       SetHeadAngle(_currentHeadAngle);
@@ -162,7 +198,9 @@ namespace Anki {
       Util::SafeDelete(_longPathPlanner);
       Util::SafeDelete(_shortPathPlanner);
       Util::SafeDelete(_shortMinAnglePathPlanner);
-      
+      Util::SafeDelete(_moodManager);
+      Util::SafeDelete(_progressionManager);
+
       _selectedPathPlanner = nullptr;
       
     }
@@ -876,9 +914,9 @@ namespace Anki {
       
       const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       
-      _moodManager.Update(currentTime);
+      _moodManager->Update(currentTime);
       
-      _progressionManager.Update(currentTime);
+      _progressionManager->Update(currentTime);
       
       const char* behaviorChooserName = "";
       std::string behaviorName("<disabled>");
@@ -2416,9 +2454,9 @@ namespace Anki {
       return SendRobotMessage<RobotInterface::ImuRequest>(length_ms);
     }
 
-    Result Robot::SendEnablePickupDetect(const bool enable) const
+    Result Robot::SendEnablePickupParalysis(const bool enable) const
     {
-      return SendRobotMessage<RobotInterface::EnablePickupDetect>(enable);
+      return SendRobotMessage<RobotInterface::EnablePickupParalysis>(enable);
     }
     
     void Robot::SetSaveStateMode(const SaveMode_t mode)

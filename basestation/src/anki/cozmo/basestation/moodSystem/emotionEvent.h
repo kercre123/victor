@@ -27,22 +27,29 @@ namespace Anki {
 namespace Cozmo {
 
   
+class MoodManager;
+
+  
 class EmotionEvent
 {
 public:
   
-  using MoodEventType = uint32_t; // [MARKW:TODO] Need something data-driven (not CLAD) for doing string<->id for these
-  static const MoodEventType kInvalidMoodEventType = 0;
+  EmotionEvent();
   
-  explicit EmotionEvent(MoodEventType eventType = kInvalidMoodEventType);
-  explicit EmotionEvent(const Json::Value& inJson);
+  // ensure noexcept default move and copy assignment-operators/constructors are created
+  EmotionEvent(const EmotionEvent& other) = default;
+  EmotionEvent& operator=(const EmotionEvent& other) = default;
+  EmotionEvent(EmotionEvent&& rhs) noexcept = default;
+  EmotionEvent& operator=(EmotionEvent&& rhs) noexcept = default;
   
   void AddEmotionAffector(const EmotionAffector& inAffector);
   
-  MoodEventType GetEventType() const { return _eventType; }
+  const std::string& GetName() const { return _name; }
+  void SetName(const char* inName) { _name = inName; }
   
   size_t GetNumAffectors() const { return _affectors.size(); }
   const EmotionAffector& GetAffector(size_t index) const { return _affectors[index]; }
+  const std::vector<EmotionAffector>& GetAffectors() const { return _affectors; }
 
   // ===== Json =====
   
@@ -52,7 +59,7 @@ public:
 private:
   
   std::vector<EmotionAffector>  _affectors;
-  MoodEventType                 _eventType;
+  std::string                   _name;
 };
 
 

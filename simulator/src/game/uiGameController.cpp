@@ -1198,12 +1198,12 @@ namespace Anki {
       SendMessage(message);
     }
 
-    void UiGameController::SendEnableRobotPickupDetect(bool enable)
+    void UiGameController::SendEnableRobotPickupParalysis(bool enable)
     {
-      ExternalInterface::EnableRobotPickupDetect m;
+      ExternalInterface::EnableRobotPickupParalysis m;
       m.enable = enable;
       ExternalInterface::MessageGameToEngine message;
-      message.Set_EnableRobotPickupDetect(m);
+      message.Set_EnableRobotPickupParalysis(m);
       SendMessage(message);
     }
     

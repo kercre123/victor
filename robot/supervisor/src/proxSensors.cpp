@@ -6,6 +6,7 @@
 #include "liftController.h"
 #include "animationController.h"
 #include "pickAndPlaceController.h"
+#include "wheelController.h"
 #include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -143,13 +144,18 @@ namespace Anki {
         
         
         /////// Cliff detect reaction ///////
+        bool movingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
         if (_enableCliffDetect) {
-          if ((HAL::IsCliffDetected() && !IMUFilter::IsPickedUp()) && !_wasCliffDetected) {
+          if (HAL::IsCliffDetected() &&
+              !IMUFilter::IsPickedUp() &&
+              movingForward &&
+              !_wasCliffDetected) {
             
             // TODO (maybe): Check for cases where cliff detect should not stop motors
             // 1) Turning in place
             // 2) Driving over something (i.e. pitch is higher than some degrees).
             
+            PRINT("Stopping due to cliff\n");
             
             // Stop all motors and animations
             PickAndPlaceController::Reset();
@@ -164,7 +170,8 @@ namespace Anki {
             RobotInterface::SendMessage(msg);
             
             _wasCliffDetected = true;
-          } else if ((!HAL::IsCliffDetected() || IMUFilter::IsPickedUp()) && _wasCliffDetected) {
+          } else if ((!HAL::IsCliffDetected() || IMUFilter::IsPickedUp()) &&
+                     _wasCliffDetected) {
             CliffEvent msg;
             msg.detected = false;
             RobotInterface::SendMessage(msg);
