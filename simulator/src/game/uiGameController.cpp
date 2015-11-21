@@ -10,6 +10,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -1062,23 +1063,8 @@ namespace Anki {
     
     BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {
-      if (behaviorName == EnumToString(BehaviorType::LookAround))
-      {
-        return BehaviorType::LookAround;
-      }
-      else if (behaviorName == EnumToString(BehaviorType::OCD))
-      {
-        return BehaviorType::OCD;
-      }
-      else if (behaviorName == EnumToString(BehaviorType::InteractWithFaces))
-      {
-        return BehaviorType::InteractWithFaces;
-      }
-      else if (behaviorName == EnumToString(BehaviorType::FollowMotion))
-      {
-        return BehaviorType::FollowMotion;
-      }
-      return BehaviorType::NoneBehavior;
+      const BehaviorType behaviorType = BehaviorTypeFromString(behaviorName);
+      return (behaviorType != BehaviorType::Count) ? behaviorType : BehaviorType::NoneBehavior;
     }
     
     void UiGameController::SendAbortPath()

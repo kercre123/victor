@@ -49,7 +49,7 @@ namespace Cozmo {
     });
     
     // Primarily Boredom and then loneliness -> OCD
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.3f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.8f}, {0.2f, 0.5f}, {1.0f, 0.3f}}), false));
     AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {0.2f, 0.8f}, {1.0f, 0.6f}}), false));
   }
   
