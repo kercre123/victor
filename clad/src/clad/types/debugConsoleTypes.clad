@@ -11,7 +11,7 @@ union consoleVarUnion {
   uint_64  varUint,
   int_64   varInt,
   uint_8   varBool,
-  int_8    varFunction,
+  string   varFunction,
 }
 
 

@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "util/console/consoleChannelFile.h"
 
 #include <assert.h>
 
@@ -45,7 +46,11 @@ namespace Cozmo {
       ExternalInterface::DebugConsoleVar varObject;
       varObject.varName = consoleVar->GetID();
       varObject.category = consoleVar->GetCategory();
-      if( consoleVar->IsIntegerType() )
+      if( consoleVar->IsToggleable())
+      {
+        varObject.varValue.Set_varBool( consoleVar->GetAsUInt64() );
+      }
+      else if( consoleVar->IsIntegerType() )
       {
         if( consoleVar->IsSignedType())
         {
@@ -61,9 +66,22 @@ namespace Cozmo {
         varObject.varValue.Set_varDouble( consoleVar->GetAsDouble() );
       }
       
+      varObject.maxValue = consoleVar->GetMaxAsDouble();
+      varObject.minValue = consoleVar->GetMinAsDouble();
       
       dataVals.push_back(varObject);
     }
+    const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
+    for ( auto& entry : funcDatabase )
+    {
+      const Anki::Util::IConsoleFunction* consoleVar = entry.second;
+      ExternalInterface::DebugConsoleVar varObject;
+      varObject.varName = consoleVar->GetID();
+      varObject.category = consoleVar->GetCategory();
+      varObject.varValue.Set_varFunction(consoleVar->GetSignature());
+      dataVals.push_back(varObject);
+    }
+    
     ExternalInterface::InitDebugConsoleVarMessage message;
     message.varData = dataVals;
     
@@ -81,6 +99,19 @@ namespace Cozmo {
         SendAllDebugConsoleVars();
       }
       break;
+      case ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage:
+      {
+        const Anki::Cozmo::ExternalInterface::RunDebugConsoleFuncMessage& msg = eventData.Get_RunDebugConsoleFuncMessage();
+        Anki::Util::IConsoleFunction* consoleFunc = Anki::Util::ConsoleSystem::Instance().FindFunction(msg.funcName.c_str());
+        if( consoleFunc )
+        {
+          enum { kBufferSize = 512 };
+          char buffer[kBufferSize];
+          //uint32_t NativeAnkiUtilConsoleCallFunction(const char* funcName, const char* funcArgs, uint32_t outTextLength, char* outText)
+          NativeAnkiUtilConsoleCallFunction( msg.funcName.c_str(), msg.funcArgs.c_str(), kBufferSize, buffer);
+        }
+      }
+      break;
       case ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage:
       {
         const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
@@ -94,7 +125,7 @@ namespace Cozmo {
           message.varValue = varValueUnion;
           _engine->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
           
-          printf("Setting var %s to %s \n",msg.varName.c_str(), msg.tryValue.c_str());
+          //printf("Setting var %s to %s \n",msg.varName.c_str(), msg.tryValue.c_str());
         }
         else
         {

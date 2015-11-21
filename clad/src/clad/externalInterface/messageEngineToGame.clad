@@ -262,6 +262,8 @@ message ProgressionStats {
 structure DebugConsoleVar {
   string varName,
   string category,
+  float_32 minValue,
+  float_32 maxValue,
   consoleVarUnion varValue
 }
 
