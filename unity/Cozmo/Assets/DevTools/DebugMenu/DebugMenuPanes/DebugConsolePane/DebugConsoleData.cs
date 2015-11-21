@@ -71,6 +71,8 @@ public class DebugConsoleData {
     }
     varData._varName = singleVar.varName;
     varData._category = singleVar.category;
+    varData._maxValue = singleVar.maxValue;
+    varData._minValue = singleVar.minValue;
 
     categoryList.Add(varData);
     _DataListVar.Add(varData);
@@ -79,6 +81,13 @@ public class DebugConsoleData {
   private GameObject GetPrefabForType(DebugConsoleVarData data) {
     if (data._tagType == consoleVarUnion.Tag.varBool) {
       return _PrefabVarUICheckbox;
+    }
+    else if (data._tagType == consoleVarUnion.Tag.varFunction) {
+      return _PrefabVarUIButton;
+    }
+    // mins and maxes are just numeric limits... so just stubbing this in
+    else if (data._maxValue < 1000000 && data._minValue > -100000) {
+      return _PrefabVarUISlider;
     }
     return _PrefabVarUIText;
   }

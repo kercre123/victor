@@ -14,6 +14,32 @@ public class VarUISlider : ConsoleVarLine {
   public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
     base.Init(singleVar);
 
+    _Slider.minValue = (float)singleVar._minValue;
+    _Slider.maxValue = (float)singleVar._maxValue;
+    float setVal = (float)singleVar._valueAsDouble;
+    switch (singleVar._tagType) {
+    case consoleVarUnion.Tag.varInt:
+      setVal = (float)singleVar._valueAsInt64;
+      break;
+    case consoleVarUnion.Tag.varUint:
+      setVal = (float)singleVar._valueAsUInt64;
+      break;
+    }
+    _Slider.value = (float)setVal;
+    SetSliderVal(_Slider.value);
+
+    _Slider.onValueChanged.AddListener(HandleValueChanged);
   }
-    
+
+  private void HandleValueChanged(float val) {
+    // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
+    // otherwise it will send another Set to a valid value.
+    // Empty string just means toggle.
+    RobotEngineManager.Instance.SetDebugConsoleVar(_varData._varName, val.ToString());
+    SetSliderVal(val);
+  }
+
+  public void SetSliderVal(double val) {
+    _SliderLabel.text = val.ToString("N2");
+  }
 }

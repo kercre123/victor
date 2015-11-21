@@ -71,8 +71,9 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
 
-  private U2G.GetAllDebugConsoleVarMessage _getAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
-  private U2G.SetDebugConsoleVarMessage _setDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
+  private U2G.GetAllDebugConsoleVarMessage _GetAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
+  private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
+  private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
 
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
@@ -580,15 +581,22 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   public void InitDebugConsole() {
-    Message.GetAllDebugConsoleVarMessage = _getAllDebugConsoleVarMessage;
+    Message.GetAllDebugConsoleVarMessage = _GetAllDebugConsoleVarMessage;
     // should get a G2U.InitDebugConsoleVarMessage back
     SendMessage();
   }
 
   public void SetDebugConsoleVar(string varName, string tryValue) {
-    _setDebugConsoleVarMessage.tryValue = tryValue;
-    _setDebugConsoleVarMessage.varName = varName;
-    Message.SetDebugConsoleVarMessage = _setDebugConsoleVarMessage;
+    _SetDebugConsoleVarMessage.tryValue = tryValue;
+    _SetDebugConsoleVarMessage.varName = varName;
+    Message.SetDebugConsoleVarMessage = _SetDebugConsoleVarMessage;
+    SendMessage();
+  }
+
+  public void RunDebugConsoleFuncMessage(string funcName, string funcArgs) {
+    _RunDebugConsoleFuncMessage.funcName = funcName;
+    _RunDebugConsoleFuncMessage.funcArgs = funcArgs;
+    Message.RunDebugConsoleFuncMessage = _RunDebugConsoleFuncMessage;
     SendMessage();
   }
 

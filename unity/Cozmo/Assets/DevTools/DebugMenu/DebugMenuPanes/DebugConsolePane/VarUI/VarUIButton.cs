@@ -14,6 +14,11 @@ public class VarUIButton : ConsoleVarLine {
   public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
     base.Init(singleVar);
 
+    _Button.onClick.AddListener(HandleClick);
+  }
+
+  public void HandleClick() {
+    RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_varData._varName, _StatInputField.text);
   }
     
 }
