@@ -167,6 +167,7 @@ namespace Cozmo {
     const UnitQuaternion<f32>& q = knownFace->face.GetHeadPose().GetRotation().GetQuaternion();
     _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                            _robot.GetID(),
+                                                           face.GetTimeStamp(),
                                                            trans.x(),
                                                            trans.y(),
                                                            trans.z(),

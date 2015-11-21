@@ -18,6 +18,8 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
+#include "anki/cozmo/basestation/robotPoseHistory.h"
+#include "anki/cozmo/basestation/visionSystem.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/visionModes.h"
 #include "util/helpers/noncopyable.h"
@@ -50,7 +52,6 @@ namespace RobotInterface {
 
 // Forward declaration
 class Robot;
-class VisionSystem;
   
 struct DockingErrorSignal;
 
@@ -69,15 +70,15 @@ struct DockingErrorSignal;
     void SetRunMode(RunMode mode);
 
     // Calibration must be provided before Update() can be called
-    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
+    void SetCameraCalibration(const Robot& robot, const Vision::CameraCalibration& camCalib);
     
     // Provide next image for processing, with corresponding robot state.
     // In synchronous mode, the image is processed immediately. In asynchronous
     // mode, it will be processed as soon as the current image is completed.
     // Also, any debug images left by vision processing for display will be
     // displayed.
-    void SetNextImage(const Vision::ImageRGB& image,
-                      const RobotState& robotState);
+    Result SetNextImage(const Vision::ImageRGB& image,
+                        const Robot& robot);
 
     void Pause(); // toggle paused state
     void Pause(bool isPaused); // set pause state
@@ -109,6 +110,8 @@ struct DockingErrorSignal;
     Result UpdateTrackingQuad(Robot& robot);
     Result UpdateDockingErrorSignal(Robot& robot);
     Result UpdateMotionCentroid(Robot& robot);
+    Result UpdateOverheadMap(const Vision::ImageRGB& image,
+                             const VisionSystem::PoseData& poseData);
     
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -147,11 +150,15 @@ struct DockingErrorSignal;
     Vision::ImageRGB _lastImg; // the last image we processed
     
     TimeStamp_t _processingPeriod = 0;
-    
-    RobotState _currentRobotState;
-    RobotState _nextRobotState;
+
+    VisionSystem::PoseData   _currentPoseData;
+    VisionSystem::PoseData   _nextPoseData;
     
     std::thread _processingThread;
+    
+    std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
+    void PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad = DEG_TO_RAD(0.25f));
+    bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();
     

@@ -77,6 +77,7 @@ message RobotState {
     int_32   carryingObjectOnTopID, // will be -1 if no object on top of object being carried
     int_32   headTrackingObjectID,  // will be -1 if head is not tracking to any object
     int_32   localizedToObjectID,   // Will be -1 if not localized to any object
+    uint_32  lastImageTimeStamp,    // Last image processed by the vision system
     uint_16  status,                // See RobotStatusFlag in cozmoTypes.h
     uint_8   gameStatus,            // See GameStatusFlag in cozmoTypes.h
     uint_8   robotID
@@ -113,6 +114,7 @@ message RobotImage_640x480 {
 //  and the world
 message RobotObservedObject {
     uint_32 robotID,
+    uint_32 timestamp,
     ObjectFamily objectFamily,
     ObjectType   objectType,
     int_32  objectID,        // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
@@ -136,6 +138,7 @@ message RobotObservedObject {
 message RobotObservedFace {
     int_64   faceID,
     uint_32  robotID,
+    uint_32 timestamp,
     float_32 world_x,        // absolute 3D position in world coords
     float_32 world_y,        //     "
     float_32 world_z,        //     "
@@ -148,8 +151,13 @@ message RobotObservedFace {
 
 // RobotObservedMotion
 message RobotObservedMotion {
-    int_16   img_x,  // Motion centroid in the image
-    int_16   img_y
+    uint_32  timestamp,// Of the corresponding image
+    int_32   img_area, // Size of the region of detected motion, in pixels
+    int_16   img_x,    // Centroid of the motion region relative to image center, in pixels
+    int_16   img_y,
+    float_32 ground_area, // Amount of motion on the ground, as a fraction of the ground ROI (0 if none)
+    int_16   ground_x,    // Centroid of the motion on the ground in robot coordinates, in mm
+    int_16   ground_y
 }
 
 // RobotDeletedFace
