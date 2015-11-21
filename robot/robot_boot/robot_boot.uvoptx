@@ -162,6 +162,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>(int*)0x40047000</ItemText>
         </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>writeAdddress</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>
