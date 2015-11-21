@@ -49,8 +49,8 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#define DEBUG_MOTION_DETECTION 1
-#define DEBUG_FACE_DETECTION   1
+#define DEBUG_MOTION_DETECTION 0
+#define DEBUG_FACE_DETECTION   0
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -1529,8 +1529,8 @@ namespace Cozmo {
     //
     
     EnableMode(VisionMode::DetectingMarkers, true);
-    EnableMode(VisionMode::DetectingMotion,  true);
-    //EnableMode(VisionMode::DetectingFaces,   true);
+    //EnableMode(VisionMode::DetectingMotion,  true);
+    EnableMode(VisionMode::DetectingFaces,   true);
     
     _markerToTrack.Clear();
     _numTrackFailures          = 0;
