@@ -21,7 +21,7 @@ namespace Conversations {
       // TODO: Set speaker image to the appropriate sprite 
       // (speaker images need to fall within the same folder and naming convention.)
       // TODO: Play VO - Set to Advance to the next line when VO ends
-      Debug.Log(string.Format("SpeechBubble.Initialize - {0}",_DialogID));
+      //Debug.Log(string.Format("SpeechBubble.Initialize - {0}",_DialogID));
     }
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {
