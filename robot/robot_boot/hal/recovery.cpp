@@ -23,16 +23,12 @@ void SyncSPI(void) {
     
     // Make sure we are bit syncronized to the espressif
     {
-      const int loops = 7;
-      bool success = true;
+      const int loops = 16;
 
       WaitForWord();
       for(int i = 0; i < loops; i++) {
-        WaitForWord();
-        if (WaitForWord() != 0x8000) success = false ;
+        if (WaitForWord() == 0x8000) return ;
       }
-
-      if (success) return ;
     }
     
     PORTE_PCR17 = PORT_PCR_MUX(0);    // SPI0_SCK (disabled)
@@ -99,10 +95,10 @@ bool FlashSector(int target, const uint32_t* data)
 
   // Test for sector erase nessessary
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++) {
-    if (original[i] == 0xFFFFFFFF) continue ;
+    //if (original[i] == 0xFFFFFFFF) continue ;
     
     // Block requires erasing
-    if (original[i] != data[i])
+    //if (original[i] != data[i])
     {
       FTFA->FCCOB0 = 0x09;
       FTFA->FCCOB1 = target >> 16;
@@ -120,9 +116,9 @@ bool FlashSector(int target, const uint32_t* data)
 
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++, target += sizeof(uint32_t)) {
     // Program word does not need to be written
-    if (data[i] == original[i]) {
-      continue ;
-    }
+    //if (data[i] == original[i]) {
+      //continue ;
+    //}
 
     // Write program word
     flashcmd[0] = (target & 0xFFFFFF) | 0x06000000;
@@ -141,10 +137,8 @@ bool FlashSector(int target, const uint32_t* data)
 static inline bool FlashBlock() {
   static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
   
-  static union {
-    FirmwareBlock packet;    
-    commandWord raw[length];
-  };
+	static FirmwareBlock packet;    
+	static commandWord* raw = (commandWord*) &packet;
 
   // Load raw packet into memory
   for (int i = 0; i < length; i++) {
@@ -168,7 +162,10 @@ static inline bool FlashBlock() {
   
   // Verify block before writting to flash
   for (int i = 0; i < SHA1_BLOCK_SIZE; i++) {
-    if (sig[i] != packet.checkSum[i]) return false;
+    if (sig[i] != packet.checkSum[i])
+		{
+			return false;
+		}
   }
 
   // Write sectors to flash

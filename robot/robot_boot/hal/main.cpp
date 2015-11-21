@@ -70,6 +70,7 @@ extern "C" void SVC_Handler(void) {
   GoSlow();
   PowerInit();
   init_data_bss();
+	MicroWait(2000000);
   EnterRecovery();
   NVIC_SystemReset();
 }
