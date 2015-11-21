@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 
 // Static data class for reading Cutscenes in from json.
+// TODO: Instead of using this to read from json into ConversationManager
+// Pass the history of conversations into the ConversationData
 public static class ConversationData {
 
   public static Dictionary<string, Conversation> Conversations;

@@ -57,7 +57,9 @@ namespace Conversations {
     IEnumerator TestRoutine(float time) {
       yield return new WaitForSeconds(time);
       NextLine();
-      StartCoroutine(TestRoutine(1.5f));
+      if (_currConversation.HasValue) {
+        StartCoroutine(TestRoutine(1.5f));
+      }
     }
     // END HACK */
 
@@ -128,7 +130,7 @@ namespace Conversations {
     // Opens and returns a speech bubble based on the specified line
     // Currently I have 2 prefabs for right/left, but later we may 
     // just want a single prefab solution that handles repositioning in code.
-    private SpeechBubble CreateSpeechBubble(ConversationData.ConversationLine line) {
+    public SpeechBubble CreateSpeechBubble(ConversationData.ConversationLine line) {
       SpeechBubble newBubble;
       if (line.isRight) {
         newBubble = UIManager.OpenView(_RightBubble) as SpeechBubble;
