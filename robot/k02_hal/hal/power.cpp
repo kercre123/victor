@@ -37,7 +37,7 @@ namespace Anki
         // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
         GPIO_IN(GPIO_WS, PIN_WS);
         SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp); 
-        
+
         Anki::Cozmo::HAL::MicroWait(10000);
         
         // Turn on 2v8 and 3v3 rails
