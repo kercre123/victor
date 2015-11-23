@@ -37,8 +37,8 @@ namespace Wink {
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
-      _WinkWaveAccumulator = Mathf.Max(0.0f, _WinkWaveAccumulator - Time.deltaTime * 0.5f);
-      if (_WinkWaveAccumulator > 0.8f) {
+      _WinkWaveAccumulator = Mathf.Max(0.0f, _WinkWaveAccumulator - Time.deltaTime * 0.25f);
+      if (_WinkWaveAccumulator > 0.6f) {
         _WinkWaveCompleted = true;
       }
     }
@@ -72,9 +72,10 @@ namespace Wink {
     }
 
     private void OnMotionDetected(float x, float y) {
+      
       float motionDetectedTime = Mathf.Clamp(Time.time - _LastWaveMessageTime, 0.0f, 0.3f);
-      Debug.Log(_WinkWaveAccumulator);
       _WinkWaveAccumulator += motionDetectedTime;
+      Debug.Log(x + ", " + y + " : " + motionDetectedTime);
 
       _LastWaveMessageTime = Time.time;
     }
