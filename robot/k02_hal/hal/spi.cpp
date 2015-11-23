@@ -24,17 +24,37 @@ static union {
 transmissionWord spi_rx_buff[RX_SIZE+RX_OVERFLOW];
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
+  memset(&drop_tx, 0, sizeof(drop_tx));
+
   drop_tx.preamble = TO_WIFI_PREAMBLE;
 
+  memcpy(drop_tx.payload, buf, buflen);
+  
   // This is where a drop should be 
-  drop_tx.payloadLen  = 0;
+  uint8_t *drop_addr = drop_tx.payload + buflen;
+  
+  // Send current state of body every frame (for the future)
+  *(drop_addr++) = DROP_BodyState;
+  BodyState bodyState; 
+  bodyState.state = recoveryMode;
+  bodyState.count = RecoveryStateUpdated;
+  
+  // Copy to drop location
+  memcpy(drop_addr, &bodyState, sizeof(bodyState));
+  drop_tx.payloadLen  = sizeof(BodyState);
 
   static int eoftime = 0;
-  drop_tx.droplet = JPEG_LENGTH(16) | ((eoftime++) & 63 ? 0 : jpegEOF);
+  drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF);
 }
+
+void EnterRecoveryMode(void) {
+  SCB->VTOR = 0;
+  __asm { SVC 0 }
+};
 
 extern "C"
 void DMA2_IRQHandler(void) {
+  using namespace Anki::Cozmo::HAL;
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
@@ -43,11 +63,33 @@ void DMA2_IRQHandler(void) {
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
-    DropToRTIP* drop = (DropToRTIP*)target;
-    
     // TODO: SCREEN
     // TODO: AUDIO
-    // TODO: DROP!
+
+    DropToRTIP* drop = (DropToRTIP*)target;
+    uint8_t *payload_data = (uint8_t*) drop->payload;
+    
+    switch (*(payload_data++)) {
+      case DROP_EnterBootloader:
+        EnterBootloader ebl;
+        memcpy(&ebl, payload_data, sizeof(ebl));
+
+        switch (ebl.which) {
+          case BOOTLOAD_RTIP:
+            EnterRecoveryMode();
+            break ;
+          case BOOTLOAD_BODY:
+            EnterBodyRecovery();
+            break ;
+        }
+        break ;
+      case DROP_BodyUpgradeData:
+        BodyUpgradeData bud;
+        memcpy(&bud, payload_data, sizeof(bud));
+
+        SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
+        break ;
+    }
   }
 }
 

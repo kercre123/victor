@@ -34,7 +34,7 @@ namespace Anki
       void WaitForSync();
       
       extern volatile bool HeadDataReceived;
-      extern volatile bool RecoveryStateUpdated;
+      extern volatile uint16_t RecoveryStateUpdated;
       extern volatile RECOVERY_STATE recoveryMode;
     }
   }

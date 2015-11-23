@@ -45,11 +45,6 @@ namespace Anki
     }
   }
 }
-void EnterRecoveryMode(void) {
-  SCB->VTOR = 0;
-  __asm { SVC 0 }
-};
-
 extern "C" void HardFault_Handler(void) {
   for(;;) ;
 }
@@ -100,7 +95,6 @@ int main (void)
   // So, we just loop around for now
 
   //StartupSelfTest();
-
   FacePrintf("Address: %2x", (uint8_t) __ESPRESSIF_SERIAL_NUMBER);
 
   for(;;) {

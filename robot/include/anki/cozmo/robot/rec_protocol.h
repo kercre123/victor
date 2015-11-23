@@ -37,9 +37,9 @@ enum RECOVERY_STATE {
 };
 
 enum DROP_COMMANDS {
-  EnterBootloader = 0xfe,
-  BodyUpgradeData = 0xfd,
-  GetBodyState    = 0xfc,
+  DROP_EnterBootloader = 0xfe,
+  DROP_BodyUpgradeData = 0xfd,
+  DROP_BodyState       = 0xfc,
 };
 
 enum EnterBootloaderWhich {
@@ -47,9 +47,22 @@ enum EnterBootloaderWhich {
   BOOTLOAD_BODY,
 };
 
-typedef struct BodyUpgradeData
+// WIFI -> RTIP
+typedef struct {
+  uint8_t which;
+} EnterBootloader;
+
+
+// RTIP -> WIFI
+typedef struct {
+  uint16_t state;
+  uint16_t  count;
+} BodyState;
+
+// WIFI -> RTIP
+typedef struct
 {
-  uint_32 data[16];
-};
+  uint32_t data;
+} BodyUpgradeData;
 
 #endif

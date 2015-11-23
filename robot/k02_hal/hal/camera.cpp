@@ -248,7 +248,7 @@ void DMA0_IRQHandler(void)
   }
 
   // Shut off DMA IRQ - we'll use FTM IRQ from now on
-  DMA_TCD0_CSR = 0;   
+  DMA_TCD0_CSR = 0;
 
   // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;

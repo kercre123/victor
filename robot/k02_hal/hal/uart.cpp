@@ -26,8 +26,9 @@ static union {
 };
 
 volatile RECOVERY_STATE Anki::Cozmo::HAL::recoveryMode = STATE_UNKNOWN;
+
 volatile bool Anki::Cozmo::HAL::HeadDataReceived = false;
-volatile bool Anki::Cozmo::HAL::RecoveryStateUpdated = false;
+volatile uint16_t Anki::Cozmo::HAL::RecoveryStateUpdated = 0;
 
 static TRANSFER_MODE uart_mode;
 
@@ -148,7 +149,7 @@ static bool TransmitRecoveryData(void) {
 static void ChangeRecoveryState(RECOVERY_STATE mode) {
   using namespace Anki::Cozmo::HAL;
 
-  RecoveryStateUpdated = true;
+  RecoveryStateUpdated++;
   recoveryMode = mode;
 }
 
