@@ -18,8 +18,6 @@ enum TRANSFER_MODE {
 static const int uart_fifo_size = 8;
 static const int MAX_REBOOT_TIMEOUT = 10000;  // 1.3seconds
 
-#define MAX(a,b)  ((a > b) ? a : b)
-
 static union {
   uint8_t   txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
   uint32_t  rx_source;
@@ -172,7 +170,7 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
         txRxBuffer[txRxIndex] = UART0_D;
 
         // Words are big endian
-        const uint16_t RECOVERY_HEADER = (COMMAND_HEADER << 8) | (COMMAND_HEADER >> 8);
+        const uint16_t RECOVERY_HEADER = (uint16_t)((COMMAND_HEADER << 8) | (COMMAND_HEADER >> 8));
 
         // Re-sync
         if (txRxIndex < 4) {

@@ -21,7 +21,7 @@ static union {
   DropToWiFi drop_tx ;
 };
 
-transmissionWord spi_rx_buff[RX_SIZE+RX_OVERFLOW];
+transmissionWord spi_rx_buff[RX_SIZE];
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
   memset(&drop_tx, 0, sizeof(drop_tx));
