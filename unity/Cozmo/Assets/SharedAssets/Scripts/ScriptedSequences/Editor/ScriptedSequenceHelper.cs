@@ -89,11 +89,17 @@ namespace ScriptedSequences.Editor {
     // Function to draw the controls for this Condition/Action
     public override void OnGUI(Vector2 mousePosition, EventType eventType)
     {
-      var rect = EditorGUILayout.GetControlRect();
 
       var lastColor = GUI.color;
       var lastBackgroundColor = GUI.backgroundColor;
       var lastContentColor = GUI.contentColor;
+
+      var bgColor = Color * 0.35f;
+      bgColor.a = 1.0f;
+      GUI.color = bgColor;
+      EditorGUILayout.BeginVertical(ScriptedSequenceEditor.BoxStyle);
+
+      var rect = EditorGUILayout.GetControlRect();
 
       GUI.color = Color;
       GUI.contentColor = Color.white;
@@ -108,6 +114,12 @@ namespace ScriptedSequences.Editor {
       if (rect.Contains(mousePosition)) {
         if (eventType == EventType.ContextClick) {
 
+          if (_Editor.GetDraggingHelper<U>() == null) {
+            _Editor.ContextMenuOpen = true;
+          }
+          else {
+            _Editor.SetDraggingHelper<U>(null);
+          }
           var menu = new GenericMenu();
 
           menu.AddItem(new GUIContent("Copy"), false, () => {
@@ -119,6 +131,10 @@ namespace ScriptedSequences.Editor {
               if(ReplaceInsteadOfInsert)
               { 
                 ReplaceAction(newCondition);
+                if(_OnDestroy != null)
+                {
+                  _OnDestroy();
+                }
               }
               else
               {
@@ -234,9 +250,9 @@ namespace ScriptedSequences.Editor {
         _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.FoldoutStyle);
       }
       else {
-        EditorGUI.indentLevel++;
+        rect.x += (EditorGUI.indentLevel + 1) * 15;
+        rect.width -= (EditorGUI.indentLevel + 1) * 15;
         GUI.Label(rect, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.LabelStyle);
-        EditorGUI.indentLevel--;
       }
 
       GUI.color = lastColor;
@@ -249,6 +265,8 @@ namespace ScriptedSequences.Editor {
         DrawControls(mousePosition, eventType);
         EditorGUI.indentLevel--;
       }
+
+      EditorGUILayout.EndVertical();
     }
 
     // Default Drawer using Reflection
