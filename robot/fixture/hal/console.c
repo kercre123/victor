@@ -18,7 +18,7 @@
 
 #define BAUD_RATE   1000000
 
-extern BOOL g_isVehiclePresent;
+extern BOOL g_isRobotPresent;
 extern u8 g_modelIndex;
 extern u32 g_modelIDs[8];
 extern FixtureType g_fixtureType;
@@ -40,7 +40,7 @@ typedef struct
 {
   const char* command;
   TestFunction function;
-  BOOL doesCommunicateWithVehicle;
+  BOOL doesCommunicateWithRobot;
 } CommandFunction;
 
 static int ConsoleReadChar(void)
@@ -274,7 +274,7 @@ static void SetMode(void)
 
 static void RedoTest(void)
 {
-  g_isVehiclePresent = 0;
+  g_isRobotPresent = 0;
 }
 
 static void SetSerial(void)
@@ -435,9 +435,9 @@ static void ParseCommand(void)
       if (!strcasecmp(cf->command, buffer) && cf->function)
       {
         commandFound = 1;
-        if (cf->doesCommunicateWithVehicle && !g_isVehiclePresent)
+        if (cf->doesCommunicateWithRobot && !g_isRobotPresent)
         {
-          ConsolePrintf("No vehicle present\r\n");
+          ConsolePrintf("No Robot present\r\n");
         } else {
           
           error_t error = ERROR_OK;

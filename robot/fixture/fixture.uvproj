@@ -494,14 +494,24 @@
               <FilePath>.\app\app.c</FilePath>
             </File>
             <File>
-              <FileName>pcbTest.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\app\pcbTest.c</FilePath>
-            </File>
-            <File>
               <FileName>binaries.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\app\binaries.s</FilePath>
+            </File>
+            <File>
+              <FileName>bodyTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\bodyTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>cubeTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\cubeTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>headTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\headTest.c</FilePath>
             </File>
           </Files>
         </Group>

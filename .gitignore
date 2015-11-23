@@ -160,6 +160,7 @@ robot/som/*.jpg
 *.safe
 !robot/**/releases/*.safe
 !makesafe*.exe
+!hex2bin.exe
 **.bin
 !robot/**/releases/*.bin
 fixture.build

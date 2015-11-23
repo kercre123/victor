@@ -2,7 +2,6 @@
 #include "hal/board.h"
 #include "hal/portable.h"
 
-#include "hal/display.h"
 #include "hal/timers.h"
 #include "../app/fixture.h"
 #include "../app/binaries.h"
@@ -12,6 +11,9 @@
 
 #define TESTPORT_TX       UART5
 #define TESTPORT_RX       USART3
+
+// Espressif baudrate detection only knows 'common' baudrates (57600 * 2^n)
+// Note:  BAUD_RATE is unstable beyond 230400
 #define BAUD_RATE         230400
 
 #define PINC_TX           12
@@ -19,43 +21,46 @@
 #define PINC_RX           10
 #define GPIOC_RX          (1 << PINC_RX)
 
+// Uncomment the below to see why programming is failing
+//#define ESP_DEBUG
+
 static const int MAX_TIMEOUT = 100000; // 100ms - will retry if needed
 
 // These are the currently known commands supported by the ROM
 static const uint8_t ESP_FLASH_BEGIN = 0x02;
 static const uint8_t ESP_FLASH_DATA  = 0x03;
-static const uint8_t ESP_FLASH_END   = 0x04;
+// static const uint8_t ESP_FLASH_END   = 0x04;
 static const uint8_t ESP_MEM_BEGIN   = 0x05;
 static const uint8_t ESP_MEM_END     = 0x06;
-static const uint8_t ESP_MEM_DATA    = 0x07;
+// static const uint8_t ESP_MEM_DATA    = 0x07;
 static const uint8_t ESP_SYNC        = 0x08;
-static const uint8_t ESP_WRITE_REG   = 0x09;
-static const uint8_t ESP_READ_REG    = 0x0a;
+// static const uint8_t ESP_WRITE_REG   = 0x09;
+// static const uint8_t ESP_READ_REG    = 0x0a;
 
 // Maximum block sized for RAM and Flash writes, respectively.
-static const uint16_t ESP_RAM_BLOCK   = 0x1800;
+// static const uint16_t ESP_RAM_BLOCK   = 0x1800;
 static const uint16_t ESP_FLASH_BLOCK = 0x400;
 
-// Default baudrate. The ROM auto-bauds, so we can use more or less whatever we want.
-static const int ESP_ROM_BAUD    = 230400;
+static const uint16_t SECTOR_SIZE = 4096;
 
 // First byte of the application image
-static const uint8_t ESP_IMAGE_MAGIC = 0xe9;
+// static const uint8_t ESP_IMAGE_MAGIC = 0xe9;
 
 // Initial state for the checksum routine
 static const uint8_t ESP_CHECKSUM_MAGIC = 0xef;
 
 // OTP ROM addresses
-static const uint32_t ESP_OTP_MAC0    = 0x3ff00050;
-static const uint32_t ESP_OTP_MAC1    = 0x3ff00054;
+// static const uint32_t ESP_OTP_MAC0    = 0x3ff00050;
+// static const uint32_t ESP_OTP_MAC1    = 0x3ff00054;
 
-// Sflash stub: an assembly routine to read from spi flash and send to host
+/* Sflash stub: an assembly routine to read from spi flash and send to host
 static const uint8_t SFLASH_STUB[]    = {
     0x80,0x3c,0x00,0x40,0x1c,0x4b,0x00,0x40,0x21,0x11,0x00,0x40,0x00,0x80,0xfe,
     0x3f,0xc1,0xfb,0xff,0xd1,0xf8,0xff,0x2d,0x0d,0x31,0xfd,0xff,0x41,0xf7,0xff,
     0x4a,0xdd,0x51,0xf9,0xff,0xc0,0x05,0x00,0x21,0xf9,0xff,0x31,0xf3,0xff,0x41,
     0xf5,0xff,0xc0,0x04,0x00,0x0b,0xcc,0x56,0xec,0xfd,0x06,0xff,0xff,0x00,0x00
 };
+*/
 
 enum ESP_SOURCE {
   ESP_FIXTURE = 0,
@@ -66,7 +71,7 @@ struct ESPHeader {
   uint8_t   source;
   uint8_t   opcode;
   uint16_t  length;
-  uint32_t  checksum;
+  uint32_t  checksum;   // Only on "flash/memory" data, not on whole data section including header
 };
 
 struct FlashLoadLocation {
@@ -220,20 +225,29 @@ static int ESPRead(u8 *target, int length, int timeout = -1) {
   return -3; // Buffer overflow
 }
 
-static inline void ESPCommand(uint8_t command, const uint8_t* data, int length) {
-  ESPHeader header = { ESP_FIXTURE, command, length, 0 } ;
+static uint8_t checksum(const uint8_t *data, int length) {
+  uint8_t state = ESP_CHECKSUM_MAGIC;
+  while(length-- > 0) {
+    state ^= *(data++);
+  }
+  return state;
+}
+
+static inline void ESPCommand(uint8_t command, const uint8_t* data, int length, int checksum) {
+  ESPHeader header = { ESP_FIXTURE, command, length, checksum } ;
+  
+#ifdef ESP_DEBUG
+  for (int i = 0; i < sizeof(header); i++)
+    SlowPrintf("%02X ", ((char*)&header)[i]);
+  SlowPrintf("  ");
+  for (int i = 0; i < length && i < 16; i++)
+    SlowPrintf("%02X ", data[i]);
+#endif
   
   ESPPutChar(0xC0);
   ESPWrite((u8*)&header, sizeof(header));
   ESPWrite(data, length);
   ESPPutChar(0xC0);
-}
-
-static uint8_t checksum(const uint8_t *data, int length, uint8_t state = ESP_CHECKSUM_MAGIC) {
-  while(length-- > 0) {
-    state ^= *(data++);
-  }
-  return state;
 }
 
 bool ESPSync(void) {
@@ -252,7 +266,7 @@ bool ESPSync(void) {
 
   // Attempt 16 times to get sync
   for (int i = 0; i < 0x40; i++) {
-    ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA));
+    ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA), 0);
     int size = ESPRead(read, sizeof(read), MAX_TIMEOUT);
     
     if (size > 0) {
@@ -268,25 +282,31 @@ bool ESPSync(void) {
   return false;
 }
 
-static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int length, uint8_t *reply, int max, int timeout = -1) {
+// From esptool.py:
+//  Responses consist of at least 8 bytes:  u8 response, u8 req_cmd, u16 datalen, u32 'value' - followed by datalen of 'body'
+//  The 'response' is always 1, the req_cmd echoes back the command, and the 'value' is only used to return read_reg (so far)
+//  The 'body' is generally a 2 byte error code - body[0] = 0 for success, 1 for fail - body[1] = last error code (not reset)
+//  Error code 7 means bad checksum.. doh
+static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int length, uint8_t *reply, int max, int timeout = -1, int checksum = 0) {
   SlowPrintf("%s=%02X {", debug, cmd);
-  for (int i = 0; i < length && i < 4; i++)
-    SlowPrintf("%02X ", data[i]);
-  ESPCommand(cmd, data, length);
+  ESPCommand(cmd, data, length, checksum);
   
   for (int retry = 0 ; retry < 100; retry++)
   {    
     int replySize = ESPRead(reply, max, timeout);
 
     // esptool says retry a command until it at least acks the command
-    if (replySize < 2 || reply[1] != cmd) {
+    // NOTE:  This check is hardcoded to deal with flashing commands and will fail on readback commands
+    if (replySize < 10 || reply[1] != cmd || reply[8] != 0) {
       SlowPrintf("retry..");
       continue;
     }
     
     SlowPrintf("..} <- %d { ", replySize);
+#ifdef ESP_DEBUG
     for (int i = 0; i < replySize; i++)
       SlowPrintf("%02X ", reply[i]);
+#endif
     SlowPrintf("}\n");
 
     return replySize;
@@ -296,9 +316,6 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
 }
 
 static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
-  // Settings: QIO, 16m 20m
-  const uint16_t flash_mode = 0x3200;
-  
   union {
     uint8_t reply_buffer[0x100];
   };
@@ -314,7 +331,7 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     uint32_t len;
     uint32_t seq;
     uint32_t _[2];
-    uint32_t data[ESP_FLASH_BLOCK];
+    uint8_t data[ESP_FLASH_BLOCK];
   };
 
   // This locks the flash chip - not really what we want!
@@ -322,14 +339,20 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     uint32_t not_reboot;
   };
   
-  const FlashBegin begin = { length, BlockCount(length), ESP_FLASH_BLOCK, address };
-  const FlashEnd finish = { 1 };  // !reboot - 0 means reboot, 1 means don't - WARNING will lock flash chip
+  int blockCount = BlockCount(length);
+  
+  // esptool.py does bizarre calculations with eraseSize - trying to align erases to 64KB boundaries?
+  // I'm just aligning it to 4KB boundaries and crossing my fingers
+  int eraseSize = ((length + SECTOR_SIZE - 1) / SECTOR_SIZE) * SECTOR_SIZE;
+  const FlashBegin begin = { eraseSize, blockCount, ESP_FLASH_BLOCK, address };
+  // const FlashEnd finish = { 0 };  // 0 means reboot, 1 means don't - DANGER: flash end locks the chip, making further writes fail
   FlashWrite block = { ESP_FLASH_BLOCK, 0, 0, 0 };
   
-  // This is copied wholesale from esptool.py - a useful hack to leave chip erased
-  const FlashBegin hack_begin = { 0, 0, ESP_FLASH_BLOCK, 0 };
+  // This is copied wholesale from esptool.py - a useful hack to leave chip unlocked
+  const FlashBegin mem_begin = { 0, 0, 0, 0x40100000 };
+  const FlashEnd mem_end = { 0x40000080 };
 
-  // Write BEGIN command (erase, wait 1 second for flash to blank)
+  // Write BEGIN command (erase, wait for flash to blank)
   int replySize = Command("Flash Begin", ESP_FLASH_BEGIN, (uint8_t*) &begin, sizeof(begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
   
   while (length > 0) {
@@ -339,18 +362,17 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
     }
     memcpy(block.data, data, copyLength);
 
-    replySize = Command("Flash Block", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+    int check = checksum(block.data, ESP_FLASH_BLOCK);
+    replySize = Command("Flash Block", ESP_FLASH_DATA, (uint8_t*) &block, sizeof(block), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT, check);
     
     data += ESP_FLASH_BLOCK;
     length -= ESP_FLASH_BLOCK;
     block.seq++;
   }
 
-  // This is a hack from esptool.py - to prevent chip locking?
-  //replySize = Command("Hack  Begin", ESP_FLASH_BEGIN, (uint8_t*) &hack_begin, sizeof(hack_begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
-  
-  // Write FINISH command
-  replySize = Command("Flash End  ", ESP_FLASH_END, (uint8_t*) &finish, sizeof(finish), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  // FINISH with this hack from esptool.py - to prevent chip locking
+  replySize = Command("Mem   Begin", ESP_MEM_BEGIN, (uint8_t*) &mem_begin, sizeof(mem_begin), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
+  replySize = Command("Mem   End  ", ESP_MEM_END, (uint8_t*) &mem_end, sizeof(mem_end), reply_buffer, sizeof(reply_buffer), MAX_TIMEOUT);
   
   return true;
 }
@@ -358,16 +380,16 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
 ESP_PROGRAM_ERROR ProgramEspressif(void) {
   SlowPrintf("ESP Syncronizing...");
 
+  // Note:  This is sensitive to delay - we must start sync immediately after power up
   EnableBAT();
-  
   if (!ESPSync()) { 
     SlowPrintf("Sync Failed.\n");
     return ESP_ERROR_NO_COMMUNICATION;
   }
-
+  
   for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
-    DisplayClear();
     SlowPrintf("Load ROM %s\n", rom->name);
+
     if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
       return ESP_ERROR_BLOCK_FAILED;
     }

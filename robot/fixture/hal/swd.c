@@ -18,7 +18,7 @@
 #define PINB_SWD        GPIO_PinSource0
 #define GPIOB_SWC       GPIO_Pin_2
 #define PINB_SWC        GPIO_PinSource2
-//#define GPIOB_VCC       GPIO_Pin_1
+
 #define GPIOA_TXRX    GPIO_Pin_2
 
 #define GSET(gp, pin)      gp->BSRRL = (pin)
@@ -39,7 +39,7 @@ void SlowPrintf(const char* format, ...);
 #define SWD_FAULT 4
 #define SWD_PARITY 8
 
-// 80 would occasionally fail a board, 150 seems enough margin - tested empirically
+// This short delay was tested empirically - it must be fast (~10) to work with the nRF51's strange glitch filter
 #define bit_delay() {volatile int x = 10; while (x--);}
 
 char HostBus = 0; // SWD bus is controlled by the host or target
@@ -446,40 +446,11 @@ int swd_flash_page(int destaddr, u16* image)
 }
 
 // Lock the JTAG port - upon next reset, JTAG will not work again - EVER
-// If you need a dev car, you must have Pablo swap the CPU
+// If you need a dev robot, you must have Pablo swap the CPU
 // Returns 0 on success, 1 on erase failure (chip will survive), 2 on program failure (dead)
 int swd_lock_jtag(void)
 {
-  swd_write32(0x40022004, 0x45670123);  // Unlock flash
-  swd_write32(0x40022004, 0xCDEF89AB);
-  swd_write32(0x40022008, 0x45670123);  // Unlock option bytes
-  swd_write32(0x40022008, 0xCDEF89AB);
-  
-  swd_write32(0x40022010, 0x200 + 0x20); // Option byte ERASE w/OPTWRE
-  swd_write32(0x40022010, 0x200 + 0x40 + 0x20); // START option byte ERASE w/OPTWRE
-  
-  int wait = 250;                       // 250ms before we give up (outer limit is 60ms)
-  while (swd_read32(0x4002200C) & 1)    // Wait for erase complete
-  {
-    if (wait-- <= 0)
-      return 1;
-    MicroWait(1000);
-  }
-  
-  swd_write32(0x40022010, 0x200 + 0x10);// Allow option byte program w/OPTWRE
-  swd_write16(0x1FFFF800, 0xCC);        // RDP mode 2 - irreversible disable
-  
-  wait = 250;                        // 250ms before we give up (outer limit is 1ms)
-  while (swd_read32(0x4002200C) & 1)    // Wait for program complete
-  {
-    if (wait-- <= 0)
-      return 2;
-    MicroWait(1000);
-  }
-  
-  swd_write32(0x40022010, 0x0);         // Disable OPTWRE
-  swd_write32(0x40022010, 0x80);        // Re-lock flash  
-  
+  // TBD
   return 0;
 }
 
@@ -513,8 +484,6 @@ void InitSWD(void)
 
 static u8 GetSerialNumber(u32* serialNumberOut, u8* bitOut)
 {
-  #define SERIALBASE 0x08020000
-  
   u32 serialNumber;
   u8 bit;
   
@@ -522,11 +491,11 @@ static u8 GetSerialNumber(u32* serialNumberOut, u8* bitOut)
     // Compute serial number
     SlowPutString("Getting serial...\r\n");
     serialNumber = 2048;
-    u8* serialbase = (u8*)SERIALBASE;
+    u8* serialbase = (u8*)FLASH_SERIAL_BITS;
     while (serialbase[(serialNumber >> 3)] == 0)
     {
       serialNumber += 8;
-      if (serialNumber > 0xFffff)
+      if (serialNumber > 0x7ffff)
       {
         return 1;
       }
@@ -553,133 +522,81 @@ static u8 GetSerialNumber(u32* serialNumberOut, u8* bitOut)
   return 0;
 }
 
-error_t SWDTest(void)
+void FlashSWD(const uint8_t* shim, const uint8_t* bin, int address, int serialAddress)
 {
   u32 serialNumber;
   u8 bit;
 
-  // Program boards forever
-  //while (1)
-  {
-    int good = 0;
+  int good = 0;
 
-    // Try to contact via SWD
-    swd_enable();
-    swd_chipinit();
+  // Try to contact via SWD
+  swd_enable();
+  swd_chipinit();
 
-    swd_write32(0xE000EDF0, 0xA05F0003);            // Halt core, just in case
-    
-    int r = swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
-    swd_write32(0xE000ED0C, 0x05FA0004);            // Reset peripherals 
-    
-    {
-      u32 uid0, uid1, uid2;
-      uid0 = swd_read32(0x1FFFF7AC);
-      uid1 = swd_read32(0x1FFFF7B0);
-      uid2 = swd_read32(0x1FFFF7B4);
-      ConsolePrintf("stm32f0-uid,%08x,%08x,%08x\r\n", uid0, uid1, uid2);
-      
-      if (!uid0 && !uid1 && !uid2)
-      {
-        return ERROR_PCB_ZERO_UID;
-      }
-      
-      // Unlock flash chip
-      r |= swd_write32(0x40022004, 0x45670123);
-      r |= swd_write32(0x40022004, 0xCDEF89AB);
-      
-      // Start mass erase
-      r |= swd_write32(0x40022010, 0x00000204);
-      r |= swd_write32(0x40022010, 0x00000244);
-      
-      // Check busy flag
-      int timeout = 50;
-      while ((swd_read32(0x4002200C) & 1) && (timeout--) > 0)
-      {
-        SlowPrintf(".");
-        MicroWait(10000);
-      }
-      
-      swd_write32(0x40022010, 0x00000200);  // Finished!
-      
-      // Grab (and program) the serial number first in the factory block so we
-      // can put it in the bootloader too.
-      //if (serialNumber == 0xFFFFffff)
-      if (GetSerialNumber(&serialNumber, &bit))
-      {
-        SlowPrintf("OUT OF SERIALS!\r\n");
-        return ERROR_PCB_OUT_OF_SERIALS;
-      }
-      
-      good = 1;
-      u8* bootBuffer = GetGlobalBuffer();
-      memcpy(bootBuffer, g_Body, (g_BodyEnd - g_Body) << 1);
-
-      // Personalize bootloader for this car
-      *(u32*)&bootBuffer[0x20] = serialNumber;
-      *(u32*)&bootBuffer[0xB4] -= uid0;
-      *(u32*)&bootBuffer[0xB8] -= uid1;
-      *(u32*)&bootBuffer[0xBC] -= uid2;
-
-      // For reasons I don't understand, must flash one page at a time
-      int pagecount = ((g_BodyEnd - g_Body) + 511) >> 9;      
-      for (int pg = 0; pg < pagecount; pg++)
-      {
-        swd_flash_page(0x08000000 + (pg * 1024), (u16*)&bootBuffer[pg * 1024]);
-      }
-      
-      // Verify bootloader part
-      u16* next = (u16*)bootBuffer;
-      u32 size = (u8*)g_BodyEnd - (u8*)g_Body;
-      int addr = 0x08000000;
-      while (next < (u16*)&bootBuffer[size])
-      {
-        int orig = next[0] | (next[1] << 16);
-        int board = swd_read32(addr);
-        next += 2;
-        addr += 4;
-        if (orig != board)
-        {
-          SlowPrintf("Bad Match: %08X: %04X, %04X\r\n", addr, orig, board);
-          good = 0;
-          break;
-        }
-      }
-      
-      // Verify personalization
-      if (uid0 != swd_read32(0x1FFFF7AC) ||
-          uid1 != swd_read32(0x1FFFF7B0) ||
-          uid2 != swd_read32(0x1FFFF7B4))
-        good = 0;
-    }
-
-    swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
+  swd_write32(0xE000EDF0, 0xA05F0003);            // Halt core, just in case
   
-    
-    // On success, wait for board to be removed
-    if (good)
-    {
-      int lock = swd_lock_jtag();
-      if (lock)
-      {
-        return ERROR_PCB_JTAG_LOCK;
-      }
-      
-      // Reserve serial number forever
-      u32 location = SERIALBASE + ((serialNumber & 0xFffff) >> 3);
-      
-      FLASH_Unlock();
-      FLASH_ProgramByte(location, ~(1 << bit));
-      FLASH_Lock();
-      
-      ConsolePrintf("vehicleESN,%08X\r\n", serialNumber);
-      
-      SlowPutString("OK\r\n");
-      
-      return ERROR_OK;
-    } else {
-      SlowPutString("ERROR_PCB_BOOTLOADER\r\n");
-      return ERROR_PCB_BOOTLOADER;
-    }    
+  int r = swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
+  swd_write32(0xE000ED0C, 0x05FA0004);            // Reset peripherals 
+  
+  int uid0 = swd_read32(0x1FFFF7AC);
+  
+   
+  // Grab (and program) the serial number first in the factory block so we
+  // can put it in the bootloader too.
+  //if (serialNumber == 0xFFFFffff)
+  if (GetSerialNumber(&serialNumber, &bit))
+  {
+    SlowPrintf("OUT OF SERIALS!\r\n");
+    throw ERROR_OUT_OF_SERIALS;
   }
+  
+  good = 1;
+  u8* bootBuffer = GetGlobalBuffer();
+  memcpy(bootBuffer, g_Body, (g_BodyEnd - g_Body) << 1);
+
+  // Personalize bootloader for this car
+
+  // For reasons I don't understand, must flash one page at a time
+  int pagecount = ((g_BodyEnd - g_Body) + 511) >> 9;      
+  for (int pg = 0; pg < pagecount; pg++)
+  {
+    swd_flash_page(0x08000000 + (pg * 1024), (u16*)&bootBuffer[pg * 1024]);
+  }
+  
+  // Verify bootloader part
+  u16* next = (u16*)bootBuffer;
+  u32 size = (u8*)g_BodyEnd - (u8*)g_Body;
+  int addr = 0x08000000;
+  while (next < (u16*)&bootBuffer[size])
+  {
+    int orig = next[0] | (next[1] << 16);
+    int board = swd_read32(addr);
+    next += 2;
+    addr += 4;
+    if (orig != board)
+    {
+      SlowPrintf("Bad Match: %08X: %04X, %04X\r\n", addr, orig, board);
+      good = 0;
+      break;
+    }
+  }
+  
+  swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
+
+  
+  // On success, reserve this serial number - wait, shouldn't we do this earlier?
+  if (good)
+  {
+    u32 location = FLASH_SERIAL_BITS + ((serialNumber & 0x7ffff) >> 3);
+    
+    FLASH_Unlock();
+    FLASH_ProgramByte(location, ~(1 << bit));
+    FLASH_Lock();
+    
+    ConsolePrintf("esn,%08X\r\n", serialNumber);
+    
+    SlowPutString("OK\r\n");
+  } else {
+    throw ERROR_HEAD_BOOTLOADER;
+  }    
 }

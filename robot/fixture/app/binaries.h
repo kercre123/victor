@@ -4,27 +4,26 @@
 #include <stdint.h>
 
 extern "C" {
-  extern const uint8_t g_Cube[];
-  extern const uint8_t g_CubeEnd[];
+  // Cube firmware
+  extern const uint8_t g_Cube[], g_CubeEnd[];
 
-  extern const uint8_t g_Body[];
-  extern const uint8_t g_BodyEnd[];
-  extern const uint8_t g_BodyBoot[];
-  extern const uint8_t g_BodyBootEnd[];
+  // nRF51 firmware (boot and app)
+  extern const uint8_t g_BodyBoot[], g_BodyBootEnd[];
+  extern const uint8_t g_Body[], g_BodyEnd[];
 
-  extern const uint8_t g_K02[];
-  extern const uint8_t g_K02End[];
-  extern const uint8_t g_K02Boot[];
-  extern const uint8_t g_K02BootEnd[];
+  // K02 firmware (boot and app)
+  extern const uint8_t g_K02Boot[], g_K02BootEnd[];
+  extern const uint8_t g_K02[], g_K02End[];
+
+  // Espressif firmware (boot and app - and some weird extra junk - ask Daniel)
+  extern const uint8_t g_EspBlank[], g_EspBlankEnd[];
+  extern const uint8_t g_EspUser[], g_EspUserEnd[];
+  extern const uint8_t g_EspBoot[], g_EspBootEnd[];
+  extern const uint8_t g_EspInit[], g_EspInitEnd[];
   
-  extern const uint8_t g_EspBlank[];
-  extern const uint8_t g_EspBlankEnd[];
-  extern const uint8_t g_EspUser[];
-  extern const uint8_t g_EspUserEnd[];
-  extern const uint8_t g_EspBoot[];
-  extern const uint8_t g_EspBootEnd[];
-  extern const uint8_t g_EspInit[];
-  extern const uint8_t g_EspInitEnd[];
+  // SWD shims - these are used to flash MCUs via SWD
+  extern const uint8_t g_shimK02[], g_shimK02End[];
+  extern const uint8_t g_shimBody[], g_shimBodyEnd[];  
 }
 
 #endif

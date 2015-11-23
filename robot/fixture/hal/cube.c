@@ -1,6 +1,7 @@
 #include <string.h>
 #include "hal/board.h"
 #include "hal/portable.h"
+#include "hal/uart.h"
 
 #include "hal/display.h"
 #include "hal/timers.h"
@@ -13,6 +14,34 @@
 // RESET = PC5
 // VDD = PB1
 
+static const int CUBE_PAGE_SIZE = 512;
+static const int CUBE_MAX_PROGRAM_SIZE = 8192;
+
+enum CUBE_FSR_FLAGS {
+  CUBE_FSR_ENDEBUG = 0x80,
+  CUBE_FSR_STP = 0x40,
+  CUBE_FSR_WEN = 0x20,
+  CUBE_FSR_RDYN = 0x10,
+  CUBE_FSR_INFEN = 0x08,
+  CUBE_FSR_RDISMB = 0x04
+};
+
+enum CUBE_COMMANDS {
+  CUBE_WREN = 0x06,
+  CUBE_WRDIS = 0x04,
+  CUBE_RDSR = 0x05,
+  CUBE_WRSR = 0x01,
+  CUBE_READ = 0x03,
+  CUBE_PROGRAM = 0x02,
+  CUBE_ERASE_PAGE = 0x52,
+  CUBE_ERASE_ALL = 0x62,
+  CUBE_RDFPCR = 0x89,
+  CUBE_RDISMB = 0x85,
+  CUBE_ENDEBUG = 0x86,
+
+  CUBE_DUMMY = 0x00
+};
+
 void InitCube(void) {
   // Clock configuration
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
@@ -21,14 +50,14 @@ void InitCube(void) {
 
   GPIO_InitTypeDef GPIO_InitStructure;
   
-  // Pull PA8 (PROG) low. 
   GPIO_ResetBits(GPIOA, GPIO_Pin_8);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  // XXX: NEVER enable PA8 (PROG) - it DOES NOT WORK IN EP1 (since we're using nRF24LE1s)
+  //GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   // Pull PB7 (CS#) high.
   GPIO_SetBits(GPIOB, GPIO_Pin_7);
@@ -129,19 +158,19 @@ static inline void CubeRead(int address, uint8_t *data, int length) {
   CubeAssert(false);
 }
 
-CUBE_PROGRAM_ERROR LoadRom(const uint8_t *rom, int length) {
+void LoadRom(const uint8_t *rom, int length) {
   DisplayClear();
-  DisplayPrintf("Programming Cube");
+  SlowPrintf("Programming Cube");
 
   if (length > CUBE_MAX_PROGRAM_SIZE) {
-    return CUBE_ERROR_ROM_OVERSIZE;
+    throw ERROR_CUBE_ROM_OVERSIZE;
   }
 
   for (int i = 0; i < PageCount(length); i++) {
-    DisplayPrintf("\nErasing %i", i);
+    SlowPrintf("\nErasing %i", i);
 
     CubeWriteEn();
-    if (~CubeReadFSR() & CUBE_FSR_WEN) { return CUBE_ERROR_CANNOT_WRITE; }
+    if (~CubeReadFSR() & CUBE_FSR_WEN) { throw ERROR_CUBE_CANNOT_WRITE; }
 
     CubeErasePage(i);
   }
@@ -149,10 +178,10 @@ CUBE_PROGRAM_ERROR LoadRom(const uint8_t *rom, int length) {
   const uint8_t *mem = rom;
   for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
     int left =  length - addr;
-    DisplayPrintf("\nWritting %i", addr / CUBE_PAGE_SIZE);
+    SlowPrintf("\nWritting %i", addr / CUBE_PAGE_SIZE);
 
     CubeWriteEn();
-    if (~CubeReadFSR() & CUBE_FSR_WEN) { return CUBE_ERROR_CANNOT_WRITE; }
+    if (~CubeReadFSR() & CUBE_FSR_WEN) { throw ERROR_CUBE_CANNOT_WRITE; }
 
     CubeProgram(addr, mem, (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left);
   }
@@ -162,25 +191,22 @@ CUBE_PROGRAM_ERROR LoadRom(const uint8_t *rom, int length) {
     int left =  length - addr;
     int send = (left > CUBE_PAGE_SIZE) ? CUBE_PAGE_SIZE : left;
       
-    DisplayPrintf("\nVerifying %i", addr / CUBE_PAGE_SIZE);
+    SlowPrintf("\nVerifying %i", addr / CUBE_PAGE_SIZE);
 
     uint8_t verify[CUBE_PAGE_SIZE];
     CubeRead(addr, verify, send);
     
     for (int i = 0; i < send; i++) {
       if (verify[i] != mem[i]) {
-        return CUBE_ERROR_VERIFY_FAILED;
+        throw ERROR_CUBE_VERIFY_FAILED;
       }
     }
   }
   
-  DisplayPrintf("\nDone         ");
-  
-  return CUBE_ERROR_NONE;
+  SlowPrintf("\nDone         ");
 }
 
-CUBE_PROGRAM_ERROR ProgramCube(void) {
-
+void ProgramCube(void) {
   EnableBAT();
 
   GPIO_SetBits(GPIOA, GPIO_Pin_8);  // PROG
@@ -190,14 +216,8 @@ CUBE_PROGRAM_ERROR ProgramCube(void) {
   GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(100000);
 
-  CUBE_PROGRAM_ERROR result = LoadRom(g_Cube, g_CubeEnd - g_Cube);
+  LoadRom(g_Cube, g_CubeEnd - g_Cube);
 
-  if (result != CUBE_ERROR_NONE) {
-    DisplayPrintf("\nFailed      ");
-  }
-  
   GPIO_ResetBits(GPIOA, GPIO_Pin_8);  // PROG
   DisableBAT();
-
-  return result;
 }

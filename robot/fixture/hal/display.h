@@ -33,7 +33,7 @@ void DisplayTextHeightMultiplier(u16 multiplier);
 void DisplayFlip();
 
 // This is used to print codes and fixture names
-void DisplayBigCenteredText(char* text);
+void DisplayBigCenteredText(const char *format, ...);
 
 // Call this periodically to enable scrolling
 void DisplayUpdate(void);
