@@ -12,9 +12,9 @@ namespace Anki.Debug {
     public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
       base.Init(singleVar);
 
-      _Checkbox.onValueChanged.AddListener(HandleValueChanged);
-
       _Checkbox.isOn = singleVar._valueAsUInt64 != 0;
+
+      _Checkbox.onValueChanged.AddListener(HandleValueChanged);
     }
 
     private void HandleValueChanged(bool val) {

@@ -19,10 +19,10 @@ namespace Anki.Debug {
       _Slider.maxValue = (float)singleVar._maxValue;
       float setVal = (float)singleVar._valueAsDouble;
       switch (singleVar._tagType) {
-      case consoleVarUnion.Tag.varInt:
+      case ConsoleVarUnion.Tag.varInt:
         setVal = (float)singleVar._valueAsInt64;
         break;
-      case consoleVarUnion.Tag.varUint:
+      case ConsoleVarUnion.Tag.varUint:
         setVal = (float)singleVar._valueAsUInt64;
         break;
       }

@@ -21,7 +21,7 @@ namespace Anki.Debug {
 
       public string _varName;
       public string _category;
-      public consoleVarUnion.Tag _tagType;
+      public ConsoleVarUnion.Tag _tagType;
 
       public double _minValue;
       public double _maxValue;
@@ -54,16 +54,16 @@ namespace Anki.Debug {
       DebugConsoleVarData varData = new DebugConsoleVarData();
       varData._tagType = singleVar.varValue.GetTag();
       switch (varData._tagType) {
-      case consoleVarUnion.Tag.varDouble:
+      case ConsoleVarUnion.Tag.varDouble:
         varData._valueAsDouble = singleVar.varValue.varDouble;
         break;
-      case consoleVarUnion.Tag.varInt:
+      case ConsoleVarUnion.Tag.varInt:
         varData._valueAsInt64 = singleVar.varValue.varInt;
         break;
-      case consoleVarUnion.Tag.varUint:
+      case ConsoleVarUnion.Tag.varUint:
         varData._valueAsUInt64 = singleVar.varValue.varUint;
         break;
-      case consoleVarUnion.Tag.varBool:
+      case ConsoleVarUnion.Tag.varBool:
         varData._valueAsUInt64 = singleVar.varValue.varBool;
         break;
       }
@@ -78,10 +78,10 @@ namespace Anki.Debug {
     }
 
     private GameObject GetPrefabForType(DebugConsoleVarData data) {
-      if (data._tagType == consoleVarUnion.Tag.varBool) {
+      if (data._tagType == ConsoleVarUnion.Tag.varBool) {
         return _ConsolePane._PrefabVarUICheckbox;
       }
-      else if (data._tagType == consoleVarUnion.Tag.varFunction) {
+      else if (data._tagType == ConsoleVarUnion.Tag.varFunction) {
         return _ConsolePane._PrefabVarUIButton;
       }
     // mins and maxes are just numeric limits... so just stubbing this in
