@@ -3,23 +3,30 @@ using UnityEngine.UI;
 using System.Collections;
 using Anki.Cozmo;
 
-public class VarUICheckbox : ConsoleVarLine {
+namespace Anki.Debug {
+  public class VarUICheckbox : ConsoleVarLine {
 
-  [SerializeField]
-  private Toggle _Checkbox;
+    [SerializeField]
+    private Toggle _Checkbox;
 
-  public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
-    base.Init(singleVar);
+    public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
+      base.Init(singleVar);
 
-    _Checkbox.onValueChanged.AddListener(HandleValueChanged);
+      _Checkbox.onValueChanged.AddListener(HandleValueChanged);
 
-    _Checkbox.isOn = singleVar._valueAsUInt64 != 0;
-  }
+      _Checkbox.isOn = singleVar._valueAsUInt64 != 0;
+    }
 
-  private void HandleValueChanged(bool val) {
-    // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
-    // otherwise it will send another Set to a valid value.
-    // Empty string just means toggle.
-    RobotEngineManager.Instance.SetDebugConsoleVar(_varData._varName, "");
+    private void HandleValueChanged(bool val) {
+      // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
+      // otherwise it will send another Set to a valid value.
+      // Empty string just means toggle.
+      if (_varData._unityVarHandler != null) {
+        _varData._unityVarHandler(val);
+      }
+      else {
+        RobotEngineManager.Instance.SetDebugConsoleVar(_varData._varName, "");
+      }
+    }
   }
 }

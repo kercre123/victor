@@ -3,50 +3,76 @@ using UnityEngine.UI;
 using System.Collections;
 using Anki.Cozmo;
 using System.Collections.Generic;
+using Anki.Cozmo.ExternalInterface;
 
-public class DebugConsolePane : MonoBehaviour {
+namespace Anki.Debug {
+  public class DebugConsolePane : MonoBehaviour {
 
-  [SerializeField]
-  private RectTransform _UIContainer;
+    [SerializeField]
+    public RectTransform _UIContainer;
 
-  [SerializeField]
-  private GameObject _PrefabVarUIText;
-  [SerializeField]
-  private GameObject _PrefabVarUICheckbox;
-  [SerializeField]
-  private GameObject _PrefabVarUIButton;
-  [SerializeField]
-  private GameObject _PrefabVarUISlider;
+    [SerializeField]
+    public Text _PaneStatusText;
 
-  [SerializeField]
-  private GameObject _CategoryPanelPrefab;
+    [SerializeField]
+    public GameObject _PrefabVarUIText;
+    [SerializeField]
+    public GameObject _PrefabVarUICheckbox;
+    [SerializeField]
+    public GameObject _PrefabVarUIButton;
+    [SerializeField]
+    public GameObject _PrefabVarUISlider;
 
-  private void Start() {
-    // Query for our initial data so DebugConsoleData gets populated when dirty in update.
-    DAS.Info("RobotSettingsPane", "INITTING!");
-    RobotEngineManager.Instance.InitDebugConsole();
+    [SerializeField]
+    public GameObject _CategoryPanelPrefab;
 
-    DebugConsoleData.Instance._PrefabVarUIText = _PrefabVarUIText.gameObject;
-    DebugConsoleData.Instance._PrefabVarUICheckbox = _PrefabVarUICheckbox.gameObject;
-    DebugConsoleData.Instance._PrefabVarUIButton = _PrefabVarUIButton.gameObject;
-    DebugConsoleData.Instance._PrefabVarUISlider = _PrefabVarUISlider.gameObject;
-  }
+    private Dictionary<string, GameObject > _CategoryPanels;
 
-  void Update() {
-    // if the static class is up, do a refresh of data.
-    if (DebugConsoleData.Instance.NeedsUIUpdate()) {
+    private void Start() {
 
-      List<string> categories = DebugConsoleData.Instance.GetCategories();
-      for (int i = 0; i < categories.Count; ++i) {
-        GameObject categoryPanel = UIManager.CreateUIElement(_CategoryPanelPrefab, _UIContainer);
+      _CategoryPanels = new Dictionary<string, GameObject>();
+      DebugConsoleData.Instance._ConsolePane = this;
 
-        ConsoleCategoryPanel panelscript = categoryPanel.GetComponent<ConsoleCategoryPanel>();
-        panelscript._TitleText.text = categories[i];
-        DebugConsoleData.Instance.AddCategory(panelscript._UIContainer.transform, categories[i]);
-      }
-      DebugConsoleData.Instance.OnUIUpdated();
+      // Query for our initial data so DebugConsoleData gets populated when dirty in update.
+      RobotEngineManager.Instance.InitDebugConsole();
+
+      // An example of adding a debug var from unity.
+      /*DebugConsoleVar testVar = new DebugConsoleVar();
+      testVar.category = "UnityVar";
+      testVar.varName = "Hello";
+      testVar.varValue.varInt = 30;
+      DebugConsoleData.Instance.AddConsoleVar(testVar, SetTest);*/
     }
-  }
 
+    /*public void SetTest(System.Object testVar) {
+      DAS.Info("SetTest", "val: " + testVar + " type " + testVar.GetType());
+      if (testVar is System.Int32) {
+        DAS.Info(this, "testVar: " + ((int)testVar));
+      }
+    }*/
+
+    void Update() {
+      // if the static class is up, do a refresh of data.
+      if (DebugConsoleData.Instance.NeedsUIUpdate()) {
+        List<string> categories = DebugConsoleData.Instance.GetCategories();
+        for (int i = 0; i < categories.Count; ++i) {
+          // Get existing child if it exists, otherwise create it.
+          GameObject categoryPanel = null;
+          if (!_CategoryPanels.TryGetValue(categories[i], out  categoryPanel)) {
+            categoryPanel = UIManager.CreateUIElement(_CategoryPanelPrefab, _UIContainer);
+            _CategoryPanels.Add(categories[i], categoryPanel);
+          }
+
+          ConsoleCategoryPanel panelscript = categoryPanel.GetComponent<ConsoleCategoryPanel>();
+          panelscript._TitleText.text = categories[i];
+          // Add the new field if it exists
+          DebugConsoleData.Instance.RefreshCategory(panelscript._UIContainer.transform, categories[i]);
+        }
+        DebugConsoleData.Instance.OnUIUpdated();
+      }
+    }
+
+
+  }
 
 }

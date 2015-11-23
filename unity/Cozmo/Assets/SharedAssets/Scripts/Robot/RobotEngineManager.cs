@@ -295,6 +295,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.InitDebugConsoleVarMessage:
       ReceivedSpecificMessage(message.InitDebugConsoleVarMessage);
       break;
+    case G2U.MessageEngineToGame.Tag.VerifyDebugConsoleVarMessage:
+      ReceivedSpecificMessage(message.VerifyDebugConsoleVarMessage);
+      break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
       break;
@@ -332,9 +335,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
     DAS.Info("RobotEngineManager", " Recieved Debug Console Init");
     for (int i = 0; i < message.varData.Length; ++i) {
-      DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
     }
+  }
 
+  private void ReceivedSpecificMessage(G2U.VerifyDebugConsoleVarMessage message) {
+    Anki.Debug.DebugConsoleData.Instance.SetStatusText(message.statusMessage);
   }
 
   private void ReceivedSpecificMessage(ObjectMoved message) {
