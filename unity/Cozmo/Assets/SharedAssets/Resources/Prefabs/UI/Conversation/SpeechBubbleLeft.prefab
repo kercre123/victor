@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _SpeakerImage: {fileID: 11452366}
-  _Text: {fileID: 0}
+  _Text: {fileID: 11438702}
 --- !u!222 &22239774
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -237,6 +237,10 @@ Prefab:
       propertyPath: m_FontData.m_FontSize
       value: 72
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _Text
+      value: 
+      objectReference: {fileID: 11438702}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 156160}
