@@ -4,14 +4,14 @@ using System.Collections;
 namespace Conversations {
   public class ConversationLine {
 
-    public ConversationLine(string speaker, string lineID, bool isRight) {
+    public ConversationLine(string speaker, string lineKey, bool isRight) {
       Speaker = speaker;
-      LineID = lineID;
+      LineKey = lineKey;
       IsRight = isRight;
     }
 
     public string Speaker;
-    public string LineID;
+    public string LineKey;
     public bool IsRight;
   }
 }

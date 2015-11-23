@@ -17,7 +17,7 @@ namespace Conversations {
 
     // Initializes this SpeechBubble with the specified line data
     public void Initialize(ConversationLine line) {
-      _LineID = line.LineID;
+      _LineID = line.LineKey;
       _Text.text = Localization.Get(_LineID);
     }
 

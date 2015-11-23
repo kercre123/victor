@@ -6,7 +6,26 @@ using System.Collections.Generic;
 namespace Conversations {
 
   public class ConversationManager : MonoBehaviour {
-    
+
+    private static readonly IDAS sDAS = DAS.GetInstance(typeof(ConversationManager));
+
+    private static ConversationManager _Instance;
+
+    public static ConversationManager Instance {
+      get {
+        if (_Instance == null) {
+          sDAS.Error("Don't access this until Start!");
+        }
+        return _Instance;
+      }
+      private set {
+        if (_Instance != null) {
+          sDAS.Error("There shouldn't be more than one ConversationManager");
+        }
+        _Instance = value;
+      }
+    }
+
     [SerializeField]
     private BaseView _LeftBubble;
 
@@ -15,28 +34,26 @@ namespace Conversations {
 
     private ConversationHistory _ConversationHistory = new ConversationHistory();
     private Conversation _CurrentConversation = new Conversation();
-    private List<SpeechBubble> _SpeechBubbles = new List<SpeechBubble>();
+    private SpeechBubble _CurrentSpeechBubble;
 
     public void StartNewConversation() {
       _CurrentConversation = new Conversation();
-      ClearSpeechBubbles();
+      if (_CurrentSpeechBubble != null) {
+        UIManager.CloseView(_CurrentSpeechBubble);
+      }
+    }
+
+    public void AddConversationLine(ConversationLine line) {
+      _CurrentConversation.AddToConversation(line);
+      if (_CurrentSpeechBubble != null) {
+        UIManager.CloseView(_CurrentSpeechBubble);
+      }
+      _CurrentSpeechBubble = CreateSpeechBubble(line);
     }
 
     public void SaveConversationToHistory() {
       _ConversationHistory.AddConversation(_CurrentConversation);
       StartNewConversation();
-    }
-
-    public void AddConversationLine(ConversationLine line) {
-      _CurrentConversation.AddToConversation(line);
-      _SpeechBubbles.Add(CreateSpeechBubble(line));
-    }
-
-    private void ClearSpeechBubbles() {
-      for (int i = 0; i < _SpeechBubbles.Count; ++i) {
-        UIManager.CloseView(_SpeechBubbles[i]);
-      }
-      _SpeechBubbles.Clear();
     }
 
     private SpeechBubble CreateSpeechBubble(ConversationLine line) {
