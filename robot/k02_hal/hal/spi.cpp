@@ -24,10 +24,10 @@ static union {
 transmissionWord spi_rx_buff[RX_SIZE];
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
-  memset(&drop_tx, 0, sizeof(drop_tx));
-
   drop_tx.preamble = TO_WIFI_PREAMBLE;
 
+  // Copy in JPEG data (TEMPORARY ZEROED)
+  buflen = 0;
   memcpy(drop_tx.payload, buf, buflen);
   
   // This is where a drop should be 
