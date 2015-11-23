@@ -61,24 +61,7 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
   
-  // Custom handlers for DebugConsole events
-  {
-    _debugConsoleManager.Init(this);
-    auto debugConsoleEventCallback = std::bind(&CozmoEngineHostImpl::HandleDebugConsoleEvent, this, std::placeholders::_1);
-    std::vector<ExternalInterface::MessageGameToEngineTag> tagList =
-    {
-      ExternalInterface::MessageGameToEngineTag::GetAllDebugConsoleVarMessage,
-      ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage,
-      ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage,
-      ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage,
-    };
-    
-    // Subscribe to desired events
-    for (auto tag : tagList)
-    {
-      _signalHandles.push_back(_externalInterface->Subscribe(tag, debugConsoleEventCallback));
-    }
-  }
+  _debugConsoleManager.Init(_externalInterface);
 }
 
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
@@ -393,11 +376,6 @@ bool CozmoEngineHostImpl::Broadcast(ExternalInterface::MessageEngineToGame&& eve
   } else {
     return false;
   }
-}
-  
-void CozmoEngineHostImpl::HandleDebugConsoleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  _debugConsoleManager.HandleEvent(event);
 }
 
 void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

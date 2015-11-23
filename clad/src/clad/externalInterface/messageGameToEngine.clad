@@ -679,7 +679,7 @@ message RunDebugConsoleFuncMessage {
 }
 message GetDebugConsoleVarMessage {
   string varName,
-  consoleVarUnion varValue
+  ConsoleVarUnion varValue
 }
 message GetAllDebugConsoleVarMessage {
 }

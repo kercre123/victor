@@ -28,9 +28,24 @@
 namespace Anki {
 namespace Cozmo {
   
-  void DebugConsoleManager::Init( CozmoEngineHostImpl* engine )
+  void DebugConsoleManager::Init( IExternalInterface* externalInterface )
   {
-    _engine = engine;
+    _externalInterface = externalInterface;
+    
+    auto debugConsoleEventCallback = std::bind(&DebugConsoleManager::HandleEvent, this, std::placeholders::_1);
+    std::vector<ExternalInterface::MessageGameToEngineTag> tagList =
+    {
+      ExternalInterface::MessageGameToEngineTag::GetAllDebugConsoleVarMessage,
+      ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage,
+      ExternalInterface::MessageGameToEngineTag::RunDebugConsoleFuncMessage,
+      ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage,
+    };
+    
+    // Subscribe to desired events
+    for (auto tag : tagList)
+    {
+      _signalHandles.push_back(_externalInterface->Subscribe(tag, debugConsoleEventCallback));
+    }
   }
   
   // Used for init of window.
@@ -85,7 +100,7 @@ namespace Cozmo {
     ExternalInterface::InitDebugConsoleVarMessage message;
     message.varData = dataVals;
     
-    _engine->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   }
   
   void DebugConsoleManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -112,7 +127,7 @@ namespace Cozmo {
           ExternalInterface::VerifyDebugConsoleVarMessage message;
           message.varName = msg.funcName;
           message.statusMessage = buffer;
-          _engine->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
         }
       }
       break;
@@ -121,14 +136,15 @@ namespace Cozmo {
         const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
         
-        if( consoleVar && consoleVar->ParseText(msg.tryValue.c_str()) )
+        if( consoleVar && !consoleVar->ParseText(msg.tryValue.c_str()) )
         {
           // Error message that doesn't wig out when entering decimals etcs?
+          PRINT_NAMED_ERROR("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage", "Unparsable text when setting var %s",msg.varName.c_str());
         }
       }
       break;
       default:
-        PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageGameToEngineTag", "Unexpected tag %u", (uint32_t)eventData.GetTag());
+        PRINT_NAMED_ERROR("DebugConsoleManager.HandleEvent.UnhandledMessageGameToEngineTag", "Unexpected tag %u", (uint32_t)eventData.GetTag());
         assert(0);
       break;
     }

@@ -6,7 +6,7 @@
 namespace Anki {
 namespace Cozmo {
 
-union consoleVarUnion {
+union ConsoleVarUnion {
   float_64 varDouble,
   uint_64  varUint,
   int_64   varInt,

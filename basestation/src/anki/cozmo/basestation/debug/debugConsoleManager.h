@@ -15,6 +15,8 @@
 #ifndef __Cozmo_Basestation_Debug_DebugConsoleManager_H__
 #define __Cozmo_Basestation_Debug_DebugConsoleManager_H__
 
+#include "util/signals/simpleSignal_fwd.h"
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -29,17 +31,19 @@ namespace ExternalInterface {
   class MessageGameToEngine;
 }
 class CozmoEngineHostImpl;
+class IExternalInterface;
   
 class DebugConsoleManager
 {
 //----------------------------------------------------------------------------------------------------------------------------
 public:
-  void Init( CozmoEngineHostImpl* engine );
+  void Init( IExternalInterface* externalInterface );
   void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 //----------------------------------------------------------------------------------------------------------------------------
 private:
   void SendAllDebugConsoleVars();
-  CozmoEngineHostImpl* _engine;
+  std::vector<Signal::SmartHandle> _signalHandles;
+  IExternalInterface* _externalInterface;
 };
   
 

@@ -90,7 +90,6 @@ protected:
 #endif
   
   Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
-  void HandleDebugConsoleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 
 }; // class CozmoEngineHostImpl
 

@@ -272,7 +272,7 @@ structure DebugConsoleVar {
   string category,
   float_32 minValue,
   float_32 maxValue,
-  consoleVarUnion varValue
+  ConsoleVarUnion varValue
 }
 
 
@@ -282,7 +282,7 @@ message InitDebugConsoleVarMessage {
 message VerifyDebugConsoleVarMessage {
   string varName,
   string statusMessage,
-  consoleVarUnion varValue
+  ConsoleVarUnion varValue
 }
 
 
