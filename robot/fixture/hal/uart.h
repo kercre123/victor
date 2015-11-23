@@ -10,7 +10,7 @@
 // Initialize serial lines for debug printing
 void InitUART(void);
 void SlowPutChar(char c);
-void SlowPutString(char *s);
+void SlowPutString(const char *s);
 void SlowPutInt(int i);
 void SlowPutLong(int i);
 void SlowPutHex(int i);

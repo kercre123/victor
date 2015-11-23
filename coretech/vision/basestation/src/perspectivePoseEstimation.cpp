@@ -66,7 +66,7 @@ namespace Anki {
         Point<3,PRECISION> e2 = CrossProduct(e3, e1);
        
         // The e vectors are the rows of the T matrix
-        T = {e1, e2, e3};
+        T = SmallSquareMatrix<3,PRECISION>{e1, e2, e3};
         T.Transpose();
         
         f3 = T * f3;
@@ -204,7 +204,7 @@ namespace Anki {
         
         // the n vectors are the rows of the N matrix (and thus the columns
         // of the N^T matrix)
-        MATRIX N = {n1, n2, n3};
+        MATRIX N{n1, n2, n3};
         N.Transpose();
         
         // Extraction of known parameters

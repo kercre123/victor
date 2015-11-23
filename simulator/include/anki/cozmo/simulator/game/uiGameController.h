@@ -19,6 +19,7 @@
 #include "clad/types/robotTestModes.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
+#include "clad/types/visionModes.h"
 #include <webots/Supervisor.hpp>
 #include <unordered_set>
 
@@ -183,6 +184,13 @@ protected:
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
+
+  void SendPopAWheelie(const s32 objectID,
+                       PathMotionProfile motionProf,
+                       const bool usePreDockPose,
+                       const bool useApproachAngle = false,
+                       const f32 approachAngle_rad = 0,
+                       const bool useManualSpeed = false);
   
   void SendTraverseSelectedObject(PathMotionProfile motionProf,
                                   const bool usePreDockPose,
@@ -203,11 +211,11 @@ protected:
   void SendSetRobotVolume(const f32 volume);
   void SendStartTestMode(TestMode mode, s32 p1 = 0, s32 p2 = 0, s32 p3 = 0);
   void SendIMURequest(u32 length_ms);
+  void SendEnableRobotPickupParalysis(bool enable);
   void SendAnimation(const char* animName, u32 numLoops);
   void SendReplayLastAnimation();
   void SendReadAnimationFile();
-  void SendStartFaceTracking(u8 timeout_sec);
-  void SendStopFaceTracking();
+  void SendEnableVisionMode(VisionMode mode, bool enable);
   void SendForceAddRobot();
   void SendSetIdleAnimation(const std::string &animName);
   void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);

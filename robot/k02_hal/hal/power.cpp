@@ -15,6 +15,7 @@ namespace Anki
         GPIO_PIN_SOURCE(POWEREN,    PTA, 2);
         GPIO_PIN_SOURCE(SCK,        PTE, 17);
         GPIO_PIN_SOURCE(MOSI,       PTE, 18);
+        GPIO_PIN_SOURCE(WS,         PTD, 4);
         GPIO_PIN_SOURCE(CAM_PWDN,   PTA, 1);
        
         // Clear any I/Os that are default driven in K02
@@ -34,17 +35,21 @@ namespace Anki
         GPIO_OUT(GPIO_SCK, PIN_SCK);
         SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
         
-        // Pull MOSI low to put ESP8266 into bootloader mode
-        // XXX: Normally, you should drive this high and rely on the cable to enter debug mode!
+        // Weakly pull MOSI high to put ESP8266 into flash boot mode
+        // We rrely on the fixture to pull this strongly low and enter bootloader mode
         GPIO_IN(GPIO_MOSI, PIN_MOSI);
-        SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp);  
+        SOURCE_SETUP(GPIO_MOSI, SOURCE_MOSI, SourceGPIO | SourcePullUp); 
+
+        // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
+        GPIO_IN(GPIO_WS, PIN_WS);
+        SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp); 
         
         Anki::Cozmo::HAL::MicroWait(10000);
         
         // Turn on 2v8 and 3v3 rails
         GPIO_SET(GPIO_POWEREN, PIN_POWEREN);
         GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
-        SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);    
+        SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
       }
     }
   }

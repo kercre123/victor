@@ -1765,8 +1765,8 @@ namespace Anki {
     {
       // Make sure we back to looking for markers (and stop tracking) whenever
       // and however this action finishes
-      robot.StartLookingForMarkers();
-      robot.StopDocking();
+      robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
+      robot.GetVisionComponent().EnableMode(VisionMode::Tracking, false);
       
       // Also return the robot's head to level
       robot.GetMoveComponent().MoveHeadToAngle(0, 2.f, 6.f);
@@ -2315,8 +2315,8 @@ namespace Anki {
         case DockAction::DA_ROLL_LOW:
         {
           if(robot.IsCarryingObject()) {
-            PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
-                              "Expecting robot to think it's not carrying object for roll action.");
+            PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
+                                "Expecting robot to think it's not carrying object for roll action.");
           } else {
             completionInfo.numObjects = 1;
             completionInfo.objectIDs.fill(-1);
@@ -2326,8 +2326,8 @@ namespace Anki {
           break;
         }
         default:
-          PRINT_NAMED_ERROR("RollObjectAction.EmitCompletionSignal",
-                            "Dock action not set before filling completion signal.");
+          PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
+                              "Dock action not set before filling completion signal.");
       }
       
       IDockAction::GetCompletionStruct(robot, completionInfo);
@@ -2339,8 +2339,8 @@ namespace Anki {
       // verify later whether we succeeded.
       // Make it w.r.t. robot's parent so we don't have to worry about differing origins later.
       if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), _dockObjectOrigPose) == false) {
-        PRINT_NAMED_ERROR("RollObjectAction.SelectDockAction.PoseWrtFailed",
-                          "Could not get pose of dock object w.r.t. robot's parent.");
+        PRINT_NAMED_WARNING("RollObjectAction.SelectDockAction.PoseWrtFailed",
+                            "Could not get pose of dock object w.r.t. robot's parent.");
         return RESULT_FAIL;
       }
       
@@ -2385,8 +2385,8 @@ namespace Anki {
           if(robot.GetLastPickOrPlaceSucceeded()) {
             
             if(robot.IsCarryingObject() == true) {
-              PRINT_NAMED_ERROR("RollObjectAction::Verify",
-                                "Expecting robot to think it's NOT carrying an object at this point.");
+              PRINT_NAMED_WARNING("RollObjectAction::Verify",
+                                  "Expecting robot to think it's NOT carrying an object at this point.");
               return ActionResult::FAILURE_ABORT;
             }
             
@@ -2415,8 +2415,8 @@ namespace Anki {
           } else {
             // If the robot thinks it failed last pick-and-place, it is because it
             // failed to dock/track.
-            PRINT_NAMED_ERROR("RollObjectAction.Verify",
-                              "Robot reported roll failure. Assuming docking failed");
+            PRINT_NAMED_WARNING("RollObjectAction.Verify",
+                                "Robot reported roll failure. Assuming docking failed");
             result = ActionResult::FAILURE_RETRY;
           }
           
@@ -2425,8 +2425,141 @@ namespace Anki {
 
           
         default:
-          PRINT_NAMED_ERROR("RollObjectAction.Verify.ReachedDefaultCase",
-            "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          PRINT_NAMED_WARNING("RollObjectAction.Verify.ReachedDefaultCase",
+                              "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
+          result = ActionResult::FAILURE_ABORT;
+          break;
+          
+      } // switch(_dockAction)
+      
+      return result;
+      
+    } // Verify()
+    
+    
+#pragma mark ---- PopAWheelieAction ----
+    
+    PopAWheelieAction::PopAWheelieAction(ObjectID objectID, const bool useManualSpeed)
+    : IDockAction(objectID, useManualSpeed)
+    {
+      
+    }
+    
+    PopAWheelieAction::~PopAWheelieAction()
+    {
+      Reset();
+    }
+    
+    
+    const std::string& PopAWheelieAction::GetName() const
+    {
+      static const std::string name("PopAWheelieAction");
+      return name;
+    }
+    
+    RobotActionType PopAWheelieAction::GetType() const
+    {
+      switch(_dockAction)
+      {
+        case DockAction::DA_POP_A_WHEELIE:
+          return RobotActionType::POP_A_WHEELIE;
+          
+        default:
+          PRINT_NAMED_WARNING("PopAWheelieAction",
+                              "Dock action not set before determining action type.");
+          return RobotActionType::PICK_AND_PLACE_INCOMPLETE;
+      }
+    }
+    
+    void PopAWheelieAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    {
+      switch(_dockAction)
+      {
+        case DockAction::DA_POP_A_WHEELIE:
+        {
+          if(robot.IsCarryingObject()) {
+            PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
+                                "Expecting robot to think it's not carrying object for roll action.");
+          } else {
+            completionInfo.numObjects = 1;
+            completionInfo.objectIDs.fill(-1);
+            completionInfo.objectIDs[0] = _dockObjectID;
+            return;
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
+                              "Dock action not set before filling completion signal.");
+      }
+      
+      IDockAction::GetCompletionStruct(robot, completionInfo);
+    }
+    
+    Result PopAWheelieAction::SelectDockAction(Robot& robot, ActionableObject* object)
+    {
+      Pose3d objectPose;
+      if(object->GetPose().GetWithRespectTo(*robot.GetPose().GetParent(), objectPose) == false) {
+        PRINT_NAMED_WARNING("PopAWheelieAction.SelectDockAction.PoseWrtFailed",
+                            "Could not get pose of dock object w.r.t. robot's parent.");
+        return RESULT_FAIL;
+      }
+      
+      // Choose docking action based on block's position and whether we are
+      // carrying a block
+      const f32 dockObjectHeightWrtRobot = objectPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
+      _dockAction = DockAction::DA_POP_A_WHEELIE;
+      
+      
+      // TODO: Stop using constant ROBOT_BOUNDING_Z for this
+      // TODO: There might be ways to roll high blocks when not carrying object and low blocks when carrying an object.
+      //       Do them later.
+      if (dockObjectHeightWrtRobot > 0.5f*ROBOT_BOUNDING_Z) { //  dockObject->GetSize().z()) {
+        PRINT_STREAM_INFO("PopAWheelieAction.SelectDockAction", "Object is too high to pop-a-wheelie. Aborting.");
+        return RESULT_FAIL;
+      } else if (robot.IsCarryingObject()) {
+        PRINT_STREAM_INFO("PopAWheelieAction.SelectDockAction", "Can't pop-a-wheelie while carrying an object.");
+        return RESULT_FAIL;
+      }
+      
+      return RESULT_OK;
+    } // SelectDockAction()
+    
+    
+    ActionResult PopAWheelieAction::Verify(Robot& robot)
+    {
+      ActionResult result = ActionResult::FAILURE_ABORT;
+      
+      switch(_dockAction)
+      {
+        case DockAction::DA_POP_A_WHEELIE:
+        {
+          if(robot.GetLastPickOrPlaceSucceeded()) {
+            // Check that the robot is sufficiently pitched up
+            if (robot.GetPitchAngle() < 1.f) {
+              PRINT_NAMED_INFO("PopAWheelieAction.Verify.PitchAngleTooSmall",
+                               "Robot pitch angle expected to be higher (measured %f rad)",
+                               robot.GetPitchAngle());
+              result = ActionResult::FAILURE_RETRY;
+            } else {
+              result = ActionResult::SUCCESS;
+            }
+            
+          } else {
+            // If the robot thinks it failed last pick-and-place, it is because it
+            // failed to dock/track.
+            PRINT_NAMED_INFO("PopAWheelieAction.Verify.DockingFailed",
+                             "Robot reported pop-a-wheelie failure. Assuming docking failed");
+            result = ActionResult::FAILURE_RETRY;
+          }
+          
+          break;
+        } // DA_POP_A_WHEELIE
+          
+          
+        default:
+          PRINT_NAMED_WARNING("PopAWheelieAction.Verify.ReachedDefaultCase",
+                              "Don't know how to verify unexpected dockAction %s.", DockActionToString(_dockAction));
           result = ActionResult::FAILURE_ABORT;
           break;
           
@@ -2541,6 +2674,26 @@ namespace Anki {
                               approachAngle_rad,
                               useManualSpeed),
       new RollObjectAction(objectID, useManualSpeed)})
+    {
+      
+    }
+    
+#pragma mark ---- DriveToRollObjectAction ----
+    
+    DriveToPopAWheelieAction::DriveToPopAWheelieAction(const ObjectID& objectID,
+                                                       const PathMotionProfile motionProfile,
+                                                       const bool useApproachAngle,
+                                                       const f32 approachAngle_rad,
+                                                       const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::ROLLING,
+                              motionProfile,
+                              0,
+                              useApproachAngle,
+                              approachAngle_rad,
+                              useManualSpeed),
+      new PopAWheelieAction(objectID, useManualSpeed)})
     {
       
     }

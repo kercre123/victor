@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 
 #include "anki/common/basestation/math/point_impl.h"
 
@@ -570,13 +571,14 @@ namespace Cozmo {
       const f32 rightEyebrowHeightScale = (rightEyebrowHeight - expectedRightEyebrowHeight)/expectedRightEyebrowHeight;
       
       // Map current eyebrow heights onto Cozmo's face, based on measured baseline values
-      proceduralFace.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralFace::Parameter::BrowCenY,
-                                  leftEyebrowHeightScale);
+      proceduralFace.GetParams().SetParameter(ProceduralFace::WhichEye::Left,
+                                              ProceduralFace::Parameter::UpperLidY,
+                                              leftEyebrowHeightScale);
       
-      proceduralFace.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralFace::Parameter::BrowCenY,
-                                  rightEyebrowHeightScale);
+      proceduralFace.GetParams().SetParameter(ProceduralFace::WhichEye::Right,
+                                              ProceduralFace::Parameter::UpperLidY,
+                                              rightEyebrowHeightScale);
+      
     }
     
     const f32 expectedEyeHeight = distanceNorm * _baselineEyeHeight;
@@ -587,8 +589,8 @@ namespace Cozmo {
     newPupilPos += face.GetRightEyeCenter();
     newPupilPos *= 0.5f;
     
-    Point2f imageHalfSize(robot.GetCamera().GetCalibration().GetNcols()/2,
-                          robot.GetCamera().GetCalibration().GetNrows()/2);
+    const Vision::CameraCalibration& camCalib = robot.GetVisionComponent().GetCameraCalibration();
+    Point2f imageHalfSize(camCalib.GetNcols()/2, camCalib.GetNrows()/2);
     newPupilPos -= imageHalfSize; // make relative to image center
     newPupilPos /= imageHalfSize; // scale to be between -1 and 1
 
@@ -598,34 +600,20 @@ namespace Cozmo {
     
     for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
       if(_baselineEyeHeight != 0.f) {
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::EyeHeight,
-                                    std::max(-.8f, std::min(.8f, eyeHeightFraction)));
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilHeight,
-                                    std::max(-.75f, std::min(.75f, eyeHeightFraction)));
+        proceduralFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleX,
+                                                std::max(-.8f, std::min(.8f, eyeHeightFraction)));
       }
-      
-      // To get saccade-like movement, only update the pupils if they new position is
-      // different enough
-      Point2f pupilChange(newPupilPos);
-      pupilChange.x() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenX);
-      pupilChange.y() -= proceduralFace.GetParameter(whichEye, ProceduralFace::Parameter::PupilCenY);
-      //if(pupilChange.Length() > .15f) { // TODO: Tune this parameter to get better-looking saccades
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenX,
-                                         -newPupilPos.x());
-        proceduralFace.SetParameter(whichEye, ProceduralFace::Parameter::PupilCenY,
-                                         newPupilPos.y());
-      //}
     }
     
     // If face angle is rotated, mirror the rotation (with a deadzone)
     if(std::abs(faceAngle.getDegrees()) > 5) {
-      proceduralFace.SetFaceAngle(faceAngle.getDegrees()/static_cast<f32>(ProceduralFace::MaxFaceAngle));
+      proceduralFace.GetParams().SetFaceAngle(faceAngle.getDegrees());
     } else {
-      proceduralFace.SetFaceAngle(0);
+      proceduralFace.GetParams().SetFaceAngle(0);
     }
     
     // Smoothing
-    proceduralFace.Interpolate(prevProcFace, proceduralFace, 0.9f);
+    proceduralFace.GetParams().Interpolate(prevProcFace.GetParams(), proceduralFace.GetParams(), 0.9f);
     
     proceduralFace.SetTimeStamp(face.GetTimeStamp());
     proceduralFace.MarkAsSentToRobot(false);

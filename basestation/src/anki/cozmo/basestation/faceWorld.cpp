@@ -106,8 +106,9 @@ namespace Cozmo {
           knownFace = &knownFaceIter->second;
           
           const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
-          //PRINT_NAMED_INFO("FaceWorld.UpdateFace.ExistingFace",
-          //                 "Updating existing face with ID=%lld.", matchedID);
+          //PRINT_NAMED_INFO("FaceWorld.UpdateFace.UpdatingKnownFace",
+          //                 "Updating face with ID=%lld from t=%d to %d",
+          //                 matchedID, knownFace->face.GetTimeStamp(), face.GetTimeStamp());
           knownFace->face = face;
           knownFace->face.SetID(matchedID);
           foundMatch = true;
@@ -117,7 +118,8 @@ namespace Cozmo {
       
       // Didn't find a match based on pose, so add a new face with a new ID:
       if(!foundMatch) {
-        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace", "Added new face with ID=%lld.", _idCtr);
+        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace",
+                         "Added new face with ID=%lld at t=%d.", _idCtr, face.GetTimeStamp());
         face.SetID(_idCtr); // Use our own ID here for the new face
         auto insertResult = _knownFaces.insert({_idCtr, face});
         if(insertResult.second == false) {
@@ -134,7 +136,7 @@ namespace Cozmo {
       auto insertResult = _knownFaces.insert({face.GetID(), face});
       
       if(insertResult.second) {
-        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace", "Added new face with ID=%lld.", face.GetID());
+        PRINT_NAMED_INFO("FaceWorld.UpdateFace.NewFace", "Added new face with ID=%lld at t=%d.", face.GetID(), face.GetTimeStamp());
       } else {
         // Update the existing face:
         insertResult.first->second = face;
@@ -165,6 +167,7 @@ namespace Cozmo {
     const UnitQuaternion<f32>& q = knownFace->face.GetHeadPose().GetRotation().GetQuaternion();
     _robot.Broadcast(MessageEngineToGame(RobotObservedFace(knownFace->face.GetID(),
                                                            _robot.GetID(),
+                                                           face.GetTimeStamp(),
                                                            trans.x(),
                                                            trans.y(),
                                                            trans.z(),
@@ -182,7 +185,7 @@ namespace Cozmo {
     // Delete any faces we haven't seen in awhile
     for(auto faceIter = _knownFaces.begin(); faceIter != _knownFaces.end(); )
     {
-      if(_robot.GetLastImageTimeStamp() - faceIter->second.face.GetTimeStamp() > _deletionTimeout_ms) {
+      if(_robot.GetLastImageTimeStamp() > _deletionTimeout_ms + faceIter->second.face.GetTimeStamp()) {
         
         PRINT_NAMED_INFO("FaceWorld.Update.DeletingFace",
                          "Removing face %llu at t=%d, because it hasn't been seen since t=%d.",

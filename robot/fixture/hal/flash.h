@@ -15,6 +15,9 @@
 #define FLASH_BOOTLOADER          0x08000000
 #define FLASH_BOOTLOADER_SERIAL   0x08003FFC    // Last 4 bytes of bootloader flash
 #define FLASH_PARAMS              0x08004000    // 16KB page of flash parameters
+
+#define FLASH_SERIAL_BITS         0x08010000    // 524288 serial numbers
+  
 #define FLASH_BLOCK_BOOT          FLASH_Sector_0
 #define FLASH_BLOCK_PARAMS        FLASH_Sector_1
 #define FLASH_BLOCK_A             0x080A0000
@@ -34,20 +37,15 @@
 #define FIXTURE_SERIAL            (*(u32*)FLASH_BOOTLOADER_SERIAL)
 #define FIXTURE_VERSION           (*(u32*)(FLASH_BLOCK_A + 28))
 
-// ONLY for the vehicle
-#define FACTORY_BLOCK             0x08001400
-
 void DecodeAndFlash(void);
 void WritePreTestData(void);
 void WriteFactoryBlockErrorCode(error_t errorCode);
-void PersonalizeNordicData(u8* buffer, u32 esn, u16 model);
 void PrintFactoryBlockInfo(void);
 
 // This is a list of parameters stored in flash memory
 // Modify the RAM copy in g_flashParams, then call StoreParams();
 typedef struct
 {
-  int crossHairs;     // Pixel to store lens crosshair
 } FlashParams;
 
 extern FlashParams g_flashParams;

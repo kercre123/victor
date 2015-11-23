@@ -10,6 +10,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
 #include "anki/cozmo/game/comms/gameComms.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -1027,7 +1028,25 @@ namespace Anki {
                      approachAngle_rad,
                      useManualSpeed);
     }
-
+    
+    void UiGameController::SendPopAWheelie(const s32 objectID,
+                                           PathMotionProfile motionProf,
+                                           const bool usePreDockPose,
+                                           const bool useApproachAngle,
+                                           const f32 approachAngle_rad,
+                                           const bool useManualSpeed)
+    {
+      ExternalInterface::PopAWheelie m;
+      m.motionProf = motionProf;
+      m.usePreDockPose = usePreDockPose;
+      m.useApproachAngle = useApproachAngle,
+      m.approachAngle_rad = approachAngle_rad,
+      m.useManualSpeed = useManualSpeed;
+      m.objectID = -1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_PopAWheelie(m);
+      SendMessage(message);
+    }
     
     void UiGameController::SendTraverseSelectedObject(PathMotionProfile motionProf,
                                                       const bool usePreDockPose,
@@ -1044,20 +1063,8 @@ namespace Anki {
     
     BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {
-      if (behaviorName == "LookAround")
-      {
-        return BehaviorType::LookAround;
-      }
-      else if (behaviorName == "OCD")
-      {
-        return BehaviorType::OCD;
-      }
-      else if (behaviorName == "InteractWithFaces")
-      {
-        return BehaviorType::InteractWithFaces;
-      }
-      
-      return BehaviorType::NoneBehavior;
+      const BehaviorType behaviorType = BehaviorTypeFromString(behaviorName);
+      return (behaviorType != BehaviorType::Count) ? behaviorType : BehaviorType::NoneBehavior;
     }
     
     void UiGameController::SendAbortPath()
@@ -1176,6 +1183,15 @@ namespace Anki {
       message.Set_IMURequest(m);
       SendMessage(message);
     }
+
+    void UiGameController::SendEnableRobotPickupParalysis(bool enable)
+    {
+      ExternalInterface::EnableRobotPickupParalysis m;
+      m.enable = enable;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_EnableRobotPickupParalysis(m);
+      SendMessage(message);
+    }
     
     void UiGameController::SendAnimation(const char* animName, u32 numLoops)
     {
@@ -1248,27 +1264,12 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendStartFaceTracking(u8 timeout_sec)
+    void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
-      ExternalInterface::StartFaceTracking m;
-      m.timeout_sec = timeout_sec;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_StartFaceTracking(m);
-      SendMessage(message);
-    }
-    
-    void UiGameController::SendStopFaceTracking()
-    {
-      ExternalInterface::StopFaceTracking m;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_StopFaceTracking(m);
-      SendMessage(message);
-      
-      // For now, have to re-enable marker finding b/c turning on face
-      // tracking will have stopped it:
-      ExternalInterface::StartLookingForMarkers m2;
-      message.Set_StartLookingForMarkers(m2);
-      SendMessage(message);
+      ExternalInterface::EnableVisionMode m;
+      m.mode = mode;
+      m.enable = enable;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
     void UiGameController::SendForceAddRobot()

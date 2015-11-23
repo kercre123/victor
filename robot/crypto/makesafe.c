@@ -149,6 +149,8 @@ void safeWriteBlock(FILE *fp, CryptoContext* ctx, safe_header* head, int i, int 
 	    head->blockFlags = i;
 	    if (!m_blockMap[i+1])
 		    head->blockFlags |= BLOCK_FLAG_LAST;
+	    if (!m_blockMap[i+1] || i == 63)	// Set for backward compatibility with old 7128KB fixtures
+		    head->blockFlags |= BLOCK_FLAG_SHORT_LAST;
       CryptoSetupNonce(ctx, (u08p)head);          // The nonce is the first 16-bytes of the header
       CryptoEncryptBytes(ctx, (u08p)srcPtr, (u08p)(head + 1), SAFE_PAYLOAD_SIZE);
       CryptoFinalize(ctx, (u08p)head->mac); // Fill in MAC
