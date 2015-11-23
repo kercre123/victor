@@ -18,7 +18,7 @@ namespace PatternPlay {
     private Text[] _TextToFadeOnClose;
 
     public void Initialize(BlockPattern discoveredPattern) {
-      GameObject display = UIManager.CreatePerspectiveUI(_PatternDiscoveryDisplayPrefab.gameObject);
+      GameObject display = UIManager.CreateUIElement(_PatternDiscoveryDisplayPrefab.gameObject);
       _PatternDiscoveryDisplayInstance = display.GetComponent<PatternDiscoveryDisplay>();
       _PatternDiscoveryDisplayInstance.Initialize(discoveredPattern);
     }

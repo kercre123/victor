@@ -19,7 +19,11 @@ public class HubWorldButton : MonoBehaviour {
     
     _ChallengeId = challengeId;
     _ButtonScript.onClick.AddListener(HandleButtonClicked);
-    _ButtonLabel.text = Localization.Get(challengeTitleLocKey);
+
+    // Allow for buttons that only show an image and no text
+    if (_ButtonLabel != null) {
+      _ButtonLabel.text = Localization.Get(challengeTitleLocKey);
+    }
   }
 
   private void HandleButtonClicked() {
