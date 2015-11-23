@@ -188,7 +188,7 @@ public class Robot : IDisposable {
 
   private ObservedObject _targetLockedObject = null;
 
-  public ObservedObject targetLockedObject {
+  public ObservedObject TargetLockedObject {
     get { return _targetLockedObject; }
     set {
       _targetLockedObject = value;
@@ -240,6 +240,7 @@ public class Robot : IDisposable {
   private U2G.ProgressionMessage ProgressionStatMessage;
   private U2G.MoodMessage MoodStatMessage;
   private U2G.VisualizeQuad VisualizeQuadMessage;
+  private U2G.DisplayProceduralFace DisplayProceduralFaceMessage;
 
   private PathMotionProfile PathMotionProfileDefault;
 
@@ -340,6 +341,7 @@ public class Robot : IDisposable {
     ProgressionStatMessage = new U2G.ProgressionMessage();
     MoodStatMessage = new U2G.MoodMessage();
     VisualizeQuadMessage = new U2G.VisualizeQuad();
+    DisplayProceduralFaceMessage = new U2G.DisplayProceduralFace();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile();
@@ -425,7 +427,7 @@ public class Robot : IDisposable {
     _CarryingObjectID = -1;
     HeadTrackingObjectID = -1;
     _LastHeadTrackingObjectID = -1;
-    targetLockedObject = null;
+    TargetLockedObject = null;
     _CarryingObject = null;
     _HeadTrackingObject = null;
     _HeadAngleRequested = float.MaxValue;
@@ -603,6 +605,21 @@ public class Robot : IDisposable {
     //DAS.Debug ("Robot", "saw a face at " + message.faceID);
     Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
+  }
+
+  public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
+    DisplayProceduralFaceMessage.robotID = ID;
+    DisplayProceduralFaceMessage.faceAngle = faceAngle;
+    DisplayProceduralFaceMessage.faceCenX = faceCenter.x;
+    DisplayProceduralFaceMessage.faceCenY = faceCenter.y;
+    DisplayProceduralFaceMessage.faceScaleX = faceScale.x;
+    DisplayProceduralFaceMessage.faceScaleY = faceScale.y;
+    DisplayProceduralFaceMessage.leftEye = leftEyeParams;
+    DisplayProceduralFaceMessage.rightEye = rightEyeParams;
+
+    RobotEngineManager.Instance.Message.DisplayProceduralFace = DisplayProceduralFaceMessage;
+    RobotEngineManager.Instance.SendMessage();
+
   }
 
   private void AddObservedFace(Face faceObject, G2U.RobotObservedFace message) {
@@ -984,7 +1001,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.SetRobotCarryingObject = SetRobotCarryingObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    targetLockedObject = null;
+    TargetLockedObject = null;
     
     SetLiftHeight(0f);
     SetHeadAngle();

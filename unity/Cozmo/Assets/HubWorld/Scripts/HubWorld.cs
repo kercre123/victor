@@ -12,9 +12,6 @@ public class HubWorld : HubWorldBase {
   private GameBase _MiniGameInstance;
 
   [SerializeField]
-  private TextAsset _TempLevelAsset;
-
-  [SerializeField]
   private ChallengeDataList _ChallengeDataList;
 
   private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;

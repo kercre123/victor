@@ -664,10 +664,10 @@ namespace Anki {
                     enableModeIter = enableModes.begin();
                   }
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  static bool enablePickupDetect = false;
-                  SendEnableRobotPickupDetect(enablePickupDetect);
-                  printf("Sent EnableRobotPickupDetect = %d\n", enablePickupDetect);
-                  enablePickupDetect = !enablePickupDetect;
+                  static bool enablePickupParalysis = true;
+                  SendEnableRobotPickupParalysis(enablePickupParalysis);
+                  printf("Sent EnableRobotPickupParalysis = %d\n", enablePickupParalysis);
+                  enablePickupParalysis = !enablePickupParalysis;
                 } else {
                   static bool showObjects = false;
                   SendEnableDisplay(showObjects);

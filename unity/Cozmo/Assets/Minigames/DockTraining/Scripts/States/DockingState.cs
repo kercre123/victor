@@ -7,12 +7,12 @@ namespace DockTraining {
   public class DockingState : State {
     
     public enum RotateCubeState {
-      LEFT,
-      RIGHT
+      Left,
+      Right
     }
 
     private Color[] _RotateCubeColors = { Color.blue, Color.green };
-    private RotateCubeState _RotateCubeState = RotateCubeState.LEFT;
+    private RotateCubeState _RotateCubeState = RotateCubeState.Left;
     private float _LastRotateCubeStateChanged;
     private float _InitialPoseRadian;
     private int _CubeID = -1;
@@ -71,7 +71,9 @@ namespace DockTraining {
         }
 
         if (distance < 53.0f && relDot > 0.88f && _CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
-          _StateMachine.SetNextState(new CelebrateState());
+          AnimationState animState = new AnimationState();
+          animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
+          _StateMachine.SetNextState(animState);
         }
         else {
           SteeringLogic();
@@ -79,6 +81,10 @@ namespace DockTraining {
 
       }
 
+    }
+
+    private void HandleWinAnimationDoneHandler(bool success) {
+      _StateMachine.GetGame().RaiseMiniGameWin();
     }
 
     public override void Exit() {
@@ -106,7 +112,7 @@ namespace DockTraining {
         return;
       }
 
-      if (_RotateCubeState == RotateCubeState.LEFT) {
+      if (_RotateCubeState == RotateCubeState.Left) {
         _DriveWheelRightSpeed += Time.deltaTime * 1000.0f;
         _DriveWheelLeftSpeed -= Time.deltaTime * 1000.0f;
       }
@@ -117,11 +123,11 @@ namespace DockTraining {
     }
 
     private void ChangeRotateCubeState() {
-      if (_RotateCubeState == RotateCubeState.LEFT) {
-        _RotateCubeState = RotateCubeState.RIGHT;
+      if (_RotateCubeState == RotateCubeState.Left) {
+        _RotateCubeState = RotateCubeState.Right;
       }
       else {
-        _RotateCubeState = RotateCubeState.LEFT;
+        _RotateCubeState = RotateCubeState.Left;
       }
       _LastRotateCubeStateChanged = Time.time;
     }
