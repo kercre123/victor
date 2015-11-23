@@ -35,21 +35,7 @@ namespace Anki.Debug {
 
       // Query for our initial data so DebugConsoleData gets populated when dirty in update.
       RobotEngineManager.Instance.InitDebugConsole();
-
-      // An example of adding a debug var from unity.
-      /*DebugConsoleVar testVar = new DebugConsoleVar();
-      testVar.category = "UnityVar";
-      testVar.varName = "Hello";
-      testVar.varValue.varInt = 30;
-      DebugConsoleData.Instance.AddConsoleVar(testVar, SetTest);*/
     }
-
-    /*public void SetTest(System.Object testVar) {
-      DAS.Info("SetTest", "val: " + testVar + " type " + testVar.GetType());
-      if (testVar is System.Int32) {
-        DAS.Info(this, "testVar: " + ((int)testVar));
-      }
-    }*/
 
     void Update() {
       // if the static class is up, do a refresh of data.
