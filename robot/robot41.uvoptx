@@ -150,7 +150,22 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>drop_rx</ItemText>
+          <ItemText>__ESPRESSIF_SERIAL_NUMBER</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>&amp;__ESPRESSIF_SERIAL_NUMBER</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>spi_rx_buff</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>targ</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

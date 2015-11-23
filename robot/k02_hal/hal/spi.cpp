@@ -13,6 +13,7 @@
 typedef uint16_t transmissionWord;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord);
+const int RX_OVERFLOW = 8;
 
 static transmissionWord spi_tx_buff[TX_SIZE];
 static union {
@@ -20,26 +21,34 @@ static union {
   DropToWiFi drop_tx ;
 };
 
-static union {
-  transmissionWord spi_rx_buff[RX_SIZE];
-  DropToRTIP drop_rx ;
-};
+transmissionWord spi_rx_buff[RX_SIZE+RX_OVERFLOW];
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
-  static int eoftime = 0;
-  eoftime++;
   drop_tx.preamble = TO_WIFI_PREAMBLE;
-  memcpy(drop_tx.payload, "0123456789ABCDEF", 16);
+
+  // This is where a drop should be 
   drop_tx.payloadLen  = 0;
-  drop_tx.droplet = JPEG_LENGTH(16) | (eoftime & 63 ? 0 : jpegEOF);
+
+  static int eoftime = 0;
+  drop_tx.droplet = JPEG_LENGTH(16) | ((eoftime++) & 63 ? 0 : jpegEOF);
 }
 
 extern "C"
 void DMA2_IRQHandler(void) {
-  // Process drop receive
-
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
+
+  // Process drop receive
+  transmissionWord *target = spi_rx_buff;
+  for (int i = 0; i < RX_OVERFLOW; i++, target++) {
+    if (*target != TO_RTIP_PREAMBLE) continue ;
+    
+    DropToRTIP* drop = (DropToRTIP*)target;
+    
+    // TODO: SCREEN
+    // TODO: AUDIO
+    // TODO: DROP!
+  }
 }
 
 extern "C"
