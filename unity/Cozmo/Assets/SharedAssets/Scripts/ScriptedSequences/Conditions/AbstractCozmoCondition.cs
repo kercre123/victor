@@ -1,13 +1,17 @@
 ﻿using System;
 
 namespace ScriptedSequences.Conditions {
-  public class RobotConnected : ScriptedSequenceCondition {
+  public abstract class AbstractCozmoCondition : ScriptedSequenceCondition {
 
+    protected Robot Robot
+    {
+      get { return RobotEngineManager.Instance.CurrentRobot; }
+    }
     #region implemented abstract members of ScriptedSequenceCondition
     protected override void EnableChanged(bool enabled) {
       if (enabled) {
-        if (RobotEngineManager.Instance.CurrentRobot != null) {
-          IsMet = true;
+        if (Robot != null) {
+          EnableChangedAndRobotConnected(enabled);
         }
         else {
           RobotEngineManager.Instance.ConnectedToClient += HandleRobotConnected;
@@ -21,9 +25,11 @@ namespace ScriptedSequences.Conditions {
     }
     #endregion
 
+    protected abstract void EnableChangedAndRobotConnected(bool enabled);
+
     private void HandleRobotConnected(string str)
     {
-      IsMet = true;
+      EnableChangedAndRobotConnected(IsEnabled);
     }
 
     private void HandleRobotDisconnected(DisconnectionReason reason)
