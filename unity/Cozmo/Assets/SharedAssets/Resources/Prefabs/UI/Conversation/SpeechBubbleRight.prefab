@@ -9,7 +9,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22465138}
   - 222: {fileID: 22253180}
-  - 114: {fileID: 11469940}
+  - 114: {fileID: 11495522}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -106,7 +106,20 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11469940
+--- !u!114 &11482668
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 156160}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e22a1964e562e41dfaef9962c096c7d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _SpeakerImage: {fileID: 11452366}
+  _Text: {fileID: 11495522}
+--- !u!114 &11495522
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -114,11 +127,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 118466}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .196078435, g: .196078435, b: .541000009, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -132,25 +145,12 @@ MonoBehaviour:
     m_BestFit: 0
     m_MinSize: 10
     m_MaxSize: 40
-    m_Alignment: 4
+    m_Alignment: 0
     m_RichText: 1
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: I am a robot as well.
---- !u!114 &11482668
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 156160}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e22a1964e562e41dfaef9962c096c7d6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _SpeakerImage: {fileID: 11452366}
-  _Text: {fileID: 11469940}
 --- !u!222 &22239774
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -228,7 +228,19 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: m_Text
+      value: I am a robot as well.
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_FontData.m_FontSize
+      value: 72
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _Text
+      value: 
+      objectReference: {fileID: 11495522}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 156160}
