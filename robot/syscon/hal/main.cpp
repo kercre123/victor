@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "nrf.h"
 #include "nrf_gpio.h"
 
@@ -10,22 +12,23 @@
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
-#include "drop.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
-const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
+static const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+extern void EnterRecovery(void) {
+  __asm { SVC 0 };
+}
+
 int main(void)
 {
-  // 
   u32 failedTransferCount = 0;
 
   // Initialize the hardware peripherals
-  Drop::init();
   Battery::init();
   TimerInit();
   Motors::init();   // Must init before power goes on
@@ -38,7 +41,6 @@ int main(void)
     ;
   UART::print("too late!\r\n");
 
-  // Finish booting up
   Radio::init();
   Battery::powerOn();
 
@@ -48,6 +50,7 @@ int main(void)
   for (;;)
   {
     // Only call every loop through - not all the time
+    Head::manage();
     Motors::update();
     Battery::update();
 
@@ -55,19 +58,14 @@ int main(void)
     Lights::manage(g_dataToBody.backpackColors);
     #endif
 
-    // Update at 200Hz (5ms delay)
-    timerStart += CYCLES_MS(5.0f);
-    while ( timerStart > GetCounter()) ;
- 
     // Update at 200Hz (5ms delay) - with unsigned subtract to handle wraparound
     const u32 DELAY = CYCLES_MS(5.0f);
     while (GetCounter() - timerStart < DELAY)
       ;
     timerStart += DELAY;
 
-    /*
     // Verify the source
-    if (Head::spokenTo)
+    if (!Head::spokenTo)
     {
       // Turn off the system if it hasn't talked to the head for a minute
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
@@ -85,6 +83,5 @@ int main(void)
         Motors::setPower(i, g_dataToBody.motorPWM[i]);
       }
     }
-    */
   }
 }

@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -88,29 +90,7 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   
 IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
 {
-  IBehavior* newBehavior = nullptr;
-  
-  switch (newType)
-  {
-    case BehaviorType::LookAround:
-    {
-      newBehavior = new BehaviorLookAround(_robot, _config);
-      break;
-    }
-    case BehaviorType::OCD:
-    {
-      newBehavior = new BehaviorOCD(_robot, _config);
-      break;
-    }
-    case BehaviorType::InteractWithFaces:
-    {
-      newBehavior = new BehaviorInteractWithFaces(_robot, _config);
-      break;
-    }
-    default:
-      // Do nothing
-      break;
-  }
+  IBehavior* newBehavior = BehaviorFactory::CreateBehavior(newType, _robot, _config);
   
   Result addResult = AddBehavior(newBehavior);
   if (Result::RESULT_OK != addResult)

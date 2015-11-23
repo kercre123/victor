@@ -17,7 +17,8 @@ message RobotStateMessage
 {
   RobotState state,
   int_32 numAnimBytesFree,
-  uint_8 videoFramefateHz,
+  uint_8 videoFrameRateHz,
+  uint_8 imageProcFrameRateHz,
   uint_8 animTag
 }
 

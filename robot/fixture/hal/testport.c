@@ -5,12 +5,12 @@
 //    The protocol is binary little-endian, with an 8-bit message ID, and a fixed-length per message
 //  Transmit:
 //    Receive and transmit use different UARTs (to workaround some electrical limitations)
-//    High/idle signals use the TX GPIO to connect a 500mA 4.6V source - powerful enough to charge the car
+//    High/idle signals use the TX GPIO to connect a 500mA 4.6V source - powerful enough to charge the robot
 //    Low signals use the RX GPIO (10mA) to ground/discharge the contacts via 330 ohms 
 //  Receive:
 //    RX simply listens on the charge contact pin - with a ~50K pull-down
-//    It is up to the car to push the charge contacts high/low when transmitting
-//    If the car is not transmitting/not connected, RX will float low
+//    It is up to the robot to push the charge contacts high/low when transmitting
+//    If the robot is not transmitting/not connected, RX will float low
 #include "lib/stm32f2xx.h"
 #include "hal/testport.h"
 #include "hal/timers.h"
@@ -260,7 +260,7 @@ error_t SendCommand(u8* receiveBuffer, u32 receiveLength)
     }
   }
   
-  // Receive data from the vehicle
+  // Receive data from the robot
   if (receiveBuffer && receiveLength)
   {
     TestEnableRx();

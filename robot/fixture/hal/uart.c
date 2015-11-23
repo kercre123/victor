@@ -58,10 +58,13 @@ void SlowPutChar(char c)
   while (USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
 }
 
-void SlowPutString(char *s)
+void SlowPutString(const char *s)
 {
-  while (*s)
+  while (*s) {
+    if (*s == '\n')
+      SlowPutChar('\r');
     SlowPutChar(*s++);
+  }
 }
 
 void SlowPutInt(int i)

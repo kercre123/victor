@@ -7,17 +7,28 @@ namespace Anki {
 namespace Cozmo {
 
 // These are the names of procedural eye parameters we can control on Cozmo's face.
+// These parameters are available for both left and right eyes.
+// All angles are in DEGREES!
 enum uint_8 ProceduralEyeParameter {
-    BrowAngle=0,
-    BrowCenX,
-    BrowCenY,
-    EyeHeight,
-    EyeWidth,
-    PupilWidth,
-    PupilHeight,
-    PupilCenX,
-    PupilCenY,
-    BrowLength,
+    EyeCenterX,  // In screen pixel coordinates
+    EyeCenterY,  // In screen pixel coordinates
+    EyeScaleX,   // From 0 to +inf: 1.0 means "nominal eye width"
+    EyeScaleY,   // From 0 to +inf: 1.0 means "nominal eye height"
+    EyeAngle,
+    LowerInnerRadiusX, // as a fraction of EyeWidth
+    LowerInnerRadiusY, // as a fraction of EyeHeight
+    UpperInnerRadiusX,
+    UpperInnerRadiusY,
+    UpperOuterRadiusX,
+    UpperOuterRadiusY,
+    LowerOuterRadiusX,
+    LowerOuterRadiusY,
+    UpperLidY,   // 0=aligned with top of eye (open), 1=aligned with bottom of eye (closed)
+    UpperLidAngle,
+    UpperLidBend,// 0 for straight, >0 to bend down into eye, <0 to bend up away from eye
+    LowerLidY,   // 0=aligned with bottom of eye (open), 1=aligned with top of eye (closed)
+    LowerLidAngle,
+    LowerLidBend,// 0 for straight, >0 to bend up into eye, <0 to bend down away from eye
 
     NumParameters
 }

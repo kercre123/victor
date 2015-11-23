@@ -25,6 +25,7 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 
 #include "anki/common/basestation/array2d.h"
+#include "util/logging/logging.h"
 
 #include "anki/common/types.h"
 
@@ -436,6 +437,16 @@ namespace Anki
     *this = cv::abs(*this);
 #   endif
     return *this;
+  }
+  
+  template<typename T>
+  void Array2d<T>::FillWith(T value)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->setTo(value);
+#   else
+    assert(false);
+#   endif
   }
   
   /* OLD: Inherit from unmanaged
