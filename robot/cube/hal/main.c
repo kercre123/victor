@@ -11,6 +11,7 @@ extern volatile u8 gMissedPacketCount;
 extern volatile u8 cumMissedPacketCount;
 extern volatile struct RadioStruct radioStruct;
 extern volatile u8 ADDRESS_RX_DAT[5];
+extern volatile u8 gCubeState;
 
 
 #define SOURCE_PWR      6
@@ -25,6 +26,17 @@ void InitTimer1()
   TR1 = 1; // start timer
 }
 #endif
+
+
+void BreakPointLight(u8 led)
+{
+    // Pet watchdog
+  WDSV = 0; // 2 seconds // TODO: update this value // TODO add a macro for watchdog
+  WDSV = 1;
+  StopTimer2();
+  LightOn(led);
+  while(1);
+}
 
 void MainLoop()
 { 
@@ -113,6 +125,9 @@ void Advertise()
     ReceiveData(radioStruct.RADIO_TIMEOUT_MSB); // 1ms timeout // TODO: change to timer bits instead of ms
     LightsOff(); // advertising light off
     
+    // Pet watchdog
+    WDSV = 0; // 2 seconds // TODO: update this value // TODO add a macro for watchdog
+    WDSV = 1;
     // Wait 1 second, unless we have received data
     if(gDataReceived == false)
     {
@@ -120,11 +135,6 @@ void Advertise()
       // XXX low power mode  
       delay_ms(1000);
     }
-  }
-  LightOn(debugLedI2CError); // advertising light on
-  while(1) // xxx remove
-  {
-    
   }
   
   // Set up new comm channel parameters
@@ -139,11 +149,6 @@ void Advertise()
 
 void InitializeMainLoop()
 {
-  #if !defined(USE_EVAL_BOARD) && !defined(IS_CHARGER)
-  // Initialize accelerometer
-  InitAcc();
-  #endif
-
   // Initialize radioPayload and LED values to zeros
   simple_memset(radioPayload, 0, sizeof(radioPayload));
   // Copy packet to LEDs
@@ -152,14 +157,11 @@ void InitializeMainLoop()
   // Initialize LED timer // TODO clean up
   InitTimer2();
   StartTimer2(); // Start LED timer  
- 
-  gDataReceived = false;
   
-    
-  #ifdef USE_UART
-  InitUart();
-  #endif
+  gDataReceived = false;
+
 }
+
 
 
 void main(void)
@@ -179,11 +181,19 @@ void main(void)
   
   // Run tests
   RunTests();
-
+  
   #ifndef EMULATE_BODY
   // Initialize watchdog watchdog
   WDSV = 0; // 2 seconds to get through startup
   WDSV = 1;  
+  #endif
+  
+   #ifdef USE_UART
+  InitUart();
+  #endif
+  #if !defined(USE_EVAL_BOARD) && !defined(IS_CHARGER)
+  // Initialize accelerometer
+  InitAcc();
   #endif
   
   // Initalize Radio Timer 
@@ -200,6 +210,8 @@ void main(void)
       case eAdvertise:
         // Advertise loop
         Advertise();
+        WDSV = 0; // 2 seconds to get through startup
+        WDSV = 1;       
         gCubeState = eSync;
         break;
       
@@ -207,8 +219,10 @@ void main(void)
         // Listen for up to 150ms
         if(ReceiveDataSync(3)) // 3x50mx ticks = 150ms
         {
+          //TR0 = 1; // Start timer  
           // Initialize accelerometer, lights, etc
           gCubeState = eInitializeMain;
+          //TransmitData(); // send something back, for kicks
         }
         else
         {
@@ -218,14 +232,18 @@ void main(void)
         
       case eInitializeMain:
           gCubeState = eMainLoop;
+          InitializeMainLoop();
         break;
         
       case eMainLoop:
+        WDSV = 0; // 2 seconds to get through startup
+        WDSV = 1;       
+        MainLoop();
         // If 3 packets are missed, go back to adverising
         if(gMissedPacketCount == MAX_MISSED_PACKETS)
         {
           // To-do: de-init accelerometer, etc.
-          gCubeState = eAdvertise;
+          gCubeState = eAdvertise;     
         }
         break;
         
@@ -235,15 +253,17 @@ void main(void)
   }
   #else
   InitUart();
+
   gDataReceived = false;
   gCubeState = eSync;
   
-    // Cube radio state machine
+  // Cube radio state machine
   gCubeState = eScan;
   while(1){
     switch(gCubeState)
     {
       case eScan:
+        PutString("Scanning...\r\n");
         // Set up advertising parameters
         radioStruct.ADDRESS_RX_PTR = ADDRESS_TX;
         radioStruct.ADDRESS_TX_PTR = ADDRESS_RX_ADV;
@@ -258,12 +278,36 @@ void main(void)
         }
         break;
       case eRespond:
+        // set up payload
+        radioPayload[0] = 37;
+        radioPayload[1] = 52; // 9.984 ms
+        radioPayload[2] = 0xA7;
+        radioPayload[3] = 0xA7;
+        radioPayload[4] = 0xA7;
+        radioPayload[5] = 0xA7;
+        radioPayload[6] = 0xA7;
         delay_us(200);
         TransmitData();
         WDSV = 128; // 1 seconds // TODO: update this value // TODO add a macro for watchdog
         WDSV = 0;
-        //PutString("Responded\r\n");
-        gCubeState = eScan;
+        PutString("Responded\r\n");
+        gCubeState = eMainLoop;
+        radioStruct.ADDRESS_RX_PTR = ADDRESS_TX;
+        radioStruct.ADDRESS_TX_PTR = ADDRESS_X;
+        radioStruct.COMM_CHANNEL = 37;
+        WDSV = 0; // 4 seconds // TODO: update this value // TODO add a macro for watchdog
+        WDSV = 2;
+        break;
+      case eMainLoop:
+        simple_memset(radioPayload, 0xFF, sizeof(radioPayload));
+        TransmitData();
+        gDataReceived = false;
+        ReceiveData(5);
+        PutHex(gDataReceived);
+        delay_ms(8);
+        delay_us(1);
+        break;
+      default:
         break;
     }
   }

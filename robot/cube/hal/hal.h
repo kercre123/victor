@@ -25,7 +25,7 @@
 //#define DO_MISSED_PACKET_TEST
 
 // Board definition
-//#define IS_CHARGER
+#define IS_CHARGER
 //#define EMULATE_BODY
 
 #if defined(EMULATE_BODY)
@@ -45,7 +45,7 @@ static enum cubeState
   eRespond,
   eMainLoop
   
-}gCubeState;
+};
 #else
 static enum cubeState
 {
@@ -53,7 +53,7 @@ static enum cubeState
   eSync,
   eInitializeMain,
   eMainLoop
-}gCubeState;
+};
 #endif
 
 // lights.c
@@ -97,6 +97,9 @@ void RunTests();
 
 static const u8 code ADDRESS_TX[5] = {0x52, 0x41, 0x43, 0x48, 0x4C}; // RACHL
 static const u8 code ADDRESS_RX_ADV[5] = {0x42, 0x52, 0x59, 0x41, 0x4E}; // BRYAN
+#ifdef EMULATE_BODY
+static const u8 code ADDRESS_X[5] = {0xA7, 0xA7, 0xA7, 0xA7, 0xA7};
+#endif
   
 static struct RadioStruct
 {

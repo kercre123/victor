@@ -141,11 +141,11 @@ void SelfTest()
 static void RunStartupLights()
 {
   // Do startup light sequence //
-  // All R, G, B, 0.25 sec each
+  // All R, G, B, 0.5 sec each
   u8 i,j;
   for(j = 0; j<3; j++)
   {
-    for(i = 0; i<62; i++)
+    for(i = 0; i<124; i++)
     {
       LightOn(0+j);
       delay_ms(1);
@@ -157,8 +157,8 @@ static void RunStartupLights()
       delay_ms(1);
     }
   }
-  // All IR 0.25s
-  for(i = 0; i<62; i++)
+  // All IR 0.5s
+  for(i = 0; i<124; i++)
   {
     LightOn(12);
     delay_ms(1);
@@ -171,7 +171,7 @@ static void RunStartupLights()
   }
   // Cube ID
   j = (CBYTE[0x3FF0] & 0x3)+1;
-  for(i = 0; i<62; i++)
+  for(i = 0; i<124; i++)
   {
     LightOn(1);
     delay_ms(1);

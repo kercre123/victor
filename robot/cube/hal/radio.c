@@ -10,11 +10,13 @@ volatile u8 gMissedPacketCount = 0;
 volatile u8 cumMissedPacketCount = 0;
 volatile u8 radioTimerCounter;
 volatile u8 ADDRESS_RX_DAT[5];
+volatile u8 gCubeState;
+
 volatile struct RadioStruct radioStruct = 
 {
   ADV_CHANNEL, // COMM_CHANNEL
   0xB6, // RADIO_INTERVAL_DELAY
-  5, // RADIO_TIMEOUT_MSB ~ 1ms
+  15, // RADIO_TIMEOUT_MSB ~ 3ms (change to 5 later)
   8, // RADIO_WAKUP_OFFSET
   ADDRESS_TX, // ADDRESS_TX_PTR 
   ADDRESS_RX_ADV // ADDRESS_RX_PTR
