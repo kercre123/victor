@@ -26,6 +26,8 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
+#include "anki/cozmo/basestation/moodSystem/moodDebug.h"
+
 #include "clad/types/behaviorChooserType.h"
 
 #include "util/logging/logging.h"
