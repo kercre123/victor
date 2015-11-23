@@ -189,7 +189,7 @@ namespace ScriptedSequences
         var token = SimpleAsyncToken.PessimisticReduce(actingTokens);
         _ActToken = token;
         token.Ready(result => {
-          Succeeded = result.Success;
+          Succeeded = !result.Value.Any(x => !x.Success);
           IsComplete = true;
         });
       }

@@ -196,8 +196,30 @@ public class Robot : IDisposable {
   }
 
   private int _CarryingObjectID;
+  public int CarryingObjectID { 
+    get { return _CarryingObjectID; } 
+    private set { 
+      if (_CarryingObjectID != value) {
+        _CarryingObjectID = value; 
+        if (OnCarryingObjectSet != null) {
+          OnCarryingObjectSet(CarryingObject);
+        }
+      }
+    } 
+  }
 
-  public int HeadTrackingObjectID { get; private set; }
+  private int _HeadTrackingObjectID;
+  public int HeadTrackingObjectID { 
+    get { return _HeadTrackingObjectID; } 
+    private set { 
+      if (_HeadTrackingObjectID != value) {
+        _HeadTrackingObjectID = value; 
+        if (OnHeadTrackingObjectSet != null) {
+          OnHeadTrackingObjectSet(HeadTrackingObject);
+        }
+      }
+    } 
+  }
 
   private int _LastHeadTrackingObjectID;
 
@@ -248,12 +270,15 @@ public class Robot : IDisposable {
 
   public ObservedObject CarryingObject {
     get {
-      if (_CarryingObject != _CarryingObjectID)
-        _CarryingObject = SeenObjects.Find(x => x == _CarryingObjectID);
+      if (_CarryingObject != CarryingObjectID)
+        _CarryingObject = SeenObjects.Find(x => x == CarryingObjectID);
 
       return _CarryingObject;
     }
   }
+
+  public event Action<ObservedObject> OnCarryingObjectSet;
+
 
   private ObservedObject _HeadTrackingObject;
 
@@ -265,6 +290,8 @@ public class Robot : IDisposable {
       return _HeadTrackingObject;
     }
   }
+
+  public event Action<ObservedObject> OnHeadTrackingObjectSet;
 
   private List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
 
@@ -424,7 +451,7 @@ public class Robot : IDisposable {
     GameStatus = GameStatusFlag.Nothing;
     WorldPosition = Vector3.zero;
     Rotation = Quaternion.identity;
-    _CarryingObjectID = -1;
+    CarryingObjectID = -1;
     HeadTrackingObjectID = -1;
     _LastHeadTrackingObjectID = -1;
     TargetLockedObject = null;
@@ -468,7 +495,7 @@ public class Robot : IDisposable {
     RobotStatus = (RobotStatusFlag)message.status;
     GameStatus = (GameStatusFlag)message.gameStatus;
     BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
-    _CarryingObjectID = message.carryingObjectID;
+    CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
     if (HeadTrackingObjectID == _LastHeadTrackingObjectID)

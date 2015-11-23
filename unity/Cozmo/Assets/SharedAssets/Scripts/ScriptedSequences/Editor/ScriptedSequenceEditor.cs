@@ -12,6 +12,8 @@ using Newtonsoft.Json;
 
 public class ScriptedSequenceEditor : EditorWindow {
 
+  private const string kScriptedSequenceResourcesPath = "Assets/SharedAssets/Resources/ScriptedSequences";
+
   public string CurrentSequenceFile;
   public ScriptedSequence CurrentSequence;
 
@@ -38,7 +40,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     var ctypes = Assembly.GetAssembly(typeof(ScriptedSequenceCondition))
                          .GetTypes()
                          .Where(t => typeof(ScriptedSequenceCondition).IsAssignableFrom(t) && 
-                                     t != typeof(ScriptedSequenceCondition));
+                                !t.IsAbstract);
     _ConditionTypes = ctypes.ToArray();
     _ConditionTypeNames = _ConditionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
 
@@ -51,7 +53,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     var atypes = Assembly.GetAssembly(typeof(ScriptedSequenceAction))
                          .GetTypes()
                          .Where(t => typeof(ScriptedSequenceAction).IsAssignableFrom(t) && 
-                                     t != typeof(ScriptedSequenceAction));
+                                !t.IsAbstract);
     _ActionTypes = atypes.ToArray();
     _ActionTypeNames = _ActionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
 
@@ -414,7 +416,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     if (GUILayout.Button("Load", ToolbarButtonStyle)) {
       GenericMenu menu = new GenericMenu();
 
-      foreach (var file in Directory.GetFiles("Assets/ScriptedSequences/Resources", "*.json")) {
+      foreach (var file in Directory.GetFiles(kScriptedSequenceResourcesPath, "*.json")) {
         Action<string> closureAction = (string f) => {
 
           menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
@@ -491,7 +493,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     if (CurrentSequence != null && GUILayout.Button("Save", ToolbarButtonStyle)) {         
       if (string.IsNullOrEmpty(CurrentSequenceFile)) {
-        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", "Assets/ScriptedSequences/Resources", CurrentSequence.Name, ".json");
+        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, ".json");
       }
 
       if(!string.IsNullOrEmpty(CurrentSequenceFile))
