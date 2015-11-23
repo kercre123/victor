@@ -40,7 +40,7 @@ public class ScriptedSequenceEditor : EditorWindow {
                          .Where(t => typeof(ScriptedSequenceCondition).IsAssignableFrom(t) && 
                                      t != typeof(ScriptedSequenceCondition));
     _ConditionTypes = ctypes.ToArray();
-    _ConditionTypeNames = _ConditionTypes.Select(x => x.Name).ToArray();
+    _ConditionTypeNames = _ConditionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
 
     _ConditionIndices = new int[_ConditionTypeNames.Length];
     for (int i = 0; i < _ConditionIndices.Length; i++) {
@@ -53,7 +53,7 @@ public class ScriptedSequenceEditor : EditorWindow {
                          .Where(t => typeof(ScriptedSequenceAction).IsAssignableFrom(t) && 
                                      t != typeof(ScriptedSequenceAction));
     _ActionTypes = atypes.ToArray();
-    _ActionTypeNames = _ActionTypes.Select(x => x.Name).ToArray();
+    _ActionTypeNames = _ActionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
 
     _ActionIndices = new int[_ActionTypeNames.Length];
     for (int i = 0; i < _ActionIndices.Length; i++) {
@@ -618,6 +618,7 @@ public class ScriptedSequenceEditor : EditorWindow {
         _DraggingConditionHelper = null;
         _DraggingActionHelper = null;
         _LastMouseUp = false;
+        Repaint();
       }
     }
 
@@ -630,6 +631,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       GUI.Box(new Rect(evt.mousePosition + DragOffset, DragSize), "  "+DragTitle, BoxStyle);
       GUI.backgroundColor = lastColor;
       GUI.contentColor = lastTextColor;
+      Repaint();
     }
   }
 

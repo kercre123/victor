@@ -66,7 +66,8 @@ namespace ScriptedSequences.Editor {
                              .Where(x => x.FieldType == typeof(int) || 
                                          x.FieldType == typeof(float) || 
                                          x.FieldType == typeof(bool) || 
-                                         x.FieldType == typeof(string))
+                                         x.FieldType == typeof(string) ||
+                                        typeof(Enum).IsAssignableFrom(x.FieldType))
                             .ToArray();
         }
         return _Fields;
@@ -151,7 +152,7 @@ namespace ScriptedSequences.Editor {
           _Editor.DragOffset = rect.position - mousePosition;
           _Editor.DragStart = mousePosition;
           _Editor.DragSize = rect.size;
-          _Editor.DragTitle = Value.GetType().Name;
+          _Editor.DragTitle = Value.GetType().Name.ToHumanFriendly();
           _Editor.DragColor = Color;
           _Editor.DragTextColor = Color.white;
         }
@@ -230,11 +231,11 @@ namespace ScriptedSequences.Editor {
       }
       // if this condition/action is expandable, draw a foldout. Otherwise just draw a label
       if (_Expandable) {
-        _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name, ScriptedSequenceEditor.FoldoutStyle);
+        _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.FoldoutStyle);
       }
       else {
         EditorGUI.indentLevel++;
-        GUI.Label(rect, typeof(T).Name, ScriptedSequenceEditor.LabelStyle);
+        GUI.Label(rect, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.LabelStyle);
         EditorGUI.indentLevel--;
       }
 
@@ -259,17 +260,20 @@ namespace ScriptedSequences.Editor {
         var field = fields[i];
 
         if (field.FieldType == typeof(int)) {
-          field.SetValue(Value, EditorGUILayout.IntField(field.Name, (int)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.IntField(field.Name.ToHumanFriendly(), (int)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(float)) {
-          field.SetValue(Value, EditorGUILayout.FloatField(field.Name, (float)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.FloatField(field.Name.ToHumanFriendly(), (float)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(bool)) {
-          field.SetValue(Value, EditorGUILayout.Toggle(field.Name, (bool)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.Toggle(field.Name.ToHumanFriendly(), (bool)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(string)) {
           string oldVal = (string)field.GetValue(Value) ?? string.Empty;
-          field.SetValue(Value, EditorGUILayout.TextField(field.Name, oldVal));
+          field.SetValue(Value, EditorGUILayout.TextField(field.Name.ToHumanFriendly(), oldVal));
+        }
+        else if (typeof(Enum).IsAssignableFrom(field.FieldType)) {
+          field.SetValue(Value, EditorGUILayout.EnumPopup(field.Name.ToHumanFriendly(), (Enum)field.GetValue(Value)));
         }
       }
     }
