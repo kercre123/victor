@@ -6,8 +6,8 @@ using System.Collections.Generic;
 public class HubWorld : HubWorldBase {
 
   [SerializeField]
-  private HubWorldView _HubWorldDialogPrefab;
-  private HubWorldView _HubWorldDialogInstance;
+  private HubWorldView _HubWorldViewPrefab;
+  private HubWorldView _HubWorldViewInstance;
 
   private GameBase _MiniGameInstance;
 
@@ -34,9 +34,9 @@ public class HubWorld : HubWorldBase {
 
     // Deregister events
     // Destroy dialog if it exists
-    if (_HubWorldDialogInstance != null) {
+    if (_HubWorldViewInstance != null) {
       DeregisterDialogEvents();
-      _HubWorldDialogInstance.CloseViewImmediately();
+      _HubWorldViewInstance.CloseViewImmediately();
     }
 
     HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
@@ -46,16 +46,16 @@ public class HubWorld : HubWorldBase {
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
 
-    GameObject newView = GameObject.Instantiate(_HubWorldDialogPrefab.gameObject);
+    GameObject newView = GameObject.Instantiate(_HubWorldViewPrefab.gameObject);
     newView.transform.position = Vector3.zero;
 
-    _HubWorldDialogInstance = newView.GetComponent<HubWorldView>();
-    _HubWorldDialogInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
-    _HubWorldDialogInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-    _HubWorldDialogInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
+    _HubWorldViewInstance = newView.GetComponent<HubWorldView>();
+    _HubWorldViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
+    _HubWorldViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+    _HubWorldViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
 
     // Show the current state of challenges being locked/unlocked
-    _HubWorldDialogInstance.Initialize(_ChallengeStatesById);
+    _HubWorldViewInstance.Initialize(_ChallengeStatesById);
   }
 
   private void HandleLockedChallengeClicked(string challengeClicked) {
@@ -131,17 +131,17 @@ public class HubWorld : HubWorldBase {
   }
 
   private void CloseHubWorldDialog() {
-    if (_HubWorldDialogInstance != null) {
+    if (_HubWorldViewInstance != null) {
       DeregisterDialogEvents();
-      _HubWorldDialogInstance.CloseView();
+      _HubWorldViewInstance.CloseView();
     }
   }
 
   private void DeregisterDialogEvents() {
-    if (_HubWorldDialogInstance != null) {
-      _HubWorldDialogInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
-      _HubWorldDialogInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-      _HubWorldDialogInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
+    if (_HubWorldViewInstance != null) {
+      _HubWorldViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
+      _HubWorldViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
+      _HubWorldViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
     }
   }
 
@@ -216,12 +216,12 @@ public class HubWorld : HubWorldBase {
   }
 
   public void TestCompleteChallenge(string completedChallengeId) {
-    if (_HubWorldDialogInstance != null) {
+    if (_HubWorldViewInstance != null) {
       CompleteChallenge(completedChallengeId);
 
       // Force refresh of the dialog
       DeregisterDialogEvents();
-      _HubWorldDialogInstance.CloseViewImmediately();
+      _HubWorldViewInstance.CloseViewImmediately();
       ShowHubWorldDialog();
     }
   }
