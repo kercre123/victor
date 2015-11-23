@@ -107,8 +107,12 @@ namespace Cozmo {
         {
           enum { kBufferSize = 512 };
           char buffer[kBufferSize];
-          //uint32_t NativeAnkiUtilConsoleCallFunction(const char* funcName, const char* funcArgs, uint32_t outTextLength, char* outText)
           NativeAnkiUtilConsoleCallFunction( msg.funcName.c_str(), msg.funcArgs.c_str(), kBufferSize, buffer);
+          
+          ExternalInterface::VerifyDebugConsoleVarMessage message;
+          message.varName = msg.funcName;
+          message.statusMessage = buffer;
+          _engine->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
         }
       }
       break;
@@ -116,20 +120,10 @@ namespace Cozmo {
       {
         const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
+        
         if( consoleVar && consoleVar->ParseText(msg.tryValue.c_str()) )
         {
-          consoleVarUnion varValueUnion;
-          varValueUnion.Set_varDouble(consoleVar->GetAsDouble());
-          ExternalInterface::VerifyDebugConsoleVarMessage message;
-          message.varName = consoleVar->GetID();
-          message.varValue = varValueUnion;
-          _engine->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-          
-          //printf("Setting var %s to %s \n",msg.varName.c_str(), msg.tryValue.c_str());
-        }
-        else
-        {
-          // TODO: send a set to get us back to something sane.
+          // Error message that doesn't wig out when entering decimals etcs?
         }
       }
       break;

@@ -273,6 +273,7 @@ message InitDebugConsoleVarMessage {
 }
 message VerifyDebugConsoleVarMessage {
   string varName,
+  string statusMessage,
   consoleVarUnion varValue
 }
 
