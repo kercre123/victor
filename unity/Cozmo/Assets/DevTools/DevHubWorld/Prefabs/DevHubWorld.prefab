@@ -49,6 +49,7 @@ MonoBehaviour:
   - {fileID: 11449852, guid: dcbe955133bd648f99567b7aa9938869, type: 2}
   - {fileID: 11429732, guid: d0931a28541c84b619f43ef72d5bafe5, type: 2}
   - {fileID: 11442344, guid: 03fb339451e9b4313b31c8df939b3cfb, type: 2}
+  - {fileID: 11413216, guid: a104eb00efac94d83853d9d2c311e5c8, type: 2}
   _DevHubWorldDialogPrefab: {fileID: 11411698, guid: ec15ecdfb1f0d4b44817e0cf9abe7cf1,
     type: 2}
 --- !u!1001 &100100000
