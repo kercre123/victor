@@ -4,13 +4,13 @@ using System.Collections;
 namespace Conversations {
   public class ConversationLine {
 
-    public ConversationLine(string speaker, string lineKey, bool isRight) {
-      Speaker = speaker;
+    public ConversationLine(Speaker lineSpeaker, string lineKey, bool isRight) {
+      LineSpeaker = lineSpeaker;
       LineKey = lineKey;
       IsRight = isRight;
     }
 
-    public string Speaker;
+    public Speaker LineSpeaker;
     public string LineKey;
     public bool IsRight;
   }

@@ -7,7 +7,7 @@ using Anki.UI;
 namespace Conversations {
   public class SpeechBubble : BaseView {
 
-    private string _LineID;
+    private string _LineKey;
 
     [SerializeField]
     private Image _SpeakerImage;
@@ -17,8 +17,8 @@ namespace Conversations {
 
     // Initializes this SpeechBubble with the specified line data
     public void Initialize(ConversationLine line) {
-      _LineID = line.LineKey;
-      _Text.text = Localization.Get(_LineID);
+      _LineKey = line.LineKey;
+      _Text.text = Localization.Get(_LineKey);
     }
 
     protected override void ConstructCloseAnimation(Sequence closeAnimation) {
