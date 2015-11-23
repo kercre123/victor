@@ -51,6 +51,8 @@ namespace Wink {
         _WinkStatus = WinkStatus.Right;
       }
       SetProceduralFace();
+      _WinkWaveAccumulator = 0.0f;
+      _WinkWaveCompleted = false;
     }
 
     public WinkStatus GetWinkStatus() {
@@ -62,6 +64,7 @@ namespace Wink {
     }
 
     public void DoneWink() {
+      _WinkWaveAccumulator = 0.0f;
       _WinkWaveCompleted = false;
       _WinkStatus = WinkStatus.Neutral;
     }
@@ -72,10 +75,21 @@ namespace Wink {
     }
 
     private void OnMotionDetected(float x, float y) {
+
+      if (_WinkStatus == WinkStatus.Neutral) {
+        return;
+      }
+
+      if (_WinkStatus == WinkStatus.Left && x < 0.0f) {
+        return;
+      }
+
+      if (_WinkStatus == WinkStatus.Right && x > 0.0f) {
+        return;
+      }
       
       float motionDetectedTime = Mathf.Clamp(Time.time - _LastWaveMessageTime, 0.0f, 0.3f);
       _WinkWaveAccumulator += motionDetectedTime;
-      Debug.Log(x + ", " + y + " : " + motionDetectedTime);
 
       _LastWaveMessageTime = Time.time;
     }
