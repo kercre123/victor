@@ -34,10 +34,12 @@ namespace Conversations {
 
     private ConversationHistory _ConversationHistory = new ConversationHistory();
     private Conversation _CurrentConversation = new Conversation();
+    private string _CurrentConversationKey;
     private SpeechBubble _CurrentSpeechBubble;
 
-    public void StartNewConversation() {
+    public void StartNewConversation(string conversationKey) {
       _CurrentConversation = new Conversation();
+      _CurrentConversationKey = conversationKey;
       if (_CurrentSpeechBubble != null) {
         UIManager.CloseView(_CurrentSpeechBubble);
       }
@@ -52,8 +54,8 @@ namespace Conversations {
     }
 
     public void SaveConversationToHistory() {
-      _ConversationHistory.AddConversation(_CurrentConversation);
-      StartNewConversation();
+      _ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
+      StartNewConversation("");
     }
 
     private SpeechBubble CreateSpeechBubble(ConversationLine line) {
