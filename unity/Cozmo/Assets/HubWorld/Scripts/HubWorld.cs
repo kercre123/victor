@@ -48,7 +48,11 @@ public class HubWorld : HubWorldBase {
 
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
-    _HubWorldDialogInstance = UIManager.OpenView(_HubWorldDialogPrefab) as HubWorldView;
+
+    GameObject newView = GameObject.Instantiate(_HubWorldDialogPrefab.gameObject);
+    newView.transform.position = Vector3.zero;
+
+    _HubWorldDialogInstance = newView.GetComponent<HubWorldView>();
     _HubWorldDialogInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
     _HubWorldDialogInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
     _HubWorldDialogInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;

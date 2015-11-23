@@ -26,7 +26,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22436240}
   - 222: {fileID: 22276614}
-  - 114: {fileID: 11459134}
+  - 114: {fileID: 11472768}
   m_Layer: 5
   m_Name: Text
   m_TagString: Untagged
@@ -42,6 +42,8 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22498124}
+  - 114: {fileID: 11427788}
+  - 114: {fileID: 11440862}
   m_Layer: 5
   m_Name: HubWorldCompletedChallengeButton
   m_TagString: Untagged
@@ -93,7 +95,61 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11459134
+--- !u!114 &11427788
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 143400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31abf14e3b565439ab400ebd41c47495, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ButtonScript: {fileID: 11440862}
+  _ButtonLabel: {fileID: 11472768}
+--- !u!114 &11440862
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 143400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1392445389, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: .615686297, g: .960784376, b: .529411793, a: 1}
+    m_HighlightedColor: {r: .615686297, g: .960784376, b: .529411793, a: 1}
+    m_PressedColor: {r: .458563983, g: .683823526, b: .402249128, a: 1}
+    m_DisabledColor: {r: .602941155, g: .602941155, b: .602941155, a: .501960814}
+    m_ColorMultiplier: 1
+    m_FadeDuration: .100000001
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 11482434}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.Button+ButtonClickedEvent, UnityEngine.UI, Version=1.0.0.0,
+      Culture=neutral, PublicKeyToken=null
+--- !u!114 &11472768
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -101,11 +157,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 113244}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -124,7 +180,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: New Text
+  m_Text: 
 --- !u!114 &11482434
 MonoBehaviour:
   m_ObjectHideFlags: 1

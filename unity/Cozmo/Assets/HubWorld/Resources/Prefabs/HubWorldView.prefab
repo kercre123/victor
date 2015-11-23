@@ -178,6 +178,7 @@ GameObject:
   - 223: {fileID: 22345802}
   - 114: {fileID: 11494006}
   - 114: {fileID: 11464808}
+  - 114: {fileID: 11410890}
   m_Layer: 5
   m_Name: HubWorldView
   m_TagString: Untagged
@@ -384,6 +385,44 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11410890
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 143852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b98745fd1773d41198f57475f1d28b70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _HubWorldLockedButtonPrefab: {fileID: 11406938, guid: 0a1fcfadbcfbe43038864fa9e078cb23,
+    type: 2}
+  _LockedButtonNodes:
+  - {fileID: 22417542}
+  - {fileID: 22479374}
+  - {fileID: 22413720}
+  - {fileID: 22444774}
+  - {fileID: 22490542}
+  - {fileID: 22426450}
+  _HubWorldUnlockedButtonPrefab: {fileID: 11420906, guid: 57cd1149cdf0a42ce93286d16d885cb5,
+    type: 2}
+  _UnlockedButtonNodes:
+  - {fileID: 22404678}
+  - {fileID: 22404242}
+  - {fileID: 22478120}
+  - {fileID: 22476216}
+  - {fileID: 22427822}
+  - {fileID: 22482186}
+  _HubWorldCompletedButtonPrefab: {fileID: 11427788, guid: 3c385bd7e1c594ad2ad5fc34dee789e6,
+    type: 2}
+  _CompletedButtonNodes:
+  - {fileID: 22467274}
+  - {fileID: 22423038}
+  - {fileID: 22449784}
+  - {fileID: 22428022}
+  - {fileID: 22406912}
+  - {fileID: 22421292}
 --- !u!114 &11452030
 MonoBehaviour:
   m_ObjectHideFlags: 1
