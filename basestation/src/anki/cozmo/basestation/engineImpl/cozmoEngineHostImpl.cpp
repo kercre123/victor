@@ -367,16 +367,6 @@ void CozmoEngineHostImpl::ReadAnimationsFromDisk() {
     robot->ReadAnimationDir();
   }
 }
-  
-bool CozmoEngineHostImpl::Broadcast(ExternalInterface::MessageEngineToGame&& event)
-{
-  if(_externalInterface) {
-    _externalInterface->Broadcast(event);
-    return true;
-  } else {
-    return false;
-  }
-}
 
 void CozmoEngineHostImpl::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {

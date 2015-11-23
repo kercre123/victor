@@ -60,8 +60,6 @@ public:
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
   void ReadAnimationsFromDisk() override;
-  
-  bool Broadcast(ExternalInterface::MessageEngineToGame&& event);
 protected:
 
   virtual Result InitInternal() override;
