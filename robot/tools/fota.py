@@ -125,7 +125,6 @@ class Upgrader(IDataReceiver):
                 self.sendAndWait(RobotInterface.EngineToRobot(writeFlash=RobotInterface.WriteFlash(flashAddress+written, chunk)))
                 written += len(chunk)
             # Finish OTA
-            input("Done loading, press enter to trigger")
             self.send(RobotInterface.EngineToRobot(
                 triggerOTAUpgrade=RobotInterface.OTAUpgrade(
                     start   = flashAddress,

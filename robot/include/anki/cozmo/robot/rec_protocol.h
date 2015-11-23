@@ -36,4 +36,20 @@ enum RECOVERY_STATE {
   STATE_IDLE = 0x5479
 };
 
+enum DROP_COMMANDS {
+  EnterBootloader = 0xfe,
+  BodyUpgradeData = 0xfd,
+  GetBodyState    = 0xfc,
+};
+
+enum EnterBootloaderWhich {
+  BOOTLOAD_RTIP,
+  BOOTLOAD_BODY,
+};
+
+typedef struct BodyUpgradeData
+{
+  uint_32 data[16];
+};
+
 #endif
