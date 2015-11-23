@@ -21,7 +21,7 @@ namespace Wink {
         animState.Initialize(AnimationName.kMajorWin, OnAnimationFinished);
         _StateMachine.SetNextState(animState);
       }
-      else if (Time.time - _EnterWinkStateTime > 10.0f) {
+      else if (Time.time - _EnterWinkStateTime > 7.0f) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kShocked, OnAnimationFinished);
         _StateMachine.SetNextState(animState);
