@@ -23,6 +23,7 @@
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "util/helpers/templateHelpers.h"
 
 //
 // Embedded implementation holdovers:
@@ -48,8 +49,8 @@
 // Cozmo-Specific Library Includes
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#define DEBUG_MOTION_DETECTION 1
-#define DEBUG_FACE_DETECTION   1
+#define DEBUG_MOTION_DETECTION 0
+#define DEBUG_FACE_DETECTION   0
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -63,7 +64,6 @@ namespace Cozmo {
   VisionSystem::VisionSystem(const std::string& dataPath)
   : _isInitialized(false)
   , _dataPath(dataPath)
-  , _headCamInfo(nullptr)
   , _faceTracker(nullptr)
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
@@ -72,12 +72,7 @@ namespace Cozmo {
   
   VisionSystem::~VisionSystem()
   {
-    if(_headCamInfo != nullptr) {
-      delete _headCamInfo;
-    }
-    if(_faceTracker != nullptr) {
-      delete _faceTracker;
-    }
+    Util::SafeDelete(_faceTracker);
   }
   
   
@@ -242,13 +237,13 @@ namespace Cozmo {
 #endif
   } // GetTrackerQuad()
   
-  Result VisionSystem::UpdateRobotState(const RobotState newRobotState)
+  Result VisionSystem::UpdatePoseData(const PoseData& poseData)
   {
-    _prevRobotState = _robotState;
-    _robotState     = newRobotState;
+    std::swap(_prevPoseData, _poseData);
+    _poseData = poseData;
     
     if(_wasCalledOnce) {
-      _havePreviousRobotState = true;
+      _havePrevPoseData = true;
     } else {
       _wasCalledOnce = true;
     }
@@ -259,19 +254,26 @@ namespace Cozmo {
   
   void VisionSystem::GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange)
   {
-    AnkiAssert(_havePreviousRobotState);
+    AnkiAssert(_havePrevPoseData);
     
-    angleChange = Radians(_robotState.pose.angle) - Radians(_prevRobotState.pose.angle);
+    const Pose3d& crntPose = _poseData.poseStamp.GetPose();
+    const Pose3d& prevPose = _prevPoseData.poseStamp.GetPose();
+    const Radians crntAngle = crntPose.GetRotation().GetAngleAroundZaxis();
+    const Radians prevAngle = prevPose.GetRotation().GetAngleAroundZaxis();
+    const Vec3f& crntT = crntPose.GetTranslation();
+    const Vec3f& prevT = prevPose.GetTranslation();
+    
+    angleChange = crntAngle - prevAngle;
     
     //PRINT_STREAM_INFO("angleChange = %.1f", angleChange.getDegrees());
     
     // Position change in world (mat) coordinates
-    const f32 dx = _robotState.pose.x - _prevRobotState.pose.x;
-    const f32 dy = _robotState.pose.y - _prevRobotState.pose.y;
+    const f32 dx = crntT.x() - prevT.x();
+    const f32 dy = crntT.y() - prevT.y();
     
     // Get change in robot coordinates
-    const f32 cosAngle = cosf(-_prevRobotState.pose.angle);
-    const f32 sinAngle = sinf(-_prevRobotState.pose.angle);
+    const f32 cosAngle = cosf(-prevAngle.ToFloat());
+    const f32 sinAngle = sinf(-prevAngle.ToFloat());
     xChange = dx*cosAngle - dy*sinAngle;
     yChange = dx*sinAngle + dy*cosAngle;
   } // GetPoseChange()
@@ -316,13 +318,13 @@ namespace Cozmo {
   
   Radians VisionSystem::GetCurrentHeadAngle()
   {
-    return _robotState.headAngle;
+    return _poseData.poseStamp.GetHeadAngle();
   }
   
   
   Radians VisionSystem::GetPreviousHeadAngle()
   {
-    return _prevRobotState.headAngle;
+    return _prevPoseData.poseStamp.GetHeadAngle();
   }
   
 
@@ -364,11 +366,11 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(Anki::Point2f& msg)
+  bool VisionSystem::CheckMailbox(ExternalInterface::RobotObservedMotion& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _motionCentroidMailbox.getMessage(msg);
+      retVal = _motionMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -713,6 +715,10 @@ namespace Cozmo {
     
 #   else
     
+    AnkiConditionalErrorAndReturnValue(_camera.IsCalibrated(), RESULT_FAIL, "VisionSystem.Update.", "Camera not calibrated");
+    
+    auto const& calib = _camera.GetCalibration();
+    
     _tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     trackingQuad,
                                                                     _trackerParameters.scaleTemplateRegionPercent,
@@ -722,10 +728,10 @@ namespace Cozmo {
                                                                     FIDUCIAL_SQUARE_WIDTH_FRACTION,
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
-                                                                    _headCamInfo->focalLength_x,
-                                                                    _headCamInfo->focalLength_y,
-                                                                    _headCamInfo->center_x,
-                                                                    _headCamInfo->center_y,
+                                                                    calib.GetFocalLength_x(),
+                                                                    calib.GetFocalLength_y(),
+                                                                    calib.GetCenter_x(),
+                                                                    calib.GetCenter_y(),
                                                                     _markerToTrack.width_mm,
                                                                     ccmScratch,
                                                                     onchipMemory,
@@ -1175,6 +1181,12 @@ namespace Cozmo {
     {
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
                    "Timestamp error.");
+      
+      // Use a camera from the robot's pose history to estimate the head's
+      // 3D translation, w.r.t. that camera. Also puts the face's pose in
+      // the camera's pose chain.
+      currentFace.UpdateTranslation(_camera);
+      
       _faceMailbox.putMessage(currentFace);
     }
 
@@ -1182,12 +1194,39 @@ namespace Cozmo {
   } // DetectFaces()
   
   
+  static size_t FindLargestRegionCentroid(const std::vector<std::vector<Anki::Point2i>>& regionPoints,
+                                        size_t minArea, Anki::Point2f& centroid)
+  {
+    size_t largestRegion = 0;
+    
+    for(auto & region : regionPoints) {
+      //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
+      //                 "Area=%lu", region.size());
+      if(region.size() > minArea) {
+        centroid = 0.f;
+        for(auto & point : region) {
+          centroid += point;
+        }
+        centroid /= static_cast<f32>(region.size());
+        largestRegion = region.size();
+      }
+    } // for each region
+    
+    return largestRegion;
+  }
+  
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
   {
-    const bool headSame =  NEAR(_robotState.headAngle, _prevRobotState.headAngle, DEG_TO_RAD(0.1));
-    const bool poseSame = (NEAR(_robotState.pose.x,    _prevRobotState.pose.x,    .5f) &&
-                           NEAR(_robotState.pose.y,    _prevRobotState.pose.y,    .5f) &&
-                           NEAR(_robotState.pose.angle,_prevRobotState.pose.angle, DEG_TO_RAD(0.1)));
+    const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
+                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+    
+    const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
+                                _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
+                           NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
+                                _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
+                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
+                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
+                                DEG_TO_RAD(0.1)));
     
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
@@ -1227,49 +1266,144 @@ namespace Cozmo {
       Vision::Image ratioImg(image.GetNumRows(), image.GetNumCols());
       image.ApplyScalarFunction(ratioTest, _prevImage, ratioImg);
       
-      size_t minArea = image.GetNumElements() / 225; // 1/15 of each image dimension
       Anki::Point2f centroid(0.f,0.f); // Not Embedded::
+      Anki::Point2f groundPlaneCentroid(0.f,0.f);
+      
+      // Get overall immge centroid
+      const size_t minArea = image.GetNumElements() / 225; // 1/15 of each image dimension
+      size_t imgRegionArea = 0;
+      f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea)
       {
         Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
         std::vector<std::vector<Point2<s32>>> regionPoints;
         ratioImg.GetConnectedComponents(motionRegions, regionPoints);
-        
-        for(auto & region : regionPoints) {
-          //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
-          //                 "Area=%lu", region.size());
-          if(region.size() > minArea) {
-            centroid = 0.f;
-            for(auto & point : region) {
-              centroid += point;
-            }
-            centroid /= static_cast<f32>(region.size());
-            minArea = region.size();
-          }
-        } // for each region
-        
-        if(centroid.x() > 0.f) {
-          ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < motionRegions.GetNumCols() &&
-                       centroid.y() > 0.f && centroid.y() < motionRegions.GetNumRows(),
-                       "Motion centroid should be within image bounds.");
 
-          PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
-                           "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
-                           "[out of %lu regions]",
-                           minArea, centroid.x(), centroid.y(), regionPoints.size());
-          
-          _lastMotionTime = image.GetTimestamp();
-          _motionCentroidMailbox.putMessage(centroid);
-          
+        imgRegionArea = FindLargestRegionCentroid(regionPoints, minArea, centroid);
+      }
+      
+      // Get centroid of all the motion within the ground plane, if we have one to reason about
+      if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
+      {
+        // Zero out everything in the ratio image that's not on the ground plane
+        Vision::Image mask(ratioImg.GetNumRows(), ratioImg.GetNumCols());
+        const Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        
+        mask.FillWith(0);
+        cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
+          imgQuad[Quad::CornerName::TopLeft].get_CvPoint_(),
+          imgQuad[Quad::CornerName::TopRight].get_CvPoint_(),
+          imgQuad[Quad::CornerName::BottomRight].get_CvPoint_(),
+          imgQuad[Quad::CornerName::BottomLeft].get_CvPoint_(),
+        }, 255);
+        
+        ASSERT_NAMED(ratioImg.IsContinuous() && mask.IsContinuous(),
+                     "RatioImg and ground mask should be continuous.");
+        const u8* maskData = mask.GetDataPointer();
+        u8* ratioData = ratioImg.GetDataPointer();
+        for(s32 i=0; i<image.GetNumElements(); ++i) {
+          if(maskData[i] == 0) {
+            ratioData[i] = 0;
+          }
         }
         
-      } // if(anyAboveThresh)
+        // Find centroid of largest connected component inside the ground plane
+        Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
+        std::vector<std::vector<Point2<s32>>> regionPoints;
+        ratioImg.GetConnectedComponents(motionRegions, regionPoints);
+        
+        const f32 imgQuadArea = imgQuad.ComputeArea();
+        groundRegionArea = FindLargestRegionCentroid(regionPoints, imgQuadArea/225.f,                                                         groundPlaneCentroid);
+        
+        /* Experimental: Try computing moments in an overhead warped view of the ratio image
+        groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
+        
+        cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
+        if(moments.m00 > 0) {
+          groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
+          groundPlaneCentroid.x() = moments.m10 / moments.m00;
+          groundPlaneCentroid.y() = moments.m01 / moments.m00;
+          groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
+          
+          // TODO: return other moments?
+        }
+        */
+        
+        if(groundRegionArea > 0.f)
+        {
+          // Make ground region area into a fraction of the ground ROI area
+          groundRegionArea /= imgQuadArea;
+          
+          // Map the centroid onto the ground plane
+          Matrix_3x3f invH;
+          _poseData.groundPlaneHomography.GetInverse(invH);
+          Point3f temp = invH * Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f};
+          ASSERT_NAMED(temp.z() > 0, "Projected 'z' should be > 0.");
+          const f32 divisor = 1.f/temp.z();
+          groundPlaneCentroid.x() = temp.x() * divisor;
+          groundPlaneCentroid.y() = temp.y() * divisor;
+          
+          ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
+                       "GroundQuad should contain the ground plane centroid.");
+        }
+      } // if(groundPlaneVisible)
+      
+      if(imgRegionArea > 0 || groundRegionArea > 0.f)
+      {
+        PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
+                         "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
+                         "-- (%.1f,%.1f) on the ground",
+                         minArea, centroid.x(), centroid.y(),
+                         groundPlaneCentroid.x(), groundPlaneCentroid.y());
+        
+        _lastMotionTime = image.GetTimestamp();
+        
+        ExternalInterface::RobotObservedMotion msg;
+        msg.timestamp = image.GetTimestamp();
+        
+        if(imgRegionArea > 0)
+        {
+          ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
+                       centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
+                       "Motion centroid should be within image bounds.");
+          centroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
+          msg.img_x = centroid.x();
+          msg.img_y = centroid.y();
+          msg.img_area = static_cast<s32>(imgRegionArea);
+        } else {
+          msg.img_area = 0;
+        }
+        
+        if(groundRegionArea > 0.f)
+        {
+          msg.ground_x = std::round(groundPlaneCentroid.x());
+          msg.ground_y = std::round(groundPlaneCentroid.y());
+          msg.ground_area = groundRegionArea;
+        } else {
+          msg.ground_area = 0;
+        }
+        
+        _motionMailbox.putMessage(std::move(msg));
+      }
       
 #     if DEBUG_MOTION_DETECTION
       {
         Vision::ImageRGB ratioImgDisp(ratioImg);
-        ratioImgDisp.DrawPoint(centroid, NamedColors::RED, 2);
+        ratioImgDisp.DrawPoint(centroid + _camera.GetCalibration().GetCenter(), NamedColors::RED, 2);
         _debugImageRGBMailbox.putMessage({"RatioImg", ratioImgDisp});
+        
+        
+        ratioImgDisp = Vision::ImageRGB(_poseData.groundPlaneROI.GetOverheadMask());
+        if(groundRegionArea > 0.f) {
+          ratioImgDisp.DrawPoint(groundPlaneCentroid-_poseData.groundPlaneROI.GetOverheadImageOrigin(),
+                                 NamedColors::RED, 2);
+          
+          cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(groundRegionArea),
+                      cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .5f,
+                      CV_RGB(0,255,0));
+        }
+        _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDisp});
+
         //_debugImageRGBMailbox.putMessage({"CurrentImg", image});
       }
 #     endif
@@ -1311,13 +1445,6 @@ namespace Cozmo {
     
     return downsampleFactor;
   }
-  
-  /*
-   const HAL::CameraInfo* VisionSystem::GetCameraCalibration() {
-   // TODO: is just returning the pointer to HAL's camera info struct kosher?
-   return _headCamInfo;
-   }
-   */
   
   f32 VisionSystem::GetTrackingMarkerWidth() {
     return _markerToTrack.width_mm;
@@ -1370,141 +1497,104 @@ namespace Cozmo {
     
   } // GetModeName()
   
-  VisionSystem::CameraInfo::CameraInfo(const Vision::CameraCalibration& camCalib)
-  : focalLength_x(camCalib.GetFocalLength_x())
-  , focalLength_y(camCalib.GetFocalLength_y())
-  , center_x(camCalib.GetCenter_x())
-  , center_y(camCalib.GetCenter_y())
-  , skew(camCalib.GetSkew())
-  , nrows(camCalib.GetNrows())
-  , ncols(camCalib.GetNcols())
-  {
-    
-    // TODO: Set distortion coefficients too
-    
-  }
-  
   Result VisionSystem::Init(const Vision::CameraCalibration& camCalib)
   {
     Result result = RESULT_OK;
     
-    bool gotNewCalibration = true;
-    if(_isInitialized) {
-      gotNewCalibration = (camCalib.GetFocalLength_x() != _headCamInfo->focalLength_x ||
-                           camCalib.GetFocalLength_y() != _headCamInfo->focalLength_y ||
-                           camCalib.GetCenter_x()      != _headCamInfo->center_x      ||
-                           camCalib.GetCenter_y()      != _headCamInfo->center_y      ||
-                           camCalib.GetSkew()          != _headCamInfo->skew          ||
-                           camCalib.GetNrows()         != _headCamInfo->nrows         ||
-                           camCalib.GetNcols()         != _headCamInfo->ncols);
+    bool calibSizeValid = false;
+    switch(camCalib.GetNcols())
+    {
+      case 640:
+        calibSizeValid = camCalib.GetNrows() == 480;
+        _captureResolution = ImageResolution::VGA;
+        break;
+      case 400:
+        calibSizeValid = camCalib.GetNrows() == 296;
+        _captureResolution = ImageResolution::CVGA;
+        break;
+      case 320:
+        calibSizeValid = camCalib.GetNrows() == 240;
+        _captureResolution = ImageResolution::QVGA;
+        break;
     }
+    AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
+                                       "VisionSystem.InvalidCalibrationResolution",
+                                       "Unexpected calibration resolution (%dx%d)\n",
+                                       camCalib.GetNcols(), camCalib.GetNrows());
     
-    if(gotNewCalibration) {
-      bool calibSizeValid = false;
-      switch(camCalib.GetNcols())
-      {
-        case 640:
-          calibSizeValid = camCalib.GetNrows() == 480;
-          _captureResolution = ImageResolution::VGA;
-          break;
-        case 400:
-          calibSizeValid = camCalib.GetNrows() == 296;
-          _captureResolution = ImageResolution::CVGA;
-          break;
-        case 320:
-          calibSizeValid = camCalib.GetNrows() == 240;
-          _captureResolution = ImageResolution::QVGA;
-          break;
-      }
-      AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
-                                         "VisionSystem.InvalidCalibrationResolution",
-                                         "Unexpected calibration resolution (%dx%d)\n",
-                                         camCalib.GetNcols(), camCalib.GetNrows());
-      
-      // WARNING: the order of these initializations matter!
-      
-      //
-      // Initialize the VisionSystem's state (i.e. its "private member variables")
-      //
-      
-      EnableMode(VisionMode::DetectingMarkers, true);
-      EnableMode(VisionMode::DetectingMotion,  true);
-      //EnableMode(VisionMode::DetectingFaces,   true);
-
-      _markerToTrack.Clear();
-      _numTrackFailures          = 0;
-      
-      _wasCalledOnce             = false;
-      _havePreviousRobotState    = false;
-      
-      //_headCamInfo = HAL::GetHeadCamInfo();
-      delete _headCamInfo;
-      _headCamInfo = new CameraInfo(camCalib);
-      if(_headCamInfo == nullptr) {
-        PRINT_STREAM_INFO("VisionSystem.Init", "Initialize() - HeadCam Info pointer is NULL!");
-        return RESULT_FAIL;
-      }
-      
-      
-      PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
-                       "With model path %s.", _dataPath.c_str());
-      _faceTracker = new Vision::FaceTracker(_dataPath);
-      PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
-      
-      
-      // Compute FOV from focal length (currently used for tracker prediciton)
-      _headCamFOV_ver = 2.f * atanf(static_cast<f32>(_headCamInfo->nrows) /
-                                    (2.f * _headCamInfo->focalLength_y));
-      _headCamFOV_hor = 2.f * atanf(static_cast<f32>(_headCamInfo->ncols) /
-                                    (2.f * _headCamInfo->focalLength_x));
-      
-      _exposureTime = 0.2f; // TODO: pick a reasonable start value
-      _frameNumber = 0;
-      
-      // Just make all the vision parameters' resolutions match capture resolution:
-      _detectionParameters.Initialize(_captureResolution);
-      _trackerParameters.Initialize(_captureResolution);
-      _faceDetectionParameters.Initialize(_captureResolution);
-      
-      Simulator::Initialize();
-      
-#ifdef RUN_SIMPLE_TRACKING_TEST
-      Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_FIRE, DEFAULT_BLOCK_MARKER_WIDTH_MM);
-#endif
-      
-      result = _memory.Initialize();
-      if(result != RESULT_OK) { return result; }
-      
-      // TODO: Re-enable debugstream/MatlabViz on Basestation visionSystem
-      /*
-       result = DebugStream::Initialize();
-       if(result != RESULT_OK) { return result; }
-       
-       result = MatlabVisualization::Initialize();
-       if(result != RESULT_OK) { return result; }
-       */
-      
-#if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
-      result = MatlabVisionProcessor::Initialize();
-      if(result != RESULT_OK) { return result; }
-#endif
-      
-      _RcamWrtRobot = Array<f32>(3,3,_memory._onchipScratch);
-      
-      _markerToTrack.Clear();
-      _newMarkerToTrack.Clear();
-      _newMarkerToTrackWasProvided = false;
-      
-      // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
-      // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
-      // the main engine thread. We don't want it referring to any memory allocated
-      // here.
-      _camera.SetSharedCalibration(&camCalib);
-      
-      VisionMarker::SetDataPath(_dataPath);
-      
-      _isInitialized = true;
-    }
+    // WARNING: the order of these initializations matter!
+    
+    //
+    // Initialize the VisionSystem's state (i.e. its "private member variables")
+    //
+    
+    EnableMode(VisionMode::DetectingMarkers, true);
+    //EnableMode(VisionMode::DetectingMotion,  true);
+    EnableMode(VisionMode::DetectingFaces,   true);
+    
+    _markerToTrack.Clear();
+    _numTrackFailures          = 0;
+    
+    _wasCalledOnce             = false;
+    _havePrevPoseData          = false;
+    
+    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                     "With model path %s.", _dataPath.c_str());
+    _faceTracker = new Vision::FaceTracker(_dataPath);
+    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+    
+    _camera.SetCalibration(camCalib);
+    
+    // Compute FOV from focal length (currently used for tracker prediciton)
+    _headCamFOV_ver = _camera.GetCalibration().ComputeVerticalFOV().ToFloat();
+    _headCamFOV_hor = _camera.GetCalibration().ComputeHorizontalFOV().ToFloat();
+    
+    _exposureTime = 0.2f; // TODO: pick a reasonable start value
+    _frameNumber = 0;
+    
+    // Just make all the vision parameters' resolutions match capture resolution:
+    _detectionParameters.Initialize(_captureResolution);
+    _trackerParameters.Initialize(_captureResolution);
+    _faceDetectionParameters.Initialize(_captureResolution);
+    
+    Simulator::Initialize();
+    
+#   ifdef RUN_SIMPLE_TRACKING_TEST
+    Anki::Cozmo::VisionSystem::SetMarkerToTrack(Vision::MARKER_FIRE, DEFAULT_BLOCK_MARKER_WIDTH_MM);
+#   endif
+    
+    result = _memory.Initialize();
+    if(result != RESULT_OK) { return result; }
+    
+    // TODO: Re-enable debugstream/MatlabViz on Basestation visionSystem
+    /*
+     result = DebugStream::Initialize();
+     if(result != RESULT_OK) { return result; }
+     
+     result = MatlabVisualization::Initialize();
+     if(result != RESULT_OK) { return result; }
+     */
+    
+#   if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+    result = MatlabVisionProcessor::Initialize();
+    if(result != RESULT_OK) { return result; }
+#   endif
+    
+    _RcamWrtRobot = Array<f32>(3,3,_memory._onchipScratch);
+    
+    _markerToTrack.Clear();
+    _newMarkerToTrack.Clear();
+    _newMarkerToTrackWasProvided = false;
+    
+    // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
+    // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
+    // the main engine thread. We don't want it referring to any memory allocated
+    // here.
+    _camera.SetSharedCalibration(&camCalib);
+    
+    VisionMarker::SetDataPath(_dataPath);
+    
+    _isInitialized = true;
     
     return result;
   } // Init()
@@ -1563,11 +1653,13 @@ namespace Cozmo {
       sortedQuad = marker.corners;
     }
     
+    auto const& calib = _camera.GetCalibration();
+    
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
                             _canonicalMarker3d[2], _canonicalMarker3d[3],
-                            _headCamInfo->focalLength_x, _headCamInfo->focalLength_y,
-                            _headCamInfo->center_x, _headCamInfo->center_y,
+                            calib.GetFocalLength_x(), calib.GetFocalLength_y(),
+                            calib.GetCenter_x(), calib.GetCenter_y(),
                             rotation, translation);
   } // GetVisionMarkerPose()
   
@@ -1638,7 +1730,7 @@ namespace Cozmo {
   } // PreprocessImage()
   
   // This is the regular Update() call
-  Result VisionSystem::Update(const RobotState robotState,
+  Result VisionSystem::Update(const PoseData&            poseData,
                               const Vision::ImageRGB&    inputImage)
   {
     Result lastResult = RESULT_OK;
@@ -1653,14 +1745,8 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
-    /* Not necessary on basestation
-     // Make sure that we send the robot state message associated with the
-     // image we are about to process.
-     Messages::SendRobotStateMsg(&robotState);
-     */
-    
     // Store the new robot state and keep a copy of the previous one
-    UpdateRobotState(robotState);
+    UpdatePoseData(poseData);
     
     // prevent us from trying to update a tracker we just initialized in the same
     // frame
@@ -1765,6 +1851,6 @@ namespace Cozmo {
     _faceDetectionParameters.maxHeight = maxObjectHeight;
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
-    
+  
 } // namespace Cozmo
 } // namespace Anki

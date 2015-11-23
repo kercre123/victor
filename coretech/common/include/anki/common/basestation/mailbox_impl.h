@@ -25,7 +25,17 @@ namespace Anki {
   }
 
   template<typename MSG_TYPE>
-  bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE newMsg)
+  bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE& newMsg)
+  {
+    lock_.lock();
+    message_  = newMsg;
+    beenRead_ = false;
+    lock_.unlock();
+    return true;
+  }
+  
+  template<typename MSG_TYPE>
+  bool Mailbox<MSG_TYPE>::putMessage(MSG_TYPE&& newMsg)
   {
     lock_.lock();
     message_  = newMsg;

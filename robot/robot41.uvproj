@@ -76,7 +76,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>c:\cygwin\bin\python2.7 ./sign/sign.py ./build/41/robot.out ./build/41/robot.safe</UserProg1Name>
+            <UserProg1Name>c:\cygwin\bin\python2.7 ./sign/sign.py ./build/41/robot.out ./build/41/robot.safe ./build/robot.bin</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>

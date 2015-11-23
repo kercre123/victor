@@ -21,7 +21,7 @@
 u8 g_fixtureReleaseVersion = 1;
 
 BOOL g_isVehiclePresent = 0;
-FixtureType g_fixtureType = FIXTURE_NONE;
+FixtureType g_fixtureType = FIXTURE_HEAD_TEST;
 FlashParams g_flashParams;
 
 char g_lotCode[15] = {0};
@@ -658,6 +658,7 @@ int main(void)
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  // XXX - ENCHG was disabled because it interferes with full-duplex TX/RX on the headboard for Espressif
   //GPIO_Init(GPIOA, &GPIO_InitStructure);
   
   // Initialize PB13-PB15 as the ID inputs with pullups
@@ -696,10 +697,14 @@ int main(void)
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();
+  
+  InitEspressif();
 
   SlowPutString("Ready...\r\n");
 
   STM_EVAL_LEDOn(LEDRED);
+
+  ProgramEspressif();
 
   while (1)
   {  

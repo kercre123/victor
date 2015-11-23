@@ -498,6 +498,11 @@
               <FileType>8</FileType>
               <FilePath>.\app\pcbTest.c</FilePath>
             </File>
+            <File>
+              <FileName>binaries.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\app\binaries.s</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -562,6 +567,16 @@
               <FileName>monitor.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\monitor.c</FilePath>
+            </File>
+            <File>
+              <FileName>espressif.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\espressif.c</FilePath>
+            </File>
+            <File>
+              <FileName>cube.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\cube.c</FilePath>
             </File>
           </Files>
         </Group>

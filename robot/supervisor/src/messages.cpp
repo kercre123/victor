@@ -154,6 +154,7 @@ namespace Anki {
         robotState_.status |= (AnimationController::IsBufferFull() ? IS_ANIM_BUFFER_FULL : 0);
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
+        robotState_.status |= HAL::IsCliffDetected() ? CLIFF_DETECTED : 0;
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -526,9 +527,9 @@ namespace Anki {
         }
       }
       
-      void Process_enablePickupDetect(const RobotInterface::EnablePickupDetect& msg)
+      void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
-        IMUFilter::EnablePickupDetect(msg.enable);
+        IMUFilter::EnablePickupParalysis(msg.enable);
       }
       
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)

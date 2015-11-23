@@ -53,11 +53,19 @@ namespace Cozmo {
     
   } // VisionSystem()
 
-  void VisionComponent::SetCameraCalibration(const Vision::CameraCalibration& camCalib)
+  void VisionComponent::SetCameraCalibration(const Robot& robot, const Vision::CameraCalibration& camCalib)
   {
-    _camCalib = camCalib;
-    _camera.SetSharedCalibration(&_camCalib);
-    _isCamCalibSet = true;
+    if(_camCalib != camCalib)
+    {
+      _camCalib = camCalib;
+      _camera.SetSharedCalibration(&_camCalib);
+      _isCamCalibSet = true;
+      
+      _visionSystem->UnInit();
+      
+      // Got a new calibration: rebuild the LUT for ground plane homographies
+      PopulateGroundPlaneHomographyLUT(robot);
+    }
   }
   
   
@@ -106,7 +114,6 @@ namespace Cozmo {
   {
     _running = false;
     
-    
     // Wait for processing thread to die before destructing since we gave it
     // a reference to *this
     if(_processingThread.joinable()) {
@@ -116,7 +123,6 @@ namespace Cozmo {
     _currentImg = {};
     _nextImg    = {};
     _lastImg    = {};
-
   }
 
 
@@ -125,7 +131,6 @@ namespace Cozmo {
     Stop();
     
     Util::SafeDelete(_visionSystem);
-    
   } // ~VisionSystem()
  
   
@@ -253,10 +258,11 @@ namespace Cozmo {
     }
   }
   
-  void VisionComponent::SetNextImage(const Vision::ImageRGB& image,
-                                     const RobotState& robotState)
+  Result VisionComponent::SetNextImage(const Vision::ImageRGB& image,
+                                       const Robot& robot)
   {
     if(_isCamCalibSet) {
+      ASSERT_NAMED(nullptr != _visionSystem, "VisionSystem should not be NULL.");
       if(!_visionSystem->IsInitialized()) {
         _visionSystem->Init(_camCalib);
         
@@ -270,12 +276,32 @@ namespace Cozmo {
         }
       }
       
+      // Fill in the pose data for the given image, by querying robot history
+      Lock();
+      Result lastResult = robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), _nextPoseData.timeStamp, _nextPoseData.poseStamp, true);
+      Unlock();
+      
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
+                          "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
+        return lastResult;
+      }
+      
+      Lock();
+      _nextPoseData.cameraPose = robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
+      _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
+                                                                     _nextPoseData.groundPlaneHomography);
+      Unlock();
+      
+      // Experimental:
+      //UpdateOverheadMap(image, _nextPoseData);
+      
       switch(_runMode)
       {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            _visionSystem->Update(robotState, image);
+            _visionSystem->Update(_nextPoseData, image);
             _lastImg = image;
             
             VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
@@ -295,8 +321,6 @@ namespace Cozmo {
           
           // TODO: Avoid the copying here (shared memory?)
           image.CopyTo(_nextImg);
-          
-          _nextRobotState = robotState;
           
           Unlock();
           break;
@@ -318,9 +342,89 @@ namespace Cozmo {
     } else {
       PRINT_NAMED_ERROR("VisionComponent.Update.NoCamCalib",
                         "Camera calibration must be set before calling Update().\n");
+      return RESULT_FAIL;
     }
     
+    return RESULT_OK;
+    
   } // SetNextImage()
+  
+  void VisionComponent::PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad)
+  {
+    const Pose3d& robotPose = robot.GetPose();
+    
+    ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated to populate homography LUT.");
+    
+    const Matrix_3x3f K = _camera.GetCalibration().GetCalibrationMatrix();
+    
+    GroundPlaneROI groundPlaneROI;
+    
+    // Loop over all possible head angles at the specified resolution and store
+    // the ground plane homography for each.
+    for(f32 headAngle_rad = MIN_HEAD_ANGLE; headAngle_rad <= MAX_HEAD_ANGLE;
+        headAngle_rad += angleResolution_rad)
+    {
+      // Get the robot origin w.r.t. the camera position with the camera at
+      // the current head angle
+      Pose3d robotPoseWrtCamera;
+      bool result = robotPose.GetWithRespectTo(robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
+      assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
+      
+      const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
+      const Vec3f&            T = robotPoseWrtCamera.GetTranslation();
+      
+      // Construct the homography mapping points on the ground plane into the
+      // image plane
+      const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
+      
+      Quad2f imgQuad = groundPlaneROI.GetImageQuad(H);
+      
+      if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
+         _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
+      {
+        // Only store this homography if the ROI still projects into the image
+        _groundPlaneHomographyLUT[headAngle_rad] = H;
+      } else {
+        PRINT_NAMED_INFO("VisionComponent.PopulateGroundPlaneHomographyLUT.MaxHeadAngleReached",
+                         "Stopping at %.1fdeg", RAD_TO_DEG(headAngle_rad));
+        break;
+      }
+    }
+    
+  } // PopulateGroundPlaneHomographyLUT()
+  
+  bool VisionComponent::LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const
+  {
+    if(atHeadAngle > _groundPlaneHomographyLUT.rbegin()->first) {
+      // Head angle too large
+      return false;
+    }
+    
+    auto iter = _groundPlaneHomographyLUT.lower_bound(atHeadAngle);
+    
+    if(iter == _groundPlaneHomographyLUT.end()) {
+      PRINT_NAMED_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
+                          "Failed to find homogrphay using headangle of %.2frad (%.1fdeg) as lower bound",
+                          atHeadAngle, RAD_TO_DEG(atHeadAngle));
+      --iter;
+    } else {
+      auto nextIter = iter; ++nextIter;
+      if(nextIter != _groundPlaneHomographyLUT.end()) {
+        if(std::abs(atHeadAngle - iter->first) > std::abs(atHeadAngle - nextIter->first)) {
+          iter = nextIter;
+        }
+      }
+    }
+    
+    //      PRINT_NAMED_DEBUG("VisionComponent.LookupGroundPlaneHomography.HeadAngleDiff",
+    //                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
+    //                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
+    //                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
+    
+    H = iter->second;
+    return true;
+    
+  } // LookupGroundPlaneHomography()
 
   void VisionComponent::Processor()
   {
@@ -342,7 +446,7 @@ namespace Cozmo {
         // There is an image to be processed:
         
         //assert(_currentImg != nullptr);
-        _visionSystem->Update(_currentRobotState, _currentImg);
+        _visionSystem->Update(_currentPoseData, _currentImg);
         
         VizManager::getInstance()->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
@@ -365,7 +469,7 @@ namespace Cozmo {
       } else if(!_nextImg.IsEmpty()) {
         Lock();
         _currentImg        = _nextImg;
-        _currentRobotState = _nextRobotState;
+        _currentPoseData   = _nextPoseData;
         _nextImg = {};
         Unlock();
       } else {
@@ -393,7 +497,7 @@ namespace Cozmo {
         
         lastResult = robot.QueueObservedMarker(visionMarker);
         if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.Update.FailedToQueueVisionMarker",
+          PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
                             "Got VisionMarker message from vision processing thread but failed to queue it.");
           return lastResult;
         }
@@ -417,7 +521,7 @@ namespace Cozmo {
       Vision::TrackedFace faceDetection;
       while(true == _visionSystem->CheckMailbox(faceDetection)) {
         /*
-         PRINT_NAMED_INFO("Robot.Update",
+         PRINT_NAMED_INFO("VisionComponent.Update",
          "Robot %d reported seeing a face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
          "at t=%d (lastImg t=%d).",
          GetID(), faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
@@ -425,31 +529,10 @@ namespace Cozmo {
          faceDetection.GetTimeStamp(), GetLastImageTimeStamp());
          */
         
-        // Get historical robot pose at specified timestamp to make sure we've
-        // got a robot/camera in pose history
-        TimeStamp_t t;
-        RobotPoseStamp* p = nullptr;
-        HistPoseKey poseKey;
-        lastResult = robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(),
-                                                                    t, &p, &poseKey, true);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_WARNING("Robot.Update.HistoricalPoseNotFound",
-                              "For face seen at time: %d, hist: %d to %d\n",
-                              faceDetection.GetTimeStamp(),
-                              robot.GetPoseHistory()->GetOldestTimeStamp(),
-                              robot.GetPoseHistory()->GetNewestTimeStamp());
-          return lastResult;
-        }
-        
-        // Use a camera from the robot's pose history to estimate the head's
-        // 3D translation, w.r.t. that camera. Also puts the face's pose in
-        // the camera's pose chain.
-        faceDetection.UpdateTranslation(robot.GetHistoricalCamera(p, t));
-        
-        // Now use the faceDetection to update FaceWorld:
+        // Use the faceDetection to update FaceWorld:
         lastResult = robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
         if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.Update.FailedToUpdateFace",
+          PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
                             "Got FaceDetection from vision processing but failed to update it.");
           return lastResult;
         }
@@ -492,7 +575,7 @@ namespace Cozmo {
          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
          Pose3d markerPoseWrtRobot;
          if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
-         PRINT_NAMED_ERROR("Robot.Update.PoseOriginFail",
+         PRINT_NAMED_ERROR("VisionComponent.Update.PoseOriginFail",
          "Could not get marker pose w.r.t. robot.");
          return RESULT_FAIL;
          }
@@ -525,17 +608,100 @@ namespace Cozmo {
   {
     if(_visionSystem != nullptr)
     {
-      Point2f motionCentroid;
+      ExternalInterface::RobotObservedMotion motionCentroid;
       if (true == _visionSystem->CheckMailbox(motionCentroid))
       {
-        using namespace ExternalInterface;
-        motionCentroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
-       
-        robot.Broadcast(MessageEngineToGame(RobotObservedMotion(motionCentroid.x(), motionCentroid.y())));
+        robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
       }
     } // if(_visionSystem != nullptr)
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
+  
+  Result VisionComponent::UpdateOverheadMap(const Vision::ImageRGB& image,
+                                            const VisionSystem::PoseData& poseData)
+  {
+    if(poseData.groundPlaneVisible)
+    {
+      const Matrix_3x3f& H = poseData.groundPlaneHomography;
+      
+      const GroundPlaneROI& roi = poseData.groundPlaneROI;
+      
+      Quad2f imgGroundQuad = roi.GetImageQuad(H);
+      
+      static Vision::ImageRGB overheadMap(1000.f, 1000.f);
+      
+      // Need to apply a shift after the homography to put things in image
+      // coordinates with (0,0) at the upper left (since groundQuad's origin
+      // is not upper left). Also mirror Y coordinates since we are looking
+      // from above, not below
+      Matrix_3x3f InvShift{
+        1.f, 0.f, roi.GetDist(), // Negated b/c we're using inv(Shift)
+        0.f,-1.f, roi.GetWidthFar()*0.5f,
+        0.f, 0.f, 1.f};
+
+      Pose3d worldPoseWrtRobot = poseData.poseStamp.GetPose().GetInverse();
+      for(s32 i=0; i<roi.GetWidthFar(); ++i) {
+        const u8* mask_i = roi.GetOverheadMask().GetRow(i);
+        const f32 y = static_cast<f32>(i) - 0.5f*roi.GetWidthFar();
+        for(s32 j=0; j<roi.GetLength(); ++j) {
+          if(mask_i[j] > 0) {
+            // Project ground plane point in robot frame to image
+            const f32 x = static_cast<f32>(j) + roi.GetDist();
+            Point3f imgPoint = H * Point3f(x,y,1.f);
+            assert(imgPoint.z() > 0.f);
+            const f32 divisor = 1.f / imgPoint.z();
+            imgPoint.x() *= divisor;
+            imgPoint.y() *= divisor;
+            const s32 x_img = std::round(imgPoint.x());
+            const s32 y_img = std::round(imgPoint.y());
+            if(x_img >= 0 && y_img >= 0 &&
+               x_img < image.GetNumCols() && y_img < image.GetNumRows())
+            {
+              const Vision::PixelRGB value = image(y_img, x_img);
+              
+              // Get corresponding map point in world coords
+              Point3f mapPoint = poseData.poseStamp.GetPose() * Point3f(x,y,0.f);
+              const s32 x_map = std::round( mapPoint.x() + static_cast<f32>(overheadMap.GetNumCols())*0.5f);
+              const s32 y_map = std::round(-mapPoint.y() + static_cast<f32>(overheadMap.GetNumRows())*0.5f);
+              if(x_map >= 0 && y_map >= 0 &&
+                 x_map < overheadMap.GetNumCols() && y_map < overheadMap.GetNumRows())
+              {
+                overheadMap(y_map, x_map).AlphaBlendWith(value, 0.5f);
+              }
+            }
+          }
+        }
+      }
+      
+      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
+      
+      static s32 updateFreq = 0;
+      if(updateFreq++ == 8){ // DEBUG
+        updateFreq = 0;
+        Vision::ImageRGB dispImg;
+        image.CopyTo(dispImg);
+        dispImg.DrawQuad(imgGroundQuad, NamedColors::RED, 1);
+        dispImg.Display("GroundQuad");
+        overheadImg.Display("OverheadView");
+        
+        // Display current map with the last updated region highlighted with
+        // a red border
+        overheadMap.CopyTo(dispImg);
+        Quad3f lastUpdate;
+        poseData.poseStamp.GetPose().ApplyTo(roi.GetGroundQuad(), lastUpdate);
+        for(auto & point : lastUpdate) {
+          point.x() += static_cast<f32>(overheadMap.GetNumCols()*0.5f);
+          point.y() *= -1.f;
+          point.y() += static_cast<f32>(overheadMap.GetNumRows()*0.5f);
+        }
+        dispImg.DrawQuad(lastUpdate, NamedColors::RED, 2);
+        dispImg.Display("OverheadMap");
+      }
+    } // if ground plane is visible
+    
+    return RESULT_OK;
+  } // UpdateOverheadMap()
+
 } // namespace Cozmo
 } // namespace Anki

@@ -437,8 +437,8 @@ message IMURequest {
     uint_32 length_ms
 }
 
-// Robot pickup detection
-message EnableRobotPickupDetect
+// Enable/Disable paralysis of motors on pickup
+message EnableRobotPickupParalysis
 {
     bool enable
 }

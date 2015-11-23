@@ -183,7 +183,7 @@ message AbortAnimation
 {
 }
 
-message EnablePickupDetect
+message EnablePickupParalysis
 {
   bool enable
 }
@@ -233,7 +233,7 @@ union EngineToRobot
   CubeLights                    setCubeLights               = 0x1D,
   FlashObjectIDs                flashObjectIDs              = 0x1E,
   ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
-  EnablePickupDetect            enablePickupDetect          = 0x20,
+  EnablePickupParalysis         enablePickupParalysis       = 0x20,
   EnableLiftPower               enableLiftPower             = 0x21,
   
   // To WiFi 0x80 to 0xFE

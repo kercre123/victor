@@ -102,7 +102,7 @@ TEST(BlockWorld, AddAndRemoveObject)
                                            HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                            HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
+  robot.GetVisionComponent().SetCameraCalibration(robot, camCalib);
   const f32 halfHeight = 0.25f*static_cast<f32>(camCalib.GetNrows());
   const f32 halfWidth = 0.25f*static_cast<f32>(camCalib.GetNcols());
   const f32 xcen = camCalib.GetCenter_x();
@@ -205,7 +205,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
-  robot.GetVisionComponent().SetCameraCalibration(calib);
+  robot.GetVisionComponent().SetCameraCalibration(robot, calib);
     
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));

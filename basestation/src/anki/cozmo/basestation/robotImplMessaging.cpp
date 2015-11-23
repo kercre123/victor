@@ -132,8 +132,9 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  _visionComponent.SetCameraCalibration(calib);
-  SetPhysicalRobot(payload.isPhysicalRobots);
+  _visionComponent.SetCameraCalibration(*this, calib);
+  
+  SetPhysicalRobot(payload.isPhysicalRobots);  
 }
 
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -522,7 +523,7 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   helper.SubscribeInternal<MessageGameToEngineTag::CancelAction>();
   helper.SubscribeInternal<MessageGameToEngineTag::DrawPoseMarker>();
   helper.SubscribeInternal<MessageGameToEngineTag::IMURequest>();
-  helper.SubscribeInternal<MessageGameToEngineTag::EnableRobotPickupDetect>();
+  helper.SubscribeInternal<MessageGameToEngineTag::EnableRobotPickupParalysis>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetBackpackLEDs>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetIdleAnimation>();
   helper.SubscribeInternal<MessageGameToEngineTag::ReplayLastAnimation>();
@@ -565,9 +566,9 @@ void Robot::HandleMessage(const ExternalInterface::IMURequest& msg)
 }
   
 template<>
-void Robot::HandleMessage(const ExternalInterface::EnableRobotPickupDetect& msg)
+void Robot::HandleMessage(const ExternalInterface::EnableRobotPickupParalysis& msg)
 {
-  SendEnablePickupDetect(msg.enable);
+  SendEnablePickupParalysis(msg.enable);
 }
   
 template<>
