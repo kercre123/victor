@@ -28,9 +28,6 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private ConversationManager _conversationManager;
-
-  [SerializeField]
   private Canvas _orthoUiCanvas;
   
   [SerializeField]
@@ -44,9 +41,6 @@ public class UIManager : MonoBehaviour {
   void Awake() {
     _Instance = this;
     _openViews = new List<BaseView>();
-    if (_conversationManager == null) {
-      _conversationManager = gameObject.AddComponent<ConversationManager>();
-    }
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
