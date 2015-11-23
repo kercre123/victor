@@ -8,7 +8,7 @@ namespace FollowCube {
     #region Tunable values
 
     private int _AttemptsLeft = 100;
-    private float _UnseenForgivenessSeconds = 1f;
+    private float _UnseenForgivenessSeconds = 2f;
 
     #endregion
 

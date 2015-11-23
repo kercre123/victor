@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Name: InvestorDemoScene1_Config
   m_EditorClassIdentifier: 
   DemoActions:
-  - AnimationName: demoCh2p01WakeUp
+  - AnimationName: invDemo_P01_WakeUp
     Behavior: 0
-  - AnimationName: demoCh2p02GetOffCharger
+  - AnimationName: invDemo_P02_GetOffCharger
     Behavior: 0
   - AnimationName: 
-    Behavior: 1
+    Behavior: 6
