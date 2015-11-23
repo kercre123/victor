@@ -221,24 +221,12 @@ namespace AnimationTool
 
         private ProceduralFacePointData WriteProceduralFaceToFile(DataPoint current)
         {
-            ProceduralFacePointData pointData = new ProceduralFacePointData();
             string key = current.GetCustomProperty(Sequencer.ExtraData.Key);
             Sequencer.ExtraProceduralFaceData extraData = Sequencer.ExtraData.Entries[key] as Sequencer.ExtraProceduralFaceData;
+            ProceduralFacePointData pointData = extraData.GetProceduralFacePointData();
 
             pointData.triggerTime_ms = (int)(current.YValues[0] * 1000); // convert to ms
             pointData.durationTime_ms = 0;
-
-            pointData.faceAngle = extraData.faceAngle;
-            pointData.faceCenterX = extraData.faceCenterX;
-            pointData.faceCenterY = extraData.faceCenterY;
-            pointData.faceScaleX = extraData.faceScaleX;
-            pointData.faceScaleY = extraData.faceScaleY;
-
-            for (int i = 0; i < extraData.leftEye.Length && i < pointData.leftEye.Length; ++i)
-            {
-                pointData.leftEye[i] = (float)Math.Round(extraData.leftEye[i], 2);
-                pointData.rightEye[i] = (float)Math.Round(extraData.rightEye[i], 2);
-            }
 
             return pointData;
         }

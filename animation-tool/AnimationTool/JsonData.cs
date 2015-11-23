@@ -107,13 +107,6 @@ namespace AnimationTool
             curIndex = (int)ProceduralEyeParameter.EyeScaleY;
             leftEye[curIndex] = rightEye[curIndex] = 1.0f;
 
-            curIndex = (int)ProceduralEyeParameter.EyeCenterX;
-            leftEye[curIndex] = 32f;
-            rightEye[curIndex] = 96f;
-
-            curIndex = (int)ProceduralEyeParameter.EyeCenterY;
-            leftEye[curIndex] = rightEye[curIndex] = 32f;
-
             // Make a quick list to init all the radius params to the same value
             var radiusParamList = new[]
             {

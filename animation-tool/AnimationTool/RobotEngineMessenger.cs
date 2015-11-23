@@ -59,22 +59,7 @@ namespace AnimationTool
         {
             if (data == null) return;
 
-            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
-            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
-            displayProceduralFaceMessage.robotID = 1;
-            displayProceduralFaceMessage.faceAngle = data.faceAngle;
-            displayProceduralFaceMessage.faceCenX = data.faceCenterX;
-            displayProceduralFaceMessage.faceCenY = data.faceCenterY;
-            displayProceduralFaceMessage.faceScaleX = data.faceScaleX;
-            displayProceduralFaceMessage.faceScaleY = data.faceScaleY;
-
-            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < data.leftEye.Length; ++i)
-            {
-                displayProceduralFaceMessage.leftEye[i] = data.leftEye[i];
-                displayProceduralFaceMessage.rightEye[i] = data.rightEye[i];
-            }
-
+            DisplayProceduralFace displayProceduralFaceMessage = data.GetProceduralFaceMessage();
             MessageGameToEngine message = new MessageGameToEngine();
             message.DisplayProceduralFace = displayProceduralFaceMessage;
             ProceduralFaceQueue.Send(message);
