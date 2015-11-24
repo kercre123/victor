@@ -23,6 +23,10 @@ public class HubWorld : HubWorldBase {
     HubWorldPane.HubWorldPaneOpened += HandleHubWorldPaneOpenHandler;
   }
 
+  private void OnDestroy() {
+    HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
+  }
+
   public override bool LoadHubWorld() {
     LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
     ShowHubWorldDialog();
@@ -38,8 +42,6 @@ public class HubWorld : HubWorldBase {
       DeregisterDialogEvents();
       _HubWorldViewInstance.CloseViewImmediately();
     }
-
-    HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
     return true;
   }
 

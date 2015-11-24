@@ -65,7 +65,7 @@ public class HubWorldView : MonoBehaviour {
     if (_LockedButtonCounter >= 0 && _LockedButtonCounter < _LockedButtonNodes.Length) {
       GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedButtonPrefab.gameObject, _LockedButtonNodes[_LockedButtonCounter]);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
+      buttonScript.Initialize(challengeData);
       buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
       _LockedButtonCounter++;
     }
@@ -75,7 +75,7 @@ public class HubWorldView : MonoBehaviour {
     if (_UnlockedButtonCounter >= 0 && _UnlockedButtonCounter < _UnlockedButtonNodes.Length) {
       GameObject newButton = UIManager.CreateUIElement(_HubWorldUnlockedButtonPrefab.gameObject, _UnlockedButtonNodes[_UnlockedButtonCounter]);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
+      buttonScript.Initialize(challengeData);
       buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
       _UnlockedButtonCounter++;
     }
@@ -86,7 +86,7 @@ public class HubWorldView : MonoBehaviour {
     if (_CompletedButtonCounter >= 0 && _CompletedButtonCounter < _CompletedButtonNodes.Length) {
       GameObject newButton = UIManager.CreateUIElement(_HubWorldCompletedButtonPrefab.gameObject, _CompletedButtonNodes[_CompletedButtonCounter]);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData.ChallengeID, challengeData.ChallengeTitleKey);
+      buttonScript.Initialize(challengeData);
       buttonScript.OnButtonClicked += HandleCompletedChallengeClicked;
       _CompletedButtonCounter++;
     }
