@@ -5,13 +5,13 @@ using UnityEngine.UI;
 
 public class DevHubWorldDialog : BaseView {
 
-  public delegate void DevButtonClickedHandler(GameBase miniGameClicked);
+  public delegate void DevButtonClickedHandler(ChallengeData challenge);
 
   public event DevButtonClickedHandler OnDevButtonClicked;
 
-  private void RaiseButtonClicked(GameBase minigame) {
+  private void RaiseButtonClicked(ChallengeData challenge) {
     if (OnDevButtonClicked != null) {
-      OnDevButtonClicked(minigame);
+      OnDevButtonClicked(challenge);
     }
   }
 
@@ -24,13 +24,13 @@ public class DevHubWorldDialog : BaseView {
   [SerializeField]
   private ScrollRect _ScrollRect;
 
-  public void Initialize(GameBase[] minigames) {
+  public void Initialize(ChallengeDataList challengeList) {
     GameObject newButton;
     DevHubWorldButton buttonScript;
-    foreach (GameBase game in minigames) {
+    foreach (ChallengeData challenge in challengeList.ChallengeData) {
       newButton = UIManager.CreateUIElement(_DevHubWorldButtonPrefab.gameObject, _ButtonContainer);
       buttonScript = newButton.GetComponent<DevHubWorldButton>();
-      buttonScript.Initialize(game);
+      buttonScript.Initialize(challenge);
       buttonScript.OnDevButtonClicked += HandleOnDevButtonClicked;
     }
     _ScrollRect.verticalNormalizedPosition = 1.0f;
@@ -44,7 +44,7 @@ public class DevHubWorldDialog : BaseView {
 
   }
 
-  private void HandleOnDevButtonClicked(GameBase miniGameClicked) {
-    RaiseButtonClicked(miniGameClicked);
+  private void HandleOnDevButtonClicked(ChallengeData challenge) {
+    RaiseButtonClicked(challenge);
   }
 }

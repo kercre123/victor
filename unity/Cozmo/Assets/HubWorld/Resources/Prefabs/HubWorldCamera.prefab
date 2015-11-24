@@ -11,7 +11,6 @@ GameObject:
   - 20: {fileID: 2059894}
   - 124: {fileID: 12446872}
   - 92: {fileID: 9220606}
-  - 81: {fileID: 8181332}
   m_Layer: 0
   m_Name: HubWorldCamera
   m_TagString: Untagged
@@ -93,13 +92,6 @@ Camera:
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
   m_StereoMirrorMode: 0
---- !u!81 &8181332
-AudioListener:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 110708}
-  m_Enabled: 1
 --- !u!92 &9220606
 Behaviour:
   m_ObjectHideFlags: 1
