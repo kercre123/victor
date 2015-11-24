@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/engineImpl/cozmoEngineImpl.h"
 #include "clad/types/imageTypes.h"
+#include "anki/cozmo/basestation/debug/debugConsoleManager.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -85,6 +86,8 @@ protected:
   IRecordingPlaybackModule *recordingPlaybackModule_;
   IRecordingPlaybackModule *uiRecordingPlaybackModule_;
 #endif
+  
+  Anki::Cozmo::DebugConsoleManager _debugConsoleManager;
 
 }; // class CozmoEngineHostImpl
 
