@@ -4,7 +4,7 @@
 // Global variables
 volatile bool radioBusy;
 volatile bool gDataReceived = false;
-volatile u8 radioPayload[13];
+volatile u8 radioPayload[RADIO_PAYLOAD_LENGTH];
 volatile enum eRadioTimerState radioTimerState = radioSleep;
 volatile u8 gMissedPacketCount = 0;
 volatile u8 cumMissedPacketCount = 0;
@@ -62,14 +62,23 @@ void InitPRX()
   EA = 1;
   // Configure radio as primary receiver (PRX)
   hal_nrf_set_operation_mode(HAL_NRF_PRX);
+  
+    // disable ack
+  //hal_nrf_write_reg(EN_AA, 0x3F & ~0x02);
+  //hal_nrf_write_reg(EN_RXADDR, 0x03);
+  //hal_nrf_rw(uint8_t value);
+  //hal_nrf_enable_dynamic_ack(false);
+  //hal_nrf_enable_ack_payload(false);
+  //hal_nrf_open_pipe((int)HAL_NRF_PIPE1, false);
+  
   // Set address
   hal_nrf_set_address(HAL_NRF_PIPE1, radioStruct.ADDRESS_RX_PTR);
   // Set datarate
   hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Set channel
   hal_nrf_set_rf_channel(radioStruct.COMM_CHANNEL);
-  // Set radioPayload width to 13 bytes
-  hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, 13U);
+  // Set radioPayload width to 17 bytes
+  hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, RADIO_PAYLOAD_LENGTH);
   // Flush RX FIFO
   hal_nrf_flush_rx();
   // Power up radio
@@ -113,8 +122,8 @@ bool ReceiveDataSync(u8 timeout50msTicks)
     if( radioTimerCounter >= timeout50msTicks ) // timeout condition
     {
       PowerDownRadio(); // Turn off radio
-      radioBusy = false; // exit loop 
       TR0 = 0; // Stop timer
+      return false;
     }
   }
   
@@ -208,7 +217,7 @@ void TransmitData()
 {
   InitPTX();
    // Write payload to radio TX FIFO
-  hal_nrf_write_tx_payload_noack(radioPayload, 13U);
+  hal_nrf_write_tx_payload_noack(radioPayload, RADIO_PAYLOAD_LENGTH);
 
   // Toggle radio CE signal to start transmission
   CE_PULSE();

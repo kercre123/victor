@@ -12,6 +12,7 @@
 
 #define TAP_THRESH 10
 #define ADV_CHANNEL 83
+#define RADIO_PAYLOAD_LENGTH 17
 
 // Tests
 //#define DO_SIMPLE_LED_TEST
@@ -25,8 +26,10 @@
 //#define DO_MISSED_PACKET_TEST
 
 // Board definition
-#define IS_CHARGER
+//#define IS_CHARGER
 //#define EMULATE_BODY
+//#define COMPATIBILITY_MODE_4P0
+
 
 #if defined(EMULATE_BODY)
 #define USE_EVAL_BOARD
@@ -94,19 +97,26 @@ void PutHex(char h);
 void RunTests();
 
 // radio.c
-
-static const u8 code ADDRESS_TX[5] = {0x52, 0x41, 0x43, 0x48, 0x4C}; // RACHL
-static const u8 code ADDRESS_RX_ADV[5] = {0x42, 0x52, 0x59, 0x41, 0x4E}; // BRYAN
-#ifdef EMULATE_BODY
-static const u8 code ADDRESS_X[5] = {0xA7, 0xA7, 0xA7, 0xA7, 0xA7};
+#ifdef COMPATIBILITY_MODE_4P0
+static const u8 code ADDRESS_4P0[5] = {0xB2, 0xC2, 0xC2, 0xC2, 0xC2}; // default
 #endif
+#ifdef EMULATE_BODY
+static const u8 code ADDRESS_X[5] =  {0xB2, 0xC2, 0xC2, 0xC2, 0xC2};
+#endif
+
+//static const u8 code ADDRESS_TX[5] = {0x52, 0x41, 0x43, 0x48, 0x4C}; // RACHL
+//static const u8 code ADDRESS_RX_ADV[5] = {0x42, 0x52, 0x59, 0x41, 0x4E}; // BRYAN
+static const u8 code ADDRESS_TX[5] = {0x52, 0xC2, 0xC2, 0xC2, 0xC2}; // RACHL
+static const u8 code ADDRESS_RX_ADV[5] = {0x42, 0xC2, 0xC2, 0xC2, 0xC2}; // BRYAN
+
+
   
 static struct RadioStruct
 {
-  u8 COMM_CHANNEL;
-  u8 RADIO_INTERVAL_DELAY;
-  const u8 RADIO_TIMEOUT_MSB;
-  const u8 RADIO_WAKEUP_OFFSET;
+  volatile u8 COMM_CHANNEL;
+  volatile u8 RADIO_INTERVAL_DELAY;
+  volatile u8 RADIO_TIMEOUT_MSB;
+  volatile u8 RADIO_WAKEUP_OFFSET;
   volatile const u8* ADDRESS_TX_PTR;
   volatile const u8* ADDRESS_RX_PTR;
 };

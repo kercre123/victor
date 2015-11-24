@@ -102,8 +102,9 @@
 #define FIFO_Y              2
 #define FIFO_Z              3
 
-
 #define ACC_INT_OPEN_DRAIN  0x0F  // Active high, open drain
+
+extern volatile u8 gCubeState; // XXX fix this global mess
 
 const u8 code I2C_ACK  = 0;
 const u8 code I2C_NACK  = 1;
@@ -472,26 +473,7 @@ void InitAcc()
   
   // Configure and enable FIFO
   WriteVerify(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
-  
-  
-  /*
-  // Enable tap detection
-  // status in 0x09 s_tap_int
-  // enabled s_tap_en
-  WriteVerify(INT_EN_0, 1<<5); // Single tap enable XXX: make define
-  //WriteVerify(INT_SRC, 1<<4); // unfiltered data for single tap
-  //WriteVerify(INT_8, 1<<7 | 4); // 20ms quiet, 50 ms shock
-  WriteVerify(INT_9, 0x01); // low tap threshold
-  WriteVerify(INT_RST_LATCH, 0x0F); // latched //25 ms latch
-  */
-  /*
-  WriteVerify(INT_EN_1, 1<<2 | 1<<1 | 1<<0); //high-g interrupt enable all axes
-  //WriteVerify(INT_SRC, 1<<1); // unfiltered data for high interrupt
-  WriteVerify(INT_3, 0x0F); // 2ms/unit duration
-  WriteVerify(INT_4, 112); // lower threshold 1.75g
-  WriteVerify(INT_RST_LATCH, 0x0F); // latched 
-  */
-  
+ 
 }
 
 void ReadAcc(s8 *accData)
@@ -506,42 +488,6 @@ void ReadAcc(s8 *accData)
   #endif
 }
 
-
-
-u8 ReadFifoTaps()
-{
-  /*u8 i;
-  u8 dat = DataRead(ACC_FIFO_STATUS);
-  u8 xdata acc[32];
-  puthex(dat & 0x7F);
-  putchar(':');
-  delay_us(100);
-  if(!!(dat & 1<<7) > 10) // overrun
-  {
-    // Reset FIFO
-    DataWrite(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
-  }
-  else
-  {
-    DataReadMultipleMsb(FIFO_DATA, (dat & 0x7F), acc);
-    for(i = 0; i< (dat & 0x7F); i++)
-    {
-      puthex(acc[i]);
-      putchar(',');
-    }
-  }
-  putstring("\r\n");
-                
-  /*
-  static u8 buffer[6];
-  DataReadMultiple(ACCD_X_LSB, 6, buffer);
-  accData[0] = (s8)buffer[1];
-  accData[1] = (s8)buffer[3];
-  accData[2] = (s8)buffer[5];
-  */
-  return 0;
-}
-
 u8 GetTaps()
 {
   u8 dat = DataRead(ACC_FIFO_STATUS);
@@ -553,19 +499,17 @@ u8 GetTaps()
     // Reset FIFO
     DataWrite(FIFO_CONFIG_1, FIFO_STREAM | FIFO_Z);
     howMany++;
-    if(howMany > 1) // reset if we've had more than 1 overrun. expect 1 during startup
+    if(howMany > 1) // reset if we've had more than 1 overrun in a row. expect 1 during startup
     {  
-      // TODO XXX don't reset, go back to advertising
-      #ifndef DO_MISSED_PACKET_TEST
-      // Pet watchdog (reset block)
-      WDSV = 1;
-      WDSV = 0;
-      delay_ms(100);
-      #endif
+      gCubeState = eAdvertise;
+      // SoftReset accelerometer
+      DataWrite(BGW_SOFTRESET,0xB6);
+      delay_ms(2);
     }
   }
   else
   {
+    howMany = 0;
     return DataReadFifoTaps(FIFO_DATA, (dat & 0x7F));
   }
   return 0;  

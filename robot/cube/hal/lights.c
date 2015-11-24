@@ -128,12 +128,13 @@ T2_ISR()
   
   // turn everyone off
   ET2 = 0; // disable timer 2 interrupt
-  PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]); 
+  PIN_IN(P0DIR, ledPins[0] | ledPins[1] | ledPins[2] | ledPins[3]); // note, these 2 lines should match LightsOff()
+  PIN_IN(P1DIR, ledPins[4] | ledPins[5]);
   
   // Turn on an LED
   do
   {
-    if(gCurrentLed<12) // XXX NUM_LEDS
+    if(gCurrentLed< (NUM_LEDS-1))
     {
       gCurrentLed++;
     }
@@ -141,7 +142,7 @@ T2_ISR()
     {
       gCurrentLed=0;
     }
-  }while(ledValues[gCurrentLed] < 16 && gCurrentLed != 12); // need a way to break out // XXX NUM_LEDS
+  }while(ledValues[gCurrentLed] < 16 && gCurrentLed != DARK_BYTE); // need a way to break out // XXX NUM_LEDS
   
   waitTime = (unsigned int)(ledValues[gCurrentLed]);
   waitTime = (waitTime*waitTime)>>8;
