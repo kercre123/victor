@@ -29,7 +29,7 @@ namespace ScriptedSequences.Conditions {
 
     protected abstract void EnableChangedAndRobotConnected(bool enabled);
 
-    private void HandleRobotConnected(string str) {
+    private void HandleRobotConnected(int id) {
       EnableChangedAndRobotConnected(IsEnabled);
     }
 
