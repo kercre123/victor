@@ -43,9 +43,14 @@ namespace ScriptedSequences.Editor.ActionHelpers {
       _translation = EditorGUILayout.TextField("Translation", _translation);
 
       if (_translation != LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey)) {
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Reload Translation")) {
+          _translation = LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey);
+        }
         if (GUILayout.Button("Save Translation")) {
           LocalizationEditorUtility.SetTranslation(kLocalizationFile, Value.LineKey, _translation);
         }
+        EditorGUILayout.EndHorizontal();
       }
 
       Value.Speaker = (Conversations.Speaker)EditorGUILayout.EnumPopup("Speaker", Value.Speaker);

@@ -17,6 +17,12 @@
         {
           "$type": "ScriptedSequences.Actions.DebugLogAction, Assembly-CSharp",
           "StringToLog": "Hello"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "HelloWorld.Hello",
+          "Speaker": "Aria",
+          "IsRight": false
         }
       ]
     },
@@ -56,6 +62,12 @@
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "majorWin",
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "HelloWorld.World",
+          "Speaker": "Cozmo",
+          "IsRight": true
         }
       ]
     }

@@ -166,6 +166,11 @@ public static class LocalizationEditorUtility {
     return dict;
   }
 
+  static LocalizationEditorUtility()
+  {
+    Reload();
+  }
+
 
   [MenuItem("Cozmo/Reload Localization Files")]
   public static void Reload()

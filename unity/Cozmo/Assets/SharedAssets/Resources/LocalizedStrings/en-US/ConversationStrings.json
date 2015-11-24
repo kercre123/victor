@@ -20,5 +20,8 @@
   },
   "HelloWorld.Hello": {
     "translation": "Hello"
+  },
+  "HelloWorld.World": {
+    "translation": "World"
   }
 }
