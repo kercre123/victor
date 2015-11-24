@@ -77,11 +77,7 @@
           "IsRight": true
         },
         {
-          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
-          "TimeInSeconds": 10.0,
-          "BlockInput": true,
-          "AllowSkipAfterDelay": true,
-          "SkipDelayInSeconds": 1.0
+          "$type": "ScriptedSequences.Actions.BlockInput, Assembly-CSharp"
         }
       ]
     },
@@ -91,8 +87,15 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
-      "Conditions": [],
+      "Conditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.TouchedAnywhere, Assembly-CSharp"
+        }
+      ],
       "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.UnblockInput, Assembly-CSharp"
+        },
         {
           "$type": "ScriptedSequences.Actions.EndConversation, Assembly-CSharp"
         }

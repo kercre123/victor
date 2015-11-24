@@ -40,6 +40,8 @@ public class UIManager : MonoBehaviour {
 
   private TouchCatcher _TouchCatcherInstance;
 
+  public TouchCatcher TouchCatcher { get { return _TouchCatcherInstance != null && _TouchCatcherInstance.isActiveAndEnabled ? _TouchCatcherInstance : null; } }
+
   void Awake() {
     Instance = this;
     _openViews = new List<BaseView>();
@@ -108,13 +110,15 @@ public class UIManager : MonoBehaviour {
     Instance._openViews.Remove(view);
   }
 
-  public void ShowTouchCatcher(System.Action onTouch) {
+  public void ShowTouchCatcher(System.Action onTouch = null) {
     if (_TouchCatcherInstance == null) {
       _TouchCatcherInstance = GameObject.Instantiate<GameObject>(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
       _TouchCatcherInstance.transform.SetParent(_Instance._overlayCanvas.transform, false);
     }
     _TouchCatcherInstance.Enable();
-    _TouchCatcherInstance.OnTouch += onTouch;
+    if (onTouch != null) {
+      _TouchCatcherInstance.OnTouch += onTouch;
+    }
   }
 
   public void HideTouchCatcher() {
