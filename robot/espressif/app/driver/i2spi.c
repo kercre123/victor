@@ -66,7 +66,7 @@ static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
-#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-22)/2)
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
@@ -114,49 +114,53 @@ void processDrop(DropToWiFi* drop)
  */
 bool makeDrop(uint8_t* payload, uint8_t length)
 {
-  if (DMA_BUF_SIZE/2 - outgoingPhase < DROP_TO_RTIP_SIZE/2) // Don't have room for the whole drop in this buffer
+  if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
-    if (txFillCount > (DMA_BUF_COUNT-2)) // Leave room for the one the I2S peripheral owns
+    if (txFillCount > (DMA_BUF_COUNT-2))
     {
       i2spiTxOverflowCount++;
       return false;
     }
+    else if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
+    {
+      outgoingPhase -= DMA_BUF_SIZE/2;
+      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      uint8_t* txBuf = (uint8_t*)(nextOutgoingDesc->buf_ptr);
+      os_memset(txBuf, 0, DMA_BUF_SIZE);
+    }
+    else // Bridging buffers
+    {
+      uint8_t* txBuf = (uint8_t*)(asDesc(nextOutgoingDesc->next_link_ptr)->buf_ptr);
+      os_memset(txBuf, 0, DMA_BUF_SIZE);
+    }
+    txFillCount++;
   }
+
   DropToRTIP drop;
-  uint32 isocData;
+  //uint32 isocData;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
-  isocData = PumpAudioData();
+  /*isocData = PumpAudioData();
   os_memcpy(&(drop.audioData), &isocData, MAX_AUDIO_BYTES_PER_DROP);
   isocData = PumpScreenData();
   os_memcpy(&drop.screenData, &isocData, MAX_SCREEN_BYTES_PER_DROP);
-  drop.droplet = screenDataValid | audioDataValid;
+  drop.droplet = screenDataValid | audioDataValid;*/
   drop.payloadLen = length;
   if (payload != NULL) os_memcpy(&(drop.payload), payload, length);
   // Copy into the DMA buffer
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-  if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
+  if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
   {
     halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
     outgoingPhase += DROP_SPACING/2;
-    if (outgoingPhase > DMA_BUF_SIZE/2) // Have rolled over into next buffer
-    {
-      txFillCount++;
-      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-      os_memset(txBuf, 0, DMA_BUF_SIZE);
-      outgoingPhase -= DMA_BUF_SIZE/2;
-    }
   }
   else // Split across two buffers
   {
     const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
     halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
-    txFillCount++;
     nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
     txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    os_memset(txBuf, 0, DMA_BUF_SIZE);
     halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
@@ -240,17 +244,15 @@ void i2spiTask(os_event_t *event)
           uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
           int w;
           for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
-                    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-                  }
+          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+          }
       }
       else // When running
       {
         if (txFillCount > 0) txFillCount--; // We just transmitted one 
-        struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
-        while (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
+        while ((txFillCount < 8) && makeDrop(NULL, 0)) // Fill in drops until we are as far ahead as we want to be
         {
           i2spiTxUnderflowCount++; // Keep track of the underflow
-          makeDrop(NULL, 0);
         }
       }
       break;
@@ -270,12 +272,12 @@ void i2spiTask(os_event_t *event)
         uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
-                nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-              }
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      }
       else // When running
       {
         if (txFillCount > 0) txFillCount--; // We just transmitted one
-                struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
+        struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
         if (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
         {
           int w;
@@ -544,11 +546,11 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
       os_printf("I2Spi mode Normal\r\n");
       if (outgoingPhase == BOOTLOADER_XFER_PHASE)
       {
-                uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+        uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
         txBuf[0] = COMMAND_HEADER;
         txBuf[1] = COMMAND_DONE;
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-              }
+      }
       outgoingPhase = UNINITALIZED_PHASE;
       txFillCount = 0;
       return;
@@ -583,7 +585,7 @@ void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
   int wInd = 0;
   int rInd = 0;
-    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   uint16_t* data  = (uint16_t*)(chunk);
   txBuf[wInd++] = COMMAND_HEADER;
   txBuf[wInd++] = COMMAND_FLASH;

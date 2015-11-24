@@ -158,9 +158,12 @@ def WaitForUserEnd():
     except KeyboardInterrupt:
         return
 
-DEFAULT_BODY_IMAGE=os.path.join("syscon", "???")
-DEFAULT_RTIP_IMAGE=os.path.join("build", "41", "robot.safe")
 DEFAULT_WIFI_IMAGE=os.path.join("espressif", "bin", "upgrade", "user1.2048.new.3.bin")
+DEFAULT_WIFI_ADDR = 0x100000
+DEFAULT_RTIP_IMAGE=os.path.join("build", "41", "robot.safe")
+DEFAULT_RTIP_ADDR = DEFAULT_WIFI_ADDR + 0xc0000
+DEFAULT_BODY_IMAGE=os.path.join("syscon", "???")
+DEFAULT_BODY_ADDR = DEFAULT_RTIP_ADDR + 0x10000
 
 # Script entry point
 if __name__ == '__main__':

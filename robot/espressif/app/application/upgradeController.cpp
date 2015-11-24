@@ -242,7 +242,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
     prevIndex = state->index;
     prevPhase = state->phase;
     prevState = rtipState;
-    os_printf("TaskOtaRTIP: state = %d\tphase = %d\tindex = %d\r\n", prevState, prevPhase, prevIndex);
+    os_printf("TaskOtaRTIP: state = %x\tphase = %d\tindex = %d\r\n", prevState, prevPhase, prevIndex);
   }
 #endif
   
@@ -332,6 +332,100 @@ LOCAL bool TaskOtaRTIP(uint32 param)
 LOCAL bool TaskOtaBody(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
+  /*
+  const uint32_t bodyBootloaderCode  = i2spiGetBodyBootloaderState();
+  const uint16_t bodyBootloaderState = bodyBootloaderCode & 0xFFFF;
+  const uint16_t bodyBootloaderCount = bodyBootloaderCode >> 16;
+  
+#ifdef DEBUG_OTA
+  static int32_t  prevIndex = 0xFFFF;
+  static int32_t  prevPhase = 0xFFFF;
+  static uint16_t prevState = 0xFFFF;
+  if ((prevIndex != state->index) || (prevPhase != state->phase) || (prevState != bodyBootloaderState))
+  {
+    prevIndex = state->index;
+    prevPhase = state->phase;
+    prevState = bodyBootloaderState;
+    os_printf("TaskOtaBody: state = %d (%d)\tphase = %d\tindex = %d\r\n",
+              prevState, bodyBootloaderCount, prevPhase, prevIndex);
+  }
+#endif
+  
+  switch(bodyBootloaderState)
+  {
+    case STATE_SYNC:
+    case STATE_BUSY:
+    case STATE_RUNNING:
+    case STATE_UNKNOWN:
+    {
+      return true; // Just wait
+    }
+    case STATE_IDLE: // Ready to receive packet
+    {
+      if (bodyBootloaderCount > state->phase) // Ready for another chunk
+      {
+        const int remainingWords = (state->fwSize - state->index)/4;
+        if (remainingWords > 0)
+        {
+          uint32_t buffer[40];
+          int sentCount = 0;
+          struct msg {
+            uint8_t  PADDING[3];
+            uint8_t  command;
+            uint32_t data;
+          };
+          switch (spi_flash_read(state->fwStart + state->index, buffer, sizeof(buffer)))
+          {
+            case SPI_FLASH_RESULT_OK:
+            {
+              retries = MAX_RETRIES;
+              break;
+            }
+            case SPI_FLASH_RESULT_ERR:
+            {
+              PRINT("BODY OTA flash readback failure, aborting\r\n");
+              os_free(state);
+              return false;
+            }
+            case SPI_FLASH_RESULT_TIMEOUT:
+            {
+              if (retries-- > 0)
+              {
+                return true;
+              }
+              else
+              {
+                PRINT("BODY OTA flash readback timeout, aborting\r\n");
+                os_free(state);
+                return false;
+              }
+            }
+          }
+          msg.command = RobotInterface::EngineToRobot::Tag_bodyUpgradeData;
+          msg.data    = buffer[sentCount];
+          while ((sentCount < remainingWords) && (i2spiQueueMessage(&msg.command, 5))
+          {
+            sentCount++;
+            msg.data = buffer[sentCount];
+          }
+          state->index += sentCount * 4;
+        }
+        else
+        {
+          PRINT("Done sending firmware to body, commanding reboot\r\n");
+          uint8_t msg[2];
+          msg[0] = COMMAND_HEADER;
+          mdg[1] = COMMAND_DONE;
+          i2spiQueueMessage(msg, 2);
+        }
+      }
+    }
+    default:
+    {
+      PRINT("Unexpected body bootloader state %d, %08x, aborting\r\n", bodyBootloaderState, bodyBootloaderCode);
+    }
+  }
+  */
   os_free(state);
   return false;
 }

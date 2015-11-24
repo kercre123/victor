@@ -52,7 +52,6 @@ typedef struct {
   uint8_t which;
 } EnterBootloader;
 
-
 // RTIP -> WIFI
 typedef struct {
   uint16_t state;

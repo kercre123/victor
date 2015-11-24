@@ -56,7 +56,7 @@ namespace WiFiToRTIP
   
   structure BodyUpgradeData
   {
-    uint_32 data[16]
+    uint_32 data
   }
   
 } // WiFiToRTIP
