@@ -2,6 +2,7 @@
 using Anki.Cozmo;
 using Anki.Cozmo.ExternalInterface;
 using System;
+using AnimationTool.Sequencer;
 
 namespace AnimationTool
 {
@@ -154,6 +155,7 @@ namespace AnimationTool
             displayProceduralFaceMessage.faceScaleX = faceScaleX;
             displayProceduralFaceMessage.faceScaleY = faceScaleY;
 
+            bool hadAllParams = true;
             for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < eyes.Length; ++i)
             {
                 if (eyes[i] != null)
@@ -163,10 +165,16 @@ namespace AnimationTool
                 }
                 else
                 {
-                    //MessageBox.Show("Missing " + (ProceduralEyeParameter)i + " in message.");
+                    MessageBox.Show("Missing " + (ProceduralEyeParameter)i + " in message.");
                     displayProceduralFaceMessage.leftEye[i] = 0;
                     displayProceduralFaceMessage.rightEye[i] = 0;
+                    hadAllParams = false;
                 }
+            }
+            
+            if (hadAllParams)
+            {
+                ExtraProceduralFaceData.AdjustEyeParamsOut(displayProceduralFaceMessage.leftEye, displayProceduralFaceMessage.rightEye);
             }
 
             MessageGameToEngine message = new MessageGameToEngine();

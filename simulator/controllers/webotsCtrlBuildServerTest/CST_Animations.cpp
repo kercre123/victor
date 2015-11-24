@@ -51,6 +51,8 @@ namespace Cozmo {
   
   // =========== Test class implementation ===========
   
+  static const char* kTestAnimationName = "ANIMATION_TEST";
+  
   s32 CST_Animations::UpdateInternal()
   {
     switch (_testState) {
@@ -62,7 +64,7 @@ namespace Cozmo {
         CST_ASSERT (GetNumAvailableAnimations() >= MIN_NUM_ANIMS_REQUIRED,
                     GetNumAvailableAnimations() << " anims loaded but " << MIN_NUM_ANIMS_REQUIRED << " expected");
 
-        _currAnimIter = GetAvailableAnimations().begin();
+        _currAnimIter = GetAvailableAnimations().find(kTestAnimationName);
         
         _testState = TestState::ReadyForNextCommand;
         break;
