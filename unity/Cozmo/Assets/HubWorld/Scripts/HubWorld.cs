@@ -9,13 +9,17 @@ namespace Cozmo.HubWorld {
     private HubWorldView _HubWorldViewPrefab;
     private HubWorldView _HubWorldViewInstance;
 
-    private GameBase _MiniGameInstance;
+    [SerializeField]
+    private ChallengeDetailsDialog _ChallengeDetailsPrefab;
+    private ChallengeDetailsDialog _ChallengeDetailsDialogInstance;
 
     [SerializeField]
     private ChallengeDataList _ChallengeDataList;
 
     private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
     private List<string> _CompletedChallengeIds;
+
+    private GameBase _MiniGameInstance;
 
     private string _CurrentChallengePlaying;
 
@@ -67,25 +71,34 @@ namespace Cozmo.HubWorld {
       ShowHubWorldDialog();
     }
 
-    private void HandleLockedChallengeClicked(string challengeClicked) {
+    private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       // Do nothing for now
     }
 
-    private void HandleUnlockedChallengeClicked(string challengeClicked) {
+    private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      // Show some details about the challenge before starting it
+      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab) as ChallengeDetailsDialog;
+      _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challengeClicked].data, buttonTransform);
+
+      // React to when we should start the challenge.
+      _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
+    }
+
+    private void HandleStartChallengeClicked(string challengeClicked) {
+      _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
+
       // Keep track of the current challenge
       _CurrentChallengePlaying = challengeClicked;
 
       // Close dialog
+      // TODO: Don't close the hub dialog during minigames
       CloseHubWorldDialog();
 
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].data);
-
-      // TODO: Show panel instead of playing minigame right away
-      // TODO: Don't close the hub dialog during minigames
     }
 
-    private void HandleCompletedChallengeClicked(string challengeClicked) {
+    private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       // For now, play the game but don't increase progress when you win
       CloseHubWorldDialog();
       PlayMinigame(_ChallengeStatesById[challengeClicked].data);
