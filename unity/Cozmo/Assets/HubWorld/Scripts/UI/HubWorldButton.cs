@@ -2,38 +2,40 @@
 using System.Collections;
 using UnityEngine.UI;
 
-public class HubWorldButton : MonoBehaviour {
-  public delegate void ButtonClickedHandler(string challengeClickedId);
+namespace Cozmo.HubWorld {
+  public class HubWorldButton : MonoBehaviour {
+    public delegate void ButtonClickedHandler(string challengeClickedId);
 
-  public event ButtonClickedHandler OnButtonClicked;
+    public event ButtonClickedHandler OnButtonClicked;
 
-  [SerializeField]
-  private Button _ButtonScript;
+    [SerializeField]
+    private Button _ButtonScript;
 
-  [SerializeField]
-  private Anki.UI.AnkiTextLabel _ButtonLabel;
+    [SerializeField]
+    private Anki.UI.AnkiTextLabel _ButtonLabel;
 
-  private string _ChallengeId;
+    private string _ChallengeId;
 
-  public virtual void Initialize(ChallengeData challengeData) {
+    public virtual void Initialize(ChallengeData challengeData) {
     
-    _ChallengeId = challengeData.ChallengeID;
-    _ButtonScript.onClick.AddListener(HandleButtonClicked);
+      _ChallengeId = challengeData.ChallengeID;
+      _ButtonScript.onClick.AddListener(HandleButtonClicked);
 
-    // Allow for buttons that only show an image and no text
-    if (_ButtonLabel != null) {
-      _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
+      // Allow for buttons that only show an image and no text
+      if (_ButtonLabel != null) {
+        _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
+      }
     }
-  }
 
-  private void HandleButtonClicked() {
-    RaiseButtonClicked(_ChallengeId);
-  }
-
-  private void RaiseButtonClicked(string challenge) {
-    if (OnButtonClicked != null) { 
-      OnButtonClicked(challenge);
+    private void HandleButtonClicked() {
+      RaiseButtonClicked(_ChallengeId);
     }
-  }
 
+    private void RaiseButtonClicked(string challenge) {
+      if (OnButtonClicked != null) { 
+        OnButtonClicked(challenge);
+      }
+    }
+
+  }
 }
