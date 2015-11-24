@@ -518,11 +518,24 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
 
       if(!string.IsNullOrEmpty(CurrentSequenceFile))
-      {
-        _RecentFiles.Add(CurrentSequenceFile);
-        File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
+      {       
+        if (CurrentSequence.Nodes.Count == 0) {
+          EditorUtility.DisplayDialog("Error!", "Cannot save a sequence with no Nodes!", "OK");
+        }
+        else
+        {
+          string msg = string.Empty;
+          if (!CurrentSequence.Nodes.Any(x => x.Final)) {
+            var last = CurrentSequence.Nodes.Last();
+            last.Final = true;
+            msg = "(!) No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node. (!)\n";
+          }
+          _RecentFiles.Add(CurrentSequenceFile);
 
-        EditorUtility.DisplayDialog("Save Successful!", "Sequence " + CurrentSequence.Name + " Has been saved to " + CurrentSequenceFile, "OK");
+          File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
+
+          EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
+        }
       }
     }
 
