@@ -11,8 +11,8 @@
 
 
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
+#include "clad/types/animationKeyFrames.h"
 #include <util/logging/logging.h>
-
 
 namespace Anki {
 namespace Cozmo {
@@ -21,55 +21,77 @@ namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer::RobotAudioBuffer() :
-  _buffer( kSampleBufferSize )
+  _audioSampleCache( kAudioSampleBufferSize),
+  _KeyFrameAudioSampleBuffer( kKeyFrameAudioSampleBufferSize )
 {
 }
-
+ 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount )
 {
-  _bufferLock.lock();
-  _clearBuffer = false;
-  _buffer.push_back( samples, sampleCount );
-//  for (size_t idx = 0; idx < sampleCount; ++idx) {
-//    _buffer.push_back(samples[idx]);
-//  }
- 
-  PRINT_NAMED_INFO("RobotAudioBuffer.UpdateBuffer", "UpdateSize: %zu Post Size : %zu", sampleCount, _buffer.size());
+  // Store plug-in samples into cache
+  _audioSampleCache.push_back( samples, sampleCount );
   
-  _bufferLock.unlock();
+  // When there is enought cache create Key Frame Audio Sample Messages
+  while ( _audioSampleCache.size() >= static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) ) {
+    CopyAudioSampleCachToKeyFrameAudioSample( static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
+  }
+  
+  _plugInIsActive = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-size_t RobotAudioBuffer::GetAudioSamples( uint8_t* outBuffer, size_t sampleCount )
+AnimKeyFrame::AudioSample&& RobotAudioBuffer::PopKeyFrameAudioSample()
 {
-  _bufferLock.lock();
+  assert( !_KeyFrameAudioSampleBuffer.empty() );
 
-//  size_t returnSize = 0;
-//  for (size_t idx = 0; idx < sampleCount; ++idx) {
-//    if (_buffer.empty()) {
-//      break;
-//    }
-//    outBuffer[idx] = _buffer.front();
-//    _buffer.pop_front();
-//    ++returnSize;
-//  }
+  // Lock and Pop Key Frame Audio Sample message
+  _KeyFrameAudioSampleBufferLock.lock();
+  AnimKeyFrame::AudioSample* audioSample = _KeyFrameAudioSampleBuffer.front();
+  _KeyFrameAudioSampleBuffer.pop_front();
   
-  const size_t returnSize = _buffer.front( outBuffer, sampleCount );
-  _buffer.pop_front( returnSize );
-  _bufferLock.unlock();
+  // If the last frame was poped plug-in is no longer active
+  if ( _KeyFrameAudioSampleBuffer.empty() && _clearCache ) {
+    _plugInIsActive = false;
+    _clearCache = false;
+  }
+  _KeyFrameAudioSampleBufferLock.unlock();
   
+  return std::move( *audioSample );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioBuffer::ClearCache()
+{
+  // No more samples to cache, create final Key Frame Audio Sample Message
+  size_t sampleCount = _audioSampleCache.size();
+  CopyAudioSampleCachToKeyFrameAudioSample( sampleCount );
+  
+  _clearCache = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+size_t RobotAudioBuffer::CopyAudioSampleCachToKeyFrameAudioSample( size_t blockSize )
+{
+  // Pop audio samples off cache buffer into a Key frame audio sample message
+  AnimKeyFrame::AudioSample* audioSample = new AnimKeyFrame::AudioSample();
+  const size_t returnSize = _audioSampleCache.front( &audioSample->sample[0], blockSize);
+  _audioSampleCache.pop_front( returnSize );
+  assert(returnSize == blockSize);  // We should have already confirmed that we can get this number of itmes
+
+  // Pad the back of the buffer with 0s
+  // This should only apply to the last sample
+  if (audioSample->Size() > blockSize) {
+    std::fill( audioSample->sample.begin() + blockSize, audioSample->sample.end(), 0 );
+  }
+
+  // Lock and push key frame audio sample message into buffer
+  _KeyFrameAudioSampleBufferLock.lock();
+  _KeyFrameAudioSampleBuffer.push_back( audioSample );
+  _KeyFrameAudioSampleBufferLock.unlock();
+
   return returnSize;
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioBuffer::ClearBuffer()
-{
-  _bufferLock.lock();
-  _clearBuffer = true;
-  _bufferLock.unlock();
-}
-
   
 } // Audio
 } // Cozmo

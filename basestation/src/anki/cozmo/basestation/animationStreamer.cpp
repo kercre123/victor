@@ -232,23 +232,14 @@ namespace Cozmo {
 
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
   {
-    AnimKeyFrame::AudioSample audioSample;
-    
-    
-    s32 numBytes = 0;
-    if ( nullptr != _audioClient && _audioClient->IsReadyToStartAudioStream() ) {
-      numBytes = _audioClient->GetSoundSample(&(audioSample.sample[0]), static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE));
-    }
-    
-    if(numBytes > 0)
-    {
-      // If we didn't get the requested number of bytes, fill the rest of the sample
-      // with zeros
-      if(numBytes < static_cast<s32>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
-        std::fill(audioSample.sample.begin()+numBytes, audioSample.sample.end(), 0);
+    if ( nullptr != _audioClient && _audioClient->IsPlugInActive() ) {
+      if ( _audioClient->HasKeyFrameAudioSample() ) {
+        AnimKeyFrame::AudioSample&& audioSample = _audioClient->PopAudioSample();
+        BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( audioSample ) ) );
       }
-      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
-    } else if(sendSilence) {
+    }
+
+    else if(sendSilence) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
     }
@@ -314,9 +305,9 @@ namespace Cozmo {
         RobotAudioKeyFrame& audioKF = robotAudioTrack.GetCurrentKeyFrame();
         if(audioKF.IsTimeToPlay(_startTime_ms, _streamingTime_ms)) {
           // Tell the audio manager to play the sound indicated by this track
-          auto & audioRef = audioKF.GetAudioRef();
+//          auto & audioRef = audioKF.GetAudioRef();
           if (nullptr != _audioClient) {
-            _audioClient->PostCozmoEvent( audioRef.audioEvent );
+            _audioClient->PostCozmoEvent(Anki::Cozmo::Audio::EventType::PLAY_VO_COZ_PLAYFUL); // audioRef.audioEvent );
             //  AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
           }
           
@@ -551,7 +542,7 @@ namespace Cozmo {
       lastResult = UpdateStream(robot, _idleAnimation);
       _timeSpentIdling_ms += BS_TIME_STEP;
       
-    } else {
+    } else if( _audioClient->HasKeyFrameAudioSample() ) {
       // No animation (idle or not). Just stream available sound, if any.
       
       UpdateNumBytesToSend(robot);
@@ -566,14 +557,17 @@ namespace Cozmo {
       // Add more stuff to the send buffer. Note that we are not counting individual
       // keyframes here, but instead _audio_ keyframes (with which we will buffer
       // any co-timed keyframes from other tracks).
-      while(_sendBuffer.empty())
+      if (_sendBuffer.empty())
       {
         // This buffers another audio sample to be sent
-        BufferAudioToSend(false);
+        while (_audioClient->HasKeyFrameAudioSample()) {
+          BufferAudioToSend(false);
+        }
         
-        if(_sendBuffer.empty()) {
+        // Didn't buffer any more and audio client has nothing left to send
+        if(!_audioClient->IsPlugInActive()) {
           // No audio got buffered, just break
-          break;
+          BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::EndOfAnimation()));
         }
         
         // Send out as much as we can from the send buffer. If we manage to send
@@ -715,8 +709,6 @@ namespace Cozmo {
   void AnimationStreamer::SetAudioClient(Audio::RobotAudioClient* audioClient)
   {
     _audioClient = audioClient;
-    // This value has no meaning, need to tune - JMR
-    _audioClient->SetPreBufferSize(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE) * 12);
   }
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)

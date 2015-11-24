@@ -12,7 +12,9 @@
 #ifndef __Basestation_Audio_RobotAudioBuffer_H__
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
+#include <util/helpers/templateHelpers.h>
 #include <util/container/circularBuffer.h>
+#include <util/dispatchQueue/dispatchQueue.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <mutex>
@@ -20,6 +22,11 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace AnimKeyFrame {
+  struct AudioSample;
+}
+  
 namespace Audio {
   
 
@@ -28,30 +35,41 @@ class RobotAudioBuffer
   
 public:
   
+  
   RobotAudioBuffer();
+  ~RobotAudioBuffer();
   
   // Write samples to buffer
   void UpdateBuffer( const uint8_t* samples, size_t sampleCount );
   
-  // Read samples from buffer
-  // Return the sample count added to out buffer array
-  size_t GetAudioSamples( uint8_t* outBuffer, size_t sampleCount );
+  // True if Plug-In is streaming audio data
+  bool IsPlugInActive() const { return _plugInIsActive; }
   
-  size_t GetBufferSize() const { return _buffer.size(); }
+  // True if key frame audio sample messages are available
+  bool HasKeyFrameAudioSample() const { return (_KeyFrameAudioSampleBuffer.size() > 0); }
   
-  void ClearBuffer();
+  // Pop the front key frame audio sample message
+  AnimKeyFrame::AudioSample&& PopKeyFrameAudioSample();
   
-  bool ShouldClearBuffer() const { return _clearBuffer; }
+  // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
+  void ClearCache();
+  
   
 private:
   
-  static constexpr size_t kSampleBufferSize = 48000;
+  static constexpr size_t kAudioSampleBufferSize = 2400;
+  static constexpr size_t kKeyFrameAudioSampleBufferSize = 100;
   
-  Util::CircularBuffer<uint8_t> _buffer;
+  Util::CircularBuffer< uint8_t > _audioSampleCache;
+  Util::CircularBuffer< AnimKeyFrame::AudioSample* > _KeyFrameAudioSampleBuffer;
+    
+  std::mutex _KeyFrameAudioSampleBufferLock;
   
-  std::mutex _bufferLock;
+  bool _plugInIsActive  = false;      // Plug-In is updating data
+  bool _clearCache      = false;      // Plug-In has been terminated
   
-  bool _clearBuffer = false;
+  
+  size_t CopyAudioSampleCachToKeyFrameAudioSample( size_t size );
 };
 
 

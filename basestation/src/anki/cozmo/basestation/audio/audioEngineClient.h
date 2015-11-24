@@ -31,7 +31,11 @@ namespace Audio {
   
 class AudioEngineMessageHandler;
 class MessageAudioClient;
-
+// Callback Structs
+struct AudioCallbackDuration;
+struct AudioCallbackMarker;
+struct AudioCallbackComplete;
+  
 class AudioEngineClient : Util::noncopyable
 {
 public:
@@ -61,7 +65,11 @@ protected:
   static constexpr CallbackIdType kInvalidCallbackId = 0;
   CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
-  virtual void HandleEvents(const AnkiEvent<MessageAudioClient>& event);
+  void HandleEvents( const AnkiEvent<MessageAudioClient>& event );
+  
+  virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg );
+  virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg );
+  virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg );
   
   CallbackIdType GetNewCallbackId();
   

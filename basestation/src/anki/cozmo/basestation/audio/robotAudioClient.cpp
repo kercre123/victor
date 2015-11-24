@@ -33,7 +33,9 @@ RobotAudioClient::RobotAudioClient( AudioEngineMessageHandler& messageHandler, R
 AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType event, AudioCallbackFlag callbackFlag )
 {
   // Track Event
-  // Allways get callbacks for Cozmo events
+  // Always get callbacks for Cozmo events
+  
+  // FIXME: Don't think I need this any more??  - JMR
   const AudioCallbackFlag flags = (AudioCallbackFlag) ((uint8_t)callbackFlag | (uint8_t)AudioCallbackFlag::EventComplete);
   const CallbackIdType callbackId = PostEvent( event, 0, flags);
   
@@ -42,84 +44,39 @@ AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType ev
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t RobotAudioClient::GetSoundSample( uint8_t* outArray, uint32_t requestedSize )
+bool RobotAudioClient::IsPlugInActive() const
 {
-
-  if ( requestedSize > _audioBuffer.GetBufferSize() ) {
-    if ( !_audioBuffer.ShouldClearBuffer() ) {
-      PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", "Not Enough bytes %zu", _audioBuffer.GetBufferSize() );
-      return 0;
-    }
-    PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", " End of event bytes left %zu", _audioBuffer.GetBufferSize() );
-    _isStreaming = false;
-  }
-  
-  
-  uint32_t returnSize = (uint32_t)_audioBuffer.GetAudioSamples(outArray, requestedSize);
-  
-  PRINT_NAMED_INFO("RobotAudioClient::GetSoundSample", "returnSize %d  - Post bufferSize %zu", returnSize, _audioBuffer.GetBufferSize());
-  
-  return returnSize;
+  return _audioBuffer.IsPlugInActive();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::IsReadyToStartAudioStream()
+bool RobotAudioClient::HasKeyFrameAudioSample() const
 {
-  if ( !_isStreaming && _audioBuffer.GetBufferSize() >= _preBufferSize) {
-    _isStreaming = true;
-  }
-  
-  return _isStreaming;
+  return _audioBuffer.HasKeyFrameAudioSample();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t RobotAudioClient::GetBufferSize() const
+AnimKeyFrame::AudioSample&& RobotAudioClient::PopAudioSample() const
 {
-  return (uint32_t)_audioBuffer.GetBufferSize();
+  return _audioBuffer.PopKeyFrameAudioSample();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::HandleCallbackEvent( const AudioCallbackDuration& callbackMsg )
+{
+
 }
 
-
-// Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
+void RobotAudioClient::HandleCallbackEvent( const AudioCallbackMarker& callbackMsg )
 {
-  PRINT_NAMED_INFO("RobotAudioClient.HandleEvents",
-                   "Handle game event of type %s !",
-                   MessageAudioClientTagToString(event.GetData().GetTag()) );
-  
-  switch ( event.GetData().GetTag() ) {
-      
-    case MessageAudioClientTag::AudioCallbackDuration:
-    {
-      // Handle Duration Callback
-      const AudioCallbackDuration& audioMsg = event.GetData().Get_AudioCallbackDuration();
-      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
-    }
-      break;
-      
-    case MessageAudioClientTag::AudioCallbackMarker:
-    {
-      // Handle Marker Callback
-      const AudioCallbackMarker& audioMsg = event.GetData().Get_AudioCallbackMarker();
-      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
-    }
-      break;
-      
-    case MessageAudioClientTag::AudioCallbackComplete:
-    {
-      // Handle Complete Callback
-      const AudioCallbackComplete& audioMsg = event.GetData().Get_AudioCallbackComplete();
-      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
-    }
-      break;
-      
-    default:
-    {
-      PRINT_NAMED_ERROR( "HandleEvents.HandleEvents",
-                         "Subscribed to unhandled event of type %s !",
-                         MessageAudioClientTagToString(event.GetData().GetTag()) );
-    }
-  }
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::HandleCallbackEvent( const AudioCallbackComplete& callbackMsg )
+{
+
 }
 
 } // Audio

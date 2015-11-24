@@ -83,25 +83,25 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
       
     case MessageAudioClientTag::AudioCallbackDuration:
     {
-    // Handle Duration Callback
-      const AudioCallbackDuration& audioMsg = event.GetData().Get_AudioCallbackDuration();
-      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
+      // Handle Duration Callback
+      const AudioCallbackDuration& callbackMsg = event.GetData().Get_AudioCallbackDuration();
+      HandleCallbackEvent( callbackMsg );
     }
       break;
       
     case MessageAudioClientTag::AudioCallbackMarker:
     {
       // Handle Marker Callback
-      const AudioCallbackMarker& audioMsg = event.GetData().Get_AudioCallbackMarker();
-      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
+      const AudioCallbackMarker& callbackMsg = event.GetData().Get_AudioCallbackMarker();
+      HandleCallbackEvent( callbackMsg );
     }
       break;
       
     case MessageAudioClientTag::AudioCallbackComplete:
     {
       // Handle Complete Callback
-      const AudioCallbackComplete& audioMsg = event.GetData().Get_AudioCallbackComplete();
-      printf("\n\nCallbackId: %d\n\n", audioMsg.callbackId);
+      const AudioCallbackComplete& callbackMsg = event.GetData().Get_AudioCallbackComplete();
+      HandleCallbackEvent( callbackMsg );
     }
       break;
       
@@ -113,6 +113,21 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
     }
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::HandleCallbackEvent( const AudioCallbackDuration& callbackMsg )
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::HandleCallbackEvent( const AudioCallbackMarker& callbackMsg )
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::HandleCallbackEvent( const AudioCallbackComplete& callbackMsg )
+{
+} 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()

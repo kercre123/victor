@@ -75,21 +75,19 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     // Setup Callbacks
     _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
+      assert( nullptr != _robotAudioBuffer );
     } );
 
     _cozmoPlugIn->SetDestroyPluginCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
-      
+      assert( nullptr != _robotAudioBuffer );
       // Done with voice clear audio buffer
-      _robotAudioBuffer->ClearBuffer();
-      
+      _robotAudioBuffer->ClearCache();
     } );
     
-    _cozmoPlugIn->SetProcessCallback( [this] ( const AudioEngine::CozmoPlugIn::CozmoAudioBuffer& buffer )
+    _cozmoPlugIn->SetProcessCallback( [this] ( const AudioEngine::CozmoPlugIn::CozmoPlugInAudioBuffer& buffer )
     {
-      if ( nullptr != _robotAudioBuffer ) {
-       _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
-      }
+      _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
     });
     
     const bool success = _cozmoPlugIn->RegisterPlugin();
@@ -104,6 +102,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       "UI.bnk",
       "VO.bnk",
       "Cozmo_Movement.bnk",
+      "Debug.bnk",
     };
     const std::string sceneTitle = "InitScene";
     AudioScene initScene = AudioScene( sceneTitle, AudioEventList(), bankList );
@@ -235,8 +234,10 @@ void AudioController::StartUpSetDefaults()
   AudioEngine::AudioParameterId ROBOT_MASTER_VOLUME = 562892825;
   AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
 
-  SetParameter( ROBOT_MASTER_VOLUME, 0.5, kInvalidAudioGameObject);
+  
   SetParameter( ROBOT_VOLUME, 0.3, kInvalidAudioGameObject);
+  // This is effected by robot volume
+  SetParameter( ROBOT_MASTER_VOLUME, 0.2, kInvalidAudioGameObject);
 }
 
 
