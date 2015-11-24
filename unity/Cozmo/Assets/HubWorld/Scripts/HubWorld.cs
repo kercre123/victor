@@ -2,243 +2,244 @@
 using System.Collections;
 using System.Collections.Generic;
 
+namespace Cozmo.HubWorld {
+  public class HubWorld : HubWorldBase {
 
-public class HubWorld : HubWorldBase {
+    [SerializeField]
+    private HubWorldView _HubWorldViewPrefab;
+    private HubWorldView _HubWorldViewInstance;
 
-  [SerializeField]
-  private HubWorldView _HubWorldViewPrefab;
-  private HubWorldView _HubWorldViewInstance;
+    private GameBase _MiniGameInstance;
 
-  private GameBase _MiniGameInstance;
+    [SerializeField]
+    private ChallengeDataList _ChallengeDataList;
 
-  [SerializeField]
-  private ChallengeDataList _ChallengeDataList;
+    private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
+    private List<string> _CompletedChallengeIds;
 
-  private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
-  private List<string> _CompletedChallengeIds;
+    private string _CurrentChallengePlaying;
 
-  private string _CurrentChallengePlaying;
-
-  private void Awake() {
-    HubWorldPane.HubWorldPaneOpened += HandleHubWorldPaneOpenHandler;
-  }
-
-  private void OnDestroy() {
-    HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
-  }
-
-  public override bool LoadHubWorld() {
-    LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
-    ShowHubWorldDialog();
-    return true;
-  }
-
-  public override bool DestroyHubWorld() {
-    CloseMiniGame();
-
-    // Deregister events
-    // Destroy dialog if it exists
-    if (_HubWorldViewInstance != null) {
-      DeregisterDialogEvents();
-      _HubWorldViewInstance.CloseViewImmediately();
+    private void Awake() {
+      HubWorldPane.HubWorldPaneOpened += HandleHubWorldPaneOpenHandler;
     }
-    return true;
-  }
 
-  private void ShowHubWorldDialog() {
-    // Create dialog with the game prefabs
+    private void OnDestroy() {
+      HubWorldPane.HubWorldPaneOpened -= HandleHubWorldPaneOpenHandler;
+    }
 
-    GameObject newView = GameObject.Instantiate(_HubWorldViewPrefab.gameObject);
-    newView.transform.position = Vector3.zero;
+    public override bool LoadHubWorld() {
+      LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
+      ShowHubWorldDialog();
+      return true;
+    }
 
-    _HubWorldViewInstance = newView.GetComponent<HubWorldView>();
-    _HubWorldViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
-    _HubWorldViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-    _HubWorldViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
+    public override bool DestroyHubWorld() {
+      CloseMiniGame();
 
-    // Show the current state of challenges being locked/unlocked
-    _HubWorldViewInstance.Initialize(_ChallengeStatesById);
-  }
+      // Deregister events
+      // Destroy dialog if it exists
+      if (_HubWorldViewInstance != null) {
+        DeregisterDialogEvents();
+        _HubWorldViewInstance.CloseViewImmediately();
+      }
+      return true;
+    }
 
-  private void HandleLockedChallengeClicked(string challengeClicked) {
-    // Do nothing for now
-  }
+    private void ShowHubWorldDialog() {
+      // Create dialog with the game prefabs
 
-  private void HandleUnlockedChallengeClicked(string challengeClicked) {
-    // Keep track of the current challenge
-    _CurrentChallengePlaying = challengeClicked;
+      GameObject newView = GameObject.Instantiate(_HubWorldViewPrefab.gameObject);
+      newView.transform.position = Vector3.zero;
 
-    // Close dialog
-    CloseHubWorldDialog();
+      _HubWorldViewInstance = newView.GetComponent<HubWorldView>();
+      _HubWorldViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
+      _HubWorldViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+      _HubWorldViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
 
-    // Play minigame immediately
-    PlayMinigame(_ChallengeStatesById[challengeClicked].data);
+      // Show the current state of challenges being locked/unlocked
+      _HubWorldViewInstance.Initialize(_ChallengeStatesById);
+    }
 
-    // TODO: Show panel instead of playing minigame right away
-    // TODO: Don't close the hub dialog during minigames
-  }
+    private void HandleLockedChallengeClicked(string challengeClicked) {
+      // Do nothing for now
+    }
 
-  private void HandleCompletedChallengeClicked(string challengeClicked) {
-    // For now, play the game but don't increase progress when you win
-    CloseHubWorldDialog();
-    PlayMinigame(_ChallengeStatesById[challengeClicked].data);
-  }
+    private void HandleUnlockedChallengeClicked(string challengeClicked) {
+      // Keep track of the current challenge
+      _CurrentChallengePlaying = challengeClicked;
 
-  private void HandleMiniGameLose() {
-    // Reset the current challenge
-    _CurrentChallengePlaying = null;
+      // Close dialog
+      CloseHubWorldDialog();
 
-    CloseMiniGame();
-    ShowHubWorldDialog();
-  }
+      // Play minigame immediately
+      PlayMinigame(_ChallengeStatesById[challengeClicked].data);
 
-  private void HandleMiniGameWin() {
-    // If we are in a challenge that needs to be completed, complete it
-    if (_CurrentChallengePlaying != null) {
-      CompleteChallenge(_CurrentChallengePlaying);
+      // TODO: Show panel instead of playing minigame right away
+      // TODO: Don't close the hub dialog during minigames
+    }
+
+    private void HandleCompletedChallengeClicked(string challengeClicked) {
+      // For now, play the game but don't increase progress when you win
+      CloseHubWorldDialog();
+      PlayMinigame(_ChallengeStatesById[challengeClicked].data);
+    }
+
+    private void HandleMiniGameLose() {
+      // Reset the current challenge
       _CurrentChallengePlaying = null;
+
+      CloseMiniGame();
+      ShowHubWorldDialog();
     }
 
-    CloseMiniGame();
-    ShowHubWorldDialog();
-  }
+    private void HandleMiniGameWin() {
+      // If we are in a challenge that needs to be completed, complete it
+      if (_CurrentChallengePlaying != null) {
+        CompleteChallenge(_CurrentChallengePlaying);
+        _CurrentChallengePlaying = null;
+      }
 
-  private void HandleMiniGameQuit() {
-    // Reset the current challenge
-    _CurrentChallengePlaying = null;
+      CloseMiniGame();
+      ShowHubWorldDialog();
+    }
 
-    CloseMiniGame();
-    ShowHubWorldDialog();
-  }
+    private void HandleMiniGameQuit() {
+      // Reset the current challenge
+      _CurrentChallengePlaying = null;
 
-  private void PlayMinigame(ChallengeData challengeData) {
-    GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
-    _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.LoadMinigameConfig(challengeData.MinigameConfig);
-    _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
-    _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
-    _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
-  }
+      CloseMiniGame();
+      ShowHubWorldDialog();
+    }
 
-  private void CloseMiniGame() {
-    // Destroy game if it exists
-    if (_MiniGameInstance != null) {
-      _MiniGameInstance.OnMiniGameQuit -= HandleMiniGameQuit;
-      _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
-      _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
+    private void PlayMinigame(ChallengeData challengeData) {
+      GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
+      _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+      _MiniGameInstance.LoadMinigameConfig(challengeData.MinigameConfig);
+      _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+      _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
+      _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
+    }
+
+    private void CloseMiniGame() {
+      // Destroy game if it exists
+      if (_MiniGameInstance != null) {
+        _MiniGameInstance.OnMiniGameQuit -= HandleMiniGameQuit;
+        _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
+        _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
       
-      _MiniGameInstance.CleanUp();
-      Destroy(_MiniGameInstance.gameObject);
-    }
-  }
-
-  private void CloseHubWorldDialog() {
-    if (_HubWorldViewInstance != null) {
-      DeregisterDialogEvents();
-      _HubWorldViewInstance.CloseView();
-    }
-  }
-
-  private void DeregisterDialogEvents() {
-    if (_HubWorldViewInstance != null) {
-      _HubWorldViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
-      _HubWorldViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-      _HubWorldViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
-    }
-  }
-
-  private void LoadChallengeData(ChallengeDataList sourceChallenges, 
-                                 out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
-    // Initial load of what's unlocked and completed from data
-    challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
-
-    // TODO: Get the list of completed challenges from data (for now, use empty list)
-    _CompletedChallengeIds = new List<string>();
-
-    // For each challenge
-    ChallengeStatePacket statePacket;
-    foreach (ChallengeData data in sourceChallenges.ChallengeData) {
-      // Create a new data packet
-      statePacket = new ChallengeStatePacket();
-      statePacket.data = data;
-
-      // Determine the current state of the challenge
-      statePacket.currentState = DetermineCurrentChallengeState(data, _CompletedChallengeIds);
-      // TODO: Set the unlock progress from persistant data (for now, use 0)
-      statePacket.unlockProgress = 0;
-      // Add the challenge to the dictionary
-      challengeStateByKey.Add(data.ChallengeID, statePacket);
-    }
-  }
-
-  private ChallengeState DetermineCurrentChallengeState(ChallengeData dataToTest, List<string> completedChallenges) {
-    // If the challenge is in the completed challenges list, it has been completed
-    ChallengeState challengeState = ChallengeState.LOCKED;
-    if (completedChallenges.Contains(dataToTest.ChallengeID)) {
-      challengeState = ChallengeState.COMPLETED;
-    }
-    else {
-      Robot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
-      if (dataToTest.ChallengeReqs.MeetsRequirements(currentRobot, completedChallenges)) {
-        // Otherwise, it is locked or unlocked based on its requirements
-        // TODO: Add case for when the challenge is unlocked, but not actionable
-        challengeState = ChallengeState.UNLOCKED;
+        _MiniGameInstance.CleanUp();
+        Destroy(_MiniGameInstance.gameObject);
       }
     }
-    return challengeState;
-  }
 
-  private void CompleteChallenge(string completedChallengeId) { 
-    // If the completed challenge is not already complete
-    if (!_CompletedChallengeIds.Contains(completedChallengeId)) {
-      // Add the current challenge to the completed list
-      _CompletedChallengeIds.Add(completedChallengeId);
-      _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.COMPLETED;
+    private void CloseHubWorldDialog() {
+      if (_HubWorldViewInstance != null) {
+        DeregisterDialogEvents();
+        _HubWorldViewInstance.CloseView();
+      }
+    }
 
-      // Check all the locked challenges to see if any new ones unlocked.
-      foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
-        if (challengeState.currentState == ChallengeState.LOCKED) {
-          challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, _CompletedChallengeIds);
+    private void DeregisterDialogEvents() {
+      if (_HubWorldViewInstance != null) {
+        _HubWorldViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
+        _HubWorldViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
+        _HubWorldViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
+      }
+    }
+
+    private void LoadChallengeData(ChallengeDataList sourceChallenges, 
+                                   out Dictionary<string, ChallengeStatePacket> challengeStateByKey) {
+      // Initial load of what's unlocked and completed from data
+      challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
+
+      // TODO: Get the list of completed challenges from data (for now, use empty list)
+      _CompletedChallengeIds = new List<string>();
+
+      // For each challenge
+      ChallengeStatePacket statePacket;
+      foreach (ChallengeData data in sourceChallenges.ChallengeData) {
+        // Create a new data packet
+        statePacket = new ChallengeStatePacket();
+        statePacket.data = data;
+
+        // Determine the current state of the challenge
+        statePacket.currentState = DetermineCurrentChallengeState(data, _CompletedChallengeIds);
+        // TODO: Set the unlock progress from persistant data (for now, use 0)
+        statePacket.unlockProgress = 0;
+        // Add the challenge to the dictionary
+        challengeStateByKey.Add(data.ChallengeID, statePacket);
+      }
+    }
+
+    private ChallengeState DetermineCurrentChallengeState(ChallengeData dataToTest, List<string> completedChallenges) {
+      // If the challenge is in the completed challenges list, it has been completed
+      ChallengeState challengeState = ChallengeState.LOCKED;
+      if (completedChallenges.Contains(dataToTest.ChallengeID)) {
+        challengeState = ChallengeState.COMPLETED;
+      }
+      else {
+        Robot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
+        if (dataToTest.ChallengeReqs.MeetsRequirements(currentRobot, completedChallenges)) {
+          // Otherwise, it is locked or unlocked based on its requirements
+          // TODO: Add case for when the challenge is unlocked, but not actionable
+          challengeState = ChallengeState.UNLOCKED;
+        }
+      }
+      return challengeState;
+    }
+
+    private void CompleteChallenge(string completedChallengeId) { 
+      // If the completed challenge is not already complete
+      if (!_CompletedChallengeIds.Contains(completedChallengeId)) {
+        // Add the current challenge to the completed list
+        _CompletedChallengeIds.Add(completedChallengeId);
+        _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.COMPLETED;
+
+        // Check all the locked challenges to see if any new ones unlocked.
+        foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
+          if (challengeState.currentState == ChallengeState.LOCKED) {
+            challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, _CompletedChallengeIds);
+          }
         }
       }
     }
-  }
 
-  // TODO: Pragma out for production
+    // TODO: Pragma out for production
 
-  #region Testing
+    #region Testing
 
-  private void HandleHubWorldPaneOpenHandler(HubWorldPane hubWorldPane) {
-    hubWorldPane.Initialize(this);
-  }
-
-  public void TestLoadHubWorld() {
-    DestroyHubWorld();
-    LoadHubWorld();
-  }
-
-  public void TestCompleteChallenge(string completedChallengeId) {
-    if (_HubWorldViewInstance != null) {
-      CompleteChallenge(completedChallengeId);
-
-      // Force refresh of the dialog
-      DeregisterDialogEvents();
-      _HubWorldViewInstance.CloseViewImmediately();
-      ShowHubWorldDialog();
+    private void HandleHubWorldPaneOpenHandler(HubWorldPane hubWorldPane) {
+      hubWorldPane.Initialize(this);
     }
+
+    public void TestLoadHubWorld() {
+      DestroyHubWorld();
+      LoadHubWorld();
+    }
+
+    public void TestCompleteChallenge(string completedChallengeId) {
+      if (_HubWorldViewInstance != null) {
+        CompleteChallenge(completedChallengeId);
+
+        // Force refresh of the dialog
+        DeregisterDialogEvents();
+        _HubWorldViewInstance.CloseViewImmediately();
+        ShowHubWorldDialog();
+      }
+    }
+
+    #endregion
   }
 
-  #endregion
-}
+  public class ChallengeStatePacket {
+    public ChallengeData data;
+    public ChallengeState currentState;
+    public float unlockProgress;
+  }
 
-public class ChallengeStatePacket {
-  public ChallengeData data;
-  public ChallengeState currentState;
-  public float unlockProgress;
-}
-
-public enum ChallengeState {
-  LOCKED,
-  UNLOCKED,
-  COMPLETED
+  public enum ChallengeState {
+    LOCKED,
+    UNLOCKED,
+    COMPLETED
+  }
 }

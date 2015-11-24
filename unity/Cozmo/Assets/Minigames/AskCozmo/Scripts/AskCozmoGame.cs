@@ -19,6 +19,7 @@ namespace AskCozmo {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
       CreateDefaultQuitButton();
+      ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("AzkCozmoSequence");
     }
 
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {

@@ -23,5 +23,11 @@
   },
   "HelloWorld.World": {
     "translation": "World"
+  },
+  "AzkCozmoSequence.Node 2": {
+    "translation": "I'm a beeping robot with no body!"
+  },
+  "AzkCozmoSequence.Node 4": {
+    "translation": "Me too! But I have a body!!"
   }
 }
