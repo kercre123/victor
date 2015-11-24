@@ -8,6 +8,8 @@
 //#define RADIO_TIMING_TEST
 
 // Updated for EP1
+#define ROBOT_EP1_BODY
+
 enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1
@@ -44,7 +46,7 @@ enum e_nrf_gpio {
 
   // Power
   PIN_PWR_EN          = 15,
-  PIN_nVDDs_EN        = 7,
+  PIN_VDDs_EN         = 7,
   PIN_V_BAT_SENSE     = 5,
   PIN_V_EXT_SENSE     = 6,
 
@@ -63,17 +65,5 @@ enum AnalogInput {
   ANALOG_V_EXT_SENSE = ADC_CONFIG_PSEL_AnalogInput7,  // P6
   ANALOG_V_BAT_SENSE = ADC_CONFIG_PSEL_AnalogInput6   // P5
 };
-
-enum e_ppi_channel {
-  PPI_MOTOR_CHANNEL_0,
-  PPI_MOTOR_CHANNEL_1,
-  PPI_MOTOR_CHANNEL_2,
-  PPI_MOTOR_CHANNEL_3,
-  PPI_MOTOR_CHANNEL_4,
-  PPI_MOTOR_CHANNEL_5,
-  PPI_MOTOR_CHANNEL_6,
-  PPI_MOTOR_CHANNEL_7
-};
-
 
 #endif

@@ -282,85 +282,11 @@ return RESULT_FAIL; \
 #pragma mark -
 #pragma mark ProceduralFaceKeyFrame
     
-    static Result SetEyeArrayHelper(ProceduralFace::WhichEye whichEye,
-                                    const Json::Value& jsonRoot,
-                                    ProceduralFace& face)
-    {
-      std::vector<ProceduralFace::Value> eyeArray;
-      const char* eyeStr = (whichEye == ProceduralFace::WhichEye::Left ?
-                            "leftEye" : "rightEye");
-      if(JsonTools::GetVectorOptional(jsonRoot, eyeStr, eyeArray)) {
-        const size_t N = static_cast<size_t>(ProceduralFace::Parameter::NumParameters);
-        if(eyeArray.size() != N) {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetEyeArrayHelper.WrongNumParams",
-                              "Unexpected number of parameters for %s array (%lu vs. %lu)",
-                              eyeStr, eyeArray.size(), N);
-        }
-        
-        for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
-        {
-          face.SetParameter(whichEye,
-                            static_cast<ProceduralFace::Parameter>(i),
-                            eyeArray[i]);
-        }
-      }
-      
-      return RESULT_OK;
-    }
-    
     Result ProceduralFaceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
-      
-      ProceduralFace::Value angle;
-      if(!JsonTools::GetValueOptional(jsonRoot, "faceAngle", angle)) {
-        if(JsonTools::GetValueOptional(jsonRoot, "faceAngle_deg", angle)) {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.OldAngleName",
-                              "Animation JSON memeber 'faceAngle_deg' is deprecated. "
-                              "Please update to 'faceAngle'.");
-        } else {
-          PRINT_NAMED_WARNING("ProceduralFaceKeyFrame.SetMembersFromJson.MissingParam",
-                              "Missing 'faceAngle' parameter - will use 0.");
-          angle = 0;
-        }
-      }
-      
-      _procFace.SetFaceAngle(angle);
-      
-      //
-      // Individual members for each parameter
-      // TODO: Remove support for these old-style Json files?
-      //
-      for(int iParam=0; iParam < static_cast<int>(ProceduralFace::Parameter::NumParameters); ++iParam)
-      {
-        ProceduralEyeParameter param = static_cast<ProceduralEyeParameter>(iParam);
-        
-        ProceduralFace::Value value;
-        std::string paramName = ProceduralEyeParameterToString(param);
-        
-        // Left
-        if(JsonTools::GetValueOptional(jsonRoot, "left" + paramName, value)) {
-          _procFace.SetParameter(ProceduralFace::Left, param, value);
-        }
-        
-        // Right
-        if(JsonTools::GetValueOptional(jsonRoot, "right" + paramName, value)) {
-          _procFace.SetParameter(ProceduralFace::Right, param, value);
-        }
-      }
-      
-      //
-      // Single array for left and right eye, indexed by enum value
-      //  Note: these will overwrite any individual values found above.
-      Result lastResult = SetEyeArrayHelper(ProceduralFace::WhichEye::Left,
-                                            jsonRoot, _procFace);
-      if(RESULT_OK == lastResult) {
-        lastResult = SetEyeArrayHelper(ProceduralFace::WhichEye::Right,
-                                     jsonRoot, _procFace);
-      }
-
+      _procFace.GetParams().SetFromJson(jsonRoot);
       Reset();
-      
-      return lastResult;
+      return RESULT_OK;
     }
     
     void ProceduralFaceKeyFrame::Reset()
@@ -407,7 +333,7 @@ return RESULT_FAIL; \
       const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
       
       ProceduralFace interpFace;
-      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      interpFace.GetParams().Interpolate(_procFace.GetParams(), nextFrame._procFace.GetParams(), fraction);
       
       _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
       if(_currentTime_ms >= nextFrame.GetTriggerTime()) {

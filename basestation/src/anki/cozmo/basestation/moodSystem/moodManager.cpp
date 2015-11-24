@@ -12,25 +12,46 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
+#include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
+#include "util/math/math.h"
+#include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/vizInterface/messageViz.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
-#include "util/math/math.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include <assert.h>
 
 
 namespace Anki {
 namespace Cozmo {
-  
-  
-Anki::Util::GraphEvaluator2d MoodManager::sEmotionDecayGraphs[(size_t)EmotionType::Count];
 
-  
-MoodManager::MoodManager()
-  : _lastUpdateTime(0.0)
+
+// For now StaticMoodData is basically a singleton, but hidden behind an interface in mood manager incase we ever
+// need it to be different per robot / moodManager
+static StaticMoodData sStaticMoodData;
+
+
+StaticMoodData& MoodManager::GetStaticMoodData()
 {
-  InitDecayGraphs();
+  return sStaticMoodData;
+}
+  
+  
+MoodManager::MoodManager(Robot* inRobot)
+  : _robot(inRobot)
+  , _lastUpdateTime(0.0)
+{
+}
+  
+  
+void MoodManager::Init(const Json::Value& inJson)
+{
+  GetStaticMoodData().Init(inJson);
 }
 
   
@@ -41,87 +62,6 @@ void MoodManager::Reset()
     GetEmotionByIndex(i).Reset();
   }
   _lastUpdateTime = 0.0;
-}
-  
-  
-bool VerifyDecayGraph(const Anki::Util::GraphEvaluator2d& newGraph)
-{
-  const size_t numNodes = newGraph.GetNumNodes();
-  if (numNodes == 0)
-  {
-    PRINT_NAMED_ERROR("VerifyDecayGraph.NoNodes", "Invalid graph has 0 nodes");
-    return false;
-  }
-  
-  bool isValid = true;
-  
-  float lastY = 0.0f;
-  for (size_t i=0; i < numNodes; ++i)
-  {
-    const Anki::Util::GraphEvaluator2d::Node& node = newGraph.GetNode(i);
-
-    if (node._y < 0.0f)
-    {
-      PRINT_NAMED_ERROR("VerifyDecayGraph.NegativeYNode", "Node[%zu] = (%f, %f) is Negative!", i, node._x, node._y);
-      isValid = false;
-    }
-    if ((i != 0) && (node._y > lastY))
-    {
-      PRINT_NAMED_ERROR("VerifyDecayGraph.IncreasingYNode", "Node[%zu] = (%f, %f) is has y > than previous (%f)", i, node._x, node._y, lastY);
-      isValid = false;
-    }
-    
-    lastY = node._y;
-  }
-  
-  return isValid;
-}
-  
-
-void MoodManager::SetDecayGraph(EmotionType emotionType, const Anki::Util::GraphEvaluator2d& newGraph)
-{
-  const size_t index = (size_t)emotionType;
-  assert((index >= 0) && (index < (size_t)EmotionType::Count));
-  
-  if (!VerifyDecayGraph(newGraph))
-  {
-    PRINT_NAMED_ERROR("MoodManager.SetDecayGraph.Invalid", "Invalid graph for emotion '%s'", EnumToString(emotionType));
-  }
-  else
-  {
-    sEmotionDecayGraphs[index] = newGraph;
-  }
-}
-
-
-// Hard coded static init for now, will replace with data loading eventually
-void MoodManager::InitDecayGraphs()
-{
-  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
-  {
-    Anki::Util::GraphEvaluator2d& decayGraph = sEmotionDecayGraphs[i];
-    if (decayGraph.GetNumNodes() == 0)
-    {
-      decayGraph.AddNode(  0.0f, 1.0f);
-      decayGraph.AddNode( 15.0f, 1.0f);
-      decayGraph.AddNode( 60.0f, 0.9f);
-      decayGraph.AddNode(150.0f, 0.6f);
-      decayGraph.AddNode(300.0f, 0.0f);
-    }
-    assert(VerifyDecayGraph(decayGraph));
-  }
-}
-  
-  
-const Anki::Util::GraphEvaluator2d& MoodManager::GetDecayGraph(EmotionType emotionType)
-{
-  const size_t index = (size_t)emotionType;
-  assert((index >= 0) && (index < (size_t)EmotionType::Count));
-  
-  Anki::Util::GraphEvaluator2d& decayGraph = sEmotionDecayGraphs[index];
-  assert(decayGraph.GetNumNodes() > 0);
-  
-  return decayGraph;
 }
 
 
@@ -145,10 +85,12 @@ void MoodManager::Update(double currentTime)
     const EmotionType emotionType = (EmotionType)i;
     Emotion& emotion = GetEmotionByIndex(i);
     
-    emotion.Update(GetDecayGraph(emotionType), currentTime, timeDelta);
+    emotion.Update(GetStaticMoodData().GetDecayGraph(emotionType), currentTime, timeDelta);
 
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
   }
+  
+  SendEmotionsToGame();
 
   #if SEND_MOOD_TO_VIZ_DEBUG
   robotMood.recentEvents = std::move(_eventNames);
@@ -158,16 +100,93 @@ void MoodManager::Update(double currentTime)
 }
   
   
+void MoodManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  
+  switch (eventData.GetTag())
+  {
+    case ExternalInterface::MessageGameToEngineTag::MoodMessage:
+      {
+        const Anki::Cozmo::ExternalInterface::MoodMessageUnion& moodMessage = eventData.Get_MoodMessage().MoodMessageUnion;
+
+        switch (moodMessage.GetTag())
+        {
+          case ExternalInterface::MoodMessageUnionTag::GetEmotions:
+            SendEmotionsToGame();
+            break;
+          case ExternalInterface::MoodMessageUnionTag::SetEmotion:
+          {
+            const Anki::Cozmo::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
+            SetEmotion(msg.emotionType, msg.newVal);
+            break;
+          }
+          case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
+          {
+            const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
+            AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str());
+            break;
+          }
+          case ExternalInterface::MoodMessageUnionTag::TriggerEmotionEvent:
+          {
+            const Anki::Cozmo::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
+            TriggerEmotionEvent(msg.emotionEventName);
+            break;
+          }
+          default:
+            PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageUnionTag", "Unexpected tag %u", (uint32_t)moodMessage.GetTag());
+            assert(0);
+        }
+      }
+      break;
+    default:
+      PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageGameToEngineTag", "Unexpected tag %u", (uint32_t)eventData.GetTag());
+      assert(0);
+  }
+}
+  
+  
+void MoodManager::SendEmotionsToGame()
+{
+  if (_robot)
+  {
+    std::vector<float> emotionValues;
+    emotionValues.reserve((size_t)EmotionType::Count);
+    
+    for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+    {
+      const Emotion& emotion = GetEmotionByIndex(i);
+      emotionValues.push_back(emotion.GetValue());
+    }
+    
+    ExternalInterface::MoodState message(_robot->GetID(), std::move(emotionValues));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  }
+}
+  
+  
+void MoodManager::TriggerEmotionEvent(const std::string& eventName)
+{
+  const EmotionEvent* emotionEvent = GetStaticMoodData().GetEmotionEventMapper().FindEvent(eventName);
+  if (emotionEvent)
+  {
+    const std::vector<EmotionAffector>& emotionAffectors = emotionEvent->GetAffectors();
+    for (const EmotionAffector& emotionAffector : emotionAffectors)
+    {
+      AddToEmotion(emotionAffector.GetType(), emotionAffector.GetValue(), eventName.c_str());
+    }
+  }
+  else
+  {
+    PRINT_NAMED_WARNING("MoodManager.TriggerEmotionEvent.EventNotFound", "Failed to find event '%s'", eventName.c_str());
+  }
+}
+
+  
 void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString)
 {
   GetEmotion(emotionType).Add(baseValue, uniqueIdString);
-  
-  #if SEND_MOOD_TO_VIZ_DEBUG
-  if (_eventNames.empty() || (_eventNames.back() != uniqueIdString))
-  {
-    _eventNames.push_back(uniqueIdString);
-  }
-  #endif // SEND_MOOD_TO_VIZ_DEBUG
+  SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
 }
   
 
@@ -189,6 +208,24 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
 }
 
 
+void MoodManager::SetEmotion(EmotionType emotionType, float value)
+{
+  GetEmotion(emotionType).SetValue(value);
+  SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
+}
+
+  
+#if SEND_MOOD_TO_VIZ_DEBUG
+void MoodManager::AddEvent(const char* eventName)
+{
+  if (_eventNames.empty() || (_eventNames.back() != eventName))
+  {
+    _eventNames.push_back(eventName);
+  }
+}
+#endif // SEND_MOOD_TO_VIZ_DEBUG
+
+  
 } // namespace Cozmo
 } // namespace Anki
 

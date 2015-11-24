@@ -114,6 +114,8 @@ namespace Anki
     // Absolute value, in place
     Array2d<T>& Abs();
     
+    void FillWith(T value);
+    
 #if ANKICORETECH_USE_OPENCV
     bool IsContinuous() const { return cv::Mat_<T>::isContinuous(); }
 #else

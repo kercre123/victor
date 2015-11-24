@@ -49,7 +49,6 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -90,7 +89,9 @@ namespace Cozmo {
 // Forward declarations:
 class IPathPlanner;
 class MatPiece;
+class MoodManager;
 class PathDolerOuter;
+class ProgressionManager;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -127,7 +128,10 @@ public:
     Robot(const RobotID_t robotID, RobotInterface::MessageHandler* msgHandler,
           IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
     ~Robot();
-    
+    // Explicitely delete copy and assignment operators (class doesn't support shallow copy)
+    Robot(const Robot&) = delete;
+    Robot& operator=(const Robot&) = delete;
+  
     Result Update();
     
     Result UpdateFullRobotState(const RobotState& msg);
@@ -194,8 +198,9 @@ public:
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
     const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
     void                     EnableVisionWhileMoving(bool enable);
-    Vision::Camera           GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t);
-    Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request);
+    Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
+    Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
+    Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
   
     Result ProcessImage(const Vision::ImageRGB& image);
   
@@ -209,8 +214,11 @@ public:
     bool GetCurrentImage(Vision::Image& img, TimeStamp_t newerThan);
     
     // Returns the average period of incoming robot images
-    u32 GetAverageImagePeriodMS();
-    
+    u32 GetAverageImagePeriodMS() const;
+  
+    // Returns the average period of image processing
+    u32 GetAverageImageProcPeriodMS() const;
+  
     // Specify whether this robot is a physical robot or not.
     // Currently, adjusts headCamPose by slop factor if it's physical.
     void SetPhysicalRobot(bool isPhysical);
@@ -225,14 +233,15 @@ public:
     const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
     const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
     const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
-
+    Pose3d                 GetCameraPose(f32 atAngle) const;
+  
     // These change the robot's internal (basestation) representation of its
     // pose, head angle, and lift angle, but do NOT actually command the
     // physical robot to do anything!
     void SetPose(const Pose3d &newPose);
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
-    
+  
     // Get 3D bounding box of the robot at its current pose or a given pose
     void GetBoundingBox(std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
     void GetBoundingBox(const Pose3d& atPose, std::array<Point3f, 8>& bbox3d, const Point3f& padding_mm) const;
@@ -243,7 +252,10 @@ public:
     
     // Return current height of lift's gripper
     f32 GetLiftHeight() const;
-    
+  
+    // Get pitch angle of robot
+    f32 GetPitchAngle();
+  
     // Return current bounding height of the robot, taking into account whether lift
     // is raised
     f32 GetHeight() const;
@@ -464,6 +476,7 @@ public:
     // =========== Pose history =============
   
     RobotPoseHistory* GetPoseHistory() { return _poseHistory; }
+    const RobotPoseHistory* GetPoseHistory() const { return _poseHistory; }
   
     Result AddRawOdomPoseToHistory(const TimeStamp_t t,
                                    const PoseFrameID_t frameID,
@@ -586,8 +599,11 @@ public:
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    MoodManager& GetMoodManager() { return _moodManager; }
-    const MoodManager& GetMoodManager() const { return _moodManager; }
+    MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
+    const MoodManager& GetMoodManager() const {  assert(_moodManager); return *_moodManager; }
+  
+    inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
+    inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
   
     // Handle various message types
     template<typename T>
@@ -683,9 +699,11 @@ public:
     const Pose3d     _liftBasePose; // around which the base rotates/lifts
     Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
-    f32              _currentHeadAngle;
+    f32                       _currentHeadAngle;
+  
     f32              _currentLiftAngle = 0;
-    
+    f32              _pitchAngle;
+  
     f32              _leftWheelSpeed_mmps;
     f32              _rightWheelSpeed_mmps;
     
@@ -748,8 +766,9 @@ public:
     // Save mode for robot images
     SaveMode_t _imageSaveMode = SAVE_OFF;
     
-    // Maintains an average period of incoming robot images
+    // Maintains an average period of incoming robot images and processing speed
     u32         _imgFramePeriod        = 0;
+    u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
 
@@ -780,7 +799,10 @@ public:
     u8  _animationTag              = 0;
     
     ///////// Mood/Emotions ////////
-    MoodManager      _moodManager;
+    MoodManager*         _moodManager;
+
+    ///////// Progression/Skills ////////
+    ProgressionManager*  _progressionManager;
     
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
@@ -843,6 +865,8 @@ public:
 
     // Request imu log from robot
     Result SendIMURequest(const u32 length_ms) const;
+  
+    Result SendEnablePickupParalysis(const bool enable) const;
 
     Result SendAbortDocking();
     Result SendAbortAnimation();

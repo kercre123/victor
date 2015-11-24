@@ -29,6 +29,13 @@ typedef enum
   DMC_LAST
 } DiagnosticModeCommand;
 
+// Error numbers - these are thrown and eventually arrive on the display for the factory operator
+// To aid memorization, error numbers are grouped logically:
+//  3xy - motor errors - where X is the motor 1 (left), 2 (right), 3 (lift), or 4 (head) - and Y is the problem (reversed, encoder, etc)
+//  4xy - testport errors - indicating problems communicating with the device or storing factory info
+//  5xy - head errors - where X is the component (0 = CPU) and Y is the problem
+//  6xy - body errors - where X is the component (0 = CPU) and Y is the problem
+//  7xy - cube/charger errors - where X is the component (0 = CPU) and Y is the problem
 #define ERROR_OK                    0
 
 // Internal Errors
@@ -40,61 +47,27 @@ typedef enum
 #define ERROR_OUT_OF_RANGE          6
 #define ERROR_ALIGNMENT             7
 
+#define ERROR_SERIAL_EXISTS         8
+#define ERROR_LOT_CODE              9
+#define ERROR_OUT_OF_SERIALS        10    // When the fixture itself runs out of 500,000 serial numbers
+
+#define ERROR_CUBE_ROM_OVERSIZE     11    // When you link a too-big cube ROM
+
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
-// Vehicle Errors
-#define ERROR_POWER_CONTACTS        100
+// Head errors
+#define ERROR_HEAD_BOOTLOADER       400   // Can't load bootloader into K02
+#define ERROR_HEAD_APP              401   // Can't load app into K02
 
-#define ERROR_ENABLE_CAMERA_2D      210
-#define ERROR_ENABLE_CAMERA_1D      211
-#define ERROR_CAMERA_2D             220
-#define ERROR_CAMERA_1D_RAW         221
+#define ERROR_HEAD_RADIO_BOOT       410   // Can't sync with radio
+#define ERROR_HEAD_RADIO_ERASE      411   // Problem erasing flash
+#define ERROR_HEAD_RADIO_FLASH      412   // Problem programming radio
 
-#define ERROR_ENABLE_MOTORS         300
-#define ERROR_DRIVE_MOTORS          310
-#define ERROR_READ_ENCODERS         320
-#define ERROR_GEAR_GAP              321
-//#define ERROR_ENCODERS_NON_ZERO     330
-#define ERROR_ENCODERS_ZERO         331
-#define ERROR_LEFT_MOTOR_ZERO       332
-#define ERROR_RIGHT_MOTOR_ZERO      333
-#define ERROR_LEFT_MOTOR_NON_ZERO   334
-#define ERROR_RIGHT_MOTOR_NON_ZERO  335
-#define ERROR_LEFT_WHEEL_NEGATIVE   336
-#define ERROR_LEFT_WHEEL_POSITIVE   337
-#define ERROR_RIGHT_WHEEL_NEGATIVE  338
-#define ERROR_RIGHT_WHEEL_POSITIVE  339
-#define ERROR_NOT_STATIONARY        340
+// Cube/charger errors
+#define ERROR_CUBE_CANNOT_WRITE     700
+#define ERROR_CUBE_NO_COMMUNICATION 701
+#define ERROR_CUBE_VERIFY_FAILED    702
+#define ERROR_CUBE_BLOCK_FAILED     703
 
-#define ERROR_WRITE_FACTORY_BLOCK   400
-#define ERROR_SERIAL_EXISTS         401
-#define ERROR_LOT_CODE              402
-#define ERROR_INVALID_MODEL         403
-#define ERROR_READ_FACTORY_BLOCK    410
-//#define ERROR_ALREADY_FLASHED       411
-#define ERROR_GET_VERSION           412
-#define ERROR_ENTER_CHARGE_FLASH    420
-#define ERROR_FLASH_BLOCK_ACK       421
-#define ERROR_CANNOT_REENTER        422
-#define ERROR_DIFFERENT_VERSION     423
-#define ERROR_READ_USER_BLOCK       430
-
-#define ERROR_RADIO_RESET           500
-#define ERROR_RADIO_ENTER_DTM       501
-#define ERROR_RADIO_ENTER_RECEIVER  502
-#define ERROR_RADIO_END_TEST        503
-#define ERROR_RADIO_TEST_RESULTS    504
-#define ERROR_RADIO_PACKET_COUNT    505
-
-#define ERROR_PCB_BOOTLOADER        600
-#define ERROR_PCB_OUT_OF_SERIALS    601
-#define ERROR_PCB_JTAG_LOCK         602
-#define ERROR_PCB_ZERO_UID          603
-#define ERROR_PCB_FLASH_VEHICLE     610
-#define ERROR_PCB_ENTER_DIAG_MODE   611
-
-#define ERROR_NO_PC                 700
-
-#define ERROR_PCB_ENCODERS          800
 
 #endif

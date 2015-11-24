@@ -43,6 +43,10 @@ public:
   bool IsLiftLocked() const { return _liftLocked; }
   bool AreWheelsLocked() const { return _wheelsLocked; }
   
+  // Enables lift power on the robot.
+  // If disabled, lift goes limp.
+  Result EnableLiftPower(bool enable);
+  
   // Below are low-level actions to tell the robot to do something "now"
   // without using the ActionList system:
   

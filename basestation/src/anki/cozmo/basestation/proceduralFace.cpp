@@ -8,10 +8,7 @@
 namespace Anki {
 namespace Cozmo {
 
-  //const ProceduralFace::Value ProceduralFace::MaxFaceAngle = 30.f; // Not sure why I can't set this one here
   u8 ProceduralFace::_firstScanLine = 0;
-  
-  const cv::Rect ProceduralFace::imgRect(0,0,ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
   
   ProceduralFace::ProceduralFace()
   {
@@ -20,128 +17,196 @@ namespace Cozmo {
   
   void ProceduralFace::Reset()
   {
-    _faceAngle = 0;
+    _faceData.Reset();
     _sentToRobot = false;
     _timestamp = 0;
-
-    _eyeParams[Left].fill(0);
-    _eyeParams[Right].fill(0);
   }
 
-  
-
-  inline const s32 GetScaledValue(ProceduralFace::Value value, s32 min, s32 max)
+  SmallMatrix<2,3,f32> ProceduralFace::GetTransformationMatrix(f32 angleDeg, f32 scaleX, f32 scaleY,
+                                                               f32 tX, f32 tY, f32 x0, f32 y0)
   {
-    // Input is [-1,1]. Make [0,1]
-    value += 1;
-    value *= .5f;
+    //
+    // Create a 2x3 warp matrix which incorporates scale, rotation, and translation
+    //    W = R * [scale_x    0   ] * [x - x0] + [x0] + [tx]
+    //            [   0    scale_y]   [y - y0] + [y0] + [ty]
+    //
+    // So a given point gets scaled (first!) and then rotated around the given center
+    // (x0,y0)and then translated by (tx,ty).
+    //
+    // Note: can't use cv::getRotationMatrix2D, b/c it only incorporates one
+    // scale factor, not separate scaling in x and y. Otherwise, this is
+    // exactly the same thing
+    //
+    f32 cosAngle = 1, sinAngle = 0;
+    if(angleDeg != 0) {
+      const f32 angleRad = DEG_TO_RAD(angleDeg);
+      cosAngle = std::cos(angleRad);
+      sinAngle = std::sin(angleRad);
+    }
     
-    return static_cast<s32>(value * static_cast<ProceduralFace::Value>(max-min)) + min;
-  }
-  
-  inline const s32 GetScaledValue(ProceduralFace::Value value, s32 min, s32 mid, s32 max)
-  {
-    if(value == 0) {
-      return mid;
-    } else if(value < 0) {
-      return (value + 1.f)*static_cast<ProceduralFace::Value>(mid-min) + min;
-    } else {
-      assert(value > 0);
-      return value*static_cast<ProceduralFace::Value>(max-mid) + mid;
-    }
-  }
-  
-  inline s32 ProceduralFace::GetBrowHeight(const s32 eyeHeightPix, const Value browCenY) const
-  {
-    return GetScaledValue(-browCenY, 1, NominalEyeCenY-std::round(static_cast<f32>(eyeHeightPix)*0.5f));// + _firstScanLine;
-  }
+    const f32 alpha_x = scaleX * cosAngle;
+    const f32 beta_x  = scaleX * sinAngle;
+    const f32 alpha_y = scaleY * cosAngle;
+    const f32 beta_y  = scaleY * sinAngle;
 
-  inline void RoundedRectangleHelper(cv::Mat& roi,
-                                     const u8 fillValue,
-                                     const s32 numCornerPixels)
-  {
-    assert(fillValue == 0 || fillValue == 255);
-    if(!roi.empty())
-    {
-      roi.setTo(fillValue);
-      
-      if(numCornerPixels > 0) {
-        const u8 cornerValue = (fillValue == 0 ? 255 : 0);
-        
-        // Add a few pixels to the four corners
-        u8* topLine0 = roi.ptr(0);
-        u8* topLine1 = roi.ptr(1);
-        u8* btmLine0 = roi.ptr(roi.rows-1);
-        u8* btmLine1 = roi.ptr(roi.rows-2);
-        for(s32 j=0; j<numCornerPixels; ++j) {
-          topLine0[j] = topLine1[j] = cornerValue;
-          btmLine0[j] = btmLine1[j] = cornerValue;
-          topLine0[roi.cols-1-j] = topLine1[roi.cols-1-j] = cornerValue;
-          btmLine0[roi.cols-1-j] = btmLine1[roi.cols-1-j] = cornerValue;
-        }
-      }
-    }
-  }
+    SmallMatrix<2, 3, float> W{
+      alpha_x, beta_y,  (1.f - alpha_x)*x0 - beta_y*y0 + tX,
+      -beta_x, alpha_y, beta_x*x0 + (1.f - alpha_y)*y0 + tY
+    };
+
+    return W;
+  } // GetTransformationMatrix()
+
   
   void ProceduralFace::DrawEye(WhichEye whichEye, cv::Mat_<u8>& faceImg) const
   {
     assert(faceImg.rows == ProceduralFace::HEIGHT &&
            faceImg.cols == ProceduralFace::WIDTH);
     
-    const s32 NominalEyeCenX = (whichEye == Left ? NominalLeftEyeCenX : NominalRightEyeCenX);
+    const s32 eyeWidth  = NominalEyeWidth;
+    const s32 eyeHeight = NominalEyeHeight;
     
-    const s32 eyeWidthPix = GetScaledValue(GetParameter(whichEye, Parameter::EyeWidth),
-                                            MinEyeWidthPix, MaxEyeWidthPix);
-    
-    const s32 eyeHeightPix = GetScaledValue(GetParameter(whichEye, Parameter::EyeHeight),
-                                            MinEyeHeightPix, MaxEyeHeightPix);
-    
-    const s32 xEye = NominalEyeCenX - eyeWidthPix/2;
-    const s32 yEye = NominalEyeCenY - eyeHeightPix/2;
-    const cv::Rect eyeRect(xEye, yEye, eyeWidthPix, eyeHeightPix);
-    
-    const s32 pupilHeightPix = GetScaledValue(GetParameter(whichEye, Parameter::PupilHeight), 0, eyeHeightPix);
-    const s32 pupilWidthPix  = GetScaledValue(GetParameter(whichEye, Parameter::PupilWidth), 0, eyeWidthPix);
-    const s32 pupilCenXPix   = GetParameter(whichEye, Parameter::PupilCenX) * static_cast<f32>(eyeWidthPix/2);
-    const s32 pupilCenYPix   = GetParameter(whichEye, Parameter::PupilCenY) * static_cast<f32>(eyeHeightPix/2);
-    const s32 xPupil = NominalEyeCenX + pupilCenXPix - pupilWidthPix/2;
-    const s32 yPupil = NominalEyeCenY + pupilCenYPix - pupilHeightPix/2;
-    const cv::Rect pupilRect(xPupil,yPupil,pupilWidthPix,pupilHeightPix);
-    
-    // Fill eye
-    cv::Mat_<u8> roi = faceImg(eyeRect & imgRect);
-    RoundedRectangleHelper(roi, 255, 3);
-    
-    // Black out pupil
-    roi = faceImg(pupilRect & imgRect);
-    RoundedRectangleHelper(roi, 0, 2);
-    
-    // Eyebrow: (quadrilateral)
-    const f32 browAngleRad = DEG_TO_RAD(static_cast<f32>(GetScaledValue(GetParameter(whichEye, Parameter::BrowAngle),
-                                                                        -MaxBrowAngle, MaxBrowAngle)));
-    const float cosAngle = std::cos(browAngleRad);
-    const float sinAngle = std::sin(browAngleRad);
-    
-    const s32 browXPosPix = GetScaledValue(GetParameter(whichEye, Parameter::BrowCenX),
-                                           -eyeWidthPix/2, eyeWidthPix/2) + NominalEyeCenX;
-    const s32 browYPosPix = GetBrowHeight(eyeHeightPix, GetParameter(whichEye, Parameter::BrowCenY));
+    // Left/right here will be in terms of the left eye. We will mirror to get
+    // the right eye. So
+    const s32 upLeftRadX  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 upLeftRadY  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const s32 lowLeftRadX = std::round(_faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 lowLeftRadY = std::round(_faceData.GetParameter(whichEye, Parameter::LowerOuterRadiusY)*0.5f*static_cast<f32>(eyeHeight));
 
-    const s32 browHalfLength = GetScaledValue(GetParameter(whichEye, Parameter::BrowLength), 0, MidBrowLengthPix, MaxBrowLengthPix)/2;
+    const s32 upRightRadX  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 upRightRadY  = std::round(_faceData.GetParameter(whichEye, Parameter::UpperInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+    const s32 lowRightRadX = std::round(_faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusX)*0.5f*static_cast<f32>(eyeWidth));
+    const s32 lowRightRadY = std::round(_faceData.GetParameter(whichEye, Parameter::LowerInnerRadiusY)*0.5f*static_cast<f32>(eyeHeight));
+
     
-    if(browHalfLength > 0) {
-      const cv::Point leftPoint(browXPosPix-std::round(static_cast<f32>(browHalfLength)*cosAngle),
-                                browYPosPix-std::round(static_cast<f32>(browHalfLength)*sinAngle));
-      const cv::Point rightPoint(browXPosPix+std::round(static_cast<f32>(browHalfLength)*cosAngle),
-                                 browYPosPix+std::round(static_cast<f32>(browHalfLength)*sinAngle));
+    //
+    // Compute eye and lid polygons:
+    //
+    std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
+    const s32 ellipseDelta = 10;
+    
+    // 1. Eye shape poly
+    {
+      // Upper right corner
+      if(upRightRadX > 0 && upRightRadY > 0) {
+        cv::ellipse2Poly(cv::Point(eyeWidth/2  - upRightRadX, -eyeHeight/2 + upRightRadY),
+                         cv::Size(upRightRadX,upRightRadY), 0, 270, 360, ellipseDelta, segment);
+        eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
+      } else {
+        eyePoly.push_back({eyeWidth/2,-eyeHeight/2});
+      }
       
-      const cv::Point leftPointBtm(leftPoint.x,   leftPoint.y + 3);
-      const cv::Point rightPointBtm(rightPoint.x, rightPoint.y + 3);
+      // Lower right corner
+      if(lowRightRadX > 0 && lowRightRadY > 0) {
+        cv::ellipse2Poly(cv::Point(eyeWidth/2 - lowRightRadX, eyeHeight/2 - lowRightRadY),
+                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, ellipseDelta, segment);
+        eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
+      } else {
+        eyePoly.push_back({eyeWidth/2, eyeHeight/2});
+      }
       
-      const std::vector<cv::Point> eyebrow = {
-        leftPoint, rightPoint, rightPointBtm, leftPointBtm
+      // Lower left corner
+      if(lowLeftRadX > 0 && lowLeftRadY > 0) {
+        cv::ellipse2Poly(cv::Point(-eyeWidth/2  + lowLeftRadX, eyeHeight/2 - lowLeftRadY),
+                         cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, ellipseDelta, segment);
+        eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
+      } else {
+        eyePoly.push_back({-eyeWidth/2, eyeHeight/2});
+      }
+    }
+    
+    // Upper left corner
+    if(upLeftRadX > 0 && upLeftRadY > 0) {
+      cv::ellipse2Poly(cv::Point(-eyeWidth/2 + upLeftRadX, -eyeHeight/2 + upLeftRadY),
+                       cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, ellipseDelta, segment);
+      eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
+    } else {
+      eyePoly.push_back({-eyeWidth/2,-eyeHeight/2});
+    }
+    
+    // 2. Lower lid poly
+    {
+      const s32 lowerLidY = std::round(_faceData.GetParameter(whichEye, Parameter::LowerLidY) * static_cast<f32>(eyeHeight));
+      const f32 angleDeg = _faceData.GetParameter(whichEye, Parameter::LowerLidAngle);
+      const f32 angleRad = DEG_TO_RAD(angleDeg);
+      const s32 yAngleAdj = -std::round(static_cast<f32>(eyeWidth)*.5f * std::tan(angleRad));
+      lowerLidPoly = {
+        { eyeWidth/2 + 1, eyeHeight/2 - lowerLidY - yAngleAdj}, // Upper right corner
+        { eyeWidth/2 + 1, eyeHeight/2 + 1}, // Lower right corner
+        {-eyeWidth/2 - 1, eyeHeight/2 + 1}, // Lower left corner
+        {-eyeWidth/2 - 1, eyeHeight/2 - lowerLidY + yAngleAdj}, // Upper left corner
       };
-      
-      cv::fillConvexPoly(faceImg, eyebrow, 255, 4);
+      // Add bend:
+      const f32 yRad = std::round(_faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight));
+      if(yRad != 0) {
+        const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
+        cv::ellipse2Poly(cv::Point(0, eyeHeight/2 - lowerLidY),
+                         cv::Size(xRad,yRad), angleDeg, 180, 360, ellipseDelta, segment);
+        ASSERT_NAMED(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
+                     std::abs(segment.front().y-lowerLidPoly.back().y)<3,
+                     "First curved lower lid segment point not close to last lid poly point.");
+        ASSERT_NAMED(std::abs(segment.back().x - lowerLidPoly.front().x)<3 &&
+                     std::abs(segment.back().y - lowerLidPoly.front().y)<3,
+                     "Last curved lower lid segment point not close to first lid poly point.");
+        lowerLidPoly.insert(lowerLidPoly.end(), segment.begin(), segment.end());
+      }
+    }
+    
+    // 3. Upper lid poly
+    {
+      const s32 upperLidY = std::round(_faceData.GetParameter(whichEye, Parameter::UpperLidY) * static_cast<f32>(eyeHeight));
+      const f32 angleDeg = _faceData.GetParameter(whichEye, Parameter::UpperLidAngle);
+      const f32 angleRad = DEG_TO_RAD(angleDeg);
+      const s32 yAngleAdj = -std::round(static_cast<f32>(eyeWidth)*.5f * std::tan(angleRad));
+      upperLidPoly = {
+        {-eyeWidth/2 - 1, -eyeHeight/2 + upperLidY + yAngleAdj}, // Lower left corner
+        {-eyeWidth/2 - 1, -eyeHeight/2 - 1}, // Upper left corner
+        { eyeWidth/2 + 1, -eyeHeight/2 - 1}, // Upper right corner
+        { eyeWidth/2 + 1, -eyeHeight/2 + upperLidY - yAngleAdj}, // Lower right corner
+      };
+      // Add bend:
+      const f32 yRad = std::round(_faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight));
+      if(yRad != 0) {
+        const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
+        cv::ellipse2Poly(cv::Point(0, -eyeHeight/2 + upperLidY),
+                         cv::Size(xRad,yRad), angleDeg, 0, 180, ellipseDelta, segment);
+        ASSERT_NAMED(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
+                     std::abs(segment.front().y - upperLidPoly.back().y)<3,
+                     "First curved upper lid segment point not close to last lid poly point.");
+        ASSERT_NAMED(std::abs(segment.back().x - upperLidPoly.front().x)<3 &&
+                     std::abs(segment.back().y - upperLidPoly.front().y)<3,
+                     "Last curved upper lid segment point not close to first lid poly point.");
+        upperLidPoly.insert(upperLidPoly.end(), segment.begin(), segment.end());
+      }
+    }
+    
+    // Apply rotation, translation, and scaling to the eye and lid polygons:
+    SmallMatrix<2, 3, f32> W = GetTransformationMatrix(_faceData.GetParameter(whichEye, Parameter::EyeAngle),
+                                                       _faceData.GetParameter(whichEye, Parameter::EyeScaleX),
+                                                       _faceData.GetParameter(whichEye, Parameter::EyeScaleY),
+                                                       _faceData.GetParameter(whichEye, Parameter::EyeCenterX),
+                                                       _faceData.GetParameter(whichEye, Parameter::EyeCenterY));
+    
+    for(auto poly : {&eyePoly, &lowerLidPoly, &upperLidPoly})
+    {
+      for(auto & point : *poly)
+      {
+        Point<2,f32> temp = W * Point<3,f32>{
+          static_cast<f32>(whichEye == WhichEye::Left ? point.x : -point.x), static_cast<f32>(point.y), 1.f};
+        point.x = std::round(temp.x());
+        point.y = std::round(temp.y()) + _firstScanLine; // Move _with_ the scanlines
+      }
+    }
+
+    // Draw eye
+    cv::fillConvexPoly(faceImg, eyePoly, 255, 4);
+    
+    // Black out lids
+    if(!upperLidPoly.empty()) {
+      cv::fillConvexPoly(faceImg, upperLidPoly, 0, 4);
+    }
+    if(!lowerLidPoly.empty()) {
+      cv::fillConvexPoly(faceImg, lowerLidPoly, 0, 4);
     }
     
   } // DrawEye()
@@ -151,135 +216,131 @@ namespace Cozmo {
     cv::Mat_<u8> faceImg(HEIGHT, WIDTH);
     faceImg.setTo(0);
     
-    //DrawEyeBrow(Left, faceImg);
-    //DrawEyeBrow(Right, faceImg);
-    DrawEye(Left, faceImg);
-    DrawEye(Right, faceImg);
+    DrawEye(WhichEye::Left, faceImg);
+    DrawEye(WhichEye::Right, faceImg);
     
-    // Rotate entire face
-    if(_faceAngle != 0) {
-      // Note negative angle to get mirroring
-      const f32 faceAngleDeg = GetScaledValue(_faceAngle, -MaxFaceAngle, MaxFaceAngle);
-      cv::Mat R = cv::getRotationMatrix2D(cv::Point2f(WIDTH/2,HEIGHT/2), faceAngleDeg, 1.0);
-      cv::warpAffine(faceImg, faceImg, R, cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
+    // Apply whole-face params
+    if(_faceData.GetFaceAngle() != 0 || !(_faceData.GetFacePosition() == 0) || !(_faceData.GetFaceScale() == 1.f)) {
+      
+      SmallMatrix<2, 3, float> W = GetTransformationMatrix(_faceData.GetFaceAngle(),
+                                                           _faceData.GetFaceScale() .x(), _faceData.GetFaceScale() .y(),
+                                                           _faceData.GetFacePosition().x(), _faceData.GetFacePosition().y(),
+                                                           static_cast<f32>(WIDTH)*0.5f,
+                                                           static_cast<f32>(HEIGHT)*0.5f);
+      
+      cv::warpAffine(faceImg, faceImg, W.get_CvMatx_(), cv::Size(WIDTH, HEIGHT), cv::INTER_NEAREST);
     }
 
     // Apply interlacing / scanlines at the end
-    // TODO: Switch odd/even periodically to avoid burn-in?
     for(s32 i=_firstScanLine; i<HEIGHT; i+=2) {
       faceImg.row(i).setTo(0);
     }
 
     return faceImg;
   } // DrawFace()
-  
-  
-  template<typename T>
-  inline static T LinearBlendHelper(const T value1, const T value2, const float blendFraction)
-  {
-    if(value1 == value2) {
-      // Special case, no math needed
-      return value1;
-    }
-    
-    T blendValue = static_cast<T>((1.f - blendFraction)*static_cast<float>(value1) +
-                                  blendFraction*static_cast<float>(value2));
-    return blendValue;
-  }
-  
-  inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1,
-                                                       const ProceduralFace::Value angle2,
-                                                       const float blendFraction)
-  {
-    if(angle1 == angle2) {
-      // Special case, no math needed
-      return angle1;
-    }
-    
-    const float angle1_rad = DEG_TO_RAD(static_cast<float>(angle1));
-    const float angle2_rad = DEG_TO_RAD(static_cast<float>(angle2));
-    
-    const float x = LinearBlendHelper(std::cos(angle1_rad), std::cos(angle2_rad), blendFraction);
-    const float y = LinearBlendHelper(std::sin(angle1_rad), std::sin(angle2_rad), blendFraction);
-    
-    return static_cast<ProceduralFace::Value>(RAD_TO_DEG(std::atan2(y,x)));
-  }
-  
-  
-  void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
-                                   float blendFraction, bool usePupilSaccades)
-  {
-    assert(blendFraction >= 0.f && blendFraction <= 1.f);
-    
-    // Special cases, no blending required:
-    if(blendFraction == 0.f) {
-      // Preserve original timestamp
-      TimeStamp_t t = GetTimeStamp();
-      *this = face1;
-      this->SetTimeStamp(t);
-      return;
-    } else if(blendFraction == 1.f) {
-      // Preserve original timestamp
-      TimeStamp_t t = GetTimeStamp();
-      *this = face2;
-      this->SetTimeStamp(t);
-      return;
-    }
-    
-    for(int iWhichEye=0; iWhichEye < 2; ++iWhichEye)
-    {
-      WhichEye whichEye = static_cast<WhichEye>(iWhichEye);
-      
-      for(int iParam=0; iParam < static_cast<int>(Parameter::NumParameters); ++iParam)
-      {
-        Parameter param = static_cast<Parameter>(iParam);
-        
-        if(param == Parameter::BrowAngle) {
-          // Special case: angle blending
-          SetParameter(whichEye, param, BlendAngleHelper(face1.GetParameter(whichEye, param),
-                                                          face2.GetParameter(whichEye, param),
-                                                          blendFraction));
-        } else if(usePupilSaccades && (param == Parameter::PupilCenX || param == Parameter::PupilCenY)) {
-          // Special case: pupils saccade rather than moving slowly. So immediately
-          // jump to new position halfway between the two frames
-          SetParameter(whichEye, param, (blendFraction <= .5f ?
-                                         face1.GetParameter(whichEye, param) :
-                                         face2.GetParameter(whichEye, param)));
-        } else {
-          // Regular linear interpolation
-          SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
-                                                           face2.GetParameter(whichEye, param),
-                                                           blendFraction));
-        }
-      } // for each parameter
-    } // for each eye
-    
-    SetFaceAngle(BlendAngleHelper(face1.GetFaceAngle(), face2.GetFaceAngle(), blendFraction));
-    
-  } // Interpolate()
-  
-  
-  void ProceduralFace::Blink()
-  {
-    // Figure out the height needed to keep the eyebrows from moving:
-    for(auto whichEye : {Left, Right}) {
-      // Current eye height in pixels:
-      const s32 eyeHeightPix = GetScaledValue(GetParameter(whichEye, Parameter::EyeHeight),
-                                              MinEyeHeightPix, MaxEyeHeightPix);
-      // Current eyebrow Y position in pixels
-      const s32 browYPosPix = GetBrowHeight(eyeHeightPix, GetParameter(whichEye, Parameter::BrowCenY));
-      
-      // Get corresponding parameter value for that same brow height, when
-      // eye is closed (as it will be when we blink)
-      SetParameter(whichEye, Parameter::BrowCenY, 2.f*(1.f-static_cast<f32>(browYPosPix)/static_cast<f32>(ProceduralFace::NominalEyeCenY-1))-1.f);
-    }
-    
-    // Close eyes
-    SetParameter(Left, Parameter::EyeHeight, -1.f);
-    SetParameter(Right, Parameter::EyeHeight, -1.f);
 
-    SwitchInterlacing();
-  }
+  bool ProceduralFace::GetNextBlinkFrame(TimeStamp_t& offset)
+  {
+    static ProceduralFace originalFace;
+    
+    enum class BlinkState : uint8_t {
+      Closing,
+      Closed,
+      JustOpened,
+      Opening
+    };
+    
+    struct BlinkParams {
+      ProceduralFaceParams::Value height, width;
+      TimeStamp_t t;
+      BlinkState blinkState;
+    };
+    
+    static const std::vector<BlinkParams> blinkParams{
+      {.height = .85f, .width = 1.05f, .t = 33,  .blinkState = BlinkState::Closing},
+      {.height = .6f,  .width = 1.2f,  .t = 33,  .blinkState = BlinkState::Closing},
+      {.height = .1f,  .width = 2.5f,  .t = 33,  .blinkState = BlinkState::Closing},
+      {.height = .05f, .width = 5.f,   .t = 33,  .blinkState = BlinkState::Closed},
+      {.height = .15f, .width = 2.f,   .t = 33,  .blinkState = BlinkState::JustOpened},
+      {.height = .7f,  .width = 1.2f,  .t = 33,  .blinkState = BlinkState::Opening},
+      {.height = .9f,  .width = 1.f,   .t = 100, .blinkState = BlinkState::Opening}
+    };
+    
+    static const std::vector<Parameter> lidParams{
+      Parameter::LowerLidY, Parameter::LowerLidBend, Parameter::LowerLidAngle,
+      Parameter::UpperLidY, Parameter::UpperLidBend, Parameter::UpperLidAngle,
+    };
+    
+    static auto paramIter = blinkParams.begin();
+    
+    if(paramIter == blinkParams.end()) {
+      // Set everything back to original params
+      *this = originalFace;
+      offset = 33;
+      
+      // Reset for next time
+      paramIter = blinkParams.begin();
+      // Let caller know this is the last blink frame
+      return false;
+      
+    } else {
+      if(paramIter == blinkParams.begin())
+      {
+        // Store the current pre-blink parameters before we muck with them
+        originalFace = *this;
+      }
+      
+      for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
+        _faceData.SetParameter(whichEye, Parameter::EyeScaleX,
+                     originalFace._faceData.GetParameter(whichEye, Parameter::EyeScaleX) * paramIter->width);
+        _faceData.SetParameter(whichEye, Parameter::EyeScaleY,
+                     originalFace._faceData.GetParameter(whichEye, Parameter::EyeScaleY) * paramIter->height);
+      }
+      offset = paramIter->t;
+      
+      switch(paramIter->blinkState)
+      {
+        case BlinkState::Closed:
+        {
+          SwitchInterlacing();
+          
+          // In case eyes are at different height, get the average height so the
+          // blink line when completely closed is nice and horizontal
+          const ProceduralFaceParams::Value blinkHeight = (originalFace._faceData.GetParameter(WhichEye::Left,  Parameter::EyeCenterY) +
+                                     originalFace._faceData.GetParameter(WhichEye::Right, Parameter::EyeCenterY))/2;
+          
+          // Zero out the lids so they don't interfere with the "closed" line
+          for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
+            _faceData.SetParameter(whichEye, Parameter::EyeCenterY, blinkHeight);
+            for(auto lidParam : lidParams) {
+              _faceData.SetParameter(whichEye, lidParam, 0);
+            }
+          }
+          break;
+        }
+        case BlinkState::JustOpened:
+        {
+          // Restore eye heights and lids
+          for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
+            _faceData.SetParameter(whichEye, Parameter::EyeCenterY,
+                         originalFace._faceData.GetParameter(whichEye, Parameter::EyeCenterY));
+            for(auto lidParam : lidParams) {
+              _faceData.SetParameter(whichEye, lidParam, originalFace._faceData.GetParameter(whichEye, lidParam));
+            }
+          }
+          break;
+        }
+        default:
+          break;
+      }
+      
+      ++paramIter;
+      
+      // Let caller know there are more blink frames left, so keep calling
+      return true;
+    }
+    
+  } // GetNextBlinkFrame()
   
   void ProceduralFace::MimicHumanFace(const Vision::TrackedFace& face)
   {

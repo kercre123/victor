@@ -68,7 +68,6 @@ public:
 
 private:
 
-
   // Name of this animation
   std::string _name;
   bool _isInitialized;

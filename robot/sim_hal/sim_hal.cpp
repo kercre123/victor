@@ -487,9 +487,9 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       */
 
-      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
+      leds_[LED_BACKPACK_FRONT]   = webotRobot_.getLED("ledHealth0");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
-      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
+      leds_[LED_BACKPACK_BACK]  = webotRobot_.getLED("ledHealth2");
       leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
       leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
 
@@ -1167,5 +1167,17 @@ namespace Anki {
       // Stub
     }
 
+    void HAL::FacePrintf(const char *format, ...)
+    {
+      // Stub
+    }
+    
+    void HAL::FaceUnPrintf()
+    {
+      // Stub
+    }
+
+    
+    
   } // namespace Cozmo
 } // namespace Anki

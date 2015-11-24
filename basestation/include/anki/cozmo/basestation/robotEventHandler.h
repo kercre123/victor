@@ -61,6 +61,8 @@ protected:
   void HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleMoodEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   

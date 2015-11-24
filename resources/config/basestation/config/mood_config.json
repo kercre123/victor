@@ -1,0 +1,68 @@
+{
+   "decayGraphs" : [
+      {
+         "emotionType" : "default",
+         "nodes" : [
+            {
+               "x" : 0,
+               "y" : 1
+            },
+            {
+               "x" : 10,
+               "y" : 1
+            },
+            {
+               "x" : 30,
+               "y" : 0.9
+            },
+            {
+               "x" : 75,
+               "y" : 0.6
+            },
+            {
+               "x" : 150,
+               "y" : 0
+            }
+         ]
+      }
+   ],
+   "eventMapper" : {
+      "emotionEvents" : [
+         {
+            "emotionAffectors" : [										  
+               {
+                  "emotionType" : "Happy",
+                  "value" : 0.25
+               },
+               {
+                  "emotionType" : "Confident",
+                  "value" : 0.5
+               },
+               {
+                  "emotionType" : "Calm",
+                  "value" : 0.12
+               }
+            ],
+            "name" : "OCD_Celebrate"
+         },
+         {
+            "emotionAffectors" : [
+               {
+                  "emotionType" : "Happy",
+                  "value" : -0.12
+               },
+               {
+                  "emotionType" : "Confident",
+                  "value" : -0.12
+               },
+               {
+                  "emotionType" : "Calm",
+                  "value" : -0.12
+               }			   
+            ],
+            "name" : "OCD_PickupFail"
+         }
+      ]
+   }
+}
+

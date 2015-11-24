@@ -442,14 +442,18 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (f32)payload.state.battVolt10x/10);
   DrawText(VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Video: %d HZ   AnimBufFree: %d",
-    payload.videoFramefateHz, payload.numAnimBytesFree);
+  sprintf(txt, "Video: %d Hz   Proc: %d Hz",
+    payload.videoFrameRateHz, payload.imageProcFrameRateHz);
   DrawText(VizTextLabelType::TEXT_LABEL_VID_RATE, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Status: %5s %5s %7s",
+  sprintf(txt, "AnimBufFree: %d", payload.numAnimBytesFree);
+  DrawText(VizTextLabelType::TEXT_LABEL_ANIM_BUFFER, Anki::NamedColors::GREEN, txt);
+  
+  sprintf(txt, "Status: %5s %5s %7s %5s",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK ? "CARRY" : "",
     payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKING_OR_PLACING ? "PAP" : "",
-    payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "");
+    payload.state.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP ? "PICKDUP" : "",
+    payload.state.status & (uint32_t)RobotStatusFlag::CLIFF_DETECTED ? "CLIFF" : "");
   DrawText(VizTextLabelType::TEXT_LABEL_STATUS_FLAG, Anki::NamedColors::GREEN, txt);
 
   char animLabel[16] = {0};

@@ -36,13 +36,20 @@ namespace Anki
       void HALExec(u8* buf, int buflen, int eof)
       {
         I2CEnable();
-        //UartTransmit();
+        UartTransmit();
         TransmitDrop(buf, buflen, eof);
-
-        //UartReceive(); // This should be done last
       }
     }
   }
+}
+
+void EnterRecoveryMode(void) {
+  SCB->VTOR = 0;
+  __asm { SVC 0 }
+};
+
+extern "C" void HardFault_Handler(void) {
+  for(;;) ;
 }
 
 int main (void)
@@ -50,7 +57,7 @@ int main (void)
   using namespace Anki::Cozmo::HAL;
   
   // Power up all ports
-  SIM_SCGC5 |= 
+  SIM_SCGC5 |=
     SIM_SCGC5_PORTA_MASK |
     SIM_SCGC5_PORTB_MASK |
     SIM_SCGC5_PORTC_MASK |
@@ -74,14 +81,16 @@ int main (void)
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
-  IMUInit();
+  Anki::Cozmo::HAL::MicroWait(100000); // Because the FLL is lame
+
+  //IMUInit();
   OLEDInit();
-  //SPIInit();
-  //DacInit();
-  //UartInit();
+  SPIInit();
+  //DacInit(); // This just plays a tone.
 
   CameraInit();
-  
+  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK
+
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
   for(;;)
