@@ -22,18 +22,21 @@
         "translation" : "Ask Cozmo Challenge 1"
     },
     "hubWorld.investorDemo.investorDemoScene1" : {
-        "translation" : "Investor Scene 1"
+        "translation" : "Investor Scene"
     },
     "hubWorld.dockTraining.challenge1" : {
-        "translation" : "Docking Challenge 1"
+        "translation" : "Docking"
     },
     "hubWorld.followCube.challenge1" : {
-        "translation" : "Follow Cube Challenge 1"
+        "translation" : "Follow Cube"
     },
     "hubWorld.rotationTraining.challenge1" : {
-        "translation" : "Turning Challenge 1"
+        "translation" : "Turning Challenge"
     },
     "hubWorld.visionTraining.challenge1" : {
-        "translation" : "Vision Challenge 1"
+        "translation" : "Cube Vision"
+    },
+    "hubWorld.winkGame.challenge1" : {
+        "translation" : "Wink Game"
     }
 }
