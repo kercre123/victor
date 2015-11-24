@@ -85,7 +85,7 @@
       "Name": "End Conversation",
       "Id": 4,
       "Sequencial": true,
-      "Final": false,
+      "Final": true,
       "FailOnError": false,
       "Conditions": [
         {

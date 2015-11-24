@@ -35,6 +35,11 @@ namespace ScriptedSequences {
       }
     }
 
+    public SimpleAsyncToken(Exception error) {
+      Fail(error);
+    }
+
+
     public void Succeed() {
       if (!IsReady) {
         IsReady = true;
