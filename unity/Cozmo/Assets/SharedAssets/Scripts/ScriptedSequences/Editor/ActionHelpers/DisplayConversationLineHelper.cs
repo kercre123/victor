@@ -17,7 +17,7 @@ namespace ScriptedSequences.Editor.ActionHelpers {
 
     private static string[] sSideOptions = { "Left", "Right" };
 
-    private string _translation;
+    private string _Translation;
 
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
 
@@ -34,21 +34,21 @@ namespace ScriptedSequences.Editor.ActionHelpers {
       }
 
 
-      if (_translation == null) {
-        _translation = LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey);
+      if (_Translation == null) {
+        _Translation = LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey);
       }
 
       Value.LineKey = EditorGUILayout.TextField("Translation Key", Value.LineKey);
 
-      _translation = EditorGUILayout.TextField("Translation", _translation);
+      _Translation = EditorGUILayout.TextField("Translation", _Translation);
 
-      if (_translation != LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey)) {
+      if (_Translation != LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey)) {
         EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Reload Translation")) {
-          _translation = LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey);
+          _Translation = LocalizationEditorUtility.GetTranslation(kLocalizationFile, Value.LineKey);
         }
         if (GUILayout.Button("Save Translation")) {
-          LocalizationEditorUtility.SetTranslation(kLocalizationFile, Value.LineKey, _translation);
+          LocalizationEditorUtility.SetTranslation(kLocalizationFile, Value.LineKey, _Translation);
         }
         EditorGUILayout.EndHorizontal();
       }
