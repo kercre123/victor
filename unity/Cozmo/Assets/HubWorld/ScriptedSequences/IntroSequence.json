@@ -103,7 +103,7 @@
       "Name": "PlayWakeAnimation",
       "Id": 1,
       "Sequencial": true,
-      "Final": false,
+      "Final": true,
       "FailOnError": false,
       "Conditions": [],
       "Actions": [
