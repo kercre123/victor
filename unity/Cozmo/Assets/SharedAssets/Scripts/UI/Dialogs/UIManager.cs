@@ -28,15 +28,15 @@ public class UIManager : MonoBehaviour {
   }
 
   [SerializeField]
-  private Canvas _overlayCanvas;
+  private Canvas _OverlayCanvas;
   
   [SerializeField]
-  private EventSystem _eventSystemScript;
+  private EventSystem _EventSystemScript;
 
   [SerializeField]
   private GameObject _TouchCatcherPrefab;
 
-  private List<BaseView> _openViews;
+  private List<BaseView> _OpenViews;
 
   private TouchCatcher _TouchCatcherInstance;
 
@@ -44,13 +44,13 @@ public class UIManager : MonoBehaviour {
 
   void Awake() {
     Instance = this;
-    _openViews = new List<BaseView>();
+    _OpenViews = new List<BaseView>();
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
 
   public static GameObject CreateUIElement(GameObject uiPrefab) {
-    return CreateUIElement(uiPrefab, Instance._overlayCanvas.transform);
+    return CreateUIElement(uiPrefab, Instance._OverlayCanvas.transform);
   }
 
   public static GameObject CreateUIElement(GameObject uiPrefab, Transform parentTransform) {
@@ -61,11 +61,11 @@ public class UIManager : MonoBehaviour {
 
   public static BaseView OpenView(BaseView viewPrefab) {
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
-    newView.transform.SetParent(Instance._overlayCanvas.transform, false);
+    newView.transform.SetParent(Instance._OverlayCanvas.transform, false);
 
     BaseView baseViewScript = newView.GetComponent<BaseView>();
     baseViewScript.OpenView();
-    Instance._openViews.Add(baseViewScript);
+    Instance._OpenViews.Add(baseViewScript);
 
     return baseViewScript;
   }
@@ -79,41 +79,41 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllViews() {
-    while (Instance._openViews.Count > 0) {
-      if (Instance._openViews[0] != null) {
-        Instance._openViews[0].CloseView();
+    while (Instance._OpenViews.Count > 0) {
+      if (Instance._OpenViews[0] != null) {
+        Instance._OpenViews[0].CloseView();
       }
     }
   }
 
   public static void CloseAllViewsImmediately() {
-    while (Instance._openViews.Count > 0) {
-      if (Instance._openViews[0] != null) {
-        Instance._openViews[0].CloseViewImmediately();
+    while (Instance._OpenViews.Count > 0) {
+      if (Instance._OpenViews[0] != null) {
+        Instance._OpenViews[0].CloseViewImmediately();
       }
     }
   }
 
   public static Camera GetUICamera() {
-    return _Instance._overlayCanvas.worldCamera;
+    return _Instance._OverlayCanvas.worldCamera;
   }
 
   public static void DisableTouchEvents() {
-    _Instance._eventSystemScript.gameObject.SetActive(false);
+    _Instance._EventSystemScript.gameObject.SetActive(false);
   }
 
   public static void EnableTouchEvents() {
-    _Instance._eventSystemScript.gameObject.SetActive(true);
+    _Instance._EventSystemScript.gameObject.SetActive(true);
   }
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
-    Instance._openViews.Remove(view);
+    Instance._OpenViews.Remove(view);
   }
 
   public void ShowTouchCatcher(System.Action onTouch = null) {
     if (_TouchCatcherInstance == null) {
       _TouchCatcherInstance = GameObject.Instantiate<GameObject>(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
-      _TouchCatcherInstance.transform.SetParent(_Instance._overlayCanvas.transform, false);
+      _TouchCatcherInstance.transform.SetParent(_Instance._OverlayCanvas.transform, false);
     }
     _TouchCatcherInstance.Enable();
     if (onTouch != null) {
