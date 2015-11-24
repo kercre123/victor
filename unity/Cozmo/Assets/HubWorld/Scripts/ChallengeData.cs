@@ -22,6 +22,9 @@ public class ChallengeData : ScriptableObject {
   // challenge title shown to the player.
   public string ChallengeTitleKey;
 
+  // icon to show to represent this challenge
+  public Sprite ChallengeIcon;
+
   // The set of requirements needed to unlock this challenge
   public ChallengeRequirements ChallengeReqs;
 

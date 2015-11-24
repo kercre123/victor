@@ -15,6 +15,7 @@ MonoBehaviour:
   ChallengeID: DockTrainingChallenge1
   EnableChallenge: 1
   ChallengeTitleKey: hubWorld.dockTraining.challenge1
+  ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   ChallengeReqs:
     ChallengeGateKeys:
     - RotationTrainingChallenge1

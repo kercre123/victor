@@ -15,14 +15,14 @@ public class HubWorldButton : MonoBehaviour {
 
   private string _ChallengeId;
 
-  public void Initialize(string challengeId, string challengeTitleLocKey) {
+  public virtual void Initialize(ChallengeData challengeData) {
     
-    _ChallengeId = challengeId;
+    _ChallengeId = challengeData.ChallengeID;
     _ButtonScript.onClick.AddListener(HandleButtonClicked);
 
     // Allow for buttons that only show an image and no text
     if (_ButtonLabel != null) {
-      _ButtonLabel.text = Localization.Get(challengeTitleLocKey);
+      _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
     }
   }
 
