@@ -12,7 +12,7 @@ namespace Anki.Debug {
     public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
       base.Init(singleVar);
 
-      _Checkbox.isOn = singleVar._valueAsUInt64 != 0;
+      _Checkbox.isOn = singleVar.ValueAsUInt64 != 0;
 
       _Checkbox.onValueChanged.AddListener(HandleValueChanged);
     }
@@ -21,11 +21,11 @@ namespace Anki.Debug {
       // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
       // otherwise it will send another Set to a valid value.
       // Empty string just means toggle.
-      if (_varData._unityVarHandler != null) {
-        _varData._unityVarHandler(val);
+      if (_VarData.UnityVarHandler != null) {
+        _VarData.UnityVarHandler(val);
       }
       else {
-        RobotEngineManager.Instance.SetDebugConsoleVar(_varData._varName, "");
+        RobotEngineManager.Instance.SetDebugConsoleVar(_VarData.VarName, "");
       }
     }
   }

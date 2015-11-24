@@ -14,15 +14,15 @@ namespace Anki.Debug {
     public override void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
       base.Init(singleVar);
 
-      switch (singleVar._tagType) {
+      switch (singleVar.TagType) {
       case ConsoleVarUnion.Tag.varDouble:
-        _StatInputField.text = singleVar._valueAsDouble.ToString();
+        _StatInputField.text = singleVar.ValueAsDouble.ToString();
         break;
       case ConsoleVarUnion.Tag.varInt:
-        _StatInputField.text = singleVar._valueAsInt64.ToString();
+        _StatInputField.text = singleVar.ValueAsInt64.ToString();
         break;
       case ConsoleVarUnion.Tag.varUint:
-        _StatInputField.text = singleVar._valueAsUInt64.ToString();
+        _StatInputField.text = singleVar.ValueAsUInt64.ToString();
         break;
       }
 
@@ -32,13 +32,13 @@ namespace Anki.Debug {
     private void HandleValueChanged(string strValue) {
 
       // If it's a unity variable, pass back with the same type.
-      if (_varData._unityVarHandler != null) {
-        switch (_varData._tagType) {
+      if (_VarData.UnityVarHandler != null) {
+        switch (_VarData.TagType) {
         case ConsoleVarUnion.Tag.varDouble:
           {
             double result;
             if (double.TryParse(strValue, out result)) {
-              _varData._unityVarHandler(result);
+              _VarData.UnityVarHandler(result);
             }
           }
           break;
@@ -46,7 +46,7 @@ namespace Anki.Debug {
           {
             int result;
             if (int.TryParse(strValue, out result)) {
-              _varData._unityVarHandler(result);
+              _VarData.UnityVarHandler(result);
             }
           }
           break;
@@ -54,7 +54,7 @@ namespace Anki.Debug {
           {
             uint result;
             if (uint.TryParse(strValue, out result)) {
-              _varData._unityVarHandler(result);
+              _VarData.UnityVarHandler(result);
             }
           }
           break;
@@ -64,7 +64,7 @@ namespace Anki.Debug {
     // If the game is fine with this value it will send a VerifyDebugConsoleVarMessage
     // otherwise it will send another Set to a valid value.
     else {
-        RobotEngineManager.Instance.SetDebugConsoleVar(_varData._varName, strValue);
+        RobotEngineManager.Instance.SetDebugConsoleVar(_VarData.VarName, strValue);
       }
     }
   }

@@ -19,11 +19,11 @@ namespace Anki.Debug {
     }
 
     public void HandleClick() {
-      if (_varData._unityVarHandler != null) {
-        _varData._unityVarHandler(_StatInputField.text);
+      if (_VarData.UnityVarHandler != null) {
+        _VarData.UnityVarHandler(_StatInputField.text);
       }
       else {
-        RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_varData._varName, _StatInputField.text);
+        RobotEngineManager.Instance.RunDebugConsoleFuncMessage(_VarData.VarName, _StatInputField.text);
       }
     }
     

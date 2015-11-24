@@ -19,26 +19,28 @@ namespace Anki.Debug {
 
     public class DebugConsoleVarData {
 
-      public string _varName;
-      public string _category;
-      public ConsoleVarUnion.Tag _tagType;
+      public string VarName;
+      public string Category;
+      public ConsoleVarUnion.Tag TagType;
 
-      public double _minValue;
-      public double _maxValue;
+      public double MinValue;
+      public double MaxValue;
 
       // most integral types can be expressed as one of the following
-      public double _valueAsDouble;
-      public long _valueAsInt64;
-      public ulong _valueAsUInt64;
+      public double ValueAsDouble;
+      public long ValueAsInt64;
+      public ulong ValueAsUInt64;
       // C# setter function
-      public DebugConsoleVarEventHandler _unityVarHandler = null;
-      public bool _UIAdded = false;
+      public DebugConsoleVarEventHandler UnityVarHandler = null;
+      public bool UIAdded = false;
     }
 
     private bool _NeedsUIUpdate;
     private Dictionary<string, List<DebugConsoleVarData> > _DataByCategory;
 
-    public DebugConsolePane _ConsolePane;
+    private DebugConsolePane _ConsolePane;
+
+    public DebugConsolePane ConsolePane { set { _ConsolePane = value; } }
 
     // CSharp can't safely store pointers, so we need a setter delegates
     public void AddConsoleVar(DebugConsoleVar singleVar, DebugConsoleVarEventHandler callback = null) {
@@ -52,44 +54,44 @@ namespace Anki.Debug {
       }
 
       DebugConsoleVarData varData = new DebugConsoleVarData();
-      varData._tagType = singleVar.varValue.GetTag();
-      switch (varData._tagType) {
+      varData.TagType = singleVar.varValue.GetTag();
+      switch (varData.TagType) {
       case ConsoleVarUnion.Tag.varDouble:
-        varData._valueAsDouble = singleVar.varValue.varDouble;
+        varData.ValueAsDouble = singleVar.varValue.varDouble;
         break;
       case ConsoleVarUnion.Tag.varInt:
-        varData._valueAsInt64 = singleVar.varValue.varInt;
+        varData.ValueAsInt64 = singleVar.varValue.varInt;
         break;
       case ConsoleVarUnion.Tag.varUint:
-        varData._valueAsUInt64 = singleVar.varValue.varUint;
+        varData.ValueAsUInt64 = singleVar.varValue.varUint;
         break;
       case ConsoleVarUnion.Tag.varBool:
-        varData._valueAsUInt64 = singleVar.varValue.varBool;
+        varData.ValueAsUInt64 = singleVar.varValue.varBool;
         break;
       }
-      varData._varName = singleVar.varName;
-      varData._category = singleVar.category;
-      varData._maxValue = singleVar.maxValue;
-      varData._minValue = singleVar.minValue;
+      varData.VarName = singleVar.varName;
+      varData.Category = singleVar.category;
+      varData.MaxValue = singleVar.maxValue;
+      varData.MinValue = singleVar.minValue;
 
-      varData._unityVarHandler = callback;
+      varData.UnityVarHandler = callback;
 
       categoryList.Add(varData);
     }
 
     private GameObject GetPrefabForType(DebugConsoleVarData data) {
-      if (data._tagType == ConsoleVarUnion.Tag.varBool) {
-        return _ConsolePane._PrefabVarUICheckbox;
+      if (data.TagType == ConsoleVarUnion.Tag.varBool) {
+        return _ConsolePane.PrefabVarUICheckbox;
       }
-      else if (data._tagType == ConsoleVarUnion.Tag.varFunction) {
-        return _ConsolePane._PrefabVarUIButton;
+      else if (data.TagType == ConsoleVarUnion.Tag.varFunction) {
+        return _ConsolePane.PrefabVarUIButton;
       }
     // mins and maxes are just numeric limits... so just stubbing this in
-    else if ((data._maxValue < 10000 && data._minValue > -10000) &&
-             (data._maxValue != data._minValue)) {
-        return _ConsolePane._PrefabVarUISlider;
+    else if ((data.MaxValue < 10000 && data.MinValue > -10000) &&
+             (data.MaxValue != data.MinValue)) {
+        return _ConsolePane.PrefabVarUISlider;
       }
-      return _ConsolePane._PrefabVarUIText;
+      return _ConsolePane.PrefabVarUIText;
     }
 
     public bool RefreshCategory(Transform parentTransform, string category_name) {
@@ -97,11 +99,11 @@ namespace Anki.Debug {
       if (_DataByCategory.TryGetValue(category_name, out lines)) {
         for (int i = 0; i < lines.Count; ++i) {
           // check if this already exists...
-          if (!lines[i]._UIAdded) {
+          if (!lines[i].UIAdded) {
             GameObject statLine = UIManager.CreateUIElement(GetPrefabForType(lines[i]), parentTransform);
             ConsoleVarLine uiLine = statLine.GetComponent<ConsoleVarLine>();
             uiLine.Init(lines[i]);
-            lines[i]._UIAdded = true;
+            lines[i].UIAdded = true;
           }
         }
       }
@@ -109,7 +111,7 @@ namespace Anki.Debug {
     }
 
     public void SetStatusText(string text) {
-      _ConsolePane._PaneStatusText.text = text;
+      _ConsolePane.PaneStatusText.text = text;
     }
 
     public List<string> GetCategories() {

@@ -9,29 +9,29 @@ namespace Anki.Debug {
   public class DebugConsolePane : MonoBehaviour {
 
     [SerializeField]
-    public RectTransform _UIContainer;
+    public RectTransform UIContainer;
 
     [SerializeField]
-    public Text _PaneStatusText;
+    public Text PaneStatusText;
 
     [SerializeField]
-    public GameObject _PrefabVarUIText;
+    public GameObject PrefabVarUIText;
     [SerializeField]
-    public GameObject _PrefabVarUICheckbox;
+    public GameObject PrefabVarUICheckbox;
     [SerializeField]
-    public GameObject _PrefabVarUIButton;
+    public GameObject PrefabVarUIButton;
     [SerializeField]
-    public GameObject _PrefabVarUISlider;
+    public GameObject PrefabVarUISlider;
 
     [SerializeField]
-    public GameObject _CategoryPanelPrefab;
+    public GameObject CategoryPanelPrefab;
 
     private Dictionary<string, GameObject > _CategoryPanels;
 
     private void Start() {
 
       _CategoryPanels = new Dictionary<string, GameObject>();
-      DebugConsoleData.Instance._ConsolePane = this;
+      DebugConsoleData.Instance.ConsolePane = this;
 
       // Query for our initial data so DebugConsoleData gets populated when dirty in update.
       RobotEngineManager.Instance.InitDebugConsole();
@@ -45,7 +45,7 @@ namespace Anki.Debug {
           // Get existing child if it exists, otherwise create it.
           GameObject categoryPanel = null;
           if (!_CategoryPanels.TryGetValue(categories[i], out  categoryPanel)) {
-            categoryPanel = UIManager.CreateUIElement(_CategoryPanelPrefab, _UIContainer);
+            categoryPanel = UIManager.CreateUIElement(CategoryPanelPrefab, UIContainer);
             _CategoryPanels.Add(categories[i], categoryPanel);
           }
 

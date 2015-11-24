@@ -9,11 +9,11 @@ namespace Anki.Debug {
     [SerializeField]
     protected Text _StatLabel;
 
-    protected DebugConsoleData.DebugConsoleVarData _varData;
+    protected DebugConsoleData.DebugConsoleVarData _VarData;
 
     public virtual void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
-      _varData = singleVar;
-      _StatLabel.text = singleVar._varName;
+      _VarData = singleVar;
+      _StatLabel.text = singleVar.VarName;
     }
 
   }
