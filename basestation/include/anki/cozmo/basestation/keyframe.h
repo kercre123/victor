@@ -288,12 +288,15 @@ namespace Anki {
       ProceduralFaceKeyFrame() { }
       ProceduralFaceKeyFrame(const ProceduralFace& face) : _procFace(face) { }
       
-      // Returns message for the face stored in this message
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
+      // keyframe.
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; }
       
       // Returns message for the face interpolated between the stored face in this
       // keyframe and the one in the next keyframe.
-      RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
+      //RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
+      
+      ProceduralFace GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame);
       
       static const std::string& GetClassName() {
         static const std::string ClassName("ProceduralFaceKeyFrame");
@@ -310,11 +313,11 @@ namespace Anki {
       TimeStamp_t     _currentTime_ms;
       bool            _isDone;
     
-      AnimKeyFrame::FaceImage _faceImageMsg;
+      //AnimKeyFrame::FaceImage _faceImageMsg;
       
       // This is what actually populates the message to stream, and is used
       // by GetStreamMessage() and GetInterpolatedStreamMessage().
-      RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
+      //RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
       
       void Reset();
       

@@ -22,6 +22,8 @@
 #include "clad/types/liveIdleAnimationParameters.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include <list>
+
 namespace Anki {
 namespace Cozmo {
   
@@ -87,6 +89,10 @@ namespace Cozmo {
     Animation*  _idleAnimation; // default points to "live" animation
     Animation*  _streamingAnimation;
     TimeStamp_t _timeSpentIdling_ms;
+    
+    // For layering procedural face animations on top of whatever is currently
+    // playing:
+    std::list<Animations::Track<ProceduralFaceKeyFrame>> _faceLayers;
     
     bool _isIdling;
     

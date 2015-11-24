@@ -379,6 +379,7 @@ return RESULT_FAIL; \
       return retVal;
     }
     
+    /*
     RobotInterface::EngineToRobot* ProceduralFaceKeyFrame::GetStreamMessageHelper(const ProceduralFace& procFace)
     {
       Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), _faceImageMsg.image);
@@ -414,6 +415,25 @@ return RESULT_FAIL; \
       }
       
       return GetStreamMessageHelper(interpFace);
+    }
+     */
+    
+    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame)
+    {
+      // The interpolation fraction is how far along in time we are from this frame's
+      // trigger time (which currentTime was initialized to) and the next frame's
+      // trigger time.
+      const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
+      
+      ProceduralFace interpFace;
+      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
+      
+      _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
+      if(_currentTime_ms >= nextFrame.GetTriggerTime()) {
+        _isDone = true;
+      }
+      
+      return interpFace;
     }
     
 #pragma mark -
