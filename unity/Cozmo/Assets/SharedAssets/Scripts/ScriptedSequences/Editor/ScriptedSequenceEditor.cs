@@ -514,7 +514,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     if (CurrentSequence != null && GUILayout.Button("Save", ToolbarButtonStyle)) {         
       if (string.IsNullOrEmpty(CurrentSequenceFile)) {
-        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, ".json");
+        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, "json");
       }
 
       if(!string.IsNullOrEmpty(CurrentSequenceFile))
@@ -548,10 +548,6 @@ public class ScriptedSequenceEditor : EditorWindow {
       if (ContextMenuOpen) {
         mouseEvent = EventType.Used;
         ContextMenuOpen = false;
-        Debug.Log("Used ContextMenuClick");
-      }
-      else {
-        Debug.Log("Context Menu Not Open");
       }
     }
 
