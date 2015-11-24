@@ -37,6 +37,9 @@ public:
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
   
+  // Container for the parameters for both eyes
+  using EyeParamArray = std::array<Value, static_cast<size_t>(Parameter::NumParameters)>;
+  
   enum WhichEye {
     Left,
     Right
@@ -56,6 +59,7 @@ public:
   // Get/Set each of the above procedural parameters, for each eye
   void  SetParameter(WhichEye whichEye, Parameter param, Value value);
   Value GetParameter(WhichEye whichEye, Parameter param) const;
+  const EyeParamArray& GetParameters(WhichEye whichEye) const;
   
   // Get/Set the overall angle of the whole face (still using parameter on interval [-1,1]
   void SetFaceAngle(Value value);
@@ -81,15 +85,18 @@ public:
                    float fraction,
                    bool usePupilSaccades = false);
   
+  // Combine the input params with those from our instance
+  ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
+  
 private:
-  // Container for the parameters for both eyes
-  std::array<std::array<Value, static_cast<size_t>(Parameter::NumParameters)>, 2> _eyeParams{{}};
+  std::array<EyeParamArray, 2> _eyeParams{{}};
   
   Value           _faceAngle = 0.0f;
-  Point<2,Value>  _faceScale;
-  Point<2,Value>  _faceCenter;
+  Point<2,Value>  _faceScale = 1.0f;
+  Point<2,Value>  _faceCenter = 0.0f;
   
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
+  void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
   
   static ProceduralFaceParams* _resetData;
   
@@ -105,6 +112,11 @@ inline void ProceduralFaceParams::SetParameter(WhichEye whichEye, Parameter para
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetParameter(WhichEye whichEye, Parameter param) const
 {
   return _eyeParams[whichEye][static_cast<size_t>(param)];
+}
+  
+inline const ProceduralFaceParams::EyeParamArray& ProceduralFaceParams::GetParameters(WhichEye whichEye) const
+{
+  return _eyeParams[whichEye];
 }
 
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetFaceAngle() const {
