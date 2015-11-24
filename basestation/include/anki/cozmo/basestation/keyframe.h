@@ -26,6 +26,11 @@
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
 
+// This is a temporary switch to use the old SoundManager for streaming robot
+// audio for animations, until we manage to fully hook up Jordan's stuff for
+// using (and syncing) wwise AudioManager.
+#define USE_SOUND_MANAGER_FOR_ROBOT_AUDIO 1
+
 namespace Anki {
   namespace Cozmo {
   // Forward declaration
@@ -188,11 +193,46 @@ namespace Anki {
       
     }; // class DeviceAudioKeyFrame
     
-    
     // A RobotAudioKeyFrame references a single "sound" which is made of lots
     // of "samples" to be individually streamed to the robot.
     class RobotAudioKeyFrame : public IKeyFrame
     {
+#   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
+    public:
+      RobotAudioKeyFrame() : _selectedAudioIndex(0), _sampleIndex(0) { }
+
+      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      
+      static const std::string& GetClassName() {
+        static const std::string ClassName("RobotAudioKeyFrame");
+        return ClassName;
+      }
+
+      const std::string& GetSoundName() const;
+
+    protected:
+      virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
+
+    private:
+      
+      Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
+      
+      struct AudioRef {
+        std::string name;
+        s32 numSamples;
+        f32 volume;
+      };
+
+      std::vector<AudioRef> _audioReferences;
+
+      s32 _selectedAudioIndex;
+      
+      s32 _sampleIndex;
+      
+      AnimKeyFrame::AudioSample  _audioSampleMsg;
+      
+#   else // if(USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
+      
     public:
       RobotAudioKeyFrame() { }
       
@@ -203,8 +243,6 @@ namespace Anki {
         static const std::string ClassName("RobotAudioKeyFrame");
         return ClassName;
       }
-      
-      //const std::string& GetSoundName() const;
       
       struct AudioRef {
         Audio::EventType audioEvent;
@@ -222,6 +260,8 @@ namespace Anki {
       Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
 
       std::vector<AudioRef> _audioReferences;
+      
+#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       
     }; // class RobotAudioKeyFrame
     
