@@ -2,6 +2,8 @@
 
 Cozmo unity gameplay code. Also includes the current animation tool in /animation-tool/
 
+Please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
+
 # Building cozmo-game
 
 At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
