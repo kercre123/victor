@@ -88,7 +88,6 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   uint8_t *drop_addr = drop_tx.payload + buflen;
   
   // Send current state of body every frame (for the future)
-  *(drop_addr++) = DROP_BodyState;
   BodyState bodyState; 
   bodyState.state = recoveryMode;
   bodyState.count = RecoveryStateUpdated;
@@ -98,7 +97,7 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   drop_tx.payloadLen  = sizeof(BodyState);
 
   static int eoftime = 0;
-  drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF);
+  drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF) | bootloaderStatus;
 }
 
 void Anki::Cozmo::HAL::EnterRecoveryMode(void) {
