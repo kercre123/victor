@@ -81,7 +81,8 @@ public static class Localization {
     string[] resources = {
       "SimpleStrings",
       "MinigameStrings",
-      "ChallengeTitleStrings"
+      "ChallengeTitleStrings",
+      "ConversationStrings"
     };
 
     string locale = GetStringsLocale();
