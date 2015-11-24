@@ -26,6 +26,11 @@ namespace Conversations {
       }
     }
 
+    void Awake()
+    {
+      Instance = this;
+    }
+
     [SerializeField]
     private BaseView _LeftBubble;
 
