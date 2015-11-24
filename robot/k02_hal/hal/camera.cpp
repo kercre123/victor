@@ -292,6 +292,7 @@ void FTM2_IRQHandler(void)
   // Enable SPI DMA, Clear flag
   if (~FTM2_SC & FTM_SC_TOF_MASK) return ;
 
+  SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
   DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
   FTM2_SC &= ~FTM_SC_TOF_MASK;
 

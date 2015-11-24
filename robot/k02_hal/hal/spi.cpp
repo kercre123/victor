@@ -11,9 +11,9 @@
 #include "uart.h"
 
 typedef uint16_t transmissionWord;
-const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
-const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord);
 const int RX_OVERFLOW = 8;
+const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
+const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
 static transmissionWord spi_tx_buff[TX_SIZE];
 static union {
@@ -23,7 +23,61 @@ static union {
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
-void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) { 
+static void ProcessDrop(void) {
+  using namespace Anki::Cozmo::HAL;
+  
+  // Process drop receive
+  static int RECEIVED = 0;
+  static int TOTAL = 0;
+  static bool clear = true;
+
+  RECEIVED++;
+  transmissionWord *target = spi_rx_buff;
+  for (int i = 0; i < RX_OVERFLOW; i++, target++) {
+    if (*target != TO_RTIP_PREAMBLE) continue ;
+
+    if (clear) {
+      RECEIVED = 0;
+      TOTAL = 0;
+      clear = false;
+    }
+    
+    // TODO: SCREEN
+    // TODO: AUDIO
+
+    TOTAL++;
+    DropToRTIP* drop = (DropToRTIP*)target;
+    uint8_t *payload_data = (uint8_t*) drop->payload;
+    
+    switch (*(payload_data++)) {
+      case DROP_EnterBootloader:
+        EnterBootloader ebl;
+        memcpy(&ebl, payload_data, sizeof(ebl));
+
+        switch (ebl.which) {
+          case BOOTLOAD_RTIP:
+            EnterRecoveryMode();
+            break ;
+          case BOOTLOAD_BODY:
+            EnterBodyRecovery();
+            break ;
+        }
+        break ;
+      case DROP_BodyUpgradeData:
+        BodyUpgradeData bud;
+        memcpy(&bud, payload_data, sizeof(bud));
+
+        SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
+        break ;
+    }
+    
+    return ;
+  }
+  
+  TOTAL = TOTAL;
+}
+
+void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
   drop_tx.preamble = TO_WIFI_PREAMBLE;
 
   // Copy in JPEG data (TEMPORARY ZEROED)
@@ -60,41 +114,7 @@ void DMA2_IRQHandler(void) {
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
-  // Process drop receive
-  transmissionWord *target = spi_rx_buff;
-  for (int i = 0; i < RX_OVERFLOW; i++, target++) {
-    if (*target != TO_RTIP_PREAMBLE) continue ;
-
-    // TODO: SCREEN
-    // TODO: AUDIO
-
-    DropToRTIP* drop = (DropToRTIP*)target;
-    uint8_t *payload_data = (uint8_t*) drop->payload;
-    
-    switch (*(payload_data++)) {
-      case DROP_EnterBootloader:
-        EnterBootloader ebl;
-        memcpy(&ebl, payload_data, sizeof(ebl));
-
-        switch (ebl.which) {
-          case BOOTLOAD_RTIP:
-            EnterRecoveryMode();
-            break ;
-          case BOOTLOAD_BODY:
-            EnterBodyRecovery();
-            break ;
-        }
-        break ;
-      case DROP_BodyUpgradeData:
-        BodyUpgradeData bud;
-        memcpy(&bud, payload_data, sizeof(bud));
-
-        SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
-        break ;
-    }
-    
-    return ;
-  }
+  ProcessDrop();
 }
 
 extern "C"
