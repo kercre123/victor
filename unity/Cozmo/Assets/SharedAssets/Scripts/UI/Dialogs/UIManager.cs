@@ -36,7 +36,7 @@ public class UIManager : MonoBehaviour {
   private List<BaseView> _openViews;
 
   void Awake() {
-    _Instance = this;
+    Instance = this;
     _openViews = new List<BaseView>();
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;

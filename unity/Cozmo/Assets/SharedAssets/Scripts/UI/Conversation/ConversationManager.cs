@@ -42,6 +42,10 @@ namespace Conversations {
     private string _CurrentConversationKey;
     private SpeechBubble _CurrentSpeechBubble;
 
+    void Awake() {
+      Instance = this;
+    }
+
     public void StartNewConversation(string conversationKey) {
       _CurrentConversation = new Conversation();
       _CurrentConversationKey = conversationKey;
