@@ -63,8 +63,13 @@ bool CheckSig(void) {
   return true;
 }
 
+static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
+static const uint32_t recovery_value = 0xCAFEBABE;
+
 // This is the remote entry point recovery mode
 extern "C" void SVC_Handler(void) { 
+  *recovery_word = 0;
+
   __disable_irq();
   StopDevices();
   GoSlow();
@@ -78,7 +83,7 @@ extern "C" void SVC_Handler(void) {
 int main (void) {
   TimerInit();
 
-  if (!CheckSig()) {
+  if (*recovery_word == recovery_value || !CheckSig()) {
     SVC_Handler();
   }
   

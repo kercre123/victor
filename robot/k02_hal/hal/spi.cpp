@@ -47,9 +47,11 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF);
 }
 
-void EnterRecoveryMode(void) {
-  SCB->VTOR = 0;
-  __asm { SVC 0 }
+void Anki::Cozmo::HAL::EnterRecoveryMode(void) {
+  static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
+  static const uint32_t recovery_value = 0xCAFEBABE;
+  *recovery_word = recovery_value;
+  NVIC_SystemReset();
 };
 
 extern "C"
@@ -62,7 +64,7 @@ void DMA2_IRQHandler(void) {
   transmissionWord *target = spi_rx_buff;
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
-    
+
     // TODO: SCREEN
     // TODO: AUDIO
 
@@ -90,6 +92,8 @@ void DMA2_IRQHandler(void) {
         SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break ;
     }
+    
+    return ;
   }
 }
 

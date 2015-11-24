@@ -16,10 +16,10 @@
 #define m_text_size                    (0x10000 - m_text_start)
 
 #define m_data_start                   0x1FFFE000
-#define m_data_size                    0x00002000 
+#define m_data_size                    0x00002000
 
 #define m_data_2_start                 0x20000000
-#define m_data_2_size                  0x00002000
+#define m_data_2_size                  0x00001FF0
 
 /* Sizes */
 #if (defined(__stack_size__))

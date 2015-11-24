@@ -4,6 +4,7 @@
 #include "anki/cozmo/robot/spineData.h"
 #include "MK02F12810.h"
 
+#include "spi.h"
 #include "uart.h"
 
 #include <string.h>
@@ -155,6 +156,7 @@ void Anki::Cozmo::HAL::WaitForSync() {
   while (recoveryMode != STATE_RUNNING || !HeadDataReceived) {
     __asm { WFI }
   }
+
   HeadDataReceived = false;
 }
 

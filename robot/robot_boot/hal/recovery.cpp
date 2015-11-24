@@ -10,6 +10,7 @@ static const int FLASH_BLOCK_SIZE = 0x800;
 static inline commandWord WaitForWord(void) {
   while(~SPI0_SR & SPI_SR_RFDF_MASK) ;  // Wait for a byte
   commandWord ret = SPI0_POPR;
+ 
   SPI0_SR = SPI0_SR;
   return ret;
 }
@@ -25,10 +26,15 @@ void SyncSPI(void) {
     {
       const int loops = 16;
 
-      WaitForWord();
-      for(int i = 0; i < loops; i++) {
-        if (WaitForWord() == 0x8000) return ;
+      for (int i = 0; i < 100; i++) WaitForWord();
+
+      bool restart = false;
+      for(int i = 0; i < loops && !restart; i++) {
+        commandWord t = WaitForWord();
+        if (t && t != 0x8000) restart = true;
       }
+      
+      if (!restart) return ;
     }
     
     PORTE_PCR17 = PORT_PCR_MUX(0);    // SPI0_SCK (disabled)
