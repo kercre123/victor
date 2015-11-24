@@ -57,6 +57,10 @@ namespace Anki {
       // Returns the time to trigger whatever change is implied by the KeyFrame
       TimeStamp_t GetTriggerTime() const { return _triggerTime_ms; }
       
+      // Set the triggert time, relative to the start time of track the animation
+      // is playing in
+      void SetTriggerTime(TimeStamp_t triggerTime_ms) { _triggerTime_ms = triggerTime_ms; }
+      
       // Set all members from Json. Calls virtual SetMembersFromJson() method so
       // subclasses can specify how to populate their members.
       Result DefineFromJson(const Json::Value &json);
@@ -286,7 +290,7 @@ namespace Anki {
     {
     public:
       ProceduralFaceKeyFrame() { }
-      ProceduralFaceKeyFrame(const ProceduralFace& face) : _procFace(face) { }
+      ProceduralFaceKeyFrame(const ProceduralFace& face, TimeStamp_t triggerTime_ms = 0);
       
       // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
       // keyframe.
@@ -296,9 +300,9 @@ namespace Anki {
       // keyframe and the one in the next keyframe.
       //RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
       
-      // Returns the interpolated face between the current keyframe and the next.
-      // If the nextFrame is nullptr, then this frame's procedural face is returned.
-      ProceduralFace GetInterpolatedFace(const ProceduralFaceKeyFrame* nextFrame);
+      // Returns the interpolated face params between the current keyframe and the next.
+      // If the nextFrame is nullptr, then this frame's procedural face params are returned.
+      ProceduralFaceParams GetInterpolatedFaceParams(const ProceduralFaceKeyFrame* nextFrame);
       
       static const std::string& GetClassName() {
         static const std::string ClassName("ProceduralFaceKeyFrame");
@@ -326,6 +330,13 @@ namespace Anki {
       void Reset();
       
     }; // class ProceduralFaceKeyFrame
+    
+    inline ProceduralFaceKeyFrame::ProceduralFaceKeyFrame(const ProceduralFace& face,
+                                                          TimeStamp_t triggerTime)
+    : _procFace(face)
+    {
+      SetTriggerTime(triggerTime);
+    }
     
     // A FacePositionKeyFrame sets the center of the currently displayed face
     // image/sprite, in LED screen coordinates.

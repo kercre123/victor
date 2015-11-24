@@ -71,9 +71,6 @@ namespace Cozmo {
     void SetParams(const ProceduralFaceParams& newData) { _faceData = newData; }
     void SetParams(ProceduralFaceParams&& newData) { _faceData = std::move(newData); }
     
-    // REMOVE ONCE WE MERGE FROM LEE's BRANCH!!
-    void Combine(const ProceduralFace& otherFace) { }
-    
   private:
 
     void DrawEye(ProceduralFaceParams::WhichEye whichEye, cv::Mat_<u8>& faceImg) const;

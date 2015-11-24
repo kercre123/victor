@@ -104,10 +104,10 @@ namespace Cozmo {
     std::list<FaceLayer> _faceLayers;
     
     // Helper to fold the next procedural face from the given track (if one is
-    // ready to play) into the passed-in procedural face.
+    // ready to play) into the passed-in procedural face params.
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                       ProceduralFace& face);
+                       ProceduralFaceParams& faceParams);
     
     bool _isIdling;
     
