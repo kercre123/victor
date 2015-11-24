@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Newtonsoft.Json;
 
 namespace ScriptedSequences {
   public class ScriptedSequence : IScriptedSequenceParent {
@@ -14,6 +15,7 @@ namespace ScriptedSequences {
 
     public List<ScriptedSequenceNode> Nodes = new List<ScriptedSequenceNode>();
 
+    [JsonIgnore]
     public string DebugName { get { return Name; } }
 
     public void Fail(Exception error) {

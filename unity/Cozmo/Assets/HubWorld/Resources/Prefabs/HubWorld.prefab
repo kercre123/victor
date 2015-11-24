@@ -39,9 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c959f61d2c3bf45fc8dddf5d4394f99a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _HubWorldDialogPrefab: {fileID: 11410890, guid: e77c4434332fe4d579f550fc60cc6c63,
+  _HubWorldViewPrefab: {fileID: 11410890, guid: e77c4434332fe4d579f550fc60cc6c63,
     type: 2}
-  _TempLevelAsset: {fileID: 4900000, guid: 3b8f26d3e5db2431c9e274f6065b9548, type: 3}
   _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -63,6 +62,11 @@ Prefab:
       propertyPath: _ChallengeDataList
       value: 
       objectReference: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HubWorldViewPrefab
+      value: 
+      objectReference: {fileID: 11410890, guid: e77c4434332fe4d579f550fc60cc6c63,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
