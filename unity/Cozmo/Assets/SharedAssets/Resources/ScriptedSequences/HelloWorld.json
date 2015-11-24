@@ -1,7 +1,7 @@
 {
   "Name": "HelloWorld",
   "RequiresConditionRemainsMet": true,
-  "Repeatable": true,
+  "Repeatable": false,
   "Condition": {
     "$type": "ScriptedSequences.Conditions.RobotConnected, Assembly-CSharp"
   },
@@ -17,6 +17,10 @@
         {
           "$type": "ScriptedSequences.Actions.DebugLogAction, Assembly-CSharp",
           "StringToLog": "Hello"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.StartConversation, Assembly-CSharp",
+          "ConversationName": "Hello World"
         },
         {
           "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
@@ -36,7 +40,10 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
-          "TimeInSeconds": 5.0
+          "TimeInSeconds": 10.0,
+          "BlockInput": true,
+          "AllowSkipAfterDelay": true,
+          "SkipDelayInSeconds": 1.0
         }
       ]
     },
@@ -44,7 +51,7 @@
       "Name": "World",
       "Id": 3,
       "Sequencial": false,
-      "Final": true,
+      "Final": false,
       "FailOnError": false,
       "Conditions": [
         {
@@ -68,6 +75,29 @@
           "LineKey": "HelloWorld.World",
           "Speaker": "Cozmo",
           "IsRight": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.BlockInput, Assembly-CSharp"
+        }
+      ]
+    },
+    {
+      "Name": "End Conversation",
+      "Id": 4,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "Conditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.TouchedAnywhere, Assembly-CSharp"
+        }
+      ],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.UnblockInput, Assembly-CSharp"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.EndConversation, Assembly-CSharp"
         }
       ]
     }

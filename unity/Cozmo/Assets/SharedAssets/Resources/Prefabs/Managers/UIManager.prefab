@@ -170,8 +170,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 909c585ba1f764677a93af23393d9cd1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _overlayCanvas: {fileID: 22391958}
-  _eventSystemScript: {fileID: 11485194}
+  _OverlayCanvas: {fileID: 22391958}
+  _EventSystemScript: {fileID: 11485194}
+  _TouchCatcherPrefab: {fileID: 151494, guid: f9f945bbe0c2a4469a9e59ccfe209d55, type: 2}
 --- !u!223 &22391958
 Canvas:
   m_ObjectHideFlags: 1

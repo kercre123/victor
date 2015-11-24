@@ -11,10 +11,16 @@ namespace ScriptedSequences.Actions {
     /// </summary>
     public float TimeInSeconds;
 
+    public bool BlockInput;
+
+    public bool AllowSkipAfterDelay;
+
+    public float SkipDelayInSeconds;
+
     public override ISimpleAsyncToken Act() {
       SimpleAsyncToken token = new SimpleAsyncToken();
 
-      ScriptedSequenceManager.Instance.BootrapCoroutine(WaitForTime(token));
+      ScriptedSequenceManager.Instance.BootstrapCoroutine(WaitForTime(token));
 
       return token;
     }
@@ -23,8 +29,25 @@ namespace ScriptedSequences.Actions {
     {
       float startTime = Time.time;
 
+      if (BlockInput) {
+        UIManager.Instance.ShowTouchCatcher(() => {
+          if(AllowSkipAfterDelay && Time.time - startTime >= SkipDelayInSeconds)
+          {
+            UIManager.Instance.HideTouchCatcher();
+            token.Succeed();
+          }
+        });
+      }
+
       while (Time.time - startTime < TimeInSeconds) {
         yield return null;
+        if (token.IsReady) {
+          yield break;
+        }
+      }
+
+      if (BlockInput) {
+        UIManager.Instance.HideTouchCatcher();
       }
 
       token.Succeed();
