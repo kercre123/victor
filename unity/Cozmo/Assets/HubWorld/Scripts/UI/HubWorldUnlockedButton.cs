@@ -1,10 +1,11 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class HubWorldUnlockedButton : HubWorldButton {
 
   [SerializeField]
-  private UnityEngine.UI.Image _ChallengeIconImage;
+  private Image _ChallengeIconImage;
 
   public override void Initialize(ChallengeData challengeData) {
 
