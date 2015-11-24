@@ -27,25 +27,13 @@ static void ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   
   // Process drop receive
-  static int RECEIVED = 0;
-  static int TOTAL = 0;
-  static bool clear = true;
-
-  RECEIVED++;
   transmissionWord *target = spi_rx_buff;
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
-
-    if (clear) {
-      RECEIVED = 0;
-      TOTAL = 0;
-      clear = false;
-    }
     
     // TODO: SCREEN
     // TODO: AUDIO
 
-    TOTAL++;
     DropToRTIP* drop = (DropToRTIP*)target;
     uint8_t *payload_data = (uint8_t*) drop->payload;
     
@@ -73,8 +61,6 @@ static void ProcessDrop(void) {
     
     return ;
   }
-  
-  TOTAL = TOTAL;
 }
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
@@ -88,7 +74,7 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
   uint8_t *drop_addr = drop_tx.payload + buflen;
   
   // Send current state of body every frame (for the future)
-  BodyState bodyState; 
+  BodyState bodyState;
   bodyState.state = recoveryMode;
   bodyState.count = RecoveryStateUpdated;
   
@@ -101,6 +87,7 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
 }
 
 void Anki::Cozmo::HAL::EnterRecoveryMode(void) {
+  __disable_irq();
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
   *recovery_word = recovery_value;
