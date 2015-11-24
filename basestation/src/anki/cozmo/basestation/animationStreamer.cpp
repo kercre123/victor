@@ -356,6 +356,15 @@ namespace Cozmo {
       // for each one, just once for each audio/silence frame.
       //
       
+#     if DEBUG_ANIMATIONS
+#       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
+                  PRINT_NAMED_INFO("AnimationStreamer.UpdateStream", \
+                                   "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
+                                   animToStream.streamTime_ms - animToStream.startTime_ms)
+#     else
+#       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
+#     endif
+        
       // Note that start of animation message is also sent _after_ audio keyframe,
       // to keep things consistent in how the robot's AnimationController expects
       // to receive things
@@ -368,63 +377,41 @@ namespace Cozmo {
       }
       
       if(BufferMessageToSend(headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
       }
       
       if(BufferMessageToSend(liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
       }
       
       if(BufferMessageToSend(facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("FacePosition");
       }
       
       bool streamedFaceAnimImage = false;
       if(BufferMessageToSend(faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
         streamedFaceAnimImage = true;
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
       }
       
       if(BufferMessageToSend(procFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("ProceduralFace");      
       }
       
       if(BufferMessageToSend(blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("Blink");
       }
       
       if(BufferMessageToSend(backpackLedTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("BackpackLights");
       }
       
       if(BufferMessageToSend(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyMotionKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
+        DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
       }
       
+#     undef DEBUG_STREAM_KEYFRAME_MESSAGE
+        
       // Send out as much as we can from the send buffer. If we manage to send
       // the entire buffer out, we will proceed with putting more into the buffer
       // the next time through this while loop. Otherwise, we will exit the while
