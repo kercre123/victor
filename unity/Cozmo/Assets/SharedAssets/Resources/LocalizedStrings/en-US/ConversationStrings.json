@@ -29,5 +29,11 @@
   },
   "AzkCozmoSequence.Node 4": {
     "translation": "Me too! But I have a body!!"
+  },
+  "IntroSequence.AriaUploadLine": {
+    "translation": "Cozmo, Let's upload you to the robot!"
+  },
+  "IntroSequence.CozmoBleepLine": {
+    "translation": "Bleep Bleep Bleep"
   }
 }

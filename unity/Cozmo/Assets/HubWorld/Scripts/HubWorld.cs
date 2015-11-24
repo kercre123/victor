@@ -19,6 +19,8 @@ namespace Cozmo.HubWorld {
 
     private string _CurrentChallengePlaying;
 
+    private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
+
     private void Awake() {
       HubWorldPane.HubWorldPaneOpened += HandleHubWorldPaneOpenHandler;
     }
@@ -29,7 +31,8 @@ namespace Cozmo.HubWorld {
 
     public override bool LoadHubWorld() {
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
-      ShowHubWorldDialog();
+      _IntroSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("IntroSequence");
+      _IntroSequenceDoneToken.Ready(HandleIntroSequenceDone);
       return true;
     }
 
@@ -58,6 +61,10 @@ namespace Cozmo.HubWorld {
 
       // Show the current state of challenges being locked/unlocked
       _HubWorldViewInstance.Initialize(_ChallengeStatesById);
+    }
+
+    private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      ShowHubWorldDialog();
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked) {
