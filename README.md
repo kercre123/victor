@@ -14,7 +14,7 @@ Install CMAKE using [brew](http://brew.sh/).
 
     brew install cmake
 
-The robotics simulation environment we use is [Webots](https://www.cyberbotics.com/overview). We are currently using version 8.2.1
+The robotics simulation environment we use is Webots. We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/).
 
 Move the OpenCV libraries inside of Webots out of the way:
 
