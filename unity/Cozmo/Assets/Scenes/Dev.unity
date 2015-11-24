@@ -238,6 +238,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 261074296}
     m_Modifications:
+    - target: {fileID: 11429672, guid: 072b7b1665337441a8158a91a744cfd0, type: 2}
+      propertyPath: SequenceTextAssets.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 411698, guid: 072b7b1665337441a8158a91a744cfd0, type: 2}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -270,6 +274,10 @@ Prefab:
       propertyPath: m_RootOrder
       value: 5
       objectReference: {fileID: 0}
+    - target: {fileID: 11429672, guid: 072b7b1665337441a8158a91a744cfd0, type: 2}
+      propertyPath: SequenceTextAssets.Array.data[0]
+      value: 
+      objectReference: {fileID: 4900000, guid: 0cdcabb23064645edb9555c242724555, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 072b7b1665337441a8158a91a744cfd0, type: 2}
   m_IsPrefabParent: 0
@@ -527,7 +535,6 @@ GameObject:
   - 20: {fileID: 1708240433}
   - 124: {fileID: 1708240432}
   - 92: {fileID: 1708240431}
-  - 81: {fileID: 1708240430}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -535,13 +542,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1708240430
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1708240429}
-  m_Enabled: 1
 --- !u!92 &1708240431
 Behaviour:
   m_ObjectHideFlags: 0
@@ -601,7 +601,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
 --- !u!1001 &1880791465
 Prefab:
   m_ObjectHideFlags: 0

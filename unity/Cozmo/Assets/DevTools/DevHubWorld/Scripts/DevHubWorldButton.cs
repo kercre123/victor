@@ -4,13 +4,13 @@ using System.Collections;
 
 public class DevHubWorldButton : MonoBehaviour {
   
-  public delegate void DevButtonClickedHandler(GameBase miniGameClicked);
+  public delegate void DevButtonClickedHandler(ChallengeData challenge);
 
   public event DevButtonClickedHandler OnDevButtonClicked;
 
-  private void RaiseButtonClicked(GameBase minigame) {
+  private void RaiseButtonClicked(ChallengeData challenge) {
     if (OnDevButtonClicked != null) { 
-      OnDevButtonClicked(minigame);
+      OnDevButtonClicked(challenge);
     }
   }
 
@@ -20,14 +20,14 @@ public class DevHubWorldButton : MonoBehaviour {
   [SerializeField]
   private Text _ButtonLabel;
 
-  private GameBase _Minigame;
+  private ChallengeData _Challenge;
 
-  public void Initialize(GameBase minigame) {
-    _Minigame = minigame;
+  public void Initialize(ChallengeData challenge) {
+    _Challenge = challenge;
 
-    string titleKey = string.Format("#{0}.title", minigame.GameId);
+    string titleKey = string.Format("#{0}.title", challenge.ChallengeTitleKey);
     _ButtonLabel.text = titleKey;
-    gameObject.name = string.Format("{0}: {1}", minigame.GameId, _ButtonLabel.text);
+    gameObject.name = string.Format("{0}: {1}", challenge.ChallengeTitleKey, _ButtonLabel.text);
 
     _ButtonScript.onClick.AddListener(HandleButtonClicked);
   }
@@ -37,6 +37,6 @@ public class DevHubWorldButton : MonoBehaviour {
   }
 
   private void HandleButtonClicked() {
-    RaiseButtonClicked(_Minigame);
+    RaiseButtonClicked(_Challenge);
   }
 }
