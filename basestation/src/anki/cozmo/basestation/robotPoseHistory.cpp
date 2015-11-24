@@ -539,7 +539,38 @@ namespace Anki {
       return RESULT_OK;
     }
     
-    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
+    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request,
+                                               const RobotPoseStamp ** p,
+                                               HistPoseKey* key) const
+    {
+      const_PoseMapIter_t it = computedPoses_.find(t_request);
+      if (it != computedPoses_.end()) {
+        *p = &(it->second);
+        
+        // Get key for the computed pose
+        if (key){
+          const_KeyByTimestampMapIter_t kIt = keyByTsMap_.find(it->first);
+          if (kIt == keyByTsMap_.end()) {
+            PRINT_NAMED_WARNING("RobotPoseHistory.GetComputedPoseAt.KeyNotFound","");
+            return RESULT_FAIL;
+          }
+          *key = kIt->second;
+        }
+        
+        return RESULT_OK;
+      }
+      
+      // TODO: Compute the pose if it doesn't exist already?
+      // ...
+      
+      return RESULT_FAIL;
+    }
+
+
+    // TODO:(bn) is there a way to avoid this duplicated code here? Not eager to use templates...
+    Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request,
+                                               RobotPoseStamp ** p,
+                                               HistPoseKey* key)
     {
       PoseMapIter_t it = computedPoses_.find(t_request);
       if (it != computedPoses_.end()) {
