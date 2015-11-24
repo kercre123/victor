@@ -13,7 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinigamePrefab: {fileID: 171818, guid: 1e70a0fe6f9ce40d5a83bd8d69d54094, type: 2}
   ChallengeID: FollowCubeChallenge1
-  EnableChallenge: 1
+  EnableHubWorldChallenge: 1
+  EnableDevWorldChallenge: 1
   ChallengeTitleKey: hubWorld.followCube.challenge1
   ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   ChallengeReqs:
