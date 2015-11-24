@@ -13,6 +13,9 @@ namespace Cozmo.HubWorld {
     public event ButtonClickedHandler OnCompletedChallengeClicked;
 
     [SerializeField]
+    private Canvas _HubWorldCanvas;
+
+    [SerializeField]
     private HubWorldButton _HubWorldLockedButtonPrefab;
 
     [SerializeField]
@@ -59,6 +62,9 @@ namespace Cozmo.HubWorld {
           break;
         }
       }
+
+      // Make sure we recieve events from the right camera
+      _HubWorldCanvas.worldCamera = HubWorldCamera.Instance.WorldCamera;
     }
 
     private void CreateLockedButton(ChallengeData challengeData) {

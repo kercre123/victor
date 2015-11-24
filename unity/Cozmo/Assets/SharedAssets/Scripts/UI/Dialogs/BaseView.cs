@@ -120,7 +120,7 @@ public abstract class BaseView : MonoBehaviour {
 
   }
 
-  // TODO: Make virtual function play from a set of default animations based on a serialized enum
+  // TODO: Make virtual function play from a set of default animations based on a serialized enum?
   // plus the pivot point and direction (top, bottom, left, right)
   // TODO: Make protected functions that return default tweeners you can add to the sequence
   protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {

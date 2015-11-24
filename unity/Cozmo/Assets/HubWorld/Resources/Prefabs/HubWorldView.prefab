@@ -379,6 +379,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b98745fd1773d41198f57475f1d28b70, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _HubWorldCanvas: {fileID: 22345802}
   _HubWorldLockedButtonPrefab: {fileID: 11471238, guid: 0a1fcfadbcfbe43038864fa9e078cb23,
     type: 2}
   _LockedButtonNodes:
@@ -974,6 +975,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11471238, guid: 0a1fcfadbcfbe43038864fa9e078cb23,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HubWorldCanvas
+      value: 
+      objectReference: {fileID: 22345802}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 143852}
