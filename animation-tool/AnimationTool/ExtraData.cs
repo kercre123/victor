@@ -9,6 +9,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Reflection;
 using Anki.Cozmo;
+using Anki.Cozmo.ExternalInterface;
 
 namespace AnimationTool.Sequencer
 {
@@ -268,6 +269,10 @@ namespace AnimationTool.Sequencer
 
         public ExtraProceduralFaceData() : this (new ProceduralFacePointData()) { }
 
+        private const float kEyeCenterXLeft = 32f;
+        private const float kEyeCenterXRight = 96f;
+        private const float kEyeCenterY = 32f;
+
         public ExtraProceduralFaceData(ProceduralFacePointData data)
         {
             Length = MoveSelectedDataPoints.DELTA_X;
@@ -284,9 +289,73 @@ namespace AnimationTool.Sequencer
 
             for (int i = 0; data.leftEye != null && i < data.leftEye.Length && i < leftEye.Length; ++i)
             {
-                leftEye[i] = data.leftEye[i];
-                rightEye[i] = data.rightEye[i];
+                float leftMod = 0f;
+                float rightMod = 0f;
+                if ((int)ProceduralEyeParameter.EyeCenterX == i)
+                {
+                    leftMod = kEyeCenterXLeft;
+                    rightMod = kEyeCenterXRight;
+                }
+                else if ((int)ProceduralEyeParameter.EyeCenterY == i)
+                {
+                    leftMod = rightMod = kEyeCenterY;
+                }
+
+                leftEye[i] = data.leftEye[i] + leftMod;
+                rightEye[i] = data.rightEye[i] + rightMod;
             }
+        }
+
+        public ProceduralFacePointData GetProceduralFacePointData()
+        {
+            ProceduralFacePointData pointData = new ProceduralFacePointData();
+            pointData.faceAngle = faceAngle;
+            pointData.faceCenterX = faceCenterX;
+            pointData.faceCenterY = faceCenterY;
+            pointData.faceScaleX = faceScaleX;
+            pointData.faceScaleY = faceScaleY;
+
+            for (int i = 0; i < leftEye.Length && i < pointData.leftEye.Length; ++i)
+            {
+                pointData.leftEye[i] = (float)Math.Round(leftEye[i], 2);
+                pointData.rightEye[i] = (float)Math.Round(rightEye[i], 2);
+            }
+            AdjustEyeParamsOut(pointData.leftEye, pointData.rightEye);
+
+            return pointData;
+        }
+
+        public DisplayProceduralFace GetProceduralFaceMessage()
+        {
+            DisplayProceduralFace displayProceduralFaceMessage = new DisplayProceduralFace();
+            displayProceduralFaceMessage.leftEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.rightEye = new float[(int)ProceduralEyeParameter.NumParameters];
+            displayProceduralFaceMessage.robotID = 1;
+            displayProceduralFaceMessage.faceAngle = faceAngle;
+            displayProceduralFaceMessage.faceCenX = faceCenterX;
+            displayProceduralFaceMessage.faceCenY = faceCenterY;
+            displayProceduralFaceMessage.faceScaleX = faceScaleX;
+            displayProceduralFaceMessage.faceScaleY = faceScaleY;
+
+            for (int i = 0; i < displayProceduralFaceMessage.leftEye.Length && i < leftEye.Length; ++i)
+            {
+                displayProceduralFaceMessage.leftEye[i] = leftEye[i];
+                displayProceduralFaceMessage.rightEye[i] = rightEye[i];
+            }
+            AdjustEyeParamsOut(displayProceduralFaceMessage.leftEye, displayProceduralFaceMessage.rightEye);
+
+            return displayProceduralFaceMessage;
+        }
+
+        public static void AdjustEyeParamsOut(float[] leftParamArray, float[] rightParamArray)
+        {
+            int curIndex = (int)ProceduralEyeParameter.EyeCenterX;
+            leftParamArray[curIndex] = Math.Min(128f, Math.Max(-128f, leftParamArray[curIndex] - kEyeCenterXLeft));
+            rightParamArray[curIndex] = Math.Min(128f, Math.Max(-128f, rightParamArray[curIndex] - kEyeCenterXRight));
+
+            curIndex = (int)ProceduralEyeParameter.EyeCenterY;
+            leftParamArray[curIndex] = Math.Min(64f, Math.Max(-64f, leftParamArray[curIndex] - kEyeCenterY));
+            rightParamArray[curIndex] = Math.Min(64f, Math.Max(-64f, rightParamArray[curIndex] - kEyeCenterY));
         }
     }
 
