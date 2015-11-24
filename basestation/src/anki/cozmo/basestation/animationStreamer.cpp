@@ -187,14 +187,14 @@ namespace Cozmo {
   
   Result AnimationStreamer::SendBufferedMessages(Robot& robot)
   {
-#   if DEBUG_ANIMATIONS
+#   if DEBUG_ANIMATION_STREAMING
     s32 numSent = 0;
 #   endif
     
     // Empty out anything waiting in the send buffer:
     RobotInterface::EngineToRobot* msg = nullptr;
     while(!_sendBuffer.empty()) {
-#     if DEBUG_ANIMATIONS
+#     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("Animation.SendBufferedMessages",
                        "Send buffer length=%lu.", _sendBuffer.size());
 #     endif
@@ -207,7 +207,7 @@ namespace Cozmo {
           return sendResult;
         }
         
-#       if DEBUG_ANIMATIONS
+#       if DEBUG_ANIMATION_STREAMING
         ++numSent;
 #       endif
         
@@ -220,7 +220,7 @@ namespace Cozmo {
         delete msg;
       } else {
         // Out of bytes to send, continue on next Update()
-#       if DEBUG_ANIMATIONS
+#       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("Animation.SendBufferedMessages",
                          "Sent %d messages, but ran out of bytes to send from "
                          "buffer. %lu remain, so will continue next Update().",
@@ -236,7 +236,7 @@ namespace Cozmo {
     assert(_numBytesToSend >= 0);
     assert(_sendBuffer.empty());
     
-#   if DEBUG_ANIMATIONS
+#   if DEBUG_ANIMATION_STREAMING
     if(numSent > 0) {
       PRINT_NAMED_INFO("Animation.SendBufferedMessages.Sent",
                        "Sent %d messages, %lu remain in buffer.",
@@ -265,7 +265,6 @@ namespace Cozmo {
       if(currentKeyFrame.IsDone()) {
         track.MoveToNextKeyFrame();
       }
-      
     }
     
     return paramsSet;
@@ -394,11 +393,11 @@ namespace Cozmo {
       // for each one, just once for each audio/silence frame.
       //
       
-#     if DEBUG_ANIMATIONS
+#     if DEBUG_ANIMATION_STREAMING
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
                   PRINT_NAMED_INFO("AnimationStreamer.UpdateStream", \
                                    "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
-                                   animToStream.streamTime_ms - animToStream.startTime_ms)
+                                   _streamingTime_ms - _startTime_ms)
 #     else
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
 #     endif
@@ -440,6 +439,8 @@ namespace Cozmo {
       {
         faceUpdated |= GetFaceHelper(faceLayerIter->track, faceLayerIter->startTime_ms,
                                      faceLayerIter->streamTime_ms, faceParams);
+        
+        faceLayerIter->streamTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
         
         if(!faceLayerIter->track.HasFramesLeft()) {
           // This layer is done, delete it
@@ -518,7 +519,7 @@ namespace Cozmo {
 #   endif
     
     // Send an end-of-animation keyframe when done
-    if(!anim->HasFramesLeft() && _sendBuffer.empty() && !_endOfAnimationSent)
+    if(!anim->HasFramesLeft() && _sendBuffer.empty() && !_endOfAnimationSent && _faceLayers.empty())
     {
 #     if DEBUG_ANIMATIONS
       static TimeStamp_t lastEndOfAnimTime = 0;
@@ -593,7 +594,7 @@ namespace Cozmo {
         }
       }
       
-      if((!robot.IsAnimating() && IsFinished(_idleAnimation)) || !_isIdling) {
+      if((!robot.IsAnimating() && _idleAnimation != &_liveAnimation && IsFinished(_idleAnimation)) || !_isIdling) {
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
                          "(Re-)Initializing idle animation: '%s'.\n",
@@ -759,14 +760,14 @@ namespace Cozmo {
       ProceduralFace blinkFace(crntFace);
       
       FaceTrack faceTrack;
+      TimeStamp_t totalOffset = 0;
       bool moreBlinkFrames = false;
       do {
         TimeStamp_t timeInc;
         moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
+        totalOffset += timeInc;
         
-        blinkFace.SetTimeStamp(crntFace.GetTimeStamp() + timeInc);
-        
-        ProceduralFaceKeyFrame kf(blinkFace, timeInc);
+        ProceduralFaceKeyFrame kf(blinkFace, totalOffset);
         kf.SetIsLive(true);
         faceTrack.AddKeyFrame(std::move(kf));
         
@@ -932,7 +933,7 @@ namespace Cozmo {
   
   bool AnimationStreamer::IsFinished(Animation* anim) const
   {
-    return _endOfAnimationSent && !anim->HasFramesLeft() && _sendBuffer.empty();
+    return _endOfAnimationSent && !anim->HasFramesLeft() && _sendBuffer.empty() && _faceLayers.empty();
   }
 
   

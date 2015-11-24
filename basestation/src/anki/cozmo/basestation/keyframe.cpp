@@ -347,6 +347,7 @@ return RESULT_FAIL; \
     ProceduralFaceParams ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame* nextFrame)
     {
       if(nullptr == nextFrame) {
+        _isDone = true;
         return _procFace.GetParams();
       } else {
         // The interpolation fraction is how far along in time we are from this frame's

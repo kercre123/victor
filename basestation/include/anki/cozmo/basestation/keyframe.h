@@ -319,7 +319,7 @@ namespace Anki {
     private:
       ProceduralFace  _procFace;
       TimeStamp_t     _currentTime_ms;
-      bool            _isDone;
+      bool            _isDone = false;
     
       //AnimKeyFrame::FaceImage _faceImageMsg;
       
@@ -336,6 +336,7 @@ namespace Anki {
     : _procFace(face)
     {
       SetTriggerTime(triggerTime);
+      Reset();
     }
     
     // A FacePositionKeyFrame sets the center of the currently displayed face
