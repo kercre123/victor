@@ -39,6 +39,7 @@ namespace Conversations {
 
     void Awake() {
       Instance = this;
+      StartNewConversation("Default");
     }
 
     public void StartNewConversation(string conversationKey) {
@@ -59,7 +60,7 @@ namespace Conversations {
 
     public void SaveConversationToHistory() {
       _ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
-      StartNewConversation("");
+      StartNewConversation("Default");
     }
 
     private SpeechBubble CreateSpeechBubble(ConversationLine line) {

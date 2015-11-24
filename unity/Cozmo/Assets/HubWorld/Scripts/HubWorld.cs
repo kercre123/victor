@@ -29,7 +29,7 @@ namespace Cozmo.HubWorld {
 
     public override bool LoadHubWorld() {
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
-      ShowHubWorldDialog();
+      ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("IntroSequence");
       return true;
     }
 
@@ -58,6 +58,10 @@ namespace Cozmo.HubWorld {
 
       // Show the current state of challenges being locked/unlocked
       _HubWorldViewInstance.Initialize(_ChallengeStatesById);
+    }
+
+    private void HandleIntroSequenceDone() {
+      ShowHubWorldDialog();
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked) {

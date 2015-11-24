@@ -7,6 +7,20 @@
   },
   "Nodes": [
     {
+      "Name": "StartConvo",
+      "Id": 7,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.StartConversation, Assembly-CSharp",
+          "ConversationName": "IntroSequence"
+        }
+      ]
+    },
+    {
       "Name": "AriaUploadLine",
       "Id": 2,
       "Sequencial": true,
@@ -51,7 +65,7 @@
           "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
           "LineKey": "IntroSequence.CozmoBleepLine",
           "Speaker": "Cozmo",
-          "IsRight": false
+          "IsRight": true
         }
       ]
     },
@@ -69,6 +83,19 @@
           "BlockInput": true,
           "AllowSkipAfterDelay": true,
           "SkipDelayInSeconds": 0.0
+        }
+      ]
+    },
+    {
+      "Name": "EndConversation",
+      "Id": 6,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.EndConversation, Assembly-CSharp"
         }
       ]
     },
