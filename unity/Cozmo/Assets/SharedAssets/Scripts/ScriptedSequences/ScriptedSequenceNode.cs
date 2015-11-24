@@ -39,14 +39,21 @@ namespace ScriptedSequences
       get { return _IsComplete; } 
       private set { 
         if (value && !_IsComplete) {
+          _IsComplete = value;
           #if DEBUG_SCRIPTED_SEQUENCES
           DAS.Debug(this, DebugName +" Is Now Complete!");
           #endif
           if (OnComplete != null) {
             OnComplete();
           }
+
+          if (Final) {
+            _Parent.Complete();
+          }
         }
-        _IsComplete = value;
+        else {
+          _IsComplete = value;
+        }
       }
     }
 

@@ -15,11 +15,25 @@ namespace ScriptedSequences {
 
     public List<ScriptedSequenceNode> Nodes = new List<ScriptedSequenceNode>();
 
+    public event Action OnComplete;
+
+    public event Action<Exception> OnError;
+
+    [JsonIgnore]
+    public bool IsComplete { get; private set; }
+
     [JsonIgnore]
     public string DebugName { get { return Name; } }
 
     public void Fail(Exception error) {
       DAS.Error(this, error.ToString());
+
+      IsComplete = true;
+
+      if (OnError != null) {
+        OnError(error);
+      }
+
       ResetSequence();
     }
 
@@ -27,9 +41,34 @@ namespace ScriptedSequences {
       #if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Reset Called on Scripted Sequence " +Name);
       #endif
+
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].Reset();
       }
+        
+      if (Condition != null) {
+        // Toggling Condition.IsEnabled should reset our sequence to its starting state
+        Condition.IsEnabled = false;
+
+        if (Repeatable || !IsComplete) {
+          IsComplete = false;
+          Condition.IsEnabled = true;
+          if (Condition.IsMet) {
+            Enable();
+          }
+        }
+      }
+    }
+
+    public void Complete()
+    {
+      IsComplete = true;
+
+      if (OnComplete != null) {
+        OnComplete();
+      }
+
+      ResetSequence();
     }
 
     public void Initialize()
@@ -77,7 +116,7 @@ namespace ScriptedSequences {
     }
 
     public void Enable()
-    {
+    {      
       #if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Enable Called on Scripted Sequence " +Name);
       #endif
