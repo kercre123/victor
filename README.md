@@ -1,12 +1,12 @@
 # cozmo-game
 
-The Cozmo repository for game prototyping.
+Cozmo unity gameplay code. Also includes the current animation tool in /animation-tool/
 
 # Building cozmo-game
 
 At this point, only Mac and iOS are supported. The engine itself supports more platforms. See [products-cozmo](https://github.com/anki/products-cozmo).
 
-## Prerequisites
+### Prerequisites
 
 Install CMAKE using [brew](http://brew.sh/).
 
@@ -44,12 +44,32 @@ Run ./configure.py from the root of your cosmo-game folder.
     ./configure.py
     ./configure.py build
 
-Open <path-to-cozmo-repository>/Assets/Scenes/Dev.unity
-You should be able to run the scene.
-
 ### Webots
 
 The Webots worlds can be found in cozmo-game/simulator/worlds
+
+Useful worlds:
+
+ * cozmoViz.wbt - Includes a keyboard controller and the engine. Used to talk to a physical robot.
+
+ * cozmoVizForunity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
+
+ * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
+
+ * remoteAnimationWorld.wbt - Used by the animation tool to see your animation on a simulated robot.
+
+### Unity
+
+We are using [Unity 5.2.2f1](http://unity3d.com/get-unity/download/archive).
+
+A dev scene that includes a simple list of challenges for Cozmo. Used in a development environment.
+
+    <path-to-cozmo-repository>/Assets/Scenes/Dev.unity
+
+The production scene used for when we deploy. This is where the final experience will live.
+
+    <path-to-cozmo-repository>/Assets/Scenes/HubWorld.unity
+
 
 # Optional Info
 
