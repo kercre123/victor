@@ -48,15 +48,21 @@ void InitCube(void) {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
 
+  // Setup outputs
   GPIO_InitTypeDef GPIO_InitStructure;
-  
-  GPIO_ResetBits(GPIOA, GPIO_Pin_8);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  // XXX: NEVER enable PA8 (PROG) - it DOES NOT WORK IN EP1 (since we're using nRF24LE1s)
+  
+  // Low-voltage PROG pin - PB0
+  GPIO_ResetBits(GPIOB, GPIO_Pin_0);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  
+  // XXX: NEVER enable PA8 (high-voltage PROG) - it DOES NOT WORK IN EP1 (since we're using nRF24LE1s)
+  //GPIO_ResetBits(GPIOA, GPIO_Pin_8);
+  //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
   //GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   // Pull PB7 (CS#) high.
@@ -159,7 +165,6 @@ static inline void CubeRead(int address, uint8_t *data, int length) {
 }
 
 void LoadRom(const uint8_t *rom, int length) {
-  DisplayClear();
   SlowPrintf("Programming Cube");
 
   if (length > CUBE_MAX_PROGRAM_SIZE) {
@@ -178,7 +183,7 @@ void LoadRom(const uint8_t *rom, int length) {
   const uint8_t *mem = rom;
   for (int addr = 0; addr < length; addr += CUBE_PAGE_SIZE, mem += CUBE_PAGE_SIZE) {
     int left =  length - addr;
-    SlowPrintf("\nWritting %i", addr / CUBE_PAGE_SIZE);
+    SlowPrintf("\nWriting %i", addr / CUBE_PAGE_SIZE);
 
     CubeWriteEn();
     if (~CubeReadFSR() & CUBE_FSR_WEN) { throw ERROR_CUBE_CANNOT_WRITE; }
@@ -209,7 +214,7 @@ void LoadRom(const uint8_t *rom, int length) {
 void ProgramCube(void) {
   EnableBAT();
 
-  GPIO_SetBits(GPIOA, GPIO_Pin_8);  // PROG
+  GPIO_SetBits(GPIOB, GPIO_Pin_0);  // Low-voltage PROG
   MicroWait(2000);
   GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(2000);
@@ -218,6 +223,7 @@ void ProgramCube(void) {
 
   LoadRom(g_Cube, g_CubeEnd - g_Cube);
 
-  GPIO_ResetBits(GPIOA, GPIO_Pin_8);  // PROG
+  GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
+  GPIO_ResetBits(GPIOB, GPIO_Pin_0);  // Turn off Low-voltage PROG
   DisableBAT();
 }

@@ -18,10 +18,10 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 1;
+u8 g_fixtureReleaseVersion = 2;
 
-BOOL g_isRobotPresent = 0;
-FixtureType g_fixtureType = FIXTURE_HEAD_TEST;
+BOOL g_isDevicePresent = 0;
+FixtureType g_fixtureType = FIXTURE_NONE;
 FlashParams g_flashParams;
 
 char g_lotCode[15] = {0};
@@ -35,11 +35,11 @@ static BOOL IsContactOnFixture(void);
 BOOL ToggleContacts(void);
 static BOOL TryToRunTests(void);
 
-// This sets up a log entry in the robot flash - showing a test was started
+// This sets up a log entry in the Device flash - showing a test was started
 void WritePreTestData(void)
 {
 }
-// This logs an error code in the robot flash - showing a test completed (maybe successfully)
+// This logs an error code in the Device flash - showing a test completed (maybe successfully)
 void WriteFactoryBlockErrorCode(error_t errorCode)
 {
 }
@@ -106,16 +106,16 @@ void SetFixtureText(void)
     DisplayBigCenteredText("HEAD");  
   } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
     DisplayBigCenteredText("BODY");
-  } else if (g_fixtureType == FIXTURE_NONE) {    
-    DisplayBigCenteredText("NO ID");
   } else if (g_fixtureType == FIXTURE_DEBUG) {    
     DisplayBigCenteredText("DEBUG");
+  } else {    
+    DisplayBigCenteredText("NO ID");
   }
   
   // Show the version number in the corner
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-  DisplayMoveCursor(7, 0);
+  DisplayMoveCursor(55, 110);
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
@@ -155,52 +155,65 @@ void SetOKText(void)
   DisplayFlip();
 }
 
-// Wait until the Robot has been pulled off the fixture
-void WaitForRobotOff(void)
+// Return true if a device is detected (on the contacts)
+bool DetectDevice(void)
 {
+  switch (g_fixtureType)
+  {
+    case FIXTURE_CHARGER_TEST:
+    case FIXTURE_CUBE_TEST:
+      return CubeDetect();
+    case FIXTURE_HEAD_TEST:
+      return HeadDetect();
+    case FIXTURE_BODY_TEST:
+      return BodyDetect();
+  }
+
+  // If we don't know what kind of device to look for, it's not there!
+  return false;
+}
+
+// Wait until the Device has been pulled off the fixture
+void WaitForDeviceOff(void)
+{
+  // In debug mode, keep device powered up so we can continue talking to it
   if (g_fixtureType & FIXTURE_DEBUG)
   {
-    while (g_isRobotPresent)
+    while (g_isDevicePresent)
     {
-      try
-      {
-        Put8(DMC_ACK);
-        SendCommand(NULL, 0);
-      }
-      catch (error_t error)
-      {
-        break;
-      }
-      
+      // XXX: We used to send DMC_ACK commands continuously here to prevent auto-power-off
       ConsoleUpdate();
+      DisplayUpdate();
     }
     // ENBAT off
     DisableBAT();
-    g_isRobotPresent = 0;
+
+  // In normal mode, just debounce the connection
   } else {
     // ENBAT off
     DisableBAT();
     
     u32 debounce = 0;
-    while (g_isRobotPresent)
+    while (g_isDevicePresent)
     {
-      TestEnableRx();
-      TestDisable();
-      PIN_IN(GPIOC, 10);
-      PIN_IN(GPIOC, 12);
-      PIN_PULL_UP(GPIOC, 10);
-      MicroWait(10000);
-    
-      if ((GPIO_READ(GPIOC) & GPIO_Pin_10))
+      bool isPresent = false;
+      if (!DetectDevice())
       {
-        if (++debounce >= 10)
-          g_isRobotPresent = 0;
+        // 500 checks * 1000uS = 500ms delay showing error post removal
+        if (++debounce >= 500)
+          g_isDevicePresent = 0;
+        MicroWait(1000);
       }
+      
+      DisplayUpdate();  // While we wait, let screen saver kick in
     }
   }
+  
+  // When device is removed, restore fixture text
+  SetFixtureText();
 }
 
-// Try to get a robot sitting on the charge contacts to enter debug mode
+// Try to get a Device sitting on the charge contacts to enter debug mode
 // XXX: This code will need to be reworked for Cozmo
 void TryToEnterDiagnosticMode(void)
 {
@@ -224,7 +237,7 @@ void TryToEnterDiagnosticMode(void)
   throw ERROR_ACK1;
 }
 
-// Walk through tests one by one - logging to the PC and to the robot flash
+// Walk through tests one by one - logging to the PC and to the Device flash
 static void RunTests()
 {
   int i;
@@ -273,28 +286,27 @@ static void RunTests()
     SetOKText();
   }
   
-  WaitForRobotOff();
+  WaitForDeviceOff();
 }
 
-// This checks for a robot (even asleep) that is in contact with the fixture
-static BOOL IsContactOnFixture(void)
+// This checks for a Device (even asleep) that is in contact with the fixture
+static BOOL IsDevicePresent(void)
 {
   TestDisable();
-  PIN_IN(GPIOC, 10);
-  PIN_IN(GPIOC, 12);
-  PIN_PULL_UP(GPIOC, 10);
-  MicroWait(100);
-  
-  g_isRobotPresent = 0;
+
+  g_isDevicePresent = 0;
   
   static u32 s_debounce = 0;
-  if (!(GPIO_READ(GPIOC) & GPIO_Pin_10))
+  
+  if (DetectDevice())
   {
-    if (++s_debounce >= 12500)
+    // 300 checks * 1ms = 300ms to be sure the board is reliably in contact
+    if (++s_debounce >= 300)
     {
       s_debounce = 0;
       return TRUE;
     }
+    MicroWait(1000);
   } else {
     s_debounce  = 0;
   }
@@ -302,7 +314,7 @@ static BOOL IsContactOnFixture(void)
   return FALSE;
 }
 
-// This function is meant to wake up a robot that is placed on a charger once it is detected
+// This function is meant to wake up a Device that is placed on a charger once it is detected
 BOOL ToggleContacts(void)
 {
   TestEnable();
@@ -312,7 +324,9 @@ BOOL ToggleContacts(void)
   MicroWait(200000);  // 200ms
   return TRUE;
   
-  /*
+  /* 
+   * The below needs to be redone for Cozmo
+   *
   u32 i;
   BOOL sawPowerOn = FALSE;
   
@@ -347,66 +361,17 @@ BOOL ToggleContacts(void)
   return sawPowerOn;*/
 }
 
+// Wake up the board and try to talk to it
 static BOOL TryToRunTests(void)
 {
-  u32 i;
-  
-  // Revert PC10 and PC12 to outputs
-  PIN_PULL_NONE(GPIOC, 10);
-  PIN_OUT(GPIOC, 10);
-  PIN_OUT(GPIOC, 12);
-  
   // PCB fixtures are a special case (no diagnostic mode)
-  if (g_fixtureType == FIXTURE_BODY_TEST)
-  {
-    TestEnable();
-    TestEnableRx();
-    TestEnableTx();
-    g_isRobotPresent = 1;
-    
-    RunTests();
-    return TRUE;
-  } else {
-    ToggleContacts();
-    
-    TestEnable();
-    TestEnableRx();
-    g_isRobotPresent = 1;
-    BOOL isInDiagnosticMode = FALSE;
-    
-    // One day, the factory sent us a message saying they were receiving
-    // lots of 002 power-on errors. This was quite possibly caused by the
-    // bootloader timing matching up perfectly when it sends an ACK command
-    // for flashing through there.  This delay should be sufficient enough
-    // to not hit this problem as often. This should let the bootloader
-    // finish booting into the main program.
-    MicroWait(200000);
-    
-    // The count here was also increased for the factory, just in case.
-    for (i = 0; i < 5000; i++)
-    {
-      try
-      {
-        TryToEnterDiagnosticMode();
-        isInDiagnosticMode = TRUE;
-        break;
-      }
-      catch (error_t e)
-      {
-        // ...
-      }
-    }
-    
-    if (isInDiagnosticMode)
-    {
-      RunTests();
-      return TRUE;
-    }
-  }
-  
-  return FALSE;
+  // If/when we add testport support - use ToggleContacts and then repeatedly call TryToEnterDiagnosticMode
+  g_isDevicePresent = 1;
+  RunTests();
+  return TRUE;
 }
 
+// Repeatedly scan for a device, then run through the tests when it appears
 static void MainExecution()
 {
   int i;
@@ -441,7 +406,7 @@ static void MainExecution()
   
   u32 startTime = getMicroCounter();
   
-  if (IsContactOnFixture())
+  if (IsDevicePresent())
   {
     TestEnableRx();
     SetTestCounterText(0, m_functionCount);
@@ -462,7 +427,7 @@ static void MainExecution()
       if (error != ERROR_OK)
       {
         SetErrorText(error);
-        WaitForRobotOff();
+        WaitForDeviceOff();
       }
     }
   }
@@ -589,11 +554,7 @@ int main(void)
 
   // Read the pins with pull-down resistors on GPIOB[14:12]
   g_fixtureType = (FixtureType)((GPIO_READ(GPIOB) >> 12) & 7);
-  
-#ifdef CHARGE_BUILD
-  g_fixtureType = FIXTURE_CHARGE_TEST;
-#endif
-  
+
   SlowPrintf("fixture: %i\r\n", g_fixtureType);
   
   InitBAT();
@@ -615,8 +576,6 @@ int main(void)
   SlowPutString("Ready...\r\n");
 
   STM_EVAL_LEDOn(LEDRED);
-
-  ProgramCube();
 
   while (1)
   {  

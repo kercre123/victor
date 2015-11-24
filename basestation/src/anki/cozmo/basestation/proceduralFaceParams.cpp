@@ -11,9 +11,11 @@
  **/
 #include "anki/cozmo/basestation/proceduralFaceParams.h"
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -155,6 +157,71 @@ void ProceduralFaceParams::Interpolate(const ProceduralFaceParams& face1, const 
     LinearBlendHelper(face1.GetFaceScale().y(), face2.GetFaceScale().y(), blendFraction)});
   
 } // Interpolate()
+  
+void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
+{
+  static const std::set<Parameter> allParams =
+  {
+    Parameter::EyeCenterX,
+    Parameter::EyeCenterY,
+    Parameter::EyeScaleX,
+    Parameter::EyeScaleY,
+    Parameter::EyeAngle,
+    Parameter::LowerInnerRadiusX,
+    Parameter::LowerInnerRadiusY,
+    Parameter::UpperInnerRadiusX,
+    Parameter::UpperInnerRadiusY,
+    Parameter::UpperOuterRadiusX,
+    Parameter::UpperOuterRadiusY,
+    Parameter::LowerOuterRadiusX,
+    Parameter::LowerOuterRadiusY,
+    Parameter::UpperLidY,
+    Parameter::UpperLidAngle,
+    Parameter::UpperLidBend,
+    Parameter::LowerLidY,
+    Parameter::LowerLidAngle,
+    Parameter::LowerLidBend
+  };
+  // Make sure these match up or we won't copy parameters correctly!
+  assert(allParams.size() == (size_t)Parameter::NumParameters);
+  
+  // We list out the eye params that need to be added instead of multiplied
+  static const std::set<Parameter> addParamList =
+  {
+    Parameter::EyeCenterX,
+    Parameter::EyeCenterY,
+    Parameter::EyeAngle,
+    Parameter::UpperLidY,
+    Parameter::UpperLidAngle,
+    Parameter::LowerLidY,
+    Parameter::LowerLidAngle,
+  };
+  
+  // Go through all the params, if they're in the add list do that, otherwise multiply
+  for (auto param : allParams)
+  {
+    if (addParamList.count(param) > 0)
+    {
+      eyeArray0[(int)param] += eyeArray1[(int)param];
+    }
+    else
+    {
+      eyeArray0[(int)param] *= eyeArray1[(int)param];
+    }
+  }
+}
+  
+ProceduralFaceParams& ProceduralFaceParams::Combine(const ProceduralFaceParams& otherFace)
+{
+  CombineEyeParams(_eyeParams[(int)WhichEye::Left], otherFace.GetParameters(WhichEye::Left));
+  CombineEyeParams(_eyeParams[(int)WhichEye::Right], otherFace.GetParameters(WhichEye::Right));
+  
+  _faceAngle += otherFace.GetFaceAngle();
+  _faceScale *= otherFace.GetFaceScale();
+  _faceCenter += otherFace.GetFacePosition();
+
+  return *this;
+}
 
 
 } // namespace Cozmo

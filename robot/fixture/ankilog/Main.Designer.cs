@@ -370,7 +370,7 @@
             this.MaximumSize = new System.Drawing.Size(640, 436);
             this.MinimumSize = new System.Drawing.Size(640, 436);
             this.Name = "Main";
-            this.Text = "ANKI LOG - COZMO";
+            this.Text = "COZMO LOG - v02";
             this.tabs.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();

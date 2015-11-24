@@ -1,39 +1,34 @@
 #include "hal.h"
 
+#ifdef HUMAN_READABLE 
+#define ACC_PRINT(x)            PutDec((x))
+#else
+#define ACC_PRINT(x)            PutHex((x))
+#endif
+
 void StreamAccelerometer()
 {
   #ifdef STREAM_ACCELEROMETER
-  volatile s8 accData[3];
-  //s8 accDataLast[3];
+  volatile s8 accData[6];
   InitUart();
   InitAcc();
-  
   while(1)
   {
-    ReadAcc(accData);
-    PutDec(accData[0]);
-    //puthex(accData[0]-accDataLast[0]);
-    putchar('\t');
-    PutDec(accData[1]);
-    //puthex(accData[1]-accDataLast[1]);
-    putchar('\t');
-    PutDec(accData[2]);
-    //puthex(accData[2]-accDataLast[2]);
-    putstring("\r\n");
-    //ReadFifo();
-    //memcpy(accDataLast, accData, sizeof(accData));
-    //delay_ms(9); // 100 hz loop.
-    /*delay_ms(8);
-    delay_us(850);*/
-   // delay_us(700); //500 hz loop
-    //delay_ms(2);
-    
-    // ~ 1.15-1.3 ms for I2C read
-    // Maybe even 1.5 ms
-    // 250 hz delay = 4ms-1.5ms = 2.5 ms
-    // In practice 2.83 so I2C read is ~1.17ms
-    delay_ms(2);
-    delay_us(830);
+    ReadAcc(accData);  
+    if((accData[0] & 0x01) && (accData[2] & 0x01) && (accData[4] & 0x01)) // is all data new?
+    {
+      ACC_PRINT(accData[1]);
+      ACC_PRINT(accData[3]);
+      ACC_PRINT(accData[5]);
+      PutString("\r\n");
+    }
+    //#define VERIFY_STREAMING_RATE
+    #ifdef VERIFY_STREAMING_RATE
+    else
+    {
+      PutChar('.');
+    }
+    #endif
     
   }
   #endif
@@ -94,6 +89,7 @@ void SimpleLedTest(bool loop)
     }
   }
   #endif
+  loop++;
 }
 
 
@@ -142,18 +138,67 @@ void SelfTest()
   #endif
 }
 
+static void RunStartupLights()
+{
+  // Do startup light sequence //
+  // All R, G, B, 0.5 sec each
+  u8 i,j;
+  for(j = 0; j<3; j++)
+  {
+    for(i = 0; i<124; i++)
+    {
+      LightOn(0+j);
+      delay_ms(1);
+      LightOn(3+j);
+      delay_ms(1);
+      LightOn(6+j);
+      delay_ms(1);
+      LightOn(9+j);
+      delay_ms(1);
+    }
+  }
+  // All IR 0.5s
+  for(i = 0; i<124; i++)
+  {
+    LightOn(12);
+    delay_ms(1);
+    LightOn(13);
+    delay_ms(1);
+    LightOn(14);
+    delay_ms(1);
+    LightOn(15);
+    delay_ms(1);
+  }
+  // Cube ID
+  j = (CBYTE[0x3FF0] & 0x3)+1;
+  for(i = 0; i<124; i++)
+  {
+    LightOn(1);
+    delay_ms(1);
+    LightsOff();
+    if(j==2)
+      LightOn(4);
+    delay_ms(1);
+    LightsOff();
+    if(j==3)
+      LightOn(7);
+    delay_ms(1);
+    LightsOff();
+    if(j==4)
+      LightOn(10);
+    delay_ms(1);
+    LightsOff();
+  }
+  // All off
+  LightsOff();
+
+  
+}
 
 // Run tests
 void RunTests()
 {
-  // Do startup light sequence //
-  u8 i;
-  for(i = 0; i<12; i++)
-  {
-    LightOn(i);
-    delay_ms(50);
-  }
-  LightsOff();
+  RunStartupLights();
   SelfTest();
   StreamAccelerometer();
   TapsTest();

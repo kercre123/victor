@@ -22,6 +22,8 @@
 #include "clad/types/liveIdleAnimationParameters.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include <list>
+
 // This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
 // Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
 // and needing sound.
@@ -69,6 +71,10 @@ namespace Cozmo {
     // Use static LiveAnimation above to use live procedural animation (default).
     Result SetIdleAnimation(const std::string& name);
     
+    // Add a procedural face "layer" to be combined with whatever is streaming
+    using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
+    Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
      
@@ -88,6 +94,9 @@ namespace Cozmo {
     
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim);
+    
+    Result SendStartOfAnimation();
+    Result SendEndOfAnimation(Robot& robot);
     
     // Stream one audio sample from the AudioManager
     // If sendSilence==true, will buffer an AudioSilence message if no audio is
@@ -109,6 +118,26 @@ namespace Cozmo {
     Animation*  _idleAnimation; // default points to "live" animation
     Animation*  _streamingAnimation;
     TimeStamp_t _timeSpentIdling_ms;
+    
+    // For layering procedural face animations on top of whatever is currently
+    // playing:
+    struct FaceLayer {
+      FaceTrack   track;
+      TimeStamp_t startTime_ms;
+      TimeStamp_t streamTime_ms;
+    };
+    std::list<FaceLayer> _faceLayers;
+    
+    // Helper to fold the next procedural face from the given track (if one is
+    // ready to play) into the passed-in procedural face params.
+    bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
+                       TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
+                       ProceduralFaceParams& faceParams);
+    
+    void UpdateFace(Robot& robot, Animation* anim);
+    
+    // Used to stream _just_ the stuff left in face layers or audio in the buffer
+    Result StreamFaceLayersOrAudio(Robot& robot);
     
     bool _isIdling;
     

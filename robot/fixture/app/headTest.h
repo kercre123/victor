@@ -3,6 +3,8 @@
 
 #include "hal/portable.h"
 
+// Return true if device is detected on contacts
+bool HeadDetect(void);
 TestFunction* GetHeadTestFunctions(void);
 
 #endif

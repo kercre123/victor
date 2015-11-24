@@ -56,12 +56,15 @@ typedef enum
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
 // Head errors
-#define ERROR_HEAD_BOOTLOADER       400   // Can't load bootloader into K02
-#define ERROR_HEAD_APP              401   // Can't load app into K02
+#define ERROR_HEAD_BOOTLOADER       500   // Can't load bootloader into K02
+#define ERROR_HEAD_APP              501   // Can't load app into K02
 
-#define ERROR_HEAD_RADIO_BOOT       410   // Can't sync with radio
-#define ERROR_HEAD_RADIO_ERASE      411   // Problem erasing flash
-#define ERROR_HEAD_RADIO_FLASH      412   // Problem programming radio
+#define ERROR_HEAD_RADIO_BOOT       510   // Can't sync with radio
+#define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash
+#define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
+
+// Body errors
+#define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body
 
 // Cube/charger errors
 #define ERROR_CUBE_CANNOT_WRITE     700

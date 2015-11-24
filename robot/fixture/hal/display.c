@@ -151,6 +151,7 @@ void InitDisplay(void)
 
 void DisplaySetScroll(bool scroll) {
   if (scroll) {
+    // XXX:  This is broken - it diagonally scrolls part of the display
     static const uint8_t enable[] = { 0x29, 0, 0, 0, 0x00, 0x01, 0x2F };
     DisplayWrite(true, enable, sizeof(enable));
   } else {

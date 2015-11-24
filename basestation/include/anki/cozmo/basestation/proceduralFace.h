@@ -29,8 +29,12 @@ namespace Cozmo {
  
     // Nominal positions/sizes for everything (these are things that aren't
     // parameterized at dynamically, but could be if we want)
-    static constexpr s32   NominalEyeHeight      = 40;
-    static constexpr s32   NominalEyeWidth       = 30;
+    static constexpr s32   NominalEyeHeight       = 40;
+    static constexpr s32   NominalEyeWidth        = 30;
+    static constexpr s32   NominalLeftEyeX        = 32;
+    static constexpr s32   NominalRightEyeX       = 96;
+    static constexpr s32   NominalEyeY            = 32;
+    
     
     using Parameter = ProceduralEyeParameter;
     using WhichEye = ProceduralFaceParams::WhichEye;
