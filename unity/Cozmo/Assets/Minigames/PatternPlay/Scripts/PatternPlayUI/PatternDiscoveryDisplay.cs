@@ -29,7 +29,7 @@ namespace PatternPlay {
         _StackPatternDisplay.Pattern = null;
         _HorizontalPatternDisplay.Pattern = discoveredPattern;
       } 
-      _AnimationAnchorInstance = UIManager.CreatePerspectiveUI(_AnimationAnchorPrefab);
+      _AnimationAnchorInstance = UIManager.CreateUIElement(_AnimationAnchorPrefab);
     }
 
     public void AddCloseAnimationSequence(Sequence sequence) {

@@ -11,7 +11,12 @@ public class ChallengeData : ScriptableObject {
   public string ChallengeID;
 
   // whether or not we should show this challenge as part of the game.
-  public bool EnableChallenge = true;
+  [SerializeField]
+  public bool EnableHubWorldChallenge = true;
+
+  // show or not on dev world challenge list
+  [SerializeField]
+  public bool EnableDevWorldChallenge = false;
 
   // the key used to get the actual localized string for the
   // challenge title shown to the player.

@@ -18,22 +18,22 @@
             "/{*}"
         ]
     },
-    "hubWorld.askCozmo.askCozmo1" : {
+    "hubWorld.askCozmo.askCozmo1.title" : {
         "translation" : "Ask Cozmo Challenge 1"
     },
-    "hubWorld.investorDemo.investorDemoScene1" : {
+    "hubWorld.investorDemo.investorDemoScene1.title" : {
         "translation" : "Investor Scene 1"
     },
-    "hubWorld.dockTraining.challenge1" : {
+    "hubWorld.dockTraining.challenge1.title" : {
         "translation" : "Docking Challenge 1"
     },
-    "hubWorld.followCube.challenge1" : {
+    "hubWorld.followCube.challenge1.title" : {
         "translation" : "Follow Cube Challenge 1"
     },
-    "hubWorld.rotationTraining.challenge1" : {
+    "hubWorld.rotationTraining.challenge1.title" : {
         "translation" : "Turning Challenge 1"
     },
-    "hubWorld.visionTraining.challenge1" : {
+    "hubWorld.visionTraining.challenge1.title" : {
         "translation" : "Vision Challenge 1"
     }
 }
