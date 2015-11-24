@@ -6,11 +6,11 @@ using Anki.Cozmo;
 namespace Anki.Debug {
   public class ConsoleCategoryPanel : MonoBehaviour {
     [SerializeField]
-    public RectTransform _UIContainer;
+    public RectTransform UIContainer;
 
     [SerializeField]
-    public Text _TitleText;
+    public Text TitleText;
 
-    public string _CategoryName;
+    public string CategoryName;
   }
 }

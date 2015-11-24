@@ -50,9 +50,9 @@ namespace Anki.Debug {
           }
 
           ConsoleCategoryPanel panelscript = categoryPanel.GetComponent<ConsoleCategoryPanel>();
-          panelscript._TitleText.text = categories[i];
+          panelscript.TitleText.text = categories[i];
           // Add the new field if it exists
-          DebugConsoleData.Instance.RefreshCategory(panelscript._UIContainer.transform, categories[i]);
+          DebugConsoleData.Instance.RefreshCategory(panelscript.UIContainer.transform, categories[i]);
         }
         DebugConsoleData.Instance.OnUIUpdated();
       }

@@ -115,8 +115,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afa34c7cd96dc4694b6e08d31e778320, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _UIContainer: {fileID: 22498888}
-  _TitleText: {fileID: 11408908}
+  UIContainer: {fileID: 22498888}
+  TitleText: {fileID: 11408908}
+  CategoryName: 
 --- !u!114 &11408908
 MonoBehaviour:
   m_ObjectHideFlags: 1

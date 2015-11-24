@@ -184,13 +184,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 815c58b083ded497092d60b9b962a792, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _UIContainer: {fileID: 22440216}
-  _PaneStatusText: {fileID: 11414954}
-  _PrefabVarUIText: {fileID: 122654, guid: 8acf7c554244847598af0b4a028cbab9, type: 2}
-  _PrefabVarUICheckbox: {fileID: 122654, guid: 6d3457259bf3c4974aa6548a3ca0268f, type: 2}
-  _PrefabVarUIButton: {fileID: 122654, guid: fdba2cd25e59d4e92bb8cefd1214f476, type: 2}
-  _PrefabVarUISlider: {fileID: 122654, guid: a33929bcc49a949739bcd7c6a8379bce, type: 2}
-  _CategoryPanelPrefab: {fileID: 191946, guid: fbe44982d9117441a9341d5ef82d3496, type: 2}
+  UIContainer: {fileID: 22440216}
+  PaneStatusText: {fileID: 11414954}
+  PrefabVarUIText: {fileID: 122654, guid: 8acf7c554244847598af0b4a028cbab9, type: 2}
+  PrefabVarUICheckbox: {fileID: 122654, guid: 6d3457259bf3c4974aa6548a3ca0268f, type: 2}
+  PrefabVarUIButton: {fileID: 122654, guid: fdba2cd25e59d4e92bb8cefd1214f476, type: 2}
+  PrefabVarUISlider: {fileID: 122654, guid: a33929bcc49a949739bcd7c6a8379bce, type: 2}
+  CategoryPanelPrefab: {fileID: 191946, guid: fbe44982d9117441a9341d5ef82d3496, type: 2}
 --- !u!114 &11428672
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -400,6 +400,10 @@ Prefab:
         type: 2}
     - target: {fileID: 0}
       propertyPath: _CategoryPanelPrefab
+      value: 
+      objectReference: {fileID: 191946, guid: fbe44982d9117441a9341d5ef82d3496, type: 2}
+    - target: {fileID: 0}
+      propertyPath: CategoryPanelPrefab
       value: 
       objectReference: {fileID: 191946, guid: fbe44982d9117441a9341d5ef82d3496, type: 2}
     m_RemovedComponents: []
