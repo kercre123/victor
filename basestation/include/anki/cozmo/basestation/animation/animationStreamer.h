@@ -56,6 +56,10 @@ namespace Cozmo {
     // Use static LiveAnimation above to use live procedural animation (default).
     Result SetIdleAnimation(const std::string& name);
     
+    // Add a procedural face "layer" to be combined with whatever is streaming
+    using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
+    Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
      
@@ -92,7 +96,18 @@ namespace Cozmo {
     
     // For layering procedural face animations on top of whatever is currently
     // playing:
-    std::list<Animations::Track<ProceduralFaceKeyFrame>> _faceLayers;
+    struct FaceLayer {
+      FaceTrack   track;
+      TimeStamp_t startTime_ms;
+      TimeStamp_t streamTime_ms;
+    };
+    std::list<FaceLayer> _faceLayers;
+    
+    // Helper to fold the next procedural face from the given track (if one is
+    // ready to play) into the passed-in procedural face.
+    bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
+                       TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
+                       ProceduralFace& face);
     
     bool _isIdling;
     

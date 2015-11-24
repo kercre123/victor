@@ -344,22 +344,26 @@ return RESULT_FAIL; \
     }
      */
     
-    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame& nextFrame)
+    ProceduralFace ProceduralFaceKeyFrame::GetInterpolatedFace(const ProceduralFaceKeyFrame* nextFrame)
     {
-      // The interpolation fraction is how far along in time we are from this frame's
-      // trigger time (which currentTime was initialized to) and the next frame's
-      // trigger time.
-      const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
-      
-      ProceduralFace interpFace;
-      interpFace.Interpolate(_procFace, nextFrame._procFace, fraction);
-      
-      _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
-      if(_currentTime_ms >= nextFrame.GetTriggerTime()) {
-        _isDone = true;
+      if(nullptr == nextFrame) {
+        return _procFace;
+      } else {
+        // The interpolation fraction is how far along in time we are from this frame's
+        // trigger time (which currentTime was initialized to) and the next frame's
+        // trigger time.
+        const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame->GetTriggerTime() - GetTriggerTime()));
+        
+        ProceduralFace interpFace;
+        interpFace.GetParams().Interpolate(_procFace.GetParams(), nextFrame->_procFace.GetParams(), fraction);
+        
+        _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
+        if(_currentTime_ms >= nextFrame->GetTriggerTime()) {
+          _isDone = true;
+        }
+        
+        return interpFace;
       }
-      
-      return interpFace;
     }
     
 #pragma mark -

@@ -161,6 +161,21 @@ namespace Cozmo {
     return lastResult;
   }
   
+  Result AnimationStreamer::AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms)
+  {
+    Result lastResult = RESULT_OK;
+    
+    FaceLayer newLayer;
+    newLayer.track = faceTrack; // COPY the track in
+    newLayer.track.Init();
+    newLayer.startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + delay_ms;
+    newLayer.streamTime_ms = newLayer.startTime_ms;
+    
+    _faceLayers.emplace_back(std::move(newLayer));
+    
+    return lastResult;
+  }
+  
   bool AnimationStreamer::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
   {
     if(msg != nullptr) {
@@ -232,6 +247,29 @@ namespace Cozmo {
     return RESULT_OK;
   } // SendBufferedMessages()
 
+  bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
+                                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
+                                        ProceduralFace& face)
+  {
+    bool paramsSet = false;
+    
+    if(track.HasFramesLeft()) {
+      ProceduralFaceKeyFrame& currentKeyFrame = track.GetCurrentKeyFrame();
+      if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
+      {
+        ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
+        face.Combine(currentKeyFrame.GetInterpolatedFace(nextFrame));
+        paramsSet = true;
+      }
+      
+      if(currentKeyFrame.IsDone()) {
+        track.MoveToNextKeyFrame();
+      }
+      
+    }
+    
+    return paramsSet;
+  } // GetFaceHelper()
   
   Result AnimationStreamer::UpdateStream(Robot& robot, Animation* anim)
   {
@@ -394,8 +432,40 @@ namespace Cozmo {
         DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
       }
       
-      if(BufferMessageToSend(procFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-        DEBUG_STREAM_KEYFRAME_MESSAGE("ProceduralFace");      
+      // Combine the robot's current face with anything the currently-streaming
+      // animation does to the face, plus anything present in any face "layers".
+      ProceduralFace procFace = robot.GetProceduralFace();
+      bool faceUpdated = GetFaceHelper(procFaceTrack, _startTime_ms, _streamingTime_ms, procFace);
+      for(auto faceLayerIter = _faceLayers.begin(); faceLayerIter != _faceLayers.end(); )
+      {
+        faceUpdated |= GetFaceHelper(faceLayerIter->track, faceLayerIter->startTime_ms,
+                                     faceLayerIter->streamTime_ms, procFace);
+        
+        if(!faceLayerIter->track.HasFramesLeft()) {
+          // This layer is done, delete it
+          faceLayerIter = _faceLayers.erase(faceLayerIter);
+        } else {
+          ++faceLayerIter;
+        }
+      }
+      
+      // If we actually made changes to the face...
+      if(faceUpdated) {
+        // ...turn the final procedural face into an RLE-encoded image suitable for
+        // streaming to the robot
+        AnimKeyFrame::FaceImage faceImageMsg;
+        Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), faceImageMsg.image);
+        
+        if(RESULT_OK != rleResult) {
+          PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
+                            "Failed to get RLE frame from procedural face.");
+        } else {
+          DEBUG_STREAM_KEYFRAME_MESSAGE("ProceduralFace");
+          BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
+        }
+        
+        // Also store the updated face in the robot
+        robot.SetProceduralFace(procFace);
       }
       
       if(BufferMessageToSend(blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
