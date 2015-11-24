@@ -13,6 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinigamePrefab: {fileID: 194240, guid: dcbe955133bd648f99567b7aa9938869, type: 2}
   ChallengeID: RotationTrainingChallenge1
-  EnableChallenge: 1
+  EnableHubWorldChallenge: 1
+  EnableDevWorldChallenge: 1
   ChallengeTitleKey: hubWorld.rotationTraining.challenge1
+  ChallengeReqs:
+    ChallengeGateKeys: []
+    StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 40aabc66f6a664960b3e775e18750d9e, type: 2}

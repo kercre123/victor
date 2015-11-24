@@ -13,6 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinigamePrefab: {fileID: 186758, guid: f22197df76e3a4979b8f3e2e8d0a07fc, type: 2}
   ChallengeID: VisionTrainingChallenge1
-  EnableChallenge: 1
+  EnableHubWorldChallenge: 1
+  EnableDevWorldChallenge: 1
   ChallengeTitleKey: hubWorld.visionTraining.challenge1
+  ChallengeReqs:
+    ChallengeGateKeys: []
+    StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 054f498f752714e328f083a7200e1cb6, type: 2}

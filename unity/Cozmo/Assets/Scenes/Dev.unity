@@ -527,7 +527,6 @@ GameObject:
   - 20: {fileID: 1708240433}
   - 124: {fileID: 1708240432}
   - 92: {fileID: 1708240431}
-  - 81: {fileID: 1708240430}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -535,13 +534,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!81 &1708240430
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1708240429}
-  m_Enabled: 1
 --- !u!92 &1708240431
 Behaviour:
   m_ObjectHideFlags: 0
@@ -601,7 +593,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
 --- !u!1001 &1880791465
 Prefab:
   m_ObjectHideFlags: 0
