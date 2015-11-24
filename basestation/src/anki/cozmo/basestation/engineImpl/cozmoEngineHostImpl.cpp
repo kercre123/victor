@@ -60,6 +60,8 @@ CozmoEngineHostImpl::CozmoEngineHostImpl(IExternalInterface* externalInterface,
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
+  
+  _debugConsoleManager.Init(_externalInterface);
 }
 
 CozmoEngineHostImpl::~CozmoEngineHostImpl()
