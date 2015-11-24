@@ -160,7 +160,7 @@ void ProceduralFaceParams::Interpolate(const ProceduralFaceParams& face1, const 
   
 void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {
-  std::set<Parameter> allParams =
+  static const std::set<Parameter> allParams =
   {
     Parameter::EyeCenterX,
     Parameter::EyeCenterY,
@@ -183,11 +183,10 @@ void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeP
     Parameter::LowerLidBend
   };
   // Make sure these match up or we won't copy parameters correctly!
-  assert(allParams.size() == (int)Parameter::NumParameters);
+  assert(allParams.size() == (size_t)Parameter::NumParameters);
   
-  // We list out the eye params that need to be added instead of multiplied, and then take those away from the
-  // 'all' list to get the one that should be multiplied
-  auto addParamList =
+  // We list out the eye params that need to be added instead of multiplied
+  static const std::set<Parameter> addParamList =
   {
     Parameter::EyeCenterX,
     Parameter::EyeCenterY,
@@ -198,17 +197,17 @@ void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeP
     Parameter::LowerLidAngle,
   };
   
-  // Go through the list of parameters that get added, add them and erase from the all list
-  for (auto param : addParamList)
-  {
-    eyeArray0[(int)param] += eyeArray1[(int)param];
-    allParams.erase(param);
-  }
-  
-  // Now that the all list has had all the add parameters removed, multiply the rest
+  // Go through all the params, if they're in the add list do that, otherwise multiply
   for (auto param : allParams)
   {
-    eyeArray0[(int)param] *= eyeArray1[(int)param];
+    if (addParamList.count(param) > 0)
+    {
+      eyeArray0[(int)param] += eyeArray1[(int)param];
+    }
+    else
+    {
+      eyeArray0[(int)param] *= eyeArray1[(int)param];
+    }
   }
 }
   
