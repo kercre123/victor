@@ -2,7 +2,6 @@
   "Name": "HelloWorld",
   "RequiresConditionRemainsMet": true,
   "Repeatable": true,
-  "CanResume": false,
   "Condition": {
     "$type": "ScriptedSequences.Conditions.RobotConnected, Assembly-CSharp"
   },
@@ -12,13 +11,18 @@
       "Id": 1,
       "Sequencial": true,
       "Final": false,
-      "CheckPoint": false,
       "FailOnError": false,
       "Conditions": [],
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.DebugLogAction, Assembly-CSharp",
           "StringToLog": "Hello"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "HelloWorld.Hello",
+          "Speaker": "Aria",
+          "IsRight": false
         }
       ]
     },
@@ -27,7 +31,6 @@
       "Id": 2,
       "Sequencial": true,
       "Final": false,
-      "CheckPoint": false,
       "FailOnError": false,
       "Conditions": [],
       "Actions": [
@@ -42,7 +45,6 @@
       "Id": 3,
       "Sequencial": false,
       "Final": true,
-      "CheckPoint": false,
       "FailOnError": false,
       "Conditions": [
         {
@@ -60,9 +62,14 @@
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "majorWin",
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "HelloWorld.World",
+          "Speaker": "Cozmo",
+          "IsRight": true
         }
       ]
     }
-  ],
-  "DebugName": "HelloWorld"
+  ]
 }

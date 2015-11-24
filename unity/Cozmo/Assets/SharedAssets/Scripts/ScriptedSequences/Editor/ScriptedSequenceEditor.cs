@@ -139,6 +139,9 @@ public class ScriptedSequenceEditor : EditorWindow {
   // the position of the last mouse up
   private Vector2 _LastMouseUpPosition;
 
+  // if we get a mouse click when the context menu is open, we want to ignore it.
+  public bool ContextMenuOpen;
+
   // dictionary from condition/action to the helper for that condition used for drawing controls
   private Dictionary<ScriptedSequenceCondition, ScriptedSequenceHelper<ScriptedSequenceCondition>> _ConditionHelpers = new Dictionary<ScriptedSequenceCondition, ScriptedSequenceHelper<ScriptedSequenceCondition>>();
   private Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>> _ActionHelpers = new Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>>();
@@ -281,6 +284,23 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
   }
 
+  // custom Unity Style for a label with large text
+  private static GUIStyle _BigLabelStyle;
+  public static GUIStyle BigLabelStyle
+  {
+    get
+    {
+      if (_BigLabelStyle == null) {
+        _BigLabelStyle = new GUIStyle();
+        _BigLabelStyle.fontStyle = FontStyle.Bold;
+        _BigLabelStyle.normal.textColor = Color.white;
+        _BigLabelStyle.active.textColor = Color.white;
+        _BigLabelStyle.fontSize = 16;
+      }
+      return _BigLabelStyle;
+    }
+  }
+
   // custom Unity Style for a box
   private static GUIStyle _BoxStyle;
   public static GUIStyle BoxStyle
@@ -414,6 +434,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     EditorGUILayout.BeginHorizontal(ToolbarStyle);
 
     if (GUILayout.Button("Load", ToolbarButtonStyle)) {
+      ContextMenuOpen = true;
       GenericMenu menu = new GenericMenu();
 
       foreach (var file in Directory.GetFiles(kScriptedSequenceResourcesPath, "*.json")) {
@@ -459,6 +480,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", ToolbarButtonStyle)) {
 
+      ContextMenuOpen = true;
       GenericMenu menu = new GenericMenu();
 
       foreach (var file in _RecentFiles) {
@@ -479,7 +501,6 @@ public class ScriptedSequenceEditor : EditorWindow {
         closureAction(file);
       }
       menu.ShowAsContext();
-
     }
 
     if (GUILayout.Button("New Sequence", ToolbarButtonStyle)) {
@@ -522,6 +543,18 @@ public class ScriptedSequenceEditor : EditorWindow {
       mouseEvent = evt.type;
       mousePosition = evt.mousePosition;
     }
+
+    if (mouseEvent == EventType.MouseDown) {
+      if (ContextMenuOpen) {
+        mouseEvent = EventType.Used;
+        ContextMenuOpen = false;
+        Debug.Log("Used ContextMenuClick");
+      }
+      else {
+        Debug.Log("Context Menu Not Open");
+      }
+    }
+
     // Theres a goofy issue where dragging down causes weirdness the frame we get Mouse Up.
     // Wait unitl the next repaint and things will be good
     if (_LastMouseUp && mouseEvent == EventType.Repaint) {
@@ -553,7 +586,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
     }
     else {
-      GUI.Label(titleRect, "Sequence: "+sequence.Name, LabelStyle);
+      GUI.Label(titleRect, "Sequence: "+sequence.Name, BigLabelStyle);
 
       // if you right click the sequence name, it goes to edit mode
       if (mouseEvent == EventType.ContextClick) {
@@ -574,7 +607,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     }, mousePosition, mouseEvent);
 
 
-    GUILayout.Label("Sequence Nodes", LabelStyle);
+    GUILayout.Label("Sequence Nodes", BigLabelStyle);
 
     EditorGUI.indentLevel++;
 
@@ -620,7 +653,6 @@ public class ScriptedSequenceEditor : EditorWindow {
         _DraggingConditionHelper = null;
         _DraggingActionHelper = null;
         _LastMouseUp = false;
-        Repaint();
       }
     }
 
@@ -633,8 +665,9 @@ public class ScriptedSequenceEditor : EditorWindow {
       GUI.Box(new Rect(evt.mousePosition + DragOffset, DragSize), "  "+DragTitle, BoxStyle);
       GUI.backgroundColor = lastColor;
       GUI.contentColor = lastTextColor;
-      Repaint();
     }
+
+    Repaint();
   }
 
   // function to insert a new node
@@ -685,12 +718,17 @@ public class ScriptedSequenceEditor : EditorWindow {
     _ExpandedNodes.TryGetValue(node.Id, out expanded);
     _EditingNodeNames.TryGetValue(node.Id, out editingName);
 
-
-    var rect = EditorGUILayout.GetControlRect();
-
     var lastColor = GUI.color;
     var lastBackgroundColor = GUI.backgroundColor;
     var lastContentColor = GUI.contentColor;
+
+    var bgColor = Color.yellow * 0.35f;
+    bgColor.a = 1f;
+    GUI.color = bgColor;
+    EditorGUILayout.BeginVertical(BoxStyle);
+
+    var rect = EditorGUILayout.GetControlRect();
+
 
     GUI.color = Color.yellow;
     GUI.contentColor = Color.black;
@@ -721,17 +759,26 @@ public class ScriptedSequenceEditor : EditorWindow {
       if (rect.Contains(mousePosition)) {
         if (eventType == EventType.ContextClick) {
 
+          if (_DraggingNodeIndex == -1) {
+            ContextMenuOpen = true;
+          }
+          else {
+            _DraggingNodeIndex = -1;
+          }
           var menu = new GenericMenu();
 
           menu.AddItem(new GUIContent("Change Name"), false, () => {
+            ContextMenuOpen = true;
             _EditingNodeNames[node.Id] = true;
           });
 
           menu.AddItem(new GUIContent("Copy"), false, () => {
+            ContextMenuOpen = true;
             _CopiedNode = node;                         
           });
           if (_CopiedNode != null) {
             menu.AddItem(new GUIContent("Paste"), false, () => {
+              ContextMenuOpen = true;
               var newNode = CopyNode(_CopiedNode);
               newNode.Id = GetNextId();
               sequence.Nodes.Insert(index, newNode);
@@ -742,9 +789,10 @@ public class ScriptedSequenceEditor : EditorWindow {
           }
 
           menu.AddItem(new GUIContent("Delete Node"), false, () => {
+            ContextMenuOpen = true;
             sequence.Nodes.RemoveAt(index);
           });
-
+            
           menu.ShowAsContext();
         }
         // handle drag start
@@ -790,8 +838,10 @@ public class ScriptedSequenceEditor : EditorWindow {
     _ExpandedNodes[node.Id] = expanded;
 
     if (!expanded) {
+      EditorGUILayout.EndVertical();
       return;
     }
+
 
     node.Sequencial = EditorGUILayout.Toggle("Sequencial", node.Sequencial);
     node.Final = EditorGUILayout.Toggle("Final", node.Final);
@@ -800,11 +850,15 @@ public class ScriptedSequenceEditor : EditorWindow {
     DrawConditionOrActionList("Conditions", node.Conditions, mousePosition, eventType);
 
     DrawConditionOrActionList("Actions", node.Actions, mousePosition, eventType);
+
+    EditorGUILayout.EndVertical();
+    EditorGUILayout.GetControlRect();
+
   }
 
   // Draws a list of Conditions or Actions
   public void DrawConditionOrActionList<T>(string label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : IScriptedSequenceItem {    
-    GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
+    GUI.Label(GetIndentedLabelRect(), label, BigLabelStyle);
 
     for (int i = 0; i < conditions.Count; i++) {
       var cond = conditions[i];
@@ -871,7 +925,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // If there is a field that is a condition/action, we can't use the list drawer. This gets around it using a setAction
   public void DrawConditionOrActionEntry<T>(string label, T value, Action<T> setAction, Vector2 mousePosition, EventType eventType) where T : IScriptedSequenceItem {
-    GUI.Label(GetIndentedLabelRect(), label, LabelStyle);
+    GUI.Label(GetIndentedLabelRect(), label, BigLabelStyle);
     EditorGUI.indentLevel++;
     ScriptedSequenceHelper<T> helper = null;
     if (value != null) {
@@ -881,10 +935,6 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
 
       helper.OnGUI(mousePosition, eventType);
-
-      if (GUILayout.Button("Clear", LabelStyle)) {
-        setAction(default(T));
-      }
     }
     else
     {
