@@ -80,12 +80,17 @@ namespace Cozmo {
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim);
     
+    Result SendStartOfAnimation();
+    Result SendEndOfAnimation(Robot& robot);
+    
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
     
     // Update generate frames needed by the "live" idle animation and add them
     // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation(Robot& robot);
+    
+    void UpdateNumBytesToSend(Robot& robot);
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
@@ -108,6 +113,11 @@ namespace Cozmo {
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                        ProceduralFaceParams& faceParams);
+    
+    void UpdateFace(Robot& robot, Animation* anim);
+    
+    // Used to stream _just_ the stuff left in face layers
+    Result StreamFaceLayers(Robot& robot);
     
     bool _isIdling;
     
