@@ -75,6 +75,10 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
 
+  private U2G.GetAllDebugConsoleVarMessage _GetAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
+  private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
+  private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
+
   private void OnEnable() {
     DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
     if (Instance != null && Instance != this) {
@@ -292,6 +296,12 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
       ReceivedSpecificMessage(message.AudioCallbackComplete);
       break;
+    case G2U.MessageEngineToGame.Tag.InitDebugConsoleVarMessage:
+      ReceivedSpecificMessage(message.InitDebugConsoleVarMessage);
+      break;
+    case G2U.MessageEngineToGame.Tag.VerifyDebugConsoleVarMessage:
+      ReceivedSpecificMessage(message.VerifyDebugConsoleVarMessage);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedMotion:
       ReceivedSpecificMessage(message.RobotObservedMotion);
       break;
@@ -327,6 +337,17 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
+  }
+
+  private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
+    DAS.Info("RobotEngineManager", " Recieved Debug Console Init");
+    for (int i = 0; i < message.varData.Length; ++i) {
+      Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.VerifyDebugConsoleVarMessage message) {
+    Anki.Debug.DebugConsoleData.Instance.SetStatusText(message.statusMessage);
   }
 
   private void ReceivedSpecificMessage(ObjectMoved message) {
@@ -579,6 +600,26 @@ public class RobotEngineManager : MonoBehaviour {
     StartEngineMessage.vizHostIP[length] = 0;
 
     Message.StartEngine = StartEngineMessage;
+    SendMessage();
+  }
+
+  public void InitDebugConsole() {
+    Message.GetAllDebugConsoleVarMessage = _GetAllDebugConsoleVarMessage;
+    // should get a G2U.InitDebugConsoleVarMessage back
+    SendMessage();
+  }
+
+  public void SetDebugConsoleVar(string varName, string tryValue) {
+    _SetDebugConsoleVarMessage.tryValue = tryValue;
+    _SetDebugConsoleVarMessage.varName = varName;
+    Message.SetDebugConsoleVarMessage = _SetDebugConsoleVarMessage;
+    SendMessage();
+  }
+
+  public void RunDebugConsoleFuncMessage(string funcName, string funcArgs) {
+    _RunDebugConsoleFuncMessage.funcName = funcName;
+    _RunDebugConsoleFuncMessage.funcArgs = funcArgs;
+    Message.RunDebugConsoleFuncMessage = _RunDebugConsoleFuncMessage;
     SendMessage();
   }
 
