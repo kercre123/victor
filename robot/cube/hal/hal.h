@@ -11,7 +11,7 @@
 // XXX: if timeout, don't send data back
 
 #define TAP_THRESH 10
-#define ADV_CHANNEL 83
+#define ADV_CHANNEL 81
 #define RADIO_PAYLOAD_LENGTH 17
 
 // Tests

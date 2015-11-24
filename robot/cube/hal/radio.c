@@ -17,7 +17,7 @@ volatile struct RadioStruct radioStruct =
   ADV_CHANNEL, // COMM_CHANNEL
   0xB6, // RADIO_INTERVAL_DELAY
   15, // RADIO_TIMEOUT_MSB ~ 3ms (change to 5 later)
-  8, // RADIO_WAKUP_OFFSET
+  8, // RADIO_WAKEUP_OFFSET
   ADDRESS_TX, // ADDRESS_TX_PTR 
   ADDRESS_RX_ADV // ADDRESS_RX_PTR
 };
