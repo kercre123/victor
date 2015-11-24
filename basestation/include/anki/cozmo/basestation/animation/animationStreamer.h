@@ -22,6 +22,8 @@
 #include "clad/types/liveIdleAnimationParameters.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include <list>
+
 namespace Anki {
 namespace Cozmo {
   
@@ -54,9 +56,13 @@ namespace Cozmo {
     // Use static LiveAnimation above to use live procedural animation (default).
     Result SetIdleAnimation(const std::string& name);
     
+    // Add a procedural face "layer" to be combined with whatever is streaming
+    using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
+    Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
-    
+     
     // Returns true if the idle animation is playing
     bool IsIdleAnimating() const;
     
@@ -67,15 +73,51 @@ namespace Cozmo {
     
   private:
     
+    // Initialize the streaming of an animation with a given tag
+    // (This will call anim->Init())
+    Result InitStream(Animation* anim, u8 withTag);
+    
+    // Actually stream the animation (called each tick)
+    Result UpdateStream(Robot& robot, Animation* anim);
+    
+    Result SendStartOfAnimation();
+    Result SendEndOfAnimation(Robot& robot);
+    
+    // Check whether the animation is done
+    bool IsFinished(Animation* anim) const;
+    
+    // Update generate frames needed by the "live" idle animation and add them
+    // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation(Robot& robot);
     
+    void UpdateNumBytesToSend(Robot& robot);
+    
+    // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
-
-    Animation      _liveAnimation;
 
     Animation*  _idleAnimation; // default points to "live" animation
     Animation*  _streamingAnimation;
     TimeStamp_t _timeSpentIdling_ms;
+    
+    // For layering procedural face animations on top of whatever is currently
+    // playing:
+    struct FaceLayer {
+      FaceTrack   track;
+      TimeStamp_t startTime_ms;
+      TimeStamp_t streamTime_ms;
+    };
+    std::list<FaceLayer> _faceLayers;
+    
+    // Helper to fold the next procedural face from the given track (if one is
+    // ready to play) into the passed-in procedural face params.
+    bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
+                       TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
+                       ProceduralFaceParams& faceParams);
+    
+    void UpdateFace(Robot& robot, Animation* anim);
+    
+    // Used to stream _just_ the stuff left in face layers
+    Result StreamFaceLayers(Robot& robot);
     
     bool _isIdling;
     
@@ -83,18 +125,54 @@ namespace Cozmo {
     u32 _loopCtr;
     u8  _tagCtr;
     
+    bool _startOfAnimationSent;
+    
+    // When this animation started playing (was initialized) in milliseconds, in
+    // "real" basestation time
+    TimeStamp_t _startTime_ms;
+    
+    // Where we are in the animation in terms of what has been streamed out, since
+    // we don't stream in real time. Each time we send an audio frame to the
+    // robot (silence or actual audio), this increments by one audio sample
+    // length, since that's what keeps time for streaming animations (not a
+    // clock)
+    TimeStamp_t _streamingTime_ms;
+    
+    bool _endOfAnimationSent;
+    
+    // TODO: Remove these once we aren't playing robot audio on the device
+    TimeStamp_t _playedRobotAudio_ms;
+    std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
+    const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
+    
+    // Manage the send buffer, which is where we put keyframe messages ready to
+    // go to the robot, and parcel them out according to how many bytes the
+    // reliable UDP channel and the robot's animation buffer can handle on a
+    // given tick.
+    bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
+    Result SendBufferedMessages(Robot& robot);
+    
+    std::list<RobotInterface::EngineToRobot*> _sendBuffer;
+    s32 _numBytesToSend;
+    uint8_t _tag;
+    
+    // "Flow control" for not overrunning reliable transport in a single
+    // update tick
+    static const s32 MAX_BYTES_FOR_RELIABLE_TRANSPORT;
+    
     Util::RandomGenerator _rng;
     
     // For live animation
-    bool _isLiveTwitchEnabled;
-    s32 _nextBlink_ms;
-    s32 _nextLookAround_ms;
-    s32 _bodyMoveDuration_ms;
-    s32 _liftMoveDuration_ms;
-    s32 _headMoveDuration_ms;
-    s32 _bodyMoveSpacing_ms;
-    s32 _liftMoveSpacing_ms;
-    s32 _headMoveSpacing_ms;
+    Animation      _liveAnimation;
+    bool           _isLiveTwitchEnabled;
+    s32            _nextBlink_ms;
+    s32            _nextLookAround_ms;
+    s32            _bodyMoveDuration_ms;
+    s32            _liftMoveDuration_ms;
+    s32            _headMoveDuration_ms;
+    s32            _bodyMoveSpacing_ms;
+    s32            _liftMoveSpacing_ms;
+    s32            _headMoveSpacing_ms;
     
   }; // class AnimationStreamer
   

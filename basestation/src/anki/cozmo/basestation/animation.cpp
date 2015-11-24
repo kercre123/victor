@@ -19,27 +19,17 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/soundManager.h"
 #include "util/logging/logging.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 //#include <cassert>
 
 #define DEBUG_ANIMATIONS 0
 
-// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
-// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
-// and needing sound.
-#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
-
 namespace Anki {
 namespace Cozmo {
-  
-  const s32 Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
 
   Animation::Animation(const std::string& name)
   : _name(name)
   , _isInitialized(false)
-  , _tag(0)
-  , _startOfAnimationSent(false)
   {
     
   }
@@ -187,352 +177,19 @@ _backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
 _bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
 _blinkTrack.__METHOD__()
   
-  Result Animation::Init(uint8_t tag)
+  Result Animation::Init()
   {
-    _tag = tag;
+
 #   if DEBUG_ANIMATIONS
     PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'", GetName().c_str());
 #   endif
     
-    _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    
-    // Initialize "fake" streaming time to the same start time so we can compare
-    // to it for determining when its time to stream out a keyframe
-    _streamingTime_ms = _startTime_ms;
-    
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE
-    // This prevents us from replaying the same keyframe
-    _playedRobotAudio_ms = 0;
-    _onDeviceRobotAudioKeyFrameQueue.clear();
-    _lastPlayedOnDeviceRobotAudioKeyFrame = nullptr;
-#   endif
-    
     ALL_TRACKS(Init, ;);
-    
-    if(!_sendBuffer.empty()) {
-      PRINT_NAMED_WARNING("Animation.Init", "Expecting SendBuffer to be empty. Will clear.");
-      _sendBuffer.clear();
-    }
-    
-    // If this is an empty (e.g. live) animation, there is no need to
-    // send end of animation keyframe until we actually send a keyframe
-    _endOfAnimationSent = IsEmpty();
-    _startOfAnimationSent = false;
     
     _isInitialized = true;
     
     return RESULT_OK;
   } // Animation::Init()
-  
-  bool Animation::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
-  {
-    if(msg != nullptr) {
-      _sendBuffer.push_back(msg);
-      return true;
-    }
-    return false;
-  }
-  
-  Result Animation::SendBufferedMessages(Robot& robot)
-  {
-#   if DEBUG_ANIMATIONS
-    s32 numSent = 0;
-#   endif
-    
-    // Empty out anything waiting in the send buffer:
-    RobotInterface::EngineToRobot* msg = nullptr;
-    while(!_sendBuffer.empty()) {
-#     if DEBUG_ANIMATIONS
-      PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                       "Send buffer length=%lu.", _sendBuffer.size());
-#     endif
-     
-      msg = _sendBuffer.front();
-      const size_t numBytesRequired = msg->Size();
-      if(numBytesRequired <= _numBytesToSend) {
-        Result sendResult = robot.SendMessage(*msg);
-        if(sendResult != RESULT_OK) {
-          return sendResult;
-        }
-        
-#       if DEBUG_ANIMATIONS
-        ++numSent;
-#       endif
-        
-        _numBytesToSend -= numBytesRequired;
-        
-        // Increment total number of bytes streamed to robot
-        robot.IncrementNumAnimationBytesStreamed((int32_t)numBytesRequired);
-        
-        _sendBuffer.pop_front();
-        delete msg;
-      } else {
-        // Out of bytes to send, continue on next Update()
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                         "Sent %d messages, but ran out of bytes to send from "
-                         "buffer. %lu remain, so will continue next Update().",
-                         numSent, _sendBuffer.size());
-#       endif
-        return RESULT_OK;
-      }
-    }
-    
-    // Sanity check
-    // If we got here, we've finished streaming out everything in the send
-    // buffer -- i.e., all the frames associated with the last audio keyframe
-    assert(_numBytesToSend >= 0);
-    assert(_sendBuffer.empty());
-    
-#   if DEBUG_ANIMATIONS
-    if(numSent > 0) {
-      PRINT_NAMED_INFO("Animation.SendBufferedMessages.Sent",
-                       "Sent %d messages, %lu remain in buffer.",
-                       numSent, _sendBuffer.size());
-    }
-#   endif
-    
-    return RESULT_OK;
-  }
-  
-  Result Animation::Update(Robot& robot)
-  {
-    Result lastResult = RESULT_OK;
-    
-    if(!_isInitialized) {
-      PRINT_NAMED_ERROR("Animation.Update", "Animation must be initialized before it can be played/updated.");
-      return RESULT_FAIL;
-    }
-    
-    const TimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    
-//#   if DEBUG_ANIMATIONS
-//    PRINT_NAMED_INFO("Animation.Update", "Current time = %dms", currTime_ms);
-//#   endif
-    
-    // Is it time to play device audio? (using actual basestation time)
-    if(_deviceAudioTrack.HasFramesLeft() &&
-       _deviceAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms)) {
-      _deviceAudioTrack.GetCurrentKeyFrame().PlayOnDevice();
-      _deviceAudioTrack.MoveToNextKeyFrame();
-    }
-    
-    // Compute number of bytes free in robot animation buffer.
-    // This is a lower bound since this is computed from a delayed measure
-    // of the number of animation bytes already played on the robot.
-    s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
-    s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
-    bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
-    assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
-    
-      s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
-    if (overflow) {
-      // Computation for minBytesFreeInRobotBuffer still works out in overflow case
-      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow", "free %d (streamed = %d, played %d)", minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
-    }
-    assert(minBytesFreeInRobotBuffer >= 0);
-    
-    // Reset the number of bytes we can send each Update() as a form of
-    // flow control: Don't send frames if robot has no space for them, and be
-    // careful not to overwhelm reliable transport either, in terms of bytes or
-    // sheer number of messages. These get decremenged on each call to
-    // SendBufferedMessages() below
-    _numBytesToSend = std::min(Animation::MAX_BYTES_FOR_RELIABLE_TRANSPORT,
-                               minBytesFreeInRobotBuffer);
-    
-    
-    // Send anything still left in the buffer after last Update()
-    lastResult = SendBufferedMessages(robot);
-    if(RESULT_OK != lastResult) {
-      PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
-      return lastResult;
-    }
-    
-    // Add more stuff to the send buffer. Note that we are not counting individual
-    // keyframes here, but instead _audio_ keyframes (with which we will buffer
-    // any co-timed keyframes from other tracks).
-    while(_sendBuffer.empty() && !AllTracksBuffered())
-    {
-#     if DEBUG_ANIMATIONS
-      //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
-      //                 numBytesToSend);
-#     endif
-      
-      // Have to always send an audio frame to keep time, whether that's the next
-      // audio sample or a silent frame. This increments "streamingTime"
-      // NOTE: Audio frame must be first!
-      if(_robotAudioTrack.HasFramesLeft() &&
-         _robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
-      {
-        
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-        // Queue up audio frame for playing locally if
-        // it's not already in the queued and it wasn't already played.
-        const RobotAudioKeyFrame* audioKF = &_robotAudioTrack.GetCurrentKeyFrame();
-        if ((audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
-            (_onDeviceRobotAudioKeyFrameQueue.empty() || audioKF != _onDeviceRobotAudioKeyFrameQueue.back())) {
-          _onDeviceRobotAudioKeyFrameQueue.push_back(audioKF);
-        }
-#   endif
-        
-        if(!BufferMessageToSend(_robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage()))
-        {
-          // No samples left to send for this keyframe. Move to next keyframe,
-          // and for now send silence.
-          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
-          _robotAudioTrack.MoveToNextKeyFrame();
-          BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-        }
-      } else {
-        // No frames left or not time to play next frame yet, so send silence
-        //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
-        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-      }
-      
-      // Increment fake "streaming" time, so we can evaluate below whether
-      // it's time to stream out any of the other tracks. Note that it is still
-      // relative to the same start time.
-      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-      
-      //
-      // We are guaranteed to have sent some kind of audio frame at this point.
-      // Now send any other frames that are ready, so they will be timed with
-      // that audio frame (silent or not).
-      //
-      // Note that these frames don't actually use up additional slots in the
-      // robot's keyframe buffer, so we don't have to decrement numFramesToSend
-      // for each one, just once for each audio/silence frame.
-      //
-      
-      // Note that start of animation message is also sent _after_ audio keyframe,
-      // to keep things consistent in how the robot's AnimationController expects
-      // to receive things
-      if(!_startOfAnimationSent) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update.BufferedStartOfAnimation", "Tag=%d", _tag);
-#       endif
-        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::StartOfAnimation(_tag)));
-        _startOfAnimationSent = true;
-      }
-      
-      if(BufferMessageToSend(_headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming HeadAngleKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      if(BufferMessageToSend(_liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming LiftHeightKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      if(BufferMessageToSend(_facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FacePositionKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      bool streamedFaceAnimImage = false;
-      if(BufferMessageToSend(_faceAnimTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-        streamedFaceAnimImage = true;
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming FaceAnimationKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      if(BufferMessageToSend(_proceduralFaceTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming ProceduralFaceKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-    
-      if(BufferMessageToSend(_blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BlinkKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      if(BufferMessageToSend(_backpackLightsTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BackpackLightsKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      if(BufferMessageToSend(_bodyPosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-#       if DEBUG_ANIMATIONS
-        PRINT_NAMED_INFO("Animation.Update", "Streaming BodyMotionKeyFrame at t=%dms.",
-                         _streamingTime_ms - _startTime_ms);
-#       endif
-      }
-      
-      // Send out as much as we can from the send buffer. If we manage to send
-      // the entire buffer out, we will proceed with putting more into the buffer
-      // the next time through this while loop. Otherwise, we will exit the while
-      // loop and continue trying to empty the buffer on the next Update().
-      // Doing this guarantees we don't try to buffer another message pointer from
-      // the same frame before sending the last one (which is important because we
-      // re-use message structs inside the keyframes and don't want pointers
-      // getting reassigned before they get sent out!)
-      lastResult = SendBufferedMessages(robot);
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
-        return lastResult;
-      }
-      
-    } // while(buffering frames)
-    
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-    for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
-    {
-      if(AllTracksBuffered() ||   // If all tracks buffered already, then play this now.
-         ((_playedRobotAudio_ms < _startTime_ms + audioKF->GetTriggerTime()) &&
-         audioKF->IsTimeToPlay(_startTime_ms,  currTime_ms)))
-      {
-        // TODO: Insert some kind of small delay to simulate latency?
-        SoundManager::getInstance()->Play(audioKF->GetSoundName());
-        _playedRobotAudio_ms = currTime_ms;
-        
-        _lastPlayedOnDeviceRobotAudioKeyFrame = audioKF;
-        _onDeviceRobotAudioKeyFrameQueue.pop_front();
-      }
-    }
-#   endif
-    
-    // Send an end-of-animation keyframe when done
-    if(AllTracksBuffered() && _sendBuffer.empty() && !_endOfAnimationSent)
-    {
-#     if DEBUG_ANIMATIONS
-      static TimeStamp_t lastEndOfAnimTime = 0;
-      PRINT_NAMED_INFO("Animation.Update", "Streaming EndOfAnimation at t=%dms.",
-                       _streamingTime_ms - _startTime_ms);
-      
-      if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
-        PRINT_NAMED_ERROR("Animation.Update", "Already sent end of animation at t=%dms.",
-                          lastEndOfAnimTime);
-      }
-      lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
-#     endif
-      RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
-      size_t endMsgSize = endMsg.Size();
-      lastResult = robot.SendMessage(std::move(endMsg));
-      if(lastResult != RESULT_OK) { return lastResult; }
-      _endOfAnimationSent = true;
-      
-      // Increment running total of bytes streamed
-      robot.IncrementNumAnimationBytesStreamed((int32_t)endMsgSize);
-    }
-    
-    return RESULT_OK;
-    
-  } // Animation::Update()
   
   void Animation::Clear()
   {
@@ -545,15 +202,11 @@ _blinkTrack.__METHOD__()
     return ALL_TRACKS(IsEmpty, &&);
   }
   
-  bool Animation::AllTracksBuffered() const
+  bool Animation::HasFramesLeft() const
   {
-    return !(ALL_TRACKS(HasFramesLeft, ||));
+    return ALL_TRACKS(HasFramesLeft, ||);
   }
-  
-  bool Animation::IsFinished() const
-  {
-    return _endOfAnimationSent && AllTracksBuffered() && _sendBuffer.empty();
-  }
+
   
 } // namespace Cozmo
 } // namespace Anki
