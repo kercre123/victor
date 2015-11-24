@@ -2,13 +2,13 @@
 using System.Collections;
 
 public class DevHubWorld : HubWorldBase {
-
-  [SerializeField]
-  private GameBase[] _GamePrefabs;
  
   [SerializeField]
   private DevHubWorldDialog _DevHubWorldDialogPrefab;
   private DevHubWorldDialog _DevHubWorldDialogInstance;
+
+  [SerializeField]
+  private ChallengeDataList _ChallengeDataList;
 
   private GameBase _MiniGameInstance;
 
@@ -24,7 +24,7 @@ public class DevHubWorld : HubWorldBase {
     // Deregister events
     // Destroy dialog if it exists
     if (_DevHubWorldDialogInstance != null) {
-      _DevHubWorldDialogInstance.OnDevButtonClicked -= OnDevButtonClicked;
+      _DevHubWorldDialogInstance.OnDevButtonClicked -= HandleDevButtonClicked;
       _DevHubWorldDialogInstance.CloseViewImmediately();
     }
     
@@ -35,18 +35,19 @@ public class DevHubWorld : HubWorldBase {
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
     _DevHubWorldDialogInstance = UIManager.OpenView(_DevHubWorldDialogPrefab) as DevHubWorldDialog;
-    _DevHubWorldDialogInstance.Initialize(_GamePrefabs);
+    _DevHubWorldDialogInstance.Initialize(_ChallengeDataList);
     
     // Listen for dialog button tap events
-    _DevHubWorldDialogInstance.OnDevButtonClicked += OnDevButtonClicked;
+    _DevHubWorldDialogInstance.OnDevButtonClicked += HandleDevButtonClicked;
   }
 
-  private void OnDevButtonClicked(GameBase miniGameClicked) {
-    _DevHubWorldDialogInstance.OnDevButtonClicked -= OnDevButtonClicked;
+  private void HandleDevButtonClicked(ChallengeData challenge) {
+    _DevHubWorldDialogInstance.OnDevButtonClicked -= HandleDevButtonClicked;
     _DevHubWorldDialogInstance.CloseView();
     
-    GameObject newMiniGameObject = GameObject.Instantiate(miniGameClicked.gameObject);
+    GameObject newMiniGameObject = GameObject.Instantiate(challenge.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
+    _MiniGameInstance.LoadMinigameConfig(challenge.MinigameConfig);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
   }
 
