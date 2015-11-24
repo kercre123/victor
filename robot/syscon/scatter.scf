@@ -1,0 +1,27 @@
+#! armcc -E
+
+#define m_rom_size                     0x00040000
+
+#define m_header_start                 0x00001000
+#define m_header_size                  232
+
+#define m_text_start                   (m_header_start + m_header_size)
+#define m_text_size                    (m_rom_size - m_text_start)
+
+#define m_rom_available                 (m_rom_size - m_header_start)
+
+LR_IROM1 m_text_start m_text_size  {    ; load region size_region
+  ER_IROM1 m_text_start m_text_size  { ; load address = execution address
+   *(InRoot$$Sections)
+   .ANY (+RO)
+  }
+  RW_IRAM1 0x20000000 0x00004000  {  ; RW data
+   .ANY (+RW +ZI)
+  }
+}
+
+LR_m_header m_header_start m_header_size {
+  HEADER_ROM m_header_start m_header_size {
+    * (HEADER,+FIRST)
+  }
+}

@@ -31,9 +31,9 @@ EmotionScorer::EmotionScorer(const Json::Value& inJson)
 }
   
   
-const char* kEmotionTypeKey = "emotionType";
-const char* kScoreGraphKey  = "scoreGraph";
-const char* kTrackDeltaKey  = "trackDelta";
+static const char* kEmotionTypeKey = "emotionType";
+static const char* kScoreGraphKey  = "scoreGraph";
+static const char* kTrackDeltaKey  = "trackDelta";
 
 
 bool EmotionScorer::ReadFromJson(const Json::Value& inJson)

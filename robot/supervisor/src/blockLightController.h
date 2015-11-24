@@ -24,14 +24,8 @@ namespace BlockLightController {
   
   Result Update();
 
-  // Register a block so that lights can be set on it
-  Result RegisterBlock(u8 blockID);
-  Result DeregisterBlock(u8 blockID);
-  bool IsRegisteredBlock(u8 blockID);
-  
   // Set lights for a blockID.
-  Result SetLights(u8 blockID, LightState *params);
-  
+  Result SetLights(u8 blockID, const LightState *params);  
   
 } // namespace BlockLightController
 } // namespace Cozmo

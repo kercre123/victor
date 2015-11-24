@@ -3,22 +3,17 @@
 #if (defined(__ram_vector_table__))
   #define __ram_vector_table_size__    0x00000400
 #else
-  #define __ram_vector_table_size__    0x00000000
+  #define __ram_vector_table_size__    0x00001000
 #endif
 
-#define m_interrupts_start             0x00000000
+#define m_header_start                 0x00001000
+#define m_header_size                  0x00000080
+
+#define m_interrupts_start             0x00001400
 #define m_interrupts_size              0x00000400
 
-#define m_flash_config_start           0x00000400
-#define m_flash_config_size            0x00000010
-
-#define m_text_start                   0x00000410
-#define m_text_size                    0x0000FBF0
-
-/* No support for RAM vector table
-   #define m_interrupts_ram_start         
-   #define m_interrupts_ram_size          __ram_vector_table_size__
-*/
+#define m_text_start                   (m_interrupts_start + m_interrupts_size)
+#define m_text_size                    (0x10000 - m_text_start)
 
 #define m_data_start                   0x1FFFE000
 #define m_data_size                    0x00002000 
@@ -57,26 +52,8 @@ LR_m_text m_text_start m_text_size {   ; load region size_region
   }
 }
 
-LR_m_interrupts m_interrupts_start m_interrupts_size {
-#if (!defined(__ram_vector_table__))
-  VECTOR_RAM m_interrupts_start EMPTY 0 {
-  }
-#endif
-  VECTOR_ROM m_interrupts_start m_interrupts_size { ; load address = execution address
-    * (RESET,+FIRST)
+LR_m_header m_header_start m_header_size {
+  HEADER_ROM m_header_start m_header_size {
+    * (HEADER,+FIRST)
   }
 }
-
-LR_m_flash_config m_flash_config_start m_flash_config_size {
-  ER_m_flash_config m_flash_config_start m_flash_config_size { ; load address = execution address
-    * (FlashConfig)
-  }
-}
-
-#if (defined(__ram_vector_table__))
-LR_m_interrupts_ram m_interrupts_ram_start m_interrupts_ram_size {
-  VECTOR_RAM m_interrupts_ram_start EMPTY m_interrupts_ram_size {
-  }
-}
-#endif
-

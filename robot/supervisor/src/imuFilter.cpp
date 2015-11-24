@@ -19,6 +19,8 @@
 #include "headController.h"
 #include "liftController.h"
 #include "wheelController.h"
+#include "pathFollower.h"
+#include "pickAndPlaceController.h"
 #include "anki/cozmo/robot/hal.h"
 #include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -56,7 +58,10 @@ namespace Anki {
         const f32 ACCEL_FILT_COEFF = 0.1f;
         
         // ==== Pickup detection ===
+        bool pickupDetectEnabled_ = true;
         bool pickedUp_ = false;
+        
+        bool enablePickupParalysis_ = false;
         
         // Filter coefficient on z-axis accelerometer
         const f32 ACCEL_PICKUP_FILT_COEFF = 0.1f;
@@ -108,10 +113,10 @@ namespace Anki {
         u32 eventTime_[NUM_IMU_EVENTS] = {0};
         
         // The amount of time required for eventStateRaw to be true for eventState to be true
-        const u32 eventActivationTime_us_[NUM_IMU_EVENTS] = {500000, 500000, 500000, 500000, 500000};
+        const u32 eventActivationTime_ms_[NUM_IMU_EVENTS] = {500, 2000, 500, 500, 500};
         
         // The amount of time required for eventStateRaw to be false for eventState to be false
-        const u32 eventDeactivationTime_us_[NUM_IMU_EVENTS] = {500000, 500000, 500000, 500000, 500000};
+        const u32 eventDeactivationTime_ms_[NUM_IMU_EVENTS] = {500, 500, 500, 500, 500};
         
         // Callback functions associated with event activation and deactivation
         typedef void (*eventCallbackFn)(void);
@@ -126,7 +131,6 @@ namespace Anki {
 
         // LED assignments
         const LEDId INDICATOR_LED_ID = LED_BACKPACK_LEFT;
-        const LEDId HEADLIGHT_LED_ID = LED_BACKPACK_RIGHT;
         
       } // "private" namespace
       
@@ -250,16 +254,6 @@ namespace Anki {
       
       
       // ==== Event callback functions ===
-      void ToggleHeadLights() {
-        static bool lightsOn = false;
-        if (lightsOn) {
-          HAL::SetLED(HEADLIGHT_LED_ID, LED_OFF);
-          lightsOn = false;
-        } else {
-          HAL::SetLED(HEADLIGHT_LED_ID, LED_RED);
-          lightsOn = true;
-        }
-      }
       
       void TurnOnIndicatorLight()
       {
@@ -288,7 +282,7 @@ namespace Anki {
       {
         // TEST WITH LIGHT
         if (pickupDetected) {
-          HAL::SetLED(INDICATOR_LED_ID, LED_BLUE);
+          HAL::SetLED(INDICATOR_LED_ID, LED_RED);
         } else {
           HAL::SetLED(INDICATOR_LED_ID, LED_OFF);
         }
@@ -300,21 +294,88 @@ namespace Anki {
         pdUnexpectedMotionCnt_ = 0;
       }
       
+      void EnablePickupDetect(bool enable)
+      {
+        SetPickupDetect(false);
+        pickupDetectEnabled_ = enable;
+      }
+      
+      void EnablePickupParalysis(bool enable)
+      {
+        PRINT("Pickup paralysis %s", enable ? "ENABLED\n" : "DISABLED\n");
+        enablePickupParalysis_ = enable;
+      }
+      
+      void HandlePickupParalysis()
+      {
+        static bool wasParalyzed = false;
+        if (enablePickupParalysis_) {
+          if (IsPickedUp() && !wasParalyzed) {
+            // Stop all movement (so we don't hurt people's hands)
+            PickAndPlaceController::Reset();
+            PathFollower::ClearPath();
+            
+            LiftController::Disable();
+            HeadController::Disable();
+            WheelController::Disable();
+            wasParalyzed = true;
+          }
+        }
+        
+        if((!IsPickedUp() || !enablePickupParalysis_) && wasParalyzed) {
+          // Just got put back down
+          LiftController::Enable();
+          HeadController::Enable();
+          WheelController::Enable();
+          wasParalyzed = false;
+        }
+        
+      }
+      
+
+      void ToggleDisplayGeneralInfo()
+      {
+        static bool infoDisplayed = false;
+        
+        if (!infoDisplayed) {
+          
+          HAL::FacePrintf("Motors DISABLED\n"
+                          "Batt: %.1fV\n",
+                          0.1f * (f32)HAL::BatteryGetVoltage10x()
+                          );
+
+          
+          WheelController::Disable();
+          LiftController::Disable();
+          HeadController::Disable();
+        } else {
+          
+          HAL::FacePrintf("Motors ENABLED\n"
+                          "Batt: %.1fV\n",
+                          0.1f * (f32)HAL::BatteryGetVoltage10x()
+                          );
+          
+          WheelController::Enable();
+          LiftController::Enable();
+          HeadController::Enable();
+        }
+        
+        infoDisplayed = !infoDisplayed;
+      }
+      
+      
       void Reset()
       {
         rot_ = 0;
         rotSpeed_ = 0;
         // Event callback functions
         // TODO: This should probably go somewhere else
-        eventActivationCallbacks[UPSIDE_DOWN] = ToggleHeadLights;
-        eventActivationCallbacks[RIGHTSIDE_DOWN] = TurnOnIndicatorLight;
-        //eventDeactivationCallbacks[RIGHTSIDE_DOWN] = StartPickAndPlaceTest;
-        eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
-        eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
-        eventActivationCallbacks[FRONTSIDE_DOWN] = TurnOnIndicatorLight;
-        eventDeactivationCallbacks[FRONTSIDE_DOWN] = StartLiftTest;
-        eventActivationCallbacks[BACKSIDE_DOWN] = TurnOnIndicatorLight;
-        eventDeactivationCallbacks[BACKSIDE_DOWN] = TurnOffIndicatorLight;
+        eventActivationCallbacks[UPSIDE_DOWN] = ToggleDisplayGeneralInfo;
+        
+        //eventActivationCallbacks[LEFTSIDE_DOWN] = TurnOnIndicatorLight;
+        //eventDeactivationCallbacks[LEFTSIDE_DOWN] = StartPathFollowTest;
+        //eventActivationCallbacks[FRONTSIDE_DOWN] = TurnOnIndicatorLight;
+        //eventDeactivationCallbacks[FRONTSIDE_DOWN] = StartLiftTest;
       }
       
       
@@ -364,6 +425,8 @@ namespace Anki {
       //    is engaged is some never-ending head motions.
       void DetectPickup()
       {
+        if (!pickupDetectEnabled_)
+          return;
         
         // Compute the acceleration componenet aligned with the z-axis of the robot
         const f32 xzAccelMagnitude = sqrtf(pdFiltAccX_*pdFiltAccX_ + pdFiltAccZ_*pdFiltAccZ_);
@@ -432,7 +495,7 @@ namespace Anki {
       
         
         // Now update event state according to (de)activation time
-        u32 currTime = HAL::GetMicroCounter();
+        u32 currTime = HAL::GetTimeStamp();
         for (int e = FALLING; e < NUM_IMU_EVENTS; ++e) {
          
 #if(DEBUG_IMU_FILTER)
@@ -445,7 +508,7 @@ namespace Anki {
               if (eventTime_[e] == 0) {
                 // Raw event state conditions met for the first time
                 eventTime_[e] = currTime;
-              } else if (currTime - eventTime_[e] > eventActivationTime_us_[e]) {
+              } else if (currTime - eventTime_[e] > eventActivationTime_ms_[e]) {
                 // Event activated
                 eventState_[e] = true;
                 
@@ -466,7 +529,7 @@ namespace Anki {
             if (!eventStateRaw_[e]){
               if (eventTime_[e] == 0) {
                 eventTime_[e] = currTime;
-              } else if (currTime - eventTime_[e] > eventDeactivationTime_us_[e]) {
+              } else if (currTime - eventTime_[e] > eventDeactivationTime_ms_[e]) {
                 // Event deactivated
                 eventState_[e] = false;
                 
@@ -661,8 +724,9 @@ namespace Anki {
         //      clearing pose history.
         DetectPickup();
         
-        //UpdateEventDetection();
+        UpdateEventDetection();
         
+        HandlePickupParalysis();
         
         // Recording IMU data for sending to basestation
         if (isRecording_) {

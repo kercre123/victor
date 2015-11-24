@@ -60,10 +60,12 @@ public:
   bool IsEmpty() const { return _frames.empty(); }
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
+  
+  using FrameList = std::list<FRAME_TYPE>;
+  typename FrameList::const_iterator GetKeyFrameBegin() const { return _frames.begin(); }
 
 private:
 
-  using FrameList = std::list<FRAME_TYPE>;
   FrameList _frames;
   typename FrameList::iterator _frameIter;
 }; // class Animation::Track

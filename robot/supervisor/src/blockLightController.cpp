@@ -36,105 +36,45 @@ namespace BlockLightController {
     // TODO: The structure of this message will change to something simpler.
     CubeLights _blockMsg[MAX_NUM_CUBES];
     
-    // Whether or not a blockID is registered
-    bool _validBlock[MAX_NUM_CUBES] = {false};
-    u8 _numValidBlocks = 0;
-    
   }; // "private" variables
   
   
-  bool IsRegisteredBlock(u8 blockID)
+  Result SetLights(u8 blockID, const LightState *params)
   {
-    return (blockID < MAX_NUM_CUBES) && _validBlock[blockID];
-  }
-  
-  Result RegisterBlock(u8 blockID)
-  {
-    // Check if ID out of range or already registered
-    if (blockID >= MAX_NUM_CUBES || _validBlock[blockID]) {
-      return RESULT_FAIL;
+    for (u8 i=0; i < NUM_CUBE_LEDS; ++i) {
+      _ledParams[blockID][i] = params[i];
+      _ledParams[blockID][i].nextSwitchTime = 0;
+      _ledParams[blockID][i].state = LED_STATE_OFF;
     }
-    
-    // Register block ID
-    _validBlock[blockID] = true;
-    ++_numValidBlocks;
-
     return RESULT_OK;
   }
   
-  Result DeregisterBlock(u8 blockID)
+  void ApplyLEDParams(u8 blockID, TimeStamp_t currentTime)
   {
-    // Check if ID out of range or already deregistered
-    if (blockID >= MAX_NUM_CUBES || !_validBlock[blockID]) {
-      return RESULT_FAIL;
+    bool blockLEDsUpdated = false;
+    CubeLights &m = _blockMsg[blockID];
+    
+    for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
+      u32 newColor;
+      if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, newColor)) {
+        m.lights[i].onColor = newColor;   // Currently, onColor is the only thing that matters in this message.
+        blockLEDsUpdated = true;
+      }
     }
     
-    // Deregister block ID
-    _validBlock[blockID] = false;
-    --_numValidBlocks;
-    
-    return RESULT_OK;
+    if (blockLEDsUpdated) {
+      HAL::SetBlockLight(blockID, m.lights);
+    }
   }
-  
-  
-  
-  
-  Result SetLights(u8 blockID, LightState *params)
-  {
-    if (IsRegisteredBlock(blockID)) {
-      for (u8 i=0; i < NUM_CUBE_LEDS; ++i) {
-        _ledParams[blockID][i] = params[i];
-        _ledParams[blockID][i].nextSwitchTime = 0;
-        _ledParams[blockID][i].state = LED_STATE_OFF;
-      }
-    } else {
-      PRINT("ERROR(BlockLightController::SetLights): Invalid blockID %d", blockID);
-      return RESULT_FAIL;
-    }
-    
-    return RESULT_OK;
-  }
-  
-  Result ApplyLEDParams(u8 blockID, TimeStamp_t currentTime)
-  {
-    if (IsRegisteredBlock(blockID)) {
-      
-      bool blockLEDsUpdated = false;
-      CubeLights &m = _blockMsg[blockID];
-      
-      for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
-        u32 newColor;
-        if (GetCurrentLEDcolor(_ledParams[blockID][i], currentTime, newColor)) {
-          m.lights[i].onColor = newColor;   // Currently, onColor is the only thing that matters in this message.
-          blockLEDsUpdated = true;
-        }
-      }
-      
-      if (blockLEDsUpdated) {
-        HAL::SetBlockLight(blockID, m.lights);
-      }
-      
-      return RESULT_OK;
-      
-    }
-    return RESULT_FAIL;
-  } // ApplyLEDParams()
 
   
   Result Update()
   {
-    // This code was simplified to ensure block updates run at a constant speed
-    // Registering and unregistering blocks already happens in the body, so doing it here is redundant!
     if (++_nextBlockToUpdate >= MAX_NUM_CUBES)
       _nextBlockToUpdate = 0;
-
-    if (IsRegisteredBlock(_nextBlockToUpdate)) {
-      // Apply LED settings to the block
-      if (ApplyLEDParams(_nextBlockToUpdate, HAL::GetTimeStamp()) != RESULT_OK) {
-        PRINT("ERROR(BlockLightController.Update): Failed to apply LED params to block %d", _nextBlockToUpdate);
-        return RESULT_FAIL;
-      }
-    }
+    
+    // Apply LED settings to the block
+    ApplyLEDParams(_nextBlockToUpdate, HAL::GetTimeStamp());
     
     return RESULT_OK;
   }

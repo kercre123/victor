@@ -41,6 +41,7 @@ namespace Anki {
     void SetDesiredWheelSpeeds(f32 leftws, f32 rightws);
     
     void GetFilteredWheelSpeeds(f32 &left, f32 &right);
+    f32 GetAverageFilteredWheelSpeed();
     
     //This function will command a wheel speed to the left and right wheel so that the vehicle follows a trajectory
     //This will only work if the steering controller does not overwrite the values.

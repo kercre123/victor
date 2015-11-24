@@ -64,8 +64,6 @@ namespace Anki {
         Robot::OperationMode mode_ = INIT_MOTOR_CALIBRATION;
         bool wasConnected_ = false;
 
-        bool wasPickedUp_ = false;
-
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
@@ -412,29 +410,6 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, CUBES);
         Anki::Cozmo::HAL::ManageCubes();
         
-        
-        //////////////////////////////////////////////////////////////
-        // Pickup reaction
-        //////////////////////////////////////////////////////////////
-        const bool isPickedUp = IMUFilter::IsPickedUp();
-        if (isPickedUp && !wasPickedUp_) {
-          // Just got picked up
-          // Stop all movement (so we don't hurt people's hands)
-          LiftController::Disable();
-          HeadController::Disable();
-          WheelController::Disable();
-
-          PickAndPlaceController::Reset();
-          PathFollower::ClearPath();
-          wasPickedUp_ = true;
-        }
-        else if(!isPickedUp && wasPickedUp_) {
-          // Just got put back down
-          LiftController::Enable();
-          HeadController::Enable();
-          WheelController::Enable();
-          wasPickedUp_ = false;
-        }
 
         //////////////////////////////////////////////////////////////
         // Feedback / Display

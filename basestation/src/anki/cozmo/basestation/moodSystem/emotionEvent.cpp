@@ -12,6 +12,7 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
@@ -20,20 +21,14 @@
 namespace Anki {
 namespace Cozmo {
 
+  
+EmotionEvent::EmotionEvent()
+  : _affectors()
+  , _name()
+{
+}
 
-EmotionEvent::EmotionEvent(MoodEventType eventType)
-  : _eventType(eventType)
-{
-}
-  
-  
-EmotionEvent::EmotionEvent(const Json::Value& inJson)
-  : _eventType(kInvalidMoodEventType)
-{
-  ReadFromJson(inJson);
-}
-  
-  
+
 void EmotionEvent::AddEmotionAffector(const EmotionAffector& inAffector)
 {
   #if ANKI_DEVELOPER_CODE
@@ -51,10 +46,55 @@ void EmotionEvent::AddEmotionAffector(const EmotionAffector& inAffector)
   _affectors.push_back(inAffector);
 }
 
+  
+static const char* kEmotionAffectorsKey = "emotionAffectors";
+static const char* kEventName           = "name";
+
 
 bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
 {
-  // [MARKW:TODO] Implementation required
+  _affectors.clear();
+  _name.clear();
+  
+  // Name
+  
+  const Json::Value& eventNameField   = inJson[kEventName];
+  
+  if (!eventNameField.isString())
+  {
+    PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.MissingNAme", "Missing '%s' string entry", kEventName);
+    return false;
+  }
+  
+  _name = eventNameField.asCString();
+  
+  // Affectors
+  
+  const Json::Value& emotionAffectors = inJson[kEmotionAffectorsKey];
+  if (emotionAffectors.isNull())
+  {
+    PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.MissingValue", "Missing '%s' entry", kEmotionAffectorsKey);
+    return false;
+  }
+  
+  const uint32_t numAffectors = emotionAffectors.size();
+  _affectors.reserve(numAffectors);
+  
+  const Json::Value kNullAffectorValue;
+  
+  for (uint32_t i = 0; i < numAffectors; ++i)
+  {
+    const Json::Value& affectorJson = emotionAffectors.get(i, kNullAffectorValue);
+    
+    EmotionAffector newAffector;
+    if (affectorJson.isNull() || !newAffector.ReadFromJson(affectorJson))
+    {
+      PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.BadAffector", "Affector %u failed to read", i);
+      return false;
+    }
+    
+    _affectors.push_back(newAffector);
+  }
   
   return true;
 }
@@ -65,7 +105,20 @@ bool EmotionEvent::WriteToJson(Json::Value& outJson) const
   assert( outJson.empty() );
   outJson.clear();
   
-  // [MARKW:TODO] Implementation required
+  outJson[kEventName] = _name;
+  
+  {
+    Json::Value emotionAffectorsJson(Json::arrayValue);
+    
+    for (const EmotionAffector& affector : _affectors)
+    {
+      Json::Value affectorJson;
+      affector.WriteToJson(affectorJson);
+      emotionAffectorsJson.append(affectorJson);
+    }
+    
+    outJson[kEmotionAffectorsKey] = emotionAffectorsJson;
+  }
   
   return true;
 }

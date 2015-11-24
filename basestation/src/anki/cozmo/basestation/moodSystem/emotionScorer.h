@@ -39,6 +39,12 @@ public:
   
   explicit EmotionScorer(const Json::Value& inJson);
   
+  // ensure noexcept default move and copy assignment-operators/constructors are created
+  EmotionScorer(const EmotionScorer& other) = default;
+  EmotionScorer& operator=(const EmotionScorer& other) = default;
+  EmotionScorer(EmotionScorer&& rhs) noexcept = default;
+  EmotionScorer& operator=(EmotionScorer&& rhs) noexcept = default;
+  
   EmotionType             GetEmotionType() const  { return _emotionType; }
   Util::GraphEvaluator2d  GetScoreGraph()  const  { return _scoreGraph; }
   bool                    TrackDeltaScore() const { return _trackDeltaScore; }

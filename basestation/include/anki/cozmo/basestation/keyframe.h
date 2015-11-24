@@ -301,6 +301,8 @@ namespace Anki {
       }
       
       virtual bool IsDone() override;
+      
+      const ProceduralFace& GetFace() const { return _procFace; }
 
     protected:
       virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;

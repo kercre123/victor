@@ -98,8 +98,8 @@ namespace Anki {
     SmallMatrix();
     SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
     
-    SmallMatrix(std::initializer_list<T> valsList);
-    SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
+    explicit SmallMatrix(std::initializer_list<T> valsList);
+    explicit SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
     
     SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M);
     
@@ -125,6 +125,9 @@ namespace Anki {
     template<MatDimType KCOLS, typename T_other, typename T_work=T>
     SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
     
+    SmallMatrix<NROWS,NCOLS,T>  operator* (T value) const;
+    SmallMatrix<NROWS,NCOLS,T>& operator*=(T value);
+    
     // Matrix transpose:
     void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
     
@@ -137,14 +140,15 @@ namespace Anki {
     MatDimType GetNumRows() const;
     MatDimType GetNumCols() const;
     
-#if ANKICORETECH_USE_OPENCV
+
+# if ANKICORETECH_USE_OPENCV
   public:
     SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
     cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
     const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
     
     using cv::Matx<T,NROWS,NCOLS>::operator=;
-#endif
+# endif
     
   protected:
     
@@ -187,9 +191,12 @@ namespace Anki {
   public:
     SmallSquareMatrix();
     SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M);
-    SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
+    explicit SmallSquareMatrix(std::initializer_list<T> valsList); // DIMxDIM list of values
+    explicit SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
     
     using SmallMatrix<DIM,DIM,T>::operator();
+    using SmallMatrix<DIM,DIM,T>::operator*;
+    using SmallMatrix<DIM,DIM,T>::operator*=;
     
     // Matrix multiplication in place...
     // ... this = this * other;

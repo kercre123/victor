@@ -81,6 +81,7 @@ private:
   
   std::set<ObjectID> _recentObjects;
   std::set<ObjectID> _oldBoringObjects;
+  std::set<uint32_t> _actionsInProgress;
   u32 _numObjectsToLookAt = 0;
   
   Result StartMoving(Robot& robot);
@@ -89,6 +90,7 @@ private:
   Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
   void ResetSafeRegion(Robot& robot);
+  void ClearQueuedActions(Robot& robot);
   
   void HandleObjectObserved(const EngineToGameEvent& event, Robot& robot);
   void HandleCompletedAction(const EngineToGameEvent& event);

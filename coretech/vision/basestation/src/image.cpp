@@ -10,7 +10,7 @@
  **/
 
 #include "anki/common/basestation/math/point_impl.h"
-
+#include "anki/common/basestation/math/quad_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
@@ -66,19 +66,32 @@ namespace Vision {
 #   endif
   }
 
+  inline cv::Scalar GetCvColor(const ColorRGBA& color) {
+    return CV_RGB(color.b(), color.g(), color.r());
+  }
+  
   template<typename T>
   void ImageBase<T>::DrawLine(const Point2f& start, const Point2f& end,
                               const ColorRGBA& color, const s32 thickness)
   {
     cv::line(this->get_CvMat_(), start.get_CvPoint_(), end.get_CvPoint_(),
-             {color.GetR(), color.GetG(), color.GetB()}, thickness);
+             GetCvColor(color), thickness);
   }
   
   template<typename T>
   void ImageBase<T>::DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size)
   {
-    cv::circle(this->get_CvMat_(), point.get_CvPoint_(), size,
-               {color.GetR(), color.GetG(), color.GetB()});
+    cv::circle(this->get_CvMat_(), point.get_CvPoint_(), size, GetCvColor(color));
+  }
+  
+  template<typename T>
+  void ImageBase<T>::DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness)
+  {
+    using namespace Quad;
+    DrawLine(quad[CornerName::TopLeft], quad[CornerName::TopRight], color, thickness);
+    DrawLine(quad[CornerName::TopLeft], quad[CornerName::BottomLeft], color, thickness);
+    DrawLine(quad[CornerName::TopRight], quad[CornerName::BottomRight], color, thickness);
+    DrawLine(quad[CornerName::BottomLeft], quad[CornerName::BottomRight], color, thickness);
   }
   
   template<typename T>

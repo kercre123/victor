@@ -13,6 +13,7 @@
 
 #include "lib/stm32f2xx.h"
 
+// Basic abstractions for low level I/O on our processor
 #define GPIO_SET(gp, index)             (gp)->BSRRL = (1 << (index))
 #define GPIO_RESET(gp, index)           (gp)->BSRRH = (1 << (index))
 #define GPIO_READ(gp)                   (gp)->IDR

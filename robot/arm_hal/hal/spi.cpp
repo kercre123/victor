@@ -126,10 +126,7 @@ namespace Anki
         NVIC_Init(&NVIC_InitStructure);   
 
         // Set up first "hello" message to body
-        g_dataToBody.common.source = SPI_SOURCE_HEAD;
-        g_dataToBody.common.SYNC[0] = 0xfa;
-        g_dataToBody.common.SYNC[1] = 0xf3;
-        g_dataToBody.common.SYNC[2] = 0x20;
+        g_dataToBody.source = SPI_SOURCE_HEAD;
         memcpy((void*)&m_DMAtoBody, (void*)&g_dataToBody, sizeof(m_DMAtoBody));
         
         // Configure DMA For transmitting
@@ -212,7 +209,7 @@ void DMA_HANDLER_RX(void)
     // XXX: There is a timing error causing an off-by-one, but I have to get into Kevin's hands
     for (int i = 0; i < 2; i++) {
       GlobalDataToHead* dataToHead = (GlobalDataToHead*)(((u8*)&m_DMAtoHead)+i);
-      if (dataToHead->common.common == SPI_SOURCE_BODY) {
+      if (dataToHead->source == SPI_SOURCE_BODY) {
         //memcpy((void*)&g_dataToHead, dataToHead, sizeof(g_dataToHead) - i);
         memcpy((void*)&g_dataToHead, ((u8*)&m_DMAtoHead) + i, sizeof(g_dataToHead) - i);
         break ;
@@ -243,7 +240,7 @@ void DMA_HANDLER_RX(void)
   const u8 MAX_FAILED_TRANSFER_COUNT = 10;
   static u8 s_failedTransferCount = 0;
   // Verify the source is the body
-  if (g_dataToHead.common.source != SPI_SOURCE_BODY)
+  if (g_dataToHead.source != SPI_SOURCE_BODY)
   {
     if (++s_failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
     {

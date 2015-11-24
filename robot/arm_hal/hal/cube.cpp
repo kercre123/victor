@@ -83,7 +83,7 @@ namespace Anki
         g_dataToBody.cubeToUpdate = blockID;
 
         // Tap detection
-        if (g_dataToHead.common.source != SPI_SOURCE_BODY){
+        if (g_dataToHead.source != SPI_SOURCE_BODY){
           return ;
         }
 

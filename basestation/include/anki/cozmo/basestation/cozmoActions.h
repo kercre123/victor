@@ -604,7 +604,7 @@ namespace Anki {
       virtual ActionResult Verify(Robot& robot) override;
       
       virtual void Reset() override;
-      
+
       // For verifying if we successfully rolled the object
       Pose3d _dockObjectOrigPose;
       
@@ -613,6 +613,37 @@ namespace Anki {
       IActionRunner*             _rollVerifyAction;
       
     }; // class RollObjectAction
+    
+    
+    // If not carrying anything, pops a wheelie off of the specified object
+    class PopAWheelieAction : public IDockAction
+    {
+    public:
+      PopAWheelieAction(ObjectID objectID,
+                       const bool useManualSpeed = false);
+      virtual ~PopAWheelieAction();
+      
+      virtual const std::string& GetName() const override;
+      
+      // Override to determine type (low roll, or potentially other rolls) dynamically depending
+      // on what we were doing.
+      virtual RobotActionType GetType() const override;
+      
+      // Override completion signal to fill in information about rolled objects
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      
+    protected:
+      
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ROLLING; }
+      
+      virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
+      
+      virtual ActionResult Verify(Robot& robot) override;
+      
+     // virtual void Reset() override;
+      
+    }; // class PopAWheelieAction
+
     
 
     // Compound action for driving to an object, visually verifying it can still be seen,
@@ -756,7 +787,29 @@ namespace Anki {
       
     };
 
-    
+    // Common compound action for driving to an object and popping a wheelie off of it
+    // @param useApproachAngle  - If true, then only the preAction pose that results in a robot
+    //                            approach angle closest to approachAngle_rad is considered.
+    // @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
+    class DriveToPopAWheelieAction : public CompoundActionSequential
+    {
+    public:
+      DriveToPopAWheelieAction(const ObjectID& objectID,
+                               const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
+                               const bool useApproachAngle = false,
+                               const f32 approachAngle_rad = 0,
+                               const bool useManualSpeed = false);
+      
+      // GetType returns the type from the PlaceRelObjectAction, which is
+      // determined dynamically
+      virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
+      
+      // Use RollObjectAction's completion signal
+      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
+        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      }
+      
+    };
     
     class PlaceObjectOnGroundAction : public IAction
     {

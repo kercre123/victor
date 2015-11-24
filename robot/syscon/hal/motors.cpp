@@ -276,7 +276,7 @@ void Motors::init()
   
   // Clear pending interrupts and enable the GPIOTE interrupt
   NVIC_ClearPendingIRQ(GPIOTE_IRQn);
-  NVIC_SetPriority(GPIOTE_IRQn, IRQ_PRIORITY);
+  NVIC_SetPriority(GPIOTE_IRQn, 0);//IRQ_PRIORITY);
   NVIC_EnableIRQ(GPIOTE_IRQn);
   
   // Clear pending events
@@ -524,7 +524,7 @@ void GPIOTE_IRQHandler()
   u32 state;
   while (m_lastState != (state = NRF_GPIO->IN))
   {
-    u32 whatChanged = state ^ m_lastState;     
+    u32 whatChanged = state ^ m_lastState;
     m_lastState = state;
     u32 count = GetCounter();
     

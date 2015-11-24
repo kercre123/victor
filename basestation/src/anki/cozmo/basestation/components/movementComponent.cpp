@@ -119,6 +119,12 @@ void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& ms
   
 // =========== Motor commands ============
 
+
+Result MovementComponent::EnableLiftPower(bool enable)
+{
+  return _robot.SendRobotMessage<RobotInterface::EnableLiftPower>(enable);
+}
+
 // Sends a message to the robot to move the lift to the specified height
 Result MovementComponent::MoveLiftToHeight(const f32 height_mm,
                                            const f32 max_speed_rad_per_sec,

@@ -65,8 +65,9 @@ typedef struct {
 } ota_header;
 
 // Block flag bits
-#define BLOCK_FLAG_BLOCK    0x3F              // Mask for this block's address - 64KB ought to be enough for anyone!
-#define BLOCK_FLAG_LAST     0x8000            // Set on the last block
+#define BLOCK_FLAG_BLOCK		0x1FF             // Mask for this block's address - 1MB ought to be enough for anyone!
+#define BLOCK_FLAG_LAST			0x4000            // Set on the last block
+#define BLOCK_FLAG_SHORT_LAST	0x8000            // Set on the last block for files <= 128KB (old fixtures)
 
 /** Crypto stuff follows **/
 #define CRYPTO_NONCE_SIZE   128     /* size of nonce        in bits */

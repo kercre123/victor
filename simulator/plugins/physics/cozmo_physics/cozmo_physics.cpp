@@ -39,6 +39,11 @@ void webots_physics_init() {
    *   dJointAttach(joint, body1, body2);
    *   ...
    */
+  
+  // Reset random number generators with constant seed for reproducible performance.
+  srand(0);
+  dRandSetSeed(0);
+  
   physVizController.Init();
 }
 

@@ -6,6 +6,9 @@
 namespace UART {
   extern bool initialized;
   
+  int DebugQueue();
+  uint8_t DebugChar();
+
   bool waitIdle();
   int get();
   void print( const char* fmt, ...);

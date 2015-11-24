@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/robot/config.h"
@@ -142,9 +143,13 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     case State::StartLooking:
     {
       IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+      _actionsInProgress.insert(moveHeadAction->GetTag());
       robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+      
       IActionRunner* moveLiftAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+      _actionsInProgress.insert(moveLiftAction->GetTag());
       robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftAction);
+      
       if (StartMoving(robot) == RESULT_OK) {
         _currentState = State::LookingForObject;
       }
@@ -161,16 +166,21 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
     }
     case State::ExamineFoundObject:
     {
-      robot.GetActionList().Cancel();
+      ClearQueuedActions(robot);
       bool queuedFaceObjectAction = false;
       while (!_recentObjects.empty())
       {
         auto iter = _recentObjects.begin();
         ObjectID objID = *iter;
-        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
         
+        IActionRunner* faceObjectAction = new FaceObjectAction(objID, Vision::Marker::ANY_CODE, DEG_TO_RAD(2), DEG_TO_RAD(1440), false, true);
+        _actionsInProgress.insert(faceObjectAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, faceObjectAction);
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK));
+        
+        IActionRunner* moveLiftHeightAction = new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK);
+        _actionsInProgress.insert(moveLiftHeightAction->GetTag());
+        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveLiftHeightAction);
+        
         queuedFaceObjectAction = true;
         
         ++_numObjectsToLookAt;
@@ -182,6 +192,7 @@ IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double curren
       if (queuedFaceObjectAction)
       {
         IActionRunner* moveHeadAction = new MoveHeadToAngleAction(0);
+        _actionsInProgress.insert(moveHeadAction->GetTag());
         robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
       }
       _currentState = State::WaitToFinishExamining;
@@ -252,6 +263,7 @@ Result BehaviorLookAround::StartMoving(Robot& robot)
                                                         false,
                                                         false);
   _currentDriveActionID = goToPoseAction->GetTag();
+  _actionsInProgress.insert(_currentDriveActionID);
   robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, goToPoseAction, 3);
   return RESULT_OK;
 }
@@ -328,7 +340,7 @@ void BehaviorLookAround::ResetBehavior(Robot& robot, float currentTime_sec)
   _lastLookAroundTime = currentTime_sec;
   _currentState = State::Inactive;
   robot.GetMoveComponent().StopAllMotors();
-  robot.GetActionList().Cancel();
+  ClearQueuedActions(robot);
   _recentObjects.clear();
   _oldBoringObjects.clear();
   _numObjectsToLookAt = 0;
@@ -421,6 +433,8 @@ void BehaviorLookAround::HandleCompletedAction(const EngineToGameEvent& event)
     // If this was a successful drive action, move on to the next destination
     _currentDestination = GetNextDestination(_currentDestination);
   }
+  
+  _actionsInProgress.erase(msg.idTag);
 }
   
 BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorLookAround::Destination current)
@@ -468,5 +482,13 @@ void BehaviorLookAround::ResetSafeRegion(Robot& robot)
   _safeRadius = kDefaultSafeRadius;
 }
 
+void BehaviorLookAround::ClearQueuedActions(Robot& robot)
+{
+  for (auto tag : _actionsInProgress)
+  {
+    robot.GetActionList().Cancel(tag);
+  }
+  _actionsInProgress.clear();
+}
 } // namespace Cozmo
 } // namespace Anki

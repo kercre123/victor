@@ -22,11 +22,14 @@ namespace Anki
     {
       void UartInit(void);
       void UartTransmit(void);
-      void UartReceive(void);
+
+      void EnterRecovery(void);
+      void LeaveRecovery(void);
       
       void DebugInit(void);
       void DebugPrintf(const char *format, ...);
       void DebugPutc(char c);
+      extern bool HeadDataReceived;
     }
   }
 }

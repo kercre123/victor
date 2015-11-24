@@ -30,7 +30,8 @@ namespace Anki {
     
     Mailbox();
     
-    bool putMessage(const MsgType newMsg);
+    bool putMessage(const MsgType& newMsg);
+    bool putMessage(MsgType&& newMsg);
     bool getMessage(MsgType& msgOut);
     
   protected:

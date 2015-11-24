@@ -20,31 +20,12 @@ typedef s64 Fixed64;
 #define FIXED_DIV(x, y) ((s32)(((s64)(x) << 16) / (y)))
 
 static const int spine_baud_rate = 350000;
-static const int uart_chunk_size = 8;
+static const uint32_t secret_code = 0x444d7852;
 
 enum SPISource
 {
-#ifdef COZMO_ROBOT_V41
-  SPI_SOURCE_HEAD = 'HEAD',
-  SPI_SOURCE_BODY = 'BODY'
-#else
-	SPI_SOURCE_HEAD = 'H',
-	SPI_SOURCE_BODY = 'B',
-	SPI_SOURCE_CLEAR = 0
-#endif
-};
-
-union GlobalCommon
-{
-#ifdef COZMO_ROBOT_V41
-  uint32_t source;
-#else
-	struct {
-		SPISource source;
-		uint8_t SYNC[3];
-	};
-	uint32_t common;
-#endif
+  SPI_SOURCE_HEAD    = 0x64616568,
+  SPI_SOURCE_BODY    = 0x79646f62
 };
 
 struct AcceleratorPacket {
@@ -54,14 +35,17 @@ struct AcceleratorPacket {
 };
 
 struct LEDPacket {
-  uint8_t ledStatus[12]; // 4-LEDs, three colors
+  union {
+    uint8_t ledStatus[12]; // 4-LEDs, three colors
+    uint32_t secret;
+  };
   uint8_t ledDark;       // Dark byte
 };
 
 union GlobalDataToHead
 {
   struct {
-    GlobalCommon common;
+    uint32_t source;
     Fixed speeds[4];
     Fixed positions[4];
     uint32_t cliffLevel;
@@ -74,20 +58,15 @@ union GlobalDataToHead
   };
 
   // Force alignment
-  struct {
-    uint8_t _RESERVED[64];
-  };
+  uint8_t _RESERVED[64];
 };
-
-static_assert(sizeof(GlobalDataToHead) == 64,
-  "sizeof(GlobalDataToHead) must be 64");
 
 // TODO: get static_assert to work so we can verify sizeof
 
 union GlobalDataToBody
 {
   struct {
-    GlobalCommon common;
+    uint32_t source;
     int16_t motorPWM[4];
     u32 backpackColors[4];
     
@@ -96,12 +75,10 @@ union GlobalDataToBody
   };
   
   // Force alignment
-  struct {
-    uint8_t _RESERVED[64];  // Pad out to 64 bytes
-  };
+  uint8_t _RESERVED[64];  // Pad out to 64 bytes
 };
 
-static_assert(sizeof(GlobalDataToBody) == 64,
-  "sizeof(GlobalDataToHead) must be 64");
+static_assert(sizeof(GlobalDataToHead) + sizeof(GlobalDataToBody) <= 128,
+  "Spine transmissions too long");
 
 #endif

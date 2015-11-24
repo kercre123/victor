@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -45,6 +47,7 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
       ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
       ExternalInterface::MessageGameToEngineTag::RollObject,
+      ExternalInterface::MessageGameToEngineTag::PopAWheelie,
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
       ExternalInterface::MessageGameToEngineTag::FaceObject,
@@ -77,6 +80,18 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
     // Custom handler for ForceDelocalizeRobot
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
     _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
+    
+    // Custom handlers for Mood events
+    {
+      auto moodEventCallback = std::bind(&RobotEventHandler::HandleMoodEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::MoodMessage, moodEventCallback));
+    }
+
+    // Custom handlers for Progression events
+    {
+      auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
+    }
   }
 }
   
@@ -245,6 +260,30 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
 }
   
+
+IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface::PopAWheelie& msg)
+{
+  ObjectID selectedObjectID;
+  if(msg.objectID < 0) {
+    selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  } else {
+    selectedObjectID = msg.objectID;
+  }
+  
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    return new DriveToPopAWheelieAction(selectedObjectID,
+                                        msg.motionProf,
+                                        msg.useApproachAngle,
+                                        msg.approachAngle_rad,
+                                        msg.useManualSpeed);
+  } else {
+    PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID, msg.useManualSpeed);
+    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    return action;
+  }
+}
+
+  
 IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterface::TraverseObject& msg)
 {
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
@@ -324,6 +363,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       
     case RobotActionUnionTag::rollObject:
       return GetRollObjectActionHelper(robot, actionUnion.Get_rollObject());
+      
+    case RobotActionUnionTag::popAWheelie:
+      return GetPopAWheelieActionHelper(robot, actionUnion.Get_popAWheelie());
       
     case RobotActionUnionTag::goToObject:
       return GetDriveToObjectActionHelper(robot, actionUnion.Get_goToObject());
@@ -456,6 +498,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     {
       numRetries = 1;
       newAction = GetRollObjectActionHelper(robot, event.GetData().Get_RollObject());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::PopAWheelie:
+    {
+      numRetries = 1;
+      newAction = GetPopAWheelieActionHelper(robot, event.GetData().Get_PopAWheelie());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TraverseObject:
@@ -598,21 +646,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   }
   
   ProceduralFace procFace;
-  using Param = ProceduralFace::Parameter;
-  const size_t N = static_cast<size_t>(Param::NumParameters);
-  if(msg.leftEye.size() < N || msg.rightEye.size() < N) {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleDisplayProceduralFace.WrongArrayLength",
-                      "Expecting leftEye / rightEye array lengths to be %lu, not %lu / %lu.",
-                      N, msg.leftEye.size(), msg.rightEye.size());
-    return;
-  }
-    
-  for(int iParam = 0; iParam < N; ++iParam) {
-    procFace.SetParameter(ProceduralFace::Left,  static_cast<Param>(iParam), msg.leftEye[iParam]);
-    procFace.SetParameter(ProceduralFace::Right, static_cast<Param>(iParam), msg.rightEye[iParam]);
-  }
-  
-  procFace.SetFaceAngle(msg.faceAngle);
+  procFace.GetParams().SetFromMessage(msg);
   procFace.SetTimeStamp(robot->GetLastMsgTimestamp());
   
   robot->SetProceduralFace(procFace);
@@ -637,6 +671,42 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
       robot->Delocalize();
     }
   }
+  
+void RobotEventHandler::HandleMoodEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const RobotID_t robotID = eventData.Get_MoodMessage().robotID;
+  
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleMoodEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetMoodManager().HandleEvent(event);
+  }
+}
+  
+void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const auto& eventData = event.GetData();
+  const RobotID_t robotID = eventData.Get_ProgressionMessage().robotID;
+  
+  Robot* robot = _robotManager.GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_ERROR("RobotEventHandler.HandleProgressionEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->GetProgressionManager().HandleEvent(event);
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki

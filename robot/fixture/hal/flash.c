@@ -37,20 +37,20 @@ void DecodeAndFlash(void)
   {
     u32 i;
     
-    // Write the decrypted data to block B in flash
+    // Write the decrypted data to block B in flash`    
+    u32 address = FLASH_BLOCK_B + (SAFE_PAYLOAD_SIZE * blockIndex);
+    SlowPrintf("start: %08X @ %d\r\n", address, getMicroCounter());
+    
     __disable_irq();
     FLASH_Unlock();
-    u32 address = FLASH_BLOCK_B + (SAFE_PAYLOAD_SIZE * blockIndex);
-    
-    SlowPrintf("address: %08X\r\n", address);
-    
+
     for (i = 0; i < SAFE_PAYLOAD_SIZE; i ++, address ++)
     {
       FLASH_ProgramByte(address, m_decryptedBuffer[i + SAFE_HEADER_SIZE]);
     }
     FLASH_Lock();
     __enable_irq();
-    
+
     // Acknowledge back to the PC
     ConsoleWrite("1");
     

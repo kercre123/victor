@@ -431,13 +431,6 @@ __user_initial_stackheap
 
     AREA    ER_ROM1, DATA, READONLY
 
-; Here's an example of how to include binary files into the project
-  EXPORT 	g_bodybin
-  EXPORT    g_bodyend
-g_bodybin
-  ;INCBIN ..\\build\\something.bin
-g_bodyend
-
                  END
 
 ;************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE*****

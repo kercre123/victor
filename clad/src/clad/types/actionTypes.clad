@@ -21,6 +21,7 @@ enum int_32 RobotActionType {
     PLACE_OBJECT_LOW,          //   "
     PLACE_OBJECT_HIGH,         //   "
     ROLL_OBJECT_LOW,           //   "
+    POP_A_WHEELIE,
     PICK_AND_PLACE_INCOMPLETE, // type for PickAndPlaceAction if fail before SelectDockAction ()
     CROSS_BRIDGE,
     ASCEND_OR_DESCEND_RAMP,

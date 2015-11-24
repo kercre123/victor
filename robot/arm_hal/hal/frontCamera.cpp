@@ -1015,9 +1015,10 @@ namespace Anki
 	0x21 , 0x14,
 	0xfe , 0x00,
   
-//  0xb6 , 0x00,  // P0: AEC off
-//  0x03 , 0x00,  // P0: Exposure MSB
-//  0x04 , 0x40,  // P0: Exposure LSB
+  // Comment these lines out to enable auto-exposure
+  0xb6 , 0x00,  // P0: AEC off
+  0x03 , 0x02,  // P0: Exposure MSB
+  0x04 , 0x40,  // P0: Exposure LSB
   
           0, 0
         };

@@ -23,7 +23,7 @@ namespace Vision {
   public:
     
     PixelRGB(u8 r, u8 g, u8 b) : cv::Vec3b(r,g,b) { }
-    PixelRGB() : PixelRGB(0,0,0) { }
+    PixelRGB(u8 value = 0) : PixelRGB(value, value, value) { }
     
     // Const accessors
     u8  r() const { return this->operator[](0); }
@@ -47,6 +47,8 @@ namespace Vision {
     // If "any" is set to true, then returns true if any channel is > or <.
     bool IsBrighterThan(u8 value, bool any = false) const;
     bool IsDarkerThan(u8 value, bool any = false) const;
+    
+    PixelRGB& AlphaBlendWith(const PixelRGB& other, f32 alpha);
     
   }; // class PixelRGB
   
@@ -130,6 +132,13 @@ namespace Vision {
     }
   }
 
+  inline PixelRGB& PixelRGB::AlphaBlendWith(const PixelRGB& other, f32 alpha)
+  {
+    r() = static_cast<u8>(alpha*static_cast<f32>(r()) + (1.f-alpha)*static_cast<f32>(other.r()));
+    g() = static_cast<u8>(alpha*static_cast<f32>(g()) + (1.f-alpha)*static_cast<f32>(other.g()));
+    b() = static_cast<u8>(alpha*static_cast<f32>(b()) + (1.f-alpha)*static_cast<f32>(other.b()));
+    return *this;
+  }
  
 } // namespace Vision
 } // namespace Anki
