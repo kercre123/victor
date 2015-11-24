@@ -255,6 +255,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49898da79bc624eeea2044eb78c17d47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _CloseDialogOnTapOutside: 1
   _TitleTextLabel: {fileID: 11421726}
   _StartChallengeButton: {fileID: 11414750}
 --- !u!222 &22252068
@@ -376,7 +377,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _CloseDialogOnTapOutside
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 102914}

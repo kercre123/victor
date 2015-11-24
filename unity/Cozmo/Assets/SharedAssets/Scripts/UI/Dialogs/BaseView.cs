@@ -56,30 +56,54 @@ public abstract class BaseView : MonoBehaviour {
     }
   }
 
+  /// <summary>
+  /// If true, creates a full screen button behind all the elements of this
+  /// dialog. The button will close this dialog on click.
+  /// </summary>
+  [SerializeField]
+  private bool _CloseDialogOnTapOutside;
+
   private Sequence _transitionAnimation;
 
   public void OnDestroy() {
     if (_transitionAnimation != null) {
       _transitionAnimation.Kill();
     }
-
-    CleanUp();
   }
 
   protected abstract void CleanUp();
 
   public void OpenView() {
     RaiseViewOpened(this);
+
+    if (_CloseDialogOnTapOutside) {
+      GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance._FullScreenButtonPrefab,
+                                      this.transform);
+
+      // Place the button underneath all the UI in this dialog
+      fullScreenButton.transform.SetAsFirstSibling();
+      UnityEngine.UI.Button fullScreenCollider = fullScreenButton.GetComponent<UnityEngine.UI.Button>();
+      fullScreenCollider.onClick.AddListener(HandleCloseColliderClicked);
+    }
+
     PlayOpenAnimations();
+  }
+
+  private void HandleCloseColliderClicked() {
+    CloseView();
   }
 
   public void CloseView() {
     RaiseViewClosed(this);
+
+    CleanUp();
     PlayCloseAnimations();
   }
 
   public void CloseViewImmediately() {
     RaiseViewClosed(this);
+
+    CleanUp();
 
     // Close dialog without playing animations
     OnCloseAnimationsFinished();
