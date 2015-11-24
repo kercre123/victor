@@ -89,7 +89,7 @@ namespace Cozmo {
         
       case TestState::ExecutingTestAnimation:
         // If no action complete message, this will timeout with assert.
-        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 10)) {
+        if (CONDITION_WITH_TIMEOUT_ASSERT(_lastAnimPlayed.empty(), _lastAnimPlayedTime, 20)) {
           _testState = TestState::ReadyForNextCommand;
         }
         break;
