@@ -84,7 +84,7 @@ namespace ScriptedSequences {
       sequence.Enable();
     }
 
-    public void BootrapCoroutine(IEnumerator coroutine) {
+    public void BootstrapCoroutine(IEnumerator coroutine) {
       StartCoroutine(coroutine);
     }
   }

@@ -33,7 +33,12 @@ public class UIManager : MonoBehaviour {
   [SerializeField]
   private EventSystem _eventSystemScript;
 
+  [SerializeField]
+  private GameObject _TouchCatcherPrefab;
+
   private List<BaseView> _openViews;
+
+  private TouchCatcher _TouchCatcherInstance;
 
   void Awake() {
     Instance = this;
@@ -103,4 +108,18 @@ public class UIManager : MonoBehaviour {
     Instance._openViews.Remove(view);
   }
 
+  public void ShowTouchCatcher(System.Action onTouch) {
+    if (_TouchCatcherInstance == null) {
+      _TouchCatcherInstance = GameObject.Instantiate<GameObject>(_TouchCatcherPrefab).GetComponent<TouchCatcher>();
+      _TouchCatcherInstance.transform.SetParent(_Instance._overlayCanvas.transform, false);
+    }
+    _TouchCatcherInstance.Enable();
+    _TouchCatcherInstance.OnTouch += onTouch;
+  }
+
+  public void HideTouchCatcher() {
+    if (_TouchCatcherInstance != null) {
+      _TouchCatcherInstance.Disable();
+    }
+  }
 }

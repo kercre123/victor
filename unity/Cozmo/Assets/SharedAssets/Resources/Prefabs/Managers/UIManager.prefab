@@ -172,6 +172,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _overlayCanvas: {fileID: 22391958}
   _eventSystemScript: {fileID: 11485194}
+  _TouchCatcherPrefab: {fileID: 151494, guid: f9f945bbe0c2a4469a9e59ccfe209d55, type: 2}
 --- !u!223 &22391958
 Canvas:
   m_ObjectHideFlags: 1
