@@ -3,6 +3,9 @@
 
 #include "hal/portable.h"
 
+// Return true if device is detected on contacts
+bool BodyDetect(void);
+  
 TestFunction* GetBodyTestFunctions(void);
 
 #endif

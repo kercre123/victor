@@ -18,7 +18,7 @@
 
 #define BAUD_RATE   1000000
 
-extern BOOL g_isRobotPresent;
+extern BOOL g_isDevicePresent;
 extern u8 g_modelIndex;
 extern u32 g_modelIDs[8];
 extern FixtureType g_fixtureType;
@@ -274,7 +274,7 @@ static void SetMode(void)
 
 static void RedoTest(void)
 {
-  g_isRobotPresent = 0;
+  g_isDevicePresent = 0;
 }
 
 static void SetSerial(void)
@@ -435,9 +435,9 @@ static void ParseCommand(void)
       if (!strcasecmp(cf->command, buffer) && cf->function)
       {
         commandFound = 1;
-        if (cf->doesCommunicateWithRobot && !g_isRobotPresent)
+        if (cf->doesCommunicateWithRobot && !g_isDevicePresent)
         {
-          ConsolePrintf("No Robot present\r\n");
+          ConsolePrintf("No device present\r\n");
         } else {
           
           error_t error = ERROR_OK;
