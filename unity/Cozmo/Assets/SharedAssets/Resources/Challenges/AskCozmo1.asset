@@ -14,8 +14,9 @@ MonoBehaviour:
   MinigamePrefab: {fileID: 189650, guid: 3f51dcc1802bc49b4b436d61e498310b, type: 2}
   ChallengeID: AzkCozmoChallenge
   EnableHubWorldChallenge: 0
-  EnableDevWorldChallenge: 1
+  EnableDevWorldChallenge: 0
   ChallengeTitleKey: hubWorld.askCozmo.askCozmo1
+  ChallengeIcon: {fileID: 0}
   ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
