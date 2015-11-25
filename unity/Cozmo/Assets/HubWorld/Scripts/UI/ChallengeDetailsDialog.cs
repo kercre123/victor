@@ -19,6 +19,9 @@ public class ChallengeDetailsDialog : BaseView {
   [SerializeField]
   private Vector3 _CenteredIconViewportPos;
 
+  [SerializeField]
+  private RectTransform _DialogBackground;
+
   private string _ChallengeId;
   private Transform _ChallengeButtonTransform;
 
@@ -44,21 +47,24 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   protected override void ConstructOpenAnimation(DG.Tweening.Sequence openAnimation) {
+
     // Play camera animation
-    if (_ChallengeButtonTransform == null) {
-      Debug.LogError("Button is null!");
-    }
     DG.Tweening.Tweener cameraTween = HubWorldCamera.Instance.CenterCameraOnTarget(
                                         _ChallengeButtonTransform.position, 
                                         _CenteredIconViewportPos);
     openAnimation.Append(cameraTween);
-      
+
     // TODO: Slide the dialog out and back
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).From().SetEase(Ease.OutBack).SetDelay(0.2f);
+    openAnimation.Join(dialogTween);
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
     // Reset the camera
     DG.Tweening.Tweener cameraTween = HubWorldCamera.Instance.ReturnCameraToDefault();
     closeAnimation.Append(cameraTween);
+
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
+    closeAnimation.Join(dialogTween);
   }
 }

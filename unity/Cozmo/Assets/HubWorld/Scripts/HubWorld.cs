@@ -97,6 +97,7 @@ namespace Cozmo.HubWorld {
       // TODO: Don't close the hub dialog during minigames
       CloseHubWorldDialog();
       _ChallengeDetailsDialogInstance.CloseViewImmediately();
+      HubWorldCamera.Instance.ReturnCameraToDefault();
 
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].data);
