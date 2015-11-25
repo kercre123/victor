@@ -14,6 +14,8 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private Sprite[] _LockedChallengeIcons;
 
+    float _RotateSpeed = 10;
+
     public override void Initialize(ChallengeData challengeData) {
 
       base.Initialize(challengeData);
@@ -23,7 +25,13 @@ namespace Cozmo.HubWorld {
         _LockedChallengeImage.sprite = _LockedChallengeIcons[index];
       }
 
-      StartCoroutine(DelayedBobAnimation());
+      // StartCoroutine(DelayedBobAnimation());
+      _RotateSpeed = Random.Range(-1f, 1f);
+    }
+
+    protected override void OnUpdate() {
+      transform.RotateAround(transform.parent.position, Vector3.forward, _RotateSpeed * Time.deltaTime);
+      transform.localRotation = Quaternion.identity;
     }
 
     private void OnDestroy() {
@@ -37,7 +45,7 @@ namespace Cozmo.HubWorld {
       yield return new WaitForSeconds(delay);
 
       // Start a bobbing animation that plays forever
-      float duration = Random.Range(2.5f, 4.5f);
+      float duration = Random.Range(3.5f, 5.5f);
       float yOffset = Random.Range(8f, 15f);
       yOffset = Random.Range(0f, 1f) > 0.5f ? yOffset : -yOffset;
       float xOffset = Random.Range(8f, 15f);
