@@ -14,7 +14,6 @@ extern int os_printf_plus(const char * format, ...) __attribute__ ((format (prin
 #define USER_NV_START_SEC   0x7d
 
 #define AP_MAX_CONNECTIONS 8
-#define AP_SSID_FMT "AnkiEspressif%02x%02x"
 #define AP_KEY      "2manysecrets"
 #define AP_IP       "172.31.1.1"
 #define AP_NETMASK  "255.255.255.0"
