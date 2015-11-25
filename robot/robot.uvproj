@@ -843,6 +843,11 @@
               <FileType>8</FileType>
               <FilePath>.\generated\clad\robot\clad\robotInterface\messageToActiveObject.cpp</FilePath>
             </File>
+            <File>
+              <FileName>otaMessages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1815,6 +1820,11 @@
               <FileName>messageToActiveObject.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\generated\clad\robot\clad\robotInterface\messageToActiveObject.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>otaMessages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
             </File>
           </Files>
         </Group>
