@@ -25,6 +25,8 @@ namespace ScriptedSequences
 
     public List<ScriptedSequenceAction> Actions = new List<ScriptedSequenceAction>();
 
+    public ScriptedSequenceCondition EarlyExitCondition;
+
     private ScriptedSequence _Parent;
 
     private ScriptedSequenceNode _Previous;
@@ -75,6 +77,7 @@ namespace ScriptedSequences
         #if DEBUG_SCRIPTED_SEQUENCES
         DAS.Debug(this, DebugName +" Is "+(_IsEnabled ? "Enabled" : "Disabled")+"!");
         #endif
+
         if (UpdateConditions(_IsEnabled)) {
           Act();
         }
@@ -102,6 +105,11 @@ namespace ScriptedSequences
         _Previous = previous;
         previous.OnComplete += HandlePreviousNodeComplete;
       }
+
+      if (EarlyExitCondition != null) {
+        EarlyExitCondition.Initialize(this);
+        EarlyExitCondition.OnConditionChanged += HandleEarlyExitConditionChanged;
+      }
     }
 
     public void TryEnable()
@@ -124,6 +132,10 @@ namespace ScriptedSequences
       if (_ActToken != null) {
         _ActToken.Abort();
         _ActToken = null;
+      }
+
+      if (EarlyExitCondition != null) {
+        EarlyExitCondition.IsEnabled = false;
       }
 
       IsComplete = false;
@@ -149,6 +161,16 @@ namespace ScriptedSequences
     {
       if (UpdateConditions(IsEnabled)) {
         Act();
+      }
+    }
+
+    private void HandleEarlyExitConditionChanged()
+    {
+      if (IsActive && EarlyExitCondition.IsMet) {
+        _ActToken.Abort();
+        _ActToken = null;
+        Succeeded = true;
+        IsComplete = true;
       }
     }
 
@@ -199,6 +221,10 @@ namespace ScriptedSequences
           Succeeded = !result.Value.Any(x => !x.Success);
           IsComplete = true;
         });
+      }
+
+      if (IsActive && EarlyExitCondition != null) {
+        EarlyExitCondition.IsEnabled = true;
       }
     }
   }

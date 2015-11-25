@@ -860,6 +860,8 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     DrawConditionOrActionList("Actions", node.Actions, mousePosition, eventType);
 
+    DrawConditionOrActionEntry("Early Exit Condition", node.EarlyExitCondition, c => node.EarlyExitCondition = c, mousePosition, eventType);
+
     EditorGUILayout.EndVertical();
     EditorGUILayout.GetControlRect();
 

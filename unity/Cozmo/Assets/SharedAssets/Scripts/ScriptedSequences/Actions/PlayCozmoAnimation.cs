@@ -18,6 +18,7 @@ namespace ScriptedSequences.Actions {
       }
 
       if (WaitToEnd) {
+        token.OnAbort += () => { robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); };
         robot.SendAnimation(AnimationName, (s) => { 
           // Do we want to fail the action if playing the animation failed?
           token.Succeed();
