@@ -1167,7 +1167,7 @@ namespace Cozmo {
       }
       
 #     if DEBUG_FACE_DETECTION
-      _debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
+      //_debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
 #     endif
       
       _faceTracker->Update(maskedImage);
@@ -1186,6 +1186,12 @@ namespace Cozmo {
       // 3D translation, w.r.t. that camera. Also puts the face's pose in
       // the camera's pose chain.
       currentFace.UpdateTranslation(_camera);
+      
+      // Make head pose w.r.t. the historical world origin
+      Pose3d headPose = currentFace.GetHeadPose();
+      headPose.SetParent(&_poseData.cameraPose);
+      headPose = headPose.GetWithRespectToOrigin();
+      currentFace.SetHeadPose(headPose);
       
       _faceMailbox.putMessage(currentFace);
     }
