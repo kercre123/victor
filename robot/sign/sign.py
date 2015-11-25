@@ -54,7 +54,6 @@ with open(argv[1], "rb+") as fo:
 	fo.seek(magic_location)
 	fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
 
-
 # Zero pad to a 4k block (flash area)
 while len(rom_data) % BLOCK_LENGTH:
 	rom_data += b"\x00"

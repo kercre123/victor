@@ -139,7 +139,7 @@ namespace Face {
   }
   
   // Return display to normal function
-  extern "C" void UnPrintf(void)
+  extern "C" void FaceUnPrintf(void)
   {
     _textMode = false;
   }

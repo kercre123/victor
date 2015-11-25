@@ -24,6 +24,15 @@
 
 #include <list>
 
+// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
+// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
+// and needing sound.
+#if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
+#  define PLAY_ROBOT_AUDIO_ON_DEVICE 1
+#else
+#  define PLAY_ROBOT_AUDIO_ON_DEVICE 0
+#endif
+
 namespace Anki {
 namespace Cozmo {
   
@@ -34,6 +43,16 @@ namespace Cozmo {
   namespace ExternalInterface {
     class MessageGameToEngine;
   }
+  
+  // Just a stub so I can compile
+  // TODO: Remove once Jordan's stuff is in
+  class AudioManager
+  {
+  public:
+    static void PlayEvent(Audio::EventType audioEvent, f32 volume) { }
+    static s32 GetBufferedData(size_t numBytes, u8* buffer) { return 0; }
+  };
+  
   
   class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
@@ -78,10 +97,15 @@ namespace Cozmo {
     Result InitStream(Animation* anim, u8 withTag);
     
     // Actually stream the animation (called each tick)
-    Result UpdateStream(Robot& robot, Animation* anim);
+    Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
     
     Result SendStartOfAnimation();
     Result SendEndOfAnimation(Robot& robot);
+    
+    // Stream one audio sample from the AudioManager
+    // If sendSilence==true, will buffer an AudioSilence message if no audio is
+    // available (needed while streaming canned animations)
+    Result BufferAudioToSend(bool sendSilence);
     
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;
@@ -112,12 +136,13 @@ namespace Cozmo {
     // ready to play) into the passed-in procedural face params.
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                       ProceduralFaceParams& faceParams);
+                       ProceduralFaceParams& faceParams,
+                       bool shouldReplace = false);
     
-    void UpdateFace(Robot& robot, Animation* anim);
+    void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
     
-    // Used to stream _just_ the stuff left in face layers
-    Result StreamFaceLayers(Robot& robot);
+    // Used to stream _just_ the stuff left in face layers or audio in the buffer
+    Result StreamFaceLayersOrAudio(Robot& robot);
     
     bool _isIdling;
     
@@ -140,10 +165,12 @@ namespace Cozmo {
     
     bool _endOfAnimationSent;
     
+#   if PLAY_ROBOT_AUDIO_ON_DEVICE
     // TODO: Remove these once we aren't playing robot audio on the device
     TimeStamp_t _playedRobotAudio_ms;
     std::deque<const RobotAudioKeyFrame*> _onDeviceRobotAudioKeyFrameQueue;
     const RobotAudioKeyFrame* _lastPlayedOnDeviceRobotAudioKeyFrame;
+#   endif
     
     // Manage the send buffer, which is where we put keyframe messages ready to
     // go to the robot, and parcel them out according to how many bytes the

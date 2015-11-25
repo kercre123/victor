@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "hal/portable.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/spineData.h"
 
 static const uint32_t debug_baud_rate = 3000000;
@@ -13,6 +14,7 @@ static const uint32_t debug_baud_rate = 3000000;
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
+extern bool recoveryStateUpdated;
 
 namespace Anki
 {
@@ -23,13 +25,17 @@ namespace Anki
       void UartInit(void);
       void UartTransmit(void);
 
-      void EnterRecovery(void);
-      void LeaveRecovery(void);
-      
+      void EnterBodyRecovery(void);
+      void SendRecoveryData(const uint8_t* data, int bytes);
+
       void DebugInit(void);
       void DebugPrintf(const char *format, ...);
       void DebugPutc(char c);
-      extern bool HeadDataReceived;
+      void WaitForSync();
+      
+      extern volatile bool HeadDataReceived;
+      extern volatile uint16_t RecoveryStateUpdated;
+      extern volatile RECOVERY_STATE recoveryMode;
     }
   }
 }

@@ -57,6 +57,7 @@ def write_file(file_name,data):
 def combine_bin(file_name,dest_file_name,start_offset_addr,need_chk):
     global chk_sum
     global blocks
+    global flashSectionsFH
     if dest_file_name is None:
         print 'dest_file_name cannot be none\n'
         sys.exit(0)
@@ -73,6 +74,7 @@ def combine_bin(file_name,dest_file_name,start_offset_addr,need_chk):
 		else:
 	            tmp_len = (data_len + 15) & (~15)
                 data_bin = struct.pack('<II',start_offset_addr,tmp_len)
+                flashSectionsFH.write("{:s}: 0x{:08x}\t{}\r\n".format(file_name, start_offset_addr, tmp_len))
                 write_file(dest_file_name,data_bin)
                 fp.seek(0,os.SEEK_SET)
                 data_bin = fp.read(data_len)
@@ -114,6 +116,7 @@ def gen_appbin():
     global chk_sum
     global crc_sum
     global blocks
+    global flashSectionsFH
     if len(sys.argv) != 6:
         print 'Usage: gen_appbin.py eagle.app.out boot_mode flash_mode flash_clk_div flash_size_map'
         sys.exit(0)
@@ -128,6 +131,7 @@ def gen_appbin():
     data_line_bits = 0xf
 
     irom0text_bin_name = 'eagle.app.v6.irom0text.bin'
+    iram2text_bin_name = 'eagle.app.v6.iram2text.bin'
     text_bin_name = 'eagle.app.v6.text.bin'
     data_bin_name = 'eagle.app.v6.data.bin'
     rodata_bin_name = 'eagle.app.v6.rodata.bin'
@@ -180,6 +184,14 @@ def gen_appbin():
         if m != None:
             rodata_start_addr = m.group(1)
             # print rodata_start_addr
+            
+    iram2_start_addr = '0'
+    p = re.compile('(\w*)(\sA\s)(_iram2_text_start)$')
+    for line in lines:
+        m = p.search(line)
+        if m != None:
+            iram2_start_addr = m.group(1)
+            print "iram2 start addr", iram2_start_addr
 
     # write flash bin header
     #============================
@@ -214,6 +226,7 @@ def gen_appbin():
     if boot_mode == '2':
         # write irom bin head
         data_bin = struct.pack('<BBBBI',BIN_MAGIC_IROM,4,byte2,byte3,long(entry_addr,16))
+        flashSectionsFH.write("IROM: 0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:08x}\r\n".format(BIN_MAGIC_IROM, 4, byte2, byte3, long(entry_addr,16)))
         sum_size = len(data_bin)
         write_file(flash_bin_name,data_bin)
         
@@ -221,6 +234,7 @@ def gen_appbin():
         combine_bin(irom0text_bin_name,flash_bin_name,0x0,0)
 
     data_bin = struct.pack('<BBBBI',BIN_MAGIC_FLASH,3,byte2,byte3,long(entry_addr,16))
+    flashSectionsFH.write("text: 0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:02x}\t0x{:08x}\r\n".format(BIN_MAGIC_FLASH, 3, byte2, byte3, long(entry_addr,16)))
     sum_size = len(data_bin)
     write_file(flash_bin_name,data_bin)
 
@@ -233,6 +247,10 @@ def gen_appbin():
 
     # rodata.bin
     combine_bin(rodata_bin_name,flash_bin_name,long(rodata_start_addr,16),1)
+    
+    # iram2.bin
+    if (os.path.isfile(iram2text_bin_name)):
+        combine_bin(iram2text_bin_name,flash_bin_name, long(iram2_start_addr, 16), 1)
 
     # write checksum header
     sum_size = os.path.getsize(flash_bin_name) + 1
@@ -267,7 +285,11 @@ def gen_appbin():
         print all_bin_crc
         write_file(flash_bin_name,chr((all_bin_crc & 0x000000FF))+chr((all_bin_crc & 0x0000FF00) >> 8)+chr((all_bin_crc & 0x00FF0000) >> 16)+chr((all_bin_crc & 0xFF000000) >> 24))
     cmd = 'rm eagle.app.sym'
+    print "eagle.app.sym"
     os.system(cmd)
 
 if __name__=='__main__':
+    global flashSectionsFH
+    flashSectionsFH = open("{}.flash-sections".format(sys.argv[1]), "w")
     gen_appbin()
+    flashSectionsFH.close()

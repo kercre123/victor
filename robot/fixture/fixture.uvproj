@@ -549,11 +549,6 @@
               <FilePath>.\hal\timers.c</FilePath>
             </File>
             <File>
-              <FileName>testport.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\testport.c</FilePath>
-            </File>
-            <File>
               <FileName>uart.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\uart.c</FilePath>

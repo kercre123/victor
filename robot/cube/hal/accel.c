@@ -476,6 +476,9 @@ void InitAcc()
  
 }
 
+/*
+accData should be size 6
+*/
 void ReadAcc(s8 *accData)
 {
   DataReadMultiple(ACCD_X_LSB, 6, accData);

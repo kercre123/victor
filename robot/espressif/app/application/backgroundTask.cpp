@@ -9,7 +9,10 @@ extern "C" {
 #include "mem.h"
 #include "backgroundTask.h"
 #include "client.h"
+#include "driver/i2spi.h"
 }
+#include "face.h"
+#include "upgradeController.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -17,9 +20,28 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 #define EXPECTED_BT_INTERVAL_US 5000
 #define BT_MAX_RUN_TIME_US      2000
 
+namespace Anki {
+namespace Cozmo {
+namespace BackgroundTask {
+
+void CheckForUpgrades(void)
+{
+  const uint32 bodyCode  = i2spiGetBodyBootloaderCode();
+  const uint16 bodyState = bodyCode & 0xffff;
+  const uint16 bodyCount = bodyCode >> 16;
+  if (bodyState == STATE_IDLE && bodyCount > 10 && bodyCount < 100)
+  {
+    UpgradeController::StartBodyUpgrade();
+  }
+  else if (i2spiGetRtipBootloaderState() == STATE_IDLE)
+  {
+    UpgradeController::StartRTIPUpgrade();
+  }
+}
+
 /** The OS task which dispatches subtasks.
 */
-LOCAL void backgroundTaskExec(os_event_t *event)
+void Exec(os_event_t *event)
 {
   static u32 lastBTT = system_get_time();
   static u8 periodicPrint = 0;
@@ -35,6 +57,11 @@ LOCAL void backgroundTaskExec(os_event_t *event)
     case 0:
     {
       clientUpdate();
+      break;
+    }
+    case 1:
+    {
+      CheckForUpgrades();
       break;
     }
     // Add new "long execution" tasks as switch cases here.
@@ -54,10 +81,15 @@ LOCAL void backgroundTaskExec(os_event_t *event)
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
+} // Background 
+} // Cozmo
+} // Anki
+
+
 extern "C" int8_t backgroundTaskInit(void)
 {
   os_printf("backgroundTask init\r\n");
-  if (system_os_task(backgroundTaskExec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
+  if (system_os_task(Anki::Cozmo::BackgroundTask::Exec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
   {
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;

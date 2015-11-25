@@ -47,7 +47,7 @@ python: $(OUTPUT_PYTHON)
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
 %.py : %.clad $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
-	if test -f $(OUTPUT_DIR_PYTHON)robot/$*.py; then chmod -f 777 $(OUTPUT_DIR_PYTHON)robot/$*.h; fi
+	if test -f $(OUTPUT_DIR_PYTHON)robot/$*.py; then chmod -f 777 $(OUTPUT_DIR_PYTHON)robot/$*.py; fi
 	$(CLAD_PYTHON) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR_PYTHON)robot $*.clad
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$*.py
 

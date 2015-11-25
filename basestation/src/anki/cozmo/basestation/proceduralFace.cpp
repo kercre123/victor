@@ -17,7 +17,6 @@ namespace Cozmo {
   
   void ProceduralFace::Reset()
   {
-    _faceData.Reset();
     _sentToRobot = false;
     _timestamp = 0;
   }

@@ -10,11 +10,9 @@
 extern int os_printf_plus(const char * format, ...) __attribute__ ((format (printf, 1, 2)));
 
 /// Based on 1MB flash map
-#define USER_NV_PARAM_START 0x7d000
-#define USER_NV_START_SEC   0x7d
+#define FLASH_MEMORY_MAP (0x40200000)
 
 #define AP_MAX_CONNECTIONS 8
-#define AP_SSID_FMT "AnkiEspressif%02x%02x"
 #define AP_KEY      "2manysecrets"
 #define AP_IP       "172.31.1.1"
 #define AP_NETMASK  "255.255.255.0"
