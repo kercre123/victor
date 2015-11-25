@@ -1,6 +1,6 @@
 fileFormatVersion: 2
-guid: d87549a349e7446878429ad81fe63e1e
-timeCreated: 1448320417
+guid: 84444cb30dfd3479bbd82de506c71e05
+timeCreated: 1448323656
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -50,7 +50,7 @@ TextureImporter:
   buildTargetSettings: []
   spriteSheet:
     sprites: []
-  spritePackingTag: hubworld
+  spritePackingTag: hubworldAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 
