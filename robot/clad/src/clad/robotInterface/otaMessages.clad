@@ -33,6 +33,7 @@ namespace RobotInterface {
     OTA_WiFi,
     OTA_RTIP,
     OTA_body,
+    OTA_stage,
   }
 
   /// Trigger a firmware upgrade from flash

@@ -14,7 +14,10 @@
 #include "driver/sdio_slv.h"
 #include "driver/i2spi.h" 
 #include "driver/i2s_ets.h"
+#include "foregroundTask.h"
 #include "imageSender.h"
+
+extern bool i2spiSynchronizedCallback(uint32 param);
 
 // Forward declaration
 uint32 PumpAudioData(void);
@@ -209,6 +212,7 @@ void i2spiTask(os_event_t *event)
               // Going past the end is OKAY as that will be used to increment the buffer
               os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
               outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
+              foregroundTaskPost(i2spiSynchronizedCallback, dropPhase);
             }
             else // Have a phase, just adjust for drift
             {
