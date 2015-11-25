@@ -28,6 +28,8 @@ namespace UpgradeController {
 
 #define DEBUG_OTA
 
+static const uint32* const flashStagedFlag = (const uint32* const)(BOOT_CONFIG_SECTOR*SECTOR_SIZE+0x100+FLASH_MEMORY_MAP);
+
 static uint8 retries;
 
 /// Stores the state nessisary for the over the air upgrade task
@@ -198,7 +200,10 @@ LOCAL bool TaskOtaWiFi(uint32 param)
       // TODO tell RTIP we're going away
       os_printf("WiFi OTA rebooting for version %d\r\n", state->version);
       os_free(state);
-      i2spiSwitchMode(I2SPI_REBOOT);
+      if (state->phase)
+      {
+        i2spiSwitchMode(I2SPI_REBOOT);
+      }
       return false;
     }
     case SPI_FLASH_RESULT_ERR:
@@ -392,7 +397,14 @@ LOCAL bool TaskOtaBody(uint32 param)
           }
           else
           {
-            i2spiSwitchMode(I2SPI_REBOOT);
+            if (*flashStagedFlag == 0xFFFFffff)
+            {
+              i2spiSwitchMode(I2SPI_REBOOT);
+            }
+            else
+            {
+              i2spiSwitchMode(I2SPI_RECOVERY);
+            }
             break;
           }
         }
@@ -562,6 +574,7 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       case RobotInterface::OTA_WiFi:
       {
+        state->phase = true; // Do trigger reboot in this mode
 #ifdef DEBUG_OTA
         os_printf("WiFi signature OKAY, posting task\r\n");
 #endif
@@ -586,6 +599,24 @@ LOCAL bool TaskCheckSig(uint32 param)
         i2spiSwitchMode(I2SPI_REBOOT);
         return false;
       }
+      case RobotInterface::OTA_stage:
+      {
+        uint32_t flashStagedFlag = state->cmd;
+        if (spi_flash_write(BOOT_CONFIG_SECTOR*SECTOR_SIZE + 0x100, &flashStagedFlag, 4) != SPI_FLASH_RESULT_OK)
+        {
+          PRINT("Couldn't write flash staged flag!\r\n");
+#ifdef DEBUG_OTA
+          os_printf("Couldn't write flash staged flag!\r\n");
+        }
+        else
+        {
+          os_printf("Successfully triggering staged upgrade\r\n");
+#endif
+        }
+        i2spiSwitchMode(I2SPI_REBOOT);
+        os_free(state);
+        return false;
+      }
       default:
       {
         PRINT("ERROR: Unexpected OTA command %d\r\n", state->cmd);
@@ -594,6 +625,21 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
     }
   }
+}
+  
+extern "C" bool i2spiSynchronizedCallback(uint32 param)
+{
+  if (*flashStagedFlag != 0xFFFFFFFF)
+  {
+    // Enter bootloader message from otaMessages.clad
+    uint8 msg[2];
+    msg[0] = 0xfe;
+    msg[1] = 1;
+    if (i2spiQueueMessage(msg, 2) == false) return true;
+    os_printf("Flash staged, starting upgrade sequence\r\n");
+    StartWiFiUpgrade(false);
+  }
+  return false;
 }
   
 void EraseFlash(RobotInterface::EraseFlash& msg)
@@ -669,6 +715,40 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
       else if(foregroundTaskPost(TaskCheckSig, reinterpret_cast<uint32>(otaState)) == false)
       {
         PRINT("Couldn't schedule signature check task! Aborting\r\n");
+      }
+    }
+  }
+  
+  void StartWiFiUpgrade(bool reboot)
+  {
+    OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
+    if (otaState == NULL)
+    {
+      os_printf("Failed to allocate memory for upgrade task\r\n");
+    }
+    else
+    {
+      os_memset(otaState, 0 , sizeof(OTAUpgradeTaskState));
+      otaState->fwStart = RobotInterface::OTA_WiFi_flash_address + 4;
+      if (spi_flash_read(RobotInterface::OTA_WiFi_flash_address, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
+      {
+        os_printf("Couldn't read back WiFi image size, aborting!\r\n");
+        os_free(otaState);
+      }
+      else
+      {
+        otaState->cmd = RobotInterface::OTA_RTIP;
+        otaState->phase = reboot;
+        retries = MAX_RETRIES;
+        if (foregroundTaskPost(TaskOtaWiFi, (uint32)otaState) == false)
+        {
+          os_printf("Couldn't post TaskOtaWiFi! Aborting\r\n");
+          os_free(otaState);
+        }
+        else
+        {
+          os_printf("Starting WiFi upgrade from address 0x%x, 0x%x bytes\r\n", otaState->fwStart, otaState->fwSize);
+        }
       }
     }
   }

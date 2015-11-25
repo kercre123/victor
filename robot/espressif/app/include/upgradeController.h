@@ -25,6 +25,9 @@ namespace Anki {
       /// Command upgrade initiation
       void Trigger(RobotInterface::OTAUpgrade& msg);
       
+      /// Run a WiFi upgrade with default settings
+      void StartWiFiUpgrade(bool reboot);
+      
       /// Run an RTIP upgrade as requested by the RTIP
       void StartRTIPUpgrade(void);
       

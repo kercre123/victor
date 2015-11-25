@@ -84,23 +84,15 @@ void wifi_event_callback(System_Event_t *evt)
 
 static void checkAndClearBootloaderConfig(void)
 {
-  BootloaderConfig bootConfig;
-  if (spi_flash_read(BOOT_CONFIG_SECTOR * SECTOR_SIZE, (uint32*)&bootConfig, sizeof(BootloaderConfig)) == SPI_FLASH_RESULT_OK)
+  const BootloaderConfig* const bootConfig = (const BootloaderConfig* const)(FLASH_MEMORY_MAP + BOOT_CONFIG_SECTOR*SECTOR_SIZE);
+  if (bootConfig->header == 0xe1df0c05)
   {
-    if (bootConfig.header != 0xe1df0c05)
+    os_printf("Clearing bootloader config\r\n");
+    // Clear the bootloader config to indicate we have successfully booted
+    if (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
     {
-      return; // No need to erase
+      os_printf("Error erasing bootloader config\r\n");
     }
-  }
-  else
-  {
-    os_printf("Error reading back bootloader config\r\n");
-  }
-  
-  // Clear the bootloader config to indicate we have successfully booted
-  if (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
-  {
-    os_printf("Error erasing bootloader config\r\n");
   }
 }
 
@@ -148,7 +140,7 @@ static void system_init_done(void)
  */
 void user_init(void)
 {
-  const uint32_t* const serialNumber = (const uint32_t* const)(0x40201000);
+  const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   char ssid[65];
   int8 err;
 

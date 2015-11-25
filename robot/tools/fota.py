@@ -82,7 +82,8 @@ class Upgrader(IDataReceiver):
         if msg.tag == msg.Tag.printText:
             sys.stdout.write("ROBOT: " + msg.printText.text)
         elif msg.tag == msg.Tag.flashWriteAck:
-            sys.stdout.write("Received ACK {}\r\n".format(str(msg.flashWriteAck)))
+            sys.stdout.write(".")
+            sys.stdout.flush()
             self.acked = True
         else:
             sys.stderr.write("Upgrader received unexpected message from robot:\r\n\t{}\r\n".format(str(msg)))
@@ -106,7 +107,7 @@ class Upgrader(IDataReceiver):
         FW_CHUNK_SIZE = 1024
         try:
             fw = open(filePathName, "rb").read()
-        except Error as inst:
+        except Exception as inst:
             sys.stderr.write("Couldn't load requested firmware file \"{}\"\r\n".format(filePathName))
             raise inst
         else:
@@ -156,6 +157,12 @@ def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
         up.ota(a, RobotInterface.OTACommand.OTA_RTIP, version, f)
         time.sleep(1.0) # Wait for finish
 
+def UpgradeAll(up, version=0):
+    "Stages all firmware upgrades and triggers upgrade"
+    up.ota(DEFAULT_WIFI_IMAGE, RobotInterface.OTACommand.OTA_none,  version, RobotInterface.OTAFlashRegions.OTA_WiFi_flash_address)
+    up.ota(DEFAULT_RTIP_IMAGE, RobotInterface.OTACommand.OTA_none,  version, RobotInterface.OTAFlashRegions.OTA_RTIP_flash_address)
+    up.ota(DEFAULT_BODY_IMAGE, RobotInterface.OTACommand.OTA_stage, version, RobotInterface.OTAFlashRegions.OTA_body_flash_address)
+
 def WaitForUserEnd():
     try:
         time.sleep(3600)
@@ -172,11 +179,7 @@ if __name__ == '__main__':
         sys.exit(USAGE)
     up = Upgrader(DEFAULT_ROBOT_ADDRESS)
     if sys.argv[1] == 'all':
-        UpgradeBody(up, DEFAULT_BODY_IMAGE)
-        time.sleep(5)
-        UpgradeRTIP(up, DEFAULT_RTIP_IMAGE)
-        time.sleep(5)
-        UpgradeWiFi(up, DEFAULT_WIFI_IMAGE)
+        UpgradeAll(up)
     elif sys.argv[1] == 'wifi':
         UpgradeWiFi(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_WIFI_IMAGE)
     elif sys.argv[1] == 'rtip':
