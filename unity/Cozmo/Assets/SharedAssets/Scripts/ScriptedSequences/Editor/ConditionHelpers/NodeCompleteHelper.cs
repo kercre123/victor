@@ -23,12 +23,17 @@ namespace ScriptedSequences.Editor.ConditionHelpers {
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
       var sequence = _Editor.CurrentSequence as ScriptedSequence;
 
-      var labels = sequence.Nodes.Select(x => x.Name).ToArray();
+      var labels = sequence.Nodes.Select(x => new GUIContent(x.Name)).ToArray();
       var ids = sequence.Nodes.Select(x => (int)x.Id).ToArray();
 
-      Value.NodeId = (uint)EditorGUILayout.IntPopup("Node", (int)Value.NodeId, labels, ids);
+      Value.NodeId = (uint)EditorGUILayout.IntPopup(
+        new GUIContent("Node", "Which node this condition waits on"), 
+        (int)Value.NodeId, labels, ids);
 
-      Value.State = (NodeComplete.CompletionState)EditorGUILayout.EnumPopup("Completion State", Value.State);
+      Value.State = (NodeComplete.CompletionState)EditorGUILayout.EnumPopup(
+        new GUIContent("Completion State",
+                        "Required State for the node that just completed to be in for this condition to be met."), 
+        Value.State);
     }
   }
 }

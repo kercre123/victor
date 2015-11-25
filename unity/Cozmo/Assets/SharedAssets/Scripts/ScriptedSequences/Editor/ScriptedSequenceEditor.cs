@@ -616,8 +616,21 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
     EditorGUIUtility.labelWidth = 200;
-    sequence.Repeatable = EditorGUILayout.Toggle("Repeatable", sequence.Repeatable);
-    sequence.RequiresConditionRemainsMet = EditorGUILayout.Toggle("Condition Must Stay Met", sequence.RequiresConditionRemainsMet);
+    sequence.Repeatable = EditorGUILayout.Toggle(
+      new GUIContent("Repeatable",
+                     "If this sequence can play multiple times"), 
+      sequence.Repeatable);
+    
+    sequence.RequiresConditionRemainsMet = EditorGUILayout.Toggle(
+      new GUIContent("Condition Must Stay Met",
+                     "If the condition becomes unmet while the sequence is running, the sequence will reset"), 
+      sequence.RequiresConditionRemainsMet);
+    
+    sequence.ActivateOnConditionMet = EditorGUILayout.Toggle(
+      new GUIContent("Activates On Condition Met", 
+                     "If this is true, the sequence will start playing as soon as the condition is met."+
+                      " Otherwise it must be started by name."), 
+      sequence.ActivateOnConditionMet);
     EditorGUIUtility.labelWidth = 0;
 
     // draw the sequence condition
@@ -862,19 +875,41 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
 
-    node.Sequencial = EditorGUILayout.Toggle("Sequencial", node.Sequencial);
-    node.Final = EditorGUILayout.Toggle("Final", node.Final);
-    node.FailOnError = EditorGUILayout.Toggle("Fail On Error", node.FailOnError);
+    node.Sequencial = EditorGUILayout.Toggle(
+      new GUIContent("Sequencial", 
+                     "If this is checked, this node will fire as soon as the node immediately above it is complete"), 
+      node.Sequencial);
+    node.Final = EditorGUILayout.Toggle(
+      new GUIContent("Final",
+                     "The Sequence will end as soon as this node is complete if checked"), 
+      node.Final);
+    node.FailOnError = EditorGUILayout.Toggle(
+      new GUIContent("Fail On Error", 
+                     "If this node fails, the sequence will end in a failure state. It will not be marked complete."), 
+      node.FailOnError);
 
-    DrawConditionOrActionList("Conditions", node.Conditions, mousePosition, eventType);
+    DrawConditionOrActionList(
+      new GUIContent("Conditions", 
+                      "A set of preconditions before the actions in this node will fire"), 
+      node.Conditions, mousePosition, eventType);
 
-    DrawConditionOrActionList("Actions", node.Actions, mousePosition, eventType);
+    DrawConditionOrActionList(
+      new GUIContent("Actions", 
+        "The set of things this node will 'do'"), 
+      node.Actions, mousePosition, eventType);
 
     EditorGUIUtility.labelWidth = 200;
-    node.ExitOnActionsComplete = EditorGUILayout.Toggle("Exit On Actions Complete", node.ExitOnActionsComplete);
+    node.ExitOnActionsComplete = EditorGUILayout.Toggle(
+      new GUIContent("Exit On Actions Complete", 
+                     "If checked, this node will exit as soon as the actions are complete regardless of any incomplete "+
+                      "exit conditions. If unchecked, exit conditions must be met to mark this node complete."),
+      node.ExitOnActionsComplete);
     EditorGUIUtility.labelWidth = 0;
 
-    DrawConditionOrActionList("Exit Conditions", node.ExitConditions, mousePosition, eventType);
+    DrawConditionOrActionList(
+      new GUIContent("Exit Conditions", 
+        "A set of post conditions that will mark this node complete. See 'Exit On Actions Complete' for more info."), 
+      node.ExitConditions, mousePosition, eventType);
 
     EditorGUILayout.EndVertical();
     EditorGUILayout.GetControlRect();
@@ -882,9 +917,8 @@ public class ScriptedSequenceEditor : EditorWindow {
   }
 
   // Draws a list of Conditions or Actions
-  public void DrawConditionOrActionList<T>(string label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : IScriptedSequenceItem {    
+  public void DrawConditionOrActionList<T>(GUIContent label, List<T> conditions, Vector2 mousePosition, EventType eventType) where T : IScriptedSequenceItem {    
     GUI.Label(GetIndentedLabelRect(), label, BigLabelStyle);
-
     for (int i = 0; i < conditions.Count; i++) {
       var cond = conditions[i];
       // clear out any null conditions
