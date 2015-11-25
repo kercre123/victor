@@ -64,7 +64,7 @@ namespace Anki
       0.00176247f,
       -0.00123075f
     };    
-#elif defined(COZMO_ROBOT_3A97)
+#elif defined(COZMO_ROBOT_3A9E)
     // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
     const u16 HEAD_CAM_CALIB_WIDTH  = 400;
     const u16 HEAD_CAM_CALIB_HEIGHT = 296;
