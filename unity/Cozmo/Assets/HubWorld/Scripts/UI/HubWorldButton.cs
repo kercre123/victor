@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId);
+    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
@@ -33,7 +33,7 @@ namespace Cozmo.HubWorld {
 
     private void RaiseButtonClicked(string challenge) {
       if (OnButtonClicked != null) { 
-        OnButtonClicked(challenge);
+        OnButtonClicked(challenge, this.transform);
       }
     }
 

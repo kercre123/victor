@@ -40,10 +40,6 @@ public class DevHubWorldDialog : BaseView {
 
   }
 
-  protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
-
-  }
-
   private void HandleOnDevButtonClicked(ChallengeData challenge) {
     RaiseButtonClicked(challenge);
   }

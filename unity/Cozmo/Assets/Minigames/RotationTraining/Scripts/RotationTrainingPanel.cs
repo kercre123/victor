@@ -15,9 +15,5 @@ namespace RotationTraining {
     protected override void CleanUp() {
     
     }
-
-    protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
-    
-    }
   }
 }

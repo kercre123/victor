@@ -6,11 +6,14 @@ using UnityEngine.UI;
 namespace Cozmo.HubWorld {
   public class HubWorldView : MonoBehaviour {
 
-    public delegate void ButtonClickedHandler(string challengeClicked);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
     public event ButtonClickedHandler OnCompletedChallengeClicked;
+
+    [SerializeField]
+    private Canvas _HubWorldCanvas;
 
     [SerializeField]
     private HubWorldButton _HubWorldLockedButtonPrefab;
@@ -59,6 +62,9 @@ namespace Cozmo.HubWorld {
           break;
         }
       }
+
+      // Make sure we recieve events from the right camera
+      _HubWorldCanvas.worldCamera = HubWorldCamera.Instance.WorldCamera;
     }
 
     private void CreateLockedButton(ChallengeData challengeData) {
@@ -93,21 +99,21 @@ namespace Cozmo.HubWorld {
       }
     }
 
-    private void HandleLockedChallengeClicked(string challengeClicked) {
+    private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnLockedChallengeClicked != null) {
-        OnLockedChallengeClicked(challengeClicked);
+        OnLockedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 
-    private void HandleUnlockedChallengeClicked(string challengeClicked) {
+    private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnUnlockedChallengeClicked != null) {
-        OnUnlockedChallengeClicked(challengeClicked);
+        OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 
-    private void HandleCompletedChallengeClicked(string challengeClicked) {
+    private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnCompletedChallengeClicked != null) {
-        OnCompletedChallengeClicked(challengeClicked);
+        OnCompletedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 
