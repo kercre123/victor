@@ -42,7 +42,7 @@ void MainLoop()
 { 
   static u8 packetCount = 0;
   static volatile u8 tapCount = 0;  
-  volatile s8 accData[3];
+  volatile s8 accData[6];
     
   // Pet watchdog
   WDSV = 128; // 1 second
@@ -54,8 +54,11 @@ void MainLoop()
 
   // Accelerometer read
   #if !defined(USE_EVAL_BOARD) && !defined(IS_CHARGER) && !defined(TIMING_SCOPE_TRIGGER)
+  #ifdef RELEASE
   if(!(CBYTE[0x3FF3] & 0x80)) // if not charger
+  #endif
   {
+    
     ReadAcc(accData);
     tapCount += GetTaps();
   }
@@ -84,7 +87,7 @@ void MainLoop()
   }
 
   // Fill radioPayload with a response
-  simple_memcpy(radioPayload, accData, sizeof(accData));
+  simple_memcpy(radioPayload, accData, 3);
   radioPayload[3] = tapCount;
   radioPayload[4] = cumMissedPacketCount;
   radioPayload[5] = packetCount++;
@@ -173,6 +176,9 @@ void InitializeMainLoop()
 
 void main(void)
 {
+  #ifdef EMULATE_BODY
+  u8 i,j;
+  #endif 
   
   // Wait until 16 MHz crystal oscillator is running
   while(hal_clk_get_16m_source() != HAL_CLK_XOSC16M)
@@ -228,7 +234,9 @@ void main(void)
         WDSV = 0; // 2 seconds to get through startup
         WDSV = 1; 
         #if !defined(USE_EVAL_BOARD) && !defined(IS_CHARGER)
+        #ifdef RELEASE
         if(!(CBYTE[0x3FF3] & 0x80)) // if not charger
+        #endif
         {
         // Initialize accelerometer
         InitAcc();
@@ -328,7 +336,9 @@ void main(void)
         radioPayload[7] = 15; // timeout
         radioPayload[8] = 8; // wakeup offset
         delay_us(200);
+      TR0 = 1; // Start radio timer 
         TransmitData();
+        
         WDSV = 128; // 1 seconds // TODO: update this value // TODO add a macro for watchdog
         WDSV = 0;
         PutString("Responded\r\n");
@@ -336,18 +346,39 @@ void main(void)
         radioStruct.ADDRESS_RX_PTR = ADDRESS_TX;
         radioStruct.ADDRESS_TX_PTR = ADDRESS_X;
         radioStruct.COMM_CHANNEL = 74;
-        WDSV = 0; // 4 seconds // TODO: update this value // TODO add a macro for watchdog
-        WDSV = 2;
+        WDSV = 128; // 1 seconds // TODO: update this value // TODO add a macro for watchdog
+        WDSV = 0;
         break;
       case eMainLoop:
+          while(radioTimerState == radioSleep);
+  {
+    // doing lights stuff TODO: low power mode
+  }
+    radioTimerState = radioSleep;
+        radioStruct.RADIO_INTERVAL_DELAY = 0xB6;
         simple_memset(radioPayload, 0xFF, sizeof(radioPayload));
         TransmitData();
         gDataReceived = false;
-        ReceiveData(5);
-        PutHex(gDataReceived);
-        delay_ms(8);
-        delay_us(1);
-        delay_ms(25);
+        ReceiveData(15);
+        if(!gDataReceived)
+        {
+          j++;
+          if(j > 2)
+          {
+            WDSV = 1; // 
+            WDSV = 0;
+          }
+        }
+        else
+        {
+          WDSV = 128; // 1 seconds // TODO: update this value // TODO add a macro for watchdog
+          WDSV = 0;
+          j=0;
+        }
+        for(i=0; i<RADIO_PAYLOAD_LENGTH; i++)
+          PutHex(radioPayload[i]);
+        PutString("\r\n");
+
         break;
       default:
         break;

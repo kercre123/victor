@@ -30,6 +30,9 @@
 //#define EMULATE_BODY
 //#define COMPATIBILITY_MODE_4P0
 
+#define RELEASE
+
+
 
 #if defined(EMULATE_BODY)
 #define USE_EVAL_BOARD
@@ -46,8 +49,8 @@ static enum cubeState
   eScan,
   eSync, // dummy state
   eRespond,
-  eMainLoop
-  
+  eMainLoop,
+  eAdvertise // dummy state
 };
 #else
 static enum cubeState
@@ -78,11 +81,12 @@ void StartTimer2();
 void StopTimer2();
 
 
-
+#ifndef USE_EVAL_BOARD
 // acc.c
 void InitAcc();
 void ReadAcc(u8 *accData);
 u8 GetTaps();
+#endif
 
 #ifdef USE_UART
 // uart.c
