@@ -37,7 +37,7 @@
 
 #define DEBUG_BEHAVIOR_MGR 0
 
-#define INVESTOR_DEMO 0
+#define INVESTOR_DEMO 1
 
 namespace Anki {
 namespace Cozmo {
