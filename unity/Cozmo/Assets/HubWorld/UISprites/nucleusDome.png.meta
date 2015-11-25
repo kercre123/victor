@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: 84444cb30dfd3479bbd82de506c71e05
-timeCreated: 1448323656
+guid: d87549a349e7446878429ad81fe63e1e
+timeCreated: 1448320417
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
-    enableMipMap: 1
+    enableMipMap: 0
     linearTexture: 0
     correctGamma: 0
     fadeOut: 0
@@ -30,7 +30,7 @@ TextureImporter:
   maxTextureSize: 2048
   textureSettings:
     filterMode: -1
-    aniso: -1
+    aniso: 16
     mipBias: -1
     wrapMode: 1
   nPOTScale: 0
@@ -50,7 +50,7 @@ TextureImporter:
   buildTargetSettings: []
   spriteSheet:
     sprites: []
-  spritePackingTag: 
+  spritePackingTag: hubworldAtlas
   userData: 
   assetBundleName: 
   assetBundleVariant: 

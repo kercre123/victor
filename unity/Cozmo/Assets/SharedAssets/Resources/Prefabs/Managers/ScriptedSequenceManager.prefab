@@ -41,6 +41,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SequenceTextAssets:
   - {fileID: 4900000, guid: 1d176bcc95ecb4192b4d0b72d7035f42, type: 3}
+  - {fileID: 4900000, guid: cd450454da0e24291afa000352473669, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
