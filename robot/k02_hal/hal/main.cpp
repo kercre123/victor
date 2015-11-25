@@ -94,8 +94,7 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
 
-  //StartupSelfTest();
-  FacePrintf("Address: %2x", (uint8_t) __ESPRESSIF_SERIAL_NUMBER);
+  StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur

@@ -72,9 +72,8 @@ void Battery::init()
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
   // Encoder and headboard power
-  nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_pin_set(PIN_VDDs_EN);
-  //nrf_gpio_cfg_output(PIN_VDDs_EN);
+  nrf_gpio_cfg_output(PIN_VDDs_EN);
 
   // turn off headlight
   //nrf_gpio_pin_clear(PIN_IR_FORWARD);
@@ -107,16 +106,12 @@ void Battery::powerOn()
 {
   // Let power drain out - 10ms is plenty long enough
   MicroWait(10000);
-  //nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
 void Battery::powerOff()
 {
   // Shutdown the extra things
-  //nrf_gpio_pin_clear(PIN_VDDs_EN);
-  nrf_gpio_pin_set(PIN_VDDs_EN);
-  MicroWait(10000);
   nrf_gpio_pin_clear(PIN_PWR_EN);
 }
 
@@ -156,10 +151,20 @@ void Battery::update()
 
     case ANALOG_V_EXT_SENSE:
       static int ground_short = 0;
+      static int off_charger = 0;
       uint32_t raw = NRF_ADC->RESULT;
       
-      if (raw < 0x24) {
-        if (ground_short++ < 100) {
+      if (raw < 0x80) {
+        if (off_charger++ >= 3600) {
+          powerOff();
+          for (;;) ;
+        }
+      } else {
+        off_charger = 0;
+      }
+    
+      if (raw < 0x30) {
+        if (ground_short++ >= 40) {
           powerOff();
           for (;;) ;
         }
