@@ -83,7 +83,7 @@ namespace Anki
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, ResetCursor, sizeof(ResetCursor), NULL);
       }
 
-      void FacePrintf(const char *format, ...) {
+      extern "C" void FacePrintf(const char *format, ...) {
         const int MAX_CHARS = SCREEN_WIDTH / (CHAR_WIDTH + 1);
         char buffer[MAX_CHARS];
         
