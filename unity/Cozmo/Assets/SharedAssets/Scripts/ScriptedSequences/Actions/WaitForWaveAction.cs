@@ -11,7 +11,7 @@ namespace ScriptedSequences.Actions {
       SimpleAsyncToken token = new SimpleAsyncToken();
       _Token = token;
       if (RobotEngineManager.Instance.CurrentRobot == null) {
-        token.Fail();
+        token.Fail(new System.Exception("Current Robot Is Null"));
       }
       else {
         RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
