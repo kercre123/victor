@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 public class ConsoleLogManager : MonoBehaviour {
 
@@ -48,27 +49,27 @@ public class ConsoleLogManager : MonoBehaviour {
     }
   }
 
-  private void OnInfoLogged(string eventName, string eventValue, Object context) {
+  private void OnInfoLogged(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.INFO, eventName, eventValue, context);
   }
 
-  private void OnErrorLogged(string eventName, string eventValue, Object context) {
+  private void OnErrorLogged(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.ERROR, eventName, eventValue, context);
   }
 
-  private void OnWarningLogged(string eventName, string eventValue, Object context) {
+  private void OnWarningLogged(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.WARNING, eventName, eventValue, context);
   }
 
-  private void OnEventLogged(string eventName, string eventValue, Object context) {
+  private void OnEventLogged(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.EVENT, eventName, eventValue, context);
   }
 
-  private void OnDebugLogged(string eventName, string eventValue, Object context) {
+  private void OnDebugLogged(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.DEBUG, eventName, eventValue, context);
   }
 
-  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, Object context) {
+  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context) {
     // Add the new log to the queue
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context);
     _MostRecentLogs.Enqueue(newPacket);
@@ -147,12 +148,12 @@ public class LogPacket {
     private set;
   }
 
-  public Object Context {
+  public object Context {
     get;
     private set;
   }
 
-  public LogPacket(ELogKind logKind, string eventName, string eventValue, Object context) {
+  public LogPacket(ELogKind logKind, string eventName, string eventValue, object context) {
     LogKind = logKind;
     EventName = eventName;
     EventValue = eventValue;
@@ -187,7 +188,15 @@ public class LogPacket {
     
     string contextStr = "null";
     if (Context != null) {
-      contextStr = Context.ToString();
+      Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
+      if(contextDict != null)
+      {
+        contextStr = string.Join(", ", contextDict.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+      }
+      else
+      {
+        contextStr = Context.ToString();
+      }
     }
     // TODO: Colorize the text
     return string.Format("<color=#{0}>[{1}] {2}: {3} ({4})</color>", colorStr, logKindStr, EventName, EventValue, contextStr);
