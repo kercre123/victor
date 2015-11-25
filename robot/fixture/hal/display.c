@@ -109,10 +109,12 @@ void InitDisplay(void)
   GPIO_PinAFConfig(SCK_PORT, SCK_SOURCE, GPIO_AF_SPI1);
 
   // Configure the SPI pins
-  GPIO_InitStructure.GPIO_Pin = MOSI_PIN | MISO_PIN | SCK_PIN;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Pin = MOSI_PIN | MISO_PIN; 
   GPIO_Init(SCK_PORT, &GPIO_InitStructure);
-  
+  GPIO_InitStructure.GPIO_Pin = SCK_PIN;
+  GPIO_Init(SCK_PORT, &GPIO_InitStructure);
+ 
   PIN_OUT(CMD_PORT, CMD_SOURCE);  
   
   GPIO_SET(CS_PORT, CS_SOURCE);  // Force CS high
@@ -149,6 +151,7 @@ void InitDisplay(void)
 
 void DisplaySetScroll(bool scroll) {
   if (scroll) {
+    // XXX:  This is broken - it diagonally scrolls part of the display
     static const uint8_t enable[] = { 0x29, 0, 0, 0, 0x00, 0x01, 0x2F };
     DisplayWrite(true, enable, sizeof(enable));
   } else {
@@ -186,6 +189,7 @@ void DisplayUpdate(void) {
 // Clears the screen
 void DisplayClear()
 {
+  DisplayInvert(0);
   memset(frame, 0, sizeof(frame));
   DisplayFlip();
 }
@@ -267,10 +271,15 @@ void DisplayPrintf(const char *format, ...)
 }
 
 // This is used to print codes and fixture names
-void DisplayBigCenteredText(char* text)
+void DisplayBigCenteredText(const char *format, ...)
 {
-  int len = strlen(text);
   const int scale = 3;
+  char text[169];
+
+  va_list argptr;
+  va_start(argptr, format);
+  int len = vsnprintf(text, sizeof(text), format, argptr);
+  va_end(argptr);
   
   DisplayTextHeightMultiplier(scale);
   DisplayTextWidthMultiplier(scale);

@@ -180,12 +180,18 @@ namespace Cozmo {
       }
     }
     
+    Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
+                                Point<2, Value>(NominalLeftEyeX, NominalEyeY) :
+                                Point<2, Value>(NominalRightEyeX, NominalEyeY);
+    eyeCenter.x() += _faceData.GetParameter(whichEye, Parameter::EyeCenterX);
+    eyeCenter.y() += _faceData.GetParameter(whichEye, Parameter::EyeCenterY);
+    
     // Apply rotation, translation, and scaling to the eye and lid polygons:
     SmallMatrix<2, 3, f32> W = GetTransformationMatrix(_faceData.GetParameter(whichEye, Parameter::EyeAngle),
                                                        _faceData.GetParameter(whichEye, Parameter::EyeScaleX),
                                                        _faceData.GetParameter(whichEye, Parameter::EyeScaleY),
-                                                       _faceData.GetParameter(whichEye, Parameter::EyeCenterX),
-                                                       _faceData.GetParameter(whichEye, Parameter::EyeCenterY));
+                                                       eyeCenter.x(),
+                                                       eyeCenter.y());
     
     for(auto poly : {&eyePoly, &lowerLidPoly, &upperLidPoly})
     {

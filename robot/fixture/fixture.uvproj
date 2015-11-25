@@ -68,7 +68,7 @@
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>cmd /c del build\startup_stm32f2xx.o</UserProg1Name>
+            <UserProg1Name>cmd /c del build\binaries.o</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -494,14 +494,24 @@
               <FilePath>.\app\app.c</FilePath>
             </File>
             <File>
-              <FileName>pcbTest.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\app\pcbTest.c</FilePath>
-            </File>
-            <File>
               <FileName>binaries.s</FileName>
               <FileType>2</FileType>
               <FilePath>.\app\binaries.s</FilePath>
+            </File>
+            <File>
+              <FileName>bodyTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\bodyTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>cubeTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\cubeTest.c</FilePath>
+            </File>
+            <File>
+              <FileName>headTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\headTest.c</FilePath>
             </File>
           </Files>
         </Group>

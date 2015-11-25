@@ -132,8 +132,9 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
     payload.center_y,
     payload.skew);
 
-  _visionComponent.SetCameraCalibration(calib);
-  SetPhysicalRobot(payload.isPhysicalRobots);
+  _visionComponent.SetCameraCalibration(*this, calib);
+  
+  SetPhysicalRobot(payload.isPhysicalRobots);  
 }
 
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)

@@ -16,26 +16,13 @@
 
 
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
+#include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "clad/types/emotionTypes.h"
-#include "util/global/globalDefinitions.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include <assert.h>
 #include <map>
 #include <string>
 #include <vector>
-
-
-#if ANKI_DEV_CHEATS
-  #define SEND_MOOD_TO_VIZ_DEBUG  1
-#else
-  #define SEND_MOOD_TO_VIZ_DEBUG  0
-#endif // ANKI_DEV_CHEATS
-
-#if SEND_MOOD_TO_VIZ_DEBUG
-  #define SEND_MOOD_TO_VIZ_DEBUG_ONLY(exp)  exp
-#else
-  #define SEND_MOOD_TO_VIZ_DEBUG_ONLY(exp)
-#endif // SEND_MOOD_TO_VIZ_DEBUG
 
 
 namespace Anki {

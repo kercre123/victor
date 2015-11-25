@@ -45,7 +45,8 @@ g_EspBlankEnd
   EXPORT g_EspUser
   EXPORT g_EspUserEnd
 g_EspUser
-  INCBIN releases\\esp.user.bin
+  ;INCBIN releases\\esp.user.bin
+  INCBIN releases\\esp.boot.bin
 g_EspUserEnd
 
   EXPORT g_EspBoot

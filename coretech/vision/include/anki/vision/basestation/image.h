@@ -17,6 +17,7 @@
 #include "anki/common/basestation/array2d.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/quad.h"
 
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/colorPixelTypes.h"
@@ -61,6 +62,8 @@ namespace Vision {
     
     void DrawPoint(const Point2f& point, const ColorRGBA& color, const s32 size);
 
+    void DrawQuad(const Quad2f& quad, const ColorRGBA& color, const s32 thickness);
+    
     using Array2d<T>::GetDataPointer;
     using Array2d<T>::IsEmpty;
     using Array2d<T>::GetNumRows;

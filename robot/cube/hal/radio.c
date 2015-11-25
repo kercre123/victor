@@ -4,23 +4,36 @@
 // Global variables
 volatile bool radioBusy;
 volatile bool gDataReceived = false;
-volatile u8 xdata radioPayload[13];
+volatile u8 radioPayload[RADIO_PAYLOAD_LENGTH];
 volatile enum eRadioTimerState radioTimerState = radioSleep;
-volatile u8 missedPacketCount = 0;
+volatile u8 gMissedPacketCount = 0;
 volatile u8 cumMissedPacketCount = 0;
+volatile u8 radioTimerCounter;
+volatile u8 ADDRESS_RX_DAT[5];
+volatile u8 gCubeState;
+
+volatile struct RadioStruct radioStruct = 
+{
+  ADV_CHANNEL, // COMM_CHANNEL
+  0xB6, // RADIO_INTERVAL_DELAY
+  15, // RADIO_TIMEOUT_MSB ~ 3ms (change to 5 later)
+  8, // RADIO_WAKEUP_OFFSET
+  ADDRESS_TX, // ADDRESS_TX_PTR 
+  ADDRESS_RX_ADV // ADDRESS_RX_PTR
+};
 
 void InitTimer0()
 {  
   TMOD &= 0xF0;
   TMOD |=  0x01; // Mode 1, 16 bit counter/timer
   
-  TL0 = 0xFF - TIMER35MS_L; 
-  TH0 = 0xFF - TIMER35MS_H;
+  TL0 = 0; 
+  TH0 = 0;
   
   ET0 = 1; // enable timer 1 interrupt
   EA = 1; // enable global interrupts
   
-  TR0 = 1; // Start timer 
+  //TR0 = 1; // Start timer 
 }
 
 void PowerDownRadio()
@@ -30,6 +43,7 @@ void PowerDownRadio()
 }
 
 
+// TODO make use of multiple pipes?
 void InitPRX()
 {
   /*
@@ -48,14 +62,23 @@ void InitPRX()
   EA = 1;
   // Configure radio as primary receiver (PRX)
   hal_nrf_set_operation_mode(HAL_NRF_PRX);
+  
+    // disable ack
+  //hal_nrf_write_reg(EN_AA, 0x3F & ~0x02);
+  //hal_nrf_write_reg(EN_RXADDR, 0x03);
+  //hal_nrf_rw(uint8_t value);
+  //hal_nrf_enable_dynamic_ack(false);
+  //hal_nrf_enable_ack_payload(false);
+  //hal_nrf_open_pipe((int)HAL_NRF_PIPE1, false);
+  
   // Set address
-  hal_nrf_set_address(HAL_NRF_PIPE1, ADDRESS);
+  hal_nrf_set_address(HAL_NRF_PIPE1, radioStruct.ADDRESS_RX_PTR);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_250KBPS);
+  hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Set channel
-  hal_nrf_set_rf_channel(COMM_CHANNEL);
-  // Set radioPayload width to 13 bytes
-  hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, 13U);
+  hal_nrf_set_rf_channel(radioStruct.COMM_CHANNEL);
+  // Set radioPayload width to 17 bytes
+  hal_nrf_set_rx_payload_width((int)HAL_NRF_PIPE1, RADIO_PAYLOAD_LENGTH);
   // Flush RX FIFO
   hal_nrf_flush_rx();
   // Power up radio
@@ -64,54 +87,100 @@ void InitPRX()
   CE_HIGH();
 }
 
-void ReceiveData(u8 msTimeout, bool syncMode)
+
+/*
+Wait for receive to establish sync
+arguments:
+  u8 timeout50msTicks - number of ~50ms ticks, 16b counter / 16 MHz / 12x prescaler = 49.2 ms
+                        counter is handled in timer overflow interrupt
+Returns true if sync established
+*/
+bool ReceiveDataSync(u8 timeout50msTicks) 
+{
+  // Set radio as busy
+  radioBusy = true;
+  
+  // Initialize radio as primary receiver
+  InitPRX();
+  
+  // Reset Timer
+  TR0 = 0; // Stop timer
+  TL0 = 0;
+  TH0 = 0;
+  TR0 = 1; // Start timer
+  
+  // Reset radio timer counter (50ms Ticks)
+  radioTimerCounter = 0;
+  
+  // Wait for received data, or timeout
+  while(radioBusy) // XXX eventually it would be nice for better radio states
+  {
+    // Pet watchdog
+    WDSV = 128; // 1 second // XXX
+    WDSV = 0;
+    delay_us(10); // XXX
+    if( radioTimerCounter >= timeout50msTicks ) // timeout condition
+    {
+      PowerDownRadio(); // Turn off radio
+      TR0 = 0; // Stop timer
+      return false;
+    }
+  }
+  
+  // Sync timing is configured in radio receive interrupt
+  
+  PowerDownRadio(); // Turn off radio
+  return true;
+}
+
+
+/*
+Receive data, with timeout
+arguments:
+  u8 timerMsbTimeout - tick =  8b counter / 16 MHz / 12x prescaler = 192us
+                       counter is high byte of 16b counter
+Returns true if sync established
+*/
+void ReceiveData(u8 timerMsbTimeout) 
 {
   u8 now;
-  // get time
+  #ifdef EMULATE_BODY
+  u8 addr[5];
+  u8 i;
+  #endif
+  
+  // Get timer MSB
   now = TH0;
 
+  // Set radio as busy
+  radioBusy = true;
+  
   // Initialize as primary receiver
   InitPRX();
   
-  // Wait for a packet, or time out
-  radioBusy = true;
- 
-  #ifndef LISTEN_FOREVER
-  if(missedPacketCount<MAX_MISSED_PACKETS) // do timeout if less than MAX_MISSED_PACKETS, else listen forever
+  #ifdef EMULATE_BODY
+  hal_nrf_get_address(HAL_NRF_PIPE1, addr);
+  /*PutString("Receiving on PIPE1 address: ");
+  for(i=0; i<5; i++)
   {
-    while(radioBusy)
-    {   
-      if((TH0-now+1)>(5*msTimeout)) 
-      {
-        // we timed out
-        if(!syncMode)
-        {
-          missedPacketCount++;
-          cumMissedPacketCount++; 
-          #if defined(DO_MISSED_PACKET_TEST)
-          PutChar('\t');
-          PutHex(missedPacketCount);
-          #endif
-        }
-        radioBusy = false;
-      }
-    }
-  }else if(missedPacketCount == MAX_MISSED_PACKETS)
-  {
-    TR0 = 0; // turn off timer
-    #if defined(DO_MISSED_PACKET_TEST)
-      PutString("\tL\r\n");
-    #endif
-    while(radioBusy)
-    {
-    }
-    // timer reset in radio interrupt
-      TR0 = 1; // turn timer back on
+    PutHex(addr[i]);
   }
+  PutString("\r\n");*/
   #endif
+
+  // Wait for received data, or timeout
+  while(radioBusy)
+  {   
+    if((TH0-now+1)>(timerMsbTimeout) && timerMsbTimeout !=0)  // timeout condition
+    {
+      gMissedPacketCount++; // increment missed packet counters 
+      cumMissedPacketCount++; 
+      radioBusy = false; // exit loop
+    }
+  }
  
+  // Power down radio
   PowerDownRadio();
-  
 }
 
 
@@ -130,17 +199,15 @@ void InitPTX()
   EA = 1U;
   hal_nrf_set_operation_mode(HAL_NRF_PTX);
   // Set datarate
-  hal_nrf_set_datarate(HAL_NRF_250KBPS);
+  hal_nrf_set_datarate(HAL_NRF_1MBPS);
   // Turn off auto-retransmit
   hal_nrf_set_auto_retr(0, 0);
   // Set power
   hal_nrf_set_output_power(HAL_NRF_0DBM);
+    // Set address
+  hal_nrf_set_address(HAL_NRF_TX, radioStruct.ADDRESS_TX_PTR); // cube to body
   // Set channel
-  hal_nrf_set_rf_channel(COMM_CHANNEL);
-  // Set address (only if acting as transmitter)
-  #ifdef DO_TRANSMITTER_BEHAVIOR
-  hal_nrf_set_address(HAL_NRF_TX, ADDRESS);
-  #endif
+  hal_nrf_set_rf_channel(radioStruct.COMM_CHANNEL);
   // Power up radio
   hal_nrf_set_power_mode(HAL_NRF_PWR_UP);
 }
@@ -150,7 +217,7 @@ void TransmitData()
 {
   InitPTX();
    // Write payload to radio TX FIFO
-  hal_nrf_write_tx_payload_noack(radioPayload, 13U);
+  hal_nrf_write_tx_payload_noack(radioPayload, RADIO_PAYLOAD_LENGTH);
 
   // Toggle radio CE signal to start transmission
   CE_PULSE();
@@ -164,6 +231,7 @@ void TransmitData()
   radioTimerState = radioSleep; 
 }
 
+
 // Radio interrupt
 NRF_ISR()
 {
@@ -173,16 +241,16 @@ NRF_ISR()
   
   // Read and clear IRQ flags from radio
   irq_flags = hal_nrf_get_clear_irq_flags();
-  
+  //gDataReceived = true;  // can't have this with advertising
   switch(irq_flags)
   {
     // Data received
     case ((1<<(uint8_t)HAL_NRF_RX_DR)):
       // Set timer for ~35-offset ms from now
       TR0 = 0; // Stop timer 
-      TL0 = 0xFF - TIMER35MS_L; 
-      TH0 = 0xFF - TIMER35MS_H + WAKEUP_OFFSET;
-      TR0 = 1; // Start timer   
+      TL0 = 0; 
+      TH0 = 0xFF - radioStruct.RADIO_INTERVAL_DELAY + radioStruct.RADIO_WAKEUP_OFFSET;
+      TR0 = 1; // Start timer
       // Read payload
       while(!hal_nrf_rx_fifo_empty())
       {
@@ -190,7 +258,7 @@ NRF_ISR()
       }
       radioBusy = false;
       gDataReceived = true; 
-      missedPacketCount = 0;
+      gMissedPacketCount = 0;
       break;
       
     // Transmission success
@@ -218,14 +286,22 @@ NRF_ISR()
 // Overflow flag auto-resets
 T0_ISR()
 {
-  EA = 0; // disable interrupts
-  radioTimerState = radioWakeup; 
-  // set for 35ms wakeup
-  TR0 = 0; // Stop timer 
-  TL0 = 0xFF - TIMER35MS_L; 
-  TH0 = 0xFF - TIMER35MS_H;;
-  TR0 = 1; // Start timer 
-  EA = 1; // enable interrupts  
+  if(gCubeState == eSync)
+  {
+    radioTimerCounter++;
+  }
+  else
+  {
+    
+    EA = 0; // disable interrupts
+    radioTimerState = radioWakeup; 
+    // set for 35ms wakeup
+    TR0 = 0; // Stop timer 
+    TL0 = 0; 
+    TH0 = 0xFF - radioStruct.RADIO_INTERVAL_DELAY;
+    TR0 = 1; // Start timer 
+    EA = 1; // enable interrupts  
+  }
 }
 
 /*

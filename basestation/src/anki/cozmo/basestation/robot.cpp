@@ -51,6 +51,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include "opencv2/calib3d/calib3d.hpp"
+
 #include <fstream>
 #include <regex>
 #include <dirent.h>
@@ -608,36 +610,41 @@ namespace Anki {
       return headAngSpeed;
     }
 
-    Vision::Camera Robot::GetHistoricalCamera(TimeStamp_t t_request)
+    Vision::Camera Robot::GetHistoricalCamera(TimeStamp_t t_request) const
     {
       RobotPoseStamp p;
       TimeStamp_t t;
       _poseHistory->GetRawPoseAt(t_request, t, p);
-      return GetHistoricalCamera(&p, t);
+      return GetHistoricalCamera(p, t);
     }
     
-    Vision::Camera Robot::GetHistoricalCamera(RobotPoseStamp* p, TimeStamp_t t)
+    Pose3d Robot::GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const
     {
-      Vision::Camera camera(_visionComponent.GetCamera());
-      
       // Compute pose from robot body to camera
       // Start with canonical (untilted) headPose
       Pose3d camPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-p->GetHeadAngle(), Y_AXIS_3D());
+      RotationVector3d Rvec(-histPoseStamp.GetHeadAngle(), Y_AXIS_3D());
       camPose.RotateBy(Rvec);
       
       // Precompose with robot body to neck pose
       camPose.PreComposeWith(_neckPose);
       
       // Set parent pose to be the historical robot pose
-      camPose.SetParent(&(p->GetPose()));
+      camPose.SetParent(&(histPoseStamp.GetPose()));
       
       camPose.SetName("PoseHistoryCamera_" + std::to_string(t));
       
+      return camPose;
+    }
+    
+    Vision::Camera Robot::GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const
+    {
+      Vision::Camera camera(_visionComponent.GetCamera());
+      
       // Update the head camera's pose
-      camera.SetPose(camPose);
+      camera.SetPose(GetHistoricalCameraPose(p, t));
       
       return camera;
     }
@@ -720,9 +727,10 @@ namespace Anki {
       
       // Update the marker's camera to use a pose from pose history, and
       // create a new marker with the updated camera
+      assert(nullptr != p);
       Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
                                     markerOrig.GetImageCorners(),
-                                    GetHistoricalCamera(p, markerOrig.GetTimeStamp()),
+                                    GetHistoricalCamera(*p, markerOrig.GetTimeStamp()),
                                     markerOrig.GetUserHandle());
       
       // Queue the marker for processing by the blockWorld
@@ -1142,24 +1150,32 @@ namespace Anki {
       
     } // SetPose()
     
-    void Robot::SetHeadAngle(const f32& angle)
+    Pose3d Robot::GetCameraPose(f32 atAngle) const
     {
-      if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
-        PRINT_NAMED_WARNING("HeadAngleOOB","angle %f  (TODO: Send correction or just recalibrate?)\n", angle);
-      }
-      
       // Start with canonical (untilted) headPose
       Pose3d newHeadPose(_headCamPose);
       
       // Rotate that by the given angle
-      RotationVector3d Rvec(-_currentHeadAngle, Y_AXIS_3D());
+      RotationVector3d Rvec(-atAngle, Y_AXIS_3D());
       newHeadPose.RotateBy(Rvec);
       newHeadPose.SetName("Camera");
+
+      return newHeadPose;
+    } // GetCameraHeadPose()
+    
+    void Robot::SetHeadAngle(const f32& angle)
+    {
+      if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
+        PRINT_NAMED_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
+                            "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)\n",
+                            angle, RAD_TO_DEG(angle));
+      }
       
-      // Update the head camera's pose
-      _visionComponent.GetCamera().SetPose(newHeadPose);
+      _visionComponent.GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
       
-    } // set_headAngle()
+    } // SetHeadAngle()
+    
+    
 
     void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
     {
@@ -2491,33 +2507,7 @@ namespace Anki {
       _imgProcPeriod = (_imgProcPeriod * (1.f-imgProcrateAvgCoeff) +
                         _visionComponent.GetProcessingPeriod() * imgProcrateAvgCoeff);
       
-      // For now, we need to reassemble a RobotState message to provide the
-      // vision system (because it is just copied from the embedded vision
-      // implementation on the robot). We'll just reassemble that from
-      // pose history, but this should not be necessary forever.
-      // NOTE: only the info found in pose history will be valid in the state message!
-      RobotState robotState;
-      
-      RobotPoseStamp p;
-      TimeStamp_t actualTimestamp;
-      //lastResult = _poseHistory->GetRawPoseAt(image.GetTimestamp(), actualTimestamp, p);
-      lastResult = _poseHistory->ComputePoseAt(image.GetTimestamp(), actualTimestamp, p, true); // TODO: use interpolation??
-      if(lastResult != RESULT_OK) {
-      PRINT_NAMED_ERROR("Robot.ProcessImage.PoseHistoryFail",
-                        "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
-        return lastResult;
-      }
-      
-      robotState.timestamp     = actualTimestamp;
-      robotState.pose_frame_id = p.GetFrameId();
-      robotState.headAngle     = p.GetHeadAngle();
-      robotState.liftAngle     = p.GetLiftAngle();
-      robotState.pose.x        = p.GetPose().GetTranslation().x();
-      robotState.pose.y        = p.GetPose().GetTranslation().y();
-      robotState.pose.z        = p.GetPose().GetTranslation().z();
-      robotState.pose.angle    = p.GetPose().GetRotationAngle<'Z'>().ToFloat();
-      
-      _visionComponent.SetNextImage(image, robotState);
+      _visionComponent.SetNextImage(image, *this);
       
       return lastResult;
     }
