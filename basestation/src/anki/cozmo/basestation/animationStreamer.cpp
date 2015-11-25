@@ -438,6 +438,7 @@ namespace Cozmo {
         SendStartOfAnimation();
       }
       
+      // Because we are updating the face with layers only, don't save face to the robot
       UpdateFace(robot, nullptr, false);
       
       // Send as much as we can of what we just buffered
@@ -717,6 +718,7 @@ namespace Cozmo {
         }
         
       } else {
+        // We do want to store this face to the robot since it's coming from an actual animation
         lastResult = UpdateStream(robot, _streamingAnimation, true);
         _isIdling = false;
         streamUpdated = true;
@@ -749,6 +751,7 @@ namespace Cozmo {
       }
       
       if(_idleAnimation->HasFramesLeft()) {
+        // This is just an idle animation, so we don't want to save the face to the robot
         lastResult = UpdateStream(robot, _idleAnimation, false);
         streamUpdated = true;
       }
