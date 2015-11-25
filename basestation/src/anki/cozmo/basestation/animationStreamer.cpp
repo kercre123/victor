@@ -5,17 +5,13 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
-
-// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
-// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
-// and needing sound.
-#define PLAY_ROBOT_AUDIO_ON_DEVICE 1
 
 namespace Anki {
 namespace Cozmo {
@@ -247,6 +243,27 @@ namespace Cozmo {
     return RESULT_OK;
   } // SendBufferedMessages()
 
+  Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
+  {
+    AnimKeyFrame::AudioSample audioSample;
+    const s32 numBytes = AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
+                                                       &(audioSample.sample[0]));
+    if(numBytes > 0)
+    {
+      // If we didn't get the requested number of bytes, fill the rest of the sample
+      // with zeros
+      if(numBytes < static_cast<s32>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
+        std::fill(audioSample.sample.begin()+numBytes, audioSample.sample.end(), 0);
+      }
+      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
+    } else if(sendSilence) {
+      // No audio sample available, so send silence
+      BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+    }
+       
+    return RESULT_OK;
+  } // UpdateAudio()
+  
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                                         ProceduralFaceParams& faceParams)
@@ -369,7 +386,7 @@ namespace Cozmo {
     return lastResult;
   } // SendEndOfAnimation()
   
-  Result AnimationStreamer::StreamFaceLayers(Robot& robot)
+  Result AnimationStreamer::StreamFaceLayersOrAudio(Robot& robot)
   {
     Result lastResult = RESULT_OK;
     
@@ -393,17 +410,17 @@ namespace Cozmo {
     // Add more stuff to send buffer from face layers
     while(_sendBuffer.empty() && !_faceLayers.empty())
     {
-      // Have to send audio silence to keep the animation "clock" moving...
-      BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+      // If we have face layers to send, we _do_ want BufferAudioToSend to
+      // buffer audio silence keyframes to keep the clock ticking. If not, we
+      // don't need to send audio silence.
+      const bool sendSilence = (_faceLayers.empty() ? false : true);
+      BufferAudioToSend(sendSilence);
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
       _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
-      // Note that start of animation message is also sent _after_ audio keyframe,
-      // to keep things consistent in how the robot's AnimationController expects
-      // to receive things
       if(!_startOfAnimationSent) {
         SendStartOfAnimation();
       }
@@ -478,13 +495,13 @@ namespace Cozmo {
       //                 numBytesToSend);
 #     endif
       
+#     if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Have to always send an audio frame to keep time, whether that's the next
       // audio sample or a silent frame. This increments "streamingTime"
       // NOTE: Audio frame must be first!
       if(robotAudioTrack.HasFramesLeft() &&
          robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
       {
-        
 #       if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
         // Queue up audio frame for playing locally if
         // it's not already in the queued and it wasn't already played.
@@ -493,13 +510,14 @@ namespace Cozmo {
             (_onDeviceRobotAudioKeyFrameQueue.empty() || audioKF != _onDeviceRobotAudioKeyFrameQueue.back())) {
           _onDeviceRobotAudioKeyFrameQueue.push_back(audioKF);
         }
-#       endif
+#       endif // PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
         
         if(!BufferMessageToSend(robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage()))
         {
           // No samples left to send for this keyframe. Move to next keyframe,
           // and for now send silence.
           //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
+          
           robotAudioTrack.MoveToNextKeyFrame();
           BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
         }
@@ -508,6 +526,37 @@ namespace Cozmo {
         //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
         BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
+
+#     else
+      
+      if(robotAudioTrack.HasFramesLeft())
+      {
+        RobotAudioKeyFrame& audioKF = robotAudioTrack.GetCurrentKeyFrame();
+        if(audioKF.IsTimeToPlay(_startTime_ms, _streamingTime_ms)) {
+          // Tell the audio manager to play the sound indicated by this track
+          auto & audioRef = audioKF.GetAudioRef();
+          AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+          
+#         if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
+          // Queue up audio frame for playing locally if
+          // it's not already in the queued and it wasn't already played.
+          if ((&audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
+              (_onDeviceRobotAudioKeyFrameQueue.empty() || &audioKF != _onDeviceRobotAudioKeyFrameQueue.back()))
+          {
+            _onDeviceRobotAudioKeyFrameQueue.push_back(&audioKF);
+          }
+#         endif
+          
+          robotAudioTrack.MoveToNextKeyFrame();
+        }
+      }
+#     endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
+      
+      // Stream a single audio sample from the audio manager (or silence if there isn't one)
+      // (Have to *always* send an audio frame to keep time, whether that's the next
+      // audio sample or a silent frame.)
+      // NOTE: Audio frame must be first!
+      BufferAudioToSend(true);
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
@@ -590,6 +639,7 @@ namespace Cozmo {
       
     } // while(buffering frames)
     
+#   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
     for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
     {
@@ -606,6 +656,7 @@ namespace Cozmo {
       }
     }
 #   endif
+#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
     // Send an end-of-animation keyframe when done
     if(!anim->HasFramesLeft() && _sendBuffer.empty() &&
@@ -616,6 +667,7 @@ namespace Cozmo {
     
     return lastResult;
   } // UpdateStream()
+  
   
   Result AnimationStreamer::Update(Robot& robot)
   {
@@ -688,13 +740,13 @@ namespace Cozmo {
         streamUpdated = true;
       }
       _timeSpentIdling_ms += BS_TIME_STEP;
-      
-    } // if we have idle or streaming animation
+    }
     
     // If we didn't do any streaming above, but we've still got face layers to
-    // stream, do that now
-    if(!streamUpdated && !_faceLayers.empty()) {
-      lastResult = StreamFaceLayers(robot);
+    // stream or there's audio waiting to go out, stream those now
+    if(!streamUpdated && (!_faceLayers.empty() /* TODO: add "|| _audioClient.HasAudio()" like on Jordan's branch*/))
+    {
+      lastResult = StreamFaceLayersOrAudio(robot);
     }
     
     return lastResult;
