@@ -2,9 +2,7 @@
   "Name": "IntroSequence",
   "RequiresConditionRemainsMet": false,
   "Repeatable": true,
-  "Condition": {
-    "$type": "ScriptedSequences.Conditions.RobotConnected, Assembly-CSharp"
-  },
+  "Condition": null,
   "Nodes": [
     {
       "Name": "StartConvo",
@@ -122,7 +120,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "invDemo_P02_GetOffCharger",
+          "AnimationName": "invDemo_P05_CatchFwd",
           "WaitToEnd": true
         }
       ],
