@@ -68,6 +68,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
 Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
+  _interrupted = true;
   return Result::RESULT_OK;
 }
 
