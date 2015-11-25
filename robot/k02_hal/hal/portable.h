@@ -63,9 +63,9 @@ typedef enum {
 // Consistent naming scheme for GPIO, pins, and source variables
 // Set name to the name of the pin, ptx to the GPIO unit (PTA/PTB/etc), and index to the pin number
 #define GPIO_PIN_SOURCE(name, ptx, index) \
-  const u8 SOURCE_##name = (index); \
-  const u32 PIN_##name = 1 << (index); \
-  GPIO_Type* const GPIO_##name = (ptx);
+  static const u8 SOURCE_##name = (index); \
+  static const u32 PIN_##name = 1 << (index); \
+  static GPIO_Type* const GPIO_##name = (ptx);
 
 #ifdef __EDG__
   #pragma diag_suppress 177   // Suppress unused variable warning - since this generates a lot of them

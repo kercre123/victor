@@ -23,7 +23,17 @@ uint32 PumpScreenData(void);
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
 
-#define UNINITALIZED_PHASE (-32768)
+/// Flags to control the DMA mode
+enum {
+  PHASE_FLAGS = -32000, ///< Anything below this value is a flag, not a valid phase value
+  UNINITALIZED_PHASE    = PHASE_FLAGS-1, ///< Haven't achieved sync
+  BOOTLOADER_SYNC_PHASE = PHASE_FLAGS-2, ///< Synchronizing with RTIP bootloader
+  BOOTLOADER_XFER_PHASE = PHASE_FLAGS-3, ///< Bootloader mode
+  PAUSED_PHASE          = PHASE_FLAGS-4, ///< I2SPI communication paused, sending 0xFFFFffff
+  REBOOT_PHASE          = PHASE_FLAGS-5, ///< I2SPI drops paused, sending 0x80018001
+  RECOVERY_PHASE        = PHASE_FLAGS-6, ///< I2SPI drops paused, sending 0x80028002
+  SHUTDOWN_PHASE        = PHASE_FLAGS-7, ///< I2SPI drops paused, sending 0x80048004
+};
 
 uint32_t i2spiTxUnderflowCount;
 uint32_t i2spiTxOverflowCount;
@@ -35,7 +45,9 @@ int32_t  i2spiIntegralDrift;
 enum
 {
   TASK_SIG_I2SPI_RX,
-  TASK_SIG_I2SPI_TX
+  TASK_SIG_I2SPI_TX,
+  TASK_SIG_I2SPI_BL_RX,
+  TASK_SIG_I2SPI_BL_TX,
 };
 
 #define I2SPI_TASK_QUEUE_LEN (DMA_BUF_COUNT * 2)
@@ -58,6 +70,10 @@ static struct sdio_queue* nextOutgoingDesc;
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
 #define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
+/// The last state we've received from the RTIP bootloader regarding it's state
+static int16_t rtipBootloaderState;
+/// The last state we've received from the RTIP updating the Body bootloader state
+static uint32_t bodyBootloaderCode;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -90,6 +106,7 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
+  if (drop->droplet & bootloaderStatus) os_memcpy(&bodyBootloaderCode, drop->payload, 4);
   // XXX do stuff with the rest of the payload
 }
 
@@ -100,52 +117,54 @@ void processDrop(DropToWiFi* drop)
  */
 bool makeDrop(uint8_t* payload, uint8_t length)
 {
-  if (DMA_BUF_SIZE/2 - outgoingPhase < DROP_TO_RTIP_SIZE/2) // Don't have room for the whole drop in this buffer
+  if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
-    if (txFillCount > (DMA_BUF_COUNT-2)) // Leave room for the one the I2S peripheral owns
+    if (txFillCount > (DMA_BUF_COUNT-4))
     {
       i2spiTxOverflowCount++;
+      //os_printf("i2spi tx overflow: %d, %d\r\n", i2spiTxOverflowCount, i2spiTxUnderflowCount);
       return false;
     }
+    else if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
+    {
+      outgoingPhase -= DMA_BUF_SIZE/2;
+      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      uint8_t* txBuf = (uint8_t*)(nextOutgoingDesc->buf_ptr);
+      os_memset(txBuf, 0, DMA_BUF_SIZE);
+    }
+    else // Bridging buffers
+    {
+      uint8_t* txBuf = (uint8_t*)(asDesc(nextOutgoingDesc->next_link_ptr)->buf_ptr);
+      os_memset(txBuf, 0, DMA_BUF_SIZE);
+    }
+    txFillCount++;
   }
-  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+
   DropToRTIP drop;
-  uint32 isocData;
+  //uint32 isocData;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
-  isocData = PumpAudioData();
+  /*isocData = PumpAudioData();
   os_memcpy(&(drop.audioData), &isocData, MAX_AUDIO_BYTES_PER_DROP);
   isocData = PumpScreenData();
   os_memcpy(&drop.screenData, &isocData, MAX_SCREEN_BYTES_PER_DROP);
-  drop.droplet = screenDataValid | audioDataValid;
-  if (length > 0)
-  {
-    os_memcpy(&(drop.payload), payload, length);
-    drop.droplet |= payloadCLAD;
-  }
+  drop.droplet = screenDataValid | audioDataValid;*/
+  drop.payloadLen = length;
+  if (payload != NULL) os_memcpy(&(drop.payload), payload, length);
   // Copy into the DMA buffer
-  if (DMA_BUF_SIZE/2 - outgoingPhase >= DROP_TO_RTIP_SIZE/2) // Whole drop fits here
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here
   {
     halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, DROP_TO_RTIP_SIZE/2);
     outgoingPhase += DROP_SPACING/2;
-    if (outgoingPhase > DMA_BUF_SIZE/2) // Have rolled over into next buffer
-    {
-      txFillCount++;
-      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-      os_memset(txBuf, 0, DMA_BUF_SIZE);
-      outgoingPhase -= DMA_BUF_SIZE/2;
-    }
   }
   else // Split across two buffers
   {
     const int16_t halfWordsWritten = DMA_BUF_SIZE/2 - outgoingPhase;
     halfWordCopy(txBuf + outgoingPhase, (uint16_t*)&drop, halfWordsWritten);
-    txFillCount++;
     nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
     txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    os_memset(txBuf, 0, DMA_BUF_SIZE);
     halfWordCopy(txBuf, ((uint16_t*)&drop) + halfWordsWritten, DROP_TO_RTIP_SIZE/2 - halfWordsWritten);
     outgoingPhase += DROP_SPACING/2 - DMA_BUF_SIZE/2;
   }
@@ -183,11 +202,12 @@ void i2spiTask(os_event_t *event)
             if (unlikely(drift > DRIFT_MARGIN)) 
             {
               i2spiRxOverflowCount++;
-              os_printf("!I2SPI too much drift: %d, RX overflow count: %d\r\n", drift, i2spiRxOverflowCount);
+              os_put_char('!'); os_put_char('T'); os_put_char('M'); os_put_char('D'); os_put_hex(drift, 4);
             }
             if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
             {
               // Going past the end is OKAY as that will be used to increment the buffer
+              os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
               outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
             }
             else // Have a phase, just adjust for drift
@@ -201,7 +221,7 @@ void i2spiTask(os_event_t *event)
           dropPhase++;
           drift++;
         }
-        if (dropPhase < DMA_BUF_SIZE/2) // If we found a header
+        if (likely(dropPhase < DMA_BUF_SIZE/2)) // If we found a header
         {
           const int8 halfWordsToRead = min(DROP_TO_WIFI_SIZE-(dropWrInd*2), DMA_BUF_SIZE - (dropPhase*2))/2;
           halfWordCopy(((uint16_t*)(&drop)) + dropWrInd, buf + dropPhase + dropWrInd, halfWordsToRead);
@@ -214,7 +234,15 @@ void i2spiTask(os_event_t *event)
           }
           else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
-        else break; // Didn't find the next header in this one
+        else 
+        {
+          if (buf[DMA_BUF_SIZE/2] == STATE_IDLE)
+          {
+            outgoingPhase       = BOOTLOADER_XFER_PHASE;
+            rtipBootloaderState = STATE_IDLE;
+          }
+          break;
+        }
       }
       dropPhase -= DMA_BUF_SIZE/2; // Now looking in next buffer
       prepSdioQueue(desc, 0);
@@ -222,7 +250,38 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_TX:
     {
-      if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) { // Durring startup
+      if (unlikely(outgoingPhase < PHASE_FLAGS)) // Durring startup
+      {
+        if (outgoingPhase == UNINITALIZED_PHASE)
+        {
+          uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
+          int w;
+          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
+          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+          }
+      }
+      else // When running
+      {
+        if (txFillCount > 0) txFillCount--; // We just transmitted one 
+        while ((txFillCount < 8) && makeDrop(NULL, 0)) // Fill in drops until we are as far ahead as we want to be
+        {
+          i2spiTxUnderflowCount++; // Keep track of the underflow
+        }
+      }
+      break;
+    }
+    case TASK_SIG_I2SPI_BL_RX:
+    {
+      uint16_t* buf = (uint16_t*)(desc->buf_ptr);
+      rtipBootloaderState = buf[DMA_BUF_SIZE/2 - 1]; // Last half-word in buffer is latest state we know
+      if (rtipBootloaderState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
+      prepSdioQueue(desc, 0);
+      break;
+    }
+    case TASK_SIG_I2SPI_BL_TX:
+    {
+      if (outgoingPhase == BOOTLOADER_SYNC_PHASE)
+      {
         uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
@@ -230,12 +289,15 @@ void i2spiTask(os_event_t *event)
       }
       else // When running
       {
-        if (txFillCount > 0) txFillCount--; // We just transmitted one 
+        if (txFillCount > 0) txFillCount--; // We just transmitted one
         struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
-        while (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
+        if (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
         {
+          int w;
+          uint32_t* txBuf = (uint32_t*)newOut->buf_ptr;
+          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0;
           i2spiTxUnderflowCount++; // Keep track of the underflow
-          makeDrop(NULL, 0);
+          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         }
       }
       break;
@@ -263,18 +325,82 @@ void dmaisr(void* arg) {
   if (slc_intr_status & SLC_TX_EOF_INT_ST) // Receive complete interrupt
   {
     uint32_t eofDesAddr = READ_PERI_REG(SLC_TX_EOF_DES_ADDR);
-    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, eofDesAddr) == false)
+    switch (outgoingPhase)
     {
-      os_put_char('!'); os_put_char('I'); os_put_char('R');
+      case PAUSED_PHASE:
+      case REBOOT_PHASE:
+      case RECOVERY_PHASE:
+      case SHUTDOWN_PHASE:
+      {
+        prepSdioQueue(asDesc(eofDesAddr), 0);
+        break;
+      }
+      case BOOTLOADER_SYNC_PHASE:
+      case BOOTLOADER_XFER_PHASE:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_BL_RX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('F');
+        }
+        break;
+      }
+      default:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_RX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('R');
+        }
+        break;
+      }
     }
   }
   
   if (slc_intr_status & SLC_RX_EOF_INT_ST) // Transmit complete interrupt
   {
-    uint32_t eofDesAddr = READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
-    if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, eofDesAddr) == false)
+    const uint32_t eofDesAddr = READ_PERI_REG(SLC_RX_EOF_DES_ADDR);
+    switch (outgoingPhase)
     {
-      os_put_char('!'); os_put_char('I'); os_put_char('T');
+      case PAUSED_PHASE:
+      case REBOOT_PHASE:
+      case RECOVERY_PHASE:
+      case SHUTDOWN_PHASE:
+      {
+        uint32_t outWord = 0xFFFFffff;
+        switch(outgoingPhase)
+        {
+          case REBOOT_PHASE:
+            outWord = 0x80018001;
+            break;
+          case RECOVERY_PHASE:
+            outWord = 0x80028002;
+            break;
+          case SHUTDOWN_PHASE:
+            outWord = 0x80048004;
+            break;
+        }
+        uint32_t* buf = (uint32_t*)(asDesc(eofDesAddr)->buf_ptr);
+        int w;
+        for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = outWord;
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        break;
+      }
+      case BOOTLOADER_SYNC_PHASE:
+      case BOOTLOADER_XFER_PHASE:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_BL_TX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('G');
+        }
+        break;
+      }
+      default:
+      {
+        if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, eofDesAddr) == false)
+        {
+          os_put_char('!'); os_put_char('I'); os_put_char('T');
+        }
+        break;
+      }
     }
   }
 }
@@ -292,6 +418,8 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   i2spiPhaseErrorCount  = 0;
   i2spiIntegralDrift    = 0;
   txFillCount           = 0;
+  rtipBootloaderState   = STATE_UNKNOWN;
+  bodyBootloaderCode    = STATE_UNKNOWN;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
@@ -412,38 +540,113 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   SET_PERI_REG_MASK(I2SINT_ENA,   I2S_I2S_TX_REMPTY_INT_ENA|I2S_I2S_TX_WFULL_INT_ENA|I2S_I2S_RX_REMPTY_INT_ENA|
   I2S_I2S_RX_WFULL_INT_ENA|I2S_I2S_TX_PUT_DATA_INT_ENA|I2S_I2S_RX_TAKE_DATA_INT_ENA);
 
-  return 0;
-}
-
-void ICACHE_FLASH_ATTR i2spiStart(void)
-{
-  //Start i2s start and receive
+  // Start
   SET_PERI_REG_MASK(I2SCONF,I2S_I2S_TX_START | I2S_I2S_RX_START);
-}
 
-void ICACHE_FLASH_ATTR i2spiStop(void)
-{
-  // Disable interrupts
-  CLEAR_PERI_REG_MASK(SLC_INT_ENA, SLC_TX_EOF_INT_ENA | SLC_RX_EOF_INT_ENA);
-
-  // Stop DMA transmitting
-  SET_PERI_REG_MASK(SLC_TX_LINK, SLC_TXLINK_STOP);
-  // Stop DMA receiving
-  SET_PERI_REG_MASK(SLC_RX_LINK, SLC_RXLINK_STOP);
+  return 0;
 }
 
 bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
 {
-  uint16_t queued = 0;
-  while (queued < msgLen)
+  if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
-    uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-    if (makeDrop(msgData + queued, payloadLen) == false)
-    {
-      os_printf("FATAL: Couldn't queue message to RTIP\r\n");
-      return false;
-    }
-    queued += payloadLen;
+    return false;
   }
-  return true;
+  else
+  {
+    uint16_t queued = 0;
+    while (queued < msgLen)
+    {
+      uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+      if (makeDrop(msgData + queued, payloadLen) == false)
+      {
+        return false;
+      }
+      queued += payloadLen;
+    }
+    return true;
+  }
 }
+
+void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
+{
+  switch(mode)
+  {
+    case I2SPI_NORMAL:
+    {
+      os_printf("I2Spi mode Normal\r\n");
+      if (outgoingPhase == BOOTLOADER_XFER_PHASE)
+      {
+        uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+        txBuf[0] = COMMAND_HEADER;
+        txBuf[1] = COMMAND_DONE;
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+      }
+      outgoingPhase = UNINITALIZED_PHASE;
+      txFillCount = 0;
+      return;
+    }
+    case I2SPI_BOOTLOADER:
+    {
+      os_printf("I2Spi mode bootloader sync\r\n");
+      outgoingPhase = BOOTLOADER_SYNC_PHASE;
+      rtipBootloaderState = STATE_UNKNOWN;
+      return;
+    }
+    case I2SPI_PAUSED:
+    {
+      outgoingPhase = PAUSED_PHASE;
+      os_printf("I2Spi mode paused\r\n");
+      return;
+    }
+    case I2SPI_REBOOT:
+    {
+      outgoingPhase = REBOOT_PHASE;
+      os_printf("I2Spi mode reboot\r\n");
+      return;
+    }
+    case I2SPI_RECOVERY:
+    {
+      outgoingPhase = RECOVERY_PHASE;
+      os_printf("I2Spi mode recovery\r\n");
+      return;
+    }
+    case I2SPI_SHUTDOWN:
+    {
+      outgoingPhase = SHUTDOWN_PHASE;
+      os_printf("I2Spi mode shutdown\r\n");
+      return;
+    }
+  }
+}
+
+int16_t ICACHE_FLASH_ATTR i2spiGetRtipBootloaderState(void)
+{
+  return rtipBootloaderState;
+}
+
+uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
+{
+  if (outgoingPhase < PHASE_FLAGS) return STATE_UNKNOWN;
+  else return bodyBootloaderCode;
+}
+
+void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
+{
+  int wInd = 0;
+  int rInd = 0;
+  uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+  uint16_t* data  = (uint16_t*)(chunk);
+  txBuf[wInd++] = COMMAND_HEADER;
+  txBuf[wInd++] = COMMAND_FLASH;
+  while (rInd < (sizeof(FirmwareBlock)/2))
+  {
+    while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
+    {
+      txBuf[wInd++] = data[rInd++];
+    }
+    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
+    wInd = 0;
+  }
+  }

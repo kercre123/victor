@@ -55,6 +55,10 @@ __Signature     DCB     'C','Z','M','0'
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
+                  
+                EXPORT  __ESPRESSIF_SERIAL_NUMBER
+__ESPRESSIF_SERIAL_NUMBER
+                DCD     0xDEADFACE
 
 ; Vector Table Mapped, aligned to a a 1kbyte boundary
 

@@ -9,6 +9,8 @@ namespace Anki
   {
     namespace HAL
     {
+      void EnterRecoveryMode(void);
+      
       void TransmitDrop(const uint8_t* buf, int buflen, int eof);
       void SPIInitDMA(void);
       void SPIInit(void);

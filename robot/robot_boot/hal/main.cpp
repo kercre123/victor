@@ -36,14 +36,26 @@ extern void PowerInit();
 static inline void StopDevices() {
   // Magic numbers taken from inital boot settings
   SIM_SCGC4 = 0xF0100030;
-  SIM_SCGC5 = 0x00040380;
+  SIM_SCGC5 = 0x00040380 |
+    SIM_SCGC5_PORTA_MASK |
+    SIM_SCGC5_PORTB_MASK |
+    SIM_SCGC5_PORTC_MASK |
+    SIM_SCGC5_PORTD_MASK |
+    SIM_SCGC5_PORTE_MASK;
   SIM_SCGC6 = 0x00000001;
   SIM_SCGC7 = 0x00000002;
 }
 
 bool CheckSig(void) {
   if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
+
+  unsigned int addr = (unsigned int) IMAGE_HEADER->rom_start;
+  unsigned int length = IMAGE_HEADER->rom_length;
   
+  if (addr + length > 0x10000) {
+    return false;
+  }
+
   // Compute signature length
   SHA1_CTX ctx;
   sha1_init(&ctx);
@@ -58,13 +70,19 @@ bool CheckSig(void) {
   return true;
 }
 
+static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
+static const uint32_t recovery_value = 0xCAFEBABE;
+
 // This is the remote entry point recovery mode
-extern "C" void SVC_Handler(void) {
+extern "C" void SVC_Handler(void) { 
+  *recovery_word = 0;
+
   __disable_irq();
   StopDevices();
   GoSlow();
   PowerInit();
   init_data_bss();
+  MicroWait(2000000);
   EnterRecovery();
   NVIC_SystemReset();
 }
@@ -72,8 +90,8 @@ extern "C" void SVC_Handler(void) {
 int main (void) {
   TimerInit();
 
-  if (!CheckSig()) {
-    __asm { SVC 0 };
+  if (*recovery_word == recovery_value || !CheckSig()) {
+    SVC_Handler();
   }
   
   SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;

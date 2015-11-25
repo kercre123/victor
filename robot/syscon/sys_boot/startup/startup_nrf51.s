@@ -144,6 +144,14 @@ Reset_Handler   PROC
 
 ; Dummy Exception Handlers (infinite loops which can be modified)
 
+ResetStack      PROC
+                EXPORT ResetStack
+                LDR r0, =0x20004000
+                MOV sp, r0
+                BX LR
+                ENDP
+                
+
 NMI_Handler     PROC
                 EXPORT  NMI_Handler               [WEAK]
                 B       .

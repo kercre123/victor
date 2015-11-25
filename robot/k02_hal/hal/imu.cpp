@@ -27,3 +27,7 @@ void Anki::Cozmo::HAL::IMUManage(void) {
   I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)&read_imu, sizeof(read_imu), NULL);
   I2CCmd( I2C_DIR_READ |  I2C_SEND_STOP, (uint8_t*)&IMUData, sizeof(IMUData), NULL);
 }
+
+uint8_t Anki::Cozmo::HAL::ReadIMUID(void) {
+  return I2CReadReg(ADDR_IMU, 0);
+}
