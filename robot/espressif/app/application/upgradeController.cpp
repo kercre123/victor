@@ -28,7 +28,9 @@ namespace UpgradeController {
 
 #define DEBUG_OTA
 
-static const uint32* const flashStagedFlag = (const uint32* const)(BOOT_CONFIG_SECTOR*SECTOR_SIZE+0x100+FLASH_MEMORY_MAP);
+#define FLASH_STAGED_FLAG_ADDRESS ((BOOT_CONFIG_SECTOR * SECTOR_SIZE) + 0x100)
+
+static const uint32* const flashStagedFlags = (const uint32* const)(FLASH_STAGED_FLAG_ADDRESS + FLASH_MEMORY_MAP);
 
 static uint8 retries;
 
@@ -312,6 +314,14 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         else // Done writing firmware
         {
           PRINT("RTIP OTA transfer complete\r\n");
+          if (flashStagedFlags[0] != 0xFFFFffff)
+          {
+            uint32 flag = 0;
+            if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS+4, &flag, 4) != SPI_FLASH_RESULT_OK)
+            {
+              os_printf("Couldn't set stage 2 staged upgrade flag\r\n");
+            }
+          }
           i2spiSwitchMode(I2SPI_NORMAL);
           os_free(state);
           return false;
@@ -397,7 +407,7 @@ LOCAL bool TaskOtaBody(uint32 param)
           }
           else
           {
-            if (*flashStagedFlag == 0xFFFFffff)
+            if (flashStagedFlags[0] == 0xFFFFffff)
             {
               i2spiSwitchMode(I2SPI_REBOOT);
             }
@@ -601,8 +611,8 @@ LOCAL bool TaskCheckSig(uint32 param)
       }
       case RobotInterface::OTA_stage:
       {
-        uint32_t flashStagedFlag = state->cmd;
-        if (spi_flash_write(BOOT_CONFIG_SECTOR*SECTOR_SIZE + 0x100, &flashStagedFlag, 4) != SPI_FLASH_RESULT_OK)
+        uint32_t flag = state->cmd;
+        if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS, &flag, 4) != SPI_FLASH_RESULT_OK)
         {
           PRINT("Couldn't write flash staged flag!\r\n");
 #ifdef DEBUG_OTA
@@ -629,15 +639,21 @@ LOCAL bool TaskCheckSig(uint32 param)
   
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
-  if (*flashStagedFlag != 0xFFFFFFFF)
+  if (flashStagedFlags[0] != 0xFFFFFFFF)
   {
-    // Enter bootloader message from otaMessages.clad
-    uint8 msg[2];
-    msg[0] = 0xfe;
-    msg[1] = 1;
-    if (i2spiQueueMessage(msg, 2) == false) return true;
-    os_printf("Flash staged, starting upgrade sequence\r\n");
-    StartWiFiUpgrade(false);
+    if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
+    {
+      // Enter bootloader message from otaMessages.clad
+      uint8 msg[2];
+      msg[0] = 0xfe;
+      msg[1] = 1;
+      if (i2spiQueueMessage(msg, 2) == false) return true;
+      os_printf("Flash staged, starting upgrade sequence\r\n");
+    }
+    else
+    {
+      StartWiFiUpgrade(true);
+    }
   }
   return false;
 }
