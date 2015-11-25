@@ -63,11 +63,11 @@ public abstract class BaseView : MonoBehaviour {
   [SerializeField]
   private bool _CloseDialogOnTapOutside;
 
-  private Sequence _transitionAnimation;
+  private Sequence _TransitionAnimation;
 
   public void OnDestroy() {
-    if (_transitionAnimation != null) {
-      _transitionAnimation.Kill();
+    if (_TransitionAnimation != null) {
+      _TransitionAnimation.Kill();
     }
   }
 
@@ -113,12 +113,12 @@ public abstract class BaseView : MonoBehaviour {
     UIManager.DisableTouchEvents();
 
     // Play some animations
-    if (_transitionAnimation != null) {
-      _transitionAnimation.Kill();
+    if (_TransitionAnimation != null) {
+      _TransitionAnimation.Kill();
     }
-    _transitionAnimation = DOTween.Sequence();
-    ConstructOpenAnimation(_transitionAnimation);
-    _transitionAnimation.AppendCallback(OnOpenAnimationsFinished);
+    _TransitionAnimation = DOTween.Sequence();
+    ConstructOpenAnimation(_TransitionAnimation);
+    _TransitionAnimation.AppendCallback(OnOpenAnimationsFinished);
   }
 
   protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
@@ -135,12 +135,12 @@ public abstract class BaseView : MonoBehaviour {
     UIManager.DisableTouchEvents();
 
     // Play some animations
-    if (_transitionAnimation != null) {
-      _transitionAnimation.Kill();
+    if (_TransitionAnimation != null) {
+      _TransitionAnimation.Kill();
     }
-    _transitionAnimation = DOTween.Sequence();
-    ConstructCloseAnimation(_transitionAnimation);
-    _transitionAnimation.AppendCallback(OnCloseAnimationsFinished);
+    _TransitionAnimation = DOTween.Sequence();
+    ConstructCloseAnimation(_TransitionAnimation);
+    _TransitionAnimation.AppendCallback(OnCloseAnimationsFinished);
 
   }
 

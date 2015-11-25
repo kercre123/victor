@@ -18,6 +18,9 @@ public static class AnimationName {
   public const string kFaceWinkR = "face_wink_R";
 
   public const string kWakeUp = "invDemo_P01_WakeUp";
+  public const string kGetOffCharger = "invDemo_P02_GetOffCharger";
+  public const string kCatchForward = "invDemo_P05_CatchFwd";
+
 
 }
 

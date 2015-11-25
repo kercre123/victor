@@ -58,9 +58,6 @@ namespace DockTraining {
         float distance = Vector3.Distance(_CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
         float relDot = Vector2.Dot((Vector2)(_CurrentRobot.Forward).normalized, (Vector2)((_CurrentTarget.WorldPosition - _CurrentRobot.WorldPosition).normalized));
 
-        Debug.Log(distance);
-        Debug.Log(relDot);
-
         if (distance < 60.0f) {
           _DriveWheelRandMin = 0.0f;
           _DriveWheelRandMax = 20.0f;
