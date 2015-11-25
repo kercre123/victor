@@ -35,6 +35,16 @@ namespace InvestorDemo {
 
     }
 
+    void Update() {
+      ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.CurrentSequence;
+      if (sequence != null) {
+        List<ScriptedSequences.ScriptedSequenceNode> activeNodes = sequence.GetActiveNodes();
+        if (activeNodes.Count > 0) {
+          _GamePanel.SetActionText(activeNodes[0].Name);
+        }
+      }
+    }
+
     private IEnumerator StartSequence() {
       yield return new WaitForEndOfFrame();
       ScriptedSequences.ISimpleAsyncToken token = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("InvestorScene1");
