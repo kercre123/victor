@@ -2,10 +2,14 @@
 using System.Collections;
 using Anki.Cozmo;
 using System;
+using System.ComponentModel;
 
 namespace ScriptedSequences.Actions {
   public class AddToCozmoEmotion : ScriptedSequenceAction {
+
+    [Description("The Emotion that should changed")]
     public EmotionType Emotion;
+    [Description("The amount to change the emotion. The scale for emotions is [-1,1].")]
     public float Delta;
 
     public override ISimpleAsyncToken Act() {
