@@ -23,7 +23,10 @@ namespace ScriptedSequences.Editor.ActionHelpers {
 
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
       Value.AnimationName = _Options[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(_Options, Value.AnimationName)), _Options)];
-      Value.WaitToEnd = EditorGUILayout.Toggle("Wait To End", Value.WaitToEnd);
+      Value.WaitToEnd = EditorGUILayout.Toggle(
+        new GUIContent("Wait To End", 
+                       "If this action should be marked complete when the animation has finished, or immediately."), 
+        Value.WaitToEnd);
     }
   }
 }

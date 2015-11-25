@@ -1,14 +1,18 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.Linq;
+using System.ComponentModel;
 
 namespace ScriptedSequences {
   public class ScriptedSequence : IScriptedSequenceParent {
     public string Name;
 
     public bool RequiresConditionRemainsMet;
+
+    [DefaultValue(true)]
+    public bool ActivateOnConditionMet = true;
 
     public bool Repeatable;
 
@@ -28,8 +32,6 @@ namespace ScriptedSequences {
 
     public void Fail(Exception error) {
       DAS.Error(this, error.ToString());
-
-      IsComplete = true;
 
       if (OnError != null) {
         OnError(error);
@@ -54,7 +56,7 @@ namespace ScriptedSequences {
         if (Repeatable || !IsComplete) {
           IsComplete = false;
           Condition.IsEnabled = true;
-          if (Condition.IsMet) {
+          if (Condition.IsMet && ActivateOnConditionMet) {
             Enable();
           }
         }
@@ -82,7 +84,7 @@ namespace ScriptedSequences {
         Condition.Initialize(this);
         Condition.OnConditionChanged += HandleConditionChanged;
         Condition.IsEnabled = true;
-        canEnable = Condition.IsMet;
+        canEnable = Condition.IsMet && ActivateOnConditionMet;
       }
 
       ScriptedSequenceNode previous = null;
@@ -108,11 +110,11 @@ namespace ScriptedSequences {
 
     private void HandleConditionChanged()
     {
-      if (Condition.IsMet) {
+      if (Condition.IsMet && ActivateOnConditionMet) {
         Enable();
       }
       else if(RequiresConditionRemainsMet) {
-        ResetSequence();
+        Fail(new Exception("Condition Became Unmet"));
       }
     }
 
