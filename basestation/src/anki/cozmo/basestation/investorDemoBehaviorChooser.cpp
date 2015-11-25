@@ -10,6 +10,7 @@
  *
  **/
 
+#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/investorDemoBehaviorChooser.h"
@@ -30,6 +31,7 @@ void InvestorDemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value
 {
   super::AddBehavior( new BehaviorNone(robot, config) );
   super::AddBehavior( new BehaviorPounceOnMotion(robot, config) );
+  super::AddBehavior( new BehaviorFollowMotion(robot, config) );
 }
 
 
