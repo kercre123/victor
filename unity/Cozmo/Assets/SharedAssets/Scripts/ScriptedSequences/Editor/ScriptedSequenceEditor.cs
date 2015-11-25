@@ -528,8 +528,18 @@ public class ScriptedSequenceEditor : EditorWindow {
           if (!CurrentSequence.Nodes.Any(x => x.Final)) {
             var last = CurrentSequence.Nodes.Last();
             last.Final = true;
-            msg = "(!) No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node. (!)\n";
+            msg = "\u26A0 No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node.\n";
           }
+
+          var invalidNodes = CurrentSequence.Nodes.Where(x => x.ExitConditions.Count == 0 && !x.ExitOnActionsComplete);
+
+          if (invalidNodes.Any()) {
+            foreach (var node in invalidNodes) {
+              node.ExitOnActionsComplete = true;
+              msg += "\u26A0 Node '" + node.Name + "' Had 'Exit On Actions Complete' unchecked, but no exit conditions. Fixing that for you.\n";
+            }
+          }
+
           _RecentFiles.Add(CurrentSequenceFile);
 
           File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
@@ -860,7 +870,11 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     DrawConditionOrActionList("Actions", node.Actions, mousePosition, eventType);
 
-    DrawConditionOrActionEntry("Early Exit Condition", node.EarlyExitCondition, c => node.EarlyExitCondition = c, mousePosition, eventType);
+    EditorGUIUtility.labelWidth = 200;
+    node.ExitOnActionsComplete = EditorGUILayout.Toggle("Exit On Actions Complete", node.ExitOnActionsComplete);
+    EditorGUIUtility.labelWidth = 0;
+
+    DrawConditionOrActionList("Exit Conditions", node.ExitConditions, mousePosition, eventType);
 
     EditorGUILayout.EndVertical();
     EditorGUILayout.GetControlRect();
