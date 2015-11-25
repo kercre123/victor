@@ -197,6 +197,10 @@ namespace ScriptedSequences
       if (IsComplete) {
         return false;
       }
+
+      if (ExitConditions.Count == 0) {
+        return false;
+      }
       
       bool lastMet = active;
       for (int i = 0; i < ExitConditions.Count; i++) {
