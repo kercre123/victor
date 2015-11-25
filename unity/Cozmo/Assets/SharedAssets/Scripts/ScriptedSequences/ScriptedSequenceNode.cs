@@ -21,11 +21,14 @@ namespace ScriptedSequences
 
     public bool FailOnError;
 
+    [DefaultValue(true)]
+    public bool ExitOnActionsComplete = true;
+
     public List<ScriptedSequenceCondition> Conditions = new List<ScriptedSequenceCondition>();
 
     public List<ScriptedSequenceAction> Actions = new List<ScriptedSequenceAction>();
 
-    public ScriptedSequenceCondition EarlyExitCondition;
+    public List<ScriptedSequenceCondition> ExitConditions = new List<ScriptedSequenceCondition>();
 
     private ScriptedSequence _Parent;
 
@@ -106,9 +109,9 @@ namespace ScriptedSequences
         previous.OnComplete += HandlePreviousNodeComplete;
       }
 
-      if (EarlyExitCondition != null) {
-        EarlyExitCondition.Initialize(this);
-        EarlyExitCondition.OnConditionChanged += HandleEarlyExitConditionChanged;
+      for (int i = 0; i < ExitConditions.Count; i++) {
+        ExitConditions[i].Initialize(this);
+        ExitConditions[i].OnConditionChanged += HandleExitConditionsChanged;
       }
     }
 
@@ -134,12 +137,10 @@ namespace ScriptedSequences
         _ActToken = null;
       }
 
-      if (EarlyExitCondition != null) {
-        EarlyExitCondition.IsEnabled = false;
-      }
-
       IsComplete = false;
       IsEnabled = false;
+
+      UpdateExitConditions(false);
     }
 
     public ScriptedSequenceNode GetNode(uint id)
@@ -164,12 +165,13 @@ namespace ScriptedSequences
       }
     }
 
-    private void HandleEarlyExitConditionChanged()
+    private void HandleExitConditionsChanged()
     {
-      if (IsActive && EarlyExitCondition.IsMet) {
-        _ActToken.Abort();
-        _ActToken = null;
-        Succeeded = true;
+      if (UpdateExitConditions(IsActive || !ExitOnActionsComplete)) {
+        if (_ActToken != null) {
+          _ActToken.Abort();
+          _ActToken = null;
+        }
         IsComplete = true;
       }
     }
@@ -183,6 +185,22 @@ namespace ScriptedSequences
       bool lastMet = enabled;
       for (int i = 0; i < Conditions.Count; i++) {
         var condition = Conditions[i];
+        condition.IsEnabled = lastMet;
+
+        lastMet = condition.IsMet;
+      }
+      return lastMet;
+    }
+
+    private bool UpdateExitConditions(bool active)
+    { 
+      if (IsComplete) {
+        return false;
+      }
+      
+      bool lastMet = active;
+      for (int i = 0; i < ExitConditions.Count; i++) {
+        var condition = ExitConditions[i];
         condition.IsEnabled = lastMet;
 
         lastMet = condition.IsMet;
@@ -212,20 +230,24 @@ namespace ScriptedSequences
             return;
           }
           Succeeded = true;
-          IsComplete = true;
+          if(ExitOnActionsComplete)
+          {
+            IsComplete = true;
+          }
         });
       } else {
         var token = SimpleAsyncToken.PessimisticReduce(actingTokens);
         _ActToken = token;
         token.Ready(result => {
           Succeeded = !result.Value.Any(x => !x.Success);
-          IsComplete = true;
+          if(ExitOnActionsComplete)
+          {
+            IsComplete = true;
+          }
         });
       }
 
-      if (IsActive && EarlyExitCondition != null) {
-        EarlyExitCondition.IsEnabled = true;
-      }
+      HandleExitConditionsChanged();
     }
   }
 
