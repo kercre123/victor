@@ -25,9 +25,8 @@ namespace ScriptedSequences.Conditions {
       }
     }
 
-    private bool UpdateConditions(bool enabled)
-    {
-      bool anyMet = false;
+    private bool UpdateConditions(bool enabled) {
+      bool anyMet = false; 
       for (int i = 0; i < Conditions.Count; i++) {
         var condition = Conditions[i];
         condition.IsEnabled = enabled;
