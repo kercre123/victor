@@ -29,6 +29,13 @@ namespace Cozmo.HubWorld {
       }
     }
 
+    private void Update() {
+      OnUpdate();
+    }
+
+    protected virtual void OnUpdate() {
+    }
+
     private void HandleButtonClicked() {
       RaiseButtonClicked(_ChallengeId);
     }
