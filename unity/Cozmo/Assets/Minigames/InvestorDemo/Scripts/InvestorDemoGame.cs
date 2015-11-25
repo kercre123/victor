@@ -29,9 +29,16 @@ namespace InvestorDemo {
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
+      // Waiting until the investor demo buttons are registered to ObjectTagRegistry before starting
+      // the sequence.
+      StartCoroutine(StartSequence());
+
+    }
+
+    private IEnumerator StartSequence() {
+      yield return new WaitForEndOfFrame();
       ScriptedSequences.ISimpleAsyncToken token = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("InvestorScene1");
       token.Ready(HandleSequenceComplete);
-
     }
 
     private void HandleSequenceComplete(ScriptedSequences.ISimpleAsyncToken token) {

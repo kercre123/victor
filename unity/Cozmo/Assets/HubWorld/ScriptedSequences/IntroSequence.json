@@ -1,7 +1,7 @@
 {
   "Name": "IntroSequence",
   "RequiresConditionRemainsMet": false,
-  "Repeatable": false,
+  "Repeatable": true,
   "Condition": {
     "$type": "ScriptedSequences.Conditions.RobotConnected, Assembly-CSharp"
   },
@@ -12,13 +12,15 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.StartConversation, Assembly-CSharp",
           "ConversationName": "IntroSequence"
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "AriaUploadLine",
@@ -26,6 +28,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
@@ -34,7 +37,8 @@
           "Speaker": "Aria",
           "IsRight": false
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "Wait",
@@ -42,6 +46,7 @@
       "Sequencial": false,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
@@ -51,7 +56,8 @@
           "AllowSkipAfterDelay": true,
           "SkipDelayInSeconds": 0.0
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "CozmoBleepLine",
@@ -59,6 +65,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
@@ -67,7 +74,8 @@
           "Speaker": "Cozmo",
           "IsRight": true
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "Wait",
@@ -75,6 +83,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
@@ -84,7 +93,8 @@
           "AllowSkipAfterDelay": true,
           "SkipDelayInSeconds": 0.0
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "EndConversation",
@@ -92,12 +102,14 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.EndConversation, Assembly-CSharp"
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "PlayWakeAnimation",
@@ -105,14 +117,16 @@
       "Sequencial": true,
       "Final": true,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "invDemo_P01_WakeUp",
+          "AnimationName": "invDemo_P02_GetOffCharger",
           "WaitToEnd": true
         }
-      ]
+      ],
+      "ExitConditions": []
     }
   ]
 }

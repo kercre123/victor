@@ -69,7 +69,7 @@
       "Name": "Follow Motion Behavior",
       "Id": 4,
       "Sequencial": true,
-      "Final": true,
+      "Final": false,
       "FailOnError": false,
       "ExitOnActionsComplete": false,
       "Conditions": [],
@@ -77,6 +77,26 @@
         {
           "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
           "Behavior": "FollowMotion"
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        }
+      ]
+    },
+    {
+      "Name": "StopBehavior",
+      "Id": 5,
+      "Sequencial": true,
+      "Final": true,
+      "FailOnError": false,
+      "ExitOnActionsComplete": false,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
+          "Behavior": "NoneBehavior"
         }
       ],
       "ExitConditions": [
