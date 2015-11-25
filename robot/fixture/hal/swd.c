@@ -1,5 +1,13 @@
 // Based on Drive Testfix, updated for Cozmo EP1 Testfix
 
+// Helpful references are:
+//  https://www.silabs.com/Support%20Documents/TechnicalDocs/AN0062.pdf
+//  https://github.com/MarkDing/swd_programing_sram/blob/master/README.md
+//  ARM Debug Interface v5
+//  K02 Reference manual covers a few SWD details
+
+// Observations:  K02 needs to have power cycled if it starts replying with FAULT
+
 //#define SWD_DEBUG
 
 #include "hal/console.h"
@@ -311,27 +319,36 @@ int swd_read(char APnDP, int A, volatile unsigned long *data)
 	unsigned long wpr;
 	int response;
 
-	wpr = 0x85 /*0b10000101*/ | (APnDP<<1) | (A<<1); // A is a 32-bit address bits 0,1 are 0.
-	if(count_ones(wpr&0x1E)%2) // odd number of 1s
-		wpr |= 1<<5;	  // set parity bit
-#ifdef SWD_DEBUG
-	SlowPrintf("swd_read(Port=%s, Addr=%d, wpr=%02x) = ",
-			APnDP ? "Access" : "Debug",
-			A, wpr);
-#endif
+  // K02 requires more than one try - often returns WAITs when busy
+  for (int retry = 0; retry < 5; retry++)
+  {
+    wpr = 0x85 /*0b10000101*/ | (APnDP<<1) | (A<<1); // A is a 32-bit address bits 0,1 are 0.
+    if(count_ones(wpr&0x1E)%2) // odd number of 1s
+      wpr |= 1<<5;	  // set parity bit
+  #ifdef SWD_DEBUG
+    SlowPrintf("swd_read(Port=%s, Addr=%d, wpr=%02x) = ",
+        APnDP ? "Access" : "Debug",
+        A, wpr);
+  #endif
 
-	write_bits( 8, &wpr);
-	// now read acknowledgement
-	response = swd_get_target_response();
-	if(response != SWD_ACK)
-	{
-#ifdef SWD_DEBUG
-		SlowPrintf("%s starting read\n", response == SWD_FAULT ? "FAULT" : "WAIT");
-#endif
-		swd_turnaround_host();
-		return response;
-	}
-
+    write_bits( 8, &wpr);
+    // now read acknowledgement
+    response = swd_get_target_response();
+    if(response != SWD_ACK)
+    {
+  #ifdef SWD_DEBUG
+      SlowPrintf("%s starting read\n", response == SWD_FAULT ? "FAULT" : "WAIT");
+  #endif
+      swd_turnaround_host();
+    } else {
+      break;
+    }
+  }
+  
+  // Bail out on failure
+  if (response != SWD_ACK)
+    return response;
+  
 	read_bits( 32, data); // read data
 	read_bits( 1, &wpr); // read parity
 	if(count_ones(wpr)%2) // odd number of 1s
@@ -370,9 +387,10 @@ void swd_chipinit(void)
 {
   unsigned long value;
   swd_read(0, 0, &value);   // Debug port (not AP), register 0 (IDCODE)
-  swd_write(0, 0x4, 0x54000000);  // Power up
-  swd_read(0, 0x4, &value);  // Check powered up
-  SlowPrintf("%x == %x\n", value >> 24, 0xf4);
+  swd_write(0, 0x4, 0x50000000);  // Power up system and debug, and place chip in reset 
+  swd_read(0, 0x4, &value);       // Check powered up
+  SlowPrintf("%x == %x\n", value >> 24, 0xfc);  // 0xfc is the value of the Debug Ctrl/Stat register on K02
+  
   //swd_write(0, 0x8, 0xF0);   // Set AP bank 0xF on AP 0x0 (the memory AP)
   //swd_read(1, 0xC, &value);   // Read AP (not debug port), register 0xFC (IDCODE)
   //swd_read(0, 0xC, &value);   // Read back result from RB registsr
@@ -419,6 +437,42 @@ int swd_write16(int addr, u16 data)
 #endif
   swd_setcsw(1, 2);   // Back to 32-bit mode
   return r;
+}
+
+// Write a CPU register in the ARM core - mostly to set up PC and SP before execution
+void swd_write_cpu_reg(int reg, int value)
+{
+  // Wait for debug module to free up after last write
+  int dhcsr;
+  do {
+    dhcsr = swd_read32((int)&CoreDebug->DHCSR);
+  } while ( !(dhcsr & CoreDebug_DHCSR_S_REGRDY_Msk) );
+  
+  swd_write32((int)&(CoreDebug->DCRDR), value);         // Write value to data reg - DCRDR
+  swd_write32((int)&(CoreDebug->DCRSR), 0x10000 | reg); // Write register to selector reg - DCRSR
+}
+
+// Read a CPU register from the ARM core
+int swd_read_cpu_reg(int reg)
+{
+  // XXX: The code below totally doesn't work
+  return 0;
+/*  
+  // Wait for debug module to free up from last write
+  int dhcsr;
+  do {
+    dhcsr = swd_read32((int)&CoreDebug->DHCSR);
+  } while ( !(dhcsr & CoreDebug_DHCSR_S_REGRDY_Msk) );
+  
+  swd_write32((int)&(CoreDebug->DCRSR), reg);          // Write register to selector reg - DCRSR  
+  
+  // Wait for read to complete
+  do {
+    dhcsr = swd_read32((int)&CoreDebug->DHCSR);
+  } while ( !(dhcsr & CoreDebug_DHCSR_S_REGRDY_Msk) );
+  
+  return swd_read32((int)&(CoreDebug->DCRDR));         // Read value from data reg - DCRDR
+*/
 }
 
 extern u16 g_Body[], g_BodyEnd[];
@@ -478,8 +532,6 @@ void InitSWD(void)
   
   // Power it on
   GPIO_ResetBits(GPIOC, GPIO_Pin_12);
-
-  TestEnableTx();
 }
 
 static u8 GetSerialNumber(u32* serialNumberOut, u8* bitOut)
@@ -522,25 +574,31 @@ static u8 GetSerialNumber(u32* serialNumberOut, u8* bitOut)
   return 0;
 }
 
-void FlashSWD(const uint8_t* shim, const uint8_t* bin, int address, int serialAddress)
+// Load a flash stub into the MCU and execute it
+// Stubs are bins (see binaries.h) with initialization code at the front that manage flashing a block at a time
+void SWDInitStub(u32 loadaddr, const u8* start, const u8* end)
 {
   u32 serialNumber;
   u8 bit;
 
   int good = 0;
-
+  
   // Try to contact via SWD
+  InitSWD();
   swd_enable();
   swd_chipinit();
+  
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);            // Halt core, just in case
+ 
+  SlowPrintf("SWD writing stub..\n");
+  swd_write(1, 0x4, loadaddr);
+  for (int i = 0; i < (end+3-start)/4; i++)
+    swd_write(1, 0xc, ((u32*)(start))[i]);
+  
+  // Start up the program
+  swd_write_cpu_reg(15, loadaddr);      // Point at start address
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0000);  // Run core - AP_DRW=RUN_CMD - DO NOT LEAVE LSB 1!
 
-  swd_write32(0xE000EDF0, 0xA05F0003);            // Halt core, just in case
-  
-  int r = swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
-  swd_write32(0xE000ED0C, 0x05FA0004);            // Reset peripherals 
-  
-  int uid0 = swd_read32(0x1FFFF7AC);
-  
-   
   // Grab (and program) the serial number first in the factory block so we
   // can put it in the bootloader too.
   //if (serialNumber == 0xFFFFffff)
@@ -551,41 +609,9 @@ void FlashSWD(const uint8_t* shim, const uint8_t* bin, int address, int serialAd
   }
   
   good = 1;
-  u8* bootBuffer = GetGlobalBuffer();
-  memcpy(bootBuffer, g_Body, (g_BodyEnd - g_Body) << 1);
 
-  // Personalize bootloader for this car
-
-  // For reasons I don't understand, must flash one page at a time
-  int pagecount = ((g_BodyEnd - g_Body) + 511) >> 9;      
-  for (int pg = 0; pg < pagecount; pg++)
-  {
-    swd_flash_page(0x08000000 + (pg * 1024), (u16*)&bootBuffer[pg * 1024]);
-  }
-  
-  // Verify bootloader part
-  u16* next = (u16*)bootBuffer;
-  u32 size = (u8*)g_BodyEnd - (u8*)g_Body;
-  int addr = 0x08000000;
-  while (next < (u16*)&bootBuffer[size])
-  {
-    int orig = next[0] | (next[1] << 16);
-    int board = swd_read32(addr);
-    next += 2;
-    addr += 4;
-    if (orig != board)
-    {
-      SlowPrintf("Bad Match: %08X: %04X, %04X\r\n", addr, orig, board);
-      good = 0;
-      break;
-    }
-  }
-  
-  swd_write32(0xE000EDF0, 0xA05F0003);    // Halt core, just in case
-
-  
   // On success, reserve this serial number - wait, shouldn't we do this earlier?
-  if (good)
+  if (0 && good)
   {
     u32 location = FLASH_SERIAL_BITS + ((serialNumber & 0x7ffff) >> 3);
     
@@ -597,6 +623,40 @@ void FlashSWD(const uint8_t* shim, const uint8_t* bin, int address, int serialAd
     
     SlowPutString("OK\r\n");
   } else {
-    throw ERROR_HEAD_BOOTLOADER;
+    ; //throw ERROR_HEAD_BOOTLOADER;
   }    
+}
+
+// Send a block to the stub
+void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end)
+{
+  while (start < end)
+  {
+    SlowPrintf("SWD sending block %08x to stub..", flashaddr);
+    
+    swd_write(1, 0x4, tempaddr);
+    for (int i = 0; i < blocklen/4; i++)
+      swd_write(1, 0xc, ((u32*)(start))[i]);
+    swd_write(1, 0xc, flashaddr);
+    
+    SlowPrintf("Waiting on stub..\n");
+    
+    u32 starttime = getMicroCounter();
+    while (swd_read32(tempaddr+blocklen) != -1)
+    {
+      if (getMicroCounter() - starttime > 1000000)
+        throw ERROR_HEAD_NOSTUB;
+    }
+    
+    flashaddr += blocklen;
+    start += blocklen;
+  }
+  
+  SlowPrintf("Success!\n");
+}
+
+void SWDReset(int resetaddr)
+{
+  swd_write32(resetaddr, -2);
+  SlowPrintf("Resetting SWD..\n");
 }

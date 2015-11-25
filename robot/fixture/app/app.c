@@ -18,7 +18,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 2;
+u8 g_fixtureReleaseVersion = 3;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -31,7 +31,6 @@ u32 g_dateCode = 0;
 static TestFunction* m_functions = 0;
 static u8 m_functionCount = 0;
 
-static BOOL IsContactOnFixture(void);
 BOOL ToggleContacts(void);
 static BOOL TryToRunTests(void);
 
@@ -196,7 +195,6 @@ void WaitForDeviceOff(void)
     u32 debounce = 0;
     while (g_isDevicePresent)
     {
-      bool isPresent = false;
       if (!DetectDevice())
       {
         // 500 checks * 1000uS = 500ms delay showing error post removal
@@ -215,6 +213,7 @@ void WaitForDeviceOff(void)
 
 // Try to get a Device sitting on the charge contacts to enter debug mode
 // XXX: This code will need to be reworked for Cozmo
+#if 0
 void TryToEnterDiagnosticMode(void)
 {
   u32 i;
@@ -235,6 +234,13 @@ void TryToEnterDiagnosticMode(void)
   }
   
   throw ERROR_ACK1;
+}
+#endif
+
+static __align(4) u8 m_globalBuffer[1024 * 5];
+u8* GetGlobalBuffer(void)
+{
+  return m_globalBuffer;
 }
 
 // Walk through tests one by one - logging to the PC and to the Device flash
@@ -292,8 +298,6 @@ static void RunTests()
 // This checks for a Device (even asleep) that is in contact with the fixture
 static BOOL IsDevicePresent(void)
 {
-  TestDisable();
-
   g_isDevicePresent = 0;
   
   static u32 s_debounce = 0;
@@ -315,6 +319,7 @@ static BOOL IsDevicePresent(void)
 }
 
 // This function is meant to wake up a Device that is placed on a charger once it is detected
+#if 0
 BOOL ToggleContacts(void)
 {
   TestEnable();
@@ -360,6 +365,7 @@ BOOL ToggleContacts(void)
   
   return sawPowerOn;*/
 }
+#endif
 
 // Wake up the board and try to talk to it
 static BOOL TryToRunTests(void)
@@ -408,7 +414,6 @@ static void MainExecution()
   
   if (IsDevicePresent())
   {
-    TestEnableRx();
     SetTestCounterText(0, m_functionCount);
     
     STM_EVAL_LEDOff(LEDRED);
@@ -554,7 +559,7 @@ int main(void)
 
   // Read the pins with pull-down resistors on GPIOB[14:12]
   g_fixtureType = (FixtureType)((GPIO_READ(GPIOB) >> 12) & 7);
-
+  
   SlowPrintf("fixture: %i\r\n", g_fixtureType);
   
   InitBAT();
@@ -567,9 +572,11 @@ int main(void)
 
   SetFixtureText();
   
+  /** Cozmo doesn't support this yet
   SlowPutString("Initializing Test Port...\r\n");
   InitTestPort(0);
-
+  */
+  
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();
   
