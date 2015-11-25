@@ -201,13 +201,18 @@ namespace Anki {
     class TurnInPlaceAction : public IAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability = 0,
-                        const Radians& angleTolerance = DEG_TO_RAD(5));
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+      
+      // Modify default parameters (must be called before Init() to have an effect)
+      void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
+      void SetTolerance(const Radians& angleTol_rad)     { _angleTolerance = angleTol_rad; }
+      void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
       
     protected:
       
@@ -220,9 +225,11 @@ namespace Anki {
       
       bool    _inPosition = false;
       Radians _targetAngle;
-      Radians _angleTolerance;
-      Radians _variability;
+      Radians _angleTolerance = DEG_TO_RAD(5);
+      Radians _variability = 0;
       bool    _isAbsoluteAngle;
+      f32     _maxSpeed_radPerSec = 50.f;
+      f32     _accel_radPerSec2 = 10.f;
       
     }; // class TurnInPlaceAction
     
@@ -237,6 +244,11 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
+      
+      // Modify default parameters (must be called before Init() to have an effect)
+      // TODO: Use setters for variability and tolerance too
+      void SetMaxSpeed(f32 maxSpeed_radPerSec)   { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetAccel(f32 accel_radPerSec2)        { _accel_radPerSec2 = accel_radPerSec2; }
       
     protected:
       
@@ -254,6 +266,9 @@ namespace Anki {
       std::string _name;
       bool        _inPosition;
       
+      f32         _maxSpeed_radPerSec = 15.f;
+      f32         _accel_radPerSec2   = 20.f;
+
     };  // class MoveHeadToAngleAction
     
     // Set the lift to specified height with a given tolerance. Note that settign
@@ -309,9 +324,7 @@ namespace Anki {
       // If an angle is less than AngleTol, then no movement occurs but the
       // eyes will dart to look at the angle.
       PanAndTiltAction(Radians bodyPan, Radians headTilt,
-                       bool isPanAbsolute, bool isTiltAbsolute,
-                       Radians panAngleTol  = DEG_TO_RAD(5),
-                       Radians tiltAngleTol = DEG_TO_RAD(2));
+                       bool isPanAbsolute, bool isTiltAbsolute);
       
       virtual const std::string& GetName() const override { return _name; }
       
@@ -320,6 +333,14 @@ namespace Anki {
       virtual u8 GetAnimTracksToDisable() const override {
         return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
       }
+      
+      // Modify default parameters (must be called before Init() to have an effect)
+      void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
+      void SetPanTolerance(const Radians& angleTol_rad)  { _panAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
+      void SetTiltTolerance(const Radians& angleTol_rad) { _tiltAngleTol = angleTol_rad.getAbsoluteVal(); }
 
     protected:
       virtual ActionResult Init(Robot& robot) override;
@@ -337,8 +358,12 @@ namespace Anki {
       bool    _isPanAbsolute;
       bool    _isTiltAbsolute;
       
-      Radians _panAngleTol;
-      Radians _tiltAngleTol;
+      Radians _panAngleTol = DEG_TO_RAD(5);
+      f32     _maxPanSpeed_radPerSec = 50.f;
+      f32     _panAccel_radPerSec2 = 10.f;
+      Radians _tiltAngleTol = DEG_TO_RAD(5);
+      f32     _maxTiltSpeed_radPerSec = 15.f;
+      f32     _tiltAccel_radPerSec2 = 20.f;
       
       std::string _name = "PanAndTiltAction";
       

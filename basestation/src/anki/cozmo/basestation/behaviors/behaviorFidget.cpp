@@ -45,7 +45,11 @@ namespace Cozmo {
     
     AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", GetRNG().RandIntInRange(1, 3));}, 1);
     
-    AddFidget("TurnInPlace", [](){return new TurnInPlaceAction(0, false, DEG_TO_RAD(90));}, 2);
+    AddFidget("TurnInPlace", [](){
+      TurnInPlaceAction* action = new TurnInPlaceAction(0, false);
+      action->SetTolerance(DEG_TO_RAD(90));
+      return action;
+    }, 2);
     
     // TODO: Make probabilities non-zero once we have these animations available
     AddFidget("Yawn", [](){return new PlayAnimationAction("Yawn");}, 0);

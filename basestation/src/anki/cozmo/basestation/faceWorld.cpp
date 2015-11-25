@@ -51,11 +51,11 @@ namespace Cozmo {
     static const Radians minHeadAngle(DEG_TO_RAD(1.f));
     static const Radians minBodyAngle(DEG_TO_RAD(1.f));
     
-    _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
-                                          new PanAndTiltAction(panAngle, headAngle,
-                                                               true, true,
-                                                               minBodyAngle, minHeadAngle));
-    
+    PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
+    action->SetPanTolerance(minBodyAngle);
+    action->SetTiltTolerance(minHeadAngle);
+    _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+                                          
     return RESULT_OK;
   } // UpdateFaceTracking()
   

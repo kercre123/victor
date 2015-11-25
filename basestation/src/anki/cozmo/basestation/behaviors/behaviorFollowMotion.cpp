@@ -118,9 +118,14 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
                                                   false, false, 50, DEG_TO_RAD(45));
           
         } else {
-          action = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,
-                                        false, false, _panAndTiltTol, _panAndTiltTol);
+          PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,
+                                                                 false, false);
+          panTiltAction->SetPanTolerance(_panAndTiltTol);
+          panTiltAction->SetTiltTolerance(_panAndTiltTol);
+          action = panTiltAction;
         }
+        
+        ASSERT_NAMED(nullptr != action, "Action pointer should not be null at this point");
         
         _actionRunning = action->GetTag();
         

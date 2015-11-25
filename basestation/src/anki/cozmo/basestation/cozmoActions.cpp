@@ -838,11 +838,8 @@ namespace Anki {
     
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute,
-                                         const Radians& variability, const Radians& angleTolerance)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute)
     : _targetAngle(angle)
-    , _angleTolerance(angleTolerance)
-    , _variability(variability)
     , _isAbsoluteAngle(isAbsolute)
     {
       
@@ -889,9 +886,9 @@ namespace Anki {
       
       if(!_inPosition) {
         RobotInterface::SetBodyAngle setBodyAngle;
-        setBodyAngle.angle_rad = _targetAngle.ToFloat();
-        setBodyAngle.max_speed_rad_per_sec = 50.f;
-        setBodyAngle.accel_rad_per_sec2 = 10.f;
+        setBodyAngle.angle_rad             = _targetAngle.ToFloat();
+        setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
+        setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
         if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
           return ActionResult::FAILURE_RETRY;
         }
@@ -936,15 +933,12 @@ namespace Anki {
 #pragma mark ---- PanAndTiltAction ----
     
     PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
-                                       bool isPanAbsolute, bool isTiltAbsolute,
-                                       Radians panAngleTol, Radians tiltAngleTol)
+                                       bool isPanAbsolute, bool isTiltAbsolute)
     : _compoundAction{}
     , _bodyPanAngle(bodyPan)
     , _headTiltAngle(headTilt)
     , _isPanAbsolute(isPanAbsolute)
     , _isTiltAbsolute(isTiltAbsolute)
-    , _panAngleTol(panAngleTol.getAbsoluteVal())
-    , _tiltAngleTol(tiltAngleTol.getAbsoluteVal())
     {
 
     }
@@ -962,7 +956,9 @@ namespace Anki {
       
       if(_isPanAbsolute || _bodyPanAngle.getAbsoluteVal() > _panAngleTol) {
         // The pan is either absolute or it is relative and above the tolerance
-        _compoundAction.AddAction(new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute, 0, _panAngleTol));
+        TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
+        action->SetTolerance(_panAngleTol);
+        _compoundAction.AddAction(action);
       } else {
         // The pan is relative and below tolerance, so just move the eyes
         const f32 x_mm = std::tan(_bodyPanAngle.ToFloat()) * HEAD_CAM_POSITION[0];
@@ -1015,20 +1011,20 @@ namespace Anki {
 #pragma mark ---- FacePoseAction ----
     
     FacePoseAction::FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
-    : PanAndTiltAction(0,0,false,true,turnAngleTol)
+    : PanAndTiltAction(0,0,false,true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-
+      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
     FacePoseAction::FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle)
-    : PanAndTiltAction(0,0,false,true,turnAngleTol)
+    : PanAndTiltAction(0,0,false,true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-      
+      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
     Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
@@ -1458,9 +1454,11 @@ namespace Anki {
       
       _inPosition = IsHeadInPosition(robot);
       
-      if(!_inPosition) {
-        // TODO: Add ability to specify speed/accel
-        if(robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(), 15, 20) != RESULT_OK) {
+      if(!_inPosition)
+      {
+        if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
+                                                                 _maxSpeed_radPerSec, _accel_radPerSec2))
+        {
           result = ActionResult::FAILURE_ABORT;
         }
       }
