@@ -33,19 +33,20 @@ public:
 
 protected:
 
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
   virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
 
-  float _maxPounceDist;
-  float _minGroundAreaForPounce;
-  float _prePouncePitch;
-
-  float _lastValidPouncePose;
-  int _numValidPouncePoses;
+  float _maxPounceDist = 70.0f;
+  float _minGroundAreaForPounce = 0.01f;
+  float _maxTimeBetweenPoses = 4.0f;
+  
+  float _prePouncePitch = 0.0f;
+  float _lastValidPouncePoseTime = 0.0f;
+  int _numValidPouncePoses = 0;
   
 private:
 
@@ -57,11 +58,11 @@ private:
     Complete,
   };
 
-  State _state;
+  State _state = State::Inactive;
 
-  u32 _waitForActionTag;
+  u32 _waitForActionTag = 0;
 
-  float _stopRelaxingTime;
+  float _stopRelaxingTime = 0.0f;
   
   void CheckPounceResult(Robot& robot);
 

@@ -30,14 +30,6 @@ using namespace ExternalInterface;
 
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _maxPounceDist(70.0f)
-  , _minGroundAreaForPounce(0.01f)
-  , _prePouncePitch(0.0f)
-  , _lastValidPouncePose(0.0f)
-  , _numValidPouncePoses(0)
-  , _state(State::Inactive)
-  , _waitForActionTag(0)
-  , _stopRelaxingTime(0.0f)
 {
   _name = "PounceOnMotion";
 
@@ -65,7 +57,7 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot, double c
   }
   
   // give 0 score if it has been too long
-  if( currentTime_sec - _lastValidPouncePose > 1.5f ) {
+  if( currentTime_sec - _lastValidPouncePoseTime > 1.5f ) {
     return 0.0f;
   }
   
@@ -79,13 +71,8 @@ float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot, double c
 }
 
 
-void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
 {
-  if( _state != State::Inactive ) {
-    // this will be handled by HandleWhileRunning
-    return;
-  }
-  
   switch (event.GetData().GetTag())
   {
     case MessageEngineToGameTag::RobotObservedMotion: {
@@ -105,7 +92,7 @@ void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const 
         if( dist <= _maxPounceDist ) {
           gotPose = true;
           _numValidPouncePoses++;
-          _lastValidPouncePose = currTime;
+          _lastValidPouncePoseTime = currTime;
           PRINT_NAMED_INFO("BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
                            dist, _numValidPouncePoses);
         }
@@ -120,13 +107,11 @@ void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const 
       }
 
       // reset everything if it's been this long since we got a valid pose
-      const float abortTime = 4.0f;
-      
-      if( ! gotPose && currTime >= _lastValidPouncePose + abortTime ) {
+      if( ! gotPose && currTime >= _lastValidPouncePoseTime + _maxTimeBetweenPoses ) {
         if( _numValidPouncePoses > 0 ) {
           PRINT_NAMED_INFO("BehaviorPounceOnMotion.ResetValid",
                            "resetting num valid poses because it has been %f seconds since the last one",
-                           currTime - _lastValidPouncePose);
+                           currTime - _lastValidPouncePoseTime);
           _numValidPouncePoses = 0;
         }
       }        
@@ -147,11 +132,6 @@ void BehaviorPounceOnMotion::AlwaysHandle(const EngineToGameEvent& event, const 
 
 void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
-  if( _state == State::Inactive ) {
-    // this will be handled by AlwaysHandle
-    return;
-  }
-
   switch (event.GetData().GetTag())
   {
     case MessageEngineToGameTag::RobotObservedMotion: {
@@ -191,7 +171,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 
   _state = State::Inactive;
   _numValidPouncePoses = 0;
-  _lastValidPouncePose = 0.0f;
+  _lastValidPouncePoseTime = 0.0f;
 }
 
   
@@ -268,9 +248,6 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot, double cu
 
     case State::Complete: {
       PRINT_NAMED_INFO("BehaviorPounceOnMotion.Complete", "");
-      // move the head and lift back down the the default positions
-      robot.GetActionList().QueueActionNext(0, new MoveHeadToAngleAction(0));
-      robot.GetActionList().QueueActionNext(0, new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::LOW_DOCK ));
       Cleanup(robot);
       return Status::Complete;
     }
