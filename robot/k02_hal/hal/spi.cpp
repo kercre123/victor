@@ -59,9 +59,9 @@ static bool ProcessDrop(void) {
         BodyUpgradeData bud;
         memcpy(&bud, payload_data, sizeof(bud));
 
-        bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
+        //bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
       
-        //SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
+        SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break ;
     }
     

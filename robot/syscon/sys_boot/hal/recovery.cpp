@@ -11,7 +11,6 @@
 
 #include "../../../include/anki/cozmo/robot/rec_protocol.h"
 
-static const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
 static const int MAX_TIMEOUT = 1000000;
 
 static const int target_pin = PIN_TX_HEAD;
@@ -124,6 +123,8 @@ static void WriteWord(commandWord word) {
 
 bool FlashSector(int target, const uint32_t* data)
 {
+  const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
+  
   volatile uint32_t* original = (uint32_t*)target;
 
   // Test for sector erase nessessary
@@ -161,14 +162,13 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
-FirmwareBlock packet;
-int index;
-
 static inline bool FlashBlock() {
+  static FirmwareBlock packet;
+  uint8_t sig[SHA1_BLOCK_SIZE];
   uint8_t* raw = (uint8_t*) &packet;
   
   // Load raw packet into memory
-  for (index = 0; index < sizeof(FirmwareBlock); index++) {
+  for (int index = 0; index < sizeof(FirmwareBlock); index++) {
     raw[index] = ReadByte();
   }
  
@@ -177,7 +177,6 @@ static inline bool FlashBlock() {
   sha1_init(&ctx);
   sha1_update(&ctx, (uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
 
-  uint8_t sig[SHA1_BLOCK_SIZE];
   sha1_final(&ctx, sig);
 
   int writeAdddress = packet.blockAddress;
@@ -193,8 +192,9 @@ static inline bool FlashBlock() {
   }
 
   // Write sectors to flash
+  const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
-    if (!FlashSector(writeAdddress + i,&packet.flashBlock[i])) {
+    if (!FlashSector(writeAdddress + i,&packet.flashBlock[i / sizeof(uint32_t)])) {
       return false;
     }
   }

@@ -183,12 +183,12 @@ ARM Macro Assembler    Page 3
   127 00000002 2103            MOVS             R1, #NRF_POWER_RAMONx_RAMxON_ON
 MODE_Msk
   128 00000004         
-  129 00000004 480B            LDR              R0, =NRF_POWER_RAMON_ADDRESS
+  129 00000004 480C            LDR              R0, =NRF_POWER_RAMON_ADDRESS
   130 00000006 6802            LDR              R2, [R0]
   131 00000008 430A            ORRS             R2, R2, R1
   132 0000000A 6002            STR              R2, [R0]
   133 0000000C         
-  134 0000000C 480A            LDR              R0, =NRF_POWER_RAMONB_ADDRESS
+  134 0000000C 480B            LDR              R0, =NRF_POWER_RAMONB_ADDRESS
   135 0000000E 6802            LDR              R2, [R0]
   136 00000010 430A            ORRS             R2, R2, R1
   137 00000012 6002            STR              R2, [R0]
@@ -199,78 +199,88 @@ MODE_Msk
 ARM Macro Assembler    Page 4 
 
 
-  139 00000014 4809            LDR              R0, =SystemInit
+  139 00000014 480A            LDR              R0, =SystemInit
   140 00000016 4780            BLX              R0
-  141 00000018 4809            LDR              R0, =__main
+  141 00000018 480A            LDR              R0, =__main
   142 0000001A 4700            BX               R0
   143 0000001C                 ENDP
   144 0000001C         
   145 0000001C         ; Dummy Exception Handlers (infinite loops which can be 
                        modified)
   146 0000001C         
-  147 0000001C         NMI_Handler
+  147 0000001C         ResetStack
                                PROC
-  148 0000001C                 EXPORT           NMI_Handler               [WEAK
+  148 0000001C                 EXPORT           ResetStack
+  149 0000001C 480A            LDR              r0, =0x20004000
+  150 0000001E 4685            MOV              sp, r0
+  151 00000020 4770            BX               LR
+  152 00000022                 ENDP
+  153 00000022         
+  154 00000022         
+  155 00000022         NMI_Handler
+                               PROC
+  156 00000022                 EXPORT           NMI_Handler               [WEAK
 ]
-  149 0000001C E7FE            B                .
-  150 0000001E                 ENDP
-  152 0000001E         HardFault_Handler
+  157 00000022 E7FE            B                .
+  158 00000024                 ENDP
+  160 00000024         HardFault_Handler
                                PROC
-  153 0000001E                 EXPORT           HardFault_Handler         [WEAK
+  161 00000024                 EXPORT           HardFault_Handler         [WEAK
 ]
-  154 0000001E E7FE            B                .
-  155 00000020                 ENDP
-  156 00000020         PendSV_Handler
+  162 00000024 E7FE            B                .
+  163 00000026                 ENDP
+  164 00000026         PendSV_Handler
                                PROC
-  157 00000020                 EXPORT           PendSV_Handler            [WEAK
+  165 00000026                 EXPORT           PendSV_Handler            [WEAK
 ]
-  158 00000020 E7FE            B                .
-  159 00000022                 ENDP
-  160 00000022         SysTick_Handler
+  166 00000026 E7FE            B                .
+  167 00000028                 ENDP
+  168 00000028         SysTick_Handler
                                PROC
-  161 00000022                 EXPORT           SysTick_Handler           [WEAK
+  169 00000028                 EXPORT           SysTick_Handler           [WEAK
 ]
-  162 00000022 E7FE            B                .
-  163 00000024                 ENDP
-  164 00000024         
-  165 00000024         Trampoline
+  170 00000028 E7FE            B                .
+  171 0000002A                 ENDP
+  172 0000002A         
+  173 0000002A         Trampoline
                                PROC
-  166 00000024 4907            LDR              R1, =(0x1028) ; Vector table of
+  174 0000002A 4908            LDR              R1, =(0x1028) ; Vector table of
                                                             fset
-  167 00000026 F3EF 8005       MRS              R0, IPSR    ; Get exception num
+  175 0000002C F3EF 8005       MRS              R0, IPSR    ; Get exception num
                                                             ber
-  168 0000002A 0680            LSLS             R0, #26     ; Clear all bits sa
+  176 00000030 0680            LSLS             R0, #26     ; Clear all bits sa
                                                             ve bottom 6
-  169 0000002C 0E00            LSRS             R0, #24     ; Multiply by 4
-  170 0000002E 5808            LDR              R0, [R1,R0] ; Load vector addre
+  177 00000032 0E00            LSRS             R0, #24     ; Multiply by 4
+  178 00000034 5808            LDR              R0, [R1,R0] ; Load vector addre
                                                             ss (base+exception*
                                                             4)
-  171 00000030 4700            BX               R0          ; Jump to it
-  172 00000032                 ENDP
-  173 00000032         
-  174 00000032 00 00           ALIGN
-  175 00000034         
-  176 00000034         
-  177 00000034         ; User Initial Stack & Heap
-  178 00000034         
-  179 00000034                 IF               :DEF:__MICROLIB
-  180 00000034         
-  181 00000034                 EXPORT           __initial_sp
-  182 00000034         
-  183 00000034                 ELSE
+  179 00000036 4700            BX               R0          ; Jump to it
+  180 00000038                 ENDP
+  181 00000038         
+  182 00000038                 ALIGN
 
 
 
 ARM Macro Assembler    Page 5 
 
 
-  197                          ENDIF
-  198 00000034         
-  199 00000034                 END
+  183 00000038         
+  184 00000038         
+  185 00000038         ; User Initial Stack & Heap
+  186 00000038         
+  187 00000038                 IF               :DEF:__MICROLIB
+  188 00000038         
+  189 00000038                 EXPORT           __initial_sp
+  190 00000038         
+  191 00000038                 ELSE
+  205                          ENDIF
+  206 00000038         
+  207 00000038                 END
               40000524 
               40000554 
               00000000 
               00000000 
+              20004000 
               00001028 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M0 --apcs=interw
 ork --depend=.\build\startup_nrf51.d -o.\build\startup_nrf51.o -IC:\Users\aster
@@ -308,7 +318,7 @@ Symbol: __initial_sp
       At line 42 in file startup\startup_nrf51.s
    Uses
       At line 57 in file startup\startup_nrf51.s
-      At line 181 in file startup\startup_nrf51.s
+      At line 189 in file startup\startup_nrf51.s
 
 3 symbols
 
@@ -358,33 +368,41 @@ Symbol: .text
    Uses
       None
 Comment: .text unused
-HardFault_Handler 0000001E
+HardFault_Handler 00000024
 
 Symbol: HardFault_Handler
    Definitions
-      At line 152 in file startup\startup_nrf51.s
+      At line 160 in file startup\startup_nrf51.s
    Uses
       At line 60 in file startup\startup_nrf51.s
-      At line 153 in file startup\startup_nrf51.s
+      At line 161 in file startup\startup_nrf51.s
 
-NMI_Handler 0000001C
+NMI_Handler 00000022
 
 Symbol: NMI_Handler
    Definitions
-      At line 147 in file startup\startup_nrf51.s
+      At line 155 in file startup\startup_nrf51.s
    Uses
       At line 59 in file startup\startup_nrf51.s
-      At line 148 in file startup\startup_nrf51.s
+      At line 156 in file startup\startup_nrf51.s
 
-PendSV_Handler 00000020
+PendSV_Handler 00000026
 
 Symbol: PendSV_Handler
    Definitions
-      At line 156 in file startup\startup_nrf51.s
+      At line 164 in file startup\startup_nrf51.s
    Uses
       At line 71 in file startup\startup_nrf51.s
-      At line 157 in file startup\startup_nrf51.s
+      At line 165 in file startup\startup_nrf51.s
 
+ResetStack 0000001C
+
+Symbol: ResetStack
+   Definitions
+      At line 147 in file startup\startup_nrf51.s
+   Uses
+      At line 148 in file startup\startup_nrf51.s
+Comment: ResetStack used once
 Reset_Handler 00000000
 
 Symbol: Reset_Handler
@@ -394,27 +412,27 @@ Symbol: Reset_Handler
       At line 58 in file startup\startup_nrf51.s
       At line 120 in file startup\startup_nrf51.s
 
-SysTick_Handler 00000022
+SysTick_Handler 00000028
 
 Symbol: SysTick_Handler
    Definitions
-      At line 160 in file startup\startup_nrf51.s
+      At line 168 in file startup\startup_nrf51.s
    Uses
       At line 72 in file startup\startup_nrf51.s
-      At line 161 in file startup\startup_nrf51.s
-
-Trampoline 00000024
-
-Symbol: Trampoline
-   Definitions
-      At line 165 in file startup\startup_nrf51.s
-   Uses
 
 
 
 ARM Macro Assembler    Page 2 Alphabetic symbol ordering
 Relocatable symbols
 
+      At line 169 in file startup\startup_nrf51.s
+
+Trampoline 0000002A
+
+Symbol: Trampoline
+   Definitions
+      At line 173 in file startup\startup_nrf51.s
+   Uses
       At line 75 in file startup\startup_nrf51.s
       At line 76 in file startup\startup_nrf51.s
       At line 77 in file startup\startup_nrf51.s
@@ -441,7 +459,7 @@ Relocatable symbols
       At line 99 in file startup\startup_nrf51.s
       At line 100 in file startup\startup_nrf51.s
 
-7 symbols
+8 symbols
 
 
 
@@ -520,4 +538,4 @@ Symbol: __main
       At line 141 in file startup\startup_nrf51.s
 Comment: __main used once
 3 symbols
-359 symbols in table
+360 symbols in table
