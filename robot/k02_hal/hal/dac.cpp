@@ -12,7 +12,7 @@
 void Anki::Cozmo::HAL::DACInit(void) {
   #ifdef EP1_HEADBOARD
   SOURCE_SETUP(GPIO_AUDIO_STANDBY, SOURCE_AUDIO_STANDBY, SourceGPIO);
-  GPIO_SET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+  GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
   GPIO_OUT(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
   #endif
 
@@ -27,7 +27,9 @@ void Anki::Cozmo::HAL::DACTone(void) {
     k[i] = 0x800 + 0x7FF * sinf(i * 2.0f * 3.14159f / 220);
   }
 
-  for(int i = 0; i < 80; i++) {
+  GPIO_SET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+
+  for(int i = 0; i < 160; i++) {
     for(int i = 0; i < 220; i++) {
       unsigned short g = k[i];
       DAC0_DAT0L = g;
@@ -36,4 +38,6 @@ void Anki::Cozmo::HAL::DACTone(void) {
       Anki::Cozmo::HAL::MicroWait(1);
     }
   }
+
+  GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
 }
