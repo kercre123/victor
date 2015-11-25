@@ -18,7 +18,9 @@ namespace Cozmo.HubWorld {
 
     public virtual void Initialize(ChallengeData challengeData) {
     
-      _ChallengeId = challengeData.ChallengeID;
+      if (challengeData != null) {
+        _ChallengeId = challengeData.ChallengeID;
+      }
       _ButtonScript.onClick.AddListener(HandleButtonClicked);
 
       // Allow for buttons that only show an image and no text
