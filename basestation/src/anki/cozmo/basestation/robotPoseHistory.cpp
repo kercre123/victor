@@ -538,7 +538,7 @@ namespace Anki {
       
       return RESULT_OK;
     }
-    
+
     Result RobotPoseHistory::GetComputedPoseAt(const TimeStamp_t t_request,
                                                const RobotPoseStamp ** p,
                                                HistPoseKey* key) const
@@ -572,27 +572,7 @@ namespace Anki {
                                                RobotPoseStamp ** p,
                                                HistPoseKey* key)
     {
-      PoseMapIter_t it = computedPoses_.find(t_request);
-      if (it != computedPoses_.end()) {
-        *p = &(it->second);
-        
-        // Get key for the computed pose
-        if (key){
-          KeyByTimestampMapIter_t kIt = keyByTsMap_.find(it->first);
-          if (kIt == keyByTsMap_.end()) {
-            PRINT_NAMED_WARNING("RobotPoseHistory.GetComputedPoseAt.KeyNotFound","");
-            return RESULT_FAIL;
-          }
-          *key = kIt->second;
-        }
-        
-        return RESULT_OK;
-      }
-      
-      // TODO: Compute the pose if it doesn't exist already?
-      // ...
-      
-      return RESULT_FAIL;
+      return GetComputedPoseAt(t_request, const_cast<const RobotPoseStamp **>(p), key);
     }
     
     Result RobotPoseHistory::GetLatestVisionOnlyPose(TimeStamp_t& t, RobotPoseStamp& p) const
