@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using System.ComponentModel;
 
 namespace ScriptedSequences.Editor {
   // Base class which has should have a generic argument of either
@@ -25,6 +26,23 @@ namespace ScriptedSequences.Editor {
     protected Action _OnDestroy;
 
     public event Action OnDestroy { add { _OnDestroy += value; } remove { _OnDestroy -= value; } }
+
+    private GUIContent _Label;
+
+    public GUIContent Label {
+      get {
+        if (_Label == null) {
+          var description = ValueBase.GetType().GetCustomAttributes(typeof(DescriptionAttribute), true)
+            .Cast<DescriptionAttribute>()
+            .Select(x => x.Description)
+            .FirstOrDefault() ?? string.Empty;
+          var name = ValueBase.GetType().Name.ToHumanFriendly();
+          _Label = new GUIContent(name, description);
+        }
+        return _Label;
+      }
+    }
+
 
     public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, List<T> list) {
       ValueBase = condition;
@@ -245,14 +263,18 @@ namespace ScriptedSequences.Editor {
           }
         }
       }
+
+
+
+
       // if this condition/action is expandable, draw a foldout. Otherwise just draw a label
       if (_Expandable) {
-        _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.FoldoutStyle);
+        _Expanded = EditorGUI.Foldout(rect, _Expanded, Label, ScriptedSequenceEditor.FoldoutStyle);
       }
       else {
         rect.x += (EditorGUI.indentLevel + 1) * 15;
         rect.width -= (EditorGUI.indentLevel + 1) * 15;
-        GUI.Label(rect, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.LabelStyle);
+        GUI.Label(rect, Label, ScriptedSequenceEditor.LabelStyle);
       }
 
       GUI.color = lastColor;
@@ -277,21 +299,28 @@ namespace ScriptedSequences.Editor {
       for (int i = 0; i < fields.Length; i++) {
         var field = fields[i];
 
+        var description = field.GetCustomAttributes(typeof(DescriptionAttribute), true)
+                               .Cast<DescriptionAttribute>()
+                               .Select(x => x.Description)
+                               .FirstOrDefault() ?? string.Empty;
+
+        var label = new GUIContent(field.Name.ToHumanFriendly(), description);
+
         if (field.FieldType == typeof(int)) {
-          field.SetValue(Value, EditorGUILayout.IntField(field.Name.ToHumanFriendly(), (int)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.IntField(label, (int)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(float)) {
-          field.SetValue(Value, EditorGUILayout.FloatField(field.Name.ToHumanFriendly(), (float)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.FloatField(label, (float)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(bool)) {
-          field.SetValue(Value, EditorGUILayout.Toggle(field.Name.ToHumanFriendly(), (bool)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.Toggle(label, (bool)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(string)) {
           string oldVal = (string)field.GetValue(Value) ?? string.Empty;
-          field.SetValue(Value, EditorGUILayout.TextField(field.Name.ToHumanFriendly(), oldVal));
+          field.SetValue(Value, EditorGUILayout.TextField(label, oldVal));
         }
         else if (typeof(Enum).IsAssignableFrom(field.FieldType)) {
-          field.SetValue(Value, EditorGUILayout.EnumPopup(field.Name.ToHumanFriendly(), (Enum)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.EnumPopup(label, (Enum)field.GetValue(Value)));
         }
       }
     }

@@ -21,7 +21,8 @@ namespace ScriptedSequences.Editor.ConditionHelpers {
     public OrConditionHelper(OrCondition condition, ScriptedSequenceEditor editor, Action<ScriptedSequenceCondition> replaceAction) : base(condition, editor, replaceAction) {}
 
     protected override void DrawControls(Vector2 mousePosition, EventType eventType) {
-      _Editor.DrawConditionOrActionList("Or Conditions", Value.Conditions, mousePosition, eventType);
+      _Editor.DrawConditionOrActionList(new GUIContent("Or Conditions", "Any condition must be met. Will not evaluate later conditions if " +
+        "earlier conditions are met (short circuiting)"), Value.Conditions, mousePosition, eventType);
     }
   }
 }
