@@ -20,6 +20,13 @@ namespace ScriptedSequences.Actions {
     public override ISimpleAsyncToken Act() {
       SimpleAsyncToken token = new SimpleAsyncToken();
 
+      token.OnAbort += () => { 
+        if(BlockInput)
+        {
+          UIManager.Instance.HideTouchCatcher();
+          token.Succeed();
+        }
+      };
       ScriptedSequenceManager.Instance.BootstrapCoroutine(WaitForTime(token));
 
       return token;
