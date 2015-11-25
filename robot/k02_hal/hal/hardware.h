@@ -1,7 +1,7 @@
 #ifndef __HARDWARE_H
 #define __HARDWARE_H
 
-//#define EP1_HEADBOARD
+#define EP1_HEADBOARD
 
 #ifdef EP1_HEADBOARD
   #define CAMERA_DATA_GPIO GPIOC_PDIR

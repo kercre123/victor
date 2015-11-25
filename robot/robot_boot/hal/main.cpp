@@ -48,7 +48,14 @@ static inline void StopDevices() {
 
 bool CheckSig(void) {
   if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
+
+  unsigned int addr = (unsigned int) IMAGE_HEADER->rom_start;
+  unsigned int length = IMAGE_HEADER->rom_length;
   
+  if (addr + length > 0x10000) {
+    return false;
+  }
+
   // Compute signature length
   SHA1_CTX ctx;
   sha1_init(&ctx);

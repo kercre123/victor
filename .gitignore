@@ -225,3 +225,5 @@ robot/generated/clad
 resources/config/faciometric
 resources/config/basestation/vision/faciometric
 generated/cladCsharp/clad
+
+JLinkLog.txt

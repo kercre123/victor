@@ -38,9 +38,9 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {
+        TransmitDrop(buf, buflen, eof);
         I2CEnable();
         UartTransmit();
-        TransmitDrop(buf, buflen, eof);
       }
     }
   }
@@ -54,7 +54,7 @@ extern "C" const int __ESPRESSIF_SERIAL_NUMBER;
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+
   // Power up all ports
   SIM_SCGC5 |=
     SIM_SCGC5_PORTA_MASK |
@@ -69,7 +69,7 @@ int main (void)
   DACInit();
 
   I2CInit();
-  
+
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i) {
     Anki::Cozmo::HAL::MicroWait(1000000);

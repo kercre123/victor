@@ -69,7 +69,7 @@ extern "C" void SVC_Handler(void) {
   NVIC_SystemReset();
 }
 
-int main (void) {  
+int main (void) {
   TimerInit();
 
   if (!CheckSig()) {

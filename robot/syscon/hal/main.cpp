@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
-static const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
+static const u32 MAX_FAILED_TRANSFER_COUNT = 18000; // 1.5m for auto shutdown (if not on charger)
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -72,8 +72,8 @@ int main(void)
       if(++failedTransferCount > MAX_FAILED_TRANSFER_COUNT)
       {
         #ifndef RADIO_TIMING_TEST
-        Battery::powerOff();
-        return -1;
+        //Battery::powerOff();
+        //return -1;
         #endif
       }
     } else {

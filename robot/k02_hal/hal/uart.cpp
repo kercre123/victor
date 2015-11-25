@@ -37,7 +37,7 @@ static bool enter_recovery;
 inline void transmit_mode(TRANSFER_MODE mode);
 
 // Recovery mode data FIFO
-static uint8_t recovery_fifo[32];
+static uint8_t recovery_fifo[64];
 static int rec_count = 0;
 static int rec_first = 0;
 static int rec_last = 0;
@@ -170,7 +170,8 @@ void Anki::Cozmo::HAL::UartTransmit(void) {
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
         txRxBuffer[txRxIndex] = UART0_D;
-
+        uint8_t temp = txRxBuffer[txRxIndex];
+        
         // Words are big endian
         const uint16_t RECOVERY_HEADER = (uint16_t)((COMMAND_HEADER << 8) | (COMMAND_HEADER >> 8));
 

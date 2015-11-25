@@ -23,7 +23,9 @@ static union {
 
 transmissionWord spi_rx_buff[RX_SIZE];
 
-static void ProcessDrop(void) {
+static int totalDrops = 0;
+
+static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   
   // Process drop receive
@@ -36,6 +38,8 @@ static void ProcessDrop(void) {
 
     DropToRTIP* drop = (DropToRTIP*)target;
     uint8_t *payload_data = (uint8_t*) drop->payload;
+    
+    totalDrops++;
     
     switch (*(payload_data++)) {
       case DROP_EnterBootloader:
@@ -55,12 +59,16 @@ static void ProcessDrop(void) {
         BodyUpgradeData bud;
         memcpy(&bud, payload_data, sizeof(bud));
 
-        SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
+        bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
+      
+        //SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break ;
     }
     
-    return ;
+    return true;
   }
+  
+  return false;
 }
 
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
@@ -84,6 +92,9 @@ void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {
 
   static int eoftime = 0;
   drop_tx.droplet = JPEG_LENGTH(buflen) | ((eoftime++) & 63 ? 0 : jpegEOF) | bootloaderStatus;
+
+  SPI0_MCR |= SPI_MCR_CLR_RXF_MASK;
+  DMA_ERQ |= DMA_ERQ_ERQ2_MASK | DMA_ERQ_ERQ3_MASK;
 }
 
 void Anki::Cozmo::HAL::EnterRecoveryMode(void) {
@@ -100,7 +111,42 @@ void DMA2_IRQHandler(void) {
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
-  ProcessDrop();
+  static bool allowReset = true;
+  static int droppedDrops = 0;
+  
+  // Don't check for silence, we had a drop
+  if (ProcessDrop()) {
+    if (allowReset) {
+      droppedDrops = 0;
+      allowReset = false;
+    }
+    
+    return ;
+  } else {
+    droppedDrops ++;
+  }
+
+  // Check for silence in the 
+  static const int MaximumSilence = 32;
+  static transmissionWord lastWord = 0;
+  static int SilentDrops = 0;
+
+  if (lastWord != spi_rx_buff[0]) {
+    lastWord = spi_rx_buff[0];
+    SilentDrops = 0;
+  } else if (++SilentDrops == MaximumSilence) {
+    switch (lastWord) {
+      case 0x8001:
+        NVIC_SystemReset();
+        break ;
+      case 0x8002:
+        EnterRecoveryMode();
+        break ;
+      case 0x8004:
+        __disable_irq();
+        break ;
+    }
+  }
 }
 
 extern "C"

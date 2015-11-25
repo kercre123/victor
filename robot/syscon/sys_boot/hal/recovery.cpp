@@ -14,12 +14,14 @@
 static const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
 static const int MAX_TIMEOUT = 1000000;
 
-static int target_pin = PIN_TX_HEAD;
-static bool UartWritting = false;
+static const int target_pin = PIN_TX_HEAD;
+static bool UartWritting;
 
 void setTransmit(bool tx);
 
 void UARTInit(void) {
+  bool UartWritting = false;
+
   // Power on the peripheral
   NRF_UART0->POWER = 1;
 
@@ -39,7 +41,7 @@ void UARTInit(void) {
 }
 
 void toggleTargetPin(void) {
-  target_pin = (target_pin == PIN_TX_HEAD) ? PIN_TX_VEXT : PIN_TX_HEAD;
+  //target_pin = (target_pin == PIN_TX_HEAD) ? PIN_TX_VEXT : PIN_TX_HEAD;
 }
 
 void setTransmit(bool tx) {
@@ -82,7 +84,7 @@ static commandWord ReadWord(void) {
   commandWord word = 0;
   
   for (int i = 0; i < sizeof(commandWord); i++) {
-    word = (word << 8) | ReadByte();
+    word = (ReadByte() << 8) | (word >> 8);
   }
 
   return word;
@@ -103,7 +105,7 @@ static bool WaitWord(commandWord target) {
 
     // We received a word
     NRF_UART0->EVENTS_RXDRDY = 0;
-    word = (word << 8) | NRF_UART0->RXD;
+    word = (NRF_UART0->RXD << 8) | (word >> 8);
   }
 
   return word == target;
@@ -159,16 +161,15 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
+FirmwareBlock packet;
+int index;
 
 static inline bool FlashBlock() {
-  static union {
-    FirmwareBlock packet;    
-    uint8_t raw[sizeof(FirmwareBlock)];
-  };
-
+  uint8_t* raw = (uint8_t*) &packet;
+  
   // Load raw packet into memory
-  for (int i = 0; i < sizeof(FirmwareBlock); i++) {
-    raw[i] = ReadByte();
+  for (index = 0; index < sizeof(FirmwareBlock); index++) {
+    raw[index] = ReadByte();
   }
  
   // Check the SHA-1 of the packet to verify that transmission actually worked

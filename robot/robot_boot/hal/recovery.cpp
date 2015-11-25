@@ -151,6 +151,8 @@ static inline bool FlashBlock() {
     raw[i] = WaitForWord();
   }
 
+  MicroWait(5000);
+  
   // Check the SHA-1 of the packet to verify that transmission actually worked
   SHA1_CTX ctx;
   sha1_init(&ctx);

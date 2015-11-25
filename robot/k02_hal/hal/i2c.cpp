@@ -110,7 +110,7 @@ namespace Anki
         if (_fifo_count >= MAX_QUEUE) {
           return false;
         }
-        
+
         I2CDisable();
 
         I2C_Queue *active = &i2c_queue[_fifo_start++];
