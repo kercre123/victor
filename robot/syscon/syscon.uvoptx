@@ -150,22 +150,22 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>NVIC</ItemText>
+          <ItemText>g_dataToHead</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>g_dataToHead.VExt/ 65536.0</ItemText>
+          <ItemText>g_dataToHead.cliffLevel</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>g_dataToHead.VExt</ItemText>
+          <ItemText>raw</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>raw</ItemText>
+          <ItemText>off_charger</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
