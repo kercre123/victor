@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
+using System.Linq;
 
 namespace ScriptedSequences {
   public class ScriptedSequence : IScriptedSequenceParent {
@@ -123,6 +124,16 @@ namespace ScriptedSequences {
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].TryEnable();
       }
+    }
+
+    public List<ScriptedSequenceNode> GetActiveNodes()
+    {
+      return Nodes.Where(x => x.IsActive).ToList();
+    }
+
+    public List<ScriptedSequenceNode> GetWaitingNodes()
+    {
+      return Nodes.Where(x => x.IsEnabled && !x.IsComplete && !x.IsActive).ToList();
     }
   }
 }
