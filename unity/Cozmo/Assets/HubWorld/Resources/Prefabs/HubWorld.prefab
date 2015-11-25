@@ -41,6 +41,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _HubWorldViewPrefab: {fileID: 11410890, guid: e77c4434332fe4d579f550fc60cc6c63,
     type: 2}
+  _ChallengeDetailsPrefab: {fileID: 11471404, guid: 44bcdb006051c4819a919a0acb07d57e,
+    type: 2}
   _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -67,6 +69,11 @@ Prefab:
       propertyPath: _HubWorldViewPrefab
       value: 
       objectReference: {fileID: 11410890, guid: e77c4434332fe4d579f550fc60cc6c63,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _ChallengeDetailsPrefab
+      value: 
+      objectReference: {fileID: 11471404, guid: 44bcdb006051c4819a919a0acb07d57e,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

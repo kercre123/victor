@@ -26,6 +26,7 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 473076}
+  - 114: {fileID: 11427274}
   m_Layer: 0
   m_Name: HubWorldCamera
   m_TagString: Untagged
@@ -66,8 +67,8 @@ Camera:
   m_GameObject: {fileID: 110708}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: .192156866, g: .301960796, b: .474509805, a: .0196078438}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: .0235294141, g: .121568635, b: .192156881, a: .0196078438}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -99,6 +100,18 @@ Behaviour:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 110708}
   m_Enabled: 1
+--- !u!114 &11427274
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 197174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 375cb72bb9a3d46f4aa76a3a8192fd39, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _WorldCamera: {fileID: 2059894}
 --- !u!124 &12446872
 Behaviour:
   m_ObjectHideFlags: 1

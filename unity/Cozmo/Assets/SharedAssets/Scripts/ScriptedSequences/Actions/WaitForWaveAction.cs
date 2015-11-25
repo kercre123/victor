@@ -10,7 +10,14 @@ namespace ScriptedSequences.Actions {
     public override ISimpleAsyncToken Act() {
       SimpleAsyncToken token = new SimpleAsyncToken();
       _Token = token;
-      RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
+      if (RobotEngineManager.Instance.CurrentRobot == null) {
+        token.Fail(new System.Exception("Current Robot Is Null"));
+      }
+      else {
+        RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+        RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
+      }
+
       return token;
     }
 

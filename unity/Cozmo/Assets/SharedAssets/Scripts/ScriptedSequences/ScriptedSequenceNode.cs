@@ -64,7 +64,7 @@ namespace ScriptedSequences
 
     private IAsyncToken _ActToken;
     [JsonIgnore]
-    public bool IsActive { get { return _ActToken != null && !_ActToken.IsReady; } }
+    public bool IsActive { get { return _ActToken != null && !IsComplete; } }
 
     private bool _IsEnabled;
 
@@ -167,7 +167,7 @@ namespace ScriptedSequences
 
     private void HandleExitConditionsChanged()
     {
-      if (UpdateExitConditions(IsActive || !ExitOnActionsComplete)) {
+      if (UpdateExitConditions(IsActive)) {
         if (_ActToken != null) {
           _ActToken.Abort();
           _ActToken = null;
@@ -195,6 +195,10 @@ namespace ScriptedSequences
     private bool UpdateExitConditions(bool active)
     { 
       if (IsComplete) {
+        return false;
+      }
+
+      if (ExitConditions.Count == 0) {
         return false;
       }
       

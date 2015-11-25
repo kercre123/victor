@@ -24,6 +24,9 @@
     "button.quit" : {
         "translation" : "Quit"
     },
+    "button.startChallenge" : {
+        "translation" : "Start Challenge"
+    },
     "badge.new" : {
         "translation" : "NEW!"
     },

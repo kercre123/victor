@@ -60,9 +60,6 @@ namespace PatternPlay {
       RemoveBadgesIfSeen();
     }
 
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-    }
-
     private void RemoveBadgesIfSeen() {
       foreach (PatternCollectionBankCard card in _MemoryBankCards) {
         card.RemoveBadgeIfSeen();
