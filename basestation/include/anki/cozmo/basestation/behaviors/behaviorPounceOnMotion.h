@@ -42,6 +42,7 @@ protected:
 
   float _maxPounceDist;
   float _minGroundAreaForPounce;
+  float _prePouncePitch;
 
   float _lastValidPouncePose;
   int _numValidPouncePoses;
