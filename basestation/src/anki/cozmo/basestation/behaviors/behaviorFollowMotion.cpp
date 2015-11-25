@@ -115,7 +115,7 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
           motionProfile.speed_mmps *= _moveForwardSpeedIncrease; // Drive forward a little faster than normal
           
           action = new DriveToPoseAction(newPose, motionProfile,
-                                                  false, false, 50, DEG_TO_RAD(45));
+                                         false, false, 50, DEG_TO_RAD(45));
           
         } else {
           PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,

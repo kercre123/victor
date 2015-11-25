@@ -857,13 +857,6 @@ namespace Anki {
       // _current_ pose, taking into account the current driveCenter offset
       Radians heading = 0;
       if (!_isAbsoluteAngle) {
-        if(_targetAngle.getAbsoluteVal() < _angleTolerance) {
-          // A relative angle has been commanded and it's less than the tolerance
-          // so we are already done
-          _inPosition = true;
-          return ActionResult::SUCCESS;
-        }
-        
         heading = robot.GetPose().GetRotationAngle<'Z'>();
       }
       
@@ -884,7 +877,15 @@ namespace Anki {
       Radians currentAngle;
       _inPosition = IsBodyInPosition(robot, currentAngle);
       
-      if(!_inPosition) {
+      if(_inPosition) {
+        // Already "in position" according to the turn tolerance, so just move the
+        // eyes
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        const Radians angleDiff = _targetAngle - currentAngle;
+        const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / SCREEN_SIZE[0]);
+        robot.ShiftEyes(xPixShift, 0, 66); // TODO: How to set the duration?
+      } else {
         RobotInterface::SetBodyAngle setBodyAngle;
         setBodyAngle.angle_rad             = _targetAngle.ToFloat();
         setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
@@ -951,34 +952,12 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
-      // Note: assuming screen is about the same x distance from the neck joint as the head cam
-      f32 xPixShift = 0.f, yPixShift = 0.f;
+      TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
+      action->SetTolerance(_panAngleTol);
+      _compoundAction.AddAction(action);
       
-      if(_isPanAbsolute || _bodyPanAngle.getAbsoluteVal() > _panAngleTol) {
-        // The pan is either absolute or it is relative and above the tolerance
-        TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
-        action->SetTolerance(_panAngleTol);
-        _compoundAction.AddAction(action);
-      } else {
-        // The pan is relative and below tolerance, so just move the eyes
-        const f32 x_mm = std::tan(_bodyPanAngle.ToFloat()) * HEAD_CAM_POSITION[0];
-        xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / SCREEN_SIZE[0]);
-      }
-      
-      if(_isTiltAbsolute || _headTiltAngle.getAbsoluteVal() > _tiltAngleTol) {
-        // The tilt is either absolute or it is relative and above the tolerance
-        const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
-        _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol));
-      } else {
-        // The tilt is relative and below tolerance, so just move the eyes
-        const f32 y_mm = std::tan(_headTiltAngle.ToFloat()) * HEAD_CAM_POSITION[0];
-        yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
-      }
-      
-      if(xPixShift != 0.f || yPixShift != 0.f) {
-        // TODO: How to set the duration of the shift?
-        robot.ShiftEyes(xPixShift, yPixShift, 66);
-      }
+      const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
+      _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol));
       
       // Put the angles in the name for debugging
       _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
@@ -1454,8 +1433,15 @@ namespace Anki {
       
       _inPosition = IsHeadInPosition(robot);
       
-      if(!_inPosition)
-      {
+      if(_inPosition) {
+        // If we are already "in position" according to the tolerance, just move the
+        // eyes
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        Radians angleDiff = _headAngle - robot.GetHeadAngle();
+        const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+        const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
+        robot.ShiftEyes(0, yPixShift, 66); // TODO: How to set the duration of the eye shift?
+      } else {
         if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
                                                                  _maxSpeed_radPerSec, _accel_radPerSec2))
         {

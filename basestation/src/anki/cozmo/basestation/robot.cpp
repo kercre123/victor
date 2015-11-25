@@ -1396,6 +1396,8 @@ namespace Anki {
     
     void Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms)
     {
+      PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
+      
       ProceduralFace procFace;
       procFace.GetParams().SetFacePosition({xPix, yPix});
       
