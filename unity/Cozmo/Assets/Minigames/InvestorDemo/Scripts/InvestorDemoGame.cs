@@ -24,16 +24,18 @@ namespace InvestorDemo {
       CreateDefaultQuitButton();
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
-      _GamePanel.OnNextButtonPressed += HandleNextActionFromButton;
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
+      ScriptedSequences.ISimpleAsyncToken token = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("InvestorScene1");
+      token.Ready(HandleSequenceComplete);
+
     }
 
-    private void HandleNextActionFromButton() {
-
+    private void HandleSequenceComplete(ScriptedSequences.ISimpleAsyncToken token) {
+      RaiseMiniGameWin();
     }
 
     public override void CleanUp() {
