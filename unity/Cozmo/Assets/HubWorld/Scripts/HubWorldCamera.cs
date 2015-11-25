@@ -14,6 +14,8 @@ public class HubWorldCamera : MonoBehaviour {
   [SerializeField]
   private Camera _WorldCamera;
 
+  private Vector3 _DefaultLocalPosition;
+
   public Camera WorldCamera {
     get { return _WorldCamera; }
     private set { _WorldCamera = value; }
@@ -21,17 +23,21 @@ public class HubWorldCamera : MonoBehaviour {
 
   private void Start() {
     _HubWorldCameraInstance = this;
+    _DefaultLocalPosition = _WorldCamera.transform.localPosition;
   }
 
   public Tweener CenterCameraOnTarget(Vector3 targetWorldPos) {
-    return CenterCameraOnTarget(targetWorldPos, new Vector3(0.5f, 0.5f, 0));
+    return CenterCameraOnTarget(targetWorldPos, new Vector3(0.5f, 0.5f, 400));
   }
 
-  public Tweener CenterCameraOnTarget(Vector3 targetWorldPos, Vector3 cameraCenterViewportPos) {
-    return null;
+  public Tweener CenterCameraOnTarget(Vector3 focusTargetWorldPos, Vector3 cameraFocusViewportPos) {
+    Vector3 cameraFocusWorldPos = _WorldCamera.ViewportToWorldPoint(cameraFocusViewportPos);
+    Vector3 distanceToMove = focusTargetWorldPos - cameraFocusWorldPos;
+    Vector3 targetWorldPosition = _WorldCamera.transform.position + distanceToMove;
+    return _WorldCamera.transform.DOMove(targetWorldPosition, 0.5f).SetEase(Ease.OutQuad);
   }
 
   public Tweener ReturnCameraToDefault() {
-    return null;
+    return _WorldCamera.transform.DOLocalMove(_DefaultLocalPosition, 0.5f).SetEase(Ease.OutQuad);
   }
 }

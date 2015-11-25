@@ -77,8 +77,11 @@ namespace Cozmo.HubWorld {
 
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       // Show some details about the challenge before starting it
-      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab) as ChallengeDetailsDialog;
+      // We need to initialize the dialog first before opening the view, so don't use UIManager's OpenView method.
+      GameObject dialogObject = UIManager.CreateUIElement(_ChallengeDetailsPrefab.gameObject);
+      _ChallengeDetailsDialogInstance = dialogObject.GetComponent<ChallengeDetailsDialog>();
       _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challengeClicked].data, buttonTransform);
+      _ChallengeDetailsDialogInstance.OpenView();
 
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;

@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using Anki.UI;
 using System.Collections;
+using DG.Tweening;
 
 public class ChallengeDetailsDialog : BaseView {
 
@@ -10,10 +11,13 @@ public class ChallengeDetailsDialog : BaseView {
   public event ChallengeDetailsClickedHandler ChallengeStarted;
 
   [SerializeField]
-  public AnkiTextLabel _TitleTextLabel;
+  private AnkiTextLabel _TitleTextLabel;
 
   [SerializeField]
-  public Button _StartChallengeButton;
+  private Button _StartChallengeButton;
+
+  [SerializeField]
+  private Vector3 _CenteredIconViewportPos;
 
   private string _ChallengeId;
   private Transform _ChallengeButtonTransform;
@@ -25,6 +29,8 @@ public class ChallengeDetailsDialog : BaseView {
     _ChallengeId = challengeData.ChallengeID;
 
     // TODO: Have a horizontal scroll rect. 
+
+
   }
 
   private void HandleStartButtonClicked() {
@@ -38,11 +44,21 @@ public class ChallengeDetailsDialog : BaseView {
   }
 
   protected override void ConstructOpenAnimation(DG.Tweening.Sequence openAnimation) {
-    // TODO: Play camera animation
+    // Play camera animation
+    if (_ChallengeButtonTransform == null) {
+      Debug.LogError("Button is null!");
+    }
+    DG.Tweening.Tweener cameraTween = HubWorldCamera.Instance.CenterCameraOnTarget(
+                                        _ChallengeButtonTransform.position, 
+                                        _CenteredIconViewportPos);
+    openAnimation.Append(cameraTween);
+      
     // TODO: Slide the dialog out and back
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
-    // TODO Reset the camera
+    // Reset the camera
+    DG.Tweening.Tweener cameraTween = HubWorldCamera.Instance.ReturnCameraToDefault();
+    closeAnimation.Append(cameraTween);
   }
 }

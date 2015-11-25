@@ -258,6 +258,7 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 1
   _TitleTextLabel: {fileID: 11421726}
   _StartChallengeButton: {fileID: 11414750}
+  _CenteredIconViewportPos: {x: .200000003, y: .5, z: 500}
 --- !u!222 &22252068
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -381,6 +382,18 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _CloseDialogOnTapOutside
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CenteredIconViewportPos.z
+      value: 500
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CenteredIconViewportPos.x
+      value: .200000003
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CenteredIconViewportPos.y
+      value: .5
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
