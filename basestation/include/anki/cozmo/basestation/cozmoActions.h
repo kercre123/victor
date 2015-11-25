@@ -294,10 +294,53 @@ namespace Anki {
       
     }; // class MoveLiftToHeightAction
     
+    class PanAndTiltAction : public IAction
+    {
+    public:
+      // Rotate the body according to bodyPan angle and tilt the head according
+      // to headTilt angle. Angles are considered relative to current robot pose
+      // if isAbsolute==false.
+      // If an angle is less than AngleTol, then no movement occurs but the
+      // eyes will dart to look at the angle.
+      PanAndTiltAction(Radians bodyPan, Radians headTilt,
+                       bool isPanAbsolute, bool isTiltAbsolute,
+                       Radians panAngleTol=0, Radians tiltAngleTol=0);
+      
+      virtual const std::string& GetName() const override { return _name; }
+      
+      virtual RobotActionType GetType() const override { return RobotActionType::PAN_AND_TILT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override {
+        return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
+      }
+
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
+      
+      void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
+      void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
+      
+    private:
+      CompoundActionParallel _compoundAction;
+      
+      Radians _bodyPanAngle;
+      Radians _headTiltAngle;
+      bool    _isPanAbsolute;
+      bool    _isTiltAbsolute;
+      
+      Radians _panAngleTol;
+      Radians _tiltAngleTol;
+      
+      std::string _name = "PanAndTiltAction";
+      
+    }; // class PanAndTiltAction
+    
     
     // Tilt head and rotate body to face the given pose.
     // Use angles specified at construction to control the body rotation.
-    class FacePoseAction : public IAction
+    class FacePoseAction : public PanAndTiltAction
     {
     public:
       // Note that the rotation in formation in pose will be ignored
@@ -306,27 +349,19 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
-      
     protected:
       virtual ActionResult Init(Robot& robot) override;
-      virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       
       FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
-      CompoundActionParallel _compoundAction;
-      
     private:
-      Pose3d _poseWrtRobot;
-      bool   _isPoseSet;
+      Pose3d    _poseWrtRobot;
+      bool      _isPoseSet;
+      Radians   _maxTurnAngle;
       
-      Radians              _turnAngleTol;
-      Radians              _maxTurnAngle;
     }; // class FacePoseAction
-    
     
     
     // Verify that an object exists by facing tilting the head to face its

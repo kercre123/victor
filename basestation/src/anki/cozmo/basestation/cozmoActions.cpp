@@ -899,32 +899,88 @@ namespace Anki {
       return result;
     } // TurnInPlaceAction::CheckIfDone()
 
+#pragma mark ---- PanAndTiltAction ----
+    
+    PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
+                                       bool isPanAbsolute, bool isTiltAbsolute,
+                                       Radians panAngleTol, Radians tiltAngleTol)
+    : _compoundAction{}
+    , _bodyPanAngle(bodyPan)
+    , _headTiltAngle(headTilt)
+    , _isPanAbsolute(isPanAbsolute)
+    , _isTiltAbsolute(isTiltAbsolute)
+    , _panAngleTol(panAngleTol.getAbsoluteVal())
+    , _tiltAngleTol(tiltAngleTol.getAbsoluteVal())
+    {
+
+    }
+    
+    void PanAndTiltAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
+    }
+    
+    ActionResult PanAndTiltAction::Init(Robot &robot)
+    {
+      if(_bodyPanAngle.getAbsoluteVal() > _panAngleTol) {
+        _compoundAction.AddAction(new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute));
+      } else {
+        // TODO: Queue a left/right eye dart somehow
+      }
+      
+      if(_headTiltAngle.getAbsoluteVal() > _tiltAngleTol) {
+        const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
+        _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle));
+      } else {
+        // TODO: Queue an up/down eye dart somehow
+      }
+      
+      // Put the angles in the name for debugging
+      _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
+               "AndTilt" + std::to_string(std::round(_headTiltAngle.getDegrees())) +
+               "Action");
+      
+      // Prevent the compound action from signaling completion
+      _compoundAction.SetIsPartOfCompoundAction(true);
+      
+      // Go ahead and do the first Update for the compound action so we don't
+      // "waste" the first CheckIfDone call doing so. Proceed so long as this
+      // first update doesn't _fail_
+      ActionResult compoundResult = _compoundAction.Update(robot);
+      if(ActionResult::SUCCESS == compoundResult ||
+         ActionResult::RUNNING == compoundResult)
+      {
+        return ActionResult::SUCCESS;
+      } else {
+        return compoundResult;
+      }
+      
+    } // PanAndTiltAction::Init()
+    
+    
+    ActionResult PanAndTiltAction::CheckIfDone(Robot& robot)
+    {
+      return _compoundAction.Update(robot);
+    }
     
 #pragma mark ---- FacePoseAction ----
     
     FacePoseAction::FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
-    : _compoundAction{}
+    : PanAndTiltAction(0,0,false,true,turnAngleTol)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
-    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
 
     }
     
     FacePoseAction::FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle)
-    : _compoundAction{}
+    : PanAndTiltAction(0,0,false,true,turnAngleTol)
     , _isPoseSet(false)
-    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
       
-    }
-    
-    void FacePoseAction::Reset()
-    {
-      IAction::Reset();
-      _compoundAction.ClearActions();
     }
     
     Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
@@ -967,14 +1023,8 @@ namespace Anki {
         PRINT_NAMED_INFO("FacePoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg", turnAngle.getDegrees());
         
-        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
-          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
-            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
-          } else {
-            PRINT_NAMED_INFO("FacePoseAction.Init.NoTurnNeeded",
-                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.",
-                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
-          }
+        if(turnAngle.getAbsoluteVal() <= _maxTurnAngle) {
+          SetBodyPanAngle(turnAngle);
         } else {
           PRINT_NAMED_ERROR("FacePoseAction.Init.RequiredTurnTooLarge",
                             "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
@@ -991,30 +1041,12 @@ namespace Anki {
       const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
       Radians headAngle = GetHeadAngle(heightDiff);
       
-      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      SetHeadTiltAngle(headAngle);
       
-      // Prevent the compound action from signaling completion
-      _compoundAction.SetIsPartOfCompoundAction(true);
-      
-      // Go ahead and do the first Update for the compound action so we don't
-      // "waste" the first CheckIfDone call doing so. Proceed so long as this
-      // first update doesn't _fail_
-      ActionResult compoundResult = _compoundAction.Update(robot);
-      if(ActionResult::SUCCESS == compoundResult ||
-         ActionResult::RUNNING == compoundResult)
-      {
-        return ActionResult::SUCCESS;
-      } else {
-        return compoundResult;
-      }
+      // Proceed with base class's Init()
+      return PanAndTiltAction::Init(robot);
       
     } // FacePoseAction::Init()
-    
-    
-    ActionResult FacePoseAction::CheckIfDone(Robot& robot)
-    {
-      return _compoundAction.Update(robot);
-    }
     
     const std::string& FacePoseAction::GetName() const
     {
