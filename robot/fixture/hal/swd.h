@@ -1,13 +1,16 @@
 #ifndef SWD_H
 #define SWD_H
 
-#include <stdint.h>
+#include "hal/portable.h"
 
-// Reinitialize SWD hardware
-void InitSWD(void);
+// Reboot the MCU, then load and execute a flash stub
+// Stubs are bins (see binaries.h) with initialization code at the front that manage flashing a block at a time
+void SWDInitStub(u32 loadaddr, const u8* start, const u8* end);
 
-// Using the shim found in binaries.h, flash the code found in binaries.h, to the given start address in flash
-// If serialAddress is non-zero, a unique 32-bit serial number will be placed at that address during the flash
-void FlashSWD(const uint8_t* shim, const uint8_t* bin, int address, int serialAddress);
+// Send a file to the stub, one block at a time
+void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end);
+
+// Ask the stub to reset
+void SWDReset(int resetaddr);
 
 #endif

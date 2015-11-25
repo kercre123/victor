@@ -95,7 +95,7 @@ void InitEspressif(void) {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
 
-  // Pull PB7 (CS#) low.  This MUST happen before 
+  // Pull PB7 (CS#) low.  This MUST happen before ProgramEspressif()
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_ResetBits(GPIOB, GPIO_Pin_7);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
@@ -265,7 +265,7 @@ bool ESPSync(void) {
   uint8_t read[256];
 
   // Attempt 16 times to get sync
-  for (int i = 0; i < 0x40; i++) {
+  for (int i = 0; i < 0x10; i++) {
     ESPCommand(ESP_SYNC, SYNC_DATA, sizeof(SYNC_DATA), 0);
     int size = ESPRead(read, sizeof(read), MAX_TIMEOUT);
     
@@ -377,23 +377,22 @@ static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
   return true;
 }
 
-ESP_PROGRAM_ERROR ProgramEspressif(void) {
+void ProgramEspressif(void)
+{
   SlowPrintf("ESP Syncronizing...");
 
   // Note:  This is sensitive to delay - we must start sync immediately after power up
   EnableBAT();
   if (!ESPSync()) { 
     SlowPrintf("Sync Failed.\n");
-    return ESP_ERROR_NO_COMMUNICATION;
+    throw ERROR_HEAD_RADIO_SYNC;
   }
   
   for(const FlashLoadLocation* rom = &ESPRESSIF_ROMS[0]; rom->length; rom++) {
     SlowPrintf("Load ROM %s\n", rom->name);
 
     if (!ESPFlashLoad(rom->addr, rom->length, rom->data)) {
-      return ESP_ERROR_BLOCK_FAILED;
+      throw ERROR_HEAD_RADIO_ERASE;
     }
   }
-  
-  return ESP_ERROR_NONE;
 }

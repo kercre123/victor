@@ -57,9 +57,9 @@ typedef enum
 
 // Head errors
 #define ERROR_HEAD_BOOTLOADER       500   // Can't load bootloader into K02
-#define ERROR_HEAD_APP              501   // Can't load app into K02
+#define ERROR_HEAD_NOSTUB           501   // Can't execute stub on K02
 
-#define ERROR_HEAD_RADIO_BOOT       510   // Can't sync with radio
+#define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
 #define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash
 #define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
 
