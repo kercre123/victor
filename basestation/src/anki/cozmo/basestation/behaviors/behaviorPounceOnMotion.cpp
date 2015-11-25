@@ -30,7 +30,7 @@ using namespace ExternalInterface;
 
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _maxPounceDist(80.0f)
+  , _maxPounceDist(70.0f)
   , _minGroundAreaForPounce(0.01f)
   , _prePouncePitch(0.0f)
   , _lastValidPouncePose(0.0f)
