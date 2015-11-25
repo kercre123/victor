@@ -24,6 +24,12 @@ namespace Anki {
       
       /// Command upgrade initiation
       void Trigger(RobotInterface::OTAUpgrade& msg);
+      
+      /// Run an RTIP upgrade as requested by the RTIP
+      void StartRTIPUpgrade(void);
+      
+      /// Run a body upgrade as requested by the body
+      void StartBodyUpgrade(void);
     }
   }
 }

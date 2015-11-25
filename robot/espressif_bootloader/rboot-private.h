@@ -29,6 +29,9 @@ typedef unsigned char uint8;
 // buffer size, must be at least sizeof(rom_header_new)
 #define BUFFER_SIZE 0x100
 
+// Small read offset for header at beginning of image
+#define IMAGE_READ_OFFSET (4)
+
 // esp8266 built in rom functions
 extern uint32 SPIRead(uint32 addr, void *outptr, uint32 len);
 extern uint32 SPIEraseSector(int);

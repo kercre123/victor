@@ -45,6 +45,7 @@ enum DROP_COMMANDS {
 enum EnterBootloaderWhich {
   BOOTLOAD_RTIP,
   BOOTLOAD_BODY,
+  BOOTLOAD_WIFI,
 };
 
 // WIFI -> RTIP

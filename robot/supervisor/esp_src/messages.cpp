@@ -88,6 +88,11 @@ namespace Anki {
                 AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
                 break;
               }
+              case RobotInterface::EngineToRobot::Tag_enterBootloader:
+              {
+                RTIP::SendMessage(msg);
+                break;
+              }
               default:
               {
                 PRINT("Received message not expected here tag=%02x\n", msg.tag);

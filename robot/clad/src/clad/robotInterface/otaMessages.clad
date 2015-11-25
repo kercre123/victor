@@ -5,6 +5,13 @@ namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
 
+  enum uint_32 OTAFlashRegions
+  {
+    OTA_WiFi_flash_address = 0x100000,
+    OTA_RTIP_flash_address = 0x180000,
+    OTA_body_flash_address = 0x190000,
+  }
+
   /// Erases flash
   message EraseFlash
   {
@@ -31,18 +38,12 @@ namespace RobotInterface {
   /// Trigger a firmware upgrade from flash
   message OTAUpgrade
   {
-    uint_32    start,   ///< New firmware starting address
-    uint_32    size,    ///< Size of the new firmware
-    uint_32    version, ///< Version number for the new firmware
-    uint_8     sig[20], ///< Cryptographic signature / checksum for the firmware upgrade
+    int_32    start,   ///< New firmware starting address
+    int_32    version, ///< Version number for the new firmware
+    uint_8    sig[20], ///< Cryptographic signature / checksum for the firmware upgrade
     OTACommand command, ///< What upgrade to do
   }
 
-} // RobotInterface
-
-/// A namespace for messages that aren't actually from the engine but originate in the WiFi and are sent to RTIP
-namespace WiFiToRTIP
-{
   enum uint_8 EnterBootloaderWhich
   {
     BOOTLOAD_RTIP,
@@ -54,12 +55,7 @@ namespace WiFiToRTIP
     EnterBootloaderWhich which
   }
   
-  structure BodyUpgradeData
-  {
-    uint_32 data
-  }
-  
-} // WiFiToRTIP
+} // RobotInterface
 
 } // Cozmo
 } // Anki

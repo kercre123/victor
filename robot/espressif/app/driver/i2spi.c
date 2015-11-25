@@ -30,6 +30,9 @@ enum {
   BOOTLOADER_SYNC_PHASE = PHASE_FLAGS-2, ///< Synchronizing with RTIP bootloader
   BOOTLOADER_XFER_PHASE = PHASE_FLAGS-3, ///< Bootloader mode
   PAUSED_PHASE          = PHASE_FLAGS-4, ///< I2SPI communication paused, sending 0xFFFFffff
+  REBOOT_PHASE          = PHASE_FLAGS-5, ///< I2SPI drops paused, sending 0x80018001
+  RECOVERY_PHASE        = PHASE_FLAGS-6, ///< I2SPI drops paused, sending 0x80028002
+  SHUTDOWN_PHASE        = PHASE_FLAGS-7, ///< I2SPI drops paused, sending 0x80048004
 };
 
 uint32_t i2spiTxUnderflowCount;
@@ -66,11 +69,11 @@ static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
 /// Phase relationship between incoming drops and outgoing drops, determined through experimentation
-#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-22)/2)
+#define DROP_TX_PHASE_ADJUST ((DROP_SPACING-24)/2)
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
-static int16_t bodyBootloaderState;
+static uint32_t bodyBootloaderCode;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -103,7 +106,7 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (drop->droplet & bootloaderStatus) os_memcpy(&bodyBootloaderState, drop->payload, sizeof(bootloaderStatus));
+  if (drop->droplet & bootloaderStatus) os_memcpy(&bodyBootloaderCode, drop->payload, 4);
   // XXX do stuff with the rest of the payload
 }
 
@@ -116,9 +119,10 @@ bool makeDrop(uint8_t* payload, uint8_t length)
 {
   if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
-    if (txFillCount > (DMA_BUF_COUNT-2))
+    if (txFillCount > (DMA_BUF_COUNT-4))
     {
       i2spiTxOverflowCount++;
+      //os_printf("i2spi tx overflow: %d, %d\r\n", i2spiTxOverflowCount, i2spiTxUnderflowCount);
       return false;
     }
     else if (outgoingPhase > (DMA_BUF_SIZE/2)) // Rolling over right now
@@ -203,6 +207,7 @@ void i2spiTask(os_event_t *event)
             if (unlikely(outgoingPhase == UNINITALIZED_PHASE)) // Haven't established outgoing phase yet
             {
               // Going past the end is OKAY as that will be used to increment the buffer
+              os_printf("I2SPI Synchronized at offset %d\r\n", dropPhase);
               outgoingPhase = dropPhase + DROP_TX_PHASE_ADJUST;
             }
             else // Have a phase, just adjust for drift
@@ -229,7 +234,15 @@ void i2spiTask(os_event_t *event)
           }
           else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
-        else break; // Didn't find the next header in this one
+        else 
+        {
+          if (buf[DMA_BUF_SIZE/2] == STATE_IDLE)
+          {
+            outgoingPhase       = BOOTLOADER_XFER_PHASE;
+            rtipBootloaderState = STATE_IDLE;
+          }
+          break;
+        }
       }
       dropPhase -= DMA_BUF_SIZE/2; // Now looking in next buffer
       prepSdioQueue(desc, 0);
@@ -237,7 +250,7 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_TX:
     {
-      if (unlikely(outgoingPhase < 0)) // Durring startup
+      if (unlikely(outgoingPhase < PHASE_FLAGS)) // Durring startup
       {
         if (outgoingPhase == UNINITALIZED_PHASE)
         {
@@ -315,6 +328,9 @@ void dmaisr(void* arg) {
     switch (outgoingPhase)
     {
       case PAUSED_PHASE:
+      case REBOOT_PHASE:
+      case RECOVERY_PHASE:
+      case SHUTDOWN_PHASE:
       {
         prepSdioQueue(asDesc(eofDesAddr), 0);
         break;
@@ -345,10 +361,26 @@ void dmaisr(void* arg) {
     switch (outgoingPhase)
     {
       case PAUSED_PHASE:
+      case REBOOT_PHASE:
+      case RECOVERY_PHASE:
+      case SHUTDOWN_PHASE:
       {
+        uint32_t outWord = 0xFFFFffff;
+        switch(outgoingPhase)
+        {
+          case REBOOT_PHASE:
+            outWord = 0x80018001;
+            break;
+          case RECOVERY_PHASE:
+            outWord = 0x80028002;
+            break;
+          case SHUTDOWN_PHASE:
+            outWord = 0x80048004;
+            break;
+        }
         uint32_t* buf = (uint32_t*)(asDesc(eofDesAddr)->buf_ptr);
         int w;
-        for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = 0xFFFFffff;
+        for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = outWord;
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         break;
       }
@@ -387,7 +419,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   i2spiIntegralDrift    = 0;
   txFillCount           = 0;
   rtipBootloaderState   = STATE_UNKNOWN;
-  bodyBootloaderState   = STATE_UNKNOWN;
+  bodyBootloaderCode    = STATE_UNKNOWN;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
@@ -528,7 +560,6 @@ bool i2spiQueueMessage(uint8_t* msgData, uint16_t msgLen)
       uint8_t payloadLen = min(msgLen, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
       if (makeDrop(msgData + queued, payloadLen) == false)
       {
-        os_printf("FATAL: Couldn't queue message to RTIP\r\n");
         return false;
       }
       queued += payloadLen;
@@ -568,6 +599,24 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
       os_printf("I2Spi mode paused\r\n");
       return;
     }
+    case I2SPI_REBOOT:
+    {
+      outgoingPhase = REBOOT_PHASE;
+      os_printf("I2Spi mode reboot\r\n");
+      return;
+    }
+    case I2SPI_RECOVERY:
+    {
+      outgoingPhase = RECOVERY_PHASE;
+      os_printf("I2Spi mode recovery\r\n");
+      return;
+    }
+    case I2SPI_SHUTDOWN:
+    {
+      outgoingPhase = SHUTDOWN_PHASE;
+      os_printf("I2Spi mode shutdown\r\n");
+      return;
+    }
   }
 }
 
@@ -576,9 +625,10 @@ int16_t ICACHE_FLASH_ATTR i2spiGetRtipBootloaderState(void)
   return rtipBootloaderState;
 }
 
-int16_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderState(void)
+uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
 {
-  return bodyBootloaderState;
+  if (outgoingPhase < PHASE_FLAGS) return STATE_UNKNOWN;
+  else return bodyBootloaderCode;
 }
 
 void ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)

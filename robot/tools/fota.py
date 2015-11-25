@@ -4,7 +4,7 @@ Firmware over the air upgrade controller for loading new firmware images onto ro
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, socket, threading, time, select, hashlib
+import sys, os, socket, threading, time, select, hashlib, struct
 
 USAGE = """
 Upgrade firmware:
@@ -73,7 +73,8 @@ class Upgrader(IDataReceiver):
         "Callback if robot disconnects"
         sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
         self.connected = False
-        sys.exit("Shutting down")
+        self.transport.KillThread()
+        exit()
 
     def ReceiveData(self, buffer, sourceAddress):
         "Callback for received messages from robot"
@@ -97,7 +98,7 @@ class Upgrader(IDataReceiver):
         while self.acked == False:
             time.sleep(0.0005)
 
-    def ota(self, filePathName, command, version=0, flashAddress=0x100000):
+    def ota(self, filePathName, command, version, flashAddress):
         """Load a file and send it to the robot for flash
         Note that flashAddress must be a multiple of 0x1000
         """
@@ -109,10 +110,13 @@ class Upgrader(IDataReceiver):
             sys.stderr.write("Couldn't load requested firmware file \"{}\"\r\n".format(filePathName))
             raise inst
         else:
-            fwSize    = len(fw)
-            sys.stdout.write("Loading \"{}\", {:d} bytes.\r\n".format(filePathName, fwSize))
             # Calculate signature
             sig = hashlib.sha1(fw).digest()
+            # Prepend length of firmware
+            fwSize = len(fw)
+            sys.stdout.write("Loading \"{}\", {:d} bytes.\r\n".format(filePathName, fwSize))
+            fw = struct.pack('i', fwSize) + fw
+            fwSize = len(fw)
             # Wait for connection
             while not self.connected:
                 time.sleep(0.1)
@@ -128,23 +132,23 @@ class Upgrader(IDataReceiver):
             self.send(RobotInterface.EngineToRobot(
                 triggerOTAUpgrade=RobotInterface.OTAUpgrade(
                     start   = flashAddress,
-                    size    = fwSize,
                     version = version,
                     sig     = sig,
                     command = command
                 )
             ))
     
-def UpgradeWiFi(up, fwPathName, version=0):
+def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RobotInterface.OTAFlashRegions.OTA_WiFi_flash_address):
     "Sends a WiFi firmware upgrade"
-    up.ota(fwPathName, RobotInterface.OTACommand.OTA_WiFi, version)
+    up.ota(fwPathName, RobotInterface.OTACommand.OTA_WiFi, version, flashAddress)
 
-def UpgradeRTIP(up, fwPathName, version=0):
+def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RobotInterface.OTAFlashRegions.OTA_RTIP_flash_address):
     "Sends an RTIP firmware upgrade"
-    up.ota(fwPathName, RobotInterface.OTACommand.OTA_RTIP, version)
+    up.ota(fwPathName, RobotInterface.OTACommand.OTA_RTIP, version, flashAddress)
 
-def UpgradeBody(up, fwPathName, version=0):
-    up.ota(fwPathName, RobotInterface.OTACommand.OTA_body, version)
+def UpgradeBody(up, fwPathName, version=0, flashAddress=RobotInterface.OTAFlashRegions.OTA_body_flash_address):
+    up.send(RobotInterface.EngineToRobot(enterBootloader=RobotInterface.EnterBootloader(RobotInterface.EnterBootloaderWhich.BOOTLOAD_BODY)))
+    up.ota(fwPathName, RobotInterface.OTACommand.OTA_body, version, flashAddress)
 
 def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
     "Sends an asset to flash"
@@ -158,12 +162,9 @@ def WaitForUserEnd():
     except KeyboardInterrupt:
         return
 
-DEFAULT_WIFI_IMAGE=os.path.join("espressif", "bin", "upgrade", "user1.2048.new.3.bin")
-DEFAULT_WIFI_ADDR = 0x100000
-DEFAULT_RTIP_IMAGE=os.path.join("build", "41", "robot.safe")
-DEFAULT_RTIP_ADDR = DEFAULT_WIFI_ADDR + 0xc0000
-DEFAULT_BODY_IMAGE=os.path.join("syscon", "???")
-DEFAULT_BODY_ADDR = DEFAULT_RTIP_ADDR + 0x10000
+DEFAULT_WIFI_IMAGE = os.path.join("espressif", "bin", "upgrade", "user1.2048.new.3.bin")
+DEFAULT_RTIP_IMAGE = os.path.join("build", "41", "robot.safe")
+DEFAULT_BODY_IMAGE = os.path.join("syscon", "build", "syscon.safe")
 
 # Script entry point
 if __name__ == '__main__':

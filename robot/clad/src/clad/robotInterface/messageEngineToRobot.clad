@@ -258,8 +258,8 @@ union EngineToRobot
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   
   // WiFi to RTIP messages, not actually sent by engine
-  WiFiToRTIP::BodyUpgradeData   bodyUpgradeData             = 0xFD,
-  WiFiToRTIP::EnterBootloader   enterBootloader             = 0xFE,
+  uint_32                       bodyUpgradeData             = 0xFD,
+  EnterBootloader               enterBootloader             = 0xFE,
 }
 
 } // namespace Robot Interface

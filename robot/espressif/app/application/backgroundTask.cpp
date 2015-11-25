@@ -9,8 +9,10 @@ extern "C" {
 #include "mem.h"
 #include "backgroundTask.h"
 #include "client.h"
+#include "driver/i2spi.h"
 }
 #include "face.h"
+#include "upgradeController.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -22,22 +24,18 @@ namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
 
-void displayFaceCredentials(void)
+void CheckForUpgrades(void)
 {
-  static bool wasConnected = true;
-  if (clientConnected() && !wasConnected)
+  const uint32 bodyCode  = i2spiGetBodyBootloaderCode();
+  const uint16 bodyState = bodyCode & 0xffff;
+  const uint16 bodyCount = bodyCode >> 16;
+  if (bodyState == STATE_IDLE && bodyCount > 10 && bodyCount < 100)
   {
-    Face::FaceUnPrintf();
-    wasConnected = true;
+    UpgradeController::StartBodyUpgrade();
   }
-  else if (!clientConnected() && wasConnected)
+  else if (i2spiGetRtipBootloaderState() == STATE_IDLE)
   {
-    struct softap_config cfg;
-    if (wifi_softap_get_config(&cfg))
-    {
-      Face::FacePrintf("%s\r\n%s\r\nChannel: %d\r\n", cfg.ssid, cfg.password, cfg.channel);
-      wasConnected = false;
-    }
+    UpgradeController::StartRTIPUpgrade();
   }
 }
 
@@ -63,7 +61,7 @@ void Exec(os_event_t *event)
     }
     case 1:
     {
-      displayFaceCredentials();
+      CheckForUpgrades();
       break;
     }
     // Add new "long execution" tasks as switch cases here.

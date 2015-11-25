@@ -20,6 +20,9 @@ typedef enum {
   I2SPI_NORMAL,     ///< Normal drop communication, synchronization is implied
   I2SPI_BOOTLOADER, ///< Bootloader communication, synchronization is implied
   I2SPI_PAUSED,     ///< Communication paused, 0xFFFFffff is sent continuously.
+  I2SPI_REBOOT,     ///< Inform the K02 we want to reboot
+  I2SPI_RECOVERY,   ///< Inform the K02 we want to reboot into recovery
+  I2SPI_SHUTDOWN,   ///< Inform the K02 we want to shut down
 } I2SpiMode;
 
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
@@ -46,7 +49,7 @@ int16_t i2spiGetRtipBootloaderState(void);
 
 /** Check the status of the body Bootloader
  */
-int16_t i2spiGetBodyBootloaderState(void);
+uint32_t i2spiGetBodyBootloaderCode(void);
 
 /** Push a chunk of firmware to the RTIP
  * @param chunk a Pointer to data to be sent

@@ -178,7 +178,7 @@ void NOINLINE copyNewImage(void)
     ets_printf("\tCopying in new firmware\r\n");
     for (sector = 0; sector < config.newImageSize; sector++)
     {
-      rslt = SPIRead((sector + config.newImageStart)*SECTOR_SIZE, buffer, SECTOR_SIZE);
+      rslt = SPIRead((sector + config.newImageStart)*SECTOR_SIZE + IMAGE_READ_OFFSET, buffer, SECTOR_SIZE);
       if (rslt != SPI_FLASH_RESULT_OK)
       {
         ets_printf("\tError reading sector %x: %d\r\n", sector + config.newImageStart, rslt);
