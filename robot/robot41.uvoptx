@@ -150,32 +150,27 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>txRxBuffer</ItemText>
+          <ItemText>forward</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rx_source</ItemText>
+          <ItemText>backward</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>bud.data</ItemText>
+          <ItemText>g_dataToHead</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>writtenData,0x0A</ItemText>
+          <ItemText>g</ItemText>
         </Ww>
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>totalDrops</ItemText>
-        </Ww>
-        <Ww>
-          <count>5</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>droppedDrops</ItemText>
+          <ItemText>k[0]</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

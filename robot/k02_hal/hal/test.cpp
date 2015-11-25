@@ -23,7 +23,7 @@ enum STARTUP_ERROR {
 };
 
 // Magical numbers for self test
-static const int DROP_THREADHOLD = 0x200;
+static const int DROP_THREADHOLD = 0x100;
 static const int MOTOR_THRESHOLD[] = {
   0x80, 0x80, 0x10000, 0x400
 };
@@ -43,6 +43,9 @@ void StartupSelfTest(void) {
   
   if (result != ERROR_NONE) {
     FacePrintf("%i FAIL", (int) result);
+  } else {
+    const uint8_t* SSID = (uint8_t*) 0xFFC;
+    FacePrintf("%2XOK", *SSID);
   }
 }
 

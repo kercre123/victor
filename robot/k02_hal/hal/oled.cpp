@@ -82,41 +82,6 @@ namespace Anki
       void OLEDFlip(void) {
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, ResetCursor, sizeof(ResetCursor), NULL);
       }
-
-      extern "C" void FacePrintf(const char *format, ...) {
-        const int MAX_CHARS = SCREEN_WIDTH / (CHAR_WIDTH + 1);
-        char buffer[MAX_CHARS];
-        
-        va_list aptr;
-        int chars;
-
-        va_start(aptr, format);
-        vsnprintf(buffer, sizeof(buffer), format, aptr);
-        va_end(aptr);
-
-        char *write = buffer;
-        int px_ptr = 0;
-        
-        memset(FrameBuffer, 0, FrameBufferLength);
-        
-        while (*write) {
-          int idx = *(write++) - CHAR_START;
-          if (idx < 0 || idx >= CHAR_END) {
-            idx = 0;
-          }
-
-          const uint8_t* pixels = (const uint8_t*)&FONT[idx];
-          
-          for (int i = 0; i < CHAR_WIDTH; i++) {
-            FrameBuffer[px_ptr] = pixels[i];
-            px_ptr += 8;
-          }
-          FrameBuffer[px_ptr] = 0;
-          px_ptr += 8;
-        }
-        
-        OLEDFlip();
-      }
       
       void OLEDInit(void) {
         using namespace Anki::Cozmo::HAL;
@@ -133,4 +98,41 @@ namespace Anki
       }
     }
   }
+}
+
+extern "C" void FacePrintf(const char *format, ...) {
+  using namespace Anki::Cozmo::HAL;
+
+  const int MAX_CHARS = SCREEN_WIDTH / (CHAR_WIDTH + 1);
+  char buffer[MAX_CHARS];
+  
+  va_list aptr;
+  int chars;
+
+  va_start(aptr, format);
+  vsnprintf(buffer, sizeof(buffer), format, aptr);
+  va_end(aptr);
+
+  char *write = buffer;
+  int px_ptr = 0;
+  
+  memset(FrameBuffer, 0, FrameBufferLength);
+  
+  while (*write) {
+    int idx = *(write++) - CHAR_START;
+    if (idx < 0 || idx >= CHAR_END) {
+      idx = 0;
+    }
+
+    const uint8_t* pixels = (const uint8_t*)&FONT[idx];
+    
+    for (int i = 0; i < CHAR_WIDTH; i++) {
+      FrameBuffer[px_ptr] = pixels[i];
+      px_ptr += 8;
+    }
+    FrameBuffer[px_ptr] = 0;
+    px_ptr += 8;
+  }
+  
+  OLEDFlip();
 }
