@@ -1394,6 +1394,20 @@ namespace Anki {
       return _animationStreamer.GetStreamingAnimationName();
     }
     
+    void Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms)
+    {
+      ProceduralFace procFace;
+      procFace.GetParams().SetFacePosition({xPix, yPix});
+      
+      ProceduralFaceKeyFrame kf(procFace, duration_ms);
+      kf.SetIsLive(true);
+      
+      AnimationStreamer::FaceTrack faceTrack;
+      faceTrack.AddKeyFrame(std::move(kf));
+      
+      _animationStreamer.AddFaceLayer(std::move(faceTrack));
+    }
+    
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::PlaySound(soundName, numLoops, volume)));
