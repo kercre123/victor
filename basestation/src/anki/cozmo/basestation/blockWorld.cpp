@@ -33,6 +33,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -972,23 +973,16 @@ namespace Cozmo {
         } else {
           const f32 minDist = std::sqrt(minDistSq);
           const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
-          //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
-          RobotInterface::PanAndTilt msg;
-          msg.headTiltAngle_rad = headAngle;
-          msg.bodyPanAngle_rad = 0.f;
+          f32 bodyPanAngle_rad = 0.f;
           
           if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
             // Also rotate ("pan") body:
-            const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
-            msg.bodyPanAngle_rad = panAngle.ToFloat();
+            bodyPanAngle_rad = std::atan2(yDist, xDist);
           }
-          /*
-          PRINT_NAMED_INFO("BlockWorld.UpdateTrackToObject",
-                           "Tilt = %.1fdeg, pan = %.1fdeg\n",
-                           RAD_TO_DEG(msg.headTiltAngle_rad),
-                           RAD_TO_DEG(msg.bodyPanAngle_rad));
-          */
-          _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+          
+          _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
+                                                 new PanAndTiltAction(bodyPanAngle_rad, headAngle,
+                                                                      true, true));
         }
       } // if/else observedMarkers.empty()
       

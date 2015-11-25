@@ -838,9 +838,10 @@ namespace Anki {
     
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
-    : DriveToPoseAction(DEFAULT_PATH_MOTION_PROFILE, false, false)
-    , _turnAngle(angle)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute,
+                                         const Radians& variability, const Radians& angleTolerance)
+    : _targetAngle(angle)
+    , _angleTolerance(angleTolerance)
     , _variability(variability)
     , _isAbsoluteAngle(isAbsolute)
     {
@@ -859,46 +860,79 @@ namespace Anki {
       // _current_ pose, taking into account the current driveCenter offset
       Radians heading = 0;
       if (!_isAbsoluteAngle) {
+        if(_targetAngle.getAbsoluteVal() < _angleTolerance) {
+          // A relative angle has been commanded and it's less than the tolerance
+          // so we are already done
+          _inPosition = true;
+          return ActionResult::SUCCESS;
+        }
+        
         heading = robot.GetPose().GetRotationAngle<'Z'>();
       }
-      Pose3d rotatedPose;
-      Pose3d dcPose = robot.GetDriveCenterPose();
       
       Radians newAngle(heading);
-      newAngle += _turnAngle;
+      newAngle += _targetAngle;
       if(_variability != 0) {
         newAngle += _rng.RandDblInRange(-_variability.ToDouble(),
-                                         _variability.ToDouble());
+                                        _variability.ToDouble());
       }
+      
+      Pose3d rotatedPose;
+      Pose3d dcPose = robot.GetDriveCenterPose();
       dcPose.SetRotation(newAngle, Z_AXIS_3D());
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
-      SetGoal(rotatedPose);
+      _targetAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
       
-      _startedTraversingPath = false;
+      Radians currentAngle;
+      _inPosition = IsBodyInPosition(robot, currentAngle);
       
-      // Now that goal is set, call the base class init to send the path, etc.
-      return DriveToPoseAction::Init(robot);
+      if(!_inPosition) {
+        RobotInterface::SetBodyAngle setBodyAngle;
+        setBodyAngle.angle_rad = _targetAngle.ToFloat();
+        setBodyAngle.max_speed_rad_per_sec = 50.f;
+        setBodyAngle.accel_rad_per_sec2 = 10.f;
+        if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+          return ActionResult::FAILURE_RETRY;
+        }
+      }
+    
+      return ActionResult::SUCCESS;
+    }
+
+    
+    bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
+    {
+      currentAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      const bool inPosition = NEAR(currentAngle, _targetAngle.ToFloat(), _angleTolerance.ToFloat());
+      return inPosition;
     }
     
-    ActionResult TurnInPlaceAction::CheckIfDone(Robot& robot)
+    ActionResult TurnInPlaceAction::CheckIfDone(Robot &robot)
     {
       ActionResult result = ActionResult::RUNNING;
       
-      if(!_startedTraversingPath) {
-        // Wait until robot reports it has started traversing the path
-        _startedTraversingPath = robot.IsTraversingPath();
-        
+      Radians currentAngle;
+      
+      if(!_inPosition) {
+        _inPosition = IsBodyInPosition(robot, currentAngle);
+      }
+      
+      // Wait to get a state message back from the physical robot saying its body
+      // is in the commanded position
+      // TODO: Is this really necessary in practice?
+      if(_inPosition) {
+        result = ActionResult::SUCCESS;
       } else {
-        // Wait until robot reports it is no longer traversing a path
-        if(!robot.IsTraversingPath()) {
-            result = ActionResult::SUCCESS;
-        }
+        PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
+                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         currentAngle.getDegrees(), _targetAngle.getDegrees(), _variability.getDegrees());
       }
       
       return result;
-    } // TurnInPlaceAction::CheckIfDone()
+    }
 
+    
 #pragma mark ---- PanAndTiltAction ----
     
     PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
@@ -923,17 +957,31 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
-      if(_bodyPanAngle.getAbsoluteVal() > _panAngleTol) {
-        _compoundAction.AddAction(new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute));
+      // Note: assuming screen is about the same x distance from the neck joint as the head cam
+      f32 xPixShift = 0.f, yPixShift = 0.f;
+      
+      if(_isPanAbsolute || _bodyPanAngle.getAbsoluteVal() > _panAngleTol) {
+        // The pan is either absolute or it is relative and above the tolerance
+        _compoundAction.AddAction(new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute, 0, _panAngleTol));
       } else {
-        // TODO: Queue a left/right eye dart somehow
+        // The pan is relative and below tolerance, so just move the eyes
+        const f32 x_mm = std::tan(_bodyPanAngle.ToFloat()) * HEAD_CAM_POSITION[0];
+        xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / SCREEN_SIZE[0]);
       }
       
-      if(_headTiltAngle.getAbsoluteVal() > _tiltAngleTol) {
+      if(_isTiltAbsolute || _headTiltAngle.getAbsoluteVal() > _tiltAngleTol) {
+        // The tilt is either absolute or it is relative and above the tolerance
         const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
-        _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle));
+        _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol));
       } else {
-        // TODO: Queue an up/down eye dart somehow
+        // The tilt is relative and below tolerance, so just move the eyes
+        const f32 y_mm = std::tan(_headTiltAngle.ToFloat()) * HEAD_CAM_POSITION[0];
+        yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
+      }
+      
+      if(xPixShift != 0.f || yPixShift != 0.f) {
+        // TODO: How to set the duration of the shift?
+        robot.ShiftEyes(xPixShift, yPixShift, 66);
       }
       
       // Put the angles in the name for debugging
@@ -1369,7 +1417,7 @@ namespace Anki {
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance, const Radians& variability)
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance, const Radians& variability)
     : _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)

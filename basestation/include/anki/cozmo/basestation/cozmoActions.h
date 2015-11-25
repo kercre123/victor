@@ -198,10 +198,11 @@ namespace Anki {
     
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
-    class TurnInPlaceAction : public DriveToPoseAction
+    class TurnInPlaceAction : public IAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability = 0);
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability = 0,
+                        const Radians& angleTolerance = DEG_TO_RAD(5));
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
@@ -214,7 +215,12 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
     private:
-      Radians _turnAngle;
+      
+      bool IsBodyInPosition(const Robot& robot, Radians& currentAngle) const;
+      
+      bool    _inPosition = false;
+      Radians _targetAngle;
+      Radians _angleTolerance;
       Radians _variability;
       bool    _isAbsoluteAngle;
       
@@ -224,7 +230,7 @@ namespace Anki {
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f),
+      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = DEG_TO_RAD(2.f),
                             const Radians& variability = 0);
       
       virtual const std::string& GetName() const override { return _name; }
@@ -304,7 +310,8 @@ namespace Anki {
       // eyes will dart to look at the angle.
       PanAndTiltAction(Radians bodyPan, Radians headTilt,
                        bool isPanAbsolute, bool isTiltAbsolute,
-                       Radians panAngleTol=0, Radians tiltAngleTol=0);
+                       Radians panAngleTol  = DEG_TO_RAD(5),
+                       Radians tiltAngleTol = DEG_TO_RAD(2));
       
       virtual const std::string& GetName() const override { return _name; }
       
