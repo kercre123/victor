@@ -136,10 +136,6 @@ namespace Anki {
                             neutralFaceAnimName);
       }
       
-      // Now that the reference neutral face has been set up, reset our local faces to start from neutral
-      _proceduralFace.GetParams().Reset();
-      _lastProceduralFace.GetParams().Reset();
-      
       // Read in Mood Manager Json
       if (nullptr != _dataPlatform)
       {

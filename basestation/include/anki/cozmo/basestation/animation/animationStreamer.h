@@ -97,7 +97,7 @@ namespace Cozmo {
     Result InitStream(Animation* anim, u8 withTag);
     
     // Actually stream the animation (called each tick)
-    Result UpdateStream(Robot& robot, Animation* anim);
+    Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
     
     Result SendStartOfAnimation();
     Result SendEndOfAnimation(Robot& robot);
@@ -136,9 +136,10 @@ namespace Cozmo {
     // ready to play) into the passed-in procedural face params.
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
-                       ProceduralFaceParams& faceParams);
+                       ProceduralFaceParams& faceParams,
+                       bool shouldReplace = false);
     
-    void UpdateFace(Robot& robot, Animation* anim);
+    void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
     
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
