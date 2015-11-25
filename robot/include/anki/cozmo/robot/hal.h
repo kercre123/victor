@@ -34,7 +34,6 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/types.h"
-#include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
