@@ -12,6 +12,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
@@ -28,7 +29,8 @@
           "Speaker": "Aria",
           "IsRight": false
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "Wait",
@@ -36,6 +38,7 @@
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
@@ -45,7 +48,8 @@
           "AllowSkipAfterDelay": true,
           "SkipDelayInSeconds": 1.0
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "World",
@@ -53,6 +57,7 @@
       "Sequencial": false,
       "Final": false,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [
         {
           "$type": "ScriptedSequences.Conditions.NodeComplete, Assembly-CSharp",
@@ -79,7 +84,8 @@
         {
           "$type": "ScriptedSequences.Actions.BlockInput, Assembly-CSharp"
         }
-      ]
+      ],
+      "ExitConditions": []
     },
     {
       "Name": "End Conversation",
@@ -87,6 +93,7 @@
       "Sequencial": true,
       "Final": true,
       "FailOnError": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [
         {
           "$type": "ScriptedSequences.Conditions.TouchedAnywhere, Assembly-CSharp"
@@ -99,7 +106,8 @@
         {
           "$type": "ScriptedSequences.Actions.EndConversation, Assembly-CSharp"
         }
-      ]
+      ],
+      "ExitConditions": []
     }
   ]
 }
