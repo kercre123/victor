@@ -16,8 +16,8 @@ namespace Anki {
           get {
             if (_AudioClient == null) {
               _AudioClient = new AudioClient();
-              _AudioClient.Initialize();
             }
+            _AudioClient.Initialize();
             return _AudioClient;
           }
         }
@@ -29,10 +29,15 @@ namespace Anki {
           // Setup Audio Controller
           _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
-          _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
-          _IsInitialized = true;
+          if (null != _RobotEngineManager) {
+            _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
+            _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
+            _RobotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
+            _IsInitialized = true;
+          }
+          else {
+            DAS.Warn("AudioClient.Initialize", "Failed to Initialize!");
+          }
         }
 
         ~AudioClient() {
@@ -50,7 +55,7 @@ namespace Anki {
           DAS.Info("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  gameObjId: " +
           gameObjectId + " CallbackFlag: " + callbackFlag.GetHashCode());
 
-          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObjectId, callbackFlag);
+          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObjectId, callbackFlag, 0);
           _RobotEngineManager.Message.PostAudioEvent = msg;
           _RobotEngineManager.SendMessage();
         }
