@@ -19,6 +19,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
+#include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
@@ -48,6 +49,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::OCD:
     {
       newBehavior = new BehaviorOCD(robot, config);
+      break;
+    }
+    case BehaviorType::BlockPlay:
+    {
+      newBehavior = new BehaviorBlockPlay(robot, config);
       break;
     }
     case BehaviorType::Fidget:
