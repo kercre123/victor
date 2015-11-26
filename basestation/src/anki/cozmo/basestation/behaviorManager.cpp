@@ -11,16 +11,18 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
-#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/demoBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoBehaviorChooser.h"
+#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
+#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -34,6 +36,8 @@
 #include "util/helpers/templateHelpers.h"
 
 #define DEBUG_BEHAVIOR_MGR 0
+
+#define INVESTOR_DEMO 1
 
 namespace Anki {
 namespace Cozmo {
@@ -90,11 +94,15 @@ namespace Cozmo {
   
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
-    DemoBehaviorChooser* newDemoChooser = new DemoBehaviorChooser(_robot, config);
-    SetBehaviorChooser(newDemoChooser);
-    
+#if INVESTOR_DEMO
+    SetBehaviorChooser( new InvestorDemoBehaviorChooser(_robot, config) );
+#else
+    SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
+
+    // TODO:(bn) use these reactions for investor demo as well?
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
     AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
+#endif
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -112,7 +120,7 @@ namespace Cozmo {
     // Callback for EngineToGame event that a reactionary behavior (possibly) cares about
     auto reactionsEngineToGameCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
-      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(event);
+      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
     };
     
     // Subscribe our own callback to these events
@@ -125,7 +133,7 @@ namespace Cozmo {
     // Callback for GameToEngine event that a reactionary behavior (possibly) cares about
     auto reactionsGameToEngineCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
-      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(event);
+      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
     };
     
     // Subscribe our own callback to these events
@@ -200,7 +208,8 @@ namespace Cozmo {
       }
     }
     else if (nullptr == _currentBehavior ||
-       currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec)
+             currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec ||
+             ( nullptr != _currentBehavior && ! _currentBehavior->IsRunnable(_robot, currentTime_sec) ))
     {
       // We've been in the current behavior long enough to consider switching
       lastResult = SelectNextBehavior(currentTime_sec);
