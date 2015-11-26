@@ -21,7 +21,7 @@ namespace AnimationTool
 
             dataPoint = new DataPoint();
 
-            dataPoint.XValue = Math.Round(xValue, 1);
+            dataPoint.XValue = Math.Round(xValue, 3);
             dataPoint.YValues[0] = Math.Round(yValue, 0);
 
             dataPoint.ToolTip = dataPoint.XValue + ", " + dataPoint.YValues[0];

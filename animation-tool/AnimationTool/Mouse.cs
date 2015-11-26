@@ -51,7 +51,7 @@ namespace AnimationTool
                 {
                     DataPoint dp = curPoints[i];
 
-                    if (Math.Abs(Math.Round(mouseXValue - dp.XValue, 1)) < MoveSelectedDataPoints.DELTA_X)
+                    if (Math.Abs(Math.Round(mouseXValue - dp.XValue, 3)) < MoveSelectedDataPoints.DELTA_X)
                     {
                         curDataPoint = dp;
                         break;
@@ -91,7 +91,7 @@ namespace AnimationTool
                     double mouseX = e.X > maxX ? maxX : e.X < minX ? minX : e.X; // force valid x
                     double mouseY = e.Y > maxY ? maxY : e.Y < minY ? minY : e.Y; // force valid y
 
-                    double mouseXValue = GetPixelPositionToValue(curChartArea.AxisX, mouseX, 1);
+                    double mouseXValue = GetPixelPositionToValue(curChartArea.AxisX, mouseX, 3);
                     double mouseYValue = GetPixelPositionToValue(curChartArea.AxisY, mouseY, 0);
 
                     int count = 0;
@@ -221,7 +221,7 @@ namespace AnimationTool
                     {
                         for (int i = 0; i < curPoints.Count; ++i)
                         {
-                            if (Math.Round(curPoints[i].XValue, 1) == Math.Round(mouseXValue, 1))
+                            if (Math.Round(curPoints[i].XValue, 3) == Math.Round(mouseXValue, 3))
                             {
                                 addDataPoint = false; // if point already there
                             }
