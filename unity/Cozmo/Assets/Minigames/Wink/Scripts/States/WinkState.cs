@@ -6,6 +6,7 @@ namespace Wink {
 
     private WinkGame _WinkGame;
     private float _EnterWinkStateTime;
+    private bool _WinkSuccess = false;
 
     public override void Enter() {
       base.Enter();
@@ -19,6 +20,7 @@ namespace Wink {
       if (_WinkGame.GetWinkCompleted()) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kMajorWin, OnAnimationFinished);
+        _WinkSuccess = true;
         _StateMachine.SetNextState(animState);
       }
       else if (Time.time - _EnterWinkStateTime > 7.0f) {
@@ -29,6 +31,9 @@ namespace Wink {
     }
 
     private void OnAnimationFinished(bool success) {
+      if (_WinkSuccess) {
+        _WinkGame.WaveSuccess();
+      }
       _StateMachine.SetNextState(new WinkState());
     }
 

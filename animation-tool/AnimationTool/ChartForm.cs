@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 
 namespace AnimationTool
@@ -9,12 +10,33 @@ namespace AnimationTool
         private CheckBox checkBox;
         private Panel panel;
         private PictureBox pictureBox;
+        private Chart _chart;
 
         public Panel SidePanel { get { return sidePanel; } private set { sidePanel = value; } }
         public CheckBox CheckBox { get { return checkBox; } private set { checkBox = value; } }
         public Panel Panel { get { return panel; } private set { panel = value; } }
         public PictureBox PictureBox { get { return pictureBox; } private set { pictureBox = value; } }
-        public Chart chart;
+        public Chart chart
+        {
+            get { return _chart; }
+            set
+            {
+                panel.Controls.Remove(_chart);
+                _chart = value;
+                panel.Controls.Add(_chart);
+            }
+        }
+        public event EventHandler ChannelEnabledHandler
+        {
+            add
+            {
+                checkBox.CheckedChanged += value;
+            }
+            remove
+            {
+                checkBox.CheckedChanged -= value;
+            }
+        }
 
         public ChartForm()
         {

@@ -25,8 +25,8 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22498124}
-  - 114: {fileID: 11427788}
   - 114: {fileID: 11440862}
+  - 114: {fileID: 11416146}
   m_Layer: 5
   m_Name: HubWorldCompletedChallengeButton
   m_TagString: Untagged
@@ -34,6 +34,19 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &11416146
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 143400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d6cebfb011934b1bac4fd4b10c85b10, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _ButtonScript: {fileID: 11440862}
+  _ButtonLabel: {fileID: 0}
 --- !u!114 &11425830
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -61,19 +74,6 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
---- !u!114 &11427788
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 143400}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 31abf14e3b565439ab400ebd41c47495, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ButtonScript: {fileID: 11440862}
-  _ButtonLabel: {fileID: 0}
 --- !u!114 &11440862
 MonoBehaviour:
   m_ObjectHideFlags: 1

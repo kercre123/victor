@@ -8,9 +8,6 @@ namespace InvestorDemo {
     private UnityEngine.UI.Button _NextButton;
 
     [SerializeField]
-    private UnityEngine.UI.Button _PrevButton;
-
-    [SerializeField]
     private UnityEngine.UI.Text _CurrentActionText;
 
     void Start() {
