@@ -224,6 +224,7 @@ namespace Cozmo {
     std::set<GameToEngineTag> _gameToEngineTags;
   }; // class IReactionaryBehavior
 
+
 } // namespace Cozmo
 } // namespace Anki
 

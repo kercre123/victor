@@ -17,6 +17,7 @@ enum uint_8 BehaviorType {
   FollowMotion,
   PlayAnim,
   UnityDriven,
+  PounceOnMotion,
 
   Count
 }

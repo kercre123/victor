@@ -156,7 +156,14 @@ namespace Anki {
                                     bool withInterpolation = false);
 
       // Points *p to a computed pose in the history that was insert via ComputeAndInsertPoseAt
-      Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
+      Result GetComputedPoseAt(const TimeStamp_t t_request,
+                               RobotPoseStamp ** p,
+                               HistPoseKey* key = nullptr);
+
+      // NOTE: p is not const, but *p is. So you can assign to *p, or p, but not **p      
+      Result GetComputedPoseAt(const TimeStamp_t t_request,
+                               const RobotPoseStamp ** p,
+                               HistPoseKey* key = nullptr) const;
 
       // If at least one vision only pose exists, the most recent one is returned in p
       // and the time it occured at in t.
@@ -202,6 +209,7 @@ namespace Anki {
       typedef TimestampByKeyMap_t::iterator TimestampByKeyMapIter_t;
       typedef std::map<TimeStamp_t, HistPoseKey> KeyByTimestampMap_t;
       typedef KeyByTimestampMap_t::iterator KeyByTimestampMapIter_t;
+      typedef KeyByTimestampMap_t::const_iterator const_KeyByTimestampMapIter_t;
       TimestampByKeyMap_t tsByKeyMap_;
       KeyByTimestampMap_t keyByTsMap_;
       
