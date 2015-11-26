@@ -308,7 +308,10 @@ public:
     u16  GetLastSentPathID()     const { return _lastSentPathID;  }
 
     bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
-    
+  
+    // Execute a manually-assembled path
+    Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
+  
     //
     // Object Docking / Carrying
     //
@@ -674,7 +677,6 @@ public:
     void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
     // Sends a path to the robot to be immediately executed
-    Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
     bool                      _visionWhileMovingEnabled = false;
 
     /*

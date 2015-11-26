@@ -168,10 +168,10 @@ namespace Anki {
         
         result = ActionResult::FAILURE_TIMEOUT;
       }
+      
       // Don't do anything until we have reached the waitUntilTime
       else if(currentTimeInSeconds >= _waitUntilTime)
       {
-        
         if(!_preconditionsMet) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.\n", GetName().c_str());
           SetStatus(GetName() + ": check preconditions");
@@ -184,6 +184,9 @@ namespace Anki {
           if(result == ActionResult::SUCCESS) {
             PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
+            
+            // It's possible Init() updated timeout:
+            _timeoutTime = currentTimeInSeconds + GetTimeoutInSeconds();
             
             // If preconditions were successfully met, switch result to RUNNING
             // so that we don't think the entire action is completed. (We still
