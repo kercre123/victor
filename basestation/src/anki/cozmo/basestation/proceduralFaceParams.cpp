@@ -13,7 +13,6 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -210,6 +209,55 @@ ProceduralFaceParams& ProceduralFaceParams::Combine(const ProceduralFaceParams& 
   return *this;
 }
 
+  
+ProceduralFaceParams::Value ProceduralFaceParams::Clip(Parameter param, Value value) const
+{
+# define POS_INF std::numeric_limits<Value>::max()
+# define NEG_INF std::numeric_limits<Value>::min()
+  
+  static const std::map<Parameter, std::pair<Value,Value>> LimitsLUT = {
+    {Parameter::LowerLidAngle,      {-45,   45}},
+    {Parameter::UpperLidAngle,      {-45,   45}},
+    {Parameter::EyeScaleX,          {  0,   POS_INF}},
+    {Parameter::EyeScaleY,          {  0,   POS_INF}},
+    {Parameter::LowerInnerRadiusX , {  0,   1}},
+    {Parameter::LowerInnerRadiusY , {  0,   1}},
+    {Parameter::UpperInnerRadiusX , {  0,   1}},
+    {Parameter::UpperInnerRadiusY , {  0,   1}},
+    {Parameter::LowerOuterRadiusX , {  0,   1}},
+    {Parameter::LowerOuterRadiusY , {  0,   1}},
+    {Parameter::UpperOuterRadiusX , {  0,   1}},
+    {Parameter::UpperOuterRadiusY , {  0,   1}},
+    {Parameter::LowerLidY,          {  0,   1}},
+    {Parameter::UpperLidY,          {  0,   1}},
+    {Parameter::LowerLidBend,       {  0,   1}},
+    {Parameter::UpperLidBend,       {  0,   1}},
+  };
+  
+  auto limitsIter = LimitsLUT.find(param);
+  if(limitsIter == LimitsLUT.end()) {
+    // No limits specified for this parameter
+    return value;
+  } else {
+    const Value MinVal = limitsIter->second.first;
+    const Value MaxVal = limitsIter->second.second;
+    if(value < MinVal) {
+      PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.TooSmall",
+                          "%f less than min value %f for parameter %s. Clipping.",
+                          value, MinVal, EnumToString(param));
+      return MinVal;
+    } else if(value > MaxVal) {
+      PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.TooLarge",
+                          "%f greater than max value %f for parameter %s. Clipping.",
+                          value, MaxVal, EnumToString(param));
+      return MaxVal;
+    }
+    return value;
+  }
+  
+# undef POS_INF
+# undef NEG_INF
+} // Clip()
 
 } // namespace Cozmo
 } // namespace Anki
