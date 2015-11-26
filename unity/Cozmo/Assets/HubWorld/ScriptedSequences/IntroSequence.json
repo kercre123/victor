@@ -21,7 +21,57 @@
       "ExitConditions": []
     },
     {
-      "Name": "AriaUploadLine",
+      "Name": "AriaIntroLine1",
+      "Id": 9,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "IntroSequence.AriaIntroLine1",
+          "Speaker": "Aria",
+          "IsRight": false
+        },
+        {
+          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
+          "TimeInSeconds": 15.0,
+          "BlockInput": true,
+          "AllowSkipAfterDelay": true,
+          "SkipDelayInSeconds": 0.0
+        }
+      ],
+      "ExitConditions": []
+    },
+    {
+      "Name": "AriaIntroLine2",
+      "Id": 10,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "IntroSequence.AriaIntroLine2",
+          "Speaker": "Aria",
+          "IsRight": false
+        },
+        {
+          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
+          "TimeInSeconds": 15.0,
+          "BlockInput": true,
+          "AllowSkipAfterDelay": true,
+          "SkipDelayInSeconds": 0.0
+        }
+      ],
+      "ExitConditions": []
+    },
+    {
+      "Name": "AriaIntroLine3",
       "Id": 2,
       "Sequencial": true,
       "Final": false,
@@ -31,22 +81,10 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
-          "LineKey": "IntroSequence.AriaUploadLine",
+          "LineKey": "IntroSequence.AriaIntroLine3",
           "Speaker": "Aria",
           "IsRight": false
-        }
-      ],
-      "ExitConditions": []
-    },
-    {
-      "Name": "Wait",
-      "Id": 4,
-      "Sequencial": false,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
+        },
         {
           "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
           "TimeInSeconds": 15.0,
@@ -71,19 +109,57 @@
           "LineKey": "IntroSequence.CozmoBleepLine",
           "Speaker": "Cozmo",
           "IsRight": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
+          "TimeInSeconds": 15.0,
+          "BlockInput": true,
+          "AllowSkipAfterDelay": true,
+          "SkipDelayInSeconds": 0.0
         }
       ],
       "ExitConditions": []
     },
     {
-      "Name": "Wait",
-      "Id": 5,
+      "Name": "AriaUploadLine1",
+      "Id": 11,
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
       "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "IntroSequence.AriaUploadLine1",
+          "Speaker": "Aria",
+          "IsRight": false
+        },
+        {
+          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
+          "TimeInSeconds": 15.0,
+          "BlockInput": true,
+          "AllowSkipAfterDelay": true,
+          "SkipDelayInSeconds": 0.0
+        }
+      ],
+      "ExitConditions": []
+    },
+    {
+      "Name": "AriaUploadLine2",
+      "Id": 8,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
+          "LineKey": "IntroSequence.AriaUploadLine2",
+          "Speaker": "Aria",
+          "IsRight": false
+        },
         {
           "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
           "TimeInSeconds": 15.0,

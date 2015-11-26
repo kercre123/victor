@@ -18,13 +18,22 @@ namespace Cozmo.HubWorld {
 
     public virtual void Initialize(ChallengeData challengeData) {
     
-      _ChallengeId = challengeData.ChallengeID;
+      if (challengeData != null) {
+        _ChallengeId = challengeData.ChallengeID;
+      }
       _ButtonScript.onClick.AddListener(HandleButtonClicked);
 
       // Allow for buttons that only show an image and no text
       if (_ButtonLabel != null) {
         _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
       }
+    }
+
+    private void Update() {
+      OnUpdate();
+    }
+
+    protected virtual void OnUpdate() {
     }
 
     private void HandleButtonClicked() {

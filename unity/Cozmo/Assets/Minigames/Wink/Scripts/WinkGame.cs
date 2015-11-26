@@ -9,6 +9,7 @@ namespace Wink {
     private bool _WinkWaveCompleted = false;
     private float _WinkWaveAccumulator = 0.0f;
     private float _LastWaveMessageTime = 0.0f;
+    private int _WaveSuccessCount = 0;
 
     public enum WinkStatus {
       Left,
@@ -20,6 +21,13 @@ namespace Wink {
 
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfigData) {
       
+    }
+
+    public void WaveSuccess() {
+      _WaveSuccessCount++;
+      if (_WaveSuccessCount > 3) {
+        RaiseMiniGameWin();
+      }
     }
 
     void Start() {

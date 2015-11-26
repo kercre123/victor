@@ -143,9 +143,6 @@
     <Compile Include="ChangeDurationForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="CheckBoxes.cs">
-      <SubType>Form</SubType>
-    </Compile>
     <Compile Include="ExtraData.cs" />
     <Compile Include="IPForm.cs">
       <SubType>Form</SubType>

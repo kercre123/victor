@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Name: WinkGameChallenge1
   m_EditorClassIdentifier: 
   MinigamePrefab: {fileID: 138730, guid: a104eb00efac94d83853d9d2c311e5c8, type: 2}
-  ChallengeID: WinkGame1
+  ChallengeID: WinkGameChallenge1
   EnableHubWorldChallenge: 1
   EnableDevWorldChallenge: 1
   ChallengeTitleKey: hubWorld.winkGame.challenge1
-  ChallengeIcon: {fileID: 0}
+  ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
