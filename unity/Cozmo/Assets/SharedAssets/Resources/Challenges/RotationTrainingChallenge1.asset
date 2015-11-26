@@ -18,6 +18,7 @@ MonoBehaviour:
   ChallengeTitleKey: hubWorld.rotationTraining.challenge1
   ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   ChallengeReqs:
-    ChallengeGateKeys: []
+    ChallengeGateKeys:
+    - VisionTrainingChallenge1
     StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 40aabc66f6a664960b3e775e18750d9e, type: 2}

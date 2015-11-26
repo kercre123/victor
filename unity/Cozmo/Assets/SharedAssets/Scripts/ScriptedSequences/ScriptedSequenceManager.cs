@@ -11,6 +11,17 @@ namespace ScriptedSequences {
 
     public List<TextAsset> SequenceTextAssets = new List<TextAsset>();
 
+    public ScriptedSequence CurrentSequence {
+      get {
+        return _CurrentSequence;
+      }
+      private set {
+        _CurrentSequence = value;
+      }
+    }
+
+    private ScriptedSequence _CurrentSequence = null;
+
     private static ScriptedSequenceManager _instance;
 
     public static ScriptedSequenceManager Instance { 
@@ -27,6 +38,7 @@ namespace ScriptedSequences {
     }
 
     private static JsonSerializerSettings _JsonSettings;
+
     public static JsonSerializerSettings JsonSettings {
       get {
         if (_JsonSettings == null) {
@@ -63,7 +75,7 @@ namespace ScriptedSequences {
         try {
           Sequences.Add(JsonConvert.DeserializeObject<ScriptedSequence>(textAsset.text, JsonSettings));
         }
-        catch(Exception ex) {
+        catch (Exception ex) {
           DAS.Error(this, "Encountered error loading ScriptedSequenceFile " + textAsset.name + ": " + ex.ToString());
         }
       }
@@ -74,8 +86,7 @@ namespace ScriptedSequences {
       }
     }
 
-    public ISimpleAsyncToken ActivateSequence(string name, bool forceReplay = false)
-    {
+    public ISimpleAsyncToken ActivateSequence(string name, bool forceReplay = false) {
       var sequence = Sequences.Find(s => s.Name == name);
 
       if (sequence == null) {
@@ -96,17 +107,20 @@ namespace ScriptedSequences {
 
       onSuccess = () => {
         token.Succeed();
+        _CurrentSequence = null;
         sequence.OnComplete -= onSuccess;
         sequence.OnError -= onError;
       };
       onError = (ex) => {
         token.Fail(ex);
+        _CurrentSequence = null;
         sequence.OnComplete -= onSuccess;
         sequence.OnError -= onError;
       };
       sequence.OnComplete += onSuccess;
       sequence.OnError += onError;
 
+      _CurrentSequence = sequence;
       sequence.Enable();
 
       return token;
