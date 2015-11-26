@@ -10,13 +10,14 @@
  *
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "util/global/globalDefinitions.h"
-#include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 
 
 #if ANKI_DEV_CHEATS
@@ -127,38 +128,45 @@ SimpleBehaviorChooser::~SimpleBehaviorChooser()
 // a particular input event. It goes through our list of reactionary Behaviors, and if the behavior's set of event
 // tags includes the type associated with this event, we return it
 template <typename EventType>
-IReactionaryBehavior* ReactionaryBehaviorChooser::_GetReactionaryBehavior(const AnkiEvent<EventType>& event,
-                                                                          std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet
-                                                                          ) const
+IReactionaryBehavior* ReactionaryBehaviorChooser::_GetReactionaryBehavior(
+  const Robot& robot,
+  const AnkiEvent<EventType>& event,
+  std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet) const
 {
-  // Note this current implementation simply returns the first behavior in the list that cares about this event. There
-  // could be others but simply the first is returned.
+  // Note this current implementation simply returns the first behavior in the list that cares about this
+  // event, and is runnable. There could be others but simply the first is returned.
   for (auto& behavior : _reactionaryBehaviorList)
   {
     if (0 != getTagSet(*behavior).count(event.GetData().GetTag()))
     {
-      return behavior;
+      if ( behavior->IsRunnable(robot, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) ) {
+        return behavior;
+      }
     }
   }
   return nullptr;
 }
 
-IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const
+IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(
+  const Robot& robot,
+  const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const
 {
   auto getEngineToGameTags = [](const IReactionaryBehavior& behavior) -> const std::set<ExternalInterface::MessageEngineToGameTag>&
   {
     return behavior.GetEngineToGameTags();
   };
-  return _GetReactionaryBehavior(event, getEngineToGameTags);
+  return _GetReactionaryBehavior(robot, event, getEngineToGameTags);
 }
 
-IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const
+IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(
+  const Robot& robot,
+  const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const
 {
   auto getGameToEngineTags = [](const IReactionaryBehavior& behavior) -> const std::set<ExternalInterface::MessageGameToEngineTag>&
   {
     return behavior.GetGameToEngineTags();
   };
-  return _GetReactionaryBehavior(event, getGameToEngineTags);
+  return _GetReactionaryBehavior(robot, event, getGameToEngineTags);
 }
   
 ReactionaryBehaviorChooser::~ReactionaryBehaviorChooser()
