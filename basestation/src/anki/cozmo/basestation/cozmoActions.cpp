@@ -969,10 +969,6 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
 
-      // Set the timeout to 1.5X as long as we expect the drive to take based
-      // on distance and speed settings
-      _timeout_sec = 1.5f * std::abs(_dist_mm) / _speed_mmps;
-
       return ActionResult::SUCCESS;
     }
     

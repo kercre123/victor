@@ -262,7 +262,6 @@ namespace Anki {
       f32 _speed_mmps = 50.f;
       f32 _accel_mmps2 = 10.f;
       f32 _decel_mmps2 = 10.f;
-      f32 _timeout_sec = -1.f;
       
       bool _hasStarted = false;
       
