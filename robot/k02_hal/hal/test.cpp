@@ -42,10 +42,10 @@ void StartupSelfTest(void) {
   STARTUP_ERROR result = RunTests();
   
   if (result != ERROR_NONE) {
-    FacePrintf("%i FAIL", (int) result);
+    FacePrintf("Fail %i", (int) result);
   } else {
-    const uint8_t* SSID = (uint8_t*) 0xFFC;
-    FacePrintf("%2XOK", *SSID);
+    const uint16_t* SSID = (uint16_t*) 0xFFC;
+    FacePrintf("               OK%2x", *SSID);
   }
 }
 

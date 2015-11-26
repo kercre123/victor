@@ -17,6 +17,7 @@
 #include "hal/portable.h"
 #include "hal/board.h"
 #include "hal/uart.h"
+
 #include "../app/fixture.h"
 #include <stdio.h>
 #include <stdarg.h>
@@ -47,7 +48,8 @@ void SlowPrintf(const char* format, ...);
 #define SWD_FAULT 4
 #define SWD_PARITY 8
 
-// This short delay was tested empirically - it must be fast (~10) to work with the nRF51's strange glitch filter
+// This short delay was tested empirically - it must be fast (>125KHz) to work with the nRF51's strange glitch filter
+// 10 bit delays makes about
 #define bit_delay() {volatile int x = 10; while (x--);}
 
 char HostBus = 0; // SWD bus is controlled by the host or target
@@ -282,7 +284,7 @@ int swd_write(char APnDP, int A, unsigned long data)
 	if(count_ones(wpr&0x1E)%2) // odd number of 1s
 		wpr |= 1<<5;	  // set parity bit
 #ifdef SWD_DEBUG
-	SlowPrintf("swd_write(Port=%s, Addr=%d, data=%08x, wpr=%02x) = ",
+	SlowPrintf("swd_write(Port=%s, Addr=%x, data=%08x, wpr=%02x) = ",
 			APnDP ? "Access" : "Debug",
 			A, data, wpr);
 #endif
@@ -346,7 +348,7 @@ int swd_read(char APnDP, int A, volatile unsigned long *data)
   }
   
   // Bail out on failure
-  if (response != SWD_ACK)
+  if (response != SWD_ACK) 
     return response;
   
 	read_bits( 32, data); // read data
@@ -383,21 +385,6 @@ void swd_setcsw(int addr, int size)
   swd_write(1, 0, csw);
 }
 
-void swd_chipinit(void)
-{
-  unsigned long value;
-  swd_read(0, 0, &value);   // Debug port (not AP), register 0 (IDCODE)
-  swd_write(0, 0x4, 0x50000000);  // Power up system and debug, and place chip in reset 
-  swd_read(0, 0x4, &value);       // Check powered up
-  SlowPrintf("%x == %x\n", value >> 24, 0xfc);  // 0xfc is the value of the Debug Ctrl/Stat register on K02
-  
-  //swd_write(0, 0x8, 0xF0);   // Set AP bank 0xF on AP 0x0 (the memory AP)
-  //swd_read(1, 0xC, &value);   // Read AP (not debug port), register 0xFC (IDCODE)
-  //swd_read(0, 0xC, &value);   // Read back result from RB registsr
-  swd_write(0, 0x8, 0x0);   // Set AP bank 0x0 on AP 0x0 (the only useful bank)
-  swd_setcsw(1,2);          // 32-bit auto-inc
-}
-
 int swd_read32(int addr)
 {
   unsigned long value;
@@ -406,8 +393,11 @@ int swd_read32(int addr)
   r |= swd_read(0, 0xC, &value);  // Read readback reg
 #ifdef SWD_DEBUG  
   if (r != SWD_ACK)
-    SlowPrintf("FAILED swd_read32 @ %08x\n", addr);
-#endif  
+    SlowPrintf("FAILED");
+  SlowPrintf("             swd_read32 @ %08x = %08x\n", addr, value);
+#endif
+  if (r != SWD_ACK)
+    throw ERROR_SWD_READ_FAULT;
   return value;
 }
 
@@ -419,8 +409,11 @@ int swd_write32(int addr, int data)
   r |= swd_read(0, 0xC, &value);  // Read readback reg.. for some reason?
 #ifdef SWD_DEBUG  
   if (r != SWD_ACK)
-    SlowPrintf("FAILED swd_write32 @ %08x = %08x\n", addr, data);
+    SlowPrintf("FAILED");
+  SlowPrintf("             swd_write32 @ %08x = %08x\n", addr, data);
 #endif
+  if (r != SWD_ACK)
+    throw ERROR_SWD_WRITE_FAULT;
   return r;
 }
 
@@ -433,11 +426,15 @@ int swd_write16(int addr, u16 data)
   r |= swd_read(0, 0xC, &value);  // Read readback reg.. for some reason?
 #ifdef SWD_DEBUG  
   if (r != SWD_ACK)
-    SlowPrintf("FAILED swd_write16 @ %08x = %08x\n", addr, data);
+    SlowPrintf("FAILED");
+  SlowPrintf("             swd_write16 @ %08x = %08x\n", addr, data);
 #endif
+  if (r != SWD_ACK)
+    throw ERROR_SWD_WRITE_FAULT;
   swd_setcsw(1, 2);   // Back to 32-bit mode
   return r;
 }
+
 
 // Write a CPU register in the ARM core - mostly to set up PC and SP before execution
 void swd_write_cpu_reg(int reg, int value)
@@ -455,9 +452,6 @@ void swd_write_cpu_reg(int reg, int value)
 // Read a CPU register from the ARM core
 int swd_read_cpu_reg(int reg)
 {
-  // XXX: The code below totally doesn't work
-  return 0;
-/*  
   // Wait for debug module to free up from last write
   int dhcsr;
   do {
@@ -472,31 +466,74 @@ int swd_read_cpu_reg(int reg)
   } while ( !(dhcsr & CoreDebug_DHCSR_S_REGRDY_Msk) );
   
   return swd_read32((int)&(CoreDebug->DCRDR));         // Read value from data reg - DCRDR
-*/
 }
 
-extern u16 g_Body[], g_BodyEnd[];
-//extern u16 g_appbin[], g_append[];
-
-int swd_flash_page(int destaddr, u16* image)
+// Display a crash dump - for debugging the stub/firmware
+void swd_crash_dump()
 {
-  int r = 0;
-  r |= swd_write32(0x40022010, 0x00000201);  // Enter program mode
-  // Packed mode is not supported by this debug interface!
-  swd_setcsw(1, 1);   // Switch to 16-bit mode    
-  r |= swd_write(1, 0x4, destaddr);    // Start address
-  u16* next = image;
-  while (next < image+512)
-  {
-    r |= swd_write(1, 0xc, *next++);  
-    r |= swd_write(1, 0xc, (*next++) << 16); // Due to lack of packed mode
+  try {
+    // Halt CPU
+    swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);  // Run core - AP_DRW=RUN_CMD - DO NOT LEAVE LSB 1!
+
+    SlowPrintf("\n\n== Crash dump from DUT\n");
+  
+    for (int i = 0; i < 16; i++)
+      SlowPrintf("R%-2d = %08x  ", i, swd_read_cpu_reg(i));
+    int stack = swd_read_cpu_reg(13), pc = swd_read_cpu_reg(15);
+    
+    SlowPrintf("\n== Stack at %08x:\n", stack);
+    for (int i = 0; i < 16; i++)
+      SlowPrintf("%08x  ", swd_read32(stack + i*4));
+    
+    SlowPrintf("\n== PC at %08x:\n", pc);
+    for (int i = 0; i < 16; i++)
+      SlowPrintf("%04x %04x ", swd_read32(pc + i*4) & 65535, (swd_read32(pc + i*4) >> 16) & 65535);
+  } catch (error_t) {
+    // Ignore exceptions during crash dumps so we don't lose the real root cause
+    SlowPrintf("..unable to read DUT\n");
   }
-  swd_setcsw(1, 2);   // Back to 32-bit mode
-  r |= swd_write32(0x40022010, 0x00000200);  // Finished!
+  SlowPrintf("\n\n");
+}
+
+// Initialize the chip
+void swd_chipinit(void)
+{
+  unsigned long value, idcode;
+  swd_read(0, 0, &idcode);   // Debug port (not AP), register 0 (IDCODE)
   
-  //STM_EVAL_LEDToggle(LED2);   // Blue LED
+  swd_write(0, 0x4, 0x54000000);  // Power up system and debug - place chip in reset   
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);  // Halt CPU so we can take over (w/debug)
+  swd_write(0, 0x4, 0x50000000);  // Power up system and debug - disable reset
+  swd_read(0, 0x4, &value);       // Check powered up and out of reset
+  if (0xf0 != (value >> 24))
+    throw ERROR_SWD_IDCODE;
   
-  return r;
+  swd_write(0, 0x8, 0x0);   // Set AP bank 0x0 on AP 0x0 (the only useful bank)
+  swd_setcsw(1,2);          // 32-bit auto-inc
+    
+  // This is for accessing the MDM-AP from the ST and K02 - not needed to distinguish K02 (M4) vs nRF51 (M0)
+  //swd_write(0, 0x8, 0xF0);   // Set AP bank 0xF on AP 0x0 (the memory AP)
+  //swd_read(1, 0xC, &value);   // Read AP (not debug port), register 0xFC (IDCODE)
+  //swd_read(0, 0xC, &value);   // Read back result from RB registsr
+
+  // If this is the K02, do K02 init
+  if (idcode == 0x2ba01477)
+  {
+    // Check whether device is locked and unlocked it (see AN4835)
+    
+  // If this is the nRF51, do nRF51 init
+  } else if (idcode == 0x0bb11477) {
+    // Suggested workarounds - they don't seem to apply to us anyway
+    //swd_write32(0x40000524, 0xF); // PAN-16 - workaround for RAMs not powering up (on obsolete revs)
+    //swd_write32(0x40000608, 0x1); // Turn off MPU (protection) while debugging
+    
+  // If we don't recognize the chip, fault out
+  } else {
+    throw ERROR_SWD_IDCODE;
+  }
+
+  // Better engineers use a breakpoint on the flash reset vector
+  // But we're just going to assume our stub is safe to run without a boot ROM first
 }
 
 // Lock the JTAG port - upon next reset, JTAG will not work again - EVER
@@ -508,11 +545,9 @@ int swd_lock_jtag(void)
   return 0;
 }
 
+// Set up the SWD GPIO
 void InitSWD(void)
 {
-  // Put board power in safe state
-  GPIO_SetBits(GPIOC, GPIO_Pin_12);   // Charge power off
-
   GPIO_InitTypeDef  GPIO_InitStructure; 
   GPIO_InitStructure.GPIO_Pin = GPIOB_SWD;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -526,126 +561,110 @@ void InitSWD(void)
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_Pin = GPIOA_TXRX;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
-  
-  // Wait for lines to settle
-  MicroWait(200);
-  
-  // Power it on
-  GPIO_ResetBits(GPIOC, GPIO_Pin_12);
 }
 
-static u8 GetSerialNumber(u32* serialNumberOut, u8* bitOut)
+// Be nice and stop driving power into turned-off boards
+void SWDDeinit(void)
 {
-  u32 serialNumber;
-  u8 bit;
-  
-  {
-    // Compute serial number
-    SlowPutString("Getting serial...\r\n");
-    serialNumber = 2048;
-    u8* serialbase = (u8*)FLASH_SERIAL_BITS;
-    while (serialbase[(serialNumber >> 3)] == 0)
-    {
-      serialNumber += 8;
-      if (serialNumber > 0x7ffff)
-      {
-        return 1;
-      }
-    }
-    
-    u8 bitMask = serialbase[(serialNumber >> 3)];
-    
-    // Find which bit we're on
-    bit = 0;
-    while (!(bitMask & (1 << bit)))
-    {
-      bit++;
-    }
-    serialNumber += bit;
-    
-    SlowPrintf("serial: %i, %08X, %i\r\n", serialNumber, serialNumber, bit);
-  }
-  
-  serialNumber |= (FIXTURE_SERIAL & 0xFFF) << 20;
-  
-  *serialNumberOut = serialNumber;
-  *bitOut = bit;
-  
-  return 0;
+  PIN_IN(GPIOB, PINB_SWD);
+  PIN_IN(GPIOB, PINB_SWC);
+  PIN_PULL_NONE(GPIOB, PINB_SWD);
+  PIN_PULL_NONE(GPIOB, PINB_SWC);
 }
 
-// Load a flash stub into the MCU and execute it
+#define STUB_TIMEOUT 1000000  // 1 second is long enough to flash a page, right?
+// Values placed in stub 'command'
+#define WAITING_FOR_BLOCK -1
+
+// Reboot the MCU, then load and execute a flash stub
 // Stubs are bins (see binaries.h) with initialization code at the front that manage flashing a block at a time
-void SWDInitStub(u32 loadaddr, const u8* start, const u8* end)
+// Stubs consist of a load address (usually 0x2000000), temp addr (load+0x1000), and a command addr (temp+blocksize+4)
+// Typical block sizes are 1KB or 2KB - see the other stubs (in fixture/flash_stubs) for examples
+void SWDInitStub(u32 loadaddr, u32 cmdaddr, const u8* start, const u8* end)
 {
-  u32 serialNumber;
-  u8 bit;
+  // Power cycle the board to clear the cobwebs
+  DisableBAT();      // DisableBAT contains its own delay to empty out power
+  EnableBAT();
+  MicroWait(50000);  // Power should be stable by now (bit unstable at 10ms)
 
-  int good = 0;
-  
   // Try to contact via SWD
   InitSWD();
   swd_enable();
   swd_chipinit();
-  
-  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);            // Halt core, just in case
- 
-  SlowPrintf("SWD writing stub..\n");
+
+  // Write the stub to RAM
+  SlowPrintf("SWD writing stub..");
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);            // Halt core again, just in case
   swd_write(1, 0x4, loadaddr);
   for (int i = 0; i < (end+3-start)/4; i++)
-    swd_write(1, 0xc, ((u32*)(start))[i]);
-  
-  // Start up the program
-  swd_write_cpu_reg(15, loadaddr);      // Point at start address
-  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0000);  // Run core - AP_DRW=RUN_CMD - DO NOT LEAVE LSB 1!
-
-  // Grab (and program) the serial number first in the factory block so we
-  // can put it in the bootloader too.
-  //if (serialNumber == 0xFFFFffff)
-  if (GetSerialNumber(&serialNumber, &bit))
-  {
-    SlowPrintf("OUT OF SERIALS!\r\n");
-    throw ERROR_OUT_OF_SERIALS;
-  }
-  
-  good = 1;
-
-  // On success, reserve this serial number - wait, shouldn't we do this earlier?
-  if (0 && good)
-  {
-    u32 location = FLASH_SERIAL_BITS + ((serialNumber & 0x7ffff) >> 3);
+    if (SWD_ACK != swd_write(1, 0xc, ((u32*)(start))[i]))
+      throw ERROR_SWD_WRITE_STUB;
+ 
+  // Start up the stub
+  swd_write32(cmdaddr, 0);          // Clear command/status - so we can watch it startup
+  swd_write_cpu_reg(15, loadaddr);  // Point at start address
+  // Unhalt core - leave debugging enabled, since nRF51 gives us special flashing powers in debug mode
+  swd_write32((int)&CoreDebug->DHCSR, 0xA05F0001);  
     
-    FLASH_Unlock();
-    FLASH_ProgramByte(location, ~(1 << bit));
-    FLASH_Lock();
-    
-    ConsolePrintf("esn,%08X\r\n", serialNumber);
-    
-    SlowPutString("OK\r\n");
-  } else {
-    ; //throw ERROR_HEAD_BOOTLOADER;
-  }    
+  // Wait for stub to wake up
+  SlowPrintf("waiting..\n");
+  u32 starttime = getMicroCounter();
+  while (swd_read32(cmdaddr) != WAITING_FOR_BLOCK)
+    if (getMicroCounter() - starttime > STUB_TIMEOUT) {
+      swd_crash_dump();
+      throw ERROR_SWD_NOSTUB;
+    }
 }
 
-// Send a block to the stub
-void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end)
-{
+// Send a file to the stub, one block at a time
+void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u8* end, u32 serialaddr, u32 serial)
+{ 
   while (start < end)
   {
-    SlowPrintf("SWD sending block %08x to stub..", flashaddr);
-    
-    swd_write(1, 0x4, tempaddr);
-    for (int i = 0; i < blocklen/4; i++)
-      swd_write(1, 0xc, ((u32*)(start))[i]);
-    swd_write(1, 0xc, flashaddr);
-    
-    SlowPrintf("Waiting on stub..\n");
-    
+    // Be sure the stub isn't busy..
     u32 starttime = getMicroCounter();
-    while (swd_read32(tempaddr+blocklen) != -1)
-    {
-      if (getMicroCounter() - starttime > 1000000)
-        throw ERROR_HEAD_NOSTUB;
+    while (swd_read32(tempaddr+blocklen) != WAITING_FOR_BLOCK)
+    if (getMicroCounter() - starttime > STUB_TIMEOUT) {
+      swd_crash_dump();
+      throw ERROR_SWD_FLASH_TIMEOUT;
+    }
+  
+    // Send the block
+    SlowPrintf("SWD sending block %08x to stub..", flashaddr);
+    swd_write(1, 0x4, tempaddr);
+    for (int i = 0; i < blocklen/4; i++) {
+      int val = ((u32*)(start))[i];
+      if (serialaddr && flashaddr+i*4 == serialaddr)
+        val = serial;   // Substitute serial when we hit that address
+      if (SWD_ACK != swd_write(1, 0xc, val))
+        throw ERROR_SWD_WRITE_BLOCK;    
+    }
+    // nRF51 (and other M0s) only accept 1KB auto-increment, so use write32 to cross blocklen boundary
+    swd_write32(tempaddr+blocklen, flashaddr);  // Send address to flash to
+    
+    // Wait for it to flash
+    SlowPrintf("waiting..");
+    starttime = getMicroCounter();
+    while (swd_read32(tempaddr+blocklen) != WAITING_FOR_BLOCK)
+      if (getMicroCounter() - starttime > STUB_TIMEOUT) {
+        swd_crash_dump();
+        throw ERROR_SWD_FLASH_TIMEOUT;
+      }
+      
+    // Verify that it did flash
+    SlowPrintf("verifying..\n");
+    for (int i = 0; i < blocklen/4; i++) {
+      int addr = flashaddr+i*4;
+      int val = ((u32*)(start))[i];
+      int actual = swd_read32(addr);
+      if (serialaddr && addr == serialaddr)
+        val = serial;   // Substitute serial when we hit that address
+      if (actual != val)
+      {
+        SlowPrintf("Data found at %08x was %08x, not %08x\n", addr, actual, val);
+        ConsolePrintf("mismatch,%08x,%08x,%08x\r\n", addr, actual, val);
+        throw ERROR_SWD_MISMATCH;
+      }
     }
     
     flashaddr += blocklen;
@@ -653,10 +672,4 @@ void SWDSend(u32 tempaddr, int blocklen, u32 flashaddr, const u8* start, const u
   }
   
   SlowPrintf("Success!\n");
-}
-
-void SWDReset(int resetaddr)
-{
-  swd_write32(resetaddr, -2);
-  SlowPrintf("Resetting SWD..\n");
 }

@@ -5,7 +5,10 @@
 #include "hal/board.h"
 #include "hal/console.h"
 #include "hal/uart.h"
+#include "hal/swd.h"
+
 #include "app/fixture.h"
+#include "app/binaries.h"
 
 #define GPIOA_TRX 2
 
@@ -31,7 +34,12 @@ bool BodyDetect(void)
 // Program code on body
 void BodyNRF51(void)
 {
-  throw ERROR_BODY_BOOTLOADER;
+  // Try to talk to head on SWD
+  SWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);
+
+  // Send the bootloader and app
+  SWDSend(0x20001000, 0x400, 0x0,    g_BodyBoot, g_BodyBootEnd,   0,    0);   // XXX: No serial number this time
+  SWDSend(0x20001000, 0x400, 0x1000, g_Body,     g_BodyEnd,       0,    0);  
 }
 
 // List of all functions invoked by the test, in order

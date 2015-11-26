@@ -211,6 +211,9 @@ void LoadRom(const uint8_t *rom, int length) {
   SlowPrintf("\nDone         ");
 }
 
+int GetSequence(void);
+extern FixtureType g_fixtureType;
+
 void ProgramCube(void) {
   EnableBAT();
 
@@ -223,6 +226,24 @@ void ProgramCube(void) {
 
   LoadRom(g_Cube, g_CubeEnd - g_Cube);
 
+  // Check serial number from (possibly) last time
+  // We don't want to reserialize the same block
+  u32 serial;
+  CubeRead(0x3ff0, (u8*)&serial, 4);
+  SlowPrintf("Serial was: %08x\n", serial);
+  if (serial != 0xffffffff) {
+    SlowPrintf("Serial already set, won't set again\n");
+  } else {
+    serial = GetSequence();
+    if (g_fixtureType == FIXTURE_CHARGER_TEST)
+      serial |= 0x80000000;
+    SlowPrintf("Setting to: %08x\n", serial);
+    CubeWriteEn();
+    CubeProgram(0x3ff0, (u8*)&serial, 4);
+    CubeRead(0x3ff0, (u8*)&serial, 4);
+    SlowPrintf("Serial is now: %08x\n", serial);
+  }
+    
   GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
   GPIO_ResetBits(GPIOB, GPIO_Pin_0);  // Turn off Low-voltage PROG
   DisableBAT();

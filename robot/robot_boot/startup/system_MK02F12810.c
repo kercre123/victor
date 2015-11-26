@@ -166,5 +166,5 @@ void GoSlow(void) {
   /* Wait until the system is in RUN mode */  
   while(SMC->PMSTAT != 0x01U) ;
 
-  SMC->PMPROT = FLASH_SMC_PMPROT_VALUE;
+  SMC->PMPROT = FLASH_SMC_PMPROT_VALUE;   // XXX: This doesn't do anything, since the reg is write-once
 }

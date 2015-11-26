@@ -583,6 +583,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\cube.c</FilePath>
             </File>
+            <File>
+              <FileName>testport.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\testport.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
