@@ -19,32 +19,36 @@ def chunk(i, size):
 	for x in range(0, len(i), size):
 		yield i[x:x+size]
 
+def rom_info(file):
+	with open(file, "rb") as fo:
+		elffile = ELFFile(fo)
+
+		segments = {}
+
+		# Build rom segments
+		for segment in elffile.iter_segments():
+			fo.seek(segment['p_offset'])
+			segments[segment['p_vaddr']] = fo.read(segment['p_filesz'])
+
+		# Locate vector table + magic header
+		for section in elffile.iter_sections():
+			if section.name == b"HEADER_ROM":
+				magic_location = section.header.sh_offset + 12
+
+		# flatten rom image
+		first = min(segments.keys())
+		last = max([addr+len(data) for addr, data in segments.items()])
+
+		base_addr = first
+		rom_data = b"\xFF" * (last-first)
+
+		for addr, data in segments.items():
+			addr = addr - first
+			rom_data = rom_data[:addr] + data + rom_data[addr+len(data):]
+	return rom_data, base_addr, magic_location			
+
 print("Building rom")
-with open(argv[1], "rb") as fo:
-	elffile = ELFFile(fo)
-
-	segments = {}
-
-	# Build rom segments
-	for segment in elffile.iter_segments():
-		fo.seek(segment['p_offset'])
-		segments[segment['p_vaddr']] = fo.read(segment['p_filesz'])
-
-	# Locate vector table + magic header
-	for section in elffile.iter_sections():
-		if section.name == b"HEADER_ROM":
-			magic_location = section.header.sh_offset + 12
-
-	# flatten rom image
-	first = min(segments.keys())
-	last = max([addr+len(data) for addr, data in segments.items()])
-
-	base_addr = first
-	rom_data = b"\xFF" * (last-first)
-
-	for addr, data in segments.items():
-		addr = addr - first
-		rom_data = rom_data[:addr] + data + rom_data[addr+len(data):]
+rom_data, base_addr, magic_location = rom_info(argv[1])
 
 # Save modified ELF
 print("Fixing header rom")
@@ -53,6 +57,8 @@ with open(argv[1], "rb+") as fo:
 
 	fo.seek(magic_location)
 	fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
+
+rom_data, base_addr, magic_location = rom_info(argv[1])
 
 # Zero pad to a 4k block (flash area)
 while len(rom_data) % BLOCK_LENGTH:
