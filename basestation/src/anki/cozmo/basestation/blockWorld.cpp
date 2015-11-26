@@ -907,8 +907,7 @@ namespace Cozmo {
         }
         
         if(_robot->GetMoveComponent().GetTrackToObject().IsSet() &&
-           obsID == _robot->GetMoveComponent().GetTrackToObject() &&
-           !_robot->GetMoveComponent().IsHeadLocked())
+           obsID == _robot->GetMoveComponent().GetTrackToObject())
         {
           UpdateTrackToObject(observedObject);
         }
