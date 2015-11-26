@@ -28,13 +28,15 @@ public:
   BehaviorFollowMotion(Robot& robot, const Json::Value& config);
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
-  
+
+  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
+
 protected:
     
   virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
-  
+
 private:
   
   bool _interrupted = false;

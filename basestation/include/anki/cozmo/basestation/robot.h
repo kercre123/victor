@@ -508,6 +508,8 @@ public:
     // Returns true if the pose is successfully updated, false otherwise.
     bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
 
+    Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
+
     
     // ============= Reactions =============
     using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
@@ -736,9 +738,9 @@ public:
                                            bool withInterpolation = false);
     
     Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+    Result GetComputedPoseAt(const TimeStamp_t t_request, const RobotPoseStamp** p, HistPoseKey* key = nullptr) const;
     Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
-    Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
-    
+  
     RobotPoseHistory* _poseHistory;
     
     // Takes startPose and moves it forward as if it were a robot pose by distance mm and

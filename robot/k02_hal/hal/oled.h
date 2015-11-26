@@ -57,7 +57,6 @@ namespace Anki
     {
       void OLEDFlip(void);
       void OLEDInit(void);
-      void FacePrintf(const char *format, ...);
     }
   }
 }

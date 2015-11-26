@@ -76,7 +76,15 @@ namespace Anki {
     
     return Pose2d(newAngle, newTranslation);
   }
-  
+
+  Point2f Pose2d::operator* (const Point2f &point) const
+  {
+    Point2f pointOut( GetRotationMatrix() * point);
+    pointOut += _translation;
+    
+    return pointOut;
+  }
+
   void Pose2d::PreComposeWith(const Pose2d &other)
   {
     _angle += other._angle;
