@@ -19,10 +19,7 @@ def chunk(i, size):
 	for x in range(0, len(i), size):
 		yield i[x:x+size]
 
-print("Building rom")
-with open(argv[1], "rb") as fo:
-	elffile = ELFFile(fo)
-
+def getElfInfo(elffile):
 	segments = {}
 
 	# Build rom segments
@@ -46,6 +43,14 @@ with open(argv[1], "rb") as fo:
 		addr = addr - first
 		rom_data = rom_data[:addr] + data + rom_data[addr+len(data):]
 
+	return magic_location, rom_data
+
+print("Building rom")
+with open(argv[1], "rb") as fo:
+	elffile = ELFFile(fo)
+
+	magic_location, rom_data = getElfInfo(elffile)
+
 # Save modified ELF
 print("Fixing header rom")
 with open(argv[1], "rb+") as fo:
@@ -53,6 +58,8 @@ with open(argv[1], "rb+") as fo:
 
 	fo.seek(magic_location)
 	fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
+
+magic_location, rom_data = getElfInfo(elffile)
 
 # Zero pad to a 4k block (flash area)
 while len(rom_data) % BLOCK_LENGTH:
