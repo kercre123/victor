@@ -46,7 +46,7 @@ namespace AnimationTool.Sequencer
             {
                 if (points[i] == dataPoint)
                 {
-                    x = Math.Round(points[i + 1].YValues[0] - dataPoint.YValues[0], 3);
+                    x = Math.Round(points[i + 1].YValues[0] - dataPoint.YValues[0], MoveSelectedDataPoints.DELTA_TIME_PRECISION);
                     break;
                 }
             }
