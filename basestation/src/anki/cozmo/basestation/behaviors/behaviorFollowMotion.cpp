@@ -116,7 +116,10 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
            relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol)
         {
           // Move towards the motion since it's centered
-          action = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
+          DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
+          driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
+          
+          action = driveAction;
           
         } else {
           PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,

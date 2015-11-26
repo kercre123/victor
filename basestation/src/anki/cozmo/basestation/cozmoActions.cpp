@@ -902,7 +902,7 @@ namespace Anki {
     bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
     {
       currentAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
-      const bool inPosition = NEAR(currentAngle, _targetAngle.ToFloat(), _angleTolerance.ToFloat());
+      const bool inPosition = NEAR(currentAngle-_targetAngle, 0.f, _angleTolerance);
       return inPosition;
     }
     
@@ -1475,8 +1475,7 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
     {
-      const bool inPosition = NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(),
-                                   _angleTolerance.ToFloat());
+      const bool inPosition = NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _angleTolerance);
       
       return inPosition;
     }
