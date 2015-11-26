@@ -176,15 +176,15 @@ static void RunStartupLights()
     LightOn(1);
     delay_ms(1);
     LightsOff();
-    if(j==2)
+    if(j>1)
       LightOn(4);
     delay_ms(1);
     LightsOff();
-    if(j==3)
+    if(j>2)
       LightOn(7);
     delay_ms(1);
     LightsOff();
-    if(j==4)
+    if(j>3)
       LightOn(10);
     delay_ms(1);
     LightsOff();
