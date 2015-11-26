@@ -236,6 +236,44 @@ namespace Anki {
     }; // class TurnInPlaceAction
     
     
+    // A simple action for drving a straight line forward or backward, without
+    // using the planner
+    class DriveStraightAction : public IAction
+    {
+    public:
+      // Positive distance for forward, negative for backward.
+      // Speed should be positive.
+      DriveStraightAction(f32 dist_mm, f32 speed_mmps);
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_STRAIGHT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+
+      void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
+      void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
+      
+    protected:
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual f32 GetTimeoutInSeconds() const override;
+      
+    private:
+      
+      f32 _dist_mm = 0.f;
+      f32 _speed_mmps = 50.f;
+      f32 _accel_mmps2 = 10.f;
+      f32 _decel_mmps2 = 10.f;
+      f32 _timeout_sec = -1.f;
+      
+      bool _hasStarted = false;
+      
+      std::string _name = "DriveStraightAction";
+      
+    }; // class DriveStraightAction
+    
+    
     class MoveHeadToAngleAction : public IAction
     {
     public:

@@ -100,23 +100,13 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
         const Radians relHeadAngle_rad = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
         const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
         
-        
         IAction* action = nullptr;
         
         if(relHeadAngle_rad.getAbsoluteVal() < _driveForwardTol &&
            relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol)
         {
           // Move towards the motion since it's centered
-          Pose3d newPose(robot.GetPose());
-          const f32 angleRad = newPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-          newPose.SetTranslation({newPose.GetTranslation().x() + _moveForwardDist_mm*std::cos(angleRad),
-            newPose.GetTranslation().y() + _moveForwardDist_mm*std::sin(angleRad),
-            newPose.GetTranslation().z()});
-          PathMotionProfile motionProfile(DEFAULT_PATH_MOTION_PROFILE);
-          motionProfile.speed_mmps *= _moveForwardSpeedIncrease; // Drive forward a little faster than normal
-          
-          action = new DriveToPoseAction(newPose, motionProfile,
-                                         false, false, 50, DEG_TO_RAD(45));
+          action = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
           
         } else {
           PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,

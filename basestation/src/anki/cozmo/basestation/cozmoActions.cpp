@@ -943,6 +943,72 @@ namespace Anki {
       return result;
     }
 
+#pragma mark ---- DriveStraightAction ----
+    
+    DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
+    : _dist_mm(dist_mm)
+    , _speed_mmps(std::abs(speed_mmps))
+    {
+      
+    }
+    
+    ActionResult DriveStraightAction::Init(Robot &robot)
+    {
+      const Radians heading = robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      
+      const Vec3f& T = robot.GetPose().GetTranslation();
+      const f32 x_start = T.x();
+      const f32 y_start = T.y();
+      
+      const f32 x_end = x_start + _dist_mm * std::cos(heading.ToFloat());
+      const f32 y_end = y_start + _dist_mm * std::sin(heading.ToFloat());
+      
+      Planning::Path path;
+      // TODO: does matID matter? I'm just using 0 below
+      if(false  == path.AppendLine(0, x_start, y_start, x_end, y_end,
+                                   _speed_mmps, _accel_mmps2, _decel_mmps2))
+      {
+        PRINT_NAMED_ERROR("DriveStraightAction.Init.AppendLineFailed", "");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      _name = "DriveStraight" + std::to_string(_dist_mm) + "mmAction";
+      _hasStarted = false;
+      
+      // Tell robot to execute this simple path
+      if(RESULT_OK != robot.ExecutePath(path, false)) {
+        return ActionResult::FAILURE_ABORT;
+      }
+
+      // Set the timeout to 1.5X as long as we expect the drive to take based
+      // on distance and speed settings
+      _timeout_sec = 1.5f * std::abs(_dist_mm) / _speed_mmps;
+
+      return ActionResult::SUCCESS;
+    }
+    
+    ActionResult DriveStraightAction::CheckIfDone(Robot &robot)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if(!_hasStarted) {
+        PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
+        _hasStarted = robot.IsTraversingPath();
+      } else if(/*hasStarted AND*/ !robot.IsTraversingPath()) {
+        result = ActionResult::SUCCESS;
+      }
+      
+      return result;
+    }
+    
+    f32 DriveStraightAction::GetTimeoutInSeconds() const
+    {
+      if(_timeout_sec < 0.f) {
+        return IAction::GetTimeoutInSeconds();
+      } else {
+        return _timeout_sec;
+      }
+    }
     
 #pragma mark ---- PanAndTiltAction ----
     
