@@ -91,6 +91,9 @@ public:
   // Combine the input params with those from our instance
   ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
   
+  // E.g. for unit tests
+  static void EnableClippingWarning(bool enable);
+  
 private:
   
   std::array<EyeParamArray, 2> _eyeParams{{}};
@@ -105,6 +108,7 @@ private:
   Value Clip(Parameter whichParam, Value value) const;
                                                           
   static ProceduralFaceParams* _resetData;
+  static std::function<void(const char*,Value,Value,Value)> ClipWarnFcn;
   
 }; // class ProceduralFaceParams
   
@@ -144,13 +148,11 @@ inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFace
 
 inline void ProceduralFaceParams::SetFaceScale(Point<2,Value> scale) {
   if(scale.x() < 0) {
-    PRINT_NAMED_WARNING("ProceduralFaceParams.SetFaceScale.InvalidScale",
-                        "Face X scale %f is less than zero. Clipping.", scale.x());
+    ClipWarnFcn("FaceScaleX", scale.x(), 0, std::numeric_limits<Value>::max());
     scale.x() = 0;
   }
   if(scale.y() < 0) {
-    PRINT_NAMED_WARNING("ProceduralFaceParams.SetFaceScale.InvalidScale",
-                        "Face Y scale %f is less than zero. Clipping.", scale.y());
+    ClipWarnFcn("FaceScaleY", scale.y(), 0, std::numeric_limits<Value>::max());
     scale.y() = 0;
   }
   _faceScale = scale;

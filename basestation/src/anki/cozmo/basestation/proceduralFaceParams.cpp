@@ -242,14 +242,10 @@ ProceduralFaceParams::Value ProceduralFaceParams::Clip(Parameter param, Value va
     const Value MinVal = limitsIter->second.first;
     const Value MaxVal = limitsIter->second.second;
     if(value < MinVal) {
-      PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.TooSmall",
-                          "%f less than min value %f for parameter %s. Clipping.",
-                          value, MinVal, EnumToString(param));
+      ClipWarnFcn(EnumToString(param), value, MinVal, MaxVal);
       return MinVal;
     } else if(value > MaxVal) {
-      PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.TooLarge",
-                          "%f greater than max value %f for parameter %s. Clipping.",
-                          value, MaxVal, EnumToString(param));
+      ClipWarnFcn(EnumToString(param), value, MinVal, MaxVal);
       return MaxVal;
     }
     return value;
@@ -258,6 +254,39 @@ ProceduralFaceParams::Value ProceduralFaceParams::Clip(Parameter param, Value va
 # undef POS_INF
 # undef NEG_INF
 } // Clip()
+  
+static void ClipWarning(const char* paramName,
+                        ProceduralFaceParams::Value value,
+                        ProceduralFaceParams::Value minVal,
+                        ProceduralFaceParams::Value maxVal)
+{
+  PRINT_NAMED_WARNING("ProceduralFaceParams.Clip.OutOfRange",
+                      "Value of %f out of range [%f,%f] for parameter %s. Clipping.",
+                      value, minVal, maxVal, paramName);
+}
+
+static void NoClipWarning(const char* paramName,
+                          ProceduralFaceParams::Value value,
+                          ProceduralFaceParams::Value minVal,
+                          ProceduralFaceParams::Value maxVal)
+{
+  // Do nothing
+}
+
+// Start out with warnings enabled:
+std::function<void(const char *,
+                   ProceduralFaceParams::Value,
+                   ProceduralFaceParams::Value,
+                   ProceduralFaceParams::Value)> ProceduralFaceParams::ClipWarnFcn = &ClipWarning;
+
+void ProceduralFaceParams::EnableClippingWarning(bool enable)
+{
+  if(enable) {
+    ClipWarnFcn = ClipWarning;
+  } else {
+    ClipWarnFcn = NoClipWarning;
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki
