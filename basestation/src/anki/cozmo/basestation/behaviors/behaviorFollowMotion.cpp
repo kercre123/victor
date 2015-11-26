@@ -97,8 +97,13 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
         // Turn to face the motion:
         // Convert image positions to desired relative angles
         const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-        const Radians relHeadAngle_rad = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
+        const Radians relHeadAngle_rad    = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
         const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
+        
+        PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
+                         "Motion centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                         motionCentroid.x(), motionCentroid.y(),
+                         relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
         
         IAction* action = nullptr;
         

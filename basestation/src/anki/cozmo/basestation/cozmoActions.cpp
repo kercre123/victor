@@ -972,7 +972,9 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
-      _name = "DriveStraight" + std::to_string(_dist_mm) + "mmAction";
+      _name = ("DriveStraight" + std::to_string(_dist_mm) + "mm@" +
+               std::to_string(_speed_mmps) + "mmpsAction");
+      
       _hasStarted = false;
       
       // Tell robot to execute this simple path
