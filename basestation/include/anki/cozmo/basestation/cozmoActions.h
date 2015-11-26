@@ -218,7 +218,6 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      f32 GetTimeoutInSeconds() const override;
       
     private:
       
@@ -231,7 +230,6 @@ namespace Anki {
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = 50.f;
       f32     _accel_radPerSec2 = 10.f;
-      f32     _timeout_sec = -1.f;
       
     }; // class TurnInPlaceAction
     
@@ -257,7 +255,6 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual f32 GetTimeoutInSeconds() const override;
       
     private:
       
@@ -294,7 +291,6 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual f32 GetTimeoutInSeconds() const override;
       
     private:
       
@@ -310,8 +306,6 @@ namespace Anki {
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
 
-      f32         _timeout_sec = -1.f;
-      
     };  // class MoveHeadToAngleAction
     
     // Set the lift to specified height with a given tolerance. Note that settign

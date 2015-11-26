@@ -877,10 +877,6 @@ namespace Anki {
       Radians currentAngle;
       _inPosition = IsBodyInPosition(robot, currentAngle);
       
-      // Figure timeout based on expected time to complete the relative angle
-      // he's gonna turn, assuming he turns at 1/4 max speed
-      _timeout_sec = std::abs((currentAngle - _targetAngle).ToFloat() + _variability.ToFloat()) / (.25f*_maxSpeed_radPerSec);
-      
       if(_inPosition) {
         // Already "in position" according to the turn tolerance, so just move the
         // eyes
@@ -900,15 +896,6 @@ namespace Anki {
       }
     
       return ActionResult::SUCCESS;
-    }
-    
-    f32 TurnInPlaceAction::GetTimeoutInSeconds() const
-    {
-      if(_timeout_sec < 0.f) {
-        return IAction::GetTimeoutInSeconds();
-      } else {
-        return _timeout_sec;
-      }
     }
 
     
@@ -1001,15 +988,6 @@ namespace Anki {
       }
       
       return result;
-    }
-    
-    f32 DriveStraightAction::GetTimeoutInSeconds() const
-    {
-      if(_timeout_sec < 0.f) {
-        return IAction::GetTimeoutInSeconds();
-      } else {
-        return _timeout_sec;
-      }
     }
     
 #pragma mark ---- PanAndTiltAction ----
@@ -1514,12 +1492,11 @@ namespace Anki {
       
       _inPosition = IsHeadInPosition(robot);
       
-      const Radians angleDiff = _headAngle - robot.GetHeadAngle();
-      
       if(_inPosition) {
         // If we are already "in position" according to the tolerance, just move the
         // eyes
         // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        Radians angleDiff = _headAngle - robot.GetHeadAngle();
         const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
         robot.ShiftEyes(0, yPixShift, 66); // TODO: How to set the duration of the eye shift?
@@ -1529,22 +1506,9 @@ namespace Anki {
         {
           result = ActionResult::FAILURE_ABORT;
         }
-        
-        // Compute a timeout based on the head moving at 1/4 the max specified speed
-        // to reach the specified angle
-        _timeout_sec = std::abs(angleDiff.ToFloat()) / (0.25f*_maxSpeed_radPerSec);
       }
       
       return result;
-    }
-    
-    f32 MoveHeadToAngleAction::GetTimeoutInSeconds() const
-    {
-      if(_timeout_sec < 0.f) {
-        return IAction::GetTimeoutInSeconds();
-      } else {
-        return _timeout_sec;
-      }
     }
     
     ActionResult MoveHeadToAngleAction::CheckIfDone(Robot &robot)

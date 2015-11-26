@@ -185,9 +185,6 @@ namespace Anki {
             PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
                              "Preconditions for %s successfully met.\n", GetName().c_str());
             
-            // It's possible Init() updated timeout:
-            _timeoutTime = currentTimeInSeconds + GetTimeoutInSeconds();
-            
             // If preconditions were successfully met, switch result to RUNNING
             // so that we don't think the entire action is completed. (We still
             // need to do CheckIfDone() calls!)
