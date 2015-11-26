@@ -3,12 +3,15 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+
 enum uint_8 AudioCallbackFlag
 {
   EventNone     = 0x00,
   EventDuration = 0x01,
-  EventMarker   = 0x02,
+  EventMarker   = 0x06, // Always profide complete callback
   EventComplete = 0x04,
+  EventAll      = 0x07,
+  EventError    = 0xff,
 }
 
 

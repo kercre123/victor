@@ -3,6 +3,13 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+
+// TODO: Add Error Type
+enum uint_32 CallbackErrorType
+{
+  Invalid = 0,
+}
+
 message AudioCallbackDuration
 {
   uint_16 callbackId            = 0,
@@ -23,6 +30,12 @@ message AudioCallbackMarker
 message AudioCallbackComplete
 {
   uint_16 callbackId = 0
+}
+
+message AudioCallbackError
+{
+  uint_16 callbackId = 0,
+  CallbackErrorType callbackError,
 }
 
 }

@@ -235,9 +235,9 @@ void AudioController::StartUpSetDefaults()
   AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
 
   
-  SetParameter( ROBOT_VOLUME, 0.3, kInvalidAudioGameObject);
+  SetParameter( ROBOT_VOLUME, 0.8, kInvalidAudioGameObject);
   // This is effected by robot volume
-  SetParameter( ROBOT_MASTER_VOLUME, 0.2, kInvalidAudioGameObject);
+  SetParameter( ROBOT_MASTER_VOLUME, 0.9, kInvalidAudioGameObject);
 }
 
 

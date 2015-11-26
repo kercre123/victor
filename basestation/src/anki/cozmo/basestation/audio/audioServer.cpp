@@ -107,13 +107,13 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
 void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId )
 {
   // Decode Game State Message
-  const AudioStateGroupId groupId = 0;  // TODO: This is wrong we need to get the type form the state or add it to message
-  const AudioStateId stateId = static_cast<AudioStateId>( message.state );
+  const AudioStateGroupId groupId = static_cast<AudioStateGroupId>( message.gameStateGroup );
+  const AudioStateId stateId = static_cast<AudioStateId>( message.gameState );
   // Perform Game State
   const bool success = _audioController->SetState( groupId, stateId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set State %s",
-                       EnumToString( message.state ) );
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set State %s : %s",
+                       EnumToString( message.gameStateGroup ), EnumToString( message.gameState ) );
   }
 }
 
@@ -121,14 +121,14 @@ void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionI
 void AudioServer::ProcessMessage( const PostAudioSwitchState& message, ConnectionIdType connectionId )
 {
   // Decode Switch State Message
-  const AudioSwitchGroupId groupId = 0;  // TODO: This is wrong we need to get the type form the state or add it to message
+  const AudioSwitchGroupId groupId = static_cast<AudioStateGroupId>( message.switchStateGroup);
   const AudioSwitchStateId stateId = static_cast<AudioSwitchStateId>( message.switchState );
   const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s on GameObject %d",
-                       EnumToString( message.switchState ), message.gameObjectId );
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %d",
+                       EnumToString( message.switchStateGroup ), EnumToString( message.switchState ), message.gameObjectId );
   }
 }
 

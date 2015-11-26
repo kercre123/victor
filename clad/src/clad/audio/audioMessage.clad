@@ -21,13 +21,13 @@ message PostAudioEvent
 
 message PostAudioGameState
 {
-// Might need Switch Group if we can't determine it from the state
-  GameStateType state,
+  GameStateGroupType gameStateGroup,
+  GameStateType gameState,
 }
 
 message PostAudioSwitchState
 {
-// Might need Switch Group if we can't determine it from the switch state
+  SwitchStateGroupType switchStateGroup,
   SwitchStateType switchState,
   uint_16 gameObjectId = 0,
 }

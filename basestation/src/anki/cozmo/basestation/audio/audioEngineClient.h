@@ -47,9 +47,9 @@ public:
                             uint16_t gameObjectId,
                             AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
 
-  void PostGameState( GameStateType gameState );
+  void PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState );
   
-  void PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId );
+  void PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId );
   
   void PostParameter( ParameterType parameter,
                       float parameterValue,

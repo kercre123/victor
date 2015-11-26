@@ -46,16 +46,16 @@ AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostGameState( GameStateType gameState )
+void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState )
 {
-  const MessageAudioClient msg( (PostAudioGameState( gameState )) );
+  const MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
   _messageHandler.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId )
+void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId )
 {
-  const MessageAudioClient msg( PostAudioSwitchState( switchState, gameObjectId ));
+  const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObjectId ));
   _messageHandler.Broadcast( std::move( msg ) );
 }
 
