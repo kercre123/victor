@@ -29,6 +29,7 @@ namespace Cozmo.HubWorld {
 
     private void Start() {
       RaiseHubWorldPaneOpened(this);
+      _ChallengeIdToComplete.text = "VisionTrainingChallenge1";
     }
 
     private void OnDestroy() {
