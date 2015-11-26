@@ -541,7 +541,7 @@ namespace Cozmo {
         BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
 
-#     else
+#     else // if (!USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
       
       if(robotAudioTrack.HasFramesLeft())
       {
@@ -564,13 +564,14 @@ namespace Cozmo {
           robotAudioTrack.MoveToNextKeyFrame();
         }
       }
-#     endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       
       // Stream a single audio sample from the audio manager (or silence if there isn't one)
       // (Have to *always* send an audio frame to keep time, whether that's the next
       // audio sample or a silent frame.)
       // NOTE: Audio frame must be first!
       BufferAudioToSend(true);
+      
+#     endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
@@ -581,10 +582,6 @@ namespace Cozmo {
       // We are guaranteed to have sent some kind of audio frame at this point.
       // Now send any other frames that are ready, so they will be timed with
       // that audio frame (silent or not).
-      //
-      // Note that these frames don't actually use up additional slots in the
-      // robot's keyframe buffer, so we don't have to decrement numFramesToSend
-      // for each one, just once for each audio/silence frame.
       //
       
 #     if DEBUG_ANIMATION_STREAMING
