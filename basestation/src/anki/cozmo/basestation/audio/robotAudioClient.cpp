@@ -56,7 +56,7 @@ bool RobotAudioClient::HasKeyFrameAudioSample() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimKeyFrame::AudioSample&& RobotAudioClient::PopAudioSample() const
+AnimKeyFrame::AudioSample* RobotAudioClient::PopAudioSample() const
 {
   return _audioBuffer.PopKeyFrameAudioSample();
 }

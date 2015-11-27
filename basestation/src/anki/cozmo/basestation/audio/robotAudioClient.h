@@ -44,7 +44,8 @@ public:
   bool HasKeyFrameAudioSample() const;
   
   // Pop the front key frame audio sample message
-  AnimKeyFrame::AudioSample&& PopAudioSample() const;
+  // Note: Audio Sample pointer memory needs to be manage or it will leak memory.
+  AnimKeyFrame::AudioSample* PopAudioSample() const;
 
   
 protected:

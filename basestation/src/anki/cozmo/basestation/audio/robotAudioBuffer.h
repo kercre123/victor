@@ -49,7 +49,8 @@ public:
   bool HasKeyFrameAudioSample() const { return (_KeyFrameAudioSampleBuffer.size() > 0); }
   
   // Pop the front key frame audio sample message
-  AnimKeyFrame::AudioSample&& PopKeyFrameAudioSample();
+  // Note: Audio Sample pointer memory needs to be manage or it will leak memory.
+  AnimKeyFrame::AudioSample* PopKeyFrameAudioSample();
   
   // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
   void ClearCache();

@@ -41,7 +41,7 @@ void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimKeyFrame::AudioSample&& RobotAudioBuffer::PopKeyFrameAudioSample()
+AnimKeyFrame::AudioSample* RobotAudioBuffer::PopKeyFrameAudioSample()
 {
   assert( !_KeyFrameAudioSampleBuffer.empty() );
 
@@ -57,7 +57,7 @@ AnimKeyFrame::AudioSample&& RobotAudioBuffer::PopKeyFrameAudioSample()
   }
   _KeyFrameAudioSampleBufferLock.unlock();
   
-  return std::move( *audioSample );
+  return audioSample;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

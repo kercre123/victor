@@ -234,8 +234,9 @@ namespace Cozmo {
   {
     if ( nullptr != _audioClient && _audioClient->IsPlugInActive() ) {
       if ( _audioClient->HasKeyFrameAudioSample() ) {
-        AnimKeyFrame::AudioSample&& audioSample = _audioClient->PopAudioSample();
-        BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( audioSample ) ) );
+        // Give audio sample memory ownership to engine message
+        AnimKeyFrame::AudioSample* audioSample = _audioClient->PopAudioSample();
+        BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( *audioSample ) ) );
       }
     }
 
