@@ -43,6 +43,7 @@ static bool ProcessDrop(void) {
     
     switch (*(payload_data++)) {
       case DROP_EnterBootloader:
+      {
         EnterBootloader ebl;
         memcpy(&ebl, payload_data, sizeof(ebl));
 
@@ -54,15 +55,28 @@ static bool ProcessDrop(void) {
             EnterBodyRecovery();
             break ;
         }
-        break ;
+        break;
+      }
       case DROP_BodyUpgradeData:
+      {
         BodyUpgradeData bud;
         memcpy(&bud, payload_data, sizeof(bud));
 
         //bud.data = ((bud.data & 0xFF00FF00) >> 8) | ((bud.data & 0x00FF00FF) << 8);
       
         SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
-        break ;
+        break;
+      }
+      case 0x01:
+      {
+        float lws, rws;
+        memcpy(&lws, payload_data, sizeof(float));
+        payload_data += sizeof(float);
+        memcpy(&rws, payload_data, sizeof(float));
+        g_dataToBody.motorPWM[0] = static_cast<int16_t>(lws);
+        g_dataToBody.motorPWM[1] = static_cast<int16_t>(rws);
+        break;
+      }
     }
     
     return true;
