@@ -40,6 +40,11 @@ bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec
   return true;
 }
 
+float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  return 0.3f; // for the investor demo, just use a fixed score
+}
+
 Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
   _interrupted = false;
@@ -68,6 +73,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
 Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
+  _interrupted = true;
   return Result::RESULT_OK;
 }
 

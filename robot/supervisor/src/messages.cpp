@@ -562,7 +562,28 @@ namespace Anki {
         // HAL::SetBlockBeingCarried(msg.blockID, msg.isBeingCarried);
       }
 
-
+      // ---------- Firmware over the air stubs for espressif -----------
+      void Process_eraseFlash(Anki::Cozmo::RobotInterface::EraseFlash const&)
+      {
+        // Nothing to do here
+      }
+      void Process_writeFlash(RobotInterface::WriteFlash const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bodyUpgradeData(unsigned int const&)
+      {
+        // Nothing to do here
+      }
+      void Process_enterBootloader(Anki::Cozmo::RobotInterface::EnterBootloader const&)
+      {
+        // Nothing to do here
+      }
+      void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
+      {
+        // Nothing to do here
+      }
+      
 // ----------- Send messages -----------------
 
 

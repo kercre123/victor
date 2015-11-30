@@ -161,6 +161,9 @@ namespace Anki {
   using Point2f = Point2<f32>;
   using Point3f = Point3<f32>;
   
+  using Point2i = Point2<s32>;
+  using Point3i = Point3<s32>;
+  
   using Vec2f = Point2f;
   using Vec3f = Point3f;
   

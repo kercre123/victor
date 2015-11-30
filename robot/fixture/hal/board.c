@@ -76,10 +76,10 @@ void InitBAT(void)
   
   MicroWait(400);
   
-  // ENBAT
+  // ENBAT_LC, ENBAT, NBATSINK
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
@@ -88,10 +88,17 @@ void InitBAT(void)
 
 void EnableBAT(void)
 {  
+  GPIO_SetBits(GPIOC, GPIO_Pin_3);    // Disable sink (to prevent blowing up the fixture)
   GPIO_ResetBits(GPIOC, GPIO_Pin_2);
 }
 
 void DisableBAT(void)
 {
   GPIO_SetBits(GPIOC, GPIO_Pin_2);
+  MicroWait(1);
+  GPIO_ResetBits(GPIOC, GPIO_Pin_3);  // Enable sink to quickly discharge any remaining power
+  GPIO_ResetBits(GPIOC, GPIO_Pin_1);  // Sink even more current (down to 0.3V at least)
+  MicroWait(50000);
+  GPIO_SetBits(GPIOC, GPIO_Pin_3);    // Disable sink (to prevent blowing up the fixture)  
+  GPIO_SetBits(GPIOC, GPIO_Pin_1);
 }

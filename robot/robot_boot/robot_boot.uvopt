@@ -197,7 +197,7 @@
         <aSer4>0</aSer4>
         <StkLoc>0</StkLoc>
         <TrcWin>0</TrcWin>
-        <newCpu>1</newCpu>
+        <newCpu>0</newCpu>
         <uProt>0</uProt>
       </DebugFlag>
       <LintExecutable></LintExecutable>
@@ -217,10 +217,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>25</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>40</TopLine>
-      <CurrentLine>79</CurrentLine>
+      <TopLine>50</TopLine>
+      <CurrentLine>72</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\main.cpp</PathWithFileName>
       <FilenameWithoutPath>main.cpp</FilenameWithoutPath>
@@ -323,8 +323,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>483</TopLine>
-      <CurrentLine>489</CurrentLine>
+      <TopLine>448</TopLine>
+      <CurrentLine>456</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\startup\startup_MK02F12810.s</PathWithFileName>
       <FilenameWithoutPath>startup_MK02F12810.s</FilenameWithoutPath>

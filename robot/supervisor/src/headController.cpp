@@ -340,20 +340,20 @@ namespace HeadController {
       if (!inPosition_) {
         vpg_.Step(startRadSpeed, startRad);
       } else {
+        
+        if (FLT_NEAR(angleError_,0.f)) {
+          #if(DEBUG_HEAD_CONTROLLER)
+          PRINT("Head (fixedDuration): Already at desired position\n");
+          #endif
+          return;
+        }
+        
         startRadSpeed = 0;
         angleErrorSum_ = 0.f;
       }
       
       lastInPositionTime_ms_ = 0;
       inPosition_ = false;
-      
-      if (FLT_NEAR(angleError_,0.f)) {
-        inPosition_ = true;
-#if(DEBUG_HEAD_CONTROLLER)
-        PRINT("Head (fixedDuration): Already at desired position\n");
-#endif
-        return;
-      }
 
       bool res = false;
       // Start profile of head trajectory

@@ -18,6 +18,7 @@ namespace Anki {
 namespace Cozmo {
 namespace Animations {
 
+  /*
 // Specialization for ProceduralFace track because it needs look-back for interpolation
 template<>
 RobotInterface::EngineToRobot* Animations::Track<ProceduralFaceKeyFrame>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
@@ -55,7 +56,7 @@ RobotInterface::EngineToRobot* Animations::Track<ProceduralFaceKeyFrame>::GetCur
 
   return msg;
 }
-
+*/
 
 } // end namespace Animations
 } // end namespace Cozmo

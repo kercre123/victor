@@ -11,6 +11,7 @@ namespace Anki
     {
       void IMUInit(void);
       void IMUManage(void);
+      uint8_t ReadIMUID(void);
     }
   }
 }

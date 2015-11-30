@@ -408,19 +408,20 @@ namespace Cozmo {
         const UnitQuaternion<float>& q = observedObject->GetPose().GetRotation().GetQuaternion();
         
         using namespace ExternalInterface;
-        _robot->GetExternalInterface()->Broadcast(MessageEngineToGame(RobotObservedObject(_robot->GetID(),
-                                                                                          observedObject->GetFamily(),
-                                                                                          observedObject->GetType(),
-                                                                                          observedObject->GetID(),
-                                                                                          boundingBox.GetX(),
-                                                                                          boundingBox.GetY(),
-                                                                                          boundingBox.GetWidth(),
-                                                                                          boundingBox.GetHeight(),
-                                                                                          T.x(), T.y(), T.z(),
-                                                                                          q.w(), q.x(), q.y(), q.z(),
-                                                                                          topMarkerOrientation.ToFloat(),
-                                                                                          markersVisible,
-                                                                                          observedObject->IsActive())));
+        _robot->Broadcast(MessageEngineToGame(RobotObservedObject(_robot->GetID(),
+                                                                  observedObject->GetLastObservedTime(),
+                                                                  observedObject->GetFamily(),
+                                                                  observedObject->GetType(),
+                                                                  observedObject->GetID(),
+                                                                  boundingBox.GetX(),
+                                                                  boundingBox.GetY(),
+                                                                  boundingBox.GetWidth(),
+                                                                  boundingBox.GetHeight(),
+                                                                  T.x(), T.y(), T.z(),
+                                                                  q.w(), q.x(), q.y(), q.z(),
+                                                                  topMarkerOrientation.ToFloat(),
+                                                                  markersVisible,
+                                                                  observedObject->IsActive())));
       } // if(observedObject->GetNumTimesObserved() > MIN_TIMES_TO_OBSERVE_OBJECT)
     } // if(_robot->HasExternalInterface())
     

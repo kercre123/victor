@@ -52,7 +52,10 @@ public:
 
   // Get a reference to the current KeyFrame in the track
   FRAME_TYPE& GetCurrentKeyFrame() { return *_frameIter; }
-
+  
+  // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
+  FRAME_TYPE* GetNextKeyFrame();
+  
   void MoveToNextKeyFrame();
 
   bool HasFramesLeft() const { return _frameIter != _frames.end(); }
@@ -60,12 +63,15 @@ public:
   bool IsEmpty() const { return _frames.empty(); }
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
+  
+  using FrameList = std::list<FRAME_TYPE>;
+  typename FrameList::const_iterator GetKeyFrameBegin() const { return _frames.begin(); }
 
 private:
 
-  using FrameList = std::list<FRAME_TYPE>;
   FrameList _frames;
   typename FrameList::iterator _frameIter;
+  
 }; // class Animation::Track
 
 
@@ -86,7 +92,21 @@ void Track<FRAME_TYPE>::MoveToNextKeyFrame()
     ++_frameIter;
   }
 }
-
+  
+template<typename FRAME_TYPE>
+FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame()
+{
+  ASSERT_NAMED(_frameIter != _frames.end(), "Frame iterator should not be at end.");
+  
+  auto nextIter = _frameIter;
+  ++nextIter;
+  
+  if(nextIter == _frames.end()) {
+    return nullptr;
+  } else {
+    return &(*nextIter);
+  }
+}
 
 template<typename FRAME_TYPE>
 Result Animations::Track<FRAME_TYPE>::AddKeyFrame(const FRAME_TYPE& keyFrame)

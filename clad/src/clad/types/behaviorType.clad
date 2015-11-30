@@ -12,8 +12,14 @@ enum uint_8 BehaviorType {
   OCD,
   Fidget,
   InteractWithFaces,
+  ReactToCliff,
   ReactToPickup,
-  FollowMotion
+  FollowMotion,
+  PlayAnim,
+  UnityDriven,
+  PounceOnMotion,
+
+  Count
 }
 
 } // namespace Cozmo

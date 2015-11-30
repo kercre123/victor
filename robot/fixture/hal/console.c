@@ -18,7 +18,7 @@
 
 #define BAUD_RATE   1000000
 
-extern BOOL g_isVehiclePresent;
+extern BOOL g_isDevicePresent;
 extern u8 g_modelIndex;
 extern u32 g_modelIDs[8];
 extern FixtureType g_fixtureType;
@@ -40,7 +40,7 @@ typedef struct
 {
   const char* command;
   TestFunction function;
-  BOOL doesCommunicateWithVehicle;
+  BOOL doesCommunicateWithRobot;
 } CommandFunction;
 
 static int ConsoleReadChar(void)
@@ -274,7 +274,7 @@ static void SetMode(void)
 
 static void RedoTest(void)
 {
-  g_isVehiclePresent = 0;
+  g_isDevicePresent = 0;
 }
 
 static void SetSerial(void)
@@ -303,13 +303,14 @@ static void SetSerial(void)
 }
 
 const char* FIXTYPES[] = FIXTURE_TYPES;
+extern int g_canary;
 static void GetSerial(void)
 {
   // Serial number, fixture type, build version
   ConsolePrintf("serial,%i,%s,%i\r\n", 
     FIXTURE_SERIAL, 
     g_fixtureType & FIXTURE_DEBUG ? "DEBUG" : FIXTYPES[g_fixtureType],
-    FIXTURE_VERSION);
+    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
 }
 
 static void SetLotCode(void)
@@ -367,6 +368,8 @@ static void DumpFixtureSerials(void)
   ConsoleWriteHex(serials, 0x400);
 }
 
+#if 0
+// Cozmo doesn't know how to do this, yet
 static void Charge(void)
 {
   const u32 sampleCount = 100;
@@ -381,10 +384,10 @@ static void Charge(void)
   }
   TestEnableRx();
 }
+#endif
 
 static CommandFunction m_functions[] =
 {
-  {"Charge", Charge, FALSE},
   {"GetSerial", GetSerial, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
@@ -434,9 +437,9 @@ static void ParseCommand(void)
       if (!strcasecmp(cf->command, buffer) && cf->function)
       {
         commandFound = 1;
-        if (cf->doesCommunicateWithVehicle && !g_isVehiclePresent)
+        if (cf->doesCommunicateWithRobot && !g_isDevicePresent)
         {
-          ConsolePrintf("No vehicle present\r\n");
+          ConsolePrintf("No device present\r\n");
         } else {
           
           error_t error = ERROR_OK;
