@@ -129,7 +129,7 @@ namespace Vortex {
         _StateMachine.SetNextState(new StateRequestSpin());
         _GamePanel.SetLockSpinner(false);
         // "Round: 1.
-        _GamePanel.SetStatusText(string.Format(Localization.Get("vortex.vortexStatus"), _RoundNumber));
+        _GamePanel.SetStatusText(string.Format(Localization.Get(LocalizationKeys.kVortexVortexStatus), _RoundNumber));
       }
       else {
         int high_score = -1;
@@ -141,7 +141,7 @@ namespace Vortex {
           }
         }
         _RoundNumber = 0;
-        _GamePanel.SetStatusText(string.Format(Localization.Get("vortex.vortexWon"), str));
+        _GamePanel.SetStatusText(string.Format(Localization.Get(LocalizationKeys.kVortexVortexWon), str));
         _StateMachine.SetNextState(new StateOutro());
         _GamePanel.EnableReplayButton(true);
       }
