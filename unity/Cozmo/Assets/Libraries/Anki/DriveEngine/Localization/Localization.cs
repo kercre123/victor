@@ -84,14 +84,10 @@ public static class Localization {
 
     // For each localization file in the locale's directory
     string locale = GetStringsLocale();
-    string localeLocalizationFolderPath = kLocalizationAssetsFolderPath + locale;
-    foreach (var file in Directory.GetFiles(localeLocalizationFolderPath, "*.json")) {
+    foreach (var fileName in GetLocalizationJsonFileNames(locale)) {
       
       // Load the localization into a string table so that we can query it at runtime
-      string resourceFilePath = kLocalizationResourcesFolderPath + locale + "/" + Path.GetFileNameWithoutExtension(file);
-  
-      TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
-      string languageJson = languageAsset.text;
+      JSONObject languageJson = GetJsonContentsFromLocalizationFile(locale, fileName);
 
       Anki.AppResources.StringTable st = Anki.AppResources.StringTable.LoadStringsFromSmartlingJSONFile(languageJson);
       _st.MergeEntriesFromStringTable(st);
@@ -100,5 +96,17 @@ public static class Localization {
 
   public static System.Globalization.CultureInfo GetCultureInfo() {
     return _CurrentCulture;
+  }
+
+  public static string[] GetLocalizationJsonFileNames(string locale) {
+    return Directory.GetFiles(kLocalizationAssetsFolderPath + locale, "*.json");
+  }
+
+  public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFileName) {
+    string resourceFilePath = kLocalizationResourcesFolderPath + locale + "/" + Path.GetFileNameWithoutExtension(localizationFileName);
+
+    TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
+    string languageJson = languageAsset.text;
+    return new JSONObject(languageJson);
   }
 }
