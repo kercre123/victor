@@ -30,8 +30,6 @@
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-#include <set>
-#include <queue>
 
 namespace Anki {
 namespace Cozmo {
@@ -72,16 +70,15 @@ namespace Cozmo {
     // Finish placing current object if there is one, otherwise good to go
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
     
-    // Number of blocks that need to be neatly stacked in order to warrant
-    // a celebratory dance.
-    constexpr static u32 kNumBlocksForCelebration = 4;
-    
     // If the robot is not executing any action for this amount of time,
     // something went wrong so start it up again.
     constexpr static f32 kInactionFailsafeTimeoutSec = 1;
     
+    // Height to set lift to once it has picked up the first block
     constexpr static f32 kLowCarryHeightMM = 45;
     
+    // Robot raises lift if object that it's tracking falls below this angle and it's
+    // also holding a block
     const f32 kTrackedObjectViewAngleThreshForRaisingCarriedBlock = 0.6; //atan2f(90, 200);
     
     
@@ -101,19 +98,6 @@ namespace Cozmo {
     void SetCurrState(State s);
     void PlayAnimation(Robot& robot, const std::string& animName);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
-    
-    /*
-    // Set/Unset the location of the last pick or place failure
-    void SetLastPickOrPlaceFailure(const ObjectID& objectID, const Pose3d& pose);
-    void UnsetLastPickOrPlaceFailure();
-    
-    // Deletes the object if it was also the previous object that the robot
-    // had failed to pick or place from the same robot pose.
-    // Returns true if object deleted.
-    bool DeleteObjectIfFailedToPickOrPlaceAgain(Robot& robot, const ObjectID& objectID);
-    */
-    
-
     
     State _currentState;
     bool  _interrupted;

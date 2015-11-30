@@ -22,8 +22,6 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
-
-#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 
@@ -31,9 +29,6 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
-#include "anki/common/basestation/utils/timer.h"
-#include "anki/common/basestation/math/point_impl.h"
 
 #define DEBUG_BLOCK_PLAY_BEHAVIOR 0
 
@@ -66,16 +61,7 @@ namespace Cozmo {
   
   bool BehaviorBlockPlay::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    // We can only run this behavior when there are at least two "messy" blocks present,
-    // or when there is at least one messy block while we've got any neat blocks
-    /*
-    return robot.IsLocalized() && ((_messyObjects.size() >= 2) ||
-                                   (!_neatObjects.empty() && !_messyObjects.empty()) ||
-                                   (_currentState == State::PlacingBlock) ||
-                                   (!_animActionTags.empty()));
-     */
-    
-    return true;
+    return (_faceID != Face::UnknownFace) || _trackedObject.IsSet() || _objectToPickUp.IsSet() || _objectToPlaceOn.IsSet();
   }
   
   Result BehaviorBlockPlay::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -85,47 +71,10 @@ namespace Cozmo {
     _interrupted = false;
     
     robot.GetActionList().Cancel();
-    
-    
-    // Go to the appropriate state
-    // based on current carry state.
     _animActionTags.clear();
     
-    /*
-      if(robot.IsCarryingObject()) {
-        // Make sure whatever the robot is carrying is some kind of block...
-        // (note that we have an actively-updated list of blocks, so we can just
-        //  check against that)
-        ObjectID carriedObjectID = robot.GetCarryingObject();
-        
-        const bool carriedObjectIsBlock = _messyObjects.count(carriedObjectID) > 0;
-        
-        if(carriedObjectIsBlock) {
-          // ... if so, start in PlacingBlock mode
-          lastResult = SelectNextPlacement(robot);
-        } else {
-          // ... if not, put this thing down and start in PickingUpBlock mode
-          
-          // TODO: Find a good place to put down this object
-          // For now, just put it down right _here_
-          PRINT_NAMED_WARNING("BehaviorBlockPlay.Init.PlacingBlockDown", "Make sure this pose is clear!");
-          lastResult = robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new PlaceObjectOnGroundAction());
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_ERROR("BehaviorBlockPlay.Init.PlacementFailed",
-                              "Failed to queue PlaceObjectOnGroundAction.");
-            return lastResult;
-          }
-          
-          lastResult = SelectNextObjectToPickUp(robot);
-        }
-      } else {
-        lastResult = SelectNextObjectToPickUp(robot);
-      }
-    */
-    
-    
+    // Go to the appropriate state
     InitState(robot);
-    
     
     return lastResult;
   } // Init()
@@ -164,15 +113,7 @@ namespace Cozmo {
       return Status::Failure;
     }
     
-    // Completion trigger is when all (?) blocks make it to his "neat" list
-    if (!IsRunnable(robot, currentTime_sec)) {
-      return Status::Complete;
-    }
-    
     if(_interrupted) {
-      // If we are in the middle of picking up a block, we can immediately interrupt.
-      // Otherwise we will wait until placing completes which switches us back to
-      // PickingUpBlock, so we can then get here
       return Status::Complete;
     }
     
@@ -376,7 +317,7 @@ namespace Cozmo {
     }
 
     
-/*
+    /*
     // Check if inactive for a while
     if (robot.GetActionList().IsEmpty()) {
       if (_inactionStartTime == 0) {
@@ -391,7 +332,7 @@ namespace Cozmo {
         _inactionStartTime = 0;
       }
     }
-*/
+     */
     
     
     return Status::Running;
@@ -538,33 +479,6 @@ namespace Cozmo {
         break;
     }
   }
-
-  
-  /*
-  void BehaviorBlockPlay::UnsetLastPickOrPlaceFailure()
-  {
-    _lastObjectFailedToPickOrPlace.UnSet();
-  }
-  
-  void BehaviorBlockPlay::SetLastPickOrPlaceFailure(const ObjectID& objectID, const Pose3d& pose)
-  {
-    _lastObjectFailedToPickOrPlace = objectID;
-    _lastPoseWhereFailedToPickOrPlace = pose;
-  }
-  
-  bool BehaviorBlockPlay::DeleteObjectIfFailedToPickOrPlaceAgain(Robot& robot, const ObjectID& objectID)
-  {
-    const f32 SAME_POSE_DIST_THRESH_MM = 5;
-    if (objectID.IsSet() &&
-        (_lastObjectFailedToPickOrPlace == objectID) &&
-        ComputeDistanceBetween(robot.GetPose(), _lastPoseWhereFailedToPickOrPlace) < SAME_POSE_DIST_THRESH_MM) {
-      PRINT_NAMED_INFO("BehaviorBlockPlay::DeleteObjectIfFailedToPickOrPlaceAgain", "Deleting object %d", objectID.GetValue());
-      robot.GetBlockWorld().ClearObject(objectID);
-      return true;
-    }
-    return false;
-  }
-  */
   
   
   Result BehaviorBlockPlay::HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction &msg, double currentTime_sec)
@@ -616,7 +530,6 @@ namespace Cozmo {
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.RollSuccessful", "");
               
               // We're done picking up the block
-              //UnsetLastPickOrPlaceFailure();
               SetCurrState(State::InspectingBlock);
               _isActing = false;
               break;
@@ -625,9 +538,7 @@ namespace Cozmo {
               
               PRINT_NAMED_ERROR("BehaviorBlockPlay.Rolling.PICK_AND_PLACE_INCOMPLETE", "THIS ACTUALLY HAPPENS?");
 
-              // We failed to pick up or place the last block, try again?
-              //DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPickUp);
-              //SetLastPickOrPlaceFailure(_objectToPickUp, robot.GetPose());
+              // We failed to pick up or place the last block, try again
               SetCurrState(State::RollingBlock);
               _isActing = false;
               break;
@@ -639,10 +550,7 @@ namespace Cozmo {
           } // switch(actionType)
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.PickupFailure", "Trying again");
-          // We failed to pick up or place the last block, try again?
-          //DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPickUp);
-          //SetLastPickOrPlaceFailure(_objectToPickUp, robot.GetPose());
-          
+          // We failed to pick up or place the last block, try again
           PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
 
           SetCurrState(State::RollingBlock);
@@ -669,9 +577,7 @@ namespace Cozmo {
               
               PRINT_NAMED_ERROR("BehaviorBlockPlay.PickingUp.PICK_AND_PLACE_INCOMPLETE", "THIS ACTUALLY HAPPENS?");
               
-              // We failed to pick up or place the last block, try again?
-              //DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPickUp);
-              //SetLastPickOrPlaceFailure(_objectToPickUp, robot.GetPose());
+              // We failed to pick up or place the last block, try again
               SetCurrState(State::PickingUpBlock);
               _isActing = false;
               break;
@@ -683,16 +589,13 @@ namespace Cozmo {
           } // switch(actionType)
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.PickupFailure", "Trying again");
-          // We failed to pick up or place the last block, try again?
-          //DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPickUp);
-          //SetLastPickOrPlaceFailure(_objectToPickUp, robot.GetPose());
+          // We failed to pick up or place the last block, try again
           
           // This isn't foolproof, but use lift height to check if this failure occured
           // during pickup verification.
           if (robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
             PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
           } else {
-            
             SetCurrState(State::PickingUpBlock);
             _isActing = false;
           }
@@ -730,9 +633,7 @@ namespace Cozmo {
           }
         } else {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.PlacementFailure", "Trying again");
-          // We failed to place the last block, try again?
-          //DeleteObjectIfFailedToPickOrPlaceAgain(robot, _objectToPlaceOn);
-          //SetLastPickOrPlaceFailure(_objectToPlaceOn, robot.GetPose());
+          // We failed to place the last block, try again
           SetCurrState(State::PlacingBlock);
           _isActing = false;
         }
@@ -849,7 +750,6 @@ namespace Cozmo {
     if (_faceID == msg.faceID) {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleDeletedFace", "id = %lld", msg.faceID);
       _faceID = Face::UnknownFace;
-      //robot.GetMoveComponent().DisableTrackToFace();
     }
     
     return RESULT_OK;
