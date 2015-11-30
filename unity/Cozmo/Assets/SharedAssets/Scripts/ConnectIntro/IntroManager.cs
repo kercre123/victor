@@ -11,26 +11,32 @@ public class IntroManager : MonoBehaviour {
   private HubWorldBase _HubWorldPrefab;
   private HubWorldBase _HubWorldInstance;
 
+  [SerializeField]
+  private string _IntroScriptedSequenceName;
+
+  private ScriptedSequences.ISimpleAsyncToken _IntroSequenceDoneToken;
+
   void Start() {
     ShowDevConnectDialog();
 
-    RobotEngineManager.Instance.RobotConnected += Connected;
-    RobotEngineManager.Instance.DisconnectedFromClient += DisconnectedFromClient;
+    RobotEngineManager.Instance.RobotConnected += HandleConnected;
+    RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
   }
 
-  void Connected(int robotID) {
-    // Spawn HubWorld
-    GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
-    hubWorldObject.transform.SetParent(transform, false);
-    _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
+  private void HandleConnected(int robotID) {
 
-    // Hide Intro dialog when it finishes loading
-    if (_HubWorldInstance.LoadHubWorld()) {
-      HideDevConnectDialog();
+    HideDevConnectDialog();
+
+    if (_IntroScriptedSequenceName.Equals("")) {
+      HandleIntroSequenceDone(_IntroSequenceDoneToken);
+    }
+    else {
+      _IntroSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("IntroSequence");
+      _IntroSequenceDoneToken.Ready(HandleIntroSequenceDone);
     }
   }
 
-  void DisconnectedFromClient(DisconnectionReason obj) {
+  private void HandleDisconnectedFromClient(DisconnectionReason obj) {
     // Force quit hub world and show connect dialog again
     if (_HubWorldInstance != null) {
       _HubWorldInstance.DestroyHubWorld(); 
@@ -39,6 +45,15 @@ public class IntroManager : MonoBehaviour {
 
     UIManager.CloseAllViewsImmediately();
     ShowDevConnectDialog();
+  }
+
+  private void HandleIntroSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+    // Spawn HubWorld
+    GameObject hubWorldObject = GameObject.Instantiate(_HubWorldPrefab.gameObject);
+    hubWorldObject.transform.SetParent(transform, false);
+    _HubWorldInstance = hubWorldObject.GetComponent<HubWorldBase>();
+
+    _HubWorldInstance.LoadHubWorld();
   }
 
   private void ShowDevConnectDialog() {
