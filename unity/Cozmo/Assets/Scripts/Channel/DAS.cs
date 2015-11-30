@@ -18,14 +18,14 @@ public interface IDAS {
 
 public static class DAS {
 
-  public delegate void DASHandler(string eventName, string eventValue, UnityEngine.Object context);
+  public delegate void DASHandler(string eventName, string eventValue, object context);
   public static event DASHandler OnEventLogged;
   public static event DASHandler OnErrorLogged;
   public static event DASHandler OnWarningLogged;
   public static event DASHandler OnInfoLogged;
   public static event DASHandler OnDebugLogged;
 
-  public static void Event(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Event(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
 
 #if ANIMATION_TOOL
@@ -40,7 +40,7 @@ public static class DAS {
 #endif
   }
  
-  public static void Error(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Error(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
 
 #if ANIMATION_TOOL
@@ -55,7 +55,7 @@ public static class DAS {
 #endif
   }
 
-  public static void Warn(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Warn(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
 
 #if ANIMATION_TOOL
@@ -70,7 +70,7 @@ public static class DAS {
 #endif
     }
 
-  public static void Info(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Info(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
 
 #if ANIMATION_TOOL
@@ -85,7 +85,7 @@ public static class DAS {
 #endif
   }
 
-  public static void Debug(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Debug(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
 
 #if ANIMATION_TOOL
