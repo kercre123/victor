@@ -197,6 +197,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   {
     PRINT_NAMED_WARNING("Robot.HandleActiveObjectMoved.UnknownActiveID",
                         "Could not find match for active object ID %d", payload.objectID);
+    return;
   }
   // Ignore move messages for objects we are docking to, since we expect to bump them
   else if(object->GetID() != GetDockObject())
@@ -247,6 +248,9 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
       Broadcast(ExternalInterface::MessageEngineToGame(ObjectMoved(payload)));
     }
   }
+
+  // Set moving state of object
+  object->SetIsMoving(true, payload.timestamp);
 }
 
 void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -263,6 +267,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   {
     PRINT_NAMED_INFO("Robot.HandleActiveObjectStopped.UnknownActiveID",
                      "Could not find match for active object ID %d", payload.objectID);
+    return;
   }
   // Ignore stopped-moving messages for objects we are docking to, since we expect to bump them
   else if(object->GetID() != GetDockObject())
@@ -305,6 +310,9 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
     payload.objectID = object->GetID();
     Broadcast(ExternalInterface::MessageEngineToGame(ObjectStoppedMoving(payload)));
   }
+
+  // Set moving state of object
+  object->SetIsMoving(false, payload.timestamp);
 }
 
 void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
