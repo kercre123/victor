@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.IO;
 
 public static class Localization {
 
@@ -76,19 +77,19 @@ public static class Localization {
     return _CurrentLocale;
   }
 
+  private const string kLocalizationAssetsFolderPath = "Assets/SharedAssets/Resources/LocalizedStrings/";
+  private const string kLocalizationResourcesFolderPath = "LocalizedStrings/";
+
   public static void LoadStrings() {
-    // TODO(BRC) Dynamically read variable number of strings files
-    string[] resources = {
-      "SimpleStrings",
-      "MinigameStrings",
-      "ChallengeTitleStrings",
-      "ConversationStrings"
-    };
 
+    // For each localization file in the locale's directory
     string locale = GetStringsLocale();
-    for (int i = 0; i < resources.Length; ++i) {
-      string resourceFilePath = "LocalizedStrings/" + locale + "/" + resources[i];
-
+    string localeLocalizationFolderPath = kLocalizationAssetsFolderPath + locale;
+    foreach (var file in Directory.GetFiles(localeLocalizationFolderPath, "*.json")) {
+      
+      // Load the localization into a string table so that we can query it at runtime
+      string resourceFilePath = kLocalizationResourcesFolderPath + locale + "/" + Path.GetFileNameWithoutExtension(file);
+  
       TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
       string languageJson = languageAsset.text;
 

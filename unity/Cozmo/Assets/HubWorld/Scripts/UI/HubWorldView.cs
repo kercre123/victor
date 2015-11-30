@@ -54,7 +54,7 @@ namespace Cozmo.HubWorld {
           break;
         case ChallengeState.COMPLETED:
           CreateCompletedButton(challengeState.data);
-          break;
+          break; 
         default:
           DAS.Error("HubWorldView", "ChallengeState view not implemented! " + challengeState);
           break;
