@@ -103,7 +103,7 @@ class CozmoCLI(IDataReceiver):
             rws = float(eval(args[1]))
         except:
             rws = lws
-        self.send(RobotInterface.EngineToRobot(drive=RobotInterface.DriveWheels(lws, rws))
+        self.send(RobotInterface.EngineToRobot(drive=RobotInterface.DriveWheels(lws, rws)))
         return True
 
     functions = {
