@@ -186,3 +186,5 @@ animationTool.zip
 UnityDASDll/UnityDASDll/obj/*
 UnityDASDll/UnityDASDll/bin/*
 
+# Anki specific
+EXTERNALS
