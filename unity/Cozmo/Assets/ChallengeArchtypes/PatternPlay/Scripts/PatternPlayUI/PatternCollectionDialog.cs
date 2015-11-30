@@ -103,7 +103,7 @@ namespace PatternPlay {
 
     private void SetCompletionText(int numSeenPatterns, int numTotalPatterns) {
       float percentComplete = numSeenPatterns / (float)numTotalPatterns;
-      string percentString = Localization.Get("label.percentComplete");
+      string percentString = Localization.Get(LocalizationKeys.kLabelPercentComplete);
       _PercentCompleteLabel.text = string.Format(Localization.GetCultureInfo(), percentString, percentComplete);
     }
 

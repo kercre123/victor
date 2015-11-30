@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.IO;
 
 public static class Localization {
 
@@ -76,21 +77,17 @@ public static class Localization {
     return _CurrentLocale;
   }
 
+  private const string kLocalizationAssetsFolderPath = "Assets/SharedAssets/Resources/LocalizedStrings/";
+  private const string kLocalizationResourcesFolderPath = "LocalizedStrings/";
+
   public static void LoadStrings() {
-    // TODO(BRC) Dynamically read variable number of strings files
-    string[] resources = {
-      "SimpleStrings",
-      "MinigameStrings",
-      "ChallengeTitleStrings",
-      "ConversationStrings"
-    };
 
+    // For each localization file in the locale's directory
     string locale = GetStringsLocale();
-    for (int i = 0; i < resources.Length; ++i) {
-      string resourceFilePath = "LocalizedStrings/" + locale + "/" + resources[i];
-
-      TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
-      string languageJson = languageAsset.text;
+    foreach (var fileName in GetLocalizationJsonFileNames(locale)) {
+      
+      // Load the localization into a string table so that we can query it at runtime
+      JSONObject languageJson = GetJsonContentsFromLocalizationFile(locale, fileName);
 
       Anki.AppResources.StringTable st = Anki.AppResources.StringTable.LoadStringsFromSmartlingJSONFile(languageJson);
       _st.MergeEntriesFromStringTable(st);
@@ -99,5 +96,17 @@ public static class Localization {
 
   public static System.Globalization.CultureInfo GetCultureInfo() {
     return _CurrentCulture;
+  }
+
+  public static string[] GetLocalizationJsonFileNames(string locale) {
+    return Directory.GetFiles(kLocalizationAssetsFolderPath + locale, "*.json");
+  }
+
+  public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFileName) {
+    string resourceFilePath = kLocalizationResourcesFolderPath + locale + "/" + Path.GetFileNameWithoutExtension(localizationFileName);
+
+    TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
+    string languageJson = languageAsset.text;
+    return new JSONObject(languageJson);
   }
 }
