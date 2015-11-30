@@ -73,8 +73,8 @@ static bool ProcessDrop(void) {
         memcpy(&lws, payload_data, sizeof(float));
         payload_data += sizeof(float);
         memcpy(&rws, payload_data, sizeof(float));
-        g_dataToBody.motorPWM[0] = dynamic_cast<int16_t>(lws);
-        g_dataToBody.motorPWM[1] = dynamic_cast<int16_t>(rws);
+        g_dataToBody.motorPWM[0] = static_cast<int16_t>(lws);
+        g_dataToBody.motorPWM[1] = static_cast<int16_t>(rws);
         break;
       }
     }
