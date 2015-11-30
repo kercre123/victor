@@ -64,8 +64,7 @@ namespace Anki.AppResources {
       }
     }
 
-    public static StringTable LoadStringsFromSmartlingJSONFile(string jsonText) {
-      JSONObject stringMapJSON = new JSONObject(jsonText);
+    public static StringTable LoadStringsFromSmartlingJSONFile(JSONObject stringMapJSON) {
 
       List<string> keys = stringMapJSON.keys;
       int keyCount = keys.Count;

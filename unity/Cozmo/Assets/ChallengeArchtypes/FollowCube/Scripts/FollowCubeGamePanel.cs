@@ -10,7 +10,7 @@ namespace FollowCube {
 
     // Use this for initialization
     public void SetAttemptsLeft(int attemptsLeft) {
-      string attemptsLocalized = Localization.Get("followCube.label.attempts");
+      string attemptsLocalized = Localization.Get(LocalizationKeys.kFollowCubeLabelAttempts);
       _AttemptsLeftLabel.text = string.Format(Localization.GetCultureInfo(), attemptsLocalized, attemptsLeft);
     }
 

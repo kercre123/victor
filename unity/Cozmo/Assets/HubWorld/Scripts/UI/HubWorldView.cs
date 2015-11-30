@@ -36,10 +36,6 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private RectTransform[] _CompletedButtonNodes;
 
-    [SerializeField]
-    private RectTransform _NucleusTransform;
-    private Sequence _NucleusTween;
-
     private int _CompletedButtonCounter;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> _challengeStatesById) {
@@ -58,7 +54,7 @@ namespace Cozmo.HubWorld {
           break;
         case ChallengeState.COMPLETED:
           CreateCompletedButton(challengeState.data);
-          break;
+          break; 
         default:
           DAS.Error("HubWorldView", "ChallengeState view not implemented! " + challengeState);
           break;
@@ -67,18 +63,6 @@ namespace Cozmo.HubWorld {
 
       // Make sure we recieve events from the right camera
       _HubWorldCanvas.worldCamera = HubWorldCamera.Instance.WorldCamera;
-
-      /*float targetScale = 0.96f;
-      _NucleusTween = DOTween.Sequence();
-      _NucleusTween.SetLoops(-1, LoopType.Yoyo); 
-      _NucleusTween.Append(_NucleusTransform.DOScale(new Vector3(targetScale, targetScale, 1), 4f).SetEase(Ease.InOutSine));
-      _NucleusTween.Play();*/
-    }
-
-    private void OnDestroy() {
-      if (_NucleusTween != null) {
-        _NucleusTween.Kill();
-      }
     }
 
     private void CreateLockedButton(ChallengeData challengeData) {
