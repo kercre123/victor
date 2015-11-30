@@ -70,7 +70,9 @@ namespace DataPersistence {
     public readonly SaveData Data;
 
     public void Save() {
-      File.Copy(sSaveFilePath, sBackupSaveFilePath);
+      if (File.Exists(sSaveFilePath)) {
+        File.Copy(sSaveFilePath, sBackupSaveFilePath);
+      }
 
       string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, JsonSettings);
 
