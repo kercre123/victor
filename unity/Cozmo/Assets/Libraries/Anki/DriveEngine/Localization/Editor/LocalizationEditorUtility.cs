@@ -203,7 +203,7 @@ public static class LocalizationEditorUtility {
     File.WriteAllText(kLocalizationFolder + fileName + ".json", JsonConvert.SerializeObject(dict, Formatting.Indented));
   }
 
-  private const string kGeneratedLocalizationKeysFilePath = "Assets/Libraries/Anki/DriveEngine/Localization/Generated/LocalizationKeys.cs";
+  private const string kGeneratedLocalizationKeysFilePath = "Assets/Libraries/Anki/DriveEngine/Localization/GeneratedKeys/LocalizationKeys.cs";
   private const string kGeneratedLocalizationKeysSourceLocale = "en-us";
 
   [MenuItem("Cozmo/Localization/Generate Localization Key Constants")]
