@@ -14,7 +14,6 @@ namespace Xcode {
 
       var proj = XcodeProjectParser.Deserialize(original);
 
-
       proj.RemoveFolder("UnityBuild");
 
       proj.AddFolder("../ios", "../ios/UnityBuild/Classes", "UnityBuild/Classes");
@@ -23,6 +22,9 @@ namespace Xcode {
       proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhoneLandscape.png", "UnityBuild/LaunchScreen-iPhoneLandscape.png");
       proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhonePortrait.png", "UnityBuild/LaunchScreen-iPhonePortrait.png");
       proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhone.xib", "UnityBuild/LaunchScreen-iPhone.xib");
+
+      // This is just a bunch of headers that we don't need to include
+      proj.RemoveFolder("UnityBuild/Libraries/libil2cpp");
 
       var parsed = XcodeProjectParser.Serialize(proj);
       File.WriteAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj", parsed);
@@ -168,8 +170,7 @@ namespace Xcode {
         DefaultSourceTree = "<group>",
         Category = XcodeCategory.Resources,
         LastKnownFileType = "text.xcconfig"
-      },
-          
+      },          
       // TODO: Add any FileTypes that I've missed
     };
 
@@ -253,10 +254,10 @@ namespace Xcode {
 
       foreach (var directoryName in Directory.GetDirectories(fileSystemFolderPath)) {
         var directory = directoryName.TrimEnd('/');
-        var extension = Path.GetExtension(directory);
+        var extension = Path.GetExtension(directory).TrimStart('.');
 
         // Some folders are treated as files, like frameworks and image folders
-        if (!string.IsNullOrEmpty(extension)) {
+        if (!string.IsNullOrEmpty(extension) && FileTypeList.Exists(x => x.Extension == extension)) {
           project.AddFile(projectRootPath, folderGroup, directory);
         }
         else {          
@@ -294,8 +295,11 @@ namespace Xcode {
 
 
       if (fileType == null) {
-        sDAS.Error("Could Not Determine FileType for Extension " + extension);
-        return;
+        fileType = new FileTypeDefinition() {
+          Category = XcodeCategory.Resources,
+          Extension = extension,
+          LastKnownFileType = "file"
+        };
       }
 
       var fileId = NewFileId(name);
