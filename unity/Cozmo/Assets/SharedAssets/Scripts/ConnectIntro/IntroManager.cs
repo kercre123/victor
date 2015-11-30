@@ -27,7 +27,7 @@ public class IntroManager : MonoBehaviour {
 
     HideDevConnectDialog();
 
-    if (_IntroScriptedSequenceName.IsNullOrEmpty()) {
+    if (string.IsNullOrEmpty(_IntroScriptedSequenceName)) {
       HandleIntroSequenceDone(_IntroSequenceDoneToken);
     }
     else {
