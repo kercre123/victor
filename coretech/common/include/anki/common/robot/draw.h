@@ -36,23 +36,25 @@ namespace Anki
       Point<s16> point1inner;
       Point<s16> point2inner;
 
+      s16 short_w = imageWidth-1;
+      s16 short_h = imageHeight-1;
       if(lineWidth > 0) {
         point1inner.x = point1.x + static_cast<s16>(lineWidth);
         point1inner.y = point1.y + static_cast<s16>(lineWidth);
         point2inner.x = point2.x - static_cast<s16>(lineWidth);
         point2inner.y = point2.y - static_cast<s16>(lineWidth);
 
-        point1inner.x = static_cast<s16>(CLIP(point1inner.x, 0, imageWidth-1));
-        point1inner.y = static_cast<s16>(CLIP(point1inner.y, 0, imageHeight-1));
-        point2inner.x = static_cast<s16>(CLIP(point2inner.x, 0, imageWidth-1));
-        point2inner.y = static_cast<s16>(CLIP(point2inner.y, 0, imageHeight-1));
+        point1inner.x = static_cast<s16>(CLIP(point1inner.x, 0, short_w));
+        point1inner.y = static_cast<s16>(CLIP(point1inner.y, 0, short_h));
+        point2inner.x = static_cast<s16>(CLIP(point2inner.x, 0, short_w));
+        point2inner.y = static_cast<s16>(CLIP(point2inner.y, 0, short_h));
       }
 
       // Make the corners fit inside the image
-      point1.x = static_cast<s16>(CLIP(point1.x, 0, imageWidth-1));
-      point1.y = static_cast<s16>(CLIP(point1.y, 0, imageHeight-1));
-      point2.x = static_cast<s16>(CLIP(point2.x, 0, imageWidth-1));
-      point2.y = static_cast<s16>(CLIP(point2.y, 0, imageHeight-1));
+      point1.x = static_cast<s16>(CLIP(point1.x, 0, short_w));
+      point1.y = static_cast<s16>(CLIP(point1.y, 0, short_h));
+      point2.x = static_cast<s16>(CLIP(point2.x, 0, short_w));
+      point2.y = static_cast<s16>(CLIP(point2.y, 0, short_h));
 
       for(s32 y=point1.y; y<=point2.y; y++) {
         Type * restrict pImage = image.Pointer(y, 0);

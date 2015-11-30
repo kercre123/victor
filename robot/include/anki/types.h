@@ -36,7 +36,7 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
-#include "anki/common/constantsAndMacros.h"
+#include "util/math/constantsAndMacros.h"
 #endif
 
 // A key associated with each computed pose retrieved from history

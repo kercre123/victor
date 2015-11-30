@@ -6,10 +6,9 @@
  **/
 
 #include <assert.h>
-#include <math.h>
 #include "anki/common/shared/utilities_shared.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
-#include "anki/common/constantsAndMacros.h"
+#include "util/math/constantsAndMacros.h"
 
 #include <stdio.h>
 
