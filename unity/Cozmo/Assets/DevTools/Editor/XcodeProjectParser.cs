@@ -12,7 +12,7 @@ using System.Linq;
 namespace Xcode {
   public static class XcodeProjectParser {
 
-    [MenuItem("Cozmo/Test Xcode Parse")]
+    [MenuItem("Cozmo/Xcode/Test Parse")]
     public static void TestParseProject() {
       string original = File.ReadAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj");
 
@@ -641,6 +641,10 @@ namespace Xcode {
 
     public override int GetHashCode() {
       return Value.GetHashCode();
+    }
+
+    public static implicit operator XcodeString(string str) {
+      return new XcodeString(str);
     }
   }
 
