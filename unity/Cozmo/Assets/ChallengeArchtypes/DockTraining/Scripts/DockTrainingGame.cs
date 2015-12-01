@@ -62,6 +62,17 @@ namespace DockTraining {
       DestroyDefaultQuitButton();
     }
 
+    public bool ShouldTryDock() {
+      return false;
+    }
+
+    public bool ShouldTryDockSucceed() {
+      if (ShouldTryDock() == false) {
+        return false;
+      }
+      return false;
+    }
+
     private LightCube FindNewTarget() {
       for (int i = 0; i < CurrentRobot.VisibleObjects.Count; ++i) {
         float distance = Vector3.Distance(CurrentRobot.WorldPosition, CurrentRobot.VisibleObjects[i].WorldPosition);

@@ -3,8 +3,7 @@ using System.Collections;
 
 namespace DockTraining {
 
-  // Determines if it should move left/right on wave or
-  // try to dock if it is close enough.
+  // Determines if it should move left/right on wave or try to dock if it is close enough.
   public class DetermineNextAction : State {
 
     private float _WaveTimeAccumulator = 0.0f;
@@ -29,7 +28,8 @@ namespace DockTraining {
       base.Update();
       LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
       if (currentTarget != null) {
-        
+        float distance = Vector2.Distance(_CurrentRobot.WorldPosition, currentTarget.WorldPosition);
+
       }
       else {
         
@@ -42,8 +42,7 @@ namespace DockTraining {
     }
 
     private void HandleObservedMotion(float x, float y) {
-      // wave accumulator is high enough for us to 
-      // go left or right.
+      // wave accumulator is high enough for us to go left or right.
       if (_WaveTimeAccumulator > 0.5f) {
         SteerState steerState = new SteerState();
         if (_LeftAccumulator > _RightAccumulator) {
