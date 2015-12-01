@@ -91,7 +91,7 @@ public class ConsoleLogPane : MonoBehaviour {
 
     // If there is space, add the new log to the current newest text field
     if (_NewestTextLabel != null &&
-        newLog.Length + 1 + _NewestTextLabel.text.Length < ConsoleLogManager.UNITY_TEXT_FIELD_CHAR_LIMIT) {
+        newLog.Length + 1 + _NewestTextLabel.text.Length < ConsoleLogManager.kUnityTextFieldCharLimit) {
       StringBuilder sb = new StringBuilder();
       sb.Append(_NewestTextLabel.text);
       sb.Append(newLog);

@@ -10,7 +10,7 @@ public class ConsoleLogManager : MonoBehaviour {
   // Each string element should be < 16250 characters because
   // Unity uses a mesh to display text, 4 verts per letter, and has
   // a hard limit of 65000 verts per mesh
-  public const int UNITY_TEXT_FIELD_CHAR_LIMIT = 14000;
+  public const int kUnityTextFieldCharLimit = 14000;
 
   [SerializeField]
   private AnkiTextLabel _ConsoleTextLabelPrefab;
@@ -132,7 +132,7 @@ public class ConsoleLogManager : MonoBehaviour {
       if (_LastToggleValues[packet.LogKind] == true) {
         logString = packet.ToString();
 
-        if (sb.Length + logString.Length + 1 > UNITY_TEXT_FIELD_CHAR_LIMIT) {
+        if (sb.Length + logString.Length + 1 > kUnityTextFieldCharLimit) {
           consoleLogs.Add(sb.ToString());
 
           // Empty the string builder
