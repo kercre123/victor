@@ -50,6 +50,8 @@ namespace Vision {
     
     static const s32 MaxFaces = 10;
     
+    std::list<TrackedFace> _faces;
+    
     //u8* _workingMemory = nullptr;
     //u8* _backupMemory  = nullptr;
     
@@ -129,6 +131,8 @@ namespace Vision {
     
     _isInitialized = true;
     
+    PRINT_NAMED_INFO("FaceTrackerImpl.Init.Success",
+                     "OKAO Vision handles created successfully.");
     return RESULT_OK;
   } // Init()
   
@@ -230,6 +234,8 @@ namespace Vision {
       return RESULT_FAIL;
     }
     
+    _faces.clear();
+    
     for(INT32 detectionIndex=0; detectionIndex<numDetections; ++detectionIndex)
     {
       DETECTION_INFO detectionInfo;
@@ -243,11 +249,12 @@ namespace Vision {
         return RESULT_FAIL;
       }
       
-      TrackedFace face;
+      // Add a new face to the list
+      _faces.emplace_back();
+      
+      TrackedFace& face = _faces.back();
       face.SetID(detectionInfo.nID);
-      face.SetHeadOrientation(DEG_TO_RAD(detectionInfo.nAngle),
-                              0,
-                              DEG_TO_RAD(detectionInfo.nPose));
+
       POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
       okaoResult = OKAO_CO_ConvertCenterToSquare(detectionInfo.ptCenter,
                                                  detectionInfo.nHeight,
@@ -293,7 +300,15 @@ namespace Vision {
                           detectionIndex, numDetections, okaoResult);
         return RESULT_FAIL;
       }
+
+      // Set eye centers
+      face.SetLeftEyeCenter(Point2f(_facialParts[PT_POINT_LEFT_EYE].x,
+                                    _facialParts[PT_POINT_LEFT_EYE].y));
       
+      face.SetRightEyeCenter(Point2f(_facialParts[PT_POINT_RIGHT_EYE].x,
+                                     _facialParts[PT_POINT_RIGHT_EYE].y));
+
+      // Set other facial features
       SetFeatureHelper(_facialParts, {
         PT_POINT_LEFT_EYE_OUT, PT_POINT_LEFT_EYE, PT_POINT_LEFT_EYE_IN
       }, TrackedFace::FeatureName::LeftEye, face);
@@ -307,9 +322,11 @@ namespace Vision {
       }, TrackedFace::FeatureName::Nose, face);
       
       SetFeatureHelper(_facialParts, {
-        PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_NOSE_RIGHT, PT_POINT_MOUTH
+        PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
+        PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
       }, TrackedFace::FeatureName::UpperLip, face);
 
+      
       // Fill in head orientation
       INT32 roll_deg=0, pitch_deg=0, yaw_deg=0;
       okaoResult = OKAO_PT_GetFaceDirection(_okaoPartDetectionResultHandle, &pitch_deg, &yaw_deg, &roll_deg);
@@ -330,9 +347,7 @@ namespace Vision {
   
   std::list<TrackedFace> FaceTracker::Impl::GetFaces() const
   {
-    //TODO: Implement!
-    
-    return std::list<TrackedFace>();
+    return _faces;
   }
   
 } // namespace Vision
