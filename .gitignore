@@ -222,7 +222,10 @@ coretech/project/gyp/build
 project/gyp/build
 generated/clad
 generated/webots/src/plugins/physics/physics.c
-robot/generated/clad
+robot/generated/clad*
 resources/config/faciometric
 resources/config/basestation/vision/faciometric
 generated/cladCsharp/clad
+JLinkLog.txt
+*.lst
+robot/cube/lst/block.m51

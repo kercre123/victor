@@ -1,7 +1,6 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
 #include "anki/common/shared/radians.h"
-#include "anki/common/constantsAndMacros.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/pose.h"
 

@@ -60,16 +60,19 @@ void PowerOn(void) {
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 }
 
+extern "C" void ResetStack(void);
+
 // This is the remote entry point recovery mode
 extern "C" void SVC_Handler(void) {
   __disable_irq();
+  ResetStack();
   StopDevices();
   PowerOn();
   EnterRecovery();
   NVIC_SystemReset();
 }
 
-int main (void) {  
+int main (void) {
   TimerInit();
 
   if (!CheckSig()) {

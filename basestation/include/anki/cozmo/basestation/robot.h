@@ -365,7 +365,7 @@ public:
     Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                      const Vision::KnownMarker* dockMarker);
     
-    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; }
+    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; _dockObjectID.UnSet(); }
     bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
     
     // Places the object that the robot was carrying in its current position
@@ -500,6 +500,8 @@ public:
     // parent pose to store the pose.
     // Returns true if the pose is successfully updated, false otherwise.
     bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
+
+    Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
 
     
     // ============= Reactions =============
@@ -730,9 +732,9 @@ public:
                                            bool withInterpolation = false);
     
     Result GetVisionOnlyPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p);
+    Result GetComputedPoseAt(const TimeStamp_t t_request, const RobotPoseStamp** p, HistPoseKey* key = nullptr) const;
     Result GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key = nullptr);
-    Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose);
-    
+  
     RobotPoseHistory* _poseHistory;
     
     // Takes startPose and moves it forward as if it were a robot pose by distance mm and

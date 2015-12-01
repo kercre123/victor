@@ -65,10 +65,8 @@ public:
   void Clear();
 
   const std::string& GetName() const { return _name; }
-  
-  
-private:
 
+private:
 
   // Name of this animation
   std::string _name;

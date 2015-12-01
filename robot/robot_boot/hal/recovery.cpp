@@ -1,15 +1,16 @@
-#include "rec_protocol.h"
+#include "../../include/anki/cozmo/robot/rec_protocol.h"
 
 #include "MK02F12810.h"
 #include "recovery.h"
 #include "sha1.h"
+#include "timer.h"
 
 static const int FLASH_BLOCK_SIZE = 0x800;
 
-
-static inline spiWord WaitForWord(void) {
+static inline commandWord WaitForWord(void) {
   while(~SPI0_SR & SPI_SR_RFDF_MASK) ;  // Wait for a byte
-  spiWord ret = SPI0_POPR;
+  commandWord ret = SPI0_POPR;
+ 
   SPI0_SR = SPI0_SR;
   return ret;
 }
@@ -23,16 +24,17 @@ void SyncSPI(void) {
     
     // Make sure we are bit syncronized to the espressif
     {
-      const int loops = 7;
-      bool success = true;
+      const int loops = 16;
 
-      WaitForWord();
-      for(int i = 0; i < loops; i++) {
-        WaitForWord();
-        if (WaitForWord() != 0x8000) success = false ;
+      for (int i = 0; i < 100; i++) WaitForWord();
+
+      bool restart = false;
+      for(int i = 0; i < loops && !restart; i++) {
+        commandWord t = WaitForWord();
+        if (t && t != 0x8000) restart = true;
       }
-
-      if (success) return ;
+      
+      if (!restart) return ;
     }
     
     PORTE_PCR17 = PORT_PCR_MUX(0);    // SPI0_SCK (disabled)
@@ -76,7 +78,7 @@ void SPIInit(void) {
 extern int counterVolume;
 int counterVolume = 0;
 
-__attribute__((section("CAMRAM"))) int SendCommand()
+int SendCommand()
 {
   const int FSTAT_ERROR = FTFA_FSTAT_FPVIOL_MASK | FTFA_FSTAT_ACCERR_MASK | FTFA_FSTAT_FPVIOL_MASK;
 
@@ -92,7 +94,6 @@ __attribute__((section("CAMRAM"))) int SendCommand()
   return FTFA->FSTAT & FSTAT_ERROR;
 }
 
-__attribute__((section("CAMRAM"))) 
 bool FlashSector(int target, const uint32_t* data)
 {
   volatile const uint32_t* original = (uint32_t*)target;
@@ -140,24 +141,18 @@ bool FlashSector(int target, const uint32_t* data)
 
 
 static inline bool FlashBlock() {
-  struct Packet {
-    uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
-    uint16_t  blockOffset;
-    uint8_t   checkSum[SHA1_BLOCK_SIZE];
-  };
-
-  static const int length = sizeof(Packet) / sizeof(spiWord);
+  static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
   
-  static union {
-    Packet packet;    
-    spiWord raw[length];
-  };
+  static FirmwareBlock packet;    
+  static commandWord* raw = (commandWord*) &packet;
 
   // Load raw packet into memory
   for (int i = 0; i < length; i++) {
     raw[i] = WaitForWord();
   }
 
+  MicroWait(5000);
+  
   // Check the SHA-1 of the packet to verify that transmission actually worked
   SHA1_CTX ctx;
   sha1_init(&ctx);
@@ -166,7 +161,7 @@ static inline bool FlashBlock() {
   uint8_t sig[SHA1_BLOCK_SIZE];
   sha1_final(&ctx, sig);
 
-  int writeAdddress = packet.blockOffset * TRANSMIT_BLOCK_SIZE;
+  int writeAdddress = packet.blockAddress;
 
   // We will not override the boot loader
   if (writeAdddress < SECURE_SPACE) {
@@ -175,12 +170,15 @@ static inline bool FlashBlock() {
   
   // Verify block before writting to flash
   for (int i = 0; i < SHA1_BLOCK_SIZE; i++) {
-    if (sig[i] != packet.checkSum[i]) return false;
+    if (sig[i] != packet.checkSum[i])
+    {
+      return false;
+    }
   }
 
   // Write sectors to flash
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
-    if (!FlashSector(writeAdddress + i,&packet.flashBlock[i])) {
+    if (!FlashSector(writeAdddress + i,&packet.flashBlock[i / sizeof(uint32_t)])) {
       return false;
     }
   }

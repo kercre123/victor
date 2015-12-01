@@ -111,7 +111,7 @@ static bool QueueMessage(const uint8_t* buffer, const uint16_t bufferSize, Relia
   {
     uint8_t* msg = &(connection->pendingMessages[connection->pendingReliableBytes]);
     PendingReliableMessageMetaData* meta = &(connection->pendingMsgMeta[connection->numPendingReliableMessages]);
-    uint16_t msgSubHeaderSizeField = bufferSize;
+    const uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
 
     // Update the connection status
     connection->pendingReliableBytes += ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
@@ -336,6 +336,11 @@ void ICACHE_FLASH_ATTR HandleSubMessage(uint8_t* msg, uint16_t msgLen, EReliable
     if (connection->nextInSequenceId == seqId) // This is the reliable message we were expecting
     {
       connection->nextInSequenceId = NextSequenceId(connection->nextInSequenceId);
+      if (msgLen > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE/2) // If we just got something BIG
+      {
+        // ACK it imeediately and explicitly if need be
+        ReliableTransport_SendMessage(NULL, 0, connection, eRMT_ACK, true, GLOBAL_INVALID_TAG);
+      }
     }
     else // A duplicate (or out of order) reliable message
     {
@@ -424,7 +429,7 @@ bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferS
   }
   else // Unreliable message
   {
-    uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
+    const uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
     if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > // + 1 for tag byte. Easier to assume it's there than check
         (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->txQueued))
     { // No room in the current packet
@@ -454,8 +459,11 @@ bool ReliableTransport_SendMessage(const uint8_t* buffer, const uint16_t bufferS
       connection->txBuf[connection->txQueued] = tag;
       connection->txQueued += 1;
     }
-    memcpy(connection->txBuf + connection->txQueued, buffer, bufferSize);
-    connection->txQueued += bufferSize;
+    if (bufferSize)
+    {
+      memcpy(connection->txBuf + connection->txQueued, buffer, bufferSize);
+      connection->txQueued += bufferSize;
+    }
     // If this needs to go out right away
     if (hot)
     {

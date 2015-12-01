@@ -1,13 +1,12 @@
 #ifndef __ESPRESSIF_H
 #define __ESPRESSIF_H
 
-enum ESP_PROGRAM_ERROR {
-  ESP_ERROR_NONE,
-  ESP_ERROR_NO_COMMUNICATION,
-  ESP_ERROR_BLOCK_FAILED
-};
+#include <stdint.h>
 
 void InitEspressif(void);
-ESP_PROGRAM_ERROR ProgramEspressif(void);
+void DeinitEspressif(void);
+
+void ProgramEspressif(void);
+bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data);
 
 #endif

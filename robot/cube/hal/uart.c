@@ -9,7 +9,7 @@
 #define GPIO_TX        P0
 
 
-static const char hexLookup[16] = {"0123456789ABCDEF"};
+static const char code hexLookup[16] = {"0123456789ABCDEF"};
 
 void PutDec(char i) reentrant 
 {
@@ -56,10 +56,10 @@ void InitUart()
   #else
   PIN_OUT(P0DIR, PIN_TX); 
   #endif
-     // Initializes the UART
+  // Initializes the UART
   hal_uart_init(UART_BAUD_57K6);
   
-      // Enable global interrupts
+  // Enable global interrupts
   EA = 1; // XXX is this needed?
   
   PutString("\r\nUART!\r\n");

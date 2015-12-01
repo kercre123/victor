@@ -45,6 +45,8 @@ public:
     Right
   };
   
+  ProceduralFaceParams();
+  
   // Allows setting an instance of ProceduralFaceParams to be used as reset values
   static void SetResetData(const ProceduralFaceParams& newResetData);
   

@@ -136,10 +136,6 @@ namespace Anki {
                             neutralFaceAnimName);
       }
       
-      // Now that the reference neutral face has been set up, reset our local faces to start from neutral
-      _proceduralFace.GetParams().Reset();
-      _lastProceduralFace.GetParams().Reset();
-      
       // Read in Mood Manager Json
       if (nullptr != _dataPlatform)
       {
@@ -1680,6 +1676,7 @@ namespace Anki {
         // TODO: Should SetPose() do the flattening w.r.t. origin?
         posePtr->SetPose(GetPoseFrameID(), robotPoseWrtOrigin, liftAngle, liftAngle);
       }
+
       
       // Compute the new "current" pose from history which uses the
       // past vision-based "ground truth" pose we just computed.
@@ -2111,6 +2108,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      // Mark as dirty so that the robot no longer localizes to this object
+      object->SetPoseState(Anki::Vision::ObservableObject::PoseState::Dirty);
+      
       _usingManualPathSpeed = useManualSpeed;
       _lastPickOrPlaceSucceeded = false;
       
@@ -2674,9 +2674,9 @@ namespace Anki {
       return _poseHistory->GetVisionOnlyPoseAt(t_request, p);
     }
 
-    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose)
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const
     {
-      RobotPoseStamp* poseStamp;
+      const RobotPoseStamp* poseStamp;
       Result lastResult = GetComputedPoseAt(t_request, &poseStamp);
       if(lastResult == RESULT_OK) {
         // Grab the pose stored in the pose stamp we just found, and hook up
@@ -2688,6 +2688,11 @@ namespace Anki {
       return lastResult;
     }
     
+    Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, const RobotPoseStamp** p, HistPoseKey* key) const
+    {
+      return _poseHistory->GetComputedPoseAt(t_request, p, key);
+    }
+
     Result Robot::GetComputedPoseAt(const TimeStamp_t t_request, RobotPoseStamp** p, HistPoseKey* key)
     {
       return _poseHistory->GetComputedPoseAt(t_request, p, key);

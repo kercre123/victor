@@ -15,12 +15,13 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
-static const u32 MAX_FAILED_TRANSFER_COUNT = 12000;
+static const u32 MAX_FAILED_TRANSFER_COUNT = 18000; // 1.5m for auto shutdown (if not on charger)
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
 extern void EnterRecovery(void) {
+  __enable_irq();
   __asm { SVC 0 };
 }
 

@@ -1158,7 +1158,7 @@ namespace Cozmo {
           }
         } else {
           // The block we're placing might've been made neat, but verification later showed that the placement failed.
-          if (_objectToPickUp) {
+          if (_objectToPickUp.IsSet()) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.MakingMessy", "Object %d", _objectToPickUp.GetValue());
             MakeMessy(_objectToPickUp);
           }

@@ -15,7 +15,6 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
-#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -35,6 +34,21 @@ void ProceduralFaceParams::Reset()
   {
     *this = *_resetData;
   }
+}
+  
+ProceduralFaceParams::ProceduralFaceParams()
+{
+  static const auto eyeScaleParamsList =
+  {
+    Parameter::EyeScaleX,
+    Parameter::EyeScaleY
+  };
+  
+  for (auto param : eyeScaleParamsList)
+  {
+    _eyeParams[WhichEye::Left][(int)param] = 1.0f;
+  }
+  _eyeParams[WhichEye::Right] = _eyeParams[WhichEye::Left];
 }
   
 static const char* kFaceAngleKey = "faceAngle";
@@ -160,54 +174,27 @@ void ProceduralFaceParams::Interpolate(const ProceduralFaceParams& face1, const 
   
 void ProceduralFaceParams::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {
-  static const std::set<Parameter> allParams =
+  static const auto addParamList =
   {
     Parameter::EyeCenterX,
     Parameter::EyeCenterY,
+    Parameter::EyeAngle,
+    Parameter::UpperLidAngle,
+    Parameter::LowerLidAngle,
+  };
+  for (auto param : addParamList)
+  {
+    eyeArray0[(int)param] += eyeArray1[(int)param];
+  }
+  
+  static const auto multiplyParamList =
+  {
     Parameter::EyeScaleX,
     Parameter::EyeScaleY,
-    Parameter::EyeAngle,
-    Parameter::LowerInnerRadiusX,
-    Parameter::LowerInnerRadiusY,
-    Parameter::UpperInnerRadiusX,
-    Parameter::UpperInnerRadiusY,
-    Parameter::UpperOuterRadiusX,
-    Parameter::UpperOuterRadiusY,
-    Parameter::LowerOuterRadiusX,
-    Parameter::LowerOuterRadiusY,
-    Parameter::UpperLidY,
-    Parameter::UpperLidAngle,
-    Parameter::UpperLidBend,
-    Parameter::LowerLidY,
-    Parameter::LowerLidAngle,
-    Parameter::LowerLidBend
   };
-  // Make sure these match up or we won't copy parameters correctly!
-  assert(allParams.size() == (size_t)Parameter::NumParameters);
-  
-  // We list out the eye params that need to be added instead of multiplied
-  static const std::set<Parameter> addParamList =
+  for (auto param : multiplyParamList)
   {
-    Parameter::EyeCenterX,
-    Parameter::EyeCenterY,
-    Parameter::EyeAngle,
-    Parameter::UpperLidY,
-    Parameter::UpperLidAngle,
-    Parameter::LowerLidY,
-    Parameter::LowerLidAngle,
-  };
-  
-  // Go through all the params, if they're in the add list do that, otherwise multiply
-  for (auto param : allParams)
-  {
-    if (addParamList.count(param) > 0)
-    {
-      eyeArray0[(int)param] += eyeArray1[(int)param];
-    }
-    else
-    {
-      eyeArray0[(int)param] *= eyeArray1[(int)param];
-    }
+    eyeArray0[(int)param] *= eyeArray1[(int)param];
   }
 }
   

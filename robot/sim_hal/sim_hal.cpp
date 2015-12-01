@@ -765,6 +765,7 @@ namespace Anki {
             case BlockMessages::LightCubeMessage::Tag_moved:
             {
               ObjectMoved m;
+              m.timestamp = HAL::GetTimeStamp();
               memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
               RobotInterface::SendMessage(m);
               break;
@@ -772,6 +773,7 @@ namespace Anki {
             case BlockMessages::LightCubeMessage::Tag_stopped:
             {
               ObjectStoppedMoving m;
+              m.timestamp = HAL::GetTimeStamp();
               memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
               RobotInterface::SendMessage(m);
               break;
@@ -779,6 +781,7 @@ namespace Anki {
             case BlockMessages::LightCubeMessage::Tag_tapped:
             {
               ObjectTapped m;
+              m.timestamp = HAL::GetTimeStamp();              
               memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
               RobotInterface::SendMessage(m);
               break;

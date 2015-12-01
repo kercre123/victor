@@ -10,6 +10,7 @@ namespace Cozmo {
   
 message ObjectMoved
 {
+  uint_32     timestamp,
   uint_32     objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32     robotID,
   ActiveAccel accel,
@@ -18,6 +19,7 @@ message ObjectMoved
 
 message ObjectStoppedMoving
 {
+  uint_32     timestamp,
   uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 robotID,
   UpAxis  upAxis,
@@ -26,6 +28,7 @@ message ObjectStoppedMoving
 
 message ObjectTapped
 {
+  uint_32     timestamp,
   uint_32 objectID, // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 robotID,
   uint_8  numTaps,

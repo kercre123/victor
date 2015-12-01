@@ -305,6 +305,7 @@ return RESULT_FAIL; \
       return retVal;
     }
     
+    /*
     RobotInterface::EngineToRobot* ProceduralFaceKeyFrame::GetStreamMessageHelper(const ProceduralFace& procFace)
     {
       Result rleResult = FaceAnimationManager::CompressRLE(procFace.GetFace(), _faceImageMsg.image);
@@ -341,6 +342,30 @@ return RESULT_FAIL; \
       
       return GetStreamMessageHelper(interpFace);
     }
+     */
+    
+    ProceduralFaceParams ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame* nextFrame)
+    {
+      if(nullptr == nextFrame) {
+        _isDone = true;
+        return _procFace.GetParams();
+      } else {
+        // The interpolation fraction is how far along in time we are from this frame's
+        // trigger time (which currentTime was initialized to) and the next frame's
+        // trigger time.
+        const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame->GetTriggerTime() - GetTriggerTime()));
+        
+        ProceduralFaceParams interpParams;
+        interpParams.Interpolate(_procFace.GetParams(), nextFrame->_procFace.GetParams(), fraction);
+        
+        _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
+        if(_currentTime_ms >= nextFrame->GetTriggerTime()) {
+          _isDone = true;
+        }
+        
+        return interpParams;
+      }
+    }
     
 #pragma mark -
 #pragma mark RobotAudioKeyFrame
@@ -349,7 +374,7 @@ return RESULT_FAIL; \
     // RobotAudioKeyFrame
     //
     
-    /*
+#   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     const std::string& RobotAudioKeyFrame::GetSoundName() const
     {
       static const std::string unknownName("UNKNOWN");
@@ -361,7 +386,65 @@ return RESULT_FAIL; \
       
       return _audioReferences[_selectedAudioIndex].name;
     }
-     */
+    
+    RobotInterface::EngineToRobot* RobotAudioKeyFrame::GetStreamMessage()
+    {
+      if(_audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
+        return nullptr;
+      }
+      
+      if(_sampleIndex == 0) {
+        // Select one of the audio names to play
+        if(_audioReferences.size()==1) {
+          // Special case: there's only one audio option
+          _selectedAudioIndex = 0;
+        } else {
+          _selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+        }
+      }
+      
+      // Populate the message with the next chunk of audio data and send it out
+      if(_sampleIndex < _audioReferences[_selectedAudioIndex].numSamples)
+      {
+        // TODO: Get next chunk of audio from wwise or something?
+        //wwise::GetNextSample(_audioSampleMsg.sample, 800);
+        
+        if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
+                                                         (uint32_t)_sampleIndex, _audioReferences[_selectedAudioIndex].volume, _audioSampleMsg)) {
+          PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
+        }
+        
+        ++_sampleIndex;
+        
+        return new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSample(_audioSampleMsg));
+      } else {
+        _sampleIndex = 0;
+        return nullptr;
+      }
+    } // GetStreamMessage()
+    
+    Result RobotAudioKeyFrame::AddAudioRef(const std::string& name, const f32 volume)
+    {
+      AudioRef audioRef;
+      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(name);
+      if(duration_ms == 0) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.AddAudioRef.InvalidName",
+                          "SoundManager could not find the sound associated with name '%s'.\n",
+                          name.c_str());
+        return RESULT_FAIL;
+      }
+      
+      audioRef.name = name;
+      audioRef.numSamples = duration_ms / SAMPLE_LENGTH_MS;
+      audioRef.volume = volume;
+      _audioReferences.push_back(audioRef);
+
+      return RESULT_OK;
+    }
+    
+#   else // (if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
     
     Result RobotAudioKeyFrame::AddAudioRef(const std::string& name, const f32 volume)
     {
@@ -375,6 +458,27 @@ return RESULT_FAIL; \
       
       return RESULT_OK;
     }
+    
+    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
+    {
+      if(_audioReferences.empty()) {
+        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
+                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
+        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid, .volume = 0.f};
+        return InvalidRef;
+      }
+      
+      // Select one of the audio names to play
+      size_t selectedAudioIndex = 0;
+      if(_audioReferences.size()>1) {
+        // If there are more than one audio references
+        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
+      }
+      
+      return _audioReferences[selectedAudioIndex];
+    }
+    
+#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot)
     {
@@ -405,26 +509,6 @@ return RESULT_FAIL; \
       }
       
       return RESULT_OK;
-    }
-    
-    //RobotInterface::EngineToRobot* RobotAudioKeyFrame::GetStreamMessage()
-    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
-    {
-      if(_audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
-                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef{.audioEvent = Audio::EventType::Invalid, .volume = 0.f};
-        return InvalidRef;
-      }
-      
-      // Select one of the audio names to play
-      size_t selectedAudioIndex = 0;
-      if(_audioReferences.size()>1) {
-        // If there are more than one audio references
-        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-      }
-      
-      return _audioReferences[selectedAudioIndex];
     }
     
 #pragma mark -

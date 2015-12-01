@@ -368,6 +368,8 @@ static void DumpFixtureSerials(void)
   ConsoleWriteHex(serials, 0x400);
 }
 
+#if 0
+// Cozmo doesn't know how to do this, yet
 static void Charge(void)
 {
   const u32 sampleCount = 100;
@@ -382,10 +384,10 @@ static void Charge(void)
   }
   TestEnableRx();
 }
+#endif
 
 static CommandFunction m_functions[] =
 {
-  {"Charge", Charge, FALSE},
   {"GetSerial", GetSerial, FALSE},
   {"RedoTest", RedoTest, FALSE},
   {"SetDateCode", SetDateCode, FALSE},

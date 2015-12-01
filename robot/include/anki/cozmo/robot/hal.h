@@ -34,7 +34,6 @@
 #include "anki/common/robot/config.h"
 #include "anki/common/robot/utilities_c.h"
 #include "anki/types.h"
-#include "anki/common/constantsAndMacros.h"
 #include "anki/vision/CameraSettings.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -441,6 +440,7 @@ namespace Anki
 
       // Print a message to the face - this will permanently replace the face with your message
       extern "C" void FacePrintf(const char *format, ...);
+
       // Restore normal operation of the face from a FacePrintf
       extern "C" void FaceUnPrintf(void);
 

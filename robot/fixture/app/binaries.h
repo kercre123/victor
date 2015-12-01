@@ -21,9 +21,9 @@ extern "C" {
   extern const uint8_t g_EspBoot[], g_EspBootEnd[];
   extern const uint8_t g_EspInit[], g_EspInitEnd[];
   
-  // SWD shims - these are used to flash MCUs via SWD
-  extern const uint8_t g_shimK02[], g_shimK02End[];
-  extern const uint8_t g_shimBody[], g_shimBodyEnd[];  
+  // SWD stubs - these are used to flash MCUs via SWD
+  extern const uint8_t g_stubK02[], g_stubK02End[];
+  extern const uint8_t g_stubBody[], g_stubBodyEnd[];  
 }
 
 #endif

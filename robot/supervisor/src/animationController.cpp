@@ -511,7 +511,7 @@ namespace AnimationController {
         // If the next message is not audio, then delete it until it is.
         while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
-          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead). Dumping message. (FYI AudioSample_ID = %d)\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
           GetFromBuffer(&msg);
           msgID = PeekBufferTag();
         }
@@ -535,7 +535,7 @@ namespace AnimationController {
             break;
           }
           default:
-            PRINT("Expecting either audio sample or silence next in animation buffer. (Got %d instead)\n", msgID);
+            PRINT("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)\n", msgID);
             return RESULT_FAIL;
         }
       

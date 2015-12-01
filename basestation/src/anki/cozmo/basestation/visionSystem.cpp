@@ -1187,6 +1187,12 @@ namespace Cozmo {
       // the camera's pose chain.
       currentFace.UpdateTranslation(_camera);
       
+      // Make head pose w.r.t. the historical world origin
+      Pose3d headPose = currentFace.GetHeadPose();
+      headPose.SetParent(&_poseData.cameraPose);
+      headPose = headPose.GetWithRespectToOrigin();
+      currentFace.SetHeadPose(headPose);
+      
       _faceMailbox.putMessage(currentFace);
     }
 

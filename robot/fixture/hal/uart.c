@@ -11,6 +11,7 @@ char* const g_hex = "0123456789abcdef";
 
 #ifdef DEBUG_UART_ENABLED
 
+#ifndef SlowPrintf
 void SlowPrintf(const char* format, ...)
 {
   char dest[64];
@@ -20,6 +21,7 @@ void SlowPrintf(const char* format, ...)
   va_end(argptr);  
   SlowPutString(dest);
 }
+#endif
 
 void InitUART(void)
 {

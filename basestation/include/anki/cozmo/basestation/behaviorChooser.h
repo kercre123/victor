@@ -42,8 +42,10 @@ public:
   virtual IBehavior* GetBehaviorByName(const std::string& name) const = 0;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) = 0;
-  virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const = 0;
-  virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const = 0;
+  virtual IBehavior* GetReactionaryBehavior(const Robot& robot,
+                                            const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const = 0;
+  virtual IBehavior* GetReactionaryBehavior(const Robot& robot,
+                                            const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const = 0;
   
   virtual Result Update(double currentTime_sec) { return Result::RESULT_OK; }
 
@@ -64,8 +66,12 @@ public:
   virtual IBehavior* GetBehaviorByName(const std::string& name) const override;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override { }
-  virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override { return nullptr; }
-  virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override { return nullptr; }
+  virtual IBehavior* GetReactionaryBehavior(
+    const Robot& robot,
+    const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override { return nullptr; }
+  virtual IBehavior* GetReactionaryBehavior(
+    const Robot& robot,
+    const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override { return nullptr; }
   
   virtual const char* GetName() const override { return "Simple"; }
   
@@ -84,8 +90,12 @@ public:
   {
     _reactionaryBehaviorList.push_back(behavior);
   }
-  virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override;
-  virtual IBehavior* GetReactionaryBehavior(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override;
+  virtual IBehavior* GetReactionaryBehavior(
+    const Robot& robot,
+    const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override;
+  virtual IBehavior* GetReactionaryBehavior(
+    const Robot& robot,
+    const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override;
   
   // We need to clean up the behaviors we've been given to hold onto
   virtual ~ReactionaryBehaviorChooser();
@@ -96,9 +106,10 @@ protected:
 private:
   // Helper function to do the common functionality of the GetReactionaryBehavior calls
   template <typename EventType>
-  IReactionaryBehavior* _GetReactionaryBehavior(const AnkiEvent<EventType>& event,
-                                                std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet
-                                                ) const;
+  IReactionaryBehavior* _GetReactionaryBehavior(
+    const Robot& robot,
+    const AnkiEvent<EventType>& event,
+    std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet) const;
 };
   
 } // namespace Cozmo

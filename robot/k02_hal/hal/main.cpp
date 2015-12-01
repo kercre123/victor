@@ -7,6 +7,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "hal/portable.h"
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -17,6 +18,8 @@
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
+
+extern int StartupSelfTest(void);
 
 namespace Anki
 {
@@ -35,27 +38,23 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {
+        TransmitDrop(buf, buflen, eof);
         I2CEnable();
         UartTransmit();
-        TransmitDrop(buf, buflen, eof);
       }
     }
   }
 }
-
-void EnterRecoveryMode(void) {
-  SCB->VTOR = 0;
-  __asm { SVC 0 }
-};
-
 extern "C" void HardFault_Handler(void) {
   for(;;) ;
 }
 
+extern "C" const int __ESPRESSIF_SERIAL_NUMBER;
+
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
-  
+
   // Power up all ports
   SIM_SCGC5 |=
     SIM_SCGC5_PORTA_MASK |
@@ -67,8 +66,10 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
+  DACInit();
+
   I2CInit();
-  
+
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i) {
     Anki::Cozmo::HAL::MicroWait(1000000);
@@ -82,17 +83,22 @@ int main (void)
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
   Anki::Cozmo::HAL::MicroWait(100000); // Because the FLL is lame
-
+  DACTone();
+  
   //IMUInit();
   OLEDInit();
   SPIInit();
-  //DacInit(); // This just plays a tone.
 
   CameraInit();
   UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
-  for(;;)
-    ;
+
+  StartupSelfTest();
+
+  for(;;) {
+    // Wait for head body sync to occur
+    WaitForSync() ;
+  }
 }

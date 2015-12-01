@@ -72,7 +72,6 @@ void Battery::init()
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
   // Encoder and headboard power
-  //nrf_gpio_pin_clear(PIN_VDDs_EN);
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
@@ -82,7 +81,7 @@ void Battery::init()
 
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_NOPULL);
-  nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_PULLUP);
   nrf_gpio_cfg_input(PIN_CLIFF_SENSE, NRF_GPIO_PIN_NOPULL);
 
   // Just in case we need to power on the peripheral ourselves
@@ -107,16 +106,12 @@ void Battery::powerOn()
 {
   // Let power drain out - 10ms is plenty long enough
   MicroWait(10000);
-  //nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
 void Battery::powerOff()
 {
   // Shutdown the extra things
-  //nrf_gpio_pin_clear(PIN_VDDs_EN);
-  nrf_gpio_pin_set(PIN_VDDs_EN);
-  MicroWait(10000);
   nrf_gpio_pin_clear(PIN_PWR_EN);
 }
 
@@ -155,6 +150,28 @@ void Battery::update()
       break ;
 
     case ANALOG_V_EXT_SENSE:
+      static int ground_short = 0;
+      static int off_charger = 0;
+      uint32_t raw = NRF_ADC->RESULT;
+      
+      if (raw < 0x80) {
+        if (off_charger++ >= 3600) {
+          powerOff();
+          for (;;) ;
+        }
+      } else {
+        off_charger = 0;
+      }
+    
+      if (raw < 0x30) {
+        if (ground_short++ >= 40) {
+          powerOff();
+          for (;;) ;
+        }
+      } else {
+        ground_short = 0;
+      }
+    
       g_dataToHead.VExt = calcResult(VEXT_SCALE);
       startADCsample(ANALOG_CLIFF_SENSE);
       break ;
