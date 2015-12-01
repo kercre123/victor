@@ -293,7 +293,10 @@ public class Robot : IDisposable {
 
   public event Action<ObservedObject> OnHeadTrackingObjectSet;
 
-  private List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
+  private readonly List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
+  // a list the robot callbacks are copied to before invoking to prevent more robot callbacks being registered
+  // during the invoke process.
+  private readonly List<RobotCallbackWrapper> _TemporaryRobotCallbacks = new List<RobotCallbackWrapper>();
 
   [System.NonSerialized] public float LocalBusyTimer = 0f;
   [System.NonSerialized] public bool LocalBusyOverride = false;
@@ -419,13 +422,16 @@ public class Robot : IDisposable {
 
   private void RobotEngineMessages(bool success, RobotActionType messageType) {
     DAS.Info("Robot.ActionCallback", "Type = " + messageType + " success = " + success);
-    for (int i = 0; i < _RobotCallbacks.Count; ++i) {
-      if (_RobotCallbacks[i].MatchesType(messageType)) {
-        _RobotCallbacks[i].Invoke(success);
-        _RobotCallbacks.RemoveAt(i);
+
+    _TemporaryRobotCallbacks.AddRange(_RobotCallbacks);
+    for (int i = 0; i < _TemporaryRobotCallbacks.Count; ++i) {
+      if (_TemporaryRobotCallbacks[i].MatchesType(messageType)) {
+        _TemporaryRobotCallbacks[i].Invoke(success);
+        _TemporaryRobotCallbacks.RemoveAt(i);
         i--;
       }
     }
+    _TemporaryRobotCallbacks.Clear();
   }
 
   private int SortByDistance(ObservedObject a, ObservedObject b) {
