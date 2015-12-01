@@ -50,6 +50,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 
@@ -589,6 +590,16 @@ namespace Anki {
         _isPhysical = isPhysical;
       }
       
+      // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
+      // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)
+      {
+        static const double kPhysicalRobotNetConnectionTimeoutInMS = Anki::Util::ReliableConnection::GetConnectionTimeoutInMS(); // grab default on 1st call
+        const double kSimulatedRobotNetConnectionTimeoutInMS = FLT_MAX;
+        const double netConnectionTimeoutInMS = isPhysical ? kPhysicalRobotNetConnectionTimeoutInMS : kSimulatedRobotNetConnectionTimeoutInMS;
+        PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "ReliableConnection::SetConnectionTimeoutInMS(%f) for %s Robot",
+                         netConnectionTimeoutInMS, isPhysical ? "Physical" : "Simulated");
+        Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
+      }
     }
     
     f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
