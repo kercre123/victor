@@ -60,8 +60,7 @@ STARTUP_ERROR RunTests(void) {
     return ERROR_IMU_ID;
   }
   
-  DACTone();
-
+  // DAC Tone has moved to main loop so FTM0 can be reinitalized to something else
   TestPause(1);
   
   if (g_dataToHead.cliffLevel < DROP_THREADHOLD) {
