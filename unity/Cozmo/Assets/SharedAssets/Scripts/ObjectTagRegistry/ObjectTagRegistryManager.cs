@@ -38,6 +38,10 @@ public class ObjectTagRegistryManager : MonoBehaviour {
     }
   }
 
+  public void RemoveTag(string tag) {
+    _Registry.Remove(tag);
+  }
+
   public GameObject GetObjectByTag(string tag) {
     return _Registry[tag];
   }

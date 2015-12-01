@@ -23,6 +23,8 @@ namespace InvestorDemo {
     void Start() {
       CreateDefaultQuitButton();
 
+      CurrentRobot.SetRobotVolume(1.0f);
+
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 
       CurrentRobot.SetBehaviorSystem(true);
@@ -59,6 +61,8 @@ namespace InvestorDemo {
       DestroyDefaultQuitButton();
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       CurrentRobot.CancelAllCallbacks();
+      ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == "InvestorScene1");
+      sequence.ResetSequence();
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
