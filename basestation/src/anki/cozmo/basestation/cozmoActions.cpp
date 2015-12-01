@@ -357,7 +357,7 @@ namespace Anki {
           if(ctr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
                              "Waiting for robot to complete its path traversal (%d), "
-                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
+                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.", ctr,
                              robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
           }
           break;
@@ -720,7 +720,7 @@ namespace Anki {
           } else {
             const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(robot.GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
-              PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.");
+              PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.");
               result = ActionResult::FAILURE_RETRY;
             }
           }
@@ -731,7 +731,7 @@ namespace Anki {
           result = GetPossiblePoses(robot, object, possiblePoses, inPosition);
           
           if(!inPosition) {
-            PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.");
+            PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.");
             result = ActionResult::FAILURE_RETRY;
           }
         }
@@ -1294,9 +1294,9 @@ namespace Anki {
       const TimeStamp_t lastObserved = object->GetLastObservedTime();
       if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
       {
-        PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                            "Object still exists, but not seen since %d (Current time = %d)",
-                            lastObserved, robot.GetLastImageTimeStamp());
+        PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
+                         "Object still exists, but not seen since %d (Current time = %d, will fail in %f (s))",
+                         lastObserved, robot.GetLastImageTimeStamp(), _waitToVerifyTime - currentTime);
         actionRes = ActionResult::FAILURE_ABORT;
       }
       
