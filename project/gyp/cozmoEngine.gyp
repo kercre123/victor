@@ -615,7 +615,7 @@
                       '<(PRODUCT_DIR)',
                     ],
                   }],
-                  ['face_library=="opencv"', {
+                  ['face_library=="opencv" or face_library=="okao"', {
                     'action': [
                     'echo',
                     'dummyOpenCVEngineAction',
