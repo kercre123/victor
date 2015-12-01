@@ -302,6 +302,7 @@ namespace Cozmo {
         } else {
           ProceduralFaceParams interpolatedFrame = currentKeyFrame.GetFace().GetParams();
           SetFaceParams(faceParams, std::move(interpolatedFrame), shouldReplace);
+          track.MoveToNextKeyFrame();
           paramsSet = true;
         }
       }
