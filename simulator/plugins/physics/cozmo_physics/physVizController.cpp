@@ -11,8 +11,6 @@
 */
 
 #include "physVizController.h"
-#include "anki/common/constantsAndMacros.h"
-//#include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/viz/vizObjectBaseId.h"
 #include "anki/common/basestation/colorRGBA.h"
