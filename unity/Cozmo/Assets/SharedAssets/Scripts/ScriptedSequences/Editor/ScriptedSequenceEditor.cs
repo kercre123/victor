@@ -547,6 +547,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
           File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
 
+          AssetDatabase.ImportAsset(CurrentSequenceFile);
           EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
           // Clear out our temporary working file on save
           OnDestroy();
@@ -1200,10 +1201,22 @@ public class ScriptedSequenceEditor : EditorWindow {
   }
 
   [MenuItem("Cozmo/Scripted Sequence Editor %t")]
-  public static void CreateScriptedSequence()
+  public static void OpenScriptedSequenceEditor()
   {
     ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow (typeof (ScriptedSequenceEditor));
     window.titleContent = new GUIContent("Scripted Sequence Editor");
     window.Show();
+  }
+
+  [MenuItem("Assets/Cozmo/Edit Sequence")]
+  public static void EditSequence()
+  {
+    var selection = Selection.objects.FirstOrDefault() as TextAsset;
+    if (selection != null) {
+      ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow(typeof(ScriptedSequenceEditor));
+      window.titleContent = new GUIContent("Scripted Sequence Editor");
+      window.Show();
+      window.LoadFile(AssetDatabase.GetAssetPath(selection));
+    }
   }
 }
