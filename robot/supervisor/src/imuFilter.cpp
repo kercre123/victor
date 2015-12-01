@@ -379,6 +379,50 @@ namespace Anki {
       }
       
       
+      // Simple poke detect
+      // If wheels aren't moving but a sudden rotation about z-axis was detected
+      void DetectPoke()
+      {
+        static TimeStamp_t peakStartTime = 0;
+        static TimeStamp_t peakMaxTime = 0;
+        static TimeStamp_t lastPokeDetectTime = 0;
+        const u32 pokeDetectRefractoryPeriod_ms = 1000;
+        
+        // Do nothing during refractory period
+        TimeStamp_t currTime = HAL::GetTimeStamp();
+        if (currTime - lastPokeDetectTime < pokeDetectRefractoryPeriod_ms) {
+          return;
+        }
+        
+        // Only check for poke when wheels are not being driven
+        f32 leftws, rightws;
+        WheelController::GetDesiredWheelSpeeds(leftws, rightws);
+        if (std::fabsf(leftws) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
+            std::fabsf(rightws) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) {
+
+          // Check for a gyro rotation
+          const f32 peakGyroThresh = 5.f;
+          const u32 maxPeakDuration_ms = 50;
+          if (gyro_robot_frame_filt[2] > peakGyroThresh) {
+            peakMaxTime = currTime;
+          } else if (gyro_robot_frame_filt[2] < peakGyroThresh) {
+            if ((peakMaxTime > peakStartTime) && (peakMaxTime - peakStartTime < maxPeakDuration_ms)) {
+              //PRINT("POKE DETECTED\n");
+              peakStartTime = currTime;
+              lastPokeDetectTime = currTime;
+
+              RobotInterface::RobotPoked m;
+              RobotInterface::SendMessage(m);
+            } else {
+              peakStartTime = currTime;
+            }
+          }
+          
+        } else {
+          peakStartTime = currTime;
+        }
+      }
+      
       void DetectFalling()
       {
         const f32 accelMagnitudeSqrd = accel_filt[0]*accel_filt[0] +
@@ -490,6 +534,7 @@ namespace Anki {
       void UpdateEventDetection()
       {
         // Call detect functions and update raw event state
+        DetectPoke();
         DetectFalling();
         DetectNsideDown();
       

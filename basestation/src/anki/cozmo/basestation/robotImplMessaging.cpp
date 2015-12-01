@@ -61,6 +61,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
     std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotPoked,
+    std::bind(&Robot::HandleRobotPoked, this, std::placeholders::_1)));
 
   // lambda wrapper to call internal handler
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::state,
@@ -511,6 +513,14 @@ void Robot::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& messag
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _timeSynced = true;
+}
+  
+void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  // Forward on with EngineToGame event
+  PRINT_NAMED_INFO("Robot.HandleRobotPoked","");
+  RobotInterface::RobotPoked payload = message.GetData().Get_robotPoked();
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
 }
   
 

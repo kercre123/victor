@@ -57,6 +57,10 @@ message SyncTimeAck
 {
 }
 
+message RobotPoked
+{
+  uint_32 robotID
+}
 
 /// *************** WiFi to Engine messages ******************************* ///
 
@@ -125,6 +129,7 @@ union RobotToEngine {
   CliffEvent                 cliffEvent             = 0x12,
   ChargerEvent               chargerEvent           = 0x13,
   SyncTimeAck                syncTimeAck            = 0x14,
+  RobotPoked                 robotPoked             = 0x15,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,
