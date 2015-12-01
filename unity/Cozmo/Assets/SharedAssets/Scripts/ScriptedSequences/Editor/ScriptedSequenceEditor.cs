@@ -462,7 +462,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       ContextMenuOpen = true;
       GenericMenu menu = new GenericMenu();
 
-      foreach (var file in Directory.GetFiles(kScriptedSequenceResourcesPath, "*.json")) {
+      foreach (var file in AssetDatabase.FindAssets(" t:TextAsset").Select(x => AssetDatabase.GUIDToAssetPath(x)).Where(x => x.Contains("ScriptedSequences") && x.EndsWith(".json"))) {
         Action<string> closureAction = (string f) => {
 
           menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {

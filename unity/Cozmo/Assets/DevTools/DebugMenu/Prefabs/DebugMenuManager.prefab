@@ -78,6 +78,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fde992c209920494f92e530e24d50201, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _ConsoleTextLabelPrefab: {fileID: 11427454, guid: 1fbeecc0ee49a443298dea77336f8a48,
+    type: 2}
   numberCachedLogMaximum: 100
 --- !u!114 &11419684
 MonoBehaviour:
@@ -285,7 +287,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _ConsoleTextLabelPrefab
+      value: 
+      objectReference: {fileID: 11427454, guid: 1fbeecc0ee49a443298dea77336f8a48,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 178082}
