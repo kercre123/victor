@@ -459,19 +459,19 @@ namespace Anki {
       // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
       virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
-      ObjectID                    _dockObjectID;
-      DockAction                _dockAction;
-      const Vision::KnownMarker*  _dockMarker;
-      const Vision::KnownMarker*  _dockMarker2;
-      Radians                     _preActionPoseAngleTolerance;
-      f32                         _waitToVerifyTime;
-      bool                        _wasPickingOrPlacing;
-      bool                        _useManualSpeed;
-      FaceObjectAction*           _faceAndVerifyAction;
-      f32                         _placementOffsetX_mm;
-      f32                         _placementOffsetY_mm;
-      f32                         _placementOffsetAngle_rad;
-      bool                        _placeObjectOnGroundIfCarrying;
+      ObjectID                   _dockObjectID;
+      DockAction                 _dockAction;
+      const Vision::KnownMarker* _dockMarker;
+      const Vision::KnownMarker* _dockMarker2;
+      Radians                    _preActionPoseAngleTolerance;
+      f32                        _waitToVerifyTime;
+      bool                       _wasPickingOrPlacing;
+      bool                       _useManualSpeed;
+      FaceObjectAction*          _faceAndVerifyAction;
+      f32                        _placementOffsetX_mm;
+      f32                        _placementOffsetY_mm;
+      f32                        _placementOffsetAngle_rad;
+      bool                       _placeObjectOnGroundIfCarrying;
     }; // class IDockAction
 
     
