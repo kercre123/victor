@@ -72,8 +72,9 @@ public class Robot : IDisposable {
     // Most callbacks are triggered by a single action, in which case we can avoid the allocation
     // of the array
     private readonly RobotActionType _ActionType;
-    private readonly RobotCallback _Callback;
     private readonly RobotActionType[] _ActionTypes;
+
+    private RobotCallback _Callback;
 
     public RobotCallbackWrapper(RobotActionType actionType, RobotCallback callback) {
       _ActionType = actionType;
@@ -122,7 +123,11 @@ public class Robot : IDisposable {
     }
 
     public bool MatchesCallback(RobotCallback callback) {
-      return _Callback.Equals(callback);
+      return _Callback != null && _Callback.Equals(callback);
+    }
+
+    public void Cancel() {
+      _Callback = null;
     }
   }
 
@@ -293,7 +298,7 @@ public class Robot : IDisposable {
 
   public event Action<ObservedObject> OnHeadTrackingObjectSet;
 
-  private List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
+  private readonly List<RobotCallbackWrapper> _RobotCallbacks = new List<RobotCallbackWrapper>();
 
   [System.NonSerialized] public float LocalBusyTimer = 0f;
   [System.NonSerialized] public bool LocalBusyOverride = false;
@@ -419,11 +424,12 @@ public class Robot : IDisposable {
 
   private void RobotEngineMessages(bool success, RobotActionType messageType) {
     DAS.Info("Robot.ActionCallback", "Type = " + messageType + " success = " + success);
+
     for (int i = 0; i < _RobotCallbacks.Count; ++i) {
       if (_RobotCallbacks[i].MatchesType(messageType)) {
         _RobotCallbacks[i].Invoke(success);
         _RobotCallbacks.RemoveAt(i);
-        i--;
+        break;
       }
     }
   }
@@ -674,9 +680,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.PLACE_OBJECT_LOW, RobotActionType.PLACE_OBJECT_HIGH));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.PLACE_OBJECT_LOW, RobotActionType.PLACE_OBJECT_HIGH));
   }
 
   public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null) {
@@ -693,9 +697,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PlaceRelObject = PlaceRelObjectMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
   }
 
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
@@ -711,7 +713,7 @@ public class Robot : IDisposable {
   public void CancelCallback(RobotCallback callback) {
     for (int i = _RobotCallbacks.Count - 1; i >= 0; i--) {
       if (_RobotCallbacks[i].MatchesCallback(callback)) {
-        _RobotCallbacks.RemoveAt(i);
+        _RobotCallbacks[i].Cancel();
       }
     }
   }
@@ -730,9 +732,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.PlayAnimation = PlayAnimationMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLAY_ANIMATION, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLAY_ANIMATION, callback));
   }
 
   public void SetIdleAnimation(string default_anim) {
@@ -810,9 +810,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.SetHeadAngle = SetHeadAngleMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    if (onComplete != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_HEAD_TO_ANGLE, onComplete));
   }
 
   public void SetRobotVolume(float volume) {
@@ -899,9 +897,7 @@ public class Robot : IDisposable {
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.PICKUP_OBJECT_LOW, RobotActionType.PICK_AND_PLACE_INCOMPLETE, RobotActionType.PICKUP_OBJECT_HIGH));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.PICKUP_OBJECT_LOW, RobotActionType.PICK_AND_PLACE_INCOMPLETE, RobotActionType.PICKUP_OBJECT_HIGH));
   }
 
   public void RollObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, RobotCallback callback = null) {
@@ -916,9 +912,8 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.ROLL_OBJECT_LOW, callback));
-    }
+
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.ROLL_OBJECT_LOW, callback));
   }
 
   public void PlaceObjectOnGround(Vector3 position, Quaternion rotation, bool level = false, bool useManualSpeed = false, RobotCallback callback = null) {
@@ -939,10 +934,7 @@ public class Robot : IDisposable {
     
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
-    }
-
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
   }
 
   public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
@@ -960,9 +952,7 @@ public class Robot : IDisposable {
     
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.DRIVE_TO_POSE, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.DRIVE_TO_POSE, callback));
   }
 
   public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null) {
@@ -976,9 +966,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
     
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.DRIVE_TO_OBJECT, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.DRIVE_TO_OBJECT, callback));
   }
 
   public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null) {
@@ -992,9 +980,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.ALIGN_WITH_OBJECT, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.ALIGN_WITH_OBJECT, callback));
   }
 
   // Height factor should be between 0.0f and 1.0f
@@ -1014,9 +1000,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {
@@ -1069,9 +1053,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.TurnInPlace = TurnInPlaceMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    if (callback != null) {
-      _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.TURN_IN_PLACE, callback));
-    }
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.TURN_IN_PLACE, callback));
   }
 
   public void TraverseObject(int objectID, bool usePreDockPose = false, bool useManualSpeed = false) {

@@ -3,8 +3,10 @@ using System.IO;
 using System.Net;
 using System.Threading;
 using System.Windows.Forms;
+using System.Security.Principal;
 using Anki.Cozmo.ExternalInterface;
 using NetFwTypeLib;
+
 
 namespace AnimationTool
 {
@@ -129,6 +131,16 @@ namespace AnimationTool
         /// </summary>
         private static void OpenFirewallPorts(int portMinimum, int portMaximum)
         {
+            bool isElevated;
+            WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            WindowsPrincipal principal = new WindowsPrincipal(identity);
+            isElevated = principal.IsInRole(WindowsBuiltInRole.Administrator);
+            // Windows should pop up a window to get admin if we're trying to access firewall and are not an admin.
+            // This code will crash if a normal user tries to force permissions.
+            if (!isElevated)
+            {
+                return;
+            }
             Type netFwMgrType = Type.GetTypeFromProgID("HNetCfg.FwMgr", false);
 
             if (netFwMgrType != null)
