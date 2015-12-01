@@ -61,6 +61,7 @@
 
 #define MAX_DISTANCE_FOR_SHORT_PLANNER 40.0f
 #define MAX_DISTANCE_TO_PREDOCK_POSE 20.0f
+#define MIN_DISTANCE_FOR_MINANGLE_PLANNER 1.0f
 
 namespace Anki {
   namespace Cozmo {
@@ -1234,9 +1235,11 @@ namespace Anki {
         const bool initialTurnAngleLarge = initialTurnAngle.getAbsoluteVal().ToFloat() >
           0.5 * PLANNER_MAINTAIN_ANGLE_THRESHOLD;
 
+        const bool farEnoughAwayForMinAngle = distSquared > std::pow( MIN_DISTANCE_FOR_MINANGLE_PLANNER, 2);
+
         // if we would need to turn fairly far, but our current angle is fairly close to the goal, use the
         // planner which backs up first to minimize the turn
-        if( withinFinalAngleTolerance && initialTurnAngleLarge ) {
+        if( withinFinalAngleTolerance && initialTurnAngleLarge && farEnoughAwayForMinAngle ) {
           PRINT_NAMED_INFO("Robot.SelectPlanner.ShortMinAngle",
                            "distance^2 is %f, angleDelta is %f, intiialTurnAngle is %f, selecting short min_angle planner\n",
                            distSquared,
