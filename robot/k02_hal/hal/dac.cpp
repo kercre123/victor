@@ -26,9 +26,9 @@ void Anki::Cozmo::HAL::DACTone(void) {
   for (int i = 0; i < 220; i++) {
     k[i] = 0x800 + 0x7FF * sinf(i * 2.0f * 3.14159f / 220);
   }
-
+#ifdef EP1_HEADBOARD
   GPIO_SET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
-
+#endif
   for(int i = 0; i < 160; i++) {
     for(int i = 0; i < 220; i++) {
       unsigned short g = k[i];
@@ -38,6 +38,7 @@ void Anki::Cozmo::HAL::DACTone(void) {
       Anki::Cozmo::HAL::MicroWait(1);
     }
   }
-
+#ifdef EP1_HEADBOARD
   GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+#endif
 }
