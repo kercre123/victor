@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.Collections.Generic;
 
 public interface IDAS {
   void Event(string eventValue, UnityEngine.Object context = null);
@@ -16,7 +17,7 @@ public interface IDAS {
 
 public static partial class DAS {
 
-  public delegate void DASHandler(string eventName, string eventValue, UnityEngine.Object context);
+  public delegate void DASHandler(string eventName, string eventValue, object context);
   public static event DASHandler OnEventLogged;
   public static event DASHandler OnErrorLogged;
   public static event DASHandler OnWarningLogged;
@@ -58,6 +59,46 @@ public static partial class DAS {
   public static void Debug(object eventObject, string eventValue, UnityEngine.Object context = null) {
     string eventName = GetEventName(eventObject);
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue), context);
+    if (OnDebugLogged != null) {
+      OnDebugLogged(eventName, eventValue, context);
+    }
+  }
+
+  public static void Event(object eventObject, string eventValue, Dictionary<string, string> context) {
+    string eventName = GetEventName(eventObject);
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 3, eventName, eventValue));
+    if (OnEventLogged != null) {
+      OnEventLogged(eventName, eventValue, context);
+    }
+  }
+
+  public static void Error(object eventObject, string eventValue, Dictionary<string, string> context) {
+    string eventName = GetEventName(eventObject);
+    UnityEngine.Debug.LogError(string.Format("DAS [{0}] {1} - {2}", 5, eventName, eventValue));
+    if (OnErrorLogged != null) {
+      OnErrorLogged(eventName, eventValue, context);
+    }
+  }
+
+  public static void Warn(object eventObject, string eventValue, Dictionary<string, string> context) {
+    string eventName = GetEventName(eventObject);
+    UnityEngine.Debug.LogWarning(string.Format("DAS [{0}] {1} - {2}", 4, eventName, eventValue));
+    if (OnWarningLogged != null) {
+      OnWarningLogged(eventName, eventValue, context);
+    }
+  }
+
+  public static void Info(object eventObject, string eventValue, Dictionary<string, string> context) {
+    string eventName = GetEventName(eventObject);
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 2, eventName, eventValue));
+    if (OnInfoLogged != null) {
+      OnInfoLogged(eventName, eventValue, context);
+    }
+  }
+
+  public static void Debug(object eventObject, string eventValue, Dictionary<string, string> context) {
+    string eventName = GetEventName(eventObject);
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue));
     if (OnDebugLogged != null) {
       OnDebugLogged(eventName, eventValue, context);
     }

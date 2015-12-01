@@ -24,8 +24,18 @@ namespace ScriptedSequences {
 
     public event Action<Exception> OnError;
 
+    private bool _IsComplete;
     [JsonIgnore]
-    public bool IsComplete { get; private set; }
+    public bool IsComplete { 
+      get { return _IsComplete; } 
+      private set { 
+        if (value && !Repeatable) {
+          DataPersistence.DataPersistenceManager.Instance.Data.CompletedScriptedSequences[Name] = true;
+          DataPersistence.DataPersistenceManager.Instance.Save();
+        }
+        _IsComplete = value; 
+      } 
+    }
 
     [JsonIgnore]
     public string DebugName { get { return Name; } }
@@ -76,6 +86,10 @@ namespace ScriptedSequences {
 
     public void Initialize()
     {
+      if (!Repeatable) {
+        DataPersistence.DataPersistenceManager.Instance.Data.CompletedScriptedSequences.TryGetValue(Name, out _IsComplete);
+      }
+
       #if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Initialize Called on Scripted Sequence " +Name);
       #endif
@@ -83,7 +97,7 @@ namespace ScriptedSequences {
       if (Condition != null) {
         Condition.Initialize(this);
         Condition.OnConditionChanged += HandleConditionChanged;
-        Condition.IsEnabled = true;
+        Condition.IsEnabled = !IsComplete;
         canEnable = Condition.IsMet && ActivateOnConditionMet;
       }
 
