@@ -92,7 +92,7 @@ public class ScriptedSequenceEditor : EditorWindow {
   private Dictionary<uint, bool> _ExpandedNodes = new Dictionary<uint, bool>();
 
   // whether we are editing the name of each node
-  private Dictionary<uint, bool> _EditingNodeNames = new Dictionary<uint, bool>();
+  private int _EditingNodeIndex = -1;
 
   // when dragging a node, this tells us which one
   private int _DraggingNodeIndex = -1;
@@ -148,6 +148,10 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // the position of the last mouse up
   private Vector2 _LastMouseUpPosition;
+
+  private Vector2 _LastMouseDownPosition;
+
+  private DateTime _LastMouseDownTime;
 
   // if we get a mouse click when the context menu is open, we want to ignore it.
   public bool ContextMenuOpen;
@@ -510,6 +514,7 @@ public class ScriptedSequenceEditor : EditorWindow {
         _UndoStack.Add("{}");
         CurrentSequence = new ScriptedSequence();
         _EditingName = true;
+        GUI.FocusControl("EditNameField");
         CurrentSequenceFile = null;
       }
     }
@@ -566,6 +571,8 @@ public class ScriptedSequenceEditor : EditorWindow {
   private void LoadFile(string path) {
     if (CheckDiscardUnsavedSequence()) {
       try {
+        CurrentSequence = null;
+        CurrentSequenceFile = null;
         _UndoStack.Clear();
         _RedoStack.Clear();
         string json = File.ReadAllText(path);
@@ -608,6 +615,15 @@ public class ScriptedSequenceEditor : EditorWindow {
       mousePosition = _LastMouseUpPosition;
     }
 
+    bool mouseDown = mouseEvent == EventType.mouseDown;
+
+    if (mouseEvent == EventType.keyUp) {
+      if (Event.current.keyCode == KeyCode.Escape || Event.current.keyCode == KeyCode.Return) {
+        _EditingName = false;
+        _EditingNodeIndex = -1;
+      }
+    }
+
     if (sequence == null) {
       return;
     }
@@ -626,6 +642,8 @@ public class ScriptedSequenceEditor : EditorWindow {
 
       rightRect.x += leftRect.width;
       rightRect.width = 35;
+
+      GUI.SetNextControlName("EditNameField");
       sequence.Name = EditorGUI.TextField(leftRect, sequence.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
         _EditingName = false;
@@ -637,6 +655,14 @@ public class ScriptedSequenceEditor : EditorWindow {
       // if you right click the sequence name, it goes to edit mode
       if (mouseEvent == EventType.ContextClick) {
         if (titleRect.Contains(mousePosition)) {
+          _EditingName = true;
+          _EditingNodeIndex = -1;
+          GUI.FocusControl("EditNameField");
+        }
+      }
+      else if (mouseEvent == EventType.mouseDown) {
+        if ((mousePosition - _LastMouseDownPosition).sqrMagnitude < 16 && DateTime.UtcNow < _LastMouseDownTime + new TimeSpan(250 * 10000)) {
+          _EditingNodeIndex = -1;
           _EditingName = true;
         }
       }
@@ -737,6 +763,11 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
     }
 
+    if (mouseDown) {
+      _LastMouseDownTime = DateTime.UtcNow;
+      _LastMouseDownPosition = mousePosition;
+    }
+
     // draw a box so you can see what you are dragging.
     if ((_DraggingNodeIndex != -1 || _DraggingConditionHelper != null || _DraggingActionHelper != null) && !_LastMouseUp && Mathf.Abs(DragStart.y - mousePosition.y) > 5) {
       var lastColor = GUI.backgroundColor;
@@ -799,6 +830,10 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
     var currentState = JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings);
+
+    if (_UndoStack.Count == 0) {
+      _UndoStack.Add(currentState);
+    }
 
     if (currentState == _UndoStack.Last()) {
       _SnapshotCountdownStart = default(DateTime);
@@ -875,7 +910,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     bool expanded, editingName;
 
     _ExpandedNodes.TryGetValue(node.Id, out expanded);
-    _EditingNodeNames.TryGetValue(node.Id, out editingName);
+    editingName = _EditingNodeIndex == index;
 
     var lastColor = GUI.color;
     var lastBackgroundColor = GUI.backgroundColor;
@@ -903,9 +938,10 @@ public class ScriptedSequenceEditor : EditorWindow {
       rightRect.width = 35;
 
       GUI.contentColor = Color.white;
+      GUI.SetNextControlName("EditNameField");
       node.Name = EditorGUI.TextField(leftRect, node.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
-        _EditingNodeNames[node.Id] = false;
+        _EditingNodeIndex = -1;
       }
       GUI.contentColor = Color.black;
 
@@ -928,7 +964,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
           menu.AddItem(new GUIContent("Change Name"), false, () => {
             ContextMenuOpen = true;
-            _EditingNodeNames[node.Id] = true;
+            _EditingNodeIndex = index;
+            _EditingName = false;
+            GUI.FocusControl("EditNameField");
           });
 
           menu.AddItem(new GUIContent("Copy"), false, () => {
@@ -956,13 +994,19 @@ public class ScriptedSequenceEditor : EditorWindow {
         }
         // handle drag start
         else if (eventType == EventType.mouseDown) {
-          _DraggingNodeIndex = index;
-          DragOffset = rect.position - mousePosition;
-          DragStart = mousePosition;
-          DragSize = rect.size;
-          DragTitle = node.Name;
-          DragColor = Color.yellow;
-          DragTextColor = Color.black;
+          if ((mousePosition - _LastMouseDownPosition).sqrMagnitude < 16 && DateTime.UtcNow < _LastMouseDownTime + new TimeSpan(250 * 10000)) {
+            _EditingNodeIndex = index;
+            _EditingName = false;
+          }
+          else {
+            _DraggingNodeIndex = index;
+            DragOffset = rect.position - mousePosition;
+            DragStart = mousePosition;
+            DragSize = rect.size;
+            DragTitle = node.Name;
+            DragColor = Color.yellow;
+            DragTextColor = Color.black;
+          }
         }
         // handle drag end (drop)
         else if (eventType == EventType.mouseUp) {
@@ -987,7 +1031,11 @@ public class ScriptedSequenceEditor : EditorWindow {
           }
         }
       }
-      expanded = EditorGUI.Foldout(rect, expanded, node.Name, FoldoutStyle);
+      bool expand = EditorGUI.Foldout(rect, expanded, node.Name, FoldoutStyle);
+      if (expand != expanded) {
+        _LastMouseDownTime = default(DateTime);
+        expanded = expand;
+      }
     }
 
     GUI.color = lastColor;
