@@ -26,7 +26,7 @@ public class ChallengeDetailsDialog : BaseView {
   private Transform _ChallengeButtonTransform;
 
   public void Initialize(ChallengeData challengeData, Transform challengeButtonTransform) {
-    _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
+    _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeButtonTransform = challengeButtonTransform;
     _ChallengeId = challengeData.ChallengeID;

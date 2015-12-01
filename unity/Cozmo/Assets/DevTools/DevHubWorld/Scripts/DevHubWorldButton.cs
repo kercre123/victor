@@ -25,8 +25,8 @@ public class DevHubWorldButton : MonoBehaviour {
   public void Initialize(ChallengeData challenge) {
     _Challenge = challenge;
 
-    _ButtonLabel.text = Localization.Get(challenge.ChallengeTitleKey);
-    gameObject.name = string.Format("{0}: {1}", challenge.ChallengeTitleKey, _ButtonLabel.text);
+    _ButtonLabel.text = Localization.Get(challenge.ChallengeTitleLocKey);
+    gameObject.name = string.Format("{0}: {1}", challenge.ChallengeTitleLocKey, _ButtonLabel.text);
 
     _ButtonScript.onClick.AddListener(HandleButtonClicked);
   }
