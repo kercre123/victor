@@ -59,6 +59,8 @@ namespace InvestorDemo {
       DestroyDefaultQuitButton();
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       CurrentRobot.CancelAllCallbacks();
+      ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == "InvestorScene1");
+      sequence.ResetSequence();
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
