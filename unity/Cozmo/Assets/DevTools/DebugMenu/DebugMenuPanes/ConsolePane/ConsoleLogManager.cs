@@ -3,8 +3,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour {
+
+  // Each string element should be < 16250 characters because
+  // Unity uses a mesh to display text, 4 verts per letter, and has
+  // a hard limit of 65000 verts per mesh
+  public const int kUnityTextFieldCharLimit = 14000;
+
+  [SerializeField]
+  private AnkiTextLabel _ConsoleTextLabelPrefab;
+
+  private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
 
   [SerializeField]
   private int numberCachedLogMaximum = 100;
@@ -17,6 +28,7 @@ public class ConsoleLogManager : MonoBehaviour {
 
   // Use this for initialization
   private void Awake() {
+    _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
@@ -89,8 +101,8 @@ public class ConsoleLogManager : MonoBehaviour {
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
 
-    string consoleText = CompileRecentLogs();
-    _ConsoleLogPaneView.Initialize(consoleText);
+    List<string> consoleText = CompileRecentLogs();
+    _ConsoleLogPaneView.Initialize(consoleText, _TextLabelPool);
     foreach (KeyValuePair<LogPacket.ELogKind, bool> kvp in _LastToggleValues) {
       _ConsoleLogPaneView.SetToggle(kvp.Key, kvp.Value);
     }
@@ -103,7 +115,7 @@ public class ConsoleLogManager : MonoBehaviour {
     _LastToggleValues[logKind] = !_LastToggleValues[logKind];
 
     // Change the text for the pane
-    string consoleText = CompileRecentLogs();
+    List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.SetText(consoleText);
   }
 
@@ -112,16 +124,51 @@ public class ConsoleLogManager : MonoBehaviour {
     _ConsoleLogPaneView = null;
   }
 
-  private string CompileRecentLogs() {
+  private List<string> CompileRecentLogs() {
+    List<string> consoleLogs = new List<string>();
     StringBuilder sb = new StringBuilder();
+    string logString;
     foreach (LogPacket packet in _MostRecentLogs) {
       if (_LastToggleValues[packet.LogKind] == true) {
+        logString = packet.ToString();
+
+        if (sb.Length + logString.Length + 1 > kUnityTextFieldCharLimit) {
+          consoleLogs.Add(sb.ToString());
+
+          // Empty the string builder
+          sb.Length = 0;
+        }
+
         sb.Append(packet.ToString());
         sb.Append("\n");
       }
     }
-    return sb.ToString();
+
+    if (sb.Length > 0) {
+      consoleLogs.Add(sb.ToString());
+    }
+    return consoleLogs;
   }
+
+  #region Text Label Pooling
+
+  private AnkiTextLabel CreateTextLabel() {
+    // Create the text label as a child under the parent container for the pool
+    GameObject newLabelObject = UIManager.CreateUIElement(_ConsoleTextLabelPrefab.gameObject, this.transform);
+    newLabelObject.SetActive(false);
+    AnkiTextLabel textScript = newLabelObject.GetComponent<AnkiTextLabel>();
+
+    return textScript;
+  }
+
+  private void ResetTextLabel(AnkiTextLabel toReset) {
+    // Add the text label as a child under the parent container for the pool
+    toReset.transform.SetParent(this.transform, true);
+    toReset.text = null;
+    toReset.gameObject.SetActive(false);
+  }
+
+  #endregion
 }
 
 public class LogPacket {
@@ -189,12 +236,10 @@ public class LogPacket {
     string contextStr = "null";
     if (Context != null) {
       Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
-      if(contextDict != null)
-      {
+      if (contextDict != null) {
         contextStr = string.Join(", ", contextDict.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
       }
-      else
-      {
+      else {
         contextStr = Context.ToString();
       }
     }
