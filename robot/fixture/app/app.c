@@ -9,6 +9,7 @@
 #include "hal/console.h"
 #include "hal/cube.h"
 #include "app/fixture.h"
+#include "hal/espressif.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -18,7 +19,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 3;
+u8 g_fixtureReleaseVersion = 6;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -55,7 +56,7 @@ TestFunction* GetDebugTestFunctions()
 
 // This generates a unique ID per cycle of the test fixture
 // This was meant to help the "big data" team see if the fixture was ever run but the log was lost (gaps in sequences)
-void GetSequence(void)
+int GetSequence(void)
 {
   u32 sequence;
   u8 bit;
@@ -69,7 +70,7 @@ void GetSequence(void)
       if (sequence > 0x7ffff)
       {
         ConsolePrintf("fixtureSequence,-1\r\n");
-        return;
+        throw ERROR_OUT_OF_SERIALS;
       }
     }
     
@@ -90,6 +91,9 @@ void GetSequence(void)
   FLASH_Lock();
   
   ConsolePrintf("fixtureSequence,%i,%i\r\n", FIXTURE_SERIAL, sequence);
+  SlowPrintf("Allocated serial: %x\n", sequence);
+  
+  return sequence;
 }
 
 // Show the name of the fixture and version information
@@ -236,13 +240,13 @@ void TryToEnterDiagnosticMode(void)
   throw ERROR_ACK1;
 }
 #endif
-
+/*
 static __align(4) u8 m_globalBuffer[1024 * 5];
 u8* GetGlobalBuffer(void)
 {
   return m_globalBuffer;
 }
-
+*/
 // Walk through tests one by one - logging to the PC and to the Device flash
 static void RunTests()
 {
@@ -284,7 +288,8 @@ static void RunTests()
   }
 
   ConsolePrintf("[RESULT:%03i]\r\n[TEST:END]\r\n", error);
-
+  SlowPrintf("Test finished with error %03d\n", error);
+  
   if (error != ERROR_OK)
   {
     SetErrorText(error);
@@ -559,7 +564,7 @@ int main(void)
 
   // Read the pins with pull-down resistors on GPIOB[14:12]
   g_fixtureType = (FixtureType)((GPIO_READ(GPIOB) >> 12) & 7);
-  
+
   SlowPrintf("fixture: %i\r\n", g_fixtureType);
   
   InitBAT();
@@ -572,15 +577,16 @@ int main(void)
 
   SetFixtureText();
   
-  /** Cozmo doesn't support this yet
+  // Cozmo doesn't support this yet
   SlowPutString("Initializing Test Port...\r\n");
   InitTestPort(0);
-  */
-  
+
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();
   
   SlowPutString("Ready...\r\n");
+
+  //InitEspressif();
 
   STM_EVAL_LEDOn(LEDRED);
 

@@ -55,9 +55,18 @@ typedef enum
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
+// SWD errors
+#define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
+#define ERROR_SWD_READ_FAULT        451   // SWD read failed
+#define ERROR_SWD_WRITE_FAULT       452   // SWD write failed
+#define ERROR_SWD_WRITE_STUB        453   // Can't write stub
+#define ERROR_SWD_WRITE_BLOCK       454   // Can't write block
+#define ERROR_SWD_NOSTUB            455   // Stub did not start up
+#define ERROR_SWD_MISMATCH          456   // Flash failed - contents do not match
+#define ERROR_SWD_FLASH_TIMEOUT     457   // Flash failed - stub timed out during flash operation
+
 // Head errors
 #define ERROR_HEAD_BOOTLOADER       500   // Can't load bootloader into K02
-#define ERROR_HEAD_NOSTUB           501   // Can't execute stub on K02
 
 #define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
 #define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash

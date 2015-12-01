@@ -5,13 +5,18 @@
 #include "hal/board.h"
 #include "hal/console.h"
 #include "hal/uart.h"
+#include "hal/swd.h"
+
 #include "app/fixture.h"
+#include "app/binaries.h"
 
 #define GPIOA_TRX 2
 
 // Return true if device is detected on contacts
 bool BodyDetect(void)
 {
+  DisableVEXT();  // Make sure power is not applied, as it messes up the detection code below
+
   // Set up TRX as weakly pulled-up - it will detect as grounded when the board is attached
   GPIO_InitTypeDef  GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Pin = 1 << GPIOA_TRX;
@@ -31,7 +36,17 @@ bool BodyDetect(void)
 // Program code on body
 void BodyNRF51(void)
 {
-  throw ERROR_BODY_BOOTLOADER;
+  EnableVEXT();   // Turn on external power to the body
+  MicroWait(100);
+  
+  // Try to talk to head on SWD
+  SWDInitStub(0x20000000, 0x20001400, g_stubBody, g_stubBodyEnd);
+
+  // Send the bootloader and app
+  SWDSend(0x20001000, 0x400, 0x0,    g_BodyBoot, g_BodyBootEnd,   0,    0);   // XXX: No serial number this time
+  SWDSend(0x20001000, 0x400, 0x1000, g_Body,     g_BodyEnd,       0,    0);  
+  
+  DisableVEXT();  // Even on failure, this should happen
 }
 
 // List of all functions invoked by the test, in order

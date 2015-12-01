@@ -232,6 +232,14 @@ namespace Anki {
                                                          dockOffsetAng_,
                                                          useManualSpeed_);
               } else {
+                
+#ifdef SIMULATOR
+                // Prevents lift from attaching to block right after a roll
+                if (action_ == DA_ROLL_LOW) {
+                  HAL::DisengageGripper();
+                }
+#endif
+                
                 // Set the distance to the marker beyond which
                 // we should ignore docking error signals since the lift occludes our view anyway.
                 u32 pointOfNoReturnDist = 0;

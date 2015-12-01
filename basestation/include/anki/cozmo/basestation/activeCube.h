@@ -78,6 +78,13 @@ namespace Cozmo {
     
     virtual bool IsActive() const override { return true; }
     
+    // If object is moving, returns true and the time that it started moving in t.
+    // If not moving, returns false and the time that it stopped moving in t.
+    virtual bool IsMoving(TimeStamp_t* t = nullptr) const override { if (t) *t=_movingTime; return _isMoving; }
+    
+    // Set the moving state of the object and when it either started or stopped moving.
+    virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
+    
     virtual bool CanBeUsedForLocalization() const override;
     
     virtual s32 GetActiveID() const override { return _activeID; }
@@ -130,6 +137,9 @@ namespace Cozmo {
   protected:
     
     s32 _activeID;
+    
+    bool        _isMoving = false;
+    TimeStamp_t _movingTime = 0;
     
     // Keep track of flash rate and color of each LED
     std::array<LEDstate,NUM_LEDS> _ledState;

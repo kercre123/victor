@@ -2118,6 +2118,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
 
+      // Mark as dirty so that the robot no longer localizes to this object
+      object->SetPoseState(Anki::Vision::ObservableObject::PoseState::Dirty);
+      
       _usingManualPathSpeed = useManualSpeed;
       _lastPickOrPlaceSucceeded = false;
       

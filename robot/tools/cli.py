@@ -21,11 +21,10 @@ sys.path.insert(0, CLAD_DIR)
 
 from ReliableTransport import *
 
-from clad.robotInterface import messageEngineToRobot, messageRobotToEngine
-EngineToRobot = messageEngineToRobot.Anki.Cozmo.RobotInterface.EngineToRobot
-RobotToEngine = messageRobotToEngine.Anki.Cozmo.RobotInterface.RobotToEngine
-
-
+from clad.robotInterface.messageEngineToRobot import Anki
+from clad.robotInterface.messageRobotToEngine import Anki as _Anki
+Anki.update(_Anki.deep_clone())
+RobotInterface = Anki.Cozmo.RobotInterface
 
 class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
@@ -52,11 +51,13 @@ class CozmoCLI(IDataReceiver):
         sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
 
     def ReceiveData(self, buffer, sourceAddress):
-        #sys.stdout.write("RX %d: %s\r\n" % (buffer[0], buffer[1:].decode("ASCII", "ignore")))
-        pass
+        msg = RobotInterface.RobotToEngine.unpack(buffer)
+        if msg.tag == msg.Tag.printText:
+            sys.stdout.write("ROBOT: " + msg.printText.text)
+        
 
-    def send(self, buffer):
-        return self.transport.SendData(True, False, self.robot, buffer)
+    def send(self, msg):
+        return self.transport.SendData(True, False, self.robot, msg.pack())
 
     def helpFtn(self, *args):
         "Prints out help text on CLI functions"
@@ -91,112 +92,24 @@ class CozmoCLI(IDataReceiver):
         raise EOFError
         return False
 
-    def FlashBlockIDs(self, *args):
-        "Sends a FlashBlockIDs message to the robot"
-        self.r(FlashBlockIDs().serialize(), self.robot)
-        return True
-
-    def SetBlockLights(self, *args):
-        "Sends a set block lights command. Args: <block ID> [LIGHT VALUE [LIGHT VALUE [...]]]"
-        try:
-            blockId = int(eval(args[0]))
-            lights = eval(' '.join(args[1:]))
-        except:
-            sys.stderr.write("Couldn't evaluate arguments\n")
-            return False
-        else:
-            try:
-                msg = SetBlockLights(blockID=blockId, lights=lights)
-            except Exception as e:
-                sys.stderr.write("Incorrect arguments:\r\n%s\n\n" % str(e))
-                return False
-            else:
-                self.send(msg.serialize())
-                return lights
-
-    def ImageRequest(self, *args):
-        "Send an image request to the robot. Args: <command> <resolution>"
-        if len(args) != 2:
-            sys.stderr.write("ImageRequest needs command and resolution specified\n")
-            return False
-        else:
-            try:
-                cmd = int(eval(args[0]))
-            except:
-                sys.stderr.write("Couldn't interprate \"%s\" as an image request command\n" % args[0])
-                return False
-            try:
-                res = int(eval(args[1]))
-            except:
-                sys.stderr.write("Couldn't interprate \"%s\" as an image request resolution\n" % args[1])
-                return False
-            self.send(ImageRequest(imageSendMode=cmd, resolution=res).serialize())
-            return True
-
     def DriveWheels(self, *args):
         "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
-        if len(args) != 2:
-            sys.stderr.write("drive command requires two motor speeds as floats\n")
+        try:
+            lws = float(eval(args[0]))
+        except:
+            sys.stderr.write("Drive wheels requires at least one floating point number argument\r\n")
             return False
-        else:
-            try:
-                lws = float(args[0])
-            except:
-                sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[0])
-                return False
-            try:
-                rws = float(args[1])
-            except:
-                sys.stderr.write("Couldn't interprate \"%s\" as a floating point wheel speed\n" % args[1])
-                return False
-            self.send(DriveWheelsMessage(lws, rws).serialize())
-            return True
-
-    def StopAllMotors(self, *args):
-        "Full stop"
-        self.send(StopAllMotorsMessage().serialize())
-
-    def SetHeadAngle(self, *args):
-        "Commands the head angle. Args: <angle (radians)> [<max speed> [<acceleration>]]"
-        if len(args) == 0:
-            sys.stderr.write("Need at least an angle for SetHeadAngle")
-            return False
-        else:
-            try:
-                params = [float(a) for a in args]
-            except:
-                sys.stderr.write("Couldn't interpret arguments as floats: %s\n" % repr(args))
-                return False
-            else:
-                self.send(SetHeadAngleMessage(*params).serialize())
-                return True
-
-    def SetLiftHeight(self, *args):
-        "Commands the lift height. Args: <height (mm)> [<max speed> [<acceleration>]]"
-        if len(args) == 0:
-            sys.stderr.write("Need at least a height for SetLiftHeight")
-            return False
-        else:
-            try:
-                params = [float(a) for a in args]
-            except:
-                sys.stderr.write("Couldn't interpret arguments as floats: %s \n" % repr(args))
-                return False
-            else:
-                self.send(SetLiftHeightMessage(*params).serialize())
-                return True
-
+        try:
+            rws = float(eval(args[1]))
+        except:
+            rws = lws
+        self.send(RobotInterface.EngineToRobot(drive=RobotInterface.DriveWheels(lws, rws)))
+        return True
 
     functions = {
         "help": helpFtn,
         "exit": exitFtn,
-        "FlashBlockIDs": FlashBlockIDs,
-        "SetBlockLights": SetBlockLights,
-        "ImageRequest": ImageRequest,
         "drive": DriveWheels,
-        "stop":  StopAllMotors,
-        "HeadAngle": SetHeadAngle,
-        "LiftHeight": SetLiftHeight,
     }
 
 

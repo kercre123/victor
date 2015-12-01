@@ -775,6 +775,7 @@ namespace Cozmo {
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&
+                                     matchingObject->GetID() != _robot->GetDockObject() &&
                                      (_robot->GetLocalizedTo().IsUnknown() ||
                                       _robot->HasMovedSinceBeingLocalized()) );
 #         endif
@@ -907,8 +908,7 @@ namespace Cozmo {
         }
         
         if(_robot->GetMoveComponent().GetTrackToObject().IsSet() &&
-           obsID == _robot->GetMoveComponent().GetTrackToObject() &&
-           !_robot->GetMoveComponent().IsHeadLocked())
+           obsID == _robot->GetMoveComponent().GetTrackToObject())
         {
           UpdateTrackToObject(observedObject);
         }

@@ -3,9 +3,9 @@
 
 #include "anki/common/robot/array2d.h"
 
-#include "utilEmbedded/transport/IUnreliableTransport.h"
-#include "utilEmbedded/transport/IReceiver.h"
-#include "utilEmbedded/transport/reliableTransport.h"
+#include "../sim_hal/transport/IUnreliableTransport.h"
+#include "../sim_hal/transport/IReceiver.h"
+#include "../sim_hal/transport/reliableTransport.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 

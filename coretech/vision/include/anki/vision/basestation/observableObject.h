@@ -87,6 +87,13 @@ namespace Anki {
       virtual bool IsActive() const { return false; }
       virtual void Identify() { /* no-op */ }
       
+      // If object is moving, returns true and the time that it started moving in t.
+      // If not moving, returns false and the time that it stopped moving in t.
+      virtual bool IsMoving(TimeStamp_t* t = nullptr) const { return false; }
+      
+      // Set the moving state of the object and when it either started or stopped moving.
+      virtual void SetIsMoving(bool isMoving, TimeStamp_t t) {};
+      
       // Override for objects that can be used for localization (e.g., mats
       // or active blocks that have not moved since last localization)
       virtual bool CanBeUsedForLocalization() const { return false; }

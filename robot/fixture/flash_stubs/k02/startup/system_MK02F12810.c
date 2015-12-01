@@ -29,8 +29,8 @@ extern "C" void SystemInit (void);
 
 /* Low power mode enable */
 /* SMC_PMPROT: AHSRUN=1,AVLP=1,ALLS=1,AVLLS=1 */
-//#define SYSTEM_SMC_PMPROT_VALUE        0xAAU               /* SMC_PMPROT */
-#define FLASH_SMC_PMPROT_VALUE         (SMC_PMPROT_AVLLS_MASK | SMC_PMPROT_ALLS_MASK | SMC_PMPROT_AVLP_MASK)
+// No reason to change this, since we should allow any mode (just not gonna use HSRUN mode this time)
+#define SYSTEM_SMC_PMPROT_VALUE        0xAAU               /* SMC_PMPROT */
 
 #define MCG_MODE                     MCG_MODE_FEI /* Clock generator mode */
 /* MCG_C1: CLKS=0,FRDIV=3,IREFS=1,IRCLKEN=1,IREFSTEN=0 - Divide by 256 */
@@ -47,13 +47,16 @@ extern "C" void SystemInit (void);
 #define SYSTEM_MCG_C6_VALUE          0x00U               /* MCG_C6 */
 /* MCG_C7: OSCSEL=0 */
 #define SYSTEM_MCG_C7_VALUE          0x00U               /* MCG_C7 */
-/* OSC_CR: ERCLKEN=1,EREFSTEN=0,SC2P=0,SC4P=0,SC8P=0,SC16P=0 */
-#define SYSTEM_OSC_CR_VALUE          0x80U               /* OSC_CR */
+/* OSC_CR: ERCLKEN=0,EREFSTEN=0,SC2P=0,SC4P=0,SC8P=0,SC16P=0 */
+// While flashing, no external clock
+#define SYSTEM_OSC_CR_VALUE          0x00U               /* OSC_CR */
 /* SMC_PMCTRL: RUNM=3,STOPA=0,STOPM=0 */
 //#define SYSTEM_SMC_PMCTRL_VALUE      0x60U               /* SMC_PMCTRL */
+// Use normal, not high-speed, run mode - our dividers are set to handle that
 #define FLASH_SMC_PMCTRL_VALUE       0x00U               /* SMC_PMCTRL */
 /* SIM_CLKDIV1: OUTDIV1=0,OUTDIV2=1,OUTDIV4=3 */
 //#define SYSTEM_SIM_CLKDIV1_VALUE     0x01030000U         /* SIM_CLKDIV1 */
+// While flashing, we run peripherals and CPU at 40MHz (/2), flash at 20MHz (/4)
 #define FLASH_SIM_CLKDIV1_VALUE     (SIM_CLKDIV1_OUTDIV1(1) | SIM_CLKDIV1_OUTDIV2(1) | SIM_CLKDIV1_OUTDIV4(3))
 
 /* SIM_SOPT1: OSC32KSEL=3,OSC32KOUT=0,RAMSIZE=0 */
@@ -67,7 +70,7 @@ extern "C" void SystemInit (void);
 void SystemInit (void)
 {
   // Enable FPU
-  //SCB->CPACR |= ((3UL << 10*2) | (3UL << 11*2));    /* set CP10, CP11 Full Access */
+  SCB->CPACR |= ((3UL << 10*2) | (3UL << 11*2));    /* set CP10, CP11 Full Access */
 
 #if (DISABLE_WDOG)
   /* WDOG->UNLOCK: WDOGUNLOCK=0xC520 */
@@ -89,14 +92,7 @@ void SystemInit (void)
        PMC->REGSC |= PMC_REGSC_ACKISO_MASK;
 
   /* Power mode protection initialization */
-  SMC->PMPROT =  FLASH_SMC_PMPROT_VALUE;
-
-  /* High speed run mode enable */
-#if (((FLASH_SMC_PMCTRL_VALUE) & SMC_PMCTRL_RUNM_MASK) == (0x03U << SMC_PMCTRL_RUNM_SHIFT))
-  SMC->PMCTRL = (uint8_t)((FLASH_SMC_PMCTRL_VALUE) & (SMC_PMCTRL_RUNM_MASK)); /* Enable HSRUN mode */
-  while(SMC->PMSTAT != 0x80U) {      /* Wait until the system is in HSRUN mode */
-  } 
-#endif
+  SMC->PMPROT =  SYSTEM_SMC_PMPROT_VALUE;
 
   /* Set system prescalers and clock sources */
   SIM->CLKDIV1 = FLASH_SIM_CLKDIV1_VALUE; /* Set system prescalers */
@@ -104,19 +100,12 @@ void SystemInit (void)
   SIM->SOPT2 = ((SIM->SOPT2) & (uint32_t)(~(SIM_SOPT2_PLLFLLSEL_MASK))) | ((SYSTEM_SIM_SOPT2_VALUE) & (SIM_SOPT2_PLLFLLSEL_MASK)); /* Selects the high frequency clock for various peripheral clocking options. */
 
 /*** MCG_MODE is FEI */
-  
-  /* Set MCG and OSC */
-#if  (((SYSTEM_OSC_CR_VALUE) & OSC_CR_ERCLKEN_MASK) != 0x00U)
-  /* SIM_SCGC5: PORTA=1 */
-  SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK;
-  /* PORTA_PCR18: ISF=0,MUX=0 */
-  PORTA_PCR18 &= (uint32_t)~(uint32_t)((PORT_PCR_ISF_MASK | PORT_PCR_MUX(0x07)));
-  if (((SYSTEM_MCG_C2_VALUE) & MCG_C2_EREFS_MASK) != 0x00U) {
-  /* PORTA_PCR19: ISF=0,MUX=0 */
-  // PORTA_PCR19 &= (uint32_t)~(uint32_t)((PORT_PCR_ISF_MASK | PORT_PCR_MUX(0x07)));
-  }
-#endif
-  
+  // Enter normal run mode
+  SMC->PMCTRL = (uint8_t)(FLASH_SMC_PMCTRL_VALUE); 
+  while(SMC->PMSTAT != 0x01U) ;
+    
+  // Don't need extenral cocks for this - we're using internal only
+    
   MCG->SC = SYSTEM_MCG_SC_VALUE;       /* Set SC (fast clock internal reference divider) */
   MCG->C1 = SYSTEM_MCG_C1_VALUE;       /* Set C1 (clock source selection, FLL ext. reference divider, int. reference enable etc.) */
 
@@ -150,10 +139,4 @@ void SystemInit (void)
   }
   LPTMR0_CSR = 0x00;                   /* Disable LPTMR */
   SIM_SCGC5 &= (uint32_t)~(uint32_t)SIM_SCGC5_LPTMR_MASK;
-  
-#if (((FLASH_SMC_PMCTRL_VALUE) & SMC_PMCTRL_RUNM_MASK) == (0x02U << SMC_PMCTRL_RUNM_SHIFT))
-  SMC->PMCTRL = (uint8_t)((FLASH_SMC_PMCTRL_VALUE) & (SMC_PMCTRL_RUNM_MASK)); /* Enable VLPR mode */
-  while(SMC->PMSTAT != 0x04U) {      /* Wait until the system is in VLPR mode */
-  }
-#endif
 }

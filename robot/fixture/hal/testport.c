@@ -15,6 +15,7 @@
 #include "hal/testport.h"
 #include "hal/timers.h"
 #include "hal/portable.h"
+#include "hal/uart.h"
 #include "../app/fixture.h"
 
 #define TESTPORT_TX       UART5
@@ -37,8 +38,6 @@ static __align(4) u8 m_globalBuffer[1024 * 5];
 static u8 m_buffer[BUFFER_LENGTH];
 static u32 m_bufferIndex = 0;
 static BOOL m_isInTxMode = TRUE;
-
-extern void SlowPrintf(const char* format, ...);
 
 // Enable the test port
 void InitTestPort(int baudRate)
