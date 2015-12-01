@@ -26,13 +26,13 @@ namespace DockTraining {
 
     public override void Update() {
       base.Update();
-      LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
-      if (currentTarget != null) {
-        float distance = Vector2.Distance(_CurrentRobot.WorldPosition, currentTarget.WorldPosition);
-
+      if (_DockTrainingGame.ShouldTryDockSucceed()) {
+        // should try to actually successfully dock.
+        _StateMachine.SetNextState(new TryDock());
       }
-      else {
-        
+      else if (_DockTrainingGame.ShouldTryDock()) {
+        // we are too far off, just fail spectacularly
+        _StateMachine.SetNextState(new FailSpectacularDock());
       }
     }
 

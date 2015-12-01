@@ -63,13 +63,17 @@ namespace DockTraining {
     }
 
     public bool ShouldTryDock() {
-      return false;
+      float distance = Vector2.Distance(CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
+      return (distance < 75.0f);
     }
 
     public bool ShouldTryDockSucceed() {
       if (ShouldTryDock() == false) {
         return false;
       }
+      // check to see if the robots forward vector is toward the cube enough to
+      // attempt a successful dock.
+
       return false;
     }
 
