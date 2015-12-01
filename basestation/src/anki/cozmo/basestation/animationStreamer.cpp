@@ -261,7 +261,7 @@ namespace Cozmo {
     }
        
     return RESULT_OK;
-  } // UpdateAudio()
+  } // BufferAudioToSend()
   
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
@@ -420,7 +420,7 @@ namespace Cozmo {
     }
     
     // Add more stuff to send buffer from face layers
-    while(_sendBuffer.empty() && !_faceLayers.empty())
+    while(_sendBuffer.empty() && (!_faceLayers.empty() || _audioClient->IsPlugInActive()))
     {
       // If we have face layers to send, we _do_ want BufferAudioToSend to
       // buffer audio silence keyframes to keep the clock ticking. If not, we
@@ -449,7 +449,7 @@ namespace Cozmo {
     }
     
     // If we just finished buffering all the face layers, send an end of animation message
-    if(_faceLayers.empty() && _sendBuffer.empty() && !_endOfAnimationSent) {
+    if(_startOfAnimationSent && _faceLayers.empty() && _sendBuffer.empty() && !_endOfAnimationSent && !_audioClient->IsPlugInActive()) {
       lastResult = SendEndOfAnimation(robot);
     }
     
