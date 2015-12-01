@@ -344,27 +344,17 @@ return RESULT_FAIL; \
     }
      */
     
-    ProceduralFaceParams ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame* nextFrame)
+    ProceduralFaceParams ProceduralFaceKeyFrame::GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms)
     {
-      if(nullptr == nextFrame) {
-        _isDone = true;
-        return _procFace.GetParams();
-      } else {
-        // The interpolation fraction is how far along in time we are from this frame's
-        // trigger time (which currentTime was initialized to) and the next frame's
-        // trigger time.
-        const f32 fraction = std::min(1.f, static_cast<f32>(_currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame->GetTriggerTime() - GetTriggerTime()));
-        
-        ProceduralFaceParams interpParams;
-        interpParams.Interpolate(_procFace.GetParams(), nextFrame->_procFace.GetParams(), fraction);
-        
-        _currentTime_ms += IKeyFrame::SAMPLE_LENGTH_MS;
-        if(_currentTime_ms >= nextFrame->GetTriggerTime()) {
-          _isDone = true;
-        }
-        
-        return interpParams;
-      }
+      // The interpolation fraction is how far along in time we are from this frame's
+      // trigger time (which currentTime was initialized to) and the next frame's
+      // trigger time.
+      const f32 fraction = std::min(1.f, static_cast<f32>(currentTime_ms - GetTriggerTime()) / static_cast<f32>(nextFrame.GetTriggerTime() - GetTriggerTime()));
+      
+      ProceduralFaceParams interpParams;
+      interpParams.Interpolate(_procFace.GetParams(), nextFrame._procFace.GetParams(), fraction);
+      
+      return interpParams;
     }
     
 #pragma mark -
