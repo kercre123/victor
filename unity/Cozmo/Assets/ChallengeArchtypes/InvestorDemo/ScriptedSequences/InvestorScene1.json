@@ -37,7 +37,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "majorWin",
+          "AnimationName": "ID_wake_openEyes",
           "WaitToEnd": true
         }
       ],
@@ -58,7 +58,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "majorWin",
+          "AnimationName": "ID_reactTppl_Surprise",
           "WaitToEnd": true
         }
       ],
