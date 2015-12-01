@@ -13,11 +13,22 @@ using Newtonsoft.Json;
 public class ScriptedSequenceEditor : EditorWindow {
 
   private const string kScriptedSequenceResourcesPath = "Assets/SharedAssets/Resources/ScriptedSequences";
+  private const string kAutosaveFilePath = "Assets/SharedAssets/Scripts/ScriptedSequences/.WorkingFile.json~";
 
   public string CurrentSequenceFile;
   public ScriptedSequence CurrentSequence;
 
   private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
+
+  private List<string> _UndoStack = new List<string>();
+
+  private List<string> _RedoStack = new List<string>();
+
+  private DateTime _LastSnapshotTime;
+
+  private DateTime _SnapshotCountdownStart;
+
+  private string _LastSnapshotState;
 
 
   // Required to display the Condition Select Popup
@@ -73,8 +84,7 @@ public class ScriptedSequenceEditor : EditorWindow {
                             .GetCustomAttributes(typeof(ScriptedSequenceHelperAttribute), false)[0]).Type,
                     x => x);
   }
-
-
+    
   // whether we should display the text field for the Sequence Name
   private bool _EditingName = false;
 
@@ -147,15 +157,12 @@ public class ScriptedSequenceEditor : EditorWindow {
   private Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>> _ActionHelpers = new Dictionary<ScriptedSequenceAction, ScriptedSequenceHelper<ScriptedSequenceAction>>();
 
   // generic way to retrieve the helper for a condition/action if it exists
-  private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem
-  {
+  private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+    if(typeof(T) == typeof(ScriptedSequenceCondition)) {
       helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ConditionHelpers;
     }
-    else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    else if(typeof(T) == typeof(ScriptedSequenceAction)) {
       helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ActionHelpers;
     }
     if(helpers == null) {
@@ -407,8 +414,13 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   private Vector2 _ScrollPosition;
 
-  public void OnGUI()
-  {
+  public void OnDestroy() {
+    if (File.Exists(kAutosaveFilePath)) {
+      File.Delete(kAutosaveFilePath);
+    }
+  }
+
+  public void OnGUI() {
 
     DrawToolbar();
 
@@ -417,6 +429,8 @@ public class ScriptedSequenceEditor : EditorWindow {
     DrawSequenceEditor();
 
     EditorGUILayout.EndScrollView();
+
+    UpdateUndoRedo();
   }
 
   private bool CheckDiscardUnsavedSequence()
@@ -429,7 +443,18 @@ public class ScriptedSequenceEditor : EditorWindow {
     return canOpen;
   }
 
-  public void DrawToolbar() {
+  private void DrawToolbar() {
+
+    if (CurrentSequence == null) {
+      // Try Restoring Autosave
+      if (File.Exists(kAutosaveFilePath)) {
+        try {
+          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(kAutosaveFilePath), ScriptedSequenceManager.JsonSettings);
+        }
+        catch {
+        }
+      }
+    }
 
     EditorGUILayout.BeginHorizontal(ToolbarStyle);
 
@@ -441,16 +466,7 @@ public class ScriptedSequenceEditor : EditorWindow {
         Action<string> closureAction = (string f) => {
 
           menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
-            if (CheckDiscardUnsavedSequence()) {
-              try {
-                CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(f), ScriptedSequenceManager.JsonSettings);
-                CurrentSequenceFile = f;
-                _RecentFiles.Add(f);
-              }
-              catch (Exception ex) {
-                DAS.Error(this, ex.ToString());
-              }
-            }
+            LoadFile(f);
           });
         };
         closureAction(file);
@@ -465,15 +481,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
         if(!string.IsNullOrEmpty(path))
         {
-          try
-          {
-            CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(path), ScriptedSequenceManager.JsonSettings);
-            CurrentSequenceFile = path;
-            _RecentFiles.Add(path);
-          }
-          catch(Exception ex) {
-            DAS.Error(this, ex.ToString());
-          }
+          LoadFile(path);
         }
       }
     }
@@ -487,15 +495,7 @@ public class ScriptedSequenceEditor : EditorWindow {
         Action<string> closureAction = (string f) => {
 
           menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
-            if (CheckDiscardUnsavedSequence()) {
-              try {
-                CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(f), ScriptedSequenceManager.JsonSettings);
-                CurrentSequenceFile = f;
-              }
-              catch (Exception ex) {
-                DAS.Error(this, ex.ToString());
-              }
-            }
+            LoadFile(f);
           });
         };
         closureAction(file);
@@ -505,6 +505,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     if (GUILayout.Button("New Sequence", ToolbarButtonStyle)) {
       if (CheckDiscardUnsavedSequence()) {
+        _UndoStack.Clear();
+        _RedoStack.Clear();
+        _UndoStack.Add("{}");
         CurrentSequence = new ScriptedSequence();
         _EditingName = true;
         CurrentSequenceFile = null;
@@ -545,6 +548,8 @@ public class ScriptedSequenceEditor : EditorWindow {
           File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
 
           EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
+          // Clear out our temporary working file on save
+          OnDestroy();
         }
       }
     }
@@ -553,8 +558,29 @@ public class ScriptedSequenceEditor : EditorWindow {
     EditorGUILayout.EndHorizontal();
   }
 
+  private void SaveTemporaryFile(string json) {    
+    File.WriteAllText(kAutosaveFilePath, json);
+  }
+
+  private void LoadFile(string path) {
+    if (CheckDiscardUnsavedSequence()) {
+      try {
+        _UndoStack.Clear();
+        _RedoStack.Clear();
+        string json = File.ReadAllText(path);
+        _UndoStack.Add(json);
+        CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(json, ScriptedSequenceManager.JsonSettings);
+        CurrentSequenceFile = path;
+        _RecentFiles.Add(path);
+      }
+      catch (Exception ex) {
+        DAS.Error(this, ex.ToString());
+      }
+    }
+  }
+
   // draw the editor for the ScriptedSequence
-  public void DrawSequenceEditor() {
+  private void DrawSequenceEditor() {
 
     var sequence = CurrentSequence;
 
@@ -662,14 +688,36 @@ public class ScriptedSequenceEditor : EditorWindow {
       AddNode(sequence.Nodes.Count);
     }
 
-    if (nextRect.Contains(mousePosition) && _DraggingNodeIndex != -1) {
-      if (mouseEvent == EventType.mouseUp) {
+    if (nextRect.Contains(mousePosition)) {
+      if (mouseEvent == EventType.ContextClick) {
+        if (_DraggingNodeIndex == -1) {
+          ContextMenuOpen = true;
+        }
+        else {
+          _DraggingNodeIndex = -1;
+        }
+        var menu = new GenericMenu();
+
+        if (_CopiedNode != null) {
+          menu.AddItem(new GUIContent("Paste"), false, () => {
+            ContextMenuOpen = true;
+            var newNode = CopyNode(_CopiedNode);
+            newNode.Id = GetNextId();
+            sequence.Nodes.Add(newNode);
+          });
+        }
+        else {
+          menu.AddDisabledItem(new GUIContent("Paste"));
+        }
+
+        menu.ShowAsContext();
+      }
+      if (_DraggingNodeIndex != -1 && mouseEvent == EventType.mouseUp) {
         var node = sequence.Nodes[_DraggingNodeIndex];
         sequence.Nodes.RemoveAt(_DraggingNodeIndex);
         sequence.Nodes.Add(node);
       }
     }
-
 
     EditorGUI.indentLevel--;
 
@@ -700,6 +748,84 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
     Repaint();
+  }
+
+  private void UpdateUndoRedo() {
+
+    if (CurrentSequence == null) {
+      return;
+    }
+
+    if (Event.current.type == EventType.keyDown && 
+      (Event.current.command || Event.current.control) && 
+      Event.current.keyCode == KeyCode.Z) {
+
+      if (Event.current.shift) { // redo
+        if (_RedoStack.Count > 0) {          
+          var current = _RedoStack.Last();
+          _RedoStack.RemoveAt(_RedoStack.Count - 1);
+          _UndoStack.Add(current);
+
+          SaveTemporaryFile(current);
+
+          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, ScriptedSequenceManager.JsonSettings);
+        }
+      }
+      else { // undo
+        if (_UndoStack.Count > 1) {
+          
+          var current = _UndoStack[_UndoStack.Count - 2];
+          _RedoStack.Add(_UndoStack.Last());
+          _UndoStack.RemoveAt(_UndoStack.Count - 1);
+
+          SaveTemporaryFile(current);
+
+          _ActionHelpers.Clear();
+          _ConditionHelpers.Clear();
+          _DraggingConditionHelper = null;
+          _DraggingActionHelper = null;
+          _DraggingNodeIndex = -1;
+          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, ScriptedSequenceManager.JsonSettings);
+        }
+      }
+      Event.current.Use();
+
+      return;
+    }
+
+    if (DateTime.UtcNow < _LastSnapshotTime + new TimeSpan(0, 0, 1)) {
+      return;
+    }
+
+    var currentState = JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings);
+
+    if (currentState == _UndoStack.Last()) {
+      _SnapshotCountdownStart = default(DateTime);
+      return;
+    }
+
+    if (currentState != _LastSnapshotState) {
+      _SnapshotCountdownStart = DateTime.UtcNow;
+      _LastSnapshotState = currentState;
+      return;
+    }
+
+    if(DateTime.UtcNow < _SnapshotCountdownStart + new TimeSpan(0, 0, 1)) {
+      return;
+    }
+
+    _SnapshotCountdownStart = default(DateTime);
+    _LastSnapshotTime = DateTime.UtcNow;
+    _LastSnapshotState = null;
+
+    SaveTemporaryFile(currentState);
+
+    _UndoStack.Add(currentState);
+    _RedoStack.Clear();
+
+    if (_UndoStack.Count > 100) {
+      _UndoStack.RemoveAt(0);
+    }
   }
 
   // function to insert a new node
@@ -951,24 +1077,48 @@ public class ScriptedSequenceEditor : EditorWindow {
     var draggingHelper = GetDraggingHelper<T>();
 
     // dropping on the add field inserts at the end
-    if (nextRect.Contains(mousePosition) && eventType == EventType.mouseUp && draggingHelper != null) {
-      if (conditions != draggingHelper.List) {
+    if (nextRect.Contains(mousePosition)) {
+      if (eventType == EventType.ContextClick) {
 
-        conditions.Add(draggingHelper.ValueBase);
-        if (draggingHelper.ReplaceInsteadOfInsert) {
-          draggingHelper.ReplaceAction(default(T));
-          draggingHelper.ReplaceAction = null;
-          draggingHelper.ReplaceInsteadOfInsert = false;
+        if (GetDraggingHelper<T>() == null) {
+          ContextMenuOpen = true;
         }
         else {
-          draggingHelper.List.RemoveAt(_DraggingConditionHelper.Index);
+          SetDraggingHelper<T>(null);
         }
-        draggingHelper.List = conditions;
+        var menu = new GenericMenu();
+
+        if (GetCopiedValue<T>() != null) {
+          menu.AddItem(new GUIContent("Paste"), false, () => {
+            var newCondition = Copy(GetCopiedValue<T>());
+            conditions.Add(newCondition);
+          });
+        }
+        else {
+          menu.AddDisabledItem(new GUIContent("Paste"));
+        }
+
+        menu.ShowAsContext();
       }
-      else {
-        int oldIndex = _DraggingConditionHelper.Index;
-        conditions.RemoveAt(oldIndex);
-        conditions.Add(draggingHelper.ValueBase);
+      else if (eventType == EventType.mouseUp && draggingHelper != null) {
+        if (conditions != draggingHelper.List) {
+
+          conditions.Add(draggingHelper.ValueBase);
+          if (draggingHelper.ReplaceInsteadOfInsert) {
+            draggingHelper.ReplaceAction(default(T));
+            draggingHelper.ReplaceAction = null;
+            draggingHelper.ReplaceInsteadOfInsert = false;
+          }
+          else {
+            draggingHelper.List.RemoveAt(_DraggingConditionHelper.Index);
+          }
+          draggingHelper.List = conditions;
+        }
+        else {
+          int oldIndex = _DraggingConditionHelper.Index;
+          conditions.RemoveAt(oldIndex);
+          conditions.Add(draggingHelper.ValueBase);
+        }
       }
     }
   }
@@ -1007,19 +1157,43 @@ public class ScriptedSequenceEditor : EditorWindow {
 
       // Dropping on a single field swaps out the field for the dragging one
       var draggingHelper = GetDraggingHelper<T>();
-      if (nextRect.Contains(mousePosition) && eventType == EventType.mouseUp && draggingHelper != null) {
-        value = draggingHelper.ValueBase;
-        setAction(value);
+      if (nextRect.Contains(mousePosition)) {
+        if (eventType == EventType.ContextClick) {
 
-        if (draggingHelper.ReplaceInsteadOfInsert) {
-          draggingHelper.ReplaceAction(default(T));
+          if (GetDraggingHelper<T>() == null) {
+            ContextMenuOpen = true;
+          }
+          else {
+            SetDraggingHelper<T>(null);
+          }
+          var menu = new GenericMenu();
+
+          if (GetCopiedValue<T>() != null) {
+            menu.AddItem(new GUIContent("Paste"), false, () => {
+              var newCondition = Copy(GetCopiedValue<T>());
+              setAction(newCondition);
+            });
+          }
+          else {
+            menu.AddDisabledItem(new GUIContent("Paste"));
+          }
+
+          menu.ShowAsContext();
         }
-        else {
-          draggingHelper.List.RemoveAt(draggingHelper.Index);
-          draggingHelper.List = null;
-          draggingHelper.ReplaceInsteadOfInsert = true;
+        else if (eventType == EventType.mouseUp && draggingHelper != null) {
+          value = draggingHelper.ValueBase;
+          setAction(value);
+
+          if (draggingHelper.ReplaceInsteadOfInsert) {
+            draggingHelper.ReplaceAction(default(T));
+          }
+          else {
+            draggingHelper.List.RemoveAt(draggingHelper.Index);
+            draggingHelper.List = null;
+            draggingHelper.ReplaceInsteadOfInsert = true;
+          }
+          draggingHelper.ReplaceAction = setAction;
         }
-        draggingHelper.ReplaceAction = setAction;
       }
     }
     EditorGUI.indentLevel--;
