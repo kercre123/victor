@@ -13,7 +13,6 @@ namespace DockTraining {
     private float _LastSeenTargetTime = 0.0f;
 
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
-      // TODO
     }
 
     void Start() {
@@ -71,9 +70,11 @@ namespace DockTraining {
       if (ShouldTryDock() == false) {
         return false;
       }
-      // check to see if the robots forward vector is toward the cube enough to
-      // attempt a successful dock.
-
+      // check to see if the robots forward vector is toward the cube enough to attempt a successful dock.
+      float dotVal = Vector2.Dot(CurrentRobot.Forward, (CurrentRobot.WorldPosition - _CurrentTarget.WorldPosition).normalized);
+      if (dotVal > 0.95f) {
+        return true;
+      }
       return false;
     }
 

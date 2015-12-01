@@ -16,7 +16,7 @@ namespace DockTraining {
     }
 
     private void HandleAnimationDone(bool success) {
-      
+      _StateMachine.SetNextState(new WaitForTargetState());
     }
   }
 
