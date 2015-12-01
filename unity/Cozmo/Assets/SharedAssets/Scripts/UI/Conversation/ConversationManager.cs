@@ -49,6 +49,10 @@ namespace Conversations {
       }
     }
 
+    public void AbortCurrentConversation() {
+      StartNewConversation("Default");
+    }
+
     public void AddConversationLine(ConversationLine line) {
       _CurrentConversation.AddToConversation(line);
       if (_CurrentSpeechBubble != null) {

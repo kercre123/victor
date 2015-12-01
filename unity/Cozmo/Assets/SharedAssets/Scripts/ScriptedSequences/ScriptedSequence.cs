@@ -25,6 +25,7 @@ namespace ScriptedSequences {
     public event Action<Exception> OnError;
 
     private bool _IsComplete;
+
     [JsonIgnore]
     public bool IsComplete { 
       get { return _IsComplete; } 
@@ -55,6 +56,8 @@ namespace ScriptedSequences {
       DAS.Debug(this, "Reset Called on Scripted Sequence " +Name);
       #endif
 
+      Conversations.ConversationManager.Instance.AbortCurrentConversation();
+
       for (int i = 0; i < Nodes.Count; i++) {
         Nodes[i].Reset();
       }
@@ -73,8 +76,7 @@ namespace ScriptedSequences {
       }
     }
 
-    public void Complete()
-    {
+    public void Complete() {
       IsComplete = true;
 
       if (OnComplete != null) {
@@ -84,8 +86,7 @@ namespace ScriptedSequences {
       ResetSequence();
     }
 
-    public void Initialize()
-    {
+    public void Initialize() {
       if (!Repeatable) {
         DataPersistence.DataPersistenceManager.Instance.Data.CompletedScriptedSequences.TryGetValue(Name, out _IsComplete);
       }
@@ -112,28 +113,24 @@ namespace ScriptedSequences {
       }
     }
 
-    public ScriptedSequenceNode GetNode(uint id)
-    {
+    public ScriptedSequenceNode GetNode(uint id) {
       return Nodes.Find(x => x.Id == id);
     }
 
-    public ScriptedSequence GetSequence()
-    {
+    public ScriptedSequence GetSequence() {
       return this;
     }
 
-    private void HandleConditionChanged()
-    {
+    private void HandleConditionChanged() {
       if (Condition.IsMet && ActivateOnConditionMet) {
         Enable();
       }
-      else if(RequiresConditionRemainsMet) {
+      else if (RequiresConditionRemainsMet) {
         Fail(new Exception("Condition Became Unmet"));
       }
     }
 
-    public void Enable()
-    {      
+    public void Enable() {      
       #if DEBUG_SCRIPTED_SEQUENCES
       DAS.Debug(this, "Enable Called on Scripted Sequence " +Name);
       #endif
@@ -142,13 +139,11 @@ namespace ScriptedSequences {
       }
     }
 
-    public List<ScriptedSequenceNode> GetActiveNodes()
-    {
+    public List<ScriptedSequenceNode> GetActiveNodes() {
       return Nodes.Where(x => x.IsActive).ToList();
     }
 
-    public List<ScriptedSequenceNode> GetWaitingNodes()
-    {
+    public List<ScriptedSequenceNode> GetWaitingNodes() {
       return Nodes.Where(x => x.IsEnabled && !x.IsComplete && !x.IsActive).ToList();
     }
   }
