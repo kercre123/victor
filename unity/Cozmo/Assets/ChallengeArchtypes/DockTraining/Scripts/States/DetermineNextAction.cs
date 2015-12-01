@@ -12,20 +12,33 @@ namespace DockTraining {
     private float _LeftAccumulator = 0.0f;
     private float _RightAccumulator = 0.0f;
 
+    private DockTrainingGame _DockTrainingGame;
+
     public override void Enter() {
       base.Enter();
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
+
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
       RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
+
+      _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
     }
 
     public override void Update() {
       base.Update();
+      LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
+      if (currentTarget != null) {
+        
+      }
+      else {
+        
+      }
     }
 
     public override void Exit() {
       base.Exit();
+      RobotEngineManager.Instance.OnObservedMotion -= HandleObservedMotion;
     }
 
     private void HandleObservedMotion(float x, float y) {

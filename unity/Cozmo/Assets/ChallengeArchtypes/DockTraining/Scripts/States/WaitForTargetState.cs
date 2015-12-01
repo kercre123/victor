@@ -4,7 +4,7 @@ using System.Collections;
 namespace DockTraining {
   public class WaitForTargetState : State {
 
-    DockTrainingGame _DockTrainingGame;
+    private DockTrainingGame _DockTrainingGame;
 
     public override void Enter() {
       base.Enter();
