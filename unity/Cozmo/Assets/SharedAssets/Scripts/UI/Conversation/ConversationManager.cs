@@ -32,7 +32,6 @@ namespace Conversations {
     [SerializeField]
     private BaseView _RightBubble;
 
-    private ConversationHistory _ConversationHistory = new ConversationHistory();
     private Conversation _CurrentConversation = new Conversation();
     private string _CurrentConversationKey;
     private SpeechBubble _CurrentSpeechBubble;
@@ -59,7 +58,8 @@ namespace Conversations {
     }
 
     public void SaveConversationToHistory() {
-      _ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
+      DataPersistence.DataPersistenceManager.Instance.Data.ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
+      DataPersistence.DataPersistenceManager.Instance.Save();
       StartNewConversation("Default");
     }
 
