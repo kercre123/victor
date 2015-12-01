@@ -24,6 +24,7 @@ static const int SAMPLE_RATE = 24000;
 static int tone_freq = 440;
 
 void Anki::Cozmo::HAL::DACTone(void) {
+  #ifdef EP1_HEADBOARD
   SIM_SCGC6 |= SIM_SCGC6_FTM0_MASK;   // Enable FTM1
 
   // Temporarly steal FTM0 for our own horrendous devices
@@ -49,6 +50,7 @@ void Anki::Cozmo::HAL::DACTone(void) {
 
   NVIC_DisableIRQ(FTM0_IRQn);
   GPIO_RESET(GPIO_AUDIO_STANDBY, PIN_AUDIO_STANDBY);
+  #endif
 }
 
 static volatile uint16_t* dac_word = (volatile uint16_t*) &DAC0_DAT0L;

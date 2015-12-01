@@ -63,6 +63,8 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led)
 
 #include "hal/console.h"
 
+#define PINC_VEXTEN 12  // Also TX, so don't use this on head fixtures!
+    
 void InitBAT(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
@@ -76,14 +78,31 @@ void InitBAT(void)
   
   MicroWait(400);
   
-  // ENBAT_LC, ENBAT, NBATSINK
+  // PINC_VEXTEN - default low (VEXT disabled)
+  GPIO_RESET(GPIOC, PINC_VEXTEN);
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_InitStructure.GPIO_Pin = PINC_VEXTEN;
+  GPIO_Init(GPIOC, &GPIO_InitStructure);  
+  
+  // ENBAT_LC, ENBAT, NBATSINK
   GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
   DisableBAT();
+}
+
+void EnableVEXT(void)
+{
+  GPIO_SET(GPIOC, PINC_VEXTEN);
+  PIN_OUT(GPIOC, PINC_VEXTEN);
+}
+
+void DisableVEXT(void)
+{
+  GPIO_RESET(GPIOC, PINC_VEXTEN);
+  PIN_OUT(GPIOC, PINC_VEXTEN);  
 }
 
 void EnableBAT(void)

@@ -39,7 +39,7 @@ void DecodeAndFlash(void)
     
     // Write the decrypted data to block B in flash`    
     u32 address = FLASH_BLOCK_B + (SAFE_PAYLOAD_SIZE * blockIndex);
-    SlowPrintf("start: %08X @ %d\r\n", address, getMicroCounter());
+    //SlowPrintf("start: %08X @ %d\r\n", address, getMicroCounter());
     
     __disable_irq();
     FLASH_Unlock();

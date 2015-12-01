@@ -499,7 +499,8 @@ void swd_crash_dump()
 void swd_chipinit(void)
 {
   unsigned long value, idcode;
-  swd_read(0, 0, &idcode);   // Debug port (not AP), register 0 (IDCODE)
+  if (SWD_ACK != swd_read(0, 0, &idcode))   // Debug port (not AP), register 0 (IDCODE)
+    throw ERROR_SWD_IDCODE;
   
   swd_write(0, 0x4, 0x54000000);  // Power up system and debug - place chip in reset   
   swd_write32((int)&CoreDebug->DHCSR, 0xA05F0003);  // Halt CPU so we can take over (w/debug)

@@ -14,7 +14,6 @@
  **/
 
 #include "anki/common/basestation/math/pose.h"
-#include "anki/common/constantsAndMacros.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/planning/shared/path.h"
 #include "minimalAnglePlanner.h"
