@@ -252,8 +252,8 @@ public class ScriptedSequenceEditor : EditorWindow {
     return JsonConvert.DeserializeObject<ScriptedSequenceNode>(
           JsonConvert.SerializeObject(node, 
                                       Formatting.None, 
-                                      ScriptedSequenceManager.JsonSettings), 
-          ScriptedSequenceManager.JsonSettings);
+                                      GlobalSerializerSettings.JsonSettings), 
+          GlobalSerializerSettings.JsonSettings);
   }
 
   // copy a condition
@@ -261,7 +261,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     T copy = (T)JsonConvert.DeserializeObject(
           JsonConvert.SerializeObject(value, 
                                       Formatting.None, 
-                                      ScriptedSequenceManager.JsonSettings),
+                                      GlobalSerializerSettings.JsonSettings),
           value.GetType());
     return copy;
   }
@@ -436,7 +436,7 @@ public class ScriptedSequenceEditor : EditorWindow {
   private bool CheckDiscardUnsavedSequence()
   {
     bool canOpen = true;
-    if (CurrentSequence != null && (string.IsNullOrEmpty(CurrentSequenceFile) || JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings) != File.ReadAllText(CurrentSequenceFile)))
+    if (CurrentSequence != null && (string.IsNullOrEmpty(CurrentSequenceFile) || JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(CurrentSequenceFile)))
     {
       canOpen = EditorUtility.DisplayDialog("Warning","Opening a Sequence will Discard Unsaved Changes. Are you Sure?", "Yes");
     }
@@ -449,7 +449,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       // Try Restoring Autosave
       if (File.Exists(kAutosaveFilePath)) {
         try {
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(kAutosaveFilePath), ScriptedSequenceManager.JsonSettings);
+          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(File.ReadAllText(kAutosaveFilePath), GlobalSerializerSettings.JsonSettings);
         }
         catch {
         }
@@ -545,7 +545,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
           _RecentFiles.Add(CurrentSequenceFile);
 
-          File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings));
+          File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
 
           AssetDatabase.ImportAsset(CurrentSequenceFile);
           EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
@@ -570,7 +570,7 @@ public class ScriptedSequenceEditor : EditorWindow {
         _RedoStack.Clear();
         string json = File.ReadAllText(path);
         _UndoStack.Add(json);
-        CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(json, ScriptedSequenceManager.JsonSettings);
+        CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(json, GlobalSerializerSettings.JsonSettings);
         CurrentSequenceFile = path;
         _RecentFiles.Add(path);
       }
@@ -769,7 +769,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
           SaveTemporaryFile(current);
 
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, ScriptedSequenceManager.JsonSettings);
+          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
         }
       }
       else { // undo
@@ -786,7 +786,7 @@ public class ScriptedSequenceEditor : EditorWindow {
           _DraggingConditionHelper = null;
           _DraggingActionHelper = null;
           _DraggingNodeIndex = -1;
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, ScriptedSequenceManager.JsonSettings);
+          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
         }
       }
       Event.current.Use();
@@ -798,7 +798,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       return;
     }
 
-    var currentState = JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, ScriptedSequenceManager.JsonSettings);
+    var currentState = JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings);
 
     if (currentState == _UndoStack.Last()) {
       _SnapshotCountdownStart = default(DateTime);

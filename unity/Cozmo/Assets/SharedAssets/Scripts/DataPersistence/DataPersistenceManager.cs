@@ -11,29 +11,12 @@ namespace DataPersistence {
 
     private static string sBackupSaveFilePath = sSaveFilePath + ".bak";
 
-    private static JsonSerializerSettings _JsonSettings;
-
-    public static JsonSerializerSettings JsonSettings {
-      get {
-        if (_JsonSettings == null) {
-          _JsonSettings = new JsonSerializerSettings() {
-            TypeNameHandling = TypeNameHandling.Auto,
-            Converters = new List<JsonConverter> {
-              new UtcDateTimeConverter(),
-              new Newtonsoft.Json.Converters.StringEnumConverter()
-            }
-          };
-        }
-        return _JsonSettings;
-      }
-    }
-
     private DataPersistenceManager() { 
       if (File.Exists(sSaveFilePath)) {
         try {
           string fileData = File.ReadAllText(sSaveFilePath);
 
-          Data = JsonConvert.DeserializeObject<SaveData>(fileData, JsonSettings);
+          Data = JsonConvert.DeserializeObject<SaveData>(fileData, GlobalSerializerSettings.JsonSettings);
         }
         catch (Exception ex) {
           DAS.Error(this, "Error Loading Saved Data: " + ex);
@@ -42,7 +25,7 @@ namespace DataPersistence {
           try {
             string backupData = File.ReadAllText(sBackupSaveFilePath);
 
-            Data = JsonConvert.DeserializeObject<SaveData>(backupData, JsonSettings);
+            Data = JsonConvert.DeserializeObject<SaveData>(backupData, GlobalSerializerSettings.JsonSettings);
           }
           catch (Exception ex2) {
             DAS.Error(this, "Error Loading Backup Saved Data: " + ex2);
@@ -83,7 +66,7 @@ namespace DataPersistence {
         DAS.Error(this, "Exception backing up save file: " + ex);
       }
 
-      string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, JsonSettings);
+      string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
 
       File.WriteAllText(sSaveFilePath, jsonValue);
     }

@@ -37,23 +37,6 @@ namespace ScriptedSequences {
       } 
     }
 
-    private static JsonSerializerSettings _JsonSettings;
-
-    public static JsonSerializerSettings JsonSettings {
-      get {
-        if (_JsonSettings == null) {
-          _JsonSettings = new JsonSerializerSettings() {
-            TypeNameHandling = TypeNameHandling.Auto,
-            Converters = new List<JsonConverter> {
-              new UtcDateTimeConverter(),
-              new Newtonsoft.Json.Converters.StringEnumConverter()
-            }
-          };
-        }
-        return _JsonSettings;
-      }
-    }
-
     private void Awake() {
       if (_instance == null) {
         _instance = this;
@@ -73,7 +56,7 @@ namespace ScriptedSequences {
           continue;
         }
         try {
-          Sequences.Add(JsonConvert.DeserializeObject<ScriptedSequence>(textAsset.text, JsonSettings));
+          Sequences.Add(JsonConvert.DeserializeObject<ScriptedSequence>(textAsset.text, GlobalSerializerSettings.JsonSettings));
         }
         catch (Exception ex) {
           DAS.Error(this, "Encountered error loading ScriptedSequenceFile " + textAsset.name + ": " + ex.ToString());
