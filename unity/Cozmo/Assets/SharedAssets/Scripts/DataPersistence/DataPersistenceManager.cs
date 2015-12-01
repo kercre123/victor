@@ -70,8 +70,17 @@ namespace DataPersistence {
     public readonly SaveData Data;
 
     public void Save() {
-      if (File.Exists(sSaveFilePath)) {
-        File.Copy(sSaveFilePath, sBackupSaveFilePath);
+      try {
+        if (File.Exists(sSaveFilePath)) {
+          if (File.Exists(sBackupSaveFilePath)) { 
+            File.Delete(sBackupSaveFilePath);
+          }
+
+          File.Copy(sSaveFilePath, sBackupSaveFilePath);
+        }
+      }
+      catch(Exception ex) {
+        DAS.Error(this, "Exception backing up save file: " + ex);
       }
 
       string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, JsonSettings);
