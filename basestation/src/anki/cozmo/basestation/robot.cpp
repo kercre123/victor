@@ -592,6 +592,9 @@ namespace Anki {
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
       // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)
+      // Note: We don't do this on phone by default, they also have a remote connection to the simulator so removing timeout would
+      // force user to restart both sides each time.
+      #if !(ANKI_IOS_BUILD || ANDROID)
       {
         static const double kPhysicalRobotNetConnectionTimeoutInMS = Anki::Util::ReliableConnection::GetConnectionTimeoutInMS(); // grab default on 1st call
         const double kSimulatedRobotNetConnectionTimeoutInMS = FLT_MAX;
@@ -600,6 +603,7 @@ namespace Anki {
                          netConnectionTimeoutInMS, isPhysical ? "Physical" : "Simulated");
         Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
       }
+      #endif // !(ANKI_IOS_BUILD || ANDROID)
     }
     
     f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
