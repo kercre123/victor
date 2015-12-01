@@ -1,7 +1,22 @@
 #include "anki/common/basestation/math/point_impl.h"
 
 namespace Anki {
-  
+
+  char AxisToChar(AxisName axis)
+  {
+    switch( axis ) {
+      case AxisName::X_NEG:
+      case AxisName::X_POS:
+        return 'X';
+      case AxisName::Y_NEG:
+      case AxisName::Y_POS:
+        return 'Y';
+      case AxisName::Z_NEG:
+      case AxisName::Z_POS:
+        return 'Z';
+    }        
+  }
+
   const Vec2f& X_AXIS_2D() {
     static const Vec2f xAxis(1.f, 0.f);
     return xAxis;
