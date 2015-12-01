@@ -23,6 +23,8 @@ namespace InvestorDemo {
     void Start() {
       CreateDefaultQuitButton();
 
+      CurrentRobot.SetRobotVolume(1.0f);
+
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 
       CurrentRobot.SetBehaviorSystem(true);
