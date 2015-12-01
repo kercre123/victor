@@ -4,15 +4,15 @@ using System.Collections.Generic;
 
 namespace Conversations {
   public class ConversationHistory {
-    private Dictionary<string, Conversation> _Conversations = new Dictionary<string, Conversation>();
+    public readonly Dictionary<string, Conversation> Conversations = new Dictionary<string, Conversation>();
 
     public void AddConversation(string conversationKey, Conversation conversation) {
       Conversation exisitingConversation;
-      if (_Conversations.TryGetValue(conversationKey, out exisitingConversation)) {
+      if (Conversations.TryGetValue(conversationKey, out exisitingConversation)) {
         exisitingConversation.AddToConversation(conversation);
       }
       else {
-        _Conversations.Add(conversationKey, conversation);
+        Conversations.Add(conversationKey, conversation);
       }
 
     }
