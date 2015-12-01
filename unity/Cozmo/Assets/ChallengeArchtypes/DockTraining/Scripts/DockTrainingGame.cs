@@ -20,14 +20,13 @@ namespace DockTraining {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 2, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       CreateDefaultQuitButton();
     }
 
-    // Update is called once per frame
     void Update() {
       _StateMachineManager.UpdateAllMachines();
       if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
@@ -35,6 +34,8 @@ namespace DockTraining {
           if (_CurrentTarget != null) {
             _CurrentTarget.SetLEDs(0);
           }
+          // we haven't seen the current target for more than a second
+          // so let's try to find a new one.
           _CurrentTarget = FindNewTarget();
           _LastSeenTargetTime = Time.time;
         }
@@ -49,7 +50,7 @@ namespace DockTraining {
 
     }
 
-    void InitialCubesDone() {
+    private void InitialCubesDone() {
 
     }
 

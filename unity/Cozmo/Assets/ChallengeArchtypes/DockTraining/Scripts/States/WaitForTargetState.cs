@@ -16,7 +16,7 @@ namespace DockTraining {
 
       LightCube target = _DockTrainingGame.GetCurrentTarget();
       if (target != null) {
-        _StateMachine.SetNextState(new DockingState());
+        _StateMachine.SetNextState(new DetermineNextAction());
       }
     }
 
