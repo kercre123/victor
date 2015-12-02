@@ -4,7 +4,7 @@
  * Author: Kevin
  * Created: 11/30/15
  *
- * Description: Behavior for immediately responding being poke
+ * Description: Behavior for immediately responding to being poked
  *
  * Copyright: Anki, Inc. 2015
  *

@@ -80,7 +80,7 @@ namespace Anki {
 
         
         u32 lastMotionDetectedTime_us = 0;
-        const u32 MOTION_DETECT_TIMEOUT_US = 500000;
+        const u32 MOTION_DETECT_TIMEOUT_US = 250000;
         const f32 ACCEL_MOTION_THRESHOLD = 60.f;
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
         
@@ -401,11 +401,11 @@ namespace Anki {
             std::fabsf(rightws) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) {
 
           // Check for a gyro rotation
-          const f32 peakGyroThresh = 5.f;
+          const f32 peakGyroThresh = 4.5f;
           const u32 maxPeakDuration_ms = 50;
-          if (gyro_robot_frame_filt[2] > peakGyroThresh) {
+          if (std::fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
             peakMaxTime = currTime;
-          } else if (gyro_robot_frame_filt[2] < peakGyroThresh) {
+          } else if (std::fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
             if ((peakMaxTime > peakStartTime) && (peakMaxTime - peakStartTime < maxPeakDuration_ms)) {
               //PRINT("POKE DETECTED\n");
               peakStartTime = currTime;
@@ -498,10 +498,11 @@ namespace Anki {
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
-            if (CheckUnintendedAcceleration() ||
-                ABS(gyro_robot_frame_filt[0]) > 5.f ||
-                ABS(gyro_robot_frame_filt[1]) > 5.f ||
-                ABS(gyro_robot_frame_filt[2]) > 5.f) {
+            if (CheckUnintendedAcceleration()
+                || ABS(gyro_robot_frame_filt[0]) > 5.f
+                || ABS(gyro_robot_frame_filt[1]) > 5.f
+                //|| ABS(gyro_robot_frame_filt[2]) > 5.f  // Not checking z-rotation since it is being used to trigger naive poke detection
+                ) {
               if (++pdUnexpectedMotionCnt_ > 40) {
                 PRINT("PDWhileStationary: acc (%f, %f, %f), gyro (%f, %f, %f)\n",
                       pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,

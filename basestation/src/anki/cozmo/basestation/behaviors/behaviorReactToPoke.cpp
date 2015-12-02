@@ -4,7 +4,7 @@
  * Author: Kevin
  * Created: 11/30/15
  *
- * Description: Behavior for immediately responding being poked
+ * Description: Behavior for immediately responding to being poked
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -112,7 +112,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
           }
         }
         
-        PRINT_NAMED_INFO("BehaviorReactToPickup.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
+        PRINT_NAMED_INFO("BehaviorReactToPoke.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
         robot.GetActionList().QueueActionNow(0, newAction);
@@ -178,8 +178,7 @@ void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorReactToPoke.HandleMovedEvent.UnknownEvent",
-                        "Reached unknown state %d.", _currentState);
+      break;
     }
   }
 }

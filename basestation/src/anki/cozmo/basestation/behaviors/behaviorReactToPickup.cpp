@@ -159,8 +159,7 @@ void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorReactToPickup.HandleMovedEvent.UnknownEvent",
-                        "Reached unknown state %d.", _currentState);
+      break;
     }
   }
 }
