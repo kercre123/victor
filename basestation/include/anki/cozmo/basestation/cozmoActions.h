@@ -198,15 +198,21 @@ namespace Anki {
     
     // Turn in place by a given angle, wherever the robot is when the action
     // is executed.
-    class TurnInPlaceAction : public DriveToPoseAction
+    class TurnInPlaceAction : public IAction
     {
     public:
-      TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability = 0);
+      TurnInPlaceAction(const Radians& angle, const bool isAbsolute);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TURN_IN_PLACE; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+      
+      // Modify default parameters (must be called before Init() to have an effect)
+      void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
+      void SetTolerance(const Radians& angleTol_rad)     { _angleTolerance = angleTol_rad; }
+      void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
       
     protected:
       
@@ -214,23 +220,71 @@ namespace Anki {
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
     private:
-      Radians _turnAngle;
-      Radians _variability;
+      
+      bool IsBodyInPosition(const Robot& robot, Radians& currentAngle) const;
+      
+      bool    _inPosition = false;
+      Radians _targetAngle;
+      Radians _angleTolerance = DEG_TO_RAD(5);
+      Radians _variability = 0;
       bool    _isAbsoluteAngle;
+      f32     _maxSpeed_radPerSec = 50.f;
+      f32     _accel_radPerSec2 = 10.f;
       
     }; // class TurnInPlaceAction
+    
+    
+    // A simple action for drving a straight line forward or backward, without
+    // using the planner
+    class DriveStraightAction : public IAction
+    {
+    public:
+      // Positive distance for forward, negative for backward.
+      // Speed should be positive.
+      DriveStraightAction(f32 dist_mm, f32 speed_mmps);
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_STRAIGHT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+
+      void SetAccel(f32 accel_mmps2) { _accel_mmps2 = accel_mmps2; }
+      void SetDecel(f32 decel_mmps2) { _decel_mmps2 = decel_mmps2; }
+      
+    protected:
+      
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      
+    private:
+      
+      f32 _dist_mm = 0.f;
+      f32 _speed_mmps  = DEFAULT_PATH_SPEED_MMPS;
+      f32 _accel_mmps2 = DEFAULT_PATH_ACCEL_MMPS2;
+      f32 _decel_mmps2 = DEFAULT_PATH_ACCEL_MMPS2;
+      
+      bool _hasStarted = false;
+      
+      std::string _name = "DriveStraightAction";
+      
+    }; // class DriveStraightAction
     
     
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance = DEG_TO_RAD(2.f),
+      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = DEG_TO_RAD(2.f),
                             const Radians& variability = 0);
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_HEAD_TO_ANGLE; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::HEAD_TRACK; }
+      
+      // Modify default parameters (must be called before Init() to have an effect)
+      // TODO: Use setters for variability and tolerance too
+      void SetMaxSpeed(f32 maxSpeed_radPerSec)   { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetAccel(f32 accel_radPerSec2)        { _accel_radPerSec2 = accel_radPerSec2; }
       
     protected:
       
@@ -248,6 +302,9 @@ namespace Anki {
       std::string _name;
       bool        _inPosition;
       
+      f32         _maxSpeed_radPerSec = 15.f;
+      f32         _accel_radPerSec2   = 20.f;
+
     };  // class MoveHeadToAngleAction
     
     // Set the lift to specified height with a given tolerance. Note that settign
@@ -294,10 +351,64 @@ namespace Anki {
       
     }; // class MoveLiftToHeightAction
     
+    class PanAndTiltAction : public IAction
+    {
+    public:
+      // Rotate the body according to bodyPan angle and tilt the head according
+      // to headTilt angle. Angles are considered relative to current robot pose
+      // if isAbsolute==false.
+      // If an angle is less than AngleTol, then no movement occurs but the
+      // eyes will dart to look at the angle.
+      PanAndTiltAction(Radians bodyPan, Radians headTilt,
+                       bool isPanAbsolute, bool isTiltAbsolute);
+      
+      virtual const std::string& GetName() const override { return _name; }
+      
+      virtual RobotActionType GetType() const override { return RobotActionType::PAN_AND_TILT; }
+      
+      virtual u8 GetAnimTracksToDisable() const override {
+        return (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK;
+      }
+      
+      // Modify default parameters (must be called before Init() to have an effect)
+      void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
+      void SetPanTolerance(const Radians& angleTol_rad)  { _panAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
+      void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
+      void SetTiltTolerance(const Radians& angleTol_rad) { _tiltAngleTol = angleTol_rad.getAbsoluteVal(); }
+
+    protected:
+      virtual ActionResult Init(Robot& robot) override;
+      virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Reset() override;
+      
+      void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
+      void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }
+      
+    private:
+      CompoundActionParallel _compoundAction;
+      
+      Radians _bodyPanAngle;
+      Radians _headTiltAngle;
+      bool    _isPanAbsolute;
+      bool    _isTiltAbsolute;
+      
+      Radians _panAngleTol = DEG_TO_RAD(5);
+      f32     _maxPanSpeed_radPerSec = 50.f;
+      f32     _panAccel_radPerSec2 = 10.f;
+      Radians _tiltAngleTol = DEG_TO_RAD(5);
+      f32     _maxTiltSpeed_radPerSec = 15.f;
+      f32     _tiltAccel_radPerSec2 = 20.f;
+      
+      std::string _name = "PanAndTiltAction";
+      
+    }; // class PanAndTiltAction
+    
     
     // Tilt head and rotate body to face the given pose.
     // Use angles specified at construction to control the body rotation.
-    class FacePoseAction : public IAction
+    class FacePoseAction : public PanAndTiltAction
     {
     public:
       // Note that the rotation in formation in pose will be ignored
@@ -306,27 +417,19 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
-      
     protected:
       virtual ActionResult Init(Robot& robot) override;
-      virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       
       FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle);
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
-      CompoundActionParallel _compoundAction;
-      
     private:
-      Pose3d _poseWrtRobot;
-      bool   _isPoseSet;
+      Pose3d    _poseWrtRobot;
+      bool      _isPoseSet;
+      Radians   _maxTurnAngle;
       
-      Radians              _turnAngleTol;
-      Radians              _maxTurnAngle;
     }; // class FacePoseAction
-    
     
     
     // Verify that an object exists by facing tilting the head to face its

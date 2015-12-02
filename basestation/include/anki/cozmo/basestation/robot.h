@@ -309,7 +309,10 @@ public:
     u16  GetLastSentPathID()     const { return _lastSentPathID;  }
 
     bool IsUsingManualPathSpeed() const {return _usingManualPathSpeed;}
-    
+  
+    // Execute a manually-assembled path
+    Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
+  
     //
     // Object Docking / Carrying
     //
@@ -437,6 +440,10 @@ public:
     // Returns a reference to a count of the total number of bytes streamed to the robot.
     s32 GetNumAnimationBytesStreamed();
     void IncrementNumAnimationBytesStreamed(s32 num);
+  
+    // Tell the animation streamer to move the eyes by this x,y amount over the
+    // specified duration (layered on top of any other animation that's playing)
+    void ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms);
   
     // =========== Audio =============
     const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient; }
@@ -673,7 +680,6 @@ public:
     void SelectPlanner(const std::vector<Pose3d>& targetPoses);
 
     // Sends a path to the robot to be immediately executed
-    Result ExecutePath(const Planning::Path& path, const bool useManualSpeed = false);
     bool                      _visionWhileMovingEnabled = false;
 
     /*

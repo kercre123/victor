@@ -1,6 +1,7 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -44,30 +45,17 @@ namespace Cozmo {
     // probably be queried from the robot instead of using the constant here)
     const f32 zDist = headPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
     
-    Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
+    const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
+    const Radians panAngle = std::atan2(yDist, xDist);
     
     static const Radians minHeadAngle(DEG_TO_RAD(1.f));
     static const Radians minBodyAngle(DEG_TO_RAD(1.f));
     
-    RobotInterface::PanAndTilt msg;
-    if((headAngle - _robot.GetHeadAngle()).getAbsoluteVal() > minHeadAngle) {
-      msg.headTiltAngle_rad = headAngle.ToFloat();
-    } else {
-      msg.headTiltAngle_rad = _robot.GetHeadAngle();
-    }
-    
-    const Radians currentBodyAngle = _robot.GetPose().GetRotationAngle<'Z'>();
-    msg.bodyPanAngle_rad = currentBodyAngle.ToFloat();
-    if(false == _robot.GetMoveComponent().IsTrackingWithHeadOnly()) {
-      // Also rotate ("pan") body, if the angle is large enough:
-      const Radians panAngle = std::atan2(yDist, xDist);
-      if((panAngle - currentBodyAngle).getAbsoluteVal() > minBodyAngle) {
-        msg.bodyPanAngle_rad = panAngle.ToFloat();
-      }
-    }
-    
-    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
-    
+    PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
+    action->SetPanTolerance(minBodyAngle);
+    action->SetTiltTolerance(minHeadAngle);
+    _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+                                          
     return RESULT_OK;
   } // UpdateFaceTracking()
   
