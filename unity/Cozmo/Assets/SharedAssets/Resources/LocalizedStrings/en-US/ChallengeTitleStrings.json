@@ -22,7 +22,16 @@
         "translation" : "Ask Cozmo Challenge 1"
     },
     "hubWorld.investorDemo.investorDemoScene1" : {
-        "translation" : "Investor Scene"
+        "translation" : "Investor Scene 1"
+    },
+    "hubWorld.investorDemo.investorDemoScene2" : {
+        "translation" : "Investor Scene 2"
+    },
+    "hubWorld.investorDemo.investorDemoScene3" : {
+        "translation" : "Investor Scene 3"
+    },
+    "hubWorld.investorDemo.investorDemoScene4" : {
+        "translation" : "Investor Scene 4"
     },
     "hubWorld.dockTraining.challenge1" : {
         "translation" : "Docking"
