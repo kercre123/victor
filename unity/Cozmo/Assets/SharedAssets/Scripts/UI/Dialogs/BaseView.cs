@@ -77,7 +77,7 @@ public abstract class BaseView : MonoBehaviour {
     RaiseViewOpened(this);
 
     if (_CloseDialogOnTapOutside) {
-      GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance._FullScreenButtonPrefab,
+      GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
                                       this.transform);
 
       // Place the button underneath all the UI in this dialog

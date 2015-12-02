@@ -15,5 +15,11 @@ public class UIPrefabHolder : ScriptableObject {
     private set { }
   }
 
-  public GameObject _FullScreenButtonPrefab;
+  [SerializeField]
+  private GameObject _FullScreenButtonPrefab;
+
+  public GameObject FullScreenButtonPrefab {
+    get { return _FullScreenButtonPrefab; }
+    set { }
+  }
 }
