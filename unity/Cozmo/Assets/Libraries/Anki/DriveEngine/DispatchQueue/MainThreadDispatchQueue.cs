@@ -15,6 +15,17 @@ namespace Anki.DispatchQueue {
 
     public static CullingMode _CullingMode = CullingMode.Self;
 
+    public static void Perform(Action action) {
+      if (action != null) {
+        if (_MainThreadToken == null) {
+          Async(action);
+        }
+        else {
+          action();
+        }
+      }
+    }
+
     public static void Async(Action action) {
       _Instance._QueueWorker.Enqueue(action);
     }

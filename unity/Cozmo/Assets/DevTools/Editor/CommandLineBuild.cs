@@ -11,6 +11,9 @@ public class CommandLineBuild {
   private static readonly IDAS sDAS = DAS.GetInstance(typeof(CommandLineBuild));
 
   public static void Build() {
+    DAS.ClearTargets();
+    DAS.AddTarget(new ConsoleDasTarget());
+
     string[] argv = new string[0];
     try {
       argv = System.Environment.GetCommandLineArgs();

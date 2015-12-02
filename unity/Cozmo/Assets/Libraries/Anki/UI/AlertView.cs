@@ -24,13 +24,23 @@ namespace Anki {
       public string Title
       {
         get { return _AlertTitleText.text; }
-        set { _TitleKey = value; _AlertTitleText.text = Localization.Get(value).ToUpper(); }
+        set {
+          if (_TitleKey != value) {
+            _TitleKey = value;
+            _AlertTitleText.text = Localization.Get(value).ToUpper();
+          }
+        }
       }
 
       public string Message
       {
         get { return _AlertMessageText.text; }
-        set { _MessageKey = value; _AlertMessageText.text = Localization.Get(value); }
+        set { 
+          if (_MessageKey != value) {
+            _MessageKey = value;
+            _AlertMessageText.text = Localization.Get(value);
+          } 
+        }
       }
 
 

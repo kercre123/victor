@@ -5,7 +5,7 @@ using System.Text;
 using System.Linq;
 using Anki.UI;
 
-public class ConsoleLogManager : MonoBehaviour {
+public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   // Each string element should be < 16250 characters because
   // Unity uses a mesh to display text, 4 verts per letter, and has
@@ -39,21 +39,13 @@ public class ConsoleLogManager : MonoBehaviour {
     _LastToggleValues.Add(LogPacket.ELogKind.EVENT, true);
     _LastToggleValues.Add(LogPacket.ELogKind.DEBUG, true);
 
-    DAS.OnInfoLogged += OnInfoLogged;
-    DAS.OnWarningLogged += OnWarningLogged;
-    DAS.OnErrorLogged += OnErrorLogged;
-    DAS.OnDebugLogged += OnDebugLogged;
-    DAS.OnEventLogged += OnEventLogged;
+    DAS.AddTarget(this);
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
   }
 
   private void OnDestroy() {
-    DAS.OnInfoLogged -= OnInfoLogged;
-    DAS.OnWarningLogged -= OnWarningLogged;
-    DAS.OnErrorLogged -= OnErrorLogged;
-    DAS.OnDebugLogged -= OnDebugLogged;
-    DAS.OnEventLogged -= OnEventLogged;
+    DAS.RemoveTarget(this);
     ConsoleLogPane.ConsoleLogPaneOpened -= OnConsoleLogPaneOpened;
 
     if (_ConsoleLogPaneView != null) {
@@ -61,23 +53,23 @@ public class ConsoleLogManager : MonoBehaviour {
     }
   }
 
-  private void OnInfoLogged(string eventName, string eventValue, object context) {
+  void IDASTarget.Info(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.INFO, eventName, eventValue, context);
   }
 
-  private void OnErrorLogged(string eventName, string eventValue, object context) {
+  void IDASTarget.Error(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.ERROR, eventName, eventValue, context);
   }
 
-  private void OnWarningLogged(string eventName, string eventValue, object context) {
+  void IDASTarget.Warn(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.WARNING, eventName, eventValue, context);
   }
 
-  private void OnEventLogged(string eventName, string eventValue, object context) {
+  void IDASTarget.Event(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.EVENT, eventName, eventValue, context);
   }
 
-  private void OnDebugLogged(string eventName, string eventValue, object context) {
+  void IDASTarget.Debug(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.DEBUG, eventName, eventValue, context);
   }
 
