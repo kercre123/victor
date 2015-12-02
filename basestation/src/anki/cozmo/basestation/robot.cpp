@@ -891,8 +891,7 @@ namespace Anki {
 #       undef TRY_AND_RETURN_ON_FAILURE
         
         // Update Block and Face Worlds
-        uint32_t numBlocksObserved = 0;
-        if(RESULT_OK != _blockWorld.Update(numBlocksObserved)) {
+        if(RESULT_OK != _blockWorld.Update()) {
           PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
         }
         
