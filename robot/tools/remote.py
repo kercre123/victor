@@ -60,7 +60,7 @@ class CozmoRemote(IDataReceiver):
     def send(self, msg):
         return self.transport.SendData(True, False, self.robot, msg.pack())
 
-    def pwm(self, *params):
+    def pwm(self, params):
         "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
         if self.connected:
             self.send(RobotInterface.EngineToRobot(setRawPWM=Cozmo.RawPWM(params)))
@@ -77,6 +77,8 @@ def RemoteGame():
     transport = UDPTransport()
     remote = CozmoRemote(transport, ("172.31.1.1", ROBOT_PORT))
     
+    cmd = (0, 0, 0, 0)
+    lastCmdTime = 0
     running = True
     while running:
         event = pygame.event.poll()
@@ -86,31 +88,37 @@ def RemoteGame():
             if event.scancode == 16: # q
                 running = False
             elif event.scancode == 72: # up arrow
-                remote.pwm(+PWM_VAL, +PWM_VAL, 0, 0)
+                cmd = (+PWM_VAL, +PWM_VAL, 0, 0)
             elif event.scancode == 80: # down arrow
-                remote.pwm(-PWM_VAL, -PWM_VAL, 0, 0)
+                cmd =(-PWM_VAL, -PWM_VAL, 0, 0)
             elif event.scancode == 75: # left arrow
-                remote.pwm(-PWM_VAL, +PWM_VAL, 0, 0)
+                cmd =(-PWM_VAL, +PWM_VAL, 0, 0)
             elif event.scancode == 77: # right arrow
-                remote.pwm(+PWM_VAL, -PWM_VAL, 0, 0)
+                cmd =(+PWM_VAL, -PWM_VAL, 0, 0)
             elif event.scancode == 17: # W
-                remote.pwm(0, 0, PWM_VAL, 0)
+                cmd =(0, 0, PWM_VAL, 0)
             elif event.scancode == 31: # S
-                remote.pwm(0, 0, -PWM_VAL, 0)
+                cmd =(0, 0, -PWM_VAL, 0)
             elif event.scancode == 18: # E
-                remote.pwm(0, 0, 0, PWM_VAL)
+                cmd =(0, 0, 0, PWM_VAL)
             elif event.scancode == 32: # D
-                remote.pwm(0, 0, 0, -PWM_VAL)
+                cmd =(0, 0, 0, -PWM_VAL)
             else:
                 sys.stdout.write("Key = {}\r\n".format(event.scancode))
+            lastCmdTime = 0
         elif event.type == pygame.KEYUP:
-            #remote.pwm(0, 0, 0, 0)
-            pass
+            cmd = (0, 0, 0, 0)
+            lastCmdTime = 0
         
-        screen.fill((0, 255, 255) if remote.connected else (255, 0, 0))
+        now = time.time()
+        if now - lastCmdTime > 0.100:
+            remote.pwm(cmd)
+            lastCmdTime = now
+        
+        screen.fill((0, 255, 0) if remote.connected else (255, 0, 0))
         pygame.display.flip()
     
-    remote.pwm(0, 0, 0, 0)
+    remote.pwm((0, 0, 0, 0))
     remote.transport.KillThread()
 
 if __name__ == '__main__':
