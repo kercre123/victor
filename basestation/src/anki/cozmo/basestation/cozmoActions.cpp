@@ -2413,7 +2413,7 @@ namespace Anki {
     , _expectedMarkerPostRoll(nullptr)
     , _rollVerifyAction(nullptr)
     {
-      
+      _dockAction = DockAction::DA_ROLL_LOW;  
     }
     
     RollObjectAction::~RollObjectAction()
@@ -2486,8 +2486,6 @@ namespace Anki {
       // Choose docking action based on block's position and whether we are
       // carrying a block
       const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
-      _dockAction = DockAction::DA_ROLL_LOW;
-      
       
       // Get the top marker as this will be what needs to be seen for verification
       Block* block = dynamic_cast<Block*>(object);
