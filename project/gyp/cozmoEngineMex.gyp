@@ -171,7 +171,6 @@
         '<(ce-cti_gyp_path):ctiVisionRobot',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
-        '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexDetectFiducialMarkers
 
@@ -186,7 +185,6 @@
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
-        '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexUnique
     
@@ -201,7 +199,6 @@
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
-        '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexRegionprops
     
@@ -216,7 +213,6 @@
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
-        '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexHist
     
@@ -231,7 +227,6 @@
         '<(ce-cti_gyp_path):ctiVisionRobot',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
-        '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexRefineQuadrilateral
     
@@ -245,7 +240,6 @@
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-util_gyp_path):jsoncpp',
         '<(ce-util_gyp_path):util',
-        '<(ce-util_gyp_path):utilEmbedded',
       ],
     }, # end mexClosestIndex
     
@@ -262,6 +256,7 @@
       'dependencies': [
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
+        '<(ce-util_gyp_path):util',
       ],
     }, # end mexCameraCapture
     
@@ -276,7 +271,7 @@
       ],
       'dependencies': [
         '<(ce-cti_gyp_path):ctiCommonRobot',
-        '<(ce-util_gyp_path):utilEmbedded',
+        '<(ce-util_gyp_path):util',
       ],
     }, # end mexFaceDetect
     

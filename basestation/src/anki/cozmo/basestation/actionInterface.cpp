@@ -168,10 +168,10 @@ namespace Anki {
         
         result = ActionResult::FAILURE_TIMEOUT;
       }
+      
       // Don't do anything until we have reached the waitUntilTime
       else if(currentTimeInSeconds >= _waitUntilTime)
       {
-        
         if(!_preconditionsMet) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
           SetStatus(GetName() + ": check preconditions");
