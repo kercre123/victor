@@ -1,0 +1,78 @@
+{
+    "smartling": {
+        "translate_paths": [
+            "*/translation"
+        ],
+        "variants_enabled": true,
+        "translate_mode": "custom",
+        "placeholder_format_custom": [
+            "%%[^%]+?%%",
+            "%[^%]+?%",
+            "##[^#]+?##",
+            "__[^_]+?__",
+            "[$]\\{[^\\}\\{]+?\\}",
+            "\\{\\{[^\\}\\{]+?\\}\\}",
+            "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+        ],
+        "source_key_paths": [
+            "/{*}"
+        ]
+    },
+    "askCozmo01.title" : {
+        "translation" : "Ask Cozmo Challenge 1"
+    },
+    "askCozmo01.subtitle" : {
+        "translation" : "Ask Cozmo Challenge 1 Subtitle"
+    },
+    "askCozmo01.description" : {
+        "translation" : "Ask Cozmo Challenge 1 Description"
+    },
+    "investorDemo.investorDemoScene1" : {
+        "translation" : "Investor Scene"
+    },
+    "dockTraining01.title" : {
+        "translation" : "Docking"
+    },
+    "dockTraining01.subtitle" : {
+        "translation" : "Docking Subtitle"
+    },
+    "dockTraining01.description" : {
+        "translation" : "Put a cube in front of cozmo. Cozmo will try to line up to it. Wave left and right to help steer cozmo."
+    },
+    "followCube01.title" : {
+        "translation" : "Follow Cube"
+    },
+    "followCube01.subtitle" : {
+        "translation" : "Follow Cube Subtitle"
+    },
+    "followCube01.description" : {
+        "translation" : "Put a cube in front of Cozmo. Let Cozmo follow the cube. Get Cozmo to go in a circle."
+    },
+    "rotationTraining01.title" : {
+        "translation" : "Turning Challenge"
+    },
+    "rotationTraining01.subtitle" : {
+        "translation" : "Turning Challenge Subtitle"
+    },
+    "rotationTraining01.description" : {
+        "translation" : "Turning Challenge Description"
+    },
+    "visionTraining01.title" : {
+        "translation" : "Cube Vision"
+    },
+    "visionTraining01.subtitle" : {
+        "translation" : "Cube Vision Subtitle"
+    },
+    "visionTraining01.description" : {
+        "translation" : "Put the cube that is lit up in front of Cozmo's view. Red means the cube is out of view. Blue means Cozmo sees it but it's not lined up right. White means the cube is the correct position."
+    },
+    "winkGame01.title" : {
+        "translation" : "Wink Game"
+    },
+    "winkGame01.subtitle" : {
+        "translation" : "Wink Game Subtitle"
+    },
+    "winkGame01.description" : {
+        "translation" : "Cozmo will wink to one side or the other. Wave your hand on the side with the eye still open."
+    }
+}

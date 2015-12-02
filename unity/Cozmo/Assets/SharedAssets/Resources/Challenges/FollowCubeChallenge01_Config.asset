@@ -8,6 +8,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a129f4637cbdd461bbae9d2cba468f7a, type: 3}
-  m_Name: VisionTrainingChallenge1_Config
+  m_Script: {fileID: 11500000, guid: 25b5fa137dcdf4789aea21cc4cd346fb, type: 3}
+  m_Name: FollowCubeChallenge01_Config
   m_EditorClassIdentifier: 
