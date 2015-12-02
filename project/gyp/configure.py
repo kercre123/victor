@@ -178,7 +178,7 @@ def main(scriptArgs):
    ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
-   ['project/gyp/ctrlRobot.lst'])
+   ['project/gyp/ctrlRobot.lst'], ['reliableSequenceId.c'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
