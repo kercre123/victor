@@ -71,6 +71,8 @@ const f32 LIFT_BASE_POSITION[3]  = {-41.0f, 0.f, 31.3f + WHEEL_RAD_TO_MM}; // re
 // IMU position relative to neck joint
 const f32 IMU_POSITION[3] = {5.8f, 0.f, -13.5f};
 
+// Face LCD Screen size
+const f32 SCREEN_SIZE[2] = {26.f, 13.f};
 
 /***************************************************************************
  *

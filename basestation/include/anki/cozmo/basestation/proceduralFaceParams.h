@@ -16,6 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
 #include "clad/types/proceduralEyeParameters.h"
+#include "util/logging/logging.h"
 #include <array>
 #include <vector>
 
@@ -90,7 +91,11 @@ public:
   // Combine the input params with those from our instance
   ProceduralFaceParams& Combine(const ProceduralFaceParams& otherFace);
   
+  // E.g. for unit tests
+  static void EnableClippingWarning(bool enable);
+  
 private:
+  
   std::array<EyeParamArray, 2> _eyeParams{{}};
   
   Value           _faceAngle = 0.0f;
@@ -100,7 +105,10 @@ private:
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
   
+  Value Clip(Parameter whichParam, Value value) const;
+                                                          
   static ProceduralFaceParams* _resetData;
+  static std::function<void(const char*,Value,Value,Value)> ClipWarnFcn;
   
 }; // class ProceduralFaceParams
   
@@ -108,7 +116,7 @@ private:
   
 inline void ProceduralFaceParams::SetParameter(WhichEye whichEye, Parameter param, Value value)
 {
-  _eyeParams[whichEye][static_cast<size_t>(param)] = value;
+  _eyeParams[whichEye][static_cast<size_t>(param)] = Clip(param, value);
 }
 
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetParameter(WhichEye whichEye, Parameter param) const
@@ -126,7 +134,8 @@ inline ProceduralFaceParams::Value ProceduralFaceParams::GetFaceAngle() const {
 }
 
 inline void ProceduralFaceParams::SetFaceAngle(Value angle) {
-  _faceAngle = angle; //std::max(-1.f, std::min(1.f, angle));
+  // TODO: Define face angle limits?
+  _faceAngle = angle;
 }
 
 inline void ProceduralFaceParams::SetFacePosition(Point<2, Value> center) {
@@ -138,13 +147,20 @@ inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFace
 }
 
 inline void ProceduralFaceParams::SetFaceScale(Point<2,Value> scale) {
+  if(scale.x() < 0) {
+    ClipWarnFcn("FaceScaleX", scale.x(), 0, std::numeric_limits<Value>::max());
+    scale.x() = 0;
+  }
+  if(scale.y() < 0) {
+    ClipWarnFcn("FaceScaleY", scale.y(), 0, std::numeric_limits<Value>::max());
+    scale.y() = 0;
+  }
   _faceScale = scale;
 }
 
 inline Point<2,ProceduralFaceParams::Value> const& ProceduralFaceParams::GetFaceScale() const {
   return _faceScale;
 }
-
   
 } // namespace Cozmo
 } // namespace Anki

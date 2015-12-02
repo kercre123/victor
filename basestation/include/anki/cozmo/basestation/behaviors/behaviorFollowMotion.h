@@ -15,6 +15,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/objectIDs.h"
+#include "anki/common/shared/radians.h"
+
 #include <vector>
 
 namespace Anki {
@@ -38,12 +40,14 @@ protected:
 private:
   
   bool _interrupted = false;
+  u32  _actionRunning = 0;
   u8   _originalVisionModes = 0;
   
   // TODO: Read these from json config
-  f32 _moveForwardDist_mm = 20.f;
-  f32 _moveForwardSpeedIncrease = 1.5f;
-  f32 _imageCenterFraction = .1f;
+  f32     _moveForwardDist_mm = 20.f;
+  f32     _moveForwardSpeedIncrease = 2.f;
+  Radians _driveForwardTol = DEG_TO_RAD(5.f); // both pan/tilt less than this will result in drive forward
+  Radians _panAndTiltTol = DEG_TO_RAD(15.f);  // pan/tilt must be greater than this to actually turn
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
