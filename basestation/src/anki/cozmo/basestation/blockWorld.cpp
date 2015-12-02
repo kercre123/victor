@@ -929,7 +929,7 @@ namespace Cozmo {
     Result BlockWorld::UpdateTrackToObject()
     {
       if(!_robot->GetMoveComponent().GetTrackToObject().IsSet()) {
-        PRINT_NAMED_WARNING("BlockWorld.UpdateTrackToObject.NoTrackToObjectSet", "");
+        // Nothing to do if the robot isn't set to track anything
         return RESULT_OK;
       }
       
@@ -1031,10 +1031,16 @@ namespace Cozmo {
           // Also rotate ("pan") body:
           bodyPanAngle_rad = std::atan2(yDist, xDist);
         }
-          
-        _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
-                                               new PanAndTiltAction(bodyPanAngle_rad, headAngle,
-                                                                    true, true));
+        
+        PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
+        
+        // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
+        action->SetPanTolerance(DEG_TO_RAD(5));
+        action->SetTiltTolerance(DEG_TO_RAD(5));
+        
+        // TODO: Expose / tune PanAndTilt speed/accel as needed
+        
+        _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
       }
       
       return RESULT_OK;
