@@ -166,10 +166,45 @@ namespace Cozmo {
     newLayer.track.Init();
     newLayer.startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + delay_ms;
     newLayer.streamTime_ms = newLayer.startTime_ms;
+    newLayer.isLooping = false;
     
     _faceLayers.emplace_back(std::move(newLayer));
     
     return lastResult;
+  }
+  
+  u32 AnimationStreamer::AddLoopingFaceLayer(const FaceTrack& faceTrack)
+  {
+    static u32 TagCtr = 0;
+
+    FaceLayer newLayer;
+    newLayer.tag = TagCtr++;
+    newLayer.track = faceTrack;
+    newLayer.track.Init();
+    newLayer.startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    newLayer.streamTime_ms = newLayer.startTime_ms;
+    newLayer.isLooping = true;
+    
+    PRINT_NAMED_INFO("AnimationStreamer.AddLoopingFaceLayer",
+                     "Tag = %d", newLayer.tag);
+    
+    const u32 returnTag = newLayer.tag;
+    _faceLayers.emplace_back(std::move(newLayer));
+    
+    return returnTag;
+  }
+  
+  void AnimationStreamer::RemoveLoopingFaceLayer(u32 tag)
+  {
+    for(auto layerIter = _faceLayers.begin(); layerIter != _faceLayers.end(); ++layerIter) {
+      if(layerIter->tag == tag) {
+        PRINT_NAMED_INFO("AnimationStreamer.RemoveLoopingFaceLayer",
+                         "Tag = %d", layerIter->tag);
+        
+        _faceLayers.erase(layerIter);
+        return; // once found, stop looking immediately (there should be no more layers w/ this tag)
+      }
+    }
   }
   
   bool AnimationStreamer::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
@@ -408,8 +443,16 @@ namespace Cozmo {
       faceLayerIter->streamTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
       if(!faceLayerIter->track.HasFramesLeft()) {
-        // This layer is done, delete it
-        faceLayerIter = _faceLayers.erase(faceLayerIter);
+        
+        // This layer is done...
+        if(faceLayerIter->isLooping) {
+          //...but is marked to loop, so restart it
+          faceLayerIter->track.Init();
+          ++faceLayerIter;
+        } else {
+          //...and is not looping, so delete it
+          faceLayerIter = _faceLayers.erase(faceLayerIter);
+        }
       } else {
         ++faceLayerIter;
       }
@@ -489,6 +532,26 @@ namespace Cozmo {
     return lastResult;
   } // SendEndOfAnimation()
   
+  bool AnimationStreamer::HaveNonLoopingFaceLayersToSend()
+  {
+    if(_faceLayers.empty()) {
+      return false;
+    } else {
+      // There are face layers, but we want to ignore any that are looping
+      for(auto & layer : _faceLayers) {
+        if(!layer.isLooping) {
+          // There's at least one non-looping face layer: return that there are
+          // face layers to send
+          return true;
+        }
+      }
+      // All face layers are looping ones, so no need to keep sending them
+      // by themselves. They only need to be re-applied while there's something
+      // else being sent
+      return false;
+    }
+  }
+  
   Result AnimationStreamer::StreamFaceLayersOrAudio(Robot& robot)
   {
     Result lastResult = RESULT_OK;
@@ -511,7 +574,7 @@ namespace Cozmo {
     }
     
     // Add more stuff to send buffer from face layers
-    while(_sendBuffer.empty() && !_faceLayers.empty())
+    while(_sendBuffer.empty() && HaveNonLoopingFaceLayersToSend())
     {
       // If we have face layers to send, we _do_ want BufferAudioToSend to
       // buffer audio silence keyframes to keep the clock ticking. If not, we
@@ -540,7 +603,7 @@ namespace Cozmo {
     }
     
     // If we just finished buffering all the face layers, send an end of animation message
-    if(_faceLayers.empty() && _sendBuffer.empty() && !_endOfAnimationSent) {
+    if(!HaveNonLoopingFaceLayersToSend() && _sendBuffer.empty() && !_endOfAnimationSent) {
       lastResult = SendEndOfAnimation(robot);
     }
     
@@ -853,7 +916,7 @@ namespace Cozmo {
     
     // If we didn't do any streaming above, but we've still got face layers to
     // stream or there's audio waiting to go out, stream those now
-    if(!streamUpdated && (!_faceLayers.empty() /* TODO: add "|| _audioClient.HasAudio()" like on Jordan's branch*/))
+    if(!streamUpdated && (HaveNonLoopingFaceLayersToSend() /* TODO: add "|| _audioClient.HasAudio()" like on Jordan's branch*/))
     {
       lastResult = StreamFaceLayersOrAudio(robot);
     }
@@ -999,22 +1062,7 @@ namespace Cozmo {
 //    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
     //const ProceduralFace& nextFace = robot.GetProceduralFace();
     ProceduralFace nextFace(robot.GetProceduralFace());
-    
-    // Squint the current face while picking/placing to show concentration:
-    if(robot.IsPickingOrPlacing()) {
-      for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-        nextFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY,
-                              GET_PARAM(f32, DockSquintEyeHeight));
-      }
-      // Make sure squinting face gets displayed:
-      if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
-        nextFace.SetTimeStamp(nextFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
-      }
-      nextFace.MarkAsSentToRobot(false);
-    }
-    
-//    const TimeStamp_t nextTime = nextFace.GetTimeStamp();
-    
+        
     _nextLookAround_ms -= BS_TIME_STEP;
     
     bool faceSent = false;
