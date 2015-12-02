@@ -906,8 +906,7 @@ namespace Anki {
 #       undef TRY_AND_RETURN_ON_FAILURE
         
         // Update Block and Face Worlds
-        uint32_t numBlocksObserved = 0;
-        if(RESULT_OK != _blockWorld.Update(numBlocksObserved)) {
+        if(RESULT_OK != _blockWorld.Update()) {
           PRINT_NAMED_WARNING("Robot.Update.BlockWorldUpdateFailed", "");
         }
         
@@ -1410,7 +1409,7 @@ namespace Anki {
     {
       if(xPix != 0 || yPix != 0.f)
       {
-        PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
+        //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
         
         ProceduralFace procFace;
         procFace.GetParams().SetFacePosition({xPix, yPix});

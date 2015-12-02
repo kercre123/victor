@@ -96,5 +96,10 @@ message StartControllerTestMode
   TestMode mode,
 }
 
+message RawPWM
+{
+  int_16 pwm[4]
+}
+
 } // namespace Cozmo
 } // namespace Anki

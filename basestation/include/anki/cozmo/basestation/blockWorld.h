@@ -54,7 +54,7 @@ namespace Anki
       
       // Update the BlockWorld's state by processing all queued ObservedMarkers
       // and updating robots' poses and blocks' poses from them.
-      Result Update(uint32_t& numBlocksObserved);
+      Result Update();
       
       // Empties the queue of all observed markers
       void ClearAllObservedMarkers();
@@ -226,8 +226,7 @@ namespace Anki
       
       Result UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
                                const ObjectFamily& inFamily,
-                               const TimeStamp_t atTimestamp,
-                               size_t& numObjectsUpdated);
+                               const TimeStamp_t atTimestamp);
       
       /*
       // Adds/Removes proxObstacles based on current sensor readings and age of existing proxObstacles
@@ -247,7 +246,10 @@ namespace Anki
       void FindOverlappingObjects(const ObservableObject* objectExisting,
                                   const std::multimap<f32, ObservableObject*>& objectsSeen,
                                   std::vector<ObservableObject*>& overlappingSeenObjects) const;
-            
+      
+      // Helper for removing markers that are inside other detected markers
+      static void RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers);
+      
       // 1. Looks for objects that should have been seen (markers should have been visible
       //    but something was seen through/behind their last known location) and delete
       //    them.
@@ -283,7 +285,7 @@ namespace Anki
                                               const ObjectFamily&  fromFamily);
       
       
-      void UpdateTrackToObject(const ObservableObject* observedObject);
+      Result UpdateTrackToObject();
       
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
@@ -344,6 +346,9 @@ namespace Anki
       std::set<ObjectID> _unidentifiedActiveObjects;
       
       std::vector<Signal::SmartHandle> _eventHandles;
+      
+      // Contains the list of added/updated objects from the last Update()
+      std::list<ObservableObject*> _currentObservedObjects;
       
     }; // class BlockWorld
 
