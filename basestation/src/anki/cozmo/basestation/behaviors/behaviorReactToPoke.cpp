@@ -30,7 +30,7 @@ static std::vector<f32> _animReactionHappyThresholds = {
 };
   
 static std::vector<std::string> _animReactions = {
-  "Demo_Face_Interaction_ShockedScared_A",
+  "ID_poked_giggle",
   "ID_pokedA",
   "ID_pokedB"
 };
@@ -116,23 +116,12 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
         _animTagToWaitFor = newAction->GetTag();
         robot.GetActionList().QueueActionNow(0, newAction);
       }
-      _waitingForAnimComplete = true;
       _currentState = State::PlayingAnimation;
       _doReaction = false;
       return Status::Running;
     }
     case State::PlayingAnimation:
     {
-      if (!_waitingForAnimComplete)
-      {
-        if (!_doReaction) {
-          _currentState = State::Inactive;
-          break; // Jump down to Status::Complete
-        }
-        
-        // Otherwise set our state to start the animation again
-        _currentState = State::IsPoked;
-      }
       return Status::Running;
     }
     default:
@@ -171,7 +160,7 @@ void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
       const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
       if (_animTagToWaitFor == msg.idTag)
       {
-        _waitingForAnimComplete = false;
+        _currentState = State::Inactive;
       }
       break;
     }
