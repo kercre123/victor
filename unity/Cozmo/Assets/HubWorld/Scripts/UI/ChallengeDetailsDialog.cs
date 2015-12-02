@@ -14,6 +14,15 @@ public class ChallengeDetailsDialog : BaseView {
   private AnkiTextLabel _TitleTextLabel;
 
   [SerializeField]
+  private AnkiTextLabel _SubtitleTextLabel;
+
+  [SerializeField]
+  private AnkiTextLabel _DescriptionTextLabel;
+
+  [SerializeField]
+  private Image _ChallengeKeyArt;
+
+  [SerializeField]
   private Button _StartChallengeButton;
 
   [SerializeField]
@@ -27,13 +36,12 @@ public class ChallengeDetailsDialog : BaseView {
 
   public void Initialize(ChallengeData challengeData, Transform challengeButtonTransform) {
     _TitleTextLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
+    _SubtitleTextLabel.text = Localization.Get(challengeData.ChallengeSubtitleLocKey);
+    _DescriptionTextLabel.text = Localization.Get(challengeData.ChallengeDescriptionLocKey);
+    _ChallengeKeyArt.sprite = challengeData.ChallengeKeyArt;
     _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
     _ChallengeButtonTransform = challengeButtonTransform;
     _ChallengeId = challengeData.ChallengeID;
-
-    // TODO: Have a horizontal scroll rect. 
-
-
   }
 
   private void HandleStartButtonClicked() {
@@ -54,7 +62,7 @@ public class ChallengeDetailsDialog : BaseView {
                                         _CenteredIconViewportPos);
     openAnimation.Append(cameraTween);
 
-    // TODO: Slide the dialog out and back
+    // Slide the dialog out and back
     DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).From().SetEase(Ease.OutBack).SetDelay(0.2f);
     openAnimation.Join(dialogTween);
   }
@@ -64,6 +72,7 @@ public class ChallengeDetailsDialog : BaseView {
     DG.Tweening.Tweener cameraTween = HubWorldCamera.Instance.ReturnCameraToDefault();
     closeAnimation.Append(cameraTween);
 
+    // Slide the dialog out
     DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(1600, 0.5f).SetEase(Ease.InBack).SetDelay(0.2f);
     closeAnimation.Join(dialogTween);
   }
