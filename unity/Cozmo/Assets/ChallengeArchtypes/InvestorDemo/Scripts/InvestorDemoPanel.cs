@@ -14,12 +14,16 @@ namespace InvestorDemo {
       ObjectTagRegistryManager.Instance.RegisterTag("InvestorNextButton", _NextButton.gameObject);
     }
 
+    void OnDestroy() {
+      ObjectTagRegistryManager.Instance.RemoveTag("InvestorNextButton");
+    }
+
     public void SetActionText(string text) {
       _CurrentActionText.text = text;
     }
 
     protected override void CleanUp() {
-      ObjectTagRegistryManager.Instance.RemoveTag("InvestorNextButton");
+
     }
   }
 
