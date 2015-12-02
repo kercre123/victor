@@ -39,9 +39,10 @@ struct AudioCallbackComplete;
 class AudioEngineClient : Util::noncopyable
 {
 public:
+  
   using CallbackIdType = uint16_t;
   
-  AudioEngineClient( AudioEngineMessageHandler& messageHandler );
+  void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
   CallbackIdType PostEvent( EventType event,
                             uint16_t gameObjectId,
@@ -59,7 +60,7 @@ public:
   
 protected:
   
-  AudioEngineMessageHandler& _messageHandler;
+  AudioEngineMessageHandler* _messageHandler;
   std::vector<Signal::SmartHandle> _signalHandles;
   
   static constexpr CallbackIdType kInvalidCallbackId = 0;

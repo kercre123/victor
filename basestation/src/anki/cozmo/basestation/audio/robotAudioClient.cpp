@@ -23,13 +23,6 @@ namespace Cozmo {
 namespace Audio {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioClient::RobotAudioClient( AudioEngineMessageHandler& messageHandler, RobotAudioBuffer& audioBuffer ) :
-  AudioEngineClient( messageHandler ),
-  _audioBuffer( audioBuffer )
-{
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType event, AudioCallbackFlag callbackFlag )
 {
   // Track Event
@@ -46,19 +39,29 @@ AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType ev
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::IsPlugInActive() const
 {
-  return _audioBuffer.IsPlugInActive();
+  if ( nullptr != _audioBuffer ) {
+    return _audioBuffer->IsPlugInActive();
+  }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool RobotAudioClient::HasKeyFrameAudioSample() const
 {
-  return _audioBuffer.HasKeyFrameAudioSample();
+  if ( nullptr != _audioBuffer ) {
+    return _audioBuffer->HasKeyFrameAudioSample();
+  }
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimKeyFrame::AudioSample* RobotAudioClient::PopAudioSample() const
 {
-  return _audioBuffer.PopKeyFrameAudioSample();
+  if ( nullptr != _audioBuffer ) {
+    return _audioBuffer->PopKeyFrameAudioSample();
+  }
+  
+  return nullptr;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

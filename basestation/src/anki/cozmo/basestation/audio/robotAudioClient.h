@@ -31,7 +31,7 @@ class RobotAudioClient : public AudioEngineClient
 {
 public:
 
-  RobotAudioClient( AudioEngineMessageHandler& messageHandler, RobotAudioBuffer& audioBuffer );
+  void SetAudioBuffer(RobotAudioBuffer* audioBuffer) { _audioBuffer = audioBuffer; }
   
   // Post Cozmo specific Audio events
   CallbackIdType PostCozmoEvent( EventType event,
@@ -44,6 +44,7 @@ public:
   bool HasKeyFrameAudioSample() const;
   
   // Pop the front key frame audio sample message
+  // Will Return NullPtr if Robot Audio Buffer is Null or there are no key frames.
   // Note: Audio Sample pointer memory needs to be manage or it will leak memory.
   AnimKeyFrame::AudioSample* PopAudioSample() const;
 
@@ -58,7 +59,7 @@ private:
   
   std::unordered_map<CallbackIdType, EventType> _currentEvents;
   
-  RobotAudioBuffer& _audioBuffer;
+  RobotAudioBuffer* _audioBuffer;
   
 };
   

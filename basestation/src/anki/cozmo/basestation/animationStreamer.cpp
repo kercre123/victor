@@ -23,7 +23,8 @@ namespace Cozmo {
   const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
   
   AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
-                                       CannedAnimationContainer& container)
+                                       CannedAnimationContainer& container,
+                                       Audio::RobotAudioClient& audioClient)
   : HasSettableParameters(externalInterface)
   , _animationContainer(container)
   , _idleAnimation(nullptr)
@@ -43,7 +44,7 @@ namespace Cozmo {
   , _bodyMoveSpacing_ms(0)
   , _liftMoveSpacing_ms(0)
   , _headMoveSpacing_ms(0)
-  , _audioClient( nullptr )
+  , _audioClient( audioClient )
   {
 
   }
@@ -247,10 +248,10 @@ namespace Cozmo {
 
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
   {
-    if ( nullptr != _audioClient && _audioClient->IsPlugInActive() ) {
-      if ( _audioClient->HasKeyFrameAudioSample() ) {
+    if ( _audioClient.IsPlugInActive() ) {
+      if ( _audioClient.HasKeyFrameAudioSample() ) {
         // Give audio sample memory ownership to engine message
-        AnimKeyFrame::AudioSample* audioSample = _audioClient->PopAudioSample();
+        AnimKeyFrame::AudioSample* audioSample = _audioClient.PopAudioSample();
         BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( *audioSample ) ) );
       }
     }
@@ -434,7 +435,9 @@ namespace Cozmo {
     }
     
     // Add more stuff to send buffer from face layers
-    while(_sendBuffer.empty() && (!_faceLayers.empty() || _audioClient->IsPlugInActive()))
+    while(_sendBuffer.empty() &&
+          ( !_faceLayers.empty() ||
+           _audioClient.IsPlugInActive() ))
     {
       // If we have face layers to send, we _do_ want BufferAudioToSend to
       // buffer audio silence keyframes to keep the clock ticking. If not, we
@@ -463,7 +466,11 @@ namespace Cozmo {
     }
     
     // If we just finished buffering all the face layers, send an end of animation message
-    if(_startOfAnimationSent && _faceLayers.empty() && _sendBuffer.empty() && !_endOfAnimationSent && !_audioClient->IsPlugInActive()) {
+    if(_startOfAnimationSent &&
+       _faceLayers.empty() &&
+       _sendBuffer.empty() &&
+       !_endOfAnimationSent &&
+       !_audioClient.IsPlugInActive()) {
       lastResult = SendEndOfAnimation(robot);
     }
     
@@ -773,7 +780,7 @@ namespace Cozmo {
     
     // If we didn't do any streaming above, but we've still got face layers to
     // stream or there's audio waiting to go out, stream those now
-    if(!streamUpdated && (!_faceLayers.empty() || _audioClient->HasKeyFrameAudioSample()))
+    if(!streamUpdated && (!_faceLayers.empty() || _audioClient.HasKeyFrameAudioSample()))
     {
       lastResult = StreamFaceLayersOrAudio(robot);
     }
@@ -900,11 +907,6 @@ namespace Cozmo {
     SET_DEFAULT(DockSquintEyebrowHeight, -0.4f);
     
 #    undef SET_DEFAULT
-  }
-  
-  void AnimationStreamer::SetAudioClient(Audio::RobotAudioClient* audioClient)
-  {
-    _audioClient = audioClient;
   }
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)

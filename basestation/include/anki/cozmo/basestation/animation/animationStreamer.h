@@ -55,7 +55,7 @@ namespace Cozmo {
     static const std::string AnimToolAnimation;
     static const u8          IdleAnimationTag = 255;
     
-    AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container);
+    AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container, Audio::RobotAudioClient& audioClient);
     
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
@@ -197,7 +197,7 @@ namespace Cozmo {
     s32            _liftMoveSpacing_ms;
     s32            _headMoveSpacing_ms;
     
-    Audio::RobotAudioClient* _audioClient;
+    Audio::RobotAudioClient& _audioClient;
     
   }; // class AnimationStreamer
   
