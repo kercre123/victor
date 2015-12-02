@@ -415,9 +415,11 @@ namespace UnityEngine.UI {
         m_TextComponent.UnregisterDirtyVerticesCallback(UpdateLabel);
       }
       CanvasUpdateRegistry.UnRegisterCanvasElementForRebuild(this);
-      
+
+      #pragma warning disable 618
       if (m_CachedInputRenderer)
         m_CachedInputRenderer.SetVertices(null, 0);
+      #pragma warning restore 618
 
       base.OnDisable();
     }
@@ -1616,11 +1618,13 @@ namespace UnityEngine.UI {
       
       OnFillVBO(m_Vbo);
       
+      #pragma warning disable 618
       if (m_Vbo.Count == 0)
         m_CachedInputRenderer.SetVertices(null, 0);
       else
         m_CachedInputRenderer.SetVertices(m_Vbo.ToArray(), m_Vbo.Count);
-      
+      #pragma warning restore 618
+
       m_Vbo.Clear();
     }
     
