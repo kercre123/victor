@@ -44,9 +44,7 @@ class UDPTransport(socket.socket, IUnreliableTransport):
 If a packet is available returns data, sourceAddres. Otherwise returns None, None"""
         try:
             data, addr = self.recvfrom(self.MTU)
-        except socket.timeout:
-            return None, None
-        except BlockingIOError:
+        except:
             return None, None
         else:
             if self.logInPackets: self.logInPackets.write(data)
