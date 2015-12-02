@@ -580,6 +580,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_setRawPWM(Anki::Cozmo::RawPWM const&)
+      {
+        // Not used here
+      }
       
 // ----------- Send messages -----------------
 
