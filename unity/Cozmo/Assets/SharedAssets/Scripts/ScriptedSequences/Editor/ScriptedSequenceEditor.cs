@@ -14,6 +14,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   private const string kScriptedSequenceResourcesPath = "Assets/SharedAssets/Resources/ScriptedSequences";
   private const string kAutosaveFilePath = "Assets/SharedAssets/Scripts/ScriptedSequences/.WorkingFile.json~";
+  private const string kColorsPath = "Assets/SharedAssets/Scripts/ScriptedSequences/ScriptedSequenceEditorColors.asset";
 
   public string CurrentSequenceFile;
   public ScriptedSequence CurrentSequence;
@@ -29,6 +30,8 @@ public class ScriptedSequenceEditor : EditorWindow {
   private DateTime _SnapshotCountdownStart;
 
   private string _LastSnapshotState;
+
+  private ScriptedSequenceEditorColors _Colors;
 
 
   // Required to display the Condition Select Popup
@@ -124,6 +127,45 @@ public class ScriptedSequenceEditor : EditorWindow {
       return (ScriptedSequenceHelper<T>)(object)_DraggingActionHelper;
     }
     return null;
+  }
+
+  // generic way to get the color for condition or action
+  public Color GetColor<T>() where T : IScriptedSequenceItem
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return _Colors.ConditionColor;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return _Colors.ActionColor;
+    }
+    return Color.black;
+  }
+
+  // generic way to get the text color for condition or action
+  public Color GetTextColor<T>() where T : IScriptedSequenceItem
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return _Colors.ConditionTextColor;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return _Colors.ActionTextColor;
+    }
+    return Color.white;
+  }
+
+  // generic way to get the background color for condition or action
+  public Color GetBackgroundColor<T>() where T : IScriptedSequenceItem
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return _Colors.ConditionBackgroundColor;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return _Colors.ActionBackgroundColor;
+    }
+    return Color.black;
   }
 
   // where on the field we started dragging
@@ -460,6 +502,16 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
     }
 
+    if (_Colors == null) {
+      if (File.Exists(kColorsPath)) {
+        _Colors = AssetDatabase.LoadAssetAtPath<ScriptedSequenceEditorColors>(kColorsPath);
+      }
+      else {
+        _Colors = ScriptableObject.CreateInstance<ScriptedSequenceEditorColors>();
+        AssetDatabase.CreateAsset(_Colors, kColorsPath);
+      }
+    }
+
     EditorGUILayout.BeginHorizontal(ToolbarStyle);
 
     if (GUILayout.Button("Load", ToolbarButtonStyle)) {
@@ -520,47 +572,60 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
 
-    if (CurrentSequence != null && GUILayout.Button("Save", ToolbarButtonStyle)) {         
-      if (string.IsNullOrEmpty(CurrentSequenceFile)) {
-        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, "json");
+    if (CurrentSequence != null) {
+      if (GUILayout.Button("Save", ToolbarButtonStyle)) {         
+        if (string.IsNullOrEmpty(CurrentSequenceFile)) {
+          CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, "json");
+        }
+
+        if (!string.IsNullOrEmpty(CurrentSequenceFile)) {       
+          if (CurrentSequence.Nodes.Count == 0) {
+            EditorUtility.DisplayDialog("Error!", "Cannot save a sequence with no Nodes!", "OK");
+          }
+          else {
+            string msg = string.Empty;
+            if (!CurrentSequence.Nodes.Any(x => x.Final)) {
+              var last = CurrentSequence.Nodes.Last();
+              last.Final = true;
+              msg = "\u26A0 No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node.\n";
+            }
+
+            var invalidNodes = CurrentSequence.Nodes.Where(x => x.ExitConditions.Count == 0 && !x.ExitOnActionsComplete);
+
+            if (invalidNodes.Any()) {
+              foreach (var node in invalidNodes) {
+                node.ExitOnActionsComplete = true;
+                msg += "\u26A0 Node '" + node.Name + "' Had 'Exit On Actions Complete' unchecked, but no exit conditions. Fixing that for you.\n";
+              }
+            }
+
+            _RecentFiles.Add(CurrentSequenceFile);
+
+            File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
+
+            AssetDatabase.ImportAsset(CurrentSequenceFile);
+            EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
+            // Clear out our temporary working file on save
+            OnDestroy();
+          }
+        }
       }
 
-      if(!string.IsNullOrEmpty(CurrentSequenceFile))
-      {       
-        if (CurrentSequence.Nodes.Count == 0) {
-          EditorUtility.DisplayDialog("Error!", "Cannot save a sequence with no Nodes!", "OK");
-        }
-        else
-        {
-          string msg = string.Empty;
-          if (!CurrentSequence.Nodes.Any(x => x.Final)) {
-            var last = CurrentSequence.Nodes.Last();
-            last.Final = true;
-            msg = "\u26A0 No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node.\n";
-          }
+      if (GUILayout.Button("Undo", ToolbarButtonStyle)) {
+        Undo();
+      }
 
-          var invalidNodes = CurrentSequence.Nodes.Where(x => x.ExitConditions.Count == 0 && !x.ExitOnActionsComplete);
-
-          if (invalidNodes.Any()) {
-            foreach (var node in invalidNodes) {
-              node.ExitOnActionsComplete = true;
-              msg += "\u26A0 Node '" + node.Name + "' Had 'Exit On Actions Complete' unchecked, but no exit conditions. Fixing that for you.\n";
-            }
-          }
-
-          _RecentFiles.Add(CurrentSequenceFile);
-
-          File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
-
-          AssetDatabase.ImportAsset(CurrentSequenceFile);
-          EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
-          // Clear out our temporary working file on save
-          OnDestroy();
-        }
+      if (GUILayout.Button("Redo", ToolbarButtonStyle)) {
+        Redo();
       }
     }
 
     GUILayout.FlexibleSpace();
+
+    if (GUILayout.Button("Customize Colors", ToolbarButtonStyle)) {      
+      Selection.activeObject = _Colors;
+    }
+
     EditorGUILayout.EndHorizontal();
   }
 
@@ -793,32 +858,10 @@ public class ScriptedSequenceEditor : EditorWindow {
       Event.current.keyCode == KeyCode.Z) {
 
       if (Event.current.shift) { // redo
-        if (_RedoStack.Count > 0) {          
-          var current = _RedoStack.Last();
-          _RedoStack.RemoveAt(_RedoStack.Count - 1);
-          _UndoStack.Add(current);
-
-          SaveTemporaryFile(current);
-
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
-        }
+        Redo();
       }
       else { // undo
-        if (_UndoStack.Count > 1) {
-          
-          var current = _UndoStack[_UndoStack.Count - 2];
-          _RedoStack.Add(_UndoStack.Last());
-          _UndoStack.RemoveAt(_UndoStack.Count - 1);
-
-          SaveTemporaryFile(current);
-
-          _ActionHelpers.Clear();
-          _ConditionHelpers.Clear();
-          _DraggingConditionHelper = null;
-          _DraggingActionHelper = null;
-          _DraggingNodeIndex = -1;
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
-        }
+        Undo();
       }
       Event.current.Use();
 
@@ -875,6 +918,42 @@ public class ScriptedSequenceEditor : EditorWindow {
     sequence.Nodes.Insert(index, new ScriptedSequenceNode(){ Id = id, Name = "Node "+id });
   }
 
+  private void Undo() {
+    if (_UndoStack.Count > 1) {
+      
+      var current = _UndoStack[_UndoStack.Count - 2];
+      _RedoStack.Add(_UndoStack.Last());
+      _UndoStack.RemoveAt(_UndoStack.Count - 1);
+
+      SaveTemporaryFile(current);
+
+      _ActionHelpers.Clear();
+      _ConditionHelpers.Clear();
+      _DraggingConditionHelper = null;
+      _DraggingActionHelper = null;
+      _DraggingNodeIndex = -1;
+      CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
+    }
+  }
+
+  private void Redo() {
+    if (_RedoStack.Count > 0) {          
+      var current = _RedoStack.Last();
+      _RedoStack.RemoveAt(_RedoStack.Count - 1);
+      _UndoStack.Add(current);
+
+      SaveTemporaryFile(current);
+
+      _ActionHelpers.Clear();
+      _ConditionHelpers.Clear();
+      _DraggingConditionHelper = null;
+      _DraggingActionHelper = null;
+      _DraggingNodeIndex = -1;
+
+      CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
+    }
+  }
+
   // get a uint 1 higher than the highest node's Id
   private uint GetNextId()
   {
@@ -916,17 +995,16 @@ public class ScriptedSequenceEditor : EditorWindow {
     var lastBackgroundColor = GUI.backgroundColor;
     var lastContentColor = GUI.contentColor;
 
-    var bgColor = Color.yellow * 0.35f;
-    bgColor.a = 1f;
+    var bgColor = _Colors.NodeBackgroundColor;
     GUI.color = bgColor;
     EditorGUILayout.BeginVertical(BoxStyle);
 
     var rect = EditorGUILayout.GetControlRect();
 
 
-    GUI.color = Color.yellow;
-    GUI.contentColor = Color.black;
-    GUI.backgroundColor = Color.yellow;
+    GUI.color = _Colors.NodeColor;
+    GUI.contentColor = _Colors.NodeTextColor;
+    GUI.backgroundColor = _Colors.NodeColor;
     GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
 
     if (editingName) {
@@ -1004,8 +1082,8 @@ public class ScriptedSequenceEditor : EditorWindow {
             DragStart = mousePosition;
             DragSize = rect.size;
             DragTitle = node.Name;
-            DragColor = Color.yellow;
-            DragTextColor = Color.black;
+            DragColor = _Colors.NodeColor;
+            DragTextColor = _Colors.NodeTextColor;
           }
         }
         // handle drag end (drop)

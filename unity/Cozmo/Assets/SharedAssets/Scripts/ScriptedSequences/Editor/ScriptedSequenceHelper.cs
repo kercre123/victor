@@ -12,7 +12,11 @@ namespace ScriptedSequences.Editor {
 
     public readonly T ValueBase;
 
-    public Color Color { get { return typeof(T) == typeof(ScriptedSequenceCondition) ? Color.red : Color.blue; } }
+    public Color Color { get { return _Editor.GetColor<T>(); } }
+
+    public Color TextColor { get { return _Editor.GetTextColor<T>(); } }
+
+    public Color BackgroundColor { get { return _Editor.GetBackgroundColor<T>(); } }
 
     protected ScriptedSequenceEditor _Editor;
     public List<T> List;
@@ -112,21 +116,19 @@ namespace ScriptedSequences.Editor {
       var lastBackgroundColor = GUI.backgroundColor;
       var lastContentColor = GUI.contentColor;
 
-      var bgColor = Color * 0.35f;
-      bgColor.a = 1.0f;
-      GUI.color = bgColor;
+      GUI.color = BackgroundColor;
       EditorGUILayout.BeginVertical(ScriptedSequenceEditor.BoxStyle);
 
       var rect = EditorGUILayout.GetControlRect();
 
       GUI.color = Color;
-      GUI.contentColor = Color.white;
+      GUI.contentColor = TextColor;
       GUI.backgroundColor = Color;
       var textureRect = rect;
       textureRect.x += 15 * (EditorGUI.indentLevel - 1);
       textureRect.width -= 15 * (EditorGUI.indentLevel - 1);
       GUI.DrawTexture(textureRect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
-      GUI.color = Color.white;
+      GUI.color = TextColor;
 
       // Handle Right Click, Drag, or Drop
       if (rect.Contains(mousePosition)) {
@@ -188,7 +190,7 @@ namespace ScriptedSequences.Editor {
           _Editor.DragSize = rect.size;
           _Editor.DragTitle = Value.GetType().Name.ToHumanFriendly();
           _Editor.DragColor = Color;
-          _Editor.DragTextColor = Color.white;
+          _Editor.DragTextColor = TextColor;
         }
         else if (eventType == EventType.mouseUp) {
           var otherHelper = _Editor.GetDraggingHelper<U>();

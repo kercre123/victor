@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f2dc477fac0b4f2eb99eb4a30cfc807, type: 3}
+  m_Name: ScriptedSequenceEditorColors
+  m_EditorClassIdentifier: 
+  NodeColor: {r: 1, g: .921568632, b: .0156862754, a: 1}
+  NodeTextColor: {r: 0, g: 0, b: 0, a: 1}
+  NodeBackgroundColor: {r: .349999994, g: .349999994, b: 0, a: 1}
+  ConditionColor: {r: 0, g: 0, b: 1, a: 1}
+  ConditionTextColor: {r: 1, g: 1, b: 1, a: 1}
+  ConditionBackgroundColor: {r: 0, g: 0, b: .349999994, a: 1}
+  ActionColor: {r: 1, g: 0, b: 0, a: 1}
+  ActionTextColor: {r: 1, g: 1, b: 1, a: 1}
+  ActionBackgroundColor: {r: .349999994, g: 0, b: 0, a: 1}
