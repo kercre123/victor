@@ -395,10 +395,7 @@ namespace Anki {
         }
         
         // Only check for poke when wheels are not being driven
-        f32 leftws, rightws;
-        WheelController::GetDesiredWheelSpeeds(leftws, rightws);
-        if (std::fabsf(leftws) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
-            std::fabsf(rightws) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S) {
+        if (!WheelController::AreWheelsMoving()) {
 
           // Check for a gyro rotation
           const f32 peakGyroThresh = 4.5f;
