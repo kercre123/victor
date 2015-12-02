@@ -68,6 +68,14 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  public void CloseMinigameView() {
+    Destroy(gameObject);
+  }
+
+  public void CloseMinigameViewImmediately() {
+    Destroy(gameObject);
+  }
+
   protected void OnQuitButtonTap() {
     RaiseMiniGameQuit();
   }
