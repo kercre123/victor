@@ -1033,6 +1033,7 @@ namespace Cozmo {
         }
         
         PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
+        action->EnableMessageDisplay(false);
         
         // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
         action->SetPanTolerance(DEG_TO_RAD(5));

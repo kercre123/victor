@@ -1007,6 +1007,8 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
+      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
+      
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       _compoundAction.AddAction(action);

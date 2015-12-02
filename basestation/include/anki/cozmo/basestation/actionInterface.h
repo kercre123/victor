@@ -113,6 +113,10 @@ namespace Anki {
       // the completion info of their constituent actions.
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const;
 
+      // Enable/disable message display (Default is true)
+      void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
+      bool IsMessageDisplayEnabled() const { return _displayMessages; }
+      
     protected:
       
       virtual ActionResult UpdateInternal(Robot& robot) = 0;
@@ -129,13 +133,14 @@ namespace Anki {
       // GetCompletionStruct() method above.
       void EmitCompletionSignal(Robot& robot, ActionResult result) const;
 
-      u8            _numRetriesRemaining;
+      u8            _numRetriesRemaining = 0;
       
       std::string   _statusMsg;
       
-      bool          _isPartOfCompoundAction;
-      bool          _isRunning;
-      bool          _isCancelled;
+      bool          _isPartOfCompoundAction = false;
+      bool          _isRunning              = false;
+      bool          _isCancelled            = false;
+      bool          _displayMessages        = true;
       
       u32           _idTag;
       
