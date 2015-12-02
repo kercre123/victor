@@ -238,6 +238,7 @@ union EngineToRobot
   ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
   EnablePickupParalysis         enablePickupParalysis       = 0x20,
   EnableLiftPower               enableLiftPower             = 0x21,
+  RawPWM                        setRawPWM                   = 0x22,
   
   // To WiFi 0x80 to 0xFE
   EraseFlash                    eraseFlash                  = 0x80,

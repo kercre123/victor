@@ -17,13 +17,12 @@ CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
 sys.path.insert(0, TOOLS_DIR)
 sys.path.insert(0, CLAD_DIR)
 
-import msgbuffers
-
 from ReliableTransport import *
 
 from clad.robotInterface.messageEngineToRobot import Anki
 from clad.robotInterface.messageRobotToEngine import Anki as _Anki
 Anki.update(_Anki.deep_clone())
+Cozmo = Anki.Cozmo
 RobotInterface = Anki.Cozmo.RobotInterface
 
 class CozmoRemote(IDataReceiver):
@@ -61,15 +60,15 @@ class CozmoRemote(IDataReceiver):
     def send(self, msg):
         return self.transport.SendData(True, False, self.robot, msg.pack())
 
-    def DriveWheels(self, lws=0.0, rws=None):
+    def pwm(self, *params):
         "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
         if self.connected:
             if rws is None: rws = lws
-            self.send(RobotInterface.EngineToRobot(drive=RobotInterface.DriveWheels(lws, rws)))
+            self.send(RobotInterface.EngineToRobot(setRawPWM=Cozmo.RawPWM(*params)))
 
 def RemoteGame():
     """Container for remote "game" under pygame."""
-    WHEEL_CMD = 20000
+    PWM_VAL = 20000
     
     pygame.init()
     screen_size = (320, 320)
@@ -88,22 +87,30 @@ def RemoteGame():
             if event.scancode == 16: # q
                 running = False
             elif event.scancode == 72: # up arrow
-                remote.DriveWheels(20000)
+                remote.pwm(+PWM_VAL, +PWM_VAL, 0, 0)
             elif event.scancode == 80: # down arrow
-                remote.DriveWheels(-20000)
+                remote.pwm(-PWM_VAL, -PWM_VAL, 0, 0)
             elif event.scancode == 75: # left arrow
-                remote.DriveWheels(-20000, +20000)
+                remote.pwm(-PWM_VAL, +PWM_VAL, 0, 0)
             elif event.scancode == 77: # right arrow
-                remote.DriveWheels(+20000, -20000)
+                remote.pwm(+PWM_VAL, -PWM_VAL, 0, 0)
+            elif event.scancode == 17: # W
+                remote.pwm(0, 0, PWM_VAL, 0)
+            elif event.scancode == 31: # S
+                remote.pwm(0, 0, -PWM_VAL, 0)
+            elif event.scancode == 18: # E
+                remote.pwm(0, 0, 0, PWM_VAL)
+            elif event.scancode == 32: # D
+                remote.pwm(0, 0, 0, -PWM_VAL)
             else:
                 sys.stdout.write("Key = {}\r\n".format(event.scancode))
         elif event.type == pygame.KEYUP:
-            remote.DriveWheels(0)
+            remote.pwm(0, 0, 0, 0)
         
         screen.fill((0, 255, 255) if remote.connected else (255, 0, 0))
         pygame.display.flip()
     
-    remote.DriveWheels(0.0)
+    remote.pwm(0, 0, 0, 0)
     remote.transport.KillThread()
 
 if __name__ == '__main__':
