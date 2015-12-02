@@ -1236,7 +1236,7 @@ namespace Cozmo {
     
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
-    if(headSame && poseSame && !_prevImage.IsEmpty() &&
+    if(headSame && poseSame && !_poseData.isMoving && !_prevImage.IsEmpty() &&
        image.GetTimestamp() - _lastMotionTime > 500)
     {
       s32 numAboveThresh = 0;
