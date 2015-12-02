@@ -213,7 +213,7 @@ public static class LocalizationEditorUtility {
     // For every key in localization, generate a C# constant. Use english as the source.
     JSONObject localizationJson;
     string cSharpVariableName;
-    foreach (var jsonFileName in Localization.GetLocalizationJsonFileNames(kGeneratedLocalizationKeysSourceLocale)) {
+    foreach (var jsonFileName in Localization.GetLocalizationJsonFilePaths(kGeneratedLocalizationKeysSourceLocale)) {
       
       fileContents += "\n\n  #region " + jsonFileName + "\n";
 
