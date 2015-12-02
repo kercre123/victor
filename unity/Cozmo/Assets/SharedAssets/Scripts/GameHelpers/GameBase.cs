@@ -47,6 +47,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private Button _QuitButtonInstance;
 
+  public void OnDestroy() {
+    CleanUpOnDestroy();
+  }
+
   protected void CreateDefaultQuitButton() {
     // Resources.Load can be pretty slow, so cache the prefab for future use.
     if (sDefaultQuitGameButtonPrefab == null) {
@@ -72,7 +76,7 @@ public abstract class GameBase : MonoBehaviour {
   /// Clean up listeners and extra game objects. Called before the game is 
   /// destroyed when the player quits or the robot loses connection.
   /// </summary>
-  public abstract void CleanUp();
+  protected abstract void CleanUpOnDestroy();
 
   public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
 }

@@ -86,7 +86,7 @@ namespace PatternPlay {
 
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       if (viewControllerInstance_ != null) {
         Destroy(viewControllerInstance_.gameObject);
       }

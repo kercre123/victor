@@ -41,7 +41,7 @@ namespace AskCozmo {
       }
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }

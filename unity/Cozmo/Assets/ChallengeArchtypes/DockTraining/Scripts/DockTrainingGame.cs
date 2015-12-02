@@ -57,7 +57,7 @@ namespace DockTraining {
       return _CurrentTarget;
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       DestroyDefaultQuitButton();
     }
 

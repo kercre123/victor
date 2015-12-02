@@ -109,7 +109,7 @@ namespace TreasureHunt {
       _StateMachineManager.UpdateAllMachines();
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       DestroyDefaultQuitButton();
     }
   }

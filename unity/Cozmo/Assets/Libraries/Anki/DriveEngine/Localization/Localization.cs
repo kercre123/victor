@@ -23,7 +23,7 @@ public static class Localization {
     }
     else if (showDebugLocText) {
       value = new string('@', value.Length);
-    }
+    } 
 
     return value;
   }

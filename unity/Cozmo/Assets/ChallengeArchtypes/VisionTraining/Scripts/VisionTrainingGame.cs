@@ -65,7 +65,7 @@ namespace VisionTraining {
       return id;
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       DestroyDefaultQuitButton();
     }
   }
