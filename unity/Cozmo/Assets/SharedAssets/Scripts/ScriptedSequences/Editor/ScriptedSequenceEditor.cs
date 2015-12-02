@@ -14,6 +14,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   private const string kScriptedSequenceResourcesPath = "Assets/SharedAssets/Resources/ScriptedSequences";
   private const string kAutosaveFilePath = "Assets/SharedAssets/Scripts/ScriptedSequences/.WorkingFile.json~";
+  private const string kColorsPath = "Assets/SharedAssets/Scripts/ScriptedSequences/ScriptedSequenceEditorColors.asset";
 
   public string CurrentSequenceFile;
   public ScriptedSequence CurrentSequence;
@@ -29,6 +30,8 @@ public class ScriptedSequenceEditor : EditorWindow {
   private DateTime _SnapshotCountdownStart;
 
   private string _LastSnapshotState;
+
+  private ScriptedSequenceEditorColors _Colors;
 
 
   // Required to display the Condition Select Popup
@@ -92,7 +95,7 @@ public class ScriptedSequenceEditor : EditorWindow {
   private Dictionary<uint, bool> _ExpandedNodes = new Dictionary<uint, bool>();
 
   // whether we are editing the name of each node
-  private Dictionary<uint, bool> _EditingNodeNames = new Dictionary<uint, bool>();
+  private int _EditingNodeIndex = -1;
 
   // when dragging a node, this tells us which one
   private int _DraggingNodeIndex = -1;
@@ -126,6 +129,45 @@ public class ScriptedSequenceEditor : EditorWindow {
     return null;
   }
 
+  // generic way to get the color for condition or action
+  public Color GetColor<T>() where T : IScriptedSequenceItem
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return _Colors.ConditionColor;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return _Colors.ActionColor;
+    }
+    return Color.black;
+  }
+
+  // generic way to get the text color for condition or action
+  public Color GetTextColor<T>() where T : IScriptedSequenceItem
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return _Colors.ConditionTextColor;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return _Colors.ActionTextColor;
+    }
+    return Color.white;
+  }
+
+  // generic way to get the background color for condition or action
+  public Color GetBackgroundColor<T>() where T : IScriptedSequenceItem
+  {
+    if(typeof(T) == typeof(ScriptedSequenceCondition))
+    {
+      return _Colors.ConditionBackgroundColor;
+    } else if(typeof(T) == typeof(ScriptedSequenceAction))
+    {
+      return _Colors.ActionBackgroundColor;
+    }
+    return Color.black;
+  }
+
   // where on the field we started dragging
   public Vector2 DragOffset;
 
@@ -148,6 +190,10 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // the position of the last mouse up
   private Vector2 _LastMouseUpPosition;
+
+  private Vector2 _LastMouseDownPosition;
+
+  private DateTime _LastMouseDownTime;
 
   // if we get a mouse click when the context menu is open, we want to ignore it.
   public bool ContextMenuOpen;
@@ -456,6 +502,16 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
     }
 
+    if (_Colors == null) {
+      if (File.Exists(kColorsPath)) {
+        _Colors = AssetDatabase.LoadAssetAtPath<ScriptedSequenceEditorColors>(kColorsPath);
+      }
+      else {
+        _Colors = ScriptableObject.CreateInstance<ScriptedSequenceEditorColors>();
+        AssetDatabase.CreateAsset(_Colors, kColorsPath);
+      }
+    }
+
     EditorGUILayout.BeginHorizontal(ToolbarStyle);
 
     if (GUILayout.Button("Load", ToolbarButtonStyle)) {
@@ -510,52 +566,66 @@ public class ScriptedSequenceEditor : EditorWindow {
         _UndoStack.Add("{}");
         CurrentSequence = new ScriptedSequence();
         _EditingName = true;
+        GUI.FocusControl("EditNameField");
         CurrentSequenceFile = null;
       }
     }
 
 
-    if (CurrentSequence != null && GUILayout.Button("Save", ToolbarButtonStyle)) {         
-      if (string.IsNullOrEmpty(CurrentSequenceFile)) {
-        CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, "json");
+    if (CurrentSequence != null) {
+      if (GUILayout.Button("Save", ToolbarButtonStyle)) {         
+        if (string.IsNullOrEmpty(CurrentSequenceFile)) {
+          CurrentSequenceFile = EditorUtility.SaveFilePanel("Save Sequence", kScriptedSequenceResourcesPath, CurrentSequence.Name, "json");
+        }
+
+        if (!string.IsNullOrEmpty(CurrentSequenceFile)) {       
+          if (CurrentSequence.Nodes.Count == 0) {
+            EditorUtility.DisplayDialog("Error!", "Cannot save a sequence with no Nodes!", "OK");
+          }
+          else {
+            string msg = string.Empty;
+            if (!CurrentSequence.Nodes.Any(x => x.Final)) {
+              var last = CurrentSequence.Nodes.Last();
+              last.Final = true;
+              msg = "\u26A0 No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node.\n";
+            }
+
+            var invalidNodes = CurrentSequence.Nodes.Where(x => x.ExitConditions.Count == 0 && !x.ExitOnActionsComplete);
+
+            if (invalidNodes.Any()) {
+              foreach (var node in invalidNodes) {
+                node.ExitOnActionsComplete = true;
+                msg += "\u26A0 Node '" + node.Name + "' Had 'Exit On Actions Complete' unchecked, but no exit conditions. Fixing that for you.\n";
+              }
+            }
+
+            _RecentFiles.Add(CurrentSequenceFile);
+
+            File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
+
+            AssetDatabase.ImportAsset(CurrentSequenceFile);
+            EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
+            // Clear out our temporary working file on save
+            OnDestroy();
+          }
+        }
       }
 
-      if(!string.IsNullOrEmpty(CurrentSequenceFile))
-      {       
-        if (CurrentSequence.Nodes.Count == 0) {
-          EditorUtility.DisplayDialog("Error!", "Cannot save a sequence with no Nodes!", "OK");
-        }
-        else
-        {
-          string msg = string.Empty;
-          if (!CurrentSequence.Nodes.Any(x => x.Final)) {
-            var last = CurrentSequence.Nodes.Last();
-            last.Final = true;
-            msg = "\u26A0 No Nodes Marked Final. Marking Node '" + last.Name + "' As Final Node.\n";
-          }
+      if (GUILayout.Button("Undo", ToolbarButtonStyle)) {
+        Undo();
+      }
 
-          var invalidNodes = CurrentSequence.Nodes.Where(x => x.ExitConditions.Count == 0 && !x.ExitOnActionsComplete);
-
-          if (invalidNodes.Any()) {
-            foreach (var node in invalidNodes) {
-              node.ExitOnActionsComplete = true;
-              msg += "\u26A0 Node '" + node.Name + "' Had 'Exit On Actions Complete' unchecked, but no exit conditions. Fixing that for you.\n";
-            }
-          }
-
-          _RecentFiles.Add(CurrentSequenceFile);
-
-          File.WriteAllText(CurrentSequenceFile, JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
-
-          AssetDatabase.ImportAsset(CurrentSequenceFile);
-          EditorUtility.DisplayDialog("Save Successful!", msg + "Sequence '" + CurrentSequence.Name + "' has been saved to " + CurrentSequenceFile, "OK");
-          // Clear out our temporary working file on save
-          OnDestroy();
-        }
+      if (GUILayout.Button("Redo", ToolbarButtonStyle)) {
+        Redo();
       }
     }
 
     GUILayout.FlexibleSpace();
+
+    if (GUILayout.Button("Customize Colors", ToolbarButtonStyle)) {      
+      Selection.activeObject = _Colors;
+    }
+
     EditorGUILayout.EndHorizontal();
   }
 
@@ -566,6 +636,8 @@ public class ScriptedSequenceEditor : EditorWindow {
   private void LoadFile(string path) {
     if (CheckDiscardUnsavedSequence()) {
       try {
+        CurrentSequence = null;
+        CurrentSequenceFile = null;
         _UndoStack.Clear();
         _RedoStack.Clear();
         string json = File.ReadAllText(path);
@@ -608,6 +680,15 @@ public class ScriptedSequenceEditor : EditorWindow {
       mousePosition = _LastMouseUpPosition;
     }
 
+    bool mouseDown = mouseEvent == EventType.mouseDown;
+
+    if (mouseEvent == EventType.keyUp) {
+      if (Event.current.keyCode == KeyCode.Escape || Event.current.keyCode == KeyCode.Return) {
+        _EditingName = false;
+        _EditingNodeIndex = -1;
+      }
+    }
+
     if (sequence == null) {
       return;
     }
@@ -626,6 +707,8 @@ public class ScriptedSequenceEditor : EditorWindow {
 
       rightRect.x += leftRect.width;
       rightRect.width = 35;
+
+      GUI.SetNextControlName("EditNameField");
       sequence.Name = EditorGUI.TextField(leftRect, sequence.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
         _EditingName = false;
@@ -637,6 +720,14 @@ public class ScriptedSequenceEditor : EditorWindow {
       // if you right click the sequence name, it goes to edit mode
       if (mouseEvent == EventType.ContextClick) {
         if (titleRect.Contains(mousePosition)) {
+          _EditingName = true;
+          _EditingNodeIndex = -1;
+          GUI.FocusControl("EditNameField");
+        }
+      }
+      else if (mouseEvent == EventType.mouseDown) {
+        if ((mousePosition - _LastMouseDownPosition).sqrMagnitude < 16 && DateTime.UtcNow < _LastMouseDownTime + new TimeSpan(250 * 10000)) {
+          _EditingNodeIndex = -1;
           _EditingName = true;
         }
       }
@@ -737,6 +828,11 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
     }
 
+    if (mouseDown) {
+      _LastMouseDownTime = DateTime.UtcNow;
+      _LastMouseDownPosition = mousePosition;
+    }
+
     // draw a box so you can see what you are dragging.
     if ((_DraggingNodeIndex != -1 || _DraggingConditionHelper != null || _DraggingActionHelper != null) && !_LastMouseUp && Mathf.Abs(DragStart.y - mousePosition.y) > 5) {
       var lastColor = GUI.backgroundColor;
@@ -762,32 +858,10 @@ public class ScriptedSequenceEditor : EditorWindow {
       Event.current.keyCode == KeyCode.Z) {
 
       if (Event.current.shift) { // redo
-        if (_RedoStack.Count > 0) {          
-          var current = _RedoStack.Last();
-          _RedoStack.RemoveAt(_RedoStack.Count - 1);
-          _UndoStack.Add(current);
-
-          SaveTemporaryFile(current);
-
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
-        }
+        Redo();
       }
       else { // undo
-        if (_UndoStack.Count > 1) {
-          
-          var current = _UndoStack[_UndoStack.Count - 2];
-          _RedoStack.Add(_UndoStack.Last());
-          _UndoStack.RemoveAt(_UndoStack.Count - 1);
-
-          SaveTemporaryFile(current);
-
-          _ActionHelpers.Clear();
-          _ConditionHelpers.Clear();
-          _DraggingConditionHelper = null;
-          _DraggingActionHelper = null;
-          _DraggingNodeIndex = -1;
-          CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
-        }
+        Undo();
       }
       Event.current.Use();
 
@@ -799,6 +873,10 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
     var currentState = JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings);
+
+    if (_UndoStack.Count == 0) {
+      _UndoStack.Add(currentState);
+    }
 
     if (currentState == _UndoStack.Last()) {
       _SnapshotCountdownStart = default(DateTime);
@@ -840,6 +918,42 @@ public class ScriptedSequenceEditor : EditorWindow {
     sequence.Nodes.Insert(index, new ScriptedSequenceNode(){ Id = id, Name = "Node "+id });
   }
 
+  private void Undo() {
+    if (_UndoStack.Count > 1) {
+      
+      var current = _UndoStack[_UndoStack.Count - 2];
+      _RedoStack.Add(_UndoStack.Last());
+      _UndoStack.RemoveAt(_UndoStack.Count - 1);
+
+      SaveTemporaryFile(current);
+
+      _ActionHelpers.Clear();
+      _ConditionHelpers.Clear();
+      _DraggingConditionHelper = null;
+      _DraggingActionHelper = null;
+      _DraggingNodeIndex = -1;
+      CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
+    }
+  }
+
+  private void Redo() {
+    if (_RedoStack.Count > 0) {          
+      var current = _RedoStack.Last();
+      _RedoStack.RemoveAt(_RedoStack.Count - 1);
+      _UndoStack.Add(current);
+
+      SaveTemporaryFile(current);
+
+      _ActionHelpers.Clear();
+      _ConditionHelpers.Clear();
+      _DraggingConditionHelper = null;
+      _DraggingActionHelper = null;
+      _DraggingNodeIndex = -1;
+
+      CurrentSequence = JsonConvert.DeserializeObject<ScriptedSequence>(current, GlobalSerializerSettings.JsonSettings);
+    }
+  }
+
   // get a uint 1 higher than the highest node's Id
   private uint GetNextId()
   {
@@ -875,23 +989,22 @@ public class ScriptedSequenceEditor : EditorWindow {
     bool expanded, editingName;
 
     _ExpandedNodes.TryGetValue(node.Id, out expanded);
-    _EditingNodeNames.TryGetValue(node.Id, out editingName);
+    editingName = _EditingNodeIndex == index;
 
     var lastColor = GUI.color;
     var lastBackgroundColor = GUI.backgroundColor;
     var lastContentColor = GUI.contentColor;
 
-    var bgColor = Color.yellow * 0.35f;
-    bgColor.a = 1f;
+    var bgColor = _Colors.NodeBackgroundColor;
     GUI.color = bgColor;
     EditorGUILayout.BeginVertical(BoxStyle);
 
     var rect = EditorGUILayout.GetControlRect();
 
 
-    GUI.color = Color.yellow;
-    GUI.contentColor = Color.black;
-    GUI.backgroundColor = Color.yellow;
+    GUI.color = _Colors.NodeColor;
+    GUI.contentColor = _Colors.NodeTextColor;
+    GUI.backgroundColor = _Colors.NodeColor;
     GUI.DrawTexture(rect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
 
     if (editingName) {
@@ -903,9 +1016,10 @@ public class ScriptedSequenceEditor : EditorWindow {
       rightRect.width = 35;
 
       GUI.contentColor = Color.white;
+      GUI.SetNextControlName("EditNameField");
       node.Name = EditorGUI.TextField(leftRect, node.Name, TextFieldStyle);
       if (GUI.Button(rightRect, "OK", ButtonStyle)) {
-        _EditingNodeNames[node.Id] = false;
+        _EditingNodeIndex = -1;
       }
       GUI.contentColor = Color.black;
 
@@ -928,7 +1042,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
           menu.AddItem(new GUIContent("Change Name"), false, () => {
             ContextMenuOpen = true;
-            _EditingNodeNames[node.Id] = true;
+            _EditingNodeIndex = index;
+            _EditingName = false;
+            GUI.FocusControl("EditNameField");
           });
 
           menu.AddItem(new GUIContent("Copy"), false, () => {
@@ -956,13 +1072,19 @@ public class ScriptedSequenceEditor : EditorWindow {
         }
         // handle drag start
         else if (eventType == EventType.mouseDown) {
-          _DraggingNodeIndex = index;
-          DragOffset = rect.position - mousePosition;
-          DragStart = mousePosition;
-          DragSize = rect.size;
-          DragTitle = node.Name;
-          DragColor = Color.yellow;
-          DragTextColor = Color.black;
+          if ((mousePosition - _LastMouseDownPosition).sqrMagnitude < 16 && DateTime.UtcNow < _LastMouseDownTime + new TimeSpan(250 * 10000)) {
+            _EditingNodeIndex = index;
+            _EditingName = false;
+          }
+          else {
+            _DraggingNodeIndex = index;
+            DragOffset = rect.position - mousePosition;
+            DragStart = mousePosition;
+            DragSize = rect.size;
+            DragTitle = node.Name;
+            DragColor = _Colors.NodeColor;
+            DragTextColor = _Colors.NodeTextColor;
+          }
         }
         // handle drag end (drop)
         else if (eventType == EventType.mouseUp) {
@@ -987,7 +1109,11 @@ public class ScriptedSequenceEditor : EditorWindow {
           }
         }
       }
-      expanded = EditorGUI.Foldout(rect, expanded, node.Name, FoldoutStyle);
+      bool expand = EditorGUI.Foldout(rect, expanded, node.Name, FoldoutStyle);
+      if (expand != expanded) {
+        _LastMouseDownTime = default(DateTime);
+        expanded = expand;
+      }
     }
 
     GUI.color = lastColor;
