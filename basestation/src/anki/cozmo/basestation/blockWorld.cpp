@@ -2183,7 +2183,8 @@ namespace Cozmo {
               
               if(object->GetLastObservedTime() < _robot->GetLastImageTimeStamp() &&
                  !object->IsBeingCarried() &&
-                 !object->IsPoseStateUnknown())
+                 !object->IsPoseStateUnknown() &&
+                 object->GetID() != _robot->GetDockObject())
               {
                 // Don't worry about collision while picking or placing since we
                 // are trying to get close to blocks in these modes.
