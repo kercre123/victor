@@ -69,7 +69,7 @@ static bool ProcessDrop(void) {
       }
       case 0x22:
       {
-        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(float)*4)
+        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(float)*4);
         break;
       }
     }
