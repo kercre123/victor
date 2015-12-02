@@ -18,6 +18,9 @@ namespace InvestorDemo {
         DAS.Error(this, "Failed to load config InvestorDemoConfig!");
         return;
       }
+
+
+
     }
 
     void Start() {
