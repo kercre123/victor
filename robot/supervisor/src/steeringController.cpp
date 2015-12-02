@@ -237,9 +237,8 @@ namespace Anki {
       
       // Activate steering if: We are moving and the commanded speed is bigger than
       // zero (or bigger than 0+eps)
-      if(SpeedController::IsVehicleStopped() == FALSE && ABS(desspeed) > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+      if(WheelController::AreWheelsMoving() && ABS(desspeed) > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = TRUE;
-        
       }
       
       
@@ -247,7 +246,7 @@ namespace Anki {
       // When it's not following a path, you should be able to push it around freely.
       
       //Deactivate steering if: We are not really moving and the commanded speed is zero (or smaller than 0+eps)
-      if (SpeedController::IsVehicleStopped() == TRUE && ABS(desspeed) <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
+      if (!WheelController::AreWheelsMoving() && ABS(desspeed) <= SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = false;
         
         // Set wheel controller coast mode as we finish decelerating to 0
@@ -506,7 +505,7 @@ namespace Anki {
     // Position-controlled point turn update
     void ManagePointTurn()
     {
-      if (!SpeedController::IsVehicleStopped() && !startedPointTurn_) {
+      if (WheelController::AreWheelsMoving() && !startedPointTurn_) {
         f32 headingError = SpeedController::GetControllerCommandedVehicleSpeed() < 0 ? PI_F : 0;
         RunLineFollowControllerNL(0,headingError);
         return;

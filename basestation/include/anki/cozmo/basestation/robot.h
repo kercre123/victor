@@ -56,6 +56,7 @@
 #include <unordered_map>
 #include <time.h>
 #include <utility>
+#include <fstream>
 
 namespace Anki {
   
@@ -818,8 +819,7 @@ public:
     std::vector<Signal::SmartHandle> _signalHandles;
     ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
-    uint32_t _imuDataSize = 0;
-    int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
+    std::ofstream _imuLogFileStream;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -841,6 +841,7 @@ public:
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupVisionHandlers(IExternalInterface& externalInterface);

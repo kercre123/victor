@@ -31,11 +31,12 @@ BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& conf
 : IBehavior(robot, config)
 {
   _name = "FollowMotion";
-  
-  SubscribeToTags({
-    MessageEngineToGameTag::RobotObservedMotion,
-    MessageEngineToGameTag::RobotCompletedAction
-  });
+
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedMotion,
+    EngineToGameTag::RobotCompletedAction
+  }});
+
 }
 
 bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
@@ -76,6 +77,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
 Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
+  _actionRunning = 0;
   _interrupted = true;
   return Result::RESULT_OK;
 }

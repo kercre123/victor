@@ -94,6 +94,7 @@ namespace Cozmo {
       bool             groundPlaneVisible;
       Matrix_3x3f      groundPlaneHomography;
       GroundPlaneROI   groundPlaneROI;
+      bool             isMoving;
     };
     
     // This is main Update() call to be called in a loop from above.

@@ -40,11 +40,11 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
 {
   _name = "LookAround";
   
-  SubscribeToTags({
+  SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::RobotCompletedAction,
     EngineToGameTag::RobotPutDown
-  });
+  }});
 
   // Boredom and loneliness -> LookAround
   AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
