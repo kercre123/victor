@@ -29,6 +29,7 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led);
 void InitBAT(void);
 void EnableBAT(void);
 void DisableBAT(void);
-
+void EnableVEXT(void);
+void DisableVEXT(void);
 
 #endif 

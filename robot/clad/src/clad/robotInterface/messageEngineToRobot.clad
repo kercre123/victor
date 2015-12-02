@@ -69,10 +69,12 @@ message HeadAngleUpdate
   float_32 newAngle,
 }
 
-message PanAndTilt
+// This is a turn in place to an absolute angle
+message SetBodyAngle
 {
-  float_32 bodyPanAngle_rad,
-  float_32 headTiltAngle_rad,
+  float_32 angle_rad,
+  float_32 max_speed_rad_per_sec,
+  float_32 accel_rad_per_sec2
 }
 
 message TurnInPlaceAtSpeed
@@ -210,7 +212,7 @@ union EngineToRobot
   SetLiftHeight                 liftHeight                  = 0x05,
   SetHeadAngle                  headAngle                   = 0x06,
   HeadAngleUpdate               headAngleUpdate             = 0x07,
-  PanAndTilt                    panAndTiltHead              = 0x08,
+  SetBodyAngle                  setBodyAngle                = 0x08,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x09,
   StopAllMotors                 stop                        = 0x0A,
   ClearPath                     clearPath                   = 0x0B,
@@ -236,6 +238,7 @@ union EngineToRobot
   ObjectBeingCarried            setObjectBeingCarried       = 0x1F,
   EnablePickupParalysis         enablePickupParalysis       = 0x20,
   EnableLiftPower               enableLiftPower             = 0x21,
+  RawPWM                        setRawPWM                   = 0x22,
   
   // To WiFi 0x80 to 0xFE
   EraseFlash                    eraseFlash                  = 0x80,

@@ -101,6 +101,7 @@ namespace Anki
 
         if (count > 0 && count < 16) {
           ObjectTapped m;
+          m.timestamp = HAL::GetTimeStamp();
           m.numTaps = count;
           m.objectID = id;
           RobotInterface::SendMessage(m);
@@ -154,6 +155,7 @@ namespace Anki
         if (upAxisChanged ||
             ((movingTimeoutCtr[id] >= START_MOVING_COUNT_THRESH) && !isMoving[id])) {
           ObjectMoved m;
+          m.timestamp = HAL::GetTimeStamp();
           m.objectID = id;
           m.accel.x = ax;
           m.accel.y = ay;
@@ -164,6 +166,7 @@ namespace Anki
           movingTimeoutCtr[id] = STOP_MOVING_COUNT_THRESH;
         } else if ((movingTimeoutCtr[id] == 0) && isMoving[id]) {
           ObjectStoppedMoving m;
+          m.timestamp = HAL::GetTimeStamp();
           m.objectID = id;
           m.upAxis = upAxis;  // This should get processed on engine eventually
           m.rolled = 0;  // This should get processed on engine eventually

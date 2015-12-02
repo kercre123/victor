@@ -33,6 +33,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/cozmoActions.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -393,7 +394,7 @@ namespace Cozmo {
           const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
           if(activeCube == nullptr) {
             PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
-                              "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.\n",
+                              "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.",
                               observedObject->GetID().GetValue());
             return RESULT_FAIL;
           } else {
@@ -591,7 +592,7 @@ namespace Cozmo {
               PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
                                   "Did not match observed object to existing %s object "
                                   "by pose, but assuming there's only one that must match "
-                                  "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
+                                  "existing ID = %d. (since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)",
                                   ObjectTypeToString(objSeen->GetType()),
                                   observedObject->GetID().GetValue(),
                                   ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
@@ -618,13 +619,13 @@ namespace Cozmo {
               // If the object is being carried, uncarry it
               if (_robot->GetCarryingObject() == observedObject->GetID()) {
                 PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.SawCarryObject",
-                                 "Uncarrying object ID=%d because it was observed\n", (int)observedObject->GetID());
+                                 "Uncarrying object ID=%d because it was observed", (int)observedObject->GetID());
                 _robot->UnSetCarryingObjects();
               }
             } else {
               PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.UpdatingByType",
                                   "Ignoring the second simultaneously-seen %s object "
-                                  "(since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)\n",
+                                  "(since ONLY_ALLOW_ONE_OBJECT_PER_TYPE = %d)",
                                   ObjectTypeToString(objSeen->GetType()),
                                   ONLY_ALLOW_ONE_OBJECT_PER_TYPE);
             }
@@ -639,7 +640,7 @@ namespace Cozmo {
             
           if(!_canAddObjects) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.AddingDisabled",
-                                "Saw a new %s%s object, but adding objects is disabled.\n",
+                                "Saw a new %s%s object, but adding objects is disabled.",
                                 objSeen->IsActive() ? "active " : "",
                                 ObjectTypeToString(objSeen->GetType()));
             
@@ -656,7 +657,7 @@ namespace Cozmo {
           AddNewObject(objectsExisting, objSeen);
           
           PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.AddNewObject",
-                           "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.\n",
+                           "Adding new %s%s object and ID=%d at (%.1f, %.1f, %.1f), relative to %s mat.",
                            objSeen->IsActive() ? "active " : "",
                            ObjectTypeToString(objSeen->GetType()),
                            objSeen->GetID().GetValue(),
@@ -762,18 +763,23 @@ namespace Cozmo {
           // object or updating the object's pose w.r.t. the robot. We only localize
           // to the object if:
           //  - we haven't already done so this tick (to another object),
+          //  - the robot is not moving,
           //  - the object is close enough,
           //  - the object didn't _just_ get identified (since we still need to check if
           //     its active ID matches a pre-existing one (on the next Update)
           //  - if the object is *currently* being observed as flat
           //  - if the object can offer localization info (which it last being
           //     observed as flat)
+          //  - the object is neither the object the robot is docking to or tracking to,
           //  - if the robot isn't already localized to an object or it has moved
           //     since the last time it got localized to an object.
           useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
+                                     !_robot->IsMoving() &&
                                      distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
                                      _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&
+                                     matchingObject->GetID() != _robot->GetDockObject() &&
+                                     matchingObject->GetID() != _robot->GetMoveComponent().GetTrackToObject() &&
                                      (_robot->GetLocalizedTo().IsUnknown() ||
                                       _robot->HasMovedSinceBeingLocalized()) );
 #         endif
@@ -799,7 +805,7 @@ namespace Cozmo {
                     Pose3d markerPoseWrtCamera;
                     if(false == marker.GetPose().GetWithRespectTo(_robot->GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera)) {
                       PRINT_NAMED_ERROR("Robot.AddAndUpdateObjects.MarkerOriginProblem",
-                                        "Could not get pose of marker w.r.t. robot camera.\n");
+                                        "Could not get pose of marker w.r.t. robot camera.");
                       return RESULT_FAIL;
                     }
                     const f32 distToMarkerSq = markerPoseWrtCamera.GetTranslation().LengthSq();
@@ -827,7 +833,7 @@ namespace Cozmo {
               Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
               if(localizeResult != RESULT_OK) {
                  PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                                   "Failed to localize to %s object %d.\n",
+                                   "Failed to localize to %s object %d.",
                                    ObjectTypeToString(matchingObject->GetType()),
                                    matchingObject->GetID().GetValue());
                  return localizeResult;
@@ -837,7 +843,7 @@ namespace Cozmo {
              haveLocalizedRobotToObject = true;
             } else {
               PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                               "Not localizing to object %d because it is not observed to be flat\n",
+                               "Not localizing to object %d because it is not observed to be flat",
                                matchingObject->GetID().GetValue());
             }
             
@@ -860,11 +866,16 @@ namespace Cozmo {
           // Project this existing object into the robot's camera, using its new pose
           //_robot->GetVisionComponent().GetCamera().ProjectObject(*matchingObject, projectedCorners, observationDistance);
           
-          // Add all observed markers of this object as occluders:
-          std::vector<const Vision::KnownMarker *> observedMarkers;
-          observedObject->GetObservedMarkers(observedMarkers);
-          for(auto marker : observedMarkers) {
-            _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
+          // Add all observed markers of this object as occluders, once it has been
+          // identified (it's possible we're seeing an existing object behind its
+          // last-known location, in which case we don't want to delete the existing
+          // one before realizing the new observation is the same object):
+          if(ActiveIdentityState::Identified == observedObject->GetIdentityState()) {
+            std::vector<const Vision::KnownMarker *> observedMarkers;
+            observedObject->GetObservedMarkers(observedMarkers);
+            for(auto marker : observedMarkers) {
+              _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
+            }
           }
           
           // Now that we've merged in objSeen, we can delete it because we
@@ -886,7 +897,7 @@ namespace Cozmo {
           if(actionObject->IsBeingCarried() && _robot->GetCarryingObject() != obsID) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.CarryStateMismatch",
                                 "Object %d thinks it is being carried, but does not match "
-                                "robot %d's carried object ID (%d). Setting as uncarried.\n",
+                                "robot %d's carried object ID (%d). Setting as uncarried.",
                                 obsID.GetValue(), _robot->GetID(),
                                 _robot->GetCarryingObject().GetValue());
             actionObject->SetBeingCarried(false);
@@ -895,7 +906,7 @@ namespace Cozmo {
         
         if(obsID.IsUnknown()) {
           PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.IDnotSet",
-                            "ID of new/re-observed object not set.\n");
+                            "ID of new/re-observed object not set.");
           return RESULT_FAIL;
         }
         
@@ -905,24 +916,62 @@ namespace Cozmo {
           BroadcastObjectObservation(observedObject, true);
         }
         
-        if(_robot->GetMoveComponent().GetTrackToObject().IsSet() &&
-           obsID == _robot->GetMoveComponent().GetTrackToObject() &&
-           !_robot->GetMoveComponent().IsHeadLocked())
-        {
-          UpdateTrackToObject(observedObject);
-        }
-
         _didObjectsChange = true;
+        _currentObservedObjects.push_back(observedObject);
         
       } // for each object seen
       
       return RESULT_OK;
       
     } // AddAndUpdateObjects()
-    
-    void BlockWorld::UpdateTrackToObject(const ObservableObject* observedObject)
+  
+  
+    Result BlockWorld::UpdateTrackToObject()
     {
-      assert(observedObject != nullptr);
+      if(!_robot->GetMoveComponent().GetTrackToObject().IsSet()) {
+        // Nothing to do if the robot isn't set to track anything
+        return RESULT_OK;
+      }
+      
+      const ObservableObject* trackToObject = GetObjectByID(_robot->GetMoveComponent().GetTrackToObject());
+      if(nullptr == trackToObject) {
+        PRINT_NAMED_ERROR("BlockWorld.Update.InvalidTrackToObject",
+                          "Robot's track to object, ID=%d, does not exist",
+                          _robot->GetMoveComponent().GetTrackToObject().GetValue());
+        return RESULT_FAIL;
+      }
+      
+      const ObservableObject* observedObject = nullptr;
+      static Pose3d lastTrackToPose = trackToObject->GetPose();
+      
+      std::list<ObservableObject*> matchingObjects;
+      for(auto object : _currentObservedObjects) {
+        if(object->GetType() == trackToObject->GetType()) {
+          matchingObjects.push_back(object);
+        }
+      }
+      
+      if(matchingObjects.size() == 1) {
+        // Special case: only one matching type. Just use that one
+        observedObject = matchingObjects.front();
+      } else if(matchingObjects.size() > 1) {
+        // Multiple objects of the TrackTo type seen simultaneously. Find
+        // the closest one to the last known position of the track-to object
+        // and use it (Not sure this is exactly what we want: we might want to
+        // use the last tracked position...)
+        f32 minDist = std::numeric_limits<f32>::max();
+        
+        for(auto matchingObject : matchingObjects) {
+          f32 dist = ComputeDistanceBetween(matchingObject->GetPose(), lastTrackToPose);
+          if(dist < minDist) {
+            observedObject = matchingObject;
+            minDist = dist;
+          }
+        }
+      } // if(num matching objects == 1 or > 1)
+      
+      ASSERT_NAMED(nullptr != observedObject, "ObservedObject should be non-null by now");
+      lastTrackToPose = observedObject->GetPose();
       
       // Find the observed marker closest to the robot and use that as the one we
       // track to
@@ -932,68 +981,72 @@ namespace Cozmo {
       if(observedMarkers.empty()) {
         PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
                           "No markers on observed object %d marked as observed since time %d, "
-                          "expecting at least one.\n",
+                          "expecting at least one.",
                           observedObject->GetID().GetValue(), observedObject->GetLastObservedTime());
-      } else {
-        const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
-        
-        const Vision::KnownMarker* closestMarker = nullptr;
-        f32 minDistSq = std::numeric_limits<f32>::max();
-        f32 xDist = 0.f, yDist = 0.f, zDist = 0.f;
-        
-        for(auto marker : observedMarkers) {
-          Pose3d markerPose;
-          if(false == marker->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), markerPose)) {
-            PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                              "Could not get pose of observed marker w.r.t. world for head tracking.\n");
-          } else {
-            
-            const f32 xDist_crnt = markerPose.GetTranslation().x() - robotTrans.x();
-            const f32 yDist_crnt = markerPose.GetTranslation().y() - robotTrans.y();
-            
-            const f32 currentDistSq = xDist_crnt*xDist_crnt + yDist_crnt*yDist_crnt;
-            if(currentDistSq < minDistSq) {
-              closestMarker = marker;
-              minDistSq = currentDistSq;
-              xDist = xDist_crnt;
-              yDist = yDist_crnt;
-              
-              // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
-              // NOTE: This isn't perfectly accurate since it doesn't take into account the
-              // the head angle and is simply using the neck joint (which should also
-              // probably be queried from the robot instead of using the constant here)
-              zDist = markerPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
-            }
-          }
-        } // For all markers
-        
-        if(closestMarker == nullptr) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject", "No closest marker found!\n");
-        } else {
-          const f32 minDist = std::sqrt(minDistSq);
-          const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
-          //_robot->MoveHeadToAngle(headAngle, 5.f, 2.f);
-          RobotInterface::PanAndTilt msg;
-          msg.headTiltAngle_rad = headAngle;
-          msg.bodyPanAngle_rad = 0.f;
-          
-          if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
-            // Also rotate ("pan") body:
-            const Radians panAngle = std::atan2(yDist, xDist);// - _robot->GetPose().GetRotationAngle<'Z'>();
-            msg.bodyPanAngle_rad = panAngle.ToFloat();
-          }
-          /*
-          PRINT_NAMED_INFO("BlockWorld.UpdateTrackToObject",
-                           "Tilt = %.1fdeg, pan = %.1fdeg\n",
-                           RAD_TO_DEG(msg.headTiltAngle_rad),
-                           RAD_TO_DEG(msg.bodyPanAngle_rad));
-          */
-          _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
-        }
-      } // if/else observedMarkers.empty()
+        return RESULT_FAIL;
+      }
       
+      const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
+      
+      const Vision::KnownMarker* closestMarker = nullptr;
+      f32 minDistSq = std::numeric_limits<f32>::max();
+      f32 xDist = 0.f, yDist = 0.f, zDist = 0.f;
+      
+      for(auto marker : observedMarkers) {
+        Pose3d markerPose;
+        if(false == marker->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), markerPose)) {
+          PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
+                            "Could not get pose of observed marker w.r.t. world for head tracking.\n");
+          return RESULT_FAIL;
+        }
+        
+        const f32 xDist_crnt = markerPose.GetTranslation().x() - robotTrans.x();
+        const f32 yDist_crnt = markerPose.GetTranslation().y() - robotTrans.y();
+        
+        const f32 currentDistSq = xDist_crnt*xDist_crnt + yDist_crnt*yDist_crnt;
+        if(currentDistSq < minDistSq) {
+          closestMarker = marker;
+          minDistSq = currentDistSq;
+          xDist = xDist_crnt;
+          yDist = yDist_crnt;
+          
+          // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
+          // NOTE: This isn't perfectly accurate since it doesn't take into account the
+          // the head angle and is simply using the neck joint (which should also
+          // probably be queried from the robot instead of using the constant here)
+          zDist = markerPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
+        }
+        
+      } // For all markers
+      
+      if(closestMarker == nullptr) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject", "No closest marker found!\n");
+        return RESULT_FAIL;
+      } else {
+        const f32 minDist = std::sqrt(minDistSq);
+        const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
+        f32 bodyPanAngle_rad = 0.f;
+          
+        if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
+          // Also rotate ("pan") body:
+          bodyPanAngle_rad = std::atan2(yDist, xDist);
+        }
+        
+        PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
+        action->EnableMessageDisplay(false);
+        
+        // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
+        action->SetPanTolerance(DEG_TO_RAD(5));
+        action->SetTiltTolerance(DEG_TO_RAD(5));
+        
+        // TODO: Expose / tune PanAndTilt speed/accel as needed
+        
+        _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+      }
+      
+      return RESULT_OK;
     } // UpdateTrackToObject()
-    
+  
     u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
       u32 numVisibleObjects = 0;
@@ -1086,12 +1139,28 @@ namespace Cozmo {
                                             xBorderPad, yBorderPad) &&
            (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
         {
-          // We "should" have seen the object! Delete it.
-          PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.RemoveUnobservedObject",
-                           "Removing object %d, which should have been seen, "
-                           "but wasn't.\n", unobserved.object->GetID().GetValue());
+          // Make sure there are no currently-observed, (just-)identified objects
+          // with the same active ID present. (If there are, we'll reassign IDs
+          // on the next update instead of clearing the existing object now.)
+          bool matchingActiveIdFound = false;
+          if(unobserved.object->IsActive()) {
+            for(auto object : _currentObservedObjects) {
+              if(ActiveIdentityState::Identified == object->GetIdentityState() &&
+                 object->GetActiveID() == unobserved.object->GetActiveID()) {
+                matchingActiveIdFound = true;
+                break;
+              }
+            }
+          }
           
-          ClearObject(unobserved.object);
+          if(!matchingActiveIdFound) {
+            // We "should" have seen the object! Delete it.
+            PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.RemoveUnobservedObject",
+                             "Removing object %d, which should have been seen, "
+                             "but wasn't.\n", unobserved.object->GetID().GetValue());
+            
+            ClearObject(unobserved.object);
+          }
         } else if(unobserved.family != ObjectFamily::Mat && _robot->GetCarryingObjects().count(unobserved.object->GetID()) == 0) {
           // If the object should _not_ be visible (i.e. none of its markers project
           // into the camera), but some part of the object is within frame, it is
@@ -1140,7 +1209,7 @@ namespace Cozmo {
             default:
               // Not expecting other resolutions
               PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects",
-                                  "Unexpeted camera calibration ncols=%d.\n",
+                                  "Unexpeted camera calibration ncols=%d.",
                                   camera.GetCalibration().GetNcols());
           }
           
@@ -1276,7 +1345,7 @@ namespace Cozmo {
                   ObservableObject* object = objectAndId.second;
                   if(object == nullptr) {
                     PRINT_NAMED_WARNING("BlockWorld.GetObjectBoundingBoxesXY.NullObjectPointer",
-                                        "ObjectID %d corresponds to NULL ObservableObject pointer.\n",
+                                        "ObjectID %d corresponds to NULL ObservableObject pointer.",
                                         objectAndId.first.GetValue());
                   } else if(object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT
                             && !object->IsPoseStateUnknown()) {
@@ -1349,14 +1418,14 @@ namespace Cozmo {
              !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
           {
             PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
-                             "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                             "Refusing to localize to %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
                              ObjectTypeToString(mat->GetType()),
                              rotAngle.getDegrees(),
                              rotAxis.x(), rotAxis.y(), rotAxis.z());
           }else if(mat->IsPoseOn(_robot->GetPose(), 0, 15.f)) { // TODO: get heightTol from robot
             if(onMat != nullptr) {
               PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.OnMultiplMats",
-                                  "Robot is 'on' multiple mats at the same time. Will just use the first for now.\n");
+                                  "Robot is 'on' multiple mats at the same time. Will just use the first for now.");
             } else {
               onMat = mat;
             }
@@ -1371,7 +1440,7 @@ namespace Cozmo {
         {
           
           PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.OnMatLocalization",
-                                  "Robot %d is on a %s mat and will localize to it.\n",
+                                  "Robot %d is on a %s mat and will localize to it.",
                                   _robot->GetID(), onMat->GetType().GetName().c_str());
           
           // If robot is "on" one of the mats it is currently seeing, localize
@@ -1391,7 +1460,7 @@ namespace Cozmo {
             ObservableObject* existingMatLocalizedTo = GetObjectByID(_robot->GetLocalizedTo());
             if(existingMatLocalizedTo == nullptr) {
               PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ExistingMatLocalizedToNull",
-                                "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.\n",
+                                "Robot %d is localized to mat with ID=%d, but that mat does not exist in the world.",
                                 _robot->GetID(), _robot->GetLocalizedTo().GetValue());
               return false;
             }
@@ -1404,7 +1473,7 @@ namespace Cozmo {
               // any of the mats it _is_ seeing.  Just update the poses of the
               // mats it is seeing, but don't localize to any of them.
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
-                                      "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.\n",
+                                      "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.",
                                       _robot->GetID(), matsSeen.size());
             }
             else {
@@ -1416,7 +1485,7 @@ namespace Cozmo {
               }
               
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatLocalization",
-                                      "Robot %d will re-localize to the %s mat it is not on, but already localized to.\n",
+                                      "Robot %d will re-localize to the %s mat it is not on, but already localized to.",
                                       _robot->GetID(), overlappingMatsSeen[0]->GetType().GetName().c_str());
               
               // The robot is localized to one of the mats it is seeing, even
@@ -1441,7 +1510,7 @@ namespace Cozmo {
               if(observedMarkers.empty()) {
                 PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObservedMatWithNoObservedMarkers",
                                   "We saw a mat piece but it is returning no observed markers for "
-                                  "the current timestamp.\n");
+                                  "the current timestamp.");
                 CORETECH_ASSERT(false); // TODO: handle this situation
               }
               
@@ -1450,7 +1519,7 @@ namespace Cozmo {
                 if(obsMarker->GetPose().GetWithRespectTo(_robot->GetPose(), markerWrtRobot) == false) {
                   PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.ObsMarkerPoseOriginMisMatch",
                                     "Could not get the pose of an observed marker w.r.t. the robot that "
-                                    "supposedly observed it.\n");
+                                    "supposedly observed it.");
                   CORETECH_ASSERT(false); // TODO: handle this situation
                 }
                 
@@ -1464,7 +1533,7 @@ namespace Cozmo {
             } // for each mat seen
             
             PRINT_LOCALIZATION_INFO("BLockWorld.UpdateRobotPose.NotOnMatLocalizationToClosest",
-                                    "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.\n",
+                                    "Robot %d is not on a mat but will localize to %s mat ID=%d, which is the closest.",
                                     _robot->GetID(), closestMat->GetType().GetName().c_str(), closestMat->GetID().GetValue());
             
             matToLocalizeTo = closestMat;
@@ -1528,7 +1597,7 @@ namespace Cozmo {
               if(existingObjects.size() > 1) {
                 PRINT_NAMED_WARNING("BlockWorld.UpdateRobotPose.MultipleExistingObjectMatches",
                               "Robot %d found multiple existing mats matching the one it "
-                              "will localize to - using first.\n", _robot->GetID());
+                              "will localize to - using first.", _robot->GetID());
               }
               
               // We are localizing to an existing mat piece: do not attempt to
@@ -1538,7 +1607,7 @@ namespace Cozmo {
               CORETECH_ASSERT(existingMatPiece != nullptr);
               
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.LocalizingToExistingMat",
-                                      "Robot %d localizing to existing %s mat with ID=%d.\n",
+                                      "Robot %d localizing to existing %s mat with ID=%d.",
                                       _robot->GetID(), existingMatPiece->GetType().GetName().c_str(),
                                       existingMatPiece->GetID().GetValue());
             }
@@ -1579,7 +1648,7 @@ namespace Cozmo {
                !AreUnitVectorsAligned(rotAxis, Z_AXIS_3D(), DEG_TO_RAD(45)))  // That rotation's axis more than 45 degrees from vertical
             {
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
-                               "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.\n",
+                               "Ignoring observation of %s mat with rotation %.1f degrees around (%.1f,%.1f,%.1f) axis.",
                                ObjectTypeToString(matSeen->GetType()),
                                rotAngle.getDegrees(),
                                rotAxis.x(), rotAxis.y(), rotAxis.z());
@@ -1602,7 +1671,7 @@ namespace Cozmo {
               newMatPiece->UpdateMarkerObservationTimes(*matSeen);
               
               PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose",
-                               "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)\n",
+                               "Adding new %s mat with ID=%d at (%.1f, %.1f, %.1f)",
                                ObjectTypeToString(newMatPiece->GetType()),
                                newMatPiece->GetID().GetValue(),
                                newMatPiece->GetPose().GetTranslation().x(),
@@ -1618,7 +1687,7 @@ namespace Cozmo {
             else {
               if(overlappingObjects.size() > 1) {
                 PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose",
-                                        "More than one overlapping mat found -- will use first.\n");
+                                        "More than one overlapping mat found -- will use first.");
                 // TODO: do something smarter here?
               }
               
@@ -1652,7 +1721,7 @@ namespace Cozmo {
                 Pose3d newPose;
                 if(localizedToMat->GetPose().GetWithRespectTo(matSeen->GetPose(), newPose) == false) {
                   PRINT_NAMED_ERROR("BlockWorld.UpdateRobotPose.FailedToUpdateWrtObservedOrigin",
-                                    "Robot %d failed to get pose of existing %s mat it is on w.r.t. observed world origin mat.\n",
+                                    "Robot %d failed to get pose of existing %s mat it is on w.r.t. observed world origin mat.",
                                     robot->GetID(), existingMatPiece->GetType().GetName().c_str());
                 }
                 newPose.SetParent(robot->GetWorldOrigin());
@@ -1677,7 +1746,7 @@ namespace Cozmo {
         for(auto obsMarker : observedMarkers) {
           /*
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.AddingMatMarkerOccluder",
-                           "Adding mat marker '%s' as an occluder for robot %d.\n",
+                           "Adding mat marker '%s' as an occluder for robot %d.",
                            Vision::MarkerTypeStrings[obsMarker->GetCode()],
                            robot->GetID());
            */
@@ -1690,14 +1759,14 @@ namespace Cozmo {
         // snapped into place.
         if(!wasLocalized && robot->IsLocalized()) {
           PRINT_NAMED_INFO("BlockWorld.UpdateRobotPose.RobotRelocalized",
-                           "Robot %d just localized after being de-localized.\n", robot->GetID());
+                           "Robot %d just localized after being de-localized.", robot->GetID());
           DrawAllObjects();
         }
         */
       } // IF any mat piece was seen
 
       if(wasPoseUpdated) {
-        PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.RobotPoseChain", "%s\n",
+        PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.RobotPoseChain", "%s",
                                 _robot->GetPose().GetNamedPathToOrigin(true).c_str());
       }
       
@@ -1707,8 +1776,7 @@ namespace Cozmo {
     
     Result BlockWorld::UpdateObjectPoses(PoseKeyObsMarkerMap_t& obsMarkersAtTimestamp,
                                          const ObjectFamily& inFamily,
-                                         const TimeStamp_t atTimestamp,
-                                         size_t& numObjectsUpdated)
+                                         const TimeStamp_t atTimestamp)
     {
       const ObservableObjectLibrary& objectLibrary = _objectLibrary[inFamily];
       
@@ -1747,12 +1815,10 @@ namespace Cozmo {
         // Use them to add or update existing blocks in our world
         Result lastResult = AddAndUpdateObjects(objectsSeen, inFamily, atTimestamp);
         if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateFailed", "\n");
+          PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateFailed", "");
           return lastResult;
         }
       }
-      
-      numObjectsUpdated = objectsSeen.size();
       
       return RESULT_OK;
       
@@ -1907,18 +1973,58 @@ namespace Cozmo {
 
       AddNewObject(ObjectFamily::MarkerlessObject, m);
       _didObjectsChange = true;
-      
+      _currentObservedObjects.push_back(m);
       
       return RESULT_OK;
     }
 
-
-    
-    
-    Result BlockWorld::Update(uint32_t& numObjectsObserved)
+  
+    void BlockWorld::RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers)
     {
-      numObjectsObserved = 0;
+      for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)
+      {
+        const Vision::ObservedMarker& marker1    = markerIter1->second;
+        const TimeStamp_t             timestamp1 = markerIter1->first;
+        
+        for(auto markerIter2 = currentObsMarkers.begin(); markerIter2 != currentObsMarkers.end(); /* incrementing decided in loop */ )
+        {
+          const Vision::ObservedMarker& marker2    = markerIter2->second;
+          const TimeStamp_t             timestamp2 = markerIter2->first;
+          
+          // These two markers must be different and observed at the same time
+          if(markerIter1 != markerIter2 && timestamp1 == timestamp2) {
+            
+            // See if #2 is inside #1
+            bool marker2isInsideMarker1 = true;
+            for(auto & corner : marker2.GetImageCorners()) {
+              if(marker1.GetImageCorners().Contains(corner) == false) {
+                marker2isInsideMarker1 = false;
+                break;
+              }
+            }
+            
+            if(marker2isInsideMarker1) {
+              PRINT_NAMED_INFO("BlockWorld.Update",
+                               "Removing %s marker completely contained within %s marker.\n",
+                               marker1.GetCodeName(), marker2.GetCodeName());
+              // Note: erase does increment of iterator for us
+              markerIter2 = currentObsMarkers.erase(markerIter2);
+            } else {
+              // Need to iterate marker2
+              ++markerIter2;
+            } // if/else marker2isInsideMarker1
+          } else {
+            // Need to iterate marker2
+            ++markerIter2;
+          } // if/else marker1 != marker2 && time1 != time2
+        } // for markerIter2
+      } // for markerIter1
       
+    } // RemoveMarkersWithinMarkers()
+  
+  
+    Result BlockWorld::Update()
+    {
       // New timestep, new set of occluders.  Get rid of anything registered as
       // an occluder with the robot's camera
       _robot->GetVisionComponent().GetCamera().ClearOccluders();
@@ -1928,6 +2034,8 @@ namespace Cozmo {
       //_currentObservedObjectIDs.clear();
       
       static TimeStamp_t lastObsMarkerTime = 0;
+      
+      _currentObservedObjects.clear();
       
       // Now we're going to process all the observed messages, grouped by
       // timestamp
@@ -1951,52 +2059,14 @@ namespace Cozmo {
         for(auto poseKeyMarkerPair = currentObsMarkers.begin(); poseKeyMarkerPair != currentObsMarkers.end();) {
           if ((poseKeyMarkerPair->second.GetSeenBy().GetID() == _robot->GetVisionComponent().GetCamera().GetID()) &&
               !_robot->IsValidPoseKey(poseKeyMarkerPair->first)) {
-            PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d\n", poseKeyMarkerPair->first);
+            PRINT_NAMED_WARNING("BlockWorld.Update.InvalidHistPoseKey", "key=%d", poseKeyMarkerPair->first);
             poseKeyMarkerPair = currentObsMarkers.erase(poseKeyMarkerPair);
           } else {
             ++poseKeyMarkerPair;
           }
         }
         
-        // Remove markers enclosed within other markers:
-        for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)
-        {
-          const Vision::ObservedMarker& marker1    = markerIter1->second;
-          const TimeStamp_t             timestamp1 = markerIter1->first;
-          
-          for(auto markerIter2 = currentObsMarkers.begin(); markerIter2 != currentObsMarkers.end(); /* incrementing decided in loop */ )
-          {
-            const Vision::ObservedMarker& marker2    = markerIter2->second;
-            const TimeStamp_t             timestamp2 = markerIter2->first;
-            
-            // These two markers must be different and observed at the same time
-            if(markerIter1 != markerIter2 && timestamp1 == timestamp2) {
-              
-              // See if #2 is inside #1
-              bool marker2isInsideMarker1 = true;
-              for(auto & corner : marker2.GetImageCorners()) {
-                if(marker1.GetImageCorners().Contains(corner) == false) {
-                  marker2isInsideMarker1 = false;
-                  break;
-                }
-              }
-              
-              if(marker2isInsideMarker1) {
-                PRINT_NAMED_INFO("BlockWorld.Update",
-                                 "Removing %s marker completely contained within %s marker.\n",
-                                 marker1.GetCodeName(), marker2.GetCodeName());
-                // Note: erase does increment of iterator for us
-                markerIter2 = currentObsMarkers.erase(markerIter2);
-              } else {
-                // Need to iterate marker2
-                ++markerIter2;
-              } // if/else marker2isInsideMarker1
-            } else {
-              // Need to iterate marker2
-              ++markerIter2;
-            } // if/else marker1 != marker2 && time1 != time2
-          } // for markerIter2
-        } // for markerIter1
+        RemoveMarkersWithinMarkers(currentObsMarkers);
         
         // Only update robot's poses using VisionMarkers while not on a ramp
         if(!_robot->IsOnRamp()) {
@@ -2010,7 +2080,6 @@ namespace Cozmo {
         _didObjectsChange = false;
 
         Result updateResult;
-        size_t numUpdated;
 
         //
         // Find any observed active blocks from the remaining markers.
@@ -2018,41 +2087,37 @@ namespace Cozmo {
         // other objects found below will be more accurately localized.
         //
         // Note that this removes markers from the list that it uses
-        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::LightCube, atTimestamp, numUpdated);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::LightCube, atTimestamp);
         if(updateResult != RESULT_OK) {
           return updateResult;
         }
-        numObjectsObserved += numUpdated;
         
         //
         // Find any observed blocks from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Block, atTimestamp, numUpdated);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Block, atTimestamp);
         if(updateResult != RESULT_OK) {
           return updateResult;
         }
-        numObjectsObserved += numUpdated;
         
         //
         // Find any observed ramps from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Ramp, atTimestamp, numUpdated);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Ramp, atTimestamp);
         if(updateResult != RESULT_OK) {
           return updateResult;
         }
-        numObjectsObserved += numUpdated;
         
         //
         // Find any observed chargers from the remaining markers
         //
         // Note that this removes markers from the list that it uses
-        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp, numUpdated);
+        updateResult = UpdateObjectPoses(currentObsMarkers, ObjectFamily::Charger, atTimestamp);
         if(updateResult != RESULT_OK) {
           return updateResult;
         }
-        numObjectsObserved += numUpdated;
         
 
         // TODO: Deal with unknown markers?
@@ -2063,13 +2128,13 @@ namespace Cozmo {
         
         for(auto & unusedMarker : currentObsMarkers) {
           PRINT_NAMED_INFO("BlockWorld.Update.UnusedMarker",
-                           "An observed %s marker went unused.\n",
+                           "An observed %s marker went unused.",
                            unusedMarker.second.GetCodeName());
         }
         
         // Delete any objects that should have been observed but weren't,
         // visualize objects that were observed:
-        numObjectsObserved += CheckForUnobservedObjects(atTimestamp);
+        CheckForUnobservedObjects(atTimestamp);
         
       } // for element in _obsMarkers
       
@@ -2077,18 +2142,25 @@ namespace Cozmo {
         // Even if there were no markers observed, check to see if there are
         // any previously-observed objects that are partially visible (some part
         // of them projects into the image even if none of their markers fully do)
-        numObjectsObserved += CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
+        CheckForUnobservedObjects(_robot->GetLastImageTimeStamp());
       }
       
-      if(numObjectsObserved == 0) {
+      if(_currentObservedObjects.empty()) {
         // If we didn't see/update anything, send a signal saying so
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
+      } else {
+        // See if the type of object the robot is tracking to got updated
+        Result trackResult = UpdateTrackToObject();
+        if(RESULT_OK != trackResult) {
+          PRINT_NAMED_WARNING("BlockWorld.Update.UpdateTrackToFailed", "");
+        }
       }
       
-      //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks\n", numBlocksObserved);
+      //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
       
       // Check for unobserved, uncarried objects that overlap with any robot's position
       // TODO: better way of specifying which objects are obstacles and which are not
+      // TODO: Move this giant loop to its own method
       for(auto & objectsByFamily : _existingObjects)
       {
         // For now, look for collision with anything other than Mat objects
@@ -2155,7 +2227,7 @@ namespace Cozmo {
                     if( inSamePlane && bboxIntersects )
                     {
                       PRINT_NAMED_INFO("BlockWorld.Update",
-                                       "Removing object %d, which intersects robot %d's bounding quad.\n",
+                                       "Removing object %d, which intersects robot %d's bounding quad.",
                                        object->GetID().GetValue(), _robot->GetID());
                       
                       // Erase the vizualized block and its projected quad
@@ -2178,7 +2250,7 @@ namespace Cozmo {
       if(numUnusedMarkers > 0) {
         if (!_robot->IsPhysical() || !SKIP_PHYS_ROBOT_LOCALIZATION) {
           PRINT_NAMED_WARNING("BlockWorld.Update.UnusedMarkers",
-                              "%zu observed markers did not match any known objects and went unused.\n",
+                              "%zu observed markers did not match any known objects and went unused.",
                               numUnusedMarkers);
         }
       }
@@ -2623,24 +2695,24 @@ namespace Cozmo {
         {
           for (auto const & objectsByType : objectsByFamily.second){
             
-            //PRINT_INFO("currType: %d\n", blockType.first);
+            //PRINT_INFO("currType: %d", blockType.first);
             for (auto const & objectsByID : objectsByType.second) {
               
               ActionableObject* object = dynamic_cast<ActionableObject*>(objectsByID.second);
               if(object != nullptr && object->HasPreActionPoses() && !object->IsBeingCarried() &&
                  object->GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT)
               {
-                //PRINT_INFO("currID: %d\n", block.first);
+                //PRINT_INFO("currID: %d", block.first);
                 if (currSelectedObjectFound) {
                   // Current block of interest has been found.
                   // Set the new block of interest to the next block in the list.
                   _selectedObject = object->GetID();
                   newSelectedObjectSet = true;
-                  //PRINT_INFO("new block found: id %d  type %d\n", block.first, blockType.first);
+                  //PRINT_INFO("new block found: id %d  type %d", block.first, blockType.first);
                   break;
                 } else if (object->GetID() == _selectedObject) {
                   currSelectedObjectFound = true;
-                  //PRINT_INFO("curr block found: id %d  type %d\n", block.first, blockType.first);
+                  //PRINT_INFO("curr block found: id %d  type %d", block.first, blockType.first);
                 }
               }
             } // for each ID
@@ -2689,7 +2761,7 @@ namespace Cozmo {
         if (firstObject == _selectedObject || !firstObject.IsSet()){
           //PRINT_INFO("Only one object in existence.");
         } else {
-          //PRINT_INFO("Setting object of interest to first block\n");
+          //PRINT_INFO("Setting object of interest to first block");
           _selectedObject = firstObject;
         }
       }
@@ -2761,13 +2833,13 @@ namespace Cozmo {
         const ActionableObject* selectedObject = dynamic_cast<const ActionableObject*>(GetObjectByID(GetSelectedObject()));
         if(selectedObject == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.DrawAllObjects.NullSelectedObject",
-                            "Selected object ID = %d, but it came back null.\n",
+                            "Selected object ID = %d, but it came back null.",
                             GetSelectedObject().GetValue());
         } else {
           if(selectedObject->IsSelected() == false) {
             PRINT_NAMED_WARNING("BlockWorld.DrawAllObjects.SelectionMisMatch",
                                 "Object %d is selected in BlockWorld but does not have its "
-                                "selection flag set.\n", GetSelectedObject().GetValue());
+                                "selection flag set.", GetSelectedObject().GetValue());
           }
           
           std::vector<std::pair<Quad2f,ObjectID> > obstacles;

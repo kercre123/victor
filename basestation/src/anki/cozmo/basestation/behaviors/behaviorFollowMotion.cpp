@@ -32,7 +32,10 @@ BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& conf
 {
   _name = "FollowMotion";
   
-  SubscribeToTags({MessageEngineToGameTag::RobotObservedMotion});
+  SubscribeToTags({
+    MessageEngineToGameTag::RobotObservedMotion,
+    MessageEngineToGameTag::RobotCompletedAction
+  });
 }
 
 bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
@@ -83,48 +86,67 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
   {
     case MessageEngineToGameTag::RobotObservedMotion:
     {
-      const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
-      
-      const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
-      
-      // Robot gets more happy/excited and less calm when he sees motion.
-      // (May not want to do this every time he sees motion, since it'll increase
-      //  pretty fast)
-      robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
-                                           EmotionType::Excited, kEmotionChangeSmall,
-                                           EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
-      
-      const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-      if(NEAR(motionCentroid.x(), 0.f, static_cast<f32>(calibration.GetNcols())*_imageCenterFraction) &&
-         NEAR(motionCentroid.y(), 0.f, static_cast<f32>(calibration.GetNrows())*_imageCenterFraction))
-      {
-        // Move towards the motion since it's centered
-        Pose3d newPose(robot.GetPose());
-        const f32 angleRad = newPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-        newPose.SetTranslation({newPose.GetTranslation().x() + _moveForwardDist_mm*std::cos(angleRad),
-          newPose.GetTranslation().y() + _moveForwardDist_mm*std::sin(angleRad),
-          newPose.GetTranslation().z()});
-        PathMotionProfile motionProfile(DEFAULT_PATH_MOTION_PROFILE);
-        motionProfile.speed_mmps *= _moveForwardSpeedIncrease; // Drive forward a little faster than normal
-        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot,
-                                             new DriveToPoseAction(newPose, motionProfile,
-                                                                   false, false, 50, DEG_TO_RAD(45))
-                                             );
+      // Ignore motion while an action is running
+      if(_actionRunning == 0) {
+        const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
         
-      } else {
+        const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
+        
+        // Robot gets more happy/excited and less calm when he sees motion.
+        // (May not want to do this every time he sees motion, since it'll increase
+        //  pretty fast)
+        robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
+                                             EmotionType::Excited, kEmotionChangeSmall,
+                                             EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
+        
         // Turn to face the motion:
-        // Convert image positions to desired angles (in absolute coordinates)
-        RobotInterface::PanAndTilt msg;
-        const f32 relHeadAngle_rad = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
-        msg.headTiltAngle_rad = robot.GetHeadAngle() + relHeadAngle_rad;
-        const f32 relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
-        msg.bodyPanAngle_rad = (robot.GetPose().GetRotation().GetAngleAroundZaxis() + relBodyPanAngle_rad).ToFloat();
+        // Convert image positions to desired relative angles
+        const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
+        const Radians relHeadAngle_rad    = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
+        const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
         
-        robot.SendRobotMessage<RobotInterface::PanAndTilt>(std::move(msg));
+        PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
+                         "Motion centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                         motionCentroid.x(), motionCentroid.y(),
+                         relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
+        
+        IAction* action = nullptr;
+        
+        if(relHeadAngle_rad.getAbsoluteVal() < _driveForwardTol &&
+           relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol)
+        {
+          // Move towards the motion since it's centered
+          DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
+          driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
+          
+          action = driveAction;
+          
+        } else {
+          PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,
+                                                                 false, false);
+          panTiltAction->SetPanTolerance(_panAndTiltTol);
+          panTiltAction->SetTiltTolerance(_panAndTiltTol);
+          action = panTiltAction;
+        }
+        
+        ASSERT_NAMED(nullptr != action, "Action pointer should not be null at this point");
+        
+        _actionRunning = action->GetTag();
+        
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
       }
-      
       break;
     }
+      
+    case MessageEngineToGameTag::RobotCompletedAction:
+    {
+      // If the action we were running completes, allow us to respond to motion again
+      if(event.GetData().Get_RobotCompletedAction().idTag == _actionRunning) {
+        _actionRunning = 0;
+      }
+      break;
+    }
+      
     default:
     {
       PRINT_NAMED_ERROR("BehaviorFollowMotion.HandleMotionEvent.UnknownEvent",

@@ -13,7 +13,6 @@
 
 #include <assert.h>
 #include "anki/common/types.h"
-#include "anki/common/constantsAndMacros.h"
 #include "anki/common/shared/radians.h"
 
 namespace Anki {

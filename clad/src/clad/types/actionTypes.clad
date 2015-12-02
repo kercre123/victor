@@ -34,7 +34,9 @@ enum int_32 RobotActionType {
     PLAY_ANIMATION,
     PLAY_SOUND,
     WAIT,
-    MOVE_LIFT_TO_HEIGHT
+    MOVE_LIFT_TO_HEIGHT,
+    PAN_AND_TILT,
+    DRIVE_STRAIGHT
 }
 
 

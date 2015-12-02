@@ -25,10 +25,6 @@ namespace Anki {
     u32 IActionRunner::sTagCounter = 100000;
     
     IActionRunner::IActionRunner()
-    : _numRetriesRemaining(0)
-    , _isPartOfCompoundAction(false)
-    , _isRunning(false)
-    , _isCancelled(false)
     {
       // Assign every action a unique tag
       _idTag = IActionRunner::sTagCounter++;
@@ -50,8 +46,10 @@ namespace Anki {
 
       ActionResult result = ActionResult::RUNNING;
       if(_isCancelled) {
-        PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
-                         "Cancelling %s.\n", GetName().c_str());
+        if(_displayMessages) {
+          PRINT_NAMED_INFO("IActionRunner.Update.CancelAction",
+                           "Cancelling %s.", GetName().c_str());
+        }
         result = ActionResult::CANCELLED;
         
       } else {
@@ -59,11 +57,12 @@ namespace Anki {
       }
       
       if(result != ActionResult::RUNNING) {
-        PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
-                         "%s %s.\n", GetName().c_str(),
-                         (result==ActionResult::SUCCESS ? "succeeded" :
-                          result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
-        
+        if(_displayMessages) {
+          PRINT_NAMED_INFO("IActionRunner.Update.ActionCompleted",
+                           "%s %s.", GetName().c_str(),
+                           (result==ActionResult::SUCCESS ? "succeeded" :
+                            result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
+        }
         Cleanup(robot);
         
         if(!_isPartOfCompoundAction) {
@@ -162,18 +161,19 @@ namespace Anki {
       
       // Fail if we have exceeded timeout time
       if(currentTimeInSeconds >= _timeoutTime) {
-        PRINT_NAMED_INFO("IAction.Update.TimedOut",
-                         "%s timed out after %.1f seconds.\n",
-                         GetName().c_str(), GetTimeoutInSeconds());
-        
+        if(IsMessageDisplayEnabled()) {
+          PRINT_NAMED_INFO("IAction.Update.TimedOut",
+                           "%s timed out after %.1f seconds.",
+                           GetName().c_str(), GetTimeoutInSeconds());
+        }
         result = ActionResult::FAILURE_TIMEOUT;
       }
+      
       // Don't do anything until we have reached the waitUntilTime
       else if(currentTimeInSeconds >= _waitUntilTime)
       {
-        
         if(!_preconditionsMet) {
-          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.\n", GetName().c_str());
+          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
           SetStatus(GetName() + ": check preconditions");
           
           // Note that derived classes will define what to do when pre-conditions
@@ -182,8 +182,10 @@ namespace Anki {
           // will get propagated out as the return value of the Update method.
           result = Init(robot);
           if(result == ActionResult::SUCCESS) {
-            PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
-                             "Preconditions for %s successfully met.\n", GetName().c_str());
+            if(IsMessageDisplayEnabled()) {
+              PRINT_NAMED_INFO("IAction.Update.PreconditionsMet",
+                               "Preconditions for %s successfully met.", GetName().c_str());
+            }
             
             // If preconditions were successfully met, switch result to RUNNING
             // so that we don't think the entire action is completed. (We still
@@ -201,7 +203,7 @@ namespace Anki {
         
         // Re-check if preconditions are met, since they could have _just_ been met
         if(_preconditionsMet && currentTimeInSeconds >= _waitUntilTime) {
-          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.\n", GetName().c_str());
+          //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.", GetName().c_str());
           SetStatus(GetName() + ": check if done");
           
           // Pre-conditions already met, just run until done
@@ -210,9 +212,11 @@ namespace Anki {
       } // if(currentTimeInSeconds > _waitUntilTime)
       
       if(result == ActionResult::FAILURE_RETRY && RetriesRemain()) {
-        PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
-                         "Robot %d failed running action %s. Retrying.\n",
-                         robot.GetID(), GetName().c_str());
+        if(IsMessageDisplayEnabled()) {
+          PRINT_NAMED_INFO("IAction.Update.CurrentActionFailedRetrying",
+                           "Robot %d failed running action %s. Retrying.",
+                           robot.GetID(), GetName().c_str());
+        }
         
         Reset();
         result = ActionResult::RUNNING;

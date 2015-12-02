@@ -1,7 +1,6 @@
 #ifndef COZMO_CONFIG_H
 #define COZMO_CONFIG_H
 
-#include "anki/common/constantsAndMacros.h"
 #include "anki/types.h"
 
 namespace Anki {

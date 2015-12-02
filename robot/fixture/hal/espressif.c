@@ -21,8 +21,10 @@
 #define PINC_RX           10
 #define GPIOC_RX          (1 << PINC_RX)
 
+#define PINB_BOOT         7
+
 // Uncomment the below to see why programming is failing
-//#define ESP_DEBUG
+// #define ESP_DEBUG
 
 static const int MAX_TIMEOUT = 100000; // 100ms - will retry if needed
 
@@ -89,26 +91,31 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
   { 0, 0, NULL }
 };
 
-void InitEspressif(void) {
-  // Clock configuration
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
-
+void InitEspressif(void)
+{
   // Pull PB7 (CS#) low.  This MUST happen before ProgramEspressif()
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_ResetBits(GPIOB, GPIO_Pin_7);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
 
+  // Clock configuration
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
+  
+  // Reset the UARTs since they tend to clog with framing errors
+  RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART3, ENABLE);
+  RCC_APB1PeriphResetCmd(RCC_APB1Periph_UART5, ENABLE);
+  RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART3, DISABLE);
+  RCC_APB1PeriphResetCmd(RCC_APB1Periph_UART5, DISABLE);
+
   USART_InitTypeDef USART_InitStructure;
-  
-  USART_HalfDuplexCmd(TESTPORT_RX, ENABLE);  // Enable the pin for transmitting and receiving
-  
+
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_Pin =  GPIOC_TX;
@@ -137,9 +144,20 @@ void InitEspressif(void) {
   USART_InitStructure.USART_Mode = USART_Mode_Rx;
   USART_Init(TESTPORT_RX, &USART_InitStructure);  
   USART_Cmd(TESTPORT_RX, ENABLE);
+      
+  USART_HalfDuplexCmd(TESTPORT_RX, ENABLE);  // Enable the pin for transmitting and receiving
 
   PIN_AF(GPIOC, PINC_TX);
   PIN_AF(GPIOC, PINC_RX);
+}
+
+void DeinitEspressif(void)
+{
+  // Don't leave the Espressif powered, that's mean
+  PIN_IN(GPIOC, PINC_TX);
+  
+  // XXX: I'm at a loss who is driving PINB_BOOT high - but make sure it's not!
+  GPIO_RESET(GPIOB, PINB_BOOT);
 }
 
 static inline int BlockCount(int length) {
@@ -315,7 +333,7 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   return -1;
 }
 
-static bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
+bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {
   union {
     uint8_t reply_buffer[0x100];
   };
@@ -381,8 +399,6 @@ void ProgramEspressif(void)
 {
   SlowPrintf("ESP Syncronizing...");
 
-  // Note:  This is sensitive to delay - we must start sync immediately after power up
-  EnableBAT();
   if (!ESPSync()) { 
     SlowPrintf("Sync Failed.\n");
     throw ERROR_HEAD_RADIO_SYNC;

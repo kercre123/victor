@@ -357,7 +357,7 @@ namespace Anki {
           if(ctr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
                              "Waiting for robot to complete its path traversal (%d), "
-                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.\n", ctr,
+                             "_currPathSegment=%d, _lastSentPathID=%d, _lastRecvdPathID=%d.", ctr,
                              robot.GetCurrentPathSegment(), robot.GetLastSentPathID(), robot.GetLastRecvdPathID());
           }
           break;
@@ -720,7 +720,7 @@ namespace Anki {
           } else {
             const f32 distanceSq = (Point2f(objectPoseWrtRobotParent.GetTranslation()) - Point2f(robot.GetPose().GetTranslation())).LengthSq();
             if(distanceSq > _distance_mm*_distance_mm) {
-              PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.");
+              PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not close enough, will return FAILURE_RETRY.");
               result = ActionResult::FAILURE_RETRY;
             }
           }
@@ -731,7 +731,7 @@ namespace Anki {
           result = GetPossiblePoses(robot, object, possiblePoses, inPosition);
           
           if(!inPosition) {
-            PRINT_NAMED_WARNING("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.");
+            PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone", "Robot not in position, will return FAILURE_RETRY.");
             result = ActionResult::FAILURE_RETRY;
           }
         }
@@ -838,10 +838,8 @@ namespace Anki {
     
 #pragma mark ---- TurnInPlaceAction ----
     
-    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute, const Radians& variability)
-    : DriveToPoseAction(DEFAULT_PATH_MOTION_PROFILE, false, false)
-    , _turnAngle(angle)
-    , _variability(variability)
+    TurnInPlaceAction::TurnInPlaceAction(const Radians& angle, const bool isAbsolute)
+    : _targetAngle(angle)
     , _isAbsoluteAngle(isAbsolute)
     {
       
@@ -861,70 +859,208 @@ namespace Anki {
       if (!_isAbsoluteAngle) {
         heading = robot.GetPose().GetRotationAngle<'Z'>();
       }
-      Pose3d rotatedPose;
-      Pose3d dcPose = robot.GetDriveCenterPose();
       
       Radians newAngle(heading);
-      newAngle += _turnAngle;
+      newAngle += _targetAngle;
       if(_variability != 0) {
         newAngle += _rng.RandDblInRange(-_variability.ToDouble(),
-                                         _variability.ToDouble());
+                                        _variability.ToDouble());
       }
+      
+      Pose3d rotatedPose;
+      Pose3d dcPose = robot.GetDriveCenterPose();
       dcPose.SetRotation(newAngle, Z_AXIS_3D());
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
-      SetGoal(rotatedPose);
+      _targetAngle = rotatedPose.GetRotation().GetAngleAroundZaxis();
       
-      _startedTraversingPath = false;
+      Radians currentAngle;
+      _inPosition = IsBodyInPosition(robot, currentAngle);
       
-      // Now that goal is set, call the base class init to send the path, etc.
-      return DriveToPoseAction::Init(robot);
+      if(_inPosition) {
+        // Already "in position" according to the turn tolerance, so just move the
+        // eyes
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        const Radians angleDiff = _targetAngle - currentAngle;
+        const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / SCREEN_SIZE[0]);
+        robot.ShiftEyes(xPixShift, 0, 66); // TODO: How to set the duration?
+      } else {
+        RobotInterface::SetBodyAngle setBodyAngle;
+        setBodyAngle.angle_rad             = _targetAngle.ToFloat();
+        setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
+        setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
+        if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+          return ActionResult::FAILURE_RETRY;
+        }
+      }
+    
+      return ActionResult::SUCCESS;
+    }
+
+    
+    bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
+    {
+      currentAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      const bool inPosition = NEAR(currentAngle-_targetAngle, 0.f, _angleTolerance);
+      return inPosition;
     }
     
-    ActionResult TurnInPlaceAction::CheckIfDone(Robot& robot)
+    ActionResult TurnInPlaceAction::CheckIfDone(Robot &robot)
     {
       ActionResult result = ActionResult::RUNNING;
       
-      if(!_startedTraversingPath) {
-        // Wait until robot reports it has started traversing the path
-        _startedTraversingPath = robot.IsTraversingPath();
-        
+      Radians currentAngle;
+      
+      if(!_inPosition) {
+        _inPosition = IsBodyInPosition(robot, currentAngle);
+      }
+      
+      // Wait to get a state message back from the physical robot saying its body
+      // is in the commanded position
+      // TODO: Is this really necessary in practice?
+      if(_inPosition) {
+        result = ActionResult::SUCCESS;
       } else {
-        // Wait until robot reports it is no longer traversing a path
-        if(!robot.IsTraversingPath()) {
-            result = ActionResult::SUCCESS;
-        }
+        PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
+                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f)",
+                         currentAngle.getDegrees(), _targetAngle.getDegrees(), _variability.getDegrees());
       }
       
       return result;
-    } // TurnInPlaceAction::CheckIfDone()
+    }
 
+#pragma mark ---- DriveStraightAction ----
+    
+    DriveStraightAction::DriveStraightAction(f32 dist_mm, f32 speed_mmps)
+    : _dist_mm(dist_mm)
+    , _speed_mmps(std::abs(speed_mmps))
+    {
+      
+    }
+    
+    ActionResult DriveStraightAction::Init(Robot &robot)
+    {
+      const Radians heading = robot.GetPose().GetRotation().GetAngleAroundZaxis();
+      
+      const Vec3f& T = robot.GetPose().GetTranslation();
+      const f32 x_start = T.x();
+      const f32 y_start = T.y();
+      
+      const f32 x_end = x_start + _dist_mm * std::cos(heading.ToFloat());
+      const f32 y_end = y_start + _dist_mm * std::sin(heading.ToFloat());
+      
+      Planning::Path path;
+      // TODO: does matID matter? I'm just using 0 below
+      if(false  == path.AppendLine(0, x_start, y_start, x_end, y_end,
+                                   _speed_mmps, _accel_mmps2, _decel_mmps2))
+      {
+        PRINT_NAMED_ERROR("DriveStraightAction.Init.AppendLineFailed", "");
+        return ActionResult::FAILURE_ABORT;
+      }
+      
+      _name = ("DriveStraight" + std::to_string(_dist_mm) + "mm@" +
+               std::to_string(_speed_mmps) + "mmpsAction");
+      
+      _hasStarted = false;
+      
+      // Tell robot to execute this simple path
+      if(RESULT_OK != robot.ExecutePath(path, false)) {
+        return ActionResult::FAILURE_ABORT;
+      }
+
+      return ActionResult::SUCCESS;
+    }
+    
+    ActionResult DriveStraightAction::CheckIfDone(Robot &robot)
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      if(!_hasStarted) {
+        PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
+        _hasStarted = robot.IsTraversingPath();
+      } else if(/*hasStarted AND*/ !robot.IsTraversingPath()) {
+        result = ActionResult::SUCCESS;
+      }
+      
+      return result;
+    }
+    
+#pragma mark ---- PanAndTiltAction ----
+    
+    PanAndTiltAction::PanAndTiltAction(Radians bodyPan, Radians headTilt,
+                                       bool isPanAbsolute, bool isTiltAbsolute)
+    : _compoundAction{}
+    , _bodyPanAngle(bodyPan)
+    , _headTiltAngle(headTilt)
+    , _isPanAbsolute(isPanAbsolute)
+    , _isTiltAbsolute(isTiltAbsolute)
+    {
+
+    }
+    
+    void PanAndTiltAction::Reset()
+    {
+      IAction::Reset();
+      _compoundAction.ClearActions();
+    }
+    
+    ActionResult PanAndTiltAction::Init(Robot &robot)
+    {
+      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
+      
+      TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
+      action->SetTolerance(_panAngleTol);
+      _compoundAction.AddAction(action);
+      
+      const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
+      _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol));
+      
+      // Put the angles in the name for debugging
+      _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
+               "AndTilt" + std::to_string(std::round(_headTiltAngle.getDegrees())) +
+               "Action");
+      
+      // Prevent the compound action from signaling completion
+      _compoundAction.SetIsPartOfCompoundAction(true);
+      
+      // Go ahead and do the first Update for the compound action so we don't
+      // "waste" the first CheckIfDone call doing so. Proceed so long as this
+      // first update doesn't _fail_
+      ActionResult compoundResult = _compoundAction.Update(robot);
+      if(ActionResult::SUCCESS == compoundResult ||
+         ActionResult::RUNNING == compoundResult)
+      {
+        return ActionResult::SUCCESS;
+      } else {
+        return compoundResult;
+      }
+      
+    } // PanAndTiltAction::Init()
+    
+    
+    ActionResult PanAndTiltAction::CheckIfDone(Robot& robot)
+    {
+      return _compoundAction.Update(robot);
+    }
     
 #pragma mark ---- FacePoseAction ----
     
     FacePoseAction::FacePoseAction(const Pose3d& pose, Radians turnAngleTol, Radians maxTurnAngle)
-    : _compoundAction{}
+    : PanAndTiltAction(0,0,false,true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
-    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-
+      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
     FacePoseAction::FacePoseAction(Radians turnAngleTol, Radians maxTurnAngle)
-    : _compoundAction{}
+    : PanAndTiltAction(0,0,false,true)
     , _isPoseSet(false)
-    , _turnAngleTol(turnAngleTol.getAbsoluteVal())
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
-      
-    }
-    
-    void FacePoseAction::Reset()
-    {
-      IAction::Reset();
-      _compoundAction.ClearActions();
+      PanAndTiltAction::SetPanTolerance(turnAngleTol);
     }
     
     Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
@@ -967,14 +1103,8 @@ namespace Anki {
         PRINT_NAMED_INFO("FacePoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg", turnAngle.getDegrees());
         
-        if(turnAngle.getAbsoluteVal() < _maxTurnAngle) {
-          if(turnAngle.getAbsoluteVal() > _turnAngleTol) {
-            _compoundAction.AddAction(new TurnInPlaceAction(turnAngle, false));
-          } else {
-            PRINT_NAMED_INFO("FacePoseAction.Init.NoTurnNeeded",
-                             "Required turn angle of %.1fdeg is within tolerance of %.1fdeg. Not turning.",
-                             turnAngle.getDegrees(), _turnAngleTol.getDegrees());
-          }
+        if(turnAngle.getAbsoluteVal() <= _maxTurnAngle) {
+          SetBodyPanAngle(turnAngle);
         } else {
           PRINT_NAMED_ERROR("FacePoseAction.Init.RequiredTurnTooLarge",
                             "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
@@ -991,30 +1121,12 @@ namespace Anki {
       const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
       Radians headAngle = GetHeadAngle(heightDiff);
       
-      _compoundAction.AddAction(new MoveHeadToAngleAction(headAngle));
+      SetHeadTiltAngle(headAngle);
       
-      // Prevent the compound action from signaling completion
-      _compoundAction.SetIsPartOfCompoundAction(true);
-      
-      // Go ahead and do the first Update for the compound action so we don't
-      // "waste" the first CheckIfDone call doing so. Proceed so long as this
-      // first update doesn't _fail_
-      ActionResult compoundResult = _compoundAction.Update(robot);
-      if(ActionResult::SUCCESS == compoundResult ||
-         ActionResult::RUNNING == compoundResult)
-      {
-        return ActionResult::SUCCESS;
-      } else {
-        return compoundResult;
-      }
+      // Proceed with base class's Init()
+      return PanAndTiltAction::Init(robot);
       
     } // FacePoseAction::Init()
-    
-    
-    ActionResult FacePoseAction::CheckIfDone(Robot& robot)
-    {
-      return _compoundAction.Update(robot);
-    }
     
     const std::string& FacePoseAction::GetName() const
     {
@@ -1294,9 +1406,9 @@ namespace Anki {
       const TimeStamp_t lastObserved = object->GetLastObservedTime();
       if (lastObserved < robot.GetLastImageTimeStamp() - DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS)
       {
-        PRINT_NAMED_WARNING("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
-                            "Object still exists, but not seen since %d (Current time = %d)",
-                            lastObserved, robot.GetLastImageTimeStamp());
+        PRINT_NAMED_INFO("VisuallyVerifyObjectAction.CheckIfDone.ObjectNotFound",
+                         "Object still exists, but not seen since %d (Current time = %d, will fail in %f (s))",
+                         lastObserved, robot.GetLastImageTimeStamp(), _waitToVerifyTime - currentTime);
         actionRes = ActionResult::FAILURE_ABORT;
       }
       
@@ -1337,7 +1449,7 @@ namespace Anki {
     
 #pragma mark ---- MoveHeadToAngleAction ----
     
-    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const f32 tolerance, const Radians& variability)
+    MoveHeadToAngleAction::MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance, const Radians& variability)
     : _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)
@@ -1365,8 +1477,7 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition(const Robot& robot) const
     {
-      const bool inPosition = NEAR(robot.GetHeadAngle(), _headAngle.ToFloat(),
-                                   _angleTolerance.ToFloat());
+      const bool inPosition = NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _angleTolerance);
       
       return inPosition;
     }
@@ -1378,9 +1489,18 @@ namespace Anki {
       
       _inPosition = IsHeadInPosition(robot);
       
-      if(!_inPosition) {
-        // TODO: Add ability to specify speed/accel
-        if(robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(), 15, 20) != RESULT_OK) {
+      if(_inPosition) {
+        // If we are already "in position" according to the tolerance, just move the
+        // eyes
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
+        const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+        const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
+        robot.ShiftEyes(0, yPixShift, 66); // TODO: How to set the duration of the eye shift?
+      } else {
+        if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
+                                                                 _maxSpeed_radPerSec, _accel_radPerSec2))
+        {
           result = ActionResult::FAILURE_ABORT;
         }
       }

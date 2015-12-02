@@ -391,6 +391,7 @@
             ],
             'dependencies': [
               'robotClad',
+              '<(ce-util_gyp_path):util',
               '<(ce-cti_gyp_path):ctiCommonRobot',
             ],
             'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
@@ -470,7 +471,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-cti_gyp_path):ctiMessagingRobot',
               '<(ce-cti_gyp_path):ctiPlanningRobot',
-              '<(ce-util_gyp_path):utilEmbedded',
+              '<(ce-util_gyp_path):util',
               'robotClad',
             ],
             'sources': [ '<!@(cat <(ctrlRobot_source))' ],

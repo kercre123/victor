@@ -1,7 +1,7 @@
 #include "anki/planning/shared/path.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/utilities_shared.h"
-#include "anki/common/constantsAndMacros.h"
+#include "util/math/constantsAndMacros.h"
 #include <assert.h>
 #include <math.h>
 #include <string.h>

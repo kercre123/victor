@@ -341,7 +341,7 @@ namespace Cozmo {
     
     // Returns the interpolated face params between the current keyframe and the next.
     // If the nextFrame is nullptr, then this frame's procedural face params are returned.
-    ProceduralFaceParams GetInterpolatedFaceParams(const ProceduralFaceKeyFrame* nextFrame);
+    ProceduralFaceParams GetInterpolatedFaceParams(const ProceduralFaceKeyFrame& nextFrame, const TimeStamp_t currentTime_ms);
     
     static const std::string& GetClassName() {
       static const std::string ClassName("ProceduralFaceKeyFrame");

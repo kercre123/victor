@@ -3,9 +3,9 @@
 
 #include "anki/common/robot/array2d.h"
 
-#include "utilEmbedded/transport/IUnreliableTransport.h"
-#include "utilEmbedded/transport/IReceiver.h"
-#include "utilEmbedded/transport/reliableTransport.h"
+#include "../sim_hal/transport/IUnreliableTransport.h"
+#include "../sim_hal/transport/IReceiver.h"
+#include "../sim_hal/transport/reliableTransport.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
@@ -359,14 +359,11 @@ namespace Anki {
         HeadController::SetAngleRad(msg.newAngle);
       }
 
-      void Process_panAndTiltHead(const RobotInterface::PanAndTilt& msg)
+      void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
       {
-        // TODO: Move this to some kind of VisualInterestTrackingController or something
-
-        HeadController::SetDesiredAngle(msg.headTiltAngle_rad, 0.1f, 0.1f, 0.1f);
-        if(msg.bodyPanAngle_rad != 0.f) {
-          SteeringController::ExecutePointTurn(msg.bodyPanAngle_rad, 50.f, 10.f, 10.f, true);
-        }
+        SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,
+                                             msg.accel_rad_per_sec2,
+                                             msg.accel_rad_per_sec2, true);
       }
       
       void Process_setCarryState(const CarryState& state)
@@ -582,6 +579,10 @@ namespace Anki {
       void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
       {
         // Nothing to do here
+      }
+      void Process_setRawPWM(Anki::Cozmo::RawPWM const&)
+      {
+        // Not used here
       }
       
 // ----------- Send messages -----------------

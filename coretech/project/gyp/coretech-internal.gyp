@@ -510,6 +510,9 @@
           '../../common/include',
         ],
       },
+      'dependencies': [
+        '<(cti-util_gyp_path):util'
+      ],
       'type': '<(common_robot_library_type)',
     },
 
@@ -593,13 +596,13 @@
       },
       'dependencies': [
         'ctiCommonRobot',
+        '<(cti-util_gyp_path):util'
       ],
       'defines': [
         'CORETECH_ROBOT'
       ],
       'type': '<(planning_robot_library_type)',
     },
-
     {
       'target_name': 'ctiVision',
       'sources': [ '<!@(cat <(vision_source))' ],
@@ -648,6 +651,7 @@
       'dependencies': [
         'ctiCommonRobot',
         '<(cti-util_gyp_path):jsoncpp',
+        '<(cti-util_gyp_path):util'
       ],
       'type': '<(vision_robot_library_type)',
     },
