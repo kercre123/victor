@@ -1,7 +1,8 @@
 {
   "Name": "IntroSequence",
   "RequiresConditionRemainsMet": false,
-  "Repeatable": true,
+  "ActivateOnConditionMet": true,
+  "Repeatable": false,
   "Condition": null,
   "Nodes": [
     {
