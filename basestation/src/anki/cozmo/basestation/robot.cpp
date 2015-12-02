@@ -962,6 +962,7 @@ namespace Anki {
       }
         
       //////// Stream Animations /////////
+      
       Result animStreamResult = _animationStreamer.Update(*this);
       if(animStreamResult != RESULT_OK) {
         PRINT_NAMED_WARNING("Robot.Update",
@@ -1407,18 +1408,21 @@ namespace Anki {
     
     void Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms)
     {
-      PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
-      
-      ProceduralFace procFace;
-      procFace.GetParams().SetFacePosition({xPix, yPix});
-      
-      ProceduralFaceKeyFrame kf(procFace, duration_ms);
-      kf.SetIsLive(true);
-      
-      AnimationStreamer::FaceTrack faceTrack;
-      faceTrack.AddKeyFrame(std::move(kf));
-      
-      _animationStreamer.AddFaceLayer(std::move(faceTrack));
+      if(xPix != 0 || yPix != 0.f)
+      {
+        PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
+        
+        ProceduralFace procFace;
+        procFace.GetParams().SetFacePosition({xPix, yPix});
+        
+        ProceduralFaceKeyFrame kf(procFace, duration_ms);
+        kf.SetIsLive(true);
+        
+        AnimationStreamer::FaceTrack faceTrack;
+        faceTrack.AddKeyFrame(std::move(kf));
+        
+        _animationStreamer.AddFaceLayer(std::move(faceTrack));
+      }
     }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
