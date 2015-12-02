@@ -31,19 +31,16 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
 : IReactionaryBehavior(robot, config)
 {
   _name = "ReactToCliff";
-  
+
   // These are the tags that should trigger this behavior to be switched to immediately
-  auto triggerTags = { MessageEngineToGameTag::CliffEvent };
-  _engineToGameTags = triggerTags;
-  
-  // We're going to subscribe to our trigger events, plus others
-  std::vector<MessageEngineToGameTag> subscribedEvents = triggerTags;
-  subscribedEvents.insert(subscribedEvents.end(), {
-    MessageEngineToGameTag::CliffEvent,
-    MessageEngineToGameTag::RobotCompletedAction,
+  SubscribeToTriggerTags({
+    EngineToGameTag::CliffEvent
   });
   
-  SubscribeToTags(std::move(subscribedEvents));
+  // These are additional tags that this behavior should handle
+  SubscribeToTags({
+    EngineToGameTag::RobotCompletedAction
+  });
 }
 
 bool BehaviorReactToCliff::IsRunnable(const Robot& robot, double currentTime_sec) const

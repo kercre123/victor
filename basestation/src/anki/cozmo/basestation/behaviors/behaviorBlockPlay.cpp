@@ -45,14 +45,15 @@ namespace Cozmo {
   {
     _name = "BlockPlay";
     
-    SubscribeToTags({
+    SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::BlockPlaced,
       EngineToGameTag::RobotObservedFace,
       EngineToGameTag::RobotDeletedFace
-    });
+    }});
+
 
   }
   

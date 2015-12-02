@@ -39,11 +39,11 @@ namespace Cozmo {
 
     // TODO: Init timeouts, etc, from Json config
 
-    SubscribeToTags({
+    SubscribeToTags({{
       EngineToGameTag::RobotObservedFace,
       EngineToGameTag::RobotDeletedFace,
       EngineToGameTag::RobotCompletedAction
-    });
+    }});
     
     // Primarily loneliness and then boredom -> InteractWithFaces
     AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));

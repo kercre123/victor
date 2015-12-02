@@ -31,11 +31,12 @@ BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& conf
 : IBehavior(robot, config)
 {
   _name = "FollowMotion";
-  
-  SubscribeToTags({
-    MessageEngineToGameTag::RobotObservedMotion,
-    MessageEngineToGameTag::RobotCompletedAction
-  });
+
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedMotion,
+    EngineToGameTag::RobotCompletedAction
+  }});
+
 }
 
 bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec) const

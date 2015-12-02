@@ -30,19 +30,18 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
 : IReactionaryBehavior(robot, config)
 {
   _name = "ReactToPickup";
-  
+ 
   // These are the tags that should trigger this behavior to be switched to immediately
-  auto triggerTags = { MessageEngineToGameTag::RobotPickedUp };
-  _engineToGameTags = triggerTags;
-  
-  // We're going to subscribe to our trigger events, plus others
-  std::vector<MessageEngineToGameTag> subscribedEvents = triggerTags;
-  subscribedEvents.insert(subscribedEvents.end(), {
-    MessageEngineToGameTag::RobotPutDown,
-    MessageEngineToGameTag::RobotCompletedAction,
+  SubscribeToTriggerTags({
+    EngineToGameTag::RobotPickedUp
   });
   
-  SubscribeToTags(std::move(subscribedEvents));
+  // These are additional tags that this behavior should handle
+  SubscribeToTags({{
+    EngineToGameTag::RobotPutDown,
+    EngineToGameTag::RobotCompletedAction
+  }});
+
 }
 
 bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_sec) const

@@ -44,16 +44,15 @@ BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config
   _name = "ReactToPoke";
   
   // These are the tags that should trigger this behavior to be switched to immediately
-  auto triggerTags = { MessageEngineToGameTag::RobotPoked };
-  _engineToGameTags = triggerTags;
-  
-  // We're going to subscribe to our trigger events, plus others
-  std::vector<MessageEngineToGameTag> subscribedEvents = triggerTags;
-  subscribedEvents.insert(subscribedEvents.end(), {
-    MessageEngineToGameTag::RobotCompletedAction,
+  SubscribeToTriggerTags({
+    EngineToGameTag::RobotPoked
   });
   
-  SubscribeToTags(std::move(subscribedEvents));
+  // These are additional tags that this behavior should handle
+  SubscribeToTags({
+    EngineToGameTag::RobotCompletedAction
+  });
+  
 }
 
 bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec) const
