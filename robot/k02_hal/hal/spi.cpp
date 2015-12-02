@@ -27,6 +27,7 @@ static int totalDrops = 0;
 
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
+  static int pwmCmdCounter = 0;
   
   // Process drop receive
   transmissionWord *target = spi_rx_buff;
@@ -69,9 +70,19 @@ static bool ProcessDrop(void) {
       }
       case 0x22:
       {
-        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(float)*4);
+        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(int16_t)*4);
+        pwmCmdCounter = (7440/5); // 200ms worth of drops
         break;
       }
+    }
+
+    if (pwmCmdCounter > 0)
+    {
+      pwmCmdCounter--;
+    }
+    if (pwmCmdCounter == 1)
+    {
+      memset(g_dataToBody.motorPWM, 0, sizeof(int16_t)*4);
     }
     
     return true;

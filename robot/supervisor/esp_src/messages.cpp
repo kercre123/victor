@@ -28,16 +28,17 @@ namespace Anki {
         else
         {
           memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-          if (!msg.IsValid())
-          {
-            PRINT("Received invalid message: %02x[%d]\n", buffer[0], bufferSize);
-          }
-          else if (msg.tag < 0x80) // Message for RTIP not us
+          if (msg.tag < 0x80) // Message for RTIP not us
           {
             RTIP::SendMessage(msg);
           }
           else
           {
+            if (!msg.IsValid())
+            {
+              PRINT("Received invalid message: %02x[%d]\n", buffer[0], bufferSize);
+              return;
+            }
             switch(msg.tag)
             {
               case RobotInterface::EngineToRobot::Tag_eraseFlash:
