@@ -9,3 +9,5 @@
 !*.exe
 !*.lib
 !*.pyc
+!SharedAssets/Scripts/ScriptedSequences/ScriptedSequenceEditorColors.asset
+!SharedAssets/Scripts/ScriptedSequences/ScriptedSequenceEditorColors.asset.meta
