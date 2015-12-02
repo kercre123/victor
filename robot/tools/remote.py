@@ -104,7 +104,8 @@ def RemoteGame():
             else:
                 sys.stdout.write("Key = {}\r\n".format(event.scancode))
         elif event.type == pygame.KEYUP:
-            remote.pwm(0, 0, 0, 0)
+            #remote.pwm(0, 0, 0, 0)
+            pass
         
         screen.fill((0, 255, 255) if remote.connected else (255, 0, 0))
         pygame.display.flip()

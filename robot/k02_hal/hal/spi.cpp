@@ -80,7 +80,7 @@ static bool ProcessDrop(void) {
     {
       pwmCmdCounter--;
     }
-    else if (pwmCmdCounter == 1)
+    if (pwmCmdCounter == 1)
     {
       memset(g_dataToBody.motorPWM, 0, sizeof(int16_t)*4);
     }
