@@ -459,7 +459,7 @@ namespace Anki {
   {
     Point<N,T> temp(point1);
     temp -= point2;
-    return temp.length();
+    return temp.Length();
   }
 
   template<PointDimType N, typename T>

@@ -52,6 +52,7 @@ namespace Cozmo {
     static const Radians minBodyAngle(DEG_TO_RAD(1.f));
     
     PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
+    action->EnableMessageDisplay(false);
     action->SetPanTolerance(minBodyAngle);
     action->SetTiltTolerance(minHeadAngle);
     _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
