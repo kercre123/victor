@@ -357,7 +357,7 @@
               <MiscControls>--asm</MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;generated\clad\robot</IncludePath>
+              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;generated\clad\robot;sim_hal\transport</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -911,12 +911,12 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>sim_hal\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
+              <FilePath>sim_hal\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>
@@ -1946,12 +1946,12 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>sim_hal\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
+              <FilePath>sim_hal\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>
