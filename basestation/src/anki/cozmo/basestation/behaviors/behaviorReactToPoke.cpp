@@ -99,7 +99,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
       if (!_animReactions.empty())
       {
         // Decrease happy
-        robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeMedium*3, "Poked");
+        robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeMedium, "Poked");
         
         // Get happy reading
         f32 happyVal = robot.GetMoodManager().GetEmotionValue(EmotionType::Happy);
