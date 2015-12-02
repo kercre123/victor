@@ -14,21 +14,27 @@
 #include "oled.h"
 #include "imu.h"
 
+// These error numbers should be in a file shared with fixture.h
+// To aid memorization, error numbers are grouped logically:
+//  3xy - motor errors - where X is the motor 1 (left), 2 (right), 3 (lift), or 4 (head) - and Y is the problem (reversed, encoder, etc)
+//  5xy - head errors - where X is the component (0 = CPU) and Y is the problem
+//  6xy - body errors - where X is the component (0 = CPU) and Y is the problem
 enum STARTUP_ERROR {
-  ERROR_NONE,
-  ERROR_IMU_ID,
-  ERROR_CLIFF_SENSOR,
-  ERROR_ENCODER_FORWARD,
-  ERROR_ENCODER_BACKWARD
+  ERROR_NONE = 0,
+  ERROR_IMU_ID = 520,           // 520 for IMU errors
+  ERROR_CLIFF_SENSOR = 620,     // 620 for cliff sensor errors (fixture could distinguish LED error from photodiode error)
+  ERROR_MOTOR_NOFORWARD = 310,  // Motor did not move forward
+  ERROR_MOTOR_NOBACKWARD = 311, // Motor did not move backward
+  ERROR_MOTOR_REVERSED = 312,   // Encoder showed motor moving in reverse direction
 };
 
 // Magical numbers for self test
-static const int DROP_THREADHOLD = 0x100;
+static const int DROP_THRESHOLD = 0x100;
 static const int MOTOR_THRESHOLD[] = {
   0x80, 0x80, 0x10000, 0x400
 };
 
-STARTUP_ERROR RunTests(void);
+int RunTests(void);
 
 static inline void TestPause(const int duration) {
   using namespace Anki::Cozmo::HAL;
@@ -39,17 +45,17 @@ static inline void TestPause(const int duration) {
 void StartupSelfTest(void) {
   using namespace Anki::Cozmo::HAL;
   
-  STARTUP_ERROR result = RunTests();
+  int result = RunTests();
   
   if (result != ERROR_NONE) {
-    FacePrintf("Fail %i", (int) result);
+    FacePrintf("Fail %03d", (int) result);
   } else {
     const uint16_t* SSID = (uint16_t*) 0xFFC;
     FacePrintf("               OK%2x", *SSID);
   }
 }
 
-STARTUP_ERROR RunTests(void) {
+int RunTests(void) {
   using namespace Anki::Cozmo::HAL;
 
   FacePrintf("SELF TEST");
@@ -63,18 +69,30 @@ STARTUP_ERROR RunTests(void) {
   // DAC Tone has moved to main loop so FTM0 can be reinitalized to something else
   TestPause(1);
   
-  if (g_dataToHead.cliffLevel < DROP_THREADHOLD) {
-    return ERROR_CLIFF_SENSOR;
+  // Measure cliff sensor now, but don't report trouble until motors are okay
+  uint32_t cliffLevel = g_dataToHead.cliffLevel;
+
+  // Wind the lift and head motor back enough to allow some travel in the tests ahead
+  for (int i = 2; i < 4; i++) {
+    g_dataToBody.motorPWM[i] = -0x3FFF;
   }
+  TestPause(3);
   
+  // Record start position, drive forward
   Fixed start[4], forward[4], backward[4];
-  
   memcpy(start, g_dataToHead.positions, sizeof(g_dataToHead.positions));
   for (int i = 0; i < 4; i++) {
     g_dataToBody.motorPWM[i] = 0x3FFF;
   }
   TestPause(3);
   
+  // Stop the motors and let them settle
+  for (int i = 0; i < 4; i++) {
+    g_dataToBody.motorPWM[i] = 0;
+  }
+  TestPause(1);
+
+  // Record forward position, drive backward
   memcpy(forward, g_dataToHead.positions, sizeof(g_dataToHead.positions));
   for (int i = 0; i < 4; i++) {
     g_dataToBody.motorPWM[i] = -0x3FFF;
@@ -88,11 +106,9 @@ STARTUP_ERROR RunTests(void) {
   TestPause(3);
 
   // Light test!
-  uint32_t *lightValue = (uint32_t*) &g_dataToBody.backpackColors;
-  
+  uint32_t *lightValue = (uint32_t*) &g_dataToBody.backpackColors;  
   memset(g_dataToBody.backpackColors, 0, sizeof(g_dataToBody.backpackColors));
   
-
   lightValue[0] = 0;
   for (int i = 1; i < 4; i++) lightValue[i] = 0x0000FF;
   TestPause(5);
@@ -109,14 +125,24 @@ STARTUP_ERROR RunTests(void) {
 
   for (int i = 0; i < 4; i++) {
     if (MOTOR_THRESHOLD[i] > forward[i] - start[i]) {
-      return ERROR_ENCODER_FORWARD;
+      if (-MOTOR_THRESHOLD[i] > forward[i] - start[i])
+        return ERROR_MOTOR_REVERSED + i*10;
+      else
+        return ERROR_MOTOR_NOFORWARD + i*10;
     }
 
     if (MOTOR_THRESHOLD[i] > forward[i] - backward[i]) {
-      return ERROR_ENCODER_BACKWARD;
+      if (-MOTOR_THRESHOLD[i] > forward[i] - backward[i])
+        return ERROR_MOTOR_REVERSED + i*10;
+      else
+        return ERROR_MOTOR_NOBACKWARD + i*10;
     }
   }
-
+  
+  if (cliffLevel < DROP_THRESHOLD) {
+    return ERROR_CLIFF_SENSOR;
+  }
+  
   OLEDFlip(); 
 
   return ERROR_NONE;

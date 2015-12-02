@@ -19,7 +19,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 6;
+u8 g_fixtureReleaseVersion = 7;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;

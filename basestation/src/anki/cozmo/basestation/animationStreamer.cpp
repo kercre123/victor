@@ -263,6 +263,21 @@ namespace Cozmo {
     return RESULT_OK;
   } // BufferAudioToSend()
   
+
+  inline static void SetFaceParams(ProceduralFaceParams& faceParams,
+                                   ProceduralFaceParams&& interpolatedFrame,
+                                   bool shouldReplace)
+  {
+    if (shouldReplace)
+    {
+      faceParams = interpolatedFrame;
+    }
+    else
+    {
+      faceParams.Combine(interpolatedFrame);
+    }
+  }
+  
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                                         ProceduralFaceParams& faceParams,
@@ -275,21 +290,20 @@ namespace Cozmo {
       if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
       {
         ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
-        const ProceduralFaceParams interpolatedFrame = currentKeyFrame.GetInterpolatedFaceParams(nextFrame);
-        if (shouldReplace)
-        {
-          faceParams = interpolatedFrame;
+        if (nextFrame != nullptr) {
+          if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms)) {
+            track.MoveToNextKeyFrame();
+          } else {
+            ProceduralFaceParams interpolatedFrame = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
+            SetFaceParams(faceParams, std::move(interpolatedFrame), shouldReplace);
+            paramsSet = true;
+          }
+        } else {
+          ProceduralFaceParams interpolatedFrame = currentKeyFrame.GetFace().GetParams();
+          SetFaceParams(faceParams, std::move(interpolatedFrame), shouldReplace);
+          track.MoveToNextKeyFrame();
+          paramsSet = true;
         }
-        else
-        {
-          faceParams.Combine(interpolatedFrame);
-        }
-        
-        paramsSet = true;
-      }
-      
-      if(currentKeyFrame.IsDone()) {
-        track.MoveToNextKeyFrame();
       }
     }
     

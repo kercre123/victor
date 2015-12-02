@@ -50,6 +50,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 
@@ -589,6 +590,20 @@ namespace Anki {
         _isPhysical = isPhysical;
       }
       
+      // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
+      // We do this regardless of previous state to ensure it works when adding 1st simulated robot (as _isPhysical already == false in that case)
+      // Note: We don't do this on phone by default, they also have a remote connection to the simulator so removing timeout would
+      // force user to restart both sides each time.
+      #if !(ANKI_IOS_BUILD || ANDROID)
+      {
+        static const double kPhysicalRobotNetConnectionTimeoutInMS = Anki::Util::ReliableConnection::GetConnectionTimeoutInMS(); // grab default on 1st call
+        const double kSimulatedRobotNetConnectionTimeoutInMS = FLT_MAX;
+        const double netConnectionTimeoutInMS = isPhysical ? kPhysicalRobotNetConnectionTimeoutInMS : kSimulatedRobotNetConnectionTimeoutInMS;
+        PRINT_NAMED_INFO("Robot.SetPhysicalRobot", "ReliableConnection::SetConnectionTimeoutInMS(%f) for %s Robot",
+                         netConnectionTimeoutInMS, isPhysical ? "Physical" : "Simulated");
+        Anki::Util::ReliableConnection::SetConnectionTimeoutInMS(netConnectionTimeoutInMS);
+      }
+      #endif // !(ANKI_IOS_BUILD || ANDROID)
     }
     
     f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
@@ -1394,6 +1409,22 @@ namespace Anki {
     {
       _audioClient = audioClient;
       _animationStreamer.SetAudioClient( _audioClient );
+    }
+
+    void Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms)
+    {
+      PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
+      
+      ProceduralFace procFace;
+      procFace.GetParams().SetFacePosition({xPix, yPix});
+      
+      ProceduralFaceKeyFrame kf(procFace, duration_ms);
+      kf.SetIsLive(true);
+      
+      AnimationStreamer::FaceTrack faceTrack;
+      faceTrack.AddKeyFrame(std::move(kf));
+      
+      _animationStreamer.AddFaceLayer(std::move(faceTrack));
     }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)
