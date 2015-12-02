@@ -9,8 +9,8 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "driver/uart.h"
-#include "utilEmbedded/transport/IReceiver.h"
-#include "utilEmbedded/transport/reliableTransport.h"
+#include "transport/IReceiver.h"
+#include "transport/reliableTransport.h"
 
 //#define DEBUG_CLIENT
 

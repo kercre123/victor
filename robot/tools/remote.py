@@ -63,8 +63,7 @@ class CozmoRemote(IDataReceiver):
     def pwm(self, *params):
         "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
         if self.connected:
-            if rws is None: rws = lws
-            self.send(RobotInterface.EngineToRobot(setRawPWM=Cozmo.RawPWM(*params)))
+            self.send(RobotInterface.EngineToRobot(setRawPWM=Cozmo.RawPWM(params)))
 
 def RemoteGame():
     """Container for remote "game" under pygame."""
