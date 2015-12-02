@@ -12,15 +12,14 @@ namespace InvestorDemo {
 
     private InvestorDemoPanel _GamePanel;
 
+    private InvestorDemoConfig _DemoConfig;
+
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
-      InvestorDemoConfig demoConfig = minigameConfig as InvestorDemoConfig;
-      if (demoConfig == null) {
+      _DemoConfig = minigameConfig as InvestorDemoConfig;
+      if (_DemoConfig == null) {
         DAS.Error(this, "Failed to load config InvestorDemoConfig!");
         return;
       }
-
-
-
     }
 
     void Start() {
@@ -31,28 +30,38 @@ namespace InvestorDemo {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
 
       CurrentRobot.SetBehaviorSystem(true);
-      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
-      // Waiting until the investor demo buttons are registered to ObjectTagRegistry before starting
-      // the sequence.
-      StartCoroutine(StartSequence());
+      if (_DemoConfig.UseSequence) {
+        CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+        CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
+        // Waiting until the investor demo buttons are registered to ObjectTagRegistry before starting
+        // the sequence.
+        StartCoroutine(StartSequence());
+      }
+      else {
+        CurrentRobot.ActivateBehaviorChooser(_DemoConfig.BehaviorChooser);
+      }
     }
 
     void Update() {
-      ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.CurrentSequence;
-      if (sequence != null) {
-        List<ScriptedSequences.ScriptedSequenceNode> activeNodes = sequence.GetActiveNodes();
-        if (activeNodes.Count > 0) {
-          _GamePanel.SetActionText(activeNodes[0].Name);
+      if (_DemoConfig.UseSequence) {
+        ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.CurrentSequence;
+        if (sequence != null) {
+          List<ScriptedSequences.ScriptedSequenceNode> activeNodes = sequence.GetActiveNodes();
+          if (activeNodes.Count > 0) {
+            _GamePanel.SetActionText(activeNodes[0].Name);
+          }
         }
+      }
+      else {
+        _GamePanel.SetActionText(_DemoConfig.BehaviorChooser.ToString());
       }
     }
 
     private IEnumerator StartSequence() {
       yield return new WaitForEndOfFrame();
-      ScriptedSequences.ISimpleAsyncToken token = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("InvestorScene1");
+      ScriptedSequences.ISimpleAsyncToken token = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_DemoConfig.SequenceName);
       token.Ready(HandleSequenceComplete);
     }
 
@@ -64,8 +73,11 @@ namespace InvestorDemo {
       DestroyDefaultQuitButton();
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       CurrentRobot.CancelAllCallbacks();
-      ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == "InvestorScene1");
-      sequence.ResetSequence();
+      if (_DemoConfig.UseSequence) {
+        ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == _DemoConfig.SequenceName);
+        sequence.ResetSequence();
+      }
+
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
