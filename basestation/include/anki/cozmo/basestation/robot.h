@@ -445,6 +445,8 @@ public:
     // specified duration (layered on top of any other animation that's playing)
     void ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms);
   
+    AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
+  
     // =========== Audio =============
     const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient; }
     void SetRobotAudioClient( Audio::RobotAudioClient* audioClient ) { _audioClient = audioClient; }

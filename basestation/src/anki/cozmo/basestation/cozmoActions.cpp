@@ -1849,6 +1849,22 @@ namespace Anki {
         // to see that it has finished picking or placing below. I.e., we need to
         // know the robot got the DockWithObject command sent in Init().
         _wasPickingOrPlacing = robot.IsPickingOrPlacing();
+        
+        if(_wasPickingOrPlacing) {
+          // Apply continuous eye squint if we have just now started picking and placing
+          AnimationStreamer::FaceTrack squintLayer;
+          ProceduralFace squintFace;
+          
+          const f32 DockSquintScaleY = 0.5f;
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+          }
+          
+          // Note that we do not make the key frame live, because we don't want it to
+          // be removed after being played once!
+          squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
+          _squintLayerTag = robot.GetAnimationStreamer().AddLoopingFaceLayer(squintLayer);
+        }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
@@ -1898,6 +1914,9 @@ namespace Anki {
       if(robot.IsPickingOrPlacing()) {
         robot.AbortDocking();
       }
+      
+      // Stop squinting
+      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_squintLayerTag);
     }
            
 

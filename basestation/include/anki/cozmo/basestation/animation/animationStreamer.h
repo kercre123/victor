@@ -79,6 +79,13 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
     
+    // Add a procedural face "layer" that is applied continuously until removed.
+    // A handle/tag for the layer is returned, which is needed for removal.
+    u32 AddLoopingFaceLayer(const FaceTrack& faceTrack);
+    
+    // Remove a previously-added looping face layer using its tag
+    void RemoveLoopingFaceLayer(u32 tag);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
      
@@ -129,6 +136,8 @@ namespace Cozmo {
       FaceTrack   track;
       TimeStamp_t startTime_ms;
       TimeStamp_t streamTime_ms;
+      bool        isLooping;
+      u32         tag;
     };
     std::list<FaceLayer> _faceLayers;
     
@@ -137,9 +146,13 @@ namespace Cozmo {
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                        ProceduralFaceParams& faceParams,
-                       bool shouldReplace = false);
+                       bool shouldReplace);
+    
+    bool HaveNonLoopingFaceLayersToSend();
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
+    
+    void KeepFaceAlive(Robot& robot);
     
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
@@ -193,6 +206,7 @@ namespace Cozmo {
     Animation      _liveAnimation;
     bool           _isLiveTwitchEnabled;
     s32            _nextBlink_ms;
+    s32            _nextEyeDart_ms;
     s32            _nextLookAround_ms;
     s32            _bodyMoveDuration_ms;
     s32            _liftMoveDuration_ms;
