@@ -22,6 +22,7 @@
 #include <OkaoAPI.h>
 #include <OkaoDtAPI.h> // Face Detection
 #include <OkaoPtAPI.h> // Face parts detection
+#include <OkaoExAPI.h>
 #include <CommonDef.h>
 #include <DetectorComDef.h>
 
@@ -56,15 +57,18 @@ namespace Vision {
     //u8* _backupMemory  = nullptr;
     
     // Okao Vision Library "Handles"
-    HCOMMON    _okaoCommonHandle              = NULL;
-    HDETECTION _okaoDetectorHandle            = NULL;
-    HDTRESULT  _okaoDetectionResultHandle     = NULL;
-    HPOINTER   _okaoPartDetectorHandle        = NULL;
-    HPTRESULT  _okaoPartDetectionResultHandle = NULL;
+    HCOMMON     _okaoCommonHandle              = NULL;
+    HDETECTION  _okaoDetectorHandle            = NULL;
+    HDTRESULT   _okaoDetectionResultHandle     = NULL;
+    HPOINTER    _okaoPartDetectorHandle        = NULL;
+    HPTRESULT   _okaoPartDetectionResultHandle = NULL;
+    HEXPRESSION _okaoEstimateExpressionHandle  = NULL;
+    HEXPRESSION _okaoExpressionResultHandle    = NULL;
     
-    // Space for detected face parts
+    // Space for detected face parts / expressions
     POINT _facialParts[PT_POINT_KIND_MAX];
     INT32 _facialPartConfs[PT_POINT_KIND_MAX];
+    INT32 _expressionValues[EX_EXPRESSION_KIND_MAX];
     
   }; // class FaceTracker::Impl
   
@@ -111,6 +115,26 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
     
+    // Adjust some detection parameters
+    // TODO: Expose these for setting at runtime
+    okaoResult = OKAO_DT_MV_SetDelayCount(_okaoDetectorHandle, 1); // have to see faces for more than one frame
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetDelayCountFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
+    okaoResult = OKAO_DT_MV_SetSearchCycle(_okaoDetectorHandle, 2, 2, 5);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetSearchCycleFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
+    okaoResult = OKAO_DT_SetAngle(_okaoDetectorHandle, POSE_ANGLE_HALF_PROFILE, ROLL_ANGLE_ULR45);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoSetAngleFailed", "");
+      return RESULT_FAIL_INVALID_PARAMETER;
+    }
+    
     _okaoDetectionResultHandle = OKAO_DT_CreateResultHandle(_okaoCommonHandle);
     if(NULL == _okaoDetectionResultHandle) {
       PRINT_NAMED_ERROR("FacetrackerImpl.Init.OkaoDetectionResultHandleAllocFail", "");
@@ -129,6 +153,18 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
     
+    _okaoEstimateExpressionHandle = OKAO_EX_CreateHandle(_okaoCommonHandle);
+    if(NULL == _okaoEstimateExpressionHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoEstimateExpressionHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
+    _okaoExpressionResultHandle = OKAO_EX_CreateResultHandle(_okaoCommonHandle);
+    if(NULL == _okaoExpressionResultHandle) {
+      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.OkaoExpressionResultHandleAllocFail", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
     _isInitialized = true;
     
     PRINT_NAMED_INFO("FaceTrackerImpl.Init.Success",
@@ -141,6 +177,18 @@ namespace Vision {
     //Util::SafeDeleteArray(_workingMemory);
     //Util::SafeDeleteArray(_backupMemory);
 
+    if(NULL != _okaoExpressionResultHandle) {
+      if(OKAO_NORMAL != OKAO_EX_DeleteResultHandle(_okaoExpressionResultHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoExpressionResultHandleDeleteFail", "");
+      }
+    }
+    
+    if(NULL != _okaoEstimateExpressionHandle) {
+      if(OKAO_NORMAL != OKAO_EX_DeleteHandle(_okaoEstimateExpressionHandle)) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoEstimateExpressionHandleDeleteFail", "");
+      }
+    }
+    
     if(NULL != _okaoPartDetectionResultHandle) {
       if(OKAO_NORMAL != OKAO_PT_DeleteResultHandle(_okaoPartDetectionResultHandle)) {
         PRINT_NAMED_ERROR("FaceTrackerImpl.Destructor.OkaoPartDetectionResultHandleDeleteFail", "");
@@ -196,7 +244,6 @@ namespace Vision {
       face.SetFeature(whichFeature, std::move(feature));
     }
   } // SetFeatureHelper()
-  
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig)
   {
@@ -339,6 +386,55 @@ namespace Vision {
       face.SetHeadOrientation(DEG_TO_RAD(roll_deg),
                               DEG_TO_RAD(pitch_deg),
                               DEG_TO_RAD(yaw_deg));
+      
+      // Expression detection
+      okaoResult = OKAO_EX_SetPointFromHandle(_okaoEstimateExpressionHandle, _okaoPartDetectionResultHandle);
+      if(OKAO_NORMAL != okaoResult) {
+        PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoSetExpressionPointFail",
+                          "Detection index %d of %d. OKAO Result Code=%d",
+                          detectionIndex, numDetections, okaoResult);
+        return RESULT_FAIL;
+      }
+      
+      okaoResult = OKAO_EX_Estimate_GRAY(_okaoEstimateExpressionHandle, dataPtr, nWidth, nHeight,
+                                         GRAY_ORDER_Y0Y1Y2Y3, _okaoExpressionResultHandle);
+      if(OKAO_NORMAL != okaoResult) {
+        if(OKAO_ERR_PROCESSCONDITION == okaoResult) {
+          // This might happen, depending on face parts
+          PRINT_NAMED_INFO("FaceTrackerImpl.Update.OkaoEstimateExpression",
+                           "Could not estimate expression for face %d of %d using detected parts.",
+                           detectionIndex, numDetections);
+        } else {
+          // This should not happen
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoEstimateExpressionFail",
+                            "Detection index %d of %d. OKAO Result Code=%d",
+                            detectionIndex, numDetections, okaoResult);
+          return RESULT_FAIL;
+        }
+      } else {
+        
+        okaoResult = OKAO_EX_GetResult(_okaoExpressionResultHandle, EX_EXPRESSION_KIND_MAX, _expressionValues);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceTrackerImpl.Update.OkaoGetExpressionResultFail",
+                            "Detection index %d of %d. OKAO Result Code=%d",
+                            detectionIndex, numDetections, okaoResult);
+          return RESULT_FAIL;
+        }
+        
+        static const TrackedFace::Expression TrackedFaceExpressionLUT[EX_EXPRESSION_KIND_MAX] = {
+          TrackedFace::Neutral,
+          TrackedFace::Happiness,
+          TrackedFace::Surprise,
+          TrackedFace::Anger,
+          TrackedFace::Sadness
+        };
+        
+        for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {
+          face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExpressionVal],
+                                  _expressionValues[okaoExpressionVal]);
+        }
+        
+      }
       
     } // FOR each face
     

@@ -74,6 +74,18 @@ namespace Vision {
       NumFeatures
     };
     
+    // TODO: Cladify this enum
+    // (There's no clad in coretech-internal/vision yet, so for now, just do it here)
+    enum Expression {
+      Neutral = 0,
+      Happiness,
+      Surprise,
+      Anger,
+      Sadness,
+      
+      NumExpressions
+    };
+    
     using Feature = std::vector<Point2f>;
     
     const Feature& GetFeature(FeatureName whichFeature) const;
@@ -101,6 +113,17 @@ namespace Vision {
     
     f32 GetIntraEyeDistance() const;
     
+    // Return the histogram over all expressions
+    std::array<f32, NumExpressions> GetExpressionValues() const;
+    
+    // Return the expression with highest value
+    Expression GetMaxExpression() const;
+    
+    // Set a particular expression value
+    void SetExpressionValue(Expression whichExpression, f32 newValue);
+    
+    static const char* GetExpressionName(Expression whichExpression);
+    
   private:
     
     ID_t _id;
@@ -115,6 +138,7 @@ namespace Vision {
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
+    std::array<f32, NumExpressions> _expression{};
     
     Radians _roll, _pitch, _yaw;
     
