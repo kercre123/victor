@@ -66,9 +66,10 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
-  DACInit();
-
   I2CInit();
+
+  DACInit();
+  DACTone();
 
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i) {
@@ -83,7 +84,6 @@ int main (void)
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
   Anki::Cozmo::HAL::MicroWait(100000); // Because the FLL is lame
-  DACTone();
   
   //IMUInit();
   OLEDInit();
@@ -95,7 +95,7 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
 
-  StartupSelfTest();
+  //StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur
