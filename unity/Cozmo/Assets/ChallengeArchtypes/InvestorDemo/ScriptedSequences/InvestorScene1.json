@@ -17,6 +17,7 @@
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "ID_wake_sleeping",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -38,6 +39,7 @@
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "ID_wake_openEyes",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -59,6 +61,7 @@
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "ID_reactTppl_Surprise",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -80,6 +83,7 @@
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "ID_offCharger_thrustFwd",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -90,7 +94,48 @@
       ]
     },
     {
-      "Name": "5. Follow Motion (Behav)",
+      "Name": "5. Wait for motion (anim)",
+      "Id": 9,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.WaitForWaveAction, Assembly-CSharp"
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        }
+      ]
+    },
+    {
+      "Name": "6. React to Motion (anim)",
+      "Id": 10,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_MotionFollow_ReactToMotion",
+          "LoopForever": false,
+          "WaitToEnd": true
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        }
+      ]
+    },
+    {
+      "Name": "7. Follow Motion (Behav)",
       "Id": 4,
       "Sequencial": true,
       "Final": false,
@@ -110,7 +155,7 @@
       ]
     },
     {
-      "Name": "6. End Demo (userCommand)",
+      "Name": "8. Bye Bye (anim)",
       "Id": 5,
       "Sequencial": true,
       "Final": true,
@@ -119,8 +164,10 @@
       "Conditions": [],
       "Actions": [
         {
-          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
-          "Behavior": "NoneBehavior"
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "tapCube",
+          "LoopForever": false,
+          "WaitToEnd": true
         }
       ],
       "ExitConditions": [
