@@ -10,7 +10,6 @@ public class ChallengeData : ScriptableObject {
 
   public GameObject MinigamePrefab {
     get { return _MinigamePrefab; }
-    private set { }
   }
 
   // the key used to find this specific challenge
@@ -19,7 +18,6 @@ public class ChallengeData : ScriptableObject {
 
   public string ChallengeID {
     get { return _ChallengeID; }
-    private set { }
   }
 
   // whether or not we should show this challenge as part of the game.
@@ -28,7 +26,6 @@ public class ChallengeData : ScriptableObject {
 
   public bool EnableHubWorldChallenge {
     get { return _EnableHubWorldChallenge; }
-    private set { }
   }
 
   // show or not on dev world challenge list
@@ -37,7 +34,6 @@ public class ChallengeData : ScriptableObject {
 
   public bool EnableDevWorldChallenge {
     get { return _EnableDevWorldChallenge; }
-    private set { }
   }
 
   // the key used to get the actual localized string for the
@@ -47,7 +43,6 @@ public class ChallengeData : ScriptableObject {
 
   public string ChallengeTitleLocKey {
     get { return _ChallengeTitleLocKey; }
-    private set { }
   }
 
   // the key used to get the actual localized string for the
@@ -57,7 +52,6 @@ public class ChallengeData : ScriptableObject {
 
   public string ChallengeSubtitleLocKey {
     get { return _ChallengeSubtitleLocKey; }
-    private set { }
   }
 
   // the key used to get the actual localized string for the
@@ -67,7 +61,6 @@ public class ChallengeData : ScriptableObject {
 
   public string ChallengeDescriptionLocKey {
     get { return _ChallengeDescriptionLocKey; }
-    private set { }
   }
 
   // icon to show to represent this challenge
@@ -76,7 +69,6 @@ public class ChallengeData : ScriptableObject {
 
   public Sprite ChallengeIcon {
     get { return _ChallengeIcon; }
-    private set { }
   }
 
   // large art to show to represent this challenge
@@ -85,7 +77,6 @@ public class ChallengeData : ScriptableObject {
 
   public Sprite ChallengeKeyArt {
     get { return _ChallengeKeyArt; }
-    private set { }
   }
 
   // The set of requirements needed to unlock this challenge
@@ -94,7 +85,6 @@ public class ChallengeData : ScriptableObject {
 
   public ChallengeRequirements ChallengeReqs {
     get { return _ChallengeReqs; }
-    private set { }
   }
 
   // string path to MinigameConfig

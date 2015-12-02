@@ -12,7 +12,6 @@ public class UIPrefabHolder : ScriptableObject {
       }
       return _Instance;
     }
-    private set { }
   }
 
   [SerializeField]
@@ -20,6 +19,5 @@ public class UIPrefabHolder : ScriptableObject {
 
   public GameObject FullScreenButtonPrefab {
     get { return _FullScreenButtonPrefab; }
-    set { }
   }
 }
