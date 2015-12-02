@@ -27,7 +27,7 @@ static int totalDrops = 0;
 
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
-  static int pwmCmdCounter;
+  static int pwmCmdCounter = 0;
   
   // Process drop receive
   transmissionWord *target = spi_rx_buff;
@@ -80,7 +80,7 @@ static bool ProcessDrop(void) {
     {
       pwmCmdCounter--;
     }
-    else
+    else if (pwmCmdCounter == 1)
     {
       memset(g_dataToBody.motorPWM, 0, sizeof(int16_t)*4);
     }
