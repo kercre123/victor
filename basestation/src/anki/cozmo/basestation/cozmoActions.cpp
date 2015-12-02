@@ -1493,7 +1493,7 @@ namespace Anki {
         // If we are already "in position" according to the tolerance, just move the
         // eyes
         // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        Radians angleDiff = _headAngle - robot.GetHeadAngle();
+        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
         const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
         robot.ShiftEyes(0, yPixShift, 66); // TODO: How to set the duration of the eye shift?
