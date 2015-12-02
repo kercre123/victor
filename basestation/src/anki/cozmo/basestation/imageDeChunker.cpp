@@ -103,7 +103,7 @@ namespace Cozmo {
         headerLength = sizeof(header80);
         break;
       default:
-        PRINT_NAMED_ERROR("miniGrayToJpeg", "No header for quality of %d\n", quality);
+        PRINT_NAMED_ERROR("miniGrayToJpeg", "No header for quality of %d", quality);
         return;
     }
     
@@ -139,7 +139,7 @@ namespace Cozmo {
                                    u8 chunkId, const u8* data, u32 chunkSize)
   {
     if(chunkSize > static_cast<u32>(ImageConstants::IMAGE_CHUNK_SIZE)) {
-      PRINT_NAMED_ERROR("ImageDeChunker.AppendChunk", "Expecting chunks of size no more than %d, got %d.\n",
+      PRINT_NAMED_ERROR("ImageDeChunker.AppendChunk", "Expecting chunks of size no more than %d, got %d.",
                         ImageConstants::IMAGE_CHUNK_SIZE, chunkSize);
       return false;
     }
@@ -158,7 +158,7 @@ namespace Cozmo {
     // Check if a chunk was received out of order
     if (chunkId != _expectedChunkId) {
       PRINT_NAMED_INFO("MessageImageChunk.ChunkDropped",
-                       "Expected chunk %d, got %d\n", _expectedChunkId, chunkId);
+                       "Expected chunk %d, got %d", _expectedChunkId, chunkId);
       _isImgValid = false;
     }
     
@@ -170,7 +170,7 @@ namespace Cozmo {
     if (!_isImgValid) {
       if (isLastChunk) {
         PRINT_NAMED_INFO("MessageImageChunk.IncompleteImage",
-                         "Received last chunk of invalidated image\n");
+                         "Received last chunk of invalidated image");
       }
       return false;
     }

@@ -83,7 +83,8 @@ int main (void)
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
   Anki::Cozmo::HAL::MicroWait(100000); // Because the FLL is lame
-
+  DACTone();
+  
   //IMUInit();
   OLEDInit();
   SPIInit();
