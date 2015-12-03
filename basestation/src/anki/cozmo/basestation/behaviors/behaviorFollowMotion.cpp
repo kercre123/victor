@@ -60,6 +60,9 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
+  
+  // Do the initial reaction for first motion each time we restart this behavior
+  _initialReactionAnimPlayed = false;
 
   return Result::RESULT_OK;
 }
@@ -135,17 +138,46 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
         
         _actionRunning = action->GetTag();
         
+        ASSERT_NAMED(_actionRunning != 0, "Expecting action tag to be non-zero!");
+        
         robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+        
+        if(!_initialReactionAnimPlayed) {
+          const Radians finalHeadAngle = robot.GetHeadAngle() + relHeadAngle_rad;
+          
+          PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.FirstMotion",
+                           "Queuing first motion reaction animation and head tilt back to %.1fdeg",
+                           finalHeadAngle.getDegrees());
+          
+          // If this is the first motion reaction, also play the corresponding animation
+          // and move the head back to the right tilt immediately after
+          CompoundActionSequential* compoundAction = new CompoundActionSequential({
+            new PlayAnimationAction("ID_MotionFollow_ReactToMotion"),
+            new MoveHeadToAngleAction(finalHeadAngle, _panAndTiltTol),
+          });
+          
+          // Wait for the last action to finish in this case
+          _actionRunning = compoundAction->GetTag();
+          
+          robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
+        }
       }
       break;
     }
       
     case MessageEngineToGameTag::RobotCompletedAction:
     {
+      auto const& completedAction = event.GetData().Get_RobotCompletedAction();
+      
       // If the action we were running completes, allow us to respond to motion again
-      if(event.GetData().Get_RobotCompletedAction().idTag == _actionRunning) {
+      if(completedAction.idTag == _actionRunning) {
         _actionRunning = 0;
       }
+      
+      if(completedAction.actionType == RobotActionType::COMPOUND) {
+        _initialReactionAnimPlayed = true;
+      }
+      
       break;
     }
       
