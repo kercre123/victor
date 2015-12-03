@@ -14,9 +14,9 @@ MonoBehaviour:
   NodeColor: {r: .661764741, g: .661764741, b: .661764741, a: .716000021}
   NodeTextColor: {r: 0, g: 0, b: 0, a: 1}
   NodeBackgroundColor: {r: .278431386, g: .278431386, b: .278431386, a: 1}
-  ConditionColor: {r: 0, g: 0, b: 1, a: 1}
+  ConditionColor: {r: .573529422, g: .573529422, b: .573529422, a: 1}
   ConditionTextColor: {r: 1, g: 1, b: 1, a: 1}
-  ConditionBackgroundColor: {r: 0, g: 0, b: .349999994, a: 1}
-  ActionColor: {r: 1, g: 0, b: 0, a: 1}
+  ConditionBackgroundColor: {r: .29411763, g: .29411763, b: .29411763, a: 1}
+  ActionColor: {r: .639705896, g: .639705896, b: .639705896, a: 1}
   ActionTextColor: {r: 1, g: 1, b: 1, a: 1}
-  ActionBackgroundColor: {r: .349999994, g: 0, b: 0, a: 1}
+  ActionBackgroundColor: {r: .257352948, g: .257352948, b: .257352948, a: 1}
