@@ -11,6 +11,7 @@
     <AssemblyName>AnimationTool</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -23,7 +24,6 @@
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
-    <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
@@ -64,9 +64,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\DAS.cs">
-      <Link>DoNotEdit\Channel\DAS.cs</Link>
-    </Compile>
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Generated\clad\**\*.cs">
       <Link>DoNotEdit\clad\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Compile>
@@ -78,6 +75,12 @@
     </Compile>
     <Compile Include="..\..\unity\Cozmo\Assets\Scripts\Channel\UdpChannel.cs">
       <Link>DoNotEdit\Channel\UdpChannel.cs</Link>
+    </Compile>
+	<Compile Include="..\..\UnityDASDll\UnityDASDll\DAS.cs">
+      <Link>DoNotEdit\Channel\DAS.cs</Link>
+    </Compile>
+    <Compile Include="..\..\UnityDASDll\UnityDASDll\IDasTarget.cs">
+      <Link>DoNotEdit\Channel\IDasTarget.cs</Link>
     </Compile>
     <Compile Include="ChartForm.cs">
       <SubType>Component</SubType>
