@@ -25,14 +25,8 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType event, AudioCallbackFlag callbackFlag )
 {
-  // Track Event
-  // Always get callbacks for Cozmo events
+  const CallbackIdType callbackId = PostEvent( event, 0, callbackFlag );
   
-  // FIXME: Don't think I need this any more??  - JMR
-  const AudioCallbackFlag flags = (AudioCallbackFlag) ((uint8_t)callbackFlag | (uint8_t)AudioCallbackFlag::EventComplete);
-  const CallbackIdType callbackId = PostEvent( event, 0, flags);
-  
-  _currentEvents.emplace(callbackId, event);
   return callbackId;
 }
 

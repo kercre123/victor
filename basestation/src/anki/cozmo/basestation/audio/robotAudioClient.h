@@ -55,9 +55,8 @@ protected:
   virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg ) override;
   virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg ) override;
   
-private:
   
-  std::unordered_map<CallbackIdType, EventType> _currentEvents;
+private:
   
   RobotAudioBuffer* _audioBuffer;
   

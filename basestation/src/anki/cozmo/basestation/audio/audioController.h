@@ -105,6 +105,7 @@ private:
   void Update();
   
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
+  void ClearGarbageCollector();
   
 };
 

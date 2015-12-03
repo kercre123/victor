@@ -132,6 +132,8 @@ AudioController::~AudioController()
   }
   Util::Dispatch::Release( _dispatchQueue );
   
+  ClearGarbageCollector();
+  
 #if USE_AUDIO_ENGINE
   {
     Util::SafeDelete( _audioEngine );
@@ -149,7 +151,12 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
   if ( _isInitialized ) {
     playingId = _audioEngine->PostEvent( eventName, gameObjectId, callbackContext );
     if ( kInvalidAudioPlayingID != playingId &&
-         nullptr != callbackContext ) {
+        nullptr != callbackContext ) {
+      callbackContext->SetPlayId( playingId );
+      callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
+                                              {
+                                                MoveCallbackContextToGarbageCollector( thisContext );
+                                              } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
   }
@@ -241,9 +248,8 @@ void AudioController::StartUpSetDefaults()
 }
 
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Private
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::Update()
 {
 #if USE_AUDIO_ENGINE
@@ -251,7 +257,8 @@ void AudioController::Update()
   _audioEngine->Update( 0.0 );
 #endif
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext )
 {
   ASSERT_NAMED( nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector Callback Context is \
@@ -259,10 +266,7 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
   PRINT_NAMED_INFO( "AudioController.MoveCallbackContextToGarbageCollector", "Add PlayId: %d Callback Context to \
                     garbagecollector", callbackContext->GetPlayId() );
   // FIXME: Is there a better way of doing this?
-  std::for_each(_callbackGarbageCollector.begin(),
-                _callbackGarbageCollector.end(),
-                [](AudioEngine::AudioCallbackContext* aContext){ Util::SafeDelete( aContext ); } );
-  _callbackGarbageCollector.clear();
+  ClearGarbageCollector();
   
   // Move context from EventCallbackMap to CallbackGarbageCollector
   const auto it = _eventCallbackContexts.find( callbackContext->GetPlayId() );
@@ -278,6 +282,15 @@ void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::
     ASSERT_NAMED( it != _eventCallbackContexts.end(), ( "AudioController.MoveCallbackContextToGarbageCollector Can NOT \
                   find PlayId: " + std::to_string( callbackContext->GetPlayId() )).c_str() );
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::ClearGarbageCollector()
+{
+  std::for_each(_callbackGarbageCollector.begin(),
+                _callbackGarbageCollector.end(),
+                [](AudioEngine::AudioCallbackContext* aContext){ Util::SafeDelete( aContext ); } );
+  _callbackGarbageCollector.clear();
 }
   
 } // Audio

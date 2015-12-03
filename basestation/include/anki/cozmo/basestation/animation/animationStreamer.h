@@ -84,8 +84,7 @@ namespace Cozmo {
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
     
-    void SetAudioClient(Audio::RobotAudioClient* audioClient);
-    
+
   private:
     
     // Initialize the streaming of an animation with a given tag
