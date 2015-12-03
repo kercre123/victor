@@ -24,6 +24,10 @@ namespace FollowCubeRotate {
 
       _AngleAccumulator += (_CurrentRobot.PoseAngle - _LastAngle);
 
+      Debug.Log(_AngleAccumulator);
+
+      _LastAngle = _CurrentRobot.PoseAngle;
+
       if (Mathf.Abs(_AngleAccumulator) > 2.0f * Mathf.PI) {
         PlayWinAnimation();
         return;
@@ -38,10 +42,10 @@ namespace FollowCubeRotate {
 
         // determines if the cube is to the left or right of cozmo.
         if (crossValue < 0.0f) {
-          
+          _CurrentRobot.DriveWheels(5.0f, -5.0f);
         }
         else {
-          
+          _CurrentRobot.DriveWheels(-5.0f, 5.0f);
         }
 
       }

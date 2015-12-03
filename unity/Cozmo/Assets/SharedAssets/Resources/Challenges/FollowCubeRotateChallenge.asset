@@ -11,11 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
   m_Name: FollowCubeRotateChallenge
   m_EditorClassIdentifier: 
-  _MinigamePrefab: {fileID: 0}
-  _ChallengeID: 
-  _EnableHubWorldChallenge: 1
+  _MinigamePrefab: {fileID: 137318, guid: d05487a86459c4c0092cf32e1423bff1, type: 2}
+  _ChallengeID: FollowCubeRotateChallenge
+  _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 1
-  _ChallengeTitleLocKey: 
+  _ChallengeTitleLocKey: followCubeRotate1.title
   _ChallengeSubtitleLocKey: 
   _ChallengeDescriptionLocKey: 
   _ChallengeIcon: {fileID: 0}

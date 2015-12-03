@@ -8,7 +8,8 @@ namespace FollowCubeRotate {
     public override void Enter() {
       base.Enter();
       _Game = _StateMachine.GetGame() as FollowCubeRotateGame;
-
+      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
     }
 
     public override void Update() {
