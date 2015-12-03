@@ -232,6 +232,47 @@ Transform:
 Transform:
   m_PrefabParentObject: {fileID: 488436, guid: 4c907f46693e946a28129e509372244a, type: 2}
   m_PrefabInternal: {fileID: 667513731}
+--- !u!1 &1293478234
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 186758, guid: 32ef09fafda04478492fd4b3fc70920f, type: 2}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 1293478236}
+  - 114: {fileID: 1293478235}
+  m_Layer: 0
+  m_Name: FollowCubeRotateGame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1293478235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 11456440, guid: 32ef09fafda04478492fd4b3fc70920f,
+    type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1293478234}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9473246b8b7744dd3975d8fa6eeab25b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _GameId: followCubeRotate
+--- !u!4 &1293478236
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 445346, guid: 32ef09fafda04478492fd4b3fc70920f, type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1293478234}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
 --- !u!1001 &1368870248
 Prefab:
   m_ObjectHideFlags: 0
