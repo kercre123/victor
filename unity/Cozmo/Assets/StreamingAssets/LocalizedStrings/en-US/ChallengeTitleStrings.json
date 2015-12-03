@@ -83,5 +83,14 @@
     },
     "winkGame01.description" : {
         "translation" : "Cozmo will wink to one side or the other. Wave your hand on the side with the eye still open."
+    },
+    "motionDetection01.title" : {
+        "translation" : "Motion Detection Challenge"
+    },
+    "motionDetection01.subtitle" : {
+        "translation" : "Motion Detection Subtitle"
+    },
+    "motionDetection01.description" : {
+        "translation" : "Wave your hand in front of Cozmo to train him how to detect motion."
     }
 }
