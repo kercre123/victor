@@ -15,13 +15,13 @@ namespace Cozmo {
       private AnkiTextLabel _AlertMessageText;
 
       [SerializeField]
-      private Button _PrimaryButton;
+      private AnkiButton _PrimaryButton;
 
       [SerializeField]
-      private Button _SecondaryButton;
+      private AnkiButton _SecondaryButton;
 
       [SerializeField]
-      private Button _CloseButton;
+      private AnkiButton _CloseButton;
 
       private string _TitleKey;
       private string _DescriptionKey;
@@ -61,7 +61,7 @@ namespace Cozmo {
         ResetButton(_SecondaryButton);
       }
 
-      private void ResetButton(Button button) {
+      private void ResetButton(AnkiButton button) {
         if (button.isActiveAndEnabled) {
           button.onClick.RemoveAllListeners();
         }
@@ -79,12 +79,9 @@ namespace Cozmo {
         SetupButton(_SecondaryButton, Localization.Get(titleKey), action);
       }
 
-      private void SetupButton(Button button, String title, Action action) {
+      private void SetupButton(AnkiButton button, String title, Action action) {
         button.gameObject.SetActive(true);
-        AnkiTextLabel text = button.gameObject.GetComponentInChildren<AnkiTextLabel>();
-        if (text != null) {
-          text.text = title.ToUpper();
-        }
+        button.Text = title.ToUpper();
         button.onClick.RemoveAllListeners();
         button.onClick.AddListener(() => {
           if (action != null) {

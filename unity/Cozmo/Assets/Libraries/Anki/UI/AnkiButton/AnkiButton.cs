@@ -11,7 +11,6 @@ namespace Anki {
   namespace UI {
     [AddComponentMenu("Anki/Button", 02)]
     [ExecuteInEditMode]
-    [RequireComponent(typeof(AnkiWindow))]
     public class AnkiButton : Selectable, IPointerClickHandler {
 
       [Serializable]
@@ -28,63 +27,30 @@ namespace Anki {
 
       [FormerlySerializedAs("onClick")]
       [SerializeField]
-      private ButtonClickedEvent
-        _OnClick = new ButtonClickedEvent();
+      private ButtonClickedEvent _OnClick = new ButtonClickedEvent();
 
       [FormerlySerializedAs("onPress")]
       [SerializeField]
-      private ButtonDownEvent
-        _OnPress = new ButtonDownEvent();
+      private ButtonDownEvent _OnPress = new ButtonDownEvent();
 
       [FormerlySerializedAs("onRelease")]
       [SerializeField]
-      private ButtonUpEvent
-        _OnRelease = new ButtonUpEvent();
+      private ButtonUpEvent _OnRelease = new ButtonUpEvent();
 
       [SerializeField]
-      private string
-        _DASEventName;
+      private string _DASEventName;
 
       [SerializeField]
-      private Text
-        _TextLabel;
+      private Text _TextLabel;
 
       [SerializeField]
-      private Sprite
-        _HighlightedSprite;
+      private CanvasGroup _AlphaController;
 
-      [SerializeField]
-      private Sprite
-        _PressedSprite;
-
-      [SerializeField]
-      private Sprite
-        _DisabledSprite;
-
-      public Text SetTextRef {
-        set{ _TextLabel = value; }
-      }
-
-      public string TextLabel {
+      public string Text {
         get{ return _TextLabel.text; }
         set { 
           _TextLabel.text = value;
         }
-      }
-
-      public Sprite HighlightedSprite {
-        get { return _HighlightedSprite; }
-        set { _HighlightedSprite = value; }
-      }
-
-      public Sprite PressedSprite {
-        get { return _PressedSprite; }
-        set { _PressedSprite = value; }
-      }
-
-      public Sprite DisabledSprite {
-        get { return _DisabledSprite; }
-        set { _DisabledSprite = value; }
       }
 
       public ButtonClickedEvent onClick {
@@ -107,7 +73,14 @@ namespace Anki {
         set { _DASEventName = value; }
       }
 
-      private AnkiWindow _ButtonView;
+      public float Alpha {
+        get { return _AlphaController != null ? _AlphaController.alpha : -1; }
+        set {
+          if (_AlphaController != null) {
+            _AlphaController.alpha = value;
+          }
+        }
+      }
 
       /*
       [SerializeField]
@@ -123,15 +96,9 @@ namespace Anki {
       protected override void OnEnable() {
         base.OnEnable();
 
-        _ButtonView = GetComponent<AnkiWindow>();
-        if(null == this.targetGraphic){
-          this.targetGraphic = _ButtonView.BackgroundImage;
+        if (_TextLabel == null) {
+          _TextLabel = GetComponentInChildren<Text>();
         }
-
-        _HighlightedSprite = this.spriteState.highlightedSprite;
-        _PressedSprite = this.spriteState.pressedSprite;
-        _DisabledSprite = this.spriteState.disabledSprite;
-        _TextLabel = _ButtonView.ContentPanel.GetComponentInChildren<Text>();
       }
 
       private void Tap() {
@@ -166,9 +133,10 @@ namespace Anki {
         }
 
         if (_TextLabel != null && _TextLabel.text.StartsWith("#")) {
-          DAS.Event ("ui.button", _TextLabel.text, new Dictionary<string,string>{ { "$data", _DASEventName } });
-        } else {
-          DAS.Event ("ui.button", this.name , new Dictionary<string,string>{ { "$data", _DASEventName } });
+          DAS.Event("ui.button", _TextLabel.text, new Dictionary<string,string>{ { "$data", _DASEventName } });
+        }
+        else {
+          DAS.Event("ui.button", this.name, new Dictionary<string,string>{ { "$data", _DASEventName } });
         }
 
         Tap();
