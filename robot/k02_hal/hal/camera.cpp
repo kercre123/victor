@@ -13,7 +13,7 @@
 #include "hardware.h"
 
 //#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
-#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
+//#define SERIAL_IMAGE    // Uncomment this to dump camera data over UART for camera debugging with SerialImageViewer
 
 namespace Anki
 {
@@ -313,7 +313,7 @@ void FTM2_IRQHandler(void)
   dmaBuff_[0] = 1;
   
   HALExec(&buf[whichbuf][4], buflen, eof);
-  
+
 #ifdef SERIAL_IMAGE
   static int pclkoffset = 0;
   int hline = line >> 1;

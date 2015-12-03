@@ -10,12 +10,6 @@ struct {
 } IMUData;
 
 void Anki::Cozmo::HAL::IMUInit(void) {
-  // Verify we are walking to an BMI160
-  uint8_t chipid = I2CReadReg(ADDR_IMU, 0x00);
-  while (chipid != 0xD1) ;
-
-  // TODO: Configure
-  
   IMUManage();
 }
 

@@ -76,8 +76,8 @@ void Battery::init()
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
   // turn off headlight
-  //nrf_gpio_pin_clear(PIN_IR_FORWARD);
-  //nrf_gpio_cfg_output(PIN_IR_FORWARD);
+  nrf_gpio_pin_clear(PIN_IR_FORWARD);
+  nrf_gpio_cfg_output(PIN_IR_FORWARD);
 
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_V_BAT_SENSE, NRF_GPIO_PIN_NOPULL);
@@ -113,6 +113,8 @@ void Battery::powerOff()
 {
   // Shutdown the extra things
   nrf_gpio_pin_clear(PIN_PWR_EN);
+  MicroWait(10000);
+  NVIC_SystemReset();
 }
 
 static inline void sampleCliffSensor() {
@@ -151,9 +153,9 @@ void Battery::update()
 
     case ANALOG_V_EXT_SENSE:
       static int ground_short = 0;
-      static int off_charger = 0;
       uint32_t raw = NRF_ADC->RESULT;
       
+      static int off_charger = 0;
       if (raw < 0x80) {
         if (off_charger++ >= 3600) {
           powerOff();
@@ -162,7 +164,7 @@ void Battery::update()
       } else {
         off_charger = 0;
       }
-    
+
       if (raw < 0x30) {
         if (ground_short++ >= 40) {
           powerOff();

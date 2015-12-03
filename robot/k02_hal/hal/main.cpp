@@ -85,7 +85,7 @@ int main (void)
 
   Anki::Cozmo::HAL::MicroWait(100000); // Because the FLL is lame
   
-  //IMUInit();
+  IMUInit();
   OLEDInit();
   SPIInit();
 

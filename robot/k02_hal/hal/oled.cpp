@@ -41,7 +41,7 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, CHARGEPUMP,
   I2C_COMMAND | I2C_SINGLE, 0x14, 
   I2C_COMMAND | I2C_SINGLE, MEMORYMODE,
-  I2C_COMMAND | I2C_SINGLE, 0x01, 
+  I2C_COMMAND | I2C_SINGLE, 0x00, 
   I2C_COMMAND | I2C_SINGLE, SEGREMAP | 0x1,
   I2C_COMMAND | I2C_SINGLE, COMSCANDEC,
   I2C_COMMAND | I2C_SINGLE, SETCOMPINS,
@@ -57,10 +57,7 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, DISPLAYON
 };
 
-static const int FramePrefixLength = 14;
-static const int FrameBufferLength = 128*64/8;
-
-static uint8_t ResetCursor[FramePrefixLength+FrameBufferLength] = {
+static const uint8_t ResetCursor[] = {
   SLAVE_ADDRESS | I2C_WRITE,
   I2C_COMMAND | I2C_SINGLE, COLUMNADDR,
   I2C_COMMAND | I2C_SINGLE, 0,
@@ -71,7 +68,7 @@ static uint8_t ResetCursor[FramePrefixLength+FrameBufferLength] = {
   I2C_DATA | I2C_CONTINUATION
 };
 
-static uint8_t *FrameBuffer = &ResetCursor[FramePrefixLength];
+static uint8_t FrameBuffer[SCREEN_HEIGHT*SCREEN_WIDTH/8];
 
 namespace Anki
 {
@@ -80,7 +77,8 @@ namespace Anki
     namespace HAL
     {
       void OLEDFlip(void) {
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, ResetCursor, sizeof(ResetCursor), NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
+        I2CCmd(I2C_DIR_WRITE |  I2C_SEND_STOP, FrameBuffer, sizeof(FrameBuffer), NULL);
       }
       
       void OLEDInit(void) {
@@ -116,7 +114,7 @@ extern "C" void FacePrintf(const char *format, ...) {
   char *write = buffer;
   int px_ptr = 0;
   
-  memset(FrameBuffer, 0, FrameBufferLength);
+  memset(FrameBuffer, 0, sizeof(FrameBuffer));
   
   while (*write) {
     int idx = *(write++) - CHAR_START;
@@ -127,11 +125,9 @@ extern "C" void FacePrintf(const char *format, ...) {
     const uint8_t* pixels = (const uint8_t*)&FONT[idx];
     
     for (int i = 0; i < CHAR_WIDTH; i++) {
-      FrameBuffer[px_ptr] = pixels[i];
-      px_ptr += 8;
+      FrameBuffer[px_ptr++] = pixels[i];
     }
-    FrameBuffer[px_ptr] = 0;
-    px_ptr += 8;
+    FrameBuffer[px_ptr++] = 0;
   }
   
   OLEDFlip();

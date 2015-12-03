@@ -38,8 +38,10 @@ int RunTests(void);
 
 static inline void TestPause(const int duration) {
   using namespace Anki::Cozmo::HAL;
-  MicroWait(100000*duration);
-  WaitForSync();
+
+  for (int i = duration * 20; i > 0; i--) {
+    WaitForSync();
+  }
 }
 
 void StartupSelfTest(void) {
