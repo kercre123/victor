@@ -40,13 +40,13 @@ namespace Cozmo {
   {
     _name = "OCD";
     
-    SubscribeToTags({
+    SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::BlockPlaced
-    });
+    }});
     
     // Primarily Boredom and then loneliness -> OCD
     AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.8f}, {0.2f, 0.5f}, {1.0f, 0.3f}}), false));

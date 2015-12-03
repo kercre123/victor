@@ -191,22 +191,6 @@ namespace Anki {
       
     }
     
-    
-    bool IsVehicleStopped(void)
-    {
-      //If the left and the right encoder are not moving (or moving REALLY slow), we are stopped
-      f32 wheelSpeedL, wheelSpeedR;
-      WheelController::GetFilteredWheelSpeeds(wheelSpeedL, wheelSpeedR);
-      
-      if(ABS(wheelSpeedL) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S &&
-         ABS(wheelSpeedR) < WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S ) {
-        return TRUE;
-      } else{
-        return FALSE;
-      }
-      
-    }
-    
     // Integral speed controller.
     // Adjusts contollerCommandedVehicleSpeed according to given desiredVehicleSpeed.
     void Run(s16 desVehicleSpeed)

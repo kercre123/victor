@@ -602,10 +602,11 @@ namespace Anki {
       bool found = false;
       auto poseIter = poses_.rend();
       for(poseIter = poses_.rbegin();
-          poseIter != poses_.rend() && !found && poseIter->second.GetFrameId() >= frameID; ++poseIter )
+          poseIter != poses_.rend() && poseIter->second.GetFrameId() >= frameID; ++poseIter )
       {
         if(poseIter->second.GetFrameId() == frameID) {
-          found = true; // break out of the loop
+          found = true; // break out of the loop without incrementing poseIter
+          break;
         }
       }
       
@@ -613,17 +614,18 @@ namespace Anki {
       // meaning we didn't find a pose already in the first loop.
       if(!found) {
         for(poseIter = visPoses_.rbegin();
-            poseIter != visPoses_.rend() && !found && poseIter->second.GetFrameId() >= frameID; ++poseIter)
+            poseIter != visPoses_.rend() && poseIter->second.GetFrameId() >= frameID; ++poseIter)
         {
           if(poseIter->second.GetFrameId() == frameID) {
             found = true;
+            break;
           }
         }
       }
       
       if(found) {
         // Success!
-        assert(poseIter != poses_.rend());
+          assert(poseIter != poses_.rend());
         p = poseIter->second;
         return RESULT_OK;
         

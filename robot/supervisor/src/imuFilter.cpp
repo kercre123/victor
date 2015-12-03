@@ -80,7 +80,7 @@ namespace Anki {
 
         
         u32 lastMotionDetectedTime_us = 0;
-        const u32 MOTION_DETECT_TIMEOUT_US = 500000;
+        const u32 MOTION_DETECT_TIMEOUT_US = 250000;
         const f32 ACCEL_MOTION_THRESHOLD = 60.f;
         const f32 GYRO_MOTION_THRESHOLD = 0.24f;
         
@@ -379,6 +379,47 @@ namespace Anki {
       }
       
       
+      // Simple poke detect
+      // If wheels aren't moving but a sudden rotation about z-axis was detected
+      void DetectPoke()
+      {
+        static TimeStamp_t peakStartTime = 0;
+        static TimeStamp_t peakMaxTime = 0;
+        static TimeStamp_t lastPokeDetectTime = 0;
+        const u32 pokeDetectRefractoryPeriod_ms = 1000;
+        
+        // Do nothing during refractory period
+        TimeStamp_t currTime = HAL::GetTimeStamp();
+        if (currTime - lastPokeDetectTime < pokeDetectRefractoryPeriod_ms) {
+          return;
+        }
+        
+        // Only check for poke when wheels are not being driven
+        if (!WheelController::AreWheelsMoving()) {
+
+          // Check for a gyro rotation
+          const f32 peakGyroThresh = 4.5f;
+          const u32 maxPeakDuration_ms = 50;
+          if (std::fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
+            peakMaxTime = currTime;
+          } else if (std::fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
+            if ((peakMaxTime > peakStartTime) && (peakMaxTime - peakStartTime < maxPeakDuration_ms)) {
+              //PRINT("POKE DETECTED\n");
+              peakStartTime = currTime;
+              lastPokeDetectTime = currTime;
+
+              RobotInterface::RobotPoked m;
+              RobotInterface::SendMessage(m);
+            } else {
+              peakStartTime = currTime;
+            }
+          }
+          
+        } else {
+          peakStartTime = currTime;
+        }
+      }
+      
       void DetectFalling()
       {
         const f32 accelMagnitudeSqrd = accel_filt[0]*accel_filt[0] +
@@ -454,10 +495,11 @@ namespace Anki {
           // Do simple check first.
           // If wheels aren't moving, any motion is because a person was messing with it!
           if (!WheelController::AreWheelsPowered() && !HeadController::IsMoving() && !LiftController::IsMoving()) {
-            if (CheckUnintendedAcceleration() ||
-                ABS(gyro_robot_frame_filt[0]) > 5.f ||
-                ABS(gyro_robot_frame_filt[1]) > 5.f ||
-                ABS(gyro_robot_frame_filt[2]) > 5.f) {
+            if (CheckUnintendedAcceleration()
+                || ABS(gyro_robot_frame_filt[0]) > 5.f
+                || ABS(gyro_robot_frame_filt[1]) > 5.f
+                //|| ABS(gyro_robot_frame_filt[2]) > 5.f  // Not checking z-rotation since it is being used to trigger naive poke detection
+                ) {
               if (++pdUnexpectedMotionCnt_ > 40) {
                 PRINT("PDWhileStationary: acc (%f, %f, %f), gyro (%f, %f, %f)\n",
                       pdFiltAccX_aligned_, pdFiltAccY_aligned_, pdFiltAccZ_aligned_,
@@ -490,6 +532,7 @@ namespace Anki {
       void UpdateEventDetection()
       {
         // Call detect functions and update raw event state
+        DetectPoke();
         DetectFalling();
         DetectNsideDown();
       
@@ -731,23 +774,52 @@ namespace Anki {
         // Recording IMU data for sending to basestation
         if (isRecording_) {
           
+          /*
           // Scale accel range of -20000 to +20000mm/s2 (roughly -2g to +2g) to be between -127 and +127
           const f32 accScaleFactor = 127.f/20000.f;
-          /*
+          
           imuChunkMsg_.aX[recordDataIdx_] = (accel_robot_frame_filt[0] * accScaleFactor);
           imuChunkMsg_.aY[recordDataIdx_] = (accel_robot_frame_filt[1] * accScaleFactor);
           imuChunkMsg_.aZ[recordDataIdx_] = (accel_robot_frame_filt[2] * accScaleFactor);
-           */
-          imuChunkMsg_.aX[recordDataIdx_] = (pdFiltAccX_aligned_ * accScaleFactor);
-          imuChunkMsg_.aY[recordDataIdx_] = (pdFiltAccY_aligned_ * accScaleFactor);
-          imuChunkMsg_.aZ[recordDataIdx_] = (pdFiltAccZ_aligned_ * accScaleFactor);
 
           // Scale gyro range of -2pi to +2pi rad/s to be between -127 and +127
           const f32 gyroScaleFactor = 127.f/(2.f*PI_F);
           imuChunkMsg_.gX[recordDataIdx_] = (gyro_robot_frame_filt[0] * gyroScaleFactor);
           imuChunkMsg_.gY[recordDataIdx_] = (gyro_robot_frame_filt[1] * gyroScaleFactor);
           imuChunkMsg_.gZ[recordDataIdx_] = (gyro_robot_frame_filt[2] * gyroScaleFactor);
+           */
 
+          /*
+          imuChunkMsg_.aX[recordDataIdx_] = accel_robot_frame_filt[0];
+          imuChunkMsg_.aY[recordDataIdx_] = accel_robot_frame_filt[1];
+          imuChunkMsg_.aZ[recordDataIdx_] = accel_robot_frame_filt[2];
+          
+          imuChunkMsg_.gX[recordDataIdx_] = gyro_robot_frame_filt[0];
+          imuChunkMsg_.gY[recordDataIdx_] = gyro_robot_frame_filt[1];
+          imuChunkMsg_.gZ[recordDataIdx_] = gyro_robot_frame_filt[2];
+          */
+          
+          
+          
+          
+          // Compute raw accel values in robot frame
+          const f32 xzAccelMagnitude = sqrtf(imu_data_.acc_x*imu_data_.acc_x + imu_data_.acc_z*imu_data_.acc_z);
+          const f32 accel_angle_imu_frame = atan2_fast(imu_data_.acc_z, imu_data_.acc_x);
+          const f32 accel_angle_robot_frame = accel_angle_imu_frame + headAngle;
+          
+          imuChunkMsg_.aX[recordDataIdx_] = xzAccelMagnitude * cosf(accel_angle_robot_frame);
+          imuChunkMsg_.aY[recordDataIdx_] = imu_data_.acc_y;
+          imuChunkMsg_.aZ[recordDataIdx_] = xzAccelMagnitude * sinf(accel_angle_robot_frame);
+          
+          // Compute raw gyro values in robot frame
+          imuChunkMsg_.gX[recordDataIdx_] = imu_data_.rate_x + imu_data_.rate_z * tanf(headAngle);
+          imuChunkMsg_.gY[recordDataIdx_] = imu_data_.rate_y;
+          imuChunkMsg_.gZ[recordDataIdx_] = imu_data_.rate_z  / cosf(headAngle);;
+          
+          
+          
+          
+          
           // Send message when it's full
           if (++recordDataIdx_ == IMU_CHUNK_SIZE) {
             RobotInterface::SendMessage(imuChunkMsg_);

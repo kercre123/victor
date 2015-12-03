@@ -32,7 +32,7 @@ namespace Cozmo {
   
   }
   
-  void IBehavior::SubscribeToTags(std::vector<GameToEngineTag> &&tags)
+  void IBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
   {
     if(_robot.HasExternalInterface()) {
       auto handlerCallback = [this](const GameToEngineEvent& event) {
@@ -45,7 +45,7 @@ namespace Cozmo {
     }
   }
   
-  void IBehavior::SubscribeToTags(std::vector<EngineToGameTag> &&tags)
+  void IBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
   {
     if(_robot.HasExternalInterface()) {
       auto handlerCallback = [this](const EngineToGameEvent& event) {
@@ -91,6 +91,21 @@ namespace Cozmo {
     return EvaluateEmotionScore(robot.GetMoodManager());
   }
 
+
+#pragma mark --- IReactionaryBehavior ----
+  
+  void IReactionaryBehavior::SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags)
+  {
+    _engineToGameTags.insert(tags.begin(), tags.end());
+    SubscribeToTags(std::move(tags));
+  }
+  
+  void IReactionaryBehavior::SubscribeToTriggerTags(std::set<GameToEngineTag>&& tags)
+  {
+    _gameToEngineTags.insert(tags.begin(), tags.end());
+    SubscribeToTags(std::move(tags));
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki

@@ -575,6 +575,7 @@ namespace Anki {
       f32                        _placementOffsetY_mm;
       f32                        _placementOffsetAngle_rad;
       bool                       _placeObjectOnGroundIfCarrying;
+      u32                        _squintLayerTag;
     }; // class IDockAction
 
     

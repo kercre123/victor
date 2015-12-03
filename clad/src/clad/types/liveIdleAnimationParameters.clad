@@ -32,6 +32,9 @@ enum uint_8 LiveIdleAnimationParameter {
   HeadAngleVariability_deg,
   DockSquintEyeHeight,
   DockSquintEyebrowHeight,
+  EyeDartSpacingMinTime_ms,
+  EyeDartSpacingMaxTime_ms,
+  EyeDartMaxDistance_pix,
 
   NumParameters
 }

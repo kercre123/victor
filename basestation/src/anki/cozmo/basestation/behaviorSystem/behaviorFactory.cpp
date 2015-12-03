@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 
 
@@ -75,6 +76,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToCliff:
     {
       newBehavior = new BehaviorReactToCliff(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToPoke:
+    {
+      newBehavior = new BehaviorReactToPoke(robot, config);
       break;
     }
     case BehaviorType::FollowMotion:
