@@ -37,9 +37,9 @@ public:
   
   AudioUnityClientConnection( IExternalInterface& externalInterface );
   
-  void PostCallback( const AudioCallbackDuration& callbackMessage ) override;
-  void PostCallback( const AudioCallbackMarker& callbackMessage ) override;
-  void PostCallback( const AudioCallbackComplete& callbackMessage ) override;
+  void PostCallback( const AudioCallbackDuration& callbackMessage ) const override;
+  void PostCallback( const AudioCallbackMarker& callbackMessage ) const override;
+  void PostCallback( const AudioCallbackComplete& callbackMessage ) const override;
   
 private:
   IExternalInterface& _externalInterface;

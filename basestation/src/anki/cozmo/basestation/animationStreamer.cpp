@@ -7,25 +7,28 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
-
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
 
+
 namespace Anki {
 namespace Cozmo {
-
+  
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
   const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
   
   AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
-                                       CannedAnimationContainer& container)
+                                       CannedAnimationContainer& container,
+                                       Audio::RobotAudioClient& audioClient)
   : HasSettableParameters(externalInterface)
   , _animationContainer(container)
   , _liveAnimation(LiveAnimation)
+  , _audioClient( audioClient )
   {
 
   }
@@ -264,24 +267,21 @@ namespace Cozmo {
 
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
   {
-    AnimKeyFrame::AudioSample audioSample;
-    const s32 numBytes = AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
-                                                       &(audioSample.sample[0]));
-    if(numBytes > 0)
-    {
-      // If we didn't get the requested number of bytes, fill the rest of the sample
-      // with zeros
-      if(numBytes < static_cast<s32>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
-        std::fill(audioSample.sample.begin()+numBytes, audioSample.sample.end(), 0);
+    if ( _audioClient.IsPlugInActive() ) {
+      if ( _audioClient.HasKeyFrameAudioSample() ) {
+        // Give audio sample memory ownership to engine message
+        AnimKeyFrame::AudioSample* audioSample = _audioClient.PopAudioSample();
+        BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( *audioSample ) ) );
       }
-      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
-    } else if(sendSilence) {
+    }
+
+    else if(sendSilence) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
     }
        
     return RESULT_OK;
-  } // UpdateAudio()
+  } // BufferAudioToSend()
   
 
   inline static void SetFaceParams(ProceduralFaceParams& faceParams,
@@ -558,7 +558,9 @@ namespace Cozmo {
     }
     
     // Add more stuff to send buffer from face layers
-    while(_sendBuffer.empty() && HaveNonLoopingFaceLayersToSend())
+    while(_sendBuffer.empty() &&
+          ( HaveNonLoopingFaceLayersToSend() ||
+           _audioClient.IsPlugInActive() ))
     {
       // If we have face layers to send, we _do_ want BufferAudioToSend to
       // buffer audio silence keyframes to keep the clock ticking. If not, we
@@ -587,7 +589,11 @@ namespace Cozmo {
     }
     
     // If we just finished buffering all the face layers, send an end of animation message
-    if(!HaveNonLoopingFaceLayersToSend() && _sendBuffer.empty() && !_endOfAnimationSent) {
+    if(_startOfAnimationSent &&
+       !HaveNonLoopingFaceLayersToSend() &&
+       _sendBuffer.empty() &&
+       !_endOfAnimationSent &&
+       !_audioClient.IsPlugInActive()) {
       lastResult = SendEndOfAnimation(robot);
     }
     
@@ -685,8 +691,11 @@ namespace Cozmo {
         RobotAudioKeyFrame& audioKF = robotAudioTrack.GetCurrentKeyFrame();
         if(audioKF.IsTimeToPlay(_startTime_ms, _streamingTime_ms)) {
           // Tell the audio manager to play the sound indicated by this track
-          auto & audioRef = audioKF.GetAudioRef();
-          AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+//          auto & audioRef = audioKF.GetAudioRef();
+          if (nullptr != _audioClient) {
+            _audioClient->PostCozmoEvent(Anki::Cozmo::Audio::EventType::PLAY_VO_COZ_PLAYFUL); // audioRef.audioEvent );
+            //  AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+          }
           
 #         if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
           // Queue up audio frame for playing locally if
@@ -908,7 +917,7 @@ namespace Cozmo {
     
     // If we didn't do any streaming above, but we've still got face layers to
     // stream or there's audio waiting to go out, stream those now
-    if(!streamUpdated && (HaveNonLoopingFaceLayersToSend() /* TODO: add "|| _audioClient.HasAudio()" like on Jordan's branch*/))
+    if(!streamUpdated && (HaveNonLoopingFaceLayersToSend() || _audioClient.HasKeyFrameAudioSample()))
     {
       lastResult = StreamFaceLayersOrAudio(robot);
     }

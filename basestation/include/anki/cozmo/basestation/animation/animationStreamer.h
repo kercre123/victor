@@ -44,15 +44,9 @@ namespace Cozmo {
     class MessageGameToEngine;
   }
   
-  // Just a stub so I can compile
-  // TODO: Remove once Jordan's stuff is in
-  class AudioManager
-  {
-  public:
-    static void PlayEvent(Audio::EventType audioEvent, f32 volume) { }
-    static s32 GetBufferedData(size_t numBytes, u8* buffer) { return 0; }
-  };
-  
+  namespace Audio {
+    class RobotAudioClient;
+  }  
   
   class AnimationStreamer : public HasSettableParameters<LiveIdleAnimationParameter, ExternalInterface::MessageGameToEngineTag::SetLiveIdleAnimationParameters, f32>
   {
@@ -61,7 +55,7 @@ namespace Cozmo {
     static const std::string AnimToolAnimation;
     static const u8          IdleAnimationTag = 255;
     
-    AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container);
+    AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container, Audio::RobotAudioClient& audioClient);
     
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
@@ -97,6 +91,7 @@ namespace Cozmo {
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
     
+
   private:
     
     // Initialize the streaming of an animation with a given tag
@@ -216,6 +211,8 @@ namespace Cozmo {
     s32            _bodyMoveSpacing_ms   = 0;
     s32            _liftMoveSpacing_ms   = 0;
     s32            _headMoveSpacing_ms   = 0;
+    
+    Audio::RobotAudioClient& _audioClient;
     
   }; // class AnimationStreamer
   
