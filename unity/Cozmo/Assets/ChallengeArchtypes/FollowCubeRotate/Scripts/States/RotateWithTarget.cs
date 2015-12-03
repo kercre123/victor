@@ -6,8 +6,9 @@ namespace FollowCubeRotate {
 
     private LightCube _Target;
     private float _LastTimeTargetSeen;
-    private float _AngleAccumulator;
-    private float _LastAngle;
+    private float _StartingAngle;
+    private bool _LeftReached = false;
+    private bool _RightReached = false;
 
     public void SetTarget(LightCube target) {
       _Target = target;
@@ -15,20 +16,21 @@ namespace FollowCubeRotate {
 
     public override void Enter() {
       base.Enter();
-      _AngleAccumulator = 0.0f;
-      _LastAngle = _CurrentRobot.PoseAngle;
+      _StartingAngle = _CurrentRobot.PoseAngle;
     }
 
     public override void Update() {
       base.Update();
 
-      _AngleAccumulator += (_CurrentRobot.PoseAngle - _LastAngle);
+      if (_StartingAngle - _CurrentRobot.PoseAngle < Mathf.PI / 3.0f) {
+        _LeftReached = true;
+      }
 
-      Debug.Log(_AngleAccumulator);
+      if (_StartingAngle - _CurrentRobot.PoseAngle > Mathf.PI / 3.0f) {
+        _RightReached = true;
+      }
 
-      _LastAngle = _CurrentRobot.PoseAngle;
-
-      if (Mathf.Abs(_AngleAccumulator) > 2.0f * Mathf.PI) {
+      if (_LeftReached && _RightReached) {
         PlayWinAnimation();
         return;
       }
@@ -42,10 +44,10 @@ namespace FollowCubeRotate {
 
         // determines if the cube is to the left or right of cozmo.
         if (crossValue < 0.0f) {
-          _CurrentRobot.DriveWheels(5.0f, -5.0f);
+          _CurrentRobot.DriveWheels(15.0f, -15.0f);
         }
         else {
-          _CurrentRobot.DriveWheels(-5.0f, 5.0f);
+          _CurrentRobot.DriveWheels(-15.0f, 15.0f);
         }
 
       }
