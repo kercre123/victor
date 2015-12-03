@@ -11,6 +11,17 @@ namespace ScriptedSequences {
 
     public List<TextAsset> SequenceTextAssets = new List<TextAsset>();
 
+    public ScriptedSequence CurrentSequence {
+      get {
+        return _CurrentSequence;
+      }
+      private set {
+        _CurrentSequence = value;
+      }
+    }
+
+    private ScriptedSequence _CurrentSequence = null;
+
     private static ScriptedSequenceManager _instance;
 
     public static ScriptedSequenceManager Instance { 
@@ -24,22 +35,6 @@ namespace ScriptedSequences {
         }
         return _instance; 
       } 
-    }
-
-    private static JsonSerializerSettings _JsonSettings;
-    public static JsonSerializerSettings JsonSettings {
-      get {
-        if (_JsonSettings == null) {
-          _JsonSettings = new JsonSerializerSettings() {
-            TypeNameHandling = TypeNameHandling.Auto,
-            Converters = new List<JsonConverter> {
-              new UtcDateTimeConverter(),
-              new Newtonsoft.Json.Converters.StringEnumConverter()
-            }
-          };
-        }
-        return _JsonSettings;
-      }
     }
 
     private void Awake() {
@@ -57,11 +52,13 @@ namespace ScriptedSequences {
     private void Start() {
 
       foreach (var textAsset in SequenceTextAssets) {
-        try
-        {
-          Sequences.Add(JsonConvert.DeserializeObject<ScriptedSequence>(textAsset.text, JsonSettings));
+        if (textAsset == null) {
+          continue;
         }
-        catch(Exception ex) {
+        try {
+          Sequences.Add(JsonConvert.DeserializeObject<ScriptedSequence>(textAsset.text, GlobalSerializerSettings.JsonSettings));
+        }
+        catch (Exception ex) {
           DAS.Error(this, "Encountered error loading ScriptedSequenceFile " + textAsset.name + ": " + ex.ToString());
         }
       }
@@ -72,16 +69,44 @@ namespace ScriptedSequences {
       }
     }
 
-    public void ActivateSequence(string name)
-    {
+    public ISimpleAsyncToken ActivateSequence(string name, bool forceReplay = false) {
       var sequence = Sequences.Find(s => s.Name == name);
 
       if (sequence == null) {
-        DAS.Error(this, "Could not find Sequence " + name);
-        return;
+        string msg = "Could not find Sequence " + name;
+        DAS.Error(this, msg);
+        return new SimpleAsyncToken(new Exception(msg));
       }
 
+      SimpleAsyncToken token = new SimpleAsyncToken();
+      Action onSuccess = null;
+      Action<Exception> onError = null;
+
+      if (!forceReplay && !sequence.Repeatable && sequence.IsComplete) {
+        DAS.Info(this, "Tried to Activate Sequence that is not repeatable and has already been played");
+        token.Succeed();
+        return token;
+      }
+
+      onSuccess = () => {
+        token.Succeed();
+        _CurrentSequence = null;
+        sequence.OnComplete -= onSuccess;
+        sequence.OnError -= onError;
+      };
+      onError = (ex) => {
+        token.Fail(ex);
+        _CurrentSequence = null;
+        sequence.OnComplete -= onSuccess;
+        sequence.OnError -= onError;
+      };
+      sequence.OnComplete += onSuccess;
+      sequence.OnError += onError;
+
+      _CurrentSequence = sequence;
       sequence.Enable();
+
+      return token;
     }
 
     public void BootstrapCoroutine(IEnumerator coroutine) {

@@ -2,8 +2,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
+using Anki.UI;
 
-public class ConsoleLogManager : MonoBehaviour {
+public class ConsoleLogManager : MonoBehaviour, IDASTarget {
+
+  // Each string element should be < 16250 characters because
+  // Unity uses a mesh to display text, 4 verts per letter, and has
+  // a hard limit of 65000 verts per mesh
+  public const int kUnityTextFieldCharLimit = 14000;
+
+  [SerializeField]
+  private AnkiTextLabel _ConsoleTextLabelPrefab;
+
+  private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
 
   [SerializeField]
   private int numberCachedLogMaximum = 100;
@@ -16,6 +28,7 @@ public class ConsoleLogManager : MonoBehaviour {
 
   // Use this for initialization
   private void Awake() {
+    _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
@@ -26,21 +39,13 @@ public class ConsoleLogManager : MonoBehaviour {
     _LastToggleValues.Add(LogPacket.ELogKind.EVENT, true);
     _LastToggleValues.Add(LogPacket.ELogKind.DEBUG, true);
 
-    DAS.OnInfoLogged += OnInfoLogged;
-    DAS.OnWarningLogged += OnWarningLogged;
-    DAS.OnErrorLogged += OnErrorLogged;
-    DAS.OnDebugLogged += OnDebugLogged;
-    DAS.OnEventLogged += OnEventLogged;
+    DAS.AddTarget(this);
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
   }
 
   private void OnDestroy() {
-    DAS.OnInfoLogged -= OnInfoLogged;
-    DAS.OnWarningLogged -= OnWarningLogged;
-    DAS.OnErrorLogged -= OnErrorLogged;
-    DAS.OnDebugLogged -= OnDebugLogged;
-    DAS.OnEventLogged -= OnEventLogged;
+    DAS.RemoveTarget(this);
     ConsoleLogPane.ConsoleLogPaneOpened -= OnConsoleLogPaneOpened;
 
     if (_ConsoleLogPaneView != null) {
@@ -48,27 +53,27 @@ public class ConsoleLogManager : MonoBehaviour {
     }
   }
 
-  private void OnInfoLogged(string eventName, string eventValue, Object context) {
+  void IDASTarget.Info(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.INFO, eventName, eventValue, context);
   }
 
-  private void OnErrorLogged(string eventName, string eventValue, Object context) {
+  void IDASTarget.Error(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.ERROR, eventName, eventValue, context);
   }
 
-  private void OnWarningLogged(string eventName, string eventValue, Object context) {
+  void IDASTarget.Warn(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.WARNING, eventName, eventValue, context);
   }
 
-  private void OnEventLogged(string eventName, string eventValue, Object context) {
+  void IDASTarget.Event(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.EVENT, eventName, eventValue, context);
   }
 
-  private void OnDebugLogged(string eventName, string eventValue, Object context) {
+  void IDASTarget.Debug(string eventName, string eventValue, object context) {
     SaveLogPacket(LogPacket.ELogKind.DEBUG, eventName, eventValue, context);
   }
 
-  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, Object context) {
+  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context) {
     // Add the new log to the queue
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context);
     _MostRecentLogs.Enqueue(newPacket);
@@ -88,8 +93,8 @@ public class ConsoleLogManager : MonoBehaviour {
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
 
-    string consoleText = CompileRecentLogs();
-    _ConsoleLogPaneView.Initialize(consoleText);
+    List<string> consoleText = CompileRecentLogs();
+    _ConsoleLogPaneView.Initialize(consoleText, _TextLabelPool);
     foreach (KeyValuePair<LogPacket.ELogKind, bool> kvp in _LastToggleValues) {
       _ConsoleLogPaneView.SetToggle(kvp.Key, kvp.Value);
     }
@@ -102,7 +107,7 @@ public class ConsoleLogManager : MonoBehaviour {
     _LastToggleValues[logKind] = !_LastToggleValues[logKind];
 
     // Change the text for the pane
-    string consoleText = CompileRecentLogs();
+    List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.SetText(consoleText);
   }
 
@@ -111,16 +116,51 @@ public class ConsoleLogManager : MonoBehaviour {
     _ConsoleLogPaneView = null;
   }
 
-  private string CompileRecentLogs() {
+  private List<string> CompileRecentLogs() {
+    List<string> consoleLogs = new List<string>();
     StringBuilder sb = new StringBuilder();
+    string logString;
     foreach (LogPacket packet in _MostRecentLogs) {
       if (_LastToggleValues[packet.LogKind] == true) {
+        logString = packet.ToString();
+
+        if (sb.Length + logString.Length + 1 > kUnityTextFieldCharLimit) {
+          consoleLogs.Add(sb.ToString());
+
+          // Empty the string builder
+          sb.Length = 0;
+        }
+
         sb.Append(packet.ToString());
         sb.Append("\n");
       }
     }
-    return sb.ToString();
+
+    if (sb.Length > 0) {
+      consoleLogs.Add(sb.ToString());
+    }
+    return consoleLogs;
   }
+
+  #region Text Label Pooling
+
+  private AnkiTextLabel CreateTextLabel() {
+    // Create the text label as a child under the parent container for the pool
+    GameObject newLabelObject = UIManager.CreateUIElement(_ConsoleTextLabelPrefab.gameObject, this.transform);
+    newLabelObject.SetActive(false);
+    AnkiTextLabel textScript = newLabelObject.GetComponent<AnkiTextLabel>();
+
+    return textScript;
+  }
+
+  private void ResetTextLabel(AnkiTextLabel toReset) {
+    // Add the text label as a child under the parent container for the pool
+    toReset.transform.SetParent(this.transform, true);
+    toReset.text = null;
+    toReset.gameObject.SetActive(false);
+  }
+
+  #endregion
 }
 
 public class LogPacket {
@@ -147,12 +187,12 @@ public class LogPacket {
     private set;
   }
 
-  public Object Context {
+  public object Context {
     get;
     private set;
   }
 
-  public LogPacket(ELogKind logKind, string eventName, string eventValue, Object context) {
+  public LogPacket(ELogKind logKind, string eventName, string eventValue, object context) {
     LogKind = logKind;
     EventName = eventName;
     EventValue = eventValue;
@@ -187,7 +227,13 @@ public class LogPacket {
     
     string contextStr = "null";
     if (Context != null) {
-      contextStr = Context.ToString();
+      Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
+      if (contextDict != null) {
+        contextStr = string.Join(", ", contextDict.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+      }
+      else {
+        contextStr = Context.ToString();
+      }
     }
     // TODO: Colorize the text
     return string.Format("<color=#{0}>[{1}] {2}: {3} ({4})</color>", colorStr, logKindStr, EventName, EventValue, contextStr);

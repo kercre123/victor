@@ -1,0 +1,57 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "HelloWorld.Hello": {
+    "translation": "Hello"
+  },
+  "HelloWorld.World": {
+    "translation": "World"
+  },
+  "AzkCozmoSequence.Node 2": {
+    "translation": "I'm a beeping robot with no body!"
+  },
+  "AzkCozmoSequence.Node 4": {
+    "translation": "Me too! But I have a body!!"
+  },
+  "IntroSequence.AriaUploadLine": {
+    "translation": "OK, we are go for launch. Protocol initiated.  Transfer in 5, 4, 3, 2, 1..."
+  },
+  "IntroSequence.CozmoBleepLine": {
+    "translation": "[AFFIRMATIVE BLEEPS]"
+  },
+  "IntroSequence.AriaIntroLine": {
+    "translation": "Cozmo, this is Mission Control. You have passed the final checks. The bot has been prepared for your arrival. Confirm when you are ready. Over."
+  },
+  "IntroSequence.AriaIntroLine1": {
+    "translation": "Cozmo, this is Mission Control."
+  },
+  "IntroSequence.AriaIntroLine2": {
+    "translation": "You have passed the final checks."
+  },
+  "IntroSequence.AriaIntroLine3": {
+    "translation": "Confirm when you are ready. Over."
+  },
+  "IntroSequence.AriaUploadLine1": {
+    "translation": "OK, we are go for launch. "
+  },
+  "IntroSequence.AriaUploadLine2": {
+    "translation": "Transfer in 5, 4, 3, 2, 1..."
+  }
+}

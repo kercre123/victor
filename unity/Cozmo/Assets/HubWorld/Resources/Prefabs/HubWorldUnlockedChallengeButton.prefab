@@ -261,6 +261,10 @@ Prefab:
       value: 
       objectReference: {fileID: 21300000, guid: cc394a82e7ff24aa2a0dcb4431416be2,
         type: 3}
+    - target: {fileID: 0}
+      propertyPath: _ChallengeBackground
+      value: 
+      objectReference: {fileID: 11414268}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 190438}

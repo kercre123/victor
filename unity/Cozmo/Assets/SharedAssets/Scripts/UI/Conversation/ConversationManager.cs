@@ -32,13 +32,13 @@ namespace Conversations {
     [SerializeField]
     private BaseView _RightBubble;
 
-    private ConversationHistory _ConversationHistory = new ConversationHistory();
     private Conversation _CurrentConversation = new Conversation();
     private string _CurrentConversationKey;
     private SpeechBubble _CurrentSpeechBubble;
 
     void Awake() {
       Instance = this;
+      StartNewConversation("Default");
     }
 
     public void StartNewConversation(string conversationKey) {
@@ -47,6 +47,10 @@ namespace Conversations {
       if (_CurrentSpeechBubble != null) {
         UIManager.CloseView(_CurrentSpeechBubble);
       }
+    }
+
+    public void AbortCurrentConversation() {
+      StartNewConversation("Default");
     }
 
     public void AddConversationLine(ConversationLine line) {
@@ -58,8 +62,9 @@ namespace Conversations {
     }
 
     public void SaveConversationToHistory() {
-      _ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
-      StartNewConversation("");
+      DataPersistence.DataPersistenceManager.Instance.Data.ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
+      DataPersistence.DataPersistenceManager.Instance.Save();
+      StartNewConversation("Default");
     }
 
     private SpeechBubble CreateSpeechBubble(ConversationLine line) {

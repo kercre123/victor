@@ -2,23 +2,25 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
+using DG.Tweening;
 
 namespace Cozmo.HubWorld {
   public class HubWorldView : MonoBehaviour {
 
-    public delegate void ButtonClickedHandler(string challengeClicked);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
     public event ButtonClickedHandler OnCompletedChallengeClicked;
 
     [SerializeField]
+    private Canvas _HubWorldCanvas;
+
+    [SerializeField]
     private HubWorldButton _HubWorldLockedButtonPrefab;
 
     [SerializeField]
-    private RectTransform[] _LockedButtonNodes;
-
-    private int _LockedButtonCounter;
+    private RectTransform _LockedButtonContainer;
 
     [SerializeField]
     private HubWorldButton _HubWorldUnlockedButtonPrefab;
@@ -37,7 +39,6 @@ namespace Cozmo.HubWorld {
     private int _CompletedButtonCounter;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> _challengeStatesById) {
-      _LockedButtonCounter = 0;
       _UnlockedButtonCounter = 0;
       _CompletedButtonCounter = 0;
 
@@ -53,23 +54,59 @@ namespace Cozmo.HubWorld {
           break;
         case ChallengeState.COMPLETED:
           CreateCompletedButton(challengeState.data);
-          break;
+          break; 
         default:
           DAS.Error("HubWorldView", "ChallengeState view not implemented! " + challengeState);
           break;
         }
       }
+
+      // Make sure we recieve events from the right camera
+      _HubWorldCanvas.worldCamera = HubWorldCamera.Instance.WorldCamera;
     }
 
     private void CreateLockedButton(ChallengeData challengeData) {
-      // TODO: The Unlocked button visuals are going to change, so don't worry about copy pasta
-      if (_LockedButtonCounter >= 0 && _LockedButtonCounter < _LockedButtonNodes.Length) {
-        GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedButtonPrefab.gameObject, _LockedButtonNodes[_LockedButtonCounter]);
-        HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-        buttonScript.Initialize(challengeData);
-        buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
-        _LockedButtonCounter++;
+      // For each locked challenge, create 1 asteroids in each quadrant
+      // Right now we're not doing anything on locked challenge tap so this is okay.
+      int numAsteroids = 4;
+
+      for (int i = 0; i < numAsteroids; i++) {
+        CreateAsteroidInQuadrant(i % 4);
       }
+
+      // Add two more in random quadrants for funsies
+      for (int i = 0; i < 2; i++) {
+        CreateAsteroidInQuadrant(Random.Range(0, 4));
+      }
+    }
+
+    private void CreateAsteroidInQuadrant(int quadrant) {
+      switch (quadrant) {
+      case 0: 
+        CreateAsteroid(-950, -500, -460, 0);
+        break;
+      case 1:
+        CreateAsteroid(-950, -500, 0, 510);
+        break;
+      case 2:
+        CreateAsteroid(500, 950, -460, 0);
+        break;
+      case 3:
+        CreateAsteroid(500, 950, 0, 510);
+        break;
+      default:
+        break;
+      }
+    }
+
+    private void CreateAsteroid(float minLocalX, float maxLocalX, float minLocalY, float maxLocalY) {
+      GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedButtonPrefab.gameObject, _LockedButtonContainer);
+      HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+      newButton.transform.localPosition = new Vector3(Random.Range(minLocalX, maxLocalX),
+        Random.Range(minLocalY, maxLocalY), Random.Range(-75, 75));
+
+      buttonScript.Initialize(null);
+      //buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
     }
 
     private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {
@@ -93,21 +130,21 @@ namespace Cozmo.HubWorld {
       }
     }
 
-    private void HandleLockedChallengeClicked(string challengeClicked) {
+    private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnLockedChallengeClicked != null) {
-        OnLockedChallengeClicked(challengeClicked);
+        OnLockedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 
-    private void HandleUnlockedChallengeClicked(string challengeClicked) {
+    private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnUnlockedChallengeClicked != null) {
-        OnUnlockedChallengeClicked(challengeClicked);
+        OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 
-    private void HandleCompletedChallengeClicked(string challengeClicked) {
+    private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnCompletedChallengeClicked != null) {
-        OnCompletedChallengeClicked(challengeClicked);
+        OnCompletedChallengeClicked(challengeClicked, buttonTransform);
       }
     }
 

@@ -21,9 +21,6 @@ namespace Conversations {
       _Text.text = Localization.Get(_LineKey);
     }
 
-    protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-    }
-
     protected override void CleanUp() {
       
     }

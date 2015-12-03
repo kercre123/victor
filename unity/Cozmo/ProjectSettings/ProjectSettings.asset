@@ -315,7 +315,7 @@ PlayerSettings:
   psp2InfoBarOnStartup: 0
   psp2InfoBarColor: 0
   psmSplashimage: {fileID: 0}
-  spritePackerPolicy: 
+  spritePackerPolicy: DefaultPackerPolicy
   scriptingDefineSymbols: {}
   metroPackageName: CozmoRefactor
   metroPackageLogo: 
@@ -459,9 +459,9 @@ PlayerSettings:
   WebGL::exceptionSupport: 1
   WebGL::memorySize: 256
   WebPlayer::ScriptingBackend: 0
-  iOS::Architecture: 0
+  iOS::Architecture: 2
   iOS::EnableIncrementalBuildSupportForIl2cpp: 0
-  iOS::ScriptingBackend: 0
+  iOS::ScriptingBackend: 1
   boolPropertyNames:
   - WebGL::analyzeBuildSize
   - WebGL::dataCaching

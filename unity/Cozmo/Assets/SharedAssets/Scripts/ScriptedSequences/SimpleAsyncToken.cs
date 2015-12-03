@@ -35,6 +35,11 @@ namespace ScriptedSequences {
       }
     }
 
+    public SimpleAsyncToken(Exception error) {
+      Fail(error);
+    }
+
+
     public void Succeed() {
       if (!IsReady) {
         IsReady = true;
@@ -68,6 +73,7 @@ namespace ScriptedSequences {
 
     private void InvokeCallbacks()
     {
+      OnAbort = null;
       for (int i = 0; i < _Callbacks.Count; i++) {
         _Callbacks[i](this);
       }

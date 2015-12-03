@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.Collections.Generic;
 
 public interface IDAS {
   void Event(string eventValue, UnityEngine.Object context = null);
 
   void Error(string eventValue, UnityEngine.Object context = null);
+
+  void Error(Exception eventValue, UnityEngine.Object context = null);
 
   void Warn(string eventValue, UnityEngine.Object context = null);
 
@@ -16,50 +19,65 @@ public interface IDAS {
 
 public static partial class DAS {
 
-  public delegate void DASHandler(string eventName, string eventValue, UnityEngine.Object context);
-  public static event DASHandler OnEventLogged;
-  public static event DASHandler OnErrorLogged;
-  public static event DASHandler OnWarningLogged;
-  public static event DASHandler OnInfoLogged;
-  public static event DASHandler OnDebugLogged;
+  private static readonly List<IDASTarget> _Targets = new List<IDASTarget>();
 
-  public static void Event(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void AddTarget(IDASTarget target) {
+    _Targets.Add(target);
+  }
+
+  public static void RemoveTarget(IDASTarget target) {
+    _Targets.Remove(target);
+  }
+
+  public static void ClearTargets() {
+    _Targets.Clear();
+  }
+
+  public static void Event(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
-    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 3, eventName, eventValue), context);
-    if (OnEventLogged != null) {
-      OnEventLogged(eventName, eventValue, context);
+
+    for(int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Event(eventName, eventValue, context);
     }
   }
 
-  public static void Error(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Error(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
-    UnityEngine.Debug.LogError(string.Format("DAS [{0}] {1} - {2}", 5, eventName, eventValue), context);
-    if (OnErrorLogged != null) {
-      OnErrorLogged(eventName, eventValue, context);
+
+    for(int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Error(eventName, eventValue, context);
     }
   }
 
-  public static void Warn(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Error(object eventObject, Exception eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
-    UnityEngine.Debug.LogWarning(string.Format("DAS [{0}] {1} - {2}", 4, eventName, eventValue), context);
-    if (OnWarningLogged != null) {
-      OnWarningLogged(eventName, eventValue, context);
+
+    for(int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Error(eventName, eventValue.Message + "\n"+eventValue.StackTrace, context);
     }
   }
 
-  public static void Info(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Warn(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
-    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 2, eventName, eventValue), context);
-    if (OnInfoLogged != null) {
-      OnInfoLogged(eventName, eventValue, context);
+
+    for(int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Warn(eventName, eventValue, context);
     }
   }
 
-  public static void Debug(object eventObject, string eventValue, UnityEngine.Object context = null) {
+  public static void Info(object eventObject, string eventValue, object context = null) {
     string eventName = GetEventName(eventObject);
-    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue), context);
-    if (OnDebugLogged != null) {
-      OnDebugLogged(eventName, eventValue, context);
+
+    for(int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Info(eventName, eventValue, context);
+    }
+  }
+
+  public static void Debug(object eventObject, string eventValue, object context = null) {
+    string eventName = GetEventName(eventObject);
+
+    for(int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].Debug(eventName, eventValue, context);
     }
   }
 
@@ -100,6 +118,10 @@ public static partial class DAS {
     }
 
     public void Error(string eventValue, UnityEngine.Object context = null) {
+      DAS.Error(_EventName, eventValue, context);      
+    }
+
+    public void Error(Exception eventValue, UnityEngine.Object context = null) {
       DAS.Error(_EventName, eventValue, context);      
     }
 

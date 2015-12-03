@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cozmo.HubWorld {
   public class HubWorldPane : MonoBehaviour {
@@ -25,7 +26,7 @@ namespace Cozmo.HubWorld {
     private Button _CompleteChallengeButton;
 
     [SerializeField]
-    private InputField _ChallengeIdToComplete;
+    private Dropdown _ChallengeIdSelect;
 
     private void Start() {
       RaiseHubWorldPaneOpened(this);
@@ -39,6 +40,13 @@ namespace Cozmo.HubWorld {
     public void Initialize(HubWorld hubWorld) {
       _HubWorldInstance = hubWorld;
 
+      var challengeDataList = typeof(HubWorld).GetField("_ChallengeDataList", 
+                                                        System.Reflection.BindingFlags.NonPublic | 
+                                                        System.Reflection.BindingFlags.Instance)
+                                              .GetValue(hubWorld) as ChallengeDataList;
+
+      _ChallengeIdSelect.options = challengeDataList.ChallengeData.Select(c => new Dropdown.OptionData(c.ChallengeID)).ToList();
+
       _LoadHubWorldButton.onClick.AddListener(HandleLoadHubWorldButtonClicked);
       _CompleteChallengeButton.onClick.AddListener(HandleCompleteChallengeClicked);
     }
@@ -48,7 +56,7 @@ namespace Cozmo.HubWorld {
     }
 
     private void HandleCompleteChallengeClicked() {
-      _HubWorldInstance.TestCompleteChallenge(_ChallengeIdToComplete.text);
+      _HubWorldInstance.TestCompleteChallenge(_ChallengeIdSelect.options[_ChallengeIdSelect.value].text);
     }
   }
 }

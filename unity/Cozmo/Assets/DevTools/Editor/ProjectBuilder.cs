@@ -144,6 +144,11 @@ public class ProjectBuilder {
     PlayerSettings.iOS.sdkVersion = saveIOSSDKVersion;
     PlayerSettings.iOS.scriptCallOptimization = saveIOSScriptLevel;
 
+    // Update our xcode project
+    if (buildTarget == BuildTarget.iOS) {
+      Xcode.XcodeProjectUtility.FixupCozmoIos();
+    }
+
     return result;
   }
 

@@ -20,6 +20,18 @@ public abstract class BaseView : MonoBehaviour {
     }
   }
 
+  public event SimpleBaseViewHandler ViewOpenAnimationFinished;
+  public static event BaseViewHandler BaseViewOpenAnimationFinished;
+
+  private static void RaiseViewOpenAnimationFinished(BaseView view) {
+    if (view.ViewOpenAnimationFinished != null) {
+      view.ViewOpenAnimationFinished();
+    }
+    if (BaseViewOpenAnimationFinished != null) {
+      BaseViewOpenAnimationFinished(view);
+    }
+  }
+
   public event SimpleBaseViewHandler ViewClosed;
   public static event BaseViewHandler BaseViewClosed;
 
@@ -44,30 +56,54 @@ public abstract class BaseView : MonoBehaviour {
     }
   }
 
-  private Sequence _closeAnimation;
+  /// <summary>
+  /// If true, creates a full screen button behind all the elements of this
+  /// dialog. The button will close this dialog on click.
+  /// </summary>
+  [SerializeField]
+  private bool _CloseDialogOnTapOutside;
+
+  private Sequence _TransitionAnimation;
 
   public void OnDestroy() {
-    if (_closeAnimation != null) {
-      _closeAnimation.Kill();
+    if (_TransitionAnimation != null) {
+      _TransitionAnimation.Kill();
     }
-
-    CleanUp();
   }
 
   protected abstract void CleanUp();
 
   public void OpenView() {
     RaiseViewOpened(this);
+
+    if (_CloseDialogOnTapOutside) {
+      GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
+                                      this.transform);
+
+      // Place the button underneath all the UI in this dialog
+      fullScreenButton.transform.SetAsFirstSibling();
+      UnityEngine.UI.Button fullScreenCollider = fullScreenButton.GetComponent<UnityEngine.UI.Button>();
+      fullScreenCollider.onClick.AddListener(HandleCloseColliderClicked);
+    }
+
     PlayOpenAnimations();
+  }
+
+  private void HandleCloseColliderClicked() {
+    CloseView();
   }
 
   public void CloseView() {
     RaiseViewClosed(this);
+
+    CleanUp();
     PlayCloseAnimations();
   }
 
   public void CloseViewImmediately() {
     RaiseViewClosed(this);
+
+    CleanUp();
 
     // Close dialog without playing animations
     OnCloseAnimationsFinished();
@@ -76,28 +112,43 @@ public abstract class BaseView : MonoBehaviour {
   private void PlayOpenAnimations() {
     UIManager.DisableTouchEvents();
 
-    // TODO: Play some animations
+    // Play some animations
+    if (_TransitionAnimation != null) {
+      _TransitionAnimation.Kill();
+    }
+    _TransitionAnimation = DOTween.Sequence();
+    ConstructOpenAnimation(_TransitionAnimation);
+    _TransitionAnimation.AppendCallback(OnOpenAnimationsFinished);
+  }
 
-    OnOpenAnimationsFinished();
+  protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
   }
 
   private void OnOpenAnimationsFinished() {
     UIManager.EnableTouchEvents();
 
-    // TODO: Raise event
+    // Raise event
+    RaiseViewOpenAnimationFinished(this);
   }
 
   private void PlayCloseAnimations() {
     UIManager.DisableTouchEvents();
 
     // Play some animations
-    _closeAnimation = DOTween.Sequence();
-    ConstructCloseAnimation(_closeAnimation);
-    _closeAnimation.AppendCallback(OnCloseAnimationsFinished);
+    if (_TransitionAnimation != null) {
+      _TransitionAnimation.Kill();
+    }
+    _TransitionAnimation = DOTween.Sequence();
+    ConstructCloseAnimation(_TransitionAnimation);
+    _TransitionAnimation.AppendCallback(OnCloseAnimationsFinished);
 
   }
 
-  protected abstract void ConstructCloseAnimation(Sequence closeAnimation);
+  // TODO: Make virtual function play from a set of default animations based on a serialized enum?
+  // plus the pivot point and direction (top, bottom, left, right)
+  // TODO: Make protected functions that return default tweeners you can add to the sequence
+  protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
+  }
 
   private void OnCloseAnimationsFinished() {
     UIManager.EnableTouchEvents();

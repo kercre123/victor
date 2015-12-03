@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
+using System.ComponentModel;
 
 namespace ScriptedSequences.Editor {
   // Base class which has should have a generic argument of either
@@ -11,7 +12,11 @@ namespace ScriptedSequences.Editor {
 
     public readonly T ValueBase;
 
-    public Color Color { get { return typeof(T) == typeof(ScriptedSequenceCondition) ? Color.red : Color.blue; } }
+    public Color Color { get { return _Editor.GetColor<T>(); } }
+
+    public Color TextColor { get { return _Editor.GetTextColor<T>(); } }
+
+    public Color BackgroundColor { get { return _Editor.GetBackgroundColor<T>(); } }
 
     protected ScriptedSequenceEditor _Editor;
     public List<T> List;
@@ -25,6 +30,23 @@ namespace ScriptedSequences.Editor {
     protected Action _OnDestroy;
 
     public event Action OnDestroy { add { _OnDestroy += value; } remove { _OnDestroy -= value; } }
+
+    private GUIContent _Label;
+
+    public GUIContent Label {
+      get {
+        if (_Label == null) {
+          var description = ValueBase.GetType().GetCustomAttributes(typeof(DescriptionAttribute), true)
+            .Cast<DescriptionAttribute>()
+            .Select(x => x.Description)
+            .FirstOrDefault() ?? string.Empty;
+          var name = ValueBase.GetType().Name.ToHumanFriendly();
+          _Label = new GUIContent(name, description);
+        }
+        return _Label;
+      }
+    }
+
 
     public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, List<T> list) {
       ValueBase = condition;
@@ -94,21 +116,19 @@ namespace ScriptedSequences.Editor {
       var lastBackgroundColor = GUI.backgroundColor;
       var lastContentColor = GUI.contentColor;
 
-      var bgColor = Color * 0.35f;
-      bgColor.a = 1.0f;
-      GUI.color = bgColor;
+      GUI.color = BackgroundColor;
       EditorGUILayout.BeginVertical(ScriptedSequenceEditor.BoxStyle);
 
       var rect = EditorGUILayout.GetControlRect();
 
       GUI.color = Color;
-      GUI.contentColor = Color.white;
+      GUI.contentColor = TextColor;
       GUI.backgroundColor = Color;
       var textureRect = rect;
       textureRect.x += 15 * (EditorGUI.indentLevel - 1);
       textureRect.width -= 15 * (EditorGUI.indentLevel - 1);
       GUI.DrawTexture(textureRect, Texture2D.whiteTexture, ScaleMode.StretchToFill);
-      GUI.color = Color.white;
+      GUI.color = TextColor;
 
       // Handle Right Click, Drag, or Drop
       if (rect.Contains(mousePosition)) {
@@ -170,7 +190,7 @@ namespace ScriptedSequences.Editor {
           _Editor.DragSize = rect.size;
           _Editor.DragTitle = Value.GetType().Name.ToHumanFriendly();
           _Editor.DragColor = Color;
-          _Editor.DragTextColor = Color.white;
+          _Editor.DragTextColor = TextColor;
         }
         else if (eventType == EventType.mouseUp) {
           var otherHelper = _Editor.GetDraggingHelper<U>();
@@ -245,14 +265,18 @@ namespace ScriptedSequences.Editor {
           }
         }
       }
+
+
+
+
       // if this condition/action is expandable, draw a foldout. Otherwise just draw a label
       if (_Expandable) {
-        _Expanded = EditorGUI.Foldout(rect, _Expanded, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.FoldoutStyle);
+        _Expanded = EditorGUI.Foldout(rect, _Expanded, Label, ScriptedSequenceEditor.FoldoutStyle);
       }
       else {
         rect.x += (EditorGUI.indentLevel + 1) * 15;
         rect.width -= (EditorGUI.indentLevel + 1) * 15;
-        GUI.Label(rect, typeof(T).Name.ToHumanFriendly(), ScriptedSequenceEditor.LabelStyle);
+        GUI.Label(rect, Label, ScriptedSequenceEditor.LabelStyle);
       }
 
       GUI.color = lastColor;
@@ -277,21 +301,28 @@ namespace ScriptedSequences.Editor {
       for (int i = 0; i < fields.Length; i++) {
         var field = fields[i];
 
+        var description = field.GetCustomAttributes(typeof(DescriptionAttribute), true)
+                               .Cast<DescriptionAttribute>()
+                               .Select(x => x.Description)
+                               .FirstOrDefault() ?? string.Empty;
+
+        var label = new GUIContent(field.Name.ToHumanFriendly(), description);
+
         if (field.FieldType == typeof(int)) {
-          field.SetValue(Value, EditorGUILayout.IntField(field.Name.ToHumanFriendly(), (int)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.IntField(label, (int)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(float)) {
-          field.SetValue(Value, EditorGUILayout.FloatField(field.Name.ToHumanFriendly(), (float)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.FloatField(label, (float)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(bool)) {
-          field.SetValue(Value, EditorGUILayout.Toggle(field.Name.ToHumanFriendly(), (bool)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.Toggle(label, (bool)field.GetValue(Value)));
         }
         else if (field.FieldType == typeof(string)) {
           string oldVal = (string)field.GetValue(Value) ?? string.Empty;
-          field.SetValue(Value, EditorGUILayout.TextField(field.Name.ToHumanFriendly(), oldVal));
+          field.SetValue(Value, EditorGUILayout.TextField(label, oldVal));
         }
         else if (typeof(Enum).IsAssignableFrom(field.FieldType)) {
-          field.SetValue(Value, EditorGUILayout.EnumPopup(field.Name.ToHumanFriendly(), (Enum)field.GetValue(Value)));
+          field.SetValue(Value, EditorGUILayout.EnumPopup(label, (Enum)field.GetValue(Value)));
         }
       }
     }

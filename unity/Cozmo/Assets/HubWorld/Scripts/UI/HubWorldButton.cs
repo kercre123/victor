@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId);
+    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
@@ -18,13 +18,22 @@ namespace Cozmo.HubWorld {
 
     public virtual void Initialize(ChallengeData challengeData) {
     
-      _ChallengeId = challengeData.ChallengeID;
+      if (challengeData != null) {
+        _ChallengeId = challengeData.ChallengeID;
+      }
       _ButtonScript.onClick.AddListener(HandleButtonClicked);
 
       // Allow for buttons that only show an image and no text
       if (_ButtonLabel != null) {
-        _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
+        _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
+    }
+
+    private void Update() {
+      OnUpdate();
+    }
+
+    protected virtual void OnUpdate() {
     }
 
     private void HandleButtonClicked() {
@@ -33,7 +42,7 @@ namespace Cozmo.HubWorld {
 
     private void RaiseButtonClicked(string challenge) {
       if (OnButtonClicked != null) { 
-        OnButtonClicked(challenge);
+        OnButtonClicked(challenge, this.transform);
       }
     }
 

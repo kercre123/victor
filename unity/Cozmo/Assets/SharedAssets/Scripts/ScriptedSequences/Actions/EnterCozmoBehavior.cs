@@ -2,9 +2,12 @@
 using System.Collections;
 using Anki.Cozmo;
 using System;
+using System.ComponentModel;
 
 namespace ScriptedSequences.Actions {
   public class EnterCozmoBehavior : ScriptedSequenceAction {
+
+    [Description("The Behavior State you want Cozmo to be in")]
     public BehaviorType Behavior;
 
     public override ISimpleAsyncToken Act() {

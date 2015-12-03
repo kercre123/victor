@@ -68,6 +68,7 @@ namespace ScriptedSequences {
 
     private void InvokeCallbacks()
     {
+      OnAbort = null;
       for (int i = 0; i < _Callbacks.Count; i++) {
         _Callbacks[i](this);
       }
