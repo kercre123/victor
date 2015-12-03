@@ -41,7 +41,7 @@ namespace DockTraining {
       RobotEngineManager.Instance.OnObservedMotion -= HandleObservedMotion;
     }
 
-    private void HandleObservedMotion(float x, float y) {
+    private void HandleObservedMotion(Vector2 pos) {
       // wave accumulator is high enough for us to go left or right.
       if (_WaveTimeAccumulator > 0.5f) {
         SteerState steerState = new SteerState();
@@ -56,7 +56,7 @@ namespace DockTraining {
 
       float dt = Mathf.Min(0.3f, Time.time - _LastWaveTime);
 
-      if (x > 0.0f) {
+      if (pos.x > 0.0f) {
         _LeftAccumulator += dt;
       }
       else {

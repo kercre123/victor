@@ -21,7 +21,7 @@ namespace ScriptedSequences.Actions {
       return token;
     }
 
-    private void HandleObservedMotion(float x, float y) {
+    private void HandleObservedMotion(Vector2 pos) {
       if (_WaveTimeAccumulator > 0.5f) {
         _Token.Succeed();
       }

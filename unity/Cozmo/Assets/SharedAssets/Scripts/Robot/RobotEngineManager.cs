@@ -44,7 +44,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,uint> RobotCompletedTaggedAction;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
-  public event Action<float, float> OnObservedMotion;
+  public event Action<Vector2> OnObservedMotion;
 
   #region Audio Callback events
 
@@ -380,7 +380,9 @@ public class RobotEngineManager : MonoBehaviour {
       return;
 
     if (OnObservedMotion != null) {
-      OnObservedMotion(message.img_x, message.img_y);
+      var resolution = ImageResolutionTable.GetDimensions(ImageResolution.CVGA);
+      // Normalize our position to [-1,1], [-1,1]
+      OnObservedMotion(new Vector2(message.img_x * 2.0f / (float)resolution.Width, message.img_y * 2.0f / (float)resolution.Height));
     }
 
   }
