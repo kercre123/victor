@@ -9,6 +9,7 @@
 
 #include "spi.h"
 #include "uart.h"
+#include "dac.h"
 
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;
@@ -34,12 +35,13 @@ static bool ProcessDrop(void) {
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
-    // TODO: SCREEN
-    // TODO: AUDIO
-
     DropToRTIP* drop = (DropToRTIP*)target;
+    // TODO: SCREEN
+
+    FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
+    EnableAudio(drop->droplet & audioDataValid);
+
     uint8_t *payload_data = (uint8_t*) drop->payload;
-    
     totalDrops++;
     
     switch (*(payload_data++)) {
