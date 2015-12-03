@@ -82,17 +82,17 @@ namespace Wink {
       RobotEngineManager.Instance.OnObservedMotion -= OnMotionDetected;
     }
 
-    private void OnMotionDetected(float x, float y) {
+    private void OnMotionDetected(Vector2 pos) {
 
       if (_WinkStatus == WinkStatus.Neutral) {
         return;
       }
 
-      if (_WinkStatus == WinkStatus.Left && x < 0.0f) {
+      if (_WinkStatus == WinkStatus.Left && pos.x < 0.0f) {
         return;
       }
 
-      if (_WinkStatus == WinkStatus.Right && x > 0.0f) {
+      if (_WinkStatus == WinkStatus.Right && pos.x > 0.0f) {
         return;
       }
       
