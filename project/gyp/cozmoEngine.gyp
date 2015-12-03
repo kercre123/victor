@@ -108,6 +108,9 @@
       ['OS=="mac" and arch_group=="standard"', {
         'target_archs%': ['$(ARCHS_STANDARD)']
       }],
+      ['OS=="linux"', {
+        'target_archs%': ['x64'],
+      }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
         'compiler_flags': [
@@ -162,7 +165,7 @@
           '-fobjc-arc',
         ],
       }],
-      ['OS=="ios" or OS=="mac"', {
+      ['OS=="ios" or OS=="mac" or OS=="linux"', {
         'linker_flags': [
           '-std=c++11',
           '-stdlib=libc++',
@@ -631,8 +634,290 @@
 
         ], # end targets
       },
-    ] # end if mac
+    ], # end if mac
 
+    [
+      "OS=='linux'",
+      {
+        'target_defaults': {
+          'variables': {
+            'linux_target_archs': [ '$(ARCHS_STANDARD)' ]
+          },
+        },
+
+
+        'targets': [
+
+          {
+            'target_name': 'cozmo_physics',
+            'type': 'shared_library',
+            'include_dirs': [
+              '../../include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [
+              '<!@(cat <(pluginPhysics_source))',
+            ],
+            'defines': [
+              'LINUX',
+            ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+          }, # end cozmo_physics
+
+          {
+            'target_name': 'webotsCtrlLightCube',
+            'type': 'executable',
+            'include_dirs': [
+              '../../robot/include',
+              '../../include',
+              '../../simulator/include',
+              '<@(webots_includes)',
+            ],
+            'dependencies': [
+              'robotClad',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+            ],
+            'sources': [ '<!@(cat <(ctrlLightCube_source))' ],
+            'defines': [
+              'COZMO_ROBOT',
+              'SIMULATOR'
+            ],
+            'libraries': [
+              'libCppController.dylib',
+            ],
+          }, # end controller Block
+
+          {
+            'target_name': 'webotsCtrlViz',
+            'type': 'executable',
+            'include_dirs': [
+              '../../include',
+              '../../robot/include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ '<!@(cat <(ctrlViz_source))' ],
+            'defines': [
+              # 'COZMO_ROBOT',
+              # 'SIMULATOR'
+            ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+            'conditions': [
+              # For some reason, need to link directly against FacioMetric libs
+              # when using them for recognition, which also means they have to be
+              # present (symlinked) in the executable dir
+              ['face_library == "faciometric"', {
+                'libraries': [
+                  '<@(face_library_libs)',
+                ],
+                'actions' : [
+                  {
+                    'action_name': 'create_symlink_webotsCtrlViz_faciometricLibs',
+                      'inputs': [ ],
+                      'outputs': [ ],
+                      'action': [
+                        'ln',
+                        '-s',
+                        '-h',
+                        '-f',
+                        '<(face_library_lib_path)',
+                        '../../simulator/controllers/webotsCtrlViz/',
+                      ],
+                  },
+                ], # actions
+              }], # conditions
+            ],
+          }, # end controller viz
+
+          {
+            'target_name': 'webotsCtrlRobot',
+            'type': 'executable',
+            'include_dirs': [
+              '../../robot/include',
+              '../../include',
+              '../../simulator/include',
+              '<@(webots_includes)',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-cti_gyp_path):ctiMessagingRobot',
+              '<(ce-cti_gyp_path):ctiPlanningRobot',
+              '<(ce-util_gyp_path):utilEmbedded',
+              'robotClad',
+            ],
+            'sources': [ '<!@(cat <(ctrlRobot_source))' ],
+            'defines': [
+              'COZMO_ROBOT',
+              'SIMULATOR'
+            ],
+            'libraries': [
+              'libCppController.dylib',
+              '<@(opencv_libs)',
+            ],
+          }, # end controller Robot
+
+          {
+            'target_name': 'cozmoEngineUnitTest',
+            'type': 'executable',
+            'include_dirs': [
+              '../../basestation/test',
+              '../../robot/include',
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):jsoncpp',
+              '<(ce-util_gyp_path):util',
+            ],
+            'sources': [ '<!@(cat <(engine_test_source))' ],
+            'sources/': [
+              ['exclude', 'run_pc_embeddedTests.cpp'],
+              ['exclude', 'run_m4_embeddedTests.cpp'],
+              ['exclude', 'resaveBlockImages.m'],
+            ],
+            'libraries': [
+              '<(ce-gtest_path)/gtest-linux',
+              '<@(opencv_libs)',
+              '<@(face_library_libs)',
+            ],
+            'actions': [
+              # { # in engine only mode, we do not know where the assets are
+              #   'action_name': 'create_symlink_resources_assets',
+              #   'inputs': [
+              #     '<(cozmo_asset_path)',
+              #   ],
+              #   'outputs': [
+              #     '<(PRODUCT_DIR)/resources/assets',
+              #   ],
+              #   'action': [
+              #     'ln',
+              #     '-s',
+              #     '-f',
+              #     '-h',
+              #     '<@(_inputs)',
+              #     '<@(_outputs)',
+              #   ],
+              # },
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/config',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_test',
+                'inputs': [
+                  '<(cozmo_engine_path)/resources/test',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/test',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_resources_pocketsphinx',
+                'inputs': [
+                  '<(coretech_external_path)/pocketsphinx/pocketsphinx/model/en-us',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/pocketsphinx',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-h',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
+                'action_name': 'create_symlink_engineUnitTestfaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVEngineAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ],
+          }, # end unittest target
+
+
+
+        ], # end targets
+      },
+    ] # end if linux
 
   ], #end conditions
 

@@ -3,10 +3,18 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+enum uint_32 GameStateGroupType
+{
+  Invalid = 0,
+  Music = 712897226,
+}
+
 enum uint_32 GameStateType
 {
   Invalid = 0,
+  MUS_CUBE_INTERACTIONFIRST = 177292647,
 }
+
 
 }
 }

@@ -43,6 +43,10 @@ public:
   void SetConnectionId( uint8_t connectionId ) { _connectionId = connectionId; }
   uint8_t GetConnectionId() const { return _connectionId; }
   
+  virtual void PostCallback( const AudioCallbackDuration& callbackMessage ) const {}
+  virtual void PostCallback( const AudioCallbackMarker& callbackMessage ) const {}
+  virtual void PostCallback( const AudioCallbackComplete& callbackMessage ) const {}
+  
   
 protected:
   
@@ -50,10 +54,6 @@ protected:
   virtual void HandleMessage( const PostAudioGameState& gameStateMessage );
   virtual void HandleMessage( const PostAudioSwitchState& switchStateMessage );
   virtual void HandleMessage( const PostAudioParameter& parameterMessage );
-  
-  virtual void PostCallback( const AudioCallbackDuration& callbackMessage ) {}
-  virtual void PostCallback( const AudioCallbackMarker& callbackMessage ) {}
-  virtual void PostCallback( const AudioCallbackComplete& callbackMessage ) {}
   
 private:
   

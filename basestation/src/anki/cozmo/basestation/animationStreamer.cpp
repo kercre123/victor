@@ -7,41 +7,28 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/animationKeyFrames.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
-
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/utils/timer.h"
 
 #define DEBUG_ANIMATION_STREAMING 0
 
+
 namespace Anki {
 namespace Cozmo {
-
+  
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
   const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
   
   AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
-                                       CannedAnimationContainer& container)
+                                       CannedAnimationContainer& container,
+                                       Audio::RobotAudioClient& audioClient)
   : HasSettableParameters(externalInterface)
   , _animationContainer(container)
-  , _idleAnimation(nullptr)
-  , _streamingAnimation(nullptr)
-  , _timeSpentIdling_ms(0)
-  , _isIdling(false)
-  , _numLoops(1)
-  , _loopCtr(0)
-  , _tagCtr(0)
   , _liveAnimation(LiveAnimation)
-  , _isLiveTwitchEnabled(false)
-  , _nextBlink_ms(0)
-  , _nextLookAround_ms(0)
-  , _bodyMoveDuration_ms(0)
-  , _liftMoveDuration_ms(0)
-  , _headMoveDuration_ms(0)
-  , _bodyMoveSpacing_ms(0)
-  , _liftMoveSpacing_ms(0)
-  , _headMoveSpacing_ms(0)
+  , _audioClient( audioClient )
   {
 
   }
@@ -280,24 +267,21 @@ namespace Cozmo {
 
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence)
   {
-    AnimKeyFrame::AudioSample audioSample;
-    const s32 numBytes = AudioManager::GetBufferedData(static_cast<size_t>(AnimConstants::AUDIO_SAMPLE_SIZE),
-                                                       &(audioSample.sample[0]));
-    if(numBytes > 0)
-    {
-      // If we didn't get the requested number of bytes, fill the rest of the sample
-      // with zeros
-      if(numBytes < static_cast<s32>(AnimConstants::AUDIO_SAMPLE_SIZE)) {
-        std::fill(audioSample.sample.begin()+numBytes, audioSample.sample.end(), 0);
+    if ( _audioClient.IsPlugInActive() ) {
+      if ( _audioClient.HasKeyFrameAudioSample() ) {
+        // Give audio sample memory ownership to engine message
+        AnimKeyFrame::AudioSample* audioSample = _audioClient.PopAudioSample();
+        BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( *audioSample ) ) );
       }
-      BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(audioSample)));
-    } else if(sendSilence) {
+    }
+
+    else if(sendSilence) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
     }
        
     return RESULT_OK;
-  } // UpdateAudio()
+  } // BufferAudioToSend()
   
 
   inline static void SetFaceParams(ProceduralFaceParams& faceParams,
@@ -413,7 +397,7 @@ namespace Cozmo {
       AddFaceLayer(std::move(faceTrack));
       
       _nextBlink_ms = _rng.RandIntInRange(GetParam<s32>(Param::BlinkSpacingMinTime_ms),
-                                         GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
+                                          GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
     }
     
   } // KeepFaceAlive()
@@ -574,7 +558,9 @@ namespace Cozmo {
     }
     
     // Add more stuff to send buffer from face layers
-    while(_sendBuffer.empty() && HaveNonLoopingFaceLayersToSend())
+    while(_sendBuffer.empty() &&
+          ( HaveNonLoopingFaceLayersToSend() ||
+           _audioClient.IsPlugInActive() ))
     {
       // If we have face layers to send, we _do_ want BufferAudioToSend to
       // buffer audio silence keyframes to keep the clock ticking. If not, we
@@ -603,7 +589,11 @@ namespace Cozmo {
     }
     
     // If we just finished buffering all the face layers, send an end of animation message
-    if(!HaveNonLoopingFaceLayersToSend() && _sendBuffer.empty() && !_endOfAnimationSent) {
+    if(_startOfAnimationSent &&
+       !HaveNonLoopingFaceLayersToSend() &&
+       _sendBuffer.empty() &&
+       !_endOfAnimationSent &&
+       !_audioClient.IsPlugInActive()) {
       lastResult = SendEndOfAnimation(robot);
     }
     
@@ -701,8 +691,11 @@ namespace Cozmo {
         RobotAudioKeyFrame& audioKF = robotAudioTrack.GetCurrentKeyFrame();
         if(audioKF.IsTimeToPlay(_startTime_ms, _streamingTime_ms)) {
           // Tell the audio manager to play the sound indicated by this track
-          auto & audioRef = audioKF.GetAudioRef();
-          AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+//          auto & audioRef = audioKF.GetAudioRef();
+          if (nullptr != _audioClient) {
+            _audioClient->PostCozmoEvent(Anki::Cozmo::Audio::EventType::PLAY_VO_COZ_PLAYFUL); // audioRef.audioEvent );
+            //  AudioManager::PlayEvent(audioRef.audioEvent, audioRef.volume);
+          }
           
 #         if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
           // Queue up audio frame for playing locally if
@@ -840,8 +833,14 @@ namespace Cozmo {
     bool streamUpdated = false;
     
     // Always keep face alive, unless we have a streaming animation, since we rely on it
-    // to do all face updating and we don't want to step on it's hand-designed toes
-    if(_streamingAnimation == nullptr) {
+    // to do all face updating and we don't want to step on it's hand-designed toes.
+    // Wait a 1/2 second before running after we finish the last streaming animation
+    // to help reduce stepping on the next animation's toes when we have things
+    // sequenced.
+    if(_streamingAnimation == nullptr &&
+       (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
+       _lastStreamTime - BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > 0.5f)))
+    {
       KeepFaceAlive(robot);
     }
     
@@ -878,6 +877,7 @@ namespace Cozmo {
         lastResult = UpdateStream(robot, _streamingAnimation, true);
         _isIdling = false;
         streamUpdated = true;
+        _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
     } else if(_idleAnimation != nullptr) {
       
@@ -910,13 +910,14 @@ namespace Cozmo {
         // This is just an idle animation, so we don't want to save the face to the robot
         lastResult = UpdateStream(robot, _idleAnimation, false);
         streamUpdated = true;
+        _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       _timeSpentIdling_ms += BS_TIME_STEP;
     }
     
     // If we didn't do any streaming above, but we've still got face layers to
     // stream or there's audio waiting to go out, stream those now
-    if(!streamUpdated && (HaveNonLoopingFaceLayersToSend() /* TODO: add "|| _audioClient.HasAudio()" like on Jordan's branch*/))
+    if(!streamUpdated && (HaveNonLoopingFaceLayersToSend() || _audioClient.HasKeyFrameAudioSample()))
     {
       lastResult = StreamFaceLayersOrAudio(robot);
     }
@@ -1028,7 +1029,6 @@ namespace Cozmo {
     SET_DEFAULT(BodyMovementDurationMax_ms, 1500);
     SET_DEFAULT(BodyMovementSpeedMinMax_mmps, 10);
     SET_DEFAULT(BodyMovementStraightFraction, 0.5f);
-    SET_DEFAULT(MaxPupilMovement, 0.5f);
     SET_DEFAULT(LiftMovementDurationMin_ms, 50);
     SET_DEFAULT(LiftMovementDurationMax_ms, 500);
     SET_DEFAULT(LiftMovementSpacingMin_ms,  250);
@@ -1040,10 +1040,8 @@ namespace Cozmo {
     SET_DEFAULT(HeadMovementSpacingMin_ms, 250);
     SET_DEFAULT(HeadMovementSpacingMax_ms, 1000);
     SET_DEFAULT(HeadAngleVariability_deg, 6);
-    SET_DEFAULT(DockSquintEyeHeight, -0.4f);
-    SET_DEFAULT(DockSquintEyebrowHeight, -0.4f);
-    SET_DEFAULT(EyeDartSpacingMinTime_ms, 100);
-    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 500);
+    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
+    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
     SET_DEFAULT(EyeDartMaxDistance_pix, 3);
     
 #   undef SET_DEFAULT
@@ -1098,31 +1096,12 @@ namespace Cozmo {
         s16 curvature = s16_MAX; // drive straight
         if(_rng.RandDblInRange(0., 1.) > GET_PARAM(f32, BodyMovementStraightFraction)) {
           curvature = 0;
+          
+          // If turning in place, look in the direction of the turn
+          const s32 x = (speed < 0 ? -1.f : 1.f) * _rng.RandIntInRange(0, ProceduralFace::WIDTH/6);
+          const s32 y = _rng.RandIntInRange(-ProceduralFace::HEIGHT/6, ProceduralFace::HEIGHT/6);
+          robot.ShiftEyes(x, y, IKeyFrame::SAMPLE_LENGTH_MS);
         }
-        
-        // If we haven't already sent a procedural face, use it to point eyes
-        // in direction of motion
-        if(!faceSent)
-        {
-          ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
-          
-          f32 x = 0, y = 0;
-          if(curvature == 0) {
-            const f32 kMaxPupilMovement = GET_PARAM(f32, MaxPupilMovement);
-            x = (speed < 0 ? _rng.RandDblInRange(-kMaxPupilMovement, 0.) : _rng.RandDblInRange(0., kMaxPupilMovement));
-            y = _rng.RandDblInRange(-kMaxPupilMovement, kMaxPupilMovement);
-          }
-          crntFace.GetParams().SetFacePosition({x,y});
-          
-          ProceduralFaceKeyFrame kf(crntFace);
-          kf.SetIsLive(true);
-          if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
-            PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddTurnLookProcFaceFrameFailed", "");
-            return RESULT_FAIL;
-          }
-          
-          anyFramesAdded = true;
-        } // if(!faceSent)
         
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",

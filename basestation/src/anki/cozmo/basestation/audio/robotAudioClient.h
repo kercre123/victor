@@ -13,16 +13,52 @@
 #define __Basestation_Audio_RobotAudioClient_H__
 
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
+#include <unordered_map>
+
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace AnimKeyFrame {
+struct AudioSample;
+}
+  
 namespace Audio {
+  
+class RobotAudioBuffer;
   
 class RobotAudioClient : public AudioEngineClient
 {
 public:
+
+  void SetAudioBuffer(RobotAudioBuffer* audioBuffer) { _audioBuffer = audioBuffer; }
   
-  RobotAudioClient( AudioEngineMessageHandler& messageHandler );
+  // Post Cozmo specific Audio events
+  CallbackIdType PostCozmoEvent( EventType event,
+                                 AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
+  
+  // True if Plug-In is streaming audio data
+  bool IsPlugInActive() const;
+  
+  // True if key frame audio sample messages are available
+  bool HasKeyFrameAudioSample() const;
+  
+  // Pop the front key frame audio sample message
+  // Will Return NullPtr if Robot Audio Buffer is Null or there are no key frames.
+  // Note: Audio Sample pointer memory needs to be manage or it will leak memory.
+  AnimKeyFrame::AudioSample* PopAudioSample() const;
+
+  
+protected:
+  
+  virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg ) override;
+  virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg ) override;
+  virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg ) override;
+  
+  
+private:
+  
+  RobotAudioBuffer* _audioBuffer = nullptr;
   
 };
   

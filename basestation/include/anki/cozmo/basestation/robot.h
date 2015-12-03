@@ -49,6 +49,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -115,10 +116,6 @@ namespace RobotInterface {
 
 namespace ExternalInterface {
   class MessageEngineToGame;
-}
-
-namespace Audio {
-  class RobotAudioClient;
 }
 
 // indent 2 spaces << that way !!!! coding standards !!!!
@@ -448,8 +445,7 @@ public:
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
     // =========== Audio =============
-    const Audio::RobotAudioClient* GetRobotAudioClient() const { return _audioClient; }
-    void SetRobotAudioClient( Audio::RobotAudioClient* audioClient ) { _audioClient = audioClient; }
+    Audio::RobotAudioClient* GetRobotAudioClient() { return &_audioClient; }
   
     // Ask the UI to play a sound for us
     // TODO: REMOVE OLD AUDIO SYSTEM
@@ -797,7 +793,7 @@ public:
     */
   
     ///////// Audio /////////
-    Audio::RobotAudioClient* _audioClient;
+    Audio::RobotAudioClient _audioClient;
   
     ///////// Animation /////////
     
