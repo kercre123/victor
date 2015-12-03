@@ -839,7 +839,7 @@ namespace Cozmo {
     // sequenced.
     if(_streamingAnimation == nullptr &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
-       _lastStreamTime - BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > 0.5f)))
+       BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
       KeepFaceAlive(robot);
     }
