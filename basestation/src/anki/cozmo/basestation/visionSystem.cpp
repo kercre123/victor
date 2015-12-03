@@ -1358,9 +1358,9 @@ namespace Cozmo {
       {
         PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
                          "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
-                         "-- (%.1f,%.1f) on the ground",
-                         minArea, centroid.x(), centroid.y(),
-                         groundPlaneCentroid.x(), groundPlaneCentroid.y());
+                         "-- %d-pixel area at (%.1f,%.1f) on the ground",
+                         imgRegionArea, centroid.x(), centroid.y(),
+                         s32(groundRegionArea), groundPlaneCentroid.x(), groundPlaneCentroid.y());
         
         _lastMotionTime = image.GetTimestamp();
         
