@@ -49,6 +49,8 @@ public class DevHubWorld : HubWorldBase {
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
     _MiniGameInstance.LoadMinigameConfig(challenge.MinigameConfig);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+    _MiniGameInstance.OnMiniGameLose += HandleMiniGameQuit;
+    _MiniGameInstance.OnMiniGameWin += HandleMiniGameQuit;
   }
 
   private void HandleMiniGameQuit() {

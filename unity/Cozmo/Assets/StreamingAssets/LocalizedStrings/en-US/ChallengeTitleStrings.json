@@ -101,5 +101,14 @@
     },
     "motionDetection01.description" : {
         "translation" : "Wave your hand in front of Cozmo to train him how to detect motion."
-    }
+    },
+    "followCubeRotate1.title" : {
+        "translation" : "Follow Cube Rotate"
+    },
+    "followCubeRotate1.subtitle" : {
+        "translation" : "Follow Cube Rotate Subtitle"
+    },
+    "followCubeRotate1.description" : {
+        "translation" : "Rotate Cozmo Left and Right by leading with a cube."
+    },
 }
