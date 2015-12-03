@@ -5,11 +5,11 @@ namespace Anki {
   namespace Cozmo {
     namespace Audio {
 
-      public class CallbackInfo
+      public struct CallbackInfo
       {
-        public ushort PlayId = 0;
-        public AudioCallbackFlag CallbackType = AudioCallbackFlag.EventNone;
-        public System.Object Info = null;
+        public readonly ushort PlayId;
+        public readonly AudioCallbackFlag CallbackType;
+        public readonly System.Object Info;
 
         public CallbackInfo(Anki.Cozmo.Audio.AudioCallbackDuration info) {
           this.CallbackType = AudioCallbackFlag.EventDuration;
@@ -33,6 +33,22 @@ namespace Anki {
           this.CallbackType = AudioCallbackFlag.EventError;
           this.PlayId = info.callbackId;
           this.Info = info;
+        }
+
+        public Anki.Cozmo.Audio.AudioCallbackDuration DurationInfo {
+          get { return Info as Anki.Cozmo.Audio.AudioCallbackDuration; }
+        }
+
+        public Anki.Cozmo.Audio.AudioCallbackMarker MarkerInfo {
+          get { return Info as Anki.Cozmo.Audio.AudioCallbackMarker; }
+        }
+
+        public Anki.Cozmo.Audio.AudioCallbackComplete CompleteInfo {
+          get { return Info as Anki.Cozmo.Audio.AudioCallbackComplete; }
+        }
+
+        public Anki.Cozmo.Audio.AudioCallbackError ErrorInfo {
+          get { return Info as Anki.Cozmo.Audio.AudioCallbackError; }
         }
       }
 
