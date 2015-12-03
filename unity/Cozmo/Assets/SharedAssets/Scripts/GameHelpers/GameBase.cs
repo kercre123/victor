@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Cozmo.UI;
 using System.Collections;
 
 // Provides common interface for HubWorlds to react to games
@@ -36,11 +37,6 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
-  [SerializeField]
-  string _GameId;
-
-  public string GameId { get { return _GameId; } private set { _GameId = value; } }
-
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private Button _QuitButtonInstance;
@@ -56,50 +52,6 @@ public abstract class GameBase : MonoBehaviour {
   /// destroyed when the player quits or the robot loses connection.
   /// </summary>
   protected abstract void CleanUpOnDestroy();
-
-  #region Default Quit button
-
-  protected void CreateDefaultQuitButton() {
-    GameObject newButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.DefaultQuitGameButtonPrefab);
-    // TODO: use ankibutton
-    _QuitButtonInstance = newButton.GetComponent<Button>();
-    _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
-  }
-
-  private void DestroyDefaultQuitButton() {
-    if (_QuitButtonInstance != null) {
-      _QuitButtonInstance.onClick.RemoveAllListeners();
-      Destroy(_QuitButtonInstance.gameObject);
-    }
-  }
-
-  private void HandleQuitButtonTap() {
-    // Open confirmation dialog instead
-    CozmoUiUtils.SimpleAlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as CozmoUiUtils.SimpleAlertView;
-    // Hook up callbacks
-    alertView.SetCloseButtonEnabled(true);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
-    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
-    alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-    alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
-    // Listen for dialog close
-    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
-    PauseGame();
-  }
-
-  private void HandleQuitCancelled() {
-    // Do nothing; we'll resume when the dialog closes.
-  }
-
-  private void HandleQuitConfirmed() {
-    RaiseMiniGameQuit();
-  }
-
-  private void HandleQuitViewClosed() {
-    ResumeGame();
-  }
-
-  #endregion
 
   protected virtual void PauseGame() {
     // Disable quit button
@@ -125,4 +77,55 @@ public abstract class GameBase : MonoBehaviour {
     DestroyDefaultQuitButton();
     Destroy(gameObject);
   }
+
+  #region Default Quit button
+
+  protected void CreateDefaultQuitButton() {
+    GameObject newButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.DefaultQuitGameButtonPrefab);
+    // TODO: use ankibutton
+    _QuitButtonInstance = newButton.GetComponent<Button>();
+    _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
+  }
+
+  private void DestroyDefaultQuitButton() {
+    if (_QuitButtonInstance != null) {
+      _QuitButtonInstance.onClick.RemoveAllListeners();
+      Destroy(_QuitButtonInstance.gameObject);
+    }
+  }
+
+  private void HandleQuitButtonTap() {
+    // Open confirmation dialog instead
+    SimpleAlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as SimpleAlertView;
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(true);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
+    alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
+    // Listen for dialog close
+    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    PauseGame();
+  }
+
+  private void HandleQuitCancelled() {
+    // Do nothing; we'll resume when the dialog closes.
+  }
+
+  private void HandleQuitConfirmed() {
+    RaiseMiniGameQuit();
+  }
+
+  private void HandleQuitViewClosed() {
+    ResumeGame();
+  }
+
+  #endregion
+
+  #region Default Stamina Bar
+
+  private void CreateDefaultStaminaBar() {
+  }
+
+  #endregion
 }

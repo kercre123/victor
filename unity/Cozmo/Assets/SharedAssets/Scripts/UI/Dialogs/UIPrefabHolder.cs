@@ -1,37 +1,41 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class UIPrefabHolder : ScriptableObject {
+namespace Cozmo {
+  namespace UI {
+    public class UIPrefabHolder : ScriptableObject {
 
-  private static UIPrefabHolder _Instance;
+      private static UIPrefabHolder _Instance;
 
-  public static UIPrefabHolder Instance {
-    get {
-      if (_Instance == null) {
-        _Instance = Resources.Load<UIPrefabHolder>("Prefabs/UI/UIPrefabHolder");
+      public static UIPrefabHolder Instance {
+        get {
+          if (_Instance == null) {
+            _Instance = Resources.Load<UIPrefabHolder>("Prefabs/UI/UIPrefabHolder");
+          }
+          return _Instance;
+        }
       }
-      return _Instance;
+
+      [SerializeField]
+      private GameObject _FullScreenButtonPrefab;
+
+      public GameObject FullScreenButtonPrefab {
+        get { return _FullScreenButtonPrefab; }
+      }
+
+      [SerializeField]
+      private SimpleAlertView _AlertViewPrefab;
+
+      public SimpleAlertView AlertViewPrefab {
+        get { return _AlertViewPrefab; }
+      }
+
+      [SerializeField]
+      private GameObject _DefaultQuitGameButtonPrefab;
+
+      public GameObject DefaultQuitGameButtonPrefab {
+        get { return _DefaultQuitGameButtonPrefab; }
+      }
     }
-  }
-
-  [SerializeField]
-  private GameObject _FullScreenButtonPrefab;
-
-  public GameObject FullScreenButtonPrefab {
-    get { return _FullScreenButtonPrefab; }
-  }
-
-  [SerializeField]
-  private CozmoUiUtils.SimpleAlertView _AlertViewPrefab;
-
-  public CozmoUiUtils.SimpleAlertView AlertViewPrefab {
-    get { return _AlertViewPrefab; }
-  }
-
-  [SerializeField]
-  private GameObject _DefaultQuitGameButtonPrefab;
-
-  public GameObject DefaultQuitGameButtonPrefab {
-    get { return _DefaultQuitGameButtonPrefab; }
   }
 }

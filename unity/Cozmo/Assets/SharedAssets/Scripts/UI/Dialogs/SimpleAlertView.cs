@@ -4,93 +4,95 @@ using System.Collections;
 using UnityEngine.UI;
 using Anki.UI;
 
-namespace CozmoUiUtils {
-  public class SimpleAlertView : BaseView {
+namespace Cozmo {
+  namespace UI {
+    public class SimpleAlertView : BaseView {
 
-    [SerializeField]
-    private AnkiTextLabel _AlertTitleText;
+      [SerializeField]
+      private AnkiTextLabel _AlertTitleText;
 
-    [SerializeField]
-    private AnkiTextLabel _AlertMessageText;
+      [SerializeField]
+      private AnkiTextLabel _AlertMessageText;
 
-    [SerializeField]
-    private Button _PrimaryButton;
+      [SerializeField]
+      private Button _PrimaryButton;
 
-    [SerializeField]
-    private Button _SecondaryButton;
+      [SerializeField]
+      private Button _SecondaryButton;
 
-    [SerializeField]
-    private Button _CloseButton;
+      [SerializeField]
+      private Button _CloseButton;
 
-    private string _TitleKey;
-    private string _DescriptionKey;
+      private string _TitleKey;
+      private string _DescriptionKey;
 
-    public string TitleLocKey {
-      get { return _AlertTitleText.text; }
-      set {
-        if (_TitleKey != value) {
-          _TitleKey = value;
-          _AlertTitleText.text = Localization.Get(value);
+      public string TitleLocKey {
+        get { return _AlertTitleText.text; }
+        set {
+          if (_TitleKey != value) {
+            _TitleKey = value;
+            _AlertTitleText.text = Localization.Get(value);
+          }
         }
       }
-    }
 
-    public string DescriptionLocKey {
-      get { return _AlertMessageText.text; }
-      set { 
-        if (_DescriptionKey != value) {
-          _DescriptionKey = value;
-          _AlertMessageText.text = Localization.Get(value);
-        } 
+      public string DescriptionLocKey {
+        get { return _AlertMessageText.text; }
+        set { 
+          if (_DescriptionKey != value) {
+            _DescriptionKey = value;
+            _AlertMessageText.text = Localization.Get(value);
+          } 
+        }
       }
-    }
 
-    private void Awake() {
-      _CloseButton.onClick.AddListener(CloseView);
+      private void Awake() {
+        _CloseButton.onClick.AddListener(CloseView);
 
-      // Hide all buttons
-      _PrimaryButton.gameObject.SetActive(false);
-      _CloseButton.gameObject.SetActive(false);
-      _SecondaryButton.gameObject.SetActive(false);
-    }
+        // Hide all buttons
+        _PrimaryButton.gameObject.SetActive(false);
+        _CloseButton.gameObject.SetActive(false);
+        _SecondaryButton.gameObject.SetActive(false);
+      }
 
-    protected override void CleanUp() {
-      ResetButton(_PrimaryButton);
-      ResetButton(_CloseButton);
-      ResetButton(_SecondaryButton);
-    }
+      protected override void CleanUp() {
+        ResetButton(_PrimaryButton);
+        ResetButton(_CloseButton);
+        ResetButton(_SecondaryButton);
+      }
 
-    private void ResetButton(Button button) {
-      if (button.isActiveAndEnabled) {
+      private void ResetButton(Button button) {
+        if (button.isActiveAndEnabled) {
+          button.onClick.RemoveAllListeners();
+        }
+      }
+
+      public void SetCloseButtonEnabled(bool enabled) {
+        _CloseButton.gameObject.SetActive(enabled);
+      }
+
+      public void SetPrimaryButton(string titleKey, Action action = null) {
+        SetupButton(_PrimaryButton, Localization.Get(titleKey), action);
+      }
+
+      public void SetSecondaryButton(string titleKey, Action action = null) {
+        SetupButton(_SecondaryButton, Localization.Get(titleKey), action);
+      }
+
+      private void SetupButton(Button button, String title, Action action) {
+        button.gameObject.SetActive(true);
+        AnkiTextLabel text = button.gameObject.GetComponentInChildren<AnkiTextLabel>();
+        if (text != null) {
+          text.text = title.ToUpper();
+        }
         button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(() => {
+          if (action != null) {
+            action();
+          }
+          CloseView();
+        });
       }
-    }
-
-    public void SetCloseButtonEnabled(bool enabled) {
-      _CloseButton.gameObject.SetActive(enabled);
-    }
-
-    public void SetPrimaryButton(string titleKey, Action action = null) {
-      SetupButton(_PrimaryButton, Localization.Get(titleKey), action);
-    }
-
-    public void SetSecondaryButton(string titleKey, Action action = null) {
-      SetupButton(_SecondaryButton, Localization.Get(titleKey), action);
-    }
-
-    private void SetupButton(Button button, String title, Action action) {
-      button.gameObject.SetActive(true);
-      AnkiTextLabel text = button.gameObject.GetComponentInChildren<AnkiTextLabel>();
-      if (text != null) {
-        text.text = title.ToUpper();
-      }
-      button.onClick.RemoveAllListeners();
-      button.onClick.AddListener(() => {
-        if (action != null) {
-          action();
-        }
-        CloseView();
-      });
     }
   }
 }
