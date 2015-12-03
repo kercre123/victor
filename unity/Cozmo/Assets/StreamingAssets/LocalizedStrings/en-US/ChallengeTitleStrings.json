@@ -92,6 +92,7 @@
     },
     "forwardBackward01.description" : {
         "translation" : "Use a light cube to lead Cozmo forward, then use the cube to lead him backward."
+    },
     "motionDetection01.title" : {
         "translation" : "Motion Detection Challenge"
     },
