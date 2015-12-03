@@ -6,8 +6,6 @@ using System.Collections;
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
 
-  private static GameObject sDefaultQuitGameButtonPrefab;
-
   public delegate void MiniGameQuitHandler();
 
   public event MiniGameQuitHandler OnMiniGameQuit;
@@ -47,37 +45,10 @@ public abstract class GameBase : MonoBehaviour {
 
   private Button _QuitButtonInstance;
 
+  public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
+
   public void OnDestroy() {
     CleanUpOnDestroy();
-  }
-
-  protected void CreateDefaultQuitButton() {
-    // Resources.Load can be pretty slow, so cache the prefab for future use.
-    if (sDefaultQuitGameButtonPrefab == null) {
-      sDefaultQuitGameButtonPrefab = Resources.Load("Prefabs/UI/DefaultQuitMiniGameButton") as GameObject;
-    }
-    GameObject newButton = UIManager.CreateUIElement(sDefaultQuitGameButtonPrefab);
-    
-    _QuitButtonInstance = newButton.GetComponent<Button>();
-    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);
-  }
-
-  protected void DestroyDefaultQuitButton() {
-    if (_QuitButtonInstance != null) {
-      Destroy(_QuitButtonInstance.gameObject);
-    }
-  }
-
-  public void CloseMinigameView() {
-    Destroy(gameObject);
-  }
-
-  public void CloseMinigameViewImmediately() {
-    Destroy(gameObject);
-  }
-
-  protected void OnQuitButtonTap() {
-    RaiseMiniGameQuit();
   }
 
   /// <summary>
@@ -86,5 +57,72 @@ public abstract class GameBase : MonoBehaviour {
   /// </summary>
   protected abstract void CleanUpOnDestroy();
 
-  public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
+  #region Default Quit button
+
+  protected void CreateDefaultQuitButton() {
+    GameObject newButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.DefaultQuitGameButtonPrefab);
+    // TODO: use ankibutton
+    _QuitButtonInstance = newButton.GetComponent<Button>();
+    _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
+  }
+
+  private void DestroyDefaultQuitButton() {
+    if (_QuitButtonInstance != null) {
+      _QuitButtonInstance.onClick.RemoveAllListeners();
+      Destroy(_QuitButtonInstance.gameObject);
+    }
+  }
+
+  private void HandleQuitButtonTap() {
+    // Open confirmation dialog instead
+    CozmoUiUtils.SimpleAlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as CozmoUiUtils.SimpleAlertView;
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(true);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
+    alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
+    // Listen for dialog close
+    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    PauseGame();
+  }
+
+  private void HandleQuitCancelled() {
+    // Do nothing; we'll resume when the dialog closes.
+  }
+
+  private void HandleQuitConfirmed() {
+    RaiseMiniGameQuit();
+  }
+
+  private void HandleQuitViewClosed() {
+    ResumeGame();
+  }
+
+  #endregion
+
+  protected virtual void PauseGame() {
+    // Disable quit button
+    if (_QuitButtonInstance != null) {
+      _QuitButtonInstance.interactable = false;
+    }
+  }
+
+  protected virtual void ResumeGame() {
+    // Enable quit button
+    if (_QuitButtonInstance != null) {
+      _QuitButtonInstance.interactable = true;
+    }
+  }
+
+  public void CloseMinigameView() {
+    // TODO: Play an animation on the quit button if it exists
+    // TODO: Play an animation on the other UI if it exists
+    Destroy(gameObject);
+  }
+
+  public void CloseMinigameViewImmediately() {
+    DestroyDefaultQuitButton();
+    Destroy(gameObject);
+  }
 }

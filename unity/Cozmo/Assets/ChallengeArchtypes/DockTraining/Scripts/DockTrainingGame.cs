@@ -58,7 +58,6 @@ namespace DockTraining {
     }
 
     protected override void CleanUpOnDestroy() {
-      DestroyDefaultQuitButton();
     }
 
     public bool ShouldTryDock() {

@@ -78,7 +78,6 @@ namespace Wink {
     }
 
     protected override void CleanUpOnDestroy() {
-      DestroyDefaultQuitButton();
       RobotEngineManager.Instance.OnObservedMotion -= OnMotionDetected;
     }
 

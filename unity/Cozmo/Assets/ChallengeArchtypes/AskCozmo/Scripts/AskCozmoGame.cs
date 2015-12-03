@@ -45,7 +45,6 @@ namespace AskCozmo {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
-      DestroyDefaultQuitButton();
     }
 
     // user just asked the question and pressed the

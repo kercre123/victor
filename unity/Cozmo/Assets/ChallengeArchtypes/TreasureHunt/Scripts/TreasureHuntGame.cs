@@ -110,7 +110,6 @@ namespace TreasureHunt {
     }
 
     protected override void CleanUpOnDestroy() {
-      DestroyDefaultQuitButton();
     }
   }
 

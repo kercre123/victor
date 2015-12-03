@@ -56,7 +56,6 @@ namespace SpeedTap {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
-      DestroyDefaultQuitButton();
     }
 
     void InitialCubesDone() {

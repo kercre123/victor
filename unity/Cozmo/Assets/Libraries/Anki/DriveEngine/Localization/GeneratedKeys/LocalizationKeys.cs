@@ -1,6 +1,6 @@
 public static class LocalizationKeys {
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ChallengeTitleStrings.json
+  #region /Users/ivyngo/Desktop/Repositories/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/ChallengeTitleStrings.json
 
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Subtitle = "askCozmo01.subtitle";
@@ -24,7 +24,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ConversationStrings.json
+  #region /Users/ivyngo/Desktop/Repositories/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/ConversationStrings.json
 
   public const string kHelloWorldHello = "HelloWorld.Hello";
   public const string kHelloWorldWorld = "HelloWorld.World";
@@ -41,7 +41,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/MinigameStrings.json
+  #region /Users/ivyngo/Desktop/Repositories/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/MinigameStrings.json
 
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
@@ -63,16 +63,20 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
+  public const string kMinigameQuitViewTitle = "minigame.quitView.title";
+  public const string kMinigameQuitViewDescription = "minigame.quitView.description";
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/SimpleStrings.json
+  #region /Users/ivyngo/Desktop/Repositories/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/SimpleStrings.json
 
   public const string kButtonTap = "button.tap";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
   public const string kBadgeNew = "badge.new";
   public const string kLabelPercentComplete = "label.percentComplete";
+  public const string kButtonYes = "button.yes";
+  public const string kButtonNo = "button.no";
 
   #endregion
 }

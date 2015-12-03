@@ -90,7 +90,6 @@ namespace PatternPlay {
       if (viewControllerInstance_ != null) {
         Destroy(viewControllerInstance_.gameObject);
       }
-      DestroyDefaultQuitButton();
     }
 
     public void SetShouldCelebrateNew(bool shouldCelebrateNew) {

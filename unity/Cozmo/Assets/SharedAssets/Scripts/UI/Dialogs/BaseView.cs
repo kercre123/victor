@@ -4,57 +4,21 @@ using DG.Tweening;
 
 public abstract class BaseView : MonoBehaviour {
   
-  public delegate void SimpleBaseViewHandler();
-
+  // Static events
   public delegate void BaseViewHandler(BaseView view);
 
-  public event SimpleBaseViewHandler ViewOpened;
   public static event BaseViewHandler BaseViewOpened;
-
-  private static void RaiseViewOpened(BaseView view) {
-    if (view.ViewOpened != null) {
-      view.ViewOpened();
-    }
-    if (BaseViewOpened != null) {
-      BaseViewOpened(view);
-    }
-  }
-
-  public event SimpleBaseViewHandler ViewOpenAnimationFinished;
   public static event BaseViewHandler BaseViewOpenAnimationFinished;
-
-  private static void RaiseViewOpenAnimationFinished(BaseView view) {
-    if (view.ViewOpenAnimationFinished != null) {
-      view.ViewOpenAnimationFinished();
-    }
-    if (BaseViewOpenAnimationFinished != null) {
-      BaseViewOpenAnimationFinished(view);
-    }
-  }
-
-  public event SimpleBaseViewHandler ViewClosed;
   public static event BaseViewHandler BaseViewClosed;
-
-  private static void RaiseViewClosed(BaseView view) {
-    if (view.ViewClosed != null) {
-      view.ViewClosed();
-    }
-    if (BaseViewClosed != null) {
-      BaseViewClosed(view);
-    }
-  }
-
-  public event SimpleBaseViewHandler ViewCloseAnimationFinished;
   public static event BaseViewHandler BaseViewCloseAnimationFinished;
 
-  private static void RaiseViewCloseAnimationFinished(BaseView view) {
-    if (view.ViewCloseAnimationFinished != null) {
-      view.ViewCloseAnimationFinished();
-    }
-    if (BaseViewCloseAnimationFinished != null) {
-      BaseViewCloseAnimationFinished(view);
-    }
-  }
+  // Instance events
+  public delegate void SimpleBaseViewHandler();
+
+  public event SimpleBaseViewHandler ViewOpened;
+  public event SimpleBaseViewHandler ViewOpenAnimationFinished;
+  public event SimpleBaseViewHandler ViewClosed;
+  public event SimpleBaseViewHandler ViewCloseAnimationFinished;
 
   /// <summary>
   /// If true, creates a full screen button behind all the elements of this
@@ -155,5 +119,42 @@ public abstract class BaseView : MonoBehaviour {
     RaiseViewCloseAnimationFinished(this);
 
     GameObject.Destroy(gameObject);
+  }
+
+  private static void RaiseViewOpened(BaseView view) {
+    if (view.ViewOpened != null) {
+      view.ViewOpened();
+    }
+    if (BaseViewOpened != null) {
+      BaseViewOpened(view);
+    }
+  }
+
+  private static void RaiseViewOpenAnimationFinished(BaseView view) {
+    if (view.ViewOpenAnimationFinished != null) {
+      view.ViewOpenAnimationFinished();
+    }
+    if (BaseViewOpenAnimationFinished != null) {
+      BaseViewOpenAnimationFinished(view);
+    }
+  }
+
+
+  private static void RaiseViewClosed(BaseView view) {
+    if (view.ViewClosed != null) {
+      view.ViewClosed();
+    }
+    if (BaseViewClosed != null) {
+      BaseViewClosed(view);
+    }
+  }
+
+  private static void RaiseViewCloseAnimationFinished(BaseView view) {
+    if (view.ViewCloseAnimationFinished != null) {
+      view.ViewCloseAnimationFinished();
+    }
+    if (BaseViewCloseAnimationFinished != null) {
+      BaseViewCloseAnimationFinished(view);
+    }
   }
 }

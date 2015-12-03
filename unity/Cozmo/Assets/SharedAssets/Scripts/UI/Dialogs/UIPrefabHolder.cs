@@ -20,4 +20,18 @@ public class UIPrefabHolder : ScriptableObject {
   public GameObject FullScreenButtonPrefab {
     get { return _FullScreenButtonPrefab; }
   }
+
+  [SerializeField]
+  private CozmoUiUtils.SimpleAlertView _AlertViewPrefab;
+
+  public CozmoUiUtils.SimpleAlertView AlertViewPrefab {
+    get { return _AlertViewPrefab; }
+  }
+
+  [SerializeField]
+  private GameObject _DefaultQuitGameButtonPrefab;
+
+  public GameObject DefaultQuitGameButtonPrefab {
+    get { return _DefaultQuitGameButtonPrefab; }
+  }
 }

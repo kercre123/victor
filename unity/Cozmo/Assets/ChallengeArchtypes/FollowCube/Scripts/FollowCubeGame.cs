@@ -40,8 +40,6 @@ namespace FollowCube {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
-
-      DestroyDefaultQuitButton();
     }
 
     // Update is called once per frame

@@ -70,7 +70,6 @@ namespace InvestorDemo {
     }
 
     protected override void CleanUpOnDestroy() {
-      DestroyDefaultQuitButton();
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       CurrentRobot.CancelAllCallbacks();
       if (_DemoConfig.UseSequence) {

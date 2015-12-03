@@ -47,7 +47,6 @@ namespace RotationTraining {
     }
 
     protected override void CleanUpOnDestroy() {
-      DestroyDefaultQuitButton();
       _GamePanel.CloseViewImmediately();
     }
 
