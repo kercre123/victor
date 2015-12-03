@@ -3,7 +3,9 @@ using UnityEngine;
 
 namespace InvestorDemo {
   public class InvestorDemoConfig : MinigameConfigBase {
-    public DemoAction[] DemoActions;
+    public string SequenceName;
+    public bool UseSequence;
+    public Anki.Cozmo.BehaviorChooserType BehaviorChooser;
   }
 }
 

@@ -28,7 +28,16 @@
         "translation" : "Ask Cozmo Challenge 1 Description"
     },
     "investorDemo.investorDemoScene1" : {
-        "translation" : "Investor Scene"
+        "translation" : "Investor Scene 1"
+    },
+    "investorDemo.investorDemoScene2" : {
+        "translation" : "Investor Scene 2"
+    },
+    "investorDemo.investorDemoScene3" : {
+        "translation" : "Investor Scene 3"
+    },
+    "investorDemo.investorDemoScene4" : {
+        "translation" : "Investor Scene 4"
     },
     "dockTraining01.title" : {
         "translation" : "Docking"
