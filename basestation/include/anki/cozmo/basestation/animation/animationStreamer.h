@@ -126,9 +126,9 @@ namespace Cozmo {
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
 
-    Animation*  _idleAnimation; // default points to "live" animation
-    Animation*  _streamingAnimation;
-    TimeStamp_t _timeSpentIdling_ms;
+    Animation*  _idleAnimation      = nullptr; // default points to "live" animation
+    Animation*  _streamingAnimation = nullptr;
+    TimeStamp_t _timeSpentIdling_ms = 0;
     
     // For layering procedural face animations on top of whatever is currently
     // playing:
@@ -157,13 +157,14 @@ namespace Cozmo {
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
     
-    bool _isIdling;
+    bool _isIdling = false;
     
-    u32 _numLoops;
-    u32 _loopCtr;
-    u8  _tagCtr;
+    u32 _numLoops = 1;
+    u32 _loopCtr  = 0;
+    u8  _tagCtr   = 0;
     
-    bool _startOfAnimationSent;
+    bool _startOfAnimationSent = false;
+    bool _endOfAnimationSent   = false;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time
@@ -176,7 +177,8 @@ namespace Cozmo {
     // clock)
     TimeStamp_t _streamingTime_ms;
     
-    bool _endOfAnimationSent;
+    // Last time we streamed anything
+    f32 _lastStreamTime = std::numeric_limits<f32>::max();
     
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
     // TODO: Remove these once we aren't playing robot audio on the device
@@ -204,16 +206,16 @@ namespace Cozmo {
     
     // For live animation
     Animation      _liveAnimation;
-    bool           _isLiveTwitchEnabled;
-    s32            _nextBlink_ms;
-    s32            _nextEyeDart_ms;
-    s32            _nextLookAround_ms;
-    s32            _bodyMoveDuration_ms;
-    s32            _liftMoveDuration_ms;
-    s32            _headMoveDuration_ms;
-    s32            _bodyMoveSpacing_ms;
-    s32            _liftMoveSpacing_ms;
-    s32            _headMoveSpacing_ms;
+    bool           _isLiveTwitchEnabled  = false;
+    s32            _nextBlink_ms         = 0;
+    s32            _nextEyeDart_ms       = 0;
+    s32            _nextLookAround_ms    = 0;
+    s32            _bodyMoveDuration_ms  = 0;
+    s32            _liftMoveDuration_ms  = 0;
+    s32            _headMoveDuration_ms  = 0;
+    s32            _bodyMoveSpacing_ms   = 0;
+    s32            _liftMoveSpacing_ms   = 0;
+    s32            _headMoveSpacing_ms   = 0;
     
   }; // class AnimationStreamer
   
