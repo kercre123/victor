@@ -95,6 +95,9 @@
       ['OS=="mac" and arch_group=="standard"', {
         'target_archs%': ['$(ARCHS_STANDARD)']
       }],
+      ['OS=="linux"', {
+        'target_archs%': ['x64'],
+      }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
         'compiler_flags': [
@@ -149,7 +152,7 @@
           '-fobjc-arc',
         ]
       }],
-      ['OS=="ios" or OS=="mac"', {
+      ['OS=="ios" or OS=="mac" or OS=="linux"', {
         'linker_flags': [
           '-std=c++11',
           '-stdlib=libc++',
@@ -450,7 +453,182 @@
 
         ], # end targets
       },
-    ] # end if mac
+    ], # end if mac
+
+
+    [
+      "OS=='linux'",
+      {
+        'target_defaults': {
+          'variables': {
+            'linux_target_archs%': [ '<@(target_archs)' ]
+          },
+        },
+
+
+        'targets': [
+          {
+            'target_name': 'ctiUnitTest',
+            'type': 'executable',
+            'variables': {
+              'linux_target_archs': [ '$(ARCHS_STANDARD)' ]
+            },
+            'include_dirs': [
+              '../../common/shared/src',
+              '../../common/basestation/test',
+              '../../planning/basestation/test',
+              '../../vision/basestation/test',
+              '../../../robot/include',
+              '<@(opencv_includes)',
+            ],
+            'defines': [
+              'TEST_DATA_PATH=<(cti-cozmo_engine_path)/coretech/'
+            ],
+            'dependencies': [
+              'ctiCommon',
+              'ctiVision',
+              'ctiPlanning',
+              '<(cti-util_gyp_path):util',
+              '<(cti-util_gyp_path):jsoncpp',
+            ],
+            'sources': [
+              '<!@(cat <(common_test_source))',
+              '<!@(cat <(common_shared_test_source))',
+              '<!@(cat <(vision_test_source))',
+              '<!@(cat <(planning_test_source))',
+            ],
+            'sources/': [
+              ['exclude', 'run_coreTechCommonSharedTests.cpp'],
+              ['exclude', 'run_coreTechVisionTests.cpp'],
+              ['exclude', 'run_coreTechPlanningTests.cpp'],
+              ['exclude', 'run_coreTechPlanningStandalone.cpp'],
+            ],
+            'xcode_settings': {
+              'FRAMEWORK_SEARCH_PATHS':'<(cti-gtest_path)',
+            },
+            'libraries': [
+              '<(cti-gtest_path)/gtest.framework',
+              '<@(opencv_libs)',
+            ],
+            'actions' : [
+              {
+                'action_name': 'create_symlink_ctiUnitTestFaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                    'echo',
+                    'dummyOpenCVCTIAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
+          }, # end unittest target
+
+          {
+            'target_name': 'ctiPlanningStandalone',
+            'type': 'executable',
+            'variables': {
+              'linux_target_archs': [ '$(ARCHS_STANDARD)' ]
+            },
+            'include_dirs': [
+              '../../common/shared/src',
+              '../../common/basestation/test',
+              '../../planning/basestation/test',
+              '../../vision/basestation/test',
+              '../../../robot/include',
+              '<@(opencv_includes)',
+            ],
+            'defines': [
+              'TEST_DATA_PATH=<(cti-cozmo_engine_path)/coretech/'
+            ],
+            'dependencies': [
+              'ctiCommon',
+              'ctiVision',
+              'ctiPlanning',
+              '<(cti-util_gyp_path):util',
+              '<(cti-util_gyp_path):jsoncpp',
+            ],
+            'sources': [
+              '<!@(cat <(common_test_source))',
+              '<!@(cat <(common_shared_test_source))',
+              '<!@(cat <(vision_test_source))',
+              '<!@(cat <(planning_test_source))',
+              '<!@(cat <(planning_standalone_source))',
+            ],
+            'sources/': [
+              ['exclude', 'run_coreTechCommonSharedTests.cpp'],
+              ['exclude', 'run_coreTechVisionTests.cpp'],
+              ['exclude', 'run_coreTechPlanningTests.cpp'],
+              ['exclude', 'run_coreTechCommonTests.cpp'],
+              ['exclude', '.*/test/.*'],
+              ['include', 'run_coreTechPlanningStandalone.cpp'],
+            ],
+            'xcode_settings': {
+            },
+            'libraries': [
+              '<@(opencv_libs)',
+            ],
+            'actions' : [
+              {
+                'action_name': 'create_symlink_ctiUnitTestFaceLibraryLibs',
+                'inputs': [ ],
+                'outputs': [ ],
+                'conditions': [
+                  ['face_library=="faciometric"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-h',
+                      '-f',
+                      '<(face_library_lib_path)',
+                      '<(PRODUCT_DIR)/',
+                    ],
+                  }],
+                  ['face_library=="facesdk"', {
+                    'action': [
+                      'ln',
+                      '-s',
+                      '-f',
+                      '<(face_library_lib_path)/libfsdk.dylib',
+                      '<(PRODUCT_DIR)',
+                    ],
+                  }],
+                  ['face_library=="opencv"', {
+                    'action': [
+                      'echo',
+                      'dummyOpenCVCTIAction',
+                    ],
+                  }],
+                ], # conditions
+              },
+            ] # actions
+          },
+
+        ], # end targets
+      },
+    ] # end if linux
 
 
   ], #end conditions

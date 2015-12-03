@@ -85,6 +85,17 @@
         'libstlport_shared.so',
       ],
     }],
+
+    ['OS=="linux" and face_library=="facesdk"', {
+      'face_library_lib_path': [
+        '<(coretech_external_path)/Luxand_FaceSDK/bin/Android/armeabi-v7a',
+      ],
+      'face_library_libs': [
+        # TODO: handle different architectures
+        'libfsdk.so',
+        'libstlport_shared.so',
+      ],
+    }],
   ], # conditions
   
 }, # variables
