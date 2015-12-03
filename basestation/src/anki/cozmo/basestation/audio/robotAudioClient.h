@@ -58,7 +58,7 @@ protected:
   
 private:
   
-  RobotAudioBuffer* _audioBuffer;
+  RobotAudioBuffer* _audioBuffer = nullptr;
   
 };
   

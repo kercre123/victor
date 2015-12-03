@@ -60,7 +60,7 @@ public:
   
 protected:
   
-  AudioEngineMessageHandler* _messageHandler;
+  AudioEngineMessageHandler* _messageHandler = nullptr;
   std::vector<Signal::SmartHandle> _signalHandles;
   
   static constexpr CallbackIdType kInvalidCallbackId = 0;
