@@ -14,7 +14,7 @@ MonoBehaviour:
   _MinigamePrefab: {fileID: 129546, guid: 0e71c546d357d459bbcd620dad638440, type: 2}
   _ChallengeID: InvestorDemoScene1
   _EnableHubWorldChallenge: 0
-  _EnableDevWorldChallenge: 1
+  _EnableDevWorldChallenge: 0
   _ChallengeTitleLocKey: investorDemo.investorDemoScene1
   _ChallengeSubtitleLocKey: 
   _ChallengeDescriptionLocKey: 
