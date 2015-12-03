@@ -12,9 +12,23 @@ namespace MotionDetection {
 
     private float _LastMotionDetectedTime = 0.0f;
 
-    // don't use the rect constructor position because
-    // it is top left and not center of the rect.
-    private Rect _VisionBounds = new Rect();
+    // this will be the top middle of the screen
+    // -1    -.5     0      .5     1
+    // +------+------+------+------+ 1
+    // |      |......|......|      |
+    // |      |...... ......|      |
+    // |      |......|......|      |
+    // |      |...... ......|      |
+    // |      |......|......|      |
+    // +- - - + - - -+- - - + - - -+ 0
+    // |      |......|......|      |
+    // |      |...... ......|      |
+    // |      +------+------+      | -.5
+    // |                           |
+    // |             |             |
+    // +-------------+-------------+ -1
+    //
+    private Rect _VisionBounds = new Rect(-0.5f, -0.5f, 1f, 1.5f);
 
     public RecognizeMotionState(float timeAllowedBetweenWaves, float totalWaveTime) {
       _TimeAllowedBetweenWaves = timeAllowedBetweenWaves;
@@ -24,11 +38,7 @@ namespace MotionDetection {
     public override void Enter() {
       base.Enter();
       _CurrentRobot.SetLiftHeight(0.0f);
-      _CurrentRobot.SetHeadAngle(0.0f);
-
-      // this will be the middle quarter of the screen
-      _VisionBounds.size = Vector2.one;
-      _VisionBounds.center = Vector2.zero;
+      _CurrentRobot.SetHeadAngle(0.3f);
 
       RobotEngineManager.Instance.OnObservedMotion += OnMotionDetected;
     }
@@ -40,14 +50,23 @@ namespace MotionDetection {
 
 
       if (motionInBox) {
+        if (Mathf.Approximately(_MotionInBoxTime, 0)) {
+          _CurrentRobot.SendAnimation(AnimationName.kEnjoyPattern);
+        }
+
         _MotionInBoxTime += Time.deltaTime;
       }
       else {
         // move eyes apart?
+        bool wasWaving = _MotionInBoxTime > 0;
 
         _MotionInBoxTime -= Time.deltaTime;
         if (_MotionInBoxTime < 0.0f) {
           _MotionInBoxTime = 0.0f;
+
+          if (wasWaving) {
+            _CurrentRobot.SendAnimation(AnimationName.kShocked);
+          }
         }
       }
 
