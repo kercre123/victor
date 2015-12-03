@@ -379,8 +379,8 @@ MonoBehaviour:
     panePrefab: {fileID: 100452, guid: ad3c2515bd1e8495eafd0da543d64c19, type: 2}
   - name: Performance
     panePrefab: {fileID: 113690, guid: 30ad73b1c18b443bdb77716d180d9439, type: 2}
-  - name: Robot Settings
-    panePrefab: {fileID: 148378, guid: 701dfcc79baab409dbce121bb5bad0c3, type: 2}
+  - name: Soundboard
+    panePrefab: {fileID: 112558, guid: 080de521b73874292802d3f45d442914, type: 2}
   - name: Pattern Play
     panePrefab: {fileID: 196276, guid: cb7a8c585deb2451e8c662434aaf4a7e, type: 2}
   - name: Emotion
@@ -629,6 +629,14 @@ Prefab:
       propertyPath: _DebugContentPaneData.Array.data[7].name
       value: Debug Console
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[2].name
+      value: Soundboard
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[2].panePrefab
+      value: 
+      objectReference: {fileID: 112558, guid: 080de521b73874292802d3f45d442914, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 159258}

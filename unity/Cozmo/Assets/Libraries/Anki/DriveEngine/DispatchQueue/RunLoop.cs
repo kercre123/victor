@@ -139,6 +139,17 @@ namespace Anki {
       }
     }
 
+    public static void PerformActionOnMainThread(Action action) {
+      if (action != null) {
+        if (_MainThreadToken == null) {
+          _MainThreadRunLoop.PerformAction(action);
+        }
+        else {
+          action();
+        }
+      }
+    }
+
     public void Update() {
       if (Paused) {
         return;

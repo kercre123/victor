@@ -77,17 +77,16 @@ public static class Localization {
     return _CurrentLocale;
   }
 
-  private const string kLocalizationAssetsFolderPath = "Assets/SharedAssets/Resources/LocalizedStrings/";
-  private const string kLocalizationResourcesFolderPath = "LocalizedStrings/";
+  private const string kLocalizationStreamingAssetsFolderPath = "/LocalizedStrings/";
 
   public static void LoadStrings() {
 
     // For each localization file in the locale's directory
     string locale = GetStringsLocale();
-    foreach (var fileName in GetLocalizationJsonFileNames(locale)) {
+    foreach (var filePath in GetLocalizationJsonFilePaths(locale)) {
       
       // Load the localization into a string table so that we can query it at runtime
-      JSONObject languageJson = GetJsonContentsFromLocalizationFile(locale, fileName);
+      JSONObject languageJson = GetJsonContentsFromLocalizationFile(locale, filePath);
 
       Anki.AppResources.StringTable st = Anki.AppResources.StringTable.LoadStringsFromSmartlingJSONFile(languageJson);
       _st.MergeEntriesFromStringTable(st);
@@ -98,15 +97,12 @@ public static class Localization {
     return _CurrentCulture;
   }
 
-  public static string[] GetLocalizationJsonFileNames(string locale) {
-    return Directory.GetFiles(kLocalizationAssetsFolderPath + locale, "*.json");
+  public static string[] GetLocalizationJsonFilePaths(string locale) {
+    return Directory.GetFiles(Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath + locale, "*.json");
   }
 
-  public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFileName) {
-    string resourceFilePath = kLocalizationResourcesFolderPath + locale + "/" + Path.GetFileNameWithoutExtension(localizationFileName);
-
-    TextAsset languageAsset = Resources.Load(resourceFilePath, typeof(TextAsset)) as TextAsset;
-    string languageJson = languageAsset.text;
+  public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFilePath) {
+    string languageJson = File.ReadAllText(localizationFilePath);
     return new JSONObject(languageJson);
   }
 }
