@@ -16,8 +16,8 @@ MonoBehaviour:
   _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: followCubeRotate1.title
-  _ChallengeSubtitleLocKey: 
-  _ChallengeDescriptionLocKey: 
+  _ChallengeSubtitleLocKey: followCubeRotate1.subtitle
+  _ChallengeDescriptionLocKey: followCubeRotate1.description
   _ChallengeIcon: {fileID: 0}
   _ChallengeKeyArt: {fileID: 0}
   _ChallengeReqs:
