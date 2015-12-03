@@ -13,21 +13,19 @@ namespace DockTraining {
     private float _LastSeenTargetTime = 0.0f;
 
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
-      // TODO
     }
 
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 2, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       CreateDefaultQuitButton();
     }
 
-    // Update is called once per frame
     void Update() {
       _StateMachineManager.UpdateAllMachines();
       if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
@@ -35,6 +33,8 @@ namespace DockTraining {
           if (_CurrentTarget != null) {
             _CurrentTarget.SetLEDs(0);
           }
+          // we haven't seen the current target for more than a second
+          // so let's try to find a new one.
           _CurrentTarget = FindNewTarget();
           _LastSeenTargetTime = Time.time;
         }
@@ -49,7 +49,7 @@ namespace DockTraining {
 
     }
 
-    void InitialCubesDone() {
+    private void InitialCubesDone() {
 
     }
 
@@ -59,6 +59,23 @@ namespace DockTraining {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+    }
+
+    public bool ShouldTryDock() {
+      float distance = Vector2.Distance(CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
+      return (distance < 75.0f);
+    }
+
+    public bool ShouldTryDockSucceed() {
+      if (ShouldTryDock() == false) {
+        return false;
+      }
+      // check to see if the robots forward vector is toward the cube enough to attempt a successful dock.
+      float dotVal = Vector2.Dot(CurrentRobot.Forward, (CurrentRobot.WorldPosition - _CurrentTarget.WorldPosition).normalized);
+      if (dotVal > 0.95f) {
+        return true;
+      }
+      return false;
     }
 
     private LightCube FindNewTarget() {

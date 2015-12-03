@@ -2,13 +2,25 @@ public static class LocalizationKeys {
 
   #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ChallengeTitleStrings.json
 
-  public const string kHubWorldAskCozmoAskCozmo1 = "hubWorld.askCozmo.askCozmo1";
-  public const string kHubWorldInvestorDemoInvestorDemoScene1 = "hubWorld.investorDemo.investorDemoScene1";
-  public const string kHubWorldDockTrainingChallenge1 = "hubWorld.dockTraining.challenge1";
-  public const string kHubWorldFollowCubeChallenge1 = "hubWorld.followCube.challenge1";
-  public const string kHubWorldRotationTrainingChallenge1 = "hubWorld.rotationTraining.challenge1";
-  public const string kHubWorldVisionTrainingChallenge1 = "hubWorld.visionTraining.challenge1";
-  public const string kHubWorldWinkGameChallenge1 = "hubWorld.winkGame.challenge1";
+  public const string kAskCozmo01Title = "askCozmo01.title";
+  public const string kAskCozmo01Subtitle = "askCozmo01.subtitle";
+  public const string kAskCozmo01Description = "askCozmo01.description";
+  public const string kInvestorDemoInvestorDemoScene1 = "investorDemo.investorDemoScene1";
+  public const string kDockTraining01Title = "dockTraining01.title";
+  public const string kDockTraining01Subtitle = "dockTraining01.subtitle";
+  public const string kDockTraining01Description = "dockTraining01.description";
+  public const string kFollowCube01Title = "followCube01.title";
+  public const string kFollowCube01Subtitle = "followCube01.subtitle";
+  public const string kFollowCube01Description = "followCube01.description";
+  public const string kRotationTraining01Title = "rotationTraining01.title";
+  public const string kRotationTraining01Subtitle = "rotationTraining01.subtitle";
+  public const string kRotationTraining01Description = "rotationTraining01.description";
+  public const string kVisionTraining01Title = "visionTraining01.title";
+  public const string kVisionTraining01Subtitle = "visionTraining01.subtitle";
+  public const string kVisionTraining01Description = "visionTraining01.description";
+  public const string kWinkGame01Title = "winkGame01.title";
+  public const string kWinkGame01Subtitle = "winkGame01.subtitle";
+  public const string kWinkGame01Description = "winkGame01.description";
 
   #endregion
 

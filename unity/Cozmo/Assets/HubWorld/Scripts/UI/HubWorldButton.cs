@@ -25,7 +25,7 @@ namespace Cozmo.HubWorld {
 
       // Allow for buttons that only show an image and no text
       if (_ButtonLabel != null) {
-        _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleKey);
+        _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
     }
 

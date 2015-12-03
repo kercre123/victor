@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "util/logging/printfLoggerProvider.h"
 
+#include "util/time/stopWatch.h"
+
 #include <fstream>
 
 
@@ -172,6 +174,8 @@ int main(int argc, char **argv)
   }  
    */
 
+  Anki::Util::Time::StopWatch stopWatch("tick");
+
   //
   // Main Execution loop: step the world forward forever
   //
@@ -180,8 +184,18 @@ int main(int argc, char **argv)
 #ifdef NO_WEBOTS
     auto tick_start = std::chrono::system_clock::now();
 #endif
-    
+    stopWatch.Start();
+
     myCozmo.Update(basestationController.getTime());
+
+    double timeMS = stopWatch.Stop();
+
+    if( timeMS >= BS_TIME_STEP ) {
+      PRINT_NAMED_WARNING("EngineHeardbeat.Overtime", "Update took %f ms (tick hearbeat is %dms)", timeMS, BS_TIME_STEP);
+    }
+    else if( timeMS >= 0.85*BS_TIME_STEP) {
+      PRINT_NAMED_INFO("EngineHeardbeat.SlowTick", "Update took %f ms (tick hearbeat is %dms)", timeMS, BS_TIME_STEP);
+    }
     
 #ifdef NO_WEBOTS
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - (std::chrono::system_clock::now() - tick_start);

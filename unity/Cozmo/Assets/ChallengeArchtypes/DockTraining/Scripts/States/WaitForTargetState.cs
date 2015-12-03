@@ -4,7 +4,7 @@ using System.Collections;
 namespace DockTraining {
   public class WaitForTargetState : State {
 
-    DockTrainingGame _DockTrainingGame;
+    private DockTrainingGame _DockTrainingGame;
 
     public override void Enter() {
       base.Enter();
@@ -16,7 +16,7 @@ namespace DockTraining {
 
       LightCube target = _DockTrainingGame.GetCurrentTarget();
       if (target != null) {
-        _StateMachine.SetNextState(new DockingState());
+        _StateMachine.SetNextState(new DetermineNextAction());
       }
     }
 

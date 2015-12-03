@@ -10,11 +10,11 @@ namespace InvestorDemo {
     [SerializeField]
     private UnityEngine.UI.Text _CurrentActionText;
 
-    void Start() {
+    void OnEnable() {
       ObjectTagRegistryManager.Instance.RegisterTag("InvestorNextButton", _NextButton.gameObject);
     }
 
-    void OnDestroy() {
+    void OnDisable() {
       ObjectTagRegistryManager.Instance.RemoveTag("InvestorNextButton");
     }
 

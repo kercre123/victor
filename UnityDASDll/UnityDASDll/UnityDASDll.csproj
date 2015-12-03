@@ -40,6 +40,8 @@
     <Compile Include="..\Properties\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="IDASTarget.cs" />
+    <Compile Include="UnityDasTarget.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
