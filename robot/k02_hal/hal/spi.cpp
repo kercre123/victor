@@ -96,8 +96,6 @@ static bool ProcessDrop(void) {
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
   drop_tx.preamble = TO_WIFI_PREAMBLE;
 
-  // Copy in JPEG data (TEMPORARY ZEROED)
-  buflen = 0;
   memcpy(drop_tx.payload, buf, buflen);
   
   // This is where a drop should be 
