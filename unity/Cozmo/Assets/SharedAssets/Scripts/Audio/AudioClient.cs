@@ -151,7 +151,9 @@ namespace Anki {
           CallbackBundle callbackBundle;
           if (_callbackDelegates.TryGetValue(playId, out callbackBundle)) {
             callbackBundle.Handler(info);
-            // Auto unregister Event Complete or if only if last event
+            // Auto unregister Event
+            // Unregister if caller requested event duration callback only or if this is the event complete callback.
+            // Note: Event Marker callbacks will always get complete callbacks which will unregister the handler.
             if (null == unregisterHandle) {
               if ( (AudioCallbackFlag.EventComplete & info.CallbackType) == AudioCallbackFlag.EventComplete ||
                   AudioCallbackFlag.EventDuration == callbackBundle.Flags) {
