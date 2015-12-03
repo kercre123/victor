@@ -5,13 +5,14 @@ import maya.cmds as cmds
 import maya.mel as mel
 import json
 
-#To use place in "/Users/Shared/Autodesk/maya/2016/plug-ins and In maya “Windows -> Setting/Preferences -> Plug-In Manager” and check under “AnkiMenu.py” hit load
+#To use place in "/Users/Shared/Autodesk/maya/2016/plug-ins and In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load
 
 kPluginCmdName = "AnkiAnimExport"
 #something like /Users/mollyjameson/cozmo-game/lib/anki/products-cozmo-assets/animations
 g_AnkiExportPath = ""
 g_PrevMenuName = ""
 g_ProceduralFaceKeyFrames = []
+ANIM_FPS = 30
 g_ProcFaceDict = { 
 "FaceCenterX":{"cladName":"faceCenterX", "cladIndex":-1},
 "FaceCenterY":{"cladName":"faceCenterY", "cladIndex":-1},
@@ -75,6 +76,84 @@ def IsProceduralAttribute(currattr):
         return True
     return False
 
+def GetAudioJSON():
+    audioNode = cmds.timeControl(mel.eval( '$tmpVar=$gPlayBackSlider' ),query=True, sound=True)
+    if( (audioNode  is not None) and (audioNode != "") ):
+        audioStart = cmds.sound(audioNode,query=True, sourceStart=True)
+        audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
+        audioFile = cmds.sound(audioNode,query=True, file=True)
+
+        audioPathSplit = audioFile.split("/sounds/", 1)
+        if( len(audioPathSplit) < 2 ):
+            print "ERROR: no sound added, it must be in the sounds directory"
+            return None
+        audioFile = audioPathSplit[1]
+
+        audio_json = {         
+                        "audioName": [audioFile],
+                        "volume": 1.0,
+                        "triggerTime_ms": round(audioStart * 1000  / ANIM_FPS, 0),
+                        "durationTime_ms": round((audioEnd - audioStart) * 1000  / ANIM_FPS, 0),
+                        "Name": "RobotAudioKeyFrame"
+                    }
+        return audio_json
+    else:
+        print "No audio found"
+    return None
+
+def GetMovement():
+    global ANIM_FPS
+    #Get a list of all the user defined attributes
+    dataNodeObject = "x:mech_all_ctrl"
+    if( len( cmds.ls(dataNodeObject) ) == 0 ):
+        return None
+    attributes = cmds.listAttr(dataNodeObject, ud=True)
+    if( len( attributes ) == 0 ):
+        return None
+    json_arr = []
+    
+    keyframe_attr_data = {}
+    #Movement requires all attributes be set with the known names TODO: better error handling
+    keyframe_attr_data["RadiusValues"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, valueChange=True)
+    keyframe_attr_data["TurnValues"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, valueChange=True)
+    keyframe_attr_data["FwdValues"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, valueChange=True)
+    keyframe_attr_data["Times"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, timeChange=True)
+
+    if( keyframe_attr_data["Times"] is None):
+        return None
+    #Loop through all keyframes
+    keyframe_count = len(keyframe_attr_data["Times"])
+    for i in range(keyframe_count-1):
+        #skip the ending frames and go to the start of the next bookend, we process in pairs.
+        if( ( i % 2) != 0 ):
+            continue
+        duration = (keyframe_attr_data["Times"][i+1] - keyframe_attr_data["Times"][i]) * 1000 / ANIM_FPS
+        triggerTime_ms = round((keyframe_attr_data["Times"][i]) * 1000  / ANIM_FPS, 0);
+        durationTime_ms = round(duration, 0); 
+        curr = {
+                    "triggerTime_ms": triggerTime_ms,
+                    "durationTime_ms": durationTime_ms,
+                    "Name": "BodyMotionKeyFrame"
+                }
+        keyframe_attr_data["FwdValues"][i+1] = round(keyframe_attr_data["FwdValues"][i+1])
+        keyframe_attr_data["RadiusValues"][i+1] = round(keyframe_attr_data["RadiusValues"][i+1])
+        keyframe_attr_data["TurnValues"][i+1] = round(keyframe_attr_data["TurnValues"][i+1])
+        if( (keyframe_attr_data["FwdValues"][i+1] != 0) and  
+            (keyframe_attr_data["RadiusValues"][i+1] == 0) and
+            (keyframe_attr_data["TurnValues"][i+1] == 0)):
+            curr["radius_mm"] = "STRAIGHT"
+            curr["speed"] =round(keyframe_attr_data["FwdValues"][i+1])
+        elif( (keyframe_attr_data["FwdValues"][i+1] == 0) and  
+            (keyframe_attr_data["RadiusValues"][i+1] == 0) and
+            (keyframe_attr_data["TurnValues"][i+1] != 0)):
+            curr["radius_mm"] = "TURN_IN_PLACE"
+            curr["speed"] =round(keyframe_attr_data["TurnValues"][i+1])
+        else:
+            curr["radius_mm"] = keyframe_attr_data["RadiusValues"][i+1]
+            curr["speed"] =round(keyframe_attr_data["TurnValues"][i+1])
+        json_arr.append(curr)
+    return json_arr
+
 # function that adds ( creates new or modifies existing keyframe)
 def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
     # search and see if we have something at that time
@@ -88,7 +167,7 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
 
     if( frame is None ):
         #add a completely empty one with logical defaults
-        frame = {          
+        frame = {        
             "faceAngle": 0.0,
             "faceCenterX": 0,
             "faceCenterY": 0,
@@ -117,7 +196,7 @@ def ExportAnkiAnim(item):
     print "AnkiAnimExportStarted..."
     if( g_AnkiExportPath == ""):
         SetAnkiExportPath("Default");
-    ANIM_FPS = 30
+    global ANIM_FPS
     #originally this was just grabbing the first selected object cmds.ls(sl=True)[0].split(':')[1]
     # Hardcoded on Mooly's request, in case of multiple cozmos will need a change to the x namespace.
     DATA_NODE_NAME = "x:data_node"
@@ -127,8 +206,11 @@ def ExportAnkiAnim(item):
     dataNodeObject = cmds.ls(DATA_NODE_NAME)[0]
     animFrames = cmds.playbackOptions(query = True, animationEndTime = True)
     animLength_s = animFrames / ANIM_FPS
-    json_arr = []
 
+    #Bake the animation so that we get the maya values mapped to the cozmo face values that the datanode driven keyframes transform
+    cmds.bakeResults( dataNodeObject, time=(1,cmds.playbackOptions( query=True,max=True )),simulation=True, smart=True,disableImplicitControl=True,preserveOutsideKeys=True,sparseAnimCurveBake=False,removeBakedAttributeFromLayer=False,removeBakedAnimFromLayer=False,bakeOnOverrideLayer=True,minimizeRotation=True,controlPoints=False,shape=True )   
+
+    json_arr = []
     # Because in the file we store the procedural anim as one keyframe with all params
     # But in maya they are stored as multiple params, we have this system for inserting them all.
     # Global to make the function work easier and laziness
@@ -160,15 +242,15 @@ def ExportAnkiAnim(item):
             else:
                 duration = (animFrames - Ts[i]) * 1000  / ANIM_FPS    
             curr = None
-            triggerTime_ms = round((Ts[i]) * 1000  / ANIM_FPS, 0);
-            durationTime_ms = round(duration, 0);
+            triggerTime_ms = int(round((Ts[i]) * 1000  / ANIM_FPS, 0));
+            durationTime_ms = int(round(duration, 0));
             if currattr == "HeadAngle":
-                curr = {          
+                curr = {
                     "angle_deg": k,
                     "angleVariability_deg": 0,
                     "triggerTime_ms": triggerTime_ms,
                     "durationTime_ms": durationTime_ms,
-                    "Name": "HeadAngleKeyFrame"
+                    "Name": "HeadAngleKeyFrame",
                 }
             elif currattr == "ArmLift":
                 curr = {          
@@ -187,27 +269,20 @@ def ExportAnkiAnim(item):
     #Concat the procedural face frames which were added per attribute
     json_arr.extend(g_ProceduralFaceKeyFrames)
     #Grab the robot sounds from the main timeline, not a datanode attribute
-    audioNode = cmds.timeControl(mel.eval( '$tmpVar=$gPlayBackSlider' ),query=True, sound=True)
-    audioStart = cmds.sound(audioNode,query=True, sourceStart=True)
-    audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
-    audioFile = cmds.sound(audioNode,query=True, file=True)
-    audio_json = {          
-                    "audioName": [audioFile],
-                    "pathFromRoot": audioFile,
-                    "volume": 1.0,
-                    "triggerTime_ms": round(audioStart * 1000  / ANIM_FPS, 0),
-                    "durationTime_ms": round((audioEnd - audioStart) * 1000  / ANIM_FPS, 0),
-                    "Name": "RobotAudioKeyFrame"
-                }
-    json_arr.append(audio_json)
-
+    audio_json = GetAudioJSON()
+    if( audio_json is not None):
+        json_arr.append(audio_json)
+    #Grab the robot movement relative to the curve
+    movement_json_arr = GetMovement()
+    if( movement_json_arr is not None):
+        json_arr.extend(movement_json_arr)
+    #Deletes the results layer the script created.
+    cmds.delete("BakeResults")
     #Scene name with stripped off .ma extension
     output_name = cmds.file(query=True, sceneName=True, shortName=True).split('.')[0]
     # the original tool just had the whole thing in a wrapper
     json_dict = {output_name:json_arr}
     output_json = json.dumps(json_dict, sort_keys=False, indent=2, separators=(',', ': '))
-    # confirm the output in the console
-    print output_json
     # redirects console output to a file then close
     cmds.cmdFileOutput( o=g_AnkiExportPath + "/"+output_name +".json")
     print output_json
