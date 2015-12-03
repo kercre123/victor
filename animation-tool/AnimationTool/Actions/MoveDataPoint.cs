@@ -28,7 +28,7 @@ namespace AnimationTool
         {
             if (dataPoint == null) return false;
 
-            dataPoint.XValue = Math.Round(xValue, 1);
+            dataPoint.XValue = Math.Round(xValue, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
             dataPoint.YValues[0] = Math.Round(yValue, 0);
             dataPoint.ToolTip = dataPoint.XValue + ", " + dataPoint.YValues[0];
 
@@ -37,7 +37,7 @@ namespace AnimationTool
 
         public virtual void Undo()
         {
-            dataPoint.XValue = Math.Round(previousX, 1);
+            dataPoint.XValue = Math.Round(previousX, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
             dataPoint.YValues[0] = Math.Round(previousY, 0);
             dataPoint.ToolTip = dataPoint.XValue + ", " + dataPoint.YValues[0];
         }

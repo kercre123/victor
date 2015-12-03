@@ -16,7 +16,7 @@ namespace AnimationTool
             int minimum = (int)(MoveSelectedDataPoints.DELTA_X * 1000);
             current.durationTime_ms = current.durationTime_ms < minimum ? minimum : current.durationTime_ms; // because procedural face points have duration time of zero
 
-            double x = Math.Round((current.triggerTime_ms + current.durationTime_ms) * 0.001D, 1);
+            double x = Math.Round((current.triggerTime_ms + current.durationTime_ms) * 0.001D, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
 
             return x;
         }
@@ -27,7 +27,7 @@ namespace AnimationTool
 
             string path = Sequencer.ExtraAudioData.FullPath + current.pathFromRoot;
             double volume = Math.Round(current.volume, 1);
-            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, 1), volume < MoveSelectedDataPoints.DELTA_X ? 1 : volume);
+            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, MoveSelectedDataPoints.DELTA_TIME_PRECISION), volume < MoveSelectedDataPoints.DELTA_X ? 1 : volume);
 
             if (extraData.Length < MoveSelectedDataPoints.DELTA_X)
             {
@@ -44,7 +44,7 @@ namespace AnimationTool
 
             string path = Sequencer.ExtraAudioData.FullPath + current.pathFromRoot;
             double volume = Math.Round(current.volume, 1);
-            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, 1), volume < MoveSelectedDataPoints.DELTA_X ? 1 : volume);
+            Sequencer.ExtraAudioData extraData = new Sequencer.ExtraAudioData(path, Math.Round(current.durationTime_ms * 0.001D, MoveSelectedDataPoints.DELTA_TIME_PRECISION), volume < MoveSelectedDataPoints.DELTA_X ? 1 : volume);
 
             if (extraData.Length < MoveSelectedDataPoints.DELTA_X)
             {
@@ -79,7 +79,7 @@ namespace AnimationTool
             if (current == null) return;
 
             string path = Sequencer.ExtraFaceAnimationData.FullPath + current.pathFromRoot;
-            Sequencer.ExtraFaceAnimationData extraData = new Sequencer.ExtraFaceAnimationData(path, Math.Round(current.durationTime_ms * 0.001D, 1));
+            Sequencer.ExtraFaceAnimationData extraData = new Sequencer.ExtraFaceAnimationData(path, Math.Round(current.durationTime_ms * 0.001D, MoveSelectedDataPoints.DELTA_TIME_PRECISION));
 
             if(extraData.Length < MoveSelectedDataPoints.DELTA_X)
             {

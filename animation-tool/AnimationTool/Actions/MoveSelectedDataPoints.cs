@@ -8,7 +8,8 @@ namespace AnimationTool
     public class MoveSelectedDataPoints : Action
     {
         public const double DELTA_Y = 1;
-        public const double DELTA_X = 0.1;
+        public const double DELTA_X = 0.033;
+        public const int DELTA_TIME_PRECISION = 3;
 
         protected ChartArea chartArea;
         protected DataPointCollection points;
@@ -134,7 +135,7 @@ namespace AnimationTool
 
             foreach (DataPoint dp in selectedDataPoints)
             {
-                double distance = Math.Round((nextRight - DELTA_X) - dp.XValue, 1);
+                double distance = Math.Round((nextRight - DELTA_X) - dp.XValue, DELTA_TIME_PRECISION);
                 if (distance < DELTA_X) //stop value from going equal to the next data point
                 {
                     right = false;
@@ -155,7 +156,7 @@ namespace AnimationTool
 
             foreach (DataPoint dp in selectedDataPoints)
             {
-                double distance = Math.Round(dp.XValue - (nextLeft + DELTA_X), 1);
+                double distance = Math.Round(dp.XValue - (nextLeft + DELTA_X), DELTA_TIME_PRECISION);
                 if (distance < DELTA_X) //stop value from going equal to the next data point
                 {
                     left = false;
