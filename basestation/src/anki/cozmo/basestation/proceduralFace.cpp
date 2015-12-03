@@ -13,6 +13,15 @@ namespace Cozmo {
   ProceduralFace::ProceduralFace()
   {
     Reset();
+    
+    // DEBUG!
+    // Save an image of the nominal face:
+    //    static bool temp = false;
+    //    if(!temp) {
+    //      cv::Mat_<u8> nominalFace = GetFace();
+    //      cv::imwrite("/Users/andrew/temp/nominalFace.png", nominalFace);
+    //      temp = true;
+    //    }
   }
   
   void ProceduralFace::Reset()

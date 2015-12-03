@@ -31,20 +31,26 @@ namespace Audio {
   
 class AudioEngineMessageHandler;
 class MessageAudioClient;
-
+// Callback Structs
+struct AudioCallbackDuration;
+struct AudioCallbackMarker;
+struct AudioCallbackComplete;
+  
 class AudioEngineClient : Util::noncopyable
 {
 public:
   
-  AudioEngineClient( AudioEngineMessageHandler& messageHandler );
+  using CallbackIdType = uint16_t;
   
-  void PostEvent( EventType event,
-                  uint16_t gameObjectId,
-                  AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone ) const;
+  void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
+  
+  CallbackIdType PostEvent( EventType event,
+                            uint16_t gameObjectId,
+                            AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
 
-  void PostGameState( GameStateType gameState ) const;
+  void PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState );
   
-  void PostSwitchState( SwitchStateType switchState, uint16_t gameObjectId ) const;
+  void PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId );
   
   void PostParameter( ParameterType parameter,
                       float parameterValue,
@@ -52,13 +58,22 @@ public:
                       int32_t timeInMilliSeconds,
                       CurveType curve ) const;
   
-private:
+protected:
   
-  AudioEngineMessageHandler& _messageHandler;
+  AudioEngineMessageHandler* _messageHandler = nullptr;
   std::vector<Signal::SmartHandle> _signalHandles;
   
+  static constexpr CallbackIdType kInvalidCallbackId = 0;
+  CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
-  void HandleEvents(const AnkiEvent<MessageAudioClient>& event);
+  void HandleEvents( const AnkiEvent<MessageAudioClient>& event );
+  
+  virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg );
+  virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg );
+  virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg );
+  
+  CallbackIdType GetNewCallbackId();
+  
 };
 
 } // Audio

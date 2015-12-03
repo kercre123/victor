@@ -263,7 +263,7 @@ def parse_engine_arguments():
         ArgumentParser.Command('wipeall!', 'delete, then wipe all ignored files in the entire repo (including generated projects)')]
     parser.add_command_arguments(commands)
       
-    platforms = ['mac', 'ios']
+    platforms = ['mac', 'ios', 'linux']
     default_platforms = ['mac']
     parser.add_platform_arguments(platforms, default_platforms)
     
@@ -369,7 +369,9 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
+        print "******************HERE1"
         generate_gyp(self.gyp_dir, self.platform, self.options)
+        print "******************HERE2"
         ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):

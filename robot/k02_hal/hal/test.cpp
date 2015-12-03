@@ -29,9 +29,10 @@ enum STARTUP_ERROR {
 };
 
 // Magical numbers for self test
-static const int DROP_THRESHOLD = 0x100;
+// Relaxed by Nathan for EP1
+static const int DROP_THRESHOLD = 0x80;
 static const int MOTOR_THRESHOLD[] = {
-  0x80, 0x80, 0x10000, 0x400
+  0x80, 0x80, 0x4000, 0x400
 };
 
 int RunTests(void);
@@ -60,7 +61,7 @@ void StartupSelfTest(void) {
 int RunTests(void) {
   using namespace Anki::Cozmo::HAL;
 
-  FacePrintf("SELF TEST");
+  FacePrintf("Self Test    v08");
   
   uint8_t imuid = ReadIMUID();
   
@@ -79,6 +80,11 @@ int RunTests(void) {
     g_dataToBody.motorPWM[i] = -0x3FFF;
   }
   TestPause(3);
+  
+  for (int i = 2; i < 4; i++) {
+    g_dataToBody.motorPWM[i] = 0;
+  }
+  TestPause(1);
   
   // Record start position, drive forward
   Fixed start[4], forward[4], backward[4];
@@ -105,8 +111,15 @@ int RunTests(void) {
   for (int i = 0; i < 4; i++) {
     g_dataToBody.motorPWM[i] = 0;
   }
+  
+  // This helps debug failing lifts - looks like they were moving about 0x8000 on average
+  //FacePrintf("%x %x", forward[2] - start[2], forward[2] - backward[2]);
+  
+  // Leave head up for ease of display
+  g_dataToBody.motorPWM[3] = 0x7fff;  
   TestPause(3);
-
+  g_dataToBody.motorPWM[3] = 0x0;
+  
   // Light test!
   uint32_t *lightValue = (uint32_t*) &g_dataToBody.backpackColors;  
   memset(g_dataToBody.backpackColors, 0, sizeof(g_dataToBody.backpackColors));

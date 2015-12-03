@@ -72,21 +72,21 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
 
 // FIXME: Check if this is how I should wrap callback messages to send them
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage )
+void AudioUnityClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage ) const
 {
   const ExternalInterface::MessageEngineToGame msg((AudioCallbackDuration( callbackMessage )));
   _externalInterface.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage )
+void AudioUnityClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage ) const
 {
   const ExternalInterface::MessageEngineToGame msg((AudioCallbackMarker( callbackMessage )));
   _externalInterface.Broadcast( std::move( msg ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage )
+void AudioUnityClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage ) const
 {
   const ExternalInterface::MessageEngineToGame msg((AudioCallbackComplete( callbackMessage )));
   _externalInterface.Broadcast( std::move( msg ) );

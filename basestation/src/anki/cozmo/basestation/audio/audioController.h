@@ -14,14 +14,17 @@
 #ifndef __Basestation_Audio_AudioController_H__
 #define __Basestation_Audio_AudioController_H__
 
-#include <stdio.h>
-
 #include <DriveAudioEngine/audioTypes.h>
+#include <DriveAudioEngine/audioCallback.h>
 #include <util/helpers/noncopyable.h>
 #include <util/dispatchQueue/iTaskHandle.h>
+#include <unordered_map>
+#include <vector>
+
 
 namespace AudioEngine {
   class AudioEngineController;
+  class CozmoPlugIn;
 }
 
 namespace Anki {
@@ -37,6 +40,8 @@ namespace Data {
 namespace Cozmo {
 namespace Audio {
   
+class RobotAudioBuffer;
+  
 class AudioController : public Util::noncopyable
 {
   
@@ -47,12 +52,14 @@ public:
   
   ~AudioController();
 
-  // TODO: Add Callback stuff
+  // Note: Transfer's callback context ownership to Audio Controller
   AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
-                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
+                                              AudioEngine::AudioCallbackContext* callbackContext = nullptr );
   
   AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject ) const;
+                                              AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
+                                              AudioEngine::AudioCallbackContext* callbackContext = nullptr );
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
                  AudioEngine::AudioStateId stateId ) const;
@@ -67,17 +74,38 @@ public:
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
                      AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
+  // Get Audio Buffer Obj for robot
+  RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
+  
+  // TODO: Add / Remove GameObj.
+  
+  
+  // TEMP: Set Cozmo Speaker Volumes
+  void StartUpSetDefaults();
+  
 
 private:
   
-  AudioEngine::AudioEngineController* _audioEngine   = nullptr;   // Audio Engine Lib
-  Util::Dispatch::Queue*              _dispatchQueue = nullptr;   // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle    = nullptr;   // Handle to our tick callback task
+  AudioEngine::AudioEngineController* _audioEngine      = nullptr;  // Audio Engine Lib
+  AudioEngine::CozmoPlugIn*           _cozmoPlugIn      = nullptr;  // Plugin Instance
+  RobotAudioBuffer*                   _robotAudioBuffer = nullptr;  // Audio Buffer for Robot Audio Clinet
+  
+  Util::Dispatch::Queue*              _dispatchQueue    = nullptr;  // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle              _taskHandle       = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   
+  using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingID, AudioEngine::AudioCallbackContext* >;
+  CallbackContextMap _eventCallbackContexts;
+  
+  std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
+
+  
   // Tick Audio Engine
   void Update();
+  
+  void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
+  void ClearGarbageCollector();
   
 };
 

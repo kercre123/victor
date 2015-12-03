@@ -52,7 +52,7 @@ def main(scriptArgs):
                       default='universal',
                       help="Target set of architectures")
   parser.add_argument('--platform', action='append', dest='platforms',
-                      choices=('ios', 'mac', 'android'),
+                      choices=('ios', 'mac', 'android', 'linux'),
                       help="Generate output for a specific platform")
   (options, args) = parser.parse_known_args(scriptArgs)
 
@@ -60,7 +60,7 @@ def main(scriptArgs):
     UtilLog.setLevel(logging.DEBUG)
 
   if options.platforms is None:
-    options.platforms = ['ios', 'mac', 'android']
+    options.platforms = ['ios', 'mac', 'android', 'linux']
 
   if (options.pathExtension):
     os.environ['PATH'] = options.pathExtension + ':' + os.environ['PATH']
@@ -215,7 +215,31 @@ def main(scriptArgs):
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
 
-
+  # linux
+  if 'linux' in options.platforms:
+    print "***************************HERE-configure.py coretech"
+    os.environ['GYP_DEFINES'] = """
+                                OS=linux
+                                ndk_root=INVALID
+                                kazmath_library_type=static_library
+                                jsoncpp_library_type=static_library
+                                util_library_type=static_library
+                                worldviz_library_type=static_library
+                                arch_group={0}
+                                output_location={1}
+                                coretech_external_path={2}
+                                cti-gtest_path={3}
+                                cti-util_gyp_path={4}
+                                cti-cozmo_engine_path={5}
+                                """.format(options.arch,
+                                  os.path.join(projectRoot, 'generated/linux'),
+                                  coretechExternalPath,
+                                  gtestPath,
+                                  ankiUtilProjectPath,
+                                  subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
+                                )
+    gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', '../../generated/linux', gypFile]
+    gyp.main(gypArgs)
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary

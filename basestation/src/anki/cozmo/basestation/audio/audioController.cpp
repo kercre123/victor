@@ -12,10 +12,12 @@
  */
 
 #include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <util/helpers/templateHelpers.h>
 #include <util/logging/logging.h>
+#include <unordered_map>
 
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
@@ -24,7 +26,7 @@
 
 #define USE_AUDIO_ENGINE 1
 #include <DriveAudioEngine/audioEngineController.h>
-
+#include <DriveAudioEngine/PlugIns/cozmoPlugIn.h>
 #else
 
 // If we're excluding the audio libs, don't link any of the audio engine
@@ -64,19 +66,43 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   if ( _isInitialized )
   {
     ASSERT_NAMED( !_taskHandle, "AudioController.Initialize Invalid Task Handle" );
-    
-    // Setup our update method to be called periodically
-    _dispatchQueue = Util::Dispatch::Create();
-    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
-    _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
-    
 #if USE_AUDIO_ENGINE
+    
+    // Setup CozmoPlugIn & RobotAudioBuffer
+    _cozmoPlugIn = new CozmoPlugIn();
+    _robotAudioBuffer = new RobotAudioBuffer();
+    
+    // Setup Callbacks
+    _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
+      PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
+      assert( nullptr != _robotAudioBuffer );
+    } );
+
+    _cozmoPlugIn->SetDestroyPluginCallback( [this] () {
+      PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
+      assert( nullptr != _robotAudioBuffer );
+      // Done with voice clear audio buffer
+      _robotAudioBuffer->ClearCache();
+    } );
+    
+    _cozmoPlugIn->SetProcessCallback( [this] ( const AudioEngine::CozmoPlugIn::CozmoPlugInAudioBuffer& buffer )
+    {
+      _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
+    });
+    
+    const bool success = _cozmoPlugIn->RegisterPlugin();
+    if ( ! success ) {
+      PRINT_NAMED_ERROR( "AudioController.Initialize", "Fail to Regist Cozmo PlugIn");
+    }
+    
     // FIXME: Temp fix to load audio banks
     AudioBankList bankList = {
+      "Init.bnk",
       "Music.bnk",
       "UI.bnk",
       "VO.bnk",
       "Cozmo_Movement.bnk",
+      "Debug.bnk",
     };
     const std::string sceneTitle = "InitScene";
     AudioScene initScene = AudioScene( sceneTitle, AudioEventList(), bankList );
@@ -84,8 +110,16 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _audioEngine->RegisterAudioScene( std::move(initScene) );
     
     _audioEngine->LoadAudioScene( sceneTitle );
+    
+    StartUpSetDefaults();
 
 #endif
+  
+    // Setup our update method to be called periodically
+    _dispatchQueue = Util::Dispatch::Create();
+    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
+    _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
+    
   }
 }
 
@@ -98,6 +132,8 @@ AudioController::~AudioController()
   }
   Util::Dispatch::Release( _dispatchQueue );
   
+  ClearGarbageCollector();
+  
 #if USE_AUDIO_ENGINE
   {
     Util::SafeDelete( _audioEngine );
@@ -107,12 +143,22 @@ AudioController::~AudioController()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& eventName,
-                                                             AudioEngine::AudioGameObject gameObjectId) const
+                                                             AudioEngine::AudioGameObject gameObjectId,
+                                                             AudioEngine::AudioCallbackContext* callbackContext )
 {
   AudioPlayingID playingId = kInvalidAudioPlayingID;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    playingId = _audioEngine->PostEvent( eventName, gameObjectId );
+    playingId = _audioEngine->PostEvent( eventName, gameObjectId, callbackContext );
+    if ( kInvalidAudioPlayingID != playingId &&
+        nullptr != callbackContext ) {
+      callbackContext->SetPlayId( playingId );
+      callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
+                                              {
+                                                MoveCallbackContextToGarbageCollector( thisContext );
+                                              } );
+      _eventCallbackContexts.emplace( playingId, callbackContext );
+    }
   }
 #endif
   return playingId;
@@ -120,12 +166,22 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioEventID eventId,
-                                                             AudioEngine::AudioGameObject gameObjectId ) const
+                                                             AudioEngine::AudioGameObject gameObjectId,
+                                                             AudioEngine::AudioCallbackContext* callbackContext  )
 {
   AudioPlayingID playingId = kInvalidAudioPlayingID;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
-    playingId = _audioEngine->PostEvent( eventId, gameObjectId );
+    playingId = _audioEngine->PostEvent( eventId, gameObjectId, callbackContext );
+    if ( kInvalidAudioPlayingID != playingId &&
+         nullptr != callbackContext ) {
+      callbackContext->SetPlayId( playingId );
+      callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
+      {
+        MoveCallbackContextToGarbageCollector( thisContext );
+      } );
+      _eventCallbackContexts.emplace( playingId, callbackContext );
+    }
   }
 #endif
   return playingId;
@@ -168,21 +224,73 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
   bool success = false;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
+    if ( AudioEngine::kInvalidAudioGameObject == gameObject ) {
+      // Set Global RTPC values
+      gameObject = _audioEngine->GetDefaultGameObjectId();
+    }
     _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
   }
 #endif
   return success;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Private
+// THIS IS TEMP
+void AudioController::StartUpSetDefaults()
+{
+  AudioEngine::AudioParameterId ROBOT_MASTER_VOLUME = 562892825;
+  AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
+
   
+  SetParameter( ROBOT_VOLUME, 0.8, kInvalidAudioGameObject);
+  // This is effected by robot volume
+  SetParameter( ROBOT_MASTER_VOLUME, 0.9, kInvalidAudioGameObject);
+}
+
+
+// Private
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::Update()
 {
 #if USE_AUDIO_ENGINE
   // NOTE: Don't need time delta
   _audioEngine->Update( 0.0 );
 #endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext )
+{
+  ASSERT_NAMED( nullptr != callbackContext, "AudioController.MoveCallbackContextToGarbageCollector Callback Context is \
+                NULL");
+  PRINT_NAMED_INFO( "AudioController.MoveCallbackContextToGarbageCollector", "Add PlayId: %d Callback Context to \
+                    garbagecollector", callbackContext->GetPlayId() );
+  // FIXME: Is there a better way of doing this?
+  ClearGarbageCollector();
+  
+  // Move context from EventCallbackMap to CallbackGarbageCollector
+  const auto it = _eventCallbackContexts.find( callbackContext->GetPlayId() );
+  if ( it != _eventCallbackContexts.end() ) {
+    ASSERT_NAMED( it->second == callbackContext, "AudioController.MoveCallbackContextToGarbageCollector PlayId dose \
+                  NOT match Callback Context" );
+    // Move to GarbageCollector
+    it->second->ClearCallbacks();
+    _callbackGarbageCollector.emplace_back( it->second );
+    _eventCallbackContexts.erase( it );
+  }
+  else {
+    ASSERT_NAMED( it != _eventCallbackContexts.end(), ( "AudioController.MoveCallbackContextToGarbageCollector Can NOT \
+                  find PlayId: " + std::to_string( callbackContext->GetPlayId() )).c_str() );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::ClearGarbageCollector()
+{
+  std::for_each(_callbackGarbageCollector.begin(),
+                _callbackGarbageCollector.end(),
+                [](AudioEngine::AudioCallbackContext* aContext){ Util::SafeDelete( aContext ); } );
+  _callbackGarbageCollector.clear();
 }
   
 } // Audio
