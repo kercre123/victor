@@ -83,5 +83,14 @@
     },
     "winkGame01.description" : {
         "translation" : "Cozmo will wink to one side or the other. Wave your hand on the side with the eye still open."
+    },
+    "forwardBackward01.title" : {
+        "translation" : "Forward Backward Game"
+    },
+    "forwardBackward01.subtitle" : {
+        "translation" : "Forward Backward Subtitle"
+    },
+    "forwardBackward01.description" : {
+        "translation" : "Use a light cube to lead Cozmo forward, then use the cube to lead him backward."
     }
 }
