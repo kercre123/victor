@@ -14,11 +14,9 @@ namespace FollowCubeRotate {
 
     public override void Update() {
       base.Update();
-      LightCube newTarget = _Game.FindNewCubeTarget();
-      if (newTarget != null) {
-        RotateWithTarget rotateState = new RotateWithTarget();
-        rotateState.SetTarget(newTarget);
-        _StateMachine.SetNextState(rotateState);
+      _Game.FindNewCubeTarget();
+      if (_Game.CurrentTarget != null) {
+        _StateMachine.SetNextState(new RotateWithTarget());
       }
     }
 

@@ -9,6 +9,16 @@ namespace FollowCubeRotate {
 
     private int _Lives = 3;
 
+    public LightCube CurrentTarget { get; set; }
+
+    public bool LeftReached { get; set; }
+
+    public float LastTimeTargetSeen { get; private set; }
+
+    public bool RightReached { get; set; }
+
+    public float StartingAngle { get; set; }
+
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
 
     }
@@ -22,14 +32,25 @@ namespace FollowCubeRotate {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
 
+      LeftReached = false;
+      RightReached = false;
+      CurrentTarget = null;
+
       CreateDefaultQuitButton();
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
+      if (CurrentRobot.VisibleObjects.Contains(CurrentTarget)) {
+        LastTimeTargetSeen = Time.time;
+      }
     }
 
     public void LoseLife() {
+      
+      LeftReached = false;
+      RightReached = false;
+
       if (_Lives > 0) {
         _Lives--;
       }
@@ -38,13 +59,14 @@ namespace FollowCubeRotate {
       }
     }
 
-    public LightCube FindNewCubeTarget() {
+    public void FindNewCubeTarget() {
       foreach (ObservedObject visibleObj in CurrentRobot.VisibleObjects) {
         if (visibleObj is LightCube) {
-          return (LightCube)visibleObj;
+          CurrentTarget = (LightCube)visibleObj;
+          StartingAngle = CurrentRobot.PoseAngle;
+          return;
         }
       }
-      return null;
     }
 
     public override void CleanUp() {
