@@ -32,13 +32,12 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   : IBehavior(robot, config)
 {
   _name = "PounceOnMotion";
-
-  std::vector<MessageEngineToGameTag> subscribedEvents = {
-    MessageEngineToGameTag::RobotObservedMotion,
-    MessageEngineToGameTag::RobotCompletedAction,
-  };
   
-  SubscribeToTags(std::move(subscribedEvents));
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedMotion,
+    EngineToGameTag::RobotCompletedAction
+  }});
+
 }
 
 bool BehaviorPounceOnMotion::IsRunnable(const Robot& robot, double currentTime_sec) const

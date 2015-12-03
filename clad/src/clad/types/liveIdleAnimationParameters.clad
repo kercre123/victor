@@ -18,7 +18,6 @@ enum uint_8 LiveIdleAnimationParameter {
   BodyMovementDurationMax_ms,
   BodyMovementSpeedMinMax_mmps,
   BodyMovementStraightFraction,
-  MaxPupilMovement,
   LiftMovementDurationMin_ms,
   LiftMovementDurationMax_ms,
   LiftMovementSpacingMin_ms,
@@ -30,8 +29,9 @@ enum uint_8 LiveIdleAnimationParameter {
   HeadMovementSpacingMin_ms,
   HeadMovementSpacingMax_ms,
   HeadAngleVariability_deg,
-  DockSquintEyeHeight,
-  DockSquintEyebrowHeight,
+  EyeDartSpacingMinTime_ms,
+  EyeDartSpacingMaxTime_ms,
+  EyeDartMaxDistance_pix,
 
   NumParameters
 }

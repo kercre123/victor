@@ -61,7 +61,7 @@ def main(scriptArgs):
                       default='universal',
                       help="Target set of architectures")
   parser.add_argument('--platform', action='append', dest='platforms',
-                      choices=('ios', 'mac', 'android'),
+                      choices=('ios', 'mac', 'android', 'linux'),
                       help="Generate output for a specific platform")
   (options, args) = parser.parse_known_args(scriptArgs)
 
@@ -69,7 +69,7 @@ def main(scriptArgs):
     UtilLog.setLevel(logging.DEBUG)
 
   if options.platforms is None:
-    options.platforms = ['ios', 'mac', 'android']
+    options.platforms = ['ios', 'mac', 'android', 'linux']
 
   if (options.pathExtension):
     os.environ['PATH'] = options.pathExtension + ':' + os.environ['PATH']
@@ -178,7 +178,7 @@ def main(scriptArgs):
    ['project/gyp/cozmoEngine.lst'])
   generator.processFolder(['basestation/test', 'robot/test'], ['project/gyp/cozmoEngine-test.lst'])
   generator.processFolder(['robot/sim_hal', 'robot/supervisor/src', 'simulator/src/robot', 'simulator/controllers/webotsCtrlRobot'],
-   ['project/gyp/ctrlRobot.lst'])
+   ['project/gyp/ctrlRobot.lst'], ['reliableSequenceId.c'])
   generator.processFolder(['robot/generated/clad/robot'], ['project/gyp/robotGeneratedClad.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlViz'], ['project/gyp/ctrlViz.lst'])
   generator.processFolder(['clad/src', 'clad/vizSrc', 'robot/clad/src'], ['project/gyp/clad.lst'])
@@ -420,6 +420,52 @@ def main(scriptArgs):
     os.environ['READELF_target'] = os.path.join(ndk_root, 'toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-readelf')
     gypArgs = ['--check', '--depth', '.', '-f', 'ninja-android', '--toplevel-dir', '../..', '--generator-output', 'generated/android', gypFile]
     gyp.main(gypArgs)
+
+
+
+  # linux
+  if 'linux' in options.platforms:
+      print "***********************HERE-configure.py"
+      os.environ['GYP_DEFINES'] = """
+                                  OS=linux
+                                  ndk_root=INVALID
+                                  audio_library_type=static_library
+                                  audio_library_build=profile
+                                  kazmath_library_type=static_library
+                                  jsoncpp_library_type=static_library
+                                  util_library_type=static_library
+                                  worldviz_library_type=static_library
+                                  arch_group={0}
+                                  output_location={1}
+                                  coretech_external_path={2}
+                                  webots_path={3}
+                                  cti-gtest_path={4}
+                                  cti-util_gyp_path={5}
+                                  cozmo_engine_path={6}
+                                  cti-cozmo_engine_path={6}
+                                  ce-gtest_path={7}
+                                  ce-util_gyp_path={8}
+                                  ce-cti_gyp_path={9}
+                                  ce-audio_path={10}
+                                  """.format(
+                                    options.arch,
+                                    os.path.join(options.projectRoot, 'generated/linux'),
+                                    coretechExternalPath,
+                                    webotsPath,
+                                    ctiGtestPath,
+                                    ctiAnkiUtilProjectPath,
+                                    projectRoot,
+                                    gtestPath,
+                                    ankiUtilProjectPath,
+                                    coretechInternalProjectPath,
+                                    audioProjectPath
+                                  )
+      os.environ['CC_target'] = '/usr/bin/clang'
+      os.environ['CXX_target'] = '/usr/bin/clang++'
+      os.environ['LD_target'] = '/usr/bin/clang++'
+      gypArgs = ['--check', '--depth', '.', '-f', 'ninja', '--toplevel-dir', '../..', '--generator-output', '../../generated/linux', gypFile] 
+      gyp.main(gypArgs)
+      print "***********************HERE-configure.py2"
 
   #pre build setup: decompress audio libs
   if (subprocess.call([os.path.join(projectRoot, 'lib/audio/gyp/decompressAudioLibs.sh')]) != 0):

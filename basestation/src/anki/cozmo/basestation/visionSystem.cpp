@@ -1236,7 +1236,7 @@ namespace Cozmo {
     
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
-    if(headSame && poseSame && !_prevImage.IsEmpty() &&
+    if(headSame && poseSame && !_poseData.isMoving && !_prevImage.IsEmpty() &&
        image.GetTimestamp() - _lastMotionTime > 500)
     {
       s32 numAboveThresh = 0;
@@ -1358,9 +1358,9 @@ namespace Cozmo {
       {
         PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
                          "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
-                         "-- (%.1f,%.1f) on the ground",
-                         minArea, centroid.x(), centroid.y(),
-                         groundPlaneCentroid.x(), groundPlaneCentroid.y());
+                         "-- %d-pixel area at (%.1f,%.1f) on the ground",
+                         imgRegionArea, centroid.x(), centroid.y(),
+                         s32(groundRegionArea), groundPlaneCentroid.x(), groundPlaneCentroid.y());
         
         _lastMotionTime = image.GetTimestamp();
         

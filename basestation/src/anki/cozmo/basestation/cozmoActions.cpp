@@ -1007,6 +1007,8 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
+      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
+      
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
       _compoundAction.AddAction(action);
@@ -1491,7 +1493,7 @@ namespace Anki {
         // If we are already "in position" according to the tolerance, just move the
         // eyes
         // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        Radians angleDiff = _headAngle - robot.GetHeadAngle();
+        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
         const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
         const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
         robot.ShiftEyes(0, yPixShift, 66); // TODO: How to set the duration of the eye shift?
@@ -1847,6 +1849,22 @@ namespace Anki {
         // to see that it has finished picking or placing below. I.e., we need to
         // know the robot got the DockWithObject command sent in Init().
         _wasPickingOrPlacing = robot.IsPickingOrPlacing();
+        
+        if(_wasPickingOrPlacing) {
+          // Apply continuous eye squint if we have just now started picking and placing
+          AnimationStreamer::FaceTrack squintLayer;
+          ProceduralFace squintFace;
+          
+          const f32 DockSquintScaleY = 0.5f;
+          for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+            squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
+          }
+          
+          // Note that we do not make the key frame live, because we don't want it to
+          // be removed after being played once!
+          squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
+          _squintLayerTag = robot.GetAnimationStreamer().AddLoopingFaceLayer(squintLayer);
+        }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
       {
@@ -1896,6 +1914,9 @@ namespace Anki {
       if(robot.IsPickingOrPlacing()) {
         robot.AbortDocking();
       }
+      
+      // Stop squinting
+      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_squintLayerTag);
     }
            
 

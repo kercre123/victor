@@ -275,19 +275,43 @@ namespace Cozmo {
           Start();
         }
       }
-      
+
       // Fill in the pose data for the given image, by querying robot history
-      Lock();
-      Result lastResult = robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), _nextPoseData.timeStamp, _nextPoseData.poseStamp, true);
-      Unlock();
-      
+      RobotPoseStamp imagePoseStamp;
+      TimeStamp_t imagePoseStampTimeStamp;
+      Result lastResult = robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
+
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
                           "Unable to get computed pose at image timestamp of %d.\n", image.GetTimestamp());
         return lastResult;
       }
       
+      // Get most recent pose data in history
+      Anki::Cozmo::RobotPoseStamp lastPoseStamp;
+      robot.GetPoseHistory()->GetLastPoseWithFrameID(robot.GetPoseFrameID(), lastPoseStamp);
+      
+      // Compare most recent pose and pose at time of image to see if robot has moved in the short time
+      // time since the image was taken. If it has, this suppresses motion detection inside VisionSystem.
+      // This is necessary because the image might contain motion, but according to the pose there was none.
+      // Whether this is due to inaccurate timestamping of images or low-resolution pose reporting from
+      // the robot, this additional info allows us to know if motion in the image was likely due to actual
+      // robot motion.
+      const bool headSame =  NEAR(lastPoseStamp.GetHeadAngle(),
+                                  imagePoseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+      
+      const bool poseSame = (NEAR(lastPoseStamp.GetPose().GetTranslation().x(),
+                                  imagePoseStamp.GetPose().GetTranslation().x(), .5f) &&
+                             NEAR(lastPoseStamp.GetPose().GetTranslation().y(),
+                                  imagePoseStamp.GetPose().GetTranslation().y(), .5f) &&
+                             NEAR(lastPoseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
+                                  imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
+                                  DEG_TO_RAD(0.1)));
+      
       Lock();
+      _nextPoseData.poseStamp = imagePoseStamp;
+      _nextPoseData.timeStamp = imagePoseStampTimeStamp;
+      _nextPoseData.isMoving = !headSame || !poseSame;
       _nextPoseData.cameraPose = robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
       _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
                                                                      _nextPoseData.groundPlaneHomography);

@@ -58,6 +58,10 @@ namespace Anki {
         _name += "+";
       }
       
+      // All added actions have the same message display setting as the parent
+      // compound action in which they are included
+      action->EnableMessageDisplay(IsMessageDisplayEnabled());
+      
       _actions.emplace_back(false, action);
       _actions.back().second->SetIsPartOfCompoundAction(true);
       _name += action->GetName();

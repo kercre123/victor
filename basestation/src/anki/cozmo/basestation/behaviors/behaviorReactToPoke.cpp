@@ -1,20 +1,21 @@
 /**
- * File: behaviorReactToPickup.cpp
+ * File: behaviorReactToPoke.cpp
  *
- * Author: Lee
- * Created: 08/26/15
+ * Author: Kevin
+ * Created: 11/30/15
  *
- * Description: Behavior for immediately responding being picked up.
+ * Description: Behavior for immediately responding to being poked
  *
  * Copyright: Anki, Inc. 2015
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -22,98 +23,110 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
   
+  
+static std::vector<f32> _animReactionHappyThresholds = {
+  -0.1f,
+  -0.8f
+};
+  
 static std::vector<std::string> _animReactions = {
-  "Demo_Face_Interaction_ShockedScared_A",
+  "ID_poked_giggle",
+  "ID_pokedA",
+  "ID_pokedB"
 };
 
-BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
+
+BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
-  _name = "ReactToPickup";
- 
+  assert(_animReactions.size() == _animReactionHappyThresholds.size() + 1);
+  
+  _name = "ReactToPoke";
+  
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTriggerTags({
-    EngineToGameTag::RobotPickedUp
+    EngineToGameTag::RobotPoked
   });
   
   // These are additional tags that this behavior should handle
-  SubscribeToTags({{
-    EngineToGameTag::RobotPutDown,
+  SubscribeToTags({
     EngineToGameTag::RobotCompletedAction
-  }});
-
+  });
+  
 }
 
-bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   switch (_currentState)
   {
     case State::Inactive:
-    case State::IsPickedUp:
+    case State::IsPoked:
     case State::PlayingAnimation:
     {
       return true;
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorReactToPickup.IsRunnable.UnknownState",
+      PRINT_NAMED_ERROR("BehaviorReactToPoke.IsRunnable.UnknownState",
                         "Reached unknown state %d.", _currentState);
     }
   }
   return false;
 }
 
-Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
+Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
 {
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double currentTime_sec)
 {
   switch (_currentState)
   {
     case State::Inactive:
     {
-      if (_isInAir)
+      if (_doReaction)
       {
-        _currentState = State::IsPickedUp;
+        _currentState = State::IsPoked;
         return Status::Running;
       }
       break; // Jump down and return Status::Complete
     }
-    case State::IsPickedUp:
+    case State::IsPoked:
     {
-      static u32 animIndex = 0;
-      // For now we simply rotate through the animations we want to play when picked up
+      // For now we simply rotate through the animations we want to play when poked
       if (!_animReactions.empty())
       {
+        // Decrease happy
+        robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeMedium, "Poked");
+        
+        // Get happy reading
+        f32 happyVal = robot.GetMoodManager().GetEmotionValue(EmotionType::Happy);
+        
+        // Figure out which reaction to play
+        u32 animIndex = 0;
+        for (; animIndex < _animReactionHappyThresholds.size(); ++animIndex) {
+          if (happyVal > _animReactionHappyThresholds[animIndex]) {
+            break;
+          }
+        }
+        
+        PRINT_NAMED_INFO("BehaviorReactToPoke.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
         IActionRunner* newAction = new PlayAnimationAction(_animReactions[animIndex]);
         _animTagToWaitFor = newAction->GetTag();
         robot.GetActionList().QueueActionNow(0, newAction);
-        animIndex = ++animIndex % _animReactions.size();
       }
-      _waitingForAnimComplete = true;
       _currentState = State::PlayingAnimation;
+      _doReaction = false;
       return Status::Running;
     }
     case State::PlayingAnimation:
     {
-      if (!_waitingForAnimComplete)
-      {
-        // If our animation is done and we're not in the air, we're done
-        if (!_isInAir)
-        {
-          _currentState = State::Inactive;
-          break; // Jump down to Status::Complete
-        }
-        // Otherwise set our state to start the animation again
-        _currentState = State::IsPickedUp;
-      }
       return Status::Running;
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorReactToPickup.Update.UnknownState",
+      PRINT_NAMED_ERROR("BehaviorReactToPoke.Update.UnknownState",
                         "Reached unknown state %d.", _currentState);
     }
   }
@@ -121,7 +134,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
+Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -131,20 +144,15 @@ Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime
   return Result::RESULT_OK;
 }
 
-void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
+void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())
   {
-    case MessageEngineToGameTag::RobotPickedUp:
+    case MessageEngineToGameTag::RobotPoked:
     {
-      _isInAir = true;
-      break;
-    }
-    case MessageEngineToGameTag::RobotPutDown:
-    {
-      _isInAir = false;
+      _doReaction = true;
       break;
     }
     case MessageEngineToGameTag::RobotCompletedAction:
@@ -152,7 +160,7 @@ void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
       const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
       if (_animTagToWaitFor == msg.idTag)
       {
-        _waitingForAnimComplete = false;
+        _currentState = State::Inactive;
       }
       break;
     }

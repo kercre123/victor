@@ -27,23 +27,7 @@ namespace Cozmo {
                                        Audio::RobotAudioClient& audioClient)
   : HasSettableParameters(externalInterface)
   , _animationContainer(container)
-  , _idleAnimation(nullptr)
-  , _streamingAnimation(nullptr)
-  , _timeSpentIdling_ms(0)
-  , _isIdling(false)
-  , _numLoops(1)
-  , _loopCtr(0)
-  , _tagCtr(0)
   , _liveAnimation(LiveAnimation)
-  , _isLiveTwitchEnabled(false)
-  , _nextBlink_ms(0)
-  , _nextLookAround_ms(0)
-  , _bodyMoveDuration_ms(0)
-  , _liftMoveDuration_ms(0)
-  , _headMoveDuration_ms(0)
-  , _bodyMoveSpacing_ms(0)
-  , _liftMoveSpacing_ms(0)
-  , _headMoveSpacing_ms(0)
   , _audioClient( audioClient )
   {
 
@@ -169,10 +153,45 @@ namespace Cozmo {
     newLayer.track.Init();
     newLayer.startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp() + delay_ms;
     newLayer.streamTime_ms = newLayer.startTime_ms;
+    newLayer.isLooping = false;
     
     _faceLayers.emplace_back(std::move(newLayer));
     
     return lastResult;
+  }
+  
+  u32 AnimationStreamer::AddLoopingFaceLayer(const FaceTrack& faceTrack)
+  {
+    static u32 TagCtr = 0;
+
+    FaceLayer newLayer;
+    newLayer.tag = TagCtr++;
+    newLayer.track = faceTrack;
+    newLayer.track.Init();
+    newLayer.startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    newLayer.streamTime_ms = newLayer.startTime_ms;
+    newLayer.isLooping = true;
+    
+    PRINT_NAMED_INFO("AnimationStreamer.AddLoopingFaceLayer",
+                     "Tag = %d", newLayer.tag);
+    
+    const u32 returnTag = newLayer.tag;
+    _faceLayers.emplace_back(std::move(newLayer));
+    
+    return returnTag;
+  }
+  
+  void AnimationStreamer::RemoveLoopingFaceLayer(u32 tag)
+  {
+    for(auto layerIter = _faceLayers.begin(); layerIter != _faceLayers.end(); ++layerIter) {
+      if(layerIter->tag == tag) {
+        PRINT_NAMED_INFO("AnimationStreamer.RemoveLoopingFaceLayer",
+                         "Tag = %d", layerIter->tag);
+        
+        _faceLayers.erase(layerIter);
+        return; // once found, stop looking immediately (there should be no more layers w/ this tag)
+      }
+    }
   }
   
   bool AnimationStreamer::BufferMessageToSend(RobotInterface::EngineToRobot* msg)
@@ -282,7 +301,7 @@ namespace Cozmo {
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                                         ProceduralFaceParams& faceParams,
-                                        bool shouldReplace /* = false */)
+                                        bool shouldReplace)
   {
     bool paramsSet = false;
     
@@ -290,26 +309,98 @@ namespace Cozmo {
       ProceduralFaceKeyFrame& currentKeyFrame = track.GetCurrentKeyFrame();
       if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
       {
+        ProceduralFaceParams interpolatedParams;
+        
         ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
         if (nextFrame != nullptr) {
           if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms)) {
+            // If it's time to play the next frame, then the current frame is done,
+            // so move the track forward
+            
+            if(nextFrame->GetTriggerTime() - currentKeyFrame.GetTriggerTime() <= IKeyFrame::SAMPLE_LENGTH_MS)
+            {
+              // Special case: the current frame is within one sample length of the
+              // next frame, meaning it became time to play both of them at the same
+              // time. So we want to make sure we actually send the current frame
+              // before moving ahead.
+              interpolatedParams = currentKeyFrame.GetFace().GetParams();
+              paramsSet = true;
+            }
+            
             track.MoveToNextKeyFrame();
           } else {
-            ProceduralFaceParams interpolatedFrame = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
-            SetFaceParams(faceParams, std::move(interpolatedFrame), shouldReplace);
+            // We're on the way to the next frame: interpolate.
+            interpolatedParams = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
             paramsSet = true;
           }
         } else {
-          ProceduralFaceParams interpolatedFrame = currentKeyFrame.GetFace().GetParams();
-          SetFaceParams(faceParams, std::move(interpolatedFrame), shouldReplace);
+          // There's no next frame to interpolate towards: just send this keyframe
+          // and move forward
+          interpolatedParams = currentKeyFrame.GetFace().GetParams();
           track.MoveToNextKeyFrame();
           paramsSet = true;
         }
-      }
-    }
+        
+        if(paramsSet) {
+          SetFaceParams(faceParams, std::move(interpolatedParams), shouldReplace);
+        }
+      } // if(nextFrame != nullptr
+    } // if(track.HasFramesLeft())
     
     return paramsSet;
   } // GetFaceHelper()
+  
+  
+  void AnimationStreamer::KeepFaceAlive(Robot& robot)
+  {
+    using Param = LiveIdleAnimationParameter;
+    
+    _nextBlink_ms   -= BS_TIME_STEP;
+    _nextEyeDart_ms -= BS_TIME_STEP;
+    
+    // Eye darts
+    if(_nextEyeDart_ms <= 0)
+    {
+      // Shift the eyes slightly by a random amount
+      const s32 xShift = _rng.RandIntInRange(0, GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const s32 yShift = _rng.RandIntInRange(0, GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      
+      robot.ShiftEyes(xShift, yShift, IKeyFrame::SAMPLE_LENGTH_MS);
+      
+      _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
+                                            GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
+    }
+    
+    // Blinks
+    if(_nextBlink_ms <= 0)
+    {
+      ProceduralFace blinkFace(robot.GetProceduralFace());
+      
+      // Now we clear out the current face params so that the layer generated
+      // below starts as the nominal face
+      blinkFace.SetParams(ProceduralFaceParams());
+      
+      FaceTrack faceTrack;
+      TimeStamp_t totalOffset = 0;
+      bool moreBlinkFrames = false;
+      do {
+        TimeStamp_t timeInc;
+        moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
+        totalOffset += timeInc;
+        
+        ProceduralFaceKeyFrame kf(blinkFace, totalOffset);
+        kf.SetIsLive(true);
+        
+        faceTrack.AddKeyFrame(std::move(kf));
+      } while(moreBlinkFrames);
+      
+      AddFaceLayer(std::move(faceTrack));
+      
+      _nextBlink_ms = _rng.RandIntInRange(GetParam<s32>(Param::BlinkSpacingMinTime_ms),
+                                          GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
+    }
+    
+  } // KeepFaceAlive()
   
   
   void AnimationStreamer::UpdateFace(Robot& robot, Animation* anim, bool storeFace)
@@ -321,19 +412,31 @@ namespace Cozmo {
     ProceduralFaceParams faceParams = robot.GetProceduralFace().GetParams();
     
     if(nullptr != anim) {
+      // Note that shouldReplace==true in this case because the animation frames
+      // actually replace what's on the face.
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
     }
     
     for(auto faceLayerIter = _faceLayers.begin(); faceLayerIter != _faceLayers.end(); )
     {
+      // Note that shouldReplace==false here because face layers do not replace
+      // what's on the face, by defintion, they layer on top of what's already there.
       faceUpdated |= GetFaceHelper(faceLayerIter->track, faceLayerIter->startTime_ms,
-                                   faceLayerIter->streamTime_ms, faceParams);
+                                   faceLayerIter->streamTime_ms, faceParams, false);
       
       faceLayerIter->streamTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
       if(!faceLayerIter->track.HasFramesLeft()) {
-        // This layer is done, delete it
-        faceLayerIter = _faceLayers.erase(faceLayerIter);
+        
+        // This layer is done...
+        if(faceLayerIter->isLooping) {
+          //...but is marked to loop, so restart it
+          faceLayerIter->track.Init();
+          ++faceLayerIter;
+        } else {
+          //...and is not looping, so delete it
+          faceLayerIter = _faceLayers.erase(faceLayerIter);
+        }
       } else {
         ++faceLayerIter;
       }
@@ -413,6 +516,26 @@ namespace Cozmo {
     return lastResult;
   } // SendEndOfAnimation()
   
+  bool AnimationStreamer::HaveNonLoopingFaceLayersToSend()
+  {
+    if(_faceLayers.empty()) {
+      return false;
+    } else {
+      // There are face layers, but we want to ignore any that are looping
+      for(auto & layer : _faceLayers) {
+        if(!layer.isLooping) {
+          // There's at least one non-looping face layer: return that there are
+          // face layers to send
+          return true;
+        }
+      }
+      // All face layers are looping ones, so no need to keep sending them
+      // by themselves. They only need to be re-applied while there's something
+      // else being sent
+      return false;
+    }
+  }
+  
   Result AnimationStreamer::StreamFaceLayersOrAudio(Robot& robot)
   {
     Result lastResult = RESULT_OK;
@@ -436,7 +559,7 @@ namespace Cozmo {
     
     // Add more stuff to send buffer from face layers
     while(_sendBuffer.empty() &&
-          ( !_faceLayers.empty() ||
+          ( HaveNonLoopingFaceLayersToSend() ||
            _audioClient.IsPlugInActive() ))
     {
       // If we have face layers to send, we _do_ want BufferAudioToSend to
@@ -467,7 +590,7 @@ namespace Cozmo {
     
     // If we just finished buffering all the face layers, send an end of animation message
     if(_startOfAnimationSent &&
-       _faceLayers.empty() &&
+       !HaveNonLoopingFaceLayersToSend() &&
        _sendBuffer.empty() &&
        !_endOfAnimationSent &&
        !_audioClient.IsPlugInActive()) {
@@ -709,6 +832,18 @@ namespace Cozmo {
     
     bool streamUpdated = false;
     
+    // Always keep face alive, unless we have a streaming animation, since we rely on it
+    // to do all face updating and we don't want to step on it's hand-designed toes.
+    // Wait a 1/2 second before running after we finish the last streaming animation
+    // to help reduce stepping on the next animation's toes when we have things
+    // sequenced.
+    if(_streamingAnimation == nullptr &&
+       (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
+       _lastStreamTime - BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() > 0.5f)))
+    {
+      KeepFaceAlive(robot);
+    }
+    
     if(_streamingAnimation != nullptr) {
       _timeSpentIdling_ms = 0;
       
@@ -742,6 +877,7 @@ namespace Cozmo {
         lastResult = UpdateStream(robot, _streamingAnimation, true);
         _isIdling = false;
         streamUpdated = true;
+        _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
     } else if(_idleAnimation != nullptr) {
       
@@ -774,13 +910,14 @@ namespace Cozmo {
         // This is just an idle animation, so we don't want to save the face to the robot
         lastResult = UpdateStream(robot, _idleAnimation, false);
         streamUpdated = true;
+        _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
       _timeSpentIdling_ms += BS_TIME_STEP;
     }
     
     // If we didn't do any streaming above, but we've still got face layers to
     // stream or there's audio waiting to go out, stream those now
-    if(!streamUpdated && (!_faceLayers.empty() || _audioClient.HasKeyFrameAudioSample()))
+    if(!streamUpdated && (HaveNonLoopingFaceLayersToSend() || _audioClient.HasKeyFrameAudioSample()))
     {
       lastResult = StreamFaceLayersOrAudio(robot);
     }
@@ -877,7 +1014,8 @@ namespace Cozmo {
   
   void AnimationStreamer::SetDefaultParams()
   {
-#   define SET_DEFAULT(__NAME__, __VALUE__) SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
+#   define SET_DEFAULT(__NAME__, __VALUE__) \
+    SetParam(LiveIdleAnimationParameter::__NAME__,  static_cast<f32>(__VALUE__))
     
     SET_DEFAULT(BlinkCloseTime_ms, 150);
     SET_DEFAULT(BlinkOpenTime_ms, 150);
@@ -891,7 +1029,6 @@ namespace Cozmo {
     SET_DEFAULT(BodyMovementDurationMax_ms, 1500);
     SET_DEFAULT(BodyMovementSpeedMinMax_mmps, 10);
     SET_DEFAULT(BodyMovementStraightFraction, 0.5f);
-    SET_DEFAULT(MaxPupilMovement, 0.5f);
     SET_DEFAULT(LiftMovementDurationMin_ms, 50);
     SET_DEFAULT(LiftMovementDurationMax_ms, 500);
     SET_DEFAULT(LiftMovementSpacingMin_ms,  250);
@@ -903,11 +1040,12 @@ namespace Cozmo {
     SET_DEFAULT(HeadMovementSpacingMin_ms, 250);
     SET_DEFAULT(HeadMovementSpacingMax_ms, 1000);
     SET_DEFAULT(HeadAngleVariability_deg, 6);
-    SET_DEFAULT(DockSquintEyeHeight, -0.4f);
-    SET_DEFAULT(DockSquintEyebrowHeight, -0.4f);
+    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
+    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
+    SET_DEFAULT(EyeDartMaxDistance_pix, 3);
     
-#    undef SET_DEFAULT
-  }
+#   undef SET_DEFAULT
+  } // SetDefaultParams()
   
   Result AnimationStreamer::UpdateLiveAnimation(Robot& robot)
   {
@@ -922,23 +1060,7 @@ namespace Cozmo {
 //    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
     //const ProceduralFace& nextFace = robot.GetProceduralFace();
     ProceduralFace nextFace(robot.GetProceduralFace());
-    
-    // Squint the current face while picking/placing to show concentration:
-    if(robot.IsPickingOrPlacing()) {
-      for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
-        nextFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY,
-                              GET_PARAM(f32, DockSquintEyeHeight));
-      }
-      // Make sure squinting face gets displayed:
-      if(nextFace.GetTimeStamp() < lastFace.GetTimeStamp()+IKeyFrame::SAMPLE_LENGTH_MS) {
-        nextFace.SetTimeStamp(nextFace.GetTimeStamp() + IKeyFrame::SAMPLE_LENGTH_MS);
-      }
-      nextFace.MarkAsSentToRobot(false);
-    }
-    
-//    const TimeStamp_t nextTime = nextFace.GetTimeStamp();
-    
-    _nextBlink_ms -= BS_TIME_STEP;
+        
     _nextLookAround_ms -= BS_TIME_STEP;
     
     bool faceSent = false;
@@ -953,45 +1075,7 @@ namespace Cozmo {
       robot.MarkProceduralFaceAsSent();
       faceSent = true;
     }
-    else if(_isLiveTwitchEnabled && _nextBlink_ms <= 0) { // "time to blink"
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.Blink", "");
-#     endif
-      ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
-      
-      ProceduralFace blinkFace(crntFace);
-      // Now we clear out the current face params so that the layer generated below starts as the nominal face
-      blinkFace.SetParams(ProceduralFaceParams());
-      
-      FaceTrack faceTrack;
-      TimeStamp_t totalOffset = 0;
-      bool moreBlinkFrames = false;
-      do {
-        TimeStamp_t timeInc;
-        moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
-        totalOffset += timeInc;
-        
-        ProceduralFaceKeyFrame kf(blinkFace, totalOffset);
-        kf.SetIsLive(true);
-        faceTrack.AddKeyFrame(std::move(kf));
-        
-        /*
-        lastResult = StreamProceduralFace(robot, crntFace, blinkFace, _liveAnimation);
-        if(RESULT_OK != lastResult) {
-          return lastResult;
-        }
-        crntFace = blinkFace;
-        */
-      } while(moreBlinkFrames);
-      
-      AddFaceLayer(std::move(faceTrack));
-
-      // Pick random next time to blink
-      _nextBlink_ms = _rng.RandIntInRange(GET_PARAM(s32, BlinkSpacingMinTime_ms),
-                                          GET_PARAM(s32, BlinkSpacingMaxTime_ms));
-      faceSent = true;
-    }
-
+    
     anyFramesAdded = faceSent;
 
     // Don't start wiggling until we've been idling for a bit and make sure we
@@ -1012,31 +1096,12 @@ namespace Cozmo {
         s16 curvature = s16_MAX; // drive straight
         if(_rng.RandDblInRange(0., 1.) > GET_PARAM(f32, BodyMovementStraightFraction)) {
           curvature = 0;
+          
+          // If turning in place, look in the direction of the turn
+          const s32 x = (speed < 0 ? -1.f : 1.f) * _rng.RandIntInRange(0, ProceduralFace::WIDTH/6);
+          const s32 y = _rng.RandIntInRange(-ProceduralFace::HEIGHT/6, ProceduralFace::HEIGHT/6);
+          robot.ShiftEyes(x, y, IKeyFrame::SAMPLE_LENGTH_MS);
         }
-        
-        // If we haven't already sent a procedural face, use it to point eyes
-        // in direction of motion
-        if(!faceSent)
-        {
-          ProceduralFace crntFace(nextFace.HasBeenSentToRobot() ? nextFace : lastFace);
-          
-          f32 x = 0, y = 0;
-          if(curvature == 0) {
-            const f32 kMaxPupilMovement = GET_PARAM(f32, MaxPupilMovement);
-            x = (speed < 0 ? _rng.RandDblInRange(-kMaxPupilMovement, 0.) : _rng.RandDblInRange(0., kMaxPupilMovement));
-            y = _rng.RandDblInRange(-kMaxPupilMovement, kMaxPupilMovement);
-          }
-          crntFace.GetParams().SetFacePosition({x,y});
-          
-          ProceduralFaceKeyFrame kf(crntFace);
-          kf.SetIsLive(true);
-          if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
-            PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddTurnLookProcFaceFrameFailed", "");
-            return RESULT_FAIL;
-          }
-          
-          anyFramesAdded = true;
-        } // if(!faceSent)
         
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",

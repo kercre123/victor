@@ -55,9 +55,6 @@ namespace Anki {
     //Runs one iteration of the vheicle speed controller to compute the commanded vehicle speed
     void Manage(void);
     
-    //Figures out whether the car is stopped or not
-    bool IsVehicleStopped(void);
-    
     void ResetIntegralError(void);
     
   } // namespace SpeedController

@@ -57,6 +57,7 @@
 #include <unordered_map>
 #include <time.h>
 #include <utility>
+#include <fstream>
 
 namespace Anki {
   
@@ -441,6 +442,8 @@ public:
     // specified duration (layered on top of any other animation that's playing)
     void ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms);
   
+    AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
+  
     // =========== Audio =============
     Audio::RobotAudioClient* GetRobotAudioClient() { return &_audioClient; }
   
@@ -814,8 +817,7 @@ public:
     std::vector<Signal::SmartHandle> _signalHandles;
     ImageDeChunker* _imageDeChunker;
     uint8_t _imuSeqID = 0;
-    uint32_t _imuDataSize = 0;
-    int8_t _imuData[6][1024]{{0}};  // first ax, ay, az, gx, gy, gz
+    std::ofstream _imuLogFileStream;
 
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -837,6 +839,7 @@ public:
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupVisionHandlers(IExternalInterface& externalInterface);

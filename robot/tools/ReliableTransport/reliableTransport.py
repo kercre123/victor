@@ -5,7 +5,7 @@ with embedded constraints and Cozmo's needs.
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, struct, ctypes, threading, select
+import sys, os, struct, ctypes, threading, select
 from ReliableTransport.reliableSequenceId import *
 from ReliableTransport.reliableConnection import ReliableConnection
 
@@ -86,7 +86,10 @@ class ReliableTransport(threading.Thread):
 
     def __init__(self, unreliable, receiver):
         "Set up a new reliable transport manager given an unreliable transport layer and a receiver callback object"
-        threading.Thread.__init__(self, daemon=True)
+        if os.name == 'posix' and sys.version_info.major > 2:
+            threading.Thread.__init__(self, daemon=True)
+        else:
+            threading.Thread.__init__(self)
         self.unreliable = unreliable
         self.receiver   = receiver
         self.queue = []

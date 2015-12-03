@@ -9,6 +9,7 @@
 
 #include "spi.h"
 #include "uart.h"
+#include "dac.h"
 
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;
@@ -27,18 +28,20 @@ static int totalDrops = 0;
 
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
+  static int pwmCmdCounter = 0;
   
   // Process drop receive
   transmissionWord *target = spi_rx_buff;
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
-    // TODO: SCREEN
-    // TODO: AUDIO
-
     DropToRTIP* drop = (DropToRTIP*)target;
+    // TODO: SCREEN
+
+    FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
+    EnableAudio(drop->droplet & audioDataValid);
+
     uint8_t *payload_data = (uint8_t*) drop->payload;
-    
     totalDrops++;
     
     switch (*(payload_data++)) {
@@ -67,16 +70,21 @@ static bool ProcessDrop(void) {
         SendRecoveryData((uint8_t*) &bud.data, sizeof(bud.data));
         break;
       }
-      case 0x01:
+      case 0x22:
       {
-        float lws, rws;
-        memcpy(&lws, payload_data, sizeof(float));
-        payload_data += sizeof(float);
-        memcpy(&rws, payload_data, sizeof(float));
-        g_dataToBody.motorPWM[0] = static_cast<int16_t>(lws);
-        g_dataToBody.motorPWM[1] = static_cast<int16_t>(rws);
+        memcpy(g_dataToBody.motorPWM, payload_data, sizeof(int16_t)*4);
+        pwmCmdCounter = (7440/5); // 200ms worth of drops
         break;
       }
+    }
+
+    if (pwmCmdCounter > 0)
+    {
+      pwmCmdCounter--;
+    }
+    if (pwmCmdCounter == 1)
+    {
+      memset(g_dataToBody.motorPWM, 0, sizeof(int16_t)*4);
     }
     
     return true;
@@ -88,8 +96,6 @@ static bool ProcessDrop(void) {
 void Anki::Cozmo::HAL::TransmitDrop(const uint8_t* buf, int buflen, int eof) {   
   drop_tx.preamble = TO_WIFI_PREAMBLE;
 
-  // Copy in JPEG data (TEMPORARY ZEROED)
-  buflen = 0;
   memcpy(drop_tx.payload, buf, buflen);
   
   // This is where a drop should be 

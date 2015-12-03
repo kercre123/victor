@@ -6,6 +6,8 @@ namespace Anki {
     namespace HAL {
       void DACInit(void);
       void DACTone(void);
+      void EnableAudio(bool enable);
+      void FeedDAC(uint8_t* samples, int length);
     }
   }
 }

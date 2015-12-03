@@ -125,8 +125,8 @@ namespace Cozmo {
     
     // Derived classes should use these methods to subscribe to any tags they
     // are interested in handling.
-    void SubscribeToTags(std::vector<GameToEngineTag>&& tags);
-    void SubscribeToTags(std::vector<EngineToGameTag>&& tags);
+    void SubscribeToTags(std::set<GameToEngineTag>&& tags);
+    void SubscribeToTags(std::set<EngineToGameTag>&& tags);
     
     // Derived classes must override this method to handle events that come in
     // irrespective of whether the behavior is running or not. Note that the Robot
@@ -218,6 +218,10 @@ namespace Cozmo {
     
     virtual const std::set<EngineToGameTag>& GetEngineToGameTags() const { return _engineToGameTags; }
     virtual const std::set<GameToEngineTag>& GetGameToEngineTags() const { return _gameToEngineTags; }
+    
+    // Subscribe to tags that should immediately trigger this behavior
+    void SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags);
+    void SubscribeToTriggerTags(std::set<GameToEngineTag>&& tags);
     
   protected:
     std::set<EngineToGameTag> _engineToGameTags;

@@ -73,6 +73,13 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
     
+    // Add a procedural face "layer" that is applied continuously until removed.
+    // A handle/tag for the layer is returned, which is needed for removal.
+    u32 AddLoopingFaceLayer(const FaceTrack& faceTrack);
+    
+    // Remove a previously-added looping face layer using its tag
+    void RemoveLoopingFaceLayer(u32 tag);
+    
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
      
@@ -114,9 +121,9 @@ namespace Cozmo {
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
 
-    Animation*  _idleAnimation; // default points to "live" animation
-    Animation*  _streamingAnimation;
-    TimeStamp_t _timeSpentIdling_ms;
+    Animation*  _idleAnimation      = nullptr; // default points to "live" animation
+    Animation*  _streamingAnimation = nullptr;
+    TimeStamp_t _timeSpentIdling_ms = 0;
     
     // For layering procedural face animations on top of whatever is currently
     // playing:
@@ -124,6 +131,8 @@ namespace Cozmo {
       FaceTrack   track;
       TimeStamp_t startTime_ms;
       TimeStamp_t streamTime_ms;
+      bool        isLooping;
+      u32         tag;
     };
     std::list<FaceLayer> _faceLayers;
     
@@ -132,20 +141,25 @@ namespace Cozmo {
     bool GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                        TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                        ProceduralFaceParams& faceParams,
-                       bool shouldReplace = false);
+                       bool shouldReplace);
+    
+    bool HaveNonLoopingFaceLayersToSend();
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
+    
+    void KeepFaceAlive(Robot& robot);
     
     // Used to stream _just_ the stuff left in face layers or audio in the buffer
     Result StreamFaceLayersOrAudio(Robot& robot);
     
-    bool _isIdling;
+    bool _isIdling = false;
     
-    u32 _numLoops;
-    u32 _loopCtr;
-    u8  _tagCtr;
+    u32 _numLoops = 1;
+    u32 _loopCtr  = 0;
+    u8  _tagCtr   = 0;
     
-    bool _startOfAnimationSent;
+    bool _startOfAnimationSent = false;
+    bool _endOfAnimationSent   = false;
     
     // When this animation started playing (was initialized) in milliseconds, in
     // "real" basestation time
@@ -158,7 +172,8 @@ namespace Cozmo {
     // clock)
     TimeStamp_t _streamingTime_ms;
     
-    bool _endOfAnimationSent;
+    // Last time we streamed anything
+    f32 _lastStreamTime = std::numeric_limits<f32>::max();
     
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE
     // TODO: Remove these once we aren't playing robot audio on the device
@@ -186,15 +201,16 @@ namespace Cozmo {
     
     // For live animation
     Animation      _liveAnimation;
-    bool           _isLiveTwitchEnabled;
-    s32            _nextBlink_ms;
-    s32            _nextLookAround_ms;
-    s32            _bodyMoveDuration_ms;
-    s32            _liftMoveDuration_ms;
-    s32            _headMoveDuration_ms;
-    s32            _bodyMoveSpacing_ms;
-    s32            _liftMoveSpacing_ms;
-    s32            _headMoveSpacing_ms;
+    bool           _isLiveTwitchEnabled  = false;
+    s32            _nextBlink_ms         = 0;
+    s32            _nextEyeDart_ms       = 0;
+    s32            _nextLookAround_ms    = 0;
+    s32            _bodyMoveDuration_ms  = 0;
+    s32            _liftMoveDuration_ms  = 0;
+    s32            _headMoveDuration_ms  = 0;
+    s32            _bodyMoveSpacing_ms   = 0;
+    s32            _liftMoveSpacing_ms   = 0;
+    s32            _headMoveSpacing_ms   = 0;
     
     Audio::RobotAudioClient& _audioClient;
     
