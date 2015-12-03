@@ -255,7 +255,7 @@ namespace Anki
         MemoryStack bigScratch(malloc(bigScratchSize), bigScratchSize);
         Array<u8> empty(image.get_size(0), image.get_size(1), bigScratch);
         Embedded::DrawComponents<u8>(empty, extractedComponents, 64, 255);
-        empty.Show("components good", true, false, true);
+        empty.Show("components good", false, false, true);
         free(bigScratch.get_buffer());
       }
 #endif
