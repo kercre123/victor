@@ -59,7 +59,7 @@ namespace Cozmo {
   // =========== Test class implementation ===========
   CST_RobotKidnapping::CST_RobotKidnapping()
   : _kidnappedPose(-M_PI_2, Z_AXIS_3D(), {150.f, -150.f, 0})
-  , _poseAngleThresh(DEG_TO_RAD(3.f))
+  , _poseAngleThresh(DEG_TO_RAD(5.f))
   {
     
   }
