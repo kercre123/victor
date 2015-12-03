@@ -30,5 +30,6 @@ public static class AnimationName {
   public const string kHappyA = "ID_catCatch_happyA";
   public const string kccMisch = "ID_catCatch_mischievous";
   public const string kreactToMotion = "ID_MotionFollow_ReactToMotion";
+  public const string kByeBye = "ID_ByeBye";
 }
 

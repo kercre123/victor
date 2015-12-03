@@ -1,6 +1,6 @@
 {
   "Name": "InvestorScene1",
-  "RequiresConditionRemainsMet": false,
+  "RequiresConditionRemainsMet": true,
   "ActivateOnConditionMet": true,
   "Repeatable": true,
   "Condition": null,
@@ -136,7 +136,7 @@
     },
     {
       "Name": "7. Follow Motion (Behav)",
-      "Id": 4,
+      "Id": 11,
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
@@ -165,9 +165,13 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "tapCube",
+          "AnimationName": "ID_ByeBye",
           "LoopForever": false,
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
+          "Behavior": "NoneBehavior"
         }
       ],
       "ExitConditions": [
