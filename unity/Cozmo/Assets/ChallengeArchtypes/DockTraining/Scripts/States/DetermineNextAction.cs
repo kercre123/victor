@@ -29,7 +29,9 @@ namespace DockTraining {
       if (_DockTrainingGame.ShouldTryDock()) {
         if (_DockTrainingGame.ShouldTryDockSucceed()) {
           // should try to actually successfully dock.
-          _StateMachine.SetNextState(new TryDock());
+          TryDock tryDockState = new TryDock();
+          tryDockState.Init(_DockTrainingGame.GetCurrentTarget());
+          _StateMachine.SetNextState(tryDockState);
         }
         else {
           // we are too far off, just fail spectacularly
