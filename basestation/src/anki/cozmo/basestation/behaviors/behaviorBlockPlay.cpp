@@ -32,6 +32,18 @@
 
 #define DEBUG_BLOCK_PLAY_BEHAVIOR 1
 
+// TODO:(bn) when driving to the side or back of the cube to roll it, the position is really far off. Instead
+// of relying on the action (or maybe add this logic within the action?) plan to a pre-dock pose which is much
+// further away from the block, so it can adjust more naturally instead of having to back up and do weird
+// stuff
+
+// TODO:(bn) tune speed, so maybe we can move faster and make everything look better. Ideally, this whole
+// behavior could have a single parameter for this
+
+// TODO:(bn) remove face tracking as first step, and integrate this behavior with the follow faces behavior
+// TODO:(bn) make sure we can go back and forth at the various staged between these behaviors
+
+
 namespace Anki {
 namespace Cozmo {
   
@@ -125,38 +137,74 @@ namespace Cozmo {
     switch(_currentState)
     {
       case State::TrackingFace:
-      {
+      {        
         // If not already tracking face...
         if (robot.GetMoveComponent().GetTrackToFace() == Face::UnknownFace) {
           
+          // if we are carrying an object, make sure the lift is out of the way. Don't execute the action yet
+          // because we may want to do it in parallel
+          MoveLiftToHeightAction* moveLiftAction = nullptr;
+
+          if( robot.IsCarryingObject() && robot.GetLiftHeight() > kLowCarryHeightMM + 5 && !robot.IsLiftMoving() ) {
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace",
+                                   "block in lift is blocking view, moving from %f to %f",
+                                   robot.GetLiftHeight(),
+                                   kLowCarryHeightMM);
+
+            moveLiftAction = new MoveLiftToHeightAction(kLowCarryHeightMM);
+            // move slowly
+            moveLiftAction->SetDuration(1.0f);
+          }
+
           if (_faceID != Face::UnknownFace) {
             
             // If we have a valid faceID, track it.
             robot.GetMoveComponent().EnableTrackToFace(_faceID, false);
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace",
-                                   "tracking face %lld", _faceID);
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
+                                   "EnableTrackToFace %lld", _faceID);
             
           } else if (_hasValidLastKnownFacePose) {
             
             // Otherwise, if had previously seen a valid face, turn to face its last known pose
             robot.GetActionList().Cancel(_lastActionTag);
-            IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, 0, PI_F);
-            _lastActionTag = lookAtFaceAction->GetTag();
-            robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, lookAtFaceAction);
-            _isActing = true;
+            IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
+
+            // if we also need to lower the lift, do it in parallel (this is the most common case)
+            if( moveLiftAction != nullptr) {
+              StartActing(robot, new CompoundActionParallel({moveLiftAction, lookAtFaceAction}));
+              moveLiftAction = nullptr;
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                     "Moving to last face pose AND lowering lift");
+            }
+            else {
+              // otherwise just execute the look action
+              StartActing(robot, lookAtFaceAction);
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
+                                     "Moving to last face pose");
+            }
             
             _hasValidLastKnownFacePose = false;
           } else {
-            
+
             // There's no face visible.
             // Wait a few seconds for a face to appear, otherwise quit.
             if (_noFacesStartTime <= 0) {
               _noFacesStartTime = currentTime_sec;
             }
-            if (currentTime_sec - _noFacesStartTime > 3) {
-              PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
-              return Status::Complete;
-            }
+            // TODO: enable this, it will switch back to track faces behavior which will make sense
+            // if (currentTime_sec - _noFacesStartTime > 3) {
+            //   PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
+            //   return Status::Complete;
+            // }
+          }
+
+          if( moveLiftAction != nullptr) {
+            // execute the lower lift action before we start tracking faces
+            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.LowerLift",
+                                   "executing lift lowering action");
+
+            StartActing(robot, moveLiftAction);
+            break;
           }
         }
         else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
@@ -203,8 +251,6 @@ namespace Cozmo {
             robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
           }
         }
-
-        // TEMP: add a visually verify step, stop tracking object if it fails, if it passes continue as before ???
         
         // Check that block is on the ground and not moving
         TimeStamp_t t;
@@ -276,6 +322,11 @@ namespace Cozmo {
                                       {PreActionPose::DOCKING},
                                       std::set<Vision::Marker::Code>(),
                                       obstacles);
+
+        if( preActionPoses.empty() ) {
+          // no valid actions, just wait a bit, hope we get them next time
+          break;
+        }
         
         // Execute roll
         robot.GetActionList().Cancel(_lastActionTag);
@@ -296,9 +347,7 @@ namespace Cozmo {
                                                    true,
                                                    approachAngle_rad);
         }
-        _lastActionTag = rollAction->GetTag();
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, rollAction);
-        _isActing = true;
+        StartActing(robot, rollAction);
         break;
       }
       case State::PickingUpBlock:
@@ -312,10 +361,7 @@ namespace Cozmo {
         }
         
         robot.GetActionList().Cancel(_lastActionTag);
-        IActionRunner* pickupAction = new DriveToPickupObjectAction(_objectToPickUp);
-        _lastActionTag = pickupAction->GetTag();
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, pickupAction);
-        _isActing = true;
+        StartActing(robot, new DriveToPickupObjectAction(_objectToPickUp));
         break;
       }
       case State::PlacingBlock:
@@ -329,25 +375,40 @@ namespace Cozmo {
         }
         
         robot.GetActionList().Cancel(_lastActionTag);
-        IActionRunner* placementAction = new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn);
-        _lastActionTag = placementAction->GetTag();
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, placementAction);
-        _isActing = true;
+        StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn));
         break;
       }
       case State::SearchingForMissingBlock:
       {
         // TODO:(bn) add a "huh, where's the block?" animation here
+
+        // first face the block object (where we think it is, if we know), then look a bit to the left and
+        // right
+
         const float lookAmountRads = DEG_TO_RAD(20);
         const float waitTime = 0.6f;
+        
+        CompoundActionSequential* searchAction = new CompoundActionSequential();
+        searchAction->SetDelayBetweenActions(waitTime);
 
-        IActionRunner* lookAroundAction = new CompoundActionSequential( {
-            new TurnInPlaceAction( -lookAmountRads, false ),
-            new WaitAction(waitTime),
-            new TurnInPlaceAction( 2 * lookAmountRads, false ) });
+        if( _trackedObject.IsSet() ) {
+          ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
+          if( obj != nullptr &&
+              obj->IsExistenceConfirmed() ) {
 
-        _lastActionTag = lookAroundAction->GetTag();
-        robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, lookAroundAction);
+            searchAction->AddAction( new FacePoseAction(obj->GetPose(), DEG_TO_RAD(5), 0.5 * PI_F) );
+          }
+        }
+
+        TurnInPlaceAction* turnAction = new TurnInPlaceAction( -lookAmountRads, false );
+        turnAction->SetTolerance(DEG_TO_RAD(2));
+        searchAction->AddAction( turnAction );
+
+        turnAction = new TurnInPlaceAction( 2 * lookAmountRads, false );
+        turnAction->SetTolerance(DEG_TO_RAD(2));
+        searchAction->AddAction( turnAction );
+
+        StartActing(robot, searchAction);
 
         // mark the time the search started, so if we see something after this time we count it.  Add a bit of
         // a fudge factor so we don't count things that we are seeing right now
@@ -358,10 +419,17 @@ namespace Cozmo {
                                "t must be >= %f",
                                _searchStartTime);
 
-        _isActing = true;
         break;
       }
-        
+      
+      case State::Complete:
+      {
+        // TODO:(bn) fade lights out??
+        SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::None);
+        SetBlockLightState(robot, _objectToPickUp, BlockLightState::None);
+        return Status::Complete;
+      }
+      
       default:
         PRINT_NAMED_ERROR("BehaviorBlockPlay.Update.UnknownState",
                           "Reached unknown state %d.", _currentState);
@@ -519,6 +587,7 @@ namespace Cozmo {
   // TODO: Get color and on/off settings from config
   void BehaviorBlockPlay::SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state)
   {
+    
     switch(state) {
       case BlockLightState::None:
         robot.SetObjectLights(objID, WhichCubeLEDs::ALL, ::Anki::NamedColors::BLACK, ::Anki::NamedColors::BLACK, 10, 10, 2000, 2000, false, MakeRelativeMode::RELATIVE_LED_MODE_OFF, {});
@@ -583,6 +652,7 @@ namespace Cozmo {
       case State::TrackingFace:
       case State::TrackingBlock:
       case State::InspectingBlock:
+      case State::Complete:
         _isActing = false;
         break;
       case State::RollingBlock:
@@ -614,29 +684,22 @@ namespace Cozmo {
               break;
               
           } // switch(actionType)
-        } else {
+        } else if( msg.result == ActionResult::FAILURE_RETRY ) {
           
           // We failed to pick up or place the last block, try again
           PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
 
-          // check when the last time we've seen the block is. If it was recent, then just try rolling it
-          // again. Otherwise, go looking for it
-          if( _lastObjectObservedTime + _objectObservedTimeThreshold < currentTime_sec ) {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                                   "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
-                                   "failed roll, haven't seen object in %f, searching",
-                                   currentTime_sec - _lastObjectObservedTime);
-            _missingBlockFoundState = State::RollingBlock;
-            SetCurrState(State::SearchingForMissingBlock);
-          }
-          else {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                                   "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
-                                   "failed roll, but have seen object (%f sec ago), trying again",
-                                   currentTime_sec - _lastObjectObservedTime);
-            SetCurrState(State::RollingBlock);
-          }
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                 "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
+                                 "failed roll with FAILURE_RETRY,trying again");
+          _isActing = false;
 
+        } else {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                 "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
+                                 "failed roll, searching for cube");
+          _missingBlockFoundState = State::RollingBlock;
+          SetCurrState(State::SearchingForMissingBlock);
           _isActing = false;
         }
         break;
@@ -652,8 +715,6 @@ namespace Cozmo {
                                      "");
               
               // We're done picking up the block.
-              // Lower lift so that we can see the player.
-              robot.GetMoveComponent().MoveLiftToHeight(kLowCarryHeightMM, 2, 5);
               SetCurrState(State::TrackingFace);
               _isActing = false;
               break;
@@ -672,32 +733,32 @@ namespace Cozmo {
               break;
               
           } // switch(actionType)
+        } else if( msg.result == ActionResult::FAILURE_RETRY ) {
+
+          // // This isn't foolproof, but use lift height to check if this failure occurred during pickup
+          // // verification.
+          // if (robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
+          //   PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
+          // } // else {
+          //   // don't make sad emote if we just drove to the wrong position
+          //   _isActing = false;
+          //   // }
+
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                                 "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
+                                 "failed pickup, trying again");
+          PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
+          _isActing = false;
+
         } else {
-
-          // This isn't foolproof, but use lift height to check if this failure occurred during pickup
-          // verification.
-          if (robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
-            PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
-          } else {
-            // don't make sad emote if we just drove to the wrong position
-            _isActing = false;
-          }
-
-          if( _lastObjectObservedTime + _objectObservedTimeThreshold < currentTime_sec ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                    "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
-                                   "failed pickup, haven't seen object in %f, searching",
-                                   currentTime_sec - _lastObjectObservedTime);
+                                   "failed pickup, searching");
             _missingBlockFoundState = State::PickingUpBlock;
             SetCurrState(State::SearchingForMissingBlock);
-          }
-          else {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
-                                   "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
-                                   "failed pickup, but have seen object %f sec ago, trying again",
-                                   currentTime_sec - _lastObjectObservedTime);
-          }
+            _isActing = false;
         }
+        
         break;
       } // case PickingUpBlock
         
@@ -715,6 +776,7 @@ namespace Cozmo {
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
               
               PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
+              SetCurrState(State::Complete);
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -842,7 +904,7 @@ namespace Cozmo {
     //                        currentTime_sec,
     //                        msg.markersVisible ? 1 : 0);
 
-    if( objectID == _trackedObject && msg.markersVisible ) {  // TEMP: ask andrew what it means if markersVisible == false. Why update?
+    if( objectID == _trackedObject && msg.markersVisible ) {
       _lastObjectObservedTime = currentTime_sec;
     }
 
@@ -911,9 +973,21 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  
+
+  void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action)
+  {
+    _lastActionTag = action->GetTag();
+    robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, action);
+    _isActing = true;
+  }
+
+
   void BehaviorBlockPlay::PlayAnimation(Robot& robot, const std::string& animName)
   {
+
+    // TEMP: disable all animations for now
+    return;
+    
     // Check if animation is already being played
     for (auto& animTagNamePair : _animActionTags) {
       if (animTagNamePair.second == animName) {

@@ -2605,7 +2605,7 @@ namespace Anki {
               if(result != ActionResult::SUCCESS) {
                 PRINT_NAMED_INFO("RollObjectAction.Verify",
                                  "Robot thinks it rolled the object, but verification failed. ");
-                result = ActionResult::FAILURE_RETRY;
+                result = ActionResult::FAILURE_ABORT;
               }
             } // if(result != ActionResult::RUNNING)
             
@@ -2614,6 +2614,7 @@ namespace Anki {
             // failed to dock/track.
             PRINT_NAMED_WARNING("RollObjectAction.Verify",
                                 "Robot reported roll failure. Assuming docking failed");
+            // retry, since the block is hopefully still there
             result = ActionResult::FAILURE_RETRY;
           }
           

@@ -63,6 +63,7 @@ namespace Cozmo {
       PickingUpBlock,
       PlacingBlock,
       SearchingForMissingBlock, // this is only entered if a block "disappears" on us
+      Complete,
     };
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
@@ -98,6 +99,7 @@ namespace Cozmo {
     void InitState(const Robot& robot);
     void SetCurrState(State s);
     void PlayAnimation(Robot& robot, const std::string& animName);
+    void StartActing(Robot& robot, IActionRunner* action);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
     
     State _currentState;
