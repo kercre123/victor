@@ -23,6 +23,7 @@ namespace DockTraining {
       else {
         animationState.Initialize(AnimationName.kShocked, HandleAnimationDone);
       }
+      _StateMachine.SetNextState(animationState);
     }
 
     private void HandleAnimationDone(bool success) {
