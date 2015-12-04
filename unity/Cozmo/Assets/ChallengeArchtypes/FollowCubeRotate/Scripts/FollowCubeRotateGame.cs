@@ -25,7 +25,7 @@ namespace FollowCubeRotate {
 
     void Start() {
       _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("ForwardBackwardStateMachine", _StateMachine);
+      _StateMachineManager.AddStateMachine("FollowCubeRotateGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new WaitForNewCube(), 1, null);
       _StateMachine.SetNextState(initCubeState);
