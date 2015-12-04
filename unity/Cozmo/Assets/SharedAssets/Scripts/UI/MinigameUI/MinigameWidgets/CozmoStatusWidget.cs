@@ -1,18 +1,44 @@
 ﻿using UnityEngine;
-using System.Collections;
+using DG.Tweening;
+using Cozmo.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class DefaultStaminaBar : MonoBehaviour, IMinigameWidget {
+    public class CozmoStatusWidget : MonoBehaviour, IMinigameWidget {
 
-      // Use this for initialization
-      void Start() {
-	
+      [SerializeField]
+      private SegmentedBarWidget _AttemptsDisplay;
+
+      // TODO: Add handling of cozmo's face view here
+
+      public void SetMaxAttempts(int maximumAttempts) {
+        _AttemptsDisplay.SetMaximumSegments(maximumAttempts);
       }
-	
-      // Update is called once per frame
-      void Update() {
-	
+
+      public void SetAttemptsLeft(int attemptsLeft) {
+        _AttemptsDisplay.SetCurrentNumSegments(attemptsLeft);
+      }
+
+      public void DestroyWidgetImmediately() {
+        Destroy(gameObject);
+      }
+
+      public Sequence OpenAnimationSequence() {
+        // TODO
+        return null;
+      }
+
+      public Sequence CloseAnimationSequence() {
+        // TODO
+        return null;
+      }
+
+      public void EnableInteractivity() {
+        // Nothing interactive to enable
+      }
+
+      public void DisableInteractivity() {
+        // Nothing interactive to disable
       }
     }
   }

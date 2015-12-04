@@ -18,6 +18,11 @@ namespace Cozmo {
 
       private QuitMinigameButton _QuitButtonInstance;
 
+      [SerializeField]
+      private CozmoStatusWidget _DefaultCozmoStatusPrefab;
+
+      private CozmoStatusWidget _CozmoStatusInstance;
+
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
       protected override void CleanUp() {
@@ -62,7 +67,11 @@ namespace Cozmo {
       #region Quit Button
 
       public void CreateQuitButton() {
-        GameObject newButton = UIManager.CreateUIElement(_DefaultQuitGameButtonPrefab);
+        if (_QuitButtonInstance != null) {
+          return;
+        }
+
+        GameObject newButton = UIManager.CreateUIElement(_DefaultQuitGameButtonPrefab, this.transform);
 
         _QuitButtonInstance = newButton.GetComponent<QuitMinigameButton>();
 
@@ -89,6 +98,26 @@ namespace Cozmo {
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
         }
+      }
+
+      #endregion
+
+      #region StaminaBar
+
+      public void CreateCozmoStatusWidget(int attemptsAllowed) {
+        if (_CozmoStatusInstance != null) {
+          return;
+        }
+
+        GameObject statusWidgetObj = UIManager.CreateUIElement(_DefaultCozmoStatusPrefab.gameObject, this.transform);
+        _CozmoStatusInstance = statusWidgetObj.GetComponent<CozmoStatusWidget>();
+        _CozmoStatusInstance.SetMaxAttempts(attemptsAllowed);
+        _CozmoStatusInstance.SetAttemptsLeft(attemptsAllowed);
+        _ActiveWidgets.Add(_CozmoStatusInstance);
+      }
+
+      public void UpdateCozmoAttempts(int attemptsLeft) {
+        _CozmoStatusInstance.SetAttemptsLeft(attemptsLeft);
       }
 
       #endregion
