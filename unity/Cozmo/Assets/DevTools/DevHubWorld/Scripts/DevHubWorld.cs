@@ -28,7 +28,7 @@ public class DevHubWorld : HubWorldBase {
       _DevHubWorldDialogInstance.CloseViewImmediately();
     }
     
-    CloseMiniGame();
+    CloseMiniGameImmediately();
     return true;
   }
 
@@ -59,10 +59,14 @@ public class DevHubWorld : HubWorldBase {
   }
 
   private void CloseMiniGame() {
-    // Destroy game if it exists
     if (_MiniGameInstance != null) {
-      _MiniGameInstance.CleanUp();
-      Destroy(_MiniGameInstance.gameObject);
+      _MiniGameInstance.CloseMinigame();
+    }
+  }
+
+  private void CloseMiniGameImmediately() {
+    if (_MiniGameInstance != null) {
+      _MiniGameInstance.CloseMinigameImmediately();
     }
   }
 }

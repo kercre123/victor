@@ -69,8 +69,7 @@ namespace InvestorDemo {
       RaiseMiniGameWin();
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       CurrentRobot.CancelAllCallbacks();
       if (_DemoConfig.UseSequence) {

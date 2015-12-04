@@ -215,7 +215,7 @@ public static class LocalizationEditorUtility {
     string cSharpVariableName;
     foreach (var jsonFileName in Localization.GetLocalizationJsonFilePaths(kGeneratedLocalizationKeysSourceLocale)) {
       
-      fileContents += "\n\n  #region " + jsonFileName + "\n";
+      fileContents += "\n\n  #region " + Path.GetFileNameWithoutExtension(jsonFileName) + "\n";
 
       localizationJson = Localization.GetJsonContentsFromLocalizationFile(kGeneratedLocalizationKeysSourceLocale, jsonFileName);
       foreach (string localizationKey in localizationJson.keys) {
