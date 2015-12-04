@@ -20,8 +20,7 @@ namespace MotionDetection {
       _StateMachineManager.AddStateMachine("DetectMotionStateMachine", _StateMachine);
       _StateMachine.SetNextState(new RecognizeMotionState(_Config.TimeAllowedBetweenWaves, _Config.TotalWaveTime));
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {

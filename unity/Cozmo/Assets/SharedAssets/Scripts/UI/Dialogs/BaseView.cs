@@ -75,15 +75,11 @@ namespace Cozmo {
 
       public void CloseView() {
         RaiseViewClosed(this);
-
-        CleanUp();
         PlayCloseAnimations();
       }
 
       public void CloseViewImmediately() {
         RaiseViewClosed(this);
-
-        CleanUp();
 
         // Close dialog without playing animations
         OnCloseAnimationsFinished();
@@ -123,6 +119,7 @@ namespace Cozmo {
       private void OnCloseAnimationsFinished() {
         UIManager.EnableTouchEvents();
         RaiseViewCloseAnimationFinished(this);
+        CleanUp();
         GameObject.Destroy(gameObject);
       }
 

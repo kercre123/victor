@@ -32,8 +32,7 @@ namespace FollowCube {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     protected override void CleanUpOnDestroy() {

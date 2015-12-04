@@ -22,8 +22,7 @@ namespace DockTraining {
       initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {

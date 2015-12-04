@@ -21,8 +21,7 @@ namespace VisionTraining {
       initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 2, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {

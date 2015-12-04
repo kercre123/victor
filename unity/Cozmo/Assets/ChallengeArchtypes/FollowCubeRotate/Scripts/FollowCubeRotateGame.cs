@@ -35,8 +35,7 @@ namespace FollowCubeRotate {
       LeftReached = false;
       RightReached = false;
       CurrentTarget = null;
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {

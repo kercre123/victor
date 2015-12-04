@@ -22,7 +22,7 @@ namespace TreasureHunt {
       initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void InitialCubesDone() {

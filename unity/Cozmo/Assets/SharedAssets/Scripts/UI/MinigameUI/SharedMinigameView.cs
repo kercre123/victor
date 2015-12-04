@@ -28,6 +28,13 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        Sequence open;
+        foreach (IMinigameWidget widget in _ActiveWidgets) {
+          open = widget.OpenAnimationSequence();
+          if (open != null) {
+            openAnimation.Join(open);
+          }
+        }
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
@@ -35,7 +42,7 @@ namespace Cozmo {
         foreach (IMinigameWidget widget in _ActiveWidgets) {
           close = widget.CloseAnimationSequence();
           if (close != null) {
-            closeAnimation.Append(close);
+            closeAnimation.Join(close);
           }
         }
       }

@@ -47,9 +47,7 @@ public abstract class GameBase : MonoBehaviour {
   protected SharedMinigameView _SharedMinigameViewInstance;
 
   public void Awake() {
-    // INGO: We might need to have some sort of callback when the 
-    // dialog is initialized
-    OpenMinigame();
+    CreateMinigameView();
   }
 
   public void OnDestroy() {
@@ -70,8 +68,21 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.EnableInteractivity();
   }
 
-  private void OpenMinigame() {
-    _SharedMinigameViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.SharedMinigameViewPrefab) as SharedMinigameView;
+  protected void CreateMinigameView() {
+    GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
+    _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
+
+    // Populate the view before opening it so that animations play correctly
+    InitializeMinigameView(_SharedMinigameViewInstance);
+  }
+
+  protected virtual void InitializeMinigameView(SharedMinigameView minigameView) {
+    // Override and call create stuff here
+    CreateDefaultQuitButton(minigameView);
+  }
+
+  protected void OpenMinigameView() {
+    _SharedMinigameViewInstance.OpenView();
   }
 
   public void CloseMinigame() {
@@ -89,11 +100,11 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Default Quit button
 
-  protected void CreateDefaultQuitButton() {
-    _SharedMinigameViewInstance.CreateQuitButton();
-    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
-    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
+  protected void CreateDefaultQuitButton(SharedMinigameView minigameView) {
+    minigameView.CreateQuitButton();
+    minigameView.QuitMiniGameViewOpened += HandleQuitViewOpened;
+    minigameView.QuitMiniGameViewClosed += HandleQuitViewClosed;
+    minigameView.QuitMiniGameConfirmed += HandleQuitConfirmed;
   }
 
   private void HandleQuitViewOpened() {

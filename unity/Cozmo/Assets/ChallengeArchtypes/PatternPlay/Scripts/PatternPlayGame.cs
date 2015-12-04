@@ -53,8 +53,7 @@ namespace PatternPlay {
       viewControllerInstance_.Initialize(patternMemory_);
 
       patternPlayAudio_ = GetComponent<PatternPlayAudio>();
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {

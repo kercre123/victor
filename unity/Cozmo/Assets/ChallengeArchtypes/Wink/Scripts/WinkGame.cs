@@ -38,9 +38,9 @@ namespace Wink {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
-      CreateDefaultQuitButton();
       RobotEngineManager.Instance.OnObservedMotion += OnMotionDetected;
 
+      OpenMinigameView();
     }
 
     void Update() {

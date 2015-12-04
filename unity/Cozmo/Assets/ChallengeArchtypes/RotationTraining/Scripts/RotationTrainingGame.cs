@@ -34,7 +34,7 @@ namespace RotationTraining {
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<RotationTrainingPanel>();
       _GamePanel.SetTimeLeft(0);
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 	
     // Update is called once per frame

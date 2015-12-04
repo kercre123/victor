@@ -56,7 +56,6 @@ namespace Vortex {
       _StateMachineManager.AddStateMachine("VortexStateMachine", _StateMachine);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<VortexPanel>();
-      CreateDefaultQuitButton();
 
       _GamePanel.HandleSpinEnded = HandleSpinEnded;
       _GamePanel.HandleSpinStarted = HandleSpinStarted;
@@ -72,6 +71,7 @@ namespace Vortex {
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;
+      OpenMinigameView();
     }
 
     void Update() {

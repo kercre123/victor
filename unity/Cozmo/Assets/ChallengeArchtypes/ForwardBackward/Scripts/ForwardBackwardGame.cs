@@ -23,8 +23,7 @@ namespace ForwardBackward {
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {

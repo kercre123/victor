@@ -44,8 +44,7 @@ namespace SpeedTap {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
-
-      CreateDefaultQuitButton();
+      OpenMinigameView();
     }
 
     void Update() {
