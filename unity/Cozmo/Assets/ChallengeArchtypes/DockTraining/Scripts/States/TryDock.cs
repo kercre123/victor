@@ -30,7 +30,7 @@ namespace DockTraining {
         _LastSeenTargetTime = Time.time;
         if (distance < 53.0f && relDot > 0.88f) {
           AnimationState animState = new AnimationState();
-          animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);
+          animState.Initialize(AnimationName.kEnjoyLight, HandleWinAnimationDone);
           _StateMachine.SetNextState(animState);
         }
       }
@@ -41,6 +41,11 @@ namespace DockTraining {
           _StateMachine.SetNextState(animState);
         }
       }
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
 
     private void HandleLoseAnimationDone(bool success) {
