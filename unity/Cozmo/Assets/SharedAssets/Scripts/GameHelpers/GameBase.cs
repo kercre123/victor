@@ -123,13 +123,6 @@ public abstract class GameBase : MonoBehaviour {
     _ActiveWidgets.Add(_QuitButtonInstance);
   }
 
-  private void DestroyDefaultQuitButton() {
-    if (_QuitButtonInstance != null) {
-      _ActiveWidgets.Remove(_QuitButtonInstance);
-      _QuitButtonInstance.DestroyWidgetImmediately();
-    }
-  }
-
   private void HandleQuitViewOpened() {
     PauseGame();
   }
