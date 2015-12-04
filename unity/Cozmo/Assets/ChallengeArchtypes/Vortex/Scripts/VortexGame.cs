@@ -78,11 +78,10 @@ namespace Vortex {
       _StateMachineManager.UpdateAllMachines();
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
-      DestroyDefaultQuitButton();
     }
 
     private void HandleSpinStarted() {

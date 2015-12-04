@@ -69,8 +69,7 @@ namespace FollowCubeRotate {
       }
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
     }
   }
 

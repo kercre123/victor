@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using DG.Tweening;
+using Cozmo.UI;
 
 namespace Vortex {
 

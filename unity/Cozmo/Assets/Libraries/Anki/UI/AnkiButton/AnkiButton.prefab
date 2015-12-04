@@ -61,7 +61,6 @@ GameObject:
   - 222: {fileID: 22295290}
   - 114: {fileID: 11463238}
   - 225: {fileID: 22572272}
-  - 114: {fileID: 11449518}
   - 114: {fileID: 11459302}
   m_Layer: 5
   m_Name: AnkiButton
@@ -100,6 +99,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 42ee65df741754d6780f269201972d36, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -122,7 +127,7 @@ MonoBehaviour:
   m_Material: {fileID: 0}
   m_Color: {r: .196078435, g: .196078435, b: .196078435, a: 1}
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 3}
     m_FontSize: 45
     m_FontStyle: 0
     m_BestFit: 0
@@ -146,21 +151,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_ShowMaskGraphic: 0
---- !u!114 &11449518
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 174196}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78fd35ce28dee423187bfbdf35da1176, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _ContentPanel: {fileID: 108814}
-  _MaskComponent: {fileID: 11444982}
-  _MaskImage: {fileID: 11485934}
-  _BackgroundImage: {fileID: 11463238}
 --- !u!114 &11459302
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -213,7 +203,8 @@ MonoBehaviour:
     m_TypeName: Anki.UI.AnkiButton+ButtonUpEvent, Assembly-CSharp, Version=0.0.0.0,
       Culture=neutral, PublicKeyToken=null
   _DASEventName: 
-  _UISoundEvent: 0
+  _TextLabel: {fileID: 0}
+  _AlphaController: {fileID: 0}
 --- !u!114 &11463238
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -227,6 +218,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: d7e74728e218e4895bcc79cc89cebd60, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
@@ -248,6 +245,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_Sprite: {fileID: 21300000, guid: 707fdcd743985411a84dc8670c718ba0, type: 3}
   m_Type: 1
   m_PreserveAspect: 0

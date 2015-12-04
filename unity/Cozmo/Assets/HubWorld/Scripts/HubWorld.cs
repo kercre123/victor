@@ -38,7 +38,7 @@ namespace Cozmo.HubWorld {
     }
 
     public override bool DestroyHubWorld() {
-      CloseMiniGame();
+      CloseMiniGameImmediately();
 
       // Deregister events
       // Destroy dialog if it exists
@@ -139,14 +139,24 @@ namespace Cozmo.HubWorld {
     }
 
     private void CloseMiniGame() {
-      // Destroy game if it exists
+      if (_MiniGameInstance != null) {
+        DeregisterMinigameEvents();
+        _MiniGameInstance.CloseMinigame();
+      }
+    }
+
+    private void CloseMiniGameImmediately() {
+      if (_MiniGameInstance != null) {
+        DeregisterMinigameEvents();
+        _MiniGameInstance.CloseMinigameImmediately();
+      }
+    }
+
+    private void DeregisterMinigameEvents() {
       if (_MiniGameInstance != null) {
         _MiniGameInstance.OnMiniGameQuit -= HandleMiniGameQuit;
         _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
         _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
-      
-        _MiniGameInstance.CleanUp();
-        Destroy(_MiniGameInstance.gameObject);
       }
     }
 

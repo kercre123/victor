@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Cozmo.UI;
 
 namespace RotationTraining {
   public class RotationTrainingPanel : BaseView {
