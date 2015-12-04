@@ -90,7 +90,7 @@ def svn_package(svn_dict):
             svn_info, err = pipe.communicate()
             l_rev = re.search(r'Revision: ([0-9]+)', svn_info).group(1)
             try:
-                int(l_rev)
+                l_rev = int(l_rev)
             except ValueError:
                 l_rev = 0
                 print " was created with a different svn."
