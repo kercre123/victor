@@ -224,6 +224,7 @@ namespace Anki {
       bool IsBodyInPosition(const Robot& robot, Radians& currentAngle) const;
       
       bool    _inPosition = false;
+      bool    _turnStarted = false;
       Radians _targetAngle;
       Radians _angleTolerance = DEG_TO_RAD(5);
       Radians _variability = 0;

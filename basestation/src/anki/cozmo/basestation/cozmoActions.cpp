@@ -925,7 +925,7 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      Radians currentAngle;
+      Radians currentAngle;          
       
       if(!_inPosition) {
         _inPosition = IsBodyInPosition(robot, currentAngle);
@@ -938,10 +938,23 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
-                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f)",
-                         currentAngle.getDegrees(), _targetAngle.getDegrees(), _variability.getDegrees());
+                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         currentAngle.getDegrees(),
+                         _targetAngle.getDegrees(),
+                         _variability.getDegrees(),
+                         _angleTolerance.ToFloat(),
+                         robot.GetPoseFrameID());
       }
-      
+
+      if( robot.IsMoving() ) {
+        _turnStarted = true;
+      }
+      else if( _turnStarted ) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
+                            "giving up since we stopped moving");
+        result = ActionResult::FAILURE_RETRY;
+      }
+
       return result;
     }
 
