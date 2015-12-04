@@ -120,4 +120,13 @@
     "peekaboo1.description" : {
         "translation" : "Show Cozmo your face, then hide it once they recognize you to surprise them."
     },
+    "stackTraining01.title" : {
+        "translation" : "Stack Cube Training"
+    },
+    "stackTraining01.subtitle" : {
+        "translation" : "Stack Cube Training Subtitle"
+    },
+    "stackTraining01.description" : {
+        "translation" : "Teach Cozmo how to stack cubes, build a stack for cozmo so he can see how its done."
+    }
 }
