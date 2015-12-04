@@ -45,6 +45,8 @@ static inline void TestPause(const int duration) {
   }
 }
 
+extern "C" void LeaveFacePrintf(void);
+
 void StartupSelfTest(void) {
   using namespace Anki::Cozmo::HAL;
   
@@ -56,6 +58,9 @@ void StartupSelfTest(void) {
     const uint16_t* SSID = (uint16_t*) 0xFFC;
     FacePrintf("               OK%2x", *SSID);
   }
+  
+  TestPause(1000/5);
+  LeaveFacePrintf();
 }
 
 int RunTests(void) {
@@ -158,7 +163,5 @@ int RunTests(void) {
     return ERROR_CLIFF_SENSOR;
   }
   
-  OLEDFlip(); 
-
   return ERROR_NONE;
 }

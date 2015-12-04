@@ -73,7 +73,7 @@ int main (void)
 
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i) {
-    Anki::Cozmo::HAL::MicroWait(1000000);
+    MicroWait(1000000);
   }
 
   // Switch to 10MHz external reference to enable 100MHz clock
@@ -83,11 +83,16 @@ int main (void)
   // Wait for FLL to lock
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
-  Anki::Cozmo::HAL::MicroWait(100000); // Because the FLL is lame
+  MicroWait(100000); // Because the FLL is lame
   
   IMUInit();
   OLEDInit();
   SPIInit();
+
+  for (int i = 0; i < 100; i++) {
+    FacePrintf("\n%li", i);
+    MicroWait(10000);
+  }
 
   CameraInit();
   UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK

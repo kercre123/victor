@@ -8,6 +8,7 @@
 #include "hal/i2c.h"
 #include "oled.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 
 #include "hardware.h"
@@ -26,6 +27,7 @@ const uint8_t I2C_SINGLE        = 0x80;
 
 const int SCREEN_WIDTH = 128;
 const int SCREEN_HEIGHT = 64;
+const int MAX_FACE_POSITIONS = SCREEN_WIDTH * SCREEN_HEIGHT / 8 / MAX_SCREEN_BYTES_PER_DROP;
 
 // Display constants
 static const uint8_t InitDisplay[] = {
@@ -54,21 +56,31 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, 0x40,
   I2C_COMMAND | I2C_SINGLE, DISPLAYALLON_RESUME,
   I2C_COMMAND | I2C_SINGLE, NORMALDISPLAY,
-  I2C_COMMAND | I2C_SINGLE, DISPLAYON
-};
-
-static const uint8_t ResetCursor[] = {
-  SLAVE_ADDRESS | I2C_WRITE,
+  I2C_COMMAND | I2C_SINGLE, DISPLAYON,
   I2C_COMMAND | I2C_SINGLE, COLUMNADDR,
   I2C_COMMAND | I2C_SINGLE, 0,
   I2C_COMMAND | I2C_SINGLE, 127,
   I2C_COMMAND | I2C_SINGLE, PAGEADDR,
   I2C_COMMAND | I2C_SINGLE, 0,
-  I2C_COMMAND | I2C_SINGLE, 7,
+  I2C_COMMAND | I2C_SINGLE, 7
+};
+
+static const uint8_t ResetCursor[] = {
+  SLAVE_ADDRESS | I2C_WRITE,
+  I2C_COMMAND | I2C_SINGLE, 0,
+  I2C_COMMAND | I2C_SINGLE, 127,
+  I2C_COMMAND | I2C_SINGLE, PAGEADDR,
+  I2C_COMMAND | I2C_SINGLE, 0,
+  I2C_COMMAND | I2C_SINGLE, 7
+};
+
+static const uint8_t StartWrite[] = {
+  SLAVE_ADDRESS | I2C_WRITE,
   I2C_DATA | I2C_CONTINUATION
 };
 
-static uint8_t FrameBuffer[SCREEN_HEIGHT*SCREEN_WIDTH/8];
+static uint8_t FaceCopyLocation = 0;
+static bool PrintFaceLock = false;
 
 namespace Anki
 {
@@ -76,11 +88,6 @@ namespace Anki
   {
     namespace HAL
     {
-      void OLEDFlip(void) {
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
-        I2CCmd(I2C_DIR_WRITE |  I2C_SEND_STOP, FrameBuffer, sizeof(FrameBuffer), NULL);
-      }
-      
       void OLEDInit(void) {
         using namespace Anki::Cozmo::HAL;
         
@@ -94,19 +101,53 @@ namespace Anki
 
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)InitDisplay, sizeof(InitDisplay), NULL);
       }
+      
+      void OLEDFeedFace(uint8_t address, uint8_t *face_bytes) {
+        if (address != FaceCopyLocation) return ;
+
+        static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
+
+        memcpy(bytes, face_bytes, sizeof(bytes));
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
+        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, bytes, sizeof(bytes), NULL);
+        address = (address + 1) % MAX_FACE_POSITIONS;
+      }
     }
   }
 }
 
+// Detach from the face and resume streaming of face data
+extern "C" void LeaveFacePrintf(void) {
+  using namespace Anki::Cozmo::HAL;
+
+  if (!PrintFaceLock) return ;
+    
+  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
+  PrintFaceLock = true;
+  FaceCopyLocation = 0;
+}
+
+// Flag when the frame has copied and the stack is safe to return
+static volatile bool PrintComplete = false;
+static void FinishFace(void *data, int count) {
+  PrintComplete = true;
+}
+
+// Print to the face
 extern "C" void FacePrintf(const char *format, ...) {
   using namespace Anki::Cozmo::HAL;
 
-  const int MAX_CHARS = SCREEN_WIDTH / (CHAR_WIDTH + 1);
+  const int CHARS_PER_LINE = SCREEN_WIDTH / (CHAR_WIDTH + 1);
+  const int LINES = SCREEN_HEIGHT / CHAR_HEIGHT;
+  const int OVERFLOW = SCREEN_WIDTH - CHARS_PER_LINE * (CHAR_WIDTH + 1);
+  const int MAX_CHARS = CHARS_PER_LINE * LINES;
+  
+  uint8_t FrameBuffer[SCREEN_HEIGHT*SCREEN_WIDTH/8];
   char buffer[MAX_CHARS];
   
   va_list aptr;
   int chars;
-
+  
   va_start(aptr, format);
   vsnprintf(buffer, sizeof(buffer), format, aptr);
   va_end(aptr);
@@ -116,19 +157,35 @@ extern "C" void FacePrintf(const char *format, ...) {
   
   memset(FrameBuffer, 0, sizeof(FrameBuffer));
   
-  while (*write) {
-    int idx = *(write++) - CHAR_START;
-    if (idx < 0 || idx >= CHAR_END) {
-      idx = 0;
+  int x_rem = CHARS_PER_LINE;
+  int y_rem = LINES;
+
+  PrintComplete = false ;
+  while (*write && y_rem > 0) {
+    if (*write == '\n' || x_rem-- <= 0) {
+      px_ptr += OVERFLOW + x_rem * (CHAR_WIDTH + 1);
+      x_rem = CHARS_PER_LINE;
+      y_rem --;
+    } 
+
+    uint8_t ch = *(write++);
+
+    if (ch == '\n') {
+      continue ;
+    } else if (ch < CHAR_START || ch > CHAR_END) {
+      ch = CHAR_START;
     }
 
-    const uint8_t* pixels = (const uint8_t*)&FONT[idx];
-    
-    for (int i = 0; i < CHAR_WIDTH; i++) {
-      FrameBuffer[px_ptr++] = pixels[i];
-    }
+    memcpy(&FrameBuffer[px_ptr], FONT[ch - CHAR_START], CHAR_WIDTH);
+    px_ptr += CHAR_WIDTH;
     FrameBuffer[px_ptr++] = 0;
   }
+
+  PrintFaceLock = true;
+
+  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
+  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
+  I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, FrameBuffer, px_ptr, &FinishFace);
   
-  OLEDFlip();
+  while (!PrintComplete) ;
 }
