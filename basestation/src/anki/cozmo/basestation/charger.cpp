@@ -185,8 +185,8 @@ namespace Anki {
                               "Could not get specified reachableFrom pose w.r.t. entry action's pose.\n");
           isValid = false;
         } else {
-          const f32 zThreshold = GetHeight() * 0.3f;
-          isValid = NEAR(reachableFromWrtEntryPose.GetTranslation().z(), preActionPose.GetPose().GetTranslation().z(), zThreshold);
+          const f32 zThreshold = 10.f;
+          isValid = std::fabsf(reachableFromWrtEntryPose.GetTranslation().z()) < zThreshold;
         }
       }
       
