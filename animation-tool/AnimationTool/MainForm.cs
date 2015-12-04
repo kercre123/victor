@@ -237,12 +237,21 @@ namespace AnimationTool
 
         private void KeyDownHandler(Keys keyData)
         {
-            if (movingDataPointsWithMouse) return;
-
             bool left = ModifierKeys.HasFlag(Keys.Left) || keyData == Keys.Left;
             bool right = ModifierKeys.HasFlag(Keys.Right) || keyData == Keys.Right;
             bool up = ModifierKeys.HasFlag(Keys.Up) || keyData == Keys.Up;
             bool down = ModifierKeys.HasFlag(Keys.Down) || keyData == Keys.Down;
+
+            // Keyboard arrows either enhance the grid or tweak the data
+            if (movingDataPointsWithMouse)
+            {
+                /*foreach (ChartForm chartForm in chartForms)
+                {
+                    chartForm.chart.ChartAreas[0].AxisX.Minimum
+                    chartForm.chart.Refresh();
+                }*/
+                return;
+            }
 
             if (left || right || up || down)
             {

@@ -51,7 +51,7 @@ namespace AnimationTool
                 return false;
             }
 
-            Properties.Settings.Default["maxTime"] = xValueNew;
+            Properties.Settings.Default.maxTime = xValueNew;
             Properties.Settings.Default.Save();
 
             return true;
@@ -59,7 +59,7 @@ namespace AnimationTool
 
         public virtual void Undo()
         {
-            Properties.Settings.Default["maxTime"] = xValueOld;
+            Properties.Settings.Default.maxTime = xValueOld;
             Properties.Settings.Default.Save();
 
             foreach (ScaleChartDuration action in changeChartDurations)

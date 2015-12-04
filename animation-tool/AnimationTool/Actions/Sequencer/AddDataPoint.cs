@@ -41,7 +41,8 @@ namespace AnimationTool.Sequencer
             this.extraData = extraData;
 
             dataPoint.XValue = 0.5D;
-            dataPoint.SetValueY(Math.Round(start, 1), Math.Round(start + extraData.Length, 1));
+            dataPoint.SetValueY(Math.Round(start, MoveSelectedDataPoints.DELTA_TIME_PRECISION), 
+                                Math.Round(start + extraData.Length, MoveSelectedDataPoints.DELTA_TIME_PRECISION));
 
             if(!extraData.Exists)
             {

@@ -25,7 +25,7 @@ namespace AnimationTool.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("6")]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
         public double maxTime {
             get {
                 return ((double)(this["maxTime"]));
