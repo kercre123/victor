@@ -1,6 +1,6 @@
 public static class LocalizationKeys {
 
-  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/ChallengeTitleStrings.json
+  #region Assets/StreamingAssets/LocalizedStrings/en-us/ChallengeTitleStrings.json
 
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Subtitle = "askCozmo01.subtitle";
@@ -39,7 +39,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/ConversationStrings.json
+  #region Assets/StreamingAssets/LocalizedStrings/en-us/ConversationStrings.json
 
   public const string kHelloWorldHello = "HelloWorld.Hello";
   public const string kHelloWorldWorld = "HelloWorld.World";
@@ -56,7 +56,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/MinigameStrings.json
+  #region Assets/StreamingAssets/LocalizedStrings/en-us/MinigameStrings.json
 
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
@@ -83,7 +83,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/SimpleStrings.json
+  #region Assets/StreamingAssets/LocalizedStrings/en-us/SimpleStrings.json
 
   public const string kButtonTap = "button.tap";
   public const string kButtonQuit = "button.quit";

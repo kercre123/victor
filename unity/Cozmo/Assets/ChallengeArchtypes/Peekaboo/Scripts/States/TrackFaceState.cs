@@ -17,7 +17,7 @@ namespace Peekaboo {
     PeekGame _GameInstance;
     private float _FirstUnseenTimestamp = -1;
     private float _FirstSeenTimestamp = -1;
-    private bool _hasScored;
+    private bool _HasScored;
 
     private Face _TargetFace;
 
@@ -27,7 +27,7 @@ namespace Peekaboo {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as PeekGame;
-      _hasScored = false;
+      _HasScored = false;
 
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
@@ -57,14 +57,14 @@ namespace Peekaboo {
       }// We have a face to track
       else {
         // Keep track of when how long we've seen the face for scoring
-        if (IsSeenTimestampUninitialized() && _hasScored == false) {
+        if (IsSeenTimestampUninitialized() && _HasScored == false) {
           _FirstSeenTimestamp = Time.time;
         }
         _TargetFace = _CurrentRobot.Faces[0];
         ResetUnseenTimestamp();
 
-        if (Time.time - _FirstSeenTimestamp > _SeenScoreDelay && _hasScored == false) {
-          _hasScored = true;
+        if (Time.time - _FirstSeenTimestamp > _SeenScoreDelay && _HasScored == false) {
+          _HasScored = true;
           _GameInstance.PeekSuccess();
           _CurrentRobot.SendAnimation(AnimationName.kMajorWin);
         }
