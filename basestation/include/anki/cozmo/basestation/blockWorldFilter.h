@@ -51,6 +51,7 @@ namespace Cozmo {
     
     // Add to the set of IDs, types, or families one at a time
     void AddIgnoreID(ObjectID ID);
+    void AddIgnoreIDs(std::set<ObjectID> &&IDs);
     void AddIgnoreType(ObjectType type);
     void AddIgnoreFamily(ObjectFamily family);
     
@@ -91,6 +92,10 @@ namespace Cozmo {
   
   inline void BlockWorldFilter::AddIgnoreID(ObjectID ID) {
     _ignoreIDs.insert(ID);
+  }
+  
+  inline void BlockWorldFilter::AddIgnoreIDs(std::set<ObjectID> &&IDs) {
+    _ignoreIDs.insert(IDs.begin(), IDs.end());
   }
   
   inline void BlockWorldFilter::AddIgnoreType(ObjectType type) {
