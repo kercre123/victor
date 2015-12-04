@@ -3,10 +3,11 @@ using System;
 using System.Collections;
 using UnityEngine.UI;
 using Anki.UI;
+using DG.Tweening;
 
 namespace Cozmo {
   namespace UI {
-    public class SimpleAlertView : BaseView {
+    public class AlertView : BaseView {
 
       [SerializeField]
       private AnkiTextLabel _AlertTitleText;
@@ -89,6 +90,14 @@ namespace Cozmo {
           }
           CloseView();
         });
+      }
+
+      protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        openAnimation.Append(this.transform.DOScale(new Vector3(0.01f, 0.01f, 0.01f), 0.25f).From().SetEase(Ease.OutQuad));
+      }
+
+      protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+        closeAnimation.Append(this.transform.DOScale(new Vector3(0.01f, 0.01f, 0.01f), 0.25f).SetEase(Ease.OutQuad));
       }
     }
   }

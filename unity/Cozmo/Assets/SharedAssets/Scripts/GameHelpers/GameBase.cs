@@ -2,6 +2,9 @@
 using UnityEngine.UI;
 using Cozmo.UI;
 using System.Collections;
+using System.Collections.Generic;
+using Cozmo.MinigameWidgets;
+using DG.Tweening;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
@@ -39,11 +42,18 @@ public abstract class GameBase : MonoBehaviour {
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  private Button _QuitButtonInstance;
+  private QuitMinigameButton _QuitButtonInstance;
+
+  private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
   public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
 
+  private Sequence _MinigameViewSequence;
+
   public void OnDestroy() {
+    if (_MinigameViewSequence != null) {
+      _MinigameViewSequence.Kill();
+    }
     CleanUpOnDestroy();
   }
 
@@ -54,27 +64,48 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   protected virtual void PauseGame() {
-    // Disable quit button
-    if (_QuitButtonInstance != null) {
-      _QuitButtonInstance.interactable = false;
+    foreach (IMinigameWidget widget in _ActiveWidgets) {
+      widget.DisableInteractivity();
     }
   }
 
   protected virtual void ResumeGame() {
-    // Enable quit button
-    if (_QuitButtonInstance != null) {
-      _QuitButtonInstance.interactable = true;
+    foreach (IMinigameWidget widget in _ActiveWidgets) {
+      widget.EnableInteractivity();
     }
+  }
+
+  protected void OpenMinigameView() {
+    // TODO: Play animations from subclasses?
   }
 
   public void CloseMinigameView() {
     // TODO: Play an animation on the quit button if it exists
     // TODO: Play an animation on the other UI if it exists
-    Destroy(gameObject);
+    // TODO: Join sequences
+    if (_MinigameViewSequence != null) {
+      _MinigameViewSequence.Kill();
+    }
+    _MinigameViewSequence = DOTween.Sequence();
+    Sequence close;
+    foreach (IMinigameWidget widget in _ActiveWidgets) {
+      close = widget.CloseAnimationSequence();
+      if (close != null) {
+        _MinigameViewSequence.Append(close);
+      }
+    }
+    _MinigameViewSequence.AppendCallback(HandleMinigameViewCloseAnimationFinished);
+  }
+
+  private void HandleMinigameViewCloseAnimationFinished() {
+    CloseMinigameViewImmediately();
   }
 
   public void CloseMinigameViewImmediately() {
-    DestroyDefaultQuitButton();
+    foreach (IMinigameWidget widget in _ActiveWidgets) {
+      widget.DestroyWidgetImmediately();
+    }
+    _ActiveWidgets.Clear();
     Destroy(gameObject);
   }
 
@@ -83,41 +114,32 @@ public abstract class GameBase : MonoBehaviour {
   protected void CreateDefaultQuitButton() {
     GameObject newButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.DefaultQuitGameButtonPrefab);
     // TODO: use ankibutton
-    _QuitButtonInstance = newButton.GetComponent<Button>();
-    _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
+    _QuitButtonInstance = newButton.GetComponent<QuitMinigameButton>();
+
+    _QuitButtonInstance.QuitViewOpened += HandleQuitViewOpened;
+    _QuitButtonInstance.QuitViewClosed += HandleQuitViewClosed;
+    _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
+
+    _ActiveWidgets.Add(_QuitButtonInstance);
   }
 
   private void DestroyDefaultQuitButton() {
     if (_QuitButtonInstance != null) {
-      _QuitButtonInstance.onClick.RemoveAllListeners();
-      Destroy(_QuitButtonInstance.gameObject);
+      _ActiveWidgets.Remove(_QuitButtonInstance);
+      _QuitButtonInstance.DestroyWidgetImmediately();
     }
   }
 
-  private void HandleQuitButtonTap() {
-    // Open confirmation dialog instead
-    SimpleAlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as SimpleAlertView;
-    // Hook up callbacks
-    alertView.SetCloseButtonEnabled(true);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
-    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
-    alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-    alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
-    // Listen for dialog close
-    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+  private void HandleQuitViewOpened() {
     PauseGame();
-  }
-
-  private void HandleQuitCancelled() {
-    // Do nothing; we'll resume when the dialog closes.
-  }
-
-  private void HandleQuitConfirmed() {
-    RaiseMiniGameQuit();
   }
 
   private void HandleQuitViewClosed() {
     ResumeGame();
+  }
+
+  private void HandleQuitConfirmed() {
+    RaiseMiniGameQuit();
   }
 
   #endregion

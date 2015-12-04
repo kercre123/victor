@@ -24,9 +24,9 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private SimpleAlertView _AlertViewPrefab;
+      private AlertView _AlertViewPrefab;
 
-      public SimpleAlertView AlertViewPrefab {
+      public AlertView AlertViewPrefab {
         get { return _AlertViewPrefab; }
       }
 
