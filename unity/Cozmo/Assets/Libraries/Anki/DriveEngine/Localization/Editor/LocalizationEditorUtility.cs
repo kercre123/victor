@@ -119,7 +119,7 @@ public static class LocalizationEditorUtility {
 
   private static readonly Dictionary<string, LocalizationDictionary> _LocalizationDictionaries = new Dictionary<string, LocalizationDictionary>();
 
-  private const string kLocalizationFolder = "Assets/SharedAssets/Resources/LocalizedStrings/en-US/";
+  private const string kLocalizationFolder = "Assets/StreamingAssets/LocalizedStrings/en-US/";
 
   public static LocalizationDictionary CreateLocalizationDictionary() {
     return new LocalizationDictionary() {
