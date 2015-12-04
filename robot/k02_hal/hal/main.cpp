@@ -66,7 +66,6 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
-  I2CInit();
 
   DACInit();
   DACTone();
@@ -85,9 +84,11 @@ int main (void)
 
   MicroWait(100000); // Because the FLL is lame
   
+  SPIInit();
+
+  I2CInit();
   IMUInit();
   OLEDInit();
-  SPIInit();
 
   for (int i = 0; i < 100; i++) {
     FacePrintf("\n%li", i);
