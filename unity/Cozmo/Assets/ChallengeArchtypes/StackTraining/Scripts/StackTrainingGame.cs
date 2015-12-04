@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 
 namespace StackTraining {
   public class StackTrainingGame : GameBase {
@@ -7,6 +8,24 @@ namespace StackTraining {
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
 
+    private int _BottomCubeId = -1;
+    private int _TopCubeId = -1;
+
+    public LightCube BottomCube {
+      get {
+        LightCube cube;
+        CurrentRobot.LightCubes.TryGetValue(_BottomCubeId, out cube);
+        return cube;
+      }
+    }
+
+    public LightCube TopCube {
+      get {
+        LightCube cube;
+        CurrentRobot.LightCubes.TryGetValue(_TopCubeId, out cube);
+        return cube;
+      }
+    }
 
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
 
@@ -16,10 +35,13 @@ namespace StackTraining {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("StackTrainingGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForStackState(), 1, null);
+      initCubeState.InitialCubeRequirements(new WaitForStackState(), 2, null);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+
+      CurrentRobot.SetLiftHeight(0f);
+      CurrentRobot.SetHeadAngle(0f);
 
       CreateDefaultQuitButton();
     }
@@ -30,6 +52,22 @@ namespace StackTraining {
 
     public override void CleanUp() {
       DestroyDefaultQuitButton();
+
+      foreach (var cube in CurrentRobot.LightCubes) {
+        cube.Value.TurnLEDsOff();
+      }
+    }
+
+    public void PickCubes() {
+
+      if (CurrentRobot.LightCubes.Count < 2) {
+        // TODO: Inform player why they lost
+        RaiseMiniGameLose();
+        return;
+      }
+        
+      _BottomCubeId = CurrentRobot.LightCubes.Keys.First();
+      _TopCubeId = CurrentRobot.LightCubes.Keys.Last();
     }
   }
 

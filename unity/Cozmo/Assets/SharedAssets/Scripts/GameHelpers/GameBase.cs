@@ -32,7 +32,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  protected void RaiseMiniGameLose() {
+  public void RaiseMiniGameLose() {
     if (OnMiniGameLose != null) {
       OnMiniGameLose();
     }
