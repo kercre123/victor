@@ -211,7 +211,7 @@ namespace Anki {
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
-      void SetTolerance(const Radians& angleTol_rad)     { _angleTolerance = angleTol_rad; }
+      void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
       
     protected:
@@ -373,10 +373,10 @@ namespace Anki {
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
-      void SetPanTolerance(const Radians& angleTol_rad)  { _panAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetPanTolerance(const Radians& angleTol_rad);
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
-      void SetTiltTolerance(const Radians& angleTol_rad) { _tiltAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetTiltTolerance(const Radians& angleTol_rad);
 
     protected:
       virtual ActionResult Init(Robot& robot) override;

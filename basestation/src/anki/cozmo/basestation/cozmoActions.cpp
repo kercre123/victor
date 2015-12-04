@@ -850,7 +850,22 @@ namespace Anki {
       static const std::string name("TurnInPlaceAction");
       return name;
     }
-    
+
+    void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
+    {
+      _angleTolerance = angleTol_rad.getAbsoluteVal();
+
+     const float minTolDeg = 0.5f;
+      
+      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_angleTolerance.ToFloat()),
+                            minTolDeg);
+        _angleTolerance = DEG_TO_RAD(minTolDeg);
+      }
+    }
+
     ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
       // Compute a goal pose rotated by specified angle around robot's
@@ -1003,6 +1018,36 @@ namespace Anki {
     {
       IAction::Reset();
       _compoundAction.ClearActions();
+    }
+
+    void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
+    {
+      _panAngleTol = angleTol_rad.getAbsoluteVal();
+
+      const float minTolDeg = 0.5f;
+      
+      if( _panAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_panAngleTol.ToFloat()),
+                            minTolDeg);
+        _panAngleTol = DEG_TO_RAD(minTolDeg);
+      }
+    }
+
+    void PanAndTiltAction::SetTiltTolerance(const Radians& angleTol_rad)
+    {
+      _tiltAngleTol = angleTol_rad.getAbsoluteVal();
+
+      const float minTolDeg = 0.5f;
+      
+      if( _tiltAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_tiltAngleTol.ToFloat()),
+                            minTolDeg);
+        _tiltAngleTol = DEG_TO_RAD(minTolDeg);
+      }
     }
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
