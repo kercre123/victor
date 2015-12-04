@@ -258,6 +258,7 @@ public class Robot : IDisposable {
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
   private U2G.PlaceRelObject PlaceRelObjectMessage;
+  private U2G.PlaceOnObject PlaceOnObjectMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
   private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
@@ -364,6 +365,7 @@ public class Robot : IDisposable {
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
     PlaceRelObjectMessage = new U2G.PlaceRelObject();
+    PlaceOnObjectMessage = new U2G.PlaceOnObject();
     PlayAnimationMessage = new U2G.PlayAnimation();
     PlayAnimationMessages = new U2G.PlayAnimation[2];
     PlayAnimationMessages[0] = new U2G.PlayAnimation();
@@ -684,7 +686,7 @@ public class Robot : IDisposable {
   }
 
   public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null) {
-    DAS.Debug(this, "PlaceObjectRel" + target.ID);
+    DAS.Debug(this, "PlaceObjectRel " + target.ID);
 
     PlaceRelObjectMessage.approachAngle_rad = approachAngle;
     PlaceRelObjectMessage.placementOffsetX_mm = offsetFromMarker;
@@ -698,6 +700,22 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
+  }
+
+  public void PlaceOnObject(ObservedObject target, float approachAngle, RobotCallback callback = null) {
+    DAS.Debug(this, "PlaceOnObject " + target.ID);
+
+    PlaceOnObjectMessage.approachAngle_rad = approachAngle;
+    PlaceOnObjectMessage.objectID = target.ID;
+    PlaceOnObjectMessage.useApproachAngle = true;
+    PlaceOnObjectMessage.usePreDockPose = true;
+    PlaceOnObjectMessage.useManualSpeed = false;
+    PlaceOnObjectMessage.motionProf = PathMotionProfileDefault;
+
+    RobotEngineManager.Instance.Message.PlaceOnObject = PlaceOnObjectMessage;
+    RobotEngineManager.Instance.SendMessage();
+
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_HIGH, callback));
   }
 
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
@@ -935,6 +953,11 @@ public class Robot : IDisposable {
     LocalBusyTimer = CozmoUtil.kLocalBusyTime;
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
+  }
+
+  public void GotoPose(Vector3 position, Quaternion rotation, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
+    float rotationAngle = rotation.eulerAngles.z * Mathf.Deg2Rad;
+    GotoPose(position.x, position.y, rotationAngle, callback, level, useManualSpeed);
   }
 
   public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
