@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fff3841096129479eb1cd69e9fc65314, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameId: followCube
+  _GameId: peekGame
   _GamePanelPrefab: {fileID: 11463664, guid: 084a9061565504bb08ee4fbd10e2297d, type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -63,7 +63,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _GameId
-      value: followCube
+      value: peekGame
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _GamePanelPrefab

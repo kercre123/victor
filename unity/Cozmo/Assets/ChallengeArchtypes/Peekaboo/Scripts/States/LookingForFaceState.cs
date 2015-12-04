@@ -5,15 +5,12 @@ namespace Peekaboo {
   // Default : Wander about, trying to find a face, goes to FoundFaceState if face is detected
   public class LookingForFaceState : State {
     
-    PeekGame _GameInstance;
     // Make sure the face has been seen consistently to confirm that it is in fact a face
     private float _SeenHoldDelay = 0.5f;
     private float _FirstSeenTimestamp = -1;
 
     public override void Enter() {
       base.Enter();
-
-      _GameInstance = _StateMachine.GetGame() as PeekGame;
 
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
