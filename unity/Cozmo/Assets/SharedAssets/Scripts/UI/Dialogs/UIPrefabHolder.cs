@@ -31,10 +31,10 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private GameObject _DefaultQuitGameButtonPrefab;
+      private Cozmo.MinigameWidgets.SharedMinigameView _SharedMinigameViewPrefab;
 
-      public GameObject DefaultQuitGameButtonPrefab {
-        get { return _DefaultQuitGameButtonPrefab; }
+      public Cozmo.MinigameWidgets.SharedMinigameView SharedMinigameViewPrefab {
+        get { return _SharedMinigameViewPrefab; }
       }
     }
   }

@@ -38,14 +38,27 @@ namespace Cozmo {
         }
       }
 
+      #region Overriden Methods
+
       protected abstract void CleanUp();
+
+      protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
+      }
+
+      // TODO: Make virtual function play from a set of default animations based on a serialized enum?
+      // plus the pivot point and direction (top, bottom, left, right)
+      // TODO: Make protected functions that return default tweeners you can add to the sequence?
+      protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
+      }
+
+      #endregion
 
       public void OpenView() {
         RaiseViewOpened(this);
 
         if (_CloseDialogOnTapOutside) {
           GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
-                                      this.transform);
+                                          this.transform);
 
           // Place the button underneath all the UI in this dialog
           fullScreenButton.transform.SetAsFirstSibling();
@@ -88,9 +101,6 @@ namespace Cozmo {
         _TransitionAnimation.AppendCallback(OnOpenAnimationsFinished);
       }
 
-      protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
-      }
-
       private void OnOpenAnimationsFinished() {
         UIManager.EnableTouchEvents();
 
@@ -108,19 +118,11 @@ namespace Cozmo {
         _TransitionAnimation = DOTween.Sequence();
         ConstructCloseAnimation(_TransitionAnimation);
         _TransitionAnimation.AppendCallback(OnCloseAnimationsFinished);
-
-      }
-
-      // TODO: Make virtual function play from a set of default animations based on a serialized enum?
-      // plus the pivot point and direction (top, bottom, left, right)
-      // TODO: Make protected functions that return default tweeners you can add to the sequence
-      protected virtual void ConstructCloseAnimation(Sequence closeAnimation) {
       }
 
       private void OnCloseAnimationsFinished() {
         UIManager.EnableTouchEvents();
         RaiseViewCloseAnimationFinished(this);
-
         GameObject.Destroy(gameObject);
       }
 

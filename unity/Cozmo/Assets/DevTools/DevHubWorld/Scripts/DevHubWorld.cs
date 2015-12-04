@@ -60,13 +60,13 @@ public class DevHubWorld : HubWorldBase {
 
   private void CloseMiniGame() {
     if (_MiniGameInstance != null) {
-      _MiniGameInstance.CloseMinigameView();
+      _MiniGameInstance.CloseMinigame();
     }
   }
 
   private void CloseMiniGameImmediately() {
     if (_MiniGameInstance != null) {
-      _MiniGameInstance.CloseMinigameViewImmediately();
+      _MiniGameInstance.CloseMinigameImmediately();
     }
   }
 }

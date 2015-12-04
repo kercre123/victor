@@ -42,18 +42,17 @@ public abstract class GameBase : MonoBehaviour {
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  private QuitMinigameButton _QuitButtonInstance;
-
-  private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
-
   public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
 
-  private Sequence _MinigameViewSequence;
+  protected SharedMinigameView _SharedMinigameViewInstance;
+
+  public void Awake() {
+    // INGO: We might need to have some sort of callback when the 
+    // dialog is initialized
+    OpenMinigame();
+  }
 
   public void OnDestroy() {
-    if (_MinigameViewSequence != null) {
-      _MinigameViewSequence.Kill();
-    }
     CleanUpOnDestroy();
   }
 
@@ -64,63 +63,37 @@ public abstract class GameBase : MonoBehaviour {
   protected abstract void CleanUpOnDestroy();
 
   protected virtual void PauseGame() {
-    foreach (IMinigameWidget widget in _ActiveWidgets) {
-      widget.DisableInteractivity();
-    }
+    _SharedMinigameViewInstance.DisableInteractivity();
   }
 
   protected virtual void ResumeGame() {
-    foreach (IMinigameWidget widget in _ActiveWidgets) {
-      widget.EnableInteractivity();
-    }
+    _SharedMinigameViewInstance.EnableInteractivity();
   }
 
-  protected void OpenMinigameView() {
-    // TODO: Play animations from subclasses?
+  private void OpenMinigame() {
+    _SharedMinigameViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.SharedMinigameViewPrefab) as SharedMinigameView;
   }
 
-  public void CloseMinigameView() {
-    // TODO: Play an animation on the quit button if it exists
-    // TODO: Play an animation on the other UI if it exists
-    // TODO: Join sequences
-    if (_MinigameViewSequence != null) {
-      _MinigameViewSequence.Kill();
-    }
-    _MinigameViewSequence = DOTween.Sequence();
-    Sequence close;
-    foreach (IMinigameWidget widget in _ActiveWidgets) {
-      close = widget.CloseAnimationSequence();
-      if (close != null) {
-        _MinigameViewSequence.Append(close);
-      }
-    }
-    _MinigameViewSequence.AppendCallback(HandleMinigameViewCloseAnimationFinished);
+  public void CloseMinigame() {
+    _SharedMinigameViewInstance.CloseView();
+    _SharedMinigameViewInstance = null;
   }
 
-  private void HandleMinigameViewCloseAnimationFinished() {
-    CloseMinigameViewImmediately();
-  }
-
-  public void CloseMinigameViewImmediately() {
-    foreach (IMinigameWidget widget in _ActiveWidgets) {
-      widget.DestroyWidgetImmediately();
+  public void CloseMinigameImmediately() {
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance = null;
     }
-    _ActiveWidgets.Clear();
     Destroy(gameObject);
   }
 
   #region Default Quit button
 
   protected void CreateDefaultQuitButton() {
-    GameObject newButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.DefaultQuitGameButtonPrefab);
-    // TODO: use ankibutton
-    _QuitButtonInstance = newButton.GetComponent<QuitMinigameButton>();
-
-    _QuitButtonInstance.QuitViewOpened += HandleQuitViewOpened;
-    _QuitButtonInstance.QuitViewClosed += HandleQuitViewClosed;
-    _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
-
-    _ActiveWidgets.Add(_QuitButtonInstance);
+    _SharedMinigameViewInstance.CreateQuitButton();
+    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
+    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
   }
 
   private void HandleQuitViewOpened() {

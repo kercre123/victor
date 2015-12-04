@@ -141,14 +141,14 @@ namespace Cozmo.HubWorld {
     private void CloseMiniGame() {
       if (_MiniGameInstance != null) {
         DeregisterMinigameEvents();
-        _MiniGameInstance.CloseMinigameView();
+        _MiniGameInstance.CloseMinigame();
       }
     }
 
     private void CloseMiniGameImmediately() {
       if (_MiniGameInstance != null) {
         DeregisterMinigameEvents();
-        _MiniGameInstance.CloseMinigameViewImmediately();
+        _MiniGameInstance.CloseMinigameImmediately();
       }
     }
 
