@@ -50,9 +50,7 @@ namespace StackTraining {
       _StateMachineManager.UpdateAllMachines();
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
-
+    protected override void CleanUpOnDestroy() {
       foreach (var cube in CurrentRobot.LightCubes) {
         cube.Value.TurnLEDsOff();
       }
