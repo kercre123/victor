@@ -26,13 +26,15 @@ namespace DockTraining {
 
     public override void Update() {
       base.Update();
-      if (_DockTrainingGame.ShouldTryDockSucceed()) {
-        // should try to actually successfully dock.
-        _StateMachine.SetNextState(new TryDock());
-      }
-      else if (_DockTrainingGame.ShouldTryDock()) {
-        // we are too far off, just fail spectacularly
-        _StateMachine.SetNextState(new FailSpectacularDock());
+      if (_DockTrainingGame.ShouldTryDock()) {
+        if (_DockTrainingGame.ShouldTryDockSucceed()) {
+          // should try to actually successfully dock.
+          _StateMachine.SetNextState(new TryDock());
+        }
+        else {
+          // we are too far off, just fail spectacularly
+          _StateMachine.SetNextState(new FailSpectacularDock());
+        }
       }
     }
 
