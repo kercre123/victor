@@ -204,6 +204,10 @@ namespace Anki {
                 // precondition checking going, to reduce lag between actions.
                 subResult = _currentActionPair->second->Update(robot);
               }
+              else {
+                // this sub-action finished, but we still have others, so reutnr running
+                return ActionResult::RUNNING;
+              }
               
               return subResult;
             }
