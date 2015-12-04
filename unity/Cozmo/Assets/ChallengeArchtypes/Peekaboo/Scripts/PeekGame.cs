@@ -15,6 +15,10 @@ namespace Peekaboo {
 
     public float DistanceMax { get; set; }
 
+    [SerializeField]
+    private PeekGamePanel _GamePanelPrefab;
+    private PeekGamePanel _GamePanel;
+
     public override void LoadMinigameConfig(MinigameConfigBase minigameConfigData) {
       PeekGameConfig config = (minigameConfigData as PeekGameConfig);
       _PeekGoalTarget = config.goal;
@@ -22,6 +26,7 @@ namespace Peekaboo {
 
     public void PeekSuccess() {
       _PeekSuccessCount++;
+      _GamePanel.SetPoints(_PeekSuccessCount);
       if (_PeekSuccessCount >= _PeekGoalTarget) {
         RaiseMiniGameWin();
       }
@@ -30,6 +35,8 @@ namespace Peekaboo {
     void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<PeekGamePanel>();
+      _GamePanel.SetPoints(_PeekSuccessCount);
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -45,8 +52,8 @@ namespace Peekaboo {
 
     void SetSpeed() {
       ForwardSpeed = 20.0f;
-      DistanceMax = 130.0f;
-      DistanceMin = 90.0f;
+      DistanceMax = 140.0f;
+      DistanceMin = 80.0f;
     }
 
     void Update() {

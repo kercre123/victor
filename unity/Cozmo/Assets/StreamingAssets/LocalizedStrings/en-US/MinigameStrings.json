@@ -77,5 +77,11 @@
     },
     "vortex.vortexWon" : {
         "translation" : "{0} Won"
+    },
+    "peekaboo.title" : {
+        "translation" : "Peek a Boo"
+    },
+    "peekaboo.label.points" : {
+        "translation" : "{0} Points"
     }
 }

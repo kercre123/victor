@@ -63,6 +63,8 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
+  public const string kPeekabooTitle = "peekaboo.title";
+  public const string kPeekabooLabelPoints = "peekaboo.label.points";
 
   #endregion
 

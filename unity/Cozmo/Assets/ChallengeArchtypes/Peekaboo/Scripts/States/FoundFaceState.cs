@@ -12,7 +12,7 @@ namespace Peekaboo {
 
       _GameInstance = _StateMachine.GetGame() as PeekGame;
       // Play Celebration upon entering state
-      _CurrentRobot.SendAnimation(AnimationName.kMajorWin,HandleAnimationEnd);
+      _CurrentRobot.SendAnimation(AnimationName.kShocked,HandleAnimationEnd);
     }
 
     public void HandleAnimationEnd(bool success) {

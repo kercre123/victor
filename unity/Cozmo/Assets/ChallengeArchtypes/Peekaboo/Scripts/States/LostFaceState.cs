@@ -13,8 +13,7 @@ namespace Peekaboo {
       _GameInstance = _StateMachine.GetGame() as PeekGame;
 
       // Express Confusion upon losing track of a face. probably something more perplexed than surprised
-      // using kShocked as a placeholder
-      _CurrentRobot.SendAnimation(AnimationName.kShocked,HandleAnimationEnd);
+      _CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin,HandleAnimationEnd);
     }
 
     public void HandleAnimationEnd(bool success) {

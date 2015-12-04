@@ -6,6 +6,9 @@ namespace Peekaboo {
   public class LookingForFaceState : State {
     
     PeekGame _GameInstance;
+    // Make sure the face has been seen consistently to confirm that it is in fact a face
+    private float _SeenHoldDelay = 0.5f;
+    private float _FirstSeenTimestamp = -1;
 
     public override void Enter() {
       base.Enter();
@@ -26,12 +29,29 @@ namespace Peekaboo {
       // If a face has been found, enter FoundFaceState
       if (_CurrentRobot.Faces.Count > 0) {
         // We found a face!
-        FindFace();
+        if (IsSeenTimestampUninitialized()) {
+          _FirstSeenTimestamp = Time.time;
+        }
+
+        if (Time.time - _FirstSeenTimestamp > _SeenHoldDelay) {
+          FindFace();
+        }
+      }
+      else {
+        ResetSeenTimestamp();
       }
     }
 
     public void FindFace() {
       _StateMachine.SetNextState(new FoundFaceState());
+    }
+
+    private bool IsSeenTimestampUninitialized() {
+      return _FirstSeenTimestamp == -1;
+    }
+
+    private void ResetSeenTimestamp() {
+      _FirstSeenTimestamp = -1;
     }
   }
 
