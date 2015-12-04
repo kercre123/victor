@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using DG.Tweening;
 using Anki.UI;
+using Cozmo.UI;
 
 namespace Conversations {
   public class SpeechBubble : BaseView {

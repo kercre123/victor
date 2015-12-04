@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using Cozmo.UI;
 using System.Collections;
+using System.Collections.Generic;
+using Cozmo.MinigameWidgets;
+using DG.Tweening;
 
 // Provides common interface for HubWorlds to react to games
 // ending and to start/restart games. Also has interface for killing games
 public abstract class GameBase : MonoBehaviour {
-
-  private static GameObject sDefaultQuitGameButtonPrefab;
 
   public delegate void MiniGameQuitHandler();
 
@@ -32,47 +34,86 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameLose;
 
-  protected void RaiseMiniGameLose() {
+  public void RaiseMiniGameLose() {
     if (OnMiniGameLose != null) {
       OnMiniGameLose();
     }
   }
 
-  [SerializeField]
-  string _GameId;
-
-  public string GameId { get { return _GameId; } private set { _GameId = value; } }
-
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  private Button _QuitButtonInstance;
+  public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
 
-  protected void CreateDefaultQuitButton() {
-    // Resources.Load can be pretty slow, so cache the prefab for future use.
-    if (sDefaultQuitGameButtonPrefab == null) {
-      sDefaultQuitGameButtonPrefab = Resources.Load("Prefabs/UI/DefaultQuitMiniGameButton") as GameObject;
-    }
-    GameObject newButton = UIManager.CreateUIElement(sDefaultQuitGameButtonPrefab);
-    
-    _QuitButtonInstance = newButton.GetComponent<Button>();
-    _QuitButtonInstance.onClick.AddListener(OnQuitButtonTap);
+  protected SharedMinigameView _SharedMinigameViewInstance;
+
+  public void Awake() {
+    // INGO: We might need to have some sort of callback when the 
+    // dialog is initialized
+    OpenMinigame();
   }
 
-  protected void DestroyDefaultQuitButton() {
-    if (_QuitButtonInstance != null) {
-      Destroy(_QuitButtonInstance.gameObject);
-    }
-  }
-
-  protected void OnQuitButtonTap() {
-    RaiseMiniGameQuit();
+  public void OnDestroy() {
+    CleanUpOnDestroy();
   }
 
   /// <summary>
   /// Clean up listeners and extra game objects. Called before the game is 
   /// destroyed when the player quits or the robot loses connection.
   /// </summary>
-  public abstract void CleanUp();
+  protected abstract void CleanUpOnDestroy();
 
-  public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
+  protected virtual void PauseGame() {
+    _SharedMinigameViewInstance.DisableInteractivity();
+  }
+
+  protected virtual void ResumeGame() {
+    _SharedMinigameViewInstance.EnableInteractivity();
+  }
+
+  private void OpenMinigame() {
+    _SharedMinigameViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.SharedMinigameViewPrefab) as SharedMinigameView;
+  }
+
+  public void CloseMinigame() {
+    _SharedMinigameViewInstance.CloseView();
+    _SharedMinigameViewInstance = null;
+  }
+
+  public void CloseMinigameImmediately() {
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance = null;
+    }
+    Destroy(gameObject);
+  }
+
+  #region Default Quit button
+
+  protected void CreateDefaultQuitButton() {
+    _SharedMinigameViewInstance.CreateQuitButton();
+    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
+    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
+  }
+
+  private void HandleQuitViewOpened() {
+    PauseGame();
+  }
+
+  private void HandleQuitViewClosed() {
+    ResumeGame();
+  }
+
+  private void HandleQuitConfirmed() {
+    RaiseMiniGameQuit();
+  }
+
+  #endregion
+
+  #region Default Stamina Bar
+
+  private void CreateDefaultStaminaBar() {
+  }
+
+  #endregion
 }

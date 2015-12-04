@@ -77,5 +77,11 @@
     },
     "vortex.vortexWon" : {
         "translation" : "{0} Won"
+    },
+    "minigame.quitView.title" : {
+        "translation" : "Return to Main Menu?"
+    },
+    "minigame.quitView.description" : {
+        "translation" : "Any progress in this game will be lost. Are you sure?"
     }
 }

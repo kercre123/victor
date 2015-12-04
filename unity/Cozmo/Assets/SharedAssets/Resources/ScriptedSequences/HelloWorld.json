@@ -1,6 +1,7 @@
 {
   "Name": "HelloWorld",
   "RequiresConditionRemainsMet": true,
+  "ActivateOnConditionMet": true,
   "Repeatable": false,
   "Condition": {
     "$type": "ScriptedSequences.Conditions.RobotConnected, Assembly-CSharp"
@@ -28,6 +29,11 @@
           "LineKey": "HelloWorld.Hello",
           "Speaker": "Aria",
           "IsRight": false
+        },
+        {
+          "$type": "ScriptedSequences.Actions.PlayAudio, Assembly-CSharp",
+          "EventType": "PLAY_VO_ARIA_CH1_1_COZMOTHISIS",
+          "WaitToEnd": true
         }
       ],
       "ExitConditions": []
@@ -73,6 +79,7 @@
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "majorWin",
+          "LoopForever": false,
           "WaitToEnd": true
         },
         {

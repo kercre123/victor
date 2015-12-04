@@ -32,5 +32,11 @@
     },
     "label.percentComplete" : {
         "translation" : "{0:P2} Complete"
+    },
+    "button.yes" : {
+        "translation" : "Yes"
+    },
+    "button.no" : {
+        "translation" : "No"
     }
 }

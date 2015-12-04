@@ -19,7 +19,7 @@ namespace ForwardBackward {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("ForwardBackwardStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new FollowCubeForwardBackwardState(_Config.Settings, 0), 2, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new FollowCubeForwardBackwardState(_Config.Settings, 0), 1, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
@@ -67,8 +67,7 @@ namespace ForwardBackward {
       return id;
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
     }
   }
 

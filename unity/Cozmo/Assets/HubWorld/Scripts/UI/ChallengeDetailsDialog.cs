@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using Anki.UI;
 using System.Collections;
 using DG.Tweening;
+using Cozmo.UI;
 
 public class ChallengeDetailsDialog : BaseView {
 
