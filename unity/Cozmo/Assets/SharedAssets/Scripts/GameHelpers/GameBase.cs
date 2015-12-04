@@ -86,6 +86,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void CloseMinigame() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished += HandleMinigameViewCloseFinished;
     _SharedMinigameViewInstance.CloseView();
     _SharedMinigameViewInstance = null;
   }
@@ -95,6 +96,10 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
+    HandleMinigameViewCloseFinished();
+  }
+
+  private void HandleMinigameViewCloseFinished() {
     Destroy(gameObject);
   }
 
