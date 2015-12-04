@@ -1,11 +1,14 @@
 public static class LocalizationKeys {
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ChallengeTitleStrings.json
+  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/ChallengeTitleStrings.json
 
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Subtitle = "askCozmo01.subtitle";
   public const string kAskCozmo01Description = "askCozmo01.description";
   public const string kInvestorDemoInvestorDemoScene1 = "investorDemo.investorDemoScene1";
+  public const string kInvestorDemoInvestorDemoScene2 = "investorDemo.investorDemoScene2";
+  public const string kInvestorDemoInvestorDemoScene3 = "investorDemo.investorDemoScene3";
+  public const string kInvestorDemoInvestorDemoScene4 = "investorDemo.investorDemoScene4";
   public const string kDockTraining01Title = "dockTraining01.title";
   public const string kDockTraining01Subtitle = "dockTraining01.subtitle";
   public const string kDockTraining01Description = "dockTraining01.description";
@@ -21,10 +24,22 @@ public static class LocalizationKeys {
   public const string kWinkGame01Title = "winkGame01.title";
   public const string kWinkGame01Subtitle = "winkGame01.subtitle";
   public const string kWinkGame01Description = "winkGame01.description";
+  public const string kForwardBackward01Title = "forwardBackward01.title";
+  public const string kForwardBackward01Subtitle = "forwardBackward01.subtitle";
+  public const string kForwardBackward01Description = "forwardBackward01.description";
+  public const string kMotionDetection01Title = "motionDetection01.title";
+  public const string kMotionDetection01Subtitle = "motionDetection01.subtitle";
+  public const string kMotionDetection01Description = "motionDetection01.description";
+  public const string kFollowCubeRotate1Title = "followCubeRotate1.title";
+  public const string kFollowCubeRotate1Subtitle = "followCubeRotate1.subtitle";
+  public const string kFollowCubeRotate1Description = "followCubeRotate1.description";
+  public const string kPeekaboo1Title = "peekaboo1.title";
+  public const string kPeekaboo1Subtitle = "peekaboo1.subtitle";
+  public const string kPeekaboo1Description = "peekaboo1.description";
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ConversationStrings.json
+  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/ConversationStrings.json
 
   public const string kHelloWorldHello = "HelloWorld.Hello";
   public const string kHelloWorldWorld = "HelloWorld.World";
@@ -41,7 +56,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/MinigameStrings.json
+  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/MinigameStrings.json
 
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
@@ -68,7 +83,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/SimpleStrings.json
+  #region /Users/ryananderson/Desktop/cozmo-game/unity/Cozmo/Assets/StreamingAssets/LocalizedStrings/en-us/SimpleStrings.json
 
   public const string kButtonTap = "button.tap";
   public const string kButtonQuit = "button.quit";

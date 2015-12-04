@@ -15,9 +15,9 @@ MonoBehaviour:
   _ChallengeID: PeekGameChallenge1
   _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
-  _ChallengeTitleLocKey: 
-  _ChallengeSubtitleLocKey: 
-  _ChallengeDescriptionLocKey: 
+  _ChallengeTitleLocKey: peekaboo1.title
+  _ChallengeSubtitleLocKey: peekaboo1.subtitle
+  _ChallengeDescriptionLocKey: peekaboo1.description
   _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeReqs:

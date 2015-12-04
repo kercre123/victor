@@ -111,4 +111,13 @@
     "followCubeRotate1.description" : {
         "translation" : "Rotate Cozmo Left and Right by leading with a cube."
     },
+    "peekaboo1.title" : {
+        "translation" : "Peek A Boo"
+    },
+    "peekaboo1.subtitle" : {
+        "translation" : "Peek A Boo Subtitle"
+    },
+    "peekaboo1.description" : {
+        "translation" : "Show Cozmo your face, then hide it once they recognize you to surprise them."
+    },
 }
