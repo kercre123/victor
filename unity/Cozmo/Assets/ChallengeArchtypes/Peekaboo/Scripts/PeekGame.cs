@@ -7,7 +7,7 @@ namespace Peekaboo {
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
     private int _PeekSuccessCount = 0;
-    private int _PeekGoalTarget  = 3;
+    private int _PeekGoalTarget = 3;
 
     public float ForwardSpeed { get; set; }
 
@@ -61,8 +61,8 @@ namespace Peekaboo {
     }
 
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
+      
     }
   }
 }
