@@ -30,6 +30,10 @@ namespace Xcode {
     [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Project")]
     public static void FixupCozmoIos() {
       try {
+
+        // use the same seed so the same files will give you the same guids
+        SetRandomSeed(0);
+
         XcodeProject proj = null;
 
         int step = 0;
@@ -210,9 +214,23 @@ namespace Xcode {
       // TODO: Add any FileTypes that I've missed
     };
 
-    private static string NewGuid() {
-      return System.Guid.NewGuid().ToString().Replace("-", "").ToUpper().Substring(0, 24);
+    private static System.Random _Random = new System.Random();
+
+    private static void SetRandomSeed(int seed) {
+      _Random = new System.Random(seed);
     }
+
+    private static string NewGuid() {
+      const string alphabet = "0123456789ABCDEF";
+
+      char[] guid = new char[24];
+      for (int i = 0; i < 24; i++) {
+        guid[i] = alphabet[_Random.Next(alphabet.Length)];
+      }
+
+      return new string(guid);
+    }
+
     private static FileId NewFileId(string name, string group = null) {
       return new FileId() { Value = NewGuid(), FileName = name, Group = group };
     }
