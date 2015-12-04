@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using UnityEngine;
 using System.Collections.Generic;
 
 public interface IDAS {
-  void Event(string eventValue, UnityEngine.Object context = null);
+  void Event(string eventValue, System.Object context = null);
 
-  void Error(string eventValue, UnityEngine.Object context = null);
+  void Error(string eventValue, System.Object context = null);
 
-  void Error(Exception eventValue, UnityEngine.Object context = null);
+  void Error(Exception eventValue, System.Object context = null);
 
-  void Warn(string eventValue, UnityEngine.Object context = null);
+  void Warn(string eventValue, System.Object context = null);
 
-  void Info(string eventValue, UnityEngine.Object context = null);
+  void Info(string eventValue, System.Object context = null);
 
-  void Debug(string eventValue, UnityEngine.Object context = null);
+  void Debug(string eventValue, System.Object context = null);
 }
 
 public static partial class DAS {
@@ -113,27 +112,27 @@ public static partial class DAS {
       _EventName = type.Name;
     }
 
-    public void Event(string eventValue, UnityEngine.Object context = null) {
+    public void Event(string eventValue, System.Object context = null) {
       DAS.Event(_EventName, eventValue, context);
     }
 
-    public void Error(string eventValue, UnityEngine.Object context = null) {
+    public void Error(string eventValue, System.Object context = null) {
       DAS.Error(_EventName, eventValue, context);      
     }
 
-    public void Error(Exception eventValue, UnityEngine.Object context = null) {
+    public void Error(Exception eventValue, System.Object context = null) {
       DAS.Error(_EventName, eventValue, context);      
     }
 
-    public void Warn(string eventValue, UnityEngine.Object context = null) {
+    public void Warn(string eventValue, System.Object context = null) {
       DAS.Warn(_EventName, eventValue, context);      
     }
 
-    public void Info(string eventValue, UnityEngine.Object context = null) {
+    public void Info(string eventValue, System.Object context = null) {
       DAS.Info(_EventName, eventValue, context);      
     }
 
-    public void Debug(string eventValue, UnityEngine.Object context = null) {
+    public void Debug(string eventValue, System.Object context = null) {
       DAS.Debug(_EventName, eventValue, context);            
     }
   }
