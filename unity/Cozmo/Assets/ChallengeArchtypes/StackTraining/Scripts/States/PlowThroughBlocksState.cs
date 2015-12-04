@@ -62,9 +62,6 @@ namespace StackTraining {
         // TODO: do better
         var initialTiltMax = Mathf.Max(Mathf.Abs(startingEuler.x), Mathf.Abs(startingEuler.y));
         var currentTiltMax = Mathf.Max(Mathf.Abs(currentEuler.x), Mathf.Abs(currentEuler.y));
-          
-
-        Debug.Log("Initial Tilt: " + initialTiltMax + "  current tilt: " + currentTiltMax);
 
         // the 1.5 seconds is a hack since we don't get pitch and roll in the quaternion yet
         if (_OnCliff || currentTiltMax > initialTiltMax * 1.5f || _BackupTime < 1.5f) {

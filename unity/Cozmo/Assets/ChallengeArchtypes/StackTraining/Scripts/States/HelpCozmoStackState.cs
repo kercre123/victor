@@ -36,8 +36,6 @@ namespace StackTraining {
       Vector3 bottomCubePosition = _CurrentRobot.WorldToCozmo(bottomCube.WorldPosition);
       Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
 
-      Debug.Log("Moving: " + _Moving + "  BottomDocked: " + _BottomDocked);
-
       if (_Moving) {
         return;
       }
