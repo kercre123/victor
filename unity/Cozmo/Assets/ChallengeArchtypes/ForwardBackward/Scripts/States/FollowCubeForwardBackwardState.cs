@@ -52,7 +52,6 @@ namespace ForwardBackward {
           
           Vector3 cubePositionCozmoSpace = (Vector3)_CurrentRobot.WorldToCozmo(_CurrentRobot.VisibleObjects[i].WorldPosition);
 
-          Debug.Log(cubePositionCozmoSpace);
           if (_VisionBounds.Contains(cubePositionCozmoSpace)) {
             cubeInBoundsNow = true;
             break;
