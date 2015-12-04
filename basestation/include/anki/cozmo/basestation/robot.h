@@ -439,8 +439,11 @@ public:
     void IncrementNumAnimationBytesStreamed(s32 num);
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
-    // specified duration (layered on top of any other animation that's playing)
-    void ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms);
+    // specified duration (layered on top of any other animation that's playing).
+    // If makePersistent is true, a looping face layer will be used and it is the
+    // caller's responsibility to remove that layer using the returned tag.
+    // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
+    u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   

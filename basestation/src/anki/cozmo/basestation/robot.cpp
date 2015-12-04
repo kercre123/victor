@@ -1403,8 +1403,10 @@ namespace Anki {
       return _animationStreamer.GetStreamingAnimationName();
     }
 
-    void Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms)
+    u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
     {
+      u32 layerTag = 0;
+      
       if(xPix != 0 || yPix != 0.f)
       {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
@@ -1418,8 +1420,14 @@ namespace Anki {
         AnimationStreamer::FaceTrack faceTrack;
         faceTrack.AddKeyFrame(std::move(kf));
         
-        _animationStreamer.AddFaceLayer(std::move(faceTrack));
+        if(makePersistent) {
+          layerTag = _animationStreamer.AddLoopingFaceLayer(std::move(faceTrack));
+        } else {
+          _animationStreamer.AddFaceLayer(std::move(faceTrack));
+        }
       }
+      
+      return layerTag;
     }
     
     Result Robot::PlaySound(const std::string& soundName, u8 numLoops, u8 volume)

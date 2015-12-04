@@ -132,6 +132,7 @@ namespace Cozmo {
       TimeStamp_t startTime_ms;
       TimeStamp_t streamTime_ms;
       bool        isLooping;
+      bool        sentOnce;
       u32         tag;
     };
     std::list<FaceLayer> _faceLayers;

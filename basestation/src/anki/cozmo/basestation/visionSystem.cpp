@@ -1208,7 +1208,7 @@ namespace Cozmo {
     for(auto & region : regionPoints) {
       //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
       //                 "Area=%lu", region.size());
-      if(region.size() > minArea) {
+      if(region.size() > minArea && region.size() > largestRegion) {
         centroid = 0.f;
         for(auto & point : region) {
           centroid += point;
@@ -1378,6 +1378,8 @@ namespace Cozmo {
           msg.img_area = static_cast<s32>(imgRegionArea);
         } else {
           msg.img_area = 0;
+          msg.img_x = 0;
+          msg.img_y = 0;
         }
         
         if(groundRegionArea > 0.f)
@@ -1387,6 +1389,8 @@ namespace Cozmo {
           msg.ground_area = groundRegionArea;
         } else {
           msg.ground_area = 0;
+          msg.ground_x = 0;
+          msg.ground_y = 0;
         }
         
         _motionMailbox.putMessage(std::move(msg));

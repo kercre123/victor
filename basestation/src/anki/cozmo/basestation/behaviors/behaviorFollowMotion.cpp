@@ -36,9 +36,8 @@ BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& conf
     EngineToGameTag::RobotObservedMotion,
     EngineToGameTag::RobotCompletedAction
   }});
-
 }
-
+  
 bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
   return true;
@@ -91,10 +90,11 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
   {
     case MessageEngineToGameTag::RobotObservedMotion:
     {
+      const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
+      
       // Ignore motion while an action is running
-      if(_actionRunning == 0) {
-        const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
-        
+      if(_actionRunning == 0 && motionObserved.img_area > 0)
+      {
         const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
         
         // Robot gets more happy/excited and less calm when he sees motion.
@@ -149,11 +149,13 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
                            "Queuing first motion reaction animation and head tilt back to %.1fdeg",
                            finalHeadAngle.getDegrees());
           
-          // If this is the first motion reaction, also play the corresponding animation
-          // and move the head back to the right tilt immediately after
+          // If this is the first motion reaction, also play the first part of the
+          // motion reaction animation, move the head back to the right tilt, and
+          // then play the second half of the animation to open the eyes back up
           CompoundActionSequential* compoundAction = new CompoundActionSequential({
             new PlayAnimationAction("ID_MotionFollow_ReactToMotion"),
             new MoveHeadToAngleAction(finalHeadAngle, _panAndTiltTol),
+            new PlayAnimationAction("ID_MotionFollow_ReactToMotion_end")
           });
           
           // Wait for the last action to finish in this case

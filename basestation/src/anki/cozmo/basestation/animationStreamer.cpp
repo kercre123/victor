@@ -171,6 +171,7 @@ namespace Cozmo {
     newLayer.startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     newLayer.streamTime_ms = newLayer.startTime_ms;
     newLayer.isLooping = true;
+    newLayer.sentOnce = false;
     
     PRINT_NAMED_INFO("AnimationStreamer.AddLoopingFaceLayer",
                      "Tag = %d", newLayer.tag);
@@ -432,6 +433,7 @@ namespace Cozmo {
         if(faceLayerIter->isLooping) {
           //...but is marked to loop, so restart it
           faceLayerIter->track.Init();
+          faceLayerIter->sentOnce = true; // mark that it has been sent at least once
           ++faceLayerIter;
         } else {
           //...and is not looping, so delete it
@@ -521,15 +523,17 @@ namespace Cozmo {
     if(_faceLayers.empty()) {
       return false;
     } else {
-      // There are face layers, but we want to ignore any that are looping
+      // There are face layers, but we want to ignore any that are looping that
+      // have already been sent once
       for(auto & layer : _faceLayers) {
-        if(!layer.isLooping) {
-          // There's at least one non-looping face layer: return that there are
+        if(!layer.isLooping || !layer.sentOnce) {
+          // There's at least one non-looping face layer, or a looping face layer
+          // that has not been sent once: return that there are
           // face layers to send
           return true;
         }
       }
-      // All face layers are looping ones, so no need to keep sending them
+      // All face layers are looping ones that have been sent, so no need to keep sending them
       // by themselves. They only need to be re-applied while there's something
       // else being sent
       return false;
