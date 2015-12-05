@@ -11,11 +11,9 @@ namespace CubeLifting {
     private int _LastSelectedId = -1;
     private CubeLiftingConfig _Config;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as CubeLiftingConfig ?? new CubeLiftingConfig();
-    }
 
-    void Start() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("CubeLiftingStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
@@ -26,8 +24,6 @@ namespace CubeLifting {
 
       CurrentRobot.SetLiftHeight(0);
       CurrentRobot.SetHeadAngle(0);
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {

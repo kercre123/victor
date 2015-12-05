@@ -11,17 +11,16 @@ namespace MotionDetection {
 
     private MotionDetectionConfig _Config;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as MotionDetectionConfig ?? new MotionDetectionConfig();
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("DetectMotionStateMachine", _StateMachine);
       _StateMachine.SetNextState(new RecognizeMotionState(_Config.TimeAllowedBetweenWaves, _Config.TotalWaveTime));
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {

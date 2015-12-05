@@ -15,14 +15,15 @@ namespace AskCozmo {
 
     private AskCozmoConfig _Config;
 
-    void Start() {
+    private int _AttemptsLeft = 5;
+
+    protected void InitializeMinigameObjects() {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
-      CreateDefaultQuitButton();
       ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("AzkCozmoSequence");
     }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       
       var askCozmoConfig = minigameConfig as AskCozmoConfig;
 
@@ -39,6 +40,12 @@ namespace AskCozmo {
       for (int i = 0; i < _Config.ParamList.Length; ++i) {
         DAS.Debug(this, _Config.ParamList[i].ToString());
       }
+      InitializeMinigameObjects();
+    }
+
+    protected override void InitializeMinigameView(Cozmo.MinigameWidgets.SharedMinigameView minigameView) {
+      base.InitializeMinigameView(minigameView);
+      minigameView.CreateCozmoStatusWidget(_AttemptsLeft);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -61,6 +68,12 @@ namespace AskCozmo {
       else {
         CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
       }
+
+      _AttemptsLeft--;
+      if (_AttemptsLeft < 0) {
+        _AttemptsLeft = 0;
+      }
+      _SharedMinigameViewInstance.UpdateCozmoAttempts(_AttemptsLeft);
     }
 
     void HandleAnimationDone(bool success) {

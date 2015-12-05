@@ -50,6 +50,14 @@ public class UIManager : MonoBehaviour {
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
 
+  public static GameObject CreateUIElement(MonoBehaviour uiPrefab) {
+    return CreateUIElement(uiPrefab.gameObject, Instance._OverlayCanvas.transform);
+  }
+
+  public static GameObject CreateUIElement(MonoBehaviour uiPrefab, Transform parentTransform) {
+    return CreateUIElement(uiPrefab.gameObject, parentTransform);
+  }
+
   public static GameObject CreateUIElement(GameObject uiPrefab) {
     return CreateUIElement(uiPrefab, Instance._OverlayCanvas.transform);
   }

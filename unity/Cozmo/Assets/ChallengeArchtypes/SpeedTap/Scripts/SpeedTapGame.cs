@@ -23,12 +23,13 @@ namespace SpeedTap {
     [SerializeField]
     private AudioClip _RollSound;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
+      InitializeMinigameObjects();
     }
 
     // Use this for initialization
-    void Start() { 
+    protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
 
       _StateMachine.SetGameRef(this);
@@ -44,8 +45,6 @@ namespace SpeedTap {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {
