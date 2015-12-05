@@ -13,6 +13,8 @@ g_AnkiExportPath = ""
 g_PrevMenuName = ""
 g_ProceduralFaceKeyFrames = []
 ANIM_FPS = 30
+# mapping from  cozmo-game\unity\cozmo\assets\scripts\generated\clad\types\proceduraleyeparameters.cs
+#which could have probably been included, but we'd still need a way to map those to the maya names.
 g_ProcFaceDict = { 
 "FaceCenterX":{"cladName":"faceCenterX", "cladIndex":-1},
 "FaceCenterY":{"cladName":"faceCenterY", "cladIndex":-1},
@@ -41,16 +43,17 @@ g_ProcFaceDict = {
 "RightEyeLowerLidAngle":{"cladName":"rightEye", "cladIndex":17}, 
 "Right_Eye_Lower_Lid_Bend":{"cladName":"rightEye", "cladIndex":18}, 
 "eyeCorner_R_outerUpper_X":{"cladName":"rightEye", "cladIndex":9}, 
-"Eye_Corner_R_Outer_Upper_Y":{"cladName":"rightEye", "cladIndex":10}, 
-"Eye_Corner_R_Inner_Upper_X":{"cladName":"rightEye", "cladIndex":7}, 
-"Eye_Corner_R_Inner_Lower_X":{"cladName":"rightEye", "cladIndex":5},
+"Eye_Corner_R_Outer_Upper_Y":{"cladName":"rightEye", "cladIndex":10},
+"Eye_Corner_R_Inner_Upper_X":{"cladName":"rightEye", "cladIndex":7},
+"Eye_Corner_R_Inner_Upper_Y":{"cladName":"rightEye", "cladIndex":8},
+"Eye_Corner_R_Inner_Lower_X":{"cladName":"rightEye", "cladIndex":5}, 
 "Eye_Corner_R_Inner_Lower_Y":{"cladName":"rightEye", "cladIndex":6}, 
 "Eye_Corner_R_Outer_Lower_X":{"cladName":"rightEye", "cladIndex":11}, 
 "Eye_Corner_R_Outer_Lower_Y":{"cladName":"rightEye", "cladIndex":12}, 
 "Eye_Corner_L_Outer_Upper_X":{"cladName":"leftEye", "cladIndex":9}, 
 "Eye_Corner_L_Outer_Upper_Y":{"cladName":"leftEye", "cladIndex":10}, 
-"Eye_Corner_L_Inner_Upper_X":{"cladName":"leftEye", "cladIndex":7}, 
-"Eye_Corner_L_Inner_Upper_Y":{"cladName":"leftEye", "cladIndex":8}, 
+"Eye_Corner_L_Inner_Upper_X":{"cladName":"leftEye", "cladIndex":7},
+"Eye_Corner_L_Inner_Upper_Y":{"cladName":"leftEye", "cladIndex":8},
 "Eye_Corner_L_Inner_Lower_X":{"cladName":"leftEye", "cladIndex":5}, 
 "Eye_Corner_L_Inner_Lower_Y":{"cladName":"leftEye", "cladIndex":6}, 
 "Eye_Corner_L_Outer_Lower_X":{"cladName":"leftEye", "cladIndex":11}, 
@@ -164,6 +167,7 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
     for existing_face_frame in g_ProceduralFaceKeyFrames:
         if( existing_face_frame["triggerTime_ms"] == triggerTime_ms):
             frame = existing_face_frame
+            break
 
     if( frame is None ):
         #add a completely empty one with logical defaults
@@ -231,6 +235,23 @@ def ExportAnkiAnim(item):
             continue
         if Ts is None:
             continue
+        #Workaround for a crazy bug where smartbake is inserting huge problems, strip those out.
+        #Start Hack since there is something wrong with the exports and baked driven keyframes are
+        # created a keyframe -5millions and positive 4million on every attribute
+        # and not using normal bake results causes a key on every frame
+        BakedVs = []
+        BakedTs = []
+        i = 0
+        for checkFrameTime in Vs:
+            if( Ts[i] >= 0 and Ts[i] < 10000):
+                BakedTs.append(Ts[i]);
+                BakedVs.append(Vs[i]);
+            i = i + 1
+        Vs = BakedVs
+        Ts = BakedTs
+
+        #end terrible hack
+       
         i = 0;
         #Loop through all keyframes
         for k in Vs:
@@ -278,6 +299,8 @@ def ExportAnkiAnim(item):
         json_arr.extend(movement_json_arr)
     #Deletes the results layer the script created.
     cmds.delete("BakeResults")
+    cmds.delete("BakeResultsContainer")
+
     #Scene name with stripped off .ma extension
     output_name = cmds.file(query=True, sceneName=True, shortName=True).split('.')[0]
     # the original tool just had the whole thing in a wrapper
