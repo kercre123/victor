@@ -29,7 +29,9 @@ namespace DockTraining {
       if (_DockTrainingGame.ShouldTryDock()) {
         if (_DockTrainingGame.ShouldTryDockSucceed()) {
           // should try to actually successfully dock.
-          _StateMachine.SetNextState(new TryDock());
+          TryDock tryDockState = new TryDock();
+          tryDockState.Init(_DockTrainingGame.GetCurrentTarget());
+          _StateMachine.SetNextState(tryDockState);
         }
         else {
           // we are too far off, just fail spectacularly
@@ -48,10 +50,10 @@ namespace DockTraining {
       if (_WaveTimeAccumulator > 0.5f) {
         SteerState steerState = new SteerState();
         if (_LeftAccumulator > _RightAccumulator) {
-          steerState.Init(25.0f, 20.0f, 1.0f, new DetermineNextAction());
+          steerState.Init(30.0f, 20.0f, 1.0f, new DetermineNextAction());
         }
         else {
-          steerState.Init(20.0f, 25.0f, 1.0f, new DetermineNextAction());
+          steerState.Init(20.0f, 30.0f, 1.0f, new DetermineNextAction());
         }
         _StateMachine.SetNextState(steerState);
       }
