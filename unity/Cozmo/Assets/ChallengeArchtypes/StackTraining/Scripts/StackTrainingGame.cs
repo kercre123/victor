@@ -27,11 +27,12 @@ namespace StackTraining {
       }
     }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
 
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("StackTrainingGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
@@ -42,8 +43,6 @@ namespace StackTraining {
 
       CurrentRobot.SetLiftHeight(0f);
       CurrentRobot.SetHeadAngle(0f);
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {

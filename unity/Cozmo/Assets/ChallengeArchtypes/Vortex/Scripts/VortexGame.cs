@@ -46,11 +46,12 @@ namespace Vortex {
     private PlayerData[] _PlayerDataList;
     private int _RoundNumber;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       DAS.Info(this, "VortexGame::Start");
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("VortexStateMachine", _StateMachine);
@@ -71,7 +72,6 @@ namespace Vortex {
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;
-      OpenMinigameView();
     }
 
     void Update() {

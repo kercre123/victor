@@ -11,11 +11,12 @@ namespace ForwardBackward {
     private int _LastSelectedId = -1;
     private ForwardBackwardConfig _Config;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as ForwardBackwardConfig ?? new ForwardBackwardConfig();
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("ForwardBackwardStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
@@ -23,7 +24,6 @@ namespace ForwardBackward {
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
-      OpenMinigameView();
     }
 
     void Update() {

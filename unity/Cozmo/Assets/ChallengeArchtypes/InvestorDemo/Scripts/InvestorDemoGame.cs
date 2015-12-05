@@ -14,15 +14,16 @@ namespace InvestorDemo {
 
     private InvestorDemoConfig _DemoConfig;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       _DemoConfig = minigameConfig as InvestorDemoConfig;
       if (_DemoConfig == null) {
         DAS.Error(this, "Failed to load config InvestorDemoConfig!");
         return;
       }
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       CurrentRobot.SetRobotVolume(1.0f);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<InvestorDemoPanel>();
@@ -40,7 +41,6 @@ namespace InvestorDemo {
       else {
         CurrentRobot.ActivateBehaviorChooser(_DemoConfig.BehaviorChooser);
       }
-      OpenMinigameView();
     }
 
     void Update() {

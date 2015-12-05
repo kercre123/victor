@@ -17,14 +17,13 @@ namespace AskCozmo {
 
     private int _AttemptsLeft = 5;
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
       ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("AzkCozmoSequence");
-      OpenMinigameView();
     }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       
       var askCozmoConfig = minigameConfig as AskCozmoConfig;
 
@@ -41,6 +40,7 @@ namespace AskCozmo {
       for (int i = 0; i < _Config.ParamList.Length; ++i) {
         DAS.Debug(this, _Config.ParamList[i].ToString());
       }
+      InitializeMinigameObjects();
     }
 
     protected override void InitializeMinigameView(Cozmo.MinigameWidgets.SharedMinigameView minigameView) {
