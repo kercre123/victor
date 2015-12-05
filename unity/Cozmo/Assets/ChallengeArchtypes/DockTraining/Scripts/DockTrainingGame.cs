@@ -64,7 +64,7 @@ namespace DockTraining {
       if (_CurrentTarget == null)
         return false;
       float distance = Vector2.Distance(CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
-      return (distance < 100.0f);
+      return (distance < 60.0f);
     }
 
     public bool ShouldTryDockSucceed() {

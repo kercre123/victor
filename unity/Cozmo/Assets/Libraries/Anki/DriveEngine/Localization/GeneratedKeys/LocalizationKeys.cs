@@ -33,6 +33,9 @@ public static class LocalizationKeys {
   public const string kFollowCubeRotate1Title = "followCubeRotate1.title";
   public const string kFollowCubeRotate1Subtitle = "followCubeRotate1.subtitle";
   public const string kFollowCubeRotate1Description = "followCubeRotate1.description";
+  public const string kPeekaboo1Title = "peekaboo1.title";
+  public const string kPeekaboo1Subtitle = "peekaboo1.subtitle";
+  public const string kPeekaboo1Description = "peekaboo1.description";
 
   #endregion
 
@@ -75,6 +78,8 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
+  public const string kPeekabooTitle = "peekaboo.title";
+  public const string kPeekabooLabelPoints = "peekaboo.label.points";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
 
