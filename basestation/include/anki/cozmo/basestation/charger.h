@@ -42,42 +42,17 @@ namespace Anki {
     class Charger : public ActionableObject
     {
     public:
-      using Type = ObjectType;
       
       Charger();
       
       virtual const Point3f& GetSize() const override { return _size; }
       
       f32     GetHeight() const { return Height; }
-      Radians GetAngle()  const { return Angle;  }
       
-      const Vision::KnownMarker* GetFrontMarker() const { return _frontMarker; }
+      const Vision::KnownMarker* GetMarker() const { return _marker; }
       
-      typedef enum : u8 {
-        ASCENDING,
-        DESCENDING,
-        UNKNOWN
-      } TraversalDirection;
-      
-      // Determine whether a robot will ascend or descend the ramp, based on its
-      // relative pose. If it is above the ramp, it must be descending. If it
-      // is on the same level as the ramp, it must be ascending. If it can't be
-      // determined, UNKNOWN is returned.
-      TraversalDirection WillAscendOrDescend(const Pose3d& robotPose) const;
-      
-      // Return start poses (at Ramp's current position) for going up or down
-      // the ramp. The distance for ascent is from the tip of the slope.  The
-      // distance for descent is from the opposite edge of the ramp.
-      const Pose3d& GetPreAscentPose()  const;
-      const Pose3d& GetPreDescentPose() const;
-      
-      // Return final poses (at Ramp's current position) for a robot after it
-      // has finished going up or down the ramp. Takes the robot's wheel base
-      // as input since the assumption is that the robot will be level when its
-      // back wheels have left the slope, meaning the robot's origin (between
-      // its front two wheels) is wheel base away.
-      Pose3d GetPostAscentPose(const float wheelBase)  const;
-      Pose3d GetPostDescentPose(const float wheelBase) const;
+      // Return pose of the robot when it's in the charger
+      Pose3d GetDockedPose()  const;
       
       //
       // Inherited Virtual Methods
@@ -95,25 +70,22 @@ namespace Anki {
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
-      constexpr static const f32 Width          = 85.f;
-      constexpr static const f32 Height         = 20.f;
-      constexpr static const f32 SlopeLength    = 50.f;
-      constexpr static const f32 PlatformLength = 100.f;
-      constexpr static const f32 TopMarkerSize  = 30.f;
-      constexpr static const f32 FrontMarkerDistance = 20.f; // along sloped surface (at angle below)
-      constexpr static const f32 PreAscentDistance  = 90.f; // for ascending from bottom
-      constexpr static const f32 PreDescentDistance = 30.f; // for descending from top
-      constexpr static const f32 Angle = 0.17f; // of first part of ramp, using vertex 18
+      constexpr static const f32 WallWidth      = 10.f;
+      constexpr static const f32 PlatformWidth  = 60.f;
+      constexpr static const f32 Width          = 2*WallWidth + PlatformWidth;
+      constexpr static const f32 Height         = 31.f;
+      constexpr static const f32 SlopeLength    = 44.f;
+      constexpr static const f32 PlatformLength = 42.f;
+      constexpr static const f32 Length         = SlopeLength + PlatformLength + WallWidth;
+      constexpr static const f32 MarkerSize     = 20.f;
+      constexpr static const f32 MarkerHeight   = 19.f; // along sloped surface (at angle below)
+      constexpr static const f32 PreAscentDistance  = 100.f; // for ascending from bottom
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
       Point3f _size;
       
-      const Vision::KnownMarker* _frontMarker;
-      const Vision::KnownMarker* _topMarker;
-      
-      Pose3d _preAscentPose;
-      Pose3d _preDescentPose;
+      const Vision::KnownMarker* _marker;
       
       mutable VizManager::Handle_t _vizHandle;
       
@@ -123,14 +95,6 @@ namespace Anki {
       
       
     }; // class Charger
-    
-    inline const Pose3d& Charger::GetPreAscentPose() const {
-      return _preAscentPose;
-    }
-    
-    inline const Pose3d& Charger::GetPreDescentPose() const {
-      return _preDescentPose;
-    }
     
   } // namespace Cozmo
 } // namespace Anki
