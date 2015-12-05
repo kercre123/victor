@@ -394,7 +394,7 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
     PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OnCharger", "");
     
     // Stop whatever we were doing
-    GetActionList().Cancel();
+    //GetActionList().Cancel();
     
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OffCharger", "");

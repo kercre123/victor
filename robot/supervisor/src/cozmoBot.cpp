@@ -327,8 +327,8 @@ namespace Anki {
           RobotInterface::SendMessage(msg);
           
           // Stop whatever we were doing
-          AnimationController::Clear();
-          PickAndPlaceController::Reset();
+          //AnimationController::Clear();
+          //PickAndPlaceController::Reset();
           
         } else if (!HAL::BatteryIsOnCharger() && _wasCharging) {
           ChargerEvent msg;
