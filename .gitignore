@@ -186,5 +186,8 @@ animationTool.zip
 UnityDASDll/UnityDASDll/obj/*
 UnityDASDll/UnityDASDll/bin/*
 
+# pycharm 
+.idea
+
 # Anki specific
 EXTERNALS
