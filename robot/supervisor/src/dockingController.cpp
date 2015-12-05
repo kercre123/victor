@@ -346,13 +346,7 @@ namespace Anki {
 #endif
           
           //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
-          
-          // Update last observed marker pose
-          lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
-          lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
-          lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
-          
-          
+
           // Check if we are beyond point of no return distance
           if (pastPointOfNoReturn_) {
 #if(DEBUG_DOCK_CONTROLLER)
@@ -511,11 +505,6 @@ namespace Anki {
 #endif
               ResetDocker();
               success_ = true;
-              
-              // If we successfully reached end of path, set lastMarkerDistX to reflect that.
-              lastMarkerDistX_ = ORIGIN_TO_LOW_LIFT_DIST_MM; // This depends on what action we were doing, but it's good enough for all of them.
-              lastMarkerDistY_ = 0;
-              
               break;
             }
             
@@ -856,6 +845,11 @@ namespace Anki {
       {
         dockingErrSignalMsg_ = msg;
         dockingErrSignalMsgReady_ = true;
+        
+        // Update last observed marker pose
+        lastMarkerDistX_ = dockingErrSignalMsg_.x_distErr;
+        lastMarkerDistY_ = dockingErrSignalMsg_.y_horErr;
+        lastMarkerAng_ = dockingErrSignalMsg_.angleErr;
       }
       
       

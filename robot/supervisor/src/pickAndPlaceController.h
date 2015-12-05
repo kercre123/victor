@@ -50,7 +50,8 @@ namespace Anki {
         TRAVERSE_BRIDGE,
         LEAVE_BRIDGE,
         ROTATE_FOR_CHARGER_APPROACH,
-        BACKUP_ON_CHARGER
+        BACKUP_ON_CHARGER,
+        DRIVE_FORWARD
       } Mode;
       
       Result Init();

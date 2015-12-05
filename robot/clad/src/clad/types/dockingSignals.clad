@@ -71,6 +71,12 @@ message BridgeTraverseComplete
   bool didSucceed,
 }
 
+message ChargerMountComplete
+{
+  uint_32  timestamp,
+  bool didSucceed,
+}
+
 structure GoalPose
 {
   RobotPose pose,

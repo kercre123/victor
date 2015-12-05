@@ -130,6 +130,7 @@ union RobotToEngine {
   ChargerEvent               chargerEvent           = 0x13,
   SyncTimeAck                syncTimeAck            = 0x14,
   RobotPoked                 robotPoked             = 0x15,
+  ChargerMountComplete       chargerMountCompleted  = 0x16,
   
   // From WiFi 0x80 to 0xFE
   AnimationState             animState              = 0x80,
