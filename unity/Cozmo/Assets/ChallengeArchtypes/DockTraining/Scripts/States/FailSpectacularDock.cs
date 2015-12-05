@@ -10,17 +10,17 @@ namespace DockTraining {
 
     public override void Update() {
       base.Update();
-      PlayShockedAnimation();
+      _CurrentRobot.DriveWheels(25.0f, 10.0f);
     }
 
     private void PlayShockedAnimation() {
-      Debug.Log("FAIL SPECTACULAR");
       AnimationState animationState = new AnimationState();
       animationState.Initialize(AnimationName.kShocked, HandleAnimationDone);
       _StateMachine.SetNextState(animationState);
     }
 
     private void HandleAnimationDone(bool success) {
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StateMachine.SetNextState(new WaitForTargetState());
     }
   }
