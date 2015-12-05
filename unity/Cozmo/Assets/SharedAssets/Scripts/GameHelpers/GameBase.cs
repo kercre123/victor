@@ -42,14 +42,45 @@ public abstract class GameBase : MonoBehaviour {
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  public abstract void LoadMinigameConfig(MinigameConfigBase minigameConfigData);
-
   protected SharedMinigameView _SharedMinigameViewInstance;
 
-  public void Awake() {
-    // INGO: We might need to have some sort of callback when the 
-    // dialog is initialized
-    OpenMinigame();
+  /// <summary>
+  /// Order of operations:
+  /// Call InitializeMinigameObjects();
+  /// Call LoadMinigameConfig();
+  /// Create the minigame view and assign to _SharedMinigameViewInstance.
+  /// Call InitializeMinigameView();
+  /// </summary>
+  public void InitializeMinigame(MinigameConfigBase minigameConfigData) {
+    Initialize(minigameConfigData);
+
+    GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
+    _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
+
+    // Populate the view before opening it so that animations play correctly
+    InitializeMinigameView(_SharedMinigameViewInstance);
+    _SharedMinigameViewInstance.OpenView();
+  }
+
+  /// <summary>
+  /// Order of operations:
+  /// Call InitializeMinigameObjects();
+  /// Call InitializeMinigameData();
+  /// Create the minigame view and assign to _SharedMinigameViewInstance.
+  /// Call InitializeMinigameView();
+  /// </summary>
+  protected abstract void Initialize(MinigameConfigBase minigameConfigData);
+
+  /// <summary>
+  /// Order of operations:
+  /// Call InitializeMinigameObjects();
+  /// Call InitializeMinigameData();
+  /// Create the minigame view and assign to _SharedMinigameViewInstance.
+  /// Call InitializeMinigameView();
+  /// </summary>
+  protected virtual void InitializeMinigameView(SharedMinigameView minigameView) {
+    // Override and call create stuff here
+    CreateDefaultQuitButton(minigameView);
   }
 
   public void OnDestroy() {
@@ -70,11 +101,8 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance.EnableInteractivity();
   }
 
-  private void OpenMinigame() {
-    _SharedMinigameViewInstance = UIManager.OpenView(UIPrefabHolder.Instance.SharedMinigameViewPrefab) as SharedMinigameView;
-  }
-
   public void CloseMinigame() {
+    _SharedMinigameViewInstance.ViewCloseAnimationFinished += HandleMinigameViewCloseFinished;
     _SharedMinigameViewInstance.CloseView();
     _SharedMinigameViewInstance = null;
   }
@@ -84,16 +112,20 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
     }
+    HandleMinigameViewCloseFinished();
+  }
+
+  private void HandleMinigameViewCloseFinished() {
     Destroy(gameObject);
   }
 
   #region Default Quit button
 
-  protected void CreateDefaultQuitButton() {
-    _SharedMinigameViewInstance.CreateQuitButton();
-    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
-    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
+  protected void CreateDefaultQuitButton(SharedMinigameView minigameView) {
+    minigameView.CreateQuitButton();
+    minigameView.QuitMiniGameViewOpened += HandleQuitViewOpened;
+    minigameView.QuitMiniGameViewClosed += HandleQuitViewClosed;
+    minigameView.QuitMiniGameConfirmed += HandleQuitConfirmed;
   }
 
   private void HandleQuitViewOpened() {

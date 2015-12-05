@@ -19,11 +19,12 @@ namespace FollowCubeRotate {
 
     public float StartingAngle { get; set; }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
 
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeRotateGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
@@ -35,8 +36,6 @@ namespace FollowCubeRotate {
       LeftReached = false;
       RightReached = false;
       CurrentTarget = null;
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {

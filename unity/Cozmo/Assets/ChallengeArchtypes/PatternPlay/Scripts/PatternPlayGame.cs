@@ -28,11 +28,12 @@ namespace PatternPlay {
 
     private PatternPlayAudio patternPlayAudio_;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       DAS.Info(this, "Game Created");
       patternPlayStateMachine_.SetGameRef(this);
       patternPlayStateMachineManager_.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine_);
@@ -53,8 +54,6 @@ namespace PatternPlay {
       viewControllerInstance_.Initialize(patternMemory_);
 
       patternPlayAudio_ = GetComponent<PatternPlayAudio>();
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {

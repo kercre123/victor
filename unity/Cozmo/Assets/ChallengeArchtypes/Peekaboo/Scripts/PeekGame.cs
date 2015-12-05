@@ -19,9 +19,10 @@ namespace Peekaboo {
     private PeekGamePanel _GamePanelPrefab;
     private PeekGamePanel _GamePanel;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfigData) {
+    protected override void Initialize(MinigameConfigBase minigameConfigData) {
       PeekGameConfig config = (minigameConfigData as PeekGameConfig);
       _PeekGoalTarget = config.goal;
+      InitializeMinigameObjects();
     }
 
     public void PeekSuccess() {
@@ -32,7 +33,7 @@ namespace Peekaboo {
       }
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<PeekGamePanel>();
@@ -47,7 +48,6 @@ namespace Peekaboo {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
       SetSpeed();
-      CreateDefaultQuitButton();
     }
 
     void SetSpeed() {
