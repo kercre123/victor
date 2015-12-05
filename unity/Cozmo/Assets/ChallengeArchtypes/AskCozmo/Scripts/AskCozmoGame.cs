@@ -45,7 +45,7 @@ namespace AskCozmo {
 
     protected override void InitializeMinigameView(Cozmo.MinigameWidgets.SharedMinigameView minigameView) {
       base.InitializeMinigameView(minigameView);
-      minigameView.CreateCozmoStatusWidget(_AttemptsLeft);
+      CreateCozmoStatusWidget(minigameView, _AttemptsLeft);
     }
 
     protected override void CleanUpOnDestroy() {
