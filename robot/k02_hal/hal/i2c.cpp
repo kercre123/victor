@@ -32,38 +32,43 @@ static inline void start_transaction();
 static inline void SendEmergencyStop(void) {
   using namespace Anki::Cozmo::HAL;
 
-  // TODO: RETURN FROM THIS IF THE SDA LINE IS HIGH
-  
   GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
-  GPIO_SET(GPIO_I2C_SDA, PIN_I2C_SDA);
 
   // Drive PWDN and RESET to safe defaults
   GPIO_OUT(GPIO_I2C_SCL, PIN_I2C_SCL);
   SOURCE_SETUP(GPIO_I2C_SCL, SOURCE_I2C_SCL, SourceGPIO);
 
   // GPIO, High drive, open drain
-  PORTB_PCR1 = PORT_PCR_MUX(1) | 
-               PORT_PCR_ODE_MASK | 
-               PORT_PCR_DSE_MASK |
-               PORT_PCR_PE_MASK |
-               PORT_PCR_PS_MASK;
-
-  // Clock some shit, hope it's not wedged
-  for(int i = 0; i < 100; i++) {
+  GPIO_IN(GPIO_I2C_SDA, PIN_I2C_SDA);
+  SOURCE_SETUP(GPIO_I2C_SDA, PIN_I2C_SDA, SourceGPIO);
+  
+  // Clock the output until the data line goes high
+  for (int i = 0; i < 100 || !GPIO_READ(GPIO_I2C_SDA); i++) {
     GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
     MicroWait(10);
     GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
     MicroWait(10);
   }
-  
-  // Send a stop signal (Force slaves to deassert)
+
+  /*
   GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
-  GPIO_RESET(GPIO_I2C_SDA, PIN_I2C_SDA);
   MicroWait(10);
-  GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
+
+  GPIO_RESET(GPIO_I2C_SDA, PIN_I2C_SDA);
+  // Set the data line to drive high, open drain
+  PORTB_PCR1 = PORT_PCR_MUX(1) | 
+               PORT_PCR_ODE_MASK | 
+               PORT_PCR_DSE_MASK |
+               PORT_PCR_PE_MASK |
+               PORT_PCR_PS_MASK;
+  GPIO_OUT(GPIO_I2C_SDA, PIN_I2C_SDA);
+
+  MicroWait(10);
+  GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);  
   MicroWait(10);
   GPIO_SET(GPIO_I2C_SDA, PIN_I2C_SDA);
   MicroWait(10);
+  */
 }
 
 // HAL
@@ -99,7 +104,7 @@ namespace Anki
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, &data, sizeof(data), NULL);
         I2CCmd(I2C_DIR_READ | I2C_SEND_NACK | I2C_SEND_STOP, &resp, sizeof(resp), i2cRegCallback);
 
-        while(i2c_data_active)  ;
+        while(i2c_data_active) ;
         
         return resp;
       }
@@ -141,7 +146,7 @@ namespace Anki
         I2C0_C1 = I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK | I2C_C1_MST_MASK;
         
         // Enable IRQs
-        NVIC_SetPriority(I2C0_IRQn, 2);
+        NVIC_SetPriority(I2C0_IRQn, 0);
         I2CEnable();
       }
 
@@ -181,9 +186,11 @@ void I2C0_IRQHandler(void);
 
 void Anki::Cozmo::HAL::I2CEnable(void) {
   NVIC_EnableIRQ(I2C0_IRQn);
+  /*
   if (I2C0_S & I2C_S_IICIF_MASK) {
     I2C0_IRQHandler();
   }
+  */
 }
 
 void Anki::Cozmo::HAL::I2CDisable(void) {

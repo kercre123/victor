@@ -314,7 +314,6 @@ void FTM2_IRQHandler(void)
   dmaBuff_[0] = 1;
   
   HALExec(&buf[whichbuf][4], buflen, eof);
-  return ;
 
 #ifdef SERIAL_IMAGE
   static int pclkoffset = 0;

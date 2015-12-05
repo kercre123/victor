@@ -66,6 +66,7 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
+  I2CInit();
 
   DACInit();
   DACTone();
@@ -86,14 +87,8 @@ int main (void)
   
   SPIInit();
 
-  I2CInit();
   IMUInit();
   OLEDInit();
-
-  for (int i = 0; i < 100; i++) {
-    FacePrintf("\n%li", i);
-    MicroWait(10000);
-  }
 
   CameraInit();
   UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK

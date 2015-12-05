@@ -187,5 +187,5 @@ extern "C" void FacePrintf(const char *format, ...) {
   I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
   I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, FrameBuffer, px_ptr, &FinishFace);
   
-  while (!PrintComplete) ;
+  while (!PrintComplete)  __asm { WFI } ;
 }
