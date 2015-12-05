@@ -128,5 +128,14 @@
     },
     "stackTraining01.description" : {
         "translation" : "Teach Cozmo how to stack cubes, build a stack for cozmo so he can see how its done."
+    },
+    "cubeLifting01.title" : {
+        "translation" : "Cube Lifting Challenge"
+    },
+    "cubeLifting01.subtitle" : {
+        "translation" : "Cube Lifting Challenge Subtitle"
+    },
+    "cubeLifting01.description" : {
+        "translation" : "Teach Cozmo how to lift a block by raising and lowering it in front of him."
     }
 }
