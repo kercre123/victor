@@ -10,5 +10,7 @@ public struct CubeLiftingSetting {
 
 public class CubeLiftingConfig : MinigameConfigBase {
 
+  public int MaxAttempts = 3;
+
   public List<CubeLiftingSetting> Settings;
 }

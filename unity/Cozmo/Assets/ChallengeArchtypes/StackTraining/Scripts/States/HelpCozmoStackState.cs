@@ -51,7 +51,12 @@ namespace StackTraining {
               _BottomDocked = true;
             }
             else {
-              _CurrentRobot.SetLiftHeight(0.0f);
+              if(_Game.TryDecrementAttempts()) {
+                _CurrentRobot.SetLiftHeight(0.0f);
+              }
+              else {
+                HandleFailed();
+              }
             }
             _Moving = false;
           });
@@ -72,11 +77,17 @@ namespace StackTraining {
               HandleComplete();
             }
             else {
-              if (!topCube.Equals(_CurrentRobot.CarryingObject)) {
-                _BottomDocked = false;
-                _CurrentRobot.SetLiftHeight(0.0f);
+              if(_Game.TryDecrementAttempts()) {
+                
+                if (!topCube.Equals(_CurrentRobot.CarryingObject)) {
+                  _BottomDocked = false;
+                  _CurrentRobot.SetLiftHeight(0.0f);
+                }
+                _Moving = false;
               }
-              _Moving = false;
+              else {
+                HandleFailed();
+              }
             }
           });
         }
@@ -93,8 +104,18 @@ namespace StackTraining {
       _StateMachine.SetNextState(animState);
     }
 
+    private void HandleFailed() {
+      AnimationState animState = new AnimationState();
+      animState.Initialize(AnimationName.kShocked, HandleLoseComplete);
+      _StateMachine.SetNextState(animState);
+    }
+
     private void HandleWinComplete(bool success) {
       _Game.RaiseMiniGameWin();
+    }
+
+    private void HandleLoseComplete(bool success) {
+      _Game.RaiseMiniGameLose();
     }
 
     public override void Exit() {
