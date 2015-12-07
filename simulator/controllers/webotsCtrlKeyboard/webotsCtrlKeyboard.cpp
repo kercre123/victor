@@ -887,11 +887,17 @@ namespace Anki {
               case (s32)'R':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool useManualSpeed = false;
                 
-                SendTraverseSelectedObject(pathMotionProfile_,
+                if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendTraverseSelectedObject(pathMotionProfile_,
+                                             usePreDockPose,
+                                             useManualSpeed);
+                } else {
+                  SendMountSelectedCharger(pathMotionProfile_,
                                            usePreDockPose,
                                            useManualSpeed);
+                }
                 break;
               }
                 
