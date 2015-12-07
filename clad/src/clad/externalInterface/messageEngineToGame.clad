@@ -156,9 +156,9 @@ message RobotObservedFace {
 
 // RobotObservedMotion
 message RobotObservedMotion {
-    uint_32  timestamp,// Of the corresponding image
-    int_32   img_area, // Size of the region of detected motion, in pixels
-    int_16   img_x,    // Centroid of the motion region relative to image center, in pixels
+    uint_32  timestamp, // Of the corresponding image
+    uint_32   img_area, // Size of the region of detected motion, in pixels
+    int_16   img_x,     // Centroid of the motion region relative to image center, in pixels
     int_16   img_y,
     float_32 ground_area, // Amount of motion on the ground, as a fraction of the ground ROI (0 if none)
     int_16   ground_x,    // Centroid of the motion on the ground in robot coordinates, in mm

@@ -1452,7 +1452,7 @@ namespace Cozmo {
           
           msg.img_x = centroid.x();
           msg.img_y = centroid.y();
-          msg.img_area = static_cast<s32>(imgRegionArea);
+          msg.img_area = static_cast<u32>(imgRegionArea);
         } else {
           msg.img_area = 0;
           msg.img_x = 0;
