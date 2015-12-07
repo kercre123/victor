@@ -36,7 +36,11 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
-    // TODO: SCREEN
+
+    if (drop->droplet & screenDataValid) {
+      
+      // OLEDFeedFace(address?, drop->screenData);
+    }
 
     FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
     EnableAudio(drop->droplet & audioDataValid);
