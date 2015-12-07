@@ -144,7 +144,8 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Default Stamina Bar
 
-  private void CreateDefaultStaminaBar() {
+  protected void CreateCozmoStatusWidget(SharedMinigameView minigameView, int attemptsAllowed) {
+    minigameView.CreateCozmoStatusWidget(attemptsAllowed);
   }
 
   #endregion
