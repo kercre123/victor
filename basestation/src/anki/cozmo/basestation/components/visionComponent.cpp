@@ -338,7 +338,7 @@ namespace Cozmo {
           Lock();
           
           if(!_nextImg.IsEmpty()) {
-            PRINT_NAMED_INFO("VisionComponent.SetNextImage.DropedFrame",
+            PRINT_NAMED_INFO("VisionComponent.SetNextImage.DroppedFrame",
                              "Setting next image with t=%d, but existing next image from t=%d not yet processed.",
                              image.GetTimestamp(), _nextImg.GetTimestamp());
           }

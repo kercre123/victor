@@ -111,7 +111,8 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
         const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
         
         PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
-                         "Motion centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                         "Motion area=%d, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",
+                         motionObserved.img_area,
                          motionCentroid.x(), motionCentroid.y(),
                          relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
         
@@ -136,10 +137,6 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
         
         ASSERT_NAMED(nullptr != action, "Action pointer should not be null at this point");
         
-        _actionRunning = action->GetTag();
-        
-        ASSERT_NAMED(_actionRunning != 0, "Expecting action tag to be non-zero!");
-        
         robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
         
         if(!_initialReactionAnimPlayed) {
@@ -162,7 +159,11 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
           _actionRunning = compoundAction->GetTag();
           
           robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, compoundAction);
+        } else {
+          _actionRunning = action->GetTag();
         }
+        
+        ASSERT_NAMED(_actionRunning != 0, "Expecting action tag to be non-zero!");
       }
       break;
     }
