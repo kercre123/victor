@@ -41,8 +41,11 @@ namespace Anki {
     Rectangle(const Point2<T>& upperLeft, const Point2<T>& lowerRight);
     
     // Construct bounding boxes:
-    Rectangle(const Quadrilateral<2,T>& quad);
-    Rectangle(const std::vector<Point<2,T> >& points);
+    template<typename T_other>
+    Rectangle(const Quadrilateral<2,T_other>& quad);
+    
+    template<typename T_other>
+    Rectangle(const std::vector<Point<2,T_other> >& points);
     
     template<size_t NumPoints>
     Rectangle(const std::array<Point<2,T>,NumPoints>& points);
@@ -66,6 +69,11 @@ namespace Anki {
     // Get x+width/2 or y+height/2
     inline T GetXmid()   const;
     inline T GetYmid()   const;
+
+    inline Point<2,T> GetTopLeft() const;
+    inline Point<2,T> GetTopRight() const;
+    inline Point<2,T> GetBottomLeft() const;
+    inline Point<2,T> GetBottomRight() const;
     
     void GetQuad(Quadrilateral<2,T>& quad) const;
     

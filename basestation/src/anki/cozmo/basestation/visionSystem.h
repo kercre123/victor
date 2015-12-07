@@ -222,9 +222,13 @@ namespace Cozmo {
     
     // Previous image for doing background subtraction, e.g. for saliency
     Vision::ImageRGB _prevImage;
+    Vision::ImageRGB _prevPrevImage;
     TimeStamp_t      _lastMotionTime = 0;
-    
-    
+    //Vision::Image    _prevRatioImg;
+    Anki::Point2f    _prevMotionCentroid;
+    Anki::Point2f    _prevGroundMotionCentroid;
+    f32              _prevCentroidFilterWeight = 0.f;
+    f32              _prevGroundCentroidFilterWeight = 0.f;
     //
     // Formerly in Embedded VisionSystem "private" namespace:
     //

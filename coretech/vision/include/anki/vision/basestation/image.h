@@ -18,6 +18,7 @@
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"
+#include "anki/common/basestation/math/rect.h"
 
 #include "anki/vision/CameraSettings.h"
 #include "anki/vision/basestation/colorPixelTypes.h"
@@ -32,6 +33,7 @@ namespace Vision {
     ImageBase() : Array2d<T>() { }
     ImageBase(s32 nrows, s32 ncols) : Array2d<T>(nrows, ncols) { }
     ImageBase(s32 nrows, s32 ncols, T* data) : Array2d<T>(nrows, ncols, data) { }
+    ImageBase(Array2d<T>&& array) : Array2d<T>(array) { }
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<T>
@@ -71,6 +73,10 @@ namespace Vision {
     
     virtual s32 GetNumChannels() const = 0;
     
+  protected:
+    template<typename DerivedType>
+    DerivedType GetROI(const Rectangle<s32>& roiRect);
+
   private:
     TimeStamp_t     _timeStamp;
     
@@ -91,12 +97,19 @@ namespace Vision {
     // Wrap image "header" around given data pointer: no allocation.
     Image(s32 nrows, s32 ncols, u8* data);
     
+    Image(const ImageBase<u8>&& imageBase) : ImageBase<u8>(imageBase) { }
+    
+    Image GetROI(const Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<u8>
     Image(cv::Mat_<u8>& cvMat);
     using Array2d<u8>::get_CvMat_;
 #   endif
 
+    // Reference counting assignment (does not copy):
+    Image& operator= (const ImageBase<u8> &other);
+    
     s32 GetConnectedComponents(Array2d<s32>& labelImage,
                                std::vector<std::vector< Point2<s32> > >& regionPoints) const;
     
@@ -114,6 +127,7 @@ namespace Vision {
   public:
     ImageRGB();
     ImageRGB(s32 nrows, s32 ncols); // allocates
+    ImageRGB(const ImageBase<PixelRGB>& imageBase) : ImageBase<PixelRGB>(imageBase) { }
     
     // No allocation, just wraps header around given data.
     // Assumes data is nrows*ncols*3 in length!
@@ -124,6 +138,8 @@ namespace Vision {
     
     // Replicates grayscale image across all three channels
     ImageRGB(const Image& imageGray);
+    
+    ImageRGB GetROI(const Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
     Image ToGray() const;
     
@@ -138,6 +154,7 @@ namespace Vision {
   public:
     ImageRGBA();
     ImageRGBA(s32 nrows, s32 ncols); // allocates
+    ImageRGBA(const ImageBase<PixelRGBA>& imageBase) : ImageBase<PixelRGBA>(imageBase) { }
     
     // No allocation, just wraps a header around given data.
     // Assumes data_32bpp is nrows*ncols in length!
@@ -152,6 +169,10 @@ namespace Vision {
 #   endif
     
     Image ToGray() const;
+    
+    ImageRGBA GetROI(const Rectangle<s32>& roiRect) {
+      return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);
+    }
     
     virtual s32 GetNumChannels() const override { return 3; }
     
@@ -169,6 +190,15 @@ namespace Vision {
   template<typename T>
   inline TimeStamp_t ImageBase<T>::GetTimestamp() const {
     return _timeStamp;
+  }
+  
+  template<typename T>
+  template<typename DerivedType>
+  DerivedType ImageBase<T>::GetROI(const Rectangle<s32>& roiRect)
+  {
+    DerivedType roi(Array2d<T>::GetROI(roiRect));
+    roi.SetTimestamp(GetTimestamp());
+    return roi;
   }
   
 } // namespace Vision

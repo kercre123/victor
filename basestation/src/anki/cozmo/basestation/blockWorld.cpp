@@ -951,7 +951,11 @@ namespace Cozmo {
         }
       }
       
-      if(matchingObjects.size() == 1) {
+      if(matchingObjects.empty()) {
+        // Nothing to do: there are current observed objects, but none of them
+        // match the type of the object we're tracking
+        return RESULT_OK;
+      } else if(matchingObjects.size() == 1) {
         // Special case: only one matching type. Just use that one
         observedObject = matchingObjects.front();
       } else if(matchingObjects.size() > 1) {

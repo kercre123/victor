@@ -877,15 +877,14 @@ namespace Anki {
       Radians currentAngle;
       _inPosition = IsBodyInPosition(robot, currentAngle);
       
-      if(_inPosition) {
-        // Already "in position" according to the turn tolerance, so just move the
-        // eyes
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        const Radians angleDiff = _targetAngle - currentAngle;
-        const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / SCREEN_SIZE[0]);
-        robot.ShiftEyes(xPixShift, 0, 66); // TODO: How to set the duration?
-      } else {
+      // Move the eyes
+      // Note: assuming screen is about the same x distance from the neck joint as the head cam
+      const Radians angleDiff = _targetAngle - currentAngle;
+      const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+      const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (2*SCREEN_SIZE[0]));
+      _eyeShiftTag = robot.ShiftEyes(xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, true); // TODO: How to set the duration?
+      
+      if(!_inPosition) {
         RobotInterface::SetBodyAngle setBodyAngle;
         setBodyAngle.angle_rad             = _targetAngle.ToFloat();
         setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
@@ -898,6 +897,14 @@ namespace Anki {
       return ActionResult::SUCCESS;
     }
 
+    void TurnInPlaceAction::SetTolerance(const Anki::Radians &angleTol_rad) {
+      _angleTolerance = angleTol_rad.getAbsoluteVal();
+      if(_angleTolerance == 0.f) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.SetTolerance.ZeroTolerance",
+                            "Tolerance must be > 0. Setting to 1 degree.");
+        _angleTolerance = DEG_TO_RAD(1);
+      }
+    }
     
     bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
     {
@@ -928,6 +935,11 @@ namespace Anki {
       }
       
       return result;
+    }
+    
+    void TurnInPlaceAction::Cleanup(Robot& robot)
+    {
+      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_eyeShiftTag);
     }
 
 #pragma mark ---- DriveStraightAction ----
@@ -1468,6 +1480,12 @@ namespace Anki {
         _headAngle = MAX_HEAD_ANGLE;
       }
       
+      if(_angleTolerance == 0.f) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.ZeroTolerance",
+                            "Tolerance must be > 0. Setting to 1 degree.");
+        _angleTolerance = DEG_TO_RAD(1);
+      }
+      
       if(_variability > 0) {
         _headAngle += _rng.RandDblInRange(-_variability.ToDouble(),
                                                        _variability.ToDouble());
@@ -1489,15 +1507,14 @@ namespace Anki {
       
       _inPosition = IsHeadInPosition(robot);
       
-      if(_inPosition) {
-        // If we are already "in position" according to the tolerance, just move the
-        // eyes
-        // Note: assuming screen is about the same x distance from the neck joint as the head cam
-        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
-        const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / SCREEN_SIZE[1]);
-        robot.ShiftEyes(0, yPixShift, 66); // TODO: How to set the duration of the eye shift?
-      } else {
+      // Lead with the eyes
+      // Note: assuming screen is about the same x distance from the neck joint as the head cam
+      Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
+      const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+      const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
+      _eyeShiftTag = robot.ShiftEyes(0, yPixShift, 4*IKeyFrame::SAMPLE_LENGTH_MS, true); // TODO: How to set the duration of the eye shift?
+      
+      if(!_inPosition) {
         if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
                                                                  _maxSpeed_radPerSec, _accel_radPerSec2))
         {
@@ -1528,6 +1545,11 @@ namespace Anki {
       }
       
       return result;
+    }
+    
+    void MoveHeadToAngleAction::Cleanup(Robot& robot)
+    {
+      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_eyeShiftTag);
     }
          
 #pragma mark ---- MoveLiftToHeightAction ----

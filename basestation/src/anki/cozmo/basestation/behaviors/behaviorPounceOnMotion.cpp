@@ -100,7 +100,7 @@ void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& even
                            dist);
         }
       }
-      else {
+      else if(_numValidPouncePoses > 0) {
         PRINT_NAMED_INFO("BehaviorPounceOnMotion.IgnorePose", "got pose, but ground plane area is %f, which is too low",
                          motionObserved.ground_area);
       }
