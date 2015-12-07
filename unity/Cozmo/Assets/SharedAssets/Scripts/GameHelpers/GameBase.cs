@@ -49,8 +49,11 @@ public abstract class GameBase : MonoBehaviour {
   protected int MaxAttempts {
     get { return _MaxAttempts; }
     set {
-      _MaxAttempts = value;
-      _SharedMinigameViewInstance.SetMaxCozmoAttempts(_MaxAttempts);
+      if (value > 0) {
+        _MaxAttempts = value;
+        _SharedMinigameViewInstance.SetMaxCozmoAttempts(_MaxAttempts);
+        AttemptsLeft = _MaxAttempts;
+      }
     }
   }
 
@@ -59,8 +62,10 @@ public abstract class GameBase : MonoBehaviour {
   protected int AttemptsLeft {
     get { return _AttemptsLeft; }
     set {
-      _AttemptsLeft = value;
-      _SharedMinigameViewInstance.SetCozmoAttemptsLeft(_AttemptsLeft);
+      if (value >= 0 && value <= _MaxAttempts) {
+        _AttemptsLeft = value;
+        _SharedMinigameViewInstance.SetCozmoAttemptsLeft(_AttemptsLeft);
+      }
     }
   }
 
@@ -160,4 +165,10 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   #endregion
+
+  public bool TryDecrementAttempts() {
+    AttemptsLeft--;
+
+    return (AttemptsLeft > 0);
+  }
 }

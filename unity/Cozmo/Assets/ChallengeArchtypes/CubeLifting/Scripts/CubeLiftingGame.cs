@@ -26,7 +26,6 @@ namespace CubeLifting {
       CurrentRobot.SetHeadAngle(0);
 
       MaxAttempts = _Config.MaxAttempts;
-      AttemptsLeft = MaxAttempts;
     }
 
     void Update() {
@@ -67,12 +66,6 @@ namespace CubeLifting {
       _LastSelectedId = id;
 
       return id;
-    }
-
-    public bool TryDecrementAttempts() {
-      AttemptsLeft--;
-
-      return (AttemptsLeft > 0);
     }
 
     protected override void CleanUpOnDestroy() {

@@ -32,7 +32,6 @@ namespace StackTraining {
       var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
 
       MaxAttempts = config.MaxAttempts;
-      AttemptsLeft = MaxAttempts;
 
       InitializeMinigameObjects();
     }
@@ -70,12 +69,6 @@ namespace StackTraining {
         
       _BottomCubeId = CurrentRobot.LightCubes.Keys.First();
       _TopCubeId = CurrentRobot.LightCubes.Keys.Last();
-    }
-
-    public bool TryDecrementAttempts() {
-      AttemptsLeft--;
-
-      return (AttemptsLeft > 0);
     }
   }
 
