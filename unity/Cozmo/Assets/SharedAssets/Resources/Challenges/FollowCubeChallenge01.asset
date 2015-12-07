@@ -23,5 +23,6 @@ MonoBehaviour:
   _ChallengeReqs:
     ChallengeGateKeys:
     - FollowCubeRotateChallenge
+    - DockTrainingChallenge01
     StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: bc9420ca9e5f74845a9dce0693807a6f, type: 2}
