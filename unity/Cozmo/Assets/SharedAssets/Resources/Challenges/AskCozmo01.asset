@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 189650, guid: 3f51dcc1802bc49b4b436d61e498310b, type: 2}
   _ChallengeID: AskCozmo01
-  _EnableHubWorldChallenge: 1
+  _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: askCozmo01.title
   _ChallengeSubtitleLocKey: askCozmo01.subtitle
