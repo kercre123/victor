@@ -26,17 +26,21 @@ public class InitialCubesState : State {
   public override void Update() {
     base.Update();
 
-    int visibleCubes = 0;
+    int validCubes = 0;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      for (int j = 0; j < lightCube.Value.Lights.Length; ++j) {
-        lightCube.Value.Lights[j].OnColor = CozmoPalette.ColorToUInt(Color.blue);
+
+      bool validCube = !_CubesMustBeVisible || lightCube.Value.MarkersVisible;
+
+      if (validCube) { 
+        lightCube.Value.SetLEDs(Color.blue);
+        validCubes++;
       }
-      if (lightCube.Value.MarkersVisible) {
-        visibleCubes++;
+      else {
+        lightCube.Value.TurnLEDsOff();
       }
     }
 
-    if ((_CubesMustBeVisible ? visibleCubes : _CurrentRobot.LightCubes.Count) >= _CubesRequired) {
+    if (validCubes >= _CubesRequired) {
       _StateMachine.SetNextState(_NextState);
     }
   }
