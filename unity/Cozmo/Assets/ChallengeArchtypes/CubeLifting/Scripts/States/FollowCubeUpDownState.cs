@@ -91,9 +91,19 @@ namespace CubeLifting {
       }
 
       if ((_CubeInvisibleTimer > 10.0f || _CubeOutOfBoundsTimer > 10.0f) && _StartedLifting) {
-        AnimationState animState = new AnimationState();
-        animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
-        _StateMachine.SetNextState(animState);
+
+        var game = (CubeLiftingGame)_StateMachine.GetGame();
+
+        if (game.TryDecrementAttempts()) {
+          AnimationState animState = new AnimationState();
+          animState.Initialize(AnimationName.kFinishTabCubeLose, HandleLifeLostAnimationDone);
+          _StateMachine.SetNextState(animState);
+        }
+        else {          
+          AnimationState animState = new AnimationState();
+          animState.Initialize(AnimationName.kShocked, HandleLoseAnimationDone);
+          _StateMachine.SetNextState(animState);
+        }
         return; 
       }
 
@@ -142,6 +152,11 @@ namespace CubeLifting {
 
     private void HandleLoseAnimationDone(bool success) {
       _StateMachine.GetGame().RaiseMiniGameLose();
+    }
+
+    private void HandleLifeLostAnimationDone(bool success) {
+      // restart this state
+      _StateMachine.SetNextState(new FollowCubeUpDownState(_Settings, _Index, _SelectedCubeId));
     }
 
     public override void Exit() {
