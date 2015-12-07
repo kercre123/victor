@@ -98,6 +98,13 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
       PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d reported it completed traversing a bridge.", GetID());
       //SetOnBridge(false);
     }));
+  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
+    [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
+      if (message.GetData().Get_chargerMountCompleted().didSucceed) {
+        SetPoseOnCharger();
+      }
+    }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::mainCycleTimeError,
     [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
       const RobotInterface::MainCycleTimeError& payload = message.GetData().Get_mainCycleTimeError();
@@ -387,7 +394,7 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
     PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OnCharger", "");
     
     // Stop whatever we were doing
-    GetActionList().Cancel();
+    //GetActionList().Cancel();
     
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OffCharger", "");

@@ -383,40 +383,64 @@ namespace Anki {
       // If wheels aren't moving but a sudden rotation about z-axis was detected
       void DetectPoke()
       {
-        static TimeStamp_t peakStartTime = 0;
-        static TimeStamp_t peakMaxTime = 0;
+        static TimeStamp_t peakGyroStartTime = 0;
+        static TimeStamp_t peakGyroMaxTime = 0;
+        static TimeStamp_t peakAccelStartTime = 0;
+        static TimeStamp_t peakAccelMaxTime = 0;
         static TimeStamp_t lastPokeDetectTime = 0;
         const u32 pokeDetectRefractoryPeriod_ms = 1000;
         
         // Do nothing during refractory period
         TimeStamp_t currTime = HAL::GetTimeStamp();
         if (currTime - lastPokeDetectTime < pokeDetectRefractoryPeriod_ms) {
+          peakGyroStartTime = currTime;
+          peakAccelStartTime = currTime;
           return;
         }
         
         // Only check for poke when wheels are not being driven
         if (!WheelController::AreWheelsMoving()) {
 
-          // Check for a gyro rotation
-          const f32 peakGyroThresh = 4.5f;
-          const u32 maxPeakDuration_ms = 50;
+          // Check for a gyro rotation spike
+          const f32 peakGyroThresh = 4.f;
+          const u32 maxGyroPeakDuration_ms = 75;
           if (std::fabsf(gyro_robot_frame_filt[2]) > peakGyroThresh) {
-            peakMaxTime = currTime;
+            peakGyroMaxTime = currTime;
           } else if (std::fabsf(gyro_robot_frame_filt[2]) < peakGyroThresh) {
-            if ((peakMaxTime > peakStartTime) && (peakMaxTime - peakStartTime < maxPeakDuration_ms)) {
-              //PRINT("POKE DETECTED\n");
-              peakStartTime = currTime;
+            if ((peakGyroMaxTime > peakGyroStartTime) && (peakGyroMaxTime - peakGyroStartTime < maxGyroPeakDuration_ms)) {
+              PRINT("POKE DETECTED (GYRO)\n");
+              peakGyroStartTime = currTime;
               lastPokeDetectTime = currTime;
 
               RobotInterface::RobotPoked m;
               RobotInterface::SendMessage(m);
             } else {
-              peakStartTime = currTime;
+              peakGyroStartTime = currTime;
             }
           }
           
+          // Check for accel spike
+          const f32 peakAccelThresh = 5000.f;
+          const u32 maxAccelPeakDuration_ms = 75;
+          if (std::fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
+            peakAccelMaxTime = currTime;
+          } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
+            if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
+              PRINT("POKE DETECTED (ACCEL)\n");
+              peakAccelStartTime = currTime;
+              lastPokeDetectTime = currTime;
+              
+              RobotInterface::RobotPoked m;
+              RobotInterface::SendMessage(m);
+            } else {
+              peakAccelStartTime = currTime;
+            }
+          }
+
+          
         } else {
-          peakStartTime = currTime;
+          peakGyroStartTime = currTime;
+          peakAccelStartTime = currTime;
         }
       }
       

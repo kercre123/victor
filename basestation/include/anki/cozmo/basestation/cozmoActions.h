@@ -1085,6 +1085,30 @@ namespace Anki {
       
     };
     
+    class DriveToAndMountChargerAction : public CompoundActionSequential
+    {
+    public:
+      DriveToAndMountChargerAction(const ObjectID& objectID,
+                                   const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
+                                   const bool useManualSpeed = false)
+      : CompoundActionSequential({
+        new DriveToObjectAction(objectID,
+                                PreActionPose::ENTRY,
+                                motionProfile,
+                                0,
+                                false,
+                                0,
+                                useManualSpeed),
+        new MountChargerAction(objectID, useManualSpeed)})
+      {
+        
+      }
+      
+      virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
+      
+    };
+
+    
     
     class PlayAnimationAction : public IAction
     {

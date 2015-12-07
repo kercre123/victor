@@ -64,19 +64,19 @@ namespace Anki
       0.00176247f,
       -0.00123075f
     };    
-#elif defined(COZMO_ROBOT_3A9E)
-    // Calibration values from Sept 1, 2015 - on 4.1 robot headboard with SSID 3a97
+#elif defined(COZMO_ROBOT_BRYONSHEAD)
+    // Calibration values from Dec 4, 2015 - on 4.0 robot headboard with SSID BryonsHead
     const u16 HEAD_CAM_CALIB_WIDTH  = 400;
     const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.065116921f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.867229568f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 197.801561858f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 151.672492176f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 277.822223821f;
+    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 279.547362811f;
+    const f32 HEAD_CAM_CALIB_CENTER_X       = 203.035206475f;
+    const f32 HEAD_CAM_CALIB_CENTER_Y       = 144.106481143f;
     const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.11281163f,
-      -0.31673507f,
-      -0.00226334f,
-      0.00200109f
+      0.192541876f,
+      -0.708972973f,
+      -0.000604805681f,
+      -0.000706399739f
     };
 #else
 #error Need to define which robot. (e.g. COZMO_ROBOT_3A94)
