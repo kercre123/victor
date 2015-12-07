@@ -24,13 +24,19 @@ namespace Cozmo {
       }
 
       public Sequence OpenAnimationSequence() {
-        // TODO
-        return null;
+        Sequence open = DOTween.Sequence();
+        open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 500, 
+          this.transform.localPosition.y - 300, this.transform.localPosition.z),
+          0.25f).From().SetEase(Ease.OutQuad));
+        return open;
       }
 
       public Sequence CloseAnimationSequence() {
-        // TODO
-        return null;
+        Sequence close = DOTween.Sequence();
+        close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
+          this.transform.localPosition.y - 300, this.transform.localPosition.z),
+          0.25f).SetEase(Ease.OutQuad));
+        return close;
       }
 
       public void EnableInteractivity() {
