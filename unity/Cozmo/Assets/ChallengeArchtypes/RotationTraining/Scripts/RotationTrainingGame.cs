@@ -29,7 +29,7 @@ namespace RotationTraining {
 
       // TODO: Create a countdown state so that the player has a few seconds to prep.
 
-      initCubeState.InitialCubeRequirements(new RotateState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new RotateState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 

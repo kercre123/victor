@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CubeLifting {
 
@@ -8,7 +9,6 @@ namespace CubeLifting {
 
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
-    private int _LastSelectedId = -1;
     private CubeLiftingConfig _Config;
     private int _AttemptsLeft;
 
@@ -18,7 +18,7 @@ namespace CubeLifting {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("CubeLiftingStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new FollowCubeUpDownState(_Config.Settings, 0), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new FollowCubeUpDownState(_Config.Settings, 0), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
@@ -44,34 +44,11 @@ namespace CubeLifting {
 
     public int PickCube() {
 
-      // for weird edge case of if batteries die and there's only one cube left.
-      if (CurrentRobot.LightCubes.Count == 1) {
-        foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
-          return lightCube.Key;
-        }
+      foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
+        lightCube.Value.SetLEDs(0);
       }
 
-      int id = -2;
-
-      do {
-        int index = Random.Range(0, CurrentRobot.LightCubes.Count);
-        int i = 0;
-
-        foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
-          if (index == i) {
-            id = lightCube.Key;
-            lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
-          }
-          else {
-            lightCube.Value.SetLEDs(0);
-          }
-          i++;
-        }
-      } while (id == _LastSelectedId);
-
-      _LastSelectedId = id;
-
-      return id;
+      return CurrentRobot.LightCubes.First(x => x.Value.MarkersVisible).Key;
     }
 
     public bool TryDecrementAttempts() {
