@@ -75,13 +75,10 @@ namespace CubeLifting {
     }
 
     public bool TryDecrementAttempts() {
-      if (_AttemptsLeft > 0) {
-        _AttemptsLeft--;
-        _SharedMinigameViewInstance.UpdateCozmoAttempts(_AttemptsLeft);
-        return true;
-      }
+      _AttemptsLeft--;
+      _SharedMinigameViewInstance.UpdateCozmoAttempts(_AttemptsLeft);
 
-      return false;
+      return (_AttemptsLeft > 0);
     }
 
     protected override void CleanUpOnDestroy() {
