@@ -329,6 +329,12 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+
+      // how long this action should take (which, in turn, effects lift speed)
+      void SetDuration(float duration_sec) { _duration = duration_sec; }
+      
+      void SetMaxLiftSpeed(float speedRadPerSec) { _maxLiftSpeedRadPerSec = speedRadPerSec; }
+      void SetLiftAccel(float accelRadPerSec2) { _liftAccelRacPerSec2 = accelRadPerSec2; }
       
     protected:
       
@@ -342,13 +348,16 @@ namespace Anki {
       
       bool IsLiftInPosition(const Robot& robot) const;
       
-      f32          _height_mm;
-      f32          _heightTolerance;
-      f32          _variability;
-      f32          _heightWithVariation;
+      f32         _height_mm;
+      f32         _heightTolerance;
+      f32         _variability;
+      f32         _heightWithVariation;
+      f32         _duration = 0.0f; // 0 means "as fast as it can"
+      f32         _maxLiftSpeedRadPerSec = 10.0f;
+      f32         _liftAccelRacPerSec2 = 20.0f;
       
-      std::string  _name;
-      bool         _inPosition;
+      std::string _name;
+      bool        _inPosition;
       
     }; // class MoveLiftToHeightAction
     

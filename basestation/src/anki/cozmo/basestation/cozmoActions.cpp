@@ -1674,8 +1674,10 @@ namespace Anki {
       _inPosition = IsLiftInPosition(robot);
       
       if(!_inPosition) {
-        // TODO: Add ability to specify speed/accel
-        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation, 10, 20) != RESULT_OK) {
+        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
+                                                     _maxLiftSpeedRadPerSec,
+                                                     _liftAccelRacPerSec2,
+                                                     _duration) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -2230,7 +2232,7 @@ namespace Anki {
               blockWorld.DeleteObject(objectInOriginalPose->GetID());
             }
             robot.UnSetCarryingObjects();
-            
+
             PRINT_STREAM_INFO("PickupObjectAction.Verify",
                               "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
