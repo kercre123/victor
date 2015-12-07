@@ -175,10 +175,10 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
       // If the action we were running completes, allow us to respond to motion again
       if(completedAction.idTag == _actionRunning) {
         _actionRunning = 0;
-      }
-      
-      if(completedAction.actionType == RobotActionType::COMPOUND) {
-        _initialReactionAnimPlayed = true;
+        
+        if(completedAction.actionType == RobotActionType::COMPOUND) {
+          _initialReactionAnimPlayed = true;
+        }
       }
       
       break;
