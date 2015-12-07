@@ -42,7 +42,27 @@ public abstract class GameBase : MonoBehaviour {
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  protected SharedMinigameView _SharedMinigameViewInstance;
+  private SharedMinigameView _SharedMinigameViewInstance;
+
+  private int _MaxAttempts = -1;
+
+  protected int MaxAttempts {
+    get { return _MaxAttempts; }
+    set {
+      _MaxAttempts = value;
+      _SharedMinigameViewInstance.SetMaxCozmoAttempts(_MaxAttempts);
+    }
+  }
+
+  private int _AttemptsLeft = -1;
+
+  protected int AttemptsLeft {
+    get { return _AttemptsLeft; }
+    set {
+      _AttemptsLeft = value;
+      _SharedMinigameViewInstance.SetCozmoAttemptsLeft(_AttemptsLeft);
+    }
+  }
 
   /// <summary>
   /// Order of operations:
@@ -52,13 +72,12 @@ public abstract class GameBase : MonoBehaviour {
   /// Call InitializeMinigameView();
   /// </summary>
   public void InitializeMinigame(MinigameConfigBase minigameConfigData) {
-    Initialize(minigameConfigData);
-
     GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
     _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
+    Initialize(minigameConfigData);
 
     // Populate the view before opening it so that animations play correctly
-    InitializeMinigameView(_SharedMinigameViewInstance);
+    InitializeMinigameView();
     _SharedMinigameViewInstance.OpenView();
   }
 
@@ -78,9 +97,9 @@ public abstract class GameBase : MonoBehaviour {
   /// Create the minigame view and assign to _SharedMinigameViewInstance.
   /// Call InitializeMinigameView();
   /// </summary>
-  protected virtual void InitializeMinigameView(SharedMinigameView minigameView) {
+  protected virtual void InitializeMinigameView() {
     // Override and call create stuff here
-    CreateDefaultQuitButton(minigameView);
+    CreateDefaultQuitButton();
   }
 
   public void OnDestroy() {
@@ -121,11 +140,11 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Default Quit button
 
-  protected void CreateDefaultQuitButton(SharedMinigameView minigameView) {
-    minigameView.CreateQuitButton();
-    minigameView.QuitMiniGameViewOpened += HandleQuitViewOpened;
-    minigameView.QuitMiniGameViewClosed += HandleQuitViewClosed;
-    minigameView.QuitMiniGameConfirmed += HandleQuitConfirmed;
+  protected void CreateDefaultQuitButton() {
+    _SharedMinigameViewInstance.CreateQuitButton();
+    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
+    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
   }
 
   private void HandleQuitViewOpened() {
@@ -138,14 +157,6 @@ public abstract class GameBase : MonoBehaviour {
 
   private void HandleQuitConfirmed() {
     RaiseMiniGameQuit();
-  }
-
-  #endregion
-
-  #region Default Stamina Bar
-
-  protected void CreateCozmoStatusWidget(SharedMinigameView minigameView, int attemptsAllowed) {
-    minigameView.CreateCozmoStatusWidget(attemptsAllowed);
   }
 
   #endregion
