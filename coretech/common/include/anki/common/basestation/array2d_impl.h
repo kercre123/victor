@@ -25,6 +25,7 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 
 #include "anki/common/basestation/array2d.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "util/logging/logging.h"
 
 #include "anki/common/types.h"
@@ -79,6 +80,12 @@ namespace Anki
   {
   } // Constructor: Array2d(rows, cols, &data)
   
+  template<typename T>
+  template<typename Trect>
+  Array2d<T> Array2d<T>::GetROI(const Rectangle<Trect>& roiRect)
+  {
+    return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_() & cv::Rect_<Trect>(0,0,GetNumCols(),GetNumRows())));
+  }
   
   template<typename T>
   void Array2d<T>::CopyTo(Array2d<T> &other) const
