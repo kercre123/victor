@@ -12,17 +12,33 @@ namespace AnimationTool
         protected bool right;
         protected bool up;
         protected bool down;
+        protected double targetXVal;
+        protected double targetYVal;
+        // we only nudge the target one delta, and don't have a real large x,y target
+        protected bool targetNudge;
 
         protected List<MoveSelectedDataPoints> moveSelectedDataPoints;
 
+        public MoveSelectedDataPointsOfSelectedCharts(List<ChartForm> chartForms, bool left, bool right, bool up, bool down, double targetXVal, double targetYVal)
+        {
+            this.left = left;
+            this.right = right;
+            this.up = up;
+            this.down = down;
+            this.targetXVal = targetXVal;
+            this.targetYVal = targetYVal;
+            this.targetNudge = false;
+            Initialize(chartForms);
+        }
         public MoveSelectedDataPointsOfSelectedCharts(List<ChartForm> chartForms, bool left, bool right, bool up, bool down)
         {
             this.left = left;
             this.right = right;
             this.up = up;
             this.down = down;
-
-            Initialize(chartForms);
+            this.targetXVal = -1.0;
+            this.targetYVal = -1.0;
+            this.targetNudge = true;
         }
 
         private void Initialize(List<ChartForm> chartForms)
@@ -44,7 +60,14 @@ namespace AnimationTool
                     }
                     else // else if XYchart
                     {
-                        moveSelectedDataPoints.Add(new MoveSelectedDataPoints(chartForm.chart, left, right, up, down));
+                        if (this.targetNudge)
+                        {
+                            moveSelectedDataPoints.Add(new MoveSelectedDataPoints(chartForm.chart, left, right, up, down));
+                        }
+                        else
+                        {
+                            moveSelectedDataPoints.Add(new MoveSelectedDataPoints(chartForm.chart, left, right, up, down, targetXVal, targetYVal));
+                        }
                     }
                 }
             }
@@ -56,7 +79,7 @@ namespace AnimationTool
 
             for (int i = 0; i < moveSelectedDataPoints.Count; ++i) // find the smallest valid change in x and y
             {
-                if(!moveSelectedDataPoints[i].Try())
+                if (!moveSelectedDataPoints[i].Try())
                 {
                     return false;
                 }

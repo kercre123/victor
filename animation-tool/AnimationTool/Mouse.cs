@@ -39,23 +39,13 @@ namespace AnimationTool
 
             curChartArea.RecalculateAxesScale();
 
-            double maxX = curChartArea.AxisX.ValueToPixelPosition(curChartArea.AxisX.Maximum);
-            double minX = curChartArea.AxisX.ValueToPixelPosition(curChartArea.AxisX.Minimum);
-            double mouseX = e.X > maxX ? maxX : e.X < minX ? minX : e.X;
-
-            double mouseXValue = GetPixelPositionToValue(curChartArea.AxisX, mouseX, 1);
-
-            if (e.Y < curChart.Size.Height && e.Y > -1)
+            // We can just do the built in hit test, no need to do crazy pixel to value conversions everywhere.
+            HitTestResult result = curChart.HitTest(e.X, e.Y, ChartElementType.DataPoint);
+            if (result.ChartElementType == ChartElementType.DataPoint)
             {
-                for (int i = 1; i < curPoints.Count; ++i) // do not select first point
+                if (result.PointIndex >= 1 && result.PointIndex < curPoints.Count)
                 {
-                    DataPoint dp = curPoints[i];
-
-                    if (Math.Abs(Math.Round(mouseXValue - dp.XValue, MoveSelectedDataPoints.DELTA_TIME_PRECISION)) < MoveSelectedDataPoints.DELTA_X)
-                    {
-                        curDataPoint = dp;
-                        break;
-                    }
+                    curDataPoint = curPoints[result.PointIndex];
                 }
             }
         }
@@ -94,24 +84,14 @@ namespace AnimationTool
                     double mouseXValue = GetPixelPositionToValue(curChartArea.AxisX, mouseX, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
                     double mouseYValue = GetPixelPositionToValue(curChartArea.AxisY, mouseY, 0);
 
-                    int count = 0;
-
+                    // Let the action handle a real snap to grid, don't just loop 100 times
                     bool left = curDataPoint.XValue > mouseXValue;
                     bool right = curDataPoint.XValue < mouseXValue;
                     bool up = curDataPoint.YValues[0] < mouseYValue;
                     bool down = curDataPoint.YValues[0] > mouseYValue;
-
-                    while ((left || right || up || down) && ++count < 100)
+                    if (left || right || up || down)
                     {
-                        if (!ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, up, down)))
-                        {
-                            break;
-                        }
-
-                        left = curDataPoint.XValue > mouseXValue;
-                        right = curDataPoint.XValue < mouseXValue;
-                        up = curDataPoint.YValues[0] < mouseYValue;
-                        down = curDataPoint.YValues[0] > mouseYValue;
+                        ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, up, down, mouseXValue, mouseYValue));
                     }
 
                     foreach (ChartForm chartForm in chartForms)
@@ -186,7 +166,7 @@ namespace AnimationTool
 
             bool addDataPoint = true;
 
-            if(curDataPoint != null)
+            if (curDataPoint != null)
             {
                 addDataPoint = false;
             }
@@ -271,9 +251,6 @@ namespace AnimationTool
                     double mouseX = e.X > maxX ? maxX : e.X < minX ? minX : e.X;
 
                     double mouseXValue = GetPixelPositionToValue(curChartArea.AxisY, mouseX, 1);
-
-                    int count = 0;
-
                     if (curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor) // if moving preview bar
                     {
                         bool left = curPreviewBar.YValues[0] > mouseXValue;
@@ -288,13 +265,9 @@ namespace AnimationTool
                     {
                         bool left = curDataPoint.YValues[0] > mouseXValue;
                         bool right = curDataPoint.YValues[1] < mouseXValue;
-
-                        while ((left || right) && ++count < 100)
+                        if (left || right)
                         {
                             ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, false, false));
-
-                            left = curDataPoint.YValues[0] > mouseXValue;
-                            right = curDataPoint.YValues[1] < mouseXValue;
                         }
 
                         foreach (ChartForm chartForm in chartForms)
@@ -551,7 +524,7 @@ namespace AnimationTool
                 straightData.Length = straightForm.Time;
                 straightData.Speed_mms = straightForm.Speed;
             }
-            else if(add)
+            else if (add)
             {
                 (new RemoveDataPoint(curDataPoint, curChart)).Do();
             }
@@ -583,7 +556,7 @@ namespace AnimationTool
                 (new RemoveDataPoint(curDataPoint, curChart)).Do();
             }
         }
-        
+
         private void ShowVolumeForm()
         {
             if (curDataPoint == null || curChart == null) return;
