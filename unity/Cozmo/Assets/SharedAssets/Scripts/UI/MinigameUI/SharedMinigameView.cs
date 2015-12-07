@@ -104,7 +104,7 @@ namespace Cozmo {
 
       #region StaminaBar
 
-      public void CreateCozmoStatusWidget(int attemptsAllowed) {
+      private void CreateCozmoStatusWidget(int attemptsAllowed) {
         if (_CozmoStatusInstance != null) {
           return;
         }
@@ -116,8 +116,24 @@ namespace Cozmo {
         _ActiveWidgets.Add(_CozmoStatusInstance);
       }
 
-      public void UpdateCozmoAttempts(int attemptsLeft) {
-        _CozmoStatusInstance.SetAttemptsLeft(attemptsLeft);
+      public void SetMaxCozmoAttempts(int maxAttempts) {
+        if (_CozmoStatusInstance != null) {
+          _CozmoStatusInstance.SetMaxAttempts(maxAttempts);
+        }
+        else {
+          CreateCozmoStatusWidget(maxAttempts);
+          // TODO: Play animation, if dialog had already been opened?
+        }
+      }
+
+      public void SetCozmoAttemptsLeft(int attemptsLeft) {
+        if (_CozmoStatusInstance != null) {
+          _CozmoStatusInstance.SetAttemptsLeft(attemptsLeft);
+        }
+        else {
+          CreateCozmoStatusWidget(attemptsLeft);
+          // TODO: Play animation, if dialog had already been opened?
+        }
       }
 
       #endregion

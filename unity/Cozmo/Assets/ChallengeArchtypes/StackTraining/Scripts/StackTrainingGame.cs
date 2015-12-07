@@ -11,8 +11,6 @@ namespace StackTraining {
     private int _BottomCubeId = -1;
     private int _TopCubeId = -1;
 
-    private int _AttemptsLeft;
-
     public LightCube BottomCube {
       get {
         LightCube cube;
@@ -33,7 +31,7 @@ namespace StackTraining {
 
       var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
 
-      _AttemptsLeft = config.MaxAttempts;
+      MaxAttempts = config.MaxAttempts;
 
       InitializeMinigameObjects();
     }
@@ -49,11 +47,6 @@ namespace StackTraining {
 
       CurrentRobot.SetLiftHeight(0f);
       CurrentRobot.SetHeadAngle(0f);
-    }
-
-    protected override void InitializeMinigameView(Cozmo.MinigameWidgets.SharedMinigameView minigameView) {
-      base.InitializeMinigameView(minigameView);
-      minigameView.CreateCozmoStatusWidget(_AttemptsLeft);
     }
 
     void Update() {
@@ -78,13 +71,6 @@ namespace StackTraining {
 
       _BottomCubeId = visibleKeys.Last();
       _TopCubeId = visibleKeys.Last();
-    }
-
-    public bool TryDecrementAttempts() {
-      _AttemptsLeft--;
-      _SharedMinigameViewInstance.UpdateCozmoAttempts(_AttemptsLeft);
-
-      return (_AttemptsLeft > 0);
     }
   }
 

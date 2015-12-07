@@ -10,7 +10,6 @@ namespace CubeLifting {
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
     private CubeLiftingConfig _Config;
-    private int _AttemptsLeft;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as CubeLiftingConfig ?? new CubeLiftingConfig();
@@ -26,12 +25,7 @@ namespace CubeLifting {
       CurrentRobot.SetLiftHeight(0);
       CurrentRobot.SetHeadAngle(0);
 
-      _AttemptsLeft = _Config.MaxAttempts;
-    }
-
-    protected override void InitializeMinigameView(Cozmo.MinigameWidgets.SharedMinigameView minigameView) {
-      base.InitializeMinigameView(minigameView);
-      minigameView.CreateCozmoStatusWidget(_AttemptsLeft);
+      MaxAttempts = _Config.MaxAttempts;
     }
 
     void Update() {
@@ -49,13 +43,6 @@ namespace CubeLifting {
       }
 
       return CurrentRobot.LightCubes.First(x => x.Value.MarkersVisible).Key;
-    }
-
-    public bool TryDecrementAttempts() {
-      _AttemptsLeft--;
-      _SharedMinigameViewInstance.UpdateCozmoAttempts(_AttemptsLeft);
-
-      return (_AttemptsLeft > 0);
     }
 
     protected override void CleanUpOnDestroy() {
