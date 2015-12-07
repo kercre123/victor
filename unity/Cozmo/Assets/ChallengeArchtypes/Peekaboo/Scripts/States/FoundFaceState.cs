@@ -10,7 +10,7 @@ namespace Peekaboo {
       base.Enter();
 
       // Play Celebration upon entering state
-      _CurrentRobot.SendAnimation(AnimationName.kShocked,HandleAnimationEnd);
+      _CurrentRobot.SendAnimation(AnimationName.kSurprise,HandleAnimationEnd);
     }
 
     public void HandleAnimationEnd(bool success) {

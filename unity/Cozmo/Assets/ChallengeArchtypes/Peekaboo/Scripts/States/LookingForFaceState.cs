@@ -8,15 +8,23 @@ namespace Peekaboo {
     // Make sure the face has been seen consistently to confirm that it is in fact a face
     private float _SeenHoldDelay = 0.5f;
     private float _FirstSeenTimestamp = -1;
+    PeekGame _GameInstance;
 
     public override void Enter() {
       base.Enter();
+      _GameInstance = _StateMachine.GetGame() as PeekGame;
 
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
       // Play Confused Animation as you enter this state, then begin
       // to wander aimlessly looking for a new face.
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+
+      if (_GameInstance.WanderEnabled) {
+        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      }
+      else {
+        _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      }
 
     }
 

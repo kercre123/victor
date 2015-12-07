@@ -5,6 +5,8 @@ namespace Peekaboo {
   public class PeekGameConfig : MinigameConfigBase {
 
     public int goal;
+    public float moveSpeed;
+    public bool wanderEnabled;
   
   }
 }

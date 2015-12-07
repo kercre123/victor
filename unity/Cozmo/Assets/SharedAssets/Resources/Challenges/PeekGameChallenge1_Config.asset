@@ -12,3 +12,5 @@ MonoBehaviour:
   m_Name: PeekGameChallenge1_Config
   m_EditorClassIdentifier: 
   goal: 3
+  moveSpeed: 0
+  wanderEnabled: 0
