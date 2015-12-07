@@ -8,7 +8,7 @@ namespace Peekaboo {
     // Make sure the face has been seen consistently to confirm that it is in fact a face
     private float _SeenHoldDelay = 0.5f;
     private float _FirstSeenTimestamp = -1;
-    PeekGame _GameInstance;
+    private PeekGame _GameInstance;
 
     public override void Enter() {
       base.Enter();

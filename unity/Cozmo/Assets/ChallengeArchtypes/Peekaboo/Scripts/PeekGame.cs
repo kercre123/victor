@@ -28,9 +28,9 @@ namespace Peekaboo {
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       PeekGameConfig config = (minigameConfigData as PeekGameConfig);
-      _PeekGoalTarget = config.goal;
-      _MoveSpeed = config.moveSpeed;
-      WanderEnabled = config.wanderEnabled;
+      _PeekGoalTarget = config.Goal;
+      _MoveSpeed = config.MoveSpeed;
+      WanderEnabled = config.WanderEnabled;
 
       InitializeMinigameObjects();
     }

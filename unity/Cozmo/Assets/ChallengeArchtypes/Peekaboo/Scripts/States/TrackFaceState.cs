@@ -14,7 +14,7 @@ namespace Peekaboo {
 
     #endregion
     
-    PeekGame _GameInstance;
+    private PeekGame _GameInstance;
     private float _FirstUnseenTimestamp = -1;
     private float _FirstSeenTimestamp = -1;
     private bool _HasScored;
