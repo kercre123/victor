@@ -147,7 +147,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       std::this_thread::sleep_for(ms_left);
     }
     
-    tickStart = tickNow;
+    tickStart = std::chrono::system_clock::now();
   }
 }
 
