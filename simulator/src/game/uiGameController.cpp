@@ -1060,6 +1060,29 @@ namespace Anki {
       message.Set_TraverseObject(m);
       SendMessage(message);
     }
+
+    void UiGameController::SendMountCharger(s32 objectID,
+                                            PathMotionProfile motionProf,
+                                            const bool usePreDockPose,
+                                            const bool useManualSpeed)
+    {
+      ExternalInterface::MountCharger m;
+      m.objectID = objectID;
+      m.motionProf = motionProf;
+      m.usePreDockPose = usePreDockPose;
+      m.useManualSpeed = useManualSpeed;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_MountCharger(m);
+      SendMessage(message);
+    }
+
+    
+    void UiGameController::SendMountSelectedCharger(PathMotionProfile motionProf,
+                                                    const bool usePreDockPose,
+                                                    const bool useManualSpeed)
+    {
+      SendMountCharger(-1, motionProf, usePreDockPose, useManualSpeed);
+    }
     
     BehaviorType UiGameController::GetBehaviorType(const std::string& behaviorName) const
     {

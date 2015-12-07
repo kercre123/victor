@@ -301,6 +301,14 @@ message PopAWheelie {
   bool useManualSpeed
 }
 
+// MountCharger
+message MountCharger {
+  int_32 objectID,
+  PathMotionProfile motionProf,
+  bool usePreDockPose,
+  bool useManualSpeed
+}
+
 // TraverseObject
 message TraverseObject {
   PathMotionProfile motionProf,

@@ -49,6 +49,7 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::RollObject,
       ExternalInterface::MessageGameToEngineTag::PopAWheelie,
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
+      ExternalInterface::MessageGameToEngineTag::MountCharger,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
       ExternalInterface::MessageGameToEngineTag::FaceObject,
       ExternalInterface::MessageGameToEngineTag::FacePose,
@@ -297,6 +298,20 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   }
 }
   
+IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface::MountCharger& msg)
+{
+  ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+  
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    return new DriveToAndMountChargerAction(selectedObjectID,
+                                            msg.motionProf,
+                                            msg.useManualSpeed);
+  } else {
+    return new MountChargerAction(selectedObjectID, msg.useManualSpeed);
+  }
+}
+
+  
 IActionRunner* GetFaceObjectActionHelper(Robot& robot, const ExternalInterface::FaceObject& msg)
 {
   ObjectID objectID;
@@ -504,6 +519,12 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     {
       numRetries = 1;
       newAction = GetPopAWheelieActionHelper(robot, event.GetData().Get_PopAWheelie());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::MountCharger:
+    {
+      numRetries = 1;
+      newAction = GetMountChargerActionHelper(robot, event.GetData().Get_MountCharger());
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::TraverseObject:

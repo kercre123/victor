@@ -3097,8 +3097,8 @@ namespace Anki {
       
       _dockAction = DockAction::DA_MOUNT_CHARGER;
       
-      // Tell robot which ramp it will be using, and in which direction
-      //robot.SetRamp(_dockObjectID, direction);
+      // Tell robot which charger it will be using
+      robot.SetCharger(_dockObjectID);
       
       return result;
       
@@ -3107,11 +3107,13 @@ namespace Anki {
     
     ActionResult MountChargerAction::Verify(Robot& robot)
     {
-      // TODO: Need to do some kind of verification here?
-      PRINT_NAMED_INFO("MountChargerAction.Verify.MountingChargerComplete",
-                       "Robot has mounted charger.");
-      
-      return ActionResult::SUCCESS;
+      // Verify that robot is on charger
+      if (robot.IsOnCharger()) {
+        PRINT_NAMED_INFO("MountChargerAction.Verify.MountingChargerComplete",
+                         "Robot has mounted charger.");
+        return ActionResult::SUCCESS;
+      }
+      return ActionResult::FAILURE_ABORT;
     } // Verify()
     
     

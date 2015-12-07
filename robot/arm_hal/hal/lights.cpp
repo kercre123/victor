@@ -59,7 +59,7 @@ namespace Anki
       extern volatile GlobalDataToHead g_dataToHead;      
       bool IsCliffDetected()
       {
-#if (defined(COZMO_ROBOT_3A9E)) || (defined(COZMO_ROBOT_3A94))
+#if (defined(COZMO_ROBOT_BRYONSHEAD)) || (defined(COZMO_ROBOT_3A94))
         return false;
 #else        
         return g_dataToHead.cliffLevel < DROP_LEVEL;

@@ -189,7 +189,17 @@ public:
     
     // Just sets the ramp to use and in which direction, not whether robot is on it yet
     void   SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction);
-    
+
+    // True if robot is on charger
+    bool   IsOnCharger() const { return _isOnCharger; }
+  
+    // Updates pose to be on charger
+    Result SetPoseOnCharger();
+  
+    // Sets the charger that it's docking to
+    void   SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
+  
+
     //
     // Camera / Vision
     //
@@ -657,7 +667,7 @@ public:
     ActionList        _actionList;
     MovementComponent _movementComponent;
     VisionComponent   _visionComponent;
-  
+
     // Path Following. There are two planners, only one of which can
     // be selected at a time
     IPathPlanner*            _selectedPathPlanner          = nullptr;
@@ -723,13 +733,17 @@ public:
     Point2f          _rampStartPosition;
     f32              _rampStartHeight;
     Ramp::TraversalDirection _rampDirection;
-    
+  
+    // Charge base ID that is being docked to
+    ObjectID         _chargerID;
+  
     // State
     bool             _isPickingOrPlacing = false;
     bool             _isPickedUp         = false;
     bool             _isMoving           = false;
     bool             _isHeadMoving       = false;
     bool             _isLiftMoving       = false;
+    bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
   
@@ -919,7 +933,7 @@ inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirectio
   _rampID = rampID;
   _rampDirection = direction;
 }
-
+  
 inline Result Robot::SetDockObjectAsAttachedToLift(){
   return SetObjectAsAttachedToLift(_dockObjectID, _dockMarker);
 }
