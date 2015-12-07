@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/ramp.h"
+#include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 #include "anki/cozmo/basestation/soundManager.h"    // TODO: REMOVE ME
@@ -426,6 +427,7 @@ namespace Anki {
       _isMoving = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_MOVING);
       _isHeadMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::HEAD_IN_POS);
       _isLiftMoving = !static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::LIFT_IN_POS);
+      _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
       
@@ -2009,9 +2011,9 @@ namespace Anki {
       
       Ramp* ramp = dynamic_cast<Ramp*>(_blockWorld.GetObjectByIDandFamily(_rampID, ObjectFamily::Ramp));
       if(ramp == nullptr) {
-        PRINT_NAMED_ERROR("Robot.SetOnRamp.NoRampWithID",
-                          "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world.\n",
-                          _ID, _rampID.GetValue());
+        PRINT_NAMED_WARNING("Robot.SetOnRamp.NoRampWithID",
+                            "Robot %d is transitioning on/off of a ramp, but Ramp object with ID=%d not found in the world.\n",
+                            _ID, _rampID.GetValue());
         return RESULT_FAIL;
       }
       
@@ -2045,9 +2047,9 @@ namespace Anki {
             break;
             
           default:
-            PRINT_NAMED_ERROR("Robot.SetOnRamp.UnexpectedRampDirection",
-                              "When transitioning on/off ramp, expecting the ramp direction to be either "
-                              "ASCENDING or DESCENDING, not %d.\n", _rampDirection);
+            PRINT_NAMED_WARNING("Robot.SetOnRamp.UnexpectedRampDirection",
+                                "When transitioning on/off ramp, expecting the ramp direction to be either "
+                                "ASCENDING or DESCENDING, not %d.\n", _rampDirection);
             return RESULT_FAIL;
         }
         
@@ -2069,8 +2071,8 @@ namespace Anki {
                                                       timeStamp,
                                                       _frameId);
         if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("Robot.SetOnRamp.SendAbsLocUpdateFailed",
-                            "Robot %d failed to send absolute localization update.\n", _ID);
+          PRINT_NAMED_WARNING("Robot.SetOnRamp.SendAbsLocUpdateFailed",
+                              "Robot %d failed to send absolute localization update.\n", _ID);
           return lastResult;
         }
 
@@ -2081,6 +2083,47 @@ namespace Anki {
       return RESULT_OK;
       
     } // SetOnPose()
+    
+    
+    Result Robot::SetPoseOnCharger()
+    {
+      Charger* charger = dynamic_cast<Charger*>(_blockWorld.GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+      if(charger == nullptr) {
+        PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.NoChargerWithID",
+                            "Robot %d has docked to charger, but Charger object with ID=%d not found in the world.\n",
+                            _ID, _chargerID.GetValue());
+        return RESULT_FAIL;
+      }
+      
+      // Just do an absolute pose update, setting the robot's position to
+      // where we "know" he should be when he finishes ascending the charger.
+      SetPose(charger->GetDockedPose().GetWithRespectToOrigin());
+
+      const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+    
+      PRINT_NAMED_INFO("Robot.SetPoseOnCharger.SetPose",
+                       "Robot %d now on charger %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d\n",
+                       _ID, charger->GetID().GetValue(),
+                       _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
+                       _pose.GetRotationAngle<'Z'>().getDegrees(),
+                       timeStamp);
+      
+      // We are creating a new pose frame at the top of the ramp
+      //IncrementPoseFrameID();
+      ++_frameId;
+      Result lastResult = SendAbsLocalizationUpdate(_pose,
+                                                    timeStamp,
+                                                    _frameId);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("Robot.SetPoseOnCharger.SendAbsLocUpdateFailed",
+                            "Robot %d failed to send absolute localization update.\n", _ID);
+        return lastResult;
+      }
+      
+      return RESULT_OK;
+      
+    } // SetOnPose()
+    
     
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const Vision::KnownMarker* marker,

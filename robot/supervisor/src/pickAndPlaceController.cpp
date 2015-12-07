@@ -128,6 +128,17 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      Result SendChargerMountCompleteMessage(const bool success)
+      {
+        ChargerMountComplete msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.didSucceed = success;
+        if(RobotInterface::SendMessage(msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
       static void StartBackingOut()
       {
         static const f32 MIN_BACKOUT_DIST = 10.f;
@@ -310,7 +321,9 @@ namespace Anki {
                   #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: MOUNT_CHARGER\n");
                   #endif
-                  f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F).ToFloat();
+                  DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
+                  f32 relAngleToMarker = atan2_acc(relMarkerY_, relMarkerX_);
+                  f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F + relAngleToMarker).ToFloat();
                   SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, true);
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
@@ -599,13 +612,32 @@ namespace Anki {
             if (HAL::GetTimeStamp() > transitionTime_) {
               PRINT("BACKUP_ON_CHARGER timeout\n");
               SteeringController::ExecuteDirectDrive(0, 0);
+              SendChargerMountCompleteMessage(false);
               mode_ = IDLE;
               
               // TODO: Some kind of recovery?
               // ...
+            } else if (IMUFilter::GetPitch() < -DEG_TO_RAD_F32(30)) {
+              // Check for tilt
+              // Drive forward until no tilt or timeout
+              PRINT("BACKUP_ON_CHARGER tilted\n");
+              SteeringController::ExecuteDirectDrive(40, 40);
+              transitionTime_ = HAL::GetTimeStamp() + 2500;
+              mode_ = DRIVE_FORWARD;
             } else if (HAL::BatteryIsOnCharger()) {
+              PRINT("BACKUP_ON_CHARGER success\n");
               SteeringController::ExecuteDirectDrive(0, 0);
+              SendChargerMountCompleteMessage(true);
               lastActionSucceeded_ = true;
+              mode_ = IDLE;
+            }
+            break;
+          case DRIVE_FORWARD:
+            // For failed charger mounting recovery only
+            if (HAL::GetTimeStamp() > transitionTime_) {
+              SteeringController::ExecuteDirectDrive(0, 0);
+              SendChargerMountCompleteMessage(false);
+              mode_ = IDLE;
             }
             break;
           default:

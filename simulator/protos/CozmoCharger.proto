@@ -5,14 +5,14 @@ PROTO CozmoCharger [
   
   # Dimensions
   field SFFloat wallWidth     .01
-  field SFFloat wallHeight    .035
+  field SFFloat wallHeight    .026
   field SFFloat platformWidth .06  # Platform is the flat part that robot sits on when charging
-  field SFFloat platformLength .083  
-  field SFFloat platformHeight .012  
-  field SFFloat rampLength     .043      # The ramp is the part that leads up to the platform
+  field SFFloat platformLength .042  
+  field SFFloat platformHeight .005  
+  field SFFloat rampLength     .044      # The ramp is the part that leads up to the platform
   field SFFloat rampWidthAtGround  .072
 
-  field SFFloat rampMarkerWidth 0.03
+  field SFFloat rampMarkerWidth 0.020
   
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
@@ -32,8 +32,8 @@ Robot {
     
     # Ramp marker
     Transform {
-      rotation -0.519988 -0.519988 0.677661 1.95044  # -80 deg about y-axis and 90 deg about z-axis
-      translation %{=fields.wallWidth.value + fields.platformLength.value + fields.rampLength.value/2}%  0 %{=fields.platformHeight.value/2 + 0.001}%
+      rotation 0 0 1 1.5708 # 90 deg about z-axis
+      translation %{=fields.wallWidth.value}% 0 %{=fields.platformHeight.value + fields.wallHeight.value/2}%
       children [
         VisionMarker {
           #rotation 0 0 1 1.5708

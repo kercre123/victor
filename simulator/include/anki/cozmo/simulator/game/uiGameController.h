@@ -195,6 +195,16 @@ protected:
   void SendTraverseSelectedObject(PathMotionProfile motionProf,
                                   const bool usePreDockPose,
                                   const bool useManualSpeed);
+
+  void SendMountCharger(const s32 objectID,
+                        PathMotionProfile motionProf,
+                        const bool usePreDockPose,
+                        const bool useManualSpeed = false);
+  
+  void SendMountSelectedCharger(PathMotionProfile motionProf,
+                                const bool usePreDockPose,
+                                const bool useManualSpeed = false);
+  
   void SendExecuteTestPlan();
   void SendClearAllBlocks();
   void SendClearAllObjects();
