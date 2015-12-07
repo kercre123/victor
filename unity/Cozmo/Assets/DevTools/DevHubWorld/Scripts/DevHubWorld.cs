@@ -28,7 +28,7 @@ public class DevHubWorld : HubWorldBase {
       _DevHubWorldDialogInstance.CloseViewImmediately();
     }
     
-    CloseMiniGame();
+    CloseMiniGameImmediately();
     return true;
   }
 
@@ -47,8 +47,10 @@ public class DevHubWorld : HubWorldBase {
     
     GameObject newMiniGameObject = GameObject.Instantiate(challenge.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.LoadMinigameConfig(challenge.MinigameConfig);
+    _MiniGameInstance.InitializeMinigame(challenge.MinigameConfig);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
+    _MiniGameInstance.OnMiniGameLose += HandleMiniGameQuit;
+    _MiniGameInstance.OnMiniGameWin += HandleMiniGameQuit;
   }
 
   private void HandleMiniGameQuit() {
@@ -57,10 +59,14 @@ public class DevHubWorld : HubWorldBase {
   }
 
   private void CloseMiniGame() {
-    // Destroy game if it exists
     if (_MiniGameInstance != null) {
-      _MiniGameInstance.CleanUp();
-      Destroy(_MiniGameInstance.gameObject);
+      _MiniGameInstance.CloseMinigame();
+    }
+  }
+
+  private void CloseMiniGameImmediately() {
+    if (_MiniGameInstance != null) {
+      _MiniGameInstance.CloseMinigameImmediately();
     }
   }
 }

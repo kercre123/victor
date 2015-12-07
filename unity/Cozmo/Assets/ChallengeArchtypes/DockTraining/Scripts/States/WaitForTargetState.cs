@@ -9,6 +9,8 @@ namespace DockTraining {
     public override void Enter() {
       base.Enter();
       _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
+      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
     }
 
     public override void Update() {

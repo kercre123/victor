@@ -31,7 +31,7 @@ public class IntroManager : MonoBehaviour {
       HandleIntroSequenceDone(_IntroSequenceDoneToken);
     }
     else {
-      _IntroSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("IntroSequence");
+      _IntroSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_IntroScriptedSequenceName);
       _IntroSequenceDoneToken.Ready(HandleIntroSequenceDone);
     }
   }

@@ -19,8 +19,9 @@ namespace Wink {
 
     private WinkStatus _WinkStatus = WinkStatus.Neutral;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfigData) {
-      
+    protected override void Initialize(MinigameConfigBase minigameConfigData) {
+
+      InitializeMinigameObjects();
     }
 
     public void WaveSuccess() {
@@ -30,7 +31,7 @@ namespace Wink {
       }
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("WinkGameStateMachine", _StateMachine);
       _StateMachine.SetNextState(new WinkState());
@@ -38,9 +39,7 @@ namespace Wink {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
-      CreateDefaultQuitButton();
       RobotEngineManager.Instance.OnObservedMotion += OnMotionDetected;
-
     }
 
     void Update() {
@@ -77,8 +76,7 @@ namespace Wink {
       _WinkStatus = WinkStatus.Neutral;
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
       RobotEngineManager.Instance.OnObservedMotion -= OnMotionDetected;
     }
 

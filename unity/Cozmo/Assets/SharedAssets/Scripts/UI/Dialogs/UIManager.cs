@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using Conversations;
+using Cozmo.UI;
 
 public class UIManager : MonoBehaviour {
 
@@ -47,6 +48,14 @@ public class UIManager : MonoBehaviour {
     _OpenViews = new List<BaseView>();
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
+  }
+
+  public static GameObject CreateUIElement(MonoBehaviour uiPrefab) {
+    return CreateUIElement(uiPrefab.gameObject, Instance._OverlayCanvas.transform);
+  }
+
+  public static GameObject CreateUIElement(MonoBehaviour uiPrefab, Transform parentTransform) {
+    return CreateUIElement(uiPrefab.gameObject, parentTransform);
   }
 
   public static GameObject CreateUIElement(GameObject uiPrefab) {

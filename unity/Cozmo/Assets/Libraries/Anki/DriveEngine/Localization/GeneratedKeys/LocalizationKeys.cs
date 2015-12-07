@@ -1,11 +1,14 @@
 public static class LocalizationKeys {
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ChallengeTitleStrings.json
+  #region ChallengeTitleStrings
 
   public const string kAskCozmo01Title = "askCozmo01.title";
   public const string kAskCozmo01Subtitle = "askCozmo01.subtitle";
   public const string kAskCozmo01Description = "askCozmo01.description";
   public const string kInvestorDemoInvestorDemoScene1 = "investorDemo.investorDemoScene1";
+  public const string kInvestorDemoInvestorDemoScene2 = "investorDemo.investorDemoScene2";
+  public const string kInvestorDemoInvestorDemoScene3 = "investorDemo.investorDemoScene3";
+  public const string kInvestorDemoInvestorDemoScene4 = "investorDemo.investorDemoScene4";
   public const string kDockTraining01Title = "dockTraining01.title";
   public const string kDockTraining01Subtitle = "dockTraining01.subtitle";
   public const string kDockTraining01Description = "dockTraining01.description";
@@ -21,10 +24,22 @@ public static class LocalizationKeys {
   public const string kWinkGame01Title = "winkGame01.title";
   public const string kWinkGame01Subtitle = "winkGame01.subtitle";
   public const string kWinkGame01Description = "winkGame01.description";
+  public const string kForwardBackward01Title = "forwardBackward01.title";
+  public const string kForwardBackward01Subtitle = "forwardBackward01.subtitle";
+  public const string kForwardBackward01Description = "forwardBackward01.description";
+  public const string kMotionDetection01Title = "motionDetection01.title";
+  public const string kMotionDetection01Subtitle = "motionDetection01.subtitle";
+  public const string kMotionDetection01Description = "motionDetection01.description";
+  public const string kFollowCubeRotate1Title = "followCubeRotate1.title";
+  public const string kFollowCubeRotate1Subtitle = "followCubeRotate1.subtitle";
+  public const string kFollowCubeRotate1Description = "followCubeRotate1.description";
+  public const string kPeekaboo1Title = "peekaboo1.title";
+  public const string kPeekaboo1Subtitle = "peekaboo1.subtitle";
+  public const string kPeekaboo1Description = "peekaboo1.description";
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/ConversationStrings.json
+  #region ConversationStrings
 
   public const string kHelloWorldHello = "HelloWorld.Hello";
   public const string kHelloWorldWorld = "HelloWorld.World";
@@ -41,7 +56,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/MinigameStrings.json
+  #region MinigameStrings
 
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
@@ -63,16 +78,22 @@ public static class LocalizationKeys {
   public const string kVortexReplayButton = "vortex.replayButton";
   public const string kVortexVortexStatus = "vortex.vortexStatus";
   public const string kVortexVortexWon = "vortex.vortexWon";
+  public const string kPeekabooTitle = "peekaboo.title";
+  public const string kPeekabooLabelPoints = "peekaboo.label.points";
+  public const string kMinigameQuitViewTitle = "minigame.quitView.title";
+  public const string kMinigameQuitViewDescription = "minigame.quitView.description";
 
   #endregion
 
-  #region Assets/SharedAssets/Resources/LocalizedStrings/en-us/SimpleStrings.json
+  #region SimpleStrings
 
   public const string kButtonTap = "button.tap";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
   public const string kBadgeNew = "badge.new";
   public const string kLabelPercentComplete = "label.percentComplete";
+  public const string kButtonYes = "button.yes";
+  public const string kButtonNo = "button.no";
 
   #endregion
 }

@@ -6,7 +6,11 @@ namespace DockTraining {
   public class FailSpectacularDock : State {
     public override void Enter() {
       base.Enter();
-      PlayShockedAnimation();
+    }
+
+    public override void Update() {
+      base.Update();
+      _CurrentRobot.DriveWheels(25.0f, 10.0f);
     }
 
     private void PlayShockedAnimation() {
@@ -16,6 +20,7 @@ namespace DockTraining {
     }
 
     private void HandleAnimationDone(bool success) {
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _StateMachine.SetNextState(new WaitForTargetState());
     }
   }

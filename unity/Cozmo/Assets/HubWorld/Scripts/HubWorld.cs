@@ -38,7 +38,7 @@ namespace Cozmo.HubWorld {
     }
 
     public override bool DestroyHubWorld() {
-      CloseMiniGame();
+      CloseMiniGameImmediately();
 
       // Deregister events
       // Destroy dialog if it exists
@@ -132,21 +132,31 @@ namespace Cozmo.HubWorld {
     private void PlayMinigame(ChallengeData challengeData) {
       GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
       _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-      _MiniGameInstance.LoadMinigameConfig(challengeData.MinigameConfig);
+      _MiniGameInstance.InitializeMinigame(challengeData.MinigameConfig);
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
     }
 
     private void CloseMiniGame() {
-      // Destroy game if it exists
+      if (_MiniGameInstance != null) {
+        DeregisterMinigameEvents();
+        _MiniGameInstance.CloseMinigame();
+      }
+    }
+
+    private void CloseMiniGameImmediately() {
+      if (_MiniGameInstance != null) {
+        DeregisterMinigameEvents();
+        _MiniGameInstance.CloseMinigameImmediately();
+      }
+    }
+
+    private void DeregisterMinigameEvents() {
       if (_MiniGameInstance != null) {
         _MiniGameInstance.OnMiniGameQuit -= HandleMiniGameQuit;
         _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
         _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
-      
-        _MiniGameInstance.CleanUp();
-        Destroy(_MiniGameInstance.gameObject);
       }
     }
 

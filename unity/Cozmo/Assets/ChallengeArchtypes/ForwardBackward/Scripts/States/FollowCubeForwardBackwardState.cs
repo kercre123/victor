@@ -9,9 +9,7 @@ namespace ForwardBackward {
     private Vector3 _StartPosition;
     private int _SelectedCubeId = -1;
 
-    // don't use the rect constructor position because
-    // it is top left and not center of the rect.
-    private Bounds _VisionBounds = new Bounds();
+    private Bounds _VisionBounds;
 
     private bool _Forward;
     private float _DistanceRequired;
@@ -37,9 +35,8 @@ namespace ForwardBackward {
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(0.0f);
 
-      _VisionBounds.size = new Vector3(100.0f, 50.0f, 50.0f);
-      _VisionBounds.center = new Vector3(150.0f+ (_Forward ? 50f : -50f), 0.0f, 25.0f );
       _StartPosition = _CurrentRobot.WorldPosition;
+      _VisionBounds = new Bounds(new Vector3(150.0f+ (_Forward ? 50f : -50f), 0.0f, 25.0f ), new Vector3(100.0f, 50.0f, 50.0f));
     }
 
     public override void Update() {
@@ -52,7 +49,6 @@ namespace ForwardBackward {
           
           Vector3 cubePositionCozmoSpace = (Vector3)_CurrentRobot.WorldToCozmo(_CurrentRobot.VisibleObjects[i].WorldPosition);
 
-          Debug.Log(cubePositionCozmoSpace);
           if (_VisionBounds.Contains(cubePositionCozmoSpace)) {
             cubeInBoundsNow = true;
             break;
