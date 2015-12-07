@@ -62,8 +62,9 @@ void Anki::Cozmo::HAL::UartInit() {
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
   g_dataToBody.source = (uint32_t)SPI_SOURCE_HEAD;
-  
-  MicroWait(1000);
+
+  //MicroWait(1000);
+
   transmit_mode(TRANSMIT_RECEIVE);
 }
 

@@ -24,6 +24,7 @@
 
 #define SETLOWCOLUMN 0x00
 #define SETHIGHCOLUMN 0x10
+#define SETPAGE 0xB0
 
 #define SETSTARTLINE 0x40
 
@@ -55,8 +56,8 @@ namespace Anki
   {
     namespace HAL
     {
-      void OLEDFlip(void);
       void OLEDInit(void);
+      void OLEDFeedFace(uint8_t address, uint8_t *face_bytes);
     }
   }
 }

@@ -5,6 +5,7 @@
 #include "hal/portable.h"
 #include "hal/i2c.h"
 #include "MK02F12810.h"
+#include "hal/hardware.h"
 
 // Internal Settings
 typedef struct {
@@ -27,6 +28,49 @@ static bool _active;
 
 static inline void start_transaction();
 
+// Send a stop condition first thing to make sure perfs are not holding the bus
+static inline void SendEmergencyStop(void) {
+  using namespace Anki::Cozmo::HAL;
+
+  GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
+
+  // Drive PWDN and RESET to safe defaults
+  GPIO_OUT(GPIO_I2C_SCL, PIN_I2C_SCL);
+  SOURCE_SETUP(GPIO_I2C_SCL, SOURCE_I2C_SCL, SourceGPIO);
+
+  // GPIO, High drive, open drain
+  GPIO_IN(GPIO_I2C_SDA, PIN_I2C_SDA);
+  SOURCE_SETUP(GPIO_I2C_SDA, PIN_I2C_SDA, SourceGPIO);
+  
+  // Clock the output until the data line goes high
+  for (int i = 0; i < 100 || !GPIO_READ(GPIO_I2C_SDA); i++) {
+    GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
+    MicroWait(10);
+    GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);
+    MicroWait(10);
+  }
+
+  /*
+  GPIO_RESET(GPIO_I2C_SCL, PIN_I2C_SCL);
+  MicroWait(10);
+
+  GPIO_RESET(GPIO_I2C_SDA, PIN_I2C_SDA);
+  // Set the data line to drive high, open drain
+  PORTB_PCR1 = PORT_PCR_MUX(1) | 
+               PORT_PCR_ODE_MASK | 
+               PORT_PCR_DSE_MASK |
+               PORT_PCR_PE_MASK |
+               PORT_PCR_PS_MASK;
+  GPIO_OUT(GPIO_I2C_SDA, PIN_I2C_SDA);
+
+  MicroWait(10);
+  GPIO_SET(GPIO_I2C_SCL, PIN_I2C_SCL);  
+  MicroWait(10);
+  GPIO_SET(GPIO_I2C_SDA, PIN_I2C_SDA);
+  MicroWait(10);
+  */
+}
+
 // HAL
 namespace Anki
 {
@@ -45,7 +89,7 @@ namespace Anki
         i2c_data_active = true;
 
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, cmd, 3, i2cRegCallback);
-        
+
         while(i2c_data_active) __asm { WFI } ;
       }
 
@@ -60,7 +104,7 @@ namespace Anki
         I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, &data, sizeof(data), NULL);
         I2CCmd(I2C_DIR_READ | I2C_SEND_NACK | I2C_SEND_STOP, &resp, sizeof(resp), i2cRegCallback);
 
-        while(i2c_data_active)  ;
+        while(i2c_data_active) ;
         
         return resp;
       }
@@ -75,6 +119,8 @@ namespace Anki
       
       void I2CInit()
       {
+        SendEmergencyStop();
+        
         // Clear our FIFO
         _fifo_start = 0;
         _fifo_end = 0;
@@ -135,6 +181,23 @@ namespace Anki
   }
 }
 
+extern "C"
+void I2C0_IRQHandler(void);
+
+void Anki::Cozmo::HAL::I2CEnable(void) {
+  NVIC_EnableIRQ(I2C0_IRQn);
+  /*
+  if (I2C0_S & I2C_S_IICIF_MASK) {
+    I2C0_IRQHandler();
+  }
+  */
+}
+
+void Anki::Cozmo::HAL::I2CDisable(void) {
+  NVIC_DisableIRQ(I2C0_IRQn);
+}
+
+
 static inline uint8_t* next_byte() {
   I2C_Queue *active = &i2c_queue[_fifo_end];
   uint8_t *data = (uint8_t*)active->data;
@@ -183,7 +246,7 @@ void I2C0_IRQHandler(void) {
   using namespace Anki::Cozmo::HAL;
   
   // Clear interrupt
-  I2C0_S |= I2C_S_IICIF_MASK;  
+  I2C0_S |= I2C_S_IICIF_MASK;
 
   I2C_Queue *active = &i2c_queue[_fifo_end];
   

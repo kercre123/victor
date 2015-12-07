@@ -17,8 +17,6 @@ enum I2C_Mode {
   I2C_SEND_STOP  = 16
 };
 
-#define I2CEnable() NVIC_EnableIRQ(I2C0_IRQn)
-#define I2CDisable() NVIC_DisableIRQ(I2C0_IRQn);
 
 namespace Anki
 {
@@ -29,7 +27,9 @@ namespace Anki
       void I2CInit(void);
       bool I2CCmd(int mode, uint8_t *bytes, int len, i2c_callback cb);
       void I2CRestart(void);
-
+      void I2CEnable(void);
+      void I2CDisable(void);
+      
       void I2CWriteReg(uint8_t slave, uint8_t addr, uint8_t data);
       uint8_t I2CReadReg(uint8_t slave, uint8_t addr);
       void I2CWriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data);
