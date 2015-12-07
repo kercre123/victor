@@ -100,7 +100,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerMountCompleted,
     [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
-      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCEEDED" : "FAILED" );
+      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage", "Robot %d charger mount %s.", GetID(), message.GetData().Get_chargerMountCompleted().didSucceed ? "SUCCEEDED" : "FAILED" );
       if (message.GetData().Get_chargerMountCompleted().didSucceed) {
         SetPoseOnCharger();
       }

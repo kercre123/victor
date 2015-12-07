@@ -80,6 +80,7 @@ namespace Anki {
       constexpr static const f32 MarkerSize     = 20.f;
       constexpr static const f32 MarkerHeight   = 19.f; // along sloped surface (at angle below)
       constexpr static const f32 PreAscentDistance  = 100.f; // for ascending from bottom
+      constexpr static const f32 RobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       

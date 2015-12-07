@@ -78,7 +78,7 @@ namespace Anki {
     Pose3d Charger::GetDockedPose() const
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
-                  {{30, 0, 0}},  // Distance from front of charger to robot origin
+                  {{RobotToChargerDistWhenDocked, 0, 0}},
                   &GetPose());
       
       pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
