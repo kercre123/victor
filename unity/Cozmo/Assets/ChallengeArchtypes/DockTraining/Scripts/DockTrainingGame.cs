@@ -41,11 +41,6 @@ namespace DockTraining {
       else {
         _LastSeenTargetTime = Time.time;
       }
-
-      if (_CurrentTarget != null) {
-        _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-      }
-
     }
 
     private void InitialCubesDone() {

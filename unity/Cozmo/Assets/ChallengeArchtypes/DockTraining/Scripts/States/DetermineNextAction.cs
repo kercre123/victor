@@ -19,6 +19,11 @@ namespace DockTraining {
 
       _AccumulatedWavePosition = Vector2.zero;
 
+      LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
+      if (currentTarget != null) {
+        currentTarget.SetLEDs(Color.white);
+      }
+
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
       RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
 
