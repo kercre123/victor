@@ -2426,8 +2426,7 @@ namespace Anki {
     
 #pragma mark ---- RollObjectAction ----
     
-    RollObjectAction::RollObjectAction(ObjectID objectID,
-                                       const bool useManualSpeed)
+    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
     , _expectedMarkerPostRoll(nullptr)
     , _rollVerifyAction(nullptr)
@@ -2597,8 +2596,7 @@ namespace Anki {
     
 #pragma mark ---- PopAWheelieAction ----
     
-    PopAWheelieAction::PopAWheelieAction(ObjectID objectID,
-                                         const bool useManualSpeed)
+    PopAWheelieAction::PopAWheelieAction(ObjectID objectID, const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
     {
       
@@ -2978,8 +2976,7 @@ namespace Anki {
     
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID,
-                                         const bool useManualSpeed)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
     : IDockAction(bridgeID, useManualSpeed)
     {
       
@@ -3018,8 +3015,7 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID,
-                                                         const bool useManualSpeed)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
     : IDockAction(rampID, useManualSpeed)
     {
 
@@ -3079,8 +3075,7 @@ namespace Anki {
     
 #pragma mark ---- MountChargerAction ----
     
-    MountChargerAction::MountChargerAction(ObjectID chargerID,
-                                           const bool useManualSpeed)
+    MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
     : IDockAction(chargerID, useManualSpeed)
     {
       
