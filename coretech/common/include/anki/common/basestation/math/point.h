@@ -184,6 +184,9 @@ namespace Anki {
     Z_POS =  3
   };
 
+  // returns single character axis for AxisName (ignoring sign)
+  char AxisToChar(AxisName axis);
+
   // Helper for compile-time conversion from character axis ('X', 'Y', or 'Z')
   // to index (0, 1, or 2, respectively). Any other character for AXIS will fail
   // to compile.

@@ -225,6 +225,7 @@ namespace Anki {
       bool IsBodyInPosition(const Robot& robot, Radians& currentAngle) const;
       
       bool    _inPosition = false;
+      bool    _turnStarted = false;
       Radians _targetAngle;
       Radians _angleTolerance = DEG_TO_RAD(5);
       Radians _variability = 0;
@@ -333,6 +334,12 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::MOVE_LIFT_TO_HEIGHT; }
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::LIFT_TRACK; }
+
+      // how long this action should take (which, in turn, effects lift speed)
+      void SetDuration(float duration_sec) { _duration = duration_sec; }
+      
+      void SetMaxLiftSpeed(float speedRadPerSec) { _maxLiftSpeedRadPerSec = speedRadPerSec; }
+      void SetLiftAccel(float accelRadPerSec2) { _liftAccelRacPerSec2 = accelRadPerSec2; }
       
     protected:
       
@@ -346,13 +353,16 @@ namespace Anki {
       
       bool IsLiftInPosition(const Robot& robot) const;
       
-      f32          _height_mm;
-      f32          _heightTolerance;
-      f32          _variability;
-      f32          _heightWithVariation;
+      f32         _height_mm;
+      f32         _heightTolerance;
+      f32         _variability;
+      f32         _heightWithVariation;
+      f32         _duration = 0.0f; // 0 means "as fast as it can"
+      f32         _maxLiftSpeedRadPerSec = 10.0f;
+      f32         _liftAccelRacPerSec2 = 20.0f;
       
-      std::string  _name;
-      bool         _inPosition;
+      std::string _name;
+      bool        _inPosition;
       
     }; // class MoveLiftToHeightAction
     
@@ -378,10 +388,10 @@ namespace Anki {
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxPanSpeed(f32 maxSpeed_radPerSec)        { _maxPanSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetPanAccel(f32 accel_radPerSec2)             { _panAccel_radPerSec2 = accel_radPerSec2; }
-      void SetPanTolerance(const Radians& angleTol_rad)  { _panAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetPanTolerance(const Radians& angleTol_rad);
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec)       { _maxTiltSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetTiltAccel(f32 accel_radPerSec2)            { _tiltAccel_radPerSec2 = accel_radPerSec2; }
-      void SetTiltTolerance(const Radians& angleTol_rad) { _tiltAngleTol = angleTol_rad.getAbsoluteVal(); }
+      void SetTiltTolerance(const Radians& angleTol_rad);
 
     protected:
       virtual ActionResult Init(Robot& robot) override;

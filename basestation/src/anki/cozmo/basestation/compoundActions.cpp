@@ -222,6 +222,11 @@ namespace Anki {
                   }
                 }
               }
+              else {
+                // this sub-action finished, but we still have others that we are waiting to run, probably due
+                // to delay between actions, so return running
+                return ActionResult::RUNNING;
+              }
               
               return subResult;
             }

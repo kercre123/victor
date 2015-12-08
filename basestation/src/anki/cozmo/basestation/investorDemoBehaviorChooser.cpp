@@ -24,7 +24,7 @@ InvestorDemoBehaviorChooser::InvestorDemoBehaviorChooser(Robot& robot, const Jso
 {
   SetupBehaviors(robot, config);
 
-  robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
+  // robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
 }
 
 void InvestorDemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)

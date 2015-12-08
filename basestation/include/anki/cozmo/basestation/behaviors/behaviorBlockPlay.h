@@ -61,7 +61,9 @@ namespace Cozmo {
       InspectingBlock,
       RollingBlock,
       PickingUpBlock,
-      PlacingBlock
+      PlacingBlock,
+      SearchingForMissingBlock, // this is only entered if a block "disappears" on us
+      Complete,
     };
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
@@ -97,11 +99,18 @@ namespace Cozmo {
     void InitState(const Robot& robot);
     void SetCurrState(State s);
     void PlayAnimation(Robot& robot, const std::string& animName);
+    void StartActing(Robot& robot, IActionRunner* action);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
     
     State _currentState;
     bool  _interrupted;
     bool _isActing = false;
+
+    // if we "lose" the block, we can use State::SearchingForMissingBlock. If we see it again, go back to this state
+    State _missingBlockFoundState = State::TrackingFace;
+
+    // if we are "searching" for a missing block, consider it found if it is seen after this time
+    f32 _searchStartTime = 0.0f;
     
     Result _lastHandlerResult;
 
@@ -117,7 +126,6 @@ namespace Cozmo {
     std::map<u32, std::string> _animActionTags;
     
 
-
     //f32 _inactionStartTime;
     
     // ID of player face that Cozmo will interact with for this behavior
@@ -126,12 +134,18 @@ namespace Cozmo {
     // This is the last known pose of a face that has been tracked
     Pose3d _lastKnownFacePose;
     bool   _hasValidLastKnownFacePose;
-    double _noFacesStartTime = 0;
+    double _noFacesStartTime = -1.0;
     
 
     // The block that currently has Cozmo's attention
     ObjectID _trackedObject;
-    
+
+    // The last time we saw _trackedObject
+    f32 _lastObjectObservedTime = 0.0f;
+
+    // how long ago we should have seen the object to attempt interaction
+    const f32 _objectObservedTimeThreshold = 0.75f;
+
     // This ID is set when the first block is on the ground.
     // This is the block that gets picked up and placed upon the second block.
     ObjectID _objectToPickUp;

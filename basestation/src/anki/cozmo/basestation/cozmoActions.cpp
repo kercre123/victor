@@ -850,7 +850,22 @@ namespace Anki {
       static const std::string name("TurnInPlaceAction");
       return name;
     }
-    
+
+    void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
+    {
+      _angleTolerance = angleTol_rad.getAbsoluteVal();
+
+     const float minTolDeg = 0.5f;
+      
+      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_angleTolerance.ToFloat()),
+                            minTolDeg);
+        _angleTolerance = DEG_TO_RAD(minTolDeg);
+      }
+    }
+
     ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
       // Compute a goal pose rotated by specified angle around robot's
@@ -896,15 +911,6 @@ namespace Anki {
     
       return ActionResult::SUCCESS;
     }
-
-    void TurnInPlaceAction::SetTolerance(const Anki::Radians &angleTol_rad) {
-      _angleTolerance = angleTol_rad.getAbsoluteVal();
-      if(_angleTolerance == 0.f) {
-        PRINT_NAMED_WARNING("TurnInPlaceAction.SetTolerance.ZeroTolerance",
-                            "Tolerance must be > 0. Setting to 1 degree.");
-        _angleTolerance = DEG_TO_RAD(1);
-      }
-    }
     
     bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
     {
@@ -917,7 +923,7 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      Radians currentAngle;
+      Radians currentAngle;          
       
       if(!_inPosition) {
         _inPosition = IsBodyInPosition(robot, currentAngle);
@@ -930,10 +936,23 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
-                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f)",
-                         currentAngle.getDegrees(), _targetAngle.getDegrees(), _variability.getDegrees());
+                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         currentAngle.getDegrees(),
+                         _targetAngle.getDegrees(),
+                         _variability.getDegrees(),
+                         _angleTolerance.ToFloat(),
+                         robot.GetPoseFrameID());
       }
-      
+
+      if( robot.IsMoving() ) {
+        _turnStarted = true;
+      }
+      else if( _turnStarted ) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
+                            "giving up since we stopped moving");
+        result = ActionResult::FAILURE_RETRY;
+      }
+
       return result;
     }
     
@@ -1015,6 +1034,36 @@ namespace Anki {
     {
       IAction::Reset();
       _compoundAction.ClearActions();
+    }
+
+    void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
+    {
+      _panAngleTol = angleTol_rad.getAbsoluteVal();
+
+      const float minTolDeg = 0.5f;
+      
+      if( _panAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_panAngleTol.ToFloat()),
+                            minTolDeg);
+        _panAngleTol = DEG_TO_RAD(minTolDeg);
+      }
+    }
+
+    void PanAndTiltAction::SetTiltTolerance(const Radians& angleTol_rad)
+    {
+      _tiltAngleTol = angleTol_rad.getAbsoluteVal();
+
+      const float minTolDeg = 0.5f;
+      
+      if( _tiltAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_tiltAngleTol.ToFloat()),
+                            minTolDeg);
+        _tiltAngleTol = DEG_TO_RAD(minTolDeg);
+      }
     }
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
@@ -1479,11 +1528,15 @@ namespace Anki {
                             _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
       }
+
+      const float minTolDeg = 0.5f;
       
-      if(_angleTolerance == 0.f) {
-        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.ZeroTolerance",
-                            "Tolerance must be > 0. Setting to 1 degree.");
-        _angleTolerance = DEG_TO_RAD(1);
+      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_angleTolerance.ToFloat()),
+                            minTolDeg);
+        _angleTolerance = DEG_TO_RAD(minTolDeg);
       }
       
       if(_variability > 0) {
@@ -1638,8 +1691,10 @@ namespace Anki {
       _inPosition = IsLiftInPosition(robot);
       
       if(!_inPosition) {
-        // TODO: Add ability to specify speed/accel
-        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation, 10, 20) != RESULT_OK) {
+        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
+                                                     _maxLiftSpeedRadPerSec,
+                                                     _liftAccelRacPerSec2,
+                                                     _duration) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -2194,7 +2249,7 @@ namespace Anki {
               blockWorld.DeleteObject(objectInOriginalPose->GetID());
             }
             robot.UnSetCarryingObjects();
-            
+
             PRINT_STREAM_INFO("PickupObjectAction.Verify",
                               "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
@@ -2435,7 +2490,7 @@ namespace Anki {
     , _expectedMarkerPostRoll(nullptr)
     , _rollVerifyAction(nullptr)
     {
-      
+      _dockAction = DockAction::DA_ROLL_LOW;  
     }
     
     RollObjectAction::~RollObjectAction()
@@ -2508,8 +2563,6 @@ namespace Anki {
       // Choose docking action based on block's position and whether we are
       // carrying a block
       const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
-      _dockAction = DockAction::DA_ROLL_LOW;
-      
       
       // Get the top marker as this will be what needs to be seen for verification
       Block* block = dynamic_cast<Block*>(object);
@@ -2569,7 +2622,7 @@ namespace Anki {
               if(result != ActionResult::SUCCESS) {
                 PRINT_NAMED_INFO("RollObjectAction.Verify",
                                  "Robot thinks it rolled the object, but verification failed. ");
-                result = ActionResult::FAILURE_RETRY;
+                result = ActionResult::FAILURE_ABORT;
               }
             } // if(result != ActionResult::RUNNING)
             
@@ -2578,6 +2631,7 @@ namespace Anki {
             // failed to dock/track.
             PRINT_NAMED_WARNING("RollObjectAction.Verify",
                                 "Robot reported roll failure. Assuming docking failed");
+            // retry, since the block is hopefully still there
             result = ActionResult::FAILURE_RETRY;
           }
           
