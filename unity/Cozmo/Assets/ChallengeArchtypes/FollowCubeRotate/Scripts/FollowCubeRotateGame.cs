@@ -28,7 +28,7 @@ namespace FollowCubeRotate {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeRotateGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForNewCube(), 1, null);
+      initCubeState.InitialCubeRequirements(new WaitForNewCube(), 1, true, null);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
