@@ -8,6 +8,8 @@ namespace VisionTraining {
     private float _CubeInRectTime = 0.0f;
     private int _SelectedCubeId = -1;
 
+    private CubeVisionGame _GameInstance;
+
     // don't use the rect constructor position because
     // it is top left and not center of the rect.
     private Rect _VisionRect = new Rect();
@@ -20,6 +22,8 @@ namespace VisionTraining {
 
       _VisionRect.size = new Vector2(100.0f, 50.0f);
       _VisionRect.center = new Vector2(120.0f, 0.0f);
+
+      _GameInstance = _StateMachine.GetGame() as CubeVisionGame;
     }
 
     public override void Update() {
@@ -27,6 +31,8 @@ namespace VisionTraining {
 
       bool cubeInRectNow = false;
       bool cubeInViewNow = false;
+
+      _GameInstance.Progress = _CubeInRectTime / 3.0f;
 
       for (int i = 0; i < _CurrentRobot.VisibleObjects.Count; ++i) {
         if (_CurrentRobot.VisibleObjects[i].ID == _SelectedCubeId) {
@@ -56,7 +62,7 @@ namespace VisionTraining {
         }
       }
 
-      if (CubeInRect()) {
+      if (_CubeInRectTime > 3.0f) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
         _StateMachine.SetNextState(animState);
@@ -88,9 +94,6 @@ namespace VisionTraining {
       base.Exit();
     }
 
-    public bool CubeInRect() {
-      return _CubeInRectTime > 3.0f;
-    }
   }
 
 }
