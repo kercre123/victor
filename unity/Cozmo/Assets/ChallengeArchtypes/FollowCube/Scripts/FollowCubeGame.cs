@@ -24,6 +24,16 @@ namespace FollowCube {
       _FailuresLeft = 10;
     }
 
+    public enum FollowTask {
+      Forwards,
+      Backwards,
+      TurnLeft,
+      TurnRight,
+      FollowDrive
+    }
+
+    public FollowTask CurrentFollowTask;
+
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
@@ -47,9 +57,30 @@ namespace FollowCube {
     }
 
     private void HandleFailedAnimation(bool success) {
+      CurrentRobot.SetLiftHeight(0.0f);
+      CurrentRobot.SetHeadAngle(-1.0f);
       if (_FailuresLeft == 0) {
         (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
         _StateMachineManager.RemoveStateMachine("FollowCubeStateMachine");
+      }
+      else {
+        InitialCubesState initCubeState = new InitialCubesState();
+        switch (CurrentFollowTask) {
+        case FollowTask.Forwards:
+          initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
+          break;
+        case FollowTask.Backwards:
+          break;
+        case FollowTask.TurnLeft:
+          break;
+        case FollowTask.TurnRight:
+          break;
+        case FollowTask.FollowDrive:
+          initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
+          break;
+        }
+
+        _StateMachine.SetNextState(initCubeState);
       }
     }
 
@@ -60,6 +91,7 @@ namespace FollowCube {
 
     void InitialCubesDone() {
       SetSpeed();
+      CurrentFollowTask = FollowTask.Forwards;
     }
 
     void SetSpeed() {
