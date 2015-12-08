@@ -66,11 +66,19 @@ namespace StackTraining {
         RaiseMiniGameLose();
         return;
       }
-        
-      var visibleKeys = CurrentRobot.LightCubes.Where(x => x.Value.MarkersVisible).Select(x => x.Key);
 
-      _BottomCubeId = visibleKeys.Last();
-      _TopCubeId = visibleKeys.Last();
+      foreach (var cube in CurrentRobot.LightCubes) {
+        cube.Value.TurnLEDsOff();
+        if (cube.Value.MarkersVisible) {
+          if (_BottomCubeId == -1) {
+            _BottomCubeId = cube.Key;
+          }
+          else if (_TopCubeId == -1) {
+            _TopCubeId = cube.Key;
+          }
+        }
+      }
+        
     }
   }
 
