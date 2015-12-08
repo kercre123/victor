@@ -23,7 +23,8 @@ namespace FollowCube {
         return;
       }
 
-      if (Vector3.Distance(_CurrentRobot.WorldPosition, _RobotStartPosition) > _WinDistanceThreshold) {
+      float distance = Vector3.Dot(_CurrentRobot.WorldPosition - _RobotStartPosition, _CurrentRobot.Forward);
+      if (distance < -_WinDistanceThreshold) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
         _StateMachine.SetNextState(animState);

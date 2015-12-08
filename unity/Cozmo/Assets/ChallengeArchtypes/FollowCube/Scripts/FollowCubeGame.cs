@@ -70,10 +70,13 @@ namespace FollowCube {
           initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
           break;
         case FollowTask.Backwards:
+          initCubeState.InitialCubeRequirements(new FollowCubeBackwardState(), 1, true, InitialCubesDone);
           break;
         case FollowTask.TurnLeft:
+          initCubeState.InitialCubeRequirements(new FollowCubeTurnLeftState(), 1, true, InitialCubesDone);
           break;
         case FollowTask.TurnRight:
+          initCubeState.InitialCubeRequirements(new FollowCubeTurnRightState(), 1, true, InitialCubesDone);
           break;
         case FollowTask.FollowDrive:
           initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
