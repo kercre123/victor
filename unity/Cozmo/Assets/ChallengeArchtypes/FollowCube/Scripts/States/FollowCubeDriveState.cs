@@ -3,18 +3,12 @@ using System.Collections;
 
 namespace FollowCube {
 
-  public class FollowCubeState : State {
-
-    #region Tunable values
-
-    private float _UnseenForgivenessSeconds = 2f;
-
-    #endregion
+  public class FollowCubeDriveState : State {
 
     private LightCube _TargetCube;
-    FollowCubeGame _GameInstance;
+    private FollowCubeGame _GameInstance;
 
-    private float _FirstUnseenTimestamp = -1;
+    private float _LastSeenTargetTime = -1;
 
     private float _PreviousAnglePose;
     private float _TotalRadiansTraveled;
@@ -66,16 +60,16 @@ namespace FollowCube {
         else {
           // Keep track of when Cozmo first loses track of the block
           if (IsUnseenTimestampUninitialized()) {
-            _FirstUnseenTimestamp = Time.time;
+            _LastSeenTargetTime = Time.time;
           }
 
-          if (Time.time - _FirstUnseenTimestamp > _UnseenForgivenessSeconds) {
+          if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
             ResetUnseenTimestamp();
-            // Only lose a life if some time passes
-            // Lost sight of the target; the player loses a life!
+            // register a failed attempt because it's been too long since
+            // we've seen a block.
             _TargetCube.TurnLEDsOff();
             _TargetCube = null;
-            // TODO: add fail state
+            _GameInstance.FailedAttempt();
           }
           else {
             // Continue trying to follow the cube
@@ -151,11 +145,11 @@ namespace FollowCube {
     }
 
     private bool IsUnseenTimestampUninitialized() {
-      return _FirstUnseenTimestamp == -1;
+      return _LastSeenTargetTime == -1;
     }
 
     private void ResetUnseenTimestamp() {
-      _FirstUnseenTimestamp = -1;
+      _LastSeenTargetTime = -1;
     }
   }
 

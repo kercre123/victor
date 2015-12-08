@@ -14,19 +14,21 @@ namespace FollowCube {
 
     public float DistanceMax { get; set; }
 
-    public int FailuresLeft { get; set; }
+    public float NotSeenForgivenessThreshold = 2f;
+
+    private int _FailuresLeft;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
       InitializeMinigameObjects();
-      FailuresLeft = 10;
+      _FailuresLeft = 10;
     }
 
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -37,6 +39,18 @@ namespace FollowCube {
 
     protected override void CleanUpOnDestroy() {
 
+    }
+
+    public void FailedAttempt() {
+      _FailuresLeft--;
+      CurrentRobot.SendAnimation(AnimationName.kShocked, HandleFailedAnimation);
+    }
+
+    private void HandleFailedAnimation(bool success) {
+      if (_FailuresLeft == 0) {
+        (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
+        _StateMachineManager.RemoveStateMachine("FollowCubeStateMachine");
+      }
     }
 
     // Update is called once per frame
