@@ -18,6 +18,11 @@ namespace Cozmo {
 
       private QuitMinigameButton _QuitButtonInstance;
 
+      [SerializeField]
+      private CozmoStatusWidget _DefaultCozmoStatusPrefab;
+
+      private CozmoStatusWidget _CozmoStatusInstance;
+
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
       protected override void CleanUp() {
@@ -28,6 +33,13 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        Sequence open;
+        foreach (IMinigameWidget widget in _ActiveWidgets) {
+          open = widget.OpenAnimationSequence();
+          if (open != null) {
+            openAnimation.Join(open);
+          }
+        }
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
@@ -35,7 +47,7 @@ namespace Cozmo {
         foreach (IMinigameWidget widget in _ActiveWidgets) {
           close = widget.CloseAnimationSequence();
           if (close != null) {
-            closeAnimation.Append(close);
+            closeAnimation.Join(close);
           }
         }
       }
@@ -55,7 +67,11 @@ namespace Cozmo {
       #region Quit Button
 
       public void CreateQuitButton() {
-        GameObject newButton = UIManager.CreateUIElement(_DefaultQuitGameButtonPrefab);
+        if (_QuitButtonInstance != null) {
+          return;
+        }
+
+        GameObject newButton = UIManager.CreateUIElement(_DefaultQuitGameButtonPrefab, this.transform);
 
         _QuitButtonInstance = newButton.GetComponent<QuitMinigameButton>();
 
@@ -81,6 +97,42 @@ namespace Cozmo {
       private void HandleQuitConfirmed() {
         if (QuitMiniGameConfirmed != null) {
           QuitMiniGameConfirmed();
+        }
+      }
+
+      #endregion
+
+      #region StaminaBar
+
+      private void CreateCozmoStatusWidget(int attemptsAllowed) {
+        if (_CozmoStatusInstance != null) {
+          return;
+        }
+
+        GameObject statusWidgetObj = UIManager.CreateUIElement(_DefaultCozmoStatusPrefab.gameObject, this.transform);
+        _CozmoStatusInstance = statusWidgetObj.GetComponent<CozmoStatusWidget>();
+        _CozmoStatusInstance.SetMaxAttempts(attemptsAllowed);
+        _CozmoStatusInstance.SetAttemptsLeft(attemptsAllowed);
+        _ActiveWidgets.Add(_CozmoStatusInstance);
+      }
+
+      public void SetMaxCozmoAttempts(int maxAttempts) {
+        if (_CozmoStatusInstance != null) {
+          _CozmoStatusInstance.SetMaxAttempts(maxAttempts);
+        }
+        else {
+          CreateCozmoStatusWidget(maxAttempts);
+          // TODO: Play animation, if dialog had already been opened?
+        }
+      }
+
+      public void SetCozmoAttemptsLeft(int attemptsLeft) {
+        if (_CozmoStatusInstance != null) {
+          _CozmoStatusInstance.SetAttemptsLeft(attemptsLeft);
+        }
+        else {
+          CreateCozmoStatusWidget(attemptsLeft);
+          // TODO: Play animation, if dialog had already been opened?
         }
       }
 

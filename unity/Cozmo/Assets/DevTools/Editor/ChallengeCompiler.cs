@@ -18,8 +18,9 @@ public class ChallengeCompiler {
     }
 
     list.ChallengeData = assets.Select(x => AssetDatabase.LoadAssetAtPath<ChallengeData>(AssetDatabase.GUIDToAssetPath(x))).ToArray();
-
+    EditorUtility.SetDirty(list);
     list.ChallengeData = list.ChallengeData.Where((x, index) => x.EnableHubWorldChallenge).ToArray();
+    AssetDatabase.SaveAssets();
 
   }
 
@@ -37,8 +38,8 @@ public class ChallengeCompiler {
     }
 
     list.ChallengeData = assets.Select(x => AssetDatabase.LoadAssetAtPath<ChallengeData>(AssetDatabase.GUIDToAssetPath(x))).ToArray();
-
+    EditorUtility.SetDirty(list);
     list.ChallengeData = list.ChallengeData.Where((x, index) => x.EnableDevWorldChallenge).ToArray();
-
+    AssetDatabase.SaveAssets();
   }
 }

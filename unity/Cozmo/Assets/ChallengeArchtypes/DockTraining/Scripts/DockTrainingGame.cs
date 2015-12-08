@@ -12,18 +12,17 @@ namespace DockTraining {
     private LightCube _CurrentTarget = null;
     private float _LastSeenTargetTime = 0.0f;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {
@@ -64,7 +63,7 @@ namespace DockTraining {
       if (_CurrentTarget == null)
         return false;
       float distance = Vector2.Distance(CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
-      return (distance < 100.0f);
+      return (distance < 60.0f);
     }
 
     public bool ShouldTryDockSucceed() {

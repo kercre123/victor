@@ -17,24 +17,24 @@ namespace RotationTraining {
     [SerializeField]
     private AudioClip _ColorChangeSound;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
 
       // TODO: Create a countdown state so that the player has a few seconds to prep.
 
-      initCubeState.InitialCubeRequirements(new RotateState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new RotateState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<RotationTrainingPanel>();
       _GamePanel.SetTimeLeft(0);
-      CreateDefaultQuitButton();
     }
 	
     // Update is called once per frame

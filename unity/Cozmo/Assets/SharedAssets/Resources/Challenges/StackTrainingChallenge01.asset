@@ -21,6 +21,7 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeReqs:
-    ChallengeGateKeys: []
+    ChallengeGateKeys:
+    - CubeLiftingChallenge01
     StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: b01e79e09439c48c88300f4abed554d3, type: 2}

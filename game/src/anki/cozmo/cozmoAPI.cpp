@@ -124,10 +124,11 @@ CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dat
 void CozmoAPI::CozmoInstanceRunner::Run()
 {
   auto runStart = std::chrono::system_clock::now();
-  auto tickStart = runStart;
   
   while(_isRunning)
   {
+    auto tickStart = std::chrono::system_clock::now();
+
     std::chrono::duration<double> timeSeconds = tickStart - runStart;
     
     Update(timeSeconds.count());
@@ -146,8 +147,6 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     {
       std::this_thread::sleep_for(ms_left);
     }
-    
-    tickStart = tickNow;
   }
 }
 

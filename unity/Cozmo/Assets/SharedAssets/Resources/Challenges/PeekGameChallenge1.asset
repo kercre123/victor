@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+  m_Name: PeekGameChallenge1
+  m_EditorClassIdentifier: 
+  _MinigamePrefab: {fileID: 171818, guid: 0fd6d6548319c4dddafe656e7e86535f, type: 2}
+  _ChallengeID: PeekGameChallenge1
+  _EnableHubWorldChallenge: 1
+  _EnableDevWorldChallenge: 1
+  _ChallengeTitleLocKey: peekaboo1.title
+  _ChallengeSubtitleLocKey: peekaboo1.subtitle
+  _ChallengeDescriptionLocKey: peekaboo1.description
+  _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeReqs:
+    ChallengeGateKeys:
+    - MotionDetectionChallenge01
+    StatGateArray: []
+  MinigameConfig: {fileID: 11400000, guid: bfcf35cee638a4a3589b101f226b93a8, type: 2}

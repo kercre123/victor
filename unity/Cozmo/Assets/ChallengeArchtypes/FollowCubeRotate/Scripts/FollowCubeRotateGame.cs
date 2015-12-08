@@ -19,15 +19,16 @@ namespace FollowCubeRotate {
 
     public float StartingAngle { get; set; }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
 
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeRotateGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForNewCube(), 1, null);
+      initCubeState.InitialCubeRequirements(new WaitForNewCube(), 1, true, null);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
@@ -35,8 +36,6 @@ namespace FollowCubeRotate {
       LeftReached = false;
       RightReached = false;
       CurrentTarget = null;
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {
