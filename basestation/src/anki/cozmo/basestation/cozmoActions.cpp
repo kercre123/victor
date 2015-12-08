@@ -648,7 +648,7 @@ namespace Anki {
           _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false));
         }
         
-        _compoundAction.SetIsPartOfCompoundAction(true);
+        _compoundAction.SetEmitCompletionSignal(false);
         
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it
@@ -1083,7 +1083,7 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      _compoundAction.SetIsPartOfCompoundAction(true);
+      _compoundAction.SetEmitCompletionSignal(false);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
@@ -1320,7 +1320,7 @@ namespace Anki {
       robot.GetMoveComponent().DisableTrackToObject();
       
       // Disable completion signals since this is inside another action
-      _visuallyVerifyAction.SetIsPartOfCompoundAction(true);
+      _visuallyVerifyAction.SetEmitCompletionSignal(false);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -1408,7 +1408,7 @@ namespace Anki {
     ActionResult VisuallyVerifyObjectAction::Init(Robot& robot)
     {
       // Get lift out of the way
-      _moveLiftToHeightAction.SetIsPartOfCompoundAction(true);
+      _moveLiftToHeightAction.SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       
@@ -1859,7 +1859,7 @@ namespace Anki {
                                                     0, 0, true, false);
 
         // Disable the visual verification from issuing a completion signal
-        _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
+        _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
         // Go ahead and Update the FaceObjectAction once now, so we don't
         // waste a tick doing so in CheckIfDone (since this is the first thing
@@ -2403,7 +2403,7 @@ namespace Anki {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
               
               // Disable completion signals since this is inside another action
-              _placementVerifyAction->SetIsPartOfCompoundAction(true);
+              _placementVerifyAction->SetEmitCompletionSignal(false);
               
               // Go ahead do the first update of the FaceObjectAction to get the
               // init "out of the way" rather than wasting a tick here
@@ -2450,7 +2450,7 @@ namespace Anki {
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
                   
                   // Disable completion signals since this is inside another action
-                  _placementVerifyAction->SetIsPartOfCompoundAction(true);
+                  _placementVerifyAction->SetEmitCompletionSignal(false);
                   
                   result = ActionResult::RUNNING;
                 }
@@ -2609,7 +2609,7 @@ namespace Anki {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
               
               // Disable completion signals since this is inside another action
-              _rollVerifyAction->SetIsPartOfCompoundAction(true);
+              _rollVerifyAction->SetEmitCompletionSignal(false);
             }
             
             result = _rollVerifyAction->Update(robot);
@@ -2962,7 +2962,7 @@ namespace Anki {
         }
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, 0, true, false);
-        _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
+        _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
       } // if/else IsCarryingObject()
       

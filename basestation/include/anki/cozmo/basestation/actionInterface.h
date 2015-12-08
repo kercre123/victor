@@ -104,8 +104,8 @@ namespace Anki {
       virtual u8 GetAnimTracksToDisable() const { return 0; }
       
       // Used (e.g. in initialization of CompoundActions) to specify that a
-      // consituent action is part of a compound action
-      void SetIsPartOfCompoundAction(bool tf) { _isPartOfCompoundAction = tf; }
+      // consituent action should not try to lock or unlock tracks it uses
+      void SetSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
 
       // Override this to fill in the ActionCompletedStruct emitted as part of the
       // completion signal with an action finishes. Note that this public because
@@ -116,6 +116,9 @@ namespace Anki {
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
       bool IsMessageDisplayEnabled() const { return _displayMessages; }
+      
+      void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
+      bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
       
     protected:
       
@@ -137,10 +140,11 @@ namespace Anki {
       
       std::string   _statusMsg;
       
-      bool          _isPartOfCompoundAction = false;
+      bool          _suppressTrackLocking   = false;
       bool          _isRunning              = false;
       bool          _isCancelled            = false;
       bool          _displayMessages        = true;
+      bool          _emitCompletionSignal   = true;
       
       u32           _idTag;
       
