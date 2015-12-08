@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 445346}
   - 114: {fileID: 11456440}
   m_Layer: 0
-  m_Name: VisionTrainingGame
+  m_Name: CubeTrainingGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
