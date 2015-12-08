@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
-#include "anki/cozmo/basestation/investorDemoBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
@@ -96,7 +96,7 @@ namespace Cozmo {
   void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
   {
 #if INVESTOR_DEMO
-    SetBehaviorChooser( new InvestorDemoBehaviorChooser(_robot, config) );
+    SetBehaviorChooser( new InvestorDemoMotionBehaviorChooser(_robot, config) );
 #else
     SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
 #endif

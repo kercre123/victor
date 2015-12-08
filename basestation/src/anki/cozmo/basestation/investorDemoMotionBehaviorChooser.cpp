@@ -1,5 +1,5 @@
 /**
- * File: investorDemoBehaviorChooser.cpp
+ * File: investorDemoMotionBehaviorChooser.cpp
  *
  * Author: Brad Neuman
  * Created: 2015-11-25
@@ -13,13 +13,13 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
-#include "anki/cozmo/basestation/investorDemoBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
 namespace Cozmo {
 
-InvestorDemoBehaviorChooser::InvestorDemoBehaviorChooser(Robot& robot, const Json::Value& config)
+InvestorDemoMotionBehaviorChooser::InvestorDemoMotionBehaviorChooser(Robot& robot, const Json::Value& config)
   : super()
 {
   SetupBehaviors(robot, config);
@@ -27,7 +27,7 @@ InvestorDemoBehaviorChooser::InvestorDemoBehaviorChooser(Robot& robot, const Jso
   // robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
 }
 
-void InvestorDemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
+void InvestorDemoMotionBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
   super::AddBehavior( new BehaviorNone(robot, config) );
   super::AddBehavior( new BehaviorPounceOnMotion(robot, config) );
@@ -35,7 +35,7 @@ void InvestorDemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value
 }
 
 
-Result InvestorDemoBehaviorChooser::Update(double currentTime_sec)
+Result InvestorDemoMotionBehaviorChooser::Update(double currentTime_sec)
 {
   return super::Update(currentTime_sec);
 }
