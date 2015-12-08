@@ -299,7 +299,7 @@ def ExportAnkiAnim(item):
         i = 0;
         #Loop through all keyframes, the value is actually the next keyframe
         keyframe_count = len(Vs)
-        for i in range(keyframe_count-2):
+        for i in range(keyframe_count-1):
             #Duration is (timeN+1-timeN)
             #Last Duration is anim-length - timeN
             duration = (Ts[i+1] - Ts[i]) * 1000 / ANIM_FPS 
