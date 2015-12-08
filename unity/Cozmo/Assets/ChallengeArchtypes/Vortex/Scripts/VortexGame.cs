@@ -82,6 +82,8 @@ namespace Vortex {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
+
+      LightCube.TappedAction -= HandleBlockTapped;
     }
 
     private void HandleSpinStarted() {

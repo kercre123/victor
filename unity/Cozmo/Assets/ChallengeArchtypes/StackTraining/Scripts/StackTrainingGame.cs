@@ -44,6 +44,7 @@ namespace StackTraining {
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
       CurrentRobot.SetLiftHeight(0f);
       CurrentRobot.SetHeadAngle(0f);

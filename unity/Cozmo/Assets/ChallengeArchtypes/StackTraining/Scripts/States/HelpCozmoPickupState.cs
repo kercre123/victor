@@ -41,7 +41,8 @@ namespace StackTraining {
         _Moving = true;
         _CurrentRobot.PickupObject(bottomCube, callback: (success) => {
           if(success) {
-            _StateMachine.SetNextState(new HelpCozmoStackState());
+            topCube.SetLEDs(Color.blue);
+            _StateMachine.SetNextState(new TapCubeState(new HelpCozmoStackState(), topCube.ID));
           }
           else {
             if(_Game.TryDecrementAttempts()) {
