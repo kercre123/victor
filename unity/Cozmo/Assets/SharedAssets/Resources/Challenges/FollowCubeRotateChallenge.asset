@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 137318, guid: d05487a86459c4c0092cf32e1423bff1, type: 2}
   _ChallengeID: FollowCubeRotateChallenge
-  _EnableHubWorldChallenge: 0
+  _EnableHubWorldChallenge: 1
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: followCubeRotate1.title
   _ChallengeSubtitleLocKey: followCubeRotate1.subtitle
@@ -21,6 +21,7 @@ MonoBehaviour:
   _ChallengeIcon: {fileID: 0}
   _ChallengeKeyArt: {fileID: 0}
   _ChallengeReqs:
-    ChallengeGateKeys: []
+    ChallengeGateKeys:
+    - ForwardBackwardChallenge01
     StatGateArray: []
   MinigameConfig: {fileID: 11400000, guid: 012efa13303264535820264353f3756a, type: 2}
