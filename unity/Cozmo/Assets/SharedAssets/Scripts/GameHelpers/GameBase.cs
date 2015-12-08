@@ -145,7 +145,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private int _MaxAttempts = -1;
 
-  protected int MaxAttempts {
+  public int MaxAttempts {
     get { return _MaxAttempts; }
     set {
       if (value > 0) {
@@ -161,7 +161,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private int _AttemptsLeft = -1;
 
-  protected int AttemptsLeft {
+  public int AttemptsLeft {
     get { return _AttemptsLeft; }
     set {
       _AttemptsLeft = Mathf.Clamp(value, 0, MaxAttempts);
@@ -183,7 +183,7 @@ public abstract class GameBase : MonoBehaviour {
   // From 0 to 1
   private float _Progress = 0f;
 
-  protected float Progress {
+  public float Progress {
     get { return _Progress; }
     set {
       _Progress = Mathf.Clamp(value, 0f, 1f);
@@ -206,7 +206,7 @@ public abstract class GameBase : MonoBehaviour {
   // "segments" there are in the bar. Progress is still from 0 to 1 overall,
   // so if you want to fill the first segment of a 4 segment bar, set
   // Progress to 0.25.
-  protected int NumSegments {
+  public int NumSegments {
     get {
       return _SharedMinigameViewInstance.NumSegments;
     }
