@@ -327,6 +327,10 @@ namespace Anki {
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
+          // Dock speed
+          const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
+          const f32 dockAccel_mmps2 = root_->getField("dockAccel_mmps2")->getSFFloat();
+          
           // Path speeds
           const f32 pathSpeed_mmps = root_->getField("pathSpeed_mmps")->getSFFloat();
           const f32 pathAccel_mmps2 = root_->getField("pathAccel_mmps2")->getSFFloat();
@@ -341,6 +345,8 @@ namespace Anki {
           pathMotionProfile_.pointTurnSpeed_rad_per_sec = pathPointTurnSpeed_radPerSec;
           pathMotionProfile_.pointTurnAccel_rad_per_sec2 = pathPointTurnAccel_radPerSec2;
           pathMotionProfile_.pointTurnDecel_rad_per_sec2 = pathPointTurnDecel_radPerSec2;
+          pathMotionProfile_.dockSpeed_mmps = dockSpeed_mmps;
+          pathMotionProfile_.dockAccel_mmps2 = dockAccel_mmps2;
           
           
           // For pickup or placeRel, specify whether or not you want to use the
