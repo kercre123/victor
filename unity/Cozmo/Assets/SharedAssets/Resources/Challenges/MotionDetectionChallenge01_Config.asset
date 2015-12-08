@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Name: MotionDetectionChallenge01_Config
   m_EditorClassIdentifier: 
   TimeAllowedBetweenWaves: 1
-  TotalWaveTime: 2.5
+  TotalWaveTime: 5
