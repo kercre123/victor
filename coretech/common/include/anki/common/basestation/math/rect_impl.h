@@ -119,6 +119,28 @@ namespace Anki {
     quad[Quad::BottomRight].x() = x + width;
     quad[Quad::BottomRight].y() = y + height;
   }
+  
+  template<typename T>
+  Point<2,T> Rectangle<T>::GetTopLeft() const {
+    return Point<2,T>(GetX(),GetY());
+  }
+  
+  template<typename T>
+  Point<2,T> Rectangle<T>::GetTopRight() const {
+    return Point<2,T>(GetXmax(),GetY());
+  }
+  
+  template<typename T>
+  Point<2,T> Rectangle<T>::GetBottomLeft() const {
+    return Point<2,T>(GetX(),GetYmax());
+  }
+  
+  template<typename T>
+  Point<2,T> Rectangle<T>::GetBottomRight() const {
+    return Point<2,T>(GetXmax(), GetYmax());
+  }
+
+  
 #endif
   
   
@@ -141,11 +163,11 @@ namespace Anki {
       ++pointIter;
       while(pointIter != points.end()) {
 #if ANKICORETECH_USE_OPENCV
-        this->x = std::min(this->x, pointIter->x());
-        this->y = std::min(this->y, pointIter->y());
+        this->x = std::min(this->x, static_cast<T>(pointIter->x()));
+        this->y = std::min(this->y, static_cast<T>(pointIter->y()));
 #endif
-        xmax = std::max(xmax, pointIter->x());
-        ymax = std::max(ymax, pointIter->y());
+        xmax = std::max(xmax, static_cast<T>(pointIter->x()));
+        ymax = std::max(ymax, static_cast<T>(pointIter->y()));
         
         ++pointIter;
       }
@@ -166,13 +188,15 @@ namespace Anki {
   } // Rectangle<T>::initFromPointContainer
   
   template<typename T>
-  Rectangle<T>::Rectangle(const Quadrilateral<2,T>& quad)
+  template<typename T_other>
+  Rectangle<T>::Rectangle(const Quadrilateral<2,T_other>& quad)
   {
     InitFromPointContainer(quad);
   }
   
   template<typename T>
-  Rectangle<T>::Rectangle(const std::vector<Point<2,T> >& points)
+  template<typename T_other>
+  Rectangle<T>::Rectangle(const std::vector<Point<2,T_other> >& points)
   {
     InitFromPointContainer(points);
   }

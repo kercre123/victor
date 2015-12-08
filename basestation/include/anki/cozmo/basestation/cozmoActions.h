@@ -218,6 +218,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Cleanup(Robot& robot) override;
       
     private:
       
@@ -231,6 +232,7 @@ namespace Anki {
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = 50.f;
       f32     _accel_radPerSec2 = 10.f;
+      u32     _eyeShiftTag = 0;
       
     }; // class TurnInPlaceAction
     
@@ -291,6 +293,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Cleanup(Robot& robot) override;
       
     private:
       
@@ -305,6 +308,8 @@ namespace Anki {
       
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
+      
+      u32         _eyeShiftTag = 0;
 
     };  // class MoveHeadToAngleAction
     

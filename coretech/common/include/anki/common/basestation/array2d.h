@@ -24,6 +24,7 @@
 #define _ANKICORETECH_COMMON_ARRAY2D_H_
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/rect.h"
 #include <vector>
 #include <functional>
 #include <limits.h>
@@ -57,6 +58,9 @@ namespace Anki
     // Copies to another Array2d
     void CopyTo(Array2d<T> &other) const;
 
+    template<typename T_rect>
+    Array2d<T> GetROI(const Rectangle<T_rect>& roiRect);
+    
     // Access by row, col (for isolated access):
     T  operator() (const int row, const int col) const;
     T& operator() (const int row, const int col);
