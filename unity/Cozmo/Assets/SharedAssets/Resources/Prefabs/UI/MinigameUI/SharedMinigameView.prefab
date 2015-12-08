@@ -32,6 +32,8 @@ MonoBehaviour:
     type: 2}
   _DefaultCozmoStatusPrefab: {fileID: 11442220, guid: cf9f13de2c8374a4789d98c4120fb2e9,
     type: 2}
+  _DefaultTaskProgressWidgetPrefab: {fileID: 11418008, guid: 1f104ca012b8a4d35b83f167e041a8a4,
+    type: 2}
 --- !u!224 &22430574
 RectTransform:
   m_ObjectHideFlags: 1
@@ -60,6 +62,11 @@ Prefab:
       propertyPath: _DefaultCozmoStatusPrefab
       value: 
       objectReference: {fileID: 11442220, guid: cf9f13de2c8374a4789d98c4120fb2e9,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DefaultTaskProgressWidgetPrefab
+      value: 
+      objectReference: {fileID: 11418008, guid: 1f104ca012b8a4d35b83f167e041a8a4,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
