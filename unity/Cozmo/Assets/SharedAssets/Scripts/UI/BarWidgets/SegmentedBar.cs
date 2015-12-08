@@ -4,7 +4,10 @@ using System.Collections.Generic;
 
 namespace Cozmo {
   namespace UI {
-    public class SegmentedBarWidget : MonoBehaviour {
+    // This potentially has a lot of overlap with ProgressBarWidget,
+    // especially if we make use of masks to achieve the same effect.
+    // This also doesn't have tweening, each segment is strictly on/off.
+    public class SegmentedBar : MonoBehaviour {
 
       [SerializeField]
       private Toggle _SegmentPrefab;
