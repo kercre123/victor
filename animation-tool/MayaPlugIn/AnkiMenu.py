@@ -89,7 +89,7 @@ def IsProceduralAttribute(currattr):
 def GetAudioJSON():
     audioNode = cmds.timeControl(mel.eval( '$tmpVar=$gPlayBackSlider' ),query=True, sound=True)
     if( (audioNode  is not None) and (audioNode != "") ):
-        audioStart = cmds.sound(audioNode,query=True, sourceStart=True)
+        audioStart = cmds.sound(audioNode,query=True, offset=True)
         audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
         audioFile = cmds.sound(audioNode,query=True, file=True)
 
@@ -110,11 +110,20 @@ def GetAudioJSON():
     else:
         print "No audio found"
     return None
+#strips extra data from baking too
+def GetSingleMovementData(dataNodeObject,attribute_name, wantsValueChange):
+    #Maya just checks that these flags are passed in... they aren't actually bools
+    if( wantsValueChange == True):
+        keyframe_arr = cmds.keyframe( dataNodeObject, attribute = attribute_name, query=True, valueChange=True)
+    else:
+        keyframe_arr = cmds.keyframe( dataNodeObject, attribute = attribute_name, query=True, timeChange=True)
+    return keyframe_arr
 
-def GetMovement():
+#keeping this backwards compatible leads to some weird concatination.
+def GetMovementJSON():
     global ANIM_FPS
-    #Get a list of all the user defined attributes
-    dataNodeObject = "x:mech_all_ctrl"
+    #Get a list of all the user defined attributes #dataNodeObject = "x:mech_all_ctrl"
+    dataNodeObject = "x:data_node"
     if( len( cmds.ls(dataNodeObject) ) == 0 ):
         return None
     attributes = cmds.listAttr(dataNodeObject, ud=True)
@@ -123,39 +132,54 @@ def GetMovement():
     json_arr = []
     
     keyframe_attr_data = {}
-    #Movement requires all attributes be set with the known names TODO: better error handling
-    keyframe_attr_data["RadiusValues"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, valueChange=True)
-    keyframe_attr_data["TurnValues"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, valueChange=True)
-    keyframe_attr_data["FwdValues"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, valueChange=True)
-    keyframe_attr_data["Times"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, timeChange=True)
+    #Movement requires all attributes be set with the known names, and all together.
+    keyframe_attr_data["RadiusValues"] = GetSingleMovementData(dataNodeObject,"Radius",True)
+    keyframe_attr_data["TurnValues"] = GetSingleMovementData(dataNodeObject,"Turn",True)
+    keyframe_attr_data["FwdValues"] = GetSingleMovementData(dataNodeObject,"Forward",True)
+    keyframe_attr_data["TimesForward"] = GetSingleMovementData(dataNodeObject,"Forward",False)
+    keyframe_attr_data["TimesRadius"] = GetSingleMovementData(dataNodeObject,"Turn",False)
+    keyframe_attr_data["TimesTurn"] = GetSingleMovementData(dataNodeObject,"Radius",False)
 
-    if( keyframe_attr_data["Times"] is None):
+    #Try to find an intersection all attributes agree on, bakeResults sometimes inserts where there shouldn't be.
+    min_keyframes = min([len(keyframe_attr_data["TimesForward"]),len(keyframe_attr_data["TimesRadius"]),len(keyframe_attr_data["TimesTurn"])])
+
+    move_data_combined = [] #object so I don't have a bunch of different arrays
+    i = 1 #filter out baked data extraness again.
+    for i in range(min_keyframes - 1):
+            valid_keyframe = {
+                    "Forward": round(keyframe_attr_data["FwdValues"][i]),
+                    "Turn": round(keyframe_attr_data["TurnValues"][i]),
+                    "Radius": round(keyframe_attr_data["RadiusValues"][i]),
+                    "Time": keyframe_attr_data["TimesForward"][i]
+                }
+            move_data_combined.append( valid_keyframe )
+
+    #TODO: error message if all are not keyed.
+    if( len(move_data_combined) == 0):
         return None
     #Loop through all keyframes
-    keyframe_count = len(keyframe_attr_data["Times"])
+    keyframe_count = len(move_data_combined)
+    i = 0
     for i in range(keyframe_count-1):
         #skip the ending frames and go to the start of the next bookend, we process in pairs.
         if( ( i % 2) != 0 ):
             continue
-        duration = (keyframe_attr_data["Times"][i+1] - keyframe_attr_data["Times"][i]) * 1000 / ANIM_FPS
-        triggerTime_ms = round((keyframe_attr_data["Times"][i]) * 1000  / ANIM_FPS, 0);
+        duration = (move_data_combined[i+1]["Time"] - move_data_combined[i]["Time"]) * 1000 / ANIM_FPS
+        triggerTime_ms = round((move_data_combined[i]["Time"]) * 1000  / ANIM_FPS, 0);
         durationTime_ms = round(duration, 0); 
         curr = {
                     "triggerTime_ms": triggerTime_ms,
                     "durationTime_ms": durationTime_ms,
                     "Name": "BodyMotionKeyFrame"
                 }
-        keyframe_attr_data["FwdValues"][i+1] = round(keyframe_attr_data["FwdValues"][i+1])
-        keyframe_attr_data["RadiusValues"][i+1] = round(keyframe_attr_data["RadiusValues"][i+1])
-        keyframe_attr_data["TurnValues"][i+1] = round(keyframe_attr_data["TurnValues"][i+1])
-        if( (keyframe_attr_data["FwdValues"][i+1] != 0) and  
-            (keyframe_attr_data["RadiusValues"][i+1] == 0) and
-            (keyframe_attr_data["TurnValues"][i+1] == 0)):
+        if( (move_data_combined[i+1]["Forward"]  != 0) and  
+            (move_data_combined[i+1]["Radius"]  == 0) and
+            (move_data_combined[i+1]["Turn"]  == 0)):
             curr["radius_mm"] = "STRAIGHT"
             curr["speed"] =round(keyframe_attr_data["FwdValues"][i+1])
-        elif( (keyframe_attr_data["FwdValues"][i+1] == 0) and  
-            (keyframe_attr_data["RadiusValues"][i+1] == 0) and
-            (keyframe_attr_data["TurnValues"][i+1] != 0)):
+        elif( (move_data_combined[i+1]["Forward"] == 0) and  
+            (move_data_combined[i+1]["Radius"] == 0) and
+            (move_data_combined[i+1]["Turn"]  != 0)):
             curr["radius_mm"] = "TURN_IN_PLACE"
             curr["speed"] =round(keyframe_attr_data["TurnValues"][i+1])
         else:
@@ -220,6 +244,10 @@ def ExportAnkiAnim(item):
 
     #Bake the animation so that we get the maya values mapped to the cozmo face values that the datanode driven keyframes transform
     cmds.bakeResults( dataNodeObject, time=(1,cmds.playbackOptions( query=True,max=True )),simulation=True, smart=True,disableImplicitControl=True,preserveOutsideKeys=True,sparseAnimCurveBake=False,removeBakedAttributeFromLayer=False,removeBakedAnimFromLayer=False,bakeOnOverrideLayer=True,minimizeRotation=True,controlPoints=False,shape=True )   
+    
+    node_list = cmds.listConnections('BakeResults')
+    for baked_key in node_list:
+        cmds.keyTangent(baked_key, inTangentType='linear', outTangentType='linear')
 
     json_arr = []
     # Because in the file we store the procedural anim as one keyframe with all params
@@ -301,7 +329,7 @@ def ExportAnkiAnim(item):
     if( audio_json is not None):
         json_arr.append(audio_json)
     #Grab the robot movement relative to the curve
-    movement_json_arr = GetMovement()
+    movement_json_arr = GetMovementJSON()
     if( movement_json_arr is not None):
         json_arr.extend(movement_json_arr)
     #Deletes the results layer the script created.
