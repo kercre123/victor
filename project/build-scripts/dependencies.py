@@ -40,7 +40,7 @@ def is_up(url_string):
         return True
     except urllib2.HTTPError, e:
         if e.code == 401:
-        # Authentication error site is up and requires login.
+            # Authentication error site is up and requires login.
             return True
         print(e.code)
         return False
@@ -59,7 +59,7 @@ def svn_package(svn_dict):
     """
     tool = "svn"
     ptool = "tar"
-    ptool_options = ['-x', '-z', '-f']
+    ptool_options = ['-v', '-x', '-z', '-f']
     assert is_tool(tool)
     assert is_tool(ptool)
     assert isinstance(svn_dict, dict)
@@ -83,7 +83,7 @@ def svn_package(svn_dict):
         checkout = [tool, 'checkout', '-r', '{0}'.format(r_rev)] + cred + [url, loc]
         cleanup = [tool, 'status', '--no-ignore'] + cred + [loc]
         get_rev = [tool, "info"] + cred + [loc]
-        unpack = [ptool] + ptool_options + [package, loc]
+        unpack = [ptool] + ptool_options + [package, '-C', loc]
 
         if os.path.isdir(loc):
             pipe = subprocess.Popen(get_rev, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
@@ -101,7 +101,7 @@ def svn_package(svn_dict):
             l_rev = 0
         if r_rev == "head" or l_rev != r_rev:
             print "Checking out {0}".format(repo)
-            pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr= subprocess.PIPE)
+            pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             successful, err = pipe.communicate()
             if '' == err:
                 print successful
@@ -116,10 +116,12 @@ def svn_package(svn_dict):
                             shutil.rmtree(a_file)
                         elif os.path.isfile(a_file):
                             os.remove(a_file)
-
                 if os.path.isfile(package):
                     # call waits for the result.  Moving on to the next checkout doesnt need this to finish.
-                    subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    successful, err = pipe.communicate()
+                    if VERBOSE:
+                        print err
             else:
                 print "Error in checking out {0}".format(repo)
                 print(err)
