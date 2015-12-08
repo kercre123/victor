@@ -97,9 +97,15 @@ namespace Cozmo.HubWorld {
     }
 
     private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      // For now, play the game but don't increase progress when you win
-      CloseHubWorldDialog();
-      PlayMinigame(_ChallengeStatesById[challengeClicked].data);
+      // Show some details about the challenge before starting it
+      // We need to initialize the dialog first before opening the view, so don't use UIManager's OpenView method.
+      GameObject dialogObject = UIManager.CreateUIElement(_ChallengeDetailsPrefab.gameObject);
+      _ChallengeDetailsDialogInstance = dialogObject.GetComponent<ChallengeDetailsDialog>();
+      _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challengeClicked].data, buttonTransform);
+      _ChallengeDetailsDialogInstance.OpenView();
+
+      // React to when we should start the challenge.
+      _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
     }
 
     private void HandleMiniGameLose() {
