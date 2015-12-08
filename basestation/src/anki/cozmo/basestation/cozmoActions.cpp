@@ -911,15 +911,6 @@ namespace Anki {
     
       return ActionResult::SUCCESS;
     }
-
-    void TurnInPlaceAction::SetTolerance(const Anki::Radians &angleTol_rad) {
-      _angleTolerance = angleTol_rad.getAbsoluteVal();
-      if(_angleTolerance == 0.f) {
-        PRINT_NAMED_WARNING("TurnInPlaceAction.SetTolerance.ZeroTolerance",
-                            "Tolerance must be > 0. Setting to 1 degree.");
-        _angleTolerance = DEG_TO_RAD(1);
-      }
-    }
     
     bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
     {
@@ -1537,11 +1528,15 @@ namespace Anki {
                             _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
       }
+
+      const float minTolDeg = 0.5f;
       
-      if(_angleTolerance == 0.f) {
-        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.ZeroTolerance",
-                            "Tolerance must be > 0. Setting to 1 degree.");
-        _angleTolerance = DEG_TO_RAD(1);
+      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_angleTolerance.ToFloat()),
+                            minTolDeg);
+        _angleTolerance = DEG_TO_RAD(minTolDeg);
       }
       
       if(_variability > 0) {
