@@ -826,15 +826,16 @@ namespace Anki {
         success_ = false;
       }
       
-      bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle)
+      const Anki::Embedded::Pose2d& GetLastMarkerAbsPose()
       {
-        if (lastMarkerDistX_ > 0.f) {
+        return blockPose_;
+      }
+      
+      void GetLastMarkerRelPose(f32 &x, f32 &y, f32 &angle)
+      {
           x = lastMarkerDistX_;
           y = lastMarkerDistY_;
           angle = lastMarkerAng_;
-          return true;
-        }
-        return false;
       }
       
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg)

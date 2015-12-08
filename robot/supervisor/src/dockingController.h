@@ -98,9 +98,12 @@ namespace Anki {
                                  const f32 rel_x, const f32 rel_y, const f32 rel_angle,
                                  const bool useManualSpeed = false);
 
-      // If a marker pose was received from VisionSystem,
-      // returns true along with that pose.
-      bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle);
+
+      // Returns the last computed pose of the marker based on docking error signal
+      const Anki::Embedded::Pose2d& GetLastMarkerAbsPose();
+      
+      // Returns the last docking error signal received
+      void GetLastMarkerRelPose(f32 &x, f32 &y, f32 &angle);
       
       // Sets the latest docking error signal message coming from engine
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);

@@ -81,6 +81,15 @@ namespace Anki {
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
         
+        // Time when robot first becomes tiled on charger (while docking)
+        u32 tiltedOnChargerStartTime_ = 0;
+
+        // Pitch angle at which Cozmo is probably having trouble backing up on charger
+        const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
+        
+        // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
+        const u32 TILT_FAILURE_DURATION_MS = 250;
+        
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
         
@@ -146,7 +155,7 @@ namespace Anki {
       {
         static const f32 MIN_BACKOUT_DIST = 10.f;
         
-        DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
+        DockingController::GetLastMarkerRelPose(relMarkerX_, relMarkerY_, relMarkerAng_);
         
         f32 backoutDist_mm = MIN_BACKOUT_DIST;
         if(relMarkerX_ > 0.f && relMarkerX_ <= BACKOUT_DISTANCE_MM) {
@@ -328,9 +337,15 @@ namespace Anki {
                   #if(DEBUG_PAP_CONTROLLER)
                   PRINT("PAP: MOUNT_CHARGER\n");
                   #endif
-                  DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
-                  f32 relAngleToMarker = atan2_acc(relMarkerY_, relMarkerX_);
-                  PRINT("CHARGER TURN %f deg (%f %f)\n", RAD_TO_DEG(relAngleToMarker), relMarkerY_, relMarkerX_ );
+                  
+                  // Compute angle to turn in order to face marker
+                  f32 robotPose_x, robotPose_y;
+                  Radians robotPose_angle;
+                  Localization::GetCurrentMatPose(robotPose_x, robotPose_y, robotPose_angle);
+                  const Anki::Embedded::Pose2d& markerPose = DockingController::GetLastMarkerAbsPose();
+                  f32 relAngleToMarker = atan2_acc(markerPose.GetY() - robotPose_y, markerPose.GetX() - robotPose_x);
+                  relAngleToMarker -= robotPose_angle.ToFloat();
+
                   f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F + relAngleToMarker).ToFloat();
                   SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, true);
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
@@ -576,7 +591,8 @@ namespace Anki {
             break;
           case TRAVERSE_BRIDGE:
             if (DockingController::IsBusy()) {
-              if (DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_) && relMarkerX_ < 100.f) {
+              DockingController::GetLastMarkerRelPose(relMarkerX_, relMarkerY_, relMarkerAng_);
+              if (relMarkerX_ < 100.f) {
                 // We're tracking the end marker.
                 // Keep driving until we're off.
                 UpdatePoseSnapshot();
@@ -625,19 +641,25 @@ namespace Anki {
               
               // TODO: Some kind of recovery?
               // ...
-            } else if (IMUFilter::GetPitch() < -DEG_TO_RAD_F32(30)) {
+            } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
               // Check for tilt
-              // Drive forward until no tilt or timeout
-              PRINT("BACKUP_ON_CHARGER tilted\n");
-              SteeringController::ExecuteDirectDrive(40, 40);
-              transitionTime_ = HAL::GetTimeStamp() + 2500;
-              mode_ = DRIVE_FORWARD;
+              if (tiltedOnChargerStartTime_ == 0) {
+                tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
+              } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
+                // Drive forward until no tilt or timeout
+                PRINT("BACKUP_ON_CHARGER tilted\n");
+                SteeringController::ExecuteDirectDrive(40, 40);
+                transitionTime_ = HAL::GetTimeStamp() + 2500;
+                mode_ = DRIVE_FORWARD;
+              }
             } else if (HAL::BatteryIsOnCharger()) {
               PRINT("BACKUP_ON_CHARGER success\n");
               SteeringController::ExecuteDirectDrive(0, 0);
               SendChargerMountCompleteMessage(true);
               lastActionSucceeded_ = true;
               mode_ = IDLE;
+            } else {
+              tiltedOnChargerStartTime_ = 0;
             }
             break;
           case DRIVE_FORWARD:
