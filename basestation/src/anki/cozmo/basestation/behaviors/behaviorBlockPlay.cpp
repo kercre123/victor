@@ -191,11 +191,11 @@ namespace Cozmo {
             if (_noFacesStartTime <= 0) {
               _noFacesStartTime = currentTime_sec;
             }
-            // TODO: enable this, it will switch back to track faces behavior which will make sense
-            // if (currentTime_sec - _noFacesStartTime > 3) {
-            //   PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
-            //   return Status::Complete;
-            // }
+            
+            if (currentTime_sec - _noFacesStartTime > 2.0f) {
+              PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
+              return Status::Complete;
+            }
           }
 
           if( moveLiftAction != nullptr) {
@@ -514,7 +514,9 @@ namespace Cozmo {
         break;
         
       case EngineToGameTag::RobotObservedObject:
-        _lastHandlerResult = HandleObservedObjectWhileRunning(robot, event.GetData().Get_RobotObservedObject(), event.GetCurrentTime());
+        _lastHandlerResult = HandleObservedObjectWhileRunning(robot,
+                                                              event.GetData().Get_RobotObservedObject(),
+                                                              event.GetCurrentTime());
         break;
         
       default:
@@ -531,13 +533,19 @@ namespace Cozmo {
     switch(event.GetData().GetTag())
     {
       case EngineToGameTag::RobotCompletedAction:
-      case EngineToGameTag::RobotObservedObject:
       case EngineToGameTag::RobotDeletedObject:
       case EngineToGameTag::BlockPlaced:
       case EngineToGameTag::RobotObservedFace:
       case EngineToGameTag::RobotDeletedFace:
         // Handled by AlwaysHandle() / HandleWhileRunning
         break;
+
+      case EngineToGameTag::RobotObservedObject:
+        _lastHandlerResult = HandleObservedObjectWhileNotRunning(robot,
+                                                                 event.GetData().Get_RobotObservedObject(),
+                                                                 event.GetCurrentTime());
+        break;
+
 
       default:
         PRINT_NAMED_ERROR("BehaviorBlockPlay.HandleWhileRunning.InvalidTag",
@@ -839,43 +847,58 @@ namespace Cozmo {
     
     return lastResult;
   } // HandleActionCompleted()
-  
 
-  
-  Result BehaviorBlockPlay::HandleObservedObjectWhileRunning(Robot& robot,
-                                                             const ExternalInterface::RobotObservedObject &msg,
-                                                             double currentTime_sec)
+  bool BehaviorBlockPlay::HandleObservedObjectHelper(const Robot& robot,
+                                                     const ExternalInterface::RobotObservedObject& msg,
+                                                     double currentTime_sec)
   {
     ObjectID objectID;
     objectID = msg.objectID;
-    
+
     // Make sure this is actually a block
     const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
     if (nullptr == oObject) {
       PRINT_NAMED_WARNING("BehaviorBlockPlay.HandeObservedObject.InvalidObject",
                           "How'd this happen? (ObjectID %d)", objectID.GetValue());
-      return RESULT_OK;
+      return false;
     }
     
     if(&oObject->GetPose().FindOrigin() != robot.GetWorldOrigin()) {
       PRINT_NAMED_WARNING("BehaviorBlockPlay.HandleObservedObject.OriginMismatch",
                           "Ignoring object %d because it does not share an origin "
                           "with the robot.", oObject->GetID().GetValue());
-      return RESULT_OK;
+      return false;
     }
     
     if(oObject->IsActive() && oObject->GetIdentityState() != ActiveIdentityState::Identified) {
       PRINT_NAMED_WARNING("BehaviorBlockPlay.HandleObservedObject.UnidentifiedActiveObject",
                           "How'd this happen? (ObjectID %d, idState=%s)",
                           objectID.GetValue(), EnumToString(oObject->GetIdentityState()));
-      return RESULT_OK;
+      return false;
     }
     
     // Only care about light cubes
     if (oObject->GetFamily() != ObjectFamily::LightCube) {
+      return false;
+    }
+
+    return true;
+  }
+  
+
+  Result BehaviorBlockPlay::HandleObservedObjectWhileNotRunning(const Robot& robot,
+                                                                const ExternalInterface::RobotObservedObject &msg,
+                                                                double currentTime_sec)
+  {
+    ObjectID objectID;
+    objectID = msg.objectID;
+
+    if( ! HandleObservedObjectHelper(robot, msg, currentTime_sec ) ) {
       return RESULT_OK;
     }
-    
+
+    const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+
     // Get height of the object.
     // Only track the block if it's above a certain height.
     Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
@@ -884,7 +907,44 @@ namespace Cozmo {
     if ((_currentState == State::TrackingFace) &&
         (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
         (diffVec.z() > oObject->GetSize().z()) ) {
-      PRINT_NAMED_INFO("BehaviorBlockPlay.HandleObservedObject.TrackingBlock",
+      PRINT_NAMED_INFO("BehaviorBlockPlay.HandleObservedObjectWhileNotRunning.TrackingBlock",
+                       "Now tracking object %d",
+                       objectID.GetValue());
+
+      _trackedObject = objectID;
+    }
+
+    if( objectID == _trackedObject && msg.markersVisible ) {
+      _lastObjectObservedTime = currentTime_sec;
+    }
+
+    return RESULT_OK;
+  }
+
+
+
+  Result BehaviorBlockPlay::HandleObservedObjectWhileRunning(Robot& robot,
+                                                             const ExternalInterface::RobotObservedObject &msg,
+                                                             double currentTime_sec)
+  {
+    ObjectID objectID;
+    objectID = msg.objectID;
+
+    if( ! HandleObservedObjectHelper(robot, msg, currentTime_sec ) ) {
+      return RESULT_OK;
+    }
+
+    const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+    
+    // Get height of the object.
+    // Only track the block if it's above a certain height.
+    Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
+
+    // If this is observed while tracking face, then switch to tracking this object
+    if ((_currentState == State::TrackingFace) &&
+        (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
+        (diffVec.z() > oObject->GetSize().z()) ) {
+      PRINT_NAMED_INFO("BehaviorBlockPlay.HandleObservedObjectWhileRunning.TrackingBlock",
                        "Now tracking object %d",
                        objectID.GetValue());
 

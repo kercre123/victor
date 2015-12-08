@@ -1,5 +1,5 @@
 /**
- * File: investorDemoMotionBehaviorChooser.h
+ * File: investorDemoFacesAndBlocksBehaviorChooser.h
  *
  * Author: Brad Neuman
  * Created: 2015-11-25
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __COZMO_BASESTATION_INVESTORDEMOMOTIONBEHAVIORCHOOSER_H__
-#define __COZMO_BASESTATION_INVESTORDEMOMOTIONBEHAVIORCHOOSER_H__
+#ifndef __COZMO_BASESTATION_INVESTOR_DEMO_FACES_AND_BLOCKS_BEHAVIOR_CHOOSER_H__
+#define __COZMO_BASESTATION_INVESTOR_DEMO_FACES_AND_BLOCKS_BEHAVIOR_CHOOSER_H__
 
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "json/json.h"
@@ -19,14 +19,14 @@
 namespace Anki {
 namespace Cozmo {
 
-class InvestorDemoMotionBehaviorChooser : public ReactionaryBehaviorChooser
+class InvestorDemoFacesAndBlocksBehaviorChooser : public ReactionaryBehaviorChooser
 {
 public:
-  InvestorDemoMotionBehaviorChooser(Robot& robot, const Json::Value& config);
+  InvestorDemoFacesAndBlocksBehaviorChooser(Robot& robot, const Json::Value& config);
 
   virtual Result Update(double currentTime_sec) override;
   
-  virtual const char* GetName() const override { return "IDemoMotion"; }
+  virtual const char* GetName() const override { return "IDemoFace+Block"; }
 
 protected:
   void SetupBehaviors(Robot& robot, const Json::Value& config);

@@ -90,7 +90,18 @@ namespace Cozmo {
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
-    Result HandleObservedObjectWhileRunning(Robot& robot, const ExternalInterface::RobotObservedObject& msg, double currentTime_sec);
+    Result HandleObservedObjectWhileRunning(Robot& robot,
+                                            const ExternalInterface::RobotObservedObject& msg,
+                                            double currentTime_sec);
+    Result HandleObservedObjectWhileNotRunning(const Robot& robot,
+                                               const ExternalInterface::RobotObservedObject& msg,
+                                               double currentTime_sec);
+
+    // returns true if we care about this object
+    bool HandleObservedObjectHelper(const Robot& robot,
+                                    const ExternalInterface::RobotObservedObject& msg,
+                                    double currentTime_sec);
+    
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
     Result HandleObservedFace(const Robot& robot, const ExternalInterface::RobotObservedFace& msg, double currentTime_sec);
     Result HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg);
