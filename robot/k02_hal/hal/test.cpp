@@ -68,7 +68,7 @@ int RunTests(void) {
 
   FacePrintf("Self Test    v08");
   
-  uint8_t imuid = ReadIMUID();
+  uint8_t imuid = IMU::ReadID();
   
   if (imuid != 0xD1) {
     return ERROR_IMU_ID;

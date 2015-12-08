@@ -25,7 +25,8 @@ namespace Anki
         void Restart(void);
         void Enable(void);
         void Disable(void);
-
+        void ForceStop(void);
+        
         bool Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb) ;
         bool Read (uint8_t slave, uint8_t *bytes, int len, i2c_callback cb);
 

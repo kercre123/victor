@@ -84,10 +84,9 @@ int main (void)
   MicroWait(100000); // Because the FLL is lame
   
   SPIInit();
-
   I2C::Init();
   OLED::Init();
-  IMUInit();
+  IMU::Init();
 
   CameraInit();
   UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK

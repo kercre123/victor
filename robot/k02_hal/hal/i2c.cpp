@@ -69,7 +69,7 @@ void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) 
 
   i2c_data_active = true;
 
-  Write(SLAVE_WRITE(slave), cmd, sizeof(addr), NULL);
+  Write(SLAVE_WRITE(slave), cmd, sizeof(addr), i2cRegCallback);
 
   while(i2c_data_active) __asm { WFI } ;
 }
@@ -111,8 +111,8 @@ void Anki::Cozmo::HAL::I2C::Init()
   SIM_SCGC5 |= SIM_SCGC5_PORTA_MASK | SIM_SCGC5_PORTB_MASK | SIM_SCGC5_PORTE_MASK;
 
   // Configure port mux for i2c
-  PORTB_PCR1 = PORT_PCR_MUX(2) | 
-               PORT_PCR_ODE_MASK | 
+  PORTB_PCR1 = PORT_PCR_MUX(2) |
+               PORT_PCR_ODE_MASK |
                PORT_PCR_DSE_MASK |
                PORT_PCR_PE_MASK |
                PORT_PCR_PS_MASK;   //I2C0_SDA
@@ -161,6 +161,11 @@ static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback c
   return true;
 }
 
+void Anki::Cozmo::HAL::I2C::ForceStop(void) {
+  I2C0_C1 &= ~I2C_C1_MST_MASK;
+  MicroWait(10);
+}
+
 bool Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb) {
   return Enqueue(slave, bytes, len, cb, false);
 }
@@ -196,37 +201,32 @@ static inline void start_transaction() {
   _active = true;
 
   I2C_Queue *active = getActive();
-  
-  // Send a stop and transmit the slave address
-  if (active->slave_address != _active_slave) {
-    I2C0_C1 &= ~I2C_C1_MST_MASK;
-    MicroWait(10);
-    I2C0_C1 |= I2C_C1_MST_MASK;
-    /*
-    MicroWait(10);
-    I2C0_C1 |= I2C_C1_RSTA_MASK;
-    */
 
-    MicroWait(10);
-    I2C0_C1 |= I2C_C1_TX_MASK;
-    MicroWait(10);
+  // Send a stop and transmit the slave address
+  if (active->slave_address != _active_slave || ~I2C0_C1 & I2C_C1_MST_MASK) {
+    if (I2C0_C1 & I2C_C1_MST_MASK) {
+      I2C0_C1 |= I2C_C1_RSTA_MASK | I2C_C1_TX_MASK;
+    } else {
+      I2C0_C1 |= I2C_C1_MST_MASK | I2C_C1_TX_MASK;
+      MicroWait(10);
+    }
+    
     I2C0_D = active->slave_address;
+
     _active_slave = active->slave_address;
     _reselected = true;
     return ;
-  } else {
-    _reselected = false;
   }
+
+  _reselected = false;
 
   
   if (active->read) {
     I2C0_C1 &= ~I2C_C1_TX_MASK;
-    MicroWait(10);
     send_nack(active->count == 1);
     uint8_t throwaway = I2C0_D;
   } else {
     I2C0_C1 |= I2C_C1_TX_MASK;
-    MicroWait(10);
     I2C0_D = *next_byte();
   }
 }
@@ -240,7 +240,6 @@ static inline bool send_byte(void) {
     send_nack(true);
   } else if (active->count == 1) {
     I2C0_C1 |= I2C_C1_TX_MASK;
-    MicroWait(10);
     *next_byte() = I2C0_D;
     return false;
   }

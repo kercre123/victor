@@ -10,6 +10,7 @@
 
 #include "hal/i2c.h"
 #include "uart.h"
+#include "imu.h"
 #include "hardware.h"
 
 //#define ENABLE_JPEG       // Comment this out to troubleshoot timing problems caused by JPEG encoder
@@ -140,7 +141,9 @@ namespace Anki
         GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
           
         I2C::ReadReg(I2C_ADDR, 0xF0);
+        I2C::ForceStop();
         I2C::ReadReg(I2C_ADDR, 0xF1);
+        I2C::ForceStop();
         uint8_t id = I2C::ReadReg(I2C_ADDR, 0xFB);
 
         // Send command array to camera
@@ -151,8 +154,10 @@ namespace Anki
           
           if (!p1 && !p2) break ;
           
+          I2C::ForceStop();
           I2C::WriteReg(I2C_ADDR, p1, p2);
         }
+        I2C::ForceStop();
         
         // TODO: Check that the GPIOs are okay
         //for (u8 i = 1; i; i <<= 1)
@@ -174,7 +179,7 @@ namespace Anki
         // Note:  Adjusting DMA crossbar priority doesn't help, since any peripheral I/O causes DMA-harming wait states
         // The only way that DMA works is to keep the CPU from touching registers or RAM block 0 (starting with 0x1fff)
         // MCM_PLACR = 0; // MCM_PLACR_ARB_MASK;
-        
+
         // Set up DMA channel 0 to repeatedly move one line buffer worth of pixels
         DMA_CR = DMA_CR_CLM_MASK;   // Continuous loop mode? (Makes no difference?)  
         DMA_TCD0_CSR = DMA_CSR_INTMAJOR_MASK;     // Stop channel, set up interrupt on transfer complete

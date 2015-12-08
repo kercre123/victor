@@ -15,7 +15,7 @@
 
 #include "font.h"
 
-const uint8_t SLAVE_ADDRESS     = 0x78;
+const uint8_t SLAVE_ADDRESS     = 0x78 >> 1;
 
 const uint8_t I2C_COMMAND       = 0x00;
 const uint8_t I2C_DATA          = 0x40;
