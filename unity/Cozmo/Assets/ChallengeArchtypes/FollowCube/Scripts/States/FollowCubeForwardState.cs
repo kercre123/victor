@@ -40,8 +40,7 @@ namespace FollowCube {
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
         _StateMachine.SetNextState(animState);
       }
-
-      if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
+      else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
         FollowTarget();
       }

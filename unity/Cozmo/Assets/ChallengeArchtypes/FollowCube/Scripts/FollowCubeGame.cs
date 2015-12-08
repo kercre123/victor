@@ -55,7 +55,6 @@ namespace FollowCube {
       _FailuresLeft--;
       if (_FailuresLeft == 0) {
         (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
-        _StateMachineManager.RemoveStateMachine("FollowCubeStateMachine");
       }
     }
 
