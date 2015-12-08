@@ -35,7 +35,7 @@ namespace StackTraining {
         return;
       }
 
-      if (_BottomCubeBounds.Contains(bottomCubePosition)) {
+      if (_BottomCubeBounds.Contains(bottomCubePosition) && bottomCube.MarkersVisible) {
         bottomCube.SetLEDs(Color.white);
 
         _Moving = true;
