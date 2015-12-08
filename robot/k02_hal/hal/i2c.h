@@ -7,16 +7,11 @@
 
 static const int MAX_QUEUE = 16;
 
-typedef void (*i2c_callback)(void *data, int count);
+#define SLAVE_WRITE(x)  (x << 1)
+#define SLAVE_READ(x)   ((x << 1) | 1)
 
-enum I2C_Mode {
-  I2C_DIR_READ   = 1,
-  I2C_DIR_WRITE  = 2,
-  I2C_SEND_START = 4,
-  I2C_SEND_NACK  = 8,
-  I2C_SEND_STOP  = 16
-};
 
+typedef void (*i2c_callback)(const void *data, int count);
 
 namespace Anki
 {
@@ -24,15 +19,20 @@ namespace Anki
   {
     namespace HAL
     {
-      void I2CInit(void);
-      bool I2CCmd(int mode, uint8_t *bytes, int len, i2c_callback cb);
-      void I2CRestart(void);
-      void I2CEnable(void);
-      void I2CDisable(void);
-      
-      void I2CWriteReg(uint8_t slave, uint8_t addr, uint8_t data);
-      uint8_t I2CReadReg(uint8_t slave, uint8_t addr);
-      void I2CWriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data);
+      namespace I2C
+      {
+        void Init(void);
+        void Restart(void);
+        void Enable(void);
+        void Disable(void);
+
+        bool Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb) ;
+        bool Read (uint8_t slave, uint8_t *bytes, int len, i2c_callback cb);
+
+        void WriteReg(uint8_t slave, uint8_t addr, uint8_t data);
+        uint8_t ReadReg(uint8_t slave, uint8_t addr);
+        void WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data);
+      }
     }
   }
 }

@@ -139,9 +139,9 @@ namespace Anki
         MicroWait(50);
         GPIO_SET(GPIO_CAM_RESET_N, PIN_CAM_RESET_N);
           
-        I2CReadReg(I2C_ADDR, 0xF0);
-        I2CReadReg(I2C_ADDR, 0xF1);
-        uint8_t id = I2CReadReg(I2C_ADDR, 0xFB);
+        I2C::ReadReg(I2C_ADDR, 0xF0);
+        I2C::ReadReg(I2C_ADDR, 0xF1);
+        uint8_t id = I2C::ReadReg(I2C_ADDR, 0xFB);
 
         // Send command array to camera
         uint8_t* initCode = (uint8_t*) CAM_SCRIPT;
@@ -151,7 +151,7 @@ namespace Anki
           
           if (!p1 && !p2) break ;
           
-          I2CWriteReg(I2C_ADDR, p1, p2);
+          I2C::WriteReg(I2C_ADDR, p1, p2);
         }
         
         // TODO: Check that the GPIOs are okay
@@ -286,7 +286,7 @@ void FTM2_IRQHandler(void)
   
   if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
     FTM2_C0SC &= ~FTM_CnSC_CHF_MASK;
-    I2CDisable();
+    I2C::Disable();
   }
   
   // Enable SPI DMA, Clear flag
