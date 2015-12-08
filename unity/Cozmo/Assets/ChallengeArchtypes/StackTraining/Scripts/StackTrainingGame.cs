@@ -40,7 +40,7 @@ namespace StackTraining {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("StackTrainingGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForStackState(), 2, null);
+      initCubeState.InitialCubeRequirements(new WaitForStackState(), 2, true, null);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
@@ -67,8 +67,10 @@ namespace StackTraining {
         return;
       }
         
-      _BottomCubeId = CurrentRobot.LightCubes.Keys.First();
-      _TopCubeId = CurrentRobot.LightCubes.Keys.Last();
+      var visibleKeys = CurrentRobot.LightCubes.Where(x => x.Value.MarkersVisible).Select(x => x.Key);
+
+      _BottomCubeId = visibleKeys.Last();
+      _TopCubeId = visibleKeys.Last();
     }
   }
 
