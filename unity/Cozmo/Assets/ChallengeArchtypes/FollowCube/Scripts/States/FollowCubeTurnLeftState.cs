@@ -38,7 +38,13 @@ namespace FollowCube {
     }
 
     private void FollowTarget() {
+      // the target is visible Follow it based on its pose.
+      Vector3 targetToRobot = (_CurrentRobot.WorldPosition - _CurrentTarget.WorldPosition).normalized;
+      float crossValue = Vector3.Cross(targetToRobot, _CurrentRobot.Forward).z;
 
+      if (crossValue > 0.0f) {
+        _CurrentRobot.DriveWheels(-15.0f, 15.0f);
+      }
     }
 
     private void HandleTaskCompleteAnimation(bool success) {
