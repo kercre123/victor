@@ -14,15 +14,23 @@ namespace FollowCube {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as FollowCubeGame;
       _RobotStartPosition = _CurrentRobot.WorldPosition;
+      _LastSeenTargetTime = Time.time;
+
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     public override void Update() {
       base.Update();
 
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
+        _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
+      }
 
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
         _GameInstance.FailedAttempt();
+        _StateMachine.SetNextState(new FollowCubeFailedState());
         return;
       }
 

@@ -53,37 +53,9 @@ namespace FollowCube {
 
     public void FailedAttempt() {
       _FailuresLeft--;
-      CurrentRobot.SendAnimation(AnimationName.kShocked, HandleFailedAnimation);
-    }
-
-    private void HandleFailedAnimation(bool success) {
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(-1.0f);
       if (_FailuresLeft == 0) {
         (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
         _StateMachineManager.RemoveStateMachine("FollowCubeStateMachine");
-      }
-      else {
-        InitialCubesState initCubeState = new InitialCubesState();
-        switch (CurrentFollowTask) {
-        case FollowTask.Forwards:
-          initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.Backwards:
-          initCubeState.InitialCubeRequirements(new FollowCubeBackwardState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.TurnLeft:
-          initCubeState.InitialCubeRequirements(new FollowCubeTurnLeftState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.TurnRight:
-          initCubeState.InitialCubeRequirements(new FollowCubeTurnRightState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.FollowDrive:
-          initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
-          break;
-        }
-
-        _StateMachine.SetNextState(initCubeState);
       }
     }
 
