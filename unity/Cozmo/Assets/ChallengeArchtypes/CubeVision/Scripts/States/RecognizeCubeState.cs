@@ -14,7 +14,7 @@ namespace VisionTraining {
 
     public override void Enter() {
       base.Enter();
-      _SelectedCubeId = (_StateMachine.GetGame() as VisionTrainingGame).PickCube();
+      _SelectedCubeId = (_StateMachine.GetGame() as CubeVisionGame).PickCube();
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
 

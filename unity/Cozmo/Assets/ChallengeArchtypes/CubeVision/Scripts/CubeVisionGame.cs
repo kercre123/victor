@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace VisionTraining {
 
-  public class VisionTrainingGame : GameBase {
+  public class CubeVisionGame : GameBase {
 
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
@@ -19,7 +19,7 @@ namespace VisionTraining {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, false, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
