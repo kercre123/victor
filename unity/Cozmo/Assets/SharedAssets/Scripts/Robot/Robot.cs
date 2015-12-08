@@ -1023,7 +1023,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
+    _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.MOVE_LIFT_TO_HEIGHT, RobotActionType.PLACE_OBJECT_LOW));
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {

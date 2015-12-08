@@ -94,47 +94,6 @@
       ]
     },
     {
-      "Name": "5. Wait for motion (anim)",
-      "Id": 9,
-      "Sequencial": true,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.WaitForWaveAction, Assembly-CSharp"
-        }
-      ],
-      "ExitConditions": [
-        {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        }
-      ]
-    },
-    {
-      "Name": "6. React to Motion (anim)",
-      "Id": 10,
-      "Sequencial": true,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "ID_MotionFollow_ReactToMotion",
-          "LoopForever": false,
-          "WaitToEnd": true
-        }
-      ],
-      "ExitConditions": [
-        {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        }
-      ]
-    },
-    {
       "Name": "7. Follow Motion (Behav)",
       "Id": 11,
       "Sequencial": true,
@@ -144,8 +103,8 @@
       "Conditions": [],
       "Actions": [
         {
-          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
-          "Behavior": "FollowMotion"
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
+          "BehaviorChooser": "Demo"
         }
       ],
       "ExitConditions": [
