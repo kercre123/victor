@@ -46,14 +46,14 @@ namespace VisionTraining {
 
       if (cubeInRectNow) {
         _CubeInRectTime += Time.deltaTime;
-        _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+        _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(Color.white);
       }
       else {
         if (cubeInViewNow) {
-          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
+          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(Color.blue);
         }
         else {
-          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(CozmoPalette.ColorToUInt(Color.red));
+          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(Color.red);
         }
 
         _CubeInRectTime -= Time.deltaTime;
