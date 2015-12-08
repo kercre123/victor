@@ -163,6 +163,29 @@ namespace Cozmo {
         }
       }
 
+      public int NumSegments {
+        get {
+          int numSegments = 0;
+          if (_TaskWidgetInstance != null) {
+            numSegments = _TaskWidgetInstance.NumSegments;
+          }
+          return numSegments;
+        }
+        set {
+          if (_TaskWidgetInstance != null) {
+            _TaskWidgetInstance.NumSegments = value;
+          }
+        }
+      }
+
+      public void SetProgress(float newProgress) {
+        if (_TaskWidgetInstance == null) {
+          CreateProgressWidget(null);
+        }
+
+        _TaskWidgetInstance.SetProgress(newProgress);
+      }
+
       private void CreateProgressWidget(string progressLabelText = null) {
         if (_TaskWidgetInstance != null) {
           return;
@@ -177,14 +200,6 @@ namespace Cozmo {
         _TaskWidgetInstance.ResetProgress();
 
         _ActiveWidgets.Add(_TaskWidgetInstance);
-      }
-
-      public void SetProgress(float newProgress) {
-        if (_TaskWidgetInstance == null) {
-          CreateProgressWidget(null);
-        }
-
-        _TaskWidgetInstance.SetProgress(newProgress);
       }
 
       #endregion

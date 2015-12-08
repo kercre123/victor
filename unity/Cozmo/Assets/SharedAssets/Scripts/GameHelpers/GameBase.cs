@@ -202,5 +202,18 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  // Add some decorative lines to the bar to demark the number
+  // "segments" there are in the bar. Progress is still from 0 to 1 overall,
+  // so if you want to fill the first segment of a 4 segment bar, set
+  // Progress to 0.25.
+  protected int NumSegments {
+    get {
+      return _SharedMinigameViewInstance.NumSegments;
+    }
+    set {
+      _SharedMinigameViewInstance.NumSegments = value;
+    }
+  }
+
   #endregion
 }

@@ -15,6 +15,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &112956
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22401666}
+  - 114: {fileID: 11427762}
+  m_Layer: 5
+  m_Name: HorizontalLayoutGroup
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &117696
 GameObject:
   m_ObjectHideFlags: 1
@@ -111,6 +127,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _ChallengeProgressBar: {fileID: 11488214}
   _ProgressBarLabel: {fileID: 11465660}
+  _ProgressBarSegmentsContainer: {fileID: 11427762}
+  _SegmentMarkerPrefab: {fileID: 113300, guid: 988ac5210be034ceda7a80175abc7842, type: 2}
+--- !u!114 &11427762
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 112956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 0
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11465660
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -182,7 +220,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: .566176474, g: .566176474, b: .566176474, a: 1}
+  m_Color: {r: .352941155, g: .352941155, b: .352941155, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -209,9 +247,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _FilledForegroundImage: {fileID: 11465698}
-  _NormalColor: {r: .0274509825, g: .556862772, b: .874509871, a: 0}
-  _DecreasingColor: {r: 1, g: 0, b: 0, a: 0}
-  _IncreasingColor: {r: .0344827175, g: 1, b: 0, a: 0}
+  _NormalColor: {r: .0274509825, g: .556862772, b: .874509871, a: 1}
+  _DecreasingColor: {r: 1, g: 0, b: 0, a: 1}
+  _IncreasingColor: {r: .0344827175, g: 1, b: 0, a: 1}
 --- !u!222 &22243060
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -230,6 +268,23 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 117696}
+--- !u!224 &22401666
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 112956}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22481984}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22431930
 RectTransform:
   m_ObjectHideFlags: 1
@@ -310,7 +365,8 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
+  m_Children:
+  - {fileID: 22401666}
   m_Father: {fileID: 22450236}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -352,6 +408,30 @@ Prefab:
       propertyPath: _ChallengeProgressBar
       value: 
       objectReference: {fileID: 11488214}
+    - target: {fileID: 0}
+      propertyPath: _NormalColor.r
+      value: .192156881
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _NormalColor.g
+      value: .192156881
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _NormalColor.b
+      value: .192156881
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _NormalColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DecreasingColor.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _IncreasingColor.a
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 127374}

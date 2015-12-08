@@ -44,6 +44,7 @@ namespace AskCozmo {
       AttemptsLeft = 5;
 
       Progress = 0.5f;
+      NumSegments = 10;
 
       // By default says "Challenge Progress"
       // ProgressBarLabelText = Localization.Get(keyNameHere);
