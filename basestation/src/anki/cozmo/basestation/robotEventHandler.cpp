@@ -145,9 +145,8 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
                                          msg.useManualSpeed);
   } else {
     PickupObjectAction* action = new PickupObjectAction(selectedObjectID,
-                                                        msg.motionProf.dockSpeed_mmps,
-                                                        msg.motionProf.dockAccel_mmps2,
                                                         msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -259,9 +258,8 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
                                        msg.useManualSpeed);
   } else {
     RollObjectAction* action = new RollObjectAction(selectedObjectID,
-                                                    msg.motionProf.dockSpeed_mmps,
-                                                    msg.motionProf.dockAccel_mmps2,
                                                     msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -285,9 +283,8 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
                                         msg.useManualSpeed);
   } else {
     PopAWheelieAction* action = new PopAWheelieAction(selectedObjectID,
-                                                      msg.motionProf.dockSpeed_mmps,
-                                                      msg.motionProf.dockAccel_mmps2,
                                                       msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -319,10 +316,10 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
                                             msg.motionProf,
                                             msg.useManualSpeed);
   } else {
-    return new MountChargerAction(selectedObjectID,
-                                  msg.motionProf.dockSpeed_mmps,
-                                  msg.motionProf.dockAccel_mmps2,
-                                  msg.useManualSpeed);
+    MountChargerAction* chargerAction = new MountChargerAction(selectedObjectID,
+                                                                msg.useManualSpeed);
+    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    return chargerAction;
   }
 }
 

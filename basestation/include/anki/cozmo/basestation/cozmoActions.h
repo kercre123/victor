@@ -518,8 +518,6 @@ namespace Anki {
     {
     public:
       IDockAction(ObjectID objectID,
-                  const f32 speed_mmps,
-                  const f32 accel_mmps2,
                   const bool useManualSpeed = false,
                   const f32 placementOffsetX_mm = 0,
                   const f32 placementOffsetY_mm = 0,
@@ -535,6 +533,10 @@ namespace Anki {
       virtual u8 GetAnimTracksToDisable() const override {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
       }
+
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) { _dockSpeed_mmps = speed_mmps; _dockAccel_mmps2 = accel_mmps2; }
+      void SetSpeed(f32 speed_mmps)                          { _dockSpeed_mmps = speed_mmps; }
+      void SetAccel(f32 accel_mmps2)                         { _dockAccel_mmps2 = accel_mmps2; }
       
     protected:
       
@@ -577,8 +579,8 @@ namespace Anki {
       f32                        _placementOffsetY_mm;
       f32                        _placementOffsetAngle_rad;
       bool                       _placeObjectOnGroundIfCarrying;
-      f32                        _dockSpeed_mmps;
-      f32                        _dockAccel_mmps2;
+      f32                        _dockSpeed_mmps = DEFAULT_DOCK_SPEED_MMPS;
+      f32                        _dockAccel_mmps2 = DEFAULT_DOCK_ACCEL_MMPS2;
       u32                        _squintLayerTag;
     }; // class IDockAction
 
@@ -588,8 +590,6 @@ namespace Anki {
     {
     public:
       AlignWithObjectAction(ObjectID objectID,
-                            const f32 speed_mmps,
-                            const f32 accel_mmps2,
                             const f32 distanceFromMarker_mm,
                             const bool useManualSpeed = false);
       virtual ~AlignWithObjectAction();
@@ -618,8 +618,6 @@ namespace Anki {
     {
     public:
       PickupObjectAction(ObjectID objectID,
-                         const f32 speed_mmps,
-                         const f32 accel_mmps2,
                          const bool useManualSpeed = false);
       virtual ~PickupObjectAction();
       
@@ -652,8 +650,6 @@ namespace Anki {
     {
     public:
       PlaceRelObjectAction(ObjectID objectID,
-                           const f32 speed_mmps,
-                           const f32 accel_mmps2,
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
@@ -697,8 +693,6 @@ namespace Anki {
     {
     public:
       RollObjectAction(ObjectID objectID,
-                       const f32 speed_mmps,
-                       const f32 accel_mmps2,
                        const bool useManualSpeed = false);
       virtual ~RollObjectAction();
       
@@ -736,8 +730,6 @@ namespace Anki {
     {
     public:
       PopAWheelieAction(ObjectID objectID,
-                        const f32 speed_mmps,
-                        const f32 accel_mmps2,
                         const bool useManualSpeed = false);
       virtual ~PopAWheelieAction();
       
@@ -979,8 +971,6 @@ namespace Anki {
     {
     public:
       CrossBridgeAction(ObjectID bridgeID,
-                        const f32 speed_mmps,
-                        const f32 accel_mmps2,
                         const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
@@ -1006,8 +996,6 @@ namespace Anki {
     {
     public:
       AscendOrDescendRampAction(ObjectID rampID,
-                                const f32 speed_mmps,
-                                const f32 accel_mmps2,
                                 const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
@@ -1032,8 +1020,6 @@ namespace Anki {
     {
     public:
       MountChargerAction(ObjectID chargerID,
-                         const f32 speed_mmps,
-                         const f32 accel_mmps2,
                          const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
@@ -1095,22 +1081,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID,
                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
-                                     const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ENTRY,
-                                motionProfile,
-                                0,
-                                false,
-                                0,
-                                useManualSpeed),
-        new TraverseObjectAction(objectID,
-                                 motionProfile.dockSpeed_mmps,
-                                 motionProfile.dockAccel_mmps2,
-                                 useManualSpeed)})
-      {
-        
-      }
+                                     const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
@@ -1121,22 +1092,7 @@ namespace Anki {
     public:
       DriveToAndMountChargerAction(const ObjectID& objectID,
                                    const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
-                                   const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ENTRY,
-                                motionProfile,
-                                0,
-                                false,
-                                0,
-                                useManualSpeed),
-        new MountChargerAction(objectID,
-                               motionProfile.dockSpeed_mmps,
-                               motionProfile.dockAccel_mmps2,
-                               useManualSpeed)})
-      {
-        
-      }
+                                   const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
       
