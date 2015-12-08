@@ -48,8 +48,8 @@ namespace FollowCube {
     }
 
     private void HandleTaskCompleteAnimation(bool success) {
-      _StateMachine.SetNextState(new FollowCubeTurnLeftState());
-      _GameInstance.CurrentFollowTask = FollowCubeGame.FollowTask.TurnLeft;
+      _StateMachine.SetNextState(new FollowCubeDriveState());
+      _GameInstance.CurrentFollowTask = FollowCubeGame.FollowTask.FollowDrive;
     }
 
     public override void Exit() {
