@@ -246,7 +246,9 @@ namespace Cozmo {
           
           if (viewAngle < kTrackedObjectViewAngleThreshForRaisingCarriedBlock) {
             // Raise block and look straight ahead
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RaisingBlockToSeeOtherBlock", "");
+            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RaisingBlockToSeeOtherBlock",
+                             "trying to see block %d",
+                             _trackedObject.GetValue());
             robot.GetMoveComponent().MoveLiftToHeight(LIFT_HEIGHT_CARRY, 2, 5);
             robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
           }
@@ -325,6 +327,9 @@ namespace Cozmo {
 
         if( preActionPoses.empty() ) {
           // no valid actions, just wait a bit, hope we get them next time
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoPredockPoses",
+                           "No valid pre-dock poses for object %d, waiting",
+                           _trackedObject.GetValue());
           break;
         }
         
@@ -575,6 +580,9 @@ namespace Cozmo {
       case State::SearchingForMissingBlock:
         _stateName += "SEARCHING";
         break;
+      case State::Complete:
+        _stateName += "COMPLETE";
+        break;
       default:
         PRINT_NAMED_WARNING("BehaviorBlockPlay.SetCurrState.InvalidState", "");
     }
@@ -777,6 +785,7 @@ namespace Cozmo {
               
               PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
               SetCurrState(State::Complete);
+              _isActing = false;
               break;
               
             case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
@@ -984,9 +993,6 @@ namespace Cozmo {
 
   void BehaviorBlockPlay::PlayAnimation(Robot& robot, const std::string& animName)
   {
-
-    // TEMP: disable all animations for now
-    return;
     
     // Check if animation is already being played
     for (auto& animTagNamePair : _animActionTags) {
