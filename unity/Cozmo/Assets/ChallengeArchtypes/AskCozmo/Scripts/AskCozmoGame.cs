@@ -42,6 +42,11 @@ namespace AskCozmo {
 
       MaxAttempts = 5;
       AttemptsLeft = 5;
+
+      Progress = 0.5f;
+
+      // By default says "Challenge Progress"
+      // ProgressBarLabelText = Localization.Get(keyNameHere);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -60,9 +65,11 @@ namespace AskCozmo {
       _AnimationPlaying = true;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
         CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
+        Progress += 0.1f;
       }
       else {
         CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
+        Progress -= 0.1f;
       }
 
       AttemptsLeft--;

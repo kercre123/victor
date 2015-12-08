@@ -23,6 +23,11 @@ namespace Cozmo {
 
       private CozmoStatusWidget _CozmoStatusInstance;
 
+      [SerializeField]
+      private ChallengeProgressWidget _DefaultTaskProgressWidgetPrefab;
+
+      private ChallengeProgressWidget _TaskWidgetInstance;
+
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
       protected override void CleanUp() {
@@ -104,18 +109,6 @@ namespace Cozmo {
 
       #region StaminaBar
 
-      private void CreateCozmoStatusWidget(int attemptsAllowed) {
-        if (_CozmoStatusInstance != null) {
-          return;
-        }
-
-        GameObject statusWidgetObj = UIManager.CreateUIElement(_DefaultCozmoStatusPrefab.gameObject, this.transform);
-        _CozmoStatusInstance = statusWidgetObj.GetComponent<CozmoStatusWidget>();
-        _CozmoStatusInstance.SetMaxAttempts(attemptsAllowed);
-        _CozmoStatusInstance.SetAttemptsLeft(attemptsAllowed);
-        _ActiveWidgets.Add(_CozmoStatusInstance);
-      }
-
       public void SetMaxCozmoAttempts(int maxAttempts) {
         if (_CozmoStatusInstance != null) {
           _CozmoStatusInstance.SetMaxAttempts(maxAttempts);
@@ -134,6 +127,64 @@ namespace Cozmo {
           CreateCozmoStatusWidget(attemptsLeft);
           // TODO: Play animation, if dialog had already been opened?
         }
+      }
+
+      private void CreateCozmoStatusWidget(int attemptsAllowed) {
+        if (_CozmoStatusInstance != null) {
+          return;
+        }
+
+        GameObject statusWidgetObj = UIManager.CreateUIElement(_DefaultCozmoStatusPrefab.gameObject, this.transform);
+        _CozmoStatusInstance = statusWidgetObj.GetComponent<CozmoStatusWidget>();
+        _CozmoStatusInstance.SetMaxAttempts(attemptsAllowed);
+        _CozmoStatusInstance.SetAttemptsLeft(attemptsAllowed);
+        _ActiveWidgets.Add(_CozmoStatusInstance);
+      }
+
+      #endregion
+
+      #region Task Progress Widget
+
+      public string ProgressBarLabelText {
+        get {
+          string labelText = null;
+          if (_TaskWidgetInstance != null) {
+            labelText = _TaskWidgetInstance.ProgressBarLabelText;
+          }
+          return labelText;
+        }
+        set {
+          if (_TaskWidgetInstance != null) {
+            _TaskWidgetInstance.ProgressBarLabelText = value;
+          }
+          else {
+            CreateProgressWidget(value);
+          }
+        }
+      }
+
+      private void CreateProgressWidget(string progressLabelText = null) {
+        if (_TaskWidgetInstance != null) {
+          return;
+        }
+
+        GameObject widgetObj = UIManager.CreateUIElement(_DefaultTaskProgressWidgetPrefab.gameObject, this.transform);
+        _TaskWidgetInstance = widgetObj.GetComponent<ChallengeProgressWidget>();
+
+        if (!string.IsNullOrEmpty(progressLabelText)) {
+          _TaskWidgetInstance.ProgressBarLabelText = progressLabelText;
+        }
+        _TaskWidgetInstance.ResetProgress();
+
+        _ActiveWidgets.Add(_TaskWidgetInstance);
+      }
+
+      public void SetProgress(float newProgress) {
+        if (_TaskWidgetInstance == null) {
+          CreateProgressWidget(null);
+        }
+
+        _TaskWidgetInstance.SetProgress(newProgress);
       }
 
       #endregion

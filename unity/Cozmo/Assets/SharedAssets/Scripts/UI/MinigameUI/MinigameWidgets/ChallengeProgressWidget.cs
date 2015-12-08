@@ -1,23 +1,19 @@
 ﻿using UnityEngine;
-using DG.Tweening;
+using UnityEngine.UI;
 using Cozmo.UI;
+using Anki.UI;
+using DG.Tweening;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class CozmoStatusWidget : MonoBehaviour, IMinigameWidget {
+    public class ChallengeProgressWidget : MonoBehaviour, IMinigameWidget {
+      [SerializeField]
+      private ProgressBarWidget _ChallengeProgressBar;
 
       [SerializeField]
-      private SegmentedBarWidget _AttemptsDisplay;
+      private AnkiTextLabel _ProgressBarLabel;
 
-      // TODO: Add handling of cozmo's face view here
-
-      public void SetMaxAttempts(int maximumAttempts) {
-        _AttemptsDisplay.SetMaximumSegments(maximumAttempts);
-      }
-
-      public void SetAttemptsLeft(int attemptsLeft) {
-        _AttemptsDisplay.SetCurrentNumSegments(attemptsLeft);
-      }
+      #region IMinigameWidget
 
       public void DestroyWidgetImmediately() {
         Destroy(gameObject);
@@ -26,7 +22,7 @@ namespace Cozmo {
       // TODO: Don't hardcode this
       public Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
-        open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
+        open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 600, 
           this.transform.localPosition.y - 300, this.transform.localPosition.z),
           0.25f).From().SetEase(Ease.OutQuad));
         return open;
@@ -35,7 +31,7 @@ namespace Cozmo {
       // TODO: Don't hardcode this
       public Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
-        close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
+        close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 600, 
           this.transform.localPosition.y - 300, this.transform.localPosition.z),
           0.25f).SetEase(Ease.OutQuad));
         return close;
@@ -47,6 +43,25 @@ namespace Cozmo {
 
       public void DisableInteractivity() {
         // Nothing interactive to disable
+      }
+
+      #endregion
+
+      public string ProgressBarLabelText {
+        get {
+          return _ProgressBarLabel.text;
+        }
+        set {
+          _ProgressBarLabel.text = value;
+        }
+      }
+
+      public void ResetProgress() {
+        _ChallengeProgressBar.ResetProgress();
+      }
+
+      public void SetProgress(float progress) {
+        _ChallengeProgressBar.SetProgress(progress);
       }
     }
   }

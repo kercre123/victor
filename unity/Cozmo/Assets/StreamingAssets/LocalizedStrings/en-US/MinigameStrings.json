@@ -89,5 +89,8 @@
     },
     "minigame.quitView.description" : {
         "translation" : "Any progress in this game will be lost. Are you sure?"
+    },
+    "minigame.progressBar.defaultLabel" : {
+        "translation" : "Challenge Progress"
     }
 }
