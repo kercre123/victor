@@ -2,12 +2,17 @@
 using System.Collections;
 
 namespace Peekaboo {
+  /// <summary>
+  /// Game for building face tracking skills. Has config options to enable Cozmo wandering
+  /// when not paying attention to a face.
+  /// </summary>
   public class PeekGame : GameBase {
     
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
     private int _PeekSuccessCount = 0;
     private int _PeekGoalTarget = 3;
+    private float _MoveSpeed = 30.0f;
 
     public float ForwardSpeed { get; set; }
 
@@ -15,13 +20,18 @@ namespace Peekaboo {
 
     public float DistanceMax { get; set; }
 
+    public bool WanderEnabled { get; set; }
+
     [SerializeField]
     private PeekGamePanel _GamePanelPrefab;
     private PeekGamePanel _GamePanel;
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       PeekGameConfig config = (minigameConfigData as PeekGameConfig);
-      _PeekGoalTarget = config.goal;
+      _PeekGoalTarget = config.Goal;
+      _MoveSpeed = config.MoveSpeed;
+      WanderEnabled = config.WanderEnabled;
+
       InitializeMinigameObjects();
     }
 
@@ -41,7 +51,12 @@ namespace Peekaboo {
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      if (WanderEnabled) {
+        CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      }
+      else {
+        CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      }
       _StateMachine.SetNextState(new LookingForFaceState());
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
@@ -51,9 +66,9 @@ namespace Peekaboo {
     }
 
     void SetSpeed() {
-      ForwardSpeed = 20.0f;
-      DistanceMax = 140.0f;
-      DistanceMin = 80.0f;
+      ForwardSpeed = _MoveSpeed;
+      DistanceMax = 200.0f;
+      DistanceMin = 100.0f;
     }
 
     void Update() {
@@ -62,7 +77,11 @@ namespace Peekaboo {
 
 
     protected override void CleanUpOnDestroy() {
-      
+      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      if (_GamePanel != null) {
+        UIManager.CloseViewImmediately(_GamePanel);
+      }
     }
   }
 }
