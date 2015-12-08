@@ -55,6 +55,8 @@ namespace SpeedTap {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
+
+      LightCube.TappedAction -= BlockTapped;
     }
 
     void InitialCubesDone() {
