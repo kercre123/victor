@@ -12,7 +12,7 @@
 #include "dac.h"
 
 typedef uint16_t transmissionWord;
-const int RX_OVERFLOW = 8;
+const int RX_OVERFLOW = 4;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
@@ -39,7 +39,7 @@ static bool ProcessDrop(void) {
 
     if (drop->droplet & screenDataValid) {
       
-      // OLEDFeedFace(address?, drop->screenData);
+      // OLED::FeedFace(address?, drop->screenData);
     }
 
     FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);

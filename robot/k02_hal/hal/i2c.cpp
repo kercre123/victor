@@ -69,7 +69,7 @@ void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) 
 
   i2c_data_active = true;
 
-  Write(SLAVE_WRITE(slave), cmd, sizeof(addr), i2cRegCallback);
+  Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), i2cRegCallback);
 
   while(i2c_data_active) __asm { WFI } ;
 }
@@ -161,9 +161,10 @@ static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback c
   return true;
 }
 
+// This should only be used during 
 void Anki::Cozmo::HAL::I2C::ForceStop(void) {
   I2C0_C1 &= ~I2C_C1_MST_MASK;
-  MicroWait(10);
+  MicroWait(1);
 }
 
 bool Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb) {
