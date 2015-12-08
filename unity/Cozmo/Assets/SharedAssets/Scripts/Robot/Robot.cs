@@ -385,6 +385,8 @@ public class Robot : IDisposable {
     PathMotionProfileDefault.pointTurnSpeed_rad_per_sec = 2.0f;
     PathMotionProfileDefault.pointTurnAccel_rad_per_sec2 = 100.0f;
     PathMotionProfileDefault.pointTurnDecel_rad_per_sec2 = 500.0f;
+    PathMotionProfileDefault.dockSpeed_mmps = 100.0f;
+    PathMotionProfileDefault.dockSpeed_mmps = 200.0f;
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
