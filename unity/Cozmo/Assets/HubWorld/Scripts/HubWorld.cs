@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using DataPersistence;
 
 namespace Cozmo.HubWorld {
   public class HubWorld : HubWorldBase {
@@ -17,7 +18,6 @@ namespace Cozmo.HubWorld {
     private ChallengeDataList _ChallengeDataList;
 
     private Dictionary<string, ChallengeStatePacket> _ChallengeStatesById;
-    private List<string> _CompletedChallengeIds;
 
     private GameBase _MiniGameInstance;
 
@@ -180,9 +180,6 @@ namespace Cozmo.HubWorld {
       // Initial load of what's unlocked and completed from data
       challengeStateByKey = new Dictionary<string, ChallengeStatePacket>();
 
-      // TODO: Get the list of completed challenges from data (for now, use empty list)
-      _CompletedChallengeIds = new List<string>();
-
       // For each challenge
       ChallengeStatePacket statePacket;
       foreach (ChallengeData data in sourceChallenges.ChallengeData) {
@@ -191,7 +188,7 @@ namespace Cozmo.HubWorld {
         statePacket.data = data;
 
         // Determine the current state of the challenge
-        statePacket.currentState = DetermineCurrentChallengeState(data, _CompletedChallengeIds);
+        statePacket.currentState = DetermineCurrentChallengeState(data, DataPersistenceManager.Instance.Data.CompletedChallengeIds);
         // TODO: Set the unlock progress from persistant data (for now, use 0)
         statePacket.unlockProgress = 0;
         // Add the challenge to the dictionary
@@ -218,17 +215,19 @@ namespace Cozmo.HubWorld {
 
     private void CompleteChallenge(string completedChallengeId) { 
       // If the completed challenge is not already complete
-      if (!_CompletedChallengeIds.Contains(completedChallengeId)) {
+      if (!DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallengeId)) {
         // Add the current challenge to the completed list
-        _CompletedChallengeIds.Add(completedChallengeId);
+        DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallengeId);
         _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.COMPLETED;
 
         // Check all the locked challenges to see if any new ones unlocked.
         foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
           if (challengeState.currentState == ChallengeState.LOCKED) {
-            challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, _CompletedChallengeIds);
+            challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, 
+              DataPersistenceManager.Instance.Data.CompletedChallengeIds);
           }
         }
+        DataPersistenceManager.Instance.Save();
       }
     }
 
