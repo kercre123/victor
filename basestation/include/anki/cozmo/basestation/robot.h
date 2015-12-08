@@ -347,17 +347,17 @@ public:
     Result DockWithObject(const ObjectID objectID,
                           const f32 speed_mmps,
                           const f32 accel_mmps2,
-                              const Vision::KnownMarker* marker,
-                              const Vision::KnownMarker* marker2,
-                              const DockAction dockAction,
-                              const u16 image_pixel_x,
-                              const u16 image_pixel_y,
-                              const u8 pixel_radius,
-                              const f32 placementOffsetX_mm = 0,
-                              const f32 placementOffsetY_mm = 0,
-                              const f32 placementOffsetAngle_rad = 0,
-                              const bool useManualSpeed = false);
-    
+                          const Vision::KnownMarker* marker,
+                          const Vision::KnownMarker* marker2,
+                          const DockAction dockAction,
+                          const u16 image_pixel_x,
+                          const u16 image_pixel_y,
+                          const u8 pixel_radius,
+                          const f32 placementOffsetX_mm = 0,
+                          const f32 placementOffsetY_mm = 0,
+                          const f32 placementOffsetAngle_rad = 0,
+                          const bool useManualSpeed = false);
+  
     // Same as above but without specifying image location for marker
     Result DockWithObject(const ObjectID objectID,
                           const f32 speed_mmps,

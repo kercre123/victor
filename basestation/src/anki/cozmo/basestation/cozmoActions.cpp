@@ -1659,21 +1659,9 @@ namespace Anki {
 #pragma mark ---- IDockAction ----
     
     IDockAction::IDockAction(ObjectID objectID,
-                             const bool useManualSpeed,
-                             const f32 placementOffsetX_mm,
-                             const f32 placementOffsetY_mm,
-                             const f32 placementOffsetAngle_rad,
-                             const bool placeObjectOnGroundIfCarrying)
+                             const bool useManualSpeed)
     : _dockObjectID(objectID)
-    , _dockMarker(nullptr)
-    , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
-    , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
-    , _faceAndVerifyAction(nullptr)
-    , _placementOffsetX_mm(placementOffsetX_mm)
-    , _placementOffsetY_mm(placementOffsetY_mm)
-    , _placementOffsetAngle_rad(placementOffsetAngle_rad)
-    , _placeObjectOnGroundIfCarrying(placeObjectOnGroundIfCarrying)
     {
       
     }
@@ -1687,6 +1675,33 @@ namespace Anki {
     {
       IAction::Reset();
       Util::SafeDelete(_faceAndVerifyAction);
+    }
+    
+    void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)
+    {
+      _dockSpeed_mmps = speed_mmps; _dockAccel_mmps2 = accel_mmps2;
+    }
+    
+    void IDockAction::SetSpeed(f32 speed_mmps)
+    {
+      _dockSpeed_mmps = speed_mmps;
+    }
+    
+    void IDockAction::SetAccel(f32 accel_mmps2)
+    {
+      _dockAccel_mmps2 = accel_mmps2;
+    }
+    
+    void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
+    {
+      _placementOffsetX_mm = offsetX_mm;
+      _placementOffsetY_mm = offsetY_mm;
+      _placementOffsetAngle_rad = offsetAngle_rad;
+    }
+    
+    void IDockAction::SetPlaceObjectOnGround(bool placeOnGround)
+    {
+      _placeObjectOnGroundIfCarrying = placeOnGround;
     }
     
     void IDockAction::SetPreActionPoseAngleTolerance(Radians angleTolerance)
@@ -1927,9 +1942,9 @@ namespace Anki {
     AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
                                                  const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed, distanceFromMarker_mm)
+    : IDockAction(objectID, useManualSpeed)
     {
-      
+      SetPlacementOffset(distanceFromMarker_mm, 0, 0);
     }
     
     AlignWithObjectAction::~AlignWithObjectAction()
@@ -2205,11 +2220,12 @@ namespace Anki {
                                                const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, 0, 0, placeOnGround)
+    : IDockAction(objectID, useManualSpeed)
     , _placementVerifyAction(nullptr)
     , _verifyComplete(false)
     {
-      
+      SetPlacementOffset(placementOffsetX_mm, 0, 0);
+      SetPlaceOnGround(placeOnGround);
     }
     
     PlaceRelObjectAction::~PlaceRelObjectAction()
@@ -2751,7 +2767,6 @@ namespace Anki {
                               approachAngle_rad,
                               useManualSpeed)})
     {
-      
       PickupObjectAction* action = new PickupObjectAction(objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
