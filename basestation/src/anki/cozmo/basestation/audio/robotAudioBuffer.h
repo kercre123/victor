@@ -12,11 +12,13 @@
 #ifndef __Basestation_Audio_RobotAudioBuffer_H__
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
+#include "anki/cozmo/basestation/audio/robotAudioBufferStream.h"
 #include <util/helpers/templateHelpers.h>
 #include <util/container/circularBuffer.h>
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <queue>
 #include <mutex>
 
 
@@ -35,42 +37,46 @@ class RobotAudioBuffer
   
 public:
   
-  
+  // Default constructor
   RobotAudioBuffer();
-  ~RobotAudioBuffer();
+  
+  // This called when the plug-in is created
+  void PrepareAudioBuffer();
   
   // Write samples to buffer
   void UpdateBuffer( const uint8_t* samples, size_t sampleCount );
   
-  // True if Plug-In is streaming audio data
-  bool IsPlugInActive() const { return _plugInIsActive; }
-  
-  // True if key frame audio sample messages are available
-  bool HasKeyFrameAudioSample() const { return (_KeyFrameAudioSampleBuffer.size() > 0); }
-  
-  // Pop the front key frame audio sample message
-  // Note: Audio Sample pointer memory needs to be manage or it will leak memory.
-  AnimKeyFrame::AudioSample* PopKeyFrameAudioSample();
-  
   // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
   void ClearCache();
   
+  // Audio Client Methods
+  bool HasAudioBufferStream() { return _streamQueue.size() > 0; }
+  
+  // Get the front / top Audio Buffer stream in the queue
+  RobotAudioBufferStream* GetFrontAudioBufferStream();
+  
+  // Pop the front  / top Audio buffer stream in the queue
+  void PopAudioBufferStream() { _streamQueue.pop(); }
+  
+  // Clear the Audio buffer stream queue
+  void ClearBufferStreams();
   
 private:
   
-  static constexpr size_t kAudioSampleBufferSize = 2400;
-  static constexpr size_t kKeyFrameAudioSampleBufferSize = 100;
+  // There should never be more then 800 samples in the buffer
+  static constexpr size_t kAudioSampleBufferSize = 2000;
   
+  // Cache Audio samples from PlugIn
   Util::CircularBuffer< uint8_t > _audioSampleCache;
-  Util::CircularBuffer< AnimKeyFrame::AudioSample* > _KeyFrameAudioSampleBuffer;
-    
-  std::mutex _KeyFrameAudioSampleBufferLock;
   
-  bool _plugInIsActive  = false;      // Plug-In is updating data
-  bool _clearCache      = false;      // Plug-In has been terminated
+  // A queue of audio buffer streams (continuous audio data)
+  std::queue< RobotAudioBufferStream > _streamQueue;
   
+  // Track what stream audio key frame is being added to
+  RobotAudioBufferStream* _currentStream = nullptr;
   
-  size_t CopyAudioSampleCachToKeyFrameAudioSample( size_t size );
+  // Copy Audio Cache samples into Audio Key Frames and store in stream
+  size_t CopyAudioSampleCacheToKeyFrameBuffer( size_t size, RobotAudioBufferStream* stream );
 };
 
 

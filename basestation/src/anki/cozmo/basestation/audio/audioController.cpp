@@ -80,6 +80,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
       assert( nullptr != _robotAudioBuffer );
+      _robotAudioBuffer->PrepareAudioBuffer();
       
 #if CozmoPlugInDebugLogs
       _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
@@ -263,7 +264,7 @@ void AudioController::StartUpSetDefaults()
   AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
 
   
-  SetParameter( ROBOT_VOLUME, 0.8, kInvalidAudioGameObject);
+  SetParameter( ROBOT_VOLUME, 0.2, kInvalidAudioGameObject);
   // This is effected by robot volume
   SetParameter( ROBOT_MASTER_VOLUME, 0.9, kInvalidAudioGameObject);
 }
