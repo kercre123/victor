@@ -107,6 +107,7 @@
         'libeOkaoDt.a',    # Face Detection
         'libeOkaoPt.a',    # Face Parts Detection
         'libeOkaoEx.a',    # Facial Expression estimation
+        'libeOkaoFr.a',    # Face Recognition
       ],
     }],
     
