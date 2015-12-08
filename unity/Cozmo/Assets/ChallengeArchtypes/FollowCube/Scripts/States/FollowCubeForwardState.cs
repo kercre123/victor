@@ -18,11 +18,13 @@ namespace FollowCube {
 
     public override void Update() {
       base.Update();
+
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
         _GameInstance.FailedAttempt();
         return;
       }
-
 
       if (Vector3.Distance(_CurrentRobot.WorldPosition, _RobotStartPosition) > _WinDistanceThreshold) {
         AnimationState animState = new AnimationState();
@@ -32,9 +34,24 @@ namespace FollowCube {
 
       if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
-
+        FollowTarget();
       }
 
+    }
+
+    private void FollowTarget() {
+      float dist = Vector3.Distance(_CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
+      float speed = _GameInstance.ForwardSpeed;
+
+      float distMax = _GameInstance.DistanceMax;
+      float distMin = _GameInstance.DistanceMin;
+
+      if (dist > distMax) {
+        _CurrentRobot.DriveWheels(speed, speed);
+      }
+      else if (dist < distMin) {
+        _CurrentRobot.DriveWheels(-speed, -speed);
+      }
     }
 
     private void HandleTaskCompleteAnimation(bool success) {
