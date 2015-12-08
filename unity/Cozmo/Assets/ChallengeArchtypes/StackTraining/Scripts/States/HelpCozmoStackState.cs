@@ -18,8 +18,6 @@ namespace StackTraining {
 
     private float _InvisibleBlockTime = 0f;
 
-    private float _HeadAngle = 0f;
-
     private Bounds _TouchingBounds = new Bounds(new Vector3(30, 0, 20), new Vector3(10, 20, 20));
 
     private Vector3 _StartPosition;
@@ -52,32 +50,24 @@ namespace StackTraining {
 
       if (!_Carrying) {
 
-        Debug.Log("Not Carrying!!");
-
-        if (!topCube.MarkersVisible && _InvisibleBlockTime < 10f) {
+        if (_InvisibleBlockTime < 2f || (!topCube.MarkersVisible && _InvisibleBlockTime < 6f)) {
           _InvisibleBlockTime += Time.deltaTime;
           _CurrentRobot.DriveWheels(-25f, -25f);
+          // raise the head so we can check the block has been placed
+          _CurrentRobot.SetHeadAngle(0.25f);
         }
         else {
           _CurrentRobot.DriveWheels(0, 0);
 
-          _HeadAngle += Time.deltaTime * 0.15f;
-
-          // raise the head so we can check the block has been placed
-          _CurrentRobot.SetHeadAngle(_HeadAngle);
-
-          if (_CurrentRobot.HeadAngle > 0.25f) {
-
-            if (CubesStacked()) {
-              HandleComplete();
+          if (CubesStacked()) {
+            HandleComplete();
+          }
+          else {
+            if (_Game.TryDecrementAttempts()) {
+              _StateMachine.SetNextState(new HelpCozmoPickupState());
             }
             else {
-              if (_Game.TryDecrementAttempts()) {
-                _StateMachine.SetNextState(new HelpCozmoPickupState());
-              }
-              else {
-                HandleFailed();
-              }
+              HandleFailed();
             }
           }
         }
@@ -143,8 +133,6 @@ namespace StackTraining {
       Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
       Vector2 xyDelta = topCubePosition - bottomCubePosition;
 
-      Debug.Log("Cube Stack Delta: " + xyDelta);
-
       return (Mathf.Abs(xyDelta.x) < 15f && Mathf.Abs(xyDelta.y) < 15f);
     }
 
@@ -152,8 +140,6 @@ namespace StackTraining {
       var topCube = _Game.TopCube;
 
       Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
-
-      Debug.Log("Top Cube Position: " + topCubePosition);
 
       return _TouchingBounds.Contains(topCubePosition);
     }
@@ -163,11 +149,8 @@ namespace StackTraining {
 
       Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
 
-      // check that cube is withing 50 units of cozmo and its y is centered
-
-      Debug.Log("Distance: " + topCubePosition.magnitude + " y: " + topCubePosition.y);
-
-      const float placementRange = 70f;
+      // check that cube is withing N units of cozmo and its y is centered
+      const float placementRange = 75f;
       return (topCubePosition.sqrMagnitude < placementRange * placementRange && 
         Mathf.Abs(topCubePosition.y) < 10f);
     }
