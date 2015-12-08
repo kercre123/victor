@@ -7,5 +7,7 @@ namespace DataPersistence {
     public Dictionary<string, bool> CompletedScriptedSequences = new Dictionary<string, bool>();
 
     public Conversations.ConversationHistory ConversationHistory = new Conversations.ConversationHistory();
+
+    public List<string> CompletedChallengeIds = new List<string>();
   }
 }

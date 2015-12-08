@@ -1,0 +1,59 @@
+﻿using UnityEngine;
+using System.Collections;
+
+namespace FollowCube {
+  public class FollowCubeTurnLeftState : State {
+
+    private LightCube _CurrentTarget = null;
+    private float _LastSeenTargetTime;
+    private FollowCubeGame _GameInstance;
+    private float _RobotStartAngle;
+    private float _WinDistanceThreshold = Mathf.PI / 4.0f;
+
+    public override void Enter() {
+      base.Enter();
+      _GameInstance = _StateMachine.GetGame() as FollowCubeGame;
+      _RobotStartAngle = _CurrentRobot.PoseAngle;
+    }
+
+    public override void Update() {
+      base.Update();
+      if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
+        _GameInstance.FailedAttempt();
+        return;
+      }
+
+      float angleDelta = _CurrentRobot.PoseAngle - _RobotStartAngle;
+      if (angleDelta < -(_WinDistanceThreshold)) {
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
+        _StateMachine.SetNextState(animState);
+      }
+
+      if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
+        _LastSeenTargetTime = Time.time;
+        FollowTarget();
+      }
+
+    }
+
+    private void FollowTarget() {
+      // the target is visible Follow it based on its pose.
+      Vector3 targetToRobot = (_CurrentRobot.WorldPosition - _CurrentTarget.WorldPosition).normalized;
+      float crossValue = Vector3.Cross(targetToRobot, _CurrentRobot.Forward).z;
+
+      if (crossValue > 0.0f) {
+        _CurrentRobot.DriveWheels(-15.0f, 15.0f);
+      }
+    }
+
+    private void HandleTaskCompleteAnimation(bool success) {
+      _StateMachine.SetNextState(new FollowCubeTurnLeftState());
+      _GameInstance.CurrentFollowTask = FollowCubeGame.FollowTask.TurnLeft;
+    }
+
+    public override void Exit() {
+      base.Exit();
+    }
+  }
+}
