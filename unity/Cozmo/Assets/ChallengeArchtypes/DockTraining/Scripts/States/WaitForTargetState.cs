@@ -18,9 +18,7 @@ namespace DockTraining {
 
       LightCube target = _DockTrainingGame.GetCurrentTarget();
       if (target != null) {
-
-        var tapState = new TapCubeState(new DetermineNextAction(), target.ID);
-        _StateMachine.SetNextState(tapState);
+        _StateMachine.SetNextState(new DetermineNextAction());
       }
     }
 
