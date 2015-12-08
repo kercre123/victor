@@ -193,16 +193,34 @@ namespace Anki {
               
               // if that was the last action, we're done
               if(_currentActionPair == _actions.end()) {
-#             if USE_ACTION_CALLBACKS
+#               if USE_ACTION_CALLBACKS
                 RunCallbacks(ActionResult::SUCCESS);
-#             endif
+#               endif
                 return ActionResult::SUCCESS;
               } else if(currentTime >= _waitUntilTime) {
+                PRINT_NAMED_INFO("CompoundActionSequential.Update.NextAction",
+                                 "Moving to action %s", _currentActionPair->second->GetName().c_str());
                 
                 // Otherwise, we are still running. Go ahead and immediately do an
                 // update on the next action now to get its initialization and
                 // precondition checking going, to reduce lag between actions.
                 subResult = _currentActionPair->second->Update(robot);
+                
+                // In the special case that the sub-action sucessfully completed
+                // immediately, don't return SUCCESS if there are more actions left!
+                if(ActionResult::SUCCESS == subResult) {
+                  ++_currentActionPair;
+                  if(_currentActionPair == _actions.end()) {
+                    // no more actions, safe to return success for the compound action
+#                   if USE_ACTION_CALLBACKS
+                    RunCallbacks(ActionResult::SUCCESS);
+#                   endif
+                    return ActionResult::SUCCESS;
+                  } else {
+                    // more actions, just say we're still running
+                    subResult = ActionResult::RUNNING;
+                  }
+                }
               }
               
               return subResult;
@@ -224,9 +242,9 @@ namespace Anki {
             case ActionResult::FAILURE_TIMEOUT:
             case ActionResult::FAILURE_PROCEED:
             case ActionResult::CANCELLED:
-#           if USE_ACTION_CALLBACKS
+#             if USE_ACTION_CALLBACKS
               RunCallbacks(subResult);
-#           endif
+#             endif
               return subResult;
               
           } // switch(result)

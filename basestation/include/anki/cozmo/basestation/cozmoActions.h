@@ -211,13 +211,14 @@ namespace Anki {
       // Modify default parameters (must be called before Init() to have an effect)
       void SetMaxSpeed(f32 maxSpeed_radPerSec)           { _maxSpeed_radPerSec = maxSpeed_radPerSec; }
       void SetAccel(f32 accel_radPerSec2)                { _accel_radPerSec2 = accel_radPerSec2; }
-      void SetTolerance(const Radians& angleTol_rad)     { _angleTolerance = angleTol_rad; }
+      void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
       
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Cleanup(Robot& robot) override;
       
     private:
       
@@ -230,6 +231,7 @@ namespace Anki {
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = 50.f;
       f32     _accel_radPerSec2 = 10.f;
+      u32     _eyeShiftTag = 0;
       
     }; // class TurnInPlaceAction
     
@@ -290,6 +292,7 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
+      virtual void Cleanup(Robot& robot) override;
       
     private:
       
@@ -304,6 +307,8 @@ namespace Anki {
       
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
+      
+      u32         _eyeShiftTag = 0;
 
     };  // class MoveHeadToAngleAction
     

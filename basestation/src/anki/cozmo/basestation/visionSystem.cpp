@@ -20,6 +20,7 @@
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
+#include "anki/common/basestation/math/rect_impl.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -51,6 +52,9 @@
 
 #define DEBUG_MOTION_DETECTION 0
 #define DEBUG_FACE_DETECTION   0
+
+#define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
+#define USE_THREE_FRAME_MOTION_DETECTION 0
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -1200,6 +1204,7 @@ namespace Cozmo {
   } // DetectFaces()
   
   
+#if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
   static size_t FindLargestRegionCentroid(const std::vector<std::vector<Anki::Point2i>>& regionPoints,
                                         size_t minArea, Anki::Point2f& centroid)
   {
@@ -1208,7 +1213,7 @@ namespace Cozmo {
     for(auto & region : regionPoints) {
       //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
       //                 "Area=%lu", region.size());
-      if(region.size() > minArea) {
+      if(region.size() > minArea && region.size() > largestRegion) {
         centroid = 0.f;
         for(auto & point : region) {
           centroid += point;
@@ -1220,6 +1225,40 @@ namespace Cozmo {
     
     return largestRegion;
   }
+#endif
+  
+  size_t GetCentroid(const Vision::Image& motionImg, size_t minArea, Anki::Point2f& centroid)
+  {
+#   if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
+    Array2d<s32> motionRegions(motionImg.GetNumRows(), motionImg.GetNumCols());
+    std::vector<std::vector<Point2<s32>>> regionPoints;
+    motionImg.GetConnectedComponents(motionRegions, regionPoints);
+    
+    return FindLargestRegionCentroid(regionPoints, minArea, centroid);
+#   else
+    size_t area = 0;
+    centroid = 0.f;
+    
+    for(s32 y=0; y<motionImg.GetNumRows(); ++y)
+    {
+      const u8* motionData_y = motionImg.GetRow(y);
+      for(s32 x=0; x<motionImg.GetNumCols(); ++x) {
+        if(motionData_y[x] != 0) {
+          centroid += Anki::Point2f(x,y);
+          ++area;
+        }
+      }
+    }
+    if(area > minArea) {
+      centroid /= static_cast<f32>(area);
+      return area;
+    } else {
+      centroid = 0.f;
+      return 0;
+    }
+#   endif
+  }
+  
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &image)
   {
@@ -1237,6 +1276,9 @@ namespace Cozmo {
     //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
     
     if(headSame && poseSame && !_poseData.isMoving && !_prevImage.IsEmpty() &&
+#      if USE_THREE_FRAME_MOTION_DETECTION
+       !_prevPrevImage.IsEmpty() &&
+#      endif
        image.GetTimestamp() - _lastMotionTime > 500)
     {
       s32 numAboveThresh = 0;
@@ -1269,32 +1311,55 @@ namespace Cozmo {
         return retVal;
       };
       
-      Vision::Image ratioImg(image.GetNumRows(), image.GetNumCols());
-      image.ApplyScalarFunction(ratioTest, _prevImage, ratioImg);
+      Vision::Image ratio12(image.GetNumRows(), image.GetNumCols());
+      image.ApplyScalarFunction(ratioTest, _prevImage, ratio12);
+      
+#     if USE_THREE_FRAME_MOTION_DETECTION
+      Vision::Image ratio01(image.GetNumRows(), image.GetNumCols());
+      _prevImage.ApplyScalarFunction(ratioTest, _prevPrevImage, ratio01);
+#     endif
+      
+      static const cv::Matx<u8, 3, 3> kernel(cv::Matx<u8, 3, 3>::ones());
+      cv::morphologyEx(ratio12.get_CvMat_(), ratio12.get_CvMat_(), cv::MORPH_OPEN, kernel);
+      
+#     if USE_THREE_FRAME_MOTION_DETECTION
+      cv::morphologyEx(ratio01.get_CvMat_(), ratio01.get_CvMat_(), cv::MORPH_OPEN, kernel);
+      cv::Mat_<u8> cvAND(255*(ratio01.get_CvMat_() & ratio12.get_CvMat_()));
+      cv::Mat_<u8> cvDIFF(ratio12.get_CvMat_() - cvAND);
+      Vision::Image foregroundMotion(cvDIFF);
+#     else
+      Vision::Image foregroundMotion = ratio12;
+#     endif
       
       Anki::Point2f centroid(0.f,0.f); // Not Embedded::
       Anki::Point2f groundPlaneCentroid(0.f,0.f);
       
-      // Get overall immge centroid
-      const size_t minArea = image.GetNumElements() / 225; // 1/15 of each image dimension
+      // Get overall image centroid
+      //#       if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
+      const size_t minAreaDivisor = 225; // 1/15 of each image dimension
+                                         //#       else
+                                         //        const size_t minAreaDivisor = 36; // 1/6 of each image dimension
+                                         //#       endif
+      const size_t minArea = image.GetNumElements() / minAreaDivisor;
       size_t imgRegionArea = 0;
       f32 groundRegionArea = 0.f;
-      if(numAboveThresh > minArea)
-      {
-        Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
-        std::vector<std::vector<Point2<s32>>> regionPoints;
-        ratioImg.GetConnectedComponents(motionRegions, regionPoints);
-
-        imgRegionArea = FindLargestRegionCentroid(regionPoints, minArea, centroid);
+      if(numAboveThresh > minArea) {
+        imgRegionArea = GetCentroid(foregroundMotion, minArea, centroid);
       }
       
       // Get centroid of all the motion within the ground plane, if we have one to reason about
       if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
       {
-        // Zero out everything in the ratio image that's not on the ground plane
-        Vision::Image mask(ratioImg.GetNumRows(), ratioImg.GetNumCols());
-        const Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
         
+        const Anki::Rectangle<s32> boundingRect(imgQuad); // Not Embedded::
+        Vision::Image groundPlaneForegroundMotion;
+        foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
+        
+        // Zero out everything in the ratio image that's not inside the ground plane quad
+        imgQuad -= boundingRect.GetTopLeft();
+        Vision::Image mask(groundPlaneForegroundMotion.GetNumRows(),
+                           groundPlaneForegroundMotion.GetNumCols());
         mask.FillWith(0);
         cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
           imgQuad[Quad::CornerName::TopLeft].get_CvPoint_(),
@@ -1303,37 +1368,38 @@ namespace Cozmo {
           imgQuad[Quad::CornerName::BottomLeft].get_CvPoint_(),
         }, 255);
         
-        ASSERT_NAMED(ratioImg.IsContinuous() && mask.IsContinuous(),
-                     "RatioImg and ground mask should be continuous.");
-        const u8* maskData = mask.GetDataPointer();
-        u8* ratioData = ratioImg.GetDataPointer();
-        for(s32 i=0; i<image.GetNumElements(); ++i) {
-          if(maskData[i] == 0) {
-            ratioData[i] = 0;
+        for(s32 i=0; i<mask.GetNumRows(); ++i) {
+          const u8* maskData_i = mask.GetRow(i);
+          u8* fgMotionData_i = groundPlaneForegroundMotion.GetRow(i);
+          for(s32 j=0; j<mask.GetNumCols(); ++j) {
+            if(maskData_i[j] == 0) {
+              fgMotionData_i[j] = 0;
+            }
           }
         }
         
         // Find centroid of largest connected component inside the ground plane
-        Array2d<s32> motionRegions(image.GetNumRows(), image.GetNumCols());
-        std::vector<std::vector<Point2<s32>>> regionPoints;
-        ratioImg.GetConnectedComponents(motionRegions, regionPoints);
-        
         const f32 imgQuadArea = imgQuad.ComputeArea();
-        groundRegionArea = FindLargestRegionCentroid(regionPoints, imgQuadArea/225.f,                                                         groundPlaneCentroid);
+        groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
+                                       imgQuadArea/static_cast<f32>(minAreaDivisor),
+                                       groundPlaneCentroid);
+        
+        // Move back to image coordinates from ROI coordinates
+        groundPlaneCentroid += boundingRect.GetTopLeft();
         
         /* Experimental: Try computing moments in an overhead warped view of the ratio image
-        groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
-        
-        cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
-        if(moments.m00 > 0) {
-          groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
-          groundPlaneCentroid.x() = moments.m10 / moments.m00;
-          groundPlaneCentroid.y() = moments.m01 / moments.m00;
-          groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
-          
-          // TODO: return other moments?
-        }
-        */
+         groundPlaneRatioImg = _poseData.groundPlaneROI.GetOverheadImage(ratioImg, _poseData.groundPlaneHomography);
+         
+         cv::Moments moments = cv::moments(groundPlaneRatioImg.get_CvMat_(), true);
+         if(moments.m00 > 0) {
+         groundMotionAreaFraction = moments.m00 / static_cast<f32>(groundPlaneRatioImg.GetNumElements());
+         groundPlaneCentroid.x() = moments.m10 / moments.m00;
+         groundPlaneCentroid.y() = moments.m01 / moments.m00;
+         groundPlaneCentroid += _poseData.groundPlaneROI.GetOverheadImageOrigin();
+         
+         // TODO: return other moments?
+         }
+         */
         
         if(groundRegionArea > 0.f)
         {
@@ -1358,9 +1424,9 @@ namespace Cozmo {
       {
         PRINT_NAMED_INFO("VisionSystem.DetectMotion.FoundCentroid",
                          "Found motion centroid for %lu-pixel area region at (%.1f,%.1f) "
-                         "-- %d-pixel area at (%.1f,%.1f) on the ground",
+                         "-- %.1f%% of ground area at (%.1f,%.1f)",
                          imgRegionArea, centroid.x(), centroid.y(),
-                         s32(groundRegionArea), groundPlaneCentroid.x(), groundPlaneCentroid.y());
+                         groundRegionArea*100.f, groundPlaneCentroid.x(), groundPlaneCentroid.y());
         
         _lastMotionTime = image.GetTimestamp();
         
@@ -1373,20 +1439,47 @@ namespace Cozmo {
                        centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
                        "Motion centroid should be within image bounds.");
           centroid -= _camera.GetCalibration().GetCenter(); // make relative to image center
+          
+          // Filter so as not to move too much from last motion detection,
+          // IFF we observed motion in the previous check
+          if(_prevCentroidFilterWeight > 0.f) {
+            centroid = (centroid * (1.f-_prevCentroidFilterWeight) +
+                        _prevMotionCentroid * _prevCentroidFilterWeight);
+            _prevMotionCentroid = centroid;
+          } else {
+            _prevCentroidFilterWeight = 0.1f;
+          }
+          
           msg.img_x = centroid.x();
           msg.img_y = centroid.y();
-          msg.img_area = static_cast<s32>(imgRegionArea);
+          msg.img_area = static_cast<u32>(imgRegionArea);
         } else {
           msg.img_area = 0;
+          msg.img_x = 0;
+          msg.img_y = 0;
+          _prevCentroidFilterWeight = 0.f;
         }
         
         if(groundRegionArea > 0.f)
         {
+          // Filter so as not to move too much from last motion detection,
+          // IFF we observed motion in the previous check
+          if(_prevGroundCentroidFilterWeight > 0.f) {
+            groundPlaneCentroid = (groundPlaneCentroid * (1.f - _prevGroundCentroidFilterWeight) +
+                                   _prevGroundMotionCentroid * _prevGroundCentroidFilterWeight);
+            _prevGroundMotionCentroid = groundPlaneCentroid;
+          } else {
+            _prevGroundCentroidFilterWeight = 0.1f;
+          }
+          
           msg.ground_x = std::round(groundPlaneCentroid.x());
           msg.ground_y = std::round(groundPlaneCentroid.y());
           msg.ground_area = groundRegionArea;
         } else {
           msg.ground_area = 0;
+          msg.ground_x = 0;
+          msg.ground_y = 0;
+          _prevGroundCentroidFilterWeight = 0.f;
         }
         
         _motionMailbox.putMessage(std::move(msg));
@@ -1394,26 +1487,33 @@ namespace Cozmo {
       
 #     if DEBUG_MOTION_DETECTION
       {
-        Vision::ImageRGB ratioImgDisp(ratioImg);
-        ratioImgDisp.DrawPoint(centroid + _camera.GetCalibration().GetCenter(), NamedColors::RED, 2);
+        Vision::ImageRGB ratioImgDisp(foregroundMotion);
+        ratioImgDisp.DrawPoint(centroid + _camera.GetCalibration().GetCenter(), NamedColors::RED, 4);
+        cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(imgRegionArea),
+                    cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .5f, CV_RGB(0,255,0));
         _debugImageRGBMailbox.putMessage({"RatioImg", ratioImgDisp});
         
+        //_debugImageMailbox.putMessage({"PrevRatioImg", _prevRatioImg});
+        //_debugImageMailbox.putMessage({"ForegroundMotion", foregroundMotion});
+        //_debugImageMailbox.putMessage({"AND", cvAND});
         
-        ratioImgDisp = Vision::ImageRGB(_poseData.groundPlaneROI.GetOverheadMask());
-        if(groundRegionArea > 0.f) {
-          ratioImgDisp.DrawPoint(groundPlaneCentroid-_poseData.groundPlaneROI.GetOverheadImageOrigin(),
-                                 NamedColors::RED, 2);
-          
-          cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(groundRegionArea),
-                      cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .5f,
-                      CV_RGB(0,255,0));
-        }
-        _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDisp});
-
+        //          ratioImgDisp = Vision::ImageRGB(_poseData.groundPlaneROI.GetOverheadMask());
+        //          if(groundRegionArea > 0.f) {
+        //            ratioImgDisp.DrawPoint(groundPlaneCentroid-_poseData.groundPlaneROI.GetOverheadImageOrigin(),
+        //                                   NamedColors::RED, 2);
+        //
+        //            cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(groundRegionArea),
+        //                        cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .5f,
+        //                        CV_RGB(0,255,0));
+        //          }
+        //          _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDisp});
+        //
         //_debugImageRGBMailbox.putMessage({"CurrentImg", image});
       }
 #     endif
-    
+      
+      //_prevRatioImg = ratio12;
+      
     } // if(headSame && poseSame)
     
     return RESULT_OK;
@@ -1810,6 +1910,9 @@ namespace Cozmo {
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
     // TODO: switch to just swapping pointers between current and previous image
+#   if USE_THREE_FRAME_MOTION_DETECTION
+    _prevImage.CopyTo(_prevPrevImage);
+#   endif
     inputImage.CopyTo(_prevImage);
     
     return lastResult;

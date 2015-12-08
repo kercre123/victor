@@ -532,9 +532,7 @@ namespace Anki
         cv::imshow(windowName, arrayCopy);
       }
 
-      if(waitForKeypress) {
-        cv::waitKey();
-      }
+      cv::waitKey(waitForKeypress ? 0 : 1);
 #endif // #if ANKICORETECH_EMBEDDED_USE_OPENCV
     }
 

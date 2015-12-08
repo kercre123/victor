@@ -41,6 +41,7 @@ public:
   // Container for the parameters for both eyes
   using EyeParamArray = std::array<Value, static_cast<size_t>(Parameter::NumParameters)>;
   
+  // Note: SCREEN Left and Right, not Cozmo's left and right!!!!
   enum WhichEye {
     Left,
     Right

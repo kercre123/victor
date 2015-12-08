@@ -42,8 +42,8 @@ void Anki::Cozmo::HAL::DACInit(void) {
   PDB0_DACINTC0 = PDB_INTC_TOE_MASK ;   // DAC output delay from PDB Software trigger
   
   // Configure our timing
-  PDB0_MOD = CLOCK_MOD;                 // This is our clock divided by our sampling rate
-  PDB0_DACINT0 = CLOCK_MOD;             // Effective after writting PDBSC_DACTOE = 1, DAC output changes are base on the interval defined by this value  
+  PDB0_MOD = CLOCK_MOD-1;                 // This is our clock divided by our sampling rate
+  PDB0_DACINT0 = CLOCK_MOD-1;             // Effective after writting PDBSC_DACTOE = 1, DAC output changes are base on the interval defined by this value  
   PDB0_SC |= PDB_SC_LDOK_MASK ;         // Load values into registers
  
   // Start counting
