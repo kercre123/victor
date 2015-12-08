@@ -4,22 +4,33 @@ using System.Collections;
 namespace StackTraining {
   public class HelpCozmoStackState : State {
 
-    private Bounds _BottomCubeBounds = new Bounds(new Vector3(100f, 0f, CozmoUtil.kBlockLengthMM * 0.5f), new Vector3(100f, 20f, 20f));
-    private Bounds _TopCubeBounds = new Bounds(new Vector3(100f, 0f, CozmoUtil.kBlockLengthMM * 0.5f), new Vector3(100f, 20f, 20f));
-
-
-    private bool _BottomDocked = false;
-
-    private bool _Moving = false;
-
     private StackTrainingGame _Game;
+
+    private float _MovingTime = 0f;
+
+    private float _Steering;
+
+    private bool _HasSeenCube;
+
+    private bool _Moving;
+
+    private bool _Carrying;
+
+    private float _InvisibleBlockTime = 0f;
+
+    private Bounds _TouchingBounds = new Bounds(new Vector3(30, 0, 20), new Vector3(10, 20, 20));
+
+    private Vector3 _StartPosition;
+    private Quaternion _StartRotation;
 
     public override void Enter() {
       base.Enter();
       _Game = _StateMachine.GetGame() as StackTrainingGame;
+      _Carrying = true;
 
-      _CurrentRobot.SetHeadAngle(0f);
-      _CurrentRobot.SetLiftHeight(0f);
+      RobotEngineManager.Instance.OnObservedMotion += HandleDetectMotion;
+      _StartPosition = _CurrentRobot.WorldPosition;
+      _StartRotation = _CurrentRobot.Rotation;
     }
 
     public override void Update() {
@@ -33,69 +44,121 @@ namespace StackTraining {
         return;
       }
 
-      Vector3 bottomCubePosition = _CurrentRobot.WorldToCozmo(bottomCube.WorldPosition);
-      Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
-
       if (_Moving) {
         return;
       }
 
-      if (!_BottomDocked) {
+      if (!_Carrying) {
 
-        if (_BottomCubeBounds.Contains(bottomCubePosition)) {
-          bottomCube.SetLEDs(Color.white);
-
-          _Moving = true;
-          _CurrentRobot.PickupObject(bottomCube, callback: (success) => {
-            if(success) {
-              _BottomDocked = true;
-            }
-            else {
-              if(_Game.TryDecrementAttempts()) {
-                _CurrentRobot.SetLiftHeight(0.0f);
-              }
-              else {
-                HandleFailed();
-              }
-            }
-            _Moving = false;
-          });
+        if (_InvisibleBlockTime < 2f || (!topCube.MarkersVisible && _InvisibleBlockTime < 6f)) {
+          _InvisibleBlockTime += Time.deltaTime;
+          _CurrentRobot.DriveWheels(-25f, -25f);
+          // raise the head so we can check the block has been placed
+          _CurrentRobot.SetHeadAngle(0.25f);
         }
         else {
-          bottomCube.SetLEDs(Color.red);
-          topCube.TurnLEDsOff();
-        }
-      }
-      else {
+          _CurrentRobot.DriveWheels(0, 0);
 
-        if (_TopCubeBounds.Contains(topCubePosition)) {
-          topCube.SetLEDs(Color.white);
-
-          _Moving = true;
-          _CurrentRobot.PlaceOnObject(topCube, _CurrentRobot.PoseAngle, (success) => {
-            if (success) {
-              HandleComplete();
+          if (CubesStacked()) {
+            HandleComplete();
+          }
+          else {
+            if (_Game.TryDecrementAttempts()) {
+              _StateMachine.SetNextState(new HelpCozmoPickupState());
             }
             else {
-              if(_Game.TryDecrementAttempts()) {
-                
-                if (!topCube.Equals(_CurrentRobot.CarryingObject)) {
-                  _BottomDocked = false;
-                  _CurrentRobot.SetLiftHeight(0.0f);
-                }
-                _Moving = false;
-              }
-              else {
-                HandleFailed();
-              }
+              HandleFailed();
             }
-          });
+          }
+        }
+
+        return;
+      }
+
+      if (!CubeInPlacementRange()) {        
+        if (topCube.MarkersVisible) {
+          topCube.SetLEDs(Color.white);
+          _InvisibleBlockTime = 0f;
+          _HasSeenCube = true;
         }
         else {
           topCube.SetLEDs(Color.red);
-        }   
 
+          _InvisibleBlockTime += Time.deltaTime;
+
+          if (_InvisibleBlockTime > 10f && _HasSeenCube) {
+            if (_Game.TryDecrementAttempts()) {
+              _InvisibleBlockTime = 0f;
+              _HasSeenCube = false;
+
+              _Moving = true;
+              // try to go back to our starting position
+              _CurrentRobot.GotoPose(_StartPosition, _StartRotation, (s) => {
+                _Moving = false;
+              });
+            }
+            else {
+              HandleFailed();
+            }
+          }
+        }
+
+        if (_MovingTime > 0f) {
+          _MovingTime -= Time.deltaTime;
+          _CurrentRobot.DriveWheels(Mathf.Lerp(15f, 25f, _Steering), Mathf.Lerp(25f, 15f, _Steering));
+        }
+        else {
+          _CurrentRobot.DriveWheels(0, 0);
+        }
       }
+      else {
+        if (TouchingTopCube()) {
+          // move backwards slowly as we lower the lift to place the cube
+          _CurrentRobot.DriveWheels(-25f, -25f);
+          _CurrentRobot.SetLiftHeight(0f);
+          _Carrying = false;
+          _InvisibleBlockTime = 0f;
+        }
+        else {
+          _CurrentRobot.DriveWheels(20f, 20f);
+        }
+      }
+    }
+
+    private bool CubesStacked() {
+      var bottomCube = _Game.BottomCube;
+      var topCube = _Game.TopCube;
+
+      Vector3 bottomCubePosition = _CurrentRobot.WorldToCozmo(bottomCube.WorldPosition);
+      Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
+      Vector2 xyDelta = topCubePosition - bottomCubePosition;
+
+      return (Mathf.Abs(xyDelta.x) < 15f && Mathf.Abs(xyDelta.y) < 15f);
+    }
+
+    private bool TouchingTopCube() {
+      var topCube = _Game.TopCube;
+
+      Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
+
+      return _TouchingBounds.Contains(topCubePosition);
+    }
+
+    private bool CubeInPlacementRange() {
+      var topCube = _Game.TopCube;
+
+      Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
+
+      // check that cube is withing N units of cozmo and its y is centered
+      const float placementRange = 75f;
+      return (topCubePosition.sqrMagnitude < placementRange * placementRange && 
+        Mathf.Abs(topCubePosition.y) < 10f);
+    }
+
+    private void HandleDetectMotion(Vector2 position) {
+      // position goes from -1 to 1, _Steering goes from 0 to 1
+      _Steering = position.x * 0.5f + 0.5f;
+      _MovingTime = 3f;
     }
 
     private void HandleComplete() {
@@ -120,6 +183,7 @@ namespace StackTraining {
 
     public override void Exit() {
       base.Exit();
+      RobotEngineManager.Instance.OnObservedMotion -= HandleDetectMotion;
     }
 
   }
