@@ -4,6 +4,7 @@ import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as cmds
 import maya.mel as mel
 import json
+from operator import itemgetter
 
 #To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
 #In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
@@ -16,6 +17,7 @@ g_ProceduralFaceKeyFrames = []
 ANIM_FPS = 30
 MAX_FRAMES = 10000
 NUM_PROCEDURAL_FRAMES = 19
+DATA_NODE_NAME = "x:data_node"
 
 # mapping from  cozmo-game\unity\cozmo\assets\scripts\generated\clad\types\proceduraleyeparameters.cs
 #which could have probably been included, but we'd still need a way to map those to the maya names.
@@ -102,7 +104,6 @@ def GetAudioJSON():
             print "ERROR: no sound added, it must be in the sounds directory"
             return None
         audioFile = audioPathSplit[1]
-
         audio_json = {         
                         "audioName": [audioFile],
                         "volume": 1.0,
@@ -193,11 +194,12 @@ def GetMovementJSON():
     return json_arr
 
 # function that adds ( creates new or modifies existing keyframe)
-def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
+def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val,frameNumber):
     # search and see if we have something at that time
     # if exists just modify currattr value else insert a blank one.
     global g_ProceduralFaceKeyFrames
     global g_ProcFaceDict
+    global DATA_NODE_NAME
     frame = None
     for existing_face_frame in g_ProceduralFaceKeyFrames:
         if( existing_face_frame["triggerTime_ms"] == triggerTime_ms):
@@ -218,6 +220,13 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
             "durationTime_ms": durationTime_ms,
             "Name": "ProceduralFaceKeyFrame"
         }
+        #Add the interpolated values for what maya thinks it is at
+        for k, v in g_ProcFaceDict.iteritems():
+            interp_val = cmds.getAttr(DATA_NODE_NAME + '.' + k,time=frameNumber)
+            if( v["cladIndex"] >= 0):
+                frame[v["cladName"]][v["cladIndex"]] = interp_val
+            else:
+                frame[v["cladName"]] = interp_val
         g_ProceduralFaceKeyFrames.append(frame)
 
     # mod the attribute you need
@@ -236,15 +245,11 @@ def ExportAnkiAnim(item):
     if( g_AnkiExportPath == ""):
         SetAnkiExportPath("Default");
     global ANIM_FPS
-    #originally this was just grabbing the first selected object cmds.ls(sl=True)[0].split(':')[1]
-    # Hardcoded on Mooly's request, in case of multiple cozmos will need a change to the x namespace.
-    DATA_NODE_NAME = "x:data_node"
+    global DATA_NODE_NAME
     if( len( cmds.ls(DATA_NODE_NAME) ) == 0 ):
-        print "ERROR: AnkiAnimExport: Select an object to export."
+        print "ERROR: AnkiAnimExport: Must have " + DATA_NODE_NAME
         return
     dataNodeObject = cmds.ls(DATA_NODE_NAME)[0]
-    animFrames = cmds.playbackOptions(query = True, animationEndTime = True)
-    animLength_s = animFrames / ANIM_FPS
 
     #Bake the animation so that we get the maya values mapped to the cozmo face values that the datanode driven keyframes transform
     cmds.bakeResults( dataNodeObject, time=(1,cmds.playbackOptions( query=True,max=True )),simulation=True, smart=True,disableImplicitControl=True,preserveOutsideKeys=True,sparseAnimCurveBake=False,removeBakedAttributeFromLayer=False,removeBakedAnimFromLayer=False,bakeOnOverrideLayer=True,minimizeRotation=True,controlPoints=False,shape=True )   
@@ -319,11 +324,13 @@ def ExportAnkiAnim(item):
                     "Name": "LiftHeightKeyFrame"
                 }
             elif isProceduralFaceAttr:
-                AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,keyframe_value)
+                AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,keyframe_value,Ts[i])
 
             if( curr is not None):
                 json_arr.append(curr)
     #Concat the procedural face frames which were added per attribute
+    # since not every attribute needs to be keyed, it might be out of order and need sorting.
+    g_ProceduralFaceKeyFrames = sorted(g_ProceduralFaceKeyFrames, key=itemgetter('triggerTime_ms')) 
     json_arr.extend(g_ProceduralFaceKeyFrames)
     #Grab the robot sounds from the main timeline, not a datanode attribute
     audio_json = GetAudioJSON()
