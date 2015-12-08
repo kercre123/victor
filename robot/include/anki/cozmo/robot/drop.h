@@ -35,7 +35,7 @@
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
 #define DROP_TO_WIFI_SIZE (100)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
-#define DROP_TO_RTIP_SIZE (80)
+#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + 1 + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
 /// Number of bytes of drop prefix
 #define DROP_PREAMBLE_SIZE sizeof(preambleType)
 /// Preamble for drops from WiFi to RTIP
@@ -48,7 +48,7 @@
 
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - MAX_AUDIO_BYTES_PER_DROP - 1 - MAX_SCREEN_BYTES_PER_DROP - 1 - 1)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
