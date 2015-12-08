@@ -69,6 +69,9 @@ namespace Anki {
         f32 dockOffsetDistY_ = 0;
         f32 dockOffsetAng_ = 0;
         
+        f32 dockSpeed_mmps_ = 0;
+        f32 dockAccel_mmps2_ = 0;
+        
         // Last seen marker pose used for bridge crossing
         f32 relMarkerX_, relMarkerY_, relMarkerAng_;
         
@@ -238,7 +241,9 @@ namespace Anki {
             if (LiftController::IsInPosition() && HeadController::IsInPosition()) {
               
               if (action_ == DA_PLACE_LOW_BLIND) {
-                DockingController::StartDockingToRelPose(dockOffsetDistX_,
+                DockingController::StartDockingToRelPose(dockSpeed_mmps_,
+                                                         dockAccel_mmps2_,
+                                                         dockOffsetDistX_,
                                                          dockOffsetDistY_,
                                                          dockOffsetAng_,
                                                          useManualSpeed_);
@@ -267,7 +272,9 @@ namespace Anki {
                     break;
                 }
 
-                DockingController::StartDocking(dockOffsetDistX_,
+                DockingController::StartDocking(dockSpeed_mmps_,
+                                                dockAccel_mmps2_,
+                                                dockOffsetDistX_,
                                                 dockOffsetDistY_,
                                                 dockOffsetAng_,
                                                 useManualSpeed_,
@@ -323,6 +330,7 @@ namespace Anki {
                   #endif
                   DockingController::GetLastMarkerPose(relMarkerX_, relMarkerY_, relMarkerAng_);
                   f32 relAngleToMarker = atan2_acc(relMarkerY_, relMarkerX_);
+                  PRINT("CHARGER TURN %f deg (%f %f)\n", RAD_TO_DEG(relAngleToMarker), relMarkerY_, relMarkerX_ );
                   f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F + relAngleToMarker).ToFloat();
                   SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, true);
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
@@ -676,6 +684,8 @@ namespace Anki {
       }
       
       void DockToBlock(const DockAction action,
+                       const f32 speed_mmps,
+                       const f32 accel_mmps2,
                        const f32 rel_x,
                        const f32 rel_y,
                        const f32 rel_angle,
@@ -686,6 +696,9 @@ namespace Anki {
 #endif
 
         action_ = action;
+        
+        dockSpeed_mmps_ = speed_mmps;
+        dockAccel_mmps2_ = accel_mmps2;
 
         if (action_ == DA_PLACE_LOW_BLIND) {
           dockOffsetDistX_ = rel_x;
@@ -706,9 +719,20 @@ namespace Anki {
         
       }
 
-      void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
+      void PlaceOnGround(const f32 speed_mmps,
+                         const f32 accel_mmps2,
+                         const f32 rel_x,
+                         const f32 rel_y,
+                         const f32 rel_angle,
+                         const bool useManualSpeed)
       {
-        DockToBlock(DA_PLACE_LOW_BLIND, rel_x, rel_y, rel_angle, useManualSpeed);
+        DockToBlock(DA_PLACE_LOW_BLIND,
+                    speed_mmps,
+                    accel_mmps2,
+                    rel_x,
+                    rel_y,
+                    rel_angle,
+                    useManualSpeed);
       }
       
     } // namespace PickAndPlaceController

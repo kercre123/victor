@@ -1659,6 +1659,8 @@ namespace Anki {
 #pragma mark ---- IDockAction ----
     
     IDockAction::IDockAction(ObjectID objectID,
+                             const f32 speed_mmps,
+                             const f32 accel_mmps2,
                              const bool useManualSpeed,
                              const f32 placementOffsetX_mm,
                              const f32 placementOffsetY_mm,
@@ -1674,6 +1676,8 @@ namespace Anki {
     , _placementOffsetY_mm(placementOffsetY_mm)
     , _placementOffsetAngle_rad(placementOffsetAngle_rad)
     , _placeObjectOnGroundIfCarrying(placeObjectOnGroundIfCarrying)
+    , _dockSpeed_mmps(speed_mmps)
+    , _dockAccel_mmps2(accel_mmps2)
     {
       
     }
@@ -1822,6 +1826,8 @@ namespace Anki {
               _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));
             
             if(robot.DockWithObject(_dockObjectID,
+                                    _dockSpeed_mmps,
+                                    _dockAccel_mmps2,
                                     _dockMarker, _dockMarker2,
                                     _dockAction,
                                     _placementOffsetX_mm,
@@ -1923,7 +1929,9 @@ namespace Anki {
 #pragma mark ---- PickupObjectAction ----
     
     AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
-                                                 f32 distanceFromMarker_mm,
+                                                 const f32 speed_mmps,
+                                                 const f32 accel_mmps2,
+                                                 const f32 distanceFromMarker_mm,
                                                  const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed, distanceFromMarker_mm)
     {
@@ -1996,8 +2004,10 @@ namespace Anki {
 #pragma mark ---- PickupObjectAction ----
     
     PickupObjectAction::PickupObjectAction(ObjectID objectID,
+                                           const f32 speed_mmps,
+                                           const f32 accel_mmps2,
                                            const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    : IDockAction(objectID, speed_mmps, accel_mmps2, useManualSpeed)
     {
       
     }
@@ -2200,10 +2210,12 @@ namespace Anki {
 #pragma mark ---- PlaceRelObjectAction ----
     
     PlaceRelObjectAction::PlaceRelObjectAction(ObjectID objectID,
-                                               const bool placeOnGround,                                               
+                                               const f32 speed_mmps,
+                                               const f32 accel_mmps2,
+                                               const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, 0, 0, placeOnGround)
+    : IDockAction(objectID, speed_mmps, accel_mmps2, useManualSpeed, placementOffsetX_mm, 0, 0, placeOnGround)
     , _placementVerifyAction(nullptr)
     , _verifyComplete(false)
     {
@@ -2408,8 +2420,11 @@ namespace Anki {
     
 #pragma mark ---- RollObjectAction ----
     
-    RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    RollObjectAction::RollObjectAction(ObjectID objectID,
+                                       const f32 speed_mmps,
+                                       const f32 accel_mmps2,
+                                       const bool useManualSpeed)
+    : IDockAction(objectID, speed_mmps, accel_mmps2, useManualSpeed)
     , _expectedMarkerPostRoll(nullptr)
     , _rollVerifyAction(nullptr)
     {
@@ -2578,8 +2593,11 @@ namespace Anki {
     
 #pragma mark ---- PopAWheelieAction ----
     
-    PopAWheelieAction::PopAWheelieAction(ObjectID objectID, const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed)
+    PopAWheelieAction::PopAWheelieAction(ObjectID objectID,
+                                         const f32 speed_mmps,
+                                         const f32 accel_mmps2,
+                                         const bool useManualSpeed)
+    : IDockAction(objectID, speed_mmps, accel_mmps2, useManualSpeed)
     {
       
     }
@@ -2725,7 +2743,11 @@ namespace Anki {
                               useApproachAngle,
                               approachAngle_rad,
                               useManualSpeed),
-      new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
+      new AlignWithObjectAction(objectID,
+                                motionProfile.dockSpeed_mmps,
+                                motionProfile.dockAccel_mmps2,
+                                distanceFromMarker_mm,
+                                useManualSpeed)})
     {
       
     }
@@ -2745,7 +2767,9 @@ namespace Anki {
                               useApproachAngle,
                               approachAngle_rad,
                               useManualSpeed),
-      new PickupObjectAction(objectID)})
+      new PickupObjectAction(objectID,
+                             motionProfile.dockSpeed_mmps,
+                             motionProfile.dockAccel_mmps2)})
     {
       
     }
@@ -2754,19 +2778,21 @@ namespace Anki {
     
     DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
                                                            const ObjectID& objectID,
-                                                           const PathMotionProfile motionProf,
+                                                           const PathMotionProfile motionProfile,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
     : CompoundActionSequential({
       new DriveToObjectAction(objectID,
                               PreActionPose::PLACE_RELATIVE,
-                              motionProf,
+                              motionProfile,
                               0,
                               useApproachAngle,
                               approachAngle_rad,
                               useManualSpeed),
       new PlaceRelObjectAction(objectID,
+                               motionProfile.dockSpeed_mmps,
+                               motionProfile.dockAccel_mmps2,
                                false,
                                0,
                                useManualSpeed)})
@@ -2790,6 +2816,8 @@ namespace Anki {
                               approachAngle_rad,
                               useManualSpeed),
       new PlaceRelObjectAction(objectID,
+                               motionProfile.dockSpeed_mmps,
+                               motionProfile.dockAccel_mmps2,
                                true,
                                placementOffsetX_mm,
                                useManualSpeed)})
@@ -2812,7 +2840,10 @@ namespace Anki {
                               useApproachAngle,
                               approachAngle_rad,
                               useManualSpeed),
-      new RollObjectAction(objectID, useManualSpeed)})
+      new RollObjectAction(objectID,
+                           motionProfile.dockSpeed_mmps,
+                           motionProfile.dockAccel_mmps2,
+                           useManualSpeed)})
     {
       
     }
@@ -2832,7 +2863,10 @@ namespace Anki {
                               useApproachAngle,
                               approachAngle_rad,
                               useManualSpeed),
-      new PopAWheelieAction(objectID, useManualSpeed)})
+      new PopAWheelieAction(objectID,
+                            motionProfile.dockSpeed_mmps,
+                            motionProfile.dockAccel_mmps2,
+                            useManualSpeed)})
     {
       
     }
@@ -2951,8 +2985,11 @@ namespace Anki {
     
 #pragma mark ---- CrossBridgeAction ----
     
-    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed)
-    : IDockAction(bridgeID, useManualSpeed)
+    CrossBridgeAction::CrossBridgeAction(ObjectID bridgeID,
+                                         const f32 speed_mmps,
+                                         const f32 accel_mmps2,
+                                         const bool useManualSpeed)
+    : IDockAction(bridgeID, speed_mmps, accel_mmps2, useManualSpeed)
     {
       
     }
@@ -2990,8 +3027,11 @@ namespace Anki {
     
 #pragma mark ---- AscendOrDescendRampAction ----
     
-    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed)
-    : IDockAction(rampID, useManualSpeed)
+    AscendOrDescendRampAction::AscendOrDescendRampAction(ObjectID rampID,
+                                                         const f32 speed_mmps,
+                                                         const f32 accel_mmps2,
+                                                         const bool useManualSpeed)
+    : IDockAction(rampID, speed_mmps, accel_mmps2, useManualSpeed)
     {
 
     }
@@ -3050,8 +3090,11 @@ namespace Anki {
     
 #pragma mark ---- MountChargerAction ----
     
-    MountChargerAction::MountChargerAction(ObjectID chargerID, const bool useManualSpeed)
-    : IDockAction(chargerID, useManualSpeed)
+    MountChargerAction::MountChargerAction(ObjectID chargerID,
+                                           const f32 speed_mmps,
+                                           const f32 accel_mmps2,
+                                           const bool useManualSpeed)
+    : IDockAction(chargerID, speed_mmps, accel_mmps2, useManualSpeed)
     {
       
     }
@@ -3097,9 +3140,14 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID,
+                                               const f32 speed_mmps,
+                                               const f32 accel_mmps2,
+                                               const bool useManualSpeed)
     : _objectID(objectID)
     , _chosenAction(nullptr)
+    , _speed_mmps(speed_mmps)
+    , _accel_mmps2(accel_mmps2)
     , _useManualSpeed(useManualSpeed)
     {
       
@@ -3136,13 +3184,13 @@ namespace Anki {
         if(object->GetType() == ObjectType::Bridge_LONG ||
            object->GetType() == ObjectType::Bridge_SHORT)
         {
-          _chosenAction = new CrossBridgeAction(_objectID, _useManualSpeed);
+          _chosenAction = new CrossBridgeAction(_objectID, _speed_mmps, _accel_mmps2, _useManualSpeed);
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
-          _chosenAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
+          _chosenAction = new AscendOrDescendRampAction(_objectID, _speed_mmps, _accel_mmps2, _useManualSpeed);
         }
         else if(object->GetType() == ObjectType::Charger_Basic) {
-          _chosenAction = new MountChargerAction(_objectID, _useManualSpeed);
+          _chosenAction = new MountChargerAction(_objectID, _speed_mmps, _accel_mmps2, _useManualSpeed);
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",

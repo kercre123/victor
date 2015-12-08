@@ -345,6 +345,8 @@ public:
     // marker2 needs to be specified when dockAction == DA_CROSS_BRIDGE to indiciate
     // the expected marker on the end of the bridge. Otherwise, it is ignored.
     Result DockWithObject(const ObjectID objectID,
+                          const f32 speed_mmps,
+                          const f32 accel_mmps2,
                               const Vision::KnownMarker* marker,
                               const Vision::KnownMarker* marker2,
                               const DockAction dockAction,
@@ -358,6 +360,8 @@ public:
     
     // Same as above but without specifying image location for marker
     Result DockWithObject(const ObjectID objectID,
+                          const f32 speed_mmps,
+                          const f32 accel_mmps2,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
                           const DockAction dockAction,

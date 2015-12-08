@@ -294,7 +294,12 @@ namespace Anki {
         PRINT("\n==== Starting PlaceBlockOnGroundTest (xOffset %d mm, yOffset %d mm, angleOffset %d degrees) =====\n",
               x_offset_mm, y_offset_mm, angle_offset_degrees);
         ticCnt_ = 0;
-        PickAndPlaceController::PlaceOnGround(x_offset_mm, y_offset_mm, DEG_TO_RAD_F32(angle_offset_degrees), false);
+        PickAndPlaceController::PlaceOnGround(50,
+                                              100,
+                                              x_offset_mm,
+                                              y_offset_mm,
+                                              DEG_TO_RAD_F32(angle_offset_degrees),
+                                              false);
         return RESULT_OK;
       }
       

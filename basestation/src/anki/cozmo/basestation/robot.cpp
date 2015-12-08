@@ -1361,7 +1361,10 @@ namespace Anki {
       _usingManualPathSpeed = useManualSpeed;
       _lastPickOrPlaceSucceeded = false;
       
-      return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0, useManualSpeed);
+      return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
+                                                                DEFAULT_DOCK_SPEED_MMPS,
+                                                                DEFAULT_DOCK_ACCEL_MMPS2,
+                                                                useManualSpeed);
     }
     
     u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
@@ -2126,6 +2129,8 @@ namespace Anki {
     
     
     Result Robot::DockWithObject(const ObjectID objectID,
+                                 const f32 speed_mmps,
+                                 const f32 accel_mmps2,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction dockAction,
@@ -2135,6 +2140,8 @@ namespace Anki {
                                  const bool useManualSpeed)
     {
       return DockWithObject(objectID,
+                            speed_mmps,
+                            accel_mmps2,
                             marker,
                             marker2,
                             dockAction,
@@ -2144,6 +2151,8 @@ namespace Anki {
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
+                                 const f32 speed_mmps,
+                                 const f32 accel_mmps2,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction dockAction,
@@ -2188,7 +2197,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, dockAction, useManualSpeed);
+      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, dockAction, useManualSpeed);
       
       
       if(sendResult == RESULT_OK) {

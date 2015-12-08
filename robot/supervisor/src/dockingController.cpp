@@ -68,10 +68,9 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 1000;
         
-        const u16 DOCK_APPROACH_SPEED_MMPS = 100;
-        //const u16 DOCK_FAR_APPROACH_SPEED_MMPS = 30;
-        const u16 DOCK_APPROACH_ACCEL_MMPS2 = 200;
-        const u16 DOCK_APPROACH_DECEL_MMPS2 = 200;
+        // Speeds and accels
+        f32 dockSpeed_mmps_ = 0;
+        f32 dockAccel_mmps2_ = 0;
         
         // Lateral tolerance at dock pose
         const f32 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1.75f;
@@ -705,9 +704,9 @@ namespace Anki {
                                                              dockPose_.angle.ToFloat(),
                                                              DOCK_PATH_START_RADIUS_MM,
                                                              DOCK_PATH_END_RADII_MM[endRadiiIdx],
-                                                             DOCK_APPROACH_SPEED_MMPS,
-                                                             DOCK_APPROACH_ACCEL_MMPS2,
-                                                             DOCK_APPROACH_DECEL_MMPS2,
+                                                             dockSpeed_mmps_,
+                                                             dockAccel_mmps2_,
+                                                             dockAccel_mmps2_,
                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
                                                              &path_length);
           
@@ -745,21 +744,10 @@ namespace Anki {
           
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
-                                               DOCK_APPROACH_SPEED_MMPS, DOCK_APPROACH_ACCEL_MMPS2, DOCK_APPROACH_DECEL_MMPS2);
+                                               dockSpeed_mmps_, dockAccel_mmps2_, dockAccel_mmps2_);
 
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
         }
-
-        /*
-        // Set speed
-        // TODO: Add hysteresis
-        if (distToBlock < FAR_DIST_TO_BLOCK_THRESH_MM) {
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_APPROACH_SPEED_MMPS );
-        } else {
-          SpeedController::SetUserCommandedDesiredVehicleSpeed( DOCK_FAR_APPROACH_SPEED_MMPS );
-        }
-        SpeedController::SetUserCommandedAcceleration( DOCK_APPROACH_ACCEL_MMPS2 );
-        */
         
         // Start following path
         createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
@@ -773,10 +761,13 @@ namespace Anki {
       }
       
       
-      void StartDocking(const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
+      void StartDocking(const f32 speed_mmps, const f32 accel_mmps,
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool useManualSpeed,
                         const u32 pointOfNoReturnDistMM)
       {
+        dockSpeed_mmps_ = speed_mmps;
+        dockAccel_mmps2_ = accel_mmps;
         dockOffsetDistX_ = dockOffsetDistX;
         
         useManualSpeed_ = useManualSpeed;
@@ -793,8 +784,13 @@ namespace Anki {
 #endif
       }
       
-      void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed)
+      void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps,
+                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle,
+                                 const bool useManualSpeed)
       {
+        dockSpeed_mmps_ = speed_mmps;
+        dockAccel_mmps2_ = accel_mmps;
+        
         useManualSpeed_ = useManualSpeed;
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         mode_ = LOOKING_FOR_BLOCK;

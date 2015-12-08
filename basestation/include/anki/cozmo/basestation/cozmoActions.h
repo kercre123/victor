@@ -518,6 +518,8 @@ namespace Anki {
     {
     public:
       IDockAction(ObjectID objectID,
+                  const f32 speed_mmps,
+                  const f32 accel_mmps2,
                   const bool useManualSpeed = false,
                   const f32 placementOffsetX_mm = 0,
                   const f32 placementOffsetY_mm = 0,
@@ -575,6 +577,8 @@ namespace Anki {
       f32                        _placementOffsetY_mm;
       f32                        _placementOffsetAngle_rad;
       bool                       _placeObjectOnGroundIfCarrying;
+      f32                        _dockSpeed_mmps;
+      f32                        _dockAccel_mmps2;
       u32                        _squintLayerTag;
     }; // class IDockAction
 
@@ -584,7 +588,9 @@ namespace Anki {
     {
     public:
       AlignWithObjectAction(ObjectID objectID,
-                            f32 distanceFromMarker_mm,
+                            const f32 speed_mmps,
+                            const f32 accel_mmps2,
+                            const f32 distanceFromMarker_mm,
                             const bool useManualSpeed = false);
       virtual ~AlignWithObjectAction();
       
@@ -612,6 +618,8 @@ namespace Anki {
     {
     public:
       PickupObjectAction(ObjectID objectID,
+                         const f32 speed_mmps,
+                         const f32 accel_mmps2,
                          const bool useManualSpeed = false);
       virtual ~PickupObjectAction();
       
@@ -644,7 +652,9 @@ namespace Anki {
     {
     public:
       PlaceRelObjectAction(ObjectID objectID,
-                           const bool placeOnGround = false,                           
+                           const f32 speed_mmps,
+                           const f32 accel_mmps2,
+                           const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
       virtual ~PlaceRelObjectAction();
@@ -687,6 +697,8 @@ namespace Anki {
     {
     public:
       RollObjectAction(ObjectID objectID,
+                       const f32 speed_mmps,
+                       const f32 accel_mmps2,
                        const bool useManualSpeed = false);
       virtual ~RollObjectAction();
       
@@ -724,7 +736,9 @@ namespace Anki {
     {
     public:
       PopAWheelieAction(ObjectID objectID,
-                       const bool useManualSpeed = false);
+                        const f32 speed_mmps,
+                        const f32 accel_mmps2,
+                        const bool useManualSpeed = false);
       virtual ~PopAWheelieAction();
       
       virtual const std::string& GetName() const override;
@@ -964,7 +978,10 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
+      CrossBridgeAction(ObjectID bridgeID,
+                        const f32 speed_mmps,
+                        const f32 accel_mmps2,
+                        const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::CROSS_BRIDGE; }
@@ -988,7 +1005,10 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
+      AscendOrDescendRampAction(ObjectID rampID,
+                                const f32 speed_mmps,
+                                const f32 accel_mmps2,
+                                const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::ASCEND_OR_DESCEND_RAMP; }
@@ -1011,7 +1031,10 @@ namespace Anki {
     class MountChargerAction : public IDockAction
     {
     public:
-      MountChargerAction(ObjectID chargerID, const bool useManualSpeed);
+      MountChargerAction(ObjectID chargerID,
+                         const f32 speed_mmps,
+                         const f32 accel_mmps2,
+                         const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::MOUNT_CHARGER; }
@@ -1036,7 +1059,10 @@ namespace Anki {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
+      TraverseObjectAction(ObjectID objectID,
+                           const f32 speed_mmps,
+                           const f32 accel_mmps2,
+                           const bool useManualSpeed);
       virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -1056,6 +1082,8 @@ namespace Anki {
       
       ObjectID       _objectID;
       IActionRunner* _chosenAction;
+      f32            _speed_mmps;
+      f32            _accel_mmps2;
       bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
@@ -1076,7 +1104,10 @@ namespace Anki {
                                 false,
                                 0,
                                 useManualSpeed),
-        new TraverseObjectAction(objectID, useManualSpeed)})
+        new TraverseObjectAction(objectID,
+                                 motionProfile.dockSpeed_mmps,
+                                 motionProfile.dockAccel_mmps2,
+                                 useManualSpeed)})
       {
         
       }
@@ -1099,7 +1130,10 @@ namespace Anki {
                                 false,
                                 0,
                                 useManualSpeed),
-        new MountChargerAction(objectID, useManualSpeed)})
+        new MountChargerAction(objectID,
+                               motionProfile.dockSpeed_mmps,
+                               motionProfile.dockAccel_mmps2,
+                               useManualSpeed)})
       {
         
       }
