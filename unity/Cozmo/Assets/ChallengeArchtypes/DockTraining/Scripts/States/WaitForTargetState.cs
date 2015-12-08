@@ -18,6 +18,7 @@ namespace DockTraining {
 
       LightCube target = _DockTrainingGame.GetCurrentTarget();
       if (target != null) {
+        target.SetLEDs(Color.blue);
         _StateMachine.SetNextState(new TapCubeState(new DetermineNextAction(), target.ID));
       }
     }
