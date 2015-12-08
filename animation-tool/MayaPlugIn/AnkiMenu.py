@@ -5,7 +5,8 @@ import maya.cmds as cmds
 import maya.mel as mel
 import json
 
-#To use place in "/Users/Shared/Autodesk/maya/2016/plug-ins and In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load
+#To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
+#In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
 
 kPluginCmdName = "AnkiAnimExport"
 #something like /Users/mollyjameson/cozmo-game/lib/anki/products-cozmo-assets/animations
@@ -13,6 +14,9 @@ g_AnkiExportPath = ""
 g_PrevMenuName = ""
 g_ProceduralFaceKeyFrames = []
 ANIM_FPS = 30
+MAX_FRAMES = 10000
+NUM_PROCEDURAL_FRAMES = 19
+
 # mapping from  cozmo-game\unity\cozmo\assets\scripts\generated\clad\types\proceduraleyeparameters.cs
 #which could have probably been included, but we'd still need a way to map those to the maya names.
 
@@ -208,8 +212,8 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
             "faceCenterY": 0,
             "faceScaleX": 1.0,
             "faceScaleY": 1.0,
-            "leftEye":  ([0]*19),
-            "rightEye":  ([0]*19),
+            "leftEye":  ([0]*NUM_PROCEDURAL_FRAMES),
+            "rightEye":  ([0]*NUM_PROCEDURAL_FRAMES),
             "triggerTime_ms": triggerTime_ms,
             "durationTime_ms": durationTime_ms,
             "Name": "ProceduralFaceKeyFrame"
@@ -278,7 +282,7 @@ def ExportAnkiAnim(item):
         BakedTs = []
         i = 0
         for checkFrameTime in Vs:
-            if( Ts[i] >= 0 and Ts[i] < 10000):
+            if( Ts[i] >= 0 and Ts[i] < MAX_FRAMES):
                 BakedTs.append(Ts[i]);
                 BakedVs.append(Vs[i]);
             i = i + 1
@@ -288,21 +292,19 @@ def ExportAnkiAnim(item):
         #end terrible hack
        
         i = 0;
-        #Loop through all keyframes
-        for k in Vs:
+        #Loop through all keyframes, the value is actually the next keyframe
+        keyframe_count = len(Vs)
+        for i in range(keyframe_count-2):
             #Duration is (timeN+1-timeN)
             #Last Duration is anim-length - timeN
-            duration = 0
-            if i<len(Vs)-1:
-                duration = (Ts[i+1] - Ts[i]) * 1000 / ANIM_FPS 
-            else:
-                duration = (animFrames - Ts[i]) * 1000  / ANIM_FPS    
+            duration = (Ts[i+1] - Ts[i]) * 1000 / ANIM_FPS 
+            keyframe_value = Vs[i+1]
             curr = None
             triggerTime_ms = int(round((Ts[i]) * 1000  / ANIM_FPS, 0));
             durationTime_ms = int(round(duration, 0));
             if currattr == "HeadAngle":
                 curr = {
-                    "angle_deg": k,
+                    "angle_deg": keyframe_value,
                     "angleVariability_deg": 0,
                     "triggerTime_ms": triggerTime_ms,
                     "durationTime_ms": durationTime_ms,
@@ -310,18 +312,17 @@ def ExportAnkiAnim(item):
                 }
             elif currattr == "ArmLift":
                 curr = {          
-                    "height_mm": k,
+                    "height_mm": keyframe_value,
                     "heightVariability_mm": 0,
                     "triggerTime_ms": triggerTime_ms,
                     "durationTime_ms": durationTime_ms,
                     "Name": "LiftHeightKeyFrame"
                 }
             elif isProceduralFaceAttr:
-                AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,k)
+                AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,keyframe_value)
 
             if( curr is not None):
                 json_arr.append(curr)
-            i = i+1
     #Concat the procedural face frames which were added per attribute
     json_arr.extend(g_ProceduralFaceKeyFrames)
     #Grab the robot sounds from the main timeline, not a datanode attribute
