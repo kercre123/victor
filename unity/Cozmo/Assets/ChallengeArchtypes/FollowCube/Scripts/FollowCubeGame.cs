@@ -14,30 +14,47 @@ namespace FollowCube {
 
     public float DistanceMax { get; set; }
 
-    [SerializeField]
-    private FollowCubeGamePanel _GamePanelPrefab;
+    public float NotSeenForgivenessThreshold = 2f;
 
-    private FollowCubeGamePanel _GamePanel;
+    private int _FailuresLeft;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
       InitializeMinigameObjects();
+      _FailuresLeft = 10;
     }
+
+    public enum FollowTask {
+      Forwards,
+      Backwards,
+      TurnLeft,
+      TurnRight,
+      FollowDrive
+    }
+
+    public FollowTask CurrentFollowTask;
 
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
-      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+
     }
 
     protected override void CleanUpOnDestroy() {
-      if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
+
+    }
+
+    public void FailedAttempt() {
+      _FailuresLeft--;
+      if (_FailuresLeft == 0) {
+        (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
       }
     }
 
@@ -48,6 +65,7 @@ namespace FollowCube {
 
     void InitialCubesDone() {
       SetSpeed();
+      CurrentFollowTask = FollowTask.Forwards;
     }
 
     void SetSpeed() {
@@ -56,9 +74,6 @@ namespace FollowCube {
       DistanceMin = 90.0f;
     }
 
-    public void SetAttemptsLeft(int attemptsLeft) {
-      _GamePanel.SetAttemptsLeft(attemptsLeft);
-    }
   }
 
 }
