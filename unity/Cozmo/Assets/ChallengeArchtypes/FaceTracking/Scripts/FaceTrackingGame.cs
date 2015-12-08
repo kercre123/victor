@@ -12,16 +12,16 @@ namespace FaceTracking {
     private StateMachine _StateMachine = new StateMachine();
     private int _TiltSuccessCount = 0;
     private int _TiltGoalTarget = 3;
-    private float _TiltGoalThreshold = 0.75f; 
+    private float _TiltGoalThreshold = 30.0f; 
     private float _MoveSpeed = 30.0f;
+
+    public float TiltGoal { get;}
 
     public float ForwardSpeed { get; set; }
 
     public float DistanceMin { get; set; }
 
     public float DistanceMax { get; set; }
-
-    public float GoalThreshold { get; set; }
 
     public bool WanderEnabled { get; set; }
 
@@ -42,13 +42,27 @@ namespace FaceTracking {
     }
 
     // Returns true if % tilt matches target treshold
-    public bool TiltTresholdMet(float tilt) {
-      return (tilt >= _TiltGoalThreshold);
+    public void TiltSuccessCheck(Face face) {
+      float angle = Vector3.Cross(CurrentRobot.Forward, face.WorldPosition - CurrentRobot.WorldPosition).z;
+      // If the Angle is (< 0). Face is to your right, if (> 0) Face is to your left.
+      float tiltVal = Mathf.Abs(angle / _TiltGoalThreshold);
+      Debug.Log(string.Format("RYAN -- Angle : {0} -- Goal : {2} -- TiltVal : {1} ",angle,tiltVal,_TiltGoalThreshold));
+
+      // TODO : Set up Cozmo's face to reflect current status/progress
+      if (tiltVal >= 1.0f) {
+        TiltSuccess();
+      }
+      else if (tiltVal > 0.0) {
+        // Set light to Green if heading in the right direction but not there yet.
+        CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
+      }
+
     }
 
     public void TiltSuccess() {
       _TiltSuccessCount++;
       _GamePanel.SetPoints(_TiltSuccessCount);
+      CurrentRobot.SendAnimation(AnimationName.kHappyA);
       TargetLeft = !TargetLeft;
       if (_TiltSuccessCount >= _TiltGoalTarget) {
         RaiseMiniGameWin();

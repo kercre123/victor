@@ -67,34 +67,15 @@ namespace FaceTracking {
 
       // Determine the relative head angle and follow the face with Cozmo's head
       float height = Mathf.InverseLerp(30, 150, target.WorldPosition.z);
+
       if (Mathf.Abs(height) > 0.1f && Mathf.Abs(height) < 15.0f) {
         float delta = height - _LastHeight;
         _CurrentRobot.SetHeadAngle(_LastHeight+delta);
       }
       _LastHeight = height;
 
-
-      // TODO: Track current % towards tilt success
-      // Set eye height based on distance from tracked face to center of view.
-      // If eye height hits target treshold on the current target side (L/R)
-      // then trigger Tilt Success and play an animation.
-      // Set light to Red if heading in the wrong direction,
-      // green if heading in the right direction.
-
-
-      if (angle < 10.0f) {
-        float distMax = _GameInstance.DistanceMax;
-        float distMin = _GameInstance.DistanceMin;
-
-        if (dist > distMax) {
-          _CurrentRobot.DriveWheels(speed, speed);
-        }
-        else if (dist < distMin) {
-          _CurrentRobot.DriveWheels(-speed, -speed);
-        }
-        else {
-          _CurrentRobot.DriveWheels(0.0f, 0.0f);
-        }
+      if (angle < _GameInstance.TiltGoal) {
+        _GameInstance.TiltSuccessCheck(target);
       }
       else {
         // we need to turn to face it
