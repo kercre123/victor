@@ -14,24 +14,27 @@ namespace Peekaboo {
 
     #endregion
     
-    PeekGame _GameInstance;
+    private PeekGame _GameInstance;
     private float _FirstUnseenTimestamp = -1;
     private float _FirstSeenTimestamp = -1;
     private bool _HasScored;
 
     private Face _TargetFace;
 
-    private float _PreviousAnglePose;
-    private float _TotalRadiansTraveled;
+    private float _LastHeight;
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as PeekGame;
       _HasScored = false;
-
+      // Trigger Scripted Sequence for Aria to tell player to tilt head left and right.
+      // Score points when you do that, otherwise return to looking for face state if
+      // you lose track. 
+      // Track total distance tilted based on current goal that alternates between left and right.
+      // Display a popup prompt for each
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
-      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.InteractWithFaces);
     }
 
     public override void Update() {
@@ -67,19 +70,13 @@ namespace Peekaboo {
           _HasScored = true;
           _GameInstance.PeekSuccess();
           _CurrentRobot.SendAnimation(AnimationName.kMajorWin);
+          _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
         }
-
-        _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
+        if (!_HasScored) {
+          _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.blue);
+        }
 
         FollowFace(_TargetFace);
-        // Keep track of any change in direction.
-        float deltaRadians = _PreviousAnglePose - _CurrentRobot.PoseAngle;
-        // Disregard a huge change in rotation, because that means he's passing the 
-        // border from -pi to pi.
-        if (Mathf.Abs(deltaRadians) < 1) {
-          _TotalRadiansTraveled += deltaRadians;
-        }
-        _PreviousAnglePose = _CurrentRobot.PoseAngle;
       }
     }
 
@@ -87,6 +84,15 @@ namespace Peekaboo {
       float dist = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
       float angle = Vector2.Angle(_CurrentRobot.Forward, target.WorldPosition - _CurrentRobot.WorldPosition);
       float speed = _GameInstance.ForwardSpeed;
+
+      // Determine the relative head angle and follow the face with Cozmo's head
+      float height = Mathf.InverseLerp(30, 150, target.WorldPosition.z);
+      if (Mathf.Abs(height) > 0.1f && Mathf.Abs(height) < 15.0f) {
+        float delta = height - _LastHeight;
+        _CurrentRobot.SetHeadAngle(_LastHeight+delta);
+      }
+      _LastHeight = height;
+
       if (angle < 10.0f) {
         float distMax = _GameInstance.DistanceMax;
         float distMin = _GameInstance.DistanceMin;

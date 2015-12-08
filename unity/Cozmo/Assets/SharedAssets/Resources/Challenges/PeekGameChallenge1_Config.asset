@@ -11,4 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0deed24fbffe54f0eb6a5970565a197c, type: 3}
   m_Name: PeekGameChallenge1_Config
   m_EditorClassIdentifier: 
-  goal: 3
+  Goal: 3
+  MoveSpeed: 0
+  WanderEnabled: 0
