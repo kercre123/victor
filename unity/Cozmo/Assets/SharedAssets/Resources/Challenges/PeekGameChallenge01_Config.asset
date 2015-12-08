@@ -8,9 +8,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 750cebbac1a9348d4a4fa7135470be71, type: 3}
-  m_Name: InvestorDemoScene3_Config
+  m_Script: {fileID: 11500000, guid: 0deed24fbffe54f0eb6a5970565a197c, type: 3}
+  m_Name: PeekGameChallenge01_Config
   m_EditorClassIdentifier: 
-  SequenceName: 
-  UseSequence: 0
-  BehaviorChooser: 0
+  Goal: 3
+  MoveSpeed: 0
+  WanderEnabled: 0
