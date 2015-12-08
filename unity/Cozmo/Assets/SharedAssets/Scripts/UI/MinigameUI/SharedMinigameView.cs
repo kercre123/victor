@@ -28,6 +28,11 @@ namespace Cozmo {
 
       private ChallengeProgressWidget _TaskWidgetInstance;
 
+      [SerializeField]
+      private ChallengeTitleWidget _TitleWidgetPrefab;
+
+      private ChallengeTitleWidget _TitleWidgetInstance;
+
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
       protected override void CleanUp() {
@@ -143,38 +148,31 @@ namespace Cozmo {
 
       #endregion
 
-      #region Task Progress Widget
+      #region Challenge Progress Widget
 
       public string ProgressBarLabelText {
         get {
-          string labelText = null;
-          if (_TaskWidgetInstance != null) {
-            labelText = _TaskWidgetInstance.ProgressBarLabelText;
-          }
-          return labelText;
+          return _TaskWidgetInstance != null ? _TaskWidgetInstance.ProgressBarLabelText : null;
         }
         set {
-          if (_TaskWidgetInstance != null) {
-            _TaskWidgetInstance.ProgressBarLabelText = value;
+          if (_TaskWidgetInstance == null) {
+            CreateProgressWidget(value);
           }
           else {
-            CreateProgressWidget(value);
+            _TaskWidgetInstance.ProgressBarLabelText = value;
           }
         }
       }
 
       public int NumSegments {
         get {
-          int numSegments = 0;
-          if (_TaskWidgetInstance != null) {
-            numSegments = _TaskWidgetInstance.NumSegments;
-          }
-          return numSegments;
+          return _TaskWidgetInstance != null ? _TaskWidgetInstance.NumSegments : 1;
         }
         set {
-          if (_TaskWidgetInstance != null) {
-            _TaskWidgetInstance.NumSegments = value;
+          if (_TaskWidgetInstance == null) {
+            CreateProgressWidget(null);
           }
+          _TaskWidgetInstance.NumSegments = value;
         }
       }
 
@@ -182,7 +180,6 @@ namespace Cozmo {
         if (_TaskWidgetInstance == null) {
           CreateProgressWidget(null);
         }
-
         _TaskWidgetInstance.SetProgress(newProgress);
       }
 
@@ -200,6 +197,39 @@ namespace Cozmo {
         _TaskWidgetInstance.ResetProgress();
 
         _ActiveWidgets.Add(_TaskWidgetInstance);
+      }
+
+      #endregion
+
+      #region Challenge Title Widget
+
+      public string TitleText {
+        get {
+          return _TitleWidgetInstance != null ? _TitleWidgetInstance.TitleLabelText : null;
+        }
+        set {
+          if (_TitleWidgetInstance != null) {
+            _TitleWidgetInstance.TitleLabelText = value;
+          }
+          else {
+            CreateTitleWidget(value);
+          }
+        }
+      }
+
+      private void CreateTitleWidget(string titleText) {
+        if (_TitleWidgetInstance != null) {
+          return;
+        }
+
+        GameObject widgetObj = UIManager.CreateUIElement(_TitleWidgetPrefab.gameObject, this.transform);
+        _TitleWidgetInstance = widgetObj.GetComponent<ChallengeTitleWidget>();
+
+        if (!string.IsNullOrEmpty(titleText)) {
+          _TitleWidgetInstance.TitleLabelText = titleText;
+        }
+
+        _ActiveWidgets.Add(_TitleWidgetInstance);
       }
 
       #endregion

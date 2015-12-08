@@ -44,41 +44,25 @@ public abstract class GameBase : MonoBehaviour {
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
-  /// <summary>
-  /// Order of operations:
-  /// Call InitializeMinigameObjects();
-  /// Call LoadMinigameConfig();
-  /// Create the minigame view and assign to _SharedMinigameViewInstance.
-  /// Call InitializeMinigameView();
-  /// </summary>
-  public void InitializeMinigame(MinigameConfigBase minigameConfigData) {
+  public void InitializeMinigame(ChallengeData challengeData) {
     GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
     _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
-    Initialize(minigameConfigData);
+
+    InitializeChallenge(challengeData);
+    Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
     InitializeMinigameView();
     _SharedMinigameViewInstance.OpenView();
   }
 
-  /// <summary>
-  /// Order of operations:
-  /// Call InitializeMinigameObjects();
-  /// Call InitializeMinigameData();
-  /// Create the minigame view and assign to _SharedMinigameViewInstance.
-  /// Call InitializeMinigameView();
-  /// </summary>
+  protected virtual void InitializeChallenge(ChallengeData challengeData) {
+    TitleText = Localization.Get(challengeData.ChallengeTitleLocKey);
+  }
+
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
-  /// <summary>
-  /// Order of operations:
-  /// Call InitializeMinigameObjects();
-  /// Call InitializeMinigameData();
-  /// Create the minigame view and assign to _SharedMinigameViewInstance.
-  /// Call InitializeMinigameView();
-  /// </summary>
   protected virtual void InitializeMinigameView() {
-    // Override and call create stuff here
     CreateDefaultQuitButton();
   }
 
@@ -212,6 +196,19 @@ public abstract class GameBase : MonoBehaviour {
     }
     set {
       _SharedMinigameViewInstance.NumSegments = value;
+    }
+  }
+
+  #endregion
+
+  #region Title Widget
+
+  protected string TitleText {
+    get {
+      return _SharedMinigameViewInstance.TitleText;
+    }
+    set {
+      _SharedMinigameViewInstance.TitleText = value;
     }
   }
 
