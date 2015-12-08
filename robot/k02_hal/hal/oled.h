@@ -56,8 +56,11 @@ namespace Anki
   {
     namespace HAL
     {
-      void OLEDInit(void);
-      void OLEDFeedFace(uint8_t address, uint8_t *face_bytes);
+      namespace OLED
+      {
+        void Init(void);
+        void FeedFace(uint8_t address, uint8_t *face_bytes);
+      }
     }
   }
 }

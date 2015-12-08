@@ -4,27 +4,20 @@
 #include "hal/imu.h"
 #include "MK02F12810.h"
 
-struct {
-  int16_t gyro[3];
-  int16_t acc[3];
-} IMUData;
+IMUData Anki::Cozmo::HAL::IMU::IMUState;
 
-void Anki::Cozmo::HAL::IMUInit(void) {
-  ReadIMUID();
-  IMUManage();
+void Anki::Cozmo::HAL::IMU::Init(void) {
+  uint8_t id = ReadID();
+  Manage();
 }
 
-const uint8_t DATA_8[] = { ADDR_IMU << 1, 0x0C };
-const uint8_t read_imu = (ADDR_IMU << 1) + 1;
+static const uint8_t DATA_8 = 0x0C;
 
-void Anki::Cozmo::HAL::IMUManage(void) {
-  /*
-  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, (uint8_t*)DATA_8, sizeof(DATA_8), NULL);
-  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)&read_imu, sizeof(read_imu), NULL);
-  I2CCmd( I2C_DIR_READ |  I2C_SEND_STOP, (uint8_t*)&IMUData, sizeof(IMUData), NULL);
-  */
+void Anki::Cozmo::HAL::IMU::Manage(void) {
+  I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), NULL);
+  I2C::Read(SLAVE_READ(ADDR_IMU), (uint8_t*) &IMUState, sizeof(IMUData), NULL);
 }
 
-uint8_t Anki::Cozmo::HAL::ReadIMUID(void) {
-  return I2CReadReg(ADDR_IMU, 0);
+uint8_t Anki::Cozmo::HAL::IMU::ReadID(void) {
+  return I2C::ReadReg(ADDR_IMU, 0);
 }

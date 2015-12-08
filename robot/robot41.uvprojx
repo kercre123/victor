@@ -446,6 +446,36 @@
               <FileName>dac.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\dac.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>oled.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spi.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>uart.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>debug.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -491,36 +521,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-            <File>
-              <FileName>oled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\oled.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>spi.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\spi.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imu.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
             </File>
             <File>
               <FileName>sha1.cpp</FileName>

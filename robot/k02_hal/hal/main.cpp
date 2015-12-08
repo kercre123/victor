@@ -30,7 +30,6 @@ namespace Anki
       // Import init functions from all HAL components
       void CameraInit(void);
       void TimerInit(void);
-      void I2CInit(void);
       void PowerInit(void);
       
       // This method is called at 7.5KHz (once per scan line)
@@ -39,7 +38,7 @@ namespace Anki
       void HALExec(u8* buf, int buflen, int eof)
       {
         TransmitDrop(buf, buflen, eof);
-        I2CEnable();
+        I2C::Enable();
         UartTransmit();
       }
     }
@@ -66,7 +65,6 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
-  I2CInit();
 
   DACInit();
   DACTone();
@@ -86,9 +84,9 @@ int main (void)
   MicroWait(100000); // Because the FLL is lame
   
   SPIInit();
-
-  IMUInit();
-  OLEDInit();
+  I2C::Init();
+  OLED::Init();
+  IMU::Init();
 
   CameraInit();
   UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK
