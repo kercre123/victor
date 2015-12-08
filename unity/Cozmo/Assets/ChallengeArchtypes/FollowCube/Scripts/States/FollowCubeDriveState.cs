@@ -74,7 +74,6 @@ namespace FollowCube {
           else {
             // Continue trying to follow the cube
             FollowCube(_TargetCube);
-            _TargetCube.SetLEDs(Color.yellow);
           }
         }
       }

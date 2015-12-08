@@ -14,23 +14,32 @@ namespace FollowCube {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as FollowCubeGame;
       _RobotStartAngle = _CurrentRobot.PoseAngle;
+      _LastSeenTargetTime = Time.time;
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     public override void Update() {
       base.Update();
+
+      if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
+        _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
+        _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+      }
+
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
         _GameInstance.FailedAttempt();
         return;
       }
 
       float angleDelta = _CurrentRobot.PoseAngle - _RobotStartAngle;
-      if (angleDelta < -(_WinDistanceThreshold)) {
+      if (angleDelta > (_WinDistanceThreshold)) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
         _StateMachine.SetNextState(animState);
       }
-
-      if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
+      else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
         FollowTarget();
       }
@@ -48,8 +57,8 @@ namespace FollowCube {
     }
 
     private void HandleTaskCompleteAnimation(bool success) {
-      _StateMachine.SetNextState(new FollowCubeTurnLeftState());
-      _GameInstance.CurrentFollowTask = FollowCubeGame.FollowTask.TurnLeft;
+      _StateMachine.SetNextState(new FollowCubeTurnRightState());
+      _GameInstance.CurrentFollowTask = FollowCubeGame.FollowTask.TurnRight;
     }
 
     public override void Exit() {
