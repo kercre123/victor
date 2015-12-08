@@ -12,5 +12,6 @@ MonoBehaviour:
   m_Name: FaceTrackGameChallenge1_Config
   m_EditorClassIdentifier: 
   Goal: 3
+  TiltTreshold: .699999988
   MoveSpeed: 0
   WanderEnabled: 0

@@ -9,15 +9,12 @@ namespace FaceTracking {
 
     #region Tunable values
 
-    private float _UnseenForgivenessSeconds = 0.75f;
-    private float _SeenScoreDelay = 2.0f;
+    private float _UnseenForgivenessSeconds = 1.5f;
 
     #endregion
     
     private FaceTrackingGame _GameInstance;
     private float _FirstUnseenTimestamp = -1;
-    private float _FirstSeenTimestamp = -1;
-    private bool _HasScored;
 
     private Face _TargetFace;
 
@@ -26,7 +23,6 @@ namespace FaceTracking {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
-      _HasScored = false;
       // Trigger Scripted Sequence for Aria to tell player to tilt head left and right.
       // Score points when you do that, otherwise return to looking for face state if
       // you lose track. 
@@ -45,7 +41,6 @@ namespace FaceTracking {
         if (IsUnseenTimestampUninitialized()) {
           _FirstUnseenTimestamp = Time.time;
         }
-        ResetSeenTimestamp();
 
         if (Time.time - _FirstUnseenTimestamp > _UnseenForgivenessSeconds) {
           ResetUnseenTimestamp();
@@ -59,23 +54,8 @@ namespace FaceTracking {
         }
       }// We have a face to track
       else {
-        // Keep track of when how long we've seen the face for scoring
-        if (IsSeenTimestampUninitialized() && _HasScored == false) {
-          _FirstSeenTimestamp = Time.time;
-        }
         _TargetFace = _CurrentRobot.Faces[0];
         ResetUnseenTimestamp();
-
-        if (Time.time - _FirstSeenTimestamp > _SeenScoreDelay && _HasScored == false) {
-          _HasScored = true;
-          _GameInstance.PeekSuccess();
-          _CurrentRobot.SendAnimation(AnimationName.kMajorWin);
-          _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
-        }
-        if (!_HasScored) {
-          _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.blue);
-        }
-
         FollowFace(_TargetFace);
       }
     }
@@ -92,6 +72,15 @@ namespace FaceTracking {
         _CurrentRobot.SetHeadAngle(_LastHeight+delta);
       }
       _LastHeight = height;
+
+
+      // TODO: Track current % towards tilt success
+      // Set eye height based on distance from tracked face to center of view.
+      // If eye height hits target treshold on the current target side (L/R)
+      // then trigger Tilt Success and play an animation.
+      // Set light to Red if heading in the wrong direction,
+      // green if heading in the right direction.
+
 
       if (angle < 10.0f) {
         float distMax = _GameInstance.DistanceMax;
@@ -135,14 +124,6 @@ namespace FaceTracking {
 
     private void ResetUnseenTimestamp() {
       _FirstUnseenTimestamp = -1;
-    }
-
-    private bool IsSeenTimestampUninitialized() {
-      return _FirstSeenTimestamp == -1;
-    }
-
-    private void ResetSeenTimestamp() {
-      _FirstSeenTimestamp = -1;
     }
 
   }

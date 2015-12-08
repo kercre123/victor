@@ -10,8 +10,9 @@ namespace FaceTracking {
     
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
-    private int _PeekSuccessCount = 0;
-    private int _PeekGoalTarget = 3;
+    private int _TiltSuccessCount = 0;
+    private int _TiltGoalTarget = 3;
+    private float _TiltGoalThreshold = 0.75f; 
     private float _MoveSpeed = 30.0f;
 
     public float ForwardSpeed { get; set; }
@@ -20,7 +21,11 @@ namespace FaceTracking {
 
     public float DistanceMax { get; set; }
 
+    public float GoalThreshold { get; set; }
+
     public bool WanderEnabled { get; set; }
+
+    public bool TargetLeft { get; set; }
 
     [SerializeField]
     private FaceTrackingGamePanel _GamePanelPrefab;
@@ -28,17 +33,24 @@ namespace FaceTracking {
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
-      _PeekGoalTarget = config.Goal;
+      _TiltGoalTarget = config.Goal;
       _MoveSpeed = config.MoveSpeed;
       WanderEnabled = config.WanderEnabled;
+      _TiltGoalThreshold = config.TiltTreshold;
 
       InitializeMinigameObjects();
     }
 
-    public void PeekSuccess() {
-      _PeekSuccessCount++;
-      _GamePanel.SetPoints(_PeekSuccessCount);
-      if (_PeekSuccessCount >= _PeekGoalTarget) {
+    // Returns true if % tilt matches target treshold
+    public bool TiltTresholdMet(float tilt) {
+      return (tilt >= _TiltGoalThreshold);
+    }
+
+    public void TiltSuccess() {
+      _TiltSuccessCount++;
+      _GamePanel.SetPoints(_TiltSuccessCount);
+      TargetLeft = !TargetLeft;
+      if (_TiltSuccessCount >= _TiltGoalTarget) {
         RaiseMiniGameWin();
       }
     }
@@ -47,7 +59,7 @@ namespace FaceTracking {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FaceTrackingGamePanel>();
-      _GamePanel.SetPoints(_PeekSuccessCount);
+      _GamePanel.SetPoints(_TiltSuccessCount);
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -63,6 +75,7 @@ namespace FaceTracking {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
       SetSpeed();
+      TargetLeft = true;
     }
 
     void SetSpeed() {
