@@ -7,7 +7,6 @@ namespace FollowCube {
 
     #region Tunable values
 
-    private int _AttemptsLeft = 100;
     private float _UnseenForgivenessSeconds = 2f;
 
     #endregion
@@ -17,8 +16,6 @@ namespace FollowCube {
 
     private float _FirstUnseenTimestamp = -1;
 
-    private bool _IsAnimatingFail = false;
-
     private float _PreviousAnglePose;
     private float _TotalRadiansTraveled;
 
@@ -26,9 +23,6 @@ namespace FollowCube {
       base.Enter();
 
       _GameInstance = _StateMachine.GetGame() as FollowCubeGame;
-      _IsAnimatingFail = false;
-      _AttemptsLeft = 100;
-      _GameInstance.SetAttemptsLeft(_AttemptsLeft);
 
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);
@@ -39,10 +33,6 @@ namespace FollowCube {
 
     public override void Update() {
       base.Update();
-
-      if (IsAnimating()) {
-        return;
-      }
 
       // Try to find a target
       if (_TargetCube == null) {
@@ -69,7 +59,7 @@ namespace FollowCube {
           // If we have turned fully around in either direction, the player wins.
           if (Mathf.Abs(_TotalRadiansTraveled) > Mathf.PI * 2) {
             AnimationState animState = new AnimationState();
-            animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDoneHandler);
+            animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);
             _StateMachine.SetNextState(animState);
           }
         }
@@ -85,19 +75,7 @@ namespace FollowCube {
             // Lost sight of the target; the player loses a life!
             _TargetCube.TurnLEDsOff();
             _TargetCube = null;
-
-            // TODO: Change this to an event?
-            _AttemptsLeft--;
-            _GameInstance.SetAttemptsLeft(_AttemptsLeft);
-
-            if (_AttemptsLeft <= 0) {
-              // Player lost; Move into fail state
-              _StateMachine.SetNextState(new FollowCubeFailState());
-            }
-            else {
-              _IsAnimatingFail = true;
-              _CurrentRobot.SendAnimation("shocked", HandleLostCubeAnimationEnd);
-            }
+            // TODO: add fail state
           }
           else {
             // Continue trying to follow the cube
@@ -112,19 +90,7 @@ namespace FollowCube {
       }
     }
 
-    private bool IsAnimating() {
-      return _IsAnimatingFail;
-    }
-
-    private void HandleLostCubeAnimationEnd(bool success) {
-      _IsAnimatingFail = false;
-
-      // Set the head level
-      _CurrentRobot.SetHeadAngle(0);
-      _CurrentRobot.SetLiftHeight(0);
-    }
-
-    private void HandleWinAnimationDoneHandler(bool success) {
+    private void HandleWinAnimationDone(bool success) {
       _StateMachine.GetGame().RaiseMiniGameWin();
     }
 

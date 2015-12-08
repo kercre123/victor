@@ -14,14 +14,12 @@ namespace FollowCube {
 
     public float DistanceMax { get; set; }
 
-    [SerializeField]
-    private FollowCubeGamePanel _GamePanelPrefab;
-
-    private FollowCubeGamePanel _GamePanel;
+    public int FailuresLeft { get; set; }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
       InitializeMinigameObjects();
+      FailuresLeft = 10;
     }
 
     protected void InitializeMinigameObjects() {
@@ -35,13 +33,10 @@ namespace FollowCube {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
 
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
     }
 
     protected override void CleanUpOnDestroy() {
-      if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
-      }
+
     }
 
     // Update is called once per frame
@@ -59,9 +54,6 @@ namespace FollowCube {
       DistanceMin = 90.0f;
     }
 
-    public void SetAttemptsLeft(int attemptsLeft) {
-      _GamePanel.SetAttemptsLeft(attemptsLeft);
-    }
   }
 
 }
