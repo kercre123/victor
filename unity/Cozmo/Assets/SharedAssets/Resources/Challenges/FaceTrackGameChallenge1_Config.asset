@@ -8,8 +8,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0deed24fbffe54f0eb6a5970565a197c, type: 3}
-  m_Name: PeekGameChallenge1_Config
+  m_Script: {fileID: 11500000, guid: 7fa95c4d076fe44429d41889a1f60c85, type: 3}
+  m_Name: FaceTrackGameChallenge1_Config
   m_EditorClassIdentifier: 
   Goal: 3
   MoveSpeed: 0

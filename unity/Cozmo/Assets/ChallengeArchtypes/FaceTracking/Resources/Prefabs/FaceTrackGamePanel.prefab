@@ -27,7 +27,7 @@ GameObject:
   - 224: {fileID: 22453642}
   - 114: {fileID: 11463664}
   m_Layer: 5
-  m_Name: PeekGamePanel
+  m_Name: FaceTrackGamePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -41,7 +41,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 154828}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6734e33f4ff4548078e47a36421237e7, type: 3}
+  m_Script: {fileID: 11500000, guid: 1037971bb4d64427e941de9323cf2ff3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 0

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Peekaboo {
+namespace FaceTracking {
   // Attempt to Follow the face along various axis
   // (Default should track in all directions at once)
   // Possibly define a specific tracking goal for Challenge/tutorial purposes
@@ -14,7 +14,7 @@ namespace Peekaboo {
 
     #endregion
     
-    private PeekGame _GameInstance;
+    private FaceTrackingGame _GameInstance;
     private float _FirstUnseenTimestamp = -1;
     private float _FirstSeenTimestamp = -1;
     private bool _HasScored;
@@ -25,7 +25,7 @@ namespace Peekaboo {
 
     public override void Enter() {
       base.Enter();
-      _GameInstance = _StateMachine.GetGame() as PeekGame;
+      _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
       _HasScored = false;
       // Trigger Scripted Sequence for Aria to tell player to tilt head left and right.
       // Score points when you do that, otherwise return to looking for face state if

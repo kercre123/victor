@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Peekaboo {
-  public class PeekGameConfig : MinigameConfigBase {
+namespace FaceTracking {
+  public class FaceTrackingGameConfig : MinigameConfigBase {
 
     public int Goal;
     public float MoveSpeed;

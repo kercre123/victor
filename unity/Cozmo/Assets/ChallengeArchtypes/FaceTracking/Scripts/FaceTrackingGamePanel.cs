@@ -2,9 +2,9 @@
 using System.Collections;
 using Cozmo.UI;
 
-namespace Peekaboo {
+namespace FaceTracking {
   
-  public class PeekGamePanel : BaseView {
+  public class FaceTrackingGamePanel : BaseView {
 
     [SerializeField]
     private Anki.UI.AnkiTextLabel _PointsLabel;

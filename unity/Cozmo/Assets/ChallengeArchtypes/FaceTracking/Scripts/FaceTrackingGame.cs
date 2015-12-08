@@ -1,12 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Peekaboo {
+namespace FaceTracking {
   /// <summary>
   /// Game for building face tracking skills. Has config options to enable Cozmo wandering
   /// when not paying attention to a face.
   /// </summary>
-  public class PeekGame : GameBase {
+  public class FaceTrackingGame : GameBase {
     
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
@@ -23,11 +23,11 @@ namespace Peekaboo {
     public bool WanderEnabled { get; set; }
 
     [SerializeField]
-    private PeekGamePanel _GamePanelPrefab;
-    private PeekGamePanel _GamePanel;
+    private FaceTrackingGamePanel _GamePanelPrefab;
+    private FaceTrackingGamePanel _GamePanel;
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
-      PeekGameConfig config = (minigameConfigData as PeekGameConfig);
+      FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
       _PeekGoalTarget = config.Goal;
       _MoveSpeed = config.MoveSpeed;
       WanderEnabled = config.WanderEnabled;
@@ -46,7 +46,7 @@ namespace Peekaboo {
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<PeekGamePanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FaceTrackingGamePanel>();
       _GamePanel.SetPoints(_PeekSuccessCount);
 
       CurrentRobot.SetBehaviorSystem(true);
