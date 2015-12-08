@@ -4,7 +4,7 @@ using DG.Tweening;
 
 namespace Cozmo {
   namespace UI {
-    public class ProgressBarWidget : MonoBehaviour {
+    public class ProgressBar : MonoBehaviour {
 
       [SerializeField]
       private Image _FilledForegroundImage;

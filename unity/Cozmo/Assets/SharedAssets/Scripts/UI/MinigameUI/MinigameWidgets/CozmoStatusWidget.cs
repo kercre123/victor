@@ -7,7 +7,7 @@ namespace Cozmo {
     public class CozmoStatusWidget : MonoBehaviour, IMinigameWidget {
 
       [SerializeField]
-      private SegmentedBarWidget _AttemptsDisplay;
+      private SegmentedBar _AttemptsDisplay;
 
       // TODO: Add handling of cozmo's face view here
 

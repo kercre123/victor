@@ -9,7 +9,7 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class ChallengeProgressWidget : MonoBehaviour, IMinigameWidget {
       [SerializeField]
-      private ProgressBarWidget _ChallengeProgressBar;
+      private ProgressBar _ChallengeProgressBar;
 
       [SerializeField]
       private AnkiTextLabel _ProgressBarLabel;
