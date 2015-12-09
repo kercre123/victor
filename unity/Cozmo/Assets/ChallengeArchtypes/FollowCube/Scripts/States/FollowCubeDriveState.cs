@@ -70,7 +70,7 @@ namespace FollowCube {
             // we've seen a block.
             _TargetCube.TurnLEDsOff();
             _TargetCube = null;
-            _GameInstance.FailedAttempt();
+            _StateMachine.SetNextState(new FollowCubeFailedState());
           }
           else {
             // Continue trying to follow the cube

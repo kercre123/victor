@@ -31,7 +31,6 @@ namespace FollowCube {
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
-        _GameInstance.FailedAttempt();
         _StateMachine.SetNextState(new FollowCubeFailedState());
         return;
       }
