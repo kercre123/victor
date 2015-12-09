@@ -9,9 +9,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7fa95c4d076fe44429d41889a1f60c85, type: 3}
-  m_Name: FaceTrackGameChallenge1_Config
+  m_Name: FaceTrackGameChallenge01_Config
   m_EditorClassIdentifier: 
   Goal: 3
-  TiltTreshold: .699999988
-  MoveSpeed: 0
+  TiltTreshold: 110
+  MoveSpeed: 30
+  Lenience: .100000001
   WanderEnabled: 0
