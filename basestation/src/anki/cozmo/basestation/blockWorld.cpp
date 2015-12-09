@@ -990,7 +990,18 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
+      //const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
+      
+      // Compare to the pose of the robot when the marker was observed
+      RobotPoseStamp *p;
+      if(RESULT_OK != _robot->GetPoseHistory()->GetComputedPoseAt(observedObject->GetLastObservedTime(), &p)) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject.PoseHistoryError",
+                          "Could not get historical pose for object observation time t=%d",
+                          observedObject->GetLastObservedTime());
+        return RESULT_FAIL;
+      }
+      
+      const Vec3f& robotTrans = p->GetPose().GetTranslation();
       
       const Vision::KnownMarker* closestMarker = nullptr;
       f32 minDistSq = std::numeric_limits<f32>::max();
