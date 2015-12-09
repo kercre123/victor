@@ -65,6 +65,9 @@ public:
   Value GetParameter(WhichEye whichEye, Parameter param) const;
   const EyeParamArray& GetParameters(WhichEye whichEye) const;
   
+  // Set the same value to a parameter for both eyes:
+  void SetParameterBothEyes(Parameter param, Value value);
+  
   // Get/Set the overall angle of the whole face (still using parameter on interval [-1,1]
   void SetFaceAngle(Value value);
   Value GetFaceAngle() const;
@@ -130,6 +133,12 @@ inline const ProceduralFaceParams::EyeParamArray& ProceduralFaceParams::GetParam
   return _eyeParams[whichEye];
 }
 
+inline void ProceduralFaceParams::SetParameterBothEyes(Parameter param, Value value)
+{
+  SetParameter(WhichEye::Left,  param, value);
+  SetParameter(WhichEye::Right, param, value);
+}
+  
 inline ProceduralFaceParams::Value ProceduralFaceParams::GetFaceAngle() const {
   return _faceAngle;
 }
