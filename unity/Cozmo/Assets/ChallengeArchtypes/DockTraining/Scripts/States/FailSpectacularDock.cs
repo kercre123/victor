@@ -10,17 +10,16 @@ namespace DockTraining {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as DockTrainingGame;
-      PlayShockedAnimation();
     }
 
     public override void Update() {
       base.Update();
+      PlayShockedAnimation();
       _CurrentRobot.DriveWheels(25.0f, 10.0f);
     }
 
     public override void Exit() {
       base.Exit();
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
 
     private void PlayShockedAnimation() {
@@ -35,6 +34,7 @@ namespace DockTraining {
 
     private void HandleBackToStartPos(bool success) {
       _StateMachine.SetNextState(new WaitForTargetState());
+      (_StateMachine.GetGame() as DockTrainingGame).DockFailed();
     }
   }
 
