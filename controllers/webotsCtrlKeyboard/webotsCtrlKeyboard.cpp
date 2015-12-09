@@ -17,6 +17,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorchooserTypesHelpers.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
@@ -229,6 +230,8 @@ namespace Anki {
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("        Force-add specifed robot:  Shift+r\n");
+        printf("                 Select behavior:  Shift+c\n");
+        printf("         Select behavior chooser:  h\n");
         printf("           Set DemoState Default:  j\n");
         printf("         Set DemoState FacesOnly:  Shift+j\n");
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
@@ -799,7 +802,6 @@ namespace Anki {
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                
-                  static bool isDemoMode = true;
                   // Send whatever animation is specified in the animationToSendName field
                   webots::Field* behaviorNameField = root_->getField("behaviorName");
                   if (behaviorNameField == nullptr) {
@@ -808,28 +810,21 @@ namespace Anki {
                   }
                   std::string behaviorName = behaviorNameField->getSFString();
                   if (behaviorName.empty()) {
-                    printf("ERROR: animationToSendName field is empty\n");
+                    printf("ERROR: behaviorName field is empty\n");
                     break;
                   }
                   
                   if (behaviorName == "DISABLED")
                   {
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(false)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::SetBehaviorSystemEnabled(false)));
                   }
                   else
                   {
-                    if (behaviorName == "AUTO" && !isDemoMode)
-                    {
-                      isDemoMode = true;
-                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Demo)));
-                    }
-                    else if (behaviorName != "AUTO" && isDemoMode)
-                    {
-                      isDemoMode = false;
-                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
-                    }
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(true)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
                   }
                   
                 }
@@ -840,6 +835,39 @@ namespace Anki {
                   // 'c' without SHIFT
                   SendClearAllBlocks();
                 }
+                break;
+              }
+
+              case (s32)'H':
+              {
+                // select behavior chooser
+                webots::Field* behaviorChooserNameField = root_->getField("behaviorChooserName");
+                if (behaviorChooserNameField == nullptr) {
+                  printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                  
+                std::string behaviorChooserName = behaviorChooserNameField->getSFString();
+                if (behaviorChooserName.empty()) {
+                  printf("ERROR: behaviorChooserName field is empty\n");
+                  break;
+                }
+                  
+                BehaviorChooserType chooser = BehaviorChooserTypeFromString(behaviorChooserName);
+                if( chooser == BehaviorChooserType::Count ) {
+                  printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
+                         behaviorChooserName.c_str());
+                  break;
+                }
+
+                printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
+                
+                SendMessage(ExternalInterface::MessageGameToEngine(
+                              ExternalInterface::SetBehaviorSystemEnabled(true)));
+
+                SendMessage(ExternalInterface::MessageGameToEngine(
+                              ExternalInterface::ActivateBehaviorChooser(chooser)));
+                
                 break;
               }
                 
