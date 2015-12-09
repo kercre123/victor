@@ -1061,7 +1061,7 @@ namespace Anki {
         }
       }
       
-      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps);
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
       
     protected:
       

@@ -3144,7 +3144,7 @@ namespace Anki {
       Util::SafeDelete(_chosenAction);
     }
     
-    void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps) {
+    void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) {
       _speed_mmps = speed_mmps;
       _accel_mmps2 = accel_mmps2;
     }
@@ -3202,13 +3202,11 @@ namespace Anki {
                               0,
                               false,
                               0,
-                              useManualSpeed),
-      new TraverseObjectAction(objectID,
-                               motionProfile.dockSpeed_mmps,
-                               motionProfile.dockAccel_mmps2,
-                               useManualSpeed)})
+                              useManualSpeed)})
     {
-      
+      TraverseObjectAction* action = new TraverseObjectAction(objectID, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
     
 #pragma mark ---- DriveToAndMountChargerAction ----

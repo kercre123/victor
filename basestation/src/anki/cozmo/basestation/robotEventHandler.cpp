@@ -297,10 +297,9 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
                                               msg.motionProf,
                                               msg.useManualSpeed);
   } else {
-    return new TraverseObjectAction(selectedObjectID,
-                                    msg.motionProf.dockSpeed_mmps,
-                                    msg.motionProf.dockAccel_mmps2,
-                                    msg.useManualSpeed);
+    TraverseObjectAction* traverseAction = new TraverseObjectAction(selectedObjectID, msg.useManualSpeed);
+    traverseAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    return traverseAction;
   }
 }
   
