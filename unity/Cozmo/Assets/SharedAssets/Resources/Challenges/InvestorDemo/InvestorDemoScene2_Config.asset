@@ -13,4 +13,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SequenceName: 
   UseSequence: 0
-  BehaviorChooser: 0
+  BehaviorChooser: 3
