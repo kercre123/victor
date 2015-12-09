@@ -50,6 +50,7 @@ namespace DockTraining {
 
     private void HandleLoseAnimationDone(bool success) {
       _StateMachine.SetNextState(new WaitForTargetState());
+      (_StateMachine.GetGame() as DockTrainingGame).DockFailed();
     }
 
     private void HandleWinAnimationDone(bool success) {
