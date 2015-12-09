@@ -10,6 +10,7 @@ namespace DockTraining {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as DockTrainingGame;
+      PlayShockedAnimation();
     }
 
     public override void Update() {
