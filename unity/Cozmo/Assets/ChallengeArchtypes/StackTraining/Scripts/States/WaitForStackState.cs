@@ -34,10 +34,13 @@ namespace StackTraining {
       Vector3 topCubePosition = _CurrentRobot.WorldToCozmo(topCube.WorldPosition);
 
       if (_BottomCubeBounds.Contains(bottomCubePosition)) {
+
         bottomCube.SetLEDs(Color.white);
 
         if (_TopCubeBounds.Contains(topCubePosition) && Mathf.Abs(topCubePosition.x - bottomCubePosition.x) < _DistanceBetweenCubesX) {
           topCube.SetLEDs(Color.white);
+
+          _Game.Progress = Mathf.Lerp(0.2f, 0.4f, Mathf.Clamp01(_StackTime / 3.0f));
 
           if (!bottomCube.IsMoving && !topCube.IsMoving) {
             _StackTime += Time.deltaTime;
@@ -49,10 +52,12 @@ namespace StackTraining {
           }
         }
         else {
+          _Game.Progress = 0.2f;
           topCube.SetLEDs(Color.red);
         }          
       }
       else {
+        _Game.Progress = 0f;
         bottomCube.SetLEDs(Color.red);
         topCube.TurnLEDsOff();
       }

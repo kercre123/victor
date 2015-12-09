@@ -51,6 +51,7 @@ namespace FollowCube {
           _PreviousAnglePose = _CurrentRobot.PoseAngle;
 
           // If we have turned fully around in either direction, the player wins.
+          _GameInstance.Progress = (Mathf.Abs(_TotalRadiansTraveled) / Mathf.PI * 2) * (1.0f / _GameInstance.NumSegments) + (4.0f / _GameInstance.NumSegments);
           if (Mathf.Abs(_TotalRadiansTraveled) > Mathf.PI * 2) {
             AnimationState animState = new AnimationState();
             animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);

@@ -34,6 +34,7 @@ namespace FollowCube {
       }
 
       float distance = Vector3.Dot(_CurrentRobot.WorldPosition - _RobotStartPosition, _CurrentRobot.Forward);
+      _GameInstance.Progress = (-distance / _WinDistanceThreshold) * (1.0f / _GameInstance.NumSegments) + (1.0f / _GameInstance.NumSegments);
       if (distance < -_WinDistanceThreshold) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);

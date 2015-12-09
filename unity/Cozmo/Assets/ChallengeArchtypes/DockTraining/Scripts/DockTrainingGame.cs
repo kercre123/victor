@@ -14,6 +14,8 @@ namespace DockTraining {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       InitializeMinigameObjects();
+      AttemptsLeft = 5;
+      MaxAttempts = 5;
     }
 
     protected void InitializeMinigameObjects() {
@@ -41,11 +43,6 @@ namespace DockTraining {
       else {
         _LastSeenTargetTime = Time.time;
       }
-
-      if (_CurrentTarget != null) {
-        _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-      }
-
     }
 
     private void InitialCubesDone() {
@@ -87,6 +84,13 @@ namespace DockTraining {
         }
       }
       return null;
+    }
+
+    public void DockFailed() {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
+        RaiseMiniGameLose();
+      }
     }
   }
 

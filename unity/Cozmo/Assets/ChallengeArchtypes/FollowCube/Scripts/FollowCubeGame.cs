@@ -16,12 +16,14 @@ namespace FollowCube {
 
     public float NotSeenForgivenessThreshold = 2f;
 
-    private int _FailuresLeft;
-
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
       InitializeMinigameObjects();
-      _FailuresLeft = 10;
+      MaxAttempts = 7;
+      AttemptsLeft = 7;
+
+      Progress = 0.0f;
+      NumSegments = 5;
     }
 
     public enum FollowTask {
@@ -52,8 +54,8 @@ namespace FollowCube {
     }
 
     public void FailedAttempt() {
-      _FailuresLeft--;
-      if (_FailuresLeft == 0) {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
         (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
       }
     }

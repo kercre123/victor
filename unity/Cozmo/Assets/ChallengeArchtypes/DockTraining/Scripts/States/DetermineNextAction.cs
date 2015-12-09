@@ -8,8 +8,7 @@ namespace DockTraining {
 
     private float _WaveTimeAccumulator = 0.0f;
     private float _LastWaveTime = 0.0f;
-    private float _LeftAccumulator = 0.0f;
-    private float _RightAccumulator = 0.0f;
+    private Vector2 _AccumulatedWavePosition;
 
     private DockTrainingGame _DockTrainingGame;
 
@@ -17,6 +16,13 @@ namespace DockTraining {
       base.Enter();
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
+
+      _AccumulatedWavePosition = Vector2.zero;
+
+      LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
+      if (currentTarget != null) {
+        currentTarget.SetLEDs(Color.white);
+      }
 
       RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
       RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
@@ -49,23 +55,13 @@ namespace DockTraining {
       // wave accumulator is high enough for us to go left or right.
       if (_WaveTimeAccumulator > 0.5f) {
         SteerState steerState = new SteerState();
-        if (_LeftAccumulator > _RightAccumulator) {
-          steerState.Init(30.0f, 20.0f, 1.0f, new DetermineNextAction());
-        }
-        else {
-          steerState.Init(20.0f, 30.0f, 1.0f, new DetermineNextAction());
-        }
+        steerState.Init(_AccumulatedWavePosition.x, 1.0f, new DetermineNextAction());
         _StateMachine.SetNextState(steerState);
       }
 
       float dt = Mathf.Min(0.3f, Time.time - _LastWaveTime);
 
-      if (pos.x > 0.0f) {
-        _LeftAccumulator += dt;
-      }
-      else {
-        _RightAccumulator += dt;
-      }
+      _AccumulatedWavePosition += pos;
 
       _WaveTimeAccumulator += dt;
       _LastWaveTime = Time.time;
