@@ -42,16 +42,15 @@ namespace FaceTracking {
       // you lose track. 
       // Track total distance tilted based on current goal that alternates between left and right.
       // Display a popup prompt for each
-      _CurrentRobot.SetHeadAngle(0.1f);
+      _CurrentRobot.SetHeadAngle(0.05f);
       _CurrentRobot.SetLiftHeight(0);
 
-      _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
-
       _LeftEyeInnerPosition = _LeftEye.EyeCenter;
-      _LeftEyeOuterPosition = _LeftEye.EyeCenter - Vector2.one * 20f;
+      _LeftEyeOuterPosition = _LeftEye.EyeCenter - new Vector2(_LeftEye.EyeCenter.x+20f,_LeftEye.EyeCenter.y);
 
       _RightEyeInnerPosition = _RightEye.EyeCenter;
-      _RightEyeOuterPosition = _RightEye.EyeCenter + Vector2.one * 20f;
+      _RightEyeOuterPosition = _RightEye.EyeCenter + new Vector2(_RightEye.EyeCenter.x+20f,_RightEye.EyeCenter.y);
+      _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       _TargetFace = null;
     }
@@ -89,11 +88,9 @@ namespace FaceTracking {
 
       // Drive closer if you pick up a face that's too far away
       if (dist > _GameInstance.DistanceMax) {
-        Debug.Log(string.Format("Moving Closer : {0}", dist));
         _CurrentRobot.DriveWheels(speed, speed);
       } // Back up if you're too cloe.
       else if (dist < _GameInstance.DistanceMin) {
-        Debug.Log(string.Format("Backing Up : {0}", dist));
         _CurrentRobot.DriveWheels(speed, speed);
       }
       else {
@@ -119,12 +116,12 @@ namespace FaceTracking {
     public void LerpEyes(float lerpVal) {
 
       if (_GameInstance.TargetLeft) {
-        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
-        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, -lerpVal);
+        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
+        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
       }
       else {
-        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
-        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, -lerpVal);
+        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
+        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeInnerPosition, _RightEyeOuterPosition, lerpVal);
       }
 
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
@@ -137,7 +134,6 @@ namespace FaceTracking {
     }
 
     public void LoseFace() {
-      Debug.Log("RYAN : Face Lost");
       _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.white);
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
       _StateMachine.SetNextState(new LostFaceState());

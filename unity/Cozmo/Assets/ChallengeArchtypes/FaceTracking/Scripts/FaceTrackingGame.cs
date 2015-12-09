@@ -58,17 +58,14 @@ namespace FaceTracking {
       // Determine success, or if we're even headed in the right direction, don't trigger success
       // if we are too far to the desired direction
       if (1.0f >= tiltVal && tiltVal >= (1.0f-GoalLenience) && !MidCelebration) {
-        Debug.Log(string.Format("RYAN - SuccessfulTilt -- Angle : {0} -- Goal : {2} -- TiltVal : {1} ",angle,tiltVal,TiltGoal));
         TiltSuccess();
       }
       else if (tiltVal > 0.0) {
         // Set light to Green if heading in the right direction but not there yet.
-        Debug.Log(string.Format("RYAN -- CorrectDir : {0} -- Goal : {2} -- TiltVal : {1} ",angle,tiltVal,TiltGoal));
         CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
       }
       else {
-        // Set light to Green if heading in the wrong direction
-        Debug.Log(string.Format("RYAN -- WrongDir : {0} -- Goal : {2} -- TiltVal : {1} ",angle,tiltVal,TiltGoal));
+        // Set light to Red if heading in the wrong direction
         CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.red);
       }
 

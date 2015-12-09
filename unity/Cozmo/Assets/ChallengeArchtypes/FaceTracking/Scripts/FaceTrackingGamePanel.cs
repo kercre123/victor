@@ -21,6 +21,7 @@ namespace FaceTracking {
       _PointsLabel.text = string.Format(Localization.GetCultureInfo(), pointsLocalized, points);
     }
 
+    // Arrows in display are relative to Cozmo's facing, not player's
     public void SetArrowFacing(bool left) {
       _GoalArrowLeft.gameObject.SetActive(left);
       _GoalArrowRight.gameObject.SetActive(!left);
