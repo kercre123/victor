@@ -1226,7 +1226,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
-					"/Users/andrew/Code/coretech-external/Luxand_FaceSDK/bin/iOS",
+					"../../../coretech-external/Luxand_FaceSDK/bin/iOS",
 					"$(SRCROOT)/sphinx",
 				);
 				ONLY_ACTIVE_ARCH = NO;
