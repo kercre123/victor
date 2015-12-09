@@ -25,6 +25,7 @@ namespace FollowCube {
       if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
         _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
         _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+        _CurrentRobot.TrackToObject(_CurrentTarget);
       }
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);

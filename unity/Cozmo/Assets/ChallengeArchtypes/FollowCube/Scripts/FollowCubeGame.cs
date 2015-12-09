@@ -17,7 +17,6 @@ namespace FollowCube {
     public float NotSeenForgivenessThreshold = 2f;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // TODO
       InitializeMinigameObjects();
       MaxAttempts = 7;
       AttemptsLeft = 7;
@@ -50,7 +49,8 @@ namespace FollowCube {
     }
 
     protected override void CleanUpOnDestroy() {
-
+      // cancels head tracking.
+      CurrentRobot.TrackToObject(null);
     }
 
     public void FailedAttempt() {

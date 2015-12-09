@@ -12,7 +12,7 @@ GameObject:
   - 114: {fileID: 11424382}
   - 114: {fileID: 11465260}
   m_Layer: 5
-  m_Name: DefaultChallengeProgressWidgetTick
+  m_Name: ChallengeProgressWidgetTick
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

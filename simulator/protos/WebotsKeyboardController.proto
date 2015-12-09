@@ -1,5 +1,21 @@
 PROTO WebotsKeyboardController [
   field SFString name "WebotsKeyboardController"
+
+  # Volume
+  field SFFloat robotVolume 1.0
+
+  # Animation to send
+  field SFString animationToSendName "ANIM_TEST"
+  field SFInt32  animationNumLoops 1
+  field SFString idleAnimationName "_LIVE_"
+  
+  # Behavior to send
+  #  Use "DISABLED" to disable behaviors
+  field SFString behaviorName "DISABLED"
+
+  # BehaviorChooser to send
+  field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
+
   field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08
   field SFRotation rotation 0 0 1 0
@@ -25,6 +41,10 @@ PROTO WebotsKeyboardController [
   field SFFloat pathPointTurnSpeed_radPerSec 1.5
   field SFFloat pathPointTurnAccel_radPerSec2 10
   field SFFloat pathPointTurnDecel_radPerSec2 50
+
+  # Docking speed/accel
+  field SFFloat dockSpeed_mmps  100
+  field SFFloat dockAccel_mmps2 200
 
   # Value between 0 and 1 which determines how much the robot turns with 
   # the left/right arrow keys when going forward or backward.
@@ -84,9 +104,6 @@ PROTO WebotsKeyboardController [
   field SFFloat steerK1 0.1
   field SFFloat steerK2 12
 
-  # Volume
-  field SFFloat robotVolume 1.0
-
   # Vision system params
   field SFString streamResolution "CVGA"
   field SFInt32 camera_autoexposureOn 1
@@ -113,16 +130,6 @@ PROTO WebotsKeyboardController [
   field SFInt32 liftTest_nodCycleTimeMS 2000  
   field SFInt32 headTest_flags 0
   field SFInt32 headTest_nodCycleTimeMS 2000  
-
-  # Animation to send
-  field SFString animationToSendName "ANIM_TEST"
-  field SFInt32  animationNumLoops 1
-  field SFString idleAnimationName "_LIVE_"
-  
-  # Behavior to send
-  #  Use "AUTO" to auto-select next behavior
-  #  Use "NONE" to disable behaviors
-  field SFString behaviorName "AUTO"
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
