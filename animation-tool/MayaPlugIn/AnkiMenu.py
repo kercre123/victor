@@ -293,41 +293,42 @@ def ExportAnkiAnim(item):
             i = i + 1
         Vs = BakedVs
         Ts = BakedTs
-
         #end terrible hack
        
         i = 0;
         #Loop through all keyframes, the value is actually the next keyframe
         keyframe_count = len(Vs)
-        for i in range(keyframe_count-1):
-            #Duration is (timeN+1-timeN)
-            #Last Duration is anim-length - timeN
-            duration = (Ts[i+1] - Ts[i]) * 1000 / ANIM_FPS 
-            keyframe_value = Vs[i+1]
-            curr = None
-            triggerTime_ms = int(round((Ts[i]) * 1000  / ANIM_FPS, 0));
-            durationTime_ms = int(round(duration, 0));
-            if currattr == "HeadAngle":
-                curr = {
-                    "angle_deg": keyframe_value,
-                    "angleVariability_deg": 0,
-                    "triggerTime_ms": triggerTime_ms,
-                    "durationTime_ms": durationTime_ms,
-                    "Name": "HeadAngleKeyFrame",
-                }
-            elif currattr == "ArmLift":
-                curr = {          
-                    "height_mm": keyframe_value,
-                    "heightVariability_mm": 0,
-                    "triggerTime_ms": triggerTime_ms,
-                    "durationTime_ms": durationTime_ms,
-                    "Name": "LiftHeightKeyFrame"
-                }
-            elif isProceduralFaceAttr:
-                AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,keyframe_value,Ts[i])
+        for i in range(keyframe_count):
+            triggerTime_ms = int(round((Ts[i]) * 1000  / ANIM_FPS, 0))
+            #For the procedural face, the engine does a lookahead, but for the others this script does lookahead.
+            # ... because they were written different times by different people
+            #Try to make this consistent after Demo
+            if isProceduralFaceAttr:
+                AddProceduralKeyframe(currattr,triggerTime_ms,0,Vs[i],Ts[i])
+            elif (currattr == "HeadAngle" or currattr == "ArmLift") and (i < keyframe_count-1): 
+                duration = (Ts[i+1] - Ts[i]) * 1000 / ANIM_FPS 
+                keyframe_value = Vs[i+1]
+                curr = None
+                durationTime_ms = int(round(duration, 0))
+                if currattr == "HeadAngle":
+                    curr = {
+                        "angle_deg": keyframe_value,
+                        "angleVariability_deg": 0,
+                        "triggerTime_ms": triggerTime_ms,
+                        "durationTime_ms": durationTime_ms,
+                        "Name": "HeadAngleKeyFrame",
+                    }
+                elif currattr == "ArmLift":
+                    curr = {          
+                        "height_mm": keyframe_value,
+                        "heightVariability_mm": 0,
+                        "triggerTime_ms": triggerTime_ms,
+                        "durationTime_ms": durationTime_ms,
+                        "Name": "LiftHeightKeyFrame"
+                    }
 
-            if( curr is not None):
-                json_arr.append(curr)
+                if( curr is not None):
+                    json_arr.append(curr)
     #Concat the procedural face frames which were added per attribute
     # since not every attribute needs to be keyed, it might be out of order and need sorting.
     g_ProceduralFaceKeyFrames = sorted(g_ProceduralFaceKeyFrames, key=itemgetter('triggerTime_ms')) 
