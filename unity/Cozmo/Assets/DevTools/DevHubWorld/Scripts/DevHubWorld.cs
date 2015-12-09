@@ -47,7 +47,7 @@ public class DevHubWorld : HubWorldBase {
     
     GameObject newMiniGameObject = GameObject.Instantiate(challenge.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.InitializeMinigame(challenge.MinigameConfig);
+    _MiniGameInstance.InitializeMinigame(challenge);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
     _MiniGameInstance.OnMiniGameLose += HandleMiniGameQuit;
     _MiniGameInstance.OnMiniGameWin += HandleMiniGameQuit;

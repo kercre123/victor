@@ -1,22 +1,22 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using DG.Tweening;
-using Cozmo.UI;
+using Anki.UI;
 
 namespace Cozmo {
   namespace MinigameWidgets {
-    public class CozmoStatusWidget : MonoBehaviour, IMinigameWidget {
+    public class ChallengeTitleWidget : MonoBehaviour, IMinigameWidget {
 
       [SerializeField]
-      private SegmentedBar _AttemptsDisplay;
+      private AnkiTextLabel _ChallengeTitleLabel;
 
-      // TODO: Add handling of cozmo's face view here
-
-      public void SetMaxAttempts(int maximumAttempts) {
-        _AttemptsDisplay.SetMaximumSegments(maximumAttempts);
-      }
-
-      public void SetAttemptsLeft(int attemptsLeft) {
-        _AttemptsDisplay.SetCurrentNumSegments(attemptsLeft);
+      public string TitleLabelText {
+        get {
+          return _ChallengeTitleLabel.text;
+        }
+        set {
+          _ChallengeTitleLabel.text = value;
+        }
       }
 
       #region IMinigameWidget
@@ -29,7 +29,7 @@ namespace Cozmo {
       public Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
-          this.transform.localPosition.y - 300, this.transform.localPosition.z),
+          this.transform.localPosition.y + 300, this.transform.localPosition.z),
           0.25f).From().SetEase(Ease.OutQuad));
         return open;
       }
@@ -38,7 +38,7 @@ namespace Cozmo {
       public Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + 600, 
-          this.transform.localPosition.y - 300, this.transform.localPosition.z),
+          this.transform.localPosition.y + 300, this.transform.localPosition.z),
           0.25f).SetEase(Ease.OutQuad));
         return close;
       }

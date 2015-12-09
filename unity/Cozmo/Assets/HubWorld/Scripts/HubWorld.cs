@@ -138,7 +138,7 @@ namespace Cozmo.HubWorld {
     private void PlayMinigame(ChallengeData challengeData) {
       GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
       _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-      _MiniGameInstance.InitializeMinigame(challengeData.MinigameConfig);
+      _MiniGameInstance.InitializeMinigame(challengeData);
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;

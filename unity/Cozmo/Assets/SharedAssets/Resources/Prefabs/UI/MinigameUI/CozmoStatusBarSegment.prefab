@@ -45,7 +45,7 @@ GameObject:
   - 114: {fileID: 11400966}
   - 114: {fileID: 11459396}
   m_Layer: 5
-  m_Name: DefaultBarSegment
+  m_Name: CozmoStatusBarSegment
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
