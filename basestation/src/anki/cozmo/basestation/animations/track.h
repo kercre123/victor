@@ -56,7 +56,12 @@ public:
   // Get pointer to next keyframe. Returns nullptr if the track is on the last frame.
   FRAME_TYPE* GetNextKeyFrame();
   
+  // Move to next frame and delete the current one if it's marked "live".
+  // Will not advance past end.
   void MoveToNextKeyFrame();
+  
+  // Move to previous frame. Will not rewind before beginning.
+  void MoveToPrevKeyFrame();
 
   bool HasFramesLeft() const { return _frameIter != _frames.end(); }
 
@@ -89,9 +94,19 @@ void Track<FRAME_TYPE>::MoveToNextKeyFrame()
     _frameIter = _frames.erase(_frameIter);
   } else {
     // For canned frames, we just move to the next one in the track
-    ++_frameIter;
+    if(_frameIter != _frames.end()) {
+      ++_frameIter;
+    }
   }
 }
+  
+  template<typename FRAME_TYPE>
+  void Track<FRAME_TYPE>::MoveToPrevKeyFrame()
+  {
+    if(_frameIter != _frames.begin()) {
+      --_frameIter;
+    }
+  }
   
 template<typename FRAME_TYPE>
 FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame()

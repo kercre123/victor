@@ -73,12 +73,13 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
     
-    // Add a procedural face "layer" that is applied continuously until removed.
+    // Add a procedural face "layer" that is applied and then has its final
+    // adjustemtn "held" until removed.
     // A handle/tag for the layer is returned, which is needed for removal.
-    u32 AddLoopingFaceLayer(const FaceTrack& faceTrack);
+    u32 AddPersistentFaceLayer(const FaceTrack& faceTrack);
     
-    // Remove a previously-added looping face layer using its tag
-    void RemoveLoopingFaceLayer(u32 tag);
+    // Remove a previously-added persistent face layer using its tag
+    void RemovePersistentFaceLayer(u32 tag);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
@@ -131,9 +132,10 @@ namespace Cozmo {
       FaceTrack   track;
       TimeStamp_t startTime_ms;
       TimeStamp_t streamTime_ms;
-      bool        isLooping;
+      bool        isPersistent;
       bool        sentOnce;
       u32         tag;
+      static u32  TagCtr;
     };
     std::list<FaceLayer> _faceLayers;
     
@@ -144,7 +146,7 @@ namespace Cozmo {
                        ProceduralFaceParams& faceParams,
                        bool shouldReplace);
     
-    bool HaveNonLoopingFaceLayersToSend();
+    bool HaveFaceLayersToSend();
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
     

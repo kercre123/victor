@@ -1409,8 +1409,55 @@ namespace Anki {
     {
       u32 layerTag = 0;
       
-      if(xPix != 0 || yPix != 0.f)
-      {
+      AnimationStreamer::FaceTrack faceTrack;
+      
+      if(duration_ms == 0) {
+        // Dart over three frames: go 2/3 of the distance in the first frame,
+        // 2/9 the second (that's 2/3 of the remaining 1/3) and then the final 1/9
+        // at the end.
+        
+        // Clip, but retain sign
+        xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
+        yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+        
+        const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
+        const f32 cosAngle = xPix / dist;
+        const f32 sinAngle = yPix / dist;
+        
+        ProceduralFace procFace;
+        ProceduralFaceParams& faceParams = procFace.GetParams();
+        
+        TimeStamp_t t=0;
+        for(auto frac : {0.666667f, 0.888889f, 1.f})
+        {
+          const f32 x = frac * dist * cosAngle;
+          const f32 y = frac * dist * sinAngle;
+          faceParams.SetFacePosition(Point2f(x,y));
+          
+          // Scale "further" eye down a little and "closer" eye up a little
+          const f32 MinScaleAdj = 0.f;// 1.f / ProceduralFace::NominalEyeHeight; // one pixel
+          const f32 MaxScaleAdj = 0.3f;
+          f32 leftScaleX = 1.f, rightScaleX = 1.f;
+          const f32 xScaleAdj = std::abs(x) * (MaxScaleAdj-MinScaleAdj) / (0.5f * ProceduralFace::WIDTH) + MinScaleAdj;
+          if(x > 0) {
+            leftScaleX  += xScaleAdj;
+            rightScaleX -= xScaleAdj;
+          } else if(x < 0) {
+            leftScaleX  -= xScaleAdj;
+            rightScaleX += xScaleAdj;
+          }
+
+          const f32 scaleY = 1.f - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
+          
+          faceParams.SetParameter(ProceduralFace::WhichEye::Left,
+                                  ProceduralEyeParameter::EyeScaleY, leftScaleX * scaleY);
+          faceParams.SetParameter(ProceduralFace::WhichEye::Right,
+                                  ProceduralEyeParameter::EyeScaleY, rightScaleX * scaleY);
+          
+          faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+          // NOTE: don't use live frames for persistent layer
+        }
+      } else {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
         
         ProceduralFace procFace;
@@ -1419,14 +1466,13 @@ namespace Anki {
         ProceduralFaceKeyFrame kf(procFace, duration_ms);
         kf.SetIsLive(true);
         
-        AnimationStreamer::FaceTrack faceTrack;
         faceTrack.AddKeyFrame(std::move(kf));
-        
-        if(makePersistent) {
-          layerTag = _animationStreamer.AddLoopingFaceLayer(std::move(faceTrack));
-        } else {
-          _animationStreamer.AddFaceLayer(std::move(faceTrack));
-        }
+      }
+      
+      if(makePersistent) {
+        layerTag = _animationStreamer.AddPersistentFaceLayer(std::move(faceTrack));
+      } else {
+        _animationStreamer.AddFaceLayer(std::move(faceTrack));
       }
       
       return layerTag;
