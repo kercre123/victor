@@ -183,7 +183,7 @@ public abstract class GameBase : MonoBehaviour {
   // From 0 to 1
   private float _Progress = 0f;
 
-  protected float Progress {
+  public float Progress {
     get { return _Progress; }
     set {
       _Progress = Mathf.Clamp(value, 0f, 1f);

@@ -77,6 +77,8 @@ namespace MotionDetection {
 
       float lerpVal = Mathf.Clamp01(_MotionInBoxTime / _TotalWaveTime);
 
+      _StateMachine.GetGame().Progress = lerpVal;
+
       _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
       _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
 

@@ -16,6 +16,8 @@ namespace StackTraining {
 
       _CurrentRobot.SetHeadAngle(0f);
       _CurrentRobot.SetLiftHeight(0f);
+
+      _Game.Progress = 0.5f;
     }
 
     public override void Update() {
@@ -38,9 +40,12 @@ namespace StackTraining {
       if (_BottomCubeBounds.Contains(bottomCubePosition) && bottomCube.MarkersVisible) {
         bottomCube.SetLEDs(Color.white);
 
+        _Game.Progress = 0.6f;
+
         _Moving = true;
         _CurrentRobot.PickupObject(bottomCube, callback: (success) => {
           if(success) {
+            _Game.Progress = 0.8f;
             topCube.SetLEDs(Color.blue);
             _StateMachine.SetNextState(new TapCubeState(new HelpCozmoStackState(), topCube.ID));
           }
