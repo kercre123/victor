@@ -145,12 +145,17 @@ class GamePlatformConfiguration(object):
         self.config_path = os.path.join(self.platform_output_dir, '{0}.xcconfig'.format(self.platform))
 
         self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
+
+        self.unity_audio_assets_symlink = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'Resources',
+                                                       'sound', self.platform)
+        self.unity_audio_assets_symlink_target = os.path.join("EXTERNALS", "cozmosoundbanks",
+                                                              "GeneratedSoundBanks", self.platform)
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
                                                          'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
-
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
+
             try:
                 tmp_pp = CERT_ROOT + '/' + self.options.provision_profile + '.mobileprovision'
                 self.provision_profile_uuid = subprocess.check_output(
@@ -164,6 +169,7 @@ class GamePlatformConfiguration(object):
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
 
             self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
+
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
             self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build',
@@ -203,6 +209,8 @@ class GamePlatformConfiguration(object):
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
         workspace.add_project(relative_gyp_project)
 
+        ankibuild.util.File.ln_s(self.unity_audio_assets_symlink_target, self.unity_audio_assets_symlink)
+
         if not self.options.do_not_check_dependencies:
             assert isinstance(dependencies, object)
             dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
@@ -214,9 +222,6 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
-                'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
-                'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
-                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
                 '']
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
 
@@ -310,6 +315,7 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.rm(self.unity_build_symlink)
             ankibuild.util.File.rm(self.unity_output_symlink)
             ankibuild.util.File.rm(self.unity_opencv_symlink)
+        ankibuild.util.File.rm(self.unity_audio_assets_symlink)
         ankibuild.util.File.rm_rf(self.platform_build_dir)
         ankibuild.util.File.rm_rf(self.platform_output_dir)
 
