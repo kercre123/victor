@@ -24,11 +24,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBlockPlay_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBlockPlay_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/pathMotionProfile.h"
 
 
 namespace Anki {
@@ -83,8 +84,6 @@ namespace Cozmo {
     // also holding a block
     const f32 kTrackedObjectViewAngleThreshForRaisingCarriedBlock = 0.6; //atan2f(90, 200);
     
-    
-    
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
@@ -117,6 +116,8 @@ namespace Cozmo {
     bool  _interrupted;
     bool _isActing = false;
 
+    f32 _holdUntilTime = -1.0f;
+
     // if we "lose" the block, we can use State::SearchingForMissingBlock. If we see it again, go back to this state
     State _missingBlockFoundState = State::TrackingFace;
 
@@ -124,6 +125,8 @@ namespace Cozmo {
     f32 _searchStartTime = 0.0f;
     
     Result _lastHandlerResult;
+
+    PathMotionProfile _motionProfile;
 
     
     // If it fails to pickup or place the same object a certain number of times in a row

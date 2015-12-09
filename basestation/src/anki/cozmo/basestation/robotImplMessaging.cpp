@@ -612,7 +612,17 @@ template<>
 void Robot::HandleMessage(const ExternalInterface::ExecuteTestPlan& msg)
 {
   Planning::Path p;
-  _longPathPlanner->GetTestPath(GetPose(), p);
+
+  PathMotionProfile motionProfile;
+
+  motionProfile.speed_mmps = 60.0f;
+  motionProfile.accel_mmps2 = 200.0f;
+  motionProfile.decel_mmps2 = 30.0f;
+  motionProfile.pointTurnSpeed_rad_per_sec = 2.0f;
+  motionProfile.pointTurnAccel_rad_per_sec2 = 100.0f;
+  motionProfile.pointTurnDecel_rad_per_sec2 = 100.0f;
+
+  _longPathPlanner->GetTestPath(GetPose(), p, &motionProfile);
   ExecutePath(p);
 }
 
