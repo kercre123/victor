@@ -179,5 +179,20 @@ public class ProceduralEyeParameters
     };
   }
 
+  public void SetMaterialValues(Material mat, bool left) {
+    string prefix = left ? "Left " : "Right ";
+
+    mat.SetVector(prefix + "Eye Center Scale", new Vector4(EyeCenter.x, EyeCenter.y, EyeScale.x, EyeScale.y));
+    mat.SetFloat(prefix + "Eye Angle", EyeAngle);
+    mat.SetVector(prefix + "Inner Radius", new Vector4(LowerInnerRadius.x, LowerInnerRadius.y, UpperInnerRadius.x, UpperInnerRadius.y));
+    mat.SetVector(prefix + "Upper Radius", new Vector4(UpperOuterRadius.x, UpperOuterRadius.y, LowerOuterRadius.x, LowerOuterRadius.y));
+    mat.SetFloat(prefix + "Upper Lid Y", UpperLidY);
+    mat.SetFloat(prefix + "Upper Lid Angle", UpperLidAngle);
+    mat.SetFloat(prefix + "Upper Lid Bend", UpperLidBend);
+    mat.SetFloat(prefix + "Lower Lid Y", LowerLidY);
+    mat.SetFloat(prefix + "Lower Lid Angle", LowerLidAngle);
+    mat.SetFloat(prefix + "Lower Lid Bend", LowerLidBend);
+  }
+
 }
 
