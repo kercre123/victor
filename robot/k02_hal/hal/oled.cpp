@@ -53,6 +53,9 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, DISPLAYALLON_RESUME,
   I2C_COMMAND | I2C_SINGLE, NORMALDISPLAY,
   I2C_COMMAND | I2C_SINGLE, DISPLAYON,
+};
+
+static const uint8_t ResetCursor[] = {
   I2C_COMMAND | I2C_SINGLE, COLUMNADDR,
   I2C_COMMAND | I2C_SINGLE, 0,
   I2C_COMMAND | I2C_SINGLE, 127,
@@ -61,17 +64,7 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, 7
 };
 
-static const uint8_t ResetCursor[] = {
-  I2C_COMMAND | I2C_SINGLE, 0,
-  I2C_COMMAND | I2C_SINGLE, 127,
-  I2C_COMMAND | I2C_SINGLE, PAGEADDR,
-  I2C_COMMAND | I2C_SINGLE, 0,
-  I2C_COMMAND | I2C_SINGLE, 7
-};
-
-static const uint8_t StartWrite[] = {
-  I2C_DATA | I2C_CONTINUATION
-};
+static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
 
 static uint8_t FaceCopyLocation = 0;
 static bool PrintFaceLock = false;
@@ -87,18 +80,19 @@ void Anki::Cozmo::HAL::OLED::Init(void) {
   MicroWait(80);
   GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
 
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), NULL, I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), ResetCursor, sizeof(ResetCursor), NULL);
 }
 
 void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
-  if (address != FaceCopyLocation) return ;
+  if (address != FaceCopyLocation || PrintFaceLock) return ;
 
   static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
 
-  memcpy(bytes, face_bytes, sizeof(bytes));
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
+  memcpy(bytes, face_bytes, sizeof(bytes));  
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL, I2C_OPTIONAL | I2C_FORCE_START);
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, sizeof(bytes), NULL);
-  address = (address + 1) % MAX_FACE_POSITIONS;
+  FaceCopyLocation = (FaceCopyLocation + 1) % MAX_FACE_POSITIONS;
 }
 
 // Detach from the face and resume streaming of face data
@@ -107,7 +101,8 @@ extern "C" void LeaveFacePrintf(void) {
 
   if (!PrintFaceLock) return ;
     
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL);
   PrintFaceLock = true;
   FaceCopyLocation = 0;
 }
@@ -168,7 +163,7 @@ extern "C" void FacePrintf(const char *format, ...) {
 
   PrintFaceLock = true;
 
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), FrameBuffer, px_ptr, &FinishFace);
   

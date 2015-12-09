@@ -10,9 +10,11 @@
 #include "spi.h"
 #include "uart.h"
 #include "dac.h"
+#include "oled.h"
+#include "i2c.h"
 
 typedef uint16_t transmissionWord;
-const int RX_OVERFLOW = 4;
+const int RX_OVERFLOW = 8;
 const int TX_SIZE = DROP_TO_WIFI_SIZE / sizeof(transmissionWord);
 const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
@@ -29,7 +31,9 @@ static int totalDrops = 0;
 static bool ProcessDrop(void) {
   using namespace Anki::Cozmo::HAL;
   static int pwmCmdCounter = 0;
-  
+
+  I2C::Disable();
+
   // Process drop receive
   transmissionWord *target = spi_rx_buff;
   for (int i = 0; i < RX_OVERFLOW; i++, target++) {
@@ -37,9 +41,23 @@ static bool ProcessDrop(void) {
     
     DropToRTIP* drop = (DropToRTIP*)target;
 
+    // THIS IS GARBAGE TEMPORARY CODE
+    static int OLED_DIVIDER_TEMPORARY = 3;
+    if (--OLED_DIVIDER_TEMPORARY == 0) {
+      drop->droplet &= ~screenDataValid;
+      OLED_DIVIDER_TEMPORARY = 3;
+    } else {
+      drop->droplet |= screenDataValid;
+    }
+    drop->droplet |= screenDataValid;
+
     if (drop->droplet & screenDataValid) {
-      
-      // OLED::FeedFace(address?, drop->screenData);
+      static uint8_t OLED_ADDRESS_TEMPORARY = 0;
+      static uint32_t OLED_DATA_TEMPORARY = 0xFFFFFFFF;
+      for (int i = 0; i < sizeof(OLED_DATA_TEMPORARY); i++) {
+        OLED_DATA_TEMPORARY = (OLED_DATA_TEMPORARY >> 1) ^ ((OLED_DATA_TEMPORARY & 1) ? 0xedb88320 : 0);
+      }
+      OLED::FeedFace(OLED_ADDRESS_TEMPORARY++, (uint8_t*)&OLED_DATA_TEMPORARY);
     }
 
     FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);

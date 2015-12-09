@@ -10,8 +10,9 @@
 // Internal Settings
 typedef struct {  
   uint8_t slave_address;
-  bool read;
 
+  uint8_t flags;
+  
   const void* buffer;
   uint8_t* data;
   int count;
@@ -57,44 +58,6 @@ static inline void SendEmergencyStop(void) {
   }
 }
 
-// For blocking
-static volatile bool i2c_data_active;
-static void i2cRegCallback(const void* data, int size) {
-  i2c_data_active = false;
-}
-
-// HAL
-void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) {
-  uint8_t cmd[2] = { addr, data };
-
-  i2c_data_active = true;
-
-  Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), i2cRegCallback);
-
-  while(i2c_data_active) __asm { WFI } ;
-}
-
-uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
-  uint8_t resp;
-
-  i2c_data_active = true;
-  
-  Write(SLAVE_WRITE(slave), &addr, sizeof(addr), NULL);
-  Read(SLAVE_READ(slave), &resp, sizeof(resp), i2cRegCallback);
-  
-  while(i2c_data_active) ;
-  
-  return resp;
-}
-
-void Anki::Cozmo::HAL::I2C::WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data) {
-  uint8_t resp;
-  WriteReg(slave, addr, data);
-  resp = ReadReg(slave, addr);
-  
-  while (resp != data) ; // CRUD
-}
-
 void Anki::Cozmo::HAL::I2C::Init()
 {
   SendEmergencyStop();
@@ -136,29 +99,41 @@ void Anki::Cozmo::HAL::I2C::Disable(void) {
   NVIC_DisableIRQ(I2C0_IRQn);
 }
 
-static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, bool read) {
-  using namespace Anki::Cozmo::HAL::I2C;
-  
-  if (_fifo_count >= MAX_QUEUE) {
-    return false;
-  }
+// Register calls
+static volatile bool i2c_data_active;
+static void i2cRegCallback(const void* data, int size) {
+  i2c_data_active = false;
+}
 
-  I2C_Queue *active = &i2c_queue[_fifo_start];
-  if (++_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
-  
-  active->callback = cb;
-  active->size = active->count = len;
-  active->buffer = active->data = (uint8_t*) bytes;
-  active->slave_address = slave;
-  active->read = read;
+void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) {
+  uint8_t cmd[2] = { addr, data };
 
-  _fifo_count++;
+  i2c_data_active = true;
 
-  if (!_active) {
-    start_transaction();
-  }
+  Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), i2cRegCallback, I2C_FORCE_START);
+
+  while(i2c_data_active) __asm { WFI } ;
+}
+
+uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
+  uint8_t resp;
+
+  i2c_data_active = true;
   
-  return true;
+  Write(SLAVE_WRITE(slave), &addr, sizeof(addr), NULL, I2C_FORCE_START);
+  Read(SLAVE_READ(slave), &resp, sizeof(resp), i2cRegCallback);
+  
+  while(i2c_data_active) ;
+  
+  return resp;
+}
+
+void Anki::Cozmo::HAL::I2C::WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t data) {
+  uint8_t resp;
+  WriteReg(slave, addr, data);
+  resp = ReadReg(slave, addr);
+  
+  while (resp != data) ;
 }
 
 // This should only be used during 
@@ -167,12 +142,39 @@ void Anki::Cozmo::HAL::I2C::ForceStop(void) {
   MicroWait(1);
 }
 
-bool Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb) {
-  return Enqueue(slave, bytes, len, cb, false);
+static bool Enqueue(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, uint8_t flags) {
+  using namespace Anki::Cozmo::HAL::I2C;
+  
+  if (_fifo_count >= MAX_QUEUE) {
+    return false;
+  }
+
+  Disable();
+  I2C_Queue *active = &i2c_queue[_fifo_start];
+  if (++_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
+  
+  active->callback = cb;
+  active->size = active->count = len;
+  active->buffer = active->data = (uint8_t*) bytes;
+  active->slave_address = slave;
+  active->flags = flags;
+
+  _fifo_count++;
+
+  if (!_active) {
+    start_transaction();
+  }
+  Enable();
+  
+  return true;
 }
 
-bool Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t *bytes, int len, i2c_callback cb) {
-  return Enqueue(slave, bytes, len, cb, true);
+bool Anki::Cozmo::HAL::I2C::Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, uint8_t flags) {
+  return Enqueue(slave, bytes, len, cb, flags);
+}
+
+bool Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t *bytes, int len, i2c_callback cb, uint8_t flags) {
+  return Enqueue(slave, bytes, len, cb, flags | I2C_READ);
 }
 
 
@@ -195,25 +197,47 @@ static inline void send_nack(bool nack) {
   }
 }
 
-static inline void start_transaction() {
+static void next_transaction() {
+  if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
+  _fifo_count--;
+}
+
+static void start_transaction() {
   using namespace Anki::Cozmo::HAL;
   static uint8_t _active_slave = UNUSED_SLAVE;
 
+  // Find a non-optional transaction
+  I2C_Queue *active;
+  
+  for(;;) {
+    if (_fifo_count <= 0) {
+      _active = false;
+      return ;
+    }
+    
+    active = getActive();
+
+    if (~active->flags & I2C_OPTIONAL || active->slave_address != _active_slave) {
+      break ;
+    }
+    
+    next_transaction();
+  }
+
   _active = true;
 
-  I2C_Queue *active = getActive();
-
   // Send a stop and transmit the slave address
-  if (active->slave_address != _active_slave || ~I2C0_C1 & I2C_C1_MST_MASK) {
+  if (active->slave_address != _active_slave || active->flags & I2C_FORCE_START || ~I2C0_C1 & I2C_C1_MST_MASK) {
     if (I2C0_C1 & I2C_C1_MST_MASK) {
       I2C0_C1 |= I2C_C1_RSTA_MASK | I2C_C1_TX_MASK;
     } else {
       I2C0_C1 |= I2C_C1_MST_MASK | I2C_C1_TX_MASK;
-      MicroWait(10);
+      MicroWait(1);
     }
     
     I2C0_D = active->slave_address;
 
+    active->flags &= ~I2C_FORCE_START;
     _active_slave = active->slave_address;
     _reselected = true;
     return ;
@@ -222,7 +246,7 @@ static inline void start_transaction() {
   _reselected = false;
 
   
-  if (active->read) {
+  if (active->flags & I2C_READ) {
     I2C0_C1 &= ~I2C_C1_TX_MASK;
     send_nack(active->count == 1);
     uint8_t throwaway = I2C0_D;
@@ -265,23 +289,18 @@ void I2C0_IRQHandler(void) {
   }
   
   // Handle next queued byte
-  if (active->read) {
+  if (active->flags & I2C_READ) {
     if (send_byte()) return ;
   } else if (active->count) {
     I2C0_D = *next_byte();
     return ;
   }
   
-  // Packet completed, continue on our merry way.
-  if (++_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
-
   if (active->callback) {
     active->callback(active->buffer, active->size);
   }
 
-  if (--_fifo_count > 0) {
-    start_transaction();
-  } else {
-    _active = false;
-  }
+  // Packet completed, continue on our merry way.
+  next_transaction();
+  start_transaction();
 }

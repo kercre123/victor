@@ -13,6 +13,13 @@ static const int MAX_QUEUE = 16;
 
 typedef void (*i2c_callback)(const void *data, int count);
 
+enum I2C_FLAGS {
+  I2C_NONE = 0,
+  I2C_OPTIONAL = 1,
+  I2C_FORCE_START = 2,
+  I2C_READ = 4
+};
+
 namespace Anki
 {
   namespace Cozmo
@@ -27,8 +34,8 @@ namespace Anki
         void Disable(void);
         void ForceStop(void);
         
-        bool Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb) ;
-        bool Read (uint8_t slave, uint8_t *bytes, int len, i2c_callback cb);
+        bool Write(uint8_t slave, const uint8_t *bytes, int len, i2c_callback cb, uint8_t flags = I2C_NONE) ;
+        bool Read (uint8_t slave, uint8_t *bytes, int len, i2c_callback cb, uint8_t flags = I2C_NONE) ;
 
         void WriteReg(uint8_t slave, uint8_t addr, uint8_t data);
         uint8_t ReadReg(uint8_t slave, uint8_t addr);

@@ -37,6 +37,7 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {
+        buflen = 0;
         TransmitDrop(buf, buflen, eof);
         I2C::Enable();
         UartTransmit();
@@ -85,16 +86,16 @@ int main (void)
   
   SPIInit();
   I2C::Init();
-  OLED::Init();
   IMU::Init();
+  OLED::Init();
 
   CameraInit();
-  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK
+  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UART RX FIFO WILL LOCK
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
 
-  StartupSelfTest();
+  //StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur

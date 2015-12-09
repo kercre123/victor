@@ -11,9 +11,9 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static const uint8_t DATA_8 = 0x0C;
-
 void Anki::Cozmo::HAL::IMU::Manage(void) {
+  static const uint8_t DATA_8 = 0x0C;
+  
   I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), NULL);
   I2C::Read(SLAVE_READ(ADDR_IMU), (uint8_t*) &IMUState, sizeof(IMUData), NULL);
 }

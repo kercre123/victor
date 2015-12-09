@@ -258,6 +258,9 @@ void DMA0_IRQHandler(void)
   // Set up FTM IRQ to match hsync - must match gc0329.h timing!
   SIM_SCGC6 |= SIM_SCGC6_FTM2_MASK;
 
+  static const uint16_t CLOCK_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;
+  static const uint16_t DISABLE_MOD = (uint16_t)(CLOCK_MOD * 0.5f);
+  
   FTM2_C0V = 8 * (BUS_CLOCK / I2SPI_CLOCK) / 2; // 50% time disable I2C interrupt
   FTM2_C0SC = FTM_CnSC_CHIE_MASK |
               //FTM_CnSC_ELSA_MASK |
@@ -265,7 +268,7 @@ void DMA0_IRQHandler(void)
               //FTM_CnSC_MSA_MASK |
               FTM_CnSC_MSB_MASK ;
 
-  FTM2_MOD = (168 * 8) * (BUS_CLOCK / I2SPI_CLOCK) - 1;   // 168 bytes at I2S_CLOCK
+  FTM2_MOD = CLOCK_MOD;   // 168 bytes at I2S_CLOCK
   FTM2_CNT = FTM2_CNTIN = 8 * (BUS_CLOCK / I2SPI_CLOCK); // Place toward center of transition
   FTM2_CNTIN = 0;
   
@@ -289,6 +292,7 @@ void FTM2_IRQHandler(void)
 {
   using namespace Anki::Cozmo::HAL;
   
+  // THIS HAPPENS IN SPI.CPP FOR NOW UNTIL WE FIGURE OUT WHY THIS ISN'T FIRING
   if (FTM2_C0SC & FTM_CnSC_CHF_MASK) {
     FTM2_C0SC &= ~FTM_CnSC_CHF_MASK;
     I2C::Disable();

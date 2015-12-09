@@ -1,6 +1,8 @@
 #ifndef __IMU_H
 #define __IMU_H
 
+#include <stdint.h>
+
 static const uint8_t ADDR_IMU = 0x68; // 7-bit slave address of gyro
 
 struct IMUData {

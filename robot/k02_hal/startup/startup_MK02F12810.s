@@ -341,7 +341,6 @@ _NVIC_ICPR0     EQU   0xE000E280
 Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 ;IMPORT  SystemInit
-                IMPORT  init_data_bss
                 IMPORT  __main
 
                 CPSID   I               ; Mask interrupts
@@ -356,8 +355,6 @@ _irq_clear
                 SUB R3, R3, #1
                 B _irq_clear
 _irq_clear_end
-                LDR     R0, =init_data_bss
-                BLX     R0
                 CPSIE   i               ; Unmask interrupts
                 LDR     R0, =__main
                 BX      R0
