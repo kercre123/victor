@@ -14,19 +14,19 @@ namespace Cozmo {
       public event SharedMinigameViewHandler QuitMiniGameViewClosed;
 
       [SerializeField]
-      private GameObject _DefaultQuitGameButtonPrefab;
+      private GameObject _QuitGameButtonPrefab;
 
       private QuitMinigameButton _QuitButtonInstance;
 
       [SerializeField]
-      private CozmoStatusWidget _DefaultCozmoStatusPrefab;
+      private CozmoStatusWidget _CozmoStatusPrefab;
 
       private CozmoStatusWidget _CozmoStatusInstance;
 
       [SerializeField]
-      private ChallengeProgressWidget _DefaultTaskProgressWidgetPrefab;
+      private ChallengeProgressWidget _ChallengeProgressWidgetPrefab;
 
-      private ChallengeProgressWidget _TaskWidgetInstance;
+      private ChallengeProgressWidget _ChallengeProgressWidgetInstance;
 
       [SerializeField]
       private ChallengeTitleWidget _TitleWidgetPrefab;
@@ -81,7 +81,7 @@ namespace Cozmo {
           return;
         }
 
-        GameObject newButton = UIManager.CreateUIElement(_DefaultQuitGameButtonPrefab, this.transform);
+        GameObject newButton = UIManager.CreateUIElement(_QuitGameButtonPrefab, this.transform);
 
         _QuitButtonInstance = newButton.GetComponent<QuitMinigameButton>();
 
@@ -139,7 +139,7 @@ namespace Cozmo {
           return;
         }
 
-        GameObject statusWidgetObj = UIManager.CreateUIElement(_DefaultCozmoStatusPrefab.gameObject, this.transform);
+        GameObject statusWidgetObj = UIManager.CreateUIElement(_CozmoStatusPrefab.gameObject, this.transform);
         _CozmoStatusInstance = statusWidgetObj.GetComponent<CozmoStatusWidget>();
         _CozmoStatusInstance.SetMaxAttempts(attemptsAllowed);
         _CozmoStatusInstance.SetAttemptsLeft(attemptsAllowed);
@@ -152,51 +152,51 @@ namespace Cozmo {
 
       public string ProgressBarLabelText {
         get {
-          return _TaskWidgetInstance != null ? _TaskWidgetInstance.ProgressBarLabelText : null;
+          return _ChallengeProgressWidgetInstance != null ? _ChallengeProgressWidgetInstance.ProgressBarLabelText : null;
         }
         set {
-          if (_TaskWidgetInstance == null) {
+          if (_ChallengeProgressWidgetInstance == null) {
             CreateProgressWidget(value);
           }
           else {
-            _TaskWidgetInstance.ProgressBarLabelText = value;
+            _ChallengeProgressWidgetInstance.ProgressBarLabelText = value;
           }
         }
       }
 
       public int NumSegments {
         get {
-          return _TaskWidgetInstance != null ? _TaskWidgetInstance.NumSegments : 1;
+          return _ChallengeProgressWidgetInstance != null ? _ChallengeProgressWidgetInstance.NumSegments : 1;
         }
         set {
-          if (_TaskWidgetInstance == null) {
+          if (_ChallengeProgressWidgetInstance == null) {
             CreateProgressWidget(null);
           }
-          _TaskWidgetInstance.NumSegments = value;
+          _ChallengeProgressWidgetInstance.NumSegments = value;
         }
       }
 
       public void SetProgress(float newProgress) {
-        if (_TaskWidgetInstance == null) {
+        if (_ChallengeProgressWidgetInstance == null) {
           CreateProgressWidget(null);
         }
-        _TaskWidgetInstance.SetProgress(newProgress);
+        _ChallengeProgressWidgetInstance.SetProgress(newProgress);
       }
 
       private void CreateProgressWidget(string progressLabelText = null) {
-        if (_TaskWidgetInstance != null) {
+        if (_ChallengeProgressWidgetInstance != null) {
           return;
         }
 
-        GameObject widgetObj = UIManager.CreateUIElement(_DefaultTaskProgressWidgetPrefab.gameObject, this.transform);
-        _TaskWidgetInstance = widgetObj.GetComponent<ChallengeProgressWidget>();
+        GameObject widgetObj = UIManager.CreateUIElement(_ChallengeProgressWidgetPrefab.gameObject, this.transform);
+        _ChallengeProgressWidgetInstance = widgetObj.GetComponent<ChallengeProgressWidget>();
 
         if (!string.IsNullOrEmpty(progressLabelText)) {
-          _TaskWidgetInstance.ProgressBarLabelText = progressLabelText;
+          _ChallengeProgressWidgetInstance.ProgressBarLabelText = progressLabelText;
         }
-        _TaskWidgetInstance.ResetProgress();
+        _ChallengeProgressWidgetInstance.ResetProgress();
 
-        _ActiveWidgets.Add(_TaskWidgetInstance);
+        _ActiveWidgets.Add(_ChallengeProgressWidgetInstance);
       }
 
       #endregion

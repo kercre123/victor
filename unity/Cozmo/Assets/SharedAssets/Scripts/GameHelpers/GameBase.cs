@@ -48,23 +48,17 @@ public abstract class GameBase : MonoBehaviour {
     GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
     _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
 
-    InitializeChallenge(challengeData);
+    // For all challenges, set the title text and add a quit button
+    TitleText = Localization.Get(challengeData.ChallengeTitleLocKey);
+    CreateDefaultQuitButton();
+
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
-    InitializeMinigameView();
     _SharedMinigameViewInstance.OpenView();
   }
 
-  protected virtual void InitializeChallenge(ChallengeData challengeData) {
-    TitleText = Localization.Get(challengeData.ChallengeTitleLocKey);
-  }
-
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
-
-  protected virtual void InitializeMinigameView() {
-    CreateDefaultQuitButton();
-  }
 
   public void OnDestroy() {
     CleanUpOnDestroy();
