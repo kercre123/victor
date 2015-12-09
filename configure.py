@@ -24,7 +24,9 @@ import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.xcode
 import importlib
+
 dependencies = importlib.import_module("project.build-scripts.dependencies")
+
 
 ####################
 # ARGUMENT PARSING #
@@ -151,7 +153,8 @@ class GamePlatformConfiguration(object):
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
             try:
                 tmp_pp = CERT_ROOT + '/' + self.options.provision_profile + '.mobileprovision'
-                self.provision_profile_uuid = subprocess.check_output('{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True)
+                self.provision_profile_uuid = subprocess.check_output(
+                    '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True)
                 self.codesign_identity = subprocess.check_output(
                     '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True)
             except TypeError or AttributeError:
@@ -202,7 +205,20 @@ class GamePlatformConfiguration(object):
 
         if not self.options.do_not_check_dependencies:
             assert isinstance(dependencies, object)
-            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT )
+            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
+
+        xcconfig = [
+            'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
+            'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+            'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
+            'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+            'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
+            'ANKI_BUILD_TARGET={0}'.format(self.platform),
+            '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
+            'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
+            'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
+            'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
+            '']
 
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
@@ -215,18 +231,6 @@ class GamePlatformConfiguration(object):
 
             if not os.path.exists(self.unity_opencv_symlink_target):
                 sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
-
-            xcconfig = [
-                'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
-                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
-                'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
-                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
-                'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
-                '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
-                'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
-                'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
-                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
-                '']
 
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
