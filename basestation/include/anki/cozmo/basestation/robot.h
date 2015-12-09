@@ -455,6 +455,10 @@ public:
     // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
     u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
   
+    // Same as above, but shifts and scales
+    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
+                          TimeStamp_t duration_ms, bool makePersistent = false);
+  
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
     // =========== Audio =============

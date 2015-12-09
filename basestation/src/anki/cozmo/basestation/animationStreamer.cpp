@@ -386,28 +386,15 @@ namespace Cozmo {
     if(_nextEyeDart_ms <= 0)
     {
       // Shift and scale the eyes slightly by a random amount
-      const s32 xShift = _rng.RandIntInRange(0, GetParam<s32>(Param::EyeDartMaxDistance_pix));
-      const s32 yShift = _rng.RandIntInRange(0, GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const s32 xShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
+                                              GetParam<s32>(Param::EyeDartMaxDistance_pix));
+      const s32 yShift = _rng.RandIntInRange(-GetParam<s32>(Param::EyeDartMaxDistance_pix),
+                                              GetParam<s32>(Param::EyeDartMaxDistance_pix));
       
-      robot.ShiftEyes(xShift, yShift, IKeyFrame::SAMPLE_LENGTH_MS);
-      
-      // TODO: Add random scaling too
-      /*
-      const s32 xScale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
-                                             GetParam<f32>(Param::EyeDartMaxScale));
-      const s32 yScale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
-                                             GetParam<f32>(Param::EyeDartMaxScale));
-      
-       FaceTrack faceTrack;
-       TimeStamp_t timeInc;
-       moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
-       totalOffset += timeInc;
-       
-       ProceduralFaceKeyFrame kf(blinkFace, totalOffset);
-       kf.SetIsLive(true);
-       
-       AddFaceLayer(<#const FaceTrack &faceTrack#>)
-       */
+      const f32 scale = _rng.RandDblInRange(GetParam<f32>(Param::EyeDartMinScale),
+                                            GetParam<f32>(Param::EyeDartMaxScale));
+
+      robot.ShiftAndScaleEyes(xShift, yShift, scale, scale, 0);
       
       _nextEyeDart_ms = _rng.RandIntInRange(GetParam<s32>(Param::EyeDartSpacingMinTime_ms),
                                             GetParam<s32>(Param::EyeDartSpacingMaxTime_ms));
@@ -1106,6 +1093,8 @@ namespace Cozmo {
     SET_DEFAULT(EyeDartSpacingMinTime_ms, 250);
     SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000);
     SET_DEFAULT(EyeDartMaxDistance_pix, 3);
+    SET_DEFAULT(EyeDartMinScale, 0.95f);
+    SET_DEFAULT(EyeDartMaxScale, 1.05f);
     
 #   undef SET_DEFAULT
   } // SetDefaultParams()

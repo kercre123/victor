@@ -1407,6 +1407,12 @@ namespace Anki {
 
     u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
     {
+      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent);
+    }
+    
+    u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
+                                 TimeStamp_t duration_ms, bool makePersistent)
+    {
       u32 layerTag = 0;
       
       AnimationStreamer::FaceTrack faceTrack;
@@ -1421,8 +1427,9 @@ namespace Anki {
         yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
         
         const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
-        const f32 cosAngle = xPix / dist;
-        const f32 sinAngle = yPix / dist;
+        const f32 divisor = (dist > 0 ? 1.f/dist : 1.f); // prevent divide by zero when (xPix==yPix==0)
+        const f32 cosAngle = xPix * divisor;
+        const f32 sinAngle = yPix * divisor;
         
         ProceduralFace procFace;
         ProceduralFaceParams& faceParams = procFace.GetParams();
@@ -1437,22 +1444,30 @@ namespace Anki {
           // Scale "further" eye down a little and "closer" eye up a little
           const f32 MinScaleAdj = 0.f;// 1.f / ProceduralFace::NominalEyeHeight; // one pixel
           const f32 MaxScaleAdj = 0.3f;
-          f32 leftScaleX = 1.f, rightScaleX = 1.f;
+          f32 leftScaleY = 1.f, rightScaleY = 1.f;
           const f32 xScaleAdj = std::abs(x) * (MaxScaleAdj-MinScaleAdj) / (0.5f * ProceduralFace::WIDTH) + MinScaleAdj;
           if(x > 0) {
-            leftScaleX  += xScaleAdj;
-            rightScaleX -= xScaleAdj;
+            leftScaleY  += xScaleAdj;
+            rightScaleY -= xScaleAdj;
           } else if(x < 0) {
-            leftScaleX  -= xScaleAdj;
-            rightScaleX += xScaleAdj;
+            leftScaleY  -= xScaleAdj;
+            rightScaleY += xScaleAdj;
           }
 
-          const f32 scaleY = 1.f - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
+          const f32 scaleY = (frac*(yScale-1.f)+1.f) - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
           
           faceParams.SetParameter(ProceduralFace::WhichEye::Left,
-                                  ProceduralEyeParameter::EyeScaleY, leftScaleX * scaleY);
+                                  ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
           faceParams.SetParameter(ProceduralFace::WhichEye::Right,
-                                  ProceduralEyeParameter::EyeScaleY, rightScaleX * scaleY);
+                                  ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
+          
+          const f32 scaleX = frac*(xScale-1.f)+1.f;
+          faceParams.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
+          
+          ASSERT_NAMED(!(std::isnan(leftScaleY) || std::isnan(rightScaleY) ||
+                         std::isnan(scaleY) || std::isnan(scaleX) ||
+                         std::isnan(x) || std::isnan(y)),
+                       "Shift/scale values should be non-nan!");
           
           faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
           // NOTE: don't use live frames for persistent layer
@@ -1461,7 +1476,9 @@ namespace Anki {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
         
         ProceduralFace procFace;
-        procFace.GetParams().SetFacePosition({xPix, yPix});
+        ProceduralFaceParams& params = procFace.GetParams();
+        params.SetFacePosition({xPix, yPix});
+        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
         
         ProceduralFaceKeyFrame kf(procFace, duration_ms);
         kf.SetIsLive(true);
