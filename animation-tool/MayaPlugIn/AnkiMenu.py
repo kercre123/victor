@@ -127,6 +127,7 @@ def GetSingleMovementData(dataNodeObject,attribute_name, wantsValueChange):
 #keeping this backwards compatible leads to some weird concatination.
 def GetMovementJSON():
     global ANIM_FPS
+    global MAX_FRAMES
     #Get a list of all the user defined attributes #dataNodeObject = "x:mech_all_ctrl"
     dataNodeObject = "x:data_node"
     if( len( cmds.ls(dataNodeObject) ) == 0 ):
@@ -150,7 +151,8 @@ def GetMovementJSON():
 
     move_data_combined = [] #object so I don't have a bunch of different arrays
     i = 1 #filter out baked data extraness again.
-    for i in range(min_keyframes - 1):
+    for i in range(min_keyframes):
+        if( (keyframe_attr_data["TimesForward"][i] >= 0) and (keyframe_attr_data["TimesForward"][i] < MAX_FRAMES) ):
             valid_keyframe = {
                     "Forward": round(keyframe_attr_data["FwdValues"][i]),
                     "Turn": round(keyframe_attr_data["TurnValues"][i]),
@@ -164,10 +166,11 @@ def GetMovementJSON():
         return None
     #Loop through all keyframes
     keyframe_count = len(move_data_combined)
-    i = 0
+    #The first keyframe always just inits things at 0
+    i = 1
     for i in range(keyframe_count-1):
         #skip the ending frames and go to the start of the next bookend, we process in pairs.
-        if( ( i % 2) != 0 ):
+        if( ( i % 2) == 0 ):
             continue
         duration = (move_data_combined[i+1]["Time"] - move_data_combined[i]["Time"]) * 1000 / ANIM_FPS
         triggerTime_ms = round((move_data_combined[i]["Time"]) * 1000  / ANIM_FPS, 0);
