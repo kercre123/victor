@@ -62,6 +62,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     CleanUpOnDestroy();
+    CurrentRobot.ResetRobotState();
   }
 
   /// <summary>
