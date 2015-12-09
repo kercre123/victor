@@ -9,6 +9,9 @@ namespace DockTraining {
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
 
+    private Vector3 _StartingPosition;
+    private Quaternion _StartingRotation;
+
     private LightCube _CurrentTarget = null;
     private float _LastSeenTargetTime = 0.0f;
 
@@ -16,6 +19,8 @@ namespace DockTraining {
       InitializeMinigameObjects();
       AttemptsLeft = 5;
       MaxAttempts = 5;
+      _StartingPosition = CurrentRobot.WorldPosition;
+      _StartingRotation = CurrentRobot.Rotation;
     }
 
     protected void InitializeMinigameObjects() {
@@ -47,6 +52,14 @@ namespace DockTraining {
 
     private void InitialCubesDone() {
 
+    }
+
+    public Vector3 StartingPosition() {
+      return _StartingPosition;
+    }
+
+    public Quaternion StartingRotation() {
+      return _StartingRotation;
     }
 
     public LightCube GetCurrentTarget() {
