@@ -14,30 +14,49 @@ namespace FollowCube {
 
     public float DistanceMax { get; set; }
 
-    [SerializeField]
-    private FollowCubeGamePanel _GamePanelPrefab;
-
-    private FollowCubeGamePanel _GamePanel;
+    public float NotSeenForgivenessThreshold = 2f;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // TODO
       InitializeMinigameObjects();
+      MaxAttempts = 7;
+      AttemptsLeft = 7;
+
+      Progress = 0.0f;
+      NumSegments = 5;
     }
+
+    public enum FollowTask {
+      Forwards,
+      Backwards,
+      TurnLeft,
+      TurnRight,
+      FollowDrive
+    }
+
+    public FollowTask CurrentFollowTask;
 
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
-      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+
     }
 
     protected override void CleanUpOnDestroy() {
-      if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
+      // cancels head tracking.
+      CurrentRobot.TrackToObject(null);
+    }
+
+    public void FailedAttempt() {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
+        (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
       }
     }
 
@@ -48,6 +67,7 @@ namespace FollowCube {
 
     void InitialCubesDone() {
       SetSpeed();
+      CurrentFollowTask = FollowTask.Forwards;
     }
 
     void SetSpeed() {
@@ -56,9 +76,6 @@ namespace FollowCube {
       DistanceMin = 90.0f;
     }
 
-    public void SetAttemptsLeft(int attemptsLeft) {
-      _GamePanel.SetAttemptsLeft(attemptsLeft);
-    }
   }
 
 }

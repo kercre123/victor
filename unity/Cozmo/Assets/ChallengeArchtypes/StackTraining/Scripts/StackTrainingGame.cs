@@ -29,6 +29,10 @@ namespace StackTraining {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
 
+      var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
+
+      MaxAttempts = config.MaxAttempts;
+
       InitializeMinigameObjects();
     }
 
@@ -36,10 +40,11 @@ namespace StackTraining {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("StackTrainingGame", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForStackState(), 2, null);
+      initCubeState.InitialCubeRequirements(new WaitForStackState(), 2, true, null);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
       CurrentRobot.SetLiftHeight(0f);
       CurrentRobot.SetHeadAngle(0f);
@@ -62,9 +67,19 @@ namespace StackTraining {
         RaiseMiniGameLose();
         return;
       }
+
+      foreach (var cube in CurrentRobot.LightCubes) {
+        cube.Value.TurnLEDsOff();
+        if (cube.Value.MarkersVisible) {
+          if (_BottomCubeId == -1) {
+            _BottomCubeId = cube.Key;
+          }
+          else if (_TopCubeId == -1) {
+            _TopCubeId = cube.Key;
+          }
+        }
+      }
         
-      _BottomCubeId = CurrentRobot.LightCubes.Keys.First();
-      _TopCubeId = CurrentRobot.LightCubes.Keys.Last();
     }
   }
 

@@ -36,19 +36,21 @@ namespace Cozmo {
         _QuitButtonInstance.interactable = false;
       }
 
+      // TODO: Don't hardcode this
       public Sequence OpenAnimationSequence() {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y + 200, this.transform.localPosition.z),
-          0.1f).From().SetEase(Ease.OutQuad));
+          0.25f).From().SetEase(Ease.OutQuad));
         return open;
       }
 
+      // TODO: Don't hardcode this
       public Sequence CloseAnimationSequence() {
         Sequence close = DOTween.Sequence();
         close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x - 200, 
           this.transform.localPosition.y + 200, this.transform.localPosition.z),
-          0.1f).SetEase(Ease.OutQuad));
+          0.25f).SetEase(Ease.OutQuad));
         return close;
       }
 

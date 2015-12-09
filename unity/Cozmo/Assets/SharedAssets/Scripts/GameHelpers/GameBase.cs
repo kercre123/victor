@@ -42,46 +42,23 @@ public abstract class GameBase : MonoBehaviour {
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  protected SharedMinigameView _SharedMinigameViewInstance;
+  private SharedMinigameView _SharedMinigameViewInstance;
 
-  /// <summary>
-  /// Order of operations:
-  /// Call InitializeMinigameObjects();
-  /// Call LoadMinigameConfig();
-  /// Create the minigame view and assign to _SharedMinigameViewInstance.
-  /// Call InitializeMinigameView();
-  /// </summary>
-  public void InitializeMinigame(MinigameConfigBase minigameConfigData) {
-    Initialize(minigameConfigData);
-
+  public void InitializeMinigame(ChallengeData challengeData) {
     GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
     _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
 
+    // For all challenges, set the title text and add a quit button
+    TitleText = Localization.Get(challengeData.ChallengeTitleLocKey);
+    CreateDefaultQuitButton();
+
+    Initialize(challengeData.MinigameConfig);
+
     // Populate the view before opening it so that animations play correctly
-    InitializeMinigameView(_SharedMinigameViewInstance);
     _SharedMinigameViewInstance.OpenView();
   }
 
-  /// <summary>
-  /// Order of operations:
-  /// Call InitializeMinigameObjects();
-  /// Call InitializeMinigameData();
-  /// Create the minigame view and assign to _SharedMinigameViewInstance.
-  /// Call InitializeMinigameView();
-  /// </summary>
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
-
-  /// <summary>
-  /// Order of operations:
-  /// Call InitializeMinigameObjects();
-  /// Call InitializeMinigameData();
-  /// Create the minigame view and assign to _SharedMinigameViewInstance.
-  /// Call InitializeMinigameView();
-  /// </summary>
-  protected virtual void InitializeMinigameView(SharedMinigameView minigameView) {
-    // Override and call create stuff here
-    CreateDefaultQuitButton(minigameView);
-  }
 
   public void OnDestroy() {
     CleanUpOnDestroy();
@@ -121,11 +98,11 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Default Quit button
 
-  protected void CreateDefaultQuitButton(SharedMinigameView minigameView) {
-    minigameView.CreateQuitButton();
-    minigameView.QuitMiniGameViewOpened += HandleQuitViewOpened;
-    minigameView.QuitMiniGameViewClosed += HandleQuitViewClosed;
-    minigameView.QuitMiniGameConfirmed += HandleQuitConfirmed;
+  protected void CreateDefaultQuitButton() {
+    _SharedMinigameViewInstance.CreateQuitButton();
+    _SharedMinigameViewInstance.QuitMiniGameViewOpened += HandleQuitViewOpened;
+    _SharedMinigameViewInstance.QuitMiniGameViewClosed += HandleQuitViewClosed;
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
   }
 
   private void HandleQuitViewOpened() {
@@ -142,10 +119,91 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  #region Default Stamina Bar
+  #region Attempts Bar
 
-  protected void CreateCozmoStatusWidget(SharedMinigameView minigameView, int attemptsAllowed) {
-    minigameView.CreateCozmoStatusWidget(attemptsAllowed);
+  private int _MaxAttempts = -1;
+
+  public int MaxAttempts {
+    get { return _MaxAttempts; }
+    set {
+      if (value > 0) {
+        _MaxAttempts = value;
+        _SharedMinigameViewInstance.SetMaxCozmoAttempts(_MaxAttempts);
+        AttemptsLeft = _MaxAttempts;
+      }
+      else {
+        DAS.Error(this, "Tried to set MaxAttempts to a negative int! Aborting!");
+      }
+    }
+  }
+
+  private int _AttemptsLeft = -1;
+
+  public int AttemptsLeft {
+    get { return _AttemptsLeft; }
+    set {
+      _AttemptsLeft = Mathf.Clamp(value, 0, MaxAttempts);
+      _AttemptsLeft = value;
+      _SharedMinigameViewInstance.SetCozmoAttemptsLeft(_AttemptsLeft);
+    }
+  }
+
+  public bool TryDecrementAttempts() {
+    AttemptsLeft--;
+
+    return (AttemptsLeft > 0);
+  }
+
+  #endregion
+
+  #region Task Progress Bar
+
+  // From 0 to 1
+  private float _Progress = 0f;
+
+  public float Progress {
+    get { return _Progress; }
+    set {
+      _Progress = Mathf.Clamp(value, 0f, 1f);
+      _Progress = value;
+      _SharedMinigameViewInstance.SetProgress(_Progress);
+    }
+  }
+
+  // By default says "Challenge Progress"
+  protected string ProgressBarLabelText {
+    get { 
+      return _SharedMinigameViewInstance.ProgressBarLabelText; 
+    }
+    set {
+      _SharedMinigameViewInstance.ProgressBarLabelText = value;
+    }
+  }
+
+  // Add some decorative lines to the bar to demark the number
+  // "segments" there are in the bar. Progress is still from 0 to 1 overall,
+  // so if you want to fill the first segment of a 4 segment bar, set
+  // Progress to 0.25.
+  public int NumSegments {
+    get {
+      return _SharedMinigameViewInstance.NumSegments;
+    }
+    set {
+      _SharedMinigameViewInstance.NumSegments = value;
+    }
+  }
+
+  #endregion
+
+  #region Title Widget
+
+  protected string TitleText {
+    get {
+      return _SharedMinigameViewInstance.TitleText;
+    }
+    set {
+      _SharedMinigameViewInstance.TitleText = value;
+    }
   }
 
   #endregion

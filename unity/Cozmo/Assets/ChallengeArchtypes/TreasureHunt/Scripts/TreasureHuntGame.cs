@@ -20,7 +20,7 @@ namespace TreasureHunt {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("TreasureHuntStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
     }

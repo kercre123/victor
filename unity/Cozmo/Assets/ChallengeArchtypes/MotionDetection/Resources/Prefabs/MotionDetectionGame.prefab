@@ -39,7 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50d6efc11dccd4db88626309a1230413, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameId: motionDetection
+  _TutorialSequenceName: MotionDetectionIntro
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -50,6 +50,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _GameId
       value: motionDetection
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TutorialSequenceName
+      value: MotionDetectionIntro
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

@@ -15,8 +15,6 @@ namespace AskCozmo {
 
     private AskCozmoConfig _Config;
 
-    private int _AttemptsLeft = 5;
-
     protected void InitializeMinigameObjects() {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
@@ -41,11 +39,15 @@ namespace AskCozmo {
         DAS.Debug(this, _Config.ParamList[i].ToString());
       }
       InitializeMinigameObjects();
-    }
 
-    protected override void InitializeMinigameView(Cozmo.MinigameWidgets.SharedMinigameView minigameView) {
-      base.InitializeMinigameView(minigameView);
-      CreateCozmoStatusWidget(minigameView, _AttemptsLeft);
+      MaxAttempts = 5;
+      AttemptsLeft = 5;
+
+      Progress = 0.5f;
+      NumSegments = 10;
+
+      // By default says "Challenge Progress"
+      // ProgressBarLabelText = Localization.Get(keyNameHere);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -64,16 +66,14 @@ namespace AskCozmo {
       _AnimationPlaying = true;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
         CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
+        Progress += 0.1f;
       }
       else {
         CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
+        Progress -= 0.1f;
       }
 
-      _AttemptsLeft--;
-      if (_AttemptsLeft < 0) {
-        _AttemptsLeft = 0;
-      }
-      _SharedMinigameViewInstance.UpdateCozmoAttempts(_AttemptsLeft);
+      AttemptsLeft--;
     }
 
     void HandleAnimationDone(bool success) {

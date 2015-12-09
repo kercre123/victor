@@ -35,7 +35,7 @@ namespace SpeedTap {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
@@ -55,6 +55,8 @@ namespace SpeedTap {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
+
+      LightCube.TappedAction -= BlockTapped;
     }
 
     void InitialCubesDone() {

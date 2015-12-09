@@ -83,7 +83,7 @@ namespace StackTraining {
     }
 
     private void HandlePrepareToStack() {       
-      _StateMachine.SetNextState(new HelpCozmoStackState());
+      _StateMachine.SetNextState(new PlaceCubeState());
     }
 
     private void HandleCliffEvent(CliffEvent evt) {

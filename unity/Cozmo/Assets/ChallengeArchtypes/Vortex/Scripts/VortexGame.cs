@@ -68,7 +68,7 @@ namespace Vortex {
 
       InitialCubesState initCubeState = new InitialCubesState();
       // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
-      initCubeState.InitialCubeRequirements(new StateIntro(), 2, null);
+      initCubeState.InitialCubeRequirements(new StateIntro(), 2, false, null);
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;
@@ -82,6 +82,8 @@ namespace Vortex {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
+
+      LightCube.TappedAction -= HandleBlockTapped;
     }
 
     private void HandleSpinStarted() {

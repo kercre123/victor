@@ -11,16 +11,31 @@ namespace MotionDetection {
 
     private MotionDetectionConfig _Config;
 
+    [SerializeField]
+    private string _TutorialSequenceName;
+
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as MotionDetectionConfig ?? new MotionDetectionConfig();
       InitializeMinigameObjects();
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
     }
 
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("DetectMotionStateMachine", _StateMachine);
       _StateMachine.SetNextState(new RecognizeMotionState(_Config.TimeAllowedBetweenWaves, _Config.TotalWaveTime));
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      //Debug.Log("TutorialSequenceDone");
     }
 
     void Update() {

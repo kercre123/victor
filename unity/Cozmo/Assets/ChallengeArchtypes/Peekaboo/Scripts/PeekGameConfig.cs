@@ -4,7 +4,9 @@ using System.Collections;
 namespace Peekaboo {
   public class PeekGameConfig : MinigameConfigBase {
 
-    public int goal;
+    public int Goal;
+    public float MoveSpeed;
+    public bool WanderEnabled;
   
   }
 }
