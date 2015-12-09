@@ -458,10 +458,10 @@ public class Robot : IDisposable {
     SetBehaviorSystem(false);
     ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-    foreach (LightCube cube in LightCubes) {
-      cube.SetLEDs(Color.black);
+    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
+      kvp.Value.SetLEDs(Color.black);
     }
-    SetBackpackLEDs(Color.black);
+    SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.black));
   }
 
   public void ClearData(bool initializing = false) {
