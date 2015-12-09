@@ -526,12 +526,16 @@ namespace Anki {
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
 
+      // Set docking speed and acceleration
       void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
       void SetSpeed(f32 speed_mmps);
       void SetAccel(f32 accel_mmps2);
       
+      // Set placement offset relative to marker
       void SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad);
-      void SetPlaceObjectOnGround(bool placeOnGround);
+      
+      // Set whether or not to place carried object on ground
+      void SetPlaceOnGround(bool placeOnGround);
       
       
       virtual u8 GetAnimTracksToDisable() const override {

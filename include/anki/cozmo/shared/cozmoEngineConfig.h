@@ -107,6 +107,8 @@ namespace Anki {
     // threshold of the final goal angle
     const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
   
+    // Tolerance on angular alignment with predock pose
+    const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5);
     
     // Default docking speed/accel
     const u16 DEFAULT_DOCK_SPEED_MMPS = 100;

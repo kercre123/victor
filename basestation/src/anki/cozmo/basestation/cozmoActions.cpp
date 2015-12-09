@@ -30,9 +30,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    // TODO: Define this as a constant parameter elsewhere
-    const Radians DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE(DEG_TO_RAD(7.5));
-    
     // Right before docking, the dock object must have been visually verified
     // no more than this many milliseconds ago or it will not even attempt to dock.
     const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 1000;
@@ -1699,7 +1696,7 @@ namespace Anki {
       _placementOffsetAngle_rad = offsetAngle_rad;
     }
     
-    void IDockAction::SetPlaceObjectOnGround(bool placeOnGround)
+    void IDockAction::SetPlaceOnGround(bool placeOnGround)
     {
       _placeObjectOnGroundIfCarrying = placeOnGround;
     }
