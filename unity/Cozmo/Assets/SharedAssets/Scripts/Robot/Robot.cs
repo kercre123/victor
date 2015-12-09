@@ -452,7 +452,7 @@ public class Robot : IDisposable {
 
   public void ResetRobotState() {
     DriveWheels(0.0f, 0.0f);
-    SetHeadAngle(-1.0f);
+    SetHeadAngle(0.0f);
     SetLiftHeight(0.0f);
     TrackToObject(null);
     SetBehaviorSystem(false);
