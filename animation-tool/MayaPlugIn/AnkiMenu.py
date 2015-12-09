@@ -4,8 +4,10 @@ import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as cmds
 import maya.mel as mel
 import json
+from operator import itemgetter
 
-#To use place in "/Users/Shared/Autodesk/maya/2016/plug-ins and In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load
+#To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
+#In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
 
 kPluginCmdName = "AnkiAnimExport"
 #something like /Users/mollyjameson/cozmo-game/lib/anki/products-cozmo-assets/animations
@@ -13,6 +15,10 @@ g_AnkiExportPath = ""
 g_PrevMenuName = ""
 g_ProceduralFaceKeyFrames = []
 ANIM_FPS = 30
+MAX_FRAMES = 10000
+NUM_PROCEDURAL_FRAMES = 19
+DATA_NODE_NAME = "x:data_node"
+
 # mapping from  cozmo-game\unity\cozmo\assets\scripts\generated\clad\types\proceduraleyeparameters.cs
 #which could have probably been included, but we'd still need a way to map those to the maya names.
 
@@ -89,7 +95,7 @@ def IsProceduralAttribute(currattr):
 def GetAudioJSON():
     audioNode = cmds.timeControl(mel.eval( '$tmpVar=$gPlayBackSlider' ),query=True, sound=True)
     if( (audioNode  is not None) and (audioNode != "") ):
-        audioStart = cmds.sound(audioNode,query=True, sourceStart=True)
+        audioStart = cmds.sound(audioNode,query=True, offset=True)
         audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
         audioFile = cmds.sound(audioNode,query=True, file=True)
 
@@ -98,7 +104,6 @@ def GetAudioJSON():
             print "ERROR: no sound added, it must be in the sounds directory"
             return None
         audioFile = audioPathSplit[1]
-
         audio_json = {         
                         "audioName": [audioFile],
                         "volume": 1.0,
@@ -110,11 +115,20 @@ def GetAudioJSON():
     else:
         print "No audio found"
     return None
+#strips extra data from baking too
+def GetSingleMovementData(dataNodeObject,attribute_name, wantsValueChange):
+    #Maya just checks that these flags are passed in... they aren't actually bools
+    if( wantsValueChange == True):
+        keyframe_arr = cmds.keyframe( dataNodeObject, attribute = attribute_name, query=True, valueChange=True)
+    else:
+        keyframe_arr = cmds.keyframe( dataNodeObject, attribute = attribute_name, query=True, timeChange=True)
+    return keyframe_arr
 
-def GetMovement():
+#keeping this backwards compatible leads to some weird concatination.
+def GetMovementJSON():
     global ANIM_FPS
-    #Get a list of all the user defined attributes
-    dataNodeObject = "x:mech_all_ctrl"
+    #Get a list of all the user defined attributes #dataNodeObject = "x:mech_all_ctrl"
+    dataNodeObject = "x:data_node"
     if( len( cmds.ls(dataNodeObject) ) == 0 ):
         return None
     attributes = cmds.listAttr(dataNodeObject, ud=True)
@@ -123,39 +137,54 @@ def GetMovement():
     json_arr = []
     
     keyframe_attr_data = {}
-    #Movement requires all attributes be set with the known names TODO: better error handling
-    keyframe_attr_data["RadiusValues"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, valueChange=True)
-    keyframe_attr_data["TurnValues"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, valueChange=True)
-    keyframe_attr_data["FwdValues"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, valueChange=True)
-    keyframe_attr_data["Times"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, timeChange=True)
+    #Movement requires all attributes be set with the known names, and all together.
+    keyframe_attr_data["RadiusValues"] = GetSingleMovementData(dataNodeObject,"Radius",True)
+    keyframe_attr_data["TurnValues"] = GetSingleMovementData(dataNodeObject,"Turn",True)
+    keyframe_attr_data["FwdValues"] = GetSingleMovementData(dataNodeObject,"Forward",True)
+    keyframe_attr_data["TimesForward"] = GetSingleMovementData(dataNodeObject,"Forward",False)
+    keyframe_attr_data["TimesRadius"] = GetSingleMovementData(dataNodeObject,"Turn",False)
+    keyframe_attr_data["TimesTurn"] = GetSingleMovementData(dataNodeObject,"Radius",False)
 
-    if( keyframe_attr_data["Times"] is None):
+    #Try to find an intersection all attributes agree on, bakeResults sometimes inserts where there shouldn't be.
+    min_keyframes = min([len(keyframe_attr_data["TimesForward"]),len(keyframe_attr_data["TimesRadius"]),len(keyframe_attr_data["TimesTurn"])])
+
+    move_data_combined = [] #object so I don't have a bunch of different arrays
+    i = 1 #filter out baked data extraness again.
+    for i in range(min_keyframes - 1):
+            valid_keyframe = {
+                    "Forward": round(keyframe_attr_data["FwdValues"][i]),
+                    "Turn": round(keyframe_attr_data["TurnValues"][i]),
+                    "Radius": round(keyframe_attr_data["RadiusValues"][i]),
+                    "Time": keyframe_attr_data["TimesForward"][i]
+                }
+            move_data_combined.append( valid_keyframe )
+
+    #TODO: error message if all are not keyed.
+    if( len(move_data_combined) == 0):
         return None
     #Loop through all keyframes
-    keyframe_count = len(keyframe_attr_data["Times"])
+    keyframe_count = len(move_data_combined)
+    i = 0
     for i in range(keyframe_count-1):
         #skip the ending frames and go to the start of the next bookend, we process in pairs.
         if( ( i % 2) != 0 ):
             continue
-        duration = (keyframe_attr_data["Times"][i+1] - keyframe_attr_data["Times"][i]) * 1000 / ANIM_FPS
-        triggerTime_ms = round((keyframe_attr_data["Times"][i]) * 1000  / ANIM_FPS, 0);
+        duration = (move_data_combined[i+1]["Time"] - move_data_combined[i]["Time"]) * 1000 / ANIM_FPS
+        triggerTime_ms = round((move_data_combined[i]["Time"]) * 1000  / ANIM_FPS, 0);
         durationTime_ms = round(duration, 0); 
         curr = {
                     "triggerTime_ms": triggerTime_ms,
                     "durationTime_ms": durationTime_ms,
                     "Name": "BodyMotionKeyFrame"
                 }
-        keyframe_attr_data["FwdValues"][i+1] = round(keyframe_attr_data["FwdValues"][i+1])
-        keyframe_attr_data["RadiusValues"][i+1] = round(keyframe_attr_data["RadiusValues"][i+1])
-        keyframe_attr_data["TurnValues"][i+1] = round(keyframe_attr_data["TurnValues"][i+1])
-        if( (keyframe_attr_data["FwdValues"][i+1] != 0) and  
-            (keyframe_attr_data["RadiusValues"][i+1] == 0) and
-            (keyframe_attr_data["TurnValues"][i+1] == 0)):
+        if( (move_data_combined[i+1]["Forward"]  != 0) and  
+            (move_data_combined[i+1]["Radius"]  == 0) and
+            (move_data_combined[i+1]["Turn"]  == 0)):
             curr["radius_mm"] = "STRAIGHT"
             curr["speed"] =round(keyframe_attr_data["FwdValues"][i+1])
-        elif( (keyframe_attr_data["FwdValues"][i+1] == 0) and  
-            (keyframe_attr_data["RadiusValues"][i+1] == 0) and
-            (keyframe_attr_data["TurnValues"][i+1] != 0)):
+        elif( (move_data_combined[i+1]["Forward"] == 0) and  
+            (move_data_combined[i+1]["Radius"] == 0) and
+            (move_data_combined[i+1]["Turn"]  != 0)):
             curr["radius_mm"] = "TURN_IN_PLACE"
             curr["speed"] =round(keyframe_attr_data["TurnValues"][i+1])
         else:
@@ -165,11 +194,12 @@ def GetMovement():
     return json_arr
 
 # function that adds ( creates new or modifies existing keyframe)
-def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
+def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val,frameNumber):
     # search and see if we have something at that time
     # if exists just modify currattr value else insert a blank one.
     global g_ProceduralFaceKeyFrames
     global g_ProcFaceDict
+    global DATA_NODE_NAME
     frame = None
     for existing_face_frame in g_ProceduralFaceKeyFrames:
         if( existing_face_frame["triggerTime_ms"] == triggerTime_ms):
@@ -184,12 +214,19 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val):
             "faceCenterY": 0,
             "faceScaleX": 1.0,
             "faceScaleY": 1.0,
-            "leftEye":  ([0]*19),
-            "rightEye":  ([0]*19),
+            "leftEye":  ([0]*NUM_PROCEDURAL_FRAMES),
+            "rightEye":  ([0]*NUM_PROCEDURAL_FRAMES),
             "triggerTime_ms": triggerTime_ms,
             "durationTime_ms": durationTime_ms,
             "Name": "ProceduralFaceKeyFrame"
         }
+        #Add the interpolated values for what maya thinks it is at
+        for k, v in g_ProcFaceDict.iteritems():
+            interp_val = cmds.getAttr(DATA_NODE_NAME + '.' + k,time=frameNumber)
+            if( v["cladIndex"] >= 0):
+                frame[v["cladName"]][v["cladIndex"]] = interp_val
+            else:
+                frame[v["cladName"]] = interp_val
         g_ProceduralFaceKeyFrames.append(frame)
 
     # mod the attribute you need
@@ -208,18 +245,18 @@ def ExportAnkiAnim(item):
     if( g_AnkiExportPath == ""):
         SetAnkiExportPath("Default");
     global ANIM_FPS
-    #originally this was just grabbing the first selected object cmds.ls(sl=True)[0].split(':')[1]
-    # Hardcoded on Mooly's request, in case of multiple cozmos will need a change to the x namespace.
-    DATA_NODE_NAME = "x:data_node"
+    global DATA_NODE_NAME
     if( len( cmds.ls(DATA_NODE_NAME) ) == 0 ):
-        print "ERROR: AnkiAnimExport: Select an object to export."
+        print "ERROR: AnkiAnimExport: Must have " + DATA_NODE_NAME
         return
     dataNodeObject = cmds.ls(DATA_NODE_NAME)[0]
-    animFrames = cmds.playbackOptions(query = True, animationEndTime = True)
-    animLength_s = animFrames / ANIM_FPS
 
     #Bake the animation so that we get the maya values mapped to the cozmo face values that the datanode driven keyframes transform
     cmds.bakeResults( dataNodeObject, time=(1,cmds.playbackOptions( query=True,max=True )),simulation=True, smart=True,disableImplicitControl=True,preserveOutsideKeys=True,sparseAnimCurveBake=False,removeBakedAttributeFromLayer=False,removeBakedAnimFromLayer=False,bakeOnOverrideLayer=True,minimizeRotation=True,controlPoints=False,shape=True )   
+    
+    node_list = cmds.listConnections('BakeResults')
+    for baked_key in node_list:
+        cmds.keyTangent(baked_key, inTangentType='linear', outTangentType='linear')
 
     json_arr = []
     # Because in the file we store the procedural anim as one keyframe with all params
@@ -250,58 +287,58 @@ def ExportAnkiAnim(item):
         BakedTs = []
         i = 0
         for checkFrameTime in Vs:
-            if( Ts[i] >= 0 and Ts[i] < 10000):
+            if( Ts[i] >= 0 and Ts[i] < MAX_FRAMES):
                 BakedTs.append(Ts[i]);
                 BakedVs.append(Vs[i]);
             i = i + 1
         Vs = BakedVs
         Ts = BakedTs
-
         #end terrible hack
        
         i = 0;
-        #Loop through all keyframes
-        for k in Vs:
-            #Duration is (timeN+1-timeN)
-            #Last Duration is anim-length - timeN
-            duration = 0
-            if i<len(Vs)-1:
+        #Loop through all keyframes, the value is actually the next keyframe
+        keyframe_count = len(Vs)
+        for i in range(keyframe_count):
+            triggerTime_ms = int(round((Ts[i]) * 1000  / ANIM_FPS, 0))
+            #For the procedural face, the engine does a lookahead, but for the others this script does lookahead.
+            # ... because they were written different times by different people
+            #Try to make this consistent after Demo
+            if isProceduralFaceAttr:
+                AddProceduralKeyframe(currattr,triggerTime_ms,0,Vs[i],Ts[i])
+            elif (currattr == "HeadAngle" or currattr == "ArmLift") and (i < keyframe_count-1): 
                 duration = (Ts[i+1] - Ts[i]) * 1000 / ANIM_FPS 
-            else:
-                duration = (animFrames - Ts[i]) * 1000  / ANIM_FPS    
-            curr = None
-            triggerTime_ms = int(round((Ts[i]) * 1000  / ANIM_FPS, 0));
-            durationTime_ms = int(round(duration, 0));
-            if currattr == "HeadAngle":
-                curr = {
-                    "angle_deg": k,
-                    "angleVariability_deg": 0,
-                    "triggerTime_ms": triggerTime_ms,
-                    "durationTime_ms": durationTime_ms,
-                    "Name": "HeadAngleKeyFrame",
-                }
-            elif currattr == "ArmLift":
-                curr = {          
-                    "height_mm": k,
-                    "heightVariability_mm": 0,
-                    "triggerTime_ms": triggerTime_ms,
-                    "durationTime_ms": durationTime_ms,
-                    "Name": "LiftHeightKeyFrame"
-                }
-            elif isProceduralFaceAttr:
-                AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,k)
+                keyframe_value = Vs[i+1]
+                curr = None
+                durationTime_ms = int(round(duration, 0))
+                if currattr == "HeadAngle":
+                    curr = {
+                        "angle_deg": keyframe_value,
+                        "angleVariability_deg": 0,
+                        "triggerTime_ms": triggerTime_ms,
+                        "durationTime_ms": durationTime_ms,
+                        "Name": "HeadAngleKeyFrame",
+                    }
+                elif currattr == "ArmLift":
+                    curr = {          
+                        "height_mm": keyframe_value,
+                        "heightVariability_mm": 0,
+                        "triggerTime_ms": triggerTime_ms,
+                        "durationTime_ms": durationTime_ms,
+                        "Name": "LiftHeightKeyFrame"
+                    }
 
-            if( curr is not None):
-                json_arr.append(curr)
-            i = i+1
+                if( curr is not None):
+                    json_arr.append(curr)
     #Concat the procedural face frames which were added per attribute
+    # since not every attribute needs to be keyed, it might be out of order and need sorting.
+    g_ProceduralFaceKeyFrames = sorted(g_ProceduralFaceKeyFrames, key=itemgetter('triggerTime_ms')) 
     json_arr.extend(g_ProceduralFaceKeyFrames)
     #Grab the robot sounds from the main timeline, not a datanode attribute
     audio_json = GetAudioJSON()
     if( audio_json is not None):
         json_arr.append(audio_json)
     #Grab the robot movement relative to the curve
-    movement_json_arr = GetMovement()
+    movement_json_arr = GetMovementJSON()
     if( movement_json_arr is not None):
         json_arr.extend(movement_json_arr)
     #Deletes the results layer the script created.
