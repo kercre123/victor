@@ -37,7 +37,8 @@ namespace Cozmo {
           if (_TimePassedSeconds > kTweenDuration) {
             _TimePassedSeconds = kTweenDuration;
           }
-          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress, _TargetProgress, kTweenDuration);
+          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress, 
+            _TargetProgress - _StartProgress, kTweenDuration);
 
           if (_TargetProgress > _FilledForegroundImage.fillAmount) {
             _FilledForegroundImage.color = _IncreasingColor;
