@@ -207,21 +207,18 @@ class GamePlatformConfiguration(object):
             assert isinstance(dependencies, object)
             dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
 
-        xcconfig = [
-            'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
-            'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
-            'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
-            'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
-            'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
-            'ANKI_BUILD_TARGET={0}'.format(self.platform),
-            '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
-            'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
-            'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
-            'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
-            '']
-
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
+            xcconfig = [
+                'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
+                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+                'ANKI_BUILD_TARGET={0}'.format(self.platform),
+                '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
+                'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
+                'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
+                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
+                '']
+            ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
 
         elif self.platform == 'ios':
             relative_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.platform_output_dir)
@@ -231,6 +228,19 @@ class GamePlatformConfiguration(object):
 
             if not os.path.exists(self.unity_opencv_symlink_target):
                 sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
+
+            xcconfig = [
+                'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
+                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+                'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
+                'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
+                'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
+                'ANKI_BUILD_TARGET={0}'.format(self.platform),
+                '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
+                'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
+                'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
+                'ANKI_BUILD_APP_PATH={0}'.format(self.artifact_path),
+                '']
 
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
