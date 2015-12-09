@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Name: ChallengeList
   m_EditorClassIdentifier: 
   ChallengeData:
-  - {fileID: 11400000, guid: 5155837ff13134bf09571eee775c3582, type: 2}
+  - {fileID: 11400000, guid: ebc63268b2739454290334ffb9db53e2, type: 2}
   - {fileID: 11400000, guid: ae1ac1eb6c66e4fa09c558602ce3bba7, type: 2}
   - {fileID: 11400000, guid: bf66c518b69254d9f9a45052b6e69cb0, type: 2}
   - {fileID: 11400000, guid: 4f19e36499cda4796a81715330fd9d6f, type: 2}
