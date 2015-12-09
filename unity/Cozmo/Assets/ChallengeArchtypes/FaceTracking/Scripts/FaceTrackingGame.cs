@@ -60,9 +60,10 @@ namespace FaceTracking {
       if (1.0f >= tiltVal && tiltVal >= (1.0f-GoalLenience) && !MidCelebration) {
         TiltSuccess();
       }
-      else if (tiltVal > 0.0) {
+      else if (1.0f > tiltVal && tiltVal > 0.0) {
         // Set light to Green if heading in the right direction but not there yet.
         CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
+        _GamePanel.SetProgressBar(tiltVal);
       }
       else {
         // Set light to Red if heading in the wrong direction

@@ -9,6 +9,8 @@ namespace FaceTracking {
 
     [SerializeField]
     private Anki.UI.AnkiTextLabel _PointsLabel;
+    [SerializeField]
+    private ProgressBar _ProgBar;
 
     [SerializeField]
     private Image _GoalArrowRight;
@@ -19,6 +21,11 @@ namespace FaceTracking {
     public void SetPoints(int points) {
       string pointsLocalized = Localization.Get(LocalizationKeys.kPeekabooLabelPoints);
       _PointsLabel.text = string.Format(Localization.GetCultureInfo(), pointsLocalized, points);
+      _ProgBar.ResetProgress();
+    }
+
+    public void SetProgressBar(float val) {
+      _ProgBar.SetProgress(val);
     }
 
     // Arrows in display are relative to Cozmo's facing, not player's

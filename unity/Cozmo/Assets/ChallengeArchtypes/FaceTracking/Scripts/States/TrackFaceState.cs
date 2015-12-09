@@ -46,7 +46,7 @@ namespace FaceTracking {
       _CurrentRobot.SetLiftHeight(0);
 
       _LeftEyeInnerPosition = _LeftEye.EyeCenter;
-      _LeftEyeOuterPosition = _LeftEye.EyeCenter - new Vector2(_LeftEye.EyeCenter.x+20f,_LeftEye.EyeCenter.y);
+      _LeftEyeOuterPosition = _LeftEye.EyeCenter + new Vector2(_LeftEye.EyeCenter.x-20f,_LeftEye.EyeCenter.y);
 
       _RightEyeInnerPosition = _RightEye.EyeCenter;
       _RightEyeOuterPosition = _RightEye.EyeCenter + new Vector2(_RightEye.EyeCenter.x+20f,_RightEye.EyeCenter.y);
