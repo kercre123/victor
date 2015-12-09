@@ -250,7 +250,7 @@ namespace AnimationTool
                     double minX = curChartArea.AxisY.ValueToPixelPosition(curChartArea.AxisY.Minimum);
                     double mouseX = e.X > maxX ? maxX : e.X < minX ? minX : e.X;
 
-                    double mouseXValue = GetPixelPositionToValue(curChartArea.AxisY, mouseX, 1);
+                    double mouseXValue = GetPixelPositionToValue(curChartArea.AxisY, mouseX, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
                     if (curPreviewBar != null && curPreviewBar.MarkerColor == SelectDataPoint.MarkerColor) // if moving preview bar
                     {
                         bool left = curPreviewBar.YValues[0] > mouseXValue;
@@ -267,7 +267,7 @@ namespace AnimationTool
                         bool right = curDataPoint.YValues[1] < mouseXValue;
                         if (left || right)
                         {
-                            ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, false, false));
+                            ActionManager.Do(new MoveSelectedDataPointsOfSelectedCharts(chartForms, left, right, false, false, mouseXValue, mouseXValue));
                         }
 
                         foreach (ChartForm chartForm in chartForms)
@@ -368,7 +368,7 @@ namespace AnimationTool
 
                 if (addDataPoint)
                 {
-                    mouseXValue = GetPixelPositionToValue(curChartArea.AxisY, e.X, 1);
+                    mouseXValue = GetPixelPositionToValue(curChartArea.AxisY, e.X, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
 
                     if (mouseXValue < curChartArea.AxisY.Minimum || mouseXValue > curChartArea.AxisY.Maximum)
                     {

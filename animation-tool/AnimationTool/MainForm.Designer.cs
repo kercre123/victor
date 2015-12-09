@@ -354,7 +354,7 @@ namespace AnimationTool
             chartArea2.AxisX.Maximum = 6D;
             chartArea2.AxisX.Minimum = 0D;
             chartArea2.AxisX.MinorGrid.Enabled = true;
-            chartArea2.AxisX.MinorGrid.Interval = 0.1D;
+            chartArea2.AxisX.MinorGrid.Interval = 0.033D;
             chartArea2.AxisX.MinorGrid.LineColor = System.Drawing.Color.LightGray;
             chartArea2.AxisX.MinorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             chartArea2.AxisX2.Maximum = 6D;
@@ -529,7 +529,7 @@ namespace AnimationTool
             chartArea4.AxisY.Maximum = 6D;
             chartArea4.AxisY.Minimum = 0D;
             chartArea4.AxisY.MinorGrid.Enabled = true;
-            chartArea4.AxisY.MinorGrid.Interval = 0.1D;
+            chartArea4.AxisY.MinorGrid.Interval = 0.033D;
             chartArea4.AxisY.MinorGrid.LineColor = System.Drawing.Color.LightGray;
             chartArea4.AxisY.MinorGrid.LineDashStyle = System.Windows.Forms.DataVisualization.Charting.ChartDashStyle.Dash;
             chartArea4.AxisY.MinorTickMark.Enabled = true;

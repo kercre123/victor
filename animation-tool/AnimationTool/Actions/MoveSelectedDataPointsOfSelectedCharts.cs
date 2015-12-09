@@ -56,7 +56,14 @@ namespace AnimationTool
 
                     if (sequencer)
                     {
-                        moveSelectedDataPoints.Add(new Sequencer.MoveSelectedDataPoints(chartForm.chart, left, right));
+                        if (this.targetNudge)
+                        {
+                            moveSelectedDataPoints.Add(new Sequencer.MoveSelectedDataPoints(chartForm.chart, left, right));
+                        }
+                        else
+                        {
+                            moveSelectedDataPoints.Add(new Sequencer.MoveSelectedDataPoints(chartForm.chart, left, right, targetXVal));
+                        }
                     }
                     else // else if XYchart
                     {
