@@ -39,6 +39,11 @@
 
 #define DEBUG_GRIPPER 0
 
+// Enable this to light up the backpack whenever a sound is being played
+// When this is on, HAL::SetLED() doesn't work.
+#define LIGHT_BACKPACK_DURING_SOUND 0
+
+
 #if BLUR_CAPTURED_IMAGES
 #include "opencv2/imgproc/imgproc.hpp"
 #endif
@@ -137,6 +142,11 @@ namespace Anki {
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
 
+      #if(LIGHT_BACKPACK_DURING_SOUND)
+      bool playingSound_ = false;
+      #endif
+
+      
       // Face display
       webots::Display* face_;
       const u32 DISPLAY_WIDTH = 128;
@@ -240,6 +250,14 @@ namespace Anki {
             // This means audio lags other tracks but the amount should be imperceptible.
             audioReadyForFrame_ = true;
           }
+          
+          #if(LIGHT_BACKPACK_DURING_SOUND)
+          if (playingSound_ && audioEndTime_ != 0) {
+            leds_[LED_BACKPACK_BACK]->set(0x00ff0000);
+          } else {
+            leds_[LED_BACKPACK_BACK]->set(0x0);
+          }
+          #endif
         }
       }
 
@@ -973,11 +991,13 @@ namespace Anki {
     };
 
     void HAL::SetLED(LEDId led_id, u32 color) {
+      #if(!LIGHT_BACKPACK_DURING_SOUND)
       if (leds_[led_id]) {
         leds_[led_id]->set(color);
       } else {
         PRINT("Unhandled LED %d\n", led_id);
       }
+      #endif
     }
 
     void HAL::SetHeadlights(bool state)
@@ -1006,6 +1026,10 @@ namespace Anki {
       }
       audioEndTime_ += AUDIO_FRAME_TIME_MS;
       audioReadyForFrame_ = false;
+      
+      #if(LIGHT_BACKPACK_DURING_SOUND)
+      playingSound_ = msg == nullptr ? false : true;
+      #endif
     }
 
 
