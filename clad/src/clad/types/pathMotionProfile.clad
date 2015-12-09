@@ -15,7 +15,9 @@ structure PathMotionProfile {
     float_32     decel_mmps2,
     float_32     pointTurnSpeed_rad_per_sec,
     float_32     pointTurnAccel_rad_per_sec2,
-    float_32     pointTurnDecel_rad_per_sec2
+    float_32     pointTurnDecel_rad_per_sec2,
+    float_32     dockSpeed_mmps,
+    float_32     dockAccel_mmps2
 }
 
 } // namespace Cozmo

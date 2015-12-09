@@ -533,17 +533,25 @@ namespace Anki {
     {
     public:
       IDockAction(ObjectID objectID,
-                  const bool useManualSpeed = false,
-                  const f32 placementOffsetX_mm = 0,
-                  const f32 placementOffsetY_mm = 0,
-                  const f32 placementOffsetAngle_rad = 0,
-                  const bool placeObjectOnGround = false);
+                  const bool useManualSpeed = false);
       
       virtual ~IDockAction();
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
+
+      // Set docking speed and acceleration
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
+      void SetSpeed(f32 speed_mmps);
+      void SetAccel(f32 accel_mmps2);
+      
+      // Set placement offset relative to marker
+      void SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad);
+      
+      // Set whether or not to place carried object on ground
+      void SetPlaceOnGround(bool placeOnGround);
+      
       
       virtual u8 GetAnimTracksToDisable() const override {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
@@ -579,17 +587,19 @@ namespace Anki {
       
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;
-      const Vision::KnownMarker* _dockMarker;
-      const Vision::KnownMarker* _dockMarker2;
-      Radians                    _preActionPoseAngleTolerance;
-      f32                        _waitToVerifyTime;
-      bool                       _wasPickingOrPlacing;
-      bool                       _useManualSpeed;
-      FaceObjectAction*          _faceAndVerifyAction;
-      f32                        _placementOffsetX_mm;
-      f32                        _placementOffsetY_mm;
-      f32                        _placementOffsetAngle_rad;
-      bool                       _placeObjectOnGroundIfCarrying;
+      const Vision::KnownMarker* _dockMarker                     = nullptr;
+      const Vision::KnownMarker* _dockMarker2                    = nullptr;
+      Radians                    _preActionPoseAngleTolerance    = DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE;
+      f32                        _waitToVerifyTime               = -1;
+      bool                       _wasPickingOrPlacing            = false;
+      bool                       _useManualSpeed                 = false;
+      FaceObjectAction*          _faceAndVerifyAction            = nullptr;
+      f32                        _placementOffsetX_mm            = 0;
+      f32                        _placementOffsetY_mm            = 0;
+      f32                        _placementOffsetAngle_rad       = 0;
+      bool                       _placeObjectOnGroundIfCarrying  = false;
+      f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
+      f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
       u32                        _squintLayerTag;
     }; // class IDockAction
 
@@ -599,7 +609,7 @@ namespace Anki {
     {
     public:
       AlignWithObjectAction(ObjectID objectID,
-                            f32 distanceFromMarker_mm,
+                            const f32 distanceFromMarker_mm,
                             const bool useManualSpeed = false);
       virtual ~AlignWithObjectAction();
       
@@ -659,7 +669,7 @@ namespace Anki {
     {
     public:
       PlaceRelObjectAction(ObjectID objectID,
-                           const bool placeOnGround = false,                           
+                           const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
       virtual ~PlaceRelObjectAction();
@@ -739,7 +749,7 @@ namespace Anki {
     {
     public:
       PopAWheelieAction(ObjectID objectID,
-                       const bool useManualSpeed = false);
+                        const bool useManualSpeed = false);
       virtual ~PopAWheelieAction();
       
       virtual const std::string& GetName() const override;
@@ -979,7 +989,8 @@ namespace Anki {
     class CrossBridgeAction : public IDockAction
     {
     public:
-      CrossBridgeAction(ObjectID bridgeID, const bool useManualSpeed);
+      CrossBridgeAction(ObjectID bridgeID,
+                        const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::CROSS_BRIDGE; }
@@ -1003,7 +1014,8 @@ namespace Anki {
     class AscendOrDescendRampAction : public IDockAction
     {
     public:
-      AscendOrDescendRampAction(ObjectID rampID, const bool useManualSpeed);
+      AscendOrDescendRampAction(ObjectID rampID,
+                                const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::ASCEND_OR_DESCEND_RAMP; }
@@ -1026,7 +1038,8 @@ namespace Anki {
     class MountChargerAction : public IDockAction
     {
     public:
-      MountChargerAction(ObjectID chargerID, const bool useManualSpeed);
+      MountChargerAction(ObjectID chargerID,
+                         const bool useManualSpeed);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::MOUNT_CHARGER; }
@@ -1063,6 +1076,8 @@ namespace Anki {
         }
       }
       
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
+      
     protected:
       
       // Update will just call the chosenAction's implementation
@@ -1071,6 +1086,8 @@ namespace Anki {
       
       ObjectID       _objectID;
       IActionRunner* _chosenAction;
+      f32            _speed_mmps;
+      f32            _accel_mmps2;
       bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
@@ -1082,19 +1099,7 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(const ObjectID& objectID,
                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
-                                     const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ENTRY,
-                                motionProfile,
-                                0,
-                                false,
-                                0,
-                                useManualSpeed),
-        new TraverseObjectAction(objectID, useManualSpeed)})
-      {
-        
-      }
+                                     const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
       
@@ -1105,19 +1110,7 @@ namespace Anki {
     public:
       DriveToAndMountChargerAction(const ObjectID& objectID,
                                    const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
-                                   const bool useManualSpeed = false)
-      : CompoundActionSequential({
-        new DriveToObjectAction(objectID,
-                                PreActionPose::ENTRY,
-                                motionProfile,
-                                0,
-                                false,
-                                0,
-                                useManualSpeed),
-        new MountChargerAction(objectID, useManualSpeed)})
-      {
-        
-      }
+                                   const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }
       

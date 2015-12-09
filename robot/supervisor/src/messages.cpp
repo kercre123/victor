@@ -294,13 +294,22 @@ namespace Anki {
         PRINT("RECVD DockToBlock (action %d, manualSpeed %d)\n", msg.action, msg.useManualSpeed);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
-        PickAndPlaceController::DockToBlock(msg.action, 0, 0, 0, msg.useManualSpeed);
+        PickAndPlaceController::DockToBlock(msg.action,
+                                            msg.speed_mmps,
+                                            msg.accel_mmps2,
+                                            0, 0, 0,
+                                            msg.useManualSpeed);
       }
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
       {
         //PRINT("Received PlaceOnGround message.\n");
-        PickAndPlaceController::PlaceOnGround(msg.rel_x_mm, msg.rel_y_mm, msg.rel_angle, msg.useManualSpeed);
+        PickAndPlaceController::PlaceOnGround(msg.speed_mmps,
+                                              msg.accel_mmps2,
+                                              msg.rel_x_mm,
+                                              msg.rel_y_mm,
+                                              msg.rel_angle,
+                                              msg.useManualSpeed);
       }
 
       void Process_drive(const RobotInterface::DriveWheels& msg) {

@@ -85,7 +85,8 @@ namespace Anki {
       //                  e.g. To place a block on top of two other blocks, the robot would need to "dock" to
       //                       one of the blocks at some horizontal offset.
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
-      void StartDocking(const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
+      void StartDocking(const f32 speed_mmps, const f32 accel_mmps,
+                        const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool useManualSpeed = false,
                         const u32 pointOfNoReturnDistMM = 0);
       
@@ -93,11 +94,16 @@ namespace Anki {
       // were in that pose, the block face facing the robot would be aligned with the pose specified
       // relative to the pose of the robot at the time "docking" started.
       // No vision markers are required as this is a "blind docking" maneuver.
-      void StartDockingToRelPose(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed = false);
+      void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps,
+                                 const f32 rel_x, const f32 rel_y, const f32 rel_angle,
+                                 const bool useManualSpeed = false);
 
-      // If a marker pose was received from VisionSystem,
-      // returns true along with that pose.
-      bool GetLastMarkerPose(f32 &x, f32 &y, f32 &angle);
+
+      // Returns the last computed pose of the marker based on docking error signal
+      const Anki::Embedded::Pose2d& GetLastMarkerAbsPose();
+      
+      // Returns the last docking error signal received
+      void GetLastMarkerRelPose(f32 &x, f32 &y, f32 &angle);
       
       // Sets the latest docking error signal message coming from engine
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);
