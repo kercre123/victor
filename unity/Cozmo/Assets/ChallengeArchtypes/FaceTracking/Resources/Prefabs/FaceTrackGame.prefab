@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 476798}
   - 114: {fileID: 11428904}
   m_Layer: 0
-  m_Name: PeekabooGame
+  m_Name: FaceTrackGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36,10 +36,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 171818}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fff3841096129479eb1cd69e9fc65314, type: 3}
+  m_Script: {fileID: 11500000, guid: 9fc01d730065f478d8752e65ad5ba99d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameId: peekGame
   _GamePanelPrefab: {fileID: 11463664, guid: 084a9061565504bb08ee4fbd10e2297d, type: 2}
 --- !u!1001 &100100000
 Prefab:
