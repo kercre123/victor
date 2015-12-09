@@ -1049,10 +1049,7 @@ namespace Anki {
     class TraverseObjectAction : public IActionRunner
     {
     public:
-      TraverseObjectAction(ObjectID objectID,
-                           const f32 speed_mmps,
-                           const f32 accel_mmps2,
-                           const bool useManualSpeed);
+      TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
       virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -1063,6 +1060,8 @@ namespace Anki {
           _chosenAction->Cleanup(robot);
         }
       }
+      
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps);
       
     protected:
       

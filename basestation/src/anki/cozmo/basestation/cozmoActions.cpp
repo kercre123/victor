@@ -3120,13 +3120,9 @@ namespace Anki {
 #pragma mark ---- TraverseObjectAction ----
     
     TraverseObjectAction::TraverseObjectAction(ObjectID objectID,
-                                               const f32 speed_mmps,
-                                               const f32 accel_mmps2,
                                                const bool useManualSpeed)
     : _objectID(objectID)
     , _chosenAction(nullptr)
-    , _speed_mmps(speed_mmps)
-    , _accel_mmps2(accel_mmps2)
     , _useManualSpeed(useManualSpeed)
     {
       
@@ -3146,6 +3142,11 @@ namespace Anki {
     void TraverseObjectAction::Reset()
     {
       Util::SafeDelete(_chosenAction);
+    }
+    
+    void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps) {
+      _speed_mmps = speed_mmps;
+      _accel_mmps2 = accel_mmps2;
     }
     
     ActionResult TraverseObjectAction::UpdateInternal(Robot& robot)
