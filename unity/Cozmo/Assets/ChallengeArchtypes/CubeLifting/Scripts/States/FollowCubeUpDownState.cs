@@ -18,12 +18,18 @@ namespace CubeLifting {
     private List<CubeLiftingSetting> _Settings;
     private int _Index;
 
+    private float _ProgressStart = 0f;
+    private float _ProgressEnd = 1f;
+
     public FollowCubeUpDownState(List<CubeLiftingSetting> settings, int index, int selectedCubeId = -1) {
       _Settings = settings;
       _Index = index;
       if (_Settings != null && index < _Settings.Count) {
         _Up = settings[index].Up;
         _RaiseLift = settings[index].RaiseLift;
+
+        _ProgressStart = (_Index) / (float)_Settings.Count;
+        _ProgressEnd = (_Index + 1) / (float)_Settings.Count;
       }
       _SelectedCubeId = selectedCubeId;
     }
@@ -57,6 +63,8 @@ namespace CubeLifting {
       var cube = _CurrentRobot.LightCubes[_SelectedCubeId];
 
       float height = Mathf.InverseLerp(30, 150, cube.WorldPosition.z);
+
+      _StateMachine.GetGame().Progress = Mathf.Lerp(_ProgressStart, _ProgressEnd, _Up ? height : 1 - height);
 
       if (_CubeInvisibleTimer > 0.5f) {
         cube.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
