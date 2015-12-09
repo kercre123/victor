@@ -383,7 +383,7 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   return ret;
 }
 
-void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
+void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile)
 {
   State_c currentRobotState(startPose.GetTranslation().x(),
                             startPose.GetTranslation().y(),
@@ -396,8 +396,16 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path)
   printf("test plan:\n");
   _impl->_context.env.PrintPlan(plan);
 
-  path.Clear();
-  _impl->_context.env.AppendToPath(plan, path);
+  Planning::Path outputPath;
+  _impl->_context.env.AppendToPath(plan, outputPath);
+
+  if( motionProfile != nullptr ) {
+    ApplyMotionProfile(outputPath, *motionProfile, path);
+  }
+  else {
+    path = outputPath;
+  }
+
   printf("test path:\n");
   path.PrintPath();
 }
