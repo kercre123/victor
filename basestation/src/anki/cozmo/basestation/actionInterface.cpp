@@ -35,7 +35,7 @@ namespace Anki {
     // IAction's Cleanup() method not be called on failure.
     ActionResult IActionRunner::Update(Robot& robot)
     {
-      if(!_isRunning && !_isPartOfCompoundAction) {
+      if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
         robot.GetMoveComponent().LockHead( ShouldLockHead() );
         robot.GetMoveComponent().LockLift( ShouldLockLift() );
@@ -65,13 +65,16 @@ namespace Anki {
         }
         Cleanup(robot);
         
-        if(!_isPartOfCompoundAction) {
+        if (_emitCompletionSignal)
+        {
           // Notify any listeners about this action's completion.
           // Note that I do this here so that compound actions only emit one signal,
           // not a signal for each constituent action.
           // TODO: Populate the signal with any action-specific info?
           EmitCompletionSignal(robot, result);
-          
+        }
+        
+        if(!_suppressTrackLocking) {
           // Action is done, always completely unlock the robot
           robot.GetMoveComponent().LockHead(false);
           robot.GetMoveComponent().LockLift(false);
