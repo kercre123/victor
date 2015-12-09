@@ -1,18 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Peekaboo {
+namespace FaceTracking {
   // Default : Wander about, trying to find a face, goes to FoundFaceState if face is detected
   public class LookingForFaceState : State {
     
     // Make sure the face has been seen consistently to confirm that it is in fact a face
     private float _SeenHoldDelay = 0.5f;
     private float _FirstSeenTimestamp = -1;
-    private PeekGame _GameInstance;
+    private FaceTrackingGame _GameInstance;
 
     public override void Enter() {
       base.Enter();
-      _GameInstance = _StateMachine.GetGame() as PeekGame;
+      _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
 
       _CurrentRobot.SetHeadAngle(0);
       _CurrentRobot.SetLiftHeight(0);

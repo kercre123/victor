@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Peekaboo {
+namespace FaceTracking {
   // Perform Celebration, then shift to Tracking Face
   public class FoundFaceState : State {
     

@@ -62,6 +62,9 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     CleanUpOnDestroy();
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState();
+    }
   }
 
   /// <summary>
@@ -81,7 +84,6 @@ public abstract class GameBase : MonoBehaviour {
   public void CloseMinigame() {
     _SharedMinigameViewInstance.ViewCloseAnimationFinished += HandleMinigameViewCloseFinished;
     _SharedMinigameViewInstance.CloseView();
-    _SharedMinigameViewInstance = null;
   }
 
   public void CloseMinigameImmediately() {
@@ -93,6 +95,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleMinigameViewCloseFinished() {
+    _SharedMinigameViewInstance = null;
     Destroy(gameObject);
   }
 
