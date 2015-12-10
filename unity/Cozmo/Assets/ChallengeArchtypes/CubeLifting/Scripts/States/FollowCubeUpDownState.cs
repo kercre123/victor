@@ -141,6 +141,7 @@ namespace CubeLifting {
 
     private void HandleFinalStateCompleteAnimationDone(bool success) {
       _GameInstance.ShowHowToPlaySlide("TapToLift");
+      _CurrentRobot.TrackToObject(null);
       _StateMachine.SetNextState(new TapCubeState(new PickupCubeState(_SelectedCubeId), _SelectedCubeId));
     }
 
