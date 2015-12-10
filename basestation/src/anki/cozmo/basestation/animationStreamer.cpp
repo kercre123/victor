@@ -138,7 +138,7 @@ namespace Cozmo {
       // Prep sound
       _audioClient.LoadAnimationAudio(anim);
       // Set Pre Buffer Key Frame Size
-      _audioClient.SetPreBufferKeyFrameCount(10);
+      _audioClient.SetPreBufferRobotAudioMessageCount(10);
 
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
@@ -277,13 +277,12 @@ namespace Cozmo {
   {
     if ( _audioClient.IsPlayingAnimation() ) {
       // Get Audio Key Frame
-      AnimKeyFrame::AudioSample* audioKeyFrame = nullptr;
-      bool shouldSendFrame = _audioClient.PopAudioKeyFrame(audioKeyFrame, startTime_ms, streamingTime_ms);
+      RobotInterface::EngineToRobot* audioMsg = nullptr;
+      bool shouldSendFrame = _audioClient.PopRobotAudioMessage(audioMsg, startTime_ms, streamingTime_ms);
       if (shouldSendFrame) {
-        if ( nullptr != audioKeyFrame ) {
+        if ( nullptr != audioMsg ) {
           // Add key frame
-          BufferMessageToSend( new RobotInterface::EngineToRobot( std::move( *audioKeyFrame ) ) );
-          Util::SafeDelete( audioKeyFrame );
+          BufferMessageToSend( audioMsg );
         }
         else {
           // Insert Silence
@@ -291,7 +290,7 @@ namespace Cozmo {
         }
       }
       else {
-        ASSERT_NAMED( false, "Should not fall into this condition, _audioClient.PopAudioKeyFrame() should always return true" );
+        ASSERT_NAMED( false, "Should not fall into this condition, _audioClient.PopRobotAudioMessage() should always return true" );
       }
     } // if ( _audioClient.IsPlayingAnimation() )
     else if(sendSilence) {
@@ -665,7 +664,7 @@ namespace Cozmo {
     // any co-timed keyframes from other tracks).
     while( _sendBuffer.empty() &&
           ( (anim->HasFramesLeft() && !_audioClient.IsPlayingAnimation() ) ||
-            (_audioClient.IsFirstBufferReady() && _audioClient.PrepareAudioKeyFrame(_startTime_ms, _streamingTime_ms)) ) )
+            (_audioClient.IsFirstBufferReady() && _audioClient.PrepareRobotAudioMessage(_startTime_ms, _streamingTime_ms)) ) )
     {
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",

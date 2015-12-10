@@ -4,7 +4,10 @@
  * Author: Jordan Rivas
  * Created: 11/13/2015
  *
- * Description: This a circular buffer to hold audio samples from the Cozmo Plugin for the animation stream to pull out.
+ * Description: This consists of a circular buffer to cache the audio samples from the Cozmo Plugin update. When there
+ *              is enough cached the data packed into a EngineToRobot audio sample message and is pushed into a
+ *              RobotAudioMessageStream. The RobotAudioMessageStreams are stored in a FIFO queue until they are ready
+ *              to be sent to the robot.
  *
  * Copyright: Anki, Inc. 2015
  */
@@ -12,7 +15,7 @@
 #ifndef __Basestation_Audio_RobotAudioBuffer_H__
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
-#include "anki/cozmo/basestation/audio/robotAudioBufferStream.h"
+#include "anki/cozmo/basestation/audio/robotAudioMessageStream.h"
 #include <util/helpers/templateHelpers.h>
 #include <util/container/circularBuffer.h>
 #include <util/dispatchQueue/dispatchQueue.h>
@@ -53,7 +56,7 @@ public:
   bool HasAudioBufferStream() { return _streamQueue.size() > 0; }
   
   // Get the front / top Audio Buffer stream in the queue
-  RobotAudioBufferStream* GetFrontAudioBufferStream();
+  RobotAudioMessageStream* GetFrontAudioBufferStream();
   
   // Pop the front  / top Audio buffer stream in the queue
   void PopAudioBufferStream() { _streamQueue.pop(); }
@@ -69,14 +72,14 @@ private:
   // Cache Audio samples from PlugIn
   Util::CircularBuffer< uint8_t > _audioSampleCache;
   
-  // A queue of audio buffer streams (continuous audio data)
-  std::queue< RobotAudioBufferStream > _streamQueue;
+  // A queue of robot audio messages (continuous audio data)
+  std::queue< RobotAudioMessageStream > _streamQueue;
   
-  // Track what stream audio key frame is being added to
-  RobotAudioBufferStream* _currentStream = nullptr;
+  // Track what stream is in uses
+  RobotAudioMessageStream* _currentStream = nullptr;
   
-  // Copy Audio Cache samples into Audio Key Frames and store in stream
-  size_t CopyAudioSampleCacheToKeyFrameBuffer( size_t size, RobotAudioBufferStream* stream );
+  // Copy Audio Cache samples into Robot Audio Message and store in stream
+  size_t CopyAudioSampleCacheToRobotAudioMessage( size_t size, RobotAudioMessageStream* stream );
 };
 
 

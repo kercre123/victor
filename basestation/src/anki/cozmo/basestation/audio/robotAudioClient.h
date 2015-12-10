@@ -23,16 +23,11 @@ namespace Anki {
 namespace Cozmo {
 
 class Animation;
-
-namespace AnimKeyFrame {
-struct AudioSample;
-}
-
   
 namespace Audio {
   
 class RobotAudioBuffer;
-class RobotAudioBufferStream;
+class RobotAudioMessageStream;
   
 class RobotAudioClient : public AudioEngineClient
 {
@@ -50,7 +45,7 @@ public:
   // Load animation and begin to buffer audio
   bool LoadAnimationAudio( Animation* anAnimation );
   
-  // This returns true after LoadAnimationAudio() is performed and remains true until the last audio key frame
+  // This returns true after LoadAnimationAudio() is performed and remains true until the last audio message
   // is completed
   bool IsPlayingAnimation() const { return _isPlayingAnimation; }
   
@@ -59,25 +54,25 @@ public:
   const std::string& GetCurrentAnimationName() const { return _animationName; }
   
   // TODO: This currently just clears all metadata and audio buffered data. It is not pleasant to the ears.
-  // This is called after the last audio key frame has been popped
+  // This is called after the last audio messages has been popped
   void ClearAnimation();
   
   // Return false if we expect to have buffer however it is not ready yet
-  bool PrepareAudioKeyFrame( TimeStamp_t startTime_ms,
-                             TimeStamp_t streamingTime_ms);
+  bool PrepareRobotAudioMessage( TimeStamp_t startTime_ms,
+                                 TimeStamp_t streamingTime_ms);
 
-  // Pop the front key frame audio sample message
-  // Will set out_AudioSamplePtr to Null if there are no key frames for provided current time. Use this to identify when
-  // to send a AudioSilence key frame.
-  // Note: Audio Sample pointer memory needs to be manage or it will leak memory.
+  // Pop the front EngineToRobot audio message
+  // Will set out_RobotAudioMessagePtr to Null if there are no messages for provided current time. Use this to identify
+  // when to send a AudioSilence message.
+  // Note: EngineToRobot pointer memory needs to be manage or it will leak memory.
   // Return false if we expect to have buffer however it is not ready yet
-  bool PopAudioKeyFrame( AnimKeyFrame::AudioSample*& out_AudioSamplePtr,
-                         TimeStamp_t startTime_ms,
-                         TimeStamp_t streamingTime_ms );
+  bool PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
+                             TimeStamp_t startTime_ms,
+                             TimeStamp_t streamingTime_ms );
   
-  // Set the minimum amount of Audio Key frames that should be buffered before return true "ready" from
-  // PrepareAudioKeyFrame() or PopAudioKeyFrame()
-  void SetPreBufferKeyFrameCount( uint8_t keyFrameCount ) { _PreBufferKeyFrameCount = keyFrameCount; }
+  // Set the minimum amount of Audio messages that should be buffered before return true "ready" from
+  // PrepareRobotAudioMessage() or PopRobotAudioMessage()
+  void SetPreBufferRobotAudioMessageCount( uint8_t count ) { _PreBufferRobotAudioMessageCount = count; }
   
   // Check if there is enough initial audio buffer to begin streaming animation
   // This returns true if there is no RobotAudioBuffer
@@ -99,8 +94,8 @@ private:
   // Dispatch event
   Util::Dispatch::Queue* _postEventTimerQueue;
   
-  // Amount of audio key frames that need to be buffered before starting animation
-  uint8_t _PreBufferKeyFrameCount = 0;
+  // Amount of audio messages that need to be buffered before starting animation
+  uint8_t _PreBufferRobotAudioMessageCount = 0;
   
   // Struct to sync audio buffer streams with animation
   struct AnimationEvent {
@@ -121,7 +116,7 @@ private:
   // Animation id
   std::string _animationName = "";
   // Track Queue's front stream
-  RobotAudioBufferStream* _currentBufferStream = nullptr;
+  RobotAudioMessageStream* _currentBufferStream = nullptr;
   
   // Audio buffer time shift, this allow us to buffer audio as soon as the animation is loaded and play
   // events relevant to each other.

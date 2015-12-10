@@ -11,7 +11,7 @@
 
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
-#include "anki/cozmo/basestation/audio/robotAudioBufferStream.h"
+#include "anki/cozmo/basestation/audio/robotAudioMessageStream.h"
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "clad/audio/messageAudioClient.h"
@@ -114,14 +114,14 @@ void RobotAudioClient::ClearAnimation()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::PrepareAudioKeyFrame(TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms)
+bool RobotAudioClient::PrepareRobotAudioMessage(TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms)
 {
   // No audio buffer therefore no audio to play
   if ( nullptr == _audioBuffer ) {
     return true;
   }
     
-  bool isKeyFrameReady = false;
+  bool isMsgReady = false;
   const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
   if ( nullptr == _currentBufferStream ) {
     // Check if we need the next stream
@@ -137,7 +137,7 @@ bool RobotAudioClient::PrepareAudioKeyFrame(TimeStamp_t startTime_ms, TimeStamp_
       } // if ( _animationEventList.front().TimeInMS <= streamingTime_ms )
       
       else if ( _isFirstBufferLoaded ) {
-        isKeyFrameReady = true;
+        isMsgReady = true;
       }
       else if ( !_isFirstBufferLoaded ) {
         // See if buffer is ready now
@@ -148,7 +148,7 @@ bool RobotAudioClient::PrepareAudioKeyFrame(TimeStamp_t startTime_ms, TimeStamp_
     else {
       // Animation Event List is empty. Send last frame and clear animation.
       ClearAnimation();
-      isKeyFrameReady = true;
+      isMsgReady = true;
     } // _animationEventList is empty
     
   } // if ( nullptr == _currentBufferStream )
@@ -156,30 +156,32 @@ bool RobotAudioClient::PrepareAudioKeyFrame(TimeStamp_t startTime_ms, TimeStamp_
   // This can be set by code above  check if buffer has key frame
   if (nullptr != _currentBufferStream && _isFirstBufferLoaded) {
     // Have Current Stream
-    isKeyFrameReady = _currentBufferStream->HasKeyFrames();
+    isMsgReady = _currentBufferStream->HasRobotAudioMessage();
   }
   
-  return isKeyFrameReady;
+  return isMsgReady;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool RobotAudioClient::PopAudioKeyFrame( AnimKeyFrame::AudioSample*& out_AudioSamplePtr, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
+bool RobotAudioClient::PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
+                                             TimeStamp_t startTime_ms,
+                                             TimeStamp_t streamingTime_ms )
 {
   // No audio buffer therefore no audio to play
   if ( nullptr == _audioBuffer ) {
-    out_AudioSamplePtr = nullptr;
+    out_RobotAudioMessagePtr = nullptr;
     return true;
   }
   
   const TimeStamp_t relevantTimeMS = streamingTime_ms - startTime_ms;
-  const bool isKeyFrameReady = PrepareAudioKeyFrame( startTime_ms, streamingTime_ms );
+  const bool isMsgReady = PrepareRobotAudioMessage( startTime_ms, streamingTime_ms );
   
   // Send Key Frame
   // Either new steam or continue sending stream
-  if ( isKeyFrameReady && nullptr != _currentBufferStream ) {
+  if ( isMsgReady && nullptr != _currentBufferStream ) {
     // Try to pop key frame
-    if ( _currentBufferStream->HasKeyFrames() ) {
-      out_AudioSamplePtr = _currentBufferStream->PopKeyFrame();
+    if ( _currentBufferStream->HasRobotAudioMessage() ) {
+      out_RobotAudioMessagePtr = _currentBufferStream->PopRobotAudioMessage();
       
       // Check if sound events are mixed together
       if ( !_animationEventList.empty() && _animationEventList.front().TimeInMS <= relevantTimeMS ) {
@@ -187,23 +189,23 @@ bool RobotAudioClient::PopAudioKeyFrame( AnimKeyFrame::AudioSample*& out_AudioSa
       }
       
       // Check if stream is complete and if there are any key frames left
-      if ( _currentBufferStream->IsComplete() && !_currentBufferStream->HasKeyFrames() ) {
+      if ( _currentBufferStream->IsComplete() && !_currentBufferStream->HasRobotAudioMessage() ) {
         _currentBufferStream = nullptr;
         _audioBuffer->PopAudioBufferStream();
       }
     }
     else {
       // Wait for more audio key frames to buffer, this will complete animation with silent frame
-      out_AudioSamplePtr = nullptr;
+      out_RobotAudioMessagePtr = nullptr;
     }
   }
-  else if ( isKeyFrameReady ) {
+  else if ( isMsgReady ) {
     // Nothing to send, insert silence key frame
-    out_AudioSamplePtr = nullptr;
+    out_RobotAudioMessagePtr = nullptr;
   }
   else {
     // Need to wait for next Audio buffer to be created
-    out_AudioSamplePtr = nullptr;
+    out_RobotAudioMessagePtr = nullptr;
     return false;
   }
   
@@ -220,8 +222,8 @@ bool RobotAudioClient::IsFirstBufferReady()
   
   // Check if buffer is ready
   if ( _audioBuffer->HasAudioBufferStream() ) {
-    RobotAudioBufferStream* stream = _audioBuffer->GetFrontAudioBufferStream();
-    if ( stream->KeyFrameCount() > _PreBufferKeyFrameCount || stream->IsComplete() ) {
+    RobotAudioMessageStream* stream = _audioBuffer->GetFrontAudioBufferStream();
+    if ( stream->RobotAudioMessageCount() > _PreBufferRobotAudioMessageCount || stream->IsComplete() ) {
       _isFirstBufferLoaded = true;
     }
   }
