@@ -50,6 +50,21 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &196684
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22405404}
+  m_Layer: 5
+  m_Name: HowToPlaySlideContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!114 &11435356
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -122,6 +137,7 @@ MonoBehaviour:
   _ChallengeProgressWidgetPrefab: {fileID: 11418008, guid: 1f104ca012b8a4d35b83f167e041a8a4,
     type: 2}
   _TitleWidgetPrefab: {fileID: 11452892, guid: 62681a27bea6f49c3b1874082b891f74, type: 2}
+  _HowToSlideContainer: {fileID: 22405404}
 --- !u!222 &22241334
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -134,6 +150,23 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 144778}
+--- !u!224 &22405404
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 196684}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22430574}
+  m_RootOrder: 2
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1400, y: 800}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22430574
 RectTransform:
   m_ObjectHideFlags: 1
@@ -146,6 +179,7 @@ RectTransform:
   m_Children:
   - {fileID: 22492990}
   - {fileID: 22476150}
+  - {fileID: 22405404}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
