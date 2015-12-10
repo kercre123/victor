@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Name: FaceTrackGameChallenge01_Config
   m_EditorClassIdentifier: 
   Goal: 1
-  TiltTreshold: 60
-  Lenience: .100000001
+  TiltTreshold: 90
+  Lenience: .0799999982
   MaxFaceDistance: 350
   MinFaceDistance: 200
   FaceJumpLimit: 150

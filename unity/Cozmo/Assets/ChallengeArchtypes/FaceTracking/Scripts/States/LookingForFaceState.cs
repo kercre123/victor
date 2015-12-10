@@ -62,7 +62,10 @@ namespace FaceTracking {
           if (Time.time - _FirstSeenTimestamp > _SeenHoldDelay) {
             FindFace();
           }
-        }
+        }/*
+        else if (_TargetFace != null) {
+          _CurrentRobot.FacePose(_TargetFace);
+        }*/
       }
       else {
         if (IsUnSeenTimestampUninitialized()) {
@@ -76,9 +79,12 @@ namespace FaceTracking {
 
     public void FindFace() {
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
+      if (_TargetFace != null) {
+        _CurrentRobot.FacePose(_TargetFace);
+      }
       AnimationState animState = new AnimationState();
       animState.Initialize(AnimationName.kHappyA, HandleStateCompleteAnimationDone);
-      _GameInstance.MidCelebration = true;
+      //_GameInstance.MidCelebration = true;
       if (_GameInstance.StepsCompleted == 0.0f) {
         _GameInstance.StepsCompleted += 0.333f;
       }
@@ -86,7 +92,7 @@ namespace FaceTracking {
     }
 
     public void HandleStateCompleteAnimationDone(bool success) {
-      _GameInstance.MidCelebration = false;
+      //_GameInstance.MidCelebration = false;
       _StateMachine.SetNextState(new TrackFaceState());
     }
 

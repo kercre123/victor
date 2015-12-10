@@ -96,22 +96,21 @@ namespace FaceTracking {
       if (Mathf.Abs(targetAngleOffset) <= 1.0f) {
         LerpEyesHoriz(targetAngleOffset);
       }
-      else {
-        _CurrentRobot.FacePose(target);
-      }
     }
 
     public void LerpEyesHoriz(float lerpVal) {
-      _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
-      _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
-      _LeftEye.UpperLidY = 0.0f;
-      _RightEye.UpperLidY = 0.0f;
+      _LeftEye.UpperLidY = 0.5f;
+      _RightEye.UpperLidY = 0.5f;
 
       if (lerpVal > 0.0f) {
-        _LeftEye.UpperLidY = 10.0f;
+        _RightEye.UpperLidY = 0.0f;
+        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
+        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
       }
       else {
-        _RightEye.UpperLidY = 10.0f;
+        _LeftEye.UpperLidY = 0.0f;
+        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeInnerPosition, _RightEyeOuterPosition, lerpVal);
+        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
       }
 
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);

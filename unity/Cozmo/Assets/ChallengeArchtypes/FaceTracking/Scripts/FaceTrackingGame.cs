@@ -89,7 +89,7 @@ namespace FaceTracking {
 
     public void TiltSuccess() {
       _TiltSuccessCount++;
-      StepsCompleted = 0.0f;
+      StepsCompleted = 1.0f;
       MidCelebration = true;
       CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin, HandleEndCelebration);
     }
@@ -139,16 +139,18 @@ namespace FaceTracking {
     // Returns true if Cozmo is directly facing you
     public bool WithinLockZone(Face toCheck) {
       if (IsValidFace(toCheck)) {
+        return true;
+        /*
         float turnAngle = Vector3.Cross(CurrentRobot.Forward, toCheck.WorldPosition - CurrentRobot.WorldPosition).z;
         // If Face is valid distance, check to see if we need to turn towards it or if we are actually within the Lock Zone
         // But also turn to face the face directly.
-        if (Mathf.Abs(turnAngle) > 30f) {
-          CurrentRobot.FacePose(toCheck);
+        if (Mathf.Abs(turnAngle) > 20f) {
+          //CurrentRobot.FacePose(toCheck);
           return false;
         }
         else {
           return true;
-        }
+        }*/
       }
       else {
         return false;
