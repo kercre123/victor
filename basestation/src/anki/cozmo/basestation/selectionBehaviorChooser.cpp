@@ -41,12 +41,11 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
   }
   
   // Setup None Behavior now since it's always the fallback
-  _behaviorNone = new BehaviorNone(robot, config);
+  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, config);
   Result addResult = AddBehavior(_behaviorNone);
   if (Result::RESULT_OK != addResult)
   {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorNone was not created properly.");
-    return;
+    PRINT_NAMED_ERROR("SelectionBehaviorChooser.SelectionBehaviorChooser", "BehaviorNone was not created properly.");
   }
 }
   
@@ -90,17 +89,23 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   
 IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
 {
-  IBehavior* newBehavior = BehaviorFactory::CreateBehavior(newType, _robot, _config);
+  BehaviorFactory& behaviorFactory = _robot.GetBehaviorFactory();
+  IBehavior* newBehavior = behaviorFactory.CreateBehavior(newType, _robot, _config);
   
-  Result addResult = AddBehavior(newBehavior);
-  if (Result::RESULT_OK != addResult)
+  if (newBehavior)
   {
-    Util::SafeDelete(newBehavior);
+    const Result addResult = AddBehavior(newBehavior);
+    if (Result::RESULT_OK != addResult)
+    {
+      PRINT_NAMED_ERROR("SelectionBehaviorChooser.AddNewBehavior",
+                        "Behavior '%s' of type %s was created but failed to add to chooser!", newBehavior->GetName().c_str(), EnumToString(newType));
+      
+      newBehavior = nullptr; // behavior will be retained by factory, but chooser cannot use it
+    }
   }
-  
-  if (nullptr == newBehavior)
+  else
   {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.AddNewBehavior", "Behavior %s was not created properly.", EnumToString(newType));
+    PRINT_NAMED_ERROR("SelectionBehaviorChooser.AddNewBehavior", "Behavior %s was not created properly.", EnumToString(newType));
   }
   
   return newBehavior;

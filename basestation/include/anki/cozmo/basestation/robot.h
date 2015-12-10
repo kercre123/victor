@@ -89,6 +89,7 @@ enum class ERobotDriveToPoseStatus {
 namespace Cozmo {
   
 // Forward declarations:
+class BehaviorFactory;
 class IPathPlanner;
 class MatPiece;
 class MoodManager;
@@ -476,6 +477,9 @@ public:
 
     // Read the animations in a dir
     void ReadAnimationDir();
+  
+    // Load in all data-driven behaviors
+    void LoadBehaviors();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -624,8 +628,11 @@ public:
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
-    const MoodManager& GetMoodManager() const {  assert(_moodManager); return *_moodManager; }
+    const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
+          MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+    const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
+          BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
   
     inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
     inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }

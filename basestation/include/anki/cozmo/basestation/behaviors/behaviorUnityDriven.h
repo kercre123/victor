@@ -23,9 +23,14 @@ namespace Cozmo {
   
 class BehaviorUnityDriven : public IBehavior
 {
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  BehaviorUnityDriven(Robot& robot, const Json::Value& config);
+  
 public:
   
-  BehaviorUnityDriven(Robot& robot, const Json::Value& config);
   virtual ~BehaviorUnityDriven();
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return _isRunnable; }

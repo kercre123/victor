@@ -23,9 +23,14 @@ namespace Cozmo {
   
   class BehaviorInteractWithFaces : public IBehavior
   {
+  protected:
+    
+    // Enforce creation through BehaviorFactory
+    friend class BehaviorFactory;
+    BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
+    
   public:
     
-    BehaviorInteractWithFaces(Robot& robot, const Json::Value& config);
     virtual ~BehaviorInteractWithFaces() override;
     
     virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;

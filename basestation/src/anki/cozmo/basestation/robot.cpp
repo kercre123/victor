@@ -153,6 +153,8 @@ namespace Anki {
         _moodManager->Init(moodConfig);
       }
       
+      LoadBehaviors();
+      
       // Read in behavior manager Json
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
@@ -1470,6 +1472,54 @@ namespace Anki {
 
     }
 
+    static bool HasSuffix(const char* inFilename, const char* inSuffix)
+    {
+      const size_t filenameLen = strlen(inFilename);
+      const size_t suffixLen   = strlen(inSuffix);
+      
+      if (filenameLen < suffixLen)
+      {
+        return false;
+      }
+      
+      const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
+      return (cmp == 0);
+    }
+    
+    void Robot::LoadBehaviors()
+    {
+      if (_dataPlatform == nullptr)
+      {
+        return;
+      }
+      
+      const std::string behaviorFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
+      
+      DIR* dir = opendir(behaviorFolder.c_str());
+      if ( dir != nullptr)
+      {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr)
+        {
+          if ((ent->d_type == DT_REG) && HasSuffix(ent->d_name, ".json"))
+          {
+            std::string fullFileName = behaviorFolder + ent->d_name;
+            
+            Json::Value behaviorJson;
+            const bool success = _dataPlatform->readAsJson(fullFileName, behaviorJson);
+            if (success && !behaviorJson.empty())
+            {
+              PRINT_NAMED_INFO("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
+            }
+            else
+            {
+              PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
+            }
+          }
+        }
+      }
+    }
     
     // Read the animations in a dir
     void Robot::ReadAnimationDir()

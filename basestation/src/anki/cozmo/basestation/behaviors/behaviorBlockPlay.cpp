@@ -57,7 +57,7 @@ namespace Cozmo {
   , _faceID(Face::UnknownFace)
   , _hasValidLastKnownFacePose(false)
   {
-    _name = "BlockPlay";
+    SetDefaultName("BlockPlay");
 
     _motionProfile.speed_mmps = 80.0f;
     _motionProfile.accel_mmps2 = 200.0f;
@@ -587,38 +587,38 @@ namespace Cozmo {
   {
     _currentState = s;
     
-    _stateName = "";
     switch(_currentState)
     {
       case State::TrackingFace:
-        _stateName += "FACETRACK";
+        SetStateName("FACETRACK");
         break;
       case State::TrackingBlock:
-        _stateName += "BLOCKTRACK";
+        SetStateName("BLOCKTRACK");
         break;
       case State::InspectingBlock:
-        _stateName += "INSPECTING";
+        SetStateName("INSPECTING");
         break;
       case State::RollingBlock:
-        _stateName += "ROLLING";
+        SetStateName("ROLLING");
         break;
       case State::PickingUpBlock:
-        _stateName += "PICKING";
+        SetStateName("PICKING");
         break;
       case State::PlacingBlock:
-        _stateName += "PLACING";
+        SetStateName("PLACING");
         break;
       case State::SearchingForMissingBlock:
-        _stateName += "SEARCHING";
+        SetStateName("SEARCHING");
         break;
       case State::Complete:
-        _stateName += "COMPLETE";
+        SetStateName("COMPLETE");
         break;
       default:
         PRINT_NAMED_WARNING("BehaviorBlockPlay.SetCurrState.InvalidState", "");
+        SetStateName("");
     }
 
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.SetState", "set state to '%s'", _stateName.c_str());
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.SetState", "set state to '%s'", GetStateName().c_str());
   }
   
 

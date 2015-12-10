@@ -21,9 +21,13 @@ namespace Cozmo {
 
 class BehaviorPounceOnMotion : public IBehavior
 {
-public:
-
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPounceOnMotion(Robot& robot, const Json::Value& config);
+  
+public:
 
   // checks if the motion is within pouncing distance
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;

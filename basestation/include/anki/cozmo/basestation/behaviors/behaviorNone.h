@@ -20,14 +20,23 @@ namespace Cozmo {
   
 class BehaviorNone: public IBehavior
 {
-public:
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorNone(Robot& robot, const Json::Value& config) : IBehavior(robot, config)
   {
-    _name = "NoneBehavior";
+    SetDefaultName("NoneBehavior");
     
-    // Baseline emotion score so this behavior gets a non-zero score regardless of mood
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{0.0f, 0.05f}}), false));
+    if (GetEmotionScorerCount() == 0)
+    {
+      // Baseline emotion score so this behavior gets a non-zero score regardless of mood
+      AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{0.0f, 0.05f}}), false));
+    }
   }
+  
+public:
+  
   virtual ~BehaviorNone() { }
   
   //
