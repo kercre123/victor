@@ -455,6 +455,7 @@ public class Robot : IDisposable {
     SetHeadAngle(0.0f);
     SetLiftHeight(0.0f);
     TrackToObject(null);
+    CancelAllCallbacks();
     SetBehaviorSystem(false);
     ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
