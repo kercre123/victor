@@ -188,7 +188,8 @@ Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
     // return them to this state when we disable tracking
     _headLockedBeforeTracking = IsHeadLocked();
     _wheelsLockedBeforeTracking = AreWheelsLocked();
-    
+
+    // TODO:(bn) this doesn't seem to work (wheels aren't locked), but not sure if it should...
     LockHead(true);
     if(!headOnly) {
       LockWheels(true);
