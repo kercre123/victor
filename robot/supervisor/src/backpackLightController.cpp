@@ -116,7 +116,7 @@ namespace BackpackLightController {
     }
   }
   
-  // Update light params based on onCharger status
+  // Set which light parameters are to be displayed based on onCharger status.
   // NOTE: While on charger, backpack lights can be set, but they won't show
   //       until the robot comes off the charger. This may or may not be what we want.
   void SetCurrParams()
@@ -131,7 +131,7 @@ namespace BackpackLightController {
         }
       } else {
         if (_isChargedCount > -LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD) {
-          -- _isChargedCount;
+          --_isChargedCount;
         }
       }
     } else {
