@@ -18,6 +18,8 @@ public abstract class GameBase : MonoBehaviour {
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
+
+    CloseMinigameImmediately();
   }
 
   public delegate void MiniGameWinHandler();
