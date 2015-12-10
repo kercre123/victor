@@ -27,6 +27,12 @@
     "button.startChallenge" : {
         "translation" : "Start Challenge"
     },
+    "label.challengeCompleted" : {
+        "translation" : "Challenge Completed"
+    },
+    "label.challengeFailed" : {
+        "translation" : "Challenge Failed"
+    },
     "badge.new" : {
         "translation" : "NEW!"
     },
@@ -38,5 +44,8 @@
     },
     "button.no" : {
         "translation" : "No"
+    },
+    "button.continue" : {
+        "translation" : "Continue"
     }
 }

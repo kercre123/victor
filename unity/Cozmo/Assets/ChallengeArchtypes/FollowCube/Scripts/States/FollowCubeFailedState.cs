@@ -32,7 +32,7 @@ namespace FollowCube {
         initCubeState.InitialCubeRequirements(new FollowCubeTurnRightState(), 1, true, null);
         break;
       case FollowCubeGame.FollowTask.FollowDrive:
-        initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, null);
+        initCubeState.InitialCubeRequirements(new FollowCubeDriveState(), 1, true, null);
         break;
       }
 

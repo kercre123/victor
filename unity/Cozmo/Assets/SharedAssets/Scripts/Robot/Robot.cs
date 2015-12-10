@@ -388,7 +388,7 @@ public class Robot : IDisposable {
     PathMotionProfileDefault.pointTurnAccel_rad_per_sec2 = 100.0f;
     PathMotionProfileDefault.pointTurnDecel_rad_per_sec2 = 500.0f;
     PathMotionProfileDefault.dockSpeed_mmps = 100.0f;
-    PathMotionProfileDefault.dockSpeed_mmps = 200.0f;
+    PathMotionProfileDefault.dockAccel_mmps2 = 200.0f;
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -455,6 +455,7 @@ public class Robot : IDisposable {
     SetHeadAngle(0.0f);
     SetLiftHeight(0.0f);
     TrackToObject(null);
+    CancelAllCallbacks();
     SetBehaviorSystem(false);
     ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
@@ -523,9 +524,6 @@ public class Robot : IDisposable {
     BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
     CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
-
-    if (HeadTrackingObjectID == _LastHeadTrackingObjectID)
-      _LastHeadTrackingObjectID = -1;
 
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
     Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
@@ -862,11 +860,7 @@ public class Robot : IDisposable {
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
-    if (HeadTrackingObjectID == observedObject) {
-      _LastHeadTrackingObjectID = -1;
-      return;
-    }
-    else if (_LastHeadTrackingObjectID == observedObject) {
+    if (HeadTrackingObjectID == observedObject && _LastHeadTrackingObjectID == observedObject) {
       return;
     }
 

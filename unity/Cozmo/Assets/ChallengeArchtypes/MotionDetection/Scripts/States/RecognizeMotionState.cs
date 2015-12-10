@@ -65,10 +65,7 @@ namespace MotionDetection {
 
       bool motionInBox = Time.time - _LastMotionDetectedTime < _TimeAllowedBetweenWaves;
 
-      if (motionInBox) {
-        _MotionInBoxTime += Time.deltaTime;
-      }
-      else {
+      if (!motionInBox) {
         _MotionInBoxTime -= Time.deltaTime;
         if (_MotionInBoxTime < 0.0f) {
           _MotionInBoxTime = 0.0f;
@@ -98,6 +95,7 @@ namespace MotionDetection {
     private void OnMotionDetected(Vector2 pos) {
       if (_VisionBounds.Contains(pos)) {
         _LastMotionDetectedTime = Time.time;
+        _MotionInBoxTime += 0.25f;
       }
     }
 
