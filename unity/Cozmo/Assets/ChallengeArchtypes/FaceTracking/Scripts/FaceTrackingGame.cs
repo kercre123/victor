@@ -17,8 +17,6 @@ namespace FaceTracking {
 
     public float TiltGoal { get; set; }
 
-    public float TurnSpeed { get; set; }
-
     public float DistanceMin { get; set; }
 
     public float DistanceMax { get; set; }
@@ -37,14 +35,9 @@ namespace FaceTracking {
 
     public bool MidCelebration { get; set; }
 
-    [SerializeField]
-    private FaceTrackingGamePanel _GamePanelPrefab;
-    private FaceTrackingGamePanel _GamePanel;
-
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
       _TiltGoalTarget = config.Goal;
-      TurnSpeed = config.TurnSpeed;
       WanderEnabled = config.WanderEnabled;
       TiltGoal = config.TiltTreshold;
       GoalLenience = config.Lenience;
@@ -67,17 +60,23 @@ namespace FaceTracking {
 
       // Determine success, or if we're even headed in the right direction, don't trigger success
       // if we are too far to the desired direction
-      if ((1.0f+GoalLenience) >= goalVal && goalVal >= (1.0f-GoalLenience) && !MidCelebration) {
+      if (1.0f >= goalVal && goalVal >= (1.0f-GoalLenience) && !MidCelebration) {
         // Mark successful leading to each side.
+        // TODO: Create a buildup delay so players have to hold for a short duration before triggering
+        // a success.
         if (tiltVal > 0 && !TargetLeft) {
           TargetLeft = true;
           CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_LEFT, Color.green);
           StepsCompleted += .333f;
+          MidCelebration = true;
+          CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleMiniCelebration);
         }
         else if (tiltVal < 0 && !TargetRight) {
           TargetRight = true;
           CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT, Color.green);
           StepsCompleted += .333f;
+          MidCelebration = true;
+          CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleMiniCelebration);
         }
         // Trigger a success if you've lit up both.
         if (TargetLeft && TargetRight) {
@@ -99,8 +98,6 @@ namespace FaceTracking {
       
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
-
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FaceTrackingGamePanel>();
       Progress = 0.0f;
 
       CurrentRobot.SetBehaviorSystem(true);
@@ -126,6 +123,10 @@ namespace FaceTracking {
       }
     }
 
+    private void HandleMiniCelebration(bool success) {
+      MidCelebration = false;
+    }
+
     private void HandleEndCelebration(bool success) {
       MidCelebration = false;
       TargetLeft = false;
@@ -140,13 +141,9 @@ namespace FaceTracking {
       if (IsValidFace(toCheck)) {
         float turnAngle = Vector3.Cross(CurrentRobot.Forward, toCheck.WorldPosition - CurrentRobot.WorldPosition).z;
         // If Face is valid distance, check to see if we need to turn towards it or if we are actually within the Lock Zone
+        // But also turn to face the face directly.
         if (Mathf.Abs(turnAngle) > 30f) {
-          if (turnAngle > 0.0f) {
-            CurrentRobot.DriveWheels(-TurnSpeed, TurnSpeed);
-          }
-          else {
-            CurrentRobot.DriveWheels(TurnSpeed, -TurnSpeed);
-          }
+          CurrentRobot.FacePose(toCheck);
           return false;
         }
         else {
@@ -163,13 +160,13 @@ namespace FaceTracking {
         return false;
       }
       float dist = Vector3.Distance(CurrentRobot.WorldPosition, toCheck.WorldPosition);
+      Debug.Log(string.Format("Current Distance : {0}", dist));
       return (dist < DistanceMax && dist > DistanceMin);
     }
 
     protected override void CleanUpOnDestroy() {
-      if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
-      }
+      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     }
   }
 }

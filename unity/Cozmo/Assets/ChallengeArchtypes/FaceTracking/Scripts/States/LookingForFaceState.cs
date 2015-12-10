@@ -16,6 +16,7 @@ namespace FaceTracking {
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
+      _GameInstance.MidCelebration = false;
       _TargetFace = null;
       _CurrentRobot.SetHeadAngle(0.2f);
       _CurrentRobot.SetLiftHeight(0);
@@ -33,6 +34,9 @@ namespace FaceTracking {
 
     public override void Update() {
       base.Update();
+      if (_GameInstance.MidCelebration) {
+        return;
+      }
       // Wander aimlessly
       // If a face has been found, enter FoundFaceState
       if (_CurrentRobot.Faces.Count > 0) {
@@ -73,7 +77,8 @@ namespace FaceTracking {
     public void FindFace() {
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
       AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kEnjoyLight, HandleStateCompleteAnimationDone);
+      animState.Initialize(AnimationName.kHappyA, HandleStateCompleteAnimationDone);
+      _GameInstance.MidCelebration = true;
       if (_GameInstance.StepsCompleted == 0.0f) {
         _GameInstance.StepsCompleted += 0.333f;
       }
@@ -81,6 +86,7 @@ namespace FaceTracking {
     }
 
     public void HandleStateCompleteAnimationDone(bool success) {
+      _GameInstance.MidCelebration = false;
       _StateMachine.SetNextState(new TrackFaceState());
     }
 

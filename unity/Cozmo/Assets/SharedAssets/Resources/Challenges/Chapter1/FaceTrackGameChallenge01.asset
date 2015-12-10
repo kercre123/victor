@@ -24,4 +24,4 @@ MonoBehaviour:
     ChallengeGateKeys:
     - MotionDetectionChallenge01
     StatGateArray: []
-  MinigameConfig: {fileID: 11400000, guid: bfcf35cee638a4a3589b101f226b93a8, type: 2}
+  MinigameConfig: {fileID: 11400000, guid: f91b6325c1b174448a97b183ac12584e, type: 2}
