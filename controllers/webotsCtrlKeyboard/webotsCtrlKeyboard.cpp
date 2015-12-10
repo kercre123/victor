@@ -765,26 +765,36 @@ namespace Anki {
                   
                   trackingObject = !trackingObject;
 
-                  ExternalInterface::TrackToObject m;
-                  m.robotID = 1;
-
                   if(trackingObject) {
-                    const bool headOnly = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                    const bool headOnly = false;
                     
-                    printf("Telling robot to track %sto the selected object %d\n",
+                    printf("Telling robot to track %sto the currently observed object %d\n",
                            headOnly ? "its head " : "",
-                           GetCurrentlyObservedObject().id);
+                           GetLastObservedObject().id);
                     
-                    m.objectID = GetCurrentlyObservedObject().id;
-                    m.headOnly = headOnly;
+                    SendTrackToObject(GetLastObservedObject().id, headOnly);
                   } else {
                     // Disable tracking
-                    m.objectID = u32_MAX;
+                    SendTrackToObject(u32_MAX);
                   }
+                  
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  static bool trackingFace = false;
+                  
+                  trackingFace = !trackingFace;
+                  
+                  if(trackingFace) {
+                    const bool headOnly = false;
                     
-                  ExternalInterface::MessageGameToEngine message;
-                  message.Set_TrackToObject(m);
-                  SendMessage(message);
+                    printf("Telling robot to track %sto the currently observed face %d\n",
+                           headOnly ? "its head " : "",
+                           (u32)GetLastObservedFaceID());
+                    
+                    SendTrackToFace((u32)GetLastObservedFaceID(), headOnly);
+                  } else {
+                    // Disable tracking
+                    SendTrackToFace(u32_MAX);
+                  }
 
                 } else {
                   SendExecuteTestPlan();
@@ -1096,7 +1106,7 @@ namespace Anki {
                   msgWrapper.Set_SetAllActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
-                else if(GetCurrentlyObservedObject().id >= 0 && GetCurrentlyObservedObject().isActive)
+                else if(GetLastObservedObject().id >= 0 && GetLastObservedObject().isActive)
                 {
                   // Proof of concept: cycle colors
                   const s32 NUM_COLORS = 4;
@@ -1108,7 +1118,7 @@ namespace Anki {
                   static s32 colorIndex = 0;
 
                   ExternalInterface::SetActiveObjectLEDs msg;
-                  msg.objectID = GetCurrentlyObservedObject().id;
+                  msg.objectID = GetLastObservedObject().id;
                   msg.robotID = 1;
                   msg.onPeriod_ms = 250;
                   msg.offPeriod_ms = 250;
@@ -1502,7 +1512,7 @@ namespace Anki {
           counter = 0;
           
           ExternalInterface::SetActiveObjectLEDs msg;
-          msg.objectID = GetCurrentlyObservedObject().id;
+          msg.objectID = GetLastObservedObject().id;
           msg.robotID = 1;
           msg.onPeriod_ms = 100;
           msg.offPeriod_ms = 100;
