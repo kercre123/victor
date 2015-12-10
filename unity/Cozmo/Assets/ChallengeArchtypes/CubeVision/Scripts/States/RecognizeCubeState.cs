@@ -23,6 +23,7 @@ namespace VisionTraining {
       _VisionRect.center = new Vector2(120.0f, 0.0f);
 
       _GameInstance = _StateMachine.GetGame() as CubeVisionGame;
+      _GameInstance.ShowHowToPlaySlide("PlaceCubeVision");
     }
 
     public override void Update() {
@@ -81,6 +82,7 @@ namespace VisionTraining {
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, true, null);
       _StateMachine.SetNextState(initCubeState);
+      _GameInstance.ShowHowToPlaySlide("ShowCubeVision");
     }
 
     public override void Exit() {

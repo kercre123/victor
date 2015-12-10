@@ -26,6 +26,11 @@ namespace MotionDetection {
     }
 
     protected void InitializeMinigameObjects() {
+
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      ShowHowToPlaySlide("MotionDetectionHelp01");
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("DetectMotionStateMachine", _StateMachine);
       _StateMachine.SetNextState(new RecognizeMotionState(_Config.TimeAllowedBetweenWaves, _Config.TotalWaveTime));
@@ -34,15 +39,13 @@ namespace MotionDetection {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
     }
 
-    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
-      //Debug.Log("TutorialSequenceDone");
-    }
-
     void Update() {
       _StateMachineManager.UpdateAllMachines();
     }
 
     protected override void CleanUpOnDestroy() {
+      ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == _TutorialSequenceName);
+      sequence.ResetSequence();
     }
   }
 

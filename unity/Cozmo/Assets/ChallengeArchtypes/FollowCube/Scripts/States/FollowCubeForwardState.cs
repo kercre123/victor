@@ -18,6 +18,8 @@ namespace FollowCube {
 
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _GameInstance.ShowHowToPlaySlide("FollowForward");
     }
 
     public override void Update() {

@@ -39,6 +39,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 23fe012b4b9b2490c84e499ff5e5ab75, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _HowToPlayPrefabs:
+  - slideName: ShowCubeVision
+    slidePrefab: {fileID: 22580126, guid: a702754e50a1f4892a91b5ddcbd1831c, type: 2}
+  - slideName: PlaceCubeVision
+    slidePrefab: {fileID: 22542104, guid: 85de59f09e7184fb6a7e1e8bf45714cc, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -47,8 +52,30 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: _GameId
       value: visionTraining
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22542104, guid: 85de59f09e7184fb6a7e1e8bf45714cc,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22580126, guid: a702754e50a1f4892a91b5ddcbd1831c,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slideName
+      value: PlaceCubeVision
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: ShowCubeVision
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

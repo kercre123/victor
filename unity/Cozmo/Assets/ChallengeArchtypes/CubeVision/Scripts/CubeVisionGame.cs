@@ -24,6 +24,7 @@ namespace VisionTraining {
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, true, null);
       _StateMachine.SetNextState(initCubeState);
+      ShowHowToPlaySlide("ShowCubeVision");
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);

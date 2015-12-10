@@ -17,6 +17,8 @@ namespace FollowCube {
       _LastSeenTargetTime = Time.time;
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _GameInstance.ShowHowToPlaySlide("FollowBackward");
     }
 
     public override void Update() {
