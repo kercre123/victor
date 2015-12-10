@@ -4,7 +4,7 @@ public static class AnimationName {
 
   public const string kTapCube = "tapCube";
   public const string kFinishTapCubeWin = "finishTapCubeWin";
-  public const string kFinishTabCubeLose = "finishTabCubeLose";
+  public const string kFinishTabCubeLose = "finishTapCubeLose";
 
   public const string kMajorWin = "majorWin";
   public const string kShocked = "shocked";
