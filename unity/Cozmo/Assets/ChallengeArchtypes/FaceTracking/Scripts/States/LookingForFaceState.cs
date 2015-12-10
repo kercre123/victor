@@ -18,8 +18,8 @@ namespace FaceTracking {
       _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
       _GameInstance.MidCelebration = false;
       _TargetFace = null;
-      _CurrentRobot.SetHeadAngle(0.2f);
-      _CurrentRobot.SetLiftHeight(0);
+      _CurrentRobot.SetHeadAngle(0.15f);
+      _CurrentRobot.SetLiftHeight(0.0f);
       // Play Confused Animation as you enter this state, then begin
       // to wander aimlessly looking for a new face.
 
@@ -41,6 +41,7 @@ namespace FaceTracking {
       // If a face has been found, enter FoundFaceState
       if (_CurrentRobot.Faces.Count > 0) {
         if (_TargetFace == null) {
+          // If TargetFace is null, find the first valid face.
           for (int i = 0; i < _CurrentRobot.Faces.Count; i++) {
             if (_GameInstance.IsValidFace(_CurrentRobot.Faces[i])) {
               _TargetFace = _CurrentRobot.Faces[i];
@@ -49,8 +50,7 @@ namespace FaceTracking {
           }
         }
         // Only count a face as found if it is within the appropriate bounds
-        if (_GameInstance.WithinLockZone(_TargetFace)) {
-          _TargetFace = _CurrentRobot.Faces[0];
+        if (_GameInstance.IsValidFace(_TargetFace)) {
           // We found a face, and its in the right spot!
           ResetUnSeenTimestamp();
 
@@ -62,10 +62,12 @@ namespace FaceTracking {
           if (Time.time - _FirstSeenTimestamp > _SeenHoldDelay) {
             FindFace();
           }
-        }/*
-        else if (_TargetFace != null) {
-          _CurrentRobot.FacePose(_TargetFace);
-        }*/
+        }else {
+          // If the current face is not valid and there are multiple, grab the closest one
+          if (_CurrentRobot.Faces.Count > 1) {
+            _TargetFace = _GameInstance.ClosestFace();
+          }
+        }
       }
       else {
         if (IsUnSeenTimestampUninitialized()) {
@@ -73,6 +75,7 @@ namespace FaceTracking {
         }
         if (Time.time - _FirstUnSeenTimestamp > _UnSeenResetDelay) {
           ResetSeenTimestamp();
+          _TargetFace = null;
         }
       }
     }

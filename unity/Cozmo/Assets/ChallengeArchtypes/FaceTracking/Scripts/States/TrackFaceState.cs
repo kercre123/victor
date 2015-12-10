@@ -43,7 +43,6 @@ namespace FaceTracking {
       // you lose track. 
       // Track total distance tilted based on current goal that alternates between left and right.
       // Display a popup prompt for each
-      _CurrentRobot.SetHeadAngle(0.2f);
       _CurrentRobot.SetLiftHeight(0);
 
       _LeftEyeInnerPosition = _LeftEye.EyeCenter;
@@ -101,16 +100,14 @@ namespace FaceTracking {
     public void LerpEyesHoriz(float lerpVal) {
       _LeftEye.UpperLidY = 0.5f;
       _RightEye.UpperLidY = 0.5f;
+      _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
+      _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
 
       if (lerpVal > 0.0f) {
         _RightEye.UpperLidY = 0.0f;
-        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
-        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
       }
       else {
-        _LeftEye.UpperLidY = 0.0f;
-        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeInnerPosition, _RightEyeOuterPosition, lerpVal);
-        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
+        _LeftEye.UpperLidY =  0.0f;
       }
 
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);

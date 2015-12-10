@@ -69,14 +69,14 @@ namespace FaceTracking {
           CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_LEFT, Color.green);
           StepsCompleted += .333f;
           MidCelebration = true;
-          CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleMiniCelebration);
+          CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleMiniCelebration);
         }
         else if (tiltVal < 0 && !TargetRight) {
           TargetRight = true;
           CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT, Color.green);
           StepsCompleted += .333f;
           MidCelebration = true;
-          CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleMiniCelebration);
+          CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleMiniCelebration);
         }
         // Trigger a success if you've lit up both.
         if (TargetLeft && TargetRight) {
@@ -135,26 +135,26 @@ namespace FaceTracking {
         RaiseMiniGameWin();
       }
     }
-
-    // Returns true if Cozmo is directly facing you
-    public bool WithinLockZone(Face toCheck) {
-      if (IsValidFace(toCheck)) {
-        return true;
-        /*
-        float turnAngle = Vector3.Cross(CurrentRobot.Forward, toCheck.WorldPosition - CurrentRobot.WorldPosition).z;
-        // If Face is valid distance, check to see if we need to turn towards it or if we are actually within the Lock Zone
-        // But also turn to face the face directly.
-        if (Mathf.Abs(turnAngle) > 20f) {
-          //CurrentRobot.FacePose(toCheck);
-          return false;
+    /// <summary>
+    /// Checks through all current robot's faces to find the closest
+    /// </summary>
+    /// <returns>the closest face or NULL if there are no faces to find.</returns>
+    public Face ClosestFace() {
+      Face closest = null;
+      float closestDist = 0.0f;
+      float checkDist = 0.0f;
+      if (CurrentRobot.Faces.Count > 0) {
+        closest = CurrentRobot.Faces[0];
+        closestDist = Vector3.Distance(CurrentRobot.WorldPosition, closest.WorldPosition);
+        for (int i = 0; i < CurrentRobot.Faces.Count; i++) {
+          checkDist = Vector3.Distance(CurrentRobot.WorldPosition, CurrentRobot.Faces[i].WorldPosition);
+          if (closestDist > checkDist) {
+            closest = CurrentRobot.Faces[i];
+            closestDist = checkDist;
+          }
         }
-        else {
-          return true;
-        }*/
       }
-      else {
-        return false;
-      }
+      return closest;
     }
 
     public bool IsValidFace(Face toCheck) {
