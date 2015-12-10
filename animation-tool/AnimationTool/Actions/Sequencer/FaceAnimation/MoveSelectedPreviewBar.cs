@@ -35,9 +35,9 @@ namespace AnimationTool.FaceAnimation
 
             if(left)
             {
-                double destination = Math.Round(previewBar.YValues[0] - MoveSelectedDataPoints.DELTA_X, 2);
+                double destination = Math.Round(previewBar.YValues[0] - MoveSelectedDataPoints.DELTA_X, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
 
-                if (destination < Math.Round(dataPoint.YValues[0] - MoveSelectedDataPoints.DELTA_X, 2))
+                if (destination < Math.Round(dataPoint.YValues[0] - MoveSelectedDataPoints.DELTA_X, MoveSelectedDataPoints.DELTA_TIME_PRECISION))
                 {
                     return false;
                 }
@@ -46,9 +46,9 @@ namespace AnimationTool.FaceAnimation
             }
             else if (right)
             {
-                double destination = Math.Round(previewBar.YValues[0] + MoveSelectedDataPoints.DELTA_X, 2);
+                double destination = Math.Round(previewBar.YValues[0] + MoveSelectedDataPoints.DELTA_X, MoveSelectedDataPoints.DELTA_TIME_PRECISION);
 
-                if (destination > Math.Round(dataPoint.YValues[1], 2))
+                if (destination > Math.Round(dataPoint.YValues[1], MoveSelectedDataPoints.DELTA_TIME_PRECISION))
                 {
                     return false;
                 }

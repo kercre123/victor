@@ -14,7 +14,9 @@ namespace AnimationTool
         public double Duration { get; private set; }
 
         private double minTime;
-
+        private TextBox textBox1;
+        private TextBox textBox2;
+        private Button zoomButton;
         private const double MAX_DURATION = 9;
 
         public ChangeDurationForm()
@@ -48,6 +50,9 @@ namespace AnimationTool
             this.durationLabel = new System.Windows.Forms.Label();
             this.scaleButton = new System.Windows.Forms.Button();
             this.truncateButton = new System.Windows.Forms.Button();
+            this.textBox1 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.zoomButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox
@@ -56,8 +61,8 @@ namespace AnimationTool
             this.textBox.Name = "textBox";
             this.textBox.Size = new System.Drawing.Size(96, 20);
             this.textBox.TabIndex = 0;
-            this.textBox.Text = Properties.Settings.Default.maxTime.ToString();
-            this.textBox.TextChanged += OnTextChange;
+            this.textBox.Text = "6";
+            this.textBox.TextChanged += new System.EventHandler(this.OnTextChange);
             // 
             // durationLabel
             // 
@@ -71,29 +76,55 @@ namespace AnimationTool
             // 
             // scaleButton
             // 
+            this.scaleButton.DialogResult = System.Windows.Forms.DialogResult.Yes;
+            this.scaleButton.Enabled = false;
             this.scaleButton.Location = new System.Drawing.Point(12, 43);
             this.scaleButton.Name = "scaleButton";
             this.scaleButton.Size = new System.Drawing.Size(75, 23);
             this.scaleButton.TabIndex = 2;
             this.scaleButton.Text = "Animation";
             this.scaleButton.UseVisualStyleBackColor = true;
-            this.scaleButton.Enabled = false;
-            this.scaleButton.DialogResult = DialogResult.Yes;
             // 
             // truncateButton
             // 
+            this.truncateButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this.truncateButton.Enabled = false;
             this.truncateButton.Location = new System.Drawing.Point(98, 43);
             this.truncateButton.Name = "truncateButton";
             this.truncateButton.Size = new System.Drawing.Size(75, 23);
             this.truncateButton.TabIndex = 3;
             this.truncateButton.Text = "Timeline";
             this.truncateButton.UseVisualStyleBackColor = true;
-            this.truncateButton.Enabled = false;
-            this.truncateButton.DialogResult = DialogResult.OK;
+            // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(44, 72);
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(44, 20);
+            this.textBox1.TabIndex = 4;
+            // 
+            // textBox2
+            // 
+            this.textBox2.Location = new System.Drawing.Point(98, 72);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(47, 20);
+            this.textBox2.TabIndex = 5;
+            // 
+            // zoomButton
+            // 
+            this.zoomButton.Location = new System.Drawing.Point(58, 98);
+            this.zoomButton.Name = "zoomButton";
+            this.zoomButton.Size = new System.Drawing.Size(75, 23);
+            this.zoomButton.TabIndex = 6;
+            this.zoomButton.Text = "ReZoom";
+            this.zoomButton.UseVisualStyleBackColor = true;
             // 
             // ChangeDurationForm
             // 
-            this.ClientSize = new System.Drawing.Size(185, 78);
+            this.ClientSize = new System.Drawing.Size(187, 135);
+            this.Controls.Add(this.zoomButton);
+            this.Controls.Add(this.textBox2);
+            this.Controls.Add(this.textBox1);
             this.Controls.Add(this.truncateButton);
             this.Controls.Add(this.scaleButton);
             this.Controls.Add(this.durationLabel);
@@ -101,6 +132,7 @@ namespace AnimationTool
             this.Name = "ChangeDurationForm";
             this.ResumeLayout(false);
             this.PerformLayout();
+
         }
 
         private void OnTextChange(object o, EventArgs e)
@@ -120,6 +152,12 @@ namespace AnimationTool
                 }
             }
             catch (Exception) { }
+        }
+
+        private void OnZoom(object o, EventArgs e)
+        {
+            double timeStart = double.Parse(textBox1.Text);
+            double timeEnd = double.Parse(textBox2.Text);
         }
     }
 }
