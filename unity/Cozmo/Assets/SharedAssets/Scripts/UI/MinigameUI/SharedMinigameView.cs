@@ -38,6 +38,7 @@ namespace Cozmo {
       private RectTransform _HowToSlideContainer;
 
       private CanvasGroup _CurrentSlide;
+      private string _CurrentSlideName;
       private Sequence _SlideInTween;
       private CanvasGroup _TransitionOutSlide;
       private Sequence _SlideOutTween;
@@ -259,12 +260,18 @@ namespace Cozmo {
 
       #region How To Play Slides
 
-      public void ShowHowToPlaySlide(CanvasGroup slidePrefab) {
+      public void ShowHowToPlaySlide(HowToPlaySlide slideData) {
+        if (slideData.slideName == _CurrentSlideName) {
+          return;
+        }
+
+        CanvasGroup slidePrefab = slideData.slidePrefab;
         // If a slide already exists, play a transition out tween on it
         if (_CurrentSlide != null) {
           // Set the instance to transition out slot
           _TransitionOutSlide = _CurrentSlide;
           _CurrentSlide = null;
+          _CurrentSlideName = null;
 
           _SlideOutTween = DOTween.Sequence();
           _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
@@ -282,6 +289,7 @@ namespace Cozmo {
         GameObject newSlideObj = UIManager.CreateUIElement(slidePrefab.gameObject, _HowToSlideContainer);
         _CurrentSlide = newSlideObj.GetComponent<CanvasGroup>();
         _CurrentSlide.alpha = 0;
+        _CurrentSlideName = slideData.slideName;
 
         // Play a transition in tween on it
         _SlideInTween = DOTween.Sequence();
