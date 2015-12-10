@@ -28,9 +28,9 @@ namespace Cozmo {
       private string _DescriptionKey;
 
       public string TitleLocKey {
-        get { return _AlertTitleText.text; }
+        get { return _AlertTitleText != null ? _AlertTitleText.text : null; }
         set {
-          if (_TitleKey != value) {
+          if (_TitleKey != value && _AlertTitleText != null) {
             _TitleKey = value;
             _AlertTitleText.text = Localization.Get(value);
           }
@@ -38,9 +38,9 @@ namespace Cozmo {
       }
 
       public string DescriptionLocKey {
-        get { return _AlertMessageText.text; }
+        get { return _AlertMessageText != null ? _AlertMessageText.text : null; }
         set { 
-          if (_DescriptionKey != value) {
+          if (_DescriptionKey != value && _AlertMessageText != null) {
             _DescriptionKey = value;
             _AlertMessageText.text = Localization.Get(value);
           } 

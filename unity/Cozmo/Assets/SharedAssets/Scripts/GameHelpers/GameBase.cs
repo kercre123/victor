@@ -26,7 +26,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameWin() {
     _WonChallenge = true;
-    CloseChallengeUI();
+    OpenChallengeEndedDialog();
   }
 
   public delegate void MiniGameLoseHandler();
@@ -35,7 +35,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void RaiseMiniGameLose() {
     _WonChallenge = false;
-    CloseChallengeUI();
+    OpenChallengeEndedDialog();
   }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
@@ -97,16 +97,6 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     Destroy(gameObject);
-  }
-
-  private void CloseChallengeUI() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished += HandleMinigameViewCloseFinished;
-    _SharedMinigameViewInstance.CloseView();
-  }
-
-  private void HandleMinigameViewCloseFinished() {
-    _SharedMinigameViewInstance = null;
-    _ChallengeEndViewInstance = OpenChallengeEndedDialog();
   }
 
   private AlertView OpenChallengeEndedDialog() {
