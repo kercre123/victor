@@ -852,14 +852,15 @@ namespace Anki {
     {
       _angleTolerance = angleTol_rad.getAbsoluteVal();
 
-     const float minTolDeg = 0.5f;
+      // NOTE: can't be lower than what is used internally on the robot
+      const float minTolRad = 0.031;
       
-      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+      if( _angleTolerance.ToFloat() < minTolRad ) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
-                            "Tried to set tolerance of %fdef, min is %f",
+                            "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_angleTolerance.ToFloat()),
-                            minTolDeg);
-        _angleTolerance = DEG_TO_RAD(minTolDeg);
+                            RAD_TO_DEG(minTolRad));
+        _angleTolerance = minTolRad;
       }
     }
 
@@ -1037,14 +1038,15 @@ namespace Anki {
     {
       _panAngleTol = angleTol_rad.getAbsoluteVal();
 
-      const float minTolDeg = 0.5f;
+      // NOTE: can't be lower than what is used internally on the robot
+      const float minTolRad = 0.031;
       
-      if( _panAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+      if( _panAngleTol.ToFloat() < minTolRad ) {
         PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
-                            "Tried to set tolerance of %fdef, min is %f",
+                            "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_panAngleTol.ToFloat()),
-                            minTolDeg);
-        _panAngleTol = DEG_TO_RAD(minTolDeg);
+                            RAD_TO_DEG(minTolRad));
+        _panAngleTol = minTolRad;
       }
     }
 
@@ -1052,14 +1054,15 @@ namespace Anki {
     {
       _tiltAngleTol = angleTol_rad.getAbsoluteVal();
 
-      const float minTolDeg = 0.5f;
+      // NOTE: can't be lower than what is used internally on the robot
+      const float minTolRad = 0.031;
       
-      if( _tiltAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+      if( _tiltAngleTol.ToFloat() < minTolRad ) {
         PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
-                            "Tried to set tolerance of %fdef, min is %f",
+                            "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_tiltAngleTol.ToFloat()),
-                            minTolDeg);
-        _tiltAngleTol = DEG_TO_RAD(minTolDeg);
+                            RAD_TO_DEG(minTolRad));
+        _tiltAngleTol = minTolRad;
       }
     }
     
@@ -1526,14 +1529,14 @@ namespace Anki {
         _headAngle = MAX_HEAD_ANGLE;
       }
 
-      const float minTolDeg = 0.5f;
+      const float minTolRad = 0.031;
       
-      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
-        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.InvalidTolerance",
-                            "Tried to set tolerance of %fdef, min is %f",
+      if( _angleTolerance.ToFloat() < minTolRad ) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_angleTolerance.ToFloat()),
-                            minTolDeg);
-        _angleTolerance = DEG_TO_RAD(minTolDeg);
+                            RAD_TO_DEG(minTolRad));
+        _angleTolerance = minTolRad;
       }
       
       if(_variability > 0) {
