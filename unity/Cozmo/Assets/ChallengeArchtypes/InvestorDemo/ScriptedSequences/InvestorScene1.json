@@ -114,6 +114,26 @@
       ]
     },
     {
+      "Name": "StopFollowMotion Behavior",
+      "Id": 12,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
+          "BehaviorChooser": "Selection"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
+          "Behavior": "NoneBehavior"
+        }
+      ],
+      "ExitConditions": []
+    },
+    {
       "Name": "8. Bye Bye (anim)",
       "Id": 5,
       "Sequencial": true,

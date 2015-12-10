@@ -42,6 +42,8 @@ namespace FollowCube {
       initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
+      ShowHowToPlaySlide("ShowCubeVision");
+
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);

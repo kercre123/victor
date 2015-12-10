@@ -10,7 +10,20 @@ namespace AnimationTool.Sequencer
         protected new List<MoveDataPoint> moveDataPoints;
 
         protected MoveSelectedDataPoints() { }
+        public MoveSelectedDataPoints(Chart chart, bool left, bool right, double targetXVal)
+        {
+            if (chart == null) return;
 
+            selectedDataPoints = new List<DataPoint>();
+            points = chart.Series[0].Points;
+            chartArea = chart.ChartAreas[0];
+            this.chart = chart;
+            moveDataPoints = new List<MoveDataPoint>();
+            this.left = left;
+            this.right = right;
+            this.targetXVal = targetXVal;
+            this.targetNudge = false;
+        }
         public MoveSelectedDataPoints(Chart chart, bool left, bool right)
         {
             if (chart == null) return;
@@ -22,6 +35,7 @@ namespace AnimationTool.Sequencer
             moveDataPoints = new List<MoveDataPoint>();
             this.left = left;
             this.right = right;
+            this.targetNudge = true;
         }
 
         public override bool Try()
@@ -52,7 +66,7 @@ namespace AnimationTool.Sequencer
 
             foreach (DataPoint dp in selectedDataPoints)
             {
-                double distance = Math.Round(nextRight - dp.YValues[1], 1);
+                double distance = Math.Round(nextRight - dp.YValues[1], DELTA_TIME_PRECISION);
                 if (distance < DELTA_X) //stop value from going equal to the next data point
                 {
                     right = false;
@@ -73,7 +87,7 @@ namespace AnimationTool.Sequencer
 
             foreach (DataPoint dp in selectedDataPoints)
             {
-                double distance = Math.Round(dp.YValues[0] - nextLeft, 1);
+                double distance = Math.Round(dp.YValues[0] - nextLeft, DELTA_TIME_PRECISION);
                 if (distance < DELTA_X) //stop value from going equal to the next data point
                 {
                     left = false;
@@ -128,7 +142,6 @@ namespace AnimationTool.Sequencer
         public override bool UpdateValues(bool left, bool right, bool up, bool down)
         {
             if (!left && !right) return false;
-
             double changeX = left ? -DELTA_X : DELTA_X;
 
             for (int i = 0; i < selectedDataPoints.Count; ++i)
@@ -138,7 +151,17 @@ namespace AnimationTool.Sequencer
 
                 if (dp.Color != Color.Red)
                 {
-                    action = new MoveDataPoint(dp, dp.YValues[0] + changeX);
+                    if (targetNudge == false && selectedDataPoints.Count == 1)
+                    {
+                        double absoluteX = dp.YValues[0];
+                        // (real/ gridwidth)
+                        absoluteX = Math.Round(targetXVal / DELTA_X) * DELTA_X;
+                        action = new MoveDataPoint(dp, absoluteX);
+                    }
+                    else
+                    {
+                        action = new MoveDataPoint(dp, dp.YValues[0] + changeX);
+                    }
                 }
                 else
                 {

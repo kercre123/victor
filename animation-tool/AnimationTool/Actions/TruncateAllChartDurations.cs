@@ -52,7 +52,7 @@ namespace AnimationTool
                 return false;
             }
 
-            Properties.Settings.Default["maxTime"] = Math.Round(xValueNew, 1);
+            Properties.Settings.Default.maxTime = Math.Round(xValueNew, 1);
             Properties.Settings.Default.Save();
 
             return true;
@@ -60,7 +60,7 @@ namespace AnimationTool
 
         public virtual void Undo()
         {
-            Properties.Settings.Default["maxTime"] = Math.Round(xValueOld, 1);
+            Properties.Settings.Default.maxTime = Math.Round(xValueOld, 1);
             Properties.Settings.Default.Save();
 
             foreach (TruncateChartDuration action in truncateChartDurations)

@@ -21,6 +21,8 @@ namespace DockTraining {
 
       _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
 
+      _DockTrainingGame.ShowHowToPlaySlide("WaveToLineUp");
+
       LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
       if (currentTarget != null) {
         currentTarget.SetLEDs(Color.white);

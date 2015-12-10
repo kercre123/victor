@@ -48,23 +48,29 @@ public abstract class GameBase : MonoBehaviour {
   private AlertView _ChallengeEndViewInstance;
   private bool _WonChallenge;
 
+  [SerializeField]
+  protected HowToPlaySlide[] _HowToPlayPrefabs;
+
   public void InitializeMinigame(ChallengeData challengeData) {
     GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
     _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
 
-    // For all challenges, set the title text and add a quit button
     _ChallengeData = challengeData;
     _WonChallenge = false;
-    TitleText = Localization.Get(challengeData.ChallengeTitleLocKey);
-    CreateDefaultQuitButton();
-
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
+    InitializeView(challengeData);
     _SharedMinigameViewInstance.OpenView();
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
+
+  protected virtual void InitializeView(ChallengeData data) {
+    // For all challenges, set the title text and add a quit button by default
+    TitleText = Localization.Get(data.ChallengeTitleLocKey);
+    CreateDefaultQuitButton();
+  }
 
   public void OnDestroy() {
     CleanUpOnDestroy();
@@ -238,4 +244,44 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   #endregion
+
+  #region How To Play Slides
+
+  public void ShowHowToPlaySlide(string slideName) {
+    // Search through the array for a slide of the same name
+    HowToPlaySlide foundSlide = null;
+    foreach (var slide in _HowToPlayPrefabs) {
+      if (slide != null && slide.slideName == slideName) {
+        foundSlide = slide;
+        break;
+      }
+      else if (slide == null) {
+        DAS.Warn(this, "Null slide found in slide prefabs! Check this object's" +
+        " list of slides! gameObject.name=" + gameObject.name);
+      }
+    }
+
+    // If found, show that slide.
+    if (foundSlide != null) {
+      if (foundSlide.slidePrefab != null) {
+        _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlide);
+      }
+      else {
+        DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
+        " list of slides! gameObject.name=" + gameObject.name);
+      }
+    }
+    else {
+      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
+      " list of slides! gameObject.name=" + gameObject.name);
+    }
+  }
+
+  #endregion
+}
+
+[System.Serializable]
+public class HowToPlaySlide {
+  public string slideName;
+  public CanvasGroup slidePrefab;
 }

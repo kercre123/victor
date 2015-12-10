@@ -17,6 +17,7 @@ namespace StackTraining {
       base.Enter();
       _Game = _StateMachine.GetGame() as StackTrainingGame;
       _Game.PickCubes();
+      _Game.ShowHowToPlaySlide("MakeStack");
     }
 
     public override void Update() {

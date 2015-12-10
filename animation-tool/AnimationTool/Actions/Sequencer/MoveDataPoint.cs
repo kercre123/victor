@@ -24,7 +24,8 @@ namespace AnimationTool.Sequencer
         {
             if (dataPoint == null) return false;
 
-            dataPoint.SetValueY(Math.Round(yValue, 1), Math.Round(yValue + extraData.Length, 1));
+            dataPoint.SetValueY(Math.Round(yValue, MoveSelectedDataPoints.DELTA_TIME_PRECISION), 
+                                Math.Round(yValue + extraData.Length, MoveSelectedDataPoints.DELTA_TIME_PRECISION));
             dataPoint.ToolTip = extraData.FileName + " (" + dataPoint.YValues[0] + ", " + dataPoint.YValues[1] + ")";
 
             if(!string.IsNullOrEmpty(extraData.Image) && File.Exists(extraData.Image))

@@ -40,6 +40,8 @@ namespace Wink {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
       RobotEngineManager.Instance.OnObservedMotion += OnMotionDetected;
+
+      ShowHowToPlaySlide("WinkGameHelp01");
     }
 
     void Update() {

@@ -173,6 +173,10 @@ namespace Vortex {
 
     public void HandleBlockTapped(int blockID, int tappedTimes) {
       DAS.Info(this, "Player Block Tapped. " + blockID);
+      if (_PlayerDataList == null) {
+        return;
+      }
+
       PlayerData player = null;
       for (int i = 0; i < kMaxPlayers; ++i) {
         if (_PlayerDataList[i].blockID == blockID) {

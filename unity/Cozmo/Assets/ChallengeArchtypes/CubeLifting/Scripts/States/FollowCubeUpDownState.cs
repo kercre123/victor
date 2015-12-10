@@ -24,6 +24,8 @@ namespace CubeLifting {
     private ProceduralEyeParameters _LeftEyeParam = ProceduralEyeParameters.MakeDefaultLeftEye();
     private ProceduralEyeParameters _RightEyeParam = ProceduralEyeParameters.MakeDefaultRightEye();
 
+    private CubeLiftingGame _GameInstance;
+
     public FollowCubeUpDownState(List<CubeLiftingSetting> settings, int index, int selectedCubeId = -1) {
       _Settings = settings;
       _Index = index;
@@ -36,7 +38,7 @@ namespace CubeLifting {
       }
       _SelectedCubeId = selectedCubeId;
     }
-      
+
     public override void Enter() {
       base.Enter();
       if (_SelectedCubeId == -1) {
@@ -46,6 +48,9 @@ namespace CubeLifting {
       _CurrentRobot.TrackToObject(_CurrentRobot.LightCubes[_SelectedCubeId]);
       SetEyeParameters(_Up);
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEyeParam, _RightEyeParam);
+
+      _GameInstance = _StateMachine.GetGame() as CubeLiftingGame;
+      _GameInstance.ShowHowToPlaySlide("CubeUpDown");
     }
 
     private void SetEyeParameters(bool up) {
@@ -135,6 +140,7 @@ namespace CubeLifting {
     }
 
     private void HandleFinalStateCompleteAnimationDone(bool success) {
+      _GameInstance.ShowHowToPlaySlide("TapToLift");
       _StateMachine.SetNextState(new TapCubeState(new PickupCubeState(_SelectedCubeId), _SelectedCubeId));
     }
 
