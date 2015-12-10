@@ -21,8 +21,8 @@ namespace CubeLifting {
     private float _ProgressStart = 0f;
     private float _ProgressEnd = 1f;
 
-    private ProceduralEyeParameters _LeftEyeParam = new ProceduralEyeParameters();
-    private ProceduralEyeParameters _RightEyeParam = new ProceduralEyeParameters();
+    private ProceduralEyeParameters _LeftEyeParam = ProceduralEyeParameters.MakeDefaultLeftEye();
+    private ProceduralEyeParameters _RightEyeParam = ProceduralEyeParameters.MakeDefaultRightEye();
 
     public FollowCubeUpDownState(List<CubeLiftingSetting> settings, int index, int selectedCubeId = -1) {
       _Settings = settings;
@@ -49,22 +49,9 @@ namespace CubeLifting {
     }
 
     private void SetEyeParameters(bool up) {
-      _LeftEyeParam.EyeScale = new Vector2(1.5f, 1f);
-      _LeftEyeParam.EyeCenter = new Vector2(10, 3);
-      _RightEyeParam.EyeScale = new Vector2(1.5f, 1f);
-      _RightEyeParam.EyeCenter = new Vector2(-10, 3);
-      if (up) {
-        _RightEyeParam.UpperLidY = 0.5f;
-        _RightEyeParam.UpperLidAngle = -45f;
-        _LeftEyeParam.UpperLidY = 0.5f;
-        _LeftEyeParam.UpperLidAngle = -45f;
-      }
-      else {
-        _RightEyeParam.LowerLidY = 0.5f;
-        _RightEyeParam.LowerLidAngle = 45f;
-        _LeftEyeParam.LowerLidY = 0.5f;
-        _LeftEyeParam.LowerLidAngle = 45f;
-      }
+      
+      _LeftEyeParam.EyeCenter = new Vector2(_LeftEyeParam.EyeCenter.x, _LeftEyeParam.EyeCenter.y + (up ? -20f : 20f));
+      _RightEyeParam.EyeCenter = new Vector2(_RightEyeParam.EyeCenter.x, _RightEyeParam.EyeCenter.y + (up ? -20f : 20f));
     }
 
     public override void Update() {
