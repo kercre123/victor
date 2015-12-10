@@ -54,14 +54,7 @@ public class DevHubWorld : HubWorldBase {
   }
 
   private void HandleMiniGameQuit() {
-    CloseMiniGame();
     ShowHubWorldDialog();
-  }
-
-  private void CloseMiniGame() {
-    if (_MiniGameInstance != null) {
-      _MiniGameInstance.CloseMinigame();
-    }
   }
 
   private void CloseMiniGameImmediately() {

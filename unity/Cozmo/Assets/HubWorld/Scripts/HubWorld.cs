@@ -111,8 +111,6 @@ namespace Cozmo.HubWorld {
     private void HandleMiniGameLose() {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
-
-      CloseMiniGame();
       ShowHubWorldDialog();
     }
 
@@ -122,16 +120,12 @@ namespace Cozmo.HubWorld {
         CompleteChallenge(_CurrentChallengePlaying);
         _CurrentChallengePlaying = null;
       }
-
-      CloseMiniGame();
       ShowHubWorldDialog();
     }
 
     private void HandleMiniGameQuit() {
       // Reset the current challenge
       _CurrentChallengePlaying = null;
-
-      CloseMiniGame();
       ShowHubWorldDialog();
     }
 
@@ -142,13 +136,6 @@ namespace Cozmo.HubWorld {
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
-    }
-
-    private void CloseMiniGame() {
-      if (_MiniGameInstance != null) {
-        DeregisterMinigameEvents();
-        _MiniGameInstance.CloseMinigame();
-      }
     }
 
     private void CloseMiniGameImmediately() {
