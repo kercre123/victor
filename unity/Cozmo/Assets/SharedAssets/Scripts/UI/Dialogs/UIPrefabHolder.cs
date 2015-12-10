@@ -36,6 +36,13 @@ namespace Cozmo {
       public Cozmo.MinigameWidgets.SharedMinigameView SharedMinigameViewPrefab {
         get { return _SharedMinigameViewPrefab; }
       }
+
+      [SerializeField]
+      private AlertView _ChallengeEndViewPrefab;
+
+      public AlertView ChallengeEndViewPrefab {
+        get { return _ChallengeEndViewPrefab; }
+      }
     }
   }
 }
