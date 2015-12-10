@@ -143,6 +143,17 @@ message TrackToObject {
     bool    headOnly
 }
 
+// TrackToFace
+//   Robot will automatically adjust head and body angle to look at this face ID, if it
+//   is observed. Sending SetHeadAngle message (above) will disable this behavior.
+//   Set headOnly to true to only use the head and not turn the body.
+//   Use objectID = u32_MAX to disable tracking.
+message TrackToFace {
+    uint_32 faceID,
+    uint_8  robotID,
+    bool    headOnly
+}
+
 // StopAllMotors
 message StopAllMotors {
 }
