@@ -39,6 +39,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81cb67300a80b49b99e058e1c4849a47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _HowToPlayPrefabs:
+  - slideName: CubeUpDown
+    slidePrefab: {fileID: 22524294, guid: c086389d053b54d81837a6a717238bcc, type: 2}
+  - slideName: TapToLift
+    slidePrefab: {fileID: 22547222, guid: 341a5042f5c134bb485e8753aa67dedd, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -47,9 +52,31 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: _GameId
       value: forwardBackward
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: CubeUpDown
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slideName
+      value: TapToLift
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22524294, guid: c086389d053b54d81837a6a717238bcc,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22547222, guid: 341a5042f5c134bb485e8753aa67dedd,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 186758}
