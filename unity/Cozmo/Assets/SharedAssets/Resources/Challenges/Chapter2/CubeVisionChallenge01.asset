@@ -22,6 +22,6 @@ MonoBehaviour:
   _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys:
-    - PeekGameChallenge1
+    - FaceTrackChallenge01
     StatGateArray: []
-  MinigameConfig: {fileID: 0}
+  MinigameConfig: {fileID: 11400000, guid: 054f498f752714e328f083a7200e1cb6, type: 2}
