@@ -14,6 +14,7 @@ namespace StackTraining {
 
       _CurrentRobot.SetHeadAngle(0f);
       _CurrentRobot.SetLiftHeight(0f);
+      _Game.ShowHowToPlaySlide("HelpStack");
     }
 
     public override void Update() {

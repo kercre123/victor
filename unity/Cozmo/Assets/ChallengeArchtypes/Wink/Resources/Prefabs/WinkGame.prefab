@@ -39,14 +39,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9baf3cd7faf584bebb1c1963e2fe09c2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameId: winkGame
+  _HowToPlayPrefabs:
+  - slideName: WinkGameHelp01
+    slidePrefab: {fileID: 22527286, guid: 93fb53beaa5214a1aa6c1948fb4322a9, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22527286, guid: 93fb53beaa5214a1aa6c1948fb4322a9,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: WinkGameHelp01
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 138730}

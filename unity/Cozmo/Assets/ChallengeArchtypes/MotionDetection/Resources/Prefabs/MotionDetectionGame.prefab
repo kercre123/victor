@@ -39,6 +39,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50d6efc11dccd4db88626309a1230413, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _HowToPlayPrefabs:
+  - slideName: MotionDetectionHelp01
+    slidePrefab: {fileID: 22581616, guid: fb5cc387c8f024498b7384de635b2217, type: 2}
   _TutorialSequenceName: MotionDetectionIntro
 --- !u!1001 &100100000
 Prefab:
@@ -48,12 +51,25 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: _GameId
       value: motionDetection
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _TutorialSequenceName
       value: MotionDetectionIntro
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22581616, guid: fb5cc387c8f024498b7384de635b2217,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: MotionDetectionHelp01
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
