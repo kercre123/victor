@@ -88,21 +88,6 @@ public class RobotEngineManager : MonoBehaviour {
     #else
     DAS.AddTarget(new UnityDasTarget());
     #endif
-
-    // TMP!!!! TMP!!! TMP!!!
-
-    for (int i = 0; i < 25; i++) {
-
-      var asteroid = new GameObject("Asteroid");
-      var renderer = asteroid.AddComponent<MeshRenderer>();
-      var filter = asteroid.AddComponent<MeshFilter>();
-      filter.sharedMesh = PolyhedronGenerator.GeneratePolyhedron();
-      renderer.sharedMaterial = new Material(Shader.Find("Diffuse"));
-
-      asteroid.transform.localScale = Vector3.one * 100f;
-
-      asteroid.transform.position = new Vector3(300 * (i % 5), 300 * (i / 5), 0);
-    }
   }
   
 
