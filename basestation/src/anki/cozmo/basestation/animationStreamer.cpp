@@ -308,20 +308,6 @@ namespace Cozmo {
   } // BufferAudioToSend()
   
 
-  inline static void SetFaceParams(ProceduralFaceParams& faceParams,
-                                   ProceduralFaceParams&& interpolatedFrame,
-                                   bool shouldReplace)
-  {
-    if (shouldReplace)
-    {
-      faceParams = interpolatedFrame;
-    }
-    else
-    {
-      faceParams.Combine(interpolatedFrame);
-    }
-  }
-  
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
                                         ProceduralFaceParams& faceParams,
@@ -329,6 +315,7 @@ namespace Cozmo {
   {
     bool paramsSet = false;
     
+    const TimeStamp_t currStreamTime = currTime_ms - startTime_ms;
     if(track.HasFramesLeft()) {
       ProceduralFaceKeyFrame& currentKeyFrame = track.GetCurrentKeyFrame();
       if(currentKeyFrame.IsTimeToPlay(startTime_ms, currTime_ms))
@@ -338,24 +325,32 @@ namespace Cozmo {
         ProceduralFaceKeyFrame* nextFrame = track.GetNextKeyFrame();
         if (nextFrame != nullptr) {
           if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms)) {
-            // If it's time to play the next frame, then the current frame is done,
-            // so move the track forward
+            // If it's time to play the next frame and the current frame at the same time, something's wrong!
+            PRINT_NAMED_WARNING("AnimationStreamer.GetFaceHelper.FramesTooClose",
+                                "currentFrameTriggerTime: %d ms, nextFrameTriggerTime: %d, StreamTime: %d",
+                                currentKeyFrame.GetTriggerTime(), nextFrame->GetTriggerTime(), currStreamTime);
             
-            if(nextFrame->GetTriggerTime() - currentKeyFrame.GetTriggerTime() <= IKeyFrame::SAMPLE_LENGTH_MS)
-            {
-              // Special case: the current frame is within one sample length of the
-              // next frame, meaning it became time to play both of them at the same
-              // time. So we want to make sure we actually send the current frame
-              // before moving ahead.
+            // Something is wrong. Just move to next frame...
+            track.MoveToNextKeyFrame();
+            
+          } else {
+            /*
+            // If we're within one sample period following the currFrame, just play the current frame
+            if (currStreamTime - currentKeyFrame.GetTriggerTime() < IKeyFrame::SAMPLE_LENGTH_MS) {
               interpolatedParams = currentKeyFrame.GetFace().GetParams();
               paramsSet = true;
             }
+            // We're on the way to the next frame, but not too close to it: interpolate.
+            else if (nextFrame->GetTriggerTime() - currStreamTime >= IKeyFrame::SAMPLE_LENGTH_MS) {
+             */
+              interpolatedParams = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
+              paramsSet = true;
+            //}
             
-            track.MoveToNextKeyFrame();
-          } else {
-            // We're on the way to the next frame: interpolate.
-            interpolatedParams = currentKeyFrame.GetInterpolatedFaceParams(*nextFrame, currTime_ms - startTime_ms);
-            paramsSet = true;
+            if (nextFrame->IsTimeToPlay(startTime_ms, currTime_ms + IKeyFrame::SAMPLE_LENGTH_MS)) {
+              track.MoveToNextKeyFrame();
+            }
+            
           }
         } else {
           // There's no next frame to interpolate towards: just send this keyframe
@@ -366,7 +361,14 @@ namespace Cozmo {
         }
         
         if(paramsSet) {
-          SetFaceParams(faceParams, std::move(interpolatedParams), shouldReplace);
+          if (shouldReplace)
+          {
+            faceParams = interpolatedParams;
+          }
+          else
+          {
+            faceParams.Combine(interpolatedParams);
+          }
         }
       } // if(nextFrame != nullptr
     } // if(track.HasFramesLeft())
@@ -769,11 +771,6 @@ namespace Cozmo {
       
 #     endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       
-      // Increment fake "streaming" time, so we can evaluate below whether
-      // it's time to stream out any of the other tracks. Note that it is still
-      // relative to the same start time.
-      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-      
       //
       // We are guaranteed to have sent some kind of audio frame at this point.
       // Now send any other frames that are ready, so they will be timed with
@@ -843,6 +840,11 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("Animation.Update.SendBufferedMessagesFailed", "");
         return lastResult;
       }
+      
+      // Increment fake "streaming" time, so we can evaluate below whether
+      // it's time to stream out any of the other tracks. Note that it is still
+      // relative to the same start time.
+      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
     } // while(buffering frames)
     
