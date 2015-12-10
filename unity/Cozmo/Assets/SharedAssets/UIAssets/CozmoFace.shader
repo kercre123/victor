@@ -271,7 +271,8 @@
 
         // apply rotation
 
-        facePos = float2(facePos.x * i.face.y + facePos.y * i.face.x, facePos.y * i.face.y - facePos.x * i.face.x) + IMAGE_SIZE * 0.5;
+        facePos = float2(facePos.x * i.face.y + facePos.y * i.face.x, 
+                         facePos.y * i.face.y - facePos.x * i.face.x) + IMAGE_SIZE * 0.5;
 
         float2 leftEyePos = _LeftEyeCenterScale.xy + NominalLeftEyePosition;
 
@@ -280,22 +281,57 @@
         // apply rotation
         leftPos = float2(leftPos.x * i.eyes.y + leftPos.y * i.eyes.x, leftPos.y * i.eyes.y - leftPos.x * i.eyes.x);
 
-        float left = eyeContains(leftPos, _LeftOuterRadius.xy, _LeftInnerRadius.zw, _LeftOuterRadius.zw, _LeftInnerRadius.xy, _LeftEyeCenterScale.zw);
+        float left = eyeContains(leftPos, 
+                                 _LeftOuterRadius.xy, 
+                                 _LeftInnerRadius.zw, 
+                                 _LeftOuterRadius.zw, 
+                                 _LeftInnerRadius.xy, 
+                                 _LeftEyeCenterScale.zw);
 
-        float leftEyelidTop = topEyelidContains(leftPos, _LeftUpperLidY, i.sine.x, i.cosine.x, i.tangent.x, _LeftUpperLidBend, _LeftEyeCenterScale.zw);
-        float leftEyelidBottom = bottomEyelidContains(leftPos, _LeftLowerLidY, i.sine.y, i.cosine.y, i.tangent.y, _LeftLowerLidBend, _LeftEyeCenterScale.zw);
+        float leftEyelidTop = topEyelidContains(leftPos, 
+                                                _LeftUpperLidY, 
+                                                i.sine.x, 
+                                                i.cosine.x, 
+                                                i.tangent.x, 
+                                                _LeftUpperLidBend, 
+                                                _LeftEyeCenterScale.zw);
+        float leftEyelidBottom = bottomEyelidContains(leftPos, 
+                                                      _LeftLowerLidY, 
+                                                      i.sine.y, 
+                                                      i.cosine.y, 
+                                                      i.tangent.y, 
+                                                      _LeftLowerLidBend, 
+                                                      _LeftEyeCenterScale.zw);
 
         float2 rightEyePos = _RightEyeCenterScale.xy + NominalRightEyePosition;
 
         float2 rightPos = facePos - rightEyePos;
 
         // apply rotation
-        rightPos = float2(rightPos.x * i.eyes.w + rightPos.y * i.eyes.z, rightPos.y * i.eyes.w - rightPos.x * i.eyes.z);
+        rightPos = float2(rightPos.x * i.eyes.w + rightPos.y * i.eyes.z, 
+                          rightPos.y * i.eyes.w - rightPos.x * i.eyes.z);
 
-        float right = eyeContains(rightPos, _RightInnerRadius.zw, _RightOuterRadius.xy, _RightInnerRadius.xy, _RightOuterRadius.zw, _RightEyeCenterScale.zw);
+        float right = eyeContains(rightPos, 
+                                  _RightInnerRadius.zw, 
+                                  _RightOuterRadius.xy, 
+                                  _RightInnerRadius.xy, 
+                                  _RightOuterRadius.zw, 
+                                  _RightEyeCenterScale.zw);
 
-        float rightEyelidTop = topEyelidContains(rightPos, _RightUpperLidY, i.sine.z, i.cosine.z, i.tangent.z, _RightUpperLidBend, _RightEyeCenterScale.zw);
-        float rightEyelidBottom = bottomEyelidContains(rightPos, _RightLowerLidY, i.sine.w, i.cosine.w, i.tangent.w, _RightLowerLidBend, _RightEyeCenterScale.zw);
+        float rightEyelidTop = topEyelidContains(rightPos, 
+                                                 _RightUpperLidY, 
+                                                 i.sine.z, 
+                                                 i.cosine.z, 
+                                                 i.tangent.z, 
+                                                 _RightUpperLidBend, 
+                                                 _RightEyeCenterScale.zw);
+        float rightEyelidBottom = bottomEyelidContains(rightPos, 
+                                                       _RightLowerLidY, 
+                                                       i.sine.w, 
+                                                       i.cosine.w, 
+                                                       i.tangent.w, 
+                                                       _RightLowerLidBend, 
+                                                       _RightEyeCenterScale.zw);
 
         left = saturate(left - leftEyelidTop - leftEyelidBottom);
         right = saturate(right - rightEyelidTop - rightEyelidBottom);

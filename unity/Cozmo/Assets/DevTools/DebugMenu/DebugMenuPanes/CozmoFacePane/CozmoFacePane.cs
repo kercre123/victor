@@ -242,7 +242,8 @@ public class CozmoFacePane : MonoBehaviour {
   }
     
   private void UpdateCozmoFaceMaterial() {
-    _CozmoFacePreview.material.SetVector("_FaceCenterScale", new Vector4(_FaceCenterX.value, _FaceCenterY.value, _FaceScaleX.value, _FaceScaleY.value));
+    _CozmoFacePreview.material.SetVector("_FaceCenterScale", 
+        new Vector4(_FaceCenterX.value, _FaceCenterY.value, _FaceScaleX.value, _FaceScaleY.value));
     _CozmoFacePreview.material.SetFloat("_FaceAngle", _FaceAngle.value);
 
     _LeftEyeParameters.SetMaterialValues(_CozmoFacePreview.material, left:true);
@@ -386,7 +387,11 @@ public class CozmoFacePane : MonoBehaviour {
     var currentRobot = RobotEngineManager.Instance.CurrentRobot;
 
     if (currentRobot != null) {
-      currentRobot.DisplayProceduralFace(_FaceAngle.value, new Vector2(_FaceCenterX.value, _FaceCenterY.value), new Vector2(_FaceScaleX.value, _FaceScaleY.value), _LeftEyeParameters, _RightEyeParameters);
+      currentRobot.DisplayProceduralFace(_FaceAngle.value, 
+        new Vector2(_FaceCenterX.value, _FaceCenterY.value), 
+        new Vector2(_FaceScaleX.value, _FaceScaleY.value), 
+        _LeftEyeParameters, 
+        _RightEyeParameters);
     }
 
     PrintCode();
