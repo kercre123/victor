@@ -49,8 +49,7 @@ namespace FollowCube {
     }
 
     protected override void CleanUpOnDestroy() {
-      // cancels head tracking.
-      CurrentRobot.TrackToObject(null);
+
     }
 
     public void FailedAttempt() {
