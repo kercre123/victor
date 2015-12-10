@@ -417,6 +417,7 @@ public:
     ActionList& GetActionList() { return _actionList; }
   
     static const ActionList::SlotHandle DriveAndManipulateSlot = 0;
+    static const ActionList::SlotHandle FaceAnimationSlot = 1;
   
     // Send a message to the robot to place whatever it is carrying on the
     // ground right where it is. Returns RESULT_FAIL if robot is not carrying

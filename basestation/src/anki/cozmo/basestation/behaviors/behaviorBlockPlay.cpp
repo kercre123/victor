@@ -59,12 +59,16 @@ namespace Cozmo {
   {
     _name = "BlockPlay";
 
-    _motionProfile.speed_mmps = 80.0f;
+    // start with defaults
+    _motionProfile = DEFAULT_PATH_MOTION_PROFILE;
+    
+    _motionProfile.speed_mmps = 60.0f;
     _motionProfile.accel_mmps2 = 200.0f;
-    _motionProfile.decel_mmps2 = 80.0f;
-    _motionProfile.pointTurnSpeed_rad_per_sec = 2.5f;
+    _motionProfile.decel_mmps2 = 200.0f;
+    _motionProfile.pointTurnSpeed_rad_per_sec = 2.0f;
     _motionProfile.pointTurnAccel_rad_per_sec2 = 100.0f;
     _motionProfile.pointTurnDecel_rad_per_sec2 = 100.0f;
+    _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
     
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
@@ -139,6 +143,24 @@ namespace Cozmo {
       return Status::Complete;
     }
 
+    // hack to track object motion
+    if( _trackedObject.IsSet() ) {
+      ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(_trackedObject);
+      if (nullptr != obj) {
+        if( obj->IsMoving() ) {
+          _trackedObjectStoppedMovingTime = -1.0f;
+        }
+        else if( _trackedObjectStoppedMovingTime < 0 ) {
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.BlockStoppedMoving",
+                                 "tracked block stopped moving at t=%f",
+                                 currentTime_sec);
+          _trackedObjectStoppedMovingTime = currentTime_sec;
+        }
+      }
+    }
+
+    
+
     if( _holdUntilTime > 0.0f) {
       if( currentTime_sec < _holdUntilTime ) {
         return Status::Running;
@@ -163,13 +185,15 @@ namespace Cozmo {
           // because we may want to do it in parallel
           MoveLiftToHeightAction* moveLiftAction = nullptr;
 
-          if( robot.IsCarryingObject() && robot.GetLiftHeight() > kLowCarryHeightMM + 5 && !robot.IsLiftMoving() ) {
+          const float lowCarry = kLowCarryHeightMM; //  + 10;
+          
+          if( robot.IsCarryingObject() && robot.GetLiftHeight() > lowCarry + 5 && !robot.IsLiftMoving() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace",
                                    "block in lift is blocking view, moving from %f to %f",
                                    robot.GetLiftHeight(),
-                                   kLowCarryHeightMM);
+                                   lowCarry);
 
-            moveLiftAction = new MoveLiftToHeightAction(kLowCarryHeightMM);
+            moveLiftAction = new MoveLiftToHeightAction(lowCarry);
             // move slowly
             moveLiftAction->SetDuration(1.0f);
           }
@@ -273,22 +297,19 @@ namespace Cozmo {
         }
         
         // Check that block is on the ground and not moving
-        TimeStamp_t t;
-        if (!obj->IsMoving(&t)) {
-          // Check that is hasn't been moving for a few seconds
-          s32 notMovingTime_ms = robot.GetLastMsgTimestamp() - t;
-          if (notMovingTime_ms > 2000 &&
-              diffVec.z() < 0.75 * obj->GetSize().z()) {
-            PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.BlockOnGround", "State: TrackingBlock");
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
-                                   "disabling block tracking in order to inspect block");
-            SetCurrState(State::InspectingBlock);
-            robot.GetMoveComponent().DisableTrackToObject();
+        if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.75f &&
+            diffVec.z() < 0.75 * obj->GetSize().z()) {
+          
+          PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.BlockOnGround", "State: TrackingBlock");
+          BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
+                                 "disabling block tracking in order to inspect block");
+          SetCurrState(State::InspectingBlock);
+          robot.GetMoveComponent().DisableTrackToObject();
+          PlayAnimation(robot, "ID_react2block_02", false);
 
-            // hold a bit before making a decision about the block
-            const float inspectTime = 0.75f;
-            _holdUntilTime = currentTime_sec + inspectTime;
-          }
+          // hold a bit before making a decision about the block
+          const float inspectTime = 0.3f;
+          _holdUntilTime = currentTime_sec + inspectTime;
         }
         
         break;
@@ -705,11 +726,13 @@ namespace Cozmo {
                                      "BehaviorBlockPlay.HandleActionCompleted.RollSuccessful",
                                      "");
               
-              // We're done picking up the block
+              // We're done rolling the block
               SetCurrState(State::InspectingBlock);
 
+              PlayAnimation(robot, "ID_rollBlock_succeed");
+
               // hold a bit before making a decision about the block
-              const float inspectTime = 0.4f;
+              const float inspectTime = 0.3f;
               _holdUntilTime = currentTime_sec + inspectTime;
 
               _isActing = false;
@@ -761,6 +784,8 @@ namespace Cozmo {
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                      "BehaviorBlockPlay.HandleActionCompleted.PickupSuccessful",
                                      "");
+
+              PlayAnimation(robot, "ID_pickUpBlock_succeed", false);
               
               // We're done picking up the block.
               SetCurrState(State::TrackingFace);
@@ -823,7 +848,7 @@ namespace Cozmo {
               SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::Complete);
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
               
-              PlayAnimation(robot, "Demo_OCD_All_Blocks_Neat_Celebration");
+              PlayAnimation(robot, "ID_reactTo2ndBlock_success");
               SetCurrState(State::Complete);
               _isActing = false;
               break;
@@ -1003,7 +1028,13 @@ namespace Cozmo {
       robot.GetMoveComponent().DisableTrackToFace();
       robot.GetMoveComponent().EnableTrackToObject(_trackedObject, false);
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
-      PlayAnimation(robot, "Demo_Look_Around_See_Something_A");
+
+      if( robot.IsCarryingObject() ) {
+        PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
+      }
+      else {
+        PlayAnimation(robot, "ID_react2block_01", false);
+      }
     }
     
     // BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleObject",
@@ -1088,26 +1119,39 @@ namespace Cozmo {
   void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action)
   {
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, action);
+    robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
     _isActing = true;
   }
 
 
-  void BehaviorBlockPlay::PlayAnimation(Robot& robot, const std::string& animName)
+  void BehaviorBlockPlay::PlayAnimation(Robot& robot, const std::string& animName, bool sequential)
   {
-    
     // Check if animation is already being played
     for (auto& animTagNamePair : _animActionTags) {
       if (animTagNamePair.second == animName) {
-        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.PlayAnimation.Ignoring", "%s already playing", animName.c_str());
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                               "BehaviorBlockPlay.PlayAnimation.Ignoring",
+                               "%s already playing",
+                               animName.c_str());
         return;
       }
     }
     
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.PlayAnimation", "%s", animName.c_str());
+    BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
+                           "BehaviorBlockPlay.PlayAnimation",
+                           "%s %s",
+                           animName.c_str(),
+                           sequential ? "sequentially" : "in parallel");
+    
     PlayAnimationAction* animAction = new PlayAnimationAction(animName.c_str());
-    _animActionTags[animAction->GetTag()] = animName;
-    robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);
+
+    if( sequential ) {
+      _animActionTags[animAction->GetTag()] = animName;
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, animAction);
+    }
+    else {
+      robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, animAction);
+    }
   }
   
 
