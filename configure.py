@@ -14,6 +14,7 @@ GAME_ROOT = os.path.normpath(
 
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
+EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
 sys.path.insert(0, ENGINE_ROOT)
 from configure import BUILD_TOOLS_ROOT, print_header, print_status
 from configure import ArgumentParser, generate_gyp, configure
@@ -22,7 +23,8 @@ sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.xcode
-
+import importlib
+dependencies = importlib.import_module("project.build-scripts.dependencies")
 
 ####################
 # ARGUMENT PARSING #
@@ -108,6 +110,11 @@ def parse_game_arguments():
         required=False,
         help='Provide the mobile provisioning profile name for signing')
 
+    parser.add_argument(
+        '--do-not-check-dependencies',
+        required=False,
+        help='Use this flag to not pull down the latest dependencies(i.e. audio)')
+
     return parser.parse_args()
 
 
@@ -136,7 +143,6 @@ class GamePlatformConfiguration(object):
         self.config_path = os.path.join(self.platform_output_dir, '{0}.xcconfig'.format(self.platform))
 
         self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
-
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
@@ -193,6 +199,10 @@ class GamePlatformConfiguration(object):
         relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
         workspace.add_project(relative_gyp_project)
+
+        if not self.options.do_not_check_dependencies:
+            assert isinstance(dependencies, object)
+            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT )
 
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)

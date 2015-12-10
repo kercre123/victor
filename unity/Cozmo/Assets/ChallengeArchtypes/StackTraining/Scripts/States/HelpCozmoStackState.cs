@@ -60,6 +60,7 @@ namespace StackTraining {
           _CurrentRobot.DriveWheels(0, 0);
 
           if (CubesStacked()) {
+            _Game.Progress = 1f;
             HandleComplete();
           }
           else {
@@ -102,6 +103,11 @@ namespace StackTraining {
             }
           }
         }
+
+        // 475 == 1, 75 == 0
+        float scaledDistance = ((topCube.WorldPosition - _CurrentRobot.WorldPosition).magnitude - 75) * 0.0025f;
+
+        _Game.Progress = 1 - 0.2f * Mathf.Clamp01(scaledDistance);
 
         if (_MovingTime > 0f) {
           _MovingTime -= Time.deltaTime;

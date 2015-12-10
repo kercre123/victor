@@ -201,6 +201,7 @@ public class Robot : IDisposable {
   }
 
   private int _CarryingObjectID;
+
   public int CarryingObjectID { 
     get { return _CarryingObjectID; } 
     private set { 
@@ -214,6 +215,7 @@ public class Robot : IDisposable {
   }
 
   private int _HeadTrackingObjectID;
+
   public int HeadTrackingObjectID { 
     get { return _HeadTrackingObjectID; } 
     private set { 
@@ -385,6 +387,8 @@ public class Robot : IDisposable {
     PathMotionProfileDefault.pointTurnSpeed_rad_per_sec = 2.0f;
     PathMotionProfileDefault.pointTurnAccel_rad_per_sec2 = 100.0f;
     PathMotionProfileDefault.pointTurnDecel_rad_per_sec2 = 500.0f;
+    PathMotionProfileDefault.dockSpeed_mmps = 100.0f;
+    PathMotionProfileDefault.dockSpeed_mmps = 200.0f;
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -444,6 +448,20 @@ public class Robot : IDisposable {
 
   private void Reset(DisconnectionReason reason = DisconnectionReason.None) {
     ClearData();
+  }
+
+  public void ResetRobotState() {
+    DriveWheels(0.0f, 0.0f);
+    SetHeadAngle(0.0f);
+    SetLiftHeight(0.0f);
+    TrackToObject(null);
+    SetBehaviorSystem(false);
+    ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
+      kvp.Value.SetLEDs(Color.black);
+    }
+    SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.black));
   }
 
   public void ClearData(bool initializing = false) {

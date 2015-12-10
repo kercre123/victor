@@ -12,6 +12,16 @@ namespace MotionDetection {
 
     private float _LastMotionDetectedTime = 0.0f;
 
+    private Vector2 _LeftEyeOuterPosition;
+    private Vector2 _RightEyeOuterPosition;
+
+    private Vector2 _LeftEyeInnerPosition;
+    private Vector2 _RightEyeInnerPosition;
+
+
+    private ProceduralEyeParameters _LeftEye = ProceduralEyeParameters.MakeDefaultLeftEye();
+    private ProceduralEyeParameters _RightEye = ProceduralEyeParameters.MakeDefaultRightEye();
+
     // this will be the top middle of the screen
     // -1    -.5     0      .5     1
     // +------+------+------+------+ 1
@@ -33,6 +43,13 @@ namespace MotionDetection {
     public RecognizeMotionState(float timeAllowedBetweenWaves, float totalWaveTime) {
       _TimeAllowedBetweenWaves = timeAllowedBetweenWaves;
       _TotalWaveTime = totalWaveTime;
+
+      _LeftEyeInnerPosition = _LeftEye.EyeCenter;
+      _LeftEyeOuterPosition = _LeftEye.EyeCenter - Vector2.one * 20f;
+
+      _RightEyeInnerPosition = _RightEye.EyeCenter;
+      _RightEyeOuterPosition = _RightEye.EyeCenter + Vector2.one * 20f;
+
     }
       
     public override void Enter() {
@@ -48,27 +65,24 @@ namespace MotionDetection {
 
       bool motionInBox = Time.time - _LastMotionDetectedTime < _TimeAllowedBetweenWaves;
 
-
       if (motionInBox) {
-        if (Mathf.Approximately(_MotionInBoxTime, 0)) {
-          _CurrentRobot.SendAnimation(AnimationName.kEnjoyPattern);
-        }
-
         _MotionInBoxTime += Time.deltaTime;
       }
       else {
-        // move eyes apart?
-        bool wasWaving = _MotionInBoxTime > 0;
-
         _MotionInBoxTime -= Time.deltaTime;
         if (_MotionInBoxTime < 0.0f) {
           _MotionInBoxTime = 0.0f;
-
-          if (wasWaving) {
-            _CurrentRobot.SendAnimation(AnimationName.kShocked);
-          }
         }
       }
+
+      float lerpVal = Mathf.Clamp01(_MotionInBoxTime / _TotalWaveTime);
+
+      _StateMachine.GetGame().Progress = lerpVal;
+
+      _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
+      _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
+
+      _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
 
       if (MotionInBoxForRequiredTime()) {
         AnimationState animState = new AnimationState();

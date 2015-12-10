@@ -16,12 +16,13 @@ namespace FollowCube {
 
     public float NotSeenForgivenessThreshold = 2f;
 
-    private int _FailuresLeft;
-
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // TODO
       InitializeMinigameObjects();
-      _FailuresLeft = 10;
+      MaxAttempts = 7;
+      AttemptsLeft = 7;
+
+      Progress = 0.0f;
+      NumSegments = 5;
     }
 
     public enum FollowTask {
@@ -48,42 +49,14 @@ namespace FollowCube {
     }
 
     protected override void CleanUpOnDestroy() {
-
+      // cancels head tracking.
+      CurrentRobot.TrackToObject(null);
     }
 
     public void FailedAttempt() {
-      _FailuresLeft--;
-      CurrentRobot.SendAnimation(AnimationName.kShocked, HandleFailedAnimation);
-    }
-
-    private void HandleFailedAnimation(bool success) {
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(-1.0f);
-      if (_FailuresLeft == 0) {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
         (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
-        _StateMachineManager.RemoveStateMachine("FollowCubeStateMachine");
-      }
-      else {
-        InitialCubesState initCubeState = new InitialCubesState();
-        switch (CurrentFollowTask) {
-        case FollowTask.Forwards:
-          initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.Backwards:
-          initCubeState.InitialCubeRequirements(new FollowCubeBackwardState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.TurnLeft:
-          initCubeState.InitialCubeRequirements(new FollowCubeTurnLeftState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.TurnRight:
-          initCubeState.InitialCubeRequirements(new FollowCubeTurnRightState(), 1, true, InitialCubesDone);
-          break;
-        case FollowTask.FollowDrive:
-          initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
-          break;
-        }
-
-        _StateMachine.SetNextState(initCubeState);
       }
     }
 

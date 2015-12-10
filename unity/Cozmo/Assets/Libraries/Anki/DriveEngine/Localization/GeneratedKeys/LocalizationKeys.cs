@@ -36,6 +36,12 @@ public static class LocalizationKeys {
   public const string kPeekaboo1Title = "peekaboo1.title";
   public const string kPeekaboo1Subtitle = "peekaboo1.subtitle";
   public const string kPeekaboo1Description = "peekaboo1.description";
+  public const string kStackTraining01Title = "stackTraining01.title";
+  public const string kStackTraining01Subtitle = "stackTraining01.subtitle";
+  public const string kStackTraining01Description = "stackTraining01.description";
+  public const string kCubeLifting01Title = "cubeLifting01.title";
+  public const string kCubeLifting01Subtitle = "cubeLifting01.subtitle";
+  public const string kCubeLifting01Description = "cubeLifting01.description";
 
   #endregion
 
@@ -82,6 +88,7 @@ public static class LocalizationKeys {
   public const string kPeekabooLabelPoints = "peekaboo.label.points";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
+  public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
 
   #endregion
 

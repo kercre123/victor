@@ -14,26 +14,35 @@ namespace FollowCube {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as FollowCubeGame;
       _RobotStartPosition = _CurrentRobot.WorldPosition;
+      _LastSeenTargetTime = Time.time;
+
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     public override void Update() {
       base.Update();
 
-      _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
+        _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
+        _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
+        _CurrentRobot.TrackToObject(_CurrentTarget);
+      }
 
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
-        _GameInstance.FailedAttempt();
+        _StateMachine.SetNextState(new FollowCubeFailedState());
         return;
       }
 
       float distance = Vector3.Dot(_CurrentRobot.WorldPosition - _RobotStartPosition, _CurrentRobot.Forward);
+      _GameInstance.Progress = (distance / _WinDistanceThreshold) * (1.0f / _GameInstance.NumSegments);
       if (distance > _WinDistanceThreshold) {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
         _StateMachine.SetNextState(animState);
       }
-
-      if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
+      else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
         FollowTarget();
       }

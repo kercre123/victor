@@ -6,6 +6,7 @@ namespace DockTraining {
 
     private LightCube _DockTarget;
     private float _LastSeenTargetTime;
+    private DockTrainingGame _GameInstance;
 
     public void Init(LightCube dockTarget) {
       _DockTarget = dockTarget;
@@ -17,6 +18,7 @@ namespace DockTraining {
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
       _LastSeenTargetTime = Time.time;
+      _GameInstance = _StateMachine.GetGame() as DockTrainingGame;
     }
 
     public override void Update() {
@@ -49,7 +51,12 @@ namespace DockTraining {
     }
 
     private void HandleLoseAnimationDone(bool success) {
+      _CurrentRobot.GotoPose(_GameInstance.StartingPosition(), _GameInstance.StartingRotation(), HandleBackToStartPos);
+    }
+
+    private void HandleBackToStartPos(bool success) {
       _StateMachine.SetNextState(new WaitForTargetState());
+      (_StateMachine.GetGame() as DockTrainingGame).DockFailed();
     }
 
     private void HandleWinAnimationDone(bool success) {

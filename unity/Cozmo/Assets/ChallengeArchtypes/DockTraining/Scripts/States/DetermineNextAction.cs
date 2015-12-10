@@ -8,8 +8,6 @@ namespace DockTraining {
 
     private float _WaveTimeAccumulator = 0.0f;
     private float _LastWaveTime = 0.0f;
-    private float _LeftAccumulator = 0.0f;
-    private float _RightAccumulator = 0.0f;
 
     private DockTrainingGame _DockTrainingGame;
 
@@ -22,6 +20,11 @@ namespace DockTraining {
       RobotEngineManager.Instance.OnObservedMotion += HandleObservedMotion;
 
       _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
+
+      LightCube currentTarget = _DockTrainingGame.GetCurrentTarget();
+      if (currentTarget != null) {
+        currentTarget.SetLEDs(Color.white);
+      }
     }
 
     public override void Update() {
@@ -38,6 +41,9 @@ namespace DockTraining {
           _StateMachine.SetNextState(new FailSpectacularDock());
         }
       }
+      if (_DockTrainingGame.GetCurrentTarget() == null) {
+        _StateMachine.SetNextState(new FailSpectacularDock());
+      }
     }
 
     public override void Exit() {
@@ -49,23 +55,11 @@ namespace DockTraining {
       // wave accumulator is high enough for us to go left or right.
       if (_WaveTimeAccumulator > 0.5f) {
         SteerState steerState = new SteerState();
-        if (_LeftAccumulator > _RightAccumulator) {
-          steerState.Init(30.0f, 20.0f, 1.0f, new DetermineNextAction());
-        }
-        else {
-          steerState.Init(20.0f, 30.0f, 1.0f, new DetermineNextAction());
-        }
+        steerState.Init(pos.x, 0.8f, new DetermineNextAction());
         _StateMachine.SetNextState(steerState);
       }
 
       float dt = Mathf.Min(0.3f, Time.time - _LastWaveTime);
-
-      if (pos.x > 0.0f) {
-        _LeftAccumulator += dt;
-      }
-      else {
-        _RightAccumulator += dt;
-      }
 
       _WaveTimeAccumulator += dt;
       _LastWaveTime = Time.time;
