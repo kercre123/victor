@@ -115,14 +115,6 @@ def GetAudioJSON():
     else:
         print "No audio found"
     return None
-#strips extra data from baking too
-def GetSingleMovementData(dataNodeObject,attribute_name, wantsValueChange):
-    #Maya just checks that these flags are passed in... they aren't actually bools
-    if( wantsValueChange == True):
-        keyframe_arr = cmds.keyframe( dataNodeObject, attribute = attribute_name, query=True, valueChange=True)
-    else:
-        keyframe_arr = cmds.keyframe( dataNodeObject, attribute = attribute_name, query=True, timeChange=True)
-    return keyframe_arr
 
 #keeping this backwards compatible leads to some weird concatination.
 def GetMovementJSON():
@@ -139,18 +131,18 @@ def GetMovementJSON():
     
     keyframe_attr_data = {}
     #Movement requires all attributes be set with the known names, and all together.
-    keyframe_attr_data["RadiusValues"] = GetSingleMovementData(dataNodeObject,"Radius",True)
-    keyframe_attr_data["TurnValues"] = GetSingleMovementData(dataNodeObject,"Turn",True)
-    keyframe_attr_data["FwdValues"] = GetSingleMovementData(dataNodeObject,"Forward",True)
-    keyframe_attr_data["TimesForward"] = GetSingleMovementData(dataNodeObject,"Forward",False)
-    keyframe_attr_data["TimesRadius"] = GetSingleMovementData(dataNodeObject,"Turn",False)
-    keyframe_attr_data["TimesTurn"] = GetSingleMovementData(dataNodeObject,"Radius",False)
+    keyframe_attr_data["RadiusValues"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, valueChange=True)
+    keyframe_attr_data["TurnValues"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, valueChange=True)
+    keyframe_attr_data["FwdValues"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, valueChange=True)
+    keyframe_attr_data["TimesForward"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, timeChange=True)
+    keyframe_attr_data["TimesRadius"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, timeChange=True)
+    keyframe_attr_data["TimesTurn"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, timeChange=True)
 
     #Try to find an intersection all attributes agree on, bakeResults sometimes inserts where there shouldn't be.
     min_keyframes = min([len(keyframe_attr_data["TimesForward"]),len(keyframe_attr_data["TimesRadius"]),len(keyframe_attr_data["TimesTurn"])])
 
     move_data_combined = [] #object so I don't have a bunch of different arrays
-    i = 1 #filter out baked data extraness again.
+    i = 1 #Skip the init frame and round off.
     for i in range(min_keyframes):
         valid_keyframe = {
                 "Forward": round(keyframe_attr_data["FwdValues"][i]),
@@ -232,7 +224,7 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val,frameNumbe
             "durationTime_ms": durationTime_ms,
             "Name": "ProceduralFaceKeyFrame"
         }
-        #Add the interpolated values for what maya thinks it is at
+        #Add the interpolated values for what maya thinks it is at, that way not every attribute needs to be keyed in maya
         for k, v in g_ProcFaceDict.iteritems():
             interp_val = cmds.getAttr(DATA_NODE_NAME + '.' + k,time=frameNumber)
             if( v["cladIndex"] >= 0):
