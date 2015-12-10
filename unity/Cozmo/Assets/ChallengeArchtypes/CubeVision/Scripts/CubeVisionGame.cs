@@ -8,18 +8,21 @@ namespace VisionTraining {
 
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
-    private int _LastSelectedId = -1;
+    private float _LastTimeTargetSeen;
+    private LightCube _CurrentTarget = null;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // TODO
       InitializeMinigameObjects();
+      _LastTimeTargetSeen = Time.time;
+      AttemptsLeft = 5;
+      MaxAttempts = 5;
     }
 
     protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, false, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new RecognizeCubeState(), 1, false, null);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
@@ -28,42 +31,37 @@ namespace VisionTraining {
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
-    }
-
-    private void InitialCubesDone() {
-      
-    }
-
-    public int PickCube() {
-
-      // for weird edge case of if batteries die and there's only one cube left.
-      if (CurrentRobot.LightCubes.Count == 1) {
-        foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
-          return lightCube.Key;
-        }
+      if (_CurrentTarget == null) {
+        _CurrentTarget = FindNewTarget();
       }
 
-      int id = -2;
+      if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
+        _LastTimeTargetSeen = Time.time;
+      }
 
-      do {
-        int index = Random.Range(0, CurrentRobot.LightCubes.Count);
-        int i = 0;
+      if (Time.time - _LastTimeTargetSeen > 2.0f) {
+        _CurrentTarget = null;
+      }
+    }
 
-        foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
-          if (index == i) {
-            id = lightCube.Key;
-            lightCube.Value.SetLEDs(CozmoPalette.ColorToUInt(Color.blue));
-          }
-          else {
-            lightCube.Value.SetLEDs(0);
-          }
-          i++;
+    public LightCube CurrentTarget() {
+      return _CurrentTarget;
+    }
+
+    private LightCube FindNewTarget() {
+      for (int i = 0; i < CurrentRobot.VisibleObjects.Count; ++i) {
+        if (CurrentRobot.VisibleObjects[i] is LightCube) {
+          return CurrentRobot.VisibleObjects[i] as LightCube;
         }
-      } while (id == _LastSelectedId);
+      }
+      return null;
+    }
 
-      _LastSelectedId = id;
-
-      return id;
+    public void LostCube() {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
+        RaiseMiniGameLose();
+      }
     }
 
     protected override void CleanUpOnDestroy() {
