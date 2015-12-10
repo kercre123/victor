@@ -15,6 +15,8 @@ namespace AskCozmo {
 
     private AskCozmoConfig _Config;
 
+    private string _CurrentSlideName = null;
+
     protected void InitializeMinigameObjects() {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
@@ -48,6 +50,10 @@ namespace AskCozmo {
 
       // By default says "Challenge Progress"
       // ProgressBarLabelText = Localization.Get(keyNameHere);
+
+      // Play a slide
+      _CurrentSlideName = GetNextSlide();
+      ShowHowToPlaySlide(_CurrentSlideName);
     }
 
     protected override void CleanUpOnDestroy() {
@@ -80,10 +86,20 @@ namespace AskCozmo {
       if (AttemptsLeft <= 0) {
         RaiseMiniGameLose();
       }
+
+      _CurrentSlideName = GetNextSlide();
+      ShowHowToPlaySlide(_CurrentSlideName);
     }
 
     void HandleAnimationDone(bool success) {
       _AnimationPlaying = false;
+    }
+
+    private string GetNextSlide() {
+      if (_CurrentSlideName == null || _CurrentSlideName == "Slide2") {
+        return "Slide1";
+      }
+      return "Slide2";
     }
   }
 
