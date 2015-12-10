@@ -5,6 +5,8 @@ namespace FaceTracking {
   /// <summary>
   /// Game for building face tracking skills. Has config options to enable Cozmo wandering
   /// when not paying attention to a face.
+  /// TODO: A bunch of this logic can be seriously cleaned up once we can order Cozmo to track
+  /// faces directly rather than handling all the movement by hand.
   /// </summary>
   public class FaceTrackingGame : GameBase {
     
@@ -12,21 +14,26 @@ namespace FaceTracking {
     private StateMachine _StateMachine = new StateMachine();
     private int _TiltSuccessCount = 0;
     private int _TiltGoalTarget = 3;
-    private float _MoveSpeed = 30.0f;
 
     public float TiltGoal { get; set; }
 
-    public float ForwardSpeed { get; set; }
+    public float TurnSpeed { get; set; }
 
     public float DistanceMin { get; set; }
 
     public float DistanceMax { get; set; }
 
+    public float FaceJumpLimit { get; set; }
+
     public float GoalLenience { get; set; }
+
+    public float StepsCompleted { get; set; }
 
     public bool WanderEnabled { get; set; }
 
     public bool TargetLeft { get; set; }
+
+    public bool TargetRight { get; set; }
 
     public bool MidCelebration { get; set; }
 
@@ -37,12 +44,17 @@ namespace FaceTracking {
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
       _TiltGoalTarget = config.Goal;
-      _MoveSpeed = config.MoveSpeed;
+      TurnSpeed = config.TurnSpeed;
       WanderEnabled = config.WanderEnabled;
       TiltGoal = config.TiltTreshold;
       GoalLenience = config.Lenience;
-      TargetLeft = true;
+      TargetLeft = false;
+      TargetRight = false;
       MidCelebration = false;
+      DistanceMax = config.MaxFaceDistance;
+      DistanceMin = config.MinFaceDistance;
+      FaceJumpLimit = config.FaceJumpLimit;
+      StepsCompleted = 0.0f;
       InitializeMinigameObjects();
     }
 
@@ -51,23 +63,26 @@ namespace FaceTracking {
       float angle = Vector3.Cross(CurrentRobot.Forward, face.WorldPosition - CurrentRobot.WorldPosition).z;
       // If the Angle is (< 0). Face is to your right, if (> 0) Face is to your left.
       float tiltVal = angle / TiltGoal;
-      if (!TargetLeft) {
-        tiltVal *= -1.0f;
-      }
+      float goalVal = Mathf.Abs(tiltVal);
 
       // Determine success, or if we're even headed in the right direction, don't trigger success
       // if we are too far to the desired direction
-      if (1.0f >= tiltVal && tiltVal >= (1.0f - GoalLenience) && !MidCelebration) {
-        TiltSuccess();
-      }
-      else if (1.0f > tiltVal && tiltVal > 0.0) {
-        // Set light to Green if heading in the right direction but not there yet.
-        CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.green);
-        _GamePanel.SetProgressBar(tiltVal);
-      }
-      else {
-        // Set light to Red if heading in the wrong direction
-        CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.red);
+      if ((1.0f+GoalLenience) >= goalVal && goalVal >= (1.0f-GoalLenience) && !MidCelebration) {
+        // Mark successful leading to each side.
+        if (tiltVal > 0 && !TargetLeft) {
+          TargetLeft = true;
+          CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_LEFT, Color.green);
+          StepsCompleted += .333f;
+        }
+        else if (tiltVal < 0 && !TargetRight) {
+          TargetRight = true;
+          CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_RIGHT, Color.green);
+          StepsCompleted += .333f;
+        }
+        // Trigger a success if you've lit up both.
+        if (TargetLeft && TargetRight) {
+          TiltSuccess();
+        }
       }
 
       return tiltVal;
@@ -75,7 +90,7 @@ namespace FaceTracking {
 
     public void TiltSuccess() {
       _TiltSuccessCount++;
-      _GamePanel.SetPoints(_TiltSuccessCount);
+      StepsCompleted = 0.0f;
       MidCelebration = true;
       CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin, HandleEndCelebration);
     }
@@ -86,8 +101,7 @@ namespace FaceTracking {
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FaceTrackingGamePanel>();
-      _GamePanel.SetPoints(_TiltSuccessCount);
-      _GamePanel.SetArrowFacing(TargetLeft);
+      Progress = 0.0f;
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -103,26 +117,53 @@ namespace FaceTracking {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
-      SetSpeed();
-    }
-
-    void SetSpeed() {
-      ForwardSpeed = _MoveSpeed;
-      DistanceMax = 800.0f;
-      DistanceMin = 400.0f;
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
+      if (Progress != StepsCompleted) {
+        Progress = StepsCompleted;
+      }
     }
 
     private void HandleEndCelebration(bool success) {
       MidCelebration = false;
-      TargetLeft = !TargetLeft;
-      _GamePanel.SetArrowFacing(TargetLeft);
+      TargetLeft = false;
+      TargetRight = false;
       if (_TiltSuccessCount >= _TiltGoalTarget) {
         RaiseMiniGameWin();
       }
+    }
+
+    // Returns true if Cozmo is directly facing you
+    public bool WithinLockZone(Face toCheck) {
+      if (IsValidFace(toCheck)) {
+        float turnAngle = Vector3.Cross(CurrentRobot.Forward, toCheck.WorldPosition - CurrentRobot.WorldPosition).z;
+        // If Face is valid distance, check to see if we need to turn towards it or if we are actually within the Lock Zone
+        if (Mathf.Abs(turnAngle) > 30f) {
+          if (turnAngle > 0.0f) {
+            CurrentRobot.DriveWheels(-TurnSpeed, TurnSpeed);
+          }
+          else {
+            CurrentRobot.DriveWheels(TurnSpeed, -TurnSpeed);
+          }
+          return false;
+        }
+        else {
+          return true;
+        }
+      }
+      else {
+        return false;
+      }
+    }
+
+    public bool IsValidFace(Face toCheck) {
+      if (toCheck == null) {
+        return false;
+      }
+      float dist = Vector3.Distance(CurrentRobot.WorldPosition, toCheck.WorldPosition);
+      return (dist < DistanceMax && dist > DistanceMin);
     }
 
     protected override void CleanUpOnDestroy() {

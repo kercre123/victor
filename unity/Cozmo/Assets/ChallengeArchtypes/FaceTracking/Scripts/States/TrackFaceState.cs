@@ -9,7 +9,7 @@ namespace FaceTracking {
 
     #region Tunable values
 
-    private float _UnseenForgivenessSeconds = 1.5f;
+    private float _UnseenForgivenessSeconds = 1.0f;
 
     #endregion
     
@@ -42,7 +42,7 @@ namespace FaceTracking {
       // you lose track. 
       // Track total distance tilted based on current goal that alternates between left and right.
       // Display a popup prompt for each
-      _CurrentRobot.SetHeadAngle(0.05f);
+      _CurrentRobot.SetHeadAngle(0.2f);
       _CurrentRobot.SetLiftHeight(0);
 
       _LeftEyeInnerPosition = _LeftEye.EyeCenter;
@@ -50,6 +50,7 @@ namespace FaceTracking {
 
       _RightEyeInnerPosition = _RightEye.EyeCenter;
       _RightEyeOuterPosition = _RightEye.EyeCenter + new Vector2(_RightEye.EyeCenter.x+20f,_RightEye.EyeCenter.y);
+
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       _TargetFace = null;
@@ -73,8 +74,12 @@ namespace FaceTracking {
         }
       }// We have a face to track
       else {
-        _TargetFace = _CurrentRobot.Faces[0];
-        ResetUnseenTimestamp();
+        if (_TargetFace == null || (_GameInstance.FaceJumpLimit > Vector3.Distance(_TargetFace.WorldPosition, _CurrentRobot.Faces[0].WorldPosition))) {
+          // Compare new face to _TargetFace, keep tracking old face if 
+          // new face is in a dramatically different position.
+          _TargetFace = _CurrentRobot.Faces[0];
+          ResetUnseenTimestamp();
+        }
       }
       // Attempt to follow your face if you have one
       if (_TargetFace != null) {
@@ -83,26 +88,18 @@ namespace FaceTracking {
     }
 
     void FollowFace(Face target) {
-      float dist = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-      float speed = _GameInstance.ForwardSpeed;
+      float speed = _GameInstance.TurnSpeed;
 
-      // Drive closer if you pick up a face that's too far away
-      if (dist > _GameInstance.DistanceMax) {
-        _CurrentRobot.DriveWheels(speed, speed);
-      } // Back up if you're too cloe.
-      else if (dist < _GameInstance.DistanceMin) {
-        _CurrentRobot.DriveWheels(speed, speed);
-      }
-      else {
-        _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      }
-
+      // Lerp eyes if the identified face is within an acceptable range.
+      // Follow with body if the face is too far.
       float targetAngleOffset = _GameInstance.CalculateTilt(target);
       if (Mathf.Abs(targetAngleOffset) <= 1.0f) {
-        LerpEyes(Mathf.Clamp01(targetAngleOffset));
+        LerpEyesHoriz(targetAngleOffset);
+        //_CurrentRobot.TrackToObject(target, true);
       }
       else {
-        // we need to turn to face it
+        //_CurrentRobot.TrackToObject(target, false);
+        // we need to turn to face it because its too far
         bool shouldTurnRight = ShouldTurnRight(target);
         if (shouldTurnRight) {
           _CurrentRobot.DriveWheels(speed, -speed);
@@ -113,19 +110,11 @@ namespace FaceTracking {
       }
     }
 
-    public void LerpEyes(float lerpVal) {
-
-      if (_GameInstance.TargetLeft) {
-        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
-        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
-      }
-      else {
-        _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeOuterPosition, _LeftEyeInnerPosition, lerpVal);
-        _RightEye.EyeCenter = Vector2.Lerp(_RightEyeInnerPosition, _RightEyeOuterPosition, lerpVal);
-      }
+    public void LerpEyesHoriz(float lerpVal) {
+      _RightEye.EyeCenter = Vector2.Lerp(_RightEyeOuterPosition, _RightEyeInnerPosition, lerpVal);
+      _LeftEye.EyeCenter = Vector2.Lerp(_LeftEyeInnerPosition, _LeftEyeOuterPosition, lerpVal);
 
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
-
     }
 
     private bool ShouldTurnRight(Face followFace) {
@@ -134,9 +123,14 @@ namespace FaceTracking {
     }
 
     public void LoseFace() {
-      _CurrentRobot.SetBackpackBarLED(Anki.Cozmo.LEDId.LED_BACKPACK_MIDDLE, Color.white);
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
-      _StateMachine.SetNextState(new LostFaceState());
+      AnimationState animState = new AnimationState();
+      animState.Initialize(AnimationName.kByeBye, HandleStateCompleteAnimationDone);
+      _StateMachine.SetNextState(animState);
+    }
+
+    public void HandleStateCompleteAnimationDone(bool success) {
+      _StateMachine.SetNextState(new LookingForFaceState());
     }
 
     private bool IsUnseenTimestampUninitialized() {
