@@ -12,6 +12,7 @@
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
+#include "rng.h"
 
 #include "anki/cozmo/robot/spineData.h"
 
@@ -35,6 +36,7 @@ int main(void)
   Motors::init();   // Must init before power goes on
   Head::init();
   Lights::init();
+  Random::init();
 
   UART::print("\r\nUnbrick me now...");
   u32 t = GetCounter();
@@ -64,6 +66,8 @@ int main(void)
     while (GetCounter() - timerStart < DELAY)
       ;
     timerStart += DELAY;
+    
+    Radio::manage();
 
     // Verify the source
     if (!Head::spokenTo)
