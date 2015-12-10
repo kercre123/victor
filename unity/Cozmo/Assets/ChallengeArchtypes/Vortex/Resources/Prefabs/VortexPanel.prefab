@@ -383,7 +383,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 120b06173ac0e40398dcecbb3d09e551, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dialogId: Dialog
+  _CloseDialogOnTapOutside: 0
   _SpinButton: {fileID: 11405548}
   _StatusText: {fileID: 0}
   _ScoreboardText: {fileID: 11432368}
@@ -631,7 +631,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: .39199999}
-  m_RaycastTarget: 1
+  m_RaycastTarget: 0
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []

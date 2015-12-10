@@ -264,7 +264,7 @@ public abstract class GameBase : MonoBehaviour {
     // If found, show that slide.
     if (foundSlide != null) {
       if (foundSlide.slidePrefab != null) {
-        _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlide.slidePrefab);
+        _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlide);
       }
       else {
         DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +

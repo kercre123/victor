@@ -1,6 +1,3 @@
-﻿using UnityEngine;
-using System.Collections;
-
-public class SpeedTapGameConfig : MinigameConfigBase {
+﻿public class SpeedTapGameConfig : MinigameConfigBase {
 
 }

@@ -57,7 +57,7 @@ namespace FaceTracking {
 
       // Determine success, or if we're even headed in the right direction, don't trigger success
       // if we are too far to the desired direction
-      if (1.0f >= tiltVal && tiltVal >= (1.0f-GoalLenience) && !MidCelebration) {
+      if (1.0f >= tiltVal && tiltVal >= (1.0f - GoalLenience) && !MidCelebration) {
         TiltSuccess();
       }
       else if (1.0f > tiltVal && tiltVal > 0.0) {
@@ -77,7 +77,7 @@ namespace FaceTracking {
       _TiltSuccessCount++;
       _GamePanel.SetPoints(_TiltSuccessCount);
       MidCelebration = true;
-      CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin,HandleEndCelebration);
+      CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin, HandleEndCelebration);
     }
 
     protected void InitializeMinigameObjects() {
@@ -126,8 +126,6 @@ namespace FaceTracking {
     }
 
     protected override void CleanUpOnDestroy() {
-      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
