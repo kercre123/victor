@@ -48,8 +48,8 @@ namespace Cozmo {
     const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
     const Radians panAngle = std::atan2(yDist, xDist);
     
-    static const Radians minHeadAngle(DEG_TO_RAD(1.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(1.f));
+    static const Radians minHeadAngle(DEG_TO_RAD(2.f));
+    static const Radians minBodyAngle(DEG_TO_RAD(2.f));
     
     PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
     action->EnableMessageDisplay(false);
