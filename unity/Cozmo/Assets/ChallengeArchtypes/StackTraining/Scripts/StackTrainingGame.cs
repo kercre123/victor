@@ -47,7 +47,7 @@ namespace StackTraining {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
       CurrentRobot.SetLiftHeight(0f);
-      CurrentRobot.SetHeadAngle(0f);
+      CurrentRobot.SetHeadAngle(0.15f);
     }
 
     void Update() {
