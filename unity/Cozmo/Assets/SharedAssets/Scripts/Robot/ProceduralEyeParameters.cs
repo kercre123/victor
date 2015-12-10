@@ -162,9 +162,9 @@ public class ProceduralEyeParameters
       EyeScale = new Vector2(1.01f, 0.87f),
 
       LowerInnerRadius = new Vector2(0.68f, 0.61f),
-      LowerOuterRadius = new Vector2(0.68f, 0.61f),
+      UpperInnerRadius = new Vector2(0.68f, 0.61f),
       UpperOuterRadius = new Vector2(0.61f, 0.61f),
-      UpperInnerRadius = new Vector2(0.61f, 0.61f)
+      LowerOuterRadius = new Vector2(0.61f, 0.61f)
     };
   }
   public static ProceduralEyeParameters MakeDefaultRightEye() {
@@ -173,9 +173,9 @@ public class ProceduralEyeParameters
       EyeScale = new Vector2(1.19f, 1f),
 
       LowerInnerRadius = new Vector2(0.62f, 0.61f),
-      LowerOuterRadius = new Vector2(0.61f, 0.61f),
+      UpperInnerRadius = new Vector2(0.61f, 0.61f),
       UpperOuterRadius = new Vector2(0.61f, 0.61f),
-      UpperInnerRadius = new Vector2(0.61f, 0.61f)
+      LowerOuterRadius = new Vector2(0.61f, 0.61f)
     };
   }
 

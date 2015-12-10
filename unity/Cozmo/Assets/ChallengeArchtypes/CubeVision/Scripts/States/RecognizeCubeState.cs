@@ -49,11 +49,8 @@ namespace VisionTraining {
         _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(Color.white);
       }
       else {
-        if (cubeInViewNow) {
+        if (!cubeInViewNow) {
           _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(Color.blue);
-        }
-        else {
-          _CurrentRobot.LightCubes[_SelectedCubeId].SetLEDs(Color.red);
         }
 
         _CubeInRectTime -= Time.deltaTime;

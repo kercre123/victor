@@ -26,7 +26,6 @@ namespace FollowCube {
       if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
         _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
         _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-        _CurrentRobot.TrackToObject(_CurrentTarget);
       }
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
@@ -41,6 +40,7 @@ namespace FollowCube {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
         _StateMachine.SetNextState(animState);
+        Debug.Log("PLAY ENJOY PATTERN THING");
       }
       else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
