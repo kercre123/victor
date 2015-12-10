@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.UI;
 using Anki.Cozmo;
 using System.Linq;
+using System.Text;
 
 public class CozmoFacePane : MonoBehaviour {
 
@@ -239,83 +240,7 @@ public class CozmoFacePane : MonoBehaviour {
     _RightLowerLidAngleLabel.text = _RightLowerLidAngle.value.ToString();
     _RightLowerLidBendLabel.text = _RightLowerLidBend.value.ToString();
   }
-
-  /*
-  private void ReflectWire() {
-    Debug.Log("Reflect Wire!");
-    var sliders = GetComponentsInChildren<Slider>();
-    var labels = GetComponentsInChildren<Text>().Where(x => x.name == "Value").ToArray();
-
-    foreach (var s in sliders) {
-      var pname = s.transform.parent.name;
-      string componentName = null;
-      if (pname.Contains("Face")) {
-        componentName = "_" + pname;
-      }
-      else {
-        var ppname = s.transform.parent.parent.name;
-
-        componentName = "_" + ppname + pname;
-      }
-
-      Debug.Log("Trying to wire " + componentName);
-
-      var field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-      if (field == null) {
-        componentName = componentName.Replace("Eye", "");
-        Debug.Log("Trying to wire " + componentName);
-
-        field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-      }
-
-      if (field != null) {
-        Debug.Log("Wiring " + field.Name);
-
-        field.SetValue(this, s);
-      }
-      else {
-
-        Debug.LogError("Could not find " + componentName);
-      }
-    }
-
-    foreach (var l in labels) {
-      var pname = l.transform.parent.name;
-      string componentName = null;
-      if (pname.Contains("Face")) {
-        componentName = "_" + pname + "Label";
-      }
-      else {
-        var ppname = l.transform.parent.parent.name;
-
-        componentName = "_" + ppname + pname + "Label";
-      }
-
-      Debug.Log("Trying to wire " + componentName);
-
-      var field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-
-      if (field == null) {
-        componentName = componentName.Replace("Eye", "");
-        Debug.Log("Trying to wire " + componentName);
-
-        field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-      }
-
-      if (field != null) {
-        Debug.Log("Wiring " + field.Name);
-
-        field.SetValue(this, l);
-      }
-      else {
-
-        Debug.LogError("Could not find " + componentName);
-      }
-    }
-  }
-  */
-
+    
   private void UpdateCozmoFaceMaterial() {
     _CozmoFacePreview.material.SetVector("_FaceCenterScale", new Vector4(_FaceCenterX.value, _FaceCenterY.value, _FaceScaleX.value, _FaceScaleY.value));
     _CozmoFacePreview.material.SetFloat("_FaceAngle", _FaceAngle.value);
@@ -457,12 +382,52 @@ public class CozmoFacePane : MonoBehaviour {
     UpdateCozmoFaceMaterial();
   }
 
-  void HandleSendFaceToCozmo() {
+  private void HandleSendFaceToCozmo() {
     var currentRobot = RobotEngineManager.Instance.CurrentRobot;
 
     if (currentRobot != null) {
       currentRobot.DisplayProceduralFace(_FaceAngle.value, new Vector2(_FaceCenterX.value, _FaceCenterY.value), new Vector2(_FaceScaleX.value, _FaceScaleY.value), _LeftEyeParameters, _RightEyeParameters);
     }
+
+    PrintCode();
   }
 
+  private void PrintCode() {
+    StringBuilder leftSB = new StringBuilder(), rightSB = new StringBuilder(), fullSB = new StringBuilder();
+
+    fullSB.AppendLine("float faceAngle = " + _FaceAngle.value + "f;");
+    fullSB.AppendLine("Vector2 faceCenter = new Vector2(" + _FaceCenterX.value + "f, " + _FaceCenterY.value + "f);");
+
+    var props = typeof(ProceduralEyeParameters).GetProperties();
+
+    leftSB.AppendLine("var leftEye = new ProceduralEyeParameters() {");
+    rightSB.AppendLine("var rightEye = new ProceduralEyeParameters() {");
+
+    foreach (var prop in props) {
+      string leftLine = null, rightLine = null;
+      if (prop.PropertyType == typeof(float)) {
+        leftLine = "\t" + prop.Name + " = " + prop.GetValue(_LeftEyeParameters, null) + "f,";
+        rightLine = "\t" + prop.Name + " = " + prop.GetValue(_RightEyeParameters, null) + "f,";
+      }
+      if (prop.PropertyType == typeof(Vector2)) {
+        var leftVector = (Vector2)prop.GetValue(_LeftEyeParameters, null);
+        var rightVector = (Vector2)prop.GetValue(_RightEyeParameters, null);
+
+        leftLine = "\t" + prop.Name + " = new Vector2(" + leftVector.x + "f, " + leftVector.y + "f),";
+        rightLine = "\t" + prop.Name + " = new Vector2(" + rightVector.x + "f, " + rightVector.y + "f),";
+      }
+      if (!string.IsNullOrEmpty(leftLine)) {
+        leftSB.AppendLine(leftLine);
+        rightSB.AppendLine(rightLine);
+      }
+    }
+
+    leftSB.AppendLine("};");
+    rightSB.AppendLine("};");
+
+    fullSB.AppendLine(leftSB.ToString());
+    fullSB.AppendLine(rightSB.ToString());
+
+    Debug.Log(fullSB.ToString());
+  }
 }
