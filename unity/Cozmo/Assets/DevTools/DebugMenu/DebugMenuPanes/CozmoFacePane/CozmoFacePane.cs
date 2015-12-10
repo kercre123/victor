@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.UI;
 using Anki.Cozmo;
+using System.Linq;
 
 public class CozmoFacePane : MonoBehaviour {
 
@@ -145,6 +146,7 @@ public class CozmoFacePane : MonoBehaviour {
     _LeftLowerLidY.value = _LeftEyeParameters.Array[(int)ProceduralEyeParameter.LowerLidY];
     _LeftLowerLidAngle.value = _LeftEyeParameters.Array[(int)ProceduralEyeParameter.LowerLidAngle];
     _LeftLowerLidBend.value = _LeftEyeParameters.Array[(int)ProceduralEyeParameter.LowerLidBend];
+
   }
 
   private void UpdateParameters() {
@@ -187,6 +189,7 @@ public class CozmoFacePane : MonoBehaviour {
     _LeftEyeParameters.Array[(int)ProceduralEyeParameter.LowerLidY] = _LeftLowerLidY.value;
     _LeftEyeParameters.Array[(int)ProceduralEyeParameter.LowerLidAngle] = _LeftLowerLidAngle.value;
     _LeftEyeParameters.Array[(int)ProceduralEyeParameter.LowerLidBend] = _LeftLowerLidBend.value;
+
   }
 
   private void UpdateLabels() {
@@ -237,16 +240,93 @@ public class CozmoFacePane : MonoBehaviour {
     _RightLowerLidBendLabel.text = _RightLowerLidBend.value.ToString();
   }
 
+  /*
+  private void ReflectWire() {
+    Debug.Log("Reflect Wire!");
+    var sliders = GetComponentsInChildren<Slider>();
+    var labels = GetComponentsInChildren<Text>().Where(x => x.name == "Value").ToArray();
+
+    foreach (var s in sliders) {
+      var pname = s.transform.parent.name;
+      string componentName = null;
+      if (pname.Contains("Face")) {
+        componentName = "_" + pname;
+      }
+      else {
+        var ppname = s.transform.parent.parent.name;
+
+        componentName = "_" + ppname + pname;
+      }
+
+      Debug.Log("Trying to wire " + componentName);
+
+      var field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+      if (field == null) {
+        componentName = componentName.Replace("Eye", "");
+        Debug.Log("Trying to wire " + componentName);
+
+        field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+      }
+
+      if (field != null) {
+        Debug.Log("Wiring " + field.Name);
+
+        field.SetValue(this, s);
+      }
+      else {
+
+        Debug.LogError("Could not find " + componentName);
+      }
+    }
+
+    foreach (var l in labels) {
+      var pname = l.transform.parent.name;
+      string componentName = null;
+      if (pname.Contains("Face")) {
+        componentName = "_" + pname + "Label";
+      }
+      else {
+        var ppname = l.transform.parent.parent.name;
+
+        componentName = "_" + ppname + pname + "Label";
+      }
+
+      Debug.Log("Trying to wire " + componentName);
+
+      var field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+
+      if (field == null) {
+        componentName = componentName.Replace("Eye", "");
+        Debug.Log("Trying to wire " + componentName);
+
+        field = GetType().GetField(componentName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+      }
+
+      if (field != null) {
+        Debug.Log("Wiring " + field.Name);
+
+        field.SetValue(this, l);
+      }
+      else {
+
+        Debug.LogError("Could not find " + componentName);
+      }
+    }
+  }
+  */
+
   private void UpdateCozmoFaceMaterial() {
-    _CozmoFacePreview.material.SetVector("Face Center Scale", new Vector4(_FaceCenterX.value, _FaceCenterY.value, _FaceScaleX.value, _FaceScaleY.value));
-    _CozmoFacePreview.material.SetFloat("Face Angle", _FaceAngle.value);
+    _CozmoFacePreview.material.SetVector("_FaceCenterScale", new Vector4(_FaceCenterX.value, _FaceCenterY.value, _FaceScaleX.value, _FaceScaleY.value));
+    _CozmoFacePreview.material.SetFloat("_FaceAngle", _FaceAngle.value);
 
     _LeftEyeParameters.SetMaterialValues(_CozmoFacePreview.material, left:true);
     _RightEyeParameters.SetMaterialValues(_CozmoFacePreview.material, left:false);
   }
 
   void Awake() {
-    UpdateSliders();
+
+    _SendToCozmoButton.onClick.AddListener(HandleSendFaceToCozmo);
 
     _FaceCenterX.minValue = -100;
     _FaceCenterX.maxValue = 100;
@@ -298,11 +378,20 @@ public class CozmoFacePane : MonoBehaviour {
     _RightLowerLidY.minValue = 0;
     _RightLowerLidY.maxValue = 1;
 
-    _RightLowerLidAngle.minValue = -90;
-    _RightLowerLidAngle.maxValue = 90;
+    _RightLowerLidAngle.minValue = -45;
+    _RightLowerLidAngle.maxValue = 45;
 
     _RightLowerLidBend.minValue = 0;
     _RightLowerLidBend.maxValue = 1;
+
+    _RightUpperLidY.minValue = 0;
+    _RightUpperLidY.maxValue = 1;
+
+    _RightUpperLidAngle.minValue = -45;
+    _RightUpperLidAngle.maxValue = 45;
+
+    _RightUpperLidBend.minValue = 0;
+    _RightUpperLidBend.maxValue = 1;
 
     // Left Eye
     _LeftEyeCenterX.minValue = -100;
@@ -341,16 +430,30 @@ public class CozmoFacePane : MonoBehaviour {
     _LeftLowerLidY.minValue = 0;
     _LeftLowerLidY.maxValue = 1;
 
-    _LeftLowerLidAngle.minValue = -90;
-    _LeftLowerLidAngle.maxValue = 90;
+    _LeftLowerLidAngle.minValue = -45;
+    _LeftLowerLidAngle.maxValue = 45;
 
     _LeftLowerLidBend.minValue = 0;
     _LeftLowerLidBend.maxValue = 1;
+
+    _LeftUpperLidY.minValue = 0;
+    _LeftUpperLidY.maxValue = 1;
+
+    _LeftUpperLidAngle.minValue = -45;
+    _LeftUpperLidAngle.maxValue = 45;
+
+    _LeftUpperLidBend.minValue = 0;
+    _LeftUpperLidBend.maxValue = 1;
+
+    _FaceScaleX.value = 1;
+    _FaceScaleY.value = 1;
+    UpdateSliders();
 
   }
 
   void Update() {
     UpdateParameters();
+    UpdateLabels();
     UpdateCozmoFaceMaterial();
   }
 

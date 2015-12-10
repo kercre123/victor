@@ -9,7 +9,7 @@
     _FaceCenterScale ("Face Center Scale", Vector) = (0, 0, 1, 1)
 
     _LeftEyeCenterScale ("Left Eye Center Scale", Vector) = (0,0,1,1)
-    _LeftAngle ("Left Eye Angle", Float) = 0
+    _LeftEyeAngle ("Left Eye Angle", Float) = 0
     _LeftInnerRadius ("Left Inner Radius", Vector) = (0,0,0,0)
     _LeftOuterRadius ("Left Outer Radius", Vector) = (0,0,0,0)
 
@@ -22,7 +22,7 @@
     _LeftLowerLidBend ("Left Lower Lid Bend", Float) = 0
 
     _RightEyeCenterScale ("Right Eye Center Scale", Vector) = (0,0,1,1)
-    _RightAngle ("Right Eye Angle", Float) = 0
+    _RightEyeAngle ("Right Eye Angle", Float) = 0
     _RightInnerRadius ("Right Inner Radius", Vector) = (0,0,0,0)
     _RightOuterRadius ("Right Outer Radius", Vector) = (0,0,0,0)
 
@@ -72,7 +72,7 @@
       float4 _FaceCenterScale;
 
       float4 _LeftEyeCenterScale;
-      float _LeftAngle;
+      float _LeftEyeAngle;
       float4 _LeftInnerRadius;
       float4 _LeftOuterRadius;
 
@@ -85,7 +85,7 @@
       float _LeftLowerLidBend;
 
       float4 _RightEyeCenterScale;
-      float _RightAngle;
+      float _RightEyeAngle;
       float4 _RightInnerRadius;
       float4 _RightOuterRadius;
 
@@ -104,18 +104,18 @@
         o.uv = v.uv;
 
         o.sine = float4(sin(radians(_LeftUpperLidAngle)), sin(radians(_LeftLowerLidAngle)),
-                        sin(radians(_RightUpperLidAngle)), sin(radians(_RightLowerLidAngle)));
+                        sin(-radians(_RightUpperLidAngle)), sin(-radians(_RightLowerLidAngle)));
 
         o.cosine = float4(cos(radians(_LeftUpperLidAngle)), cos(radians(_LeftLowerLidAngle)),
-                          cos(radians(_RightUpperLidAngle)), cos(radians(_RightLowerLidAngle)));
+                          cos(-radians(_RightUpperLidAngle)), cos(-radians(_RightLowerLidAngle)));
 
         o.tangent = float4(tan(radians(_LeftUpperLidAngle)), tan(radians(_LeftLowerLidAngle)),
-                           tan(radians(_RightUpperLidAngle)), tan(radians(_RightLowerLidAngle)));
+                           tan(-radians(_RightUpperLidAngle)), tan(-radians(_RightLowerLidAngle)));
 
-        o.face = float3(sin(radians(_FaceAngle)), cos(radians(_FaceAngle)), 0);
+        o.face = float3(sin(-radians(_FaceAngle)), cos(-radians(_FaceAngle)), 0);
 
-        o.eyes = float4(sin(radians(_LeftAngle)), cos(radians(_LeftAngle)), 
-                        sin(radians(_RightAngle)), cos(radians(_RightAngle)));
+        o.eyes = float4(sin(-radians(_LeftEyeAngle)), cos(-radians(_LeftEyeAngle)), 
+                        sin(-radians(_RightEyeAngle)), cos(-radians(_RightEyeAngle)));
 
         return o;
       }
@@ -140,8 +140,6 @@
       const float2 NominalLeftEyePosition = float2(NominalLeftEyeX, NominalEyeY);
       const float2 NominalRightEyePosition = float2(NominalRightEyeX, NominalEyeY);
 
-
-
       float mod(float x, float d)
       {
         return x - floor(x / d) * d;
@@ -157,51 +155,51 @@
         bl = bl * halfS;
         br = br * halfS;
 
-        float2 topRight = halfS;
-        float2 bottomLeft = -halfS;
+        float2 bottomRight = halfS;
+        float2 topLeft = -halfS;
 
-        float2 topLeft = float2(bottomLeft.x, topRight.y);
-        float2 bottomRight = float2(topRight.x, bottomLeft.y);
+        float2 bottomLeft = float2(topLeft.x, bottomRight.y);
+        float2 topRight = float2(bottomRight.x, topLeft.y);
 
-        float2 innerTopLeft = topLeft + float2(tl.x, -tl.y);
-        float2 innerTopRight = topRight - tr;
-        float2 innerBottomLeft = bottomLeft + bl;
-        float2 innerBottomRight = bottomRight + float2(-br.x, br.y);
+        float2 innerTopLeft = topLeft + tl;
+        float2 innerTopRight = topRight + float2(-tr.x, tr.y);
+        float2 innerBottomLeft = bottomLeft + float2(bl.x, -bl.y);
+        float2 innerBottomRight = bottomRight - br;
 
         if(pos.x > topRight.x || pos.x < bottomLeft.x)
           return 0;
-        if(pos.y > topRight.y || pos.y < bottomLeft.y)
-          return 0;
 
+        if(pos.y < topRight.y || pos.y > bottomLeft.y)
+          return 0;
 
         //top left
         float2 r = pos - innerTopLeft;
         float2 d2 = (r * r) / (tl * tl);
-        if(d2.x + d2.y > 1 && r.x < 0 && r.y > 0)
+        if(d2.x + d2.y > 1 && r.x < 0 && r.y < 0)
           return 0;
 
         // top right
         r = pos - innerTopRight;
         d2 = (r * r) / (tr * tr);
-        if(d2.x + d2.y > 1 && r.x > 0 && r.y > 0)
+        if(d2.x + d2.y > 1 && r.x > 0 && r.y < 0)
           return 0;
 
         // bottom left
         r = pos - innerBottomLeft;
         d2 = (r * r) / (bl * bl);
-        if(d2.x + d2.y > 1 && r.x < 0 && r.y < 0)
+        if(d2.x + d2.y > 1 && r.x < 0 && r.y > 0)
           return 0;
 
         // bottom right
         r = pos - innerBottomRight;
         d2 = (r * r) / (br * br);
-        if(d2.x + d2.y > 1 && r.x > 0 && r.y < 0)
+        if(d2.x + d2.y > 1 && r.x > 0 && r.y > 0)
           return 0;
 
         return 1;
       }
 
-      float topEyelidContains(float2 pos, float lidY, float sina, float cosa, float tana, float bend, float2 scale) {
+      float bottomEyelidContains(float2 pos, float lidY, float sina, float cosa, float tana, float bend, float2 scale) {
 
         float eyeHeight = scale.y * NominalEyeHeight;
         float offset = eyeHeight * (0.5 - lidY);
@@ -231,7 +229,7 @@
          return 0;
       }
 
-      float bottomEyelidContains(float2 pos, float lidY, float sina, float cosa, float tana, float bend, float2 scale) {
+      float topEyelidContains(float2 pos, float lidY, float sina, float cosa, float tana, float bend, float2 scale) {
 
         float eyeHeight = scale.y * NominalEyeHeight;
         float offset = eyeHeight * (lidY - 0.5);
@@ -263,18 +261,17 @@
 
       fixed4 frag (v2f i) : SV_Target
       {
-        float2 imagePos = IMAGE_SIZE * i.uv;
+        float2 imagePos = IMAGE_SIZE * i.uv * float2(1, -1) + float2(0, IMAGE_HEIGHT);
         // pixel effect
-        //float2 imagePos = floor(IMAGE_SIZE * i.uv * 2) * 0.5;
+        //float2 imagePos = floor(IMAGE_SIZE * i.uv * 2) * 0.5 * float2(1, -1) + float2(0, IMAGE_HEIGHT);
 
         float4 baseColor = floor(mod(imagePos.y, 2)) * _Color;
 
-        float2 facePos = (imagePos - _FaceCenterScale.xy) / _FaceCenterScale.zw - IMAGE_SIZE * 0.5;
+        float2 facePos = (imagePos - _FaceCenterScale.xy - IMAGE_SIZE * 0.5) / _FaceCenterScale.zw;
 
         // apply rotation
 
         facePos = float2(facePos.x * i.face.y + facePos.y * i.face.x, facePos.y * i.face.y - facePos.x * i.face.x) + IMAGE_SIZE * 0.5;
-
 
         float2 leftEyePos = _LeftEyeCenterScale.xy + NominalLeftEyePosition;
 

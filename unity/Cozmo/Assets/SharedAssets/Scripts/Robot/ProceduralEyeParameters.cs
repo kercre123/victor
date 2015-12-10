@@ -48,7 +48,7 @@ public class ProceduralEyeParameters
     }
     set {
       _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusX] = value.x;
-      _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusX] = value.y;
+      _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusY] = value.y;
     }
   }
 
@@ -58,7 +58,7 @@ public class ProceduralEyeParameters
     }
     set {
       _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusX] = value.x;
-      _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusX] = value.y;
+      _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusY] = value.y;
     }
   }
 
@@ -180,18 +180,18 @@ public class ProceduralEyeParameters
   }
 
   public void SetMaterialValues(Material mat, bool left) {
-    string prefix = left ? "Left " : "Right ";
+    string prefix = left ? "_Left" : "_Right";
 
-    mat.SetVector(prefix + "Eye Center Scale", new Vector4(EyeCenter.x, EyeCenter.y, EyeScale.x, EyeScale.y));
-    mat.SetFloat(prefix + "Eye Angle", EyeAngle);
-    mat.SetVector(prefix + "Inner Radius", new Vector4(LowerInnerRadius.x, LowerInnerRadius.y, UpperInnerRadius.x, UpperInnerRadius.y));
-    mat.SetVector(prefix + "Upper Radius", new Vector4(UpperOuterRadius.x, UpperOuterRadius.y, LowerOuterRadius.x, LowerOuterRadius.y));
-    mat.SetFloat(prefix + "Upper Lid Y", UpperLidY);
-    mat.SetFloat(prefix + "Upper Lid Angle", UpperLidAngle);
-    mat.SetFloat(prefix + "Upper Lid Bend", UpperLidBend);
-    mat.SetFloat(prefix + "Lower Lid Y", LowerLidY);
-    mat.SetFloat(prefix + "Lower Lid Angle", LowerLidAngle);
-    mat.SetFloat(prefix + "Lower Lid Bend", LowerLidBend);
+    mat.SetVector(prefix + "EyeCenterScale", new Vector4(EyeCenter.x, EyeCenter.y, EyeScale.x, EyeScale.y));
+    mat.SetFloat(prefix + "EyeAngle", EyeAngle);
+    mat.SetVector(prefix + "InnerRadius", new Vector4(LowerInnerRadius.x, LowerInnerRadius.y, UpperInnerRadius.x, UpperInnerRadius.y));
+    mat.SetVector(prefix + "OuterRadius", new Vector4(UpperOuterRadius.x, UpperOuterRadius.y, LowerOuterRadius.x, LowerOuterRadius.y));
+    mat.SetFloat(prefix + "UpperLidY", UpperLidY);
+    mat.SetFloat(prefix + "UpperLidAngle", UpperLidAngle);
+    mat.SetFloat(prefix + "UpperLidBend", UpperLidBend);
+    mat.SetFloat(prefix + "LowerLidY", LowerLidY);
+    mat.SetFloat(prefix + "LowerLidAngle", LowerLidAngle);
+    mat.SetFloat(prefix + "LowerLidBend", LowerLidBend);
   }
 
 }
