@@ -48,12 +48,19 @@ namespace Cozmo {
       }
 
       private void Awake() {
-        _CloseButton.onClick.AddListener(CloseView);
+        if (_CloseButton != null) {
+          _CloseButton.onClick.AddListener(CloseView);
+          _CloseButton.gameObject.SetActive(false);
+        }
 
         // Hide all buttons
-        _PrimaryButton.gameObject.SetActive(false);
-        _CloseButton.gameObject.SetActive(false);
-        _SecondaryButton.gameObject.SetActive(false);
+        if (_PrimaryButton != null) {
+          _PrimaryButton.gameObject.SetActive(false);
+        }
+
+        if (_SecondaryButton != null) {
+          _SecondaryButton.gameObject.SetActive(false);
+        }
       }
 
       protected override void CleanUp() {
@@ -63,13 +70,18 @@ namespace Cozmo {
       }
 
       private void ResetButton(AnkiButton button) {
-        if (button.isActiveAndEnabled) {
+        if (button != null && button.isActiveAndEnabled) {
           button.onClick.RemoveAllListeners();
         }
       }
 
       public void SetCloseButtonEnabled(bool enabled) {
-        _CloseButton.gameObject.SetActive(enabled);
+        if (_CloseButton != null) {
+          _CloseButton.gameObject.SetActive(enabled);
+        }
+        else {
+          DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);
+        }
       }
 
       public void SetPrimaryButton(string titleKey, Action action = null) {
@@ -81,23 +93,26 @@ namespace Cozmo {
       }
 
       private void SetupButton(AnkiButton button, String title, Action action) {
-        button.gameObject.SetActive(true);
-        button.Text = title.ToUpper();
-        button.onClick.RemoveAllListeners();
-        button.onClick.AddListener(() => {
-          if (action != null) {
-            action();
-          }
-          CloseView();
-        });
+        if (button != null) {
+          button.gameObject.SetActive(true);
+          button.Text = title.ToUpper();
+          button.onClick.RemoveAllListeners();
+          button.onClick.AddListener(() => {
+            if (action != null) {
+              action();
+            }
+            CloseView();
+          });
+        }
+        else {
+          DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);
+        }
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
-        openAnimation.Append(this.transform.DOScale(new Vector3(0.01f, 0.01f, 0.01f), 0.25f).From().SetEase(Ease.OutQuad));
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-        closeAnimation.Append(this.transform.DOScale(new Vector3(0.01f, 0.01f, 0.01f), 0.25f).SetEase(Ease.OutQuad));
       }
     }
   }
