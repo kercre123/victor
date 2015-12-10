@@ -508,9 +508,6 @@ public class Robot : IDisposable {
     CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
 
-    if (HeadTrackingObjectID == _LastHeadTrackingObjectID)
-      _LastHeadTrackingObjectID = -1;
-
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
     Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
 
@@ -846,11 +843,7 @@ public class Robot : IDisposable {
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
-    if (HeadTrackingObjectID == observedObject) {
-      _LastHeadTrackingObjectID = -1;
-      return;
-    }
-    else if (_LastHeadTrackingObjectID == observedObject) {
+    if (HeadTrackingObjectID == observedObject && _LastHeadTrackingObjectID == observedObject) {
       return;
     }
 
