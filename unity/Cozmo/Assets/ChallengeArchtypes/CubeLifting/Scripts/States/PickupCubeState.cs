@@ -22,7 +22,7 @@ namespace CubeLifting {
     }
 
     private void OnCubePickedUp(bool success) {
-      if (success) {
+      if (!success) {
         var game = _StateMachine.GetGame();
         if (game.TryDecrementAttempts()) {
           AnimationState animState = new AnimationState();
