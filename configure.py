@@ -148,8 +148,8 @@ class GamePlatformConfiguration(object):
 
         self.unity_audio_assets_symlink = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'Resources',
                                                        'sound', self.platform)
-        self.unity_audio_assets_symlink_target = os.path.join("EXTERNALS", "cozmosoundbanks",
-                                                              "GeneratedSoundBanks", self.platform)
+        self.unity_audio_assets_symlink_target = os.path.join(EXTERNAL_ROOT, "cozmosoundbanks",
+                                                              "GeneratedSoundBanks", self.platform.title())
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
