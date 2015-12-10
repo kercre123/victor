@@ -33,6 +33,11 @@ namespace Cozmo {
 
       private ChallengeTitleWidget _TitleWidgetInstance;
 
+      private CanvasGroup _CurrentSlide;
+      private Sequence _SlideInTween;
+      private CanvasGroup _TransitionOutSlide;
+      private Sequence _SlideOutTween;
+
       private List<IMinigameWidget> _ActiveWidgets = new List<IMinigameWidget>();
 
       protected override void CleanUp() {
@@ -40,6 +45,8 @@ namespace Cozmo {
           widget.DestroyWidgetImmediately();
         }
         _ActiveWidgets.Clear();
+
+        // TODO: If there are any slides or tweens running, destroy them right away
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
@@ -230,6 +237,19 @@ namespace Cozmo {
         }
 
         _ActiveWidgets.Add(_TitleWidgetInstance);
+      }
+
+      #endregion
+
+      #region How To Play Slides
+
+      public void ShowHowToPlaySlide(GameObject slidePrefab) {
+        // TODO: If a slide already exists, play a transition out tween on it
+        // Set the instance to transition out slot
+
+        // Create the new slide underneath the container
+        // Play a transition in tween on it
+        // At the end of the tween destroy the out slide
       }
 
       #endregion
