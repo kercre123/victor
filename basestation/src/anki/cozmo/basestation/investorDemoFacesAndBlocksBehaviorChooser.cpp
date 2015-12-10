@@ -73,7 +73,7 @@ void InvestorDemoFacesAndBlocksBehaviorChooser::SetupBehaviors(Robot& robot, con
   lookAround->SetLookAroundHeadAngle( DEG_TO_RAD( 17.5f ) );
   super::AddBehavior( lookAround );
   
-  // super::AddBehavior( new BehaviorInteractWithFaces_investorDemo(robot, config) );
+  super::AddBehavior( new BehaviorInteractWithFaces_investorDemo(robot, config) );
   
   super::AddBehavior( new BehaviorBlockPlay_investorDemo(robot, config) );
 }

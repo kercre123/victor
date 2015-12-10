@@ -87,7 +87,8 @@ namespace Cozmo {
   
   bool BehaviorBlockPlay::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    return (_faceID != Face::UnknownFace) || _trackedObject.IsSet() || _objectToPickUp.IsSet() || _objectToPlaceOn.IsSet();
+    return _trackedObject.IsSet() || _objectToPickUp.IsSet() || _objectToPlaceOn.IsSet() ||
+      (_currentState == State::TrackingFace && _faceID != Face::UnknownFace && robot.IsCarryingObject());
   }
   
   Result BehaviorBlockPlay::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -233,12 +234,16 @@ namespace Cozmo {
             if (_noFacesStartTime <= 0) {
               _noFacesStartTime = currentTime_sec;
             }
-            
-            if (currentTime_sec - _noFacesStartTime > 2.0f) {
+
+            // HACK: don't abort if we are carrying an object, because we might get stuck
+            if (currentTime_sec - _noFacesStartTime > 2.0f && !robot.IsCarryingObject()) {
               PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.NoFacesSeen", "Aborting behavior");
               return Status::Complete;
             }
           }
+
+          // TEMP: what I really need is a "search for faces" beahvior, instead of look around. It would
+          // always be runnable. Then when we "abort" this behavior, we could go to that one
 
           if( moveLiftAction != nullptr) {
             // execute the lower lift action before we start tracking faces
@@ -291,8 +296,12 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.RaisingBlockToSeeOtherBlock",
                              "trying to see block %d",
                              _trackedObject.GetValue());
-            robot.GetMoveComponent().MoveLiftToHeight(LIFT_HEIGHT_CARRY, 2, 5);
-            robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
+            StartActing(robot,
+                        new CompoundActionParallel({
+                            new MoveLiftToHeightAction( LIFT_HEIGHT_CARRY ),
+                            new MoveHeadToAngleAction( 0 ) }) );
+            // robot.GetMoveComponent().MoveLiftToHeight(LIFT_HEIGHT_CARRY, 2, 5);
+            // robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
           }
         }
         
