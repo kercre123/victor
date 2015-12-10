@@ -200,7 +200,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: 6cfcdac293fc94311a8bda567bc82faa, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 713063a23dd2042ddb0fd52e72645d5d, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -249,7 +249,7 @@ MonoBehaviour:
   _FilledForegroundImage: {fileID: 11465698}
   _NormalColor: {r: .0274509825, g: .556862772, b: .874509871, a: 1}
   _DecreasingColor: {r: 1, g: 0, b: 0, a: 1}
-  _IncreasingColor: {r: .0344827175, g: 1, b: 0, a: 1}
+  _IncreasingColor: {r: .0274509825, g: .556862772, b: .874509871, a: 1}
 --- !u!222 &22243060
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -431,6 +431,18 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _IncreasingColor.a
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _IncreasingColor.r
+      value: .0274509825
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _IncreasingColor.g
+      value: .556862772
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _IncreasingColor.b
+      value: .874509871
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

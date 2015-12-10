@@ -1,0 +1,234 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: CozmoFace
+  m_Shader: {fileID: 4800000, guid: 40bcc9a9013094ded91abade62d6a097, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: 2000
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _BumpMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _DetailNormalMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _ParallaxMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _OcclusionMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _EmissionMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _DetailMask
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _DetailAlbedoMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _MetallicGlossMap
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _SrcBlend
+        second: 1
+      data:
+        first:
+          name: _DstBlend
+        second: 0
+      data:
+        first:
+          name: _Cutoff
+        second: .5
+      data:
+        first:
+          name: _Parallax
+        second: .0199999996
+      data:
+        first:
+          name: _ZWrite
+        second: 1
+      data:
+        first:
+          name: _Glossiness
+        second: .5
+      data:
+        first:
+          name: _BumpScale
+        second: 1
+      data:
+        first:
+          name: _OcclusionStrength
+        second: 1
+      data:
+        first:
+          name: _DetailNormalMapScale
+        second: 1
+      data:
+        first:
+          name: _UVSec
+        second: 0
+      data:
+        first:
+          name: _Mode
+        second: 0
+      data:
+        first:
+          name: _Metallic
+        second: 0
+      data:
+        first:
+          name: _FaceAngle
+        second: 0
+      data:
+        first:
+          name: _LeftEyeAngle
+        second: 0
+      data:
+        first:
+          name: _LeftUpperLidY
+        second: 0
+      data:
+        first:
+          name: _LeftUpperLidAngle
+        second: 0
+      data:
+        first:
+          name: _LeftUpperLidBend
+        second: 0
+      data:
+        first:
+          name: _LeftLowerLidY
+        second: 0
+      data:
+        first:
+          name: _LeftLowerLidAngle
+        second: 0
+      data:
+        first:
+          name: _LeftLowerLidBend
+        second: 0
+      data:
+        first:
+          name: _RightEyeAngle
+        second: 0
+      data:
+        first:
+          name: _RightUpperLidY
+        second: 0
+      data:
+        first:
+          name: _RightUpperLidAngle
+        second: 0
+      data:
+        first:
+          name: _RightUpperLidBend
+        second: 0
+      data:
+        first:
+          name: _RightLowerLidY
+        second: 0
+      data:
+        first:
+          name: _RightLowerLidAngle
+        second: 0
+      data:
+        first:
+          name: _RightLowerLidBend
+        second: 0
+      data:
+        first:
+          name: _LeftAngle
+        second: 0
+      data:
+        first:
+          name: _RightAngle
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _EmissionColor
+        second: {r: 0, g: 0, b: 0, a: 1}
+      data:
+        first:
+          name: _Color
+        second: {r: 0, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _FaceCenterScale
+        second: {r: 0, g: 0, b: 1, a: 1}
+      data:
+        first:
+          name: _LeftEyeCenterScale
+        second: {r: 10, g: 4, b: 1.00999999, a: .870000005}
+      data:
+        first:
+          name: _LeftInnerRadius
+        second: {r: .680000007, g: .610000014, b: .680000007, a: .610000014}
+      data:
+        first:
+          name: _LeftOuterRadius
+        second: {r: .610000014, g: .610000014, b: .610000014, a: .610000014}
+      data:
+        first:
+          name: _RightEyeCenterScale
+        second: {r: -13, g: 3, b: 1.19000006, a: 1}
+      data:
+        first:
+          name: _RightInnerRadius
+        second: {r: .620000005, g: .610000014, b: .610000014, a: .610000014}
+      data:
+        first:
+          name: _RightOuterRadius
+        second: {r: .610000014, g: .610000014, b: .610000014, a: .610000014}

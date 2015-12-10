@@ -39,8 +39,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7752c2014d4e847c6bb0504c546b0fca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameId: followCube
-  _GamePanelPrefab: {fileID: 11463664, guid: 7938bdc58b9924280aa2204784042d99, type: 2}
+  _HowToPlayPrefabs:
+  - slideName: ShowCubeVision
+    slidePrefab: {fileID: 22563934, guid: 808066d5e21a84aac8ab6975c0b1d5c6, type: 2}
+  - slideName: FollowForward
+    slidePrefab: {fileID: 22518124, guid: ac3dafef8266543d3b066ef92a44c1b9, type: 2}
+  - slideName: FollowBackward
+    slidePrefab: {fileID: 22546770, guid: b2fbace6cf1404ec3a47bad4273962b8, type: 2}
+  - slideName: FollowTurnLeft
+    slidePrefab: {fileID: 22598462, guid: fa44c1bc5930348058ca6f9eec3d2e7a, type: 2}
+  - slideName: FollowTurnRight
+    slidePrefab: {fileID: 22570580, guid: 11f6732e39d8e4f68bca717eee40811c, type: 2}
+  - slideName: FollowDrive
+    slidePrefab: {fileID: 22512638, guid: f883e6fc9c79246e3a0821153a900f4d, type: 2}
+  NotSeenForgivenessThreshold: 2
+  CurrentFollowTask: 0
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -48,6 +61,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 6
+      objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: gameName_
       value: Follow Cube
@@ -70,6 +87,60 @@ Prefab:
       value: 
       objectReference: {fileID: 11463664, guid: 7938bdc58b9924280aa2204784042d99,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22563934, guid: 808066d5e21a84aac8ab6975c0b1d5c6,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: ShowCubeVision
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22518124, guid: ac3dafef8266543d3b066ef92a44c1b9,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slideName
+      value: FollowForward
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slidePrefab
+      value: 
+      objectReference: {fileID: 22546770, guid: b2fbace6cf1404ec3a47bad4273962b8,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slideName
+      value: FollowBackward
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slidePrefab
+      value: 
+      objectReference: {fileID: 22598462, guid: fa44c1bc5930348058ca6f9eec3d2e7a,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slideName
+      value: FollowTurnLeft
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[4].slidePrefab
+      value: 
+      objectReference: {fileID: 22570580, guid: 11f6732e39d8e4f68bca717eee40811c,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[4].slideName
+      value: FollowTurnRight
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[5].slidePrefab
+      value: 
+      objectReference: {fileID: 22512638, guid: f883e6fc9c79246e3a0821153a900f4d,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[5].slideName
+      value: FollowDrive
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 171818}

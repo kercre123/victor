@@ -21,12 +21,18 @@ namespace ScriptedSequences.Actions {
         return token;
       }
       if (LoopForever) {
-        token.OnAbort += () => { robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); };
+        bool loopComplete = false;
+        token.OnAbort += () => { 
+          loopComplete = true;
+          robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION); 
+        };
         Action playAnimation = null;
 
-        playAnimation = () => {
+        playAnimation = () => {          
           robot.SendAnimation(AnimationName, (s) => { 
-            playAnimation();
+            if(!loopComplete) {
+              playAnimation();
+            }
           });
         };
 

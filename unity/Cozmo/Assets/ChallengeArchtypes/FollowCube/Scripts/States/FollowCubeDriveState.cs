@@ -23,6 +23,8 @@ namespace FollowCube {
 
       _PreviousAnglePose = _CurrentRobot.PoseAngle;
       _TotalRadiansTraveled = 0;
+
+      _GameInstance.ShowHowToPlaySlide("FollowDrive");
     }
 
     public override void Update() {
@@ -51,7 +53,7 @@ namespace FollowCube {
           _PreviousAnglePose = _CurrentRobot.PoseAngle;
 
           // If we have turned fully around in either direction, the player wins.
-          _GameInstance.Progress = (Mathf.Abs(_TotalRadiansTraveled) / Mathf.PI * 2) * (1.0f / _GameInstance.NumSegments) + (4.0f / _GameInstance.NumSegments);
+          _GameInstance.Progress = (Mathf.Abs(_TotalRadiansTraveled) / (Mathf.PI * 2)) * (1.0f / _GameInstance.NumSegments) + (4.0f / _GameInstance.NumSegments);
           if (Mathf.Abs(_TotalRadiansTraveled) > Mathf.PI * 2) {
             AnimationState animState = new AnimationState();
             animState.Initialize(AnimationName.kMajorWin, HandleWinAnimationDone);
@@ -70,7 +72,7 @@ namespace FollowCube {
             // we've seen a block.
             _TargetCube.TurnLEDsOff();
             _TargetCube = null;
-            _GameInstance.FailedAttempt();
+            _StateMachine.SetNextState(new FollowCubeFailedState());
           }
           else {
             // Continue trying to follow the cube

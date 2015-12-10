@@ -9,7 +9,8 @@ public class ProceduralEyeParameters
 
   public Vector2 EyeCenter {
     get {
-      return new Vector2(_Arr[(int)ProceduralEyeParameter.EyeCenterX], _Arr[(int)ProceduralEyeParameter.EyeCenterY]);
+      return new Vector2( _Arr[(int)ProceduralEyeParameter.EyeCenterX], 
+                          _Arr[(int)ProceduralEyeParameter.EyeCenterY]);
     }
     set {
       _Arr[(int)ProceduralEyeParameter.EyeCenterX] = value.x;
@@ -19,7 +20,8 @@ public class ProceduralEyeParameters
 
   public Vector2 EyeScale {
     get {
-      return new Vector2(_Arr[(int)ProceduralEyeParameter.EyeScaleX], _Arr[(int)ProceduralEyeParameter.EyeScaleY]);
+      return new Vector2( _Arr[(int)ProceduralEyeParameter.EyeScaleX], 
+                          _Arr[(int)ProceduralEyeParameter.EyeScaleY]);
     }
     set {
       _Arr[(int)ProceduralEyeParameter.EyeScaleX] = value.x;
@@ -34,7 +36,8 @@ public class ProceduralEyeParameters
 
   public Vector2 LowerInnerRadius {
     get {
-      return new Vector2(_Arr[(int)ProceduralEyeParameter.LowerInnerRadiusX], _Arr[(int)ProceduralEyeParameter.LowerInnerRadiusY]);
+      return new Vector2( _Arr[(int)ProceduralEyeParameter.LowerInnerRadiusX], 
+                          _Arr[(int)ProceduralEyeParameter.LowerInnerRadiusY]);
     }
     set {
       _Arr[(int)ProceduralEyeParameter.LowerInnerRadiusX] = value.x;
@@ -44,27 +47,30 @@ public class ProceduralEyeParameters
 
   public Vector2 UpperInnerRadius {
     get {
-      return new Vector2(_Arr[(int)ProceduralEyeParameter.UpperInnerRadiusX], _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusY]);
+      return new Vector2( _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusX], 
+                          _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusY]);
     }
     set {
       _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusX] = value.x;
-      _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusX] = value.y;
+      _Arr[(int)ProceduralEyeParameter.UpperInnerRadiusY] = value.y;
     }
   }
 
   public Vector2 UpperOuterRadius {
     get {
-      return new Vector2(_Arr[(int)ProceduralEyeParameter.UpperOuterRadiusX], _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusY]);
+      return new Vector2( _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusX], 
+                          _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusY]);
     }
     set {
       _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusX] = value.x;
-      _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusX] = value.y;
+      _Arr[(int)ProceduralEyeParameter.UpperOuterRadiusY] = value.y;
     }
   }
 
   public Vector2 LowerOuterRadius {
     get {
-      return new Vector2(_Arr[(int)ProceduralEyeParameter.LowerOuterRadiusX], _Arr[(int)ProceduralEyeParameter.LowerOuterRadiusY]);
+      return new Vector2( _Arr[(int)ProceduralEyeParameter.LowerOuterRadiusX], 
+                          _Arr[(int)ProceduralEyeParameter.LowerOuterRadiusY]);
     }
     set {
       _Arr[(int)ProceduralEyeParameter.LowerOuterRadiusX] = value.x;
@@ -162,9 +168,9 @@ public class ProceduralEyeParameters
       EyeScale = new Vector2(1.01f, 0.87f),
 
       LowerInnerRadius = new Vector2(0.68f, 0.61f),
-      LowerOuterRadius = new Vector2(0.68f, 0.61f),
+      UpperInnerRadius = new Vector2(0.68f, 0.61f),
       UpperOuterRadius = new Vector2(0.61f, 0.61f),
-      UpperInnerRadius = new Vector2(0.61f, 0.61f)
+      LowerOuterRadius = new Vector2(0.61f, 0.61f)
     };
   }
   public static ProceduralEyeParameters MakeDefaultRightEye() {
@@ -173,10 +179,28 @@ public class ProceduralEyeParameters
       EyeScale = new Vector2(1.19f, 1f),
 
       LowerInnerRadius = new Vector2(0.62f, 0.61f),
-      LowerOuterRadius = new Vector2(0.61f, 0.61f),
+      UpperInnerRadius = new Vector2(0.61f, 0.61f),
       UpperOuterRadius = new Vector2(0.61f, 0.61f),
-      UpperInnerRadius = new Vector2(0.61f, 0.61f)
+      LowerOuterRadius = new Vector2(0.61f, 0.61f)
     };
+  }
+
+  public void SetMaterialValues(Material mat, bool left) {
+    string prefix = left ? "_Left" : "_Right";
+
+    mat.SetVector(prefix + "EyeCenterScale", 
+      new Vector4(EyeCenter.x, EyeCenter.y, EyeScale.x, EyeScale.y));
+    mat.SetFloat(prefix + "EyeAngle", EyeAngle);
+    mat.SetVector(prefix + "InnerRadius", 
+      new Vector4(LowerInnerRadius.x, LowerInnerRadius.y, UpperInnerRadius.x, UpperInnerRadius.y));
+    mat.SetVector(prefix + "OuterRadius", 
+      new Vector4(UpperOuterRadius.x, UpperOuterRadius.y, LowerOuterRadius.x, LowerOuterRadius.y));
+    mat.SetFloat(prefix + "UpperLidY", UpperLidY);
+    mat.SetFloat(prefix + "UpperLidAngle", UpperLidAngle);
+    mat.SetFloat(prefix + "UpperLidBend", UpperLidBend);
+    mat.SetFloat(prefix + "LowerLidY", LowerLidY);
+    mat.SetFloat(prefix + "LowerLidAngle", LowerLidAngle);
+    mat.SetFloat(prefix + "LowerLidBend", LowerLidBend);
   }
 
 }

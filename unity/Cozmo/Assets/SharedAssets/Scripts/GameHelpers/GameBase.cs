@@ -18,6 +18,8 @@ public abstract class GameBase : MonoBehaviour {
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
+
+    CloseMinigameImmediately();
   }
 
   public delegate void MiniGameWinHandler();
@@ -25,9 +27,8 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameWinHandler OnMiniGameWin;
 
   public void RaiseMiniGameWin() {
-    if (OnMiniGameWin != null) {
-      OnMiniGameWin();
-    }
+    _WonChallenge = true;
+    OpenChallengeEndedDialog();
   }
 
   public delegate void MiniGameLoseHandler();
@@ -35,33 +36,55 @@ public abstract class GameBase : MonoBehaviour {
   public event MiniGameWinHandler OnMiniGameLose;
 
   public void RaiseMiniGameLose() {
-    if (OnMiniGameLose != null) {
-      OnMiniGameLose();
-    }
+    _WonChallenge = false;
+    OpenChallengeEndedDialog();
   }
 
   public Robot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private SharedMinigameView _SharedMinigameViewInstance;
 
+  protected ChallengeData _ChallengeData;
+  private AlertView _ChallengeEndViewInstance;
+  private bool _WonChallenge;
+
+  [SerializeField]
+  protected HowToPlaySlide[] _HowToPlayPrefabs;
+
   public void InitializeMinigame(ChallengeData challengeData) {
     GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
     _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
 
-    // For all challenges, set the title text and add a quit button
-    TitleText = Localization.Get(challengeData.ChallengeTitleLocKey);
-    CreateDefaultQuitButton();
-
+    _ChallengeData = challengeData;
+    _WonChallenge = false;
     Initialize(challengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
+    InitializeView(challengeData);
     _SharedMinigameViewInstance.OpenView();
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
+  protected virtual void InitializeView(ChallengeData data) {
+    // For all challenges, set the title text and add a quit button by default
+    TitleText = Localization.Get(data.ChallengeTitleLocKey);
+    CreateDefaultQuitButton();
+  }
+
   public void OnDestroy() {
     CleanUpOnDestroy();
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState();
+    }
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.CloseViewImmediately();
+      _SharedMinigameViewInstance = null;
+    }
+    if (_ChallengeEndViewInstance != null) {
+      _ChallengeEndViewInstance.CloseViewImmediately();
+      _ChallengeEndViewInstance = null;
+    }
   }
 
   /// <summary>
@@ -75,24 +98,38 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void ResumeGame() {
-    _SharedMinigameViewInstance.EnableInteractivity();
-  }
-
-  public void CloseMinigame() {
-    _SharedMinigameViewInstance.ViewCloseAnimationFinished += HandleMinigameViewCloseFinished;
-    _SharedMinigameViewInstance.CloseView();
-    _SharedMinigameViewInstance = null;
+    if (_SharedMinigameViewInstance != null) {
+      _SharedMinigameViewInstance.EnableInteractivity();
+    }
   }
 
   public void CloseMinigameImmediately() {
-    if (_SharedMinigameViewInstance != null) {
-      _SharedMinigameViewInstance.CloseViewImmediately();
-      _SharedMinigameViewInstance = null;
-    }
-    HandleMinigameViewCloseFinished();
+    Destroy(gameObject);
   }
 
-  private void HandleMinigameViewCloseFinished() {
+  private AlertView OpenChallengeEndedDialog() {
+    // Open confirmation dialog instead
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.ChallengeEndViewPrefab) as AlertView;
+    // Hook up callbacks
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue, HandleChallengeResultViewClosed);
+    alertView.TitleLocKey = _ChallengeData.ChallengeTitleLocKey;
+    alertView.DescriptionLocKey = _WonChallenge ? LocalizationKeys.kLabelChallengeCompleted : LocalizationKeys.kLabelChallengeFailed;
+    // Listen for dialog close
+    alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+    return alertView;
+  }
+
+  private void HandleChallengeResultViewClosed() {
+    if (_WonChallenge) {
+      if (OnMiniGameWin != null) {
+        OnMiniGameWin();
+      }
+    }
+    else {
+      if (OnMiniGameLose != null) {
+        OnMiniGameLose();
+      }
+    }
     Destroy(gameObject);
   }
 
@@ -207,4 +244,44 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   #endregion
+
+  #region How To Play Slides
+
+  public void ShowHowToPlaySlide(string slideName) {
+    // Search through the array for a slide of the same name
+    HowToPlaySlide foundSlide = null;
+    foreach (var slide in _HowToPlayPrefabs) {
+      if (slide != null && slide.slideName == slideName) {
+        foundSlide = slide;
+        break;
+      }
+      else if (slide == null) {
+        DAS.Warn(this, "Null slide found in slide prefabs! Check this object's" +
+        " list of slides! gameObject.name=" + gameObject.name);
+      }
+    }
+
+    // If found, show that slide.
+    if (foundSlide != null) {
+      if (foundSlide.slidePrefab != null) {
+        _SharedMinigameViewInstance.ShowHowToPlaySlide(foundSlide.slidePrefab);
+      }
+      else {
+        DAS.Error(this, "Null prefab for slide with name '" + slideName + "'! Check this object's" +
+        " list of slides! gameObject.name=" + gameObject.name);
+      }
+    }
+    else {
+      DAS.Error(this, "Could not find slide with name '" + slideName + "' in slide prefabs! Check this object's" +
+      " list of slides! gameObject.name=" + gameObject.name);
+    }
+  }
+
+  #endregion
+}
+
+[System.Serializable]
+public class HowToPlaySlide {
+  public string slideName;
+  public CanvasGroup slidePrefab;
 }

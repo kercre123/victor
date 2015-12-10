@@ -47,7 +47,7 @@ namespace StackTraining {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
 
       CurrentRobot.SetLiftHeight(0f);
-      CurrentRobot.SetHeadAngle(0f);
+      CurrentRobot.SetHeadAngle(0.15f);
     }
 
     void Update() {
@@ -55,9 +55,7 @@ namespace StackTraining {
     }
 
     protected override void CleanUpOnDestroy() {
-      foreach (var cube in CurrentRobot.LightCubes) {
-        cube.Value.TurnLEDsOff();
-      }
+
     }
 
     public void PickCubes() {

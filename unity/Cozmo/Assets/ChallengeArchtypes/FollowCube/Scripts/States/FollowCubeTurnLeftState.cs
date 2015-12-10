@@ -17,6 +17,8 @@ namespace FollowCube {
       _LastSeenTargetTime = Time.time;
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _GameInstance.ShowHowToPlaySlide("FollowTurnLeft");
     }
 
     public override void Update() {
@@ -25,12 +27,11 @@ namespace FollowCube {
       if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
         _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
         _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-        _CurrentRobot.TrackToObject(_CurrentTarget);
       }
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
-        _GameInstance.FailedAttempt();
+        _StateMachine.SetNextState(new FollowCubeFailedState());
         return;
       }
 

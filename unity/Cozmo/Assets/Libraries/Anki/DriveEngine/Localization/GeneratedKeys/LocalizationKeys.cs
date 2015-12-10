@@ -59,6 +59,9 @@ public static class LocalizationKeys {
   public const string kIntroSequenceAriaIntroLine3 = "IntroSequence.AriaIntroLine3";
   public const string kIntroSequenceAriaUploadLine1 = "IntroSequence.AriaUploadLine1";
   public const string kIntroSequenceAriaUploadLine2 = "IntroSequence.AriaUploadLine2";
+  public const string kMotionDetectionIntroNode1 = "MotionDetectionIntro.Node 1";
+  public const string kMotionDetectionIntroNode2 = "MotionDetectionIntro.Node 2";
+  public const string kMotionDetectionIntroNode3 = "MotionDetectionIntro.Node 3";
 
   #endregion
 
@@ -97,10 +100,13 @@ public static class LocalizationKeys {
   public const string kButtonTap = "button.tap";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
+  public const string kLabelChallengeCompleted = "label.challengeCompleted";
+  public const string kLabelChallengeFailed = "label.challengeFailed";
   public const string kBadgeNew = "badge.new";
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
+  public const string kButtonContinue = "button.continue";
 
   #endregion
 }

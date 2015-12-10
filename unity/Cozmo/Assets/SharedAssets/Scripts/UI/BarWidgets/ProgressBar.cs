@@ -5,7 +5,7 @@ namespace Cozmo {
   namespace UI {
     public class ProgressBar : MonoBehaviour {
 
-      private const float kTweenDuration = 3.25f;
+      private const float kTweenDuration = 0.5f;
 
       [SerializeField]
       private Image _FilledForegroundImage;
@@ -37,7 +37,8 @@ namespace Cozmo {
           if (_TimePassedSeconds > kTweenDuration) {
             _TimePassedSeconds = kTweenDuration;
           }
-          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress, _TargetProgress, kTweenDuration);
+          _FilledForegroundImage.fillAmount = EaseOutQuad(_TimePassedSeconds, _StartProgress, 
+            _TargetProgress - _StartProgress, kTweenDuration);
 
           if (_TargetProgress > _FilledForegroundImage.fillAmount) {
             _FilledForegroundImage.color = _IncreasingColor;

@@ -69,8 +69,6 @@ namespace InvestorDemo {
     }
 
     protected override void CleanUpOnDestroy() {
-      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-      CurrentRobot.CancelAllCallbacks();
       if (_DemoConfig.UseSequence) {
         ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == _DemoConfig.SequenceName);
         sequence.ResetSequence();

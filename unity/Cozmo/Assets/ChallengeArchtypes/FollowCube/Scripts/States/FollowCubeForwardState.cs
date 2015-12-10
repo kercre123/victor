@@ -18,6 +18,8 @@ namespace FollowCube {
 
       _CurrentRobot.SetLiftHeight(0.0f);
       _CurrentRobot.SetHeadAngle(-1.0f);
+
+      _GameInstance.ShowHowToPlaySlide("FollowForward");
     }
 
     public override void Update() {
@@ -26,12 +28,10 @@ namespace FollowCube {
       if (_CurrentTarget == null && _CurrentRobot.VisibleObjects.Count > 0) {
         _CurrentTarget = _CurrentRobot.VisibleObjects[0] as LightCube;
         _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-        _CurrentRobot.TrackToObject(_CurrentTarget);
       }
 
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       if (Time.time - _LastSeenTargetTime > _GameInstance.NotSeenForgivenessThreshold) {
-        _GameInstance.FailedAttempt();
         _StateMachine.SetNextState(new FollowCubeFailedState());
         return;
       }
@@ -42,6 +42,7 @@ namespace FollowCube {
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kEnjoyPattern, HandleTaskCompleteAnimation);
         _StateMachine.SetNextState(animState);
+        Debug.Log("PLAY ENJOY PATTERN THING");
       }
       else if (_CurrentRobot.VisibleObjects.Contains(_CurrentTarget)) {
         _LastSeenTargetTime = Time.time;
