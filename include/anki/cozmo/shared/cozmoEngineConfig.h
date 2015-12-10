@@ -106,7 +106,13 @@ namespace Anki {
     // radians. If the starting point is close (in euclidean distance) and also the robot angle is within this
     // threshold of the final goal angle
     const f32 PLANNER_MAINTAIN_ANGLE_THRESHOLD = 0.392699081699f;
+  
+    // Tolerance on angular alignment with predock pose
+    const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5);
     
+    // Default docking speed/accel
+    const u16 DEFAULT_DOCK_SPEED_MMPS = 100;
+    const u16 DEFAULT_DOCK_ACCEL_MMPS2 = 200;
     
     // DON'T CHANGE THESE VALUES. ROBOT WON'T STOP WHERE IT'S SUPPOSED TO IF YOU DECREASE THEM.
     // TODO: Using a high fixed deceleration for all paths until we have support for
@@ -120,12 +126,15 @@ namespace Anki {
     const f32 DEFAULT_PATH_ACCEL_MMPS2 = 200;
     const f32 DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC = 2;
     const f32 DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2 = 100.f;
+  
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE(DEFAULT_PATH_SPEED_MMPS,
                                                         DEFAULT_PATH_ACCEL_MMPS2,
                                                         DEFAULT_PATH_DECEL_MMPS2,
                                                         DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC,
                                                         DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2,
-                                                        DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2);
+                                                        DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2,
+                                                        DEFAULT_DOCK_SPEED_MMPS,
+                                                        DEFAULT_DOCK_ACCEL_MMPS2);
     
   } // namespace Cozmo
 } // namespace Anki

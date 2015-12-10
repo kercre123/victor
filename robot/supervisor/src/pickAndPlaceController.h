@@ -72,13 +72,20 @@ namespace Anki {
       // If DA_PLACE_LOW_BLIND, rel_* parameters are wrt to current robot pose. Otherwise, rel_* params
       // are ignored.
       void DockToBlock(const DockAction action,
+                       const f32 speed_mmps,
+                       const f32 accel_mmps2,
                        const f32 rel_x = 0,
                        const f32 rel_y = 0,
                        const f32 rel_angle = 0,
                        const bool useManualSpeed = false);
       
       // Places block on ground and backs out.
-      void PlaceOnGround(const f32 rel_x, const f32 rel_y, const f32 rel_angle, const bool useManualSpeed);
+      void PlaceOnGround(const f32 speed_mmps,
+                         const f32 accel_mmps2,
+                         const f32 rel_x,
+                         const f32 rel_y,
+                         const f32 rel_angle,
+                         const bool useManualSpeed);
       
       // Abort whatever pick or place action we're currently doing
       void Reset();

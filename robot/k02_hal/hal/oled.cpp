@@ -15,10 +15,7 @@
 
 #include "font.h"
 
-const uint8_t SLAVE_ADDRESS     = 0x78;
-
-const uint8_t I2C_READ          = 0x01;
-const uint8_t I2C_WRITE         = 0x00;
+const uint8_t SLAVE_ADDRESS     = 0x78 >> 1;
 
 const uint8_t I2C_COMMAND       = 0x00;
 const uint8_t I2C_DATA          = 0x40;
@@ -31,7 +28,6 @@ const int MAX_FACE_POSITIONS = SCREEN_WIDTH * SCREEN_HEIGHT / 8 / MAX_SCREEN_BYT
 
 // Display constants
 static const uint8_t InitDisplay[] = {
-  SLAVE_ADDRESS | I2C_WRITE,
   I2C_COMMAND | I2C_SINGLE, DISPLAYOFF,
   I2C_COMMAND | I2C_SINGLE, SETDISPLAYCLOCKDIV, 
   I2C_COMMAND | I2C_SINGLE, 0xF0, 
@@ -57,6 +53,9 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, DISPLAYALLON_RESUME,
   I2C_COMMAND | I2C_SINGLE, NORMALDISPLAY,
   I2C_COMMAND | I2C_SINGLE, DISPLAYON,
+};
+
+static const uint8_t ResetCursor[] = {
   I2C_COMMAND | I2C_SINGLE, COLUMNADDR,
   I2C_COMMAND | I2C_SINGLE, 0,
   I2C_COMMAND | I2C_SINGLE, 127,
@@ -65,55 +64,35 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, 7
 };
 
-static const uint8_t ResetCursor[] = {
-  SLAVE_ADDRESS | I2C_WRITE,
-  I2C_COMMAND | I2C_SINGLE, 0,
-  I2C_COMMAND | I2C_SINGLE, 127,
-  I2C_COMMAND | I2C_SINGLE, PAGEADDR,
-  I2C_COMMAND | I2C_SINGLE, 0,
-  I2C_COMMAND | I2C_SINGLE, 7
-};
-
-static const uint8_t StartWrite[] = {
-  SLAVE_ADDRESS | I2C_WRITE,
-  I2C_DATA | I2C_CONTINUATION
-};
+static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
 
 static uint8_t FaceCopyLocation = 0;
 static bool PrintFaceLock = false;
 
-namespace Anki
-{
-  namespace Cozmo
-  {
-    namespace HAL
-    {
-      void OLEDInit(void) {
-        using namespace Anki::Cozmo::HAL;
-        
-        GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
-        PORTA_PCR19  = PORT_PCR_MUX(1);
+void Anki::Cozmo::HAL::OLED::Init(void) {
+  using namespace Anki::Cozmo::HAL;
+  
+  GPIO_OUT(GPIO_OLED_RST, PIN_OLED_RST);
+  PORTA_PCR19  = PORT_PCR_MUX(1);
 
-        MicroWait(80);
-        GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
-        MicroWait(80);
-        GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
+  MicroWait(80);
+  GPIO_RESET(GPIO_OLED_RST, PIN_OLED_RST);
+  MicroWait(80);
+  GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
 
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)InitDisplay, sizeof(InitDisplay), NULL);
-      }
-      
-      void OLEDFeedFace(uint8_t address, uint8_t *face_bytes) {
-        if (address != FaceCopyLocation) return ;
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), NULL, I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), ResetCursor, sizeof(ResetCursor), NULL);
+}
 
-        static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
+void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
+  if (address != FaceCopyLocation || PrintFaceLock) return ;
 
-        memcpy(bytes, face_bytes, sizeof(bytes));
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
-        I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, bytes, sizeof(bytes), NULL);
-        address = (address + 1) % MAX_FACE_POSITIONS;
-      }
-    }
-  }
+  static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
+
+  memcpy(bytes, face_bytes, sizeof(bytes));  
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL, I2C_OPTIONAL | I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, sizeof(bytes), NULL);
+  FaceCopyLocation = (FaceCopyLocation + 1) % MAX_FACE_POSITIONS;
 }
 
 // Detach from the face and resume streaming of face data
@@ -122,14 +101,15 @@ extern "C" void LeaveFacePrintf(void) {
 
   if (!PrintFaceLock) return ;
     
-  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL);
   PrintFaceLock = true;
   FaceCopyLocation = 0;
 }
 
 // Flag when the frame has copied and the stack is safe to return
 static volatile bool PrintComplete = false;
-static void FinishFace(void *data, int count) {
+static void FinishFace(const void *data, int count) {
   PrintComplete = true;
 }
 
@@ -183,9 +163,9 @@ extern "C" void FacePrintf(const char *format, ...) {
 
   PrintFaceLock = true;
 
-  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START | I2C_SEND_STOP, (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL);
-  I2CCmd(I2C_DIR_WRITE | I2C_SEND_START, (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
-  I2CCmd(I2C_DIR_WRITE | I2C_SEND_STOP, FrameBuffer, px_ptr, &FinishFace);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), FrameBuffer, px_ptr, &FinishFace);
   
   while (!PrintComplete)  __asm { WFI } ;
 }

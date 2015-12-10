@@ -30,9 +30,6 @@ namespace Anki {
   
   namespace Cozmo {
     
-    // TODO: Define this as a constant parameter elsewhere
-    const Radians DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE(DEG_TO_RAD(7.5));
-    
     // Right before docking, the dock object must have been visually verified
     // no more than this many milliseconds ago or it will not even attempt to dock.
     const u32 DOCK_OBJECT_LAST_OBSERVED_TIME_THRESH_MS = 1000;
@@ -648,7 +645,7 @@ namespace Anki {
           _compoundAction.AddAction(new FaceObjectAction(_objectID, Radians(0), Radians(0), true, false));
         }
         
-        _compoundAction.SetIsPartOfCompoundAction(true);
+        _compoundAction.SetEmitCompletionSignal(false);
         
         // Go ahead and do the first Update on the compound action, so we don't
         // "waste" the first CheckIfDone call just initializing it
@@ -850,7 +847,22 @@ namespace Anki {
       static const std::string name("TurnInPlaceAction");
       return name;
     }
-    
+
+    void TurnInPlaceAction::SetTolerance(const Radians& angleTol_rad)
+    {
+      _angleTolerance = angleTol_rad.getAbsoluteVal();
+
+     const float minTolDeg = 0.5f;
+      
+      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_angleTolerance.ToFloat()),
+                            minTolDeg);
+        _angleTolerance = DEG_TO_RAD(minTolDeg);
+      }
+    }
+
     ActionResult TurnInPlaceAction::Init(Robot &robot)
     {
       // Compute a goal pose rotated by specified angle around robot's
@@ -901,15 +913,6 @@ namespace Anki {
       
       return ActionResult::SUCCESS;
     }
-
-    void TurnInPlaceAction::SetTolerance(const Anki::Radians &angleTol_rad) {
-      _angleTolerance = angleTol_rad.getAbsoluteVal();
-      if(_angleTolerance == 0.f) {
-        PRINT_NAMED_WARNING("TurnInPlaceAction.SetTolerance.ZeroTolerance",
-                            "Tolerance must be > 0. Setting to 1 degree.");
-        _angleTolerance = DEG_TO_RAD(1);
-      }
-    }
     
     bool TurnInPlaceAction::IsBodyInPosition(const Robot& robot, Radians& currentAngle) const
     {
@@ -922,7 +925,7 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      Radians currentAngle;
+      Radians currentAngle;          
       
       if(!_inPosition) {
         _inPosition = IsBodyInPosition(robot, currentAngle);
@@ -948,10 +951,23 @@ namespace Anki {
         result = ActionResult::SUCCESS;
       } else {
         PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone",
-                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f)",
-                         currentAngle.getDegrees(), _targetAngle.getDegrees(), _variability.getDegrees());
+                         "Waiting for body to reach angle: %.1fdeg vs. %.1fdeg(+/-%.1f) (tol: %f) (pfid: %d)",
+                         currentAngle.getDegrees(),
+                         _targetAngle.getDegrees(),
+                         _variability.getDegrees(),
+                         _angleTolerance.ToFloat(),
+                         robot.GetPoseFrameID());
       }
-      
+
+      if( robot.IsMoving() ) {
+        _turnStarted = true;
+      }
+      else if( _turnStarted ) {
+        PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
+                            "giving up since we stopped moving");
+        result = ActionResult::FAILURE_RETRY;
+      }
+
       return result;
     }
     
@@ -1038,6 +1054,36 @@ namespace Anki {
       IAction::Reset();
       _compoundAction.ClearActions();
     }
+
+    void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
+    {
+      _panAngleTol = angleTol_rad.getAbsoluteVal();
+
+      const float minTolDeg = 0.5f;
+      
+      if( _panAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_panAngleTol.ToFloat()),
+                            minTolDeg);
+        _panAngleTol = DEG_TO_RAD(minTolDeg);
+      }
+    }
+
+    void PanAndTiltAction::SetTiltTolerance(const Radians& angleTol_rad)
+    {
+      _tiltAngleTol = angleTol_rad.getAbsoluteVal();
+
+      const float minTolDeg = 0.5f;
+      
+      if( _tiltAngleTol.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_tiltAngleTol.ToFloat()),
+                            minTolDeg);
+        _tiltAngleTol = DEG_TO_RAD(minTolDeg);
+      }
+    }
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
@@ -1056,7 +1102,7 @@ namespace Anki {
                "Action");
       
       // Prevent the compound action from signaling completion
-      _compoundAction.SetIsPartOfCompoundAction(true);
+      _compoundAction.SetEmitCompletionSignal(false);
       
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
@@ -1299,7 +1345,7 @@ namespace Anki {
       robot.GetMoveComponent().DisableTrackToObject();
       
       // Disable completion signals since this is inside another action
-      _visuallyVerifyAction.SetIsPartOfCompoundAction(true);
+      _visuallyVerifyAction.SetEmitCompletionSignal(false);
       
       return ActionResult::SUCCESS;
     } // FaceObjectAction::Init()
@@ -1387,7 +1433,7 @@ namespace Anki {
     ActionResult VisuallyVerifyObjectAction::Init(Robot& robot)
     {
       // Get lift out of the way
-      _moveLiftToHeightAction.SetIsPartOfCompoundAction(true);
+      _moveLiftToHeightAction.SetEmitCompletionSignal(false);
       _moveLiftToHeightActionDone = false;
       _waitToVerifyTime = -1.f;
       
@@ -1507,11 +1553,15 @@ namespace Anki {
                             _headAngle.getDegrees(), RAD_TO_DEG(MAX_HEAD_ANGLE));
         _headAngle = MAX_HEAD_ANGLE;
       }
+
+      const float minTolDeg = 0.5f;
       
-      if(_angleTolerance == 0.f) {
-        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.ZeroTolerance",
-                            "Tolerance must be > 0. Setting to 1 degree.");
-        _angleTolerance = DEG_TO_RAD(1);
+      if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
+        PRINT_NAMED_WARNING("MoveHeadToAngleAction.Constructor.InvalidTolerance",
+                            "Tried to set tolerance of %fdef, min is %f",
+                            RAD_TO_DEG(_angleTolerance.ToFloat()),
+                            minTolDeg);
+        _angleTolerance = DEG_TO_RAD(minTolDeg);
       }
       
       if(_variability > 0) {
@@ -1690,8 +1740,10 @@ namespace Anki {
       _inPosition = IsLiftInPosition(robot);
       
       if(!_inPosition) {
-        // TODO: Add ability to specify speed/accel
-        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation, 10, 20) != RESULT_OK) {
+        if(robot.GetMoveComponent().MoveLiftToHeight(_heightWithVariation,
+                                                     _maxLiftSpeedRadPerSec,
+                                                     _liftAccelRacPerSec2,
+                                                     _duration) != RESULT_OK) {
           result = ActionResult::FAILURE_ABORT;
         }
       }
@@ -1733,21 +1785,9 @@ namespace Anki {
 #pragma mark ---- IDockAction ----
     
     IDockAction::IDockAction(ObjectID objectID,
-                             const bool useManualSpeed,
-                             const f32 placementOffsetX_mm,
-                             const f32 placementOffsetY_mm,
-                             const f32 placementOffsetAngle_rad,
-                             const bool placeObjectOnGroundIfCarrying)
+                             const bool useManualSpeed)
     : _dockObjectID(objectID)
-    , _dockMarker(nullptr)
-    , _preActionPoseAngleTolerance(DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE)
-    , _wasPickingOrPlacing(false)
     , _useManualSpeed(useManualSpeed)
-    , _faceAndVerifyAction(nullptr)
-    , _placementOffsetX_mm(placementOffsetX_mm)
-    , _placementOffsetY_mm(placementOffsetY_mm)
-    , _placementOffsetAngle_rad(placementOffsetAngle_rad)
-    , _placeObjectOnGroundIfCarrying(placeObjectOnGroundIfCarrying)
     {
       
     }
@@ -1761,6 +1801,33 @@ namespace Anki {
     {
       IAction::Reset();
       Util::SafeDelete(_faceAndVerifyAction);
+    }
+    
+    void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)
+    {
+      _dockSpeed_mmps = speed_mmps; _dockAccel_mmps2 = accel_mmps2;
+    }
+    
+    void IDockAction::SetSpeed(f32 speed_mmps)
+    {
+      _dockSpeed_mmps = speed_mmps;
+    }
+    
+    void IDockAction::SetAccel(f32 accel_mmps2)
+    {
+      _dockAccel_mmps2 = accel_mmps2;
+    }
+    
+    void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
+    {
+      _placementOffsetX_mm = offsetX_mm;
+      _placementOffsetY_mm = offsetY_mm;
+      _placementOffsetAngle_rad = offsetAngle_rad;
+    }
+    
+    void IDockAction::SetPlaceOnGround(bool placeOnGround)
+    {
+      _placeObjectOnGroundIfCarrying = placeOnGround;
     }
     
     void IDockAction::SetPreActionPoseAngleTolerance(Radians angleTolerance)
@@ -1856,7 +1923,7 @@ namespace Anki {
                                                     0, 0, true, false);
 
         // Disable the visual verification from issuing a completion signal
-        _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
+        _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
         // Go ahead and Update the FaceObjectAction once now, so we don't
         // waste a tick doing so in CheckIfDone (since this is the first thing
@@ -1896,6 +1963,8 @@ namespace Anki {
               _dockMarker->GetCode(), Vision::MarkerTypeStrings[_dockMarker->GetCode()], DockActionToString(_dockAction));
             
             if(robot.DockWithObject(_dockObjectID,
+                                    _dockSpeed_mmps,
+                                    _dockAccel_mmps2,
                                     _dockMarker, _dockMarker2,
                                     _dockAction,
                                     _placementOffsetX_mm,
@@ -1997,11 +2066,11 @@ namespace Anki {
 #pragma mark ---- PickupObjectAction ----
     
     AlignWithObjectAction::AlignWithObjectAction(ObjectID objectID,
-                                                 f32 distanceFromMarker_mm,
+                                                 const f32 distanceFromMarker_mm,
                                                  const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed, distanceFromMarker_mm)
+    : IDockAction(objectID, useManualSpeed)
     {
-      
+      SetPlacementOffset(distanceFromMarker_mm, 0, 0);
     }
     
     AlignWithObjectAction::~AlignWithObjectAction()
@@ -2246,7 +2315,7 @@ namespace Anki {
               blockWorld.DeleteObject(objectInOriginalPose->GetID());
             }
             robot.UnSetCarryingObjects();
-            
+
             PRINT_STREAM_INFO("PickupObjectAction.Verify",
                               "Object pick-up FAILED! (Still seeing object in same place.)");
             result = ActionResult::FAILURE_RETRY;
@@ -2274,14 +2343,15 @@ namespace Anki {
 #pragma mark ---- PlaceRelObjectAction ----
     
     PlaceRelObjectAction::PlaceRelObjectAction(ObjectID objectID,
-                                               const bool placeOnGround,                                               
+                                               const bool placeOnGround,
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
-    : IDockAction(objectID, useManualSpeed, placementOffsetX_mm, 0, 0, placeOnGround)
+    : IDockAction(objectID, useManualSpeed)
     , _placementVerifyAction(nullptr)
     , _verifyComplete(false)
     {
-      
+      SetPlacementOffset(placementOffsetX_mm, 0, 0);
+      SetPlaceOnGround(placeOnGround);
     }
     
     PlaceRelObjectAction::~PlaceRelObjectAction()
@@ -2400,7 +2470,7 @@ namespace Anki {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
               
               // Disable completion signals since this is inside another action
-              _placementVerifyAction->SetIsPartOfCompoundAction(true);
+              _placementVerifyAction->SetEmitCompletionSignal(false);
               
               // Go ahead do the first update of the FaceObjectAction to get the
               // init "out of the way" rather than wasting a tick here
@@ -2447,7 +2517,7 @@ namespace Anki {
                   _placementVerifyAction = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
                   
                   // Disable completion signals since this is inside another action
-                  _placementVerifyAction->SetIsPartOfCompoundAction(true);
+                  _placementVerifyAction->SetEmitCompletionSignal(false);
                   
                   result = ActionResult::RUNNING;
                 }
@@ -2487,7 +2557,7 @@ namespace Anki {
     , _expectedMarkerPostRoll(nullptr)
     , _rollVerifyAction(nullptr)
     {
-      
+      _dockAction = DockAction::DA_ROLL_LOW;  
     }
     
     RollObjectAction::~RollObjectAction()
@@ -2560,8 +2630,6 @@ namespace Anki {
       // Choose docking action based on block's position and whether we are
       // carrying a block
       const f32 dockObjectHeightWrtRobot = _dockObjectOrigPose.GetTranslation().z() - robot.GetPose().GetTranslation().z();
-      _dockAction = DockAction::DA_ROLL_LOW;
-      
       
       // Get the top marker as this will be what needs to be seen for verification
       Block* block = dynamic_cast<Block*>(object);
@@ -2608,7 +2676,7 @@ namespace Anki {
               _rollVerifyAction = new VisuallyVerifyObjectAction(_dockObjectID, _expectedMarkerPostRoll->GetCode());
               
               // Disable completion signals since this is inside another action
-              _rollVerifyAction->SetIsPartOfCompoundAction(true);
+              _rollVerifyAction->SetEmitCompletionSignal(false);
             }
             
             result = _rollVerifyAction->Update(robot);
@@ -2621,7 +2689,7 @@ namespace Anki {
               if(result != ActionResult::SUCCESS) {
                 PRINT_NAMED_INFO("RollObjectAction.Verify",
                                  "Robot thinks it rolled the object, but verification failed. ");
-                result = ActionResult::FAILURE_RETRY;
+                result = ActionResult::FAILURE_ABORT;
               }
             } // if(result != ActionResult::RUNNING)
             
@@ -2630,6 +2698,7 @@ namespace Anki {
             // failed to dock/track.
             PRINT_NAMED_WARNING("RollObjectAction.Verify",
                                 "Robot reported roll failure. Assuming docking failed");
+            // retry, since the block is hopefully still there
             result = ActionResult::FAILURE_RETRY;
           }
           
@@ -2798,10 +2867,11 @@ namespace Anki {
                               distanceFromMarker_mm,
                               useApproachAngle,
                               approachAngle_rad,
-                              useManualSpeed),
-      new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed)})
+                              useManualSpeed)})
     {
-      
+      AlignWithObjectAction* action = new AlignWithObjectAction(objectID, distanceFromMarker_mm, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
 
 #pragma mark ---- DriveToPickupObjectAction ----
@@ -2818,33 +2888,36 @@ namespace Anki {
                               0,
                               useApproachAngle,
                               approachAngle_rad,
-                              useManualSpeed),
-      new PickupObjectAction(objectID)})
+                              useManualSpeed)})
     {
-      
+      PickupObjectAction* action = new PickupObjectAction(objectID, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
     
 #pragma mark ---- DriveToPlaceOnObjectAction ----
     
     DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(const Robot& robot,
                                                            const ObjectID& objectID,
-                                                           const PathMotionProfile motionProf,
+                                                           const PathMotionProfile motionProfile,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
     : CompoundActionSequential({
       new DriveToObjectAction(objectID,
                               PreActionPose::PLACE_RELATIVE,
-                              motionProf,
+                              motionProfile,
                               0,
                               useApproachAngle,
                               approachAngle_rad,
-                              useManualSpeed),
-      new PlaceRelObjectAction(objectID,
-                               false,
-                               0,
-                               useManualSpeed)})
+                              useManualSpeed)})
     {
+      PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
+                                                              false,
+                                                              0,
+                                                              useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
     
 #pragma mark ---- DriveToPlaceRelObjectAction ----
@@ -2862,13 +2935,14 @@ namespace Anki {
                               placementOffsetX_mm,
                               useApproachAngle,
                               approachAngle_rad,
-                              useManualSpeed),
-      new PlaceRelObjectAction(objectID,
-                               true,
-                               placementOffsetX_mm,
-                               useManualSpeed)})
+                              useManualSpeed)})
     {
-      
+      PlaceRelObjectAction* action = new PlaceRelObjectAction(objectID,
+                                                              true,
+                                                              placementOffsetX_mm,
+                                                              useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
     
 #pragma mark ---- DriveToRollObjectAction ----
@@ -2885,13 +2959,14 @@ namespace Anki {
                               0,
                               useApproachAngle,
                               approachAngle_rad,
-                              useManualSpeed),
-      new RollObjectAction(objectID, useManualSpeed)})
+                              useManualSpeed)})
     {
-      
+      RollObjectAction* action = new RollObjectAction(objectID, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
     
-#pragma mark ---- DriveToRollObjectAction ----
+#pragma mark ---- DriveToPopAWheelieAction ----
     
     DriveToPopAWheelieAction::DriveToPopAWheelieAction(const ObjectID& objectID,
                                                        const PathMotionProfile motionProfile,
@@ -2905,10 +2980,11 @@ namespace Anki {
                               0,
                               useApproachAngle,
                               approachAngle_rad,
-                              useManualSpeed),
-      new PopAWheelieAction(objectID, useManualSpeed)})
+                              useManualSpeed)})
     {
-      
+      PopAWheelieAction* action = new PopAWheelieAction(objectID, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
     }
     
 #pragma mark ---- PlaceObjectOnGroundAction ----
@@ -2960,7 +3036,7 @@ namespace Anki {
         }
         
         _faceAndVerifyAction = new FaceObjectAction(_carryingObjectID, _carryObjectMarker->GetCode(), 0, 0, true, false);
-        _faceAndVerifyAction->SetIsPartOfCompoundAction(true);
+        _faceAndVerifyAction->SetEmitCompletionSignal(false);
         
       } // if/else IsCarryingObject()
       
@@ -3171,7 +3247,8 @@ namespace Anki {
     
 #pragma mark ---- TraverseObjectAction ----
     
-    TraverseObjectAction::TraverseObjectAction(ObjectID objectID, const bool useManualSpeed)
+    TraverseObjectAction::TraverseObjectAction(ObjectID objectID,
+                                               const bool useManualSpeed)
     : _objectID(objectID)
     , _chosenAction(nullptr)
     , _useManualSpeed(useManualSpeed)
@@ -3195,6 +3272,11 @@ namespace Anki {
       Util::SafeDelete(_chosenAction);
     }
     
+    void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) {
+      _speed_mmps = speed_mmps;
+      _accel_mmps2 = accel_mmps2;
+    }
+    
     ActionResult TraverseObjectAction::UpdateInternal(Robot& robot)
     {
       // Select the chosen action based on the object's type, if we haven't
@@ -3210,13 +3292,14 @@ namespace Anki {
         if(object->GetType() == ObjectType::Bridge_LONG ||
            object->GetType() == ObjectType::Bridge_SHORT)
         {
-          _chosenAction = new CrossBridgeAction(_objectID, _useManualSpeed);
+          CrossBridgeAction* bridgeAction = new CrossBridgeAction(_objectID, _useManualSpeed);
+          bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          _chosenAction = bridgeAction;
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
-          _chosenAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
-        }
-        else if(object->GetType() == ObjectType::Charger_Basic) {
-          _chosenAction = new MountChargerAction(_objectID, _useManualSpeed);
+          AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_objectID, _useManualSpeed);
+          rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          _chosenAction = rampAction;
         }
         else {
           PRINT_NAMED_ERROR("TraverseObjectAction.Init.CannotTraverseObjectType",
@@ -3234,6 +3317,44 @@ namespace Anki {
       
     } // Update()
     
+    
+#pragma mark ---- DriveToAndTraverseObjectAction ----
+    
+    DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(const ObjectID& objectID,
+                                                                   const PathMotionProfile motionProfile,
+                                                                   const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::ENTRY,
+                              motionProfile,
+                              0,
+                              false,
+                              0,
+                              useManualSpeed)})
+    {
+      TraverseObjectAction* action = new TraverseObjectAction(objectID, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
+    }
+    
+#pragma mark ---- DriveToAndMountChargerAction ----
+    
+    DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
+                                                               const PathMotionProfile motionProfile,
+                                                               const bool useManualSpeed)
+    : CompoundActionSequential({
+      new DriveToObjectAction(objectID,
+                              PreActionPose::ENTRY,
+                              motionProfile,
+                              0,
+                              false,
+                              0,
+                              useManualSpeed)})
+    {
+      MountChargerAction* action = new MountChargerAction(objectID, useManualSpeed);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      AddAction(action);
+    }
     
 #pragma mark ---- PlayAnimationAction ----
     

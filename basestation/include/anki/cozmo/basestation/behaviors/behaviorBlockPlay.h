@@ -24,11 +24,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBlockPlay_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBlockPlay_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/pathMotionProfile.h"
 
 
 namespace Anki {
@@ -61,7 +62,9 @@ namespace Cozmo {
       InspectingBlock,
       RollingBlock,
       PickingUpBlock,
-      PlacingBlock
+      PlacingBlock,
+      SearchingForMissingBlock, // this is only entered if a block "disappears" on us
+      Complete,
     };
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
@@ -81,14 +84,23 @@ namespace Cozmo {
     // also holding a block
     const f32 kTrackedObjectViewAngleThreshForRaisingCarriedBlock = 0.6; //atan2f(90, 200);
     
-    
-    
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
-    Result HandleObservedObjectWhileRunning(Robot& robot, const ExternalInterface::RobotObservedObject& msg, double currentTime_sec);
+    Result HandleObservedObjectWhileRunning(Robot& robot,
+                                            const ExternalInterface::RobotObservedObject& msg,
+                                            double currentTime_sec);
+    Result HandleObservedObjectWhileNotRunning(const Robot& robot,
+                                               const ExternalInterface::RobotObservedObject& msg,
+                                               double currentTime_sec);
+
+    // returns true if we care about this object
+    bool HandleObservedObjectHelper(const Robot& robot,
+                                    const ExternalInterface::RobotObservedObject& msg,
+                                    double currentTime_sec);
+    
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
     Result HandleObservedFace(const Robot& robot, const ExternalInterface::RobotObservedFace& msg, double currentTime_sec);
     Result HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg);
@@ -97,13 +109,24 @@ namespace Cozmo {
     void InitState(const Robot& robot);
     void SetCurrState(State s);
     void PlayAnimation(Robot& robot, const std::string& animName);
+    void StartActing(Robot& robot, IActionRunner* action);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
     
     State _currentState;
     bool  _interrupted;
     bool _isActing = false;
+
+    f32 _holdUntilTime = -1.0f;
+
+    // if we "lose" the block, we can use State::SearchingForMissingBlock. If we see it again, go back to this state
+    State _missingBlockFoundState = State::TrackingFace;
+
+    // if we are "searching" for a missing block, consider it found if it is seen after this time
+    f32 _searchStartTime = 0.0f;
     
     Result _lastHandlerResult;
+
+    PathMotionProfile _motionProfile;
 
     
     // If it fails to pickup or place the same object a certain number of times in a row
@@ -117,7 +140,6 @@ namespace Cozmo {
     std::map<u32, std::string> _animActionTags;
     
 
-
     //f32 _inactionStartTime;
     
     // ID of player face that Cozmo will interact with for this behavior
@@ -126,12 +148,18 @@ namespace Cozmo {
     // This is the last known pose of a face that has been tracked
     Pose3d _lastKnownFacePose;
     bool   _hasValidLastKnownFacePose;
-    double _noFacesStartTime = 0;
+    double _noFacesStartTime = -1.0;
     
 
     // The block that currently has Cozmo's attention
     ObjectID _trackedObject;
-    
+
+    // The last time we saw _trackedObject
+    f32 _lastObjectObservedTime = 0.0f;
+
+    // how long ago we should have seen the object to attempt interaction
+    const f32 _objectObservedTimeThreshold = 0.75f;
+
     // This ID is set when the first block is on the ground.
     // This is the block that gets picked up and placed upon the second block.
     ObjectID _objectToPickUp;

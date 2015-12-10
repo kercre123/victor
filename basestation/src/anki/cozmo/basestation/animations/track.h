@@ -38,7 +38,7 @@ namespace Animations {
 template<class FRAME_TYPE>
 class Track {
 public:
-  static const size_t MAX_FRAMES_PER_TRACK = 100;
+  static const size_t MAX_FRAMES_PER_TRACK = 1000;
 
   void Init();
 

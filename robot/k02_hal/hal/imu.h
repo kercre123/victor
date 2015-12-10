@@ -1,7 +1,14 @@
 #ifndef __IMU_H
 #define __IMU_H
 
-#define ADDR_IMU 0x68 // 7-bit slave address of gyro
+#include <stdint.h>
+
+static const uint8_t ADDR_IMU = 0x68; // 7-bit slave address of gyro
+
+struct IMUData {
+  int16_t gyro[3];
+  int16_t acc[3];
+};
 
 namespace Anki
 {
@@ -9,9 +16,13 @@ namespace Anki
   {
     namespace HAL
     {
-      void IMUInit(void);
-      void IMUManage(void);
-      uint8_t ReadIMUID(void);
+      namespace IMU
+      {
+        extern IMUData IMUState;
+        void Init(void);
+        void Manage(void);
+        uint8_t ReadID(void);
+      }
     }
   }
 }

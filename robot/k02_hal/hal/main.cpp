@@ -30,7 +30,6 @@ namespace Anki
       // Import init functions from all HAL components
       void CameraInit(void);
       void TimerInit(void);
-      void I2CInit(void);
       void PowerInit(void);
       
       // This method is called at 7.5KHz (once per scan line)
@@ -38,8 +37,9 @@ namespace Anki
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
       void HALExec(u8* buf, int buflen, int eof)
       {
+        buflen = 0;
         TransmitDrop(buf, buflen, eof);
-        I2CEnable();
+        I2C::Enable();
         UartTransmit();
       }
     }
@@ -66,7 +66,6 @@ int main (void)
   DebugInit();
   TimerInit();
   PowerInit();
-  I2CInit();
 
   DACInit();
   DACTone();
@@ -86,17 +85,17 @@ int main (void)
   MicroWait(100000); // Because the FLL is lame
   
   SPIInit();
-
-  IMUInit();
-  OLEDInit();
+  I2C::Init();
+  IMU::Init();
+  OLED::Init();
 
   CameraInit();
-  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UARD RX FIFO WILL LOCK
+  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UART RX FIFO WILL LOCK
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
 
-  StartupSelfTest();
+  //StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur

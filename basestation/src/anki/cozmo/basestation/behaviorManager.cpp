@@ -13,7 +13,8 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
-#include "anki/cozmo/basestation/investorDemoBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoFacesAndBlocksBehaviorChooser.h"
+#include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
@@ -38,8 +39,6 @@
 
 #define DEBUG_BEHAVIOR_MGR 0
 
-#define INVESTOR_DEMO 1
-
 namespace Anki {
 namespace Cozmo {
   
@@ -61,7 +60,7 @@ namespace Cozmo {
     
     // TODO: Only load behaviors specified by Json?
     
-    SetupBehaviorChooser(config);
+    SetupOctDemoBehaviorChooser(config);
     
     if (_robot.HasExternalInterface())
     {
@@ -73,7 +72,7 @@ namespace Cozmo {
          {
            case BehaviorChooserType::Demo:
            {
-             SetupBehaviorChooser(config);
+             SetupOctDemoBehaviorChooser(config);
              break;
            }
            case BehaviorChooserType::Selection:
@@ -81,8 +80,30 @@ namespace Cozmo {
              SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
              break;
            }
-           default:
+           case BehaviorChooserType::InvestorDemoMotion:
+           {
+             SetBehaviorChooser( new InvestorDemoMotionBehaviorChooser(_robot, config) );
+
+             // AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
+             // AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
+             AddReactionaryBehavior(new BehaviorReactToPoke(_robot, config));
              break;
+           }
+           case BehaviorChooserType::InvestorDemoFacesAndBlocks:
+           {
+             SetBehaviorChooser( new InvestorDemoFacesAndBlocksBehaviorChooser(_robot, config) );
+             
+             AddReactionaryBehavior(new BehaviorReactToPoke(_robot, config));
+             break;
+           }
+           default:
+           {
+             PRINT_NAMED_WARNING("BehaviorManager.ActivateBehaviorChooser.InvalidChooser",
+                                 "don't know how to create a chooser of type '%s'",
+                                 BehaviorChooserTypeToString(
+                                   event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType));
+             break;
+           }
          }
        }));
     }
@@ -93,13 +114,9 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  void BehaviorManager::SetupBehaviorChooser(const Json::Value &config)
+  void BehaviorManager::SetupOctDemoBehaviorChooser(const Json::Value &config)
   {
-#if INVESTOR_DEMO
-    SetBehaviorChooser( new InvestorDemoBehaviorChooser(_robot, config) );
-#else
     SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
-#endif
     
     AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
     AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
@@ -338,6 +355,13 @@ namespace Cozmo {
     // These behavior pointers are going to be invalidated, so clear them
     _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
     _resumeBehavior = nullptr;
+
+    if( _behaviorChooser != nullptr ) {
+      PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
+                       "deleting behavior chooser '%s'",
+                       _behaviorChooser->GetName());
+    }
+    
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;

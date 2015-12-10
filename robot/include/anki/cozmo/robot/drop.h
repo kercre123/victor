@@ -35,20 +35,20 @@
 /// Number of usable bytes on the I2SPI bus for drops from RTIP to WiFi
 #define DROP_TO_WIFI_SIZE (100)
 /// Number of usable bytes on the I2SPI bus for drops from WiFi to the RTIP
-#define DROP_TO_RTIP_SIZE (80)
+#define DROP_TO_RTIP_SIZE (DROP_PREAMBLE_SIZE + MAX_AUDIO_BYTES_PER_DROP + 1 + MAX_SCREEN_BYTES_PER_DROP + 1 + DROP_TO_RTIP_MAX_VAR_PAYLOAD + 1)
 /// Number of bytes of drop prefix
 #define DROP_PREAMBLE_SIZE sizeof(preambleType)
 /// Preamble for drops from WiFi to RTIP
 /// Preamble for drops from RTIP to WiFi
 
 /// Number of samples of audio data delivered to the RTIP each drop.
-#define MAX_AUDIO_BYTES_PER_DROP 4
+#define MAX_AUDIO_BYTES_PER_DROP 3
 /// Number of bytes of SCREEN data to the RTIP each drop
 #define MAX_SCREEN_BYTES_PER_DROP 4
 
 
 /// Maximum variable payload to RTIP
-#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (DROP_TO_RTIP_SIZE - DROP_PREAMBLE_SIZE - MAX_AUDIO_BYTES_PER_DROP - MAX_SCREEN_BYTES_PER_DROP - 1 - 1)
+#define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)
 
 enum DROP_PREAMBLE {
   TO_RTIP_PREAMBLE = 0x5452,
@@ -61,7 +61,8 @@ typedef uint16_t preambleType;
 typedef struct
 {
   preambleType preamble; ///< Synchronization Preamble indicating drop destination
-  uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP]; ///< Isochronous audio data
+  uint8_t  audioData[MAX_AUDIO_BYTES_PER_DROP];   ///< Isochronous audio data
+  uint8_t  screenInd;                             ///< Where in the screen memory to write the data
   uint8_t  screenData[MAX_SCREEN_BYTES_PER_DROP]; ///< Isochronous SCREEN write data
   uint8_t  payloadLen;                            ///< Number of data bytes in payload
   uint8_t  payload[DROP_TO_RTIP_MAX_VAR_PAYLOAD]; ///< Variable format "message" data

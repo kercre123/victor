@@ -585,7 +585,7 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
   // this is hardcoded for now!
   assert( _context.env.GetNumActions() == 9);
 
-  constexpr int numPlans = 4;
+  // constexpr int numPlans = 4;
   static int whichPlan = 0;
 
   plan.Clear();
@@ -733,7 +733,7 @@ void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
     break;
   }
 
-  whichPlan = (whichPlan + 1) % numPlans;
+  // whichPlan = (whichPlan + 1) % numPlans;
 
   // TODO:(bn) this line below might have been doing something useful....
   // SetGoal(_context.env.State2State_c(_context.env.GetPlanFinalState(plan)));
