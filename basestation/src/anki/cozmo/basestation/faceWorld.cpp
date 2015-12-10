@@ -49,8 +49,8 @@ namespace Cozmo {
     const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
     const Radians panAngle = std::atan2(yDist, xDist);
     
-    static const Radians minHeadAngle(DEG_TO_RAD(1.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(1.f));
+    static const Radians minHeadAngle(DEG_TO_RAD(2.f));
+    static const Radians minBodyAngle(DEG_TO_RAD(2.f));
 
     // only do a tracking action if we aren't going to stomp on someone elses action
     size_t qLength = _robot.GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
