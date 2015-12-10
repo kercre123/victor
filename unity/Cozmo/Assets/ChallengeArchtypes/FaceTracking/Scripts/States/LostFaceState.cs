@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace Peekaboo {
+namespace FaceTracking {
   // Express Confusion, then enter LookingForFace state
   public class LostFaceState : State {
     

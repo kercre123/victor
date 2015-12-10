@@ -10,9 +10,9 @@ public class SteerState : State {
   private float _StartTime;
 
   public void Init(float wavePositionX, float duration, State nextState) {
-    wavePositionX = 0.5f * wavePositionX + 0.5f;
-    _LeftSpeed = Mathf.Lerp(35.0f, 25.0f, wavePositionX);
-    _RightSpeed = Mathf.Lerp(25.0f, 35.0f, wavePositionX);
+    wavePositionX = wavePositionX * 0.5f + 0.5f;
+    _LeftSpeed = Mathf.Lerp(15.0f, 50.0f, wavePositionX);
+    _RightSpeed = Mathf.Lerp(50.0f, 15.0f, wavePositionX);
 
     _Duration = duration;
     _NextState = nextState;

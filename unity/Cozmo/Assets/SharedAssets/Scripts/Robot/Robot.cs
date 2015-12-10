@@ -201,6 +201,7 @@ public class Robot : IDisposable {
   }
 
   private int _CarryingObjectID;
+
   public int CarryingObjectID { 
     get { return _CarryingObjectID; } 
     private set { 
@@ -214,6 +215,7 @@ public class Robot : IDisposable {
   }
 
   private int _HeadTrackingObjectID;
+
   public int HeadTrackingObjectID { 
     get { return _HeadTrackingObjectID; } 
     private set { 
@@ -446,6 +448,20 @@ public class Robot : IDisposable {
 
   private void Reset(DisconnectionReason reason = DisconnectionReason.None) {
     ClearData();
+  }
+
+  public void ResetRobotState() {
+    DriveWheels(0.0f, 0.0f);
+    SetHeadAngle(0.0f);
+    SetLiftHeight(0.0f);
+    TrackToObject(null);
+    SetBehaviorSystem(false);
+    ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
+      kvp.Value.SetLEDs(Color.black);
+    }
+    SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.black));
   }
 
   public void ClearData(bool initializing = false) {
