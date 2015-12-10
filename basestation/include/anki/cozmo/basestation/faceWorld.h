@@ -38,6 +38,10 @@ namespace Cozmo {
     std::map<Vision::TrackedFace::ID_t, KnownFace> _knownFaces;
     
     TimeStamp_t _deletionTimeout_ms = 3000;
+
+    // For tracking, keep track of the id of the actions we are doing
+    u32 _lastTrackingActionTag = 0;
+    bool _hasTrackingAction = false;
     
     Result UpdateFaceTracking(const Vision::TrackedFace& face);
     

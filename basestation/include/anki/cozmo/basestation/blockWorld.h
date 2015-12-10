@@ -339,6 +339,10 @@ namespace Anki
       bool _canAddObjects;
       
       ObjectID _selectedObject;
+
+      // For tracking, keep track of the id of the actions we are doing
+      u32 _lastTrackingActionTag = 0;
+      bool _hasTrackingAction = false;
                   
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;
