@@ -5,7 +5,7 @@ namespace Cozmo {
   namespace UI {
     public class ProgressBar : MonoBehaviour {
 
-      private const float kTweenDuration = 3.25f;
+      private const float kTweenDuration = 0.5f;
 
       [SerializeField]
       private Image _FilledForegroundImage;
