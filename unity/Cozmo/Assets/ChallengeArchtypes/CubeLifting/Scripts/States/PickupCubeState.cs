@@ -48,7 +48,7 @@ namespace CubeLifting {
     }
 
     private void HandleLoseAnimationDone(bool success) {
-      _StateMachine.GetGame().RaiseMiniGameLose();
+      (_StateMachine.GetGame() as CubeLiftingGame).LoseCubeSight();
     }
 
     private void HandleLifeLostAnimationDone(bool success) {

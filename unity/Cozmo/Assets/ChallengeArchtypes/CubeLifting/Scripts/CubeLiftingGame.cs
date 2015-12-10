@@ -36,6 +36,13 @@ namespace CubeLifting {
       
     }
 
+    public void LoseCubeSight() {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
+        RaiseMiniGameLose();
+      }
+    }
+
     public int PickCube() {
 
       foreach (KeyValuePair<int, LightCube> lightCube in CurrentRobot.LightCubes) {
