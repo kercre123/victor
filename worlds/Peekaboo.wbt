@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.113768 0.560987 0.81997 3.47116
-  position -1.06564 2.95306 1.47912
+  orientation -0.470948 0.547819 0.691449 4.21422
+  position -3.29458 0.685436 1.08967
 }
 Background {
   skyColor [
@@ -32,7 +32,8 @@ CozmoMat {
 }
 Face {
   name "Face001"
-  translation 0 -0.45 0.2
+  translation 0.62 -0.45 0.2
+  rotation 0 0 1 4.45059
   image "face02.png"
 }
 Face {
@@ -56,13 +57,31 @@ LightCube {
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
-  hidden position_0_2 -0.0100037
-  hidden position_24_0 -0.0100013
+  hidden position_0_2 -0.0100041
+  hidden linearVelocity_0 -7.6701e-18 -1.20379e-11 -8.96169e-17
+  hidden angularVelocity_0 7.23669e-16 5.58471e-14 -2.37998e-11
+  hidden translation_8 3.38785e-12 -2.81187e-13 -7.65816e-08
+  hidden rotation_8 -3.47203e-12 1 3.16283e-11 -3.03867e-05
+  hidden linearVelocity_8 3.80154e-12 -1.23669e-11 -3.57988e-11
+  hidden angularVelocity_8 5.22727e-16 1.04718e-08 -2.37613e-11
+  hidden translation_24 1.48348e-10 -3.12232e-14 -1.4349e-08
+  hidden rotation_24 -3.75646e-07 1 -1.83907e-06 7.28054e-10
+  hidden position_24_0 -0.0100009
+  hidden linearVelocity_24 -1.0649e-14 -1.23642e-11 -2.17193e-13
+  hidden angularVelocity_24 8.51393e-16 6.11563e-12 -2.37998e-11
+  hidden translation_25 1.48107e-10 -1.1492e-14 -8.97557e-09
+  hidden rotation_25 -2.48605e-10 1 -1.29591e-11 4.22098e-07
+  hidden linearVelocity_25 -6.67797e-14 -1.31158e-11 -2.90757e-13
+  hidden angularVelocity_25 6.16993e-16 4.81094e-12 -2.37998e-11
+  hidden translation_27 -1.47595e-10 -3.12246e-14 -2.65838e-09
+  hidden rotation_27 -7.33298e-10 1 -3.57954e-09 3.7423e-07
   hidden position_27_0 -0.0100023
-  translation 0.16 -2.59219e-09 0.000281866
-  rotation 0.0829806 0.996551 -1.38479e-05 4.42511e-05
+  hidden linearVelocity_27 -8.8092e-15 -1.23641e-11 -1.44882e-13
+  hidden angularVelocity_27 9.63698e-16 4.60724e-12 -2.37998e-11
+  translation 0.16 -2.78573e-09 0.000288918
+  rotation 0.0827182 0.996573 -2.09337e-05 4.43915e-05
   name "CozmoBot_1"
-  headAngle -0.347884
+  headAngle -0.347827
   liftAngle -0.0100025
   usbChannel 10
 }
