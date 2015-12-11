@@ -693,7 +693,7 @@
                   '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
                 ],
                 'outputs': [
-                  '<(PRODUCT_DIR)/resources/sound',
+                  '../../simulator/controllers/webotsCtrlGameEngine/resources/sound',
                 ],
                 'action': [
                   'ln',
