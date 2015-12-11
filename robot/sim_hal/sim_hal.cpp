@@ -505,9 +505,9 @@ namespace Anki {
       leds_[LED_RIGHT_EYE_BOTTOM] = webotRobot_.getLED("RightEyeLED_bottom");
       */
 
-      leds_[LED_BACKPACK_FRONT]   = webotRobot_.getLED("ledHealth0");
+      leds_[LED_BACKPACK_BACK]   = webotRobot_.getLED("ledHealth0");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("ledHealth1");
-      leds_[LED_BACKPACK_BACK]  = webotRobot_.getLED("ledHealth2");
+      leds_[LED_BACKPACK_FRONT]  = webotRobot_.getLED("ledHealth2");
       leds_[LED_BACKPACK_LEFT]   = webotRobot_.getLED("ledDirLeft");
       leds_[LED_BACKPACK_RIGHT]  = webotRobot_.getLED("ledDirRight");
 
@@ -783,24 +783,24 @@ namespace Anki {
             case BlockMessages::LightCubeMessage::Tag_moved:
             {
               ObjectMoved m;
-              m.timestamp = HAL::GetTimeStamp();
               memcpy(m.GetBuffer(), lcm.moved.GetBuffer(), lcm.moved.Size());
+              m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;
             }
             case BlockMessages::LightCubeMessage::Tag_stopped:
             {
               ObjectStoppedMoving m;
-              m.timestamp = HAL::GetTimeStamp();
               memcpy(m.GetBuffer(), lcm.stopped.GetBuffer(), lcm.stopped.Size());
+              m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;
             }
             case BlockMessages::LightCubeMessage::Tag_tapped:
             {
               ObjectTapped m;
-              m.timestamp = HAL::GetTimeStamp();              
               memcpy(m.GetBuffer(), lcm.tapped.GetBuffer(), lcm.tapped.Size());
+              m.timestamp = HAL::GetTimeStamp();
               RobotInterface::SendMessage(m);
               break;
             }
