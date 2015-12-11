@@ -54,22 +54,49 @@
   "IntroSequence.AriaUploadLine2": {
     "translation": "Transfer in 5, 4, 3, 2, 1..."
   },
-  "MotionDetectionIntro.Node 1": {
+  "MotionDetectionIntro.AriaLine1": {
     "translation": "Time to teach Cozmo how to track Motion!"
   },
-  "MotionDetectionIntro.Node 2": {
+  "MotionDetectionIntro.AriaLine2": {
     "translation": "Shake your hand in the center of cozmo's view!"
   },
-  "MotionDetectionIntro.Node 3": {
-    "translation": "Lead Cozmo forward to the cube!"
+  "MotionDetectionIntro.CozmoLine1": {
+    "translation": "[ O___o ] :D"
+  },
+  "FaceTrackingIntro.AriaLine1": {
+    "translation": "Let's help Cozmo recognize humans."
+  },
+  "FaceTrackingIntro.CozmoLine1": {
+    "translation": "d-[ ^ v ^ ]-b"
   },
   "CubeLiftingIntro.AriaLine1": {
-    "translation": "Help Cozmo learn how to lift a cube!"
+    "translation": "Cozmo, let's lift a cube. What? You can't?"
   },
-  "CubeLiftingIntro.CozmoLine2": {
-    "translation": "beep boop"
+  "CubeLiftingIntro.CozmoLine1": {
+    "translation": "[ -___-;;]     :<"
   },
-  "MotionDetectionIntro.CozmoLine1": {
-    "translation": "O___o :D"
+  "CubeVisionIntro.AriaLine1": {
+    "translation": "Cozmo, HQ has some Power Cubes for you to test."
+  },
+  "CubeVisionIntro.CozmoLine1": {
+    "translation": ":?    [ >___>]a"
+  },
+  "DockTrainingIntro.CozmoLine1": {
+    "translation": ">:D     \\[ o w o ]/"
+  },
+  "DockTrainingIntro.AriaLine1": {
+    "translation": "Now that you know what a Power Cube is, it's time to drive to one!"
+  },
+  "FollowCubeIntro.AriaLine1": {
+    "translation": "Chase the cube Cozmo! Chase it!"
+  },
+  "FollowCubeIntro.CozmoLine1": {
+    "translation": "ε=ε=ε=[ﾉ≧ ∀]ﾉ"
+  },
+  "StackTrainingIntro.AriaLine1": {
+    "translation": "Hmmm.... can we do anything else with these?"
+  },
+  "StackTrainingIntro.CozmoLine1": {
+    "translation": "((( [; > x < ;]a )))"
   }
 }
