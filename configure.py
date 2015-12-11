@@ -324,8 +324,12 @@ def generate_gyp(path, platform, options):
     
     if not os.environ.get("CORETECH_EXTERNAL_DIR"):
         sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
+
+    if not os.environ.get("EXTERNALS_DIR"):
+        sys.exit('ERROR: Environment variable "EXTERNALS_DIR" must be defined.')
     
     arguments += ['--coretechExternal', os.environ.get("CORETECH_EXTERNAL_DIR")]
+    arguments += ['--externals', os.environ.get("EXTERNALS_DIR")]
     if options.verbose:
         arguments += ['--verbose']
     if options.mex:
