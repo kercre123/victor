@@ -8,6 +8,7 @@
 #include "clad/types/actionTypes.h"
 
 #include <map>
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -26,6 +27,17 @@ namespace Cozmo {
   
     // Returns nullptr if not found
     const Vision::TrackedFace* GetFace(Vision::TrackedFace::ID_t faceID) const;
+    
+    // Returns number of known faces
+    // Actual face IDs returned in faceIDs
+    u32 GetKnownFaceIDs(std::vector<Vision::TrackedFace::ID_t> &faceIDs) const;
+    
+    // Returns number of known faces observed since seenSinceTime_ms
+    u32 GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms, std::map<TimeStamp_t, Vision::TrackedFace::ID_t> &faceIDs) const;
+
+    // Returns time of the last observed face.
+    // 0 if no face was ever observed.
+    TimeStamp_t GetLastObservedFace(Pose3d& p);
     
   private:
     
@@ -47,6 +59,9 @@ namespace Cozmo {
     Result UpdateFaceTracking(const Vision::TrackedFace& face);
     
     Vision::TrackedFace::ID_t _idCtr = 0;
+    
+    Pose3d      _lastObservedFacePose;
+    TimeStamp_t _lastObservedFaceTimeStamp = 0;
     
   }; // class FaceWorld
   

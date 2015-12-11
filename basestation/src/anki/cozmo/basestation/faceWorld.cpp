@@ -147,6 +147,10 @@ namespace Cozmo {
     // existing one!
     assert(knownFace != nullptr);
     
+    // Update the last observed face pose
+    _lastObservedFacePose = knownFace->face.GetHeadPose();
+    _lastObservedFaceTimeStamp = knownFace->face.GetTimeStamp();
+    
     // Draw 3D face
     knownFace->vizHandle = VizManager::getInstance()->DrawHumanHead(1+static_cast<u32>(knownFace->face.GetID()),
                                                                    humanHeadSize,
@@ -214,6 +218,36 @@ namespace Cozmo {
     }
   }
 
+
+  u32 FaceWorld::GetKnownFaceIDs(std::vector<Vision::TrackedFace::ID_t> &faceIDs) const
+  {
+    faceIDs.clear();
+    for (auto pair : _knownFaces) {
+      faceIDs.push_back(pair.first);
+    }
+    return static_cast<u32>(faceIDs.size());
+  }
+  
+  u32 FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms, std::map<TimeStamp_t, Vision::TrackedFace::ID_t> &faceIDs) const
+  {
+    faceIDs.clear();
+    for (auto pair : _knownFaces) {
+      if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
+        faceIDs.insert(std::pair<TimeStamp_t, Vision::TrackedFace::ID_t>(pair.first, pair.second.face.GetTimeStamp()));
+      }
+    }
+    return static_cast<u32>(faceIDs.size());
+  }
+  
+  
+  TimeStamp_t FaceWorld::GetLastObservedFace(Pose3d& p)
+  {
+    if (_lastObservedFaceTimeStamp > 0) {
+      p = _lastObservedFacePose;
+    }
+    
+    return _lastObservedFaceTimeStamp;
+  }
   
 } // namespace Cozmo
 } // namespace Anki
