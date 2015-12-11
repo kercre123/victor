@@ -17,7 +17,6 @@ CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
 EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
 os.environ['EXTERNALS_DIR'] = "{0}".format(EXTERNAL_ROOT)
 sys.path.insert(0, ENGINE_ROOT)
-sys.path.insert(0, EXTERNAL_ROOT)
 
 from configure import BUILD_TOOLS_ROOT, print_header, print_status
 from configure import ArgumentParser, generate_gyp, configure
