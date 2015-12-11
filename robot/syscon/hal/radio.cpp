@@ -55,7 +55,7 @@ static void EnterState(RadioState state);
 
 static const int TICK_LOOP = 7;                   // 35ms period
 static const int LOCATE_TIMEOUT = TICK_LOOP;      // One entire cozmo period
-static const int ACCESSORY_TIMEOUT = 20;          // 100ms timeout before accessory is considered lost
+static const int ACCESSORY_TIMEOUT = 30;          // 150ms timeout before accessory is considered lost
 
 static const int PACKET_SIZE = 17; 
 static const int MAX_ACCESSORIES = TICK_LOOP;
@@ -64,12 +64,13 @@ static const int MAX_ACCESSORIES = TICK_LOOP;
 static const uint8_t ROBOT_TO_CUBE_PREFIX = 0x42;
 static const uint8_t CUBE_TO_ROBOT_PREFIX = 0x52;
 
+static const uint32_t UNUSED_BASE = 0xE6E6E6E6;
 static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 
-#define ADVERTISE_PREFIX    {0xC2, CUBE_TO_ROBOT_PREFIX, ROBOT_TO_CUBE_PREFIX, 1, 2, 3, 4, 5}
+#define ADVERTISE_PREFIX    {0xE6, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX, 1, 2, 3, 4, 5}
 
-static const int ROBOT_PAIR_PIPE = 2;
-static const int CUBE_ADVERT_PIPE = 1;
+static const int ROBOT_PAIR_PIPE = 1;
+static const int CUBE_ADVERT_PIPE = 2;
 
 static const uint8_t ADVERTISING_PREFIX[8] = ADVERTISE_PREFIX;
 
@@ -83,8 +84,12 @@ static const int RADIO_TIMEOUT_MSB = 15;
 static const int RADIO_WAKEUP_OFFSET = 8;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
-static const uint8_t PIPE_VALUES[] = {ROBOT_TO_CUBE_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9};
+static const uint8_t PIPE_VALUES[] = {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9};
 static const int BASE_PIPE = 1;
+
+static const int MAX_CHARGERS = 1;
+static const int MAX_CUBES = 6;
+
 
 // Global head / body sync values
 extern GlobalDataToHead g_dataToHead;
@@ -97,14 +102,11 @@ static uint32_t targetAddress;
 static uint32_t targetChannel;
 static AccessorySlot accessories[MAX_ACCESSORIES];
 
-// State memory
-static union {
-  // State memory for Channel location
-  struct {
-    uint8_t currentNoiseLevel[MAX_TX_CHANNEL+1];
-    int locateTimeout;
-  };
-};
+// Variables for locating a quiet channel
+static uint8_t currentNoiseLevel[MAX_TX_CHANNEL+1];
+static uint8_t scanChannel;
+static int locateTimeout;
+static uint8_t currentAccessory;
 
 // This verifies there are not bit strings too long
 static inline uint32_t fixAddress(uint32_t word) {
@@ -137,12 +139,12 @@ void Radio::init() {
     UESB_TX_POWER_0DBM,
     ADV_CHANNEL,
     PACKET_SIZE,
-    5,  // Address length
+    5, // Address length
+    UNUSED_BASE,
     ADVERTISE_BASE,
-    ADVERTISE_BASE,       // This will change to the target address once the pairing step finishes
     ADVERTISE_PREFIX,
     0xFF,
-    1
+    2                     // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   // Generate target address for the robot
@@ -151,7 +153,8 @@ void Radio::init() {
 
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
-
+  currentAccessory = 0;
+  
   // Start the radio stack
   uesb_init(&uesb_config);
   EnterState(RADIO_FIND_CHANNEL);
@@ -188,12 +191,14 @@ static int FreeAccessory(void) {
 
 static void TalkAdvertise(void) {
   uesb_set_rf_channel(ADV_CHANNEL);
+  uesb_set_address(UESB_ADDRESS_BASE0, &UNUSED_BASE);
   uesb_set_address(UESB_ADDRESS_BASE1, &ADVERTISE_BASE);
   uesb_set_address(UESB_ADDRESS_PREFIX, ADVERTISING_PREFIX);
 }
 
 static void TalkCommunicate(void) {
   uesb_set_rf_channel(targetChannel);
+  uesb_set_address(UESB_ADDRESS_BASE0, &ADVERTISE_BASE);
   uesb_set_address(UESB_ADDRESS_BASE1, &targetAddress);
   uesb_set_address(UESB_ADDRESS_PREFIX, PIPE_VALUES);
 }
@@ -203,7 +208,8 @@ static void EnterState(RadioState state) {
 
   switch (state) {
     case RADIO_FIND_CHANNEL:
-      targetAddress = 0;
+      locateTimeout = LOCATE_TIMEOUT;  
+      targetChannel = 0;
       memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
       TalkCommunicate();
       break ;
@@ -216,10 +222,17 @@ static void EnterState(RadioState state) {
   }
 }
 
+static bool turn_around = false;
+static void send_dummy_byte(void) {
+  // This just send garbage
+  static const uint8_t dummy_data = 0xC2;
+  uesb_write_tx_payload(0, &dummy_data, sizeof(dummy_data));
+  turn_around  = true;
+}
+
 extern "C" void uesb_event_handler(void)
 {
   uint32_t rf_interrupts = uesb_get_clear_interrupts();
-  static bool turn_around = false;
   int slot;
   
   // Recevied a packet
@@ -240,7 +253,8 @@ extern "C" void uesb_event_handler(void)
         ReleaseAccessory(packet.id);
 
         // We don't want more than one charger paired (sorry about it)
-        if (AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= 1) {
+        if ((AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= MAX_CHARGERS) ||
+            (AccType(packet.id) == ACCESSORY_CUBE && CountAccessories(ACCESSORY_CUBE) >= MAX_CUBES)) {
           break ;
         }
 
@@ -262,24 +276,20 @@ extern "C" void uesb_event_handler(void)
         pair.timeout_msb = RADIO_TIMEOUT_MSB;
         pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
 
+        // Tell this accessory to come over to my side
+        //MicroWait(100);
         uesb_write_tx_payload(ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
       }
       
       break ;
       
     case RADIO_TALKING:
-      /*
-      SADLY, THIS WILL BE A PAIN IN THE DICK, SINCE IT ALWAYS COMES TO PIPE 0
-      uint8_t addr = rx_payload.data[sizeof(AcceleratorPacket)] - CUBE_BASE_ADDR;
-      if (addr < MAX_CUBES) {
-        memcpy((uint8_t*)&cubeRx[addr], rx_payload.data, sizeof(AcceleratorPacket));
-      }
-      */
-      
-      static const uint8_t dummy_data = 0xC2;
-      uesb_write_tx_payload(ROBOT_PAIR_PIPE, &dummy_data, sizeof(dummy_data));
-      turn_around  = true;
+      AccessorySlot* acc = &accessories[currentAccessory];
+      AcceleratorPacket* data;
     
+      memcpy(&acc->rx_state, rx_payload.data, sizeof(AcceleratorPacket));
+
+      send_dummy_byte();
       break ;
     }
   }
@@ -287,7 +297,7 @@ extern "C" void uesb_event_handler(void)
   if(rf_interrupts & UESB_INT_TX_SUCCESS_MSK) {
     if (turn_around) {
       turn_around  = false;
-      TalkAdvertise();
+      EnterState(RADIO_PAIRING);
     }
   }
 }
@@ -312,55 +322,60 @@ void Radio::manage() {
   // Handle per 5ms channel updates
   switch (radioState) {
   case RADIO_FIND_CHANNEL:
-    uesb_stop();
     if (locateTimeout-- <= 0) {
       locateTimeout = LOCATE_TIMEOUT;
 
+      uesb_stop();
       if (currentNoiseLevel[targetChannel] == 0) {
         // Found a quiet place to sleep in
         EnterState(RADIO_PAIRING);
-      } else if (targetChannel >= MAX_TX_CHANNEL) {
-        // We've reached the end of the usable frequency range, simply
-        // pick quietest spot
-        uint8_t noiseLevel = ~0;
-        
-        // Run to the quietest channel
-        for (int i = 0; i <= MAX_TX_CHANNEL; i++) {
-          if (currentNoiseLevel[i] < noiseLevel) {
-            targetChannel = i;
-            noiseLevel = currentNoiseLevel[i];
-          }
-        }
-        
-        EnterState(RADIO_PAIRING);
       } else {
-        // Probe the next channel
-        uesb_set_rf_channel(++targetChannel);
+        if ((targetChannel += 13) > MAX_TX_CHANNEL) {
+          // This trys to space the robots apart (the 7 is carefully picked)
+          targetChannel -= MAX_TX_CHANNEL;
+        }
+          
+        // a zero means a wrap around
+        if (targetChannel) {
+          // Probe the next channel
+          uesb_set_rf_channel(targetChannel);
+        } else {
+
+          // We've reached the end of the usable frequency range, simply
+          // pick quietest spot
+          uint8_t noiseLevel = ~0;
+          
+          // Run to the quietest channel
+          for (int i = 0; i <= MAX_TX_CHANNEL; i++) {
+            if (currentNoiseLevel[i] < noiseLevel) {
+              targetChannel = i;
+              noiseLevel = currentNoiseLevel[i];
+            }
+          }
+          
+          EnterState(RADIO_PAIRING);
+        }
       }
+      uesb_start();
     }
-    uesb_start();
+
     break ;
   
   default:
     // Transmit to accessories round-robin
-    static uint8_t currentAccessory = 0;
     currentAccessory = (currentAccessory + 1) % TICK_LOOP;
     
     if (currentAccessory >= MAX_ACCESSORIES) break ;
 
+    EnterState(RADIO_TALKING);
     AccessorySlot* acc = &accessories[currentAccessory];
-    if (acc->active) {
-      if (++acc->last_received < ACCESSORY_TIMEOUT) {
-        EnterState(RADIO_TALKING);
-        uesb_write_tx_payload(BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
-      } else {
-        acc->active = false;
-      }
+    if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+      // Broadcast to the appropriate device
+      uesb_write_tx_payload(BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
     } else {
-      // Timeslice is empty
-      uesb_stop();
-      EnterState(RADIO_PAIRING);
-      uesb_start();
+      // Timeslice is empty, send a dummy command on the channel so people know to stay away
+      acc->active = false;
+      send_dummy_byte();
     }
 
     break ;

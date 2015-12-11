@@ -392,10 +392,9 @@ extern "C" void RADIO_IRQHandler()
             default:
                 break ;
         }
+        
         uesb_event_handler();
-
         m_uesb_mainstate = UESB_STATE_IDLE;
-
         uesb_start();
     }
 }
