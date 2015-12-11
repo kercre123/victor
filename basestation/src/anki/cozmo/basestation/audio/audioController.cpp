@@ -51,9 +51,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #if USE_AUDIO_ENGINE
   {
     _audioEngine = new AudioEngineController();
-    
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/wwise/GeneratedSoundBanks/Mac/" );
-    
+    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
+
     // Set Language Local
     const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
     
