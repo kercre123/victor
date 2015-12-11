@@ -62,6 +62,9 @@ InvestorDemoFacesAndBlocksBehaviorChooser::InvestorDemoFacesAndBlocksBehaviorCho
 {
   SetupBehaviors(robot, config);
 
+  // enable live idle animation
+  robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+
   // robot.GetVisionComponent().EnableMode(VisionMode::DetectingFacesAndBlocks, true);
 }
 

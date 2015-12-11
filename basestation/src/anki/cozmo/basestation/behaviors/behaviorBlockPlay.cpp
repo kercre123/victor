@@ -919,8 +919,13 @@ namespace Cozmo {
       default:
         break;
     } // switch(_currentState)
-    
-    
+
+
+    // hack: re-enable idle animations
+    if( ! _isActing ) {
+      robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+    }
+
     return lastResult;
   } // HandleActionCompleted()
 
@@ -1127,6 +1132,9 @@ namespace Cozmo {
 
   void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action)
   {
+    // HACK! disable idle animation while acting
+    robot.SetIdleAnimation("NONE");
+
     _lastActionTag = action->GetTag();
     robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
     _isActing = true;
