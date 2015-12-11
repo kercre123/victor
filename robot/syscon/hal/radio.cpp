@@ -46,7 +46,7 @@ struct CapturePacket {
   uint8_t target_channel;
   uint8_t interval_delay;
   uint8_t prefix;
-  uint32_t base;
+  uint8_t base[4];
   uint8_t timeout_msb;
   uint8_t wakeup_offset;
 };
@@ -55,9 +55,9 @@ static void EnterState(RadioState state);
 
 static const int TICK_LOOP = 7;                   // 35ms period
 static const int LOCATE_TIMEOUT = TICK_LOOP;      // One entire cozmo period
-static const int ACCESSORY_TIMEOUT = 30;          // 150ms timeout before accessory is considered lost
+static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
 
-static const int PACKET_SIZE = 17; 
+static const int PACKET_SIZE = 17;
 static const int MAX_ACCESSORIES = TICK_LOOP;
 
 // Advertising settings
@@ -80,10 +80,9 @@ static const int MAX_TX_CHANNEL = 80;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
 static const int RADIO_TIMEOUT_MSB = 15;
-static const int RADIO_WAKEUP_OFFSET = 8;
+static const int RADIO_WAKEUP_OFFSET = 18;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
-static const uint8_t PIPE_VALUES[] = COMMUNICATE_PREFIX;
 static const int BASE_PIPE = 1;
 
 static const int MAX_CHARGERS = 1;
@@ -103,6 +102,7 @@ static const uesb_address_desc_t AdvertiseAddress = {
   ADVERTISE_BASE,
   ADVERTISE_PREFIX
 };
+
 static uesb_address_desc_t TalkAddress = { 
   0,
   ADVERTISE_BASE,
@@ -171,7 +171,7 @@ static inline uint8_t AccType(uint32_t id) {
 }
 
 static int CountAccessories(uint8_t type) {
-  int count;
+  int count = 0;
 
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
     if (accessories[i].active && AccType(accessories[i].id) == type)  count++;
@@ -180,10 +180,12 @@ static int CountAccessories(uint8_t type) {
   return count;
 }
 
-static void ReleaseAccessory(uint32_t id) {
+static int LocateAccessory(uint32_t id) {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    if (accessories[i].id == id) accessories[i].active = false;
+    if (accessories[i].id == id) return i;
   }
+
+  return -1;
 }
 
 static int FreeAccessory(void) {
@@ -194,14 +196,6 @@ static int FreeAccessory(void) {
   return -1;
 }
 
-static void TalkAdvertise(void) {
-  uesb_set_rx_address(&AdvertiseAddress);
-}
-
-static void TalkCommunicate(void) {
-  uesb_set_rx_address(&TalkAddress);
-}
-
 static void EnterState(RadioState state) { 
   radioState = state;
 
@@ -210,13 +204,13 @@ static void EnterState(RadioState state) {
       locateTimeout = LOCATE_TIMEOUT;  
       TalkAddress.rf_channel = 0;
       memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
-      TalkCommunicate();
+      uesb_set_rx_address(&TalkAddress);
       break ;
     case RADIO_PAIRING:
-      TalkAdvertise();
+      uesb_set_rx_address(&AdvertiseAddress);
       break;
     case RADIO_TALKING:
-      TalkCommunicate();
+      uesb_set_rx_address(&TalkAddress);
       break ;
   }
 }
@@ -243,44 +237,56 @@ extern "C" void uesb_event_handler(void)
     case RADIO_FIND_CHANNEL:
       currentNoiseLevel[TalkAddress.rf_channel]++;
       break ;
-    case RADIO_PAIRING:
-      slot = FreeAccessory();
-      
-      if (rx_payload.pipe != CUBE_ADVERT_PIPE || slot < 0) {
+    case RADIO_PAIRING:      
+      if (rx_payload.pipe != CUBE_ADVERT_PIPE) {
         break ;
       }
 
       AdvertisePacket packet;
       memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
-      ReleaseAccessory(packet.id);
 
-      // We don't want more than one charger paired (sorry about it)
-      if ((AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= MAX_CHARGERS) ||
-          (AccType(packet.id) == ACCESSORY_CUBE && CountAccessories(ACCESSORY_CUBE) >= MAX_CUBES)) {
-        break ;
+      // Attempt to locate existing accessory and repair
+      slot = LocateAccessory(packet.id);
+      if (slot < 0) {
+        // Attempt to allocate a slot for it
+        slot = FreeAccessory();
+
+        // We cannot find a place for it
+        if (slot < 0) {
+          break ;
+        }
+        
+        // We don't want more than one charger paired (sorry about it)
+        if ((AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= MAX_CHARGERS) ||
+            (AccType(packet.id) == ACCESSORY_CUBE && CountAccessories(ACCESSORY_CUBE) >= MAX_CUBES)) {
+          break ;
+        }
+      }
+
+      // If we are not re-establishing an existing connection, clear the active state
+      if (!accessories[slot].active) {
+        memset(&accessories[slot].rx_state, 0, sizeof(accessories[slot].rx_state));
+        memset(&accessories[slot].tx_state, 0xC0, sizeof(accessories[slot].tx_state));
       }
 
       // We are loading the slot
       accessories[slot].active = true;
       accessories[slot].id = packet.id;
-      accessories[slot].last_received = 0;        
-      
-      memset(&accessories[slot].rx_state, 0, sizeof(accessories[slot].rx_state));
-      memset(&accessories[slot].tx_state, 0xFF, sizeof(accessories[slot].tx_state));
-      
+      accessories[slot].last_received = 0;
+            
       // Send a pairing packet
       CapturePacket pair;
 
       pair.target_channel = TalkAddress.rf_channel;
       pair.interval_delay = RADIO_INTERVAL_DELAY;
-      pair.prefix = PIPE_VALUES[BASE_PIPE+slot];
-      pair.base = TalkAddress.base1;
+      pair.prefix = TalkAddress.prefix[BASE_PIPE+slot];
+      memcpy(&pair.base, &TalkAddress.base1, sizeof(TalkAddress.base1));
       pair.timeout_msb = RADIO_TIMEOUT_MSB;
       pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
 
       // Tell this accessory to come over to my side
+      MicroWait(300);
       uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
-      
       break ;
       
     case RADIO_TALKING:
@@ -356,15 +362,6 @@ void Radio::manage() {
     break ;
   
   default:
-    uesb_address_desc_t cube_classic = {
-      82, 0xE7E7E7E7, 0xC2C2C2C2, {0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8}
-    };
-    LEDPacket packet;
-    
-    memset(&packet, 0xC0, sizeof(packet));
-    uesb_write_tx_payload(&cube_classic, 2, &packet, sizeof(packet));
-    
-    break ;
     // Transmit to accessories round-robin
     currentAccessory = (currentAccessory + 1) % TICK_LOOP;
     

@@ -148,30 +148,41 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>62</LineNumber>
+          <LineNumber>289</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>12546</Address>
+          <Address>15136</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\hal\main.cpp</Filename>
+          <Filename>.\hal\radio.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\\hal/main.cpp\62</Expression>
+          <Expression>\\syscon\hal/radio.cpp\289</Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>169</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>9554</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\hal\micro_esb.cpp</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\syscon\hal/micro_esb.cpp\169</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>NRF_RADIO</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>g_dataToHead.VExt / 65536.0</ItemText>
+          <ItemText>payload</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

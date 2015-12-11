@@ -157,7 +157,7 @@ uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe,
   m_tx_fifo.count++;
 
   payload->pipe = pipe;
-  payload->length = length;//m_config_local.payload_length;// length; //THIS SUCKS HERE
+  payload->length = length;
   memcpy(&payload->address, address, sizeof(uesb_address_desc_t));
   memcpy(payload->data, data, length);
   
@@ -215,11 +215,17 @@ uint32_t uesb_start() {
   if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
     
   update_radio_parameters();
-
-  NRF_RADIO->EVENTS_DISABLED = 0;
+  update_rf_payload_format(m_config_local.payload_length);
 
   uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
-  
+
+  NRF_RADIO->EVENTS_DISABLED = 0;
+  NRF_RADIO->EVENTS_READY = 0;
+  NRF_RADIO->EVENTS_ADDRESS = 0;
+  NRF_RADIO->EVENTS_PAYLOAD = 0;
+  //NRF_RADIO->EVENTS_END = 0;
+  //NRF_RADIO->EVENTS_RSSIEND = 0;
+
   if (m_tx_fifo.count > 0) {
     // Dequeue fifo
     uint8_t pipe = current_payload->pipe;
@@ -233,9 +239,6 @@ uint32_t uesb_start() {
     current_payload->pid = 0xCC | m_pid[pipe];
     current_payload->null = 0;
 
-    // Configure the transmitter
-    update_rf_payload_format(current_payload->length);
-
     m_uesb_mainstate       = UESB_STATE_PTX;
 
     configure_addresses(&current_payload->address);
@@ -246,21 +249,17 @@ uint32_t uesb_start() {
     NRF_RADIO->TASKS_TXEN  = 1;
 
   } else if (m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
-    update_rf_payload_format(m_config_local.payload_length);
-
     m_uesb_mainstate       = UESB_STATE_PRX;
+    
     configure_addresses(&m_config_local.rx_address);
+    
     NRF_RADIO->RXADDRESSES = m_config_local.rx_pipes_enabled;
-
     NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_buffer;
   
     NRF_RADIO->TASKS_RXEN  = 1;
   } else {
     m_uesb_mainstate = UESB_STATE_IDLE;
   }
-
-  NRF_RADIO->EVENTS_ADDRESS = 0;
-  NRF_RADIO->EVENTS_PAYLOAD = 0;
 
   NVIC_ClearPendingIRQ(RADIO_IRQn);
   ENABLE_RF_IRQ;
@@ -273,7 +272,8 @@ uint32_t uesb_stop(void)
   DISABLE_RF_IRQ;
   NRF_RADIO->TASKS_DISABLE = 1;
   while(!NRF_RADIO->EVENTS_DISABLED) ;
-
+  NRF_RADIO->EVENTS_DISABLED = 0;
+  
   m_uesb_mainstate = UESB_STATE_IDLE;
   ENABLE_RF_IRQ;
 
@@ -347,6 +347,8 @@ extern "C" void RADIO_IRQHandler()
     {
       uesb_payload_t *m_rx_payload = &m_rx_fifo.payload[m_rx_fifo.entry_point];
       
+      m_interrupt_flags |= UESB_INT_RX_DR_MSK;
+
       if(++m_rx_fifo.entry_point >= UESB_CORE_RX_FIFO_SIZE) m_rx_fifo.entry_point = 0;
       m_rx_fifo.count++;
 
