@@ -6,7 +6,8 @@
         _Color ("Tint", Color) = (1,1,1,1)
         _GradientColor ("Gradient Tint", Color) = (1,1,1,1)
         _BackgroundColor ("Background Color", Color) = (1,1,1,1)
-        _GradientScale ("GradientScale", Vector) = (1, 1, 1, 1)
+        _GlowColor ("Glow Color", Color) = (1,1,1,1)
+        _GradientScale ("GradientScale", Vector) = (1,1,1,1)
     }
  
     SubShader
@@ -31,31 +32,56 @@
         fixed4 _Color;
         fixed4 _GradientColor;
         fixed4 _BackgroundColor;
+        fixed4 _GlowColor;
         float4 _GradientScale;
- 
+
         struct Input
         {
             float2 uv_MainTex;
         };
+
+        // TODO: Turn off on low tier devices
+        fixed4 applyGlow(float2 uv, fixed4 circuit) 
+        {
+            float glowAlpha = saturate(min(uv.y, 1 - uv.y) * 4 - 1);
+
+            glowAlpha *= glowAlpha;
+
+            float horizontalFlow = min(uv.x, 1 - uv.x) * 2;
+
+            float sint = abs(_SinTime.x) * 2 - 1;
+
+            float horizontalGlowAlpha = saturate(min(sint - horizontalFlow + 0.4, horizontalFlow + 0.4 - sint) * 5);
+
+            glowAlpha += glowAlpha * horizontalGlowAlpha;
+
+            fixed4 glow = glowAlpha * _GlowColor * _GlowColor.a;
+
+            circuit.a += circuit.a * glow.a * 0.2;
+            circuit.rgb = circuit.rgb * (1 - glow.a) + glow.a * glow.rgb;
+
+            return circuit;
+        }
  
         void surf (Input IN, inout SurfaceOutput o)
         {
-            float2 d = (IN.uv_MainTex * 2 - float2(1, 1)) * _GradientScale.xy;
+            float2 delta = (IN.uv_MainTex * 2 - float2(1, 1)) * _GradientScale.xy;
 
-            float2 d2 = d * d;
+            float2 deltaSqr = delta * delta;
 
-            float a = saturate(1 - sqrt(d2.x  + d2.y));
+            float gradientAlpha = saturate(1 - sqrt(deltaSqr.x  + deltaSqr.y));
 
-            fixed4 g = _GradientColor * a;
+            fixed4 gradient = _GradientColor * gradientAlpha;
 
-            fixed4 b = g * g.a + (1 - g.a) * _BackgroundColor;
+            fixed4 background = gradient * gradient.a + (1 - gradient.a) * _BackgroundColor;
 
-            fixed4 c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
+            fixed4 circuit = tex2D(_MainTex, IN.uv_MainTex) * _Color;
 
-            fixed3 r = c.rgb * c.a + (1 - c.a) * b.rgb;
+            circuit = applyGlow(IN.uv_MainTex, circuit);
 
-            o.Albedo = r;
-            o.Alpha = 1;
+            fixed3 result = circuit.rgb * circuit.a + (1 - circuit.a) * background.rgb;
+
+            o.Albedo = result;
         }
         ENDCG
     }

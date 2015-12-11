@@ -148,3 +148,7 @@ Material:
         first:
           name: _GradientScale
         second: {r: .5, g: .333299994, b: 1, a: 1}
+      data:
+        first:
+          name: _GlowColor
+        second: {r: .937254906, g: .686274529, b: .482352942, a: 1}
