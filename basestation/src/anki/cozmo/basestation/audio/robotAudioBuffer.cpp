@@ -4,15 +4,18 @@
  * Author: Jordan Rivas
  * Created: 11/13/2015
  *
- * Description: This a circular buffer to hold audio samples from the Cozmo Plugin for the animation stream to pull out.
+ * Description: This consists of a circular buffer to cache the audio samples from the Cozmo Plugin update. When there
+ *              is enough cached the data packed into a EngineToRobot audio sample message and is pushed into a
+ *              RobotAudioMessageStream. The RobotAudioMessageStreams are stored in a FIFO queue until they are ready
+ *              to be sent to the robot.
  *
  * Copyright: Anki, Inc. 2015
  */
 
-
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
-#include "clad/types/animationKeyFrames.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include <util/logging/logging.h>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -21,77 +24,84 @@ namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioBuffer::RobotAudioBuffer() :
-  _audioSampleCache( kAudioSampleBufferSize),
-  _KeyFrameAudioSampleBuffer( kKeyFrameAudioSampleBufferSize )
+  _audioSampleCache( kAudioSampleBufferSize)
 {
 }
- 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioBuffer::PrepareAudioBuffer()
+{
+  // Prep new Continuous Stream Buffer
+  _streamQueue.emplace();
+  _currentStream = &_streamQueue.back();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount )
 {
   // Store plug-in samples into cache
   _audioSampleCache.push_back( samples, sampleCount );
   
-  // When there is enought cache create Key Frame Audio Sample Messages
+  // When there is enought cache create Robot Audio Messages
   while ( _audioSampleCache.size() >= static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) ) {
-    CopyAudioSampleCachToKeyFrameAudioSample( static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
+    CopyAudioSampleCacheToRobotAudioMessage( static_cast<int32_t>(AnimConstants::AUDIO_SAMPLE_SIZE), _currentStream );
   }
-  
-  _plugInIsActive = true;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AnimKeyFrame::AudioSample* RobotAudioBuffer::PopKeyFrameAudioSample()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+RobotAudioMessageStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 {
-  assert( !_KeyFrameAudioSampleBuffer.empty() );
-
-  // Lock and Pop Key Frame Audio Sample message
-  _KeyFrameAudioSampleBufferLock.lock();
-  AnimKeyFrame::AudioSample* audioSample = _KeyFrameAudioSampleBuffer.front();
-  _KeyFrameAudioSampleBuffer.pop_front();
+  ASSERT_NAMED( !_streamQueue.empty(), "Must check if a Robot Audio Buffer Stream is in Queue befor calling this method") ;
   
-  // If the last frame was poped plug-in is no longer active
-  if ( _KeyFrameAudioSampleBuffer.empty() && _clearCache ) {
-    _plugInIsActive = false;
-    _clearCache = false;
+  return &_streamQueue.front();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioBuffer::ClearBufferStreams()
+{
+  while (!_streamQueue.empty()) {
+    _streamQueue.pop();
   }
-  _KeyFrameAudioSampleBufferLock.unlock();
-  
-  return audioSample;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ClearCache()
 {
-  // No more samples to cache, create final Key Frame Audio Sample Message
+  // No more samples to cache, create final Audio Message
   size_t sampleCount = _audioSampleCache.size();
-  CopyAudioSampleCachToKeyFrameAudioSample( sampleCount );
+  CopyAudioSampleCacheToRobotAudioMessage( sampleCount, _currentStream );
   
-  _clearCache = true;
+  _currentStream->SetIsComplete();
+  
+  _currentStream = nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-size_t RobotAudioBuffer::CopyAudioSampleCachToKeyFrameAudioSample( size_t blockSize )
+size_t RobotAudioBuffer::CopyAudioSampleCacheToRobotAudioMessage( size_t blockSize, RobotAudioMessageStream* stream )
 {
-  // Pop audio samples off cache buffer into a Key frame audio sample message
-  AnimKeyFrame::AudioSample* audioSample = new AnimKeyFrame::AudioSample();
-  const size_t returnSize = _audioSampleCache.front( &audioSample->sample[0], blockSize);
+  // TODO: Add support to write into directly into clad robot messages audio sample to save us a copy step.
+  
+  // Pop audio samples off cache buffer into an audio sample message
+  AnimKeyFrame::AudioSample audioSample = AnimKeyFrame::AudioSample();
+  ASSERT_NAMED(blockSize <= audioSample.Size(), "Block size must be less or equal to audioSameple size");
+  const size_t returnSize = _audioSampleCache.front( audioSample.sample.data(), blockSize);
   _audioSampleCache.pop_front( returnSize );
-  assert(returnSize == blockSize);  // We should have already confirmed that we can get this number of itmes
+  ASSERT_NAMED( returnSize == blockSize, "We expect that the returnSize is equal to blockSize" );
 
   // Pad the back of the buffer with 0s
   // This should only apply to the last sample
-  if (audioSample->Size() > blockSize) {
-    std::fill( audioSample->sample.begin() + blockSize, audioSample->sample.end(), 0 );
+  if (audioSample.Size() > blockSize) {
+    std::fill( audioSample.sample.begin() + blockSize, audioSample.sample.end(), 0 );
   }
 
-  // Lock and push key frame audio sample message into buffer
-  _KeyFrameAudioSampleBufferLock.lock();
-  _KeyFrameAudioSampleBuffer.push_back( audioSample );
-  _KeyFrameAudioSampleBufferLock.unlock();
+  ASSERT_NAMED( nullptr!= stream, "Must pass a Robot Audio Buffer Stream object" );
+  RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioSample ) );
+  
+  stream->PushRobotAudioMessage( audioMsg );
 
   return returnSize;
 }
+
   
 } // Audio
 } // Cozmo
