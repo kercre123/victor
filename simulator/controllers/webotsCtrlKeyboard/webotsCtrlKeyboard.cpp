@@ -831,10 +831,15 @@ namespace Anki {
                   }
                   else
                   {
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
+                    printf("Selecting behavior: %s\n", behaviorName.c_str());
+
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::SetBehaviorSystemEnabled(true)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
+                
                   }
                   
                 }
