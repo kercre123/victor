@@ -27,9 +27,14 @@ namespace Cozmo {
   // A behavior that tries to neaten up blocks present in the world
   class BehaviorOCD : public IBehavior
   {
-  public:
+  private:
     
+    // Enforce creation through BehaviorFactory
+    friend class BehaviorFactory;
     BehaviorOCD(Robot& robot, const Json::Value& config);
+    
+  public:
+   
     virtual ~BehaviorOCD() { }
     
     virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;

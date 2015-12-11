@@ -17,14 +17,7 @@
 #include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -47,6 +40,7 @@ namespace Cozmo {
   : _isInitialized(false)
   , _forceReInit(false)
   , _robot(robot)
+  , _behaviorFactory(new BehaviorFactory())
   , _minBehaviorTime_sec(1)
   {
 
@@ -84,16 +78,18 @@ namespace Cozmo {
            {
              SetBehaviorChooser( new InvestorDemoMotionBehaviorChooser(_robot, config) );
 
-             // AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
-             // AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
-             AddReactionaryBehavior(new BehaviorReactToPoke(_robot, config));
+             BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+             AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
              break;
            }
            case BehaviorChooserType::InvestorDemoFacesAndBlocks:
            {
              SetBehaviorChooser( new InvestorDemoFacesAndBlocksBehaviorChooser(_robot, config) );
              
-             AddReactionaryBehavior(new BehaviorReactToPoke(_robot, config));
+             BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+             AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
              break;
            }
            default:
@@ -118,9 +114,10 @@ namespace Cozmo {
   {
     SetBehaviorChooser( new DemoBehaviorChooser(_robot, config) );
     
-    AddReactionaryBehavior(new BehaviorReactToPickup(_robot, config));
-    AddReactionaryBehavior(new BehaviorReactToCliff(_robot, config));
-    AddReactionaryBehavior(new BehaviorReactToPoke(_robot, config));
+    BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
   }
   
   // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
@@ -164,6 +161,7 @@ namespace Cozmo {
   BehaviorManager::~BehaviorManager()
   {
     Util::SafeDelete(_behaviorChooser);
+    Util::SafeDelete(_behaviorFactory);
   }
   
   void BehaviorManager::SwitchToNextBehavior(double currentTime_sec)
@@ -365,6 +363,12 @@ namespace Cozmo {
     Util::SafeDelete(_behaviorChooser);
     
     _behaviorChooser = newChooser;
+  }
+  
+  IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
+  {
+    IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
+    return newBehavior;
   }
   
 } // namespace Cozmo

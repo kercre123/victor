@@ -21,10 +21,11 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
   
+  
+static const char* kAnimNameKey = "animName";
+static const char* kMinTimeBetweenRunsKey = "minTimeBetweenRuns";
+  
 
-static const std::string kBaseBehaviorName = "PlayAnim";
-  
-  
 BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _animationName()
@@ -37,7 +38,25 @@ BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   , _isInterrupted(false)
   , _isActing(false)
 {
-  _name = kBaseBehaviorName;
+  SetDefaultName("PlayAnim");
+  
+  if (!config.isNull())
+  {
+    {
+      const Json::Value& valueJson = config[kAnimNameKey];
+      if (valueJson.isString())
+      {
+        _animationName = valueJson.asCString();
+      }
+    }
+    {
+      const Json::Value& valueJson = config[kMinTimeBetweenRunsKey];
+      if (valueJson.isNumeric())
+      {
+        _minTimeBetweenRuns = valueJson.asDouble();
+      }
+    }
+  }
   
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction
@@ -53,12 +72,6 @@ BehaviorPlayAnim::~BehaviorPlayAnim()
 void BehaviorPlayAnim::SetAnimationName(const std::string& inName)
 {
   _animationName = inName;
-}
-  
-  
-void BehaviorPlayAnim::SetName(const std::string& inName)
-{
-  _name = kBaseBehaviorName + inName;
 }
 
   
@@ -132,7 +145,7 @@ void BehaviorPlayAnim::HandleWhileRunning(const EngineToGameEvent& event, Robot&
 void BehaviorPlayAnim::PlayAnimation(Robot& robot, const std::string& animName)
 {
   --_loopsLeft;  
-  _stateName = "Play" + std::to_string(_loopsLeft);
+  SetStateName("Play" + std::to_string(_loopsLeft));
   
   PlayAnimationAction* animAction = new PlayAnimationAction(animName);
   robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, animAction);

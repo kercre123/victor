@@ -10,10 +10,8 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
-#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/investorDemoMotionBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
@@ -29,9 +27,9 @@ InvestorDemoMotionBehaviorChooser::InvestorDemoMotionBehaviorChooser(Robot& robo
 
 void InvestorDemoMotionBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
-  super::AddBehavior( new BehaviorNone(robot, config) );
-  super::AddBehavior( new BehaviorPounceOnMotion(robot, config) );
-  super::AddBehavior( new BehaviorFollowMotion(robot, config) );
+  super::AddBehavior( robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior,   robot, config) );
+  super::AddBehavior( robot.GetBehaviorFactory().CreateBehavior(BehaviorType::PounceOnMotion, robot, config) );
+  super::AddBehavior( robot.GetBehaviorFactory().CreateBehavior(BehaviorType::FollowMotion,   robot, config) );
 }
 
 

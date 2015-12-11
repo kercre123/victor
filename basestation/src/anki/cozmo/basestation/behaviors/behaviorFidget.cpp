@@ -25,7 +25,7 @@ namespace Cozmo {
   : IBehavior(robot, config)
   , _totalProb(0)
   {
-    _name = "Fidget";
+    SetDefaultName("Fidget");
     
     // TODO: Add fidget behaviors based on config
     // TODO: Set parameters (including selection frequencies) from config
@@ -56,8 +56,11 @@ namespace Cozmo {
     AddFidget("Stretch", [](){return new PlayAnimationAction("Stretch");}, 0);
     AddFidget("Sneeze", [](){return new PlayAnimationAction("Sneeze");}, 0);
     
-    // Bored -> Fidget
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.1f}}), false));
+    if (GetEmotionScorerCount() == 0)
+    {
+      // Bored -> Fidget
+      AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 1.0f}, {1.0f, 0.1f}}), false));
+    }
   }
   
   void BehaviorFidget::AddFidget(const std::string& name, MakeFidgetAction fcn,
@@ -108,7 +111,7 @@ namespace Cozmo {
       
       // Set the name based on the selected fidget and then queue the action
       // returned by its MakeFidgetAction function
-      _stateName = fidgetIter->second.first;
+      SetStateName(fidgetIter->second.first);
       robot.GetActionList().QueueActionNext(IBehavior::sActionSlot,
                                              fidgetIter->second.second());
       

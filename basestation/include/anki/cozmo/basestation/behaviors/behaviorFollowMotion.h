@@ -24,8 +24,13 @@ namespace Cozmo {
 
 class BehaviorFollowMotion : public IBehavior
 {
-public:
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFollowMotion(Robot& robot, const Json::Value& config);
+  
+public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
 

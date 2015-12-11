@@ -89,6 +89,7 @@ enum class ERobotDriveToPoseStatus {
 namespace Cozmo {
   
 // Forward declarations:
+class BehaviorFactory;
 class IPathPlanner;
 class MatPiece;
 class MoodManager;
@@ -435,6 +436,8 @@ public:
     // Set the animation to be played when no other animation has been specified.
     // Use the empty string to disable idle animation.
     Result SetIdleAnimation(const std::string& animName);
+
+    const std::string& GetIdleAnimationName() const;
     
     // Returns name of currently streaming animation. Does not include idle animation.
     // Returns "" if no non-idle animation is streaming.
@@ -445,13 +448,18 @@ public:
     void SetProceduralFace(const ProceduralFace& face);
     void MarkProceduralFaceAsSent();
     
-    // Returns the number of animation bytes played on the robot since
+    // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
-    
-    // Returns a reference to a count of the total number of bytes streamed to the robot.
-    s32 GetNumAnimationBytesStreamed();
+    s32 GetNumAnimationAudioFramesPlayed() const;
+  
+    // Returns a reference to a count of the total number of bytes or audio frames
+    // streamed to the robot.
+    s32 GetNumAnimationBytesStreamed() const;
+    s32 GetNumAnimationAudioFramesStreamed() const;
+  
     void IncrementNumAnimationBytesStreamed(s32 num);
+    void IncrementNumAnimationAudioFramesStreamed(s32 num);
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
@@ -459,6 +467,10 @@ public:
     // caller's responsibility to remove that layer using the returned tag.
     // (Otherwise - when makePersistent=false - the tag is 0 and can be ignored.)
     u32 ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent = false);
+  
+    // Same as above, but shifts and scales
+    u32 ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
+                          TimeStamp_t duration_ms, bool makePersistent = false);
   
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
@@ -477,6 +489,9 @@ public:
 
     // Read the animations in a dir
     void ReadAnimationDir();
+  
+    // Load in all data-driven behaviors
+    void LoadBehaviors();
 
     // Returns true if the robot is currently playing an animation, according
     // to most recent state message. NOTE: Will also be true if the animation
@@ -625,8 +640,11 @@ public:
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
-    MoodManager& GetMoodManager() { assert(_moodManager); return *_moodManager; }
-    const MoodManager& GetMoodManager() const {  assert(_moodManager); return *_moodManager; }
+    const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
+          MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
+
+    const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
+          BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
   
     inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
     inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
@@ -823,9 +841,11 @@ public:
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed   = 0;
-    s32 _numAnimationBytesStreamed = 0;
-    u8  _animationTag              = 0;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
@@ -964,12 +984,24 @@ inline s32 Robot::GetNumAnimationBytesPlayed() const {
   return _numAnimationBytesPlayed;
 }
 
-inline s32 Robot::GetNumAnimationBytesStreamed() {
+inline s32 Robot::GetNumAnimationBytesStreamed() const {
   return _numAnimationBytesStreamed;
 }
 
+inline s32 Robot::GetNumAnimationAudioFramesPlayed() const {
+  return _numAnimationAudioFramesPlayed;
+}
+  
+inline s32 Robot::GetNumAnimationAudioFramesStreamed() const {
+  return _numAnimationAudioFramesStreamed;
+}
+  
 inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
   _numAnimationBytesStreamed += num;
+}
+  
+inline void Robot::IncrementNumAnimationAudioFramesStreamed(s32 num) {
+  _numAnimationAudioFramesStreamed += num;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {

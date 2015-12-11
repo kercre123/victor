@@ -183,8 +183,9 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-        // Reset number of bytes played in animation buffer
+        // Reset number of bytes/audio frames played in animation buffer
         AnimationController::ClearNumBytesPlayed();
+        AnimationController::ClearNumAudioFramesPlayed();
 
       } // ProcessRobotInit()
 
@@ -629,6 +630,7 @@ namespace Anki {
           RobotInterface::AnimationState am;
           am.timestamp = m->timestamp;
           am.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
+          am.numAudioFramesPlayed = AnimationController::GetTotalNumAudioFramesPlayed();
           am.tag = AnimationController::GetCurrentTag();
           RobotInterface::SendMessage(am, false, false);
           return RESULT_OK;

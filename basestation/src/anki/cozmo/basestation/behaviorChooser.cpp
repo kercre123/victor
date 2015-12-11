@@ -45,6 +45,8 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
     return Result::RESULT_FAIL;
   }
   
+  assert(newBehavior->IsOwnedByFactory()); // we assume all behaviors are created and owned by factory now
+  
   // If a behavior already exists in the list with this name, replace it
   for (auto& behavior : _behaviorList)
   {
@@ -52,9 +54,10 @@ Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
     {
       PRINT_NAMED_WARNING("SimpleBehaviorChooser.AddBehavior.ReplaceExisting",
                                "Replacing existing '%s' behavior.", behavior->GetName().c_str());
-      IBehavior* toDelete = behavior;
+
+      assert(behavior->IsOwnedByFactory()); // otherwise we'd be leaking the old behavior
       behavior = newBehavior;
-      Util::SafeDelete(toDelete);
+
       return Result::RESULT_OK;
     }
   }
@@ -116,10 +119,12 @@ IBehavior* SimpleBehaviorChooser::GetBehaviorByName(const std::string& name) con
 #pragma mark --- SimpleBehaviorChooser Members ---
 SimpleBehaviorChooser::~SimpleBehaviorChooser()
 {
+  #if ANKI_DEVELOPER_CODE
   for (auto& behavior : _behaviorList)
   {
-    Util::SafeDelete(behavior);
+    ASSERT_NAMED(behavior->IsOwnedByFactory(), "Behavior not owned by factory - shouldn't be possible!");
   }
+  #endif //ANKI_DEVELOPER_CODE
 }
   
 #pragma mark --- ReactionaryBehaviorChooser Members ---
@@ -171,10 +176,12 @@ IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(
   
 ReactionaryBehaviorChooser::~ReactionaryBehaviorChooser()
 {
+  #if ANKI_DEVELOPER_CODE
   for (auto& behavior : _reactionaryBehaviorList)
   {
-    Util::SafeDelete(behavior);
+    ASSERT_NAMED(behavior->IsOwnedByFactory(), "Behavior not owned by factory - shouldn't be possible!");
   }
+  #endif //ANKI_DEVELOPER_CODE
 }
 
   

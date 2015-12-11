@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/common/basestation/objectIDs.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include <vector>
 
 namespace Anki {
@@ -22,8 +23,13 @@ namespace Cozmo {
 
 class BehaviorReactToPoke : public IReactionaryBehavior
 {
-public:
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToPoke(Robot& robot, const Json::Value& config);
+  
+public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
   
@@ -34,18 +40,25 @@ protected:
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
   
 private:
+  
+  // Cap on how long ago we had to have observed a face in order to turn towards it
+  constexpr static TimeStamp_t kMaxTimeSinceLastObservedFace_ms = 120000;
+  
   enum class State {
     Inactive,
-    IsPoked,
-    PlayingAnimation
+    ReactToPoke,
+    TurnToFace,
+    ReactToFace
   };
   
   State _currentState = State::Inactive;
   bool _doReaction = false;
-  u32 _animTagToWaitFor = 0;
+  u32 _lastActionTag = 0;
+  bool _isActing = false;
   
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
+  void StartActing(Robot& robot, IActionRunner* action);
 }; // class BehaviorReactToPoke
   
 

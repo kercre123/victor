@@ -13,7 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/investorDemoFacesAndBlocksBehaviorChooser.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -26,8 +26,13 @@ namespace Cozmo {
 class BehaviorLookAround_investorDemo : public BehaviorLookAround
 {
 public:
+  
+  // FIXME - constructor should be private, only creatable via BehaviorFactory
   BehaviorLookAround_investorDemo(Robot& robot, const Json::Value& config)
-    : BehaviorLookAround(robot, config) { }
+    : BehaviorLookAround(robot, config)
+  {
+    DEMO_HACK_SetName("LookAround_ID"); // to avoid clash in factory with subclass
+  }
   
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override {
     return 0.1f;
@@ -37,8 +42,13 @@ public:
 class BehaviorInteractWithFaces_investorDemo : public BehaviorInteractWithFaces
 {
 public:
+  
+  // FIXME - constructor should be private, only creatable via BehaviorFactory
   BehaviorInteractWithFaces_investorDemo(Robot& robot, const Json::Value& config)
-    : BehaviorInteractWithFaces(robot, config) { }
+    : BehaviorInteractWithFaces(robot, config)
+  {
+    DEMO_HACK_SetName("Faces_ID"); // to avoid clash in factory with subclass
+  }
 
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override {
     return 0.2f;
@@ -48,8 +58,13 @@ public:
 class BehaviorBlockPlay_investorDemo : public BehaviorBlockPlay
 {
 public:
+  
+  // FIXME - constructor should be private, only creatable via BehaviorFactory
   BehaviorBlockPlay_investorDemo(Robot& robot, const Json::Value& config)
-    : BehaviorBlockPlay(robot, config) { }
+    : BehaviorBlockPlay(robot, config)
+  {
+    DEMO_HACK_SetName("BlockPlay_ID"); // to avoid clash in factory with subclass
+  }
 
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override {
     return 0.5f;
@@ -68,17 +83,28 @@ InvestorDemoFacesAndBlocksBehaviorChooser::InvestorDemoFacesAndBlocksBehaviorCho
   // robot.GetVisionComponent().EnableMode(VisionMode::DetectingFacesAndBlocks, true);
 }
 
+
+void InvestorDemoFacesAndBlocksBehaviorChooser::AddNonFactoryBehavior(BehaviorFactory& behaviorFactory, IBehavior* newBehavior)
+{
+  behaviorFactory.DEMO_HACK_AddToFactory(newBehavior);
+  super::AddBehavior( newBehavior );
+}
+  
+  
 void InvestorDemoFacesAndBlocksBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
-  super::AddBehavior( new BehaviorNone(robot, config) );
+  BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
   
-  BehaviorLookAround_investorDemo* lookAround = new BehaviorLookAround_investorDemo(robot, config);
-  lookAround->SetLookAroundHeadAngle( DEG_TO_RAD( 17.5f ) );
-  super::AddBehavior( lookAround );
+  super::AddBehavior( behaviorFactory.CreateBehavior(BehaviorType::NoneBehavior, robot, config) );
   
-  super::AddBehavior( new BehaviorInteractWithFaces_investorDemo(robot, config) );
+  {
+    BehaviorLookAround_investorDemo* lookAround = new BehaviorLookAround_investorDemo(robot, config);
+    lookAround->SetLookAroundHeadAngle( DEG_TO_RAD( 17.5f ) );
+    AddNonFactoryBehavior( behaviorFactory, lookAround );
+  }
   
-  super::AddBehavior( new BehaviorBlockPlay_investorDemo(robot, config) );
+  AddNonFactoryBehavior( behaviorFactory, new BehaviorInteractWithFaces_investorDemo(robot, config) );
+  AddNonFactoryBehavior( behaviorFactory, new BehaviorBlockPlay_investorDemo(robot, config) );
 }
 
 Result InvestorDemoFacesAndBlocksBehaviorChooser::Update(double currentTime_sec)

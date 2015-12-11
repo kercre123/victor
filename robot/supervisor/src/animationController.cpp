@@ -34,6 +34,7 @@ namespace AnimationController {
     
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
+    s32 _numAudioFramesPlayed = 0;
 
     u8  _currentTag = 0;
     
@@ -271,8 +272,6 @@ namespace AnimationController {
     
     _tracksToPlay = ENABLE_ALL_TRACKS;
     
-    _tracksInUse  = 0;
-    
     Clear();
     
     DefineHardCodedAnimations();
@@ -306,26 +305,16 @@ namespace AnimationController {
     _numBytesPlayed = 0;
   }
   
-  void Clear()
-  {
-#   if DEBUG_ANIMATION_CONTROLLER
-    PRINT("Clearing AnimationController\n");
-#   endif
-    
-    _numBytesPlayed += GetNumBytesInBuffer();
-    //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
-    
-    _currentBufferPos = 0;
-    _lastBufferPos = 0;
-    _currentTag = 0;
-    
-    _numAudioFramesBuffered = 0;
+  s32 GetTotalNumAudioFramesPlayed() {
+    return _numAudioFramesPlayed;
+  }
 
-    _haveReceivedTerminationFrame = false;
-    _isPlaying = false;
-    _isBufferStarved = false;
-    _bufferFullMessagePrintedThisTick = false;
-    
+  void ClearNumAudioFramesPlayed() {
+    _numAudioFramesPlayed = 0;
+  }
+  
+  void StopTracksInUse()
+  {
     if(_tracksInUse) {
       // In case we are aborting an animation, stop any tracks that were in use
       // (For now, this just means motor-based tracks.) Note that we don't
@@ -341,8 +330,32 @@ namespace AnimationController {
         SteeringController::ExecuteDirectDrive(0, 0);
       }
     }
-      
     _tracksInUse = 0;
+  }
+  
+  void Clear()
+  {
+#   if DEBUG_ANIMATION_CONTROLLER
+    PRINT("Clearing AnimationController\n");
+#   endif
+    
+    _numBytesPlayed += GetNumBytesInBuffer();
+    _numAudioFramesPlayed += _numAudioFramesBuffered;
+    
+    //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
+    
+    _currentBufferPos = 0;
+    _lastBufferPos = 0;
+    _currentTag = 0;
+    
+    _numAudioFramesBuffered = 0;
+
+    _haveReceivedTerminationFrame = false;
+    _isPlaying = false;
+    _isBufferStarved = false;
+    _bufferFullMessagePrintedThisTick = false;
+    
+    StopTracksInUse();
     
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
@@ -478,7 +491,7 @@ namespace AnimationController {
       
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numAudioFramesBuffered > ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
         _isBufferStarved = false;
@@ -591,7 +604,7 @@ namespace AnimationController {
 #             endif
               GetFromBuffer(&msg);
               terminatorFound = true;
-              _tracksInUse = 0;
+              StopTracksInUse();
               break;
             }
               
@@ -758,12 +771,14 @@ namespace AnimationController {
           } // switch
         } // while(!nextAudioFrameFound && !terminatorFound)
 
+        ++_numAudioFramesPlayed;
         --_numAudioFramesBuffered;
         
         if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
           --_numAudioFramesBuffered;
+          ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
                 _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);

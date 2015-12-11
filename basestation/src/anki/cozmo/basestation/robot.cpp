@@ -153,6 +153,8 @@ namespace Anki {
         _moodManager->Init(moodConfig);
       }
       
+      LoadBehaviors();
+      
       // Read in behavior manager Json
       Json::Value behaviorConfig;
       if (nullptr != _dataPlatform)
@@ -559,6 +561,7 @@ namespace Anki {
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
+                                                AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                                                 _animationTag);
@@ -962,11 +965,12 @@ namespace Anki {
       }
         
       //////// Stream Animations /////////
-      
-      Result animStreamResult = _animationStreamer.Update(*this);
-      if(animStreamResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update",
-                            "Robot %d had an animation streaming failure.", GetID());
+      if(_timeSynced) { // Don't stream anything before we've connected
+        Result animStreamResult = _animationStreamer.Update(*this);
+        if(animStreamResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.Update",
+                              "Robot %d had an animation streaming failure.", GetID());
+        }
       }
 
 
@@ -1372,7 +1376,7 @@ namespace Anki {
     
     u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      u8 tag = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops);
       _lastPlayedAnimationId = animName;
       return tag;
     }
@@ -1381,7 +1385,12 @@ namespace Anki {
     {
       return _animationStreamer.SetIdleAnimation(animName);
     }
-    
+
+    const std::string& Robot::GetIdleAnimationName() const
+    {
+      return _animationStreamer.GetIdleAnimationName();
+    }
+  
     void Robot::SetProceduralFace(const ProceduralFace& face)
     {
       // First one
@@ -1413,26 +1422,89 @@ namespace Anki {
 
     u32 Robot::ShiftEyes(f32 xPix, f32 yPix, TimeStamp_t duration_ms, bool makePersistent)
     {
+      return ShiftAndScaleEyes(xPix, yPix, 1.f, 1.f, duration_ms, makePersistent);
+    }
+    
+    u32 Robot::ShiftAndScaleEyes(f32 xPix, f32 yPix, f32 xScale, f32 yScale,
+                                 TimeStamp_t duration_ms, bool makePersistent)
+    {
       u32 layerTag = 0;
       
-      if(xPix != 0 || yPix != 0.f)
-      {
+      AnimationStreamer::FaceTrack faceTrack;
+      
+      if(duration_ms == 0) {
+        // Dart over three frames: go 2/3 of the distance in the first frame,
+        // 2/9 the second (that's 2/3 of the remaining 1/3) and then the final 1/9
+        // at the end.
+        
+        // Clip, but retain sign
+        xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
+        yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+        
+        const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
+        const f32 divisor = (dist > 0 ? 1.f/dist : 1.f); // prevent divide by zero when (xPix==yPix==0)
+        const f32 cosAngle = xPix * divisor;
+        const f32 sinAngle = yPix * divisor;
+        
+        ProceduralFace procFace;
+        ProceduralFaceParams& faceParams = procFace.GetParams();
+        
+        TimeStamp_t t=0;
+        for(auto frac : {0.666667f, 0.888889f, 1.f})
+        {
+          const f32 x = frac * dist * cosAngle;
+          const f32 y = frac * dist * sinAngle;
+          faceParams.SetFacePosition(Point2f(x,y));
+          
+          // Scale "further" eye down a little and "closer" eye up a little
+          const f32 MaxScaleAdj = 0.25f;
+          f32 leftScaleY = 1.f, rightScaleY = 1.f;
+          const f32 xScaleAdj = std::abs(x) * MaxScaleAdj / (0.5f * ProceduralFace::WIDTH);
+          if(x > 0) {
+            leftScaleY  += xScaleAdj;
+            rightScaleY -= xScaleAdj;
+          } else if(x < 0) {
+            leftScaleY  -= xScaleAdj;
+            rightScaleY += xScaleAdj;
+          }
+
+          const f32 scaleY = (frac*(yScale-1.f)+1.f) - std::abs(y) / (0.5f * ProceduralFace::HEIGHT) * 0.2f;
+          
+          faceParams.SetParameter(ProceduralFace::WhichEye::Left,
+                                  ProceduralEyeParameter::EyeScaleY, leftScaleY * scaleY);
+          faceParams.SetParameter(ProceduralFace::WhichEye::Right,
+                                  ProceduralEyeParameter::EyeScaleY, rightScaleY * scaleY);
+          
+          const f32 scaleX = frac*(xScale-1.f)+1.f;
+          faceParams.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, scaleX);
+          
+          ASSERT_NAMED(!(std::isnan(leftScaleY) || std::isnan(rightScaleY) ||
+                         std::isnan(scaleY) || std::isnan(scaleX) ||
+                         std::isnan(x) || std::isnan(y)),
+                       "Shift/scale values should be non-nan!");
+          
+          faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
+          // NOTE: don't use live frames for persistent layer
+        }
+      } else {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
         
         ProceduralFace procFace;
-        procFace.GetParams().SetFacePosition({xPix, yPix});
+        ProceduralFaceParams& params = procFace.GetParams();
+        params.SetFacePosition({xPix, yPix});
+        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
+        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
         ProceduralFaceKeyFrame kf(procFace, duration_ms);
         kf.SetIsLive(true);
         
-        AnimationStreamer::FaceTrack faceTrack;
         faceTrack.AddKeyFrame(std::move(kf));
-        
-        if(makePersistent) {
-          layerTag = _animationStreamer.AddLoopingFaceLayer(std::move(faceTrack));
-        } else {
-          _animationStreamer.AddFaceLayer(std::move(faceTrack));
-        }
+      }
+      
+      if(makePersistent) {
+        layerTag = _animationStreamer.AddPersistentFaceLayer(std::move(faceTrack));
+      } else {
+        _animationStreamer.AddFaceLayer(std::move(faceTrack));
       }
       
       return layerTag;
@@ -1470,6 +1542,54 @@ namespace Anki {
 
     }
 
+    static bool HasSuffix(const char* inFilename, const char* inSuffix)
+    {
+      const size_t filenameLen = strlen(inFilename);
+      const size_t suffixLen   = strlen(inSuffix);
+      
+      if (filenameLen < suffixLen)
+      {
+        return false;
+      }
+      
+      const int cmp = strcmp(&inFilename[filenameLen-suffixLen], inSuffix);
+      return (cmp == 0);
+    }
+    
+    void Robot::LoadBehaviors()
+    {
+      if (_dataPlatform == nullptr)
+      {
+        return;
+      }
+      
+      const std::string behaviorFolder = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
+      
+      DIR* dir = opendir(behaviorFolder.c_str());
+      if ( dir != nullptr)
+      {
+        dirent* ent = nullptr;
+        while ( (ent = readdir(dir)) != nullptr)
+        {
+          if ((ent->d_type == DT_REG) && HasSuffix(ent->d_name, ".json"))
+          {
+            std::string fullFileName = behaviorFolder + ent->d_name;
+            
+            Json::Value behaviorJson;
+            const bool success = _dataPlatform->readAsJson(fullFileName, behaviorJson);
+            if (success && !behaviorJson.empty())
+            {
+              PRINT_NAMED_INFO("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
+            }
+            else
+            {
+              PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
+            }
+          }
+        }
+      }
+    }
     
     // Read the animations in a dir
     void Robot::ReadAnimationDir()
@@ -3045,7 +3165,7 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
-      _animationStreamer.SetStreamingAnimation("");
+      _animationStreamer.SetStreamingAnimation(*this, "");
       return SendAbortAnimation();
     }
     

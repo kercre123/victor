@@ -76,6 +76,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::animState,
      [this](const AnkiEvent<RobotInterface::RobotToEngine>& message){
        _numAnimationBytesPlayed = message.GetData().Get_animState().numAnimBytesPlayed;
+       _numAnimationAudioFramesPlayed = message.GetData().Get_animState().numAudioFramesPlayed;
        _animationTag = message.GetData().Get_animState().tag;
      }));
   _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::rampTraverseStarted,
@@ -605,7 +606,7 @@ void Robot::HandleMessage(const ExternalInterface::SetIdleAnimation& msg)
 template<>
 void Robot::HandleMessage(const ExternalInterface::ReplayLastAnimation& msg)
 {
-  _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+  _animationStreamer.SetStreamingAnimation(*this, _lastPlayedAnimationId, msg.numLoops);
 }
 
 template<>
