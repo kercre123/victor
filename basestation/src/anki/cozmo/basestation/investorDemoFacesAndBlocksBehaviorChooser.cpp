@@ -77,6 +77,9 @@ InvestorDemoFacesAndBlocksBehaviorChooser::InvestorDemoFacesAndBlocksBehaviorCho
 {
   SetupBehaviors(robot, config);
 
+  // enable live idle animation
+  robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
+
   // robot.GetVisionComponent().EnableMode(VisionMode::DetectingFacesAndBlocks, true);
 }
 
@@ -85,16 +88,7 @@ void InvestorDemoFacesAndBlocksBehaviorChooser::SetupBehaviors(Robot& robot, con
   BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
   
   super::AddBehavior( behaviorFactory.CreateBehavior(BehaviorType::NoneBehavior, robot, config) );
-  
-  {
-    BehaviorLookAround_investorDemo* lookAround = new BehaviorLookAround_investorDemo(robot, config);
-    lookAround->SetLookAroundHeadAngle( DEG_TO_RAD( 17.5f ) );
     
-    IBehavior* newBehavior = lookAround;
-    behaviorFactory.DEMO_HACK_AddToFactory(newBehavior);
-    super::AddBehavior( newBehavior );
-  }
-  
   {
     IBehavior* newBehavior = new BehaviorInteractWithFaces_investorDemo(robot, config);
     behaviorFactory.DEMO_HACK_AddToFactory(newBehavior);

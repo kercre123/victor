@@ -113,7 +113,7 @@ namespace Cozmo {
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
-    void PlayAnimation(Robot& robot, const std::string& animName);
+    void PlayAnimation(Robot& robot, const std::string& animName, bool sequential = true);
     void StartActing(Robot& robot, IActionRunner* action);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
     
@@ -133,7 +133,6 @@ namespace Cozmo {
 
     PathMotionProfile _motionProfile;
 
-    
     // If it fails to pickup or place the same object a certain number of times in a row
     // then delete the object. Assuming that the failures are due to not being able to see
     // an object where it used to be.
@@ -161,6 +160,8 @@ namespace Cozmo {
 
     // The last time we saw _trackedObject
     f32 _lastObjectObservedTime = 0.0f;
+
+    f32 _trackedObjectStoppedMovingTime = -1.0f;
 
     // how long ago we should have seen the object to attempt interaction
     const f32 _objectObservedTimeThreshold = 0.75f;
