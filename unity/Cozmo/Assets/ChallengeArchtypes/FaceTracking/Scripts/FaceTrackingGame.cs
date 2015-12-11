@@ -167,8 +167,6 @@ namespace FaceTracking {
     }
 
     protected override void CleanUpOnDestroy() {
-      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-      CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
     }
   }
 }
