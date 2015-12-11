@@ -40,6 +40,29 @@ void CheckForUpgrades(void)
   }
 }
 
+void WiFiFace(void)
+{
+  static bool wasConnected = false;
+  if (clientConnected() && !wasConnected)
+  {
+    Face::FaceUnPrintf();
+    wasConnected = true;
+  }
+  else
+  {
+    wasConnected = false;
+    struct softap_config ap_config;
+    if (wifi_softap_get_config(&ap_config) == false)
+    {
+      os_printf("WiFiFace couldn't read back config\r\n");
+    }
+    {
+      Face::FacePrintf("SSID: %s\nPSK:  %s\nChan: %d\nStas: %d\n",
+                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num());
+    }
+  }
+}
+
 /** The OS task which dispatches subtasks.
 */
 void Exec(os_event_t *event)
@@ -76,6 +99,12 @@ void Exec(os_event_t *event)
           lastAnimStateTime = now;
         }
       }
+      break;
+    }
+    case 3:
+    {
+      WiFiFace();
+      break;
     }
     // Add new "long execution" tasks as switch cases here.
     default:

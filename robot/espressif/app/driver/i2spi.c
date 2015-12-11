@@ -120,6 +120,7 @@ void processDrop(DropToWiFi* drop)
  */
 bool makeDrop(uint8_t* payload, uint8_t length)
 {
+  static int8_t screenTxFraction = 0;
   if ((outgoingPhase + (DROP_TO_RTIP_SIZE/2)) > (DMA_BUF_SIZE/2)) // Will roll over making this drop
   {
     if (txFillCount > (DMA_BUF_COUNT-4))
@@ -148,12 +149,16 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
   if (PumpAudioData(drop.audioData)) drop.droplet |= audioDataValid;
-  const int screenInd = PumpScreenData(drop.screenData);
-  if (screenInd == (screenInd & 0xff))
+  if (screenTxFraction++ < TX_SCREEN_DATA_EVERY)
   {
-    drop.droplet  |= screenDataValid;
-    drop.screenInd = screenInd & 0xff;
+    const int screenInd = PumpScreenData(drop.screenData);
+    if (screenInd == (screenInd & 0xff))
+    {
+      drop.droplet  |= screenDataValid;
+      drop.screenInd = screenInd & 0xff;
+    }
   }
+  if (screenTxFraction >= TX_SCREEN_DATA_OUTOF) screenTxFraction = 0;
   if (payload != NULL)
   {
     os_memcpy(&(drop.payload), payload, length);
