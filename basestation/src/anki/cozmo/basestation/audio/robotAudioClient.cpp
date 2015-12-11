@@ -247,6 +247,11 @@ void RobotAudioClient::HandleCallbackEvent( const AudioCallbackComplete& callbac
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::HandleCallbackEvent( const AudioCallbackError& callbackMsg )
+{
+}
+
 
 } // Audio
 } // Cozmo
