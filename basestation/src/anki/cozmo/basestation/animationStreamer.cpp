@@ -23,6 +23,9 @@ namespace Cozmo {
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
   const s32 AnimationStreamer::MAX_BYTES_FOR_RELIABLE_TRANSPORT = (1000/2) * BS_TIME_STEP; // Don't send more than 1000 bytes every 2ms
+
+  // This is roughly (2 x ExpectedOneWayLatency_ms + BasestationTick_ms) / AudioSampleLength_ms
+  const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
   
   AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
                                        CannedAnimationContainer& container,
@@ -1056,7 +1059,12 @@ namespace Cozmo {
                                minBytesFreeInRobotBuffer);
     
     s32 audioFramesInBuffer = totalNumAudioFramesStreamed - totalNumAudioFramesPlayed;
-    _numAudioFramesToSend = std::max(0, static_cast<s32>(AnimConstants::PREROLL_LENGTH)-audioFramesInBuffer);
+
+#   if DEBUG_ANIMATION_STREAMING
+    PRINT_NAMED_INFO("AnimationStreamer.UpdateAmountToSend", "Streamed= %d, Played=%d, InBuffer=%d",
+                     totalNumAudioFramesStreamed, totalNumAudioFramesPlayed, audioFramesInBuffer);
+#   endif
+    _numAudioFramesToSend = std::max(0, NUM_AUDIO_FRAMES_LEAD-audioFramesInBuffer);
     
   } // UpdateAmountToSend()
   

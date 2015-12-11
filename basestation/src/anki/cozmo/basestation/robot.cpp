@@ -559,7 +559,7 @@ namespace Anki {
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
-                                                static_cast<s32>(AnimConstants::PREROLL_LENGTH)-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
+                                                AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                                                 _animationTag);

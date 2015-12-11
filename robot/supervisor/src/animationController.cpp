@@ -4,7 +4,6 @@
 #include "anki/common/robot/utilities_c.h"
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
-#include "clad/types/animationKeyFrames.h"
 
 #include "headController.h"
 #include "liftController.h"
@@ -23,6 +22,10 @@ namespace Cozmo {
 namespace AnimationController {
   
   namespace {
+    
+    // Streamed animation will not play until we've got this many _audio_ keyframes
+    // buffered.
+    static const s32 ANIMATION_PREROLL_LENGTH = 7;
     
     // Circular byte buffer for keyframe messages
     ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
@@ -486,7 +489,7 @@ namespace AnimationController {
       
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numAudioFramesBuffered >= PREROLL_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
         _isBufferStarved = false;
