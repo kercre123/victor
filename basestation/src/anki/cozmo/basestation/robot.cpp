@@ -1376,7 +1376,7 @@ namespace Anki {
     
     u8 Robot::PlayAnimation(const std::string& animName, const u32 numLoops)
     {
-      u8 tag = _animationStreamer.SetStreamingAnimation(animName, numLoops);
+      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops);
       _lastPlayedAnimationId = animName;
       return tag;
     }
@@ -1385,7 +1385,12 @@ namespace Anki {
     {
       return _animationStreamer.SetIdleAnimation(animName);
     }
-    
+
+    const std::string& Robot::GetIdleAnimationName() const
+    {
+      return _animationStreamer.GetIdleAnimationName();
+    }
+  
     void Robot::SetProceduralFace(const ProceduralFace& face)
     {
       // First one
@@ -3160,7 +3165,7 @@ namespace Anki {
       
     Result Robot::AbortAnimation()
     {
-      _animationStreamer.SetStreamingAnimation("");
+      _animationStreamer.SetStreamingAnimation(*this, "");
       return SendAbortAnimation();
     }
     

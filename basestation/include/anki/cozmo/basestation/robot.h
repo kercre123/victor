@@ -436,6 +436,8 @@ public:
     // Set the animation to be played when no other animation has been specified.
     // Use the empty string to disable idle animation.
     Result SetIdleAnimation(const std::string& animName);
+
+    const std::string& GetIdleAnimationName() const;
     
     // Returns name of currently streaming animation. Does not include idle animation.
     // Returns "" if no non-idle animation is streaming.
