@@ -10,15 +10,13 @@ namespace FaceTracking {
   /// </summary>
   public class FaceTrackingGame : GameBase {
 
-    private const string kLeanIn = "slide1";
-    private const string kMoveToSide = "slide2";
-    private const string kMoveToOther = "slide3";
-    private const string kLeanInAlt = "slide4";
+    private const string kLeanIn = "LeanIn";
+    private const string kMoveToSide = "MoveToSide";
+    private const string kMoveToOther = "MoveToOther";
+    private const string kLeanInAlt = "LeanInFail";
     
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
-    private int _TiltSuccessCount = 0;
-    private int _TiltGoalTarget = 3;
 
     public float TiltGoal { get; set; }
 
@@ -44,7 +42,6 @@ namespace FaceTracking {
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
-      _TiltGoalTarget = config.Goal;
       WanderEnabled = config.WanderEnabled;
       TiltGoal = config.TiltTreshold;
       GoalLenience = config.Lenience;
@@ -94,7 +91,6 @@ namespace FaceTracking {
     }
 
     public void TiltSuccess() {
-      _TiltSuccessCount++;
       StepsCompleted = 1.0f;
       MidCelebration = true;
       CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin, HandleEndCelebration);
@@ -143,17 +139,7 @@ namespace FaceTracking {
 
     private void HandleEndCelebration(bool success) {
       MidCelebration = false;
-      if (_TiltSuccessCount >= _TiltGoalTarget) {
-        RaiseMiniGameWin();
-      }
-      else {
-        // Reset progress if we need to do this more than once to complete challenge
-        // Then move to the Looking for Face State
-        StepsCompleted = 0.0f;
-        TargetLeft = false;
-        TargetRight = false;
-        _StateMachine.SetNextState(new LookingForFaceState());
-      }
+      RaiseMiniGameWin();
     }
     /// <summary>
     /// Checks through all current robot's faces to find the closest
@@ -189,9 +175,6 @@ namespace FaceTracking {
     }
 
     // Returns the name of the slide that corresponds to the current state
-    // This is currently set up to expect only one full success to end the challenge.
-    // If we want multiple successes we'll need one more alternate for Lean In.
-    // As well as an action for Cozmo to intentionally break eye contact and lose a face.
     public void ShowNextSlide() {
       if (StepsCompleted <= 0.0f) {
         if (AttemptsLeft == MaxAttempts) {
