@@ -30,7 +30,7 @@ static std::vector<std::string> _animReactions = {
 BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  _name = "FollowMotion";
+  SetDefaultName("FollowMotion");
 
   SubscribeToTags({{
     EngineToGameTag::RobotObservedMotion,
@@ -107,8 +107,22 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
         // Turn to face the motion:
         // Convert image positions to desired relative angles
         const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-        const Radians relHeadAngle_rad    = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
-        const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
+        Radians relHeadAngle_rad    = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
+        Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
+        
+        /* I don't believe this is necessary because we only see motion while stopped
+        // Those angles are relative to where the robot was when he saw the motion.
+        // Figure out what those are relative to _now_
+        RobotPoseStamp *p;
+        if(RESULT_OK != robot.GetPoseHistory()->GetComputedPoseAt(motionObserved.timestamp, &p)) {
+          PRINT_NAMED_WARNING("BehaviorFollowMotion.HandeWhileRunning.PoseHistoryError",
+                              "Could not get historical pose for observed motion at t=%d",
+                              motionObserved.timestamp);
+        } else {
+          relHeadAngle_rad += p->GetHeadAngle() - robot.GetHeadAngle();
+          relBodyPanAngle_rad += p->GetPose().GetRotation().GetAngleAroundZaxis() - robot.GetPose().GetRotation().GetAngleAroundZaxis();
+        }
+         */
         
         PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.Motion",
                          "Motion area=%d, centroid=(%.1f,%.1f), HeadTilt=%.1fdeg, BodyPan=%.1fdeg",

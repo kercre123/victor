@@ -17,6 +17,7 @@
 #include "util/math/math.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
 #include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
 #include "anki/cozmo/basestation/moodSystem/emotionEventMapper.h"
@@ -332,43 +333,53 @@ TEST(MoodManager, DecayResetFromAwards)
 }
 
 
-class TestBehavior : public IBehavior
-{
-public:
-  
-  TestBehavior(Robot& robot, const Json::Value& config, const char* name)
-    : IBehavior(robot, config)
-  {
-    _name = name;
-  }
+static const char* kTestBehavior1Json =
+"{"
+"   \"behaviorType\" : \"NoneBehavior\","
+"   \"name\" : \"TestHappy\""
+"}";
 
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
 
-  virtual Anki::Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override { return Anki::RESULT_OK; }
-  virtual Status       UpdateInternal(Robot& robot, double currentTime_sec) override { return Status::Running; }
-  virtual Anki::Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override { return Anki::RESULT_OK; }
-};
+static const char* kTestBehavior2Json =
+"{"
+"   \"behaviorType\" : \"NoneBehavior\","
+"   \"name\" : \"TestCalm\""
+"}";
 
 
 TEST(MoodManager, BehaviorScoring)
 {
   RobotInterface::MessageHandler messageHandler;
   Robot testRobot(RobotID_t(0), &messageHandler, nullptr, nullptr);
+  
+  BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
 
   MoodManager& moodManager = testRobot.GetMoodManager();
   TickMoodManager(moodManager, 1, kTickTimestep);
 
   MoodManager::GetStaticMoodData().SetDecayGraph(EmotionType::Happy, kTestDecayGraph);
   
-  Json::Value config;
+  Json::Value  testBehavior1Json;
+  Json::Value  testBehavior2Json;
+  Json::Reader reader;
+  bool parsedOK = reader.parse(kTestBehavior1Json, testBehavior1Json, false);
+  ASSERT_TRUE(parsedOK);
+  parsedOK = reader.parse(kTestBehavior2Json, testBehavior2Json, false);
+  ASSERT_TRUE(parsedOK);
+  
   // have to alloc the behaviors - they're freed by the chooser
-  TestBehavior* testBehaviorReqHappy = new TestBehavior(testRobot, config, "TestHappy");
-  TestBehavior* testBehaviorReqCalm = new TestBehavior(testRobot, config, "TestCalm");
+  IBehavior* testBehaviorReqHappy = behaviorFactory.CreateBehavior(testBehavior1Json, testRobot);
+  IBehavior* testBehaviorReqCalm  = behaviorFactory.CreateBehavior(testBehavior2Json, testRobot);
+  ASSERT_NE(testBehaviorReqHappy, nullptr);
+  ASSERT_NE(testBehaviorReqCalm,  nullptr);
+  
   SimpleBehaviorChooser behaviorChooser;
   behaviorChooser.AddBehavior(testBehaviorReqHappy);
   behaviorChooser.AddBehavior(testBehaviorReqCalm);
   
+  testBehaviorReqHappy->ClearEmotionScorers();
   testBehaviorReqHappy->AddEmotionScorer(EmotionScorer(EmotionType::Happy, Anki::Util::GraphEvaluator2d({{-1.0f, 0.0f}, {0.5f, 1.0f}, {1.0f, 0.6f}}), false));
+  testBehaviorReqCalm->ClearEmotionScorers();
   testBehaviorReqCalm->AddEmotionScorer( EmotionScorer(EmotionType::Calm,  Anki::Util::GraphEvaluator2d({{-1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}}), false));
   
   float score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);

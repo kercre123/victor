@@ -38,7 +38,7 @@ namespace Cozmo {
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   {
-    _name = "Faces";
+    SetDefaultName("Faces");
 
     // TODO: Init timeouts, etc, from Json config
 
@@ -48,9 +48,12 @@ namespace Cozmo {
       EngineToGameTag::RobotCompletedAction
     }});
     
-    // Primarily loneliness and then boredom -> InteractWithFaces
-    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
+    if (GetEmotionScorerCount() == 0)
+    {
+      // Primarily loneliness and then boredom -> InteractWithFaces
+      AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));
+      AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
+    }
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -160,7 +163,7 @@ namespace Cozmo {
     {
       case State::Inactive:
       {
-        _stateName = "Inactive";
+        SetStateName("Inactive");
         
         // If we're still finishing an action, just wait
         if(_isActing)
@@ -243,7 +246,7 @@ namespace Cozmo {
         
       case State::TrackingFace:
       {
-        _stateName = "TrackingFace";
+        SetStateName("TrackingFace");
         
         auto faceID = robot.GetMoveComponent().GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
@@ -356,7 +359,7 @@ namespace Cozmo {
         
       case State::Interrupted:
       {
-        _stateName = "Interrupted";
+        SetStateName("Interrupted");
         
         status = Status::Complete;
         break;

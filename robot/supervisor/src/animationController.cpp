@@ -34,6 +34,7 @@ namespace AnimationController {
     
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
+    s32 _numAudioFramesPlayed = 0;
 
     u8  _currentTag = 0;
     
@@ -304,6 +305,14 @@ namespace AnimationController {
     _numBytesPlayed = 0;
   }
   
+  s32 GetTotalNumAudioFramesPlayed() {
+    return _numAudioFramesPlayed;
+  }
+
+  void ClearNumAudioFramesPlayed() {
+    _numAudioFramesPlayed = 0;
+  }
+  
   void StopTracksInUse()
   {
     if(_tracksInUse) {
@@ -331,6 +340,8 @@ namespace AnimationController {
 #   endif
     
     _numBytesPlayed += GetNumBytesInBuffer();
+    _numAudioFramesPlayed += _numAudioFramesBuffered;
+    
     //PRINT("CLEAR NumBytesPlayed %d (%d)\n", _numBytesPlayed, GetNumBytesInBuffer());
     
     _currentBufferPos = 0;
@@ -480,7 +491,7 @@ namespace AnimationController {
       
     } else {
       // Otherwise, wait until we get enough frames to start
-      ready = (_numAudioFramesBuffered > ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
+      ready = (_numAudioFramesBuffered >= ANIMATION_PREROLL_LENGTH || _haveReceivedTerminationFrame);
       if(ready) {
         _isPlaying = true;
         _isBufferStarved = false;
@@ -760,12 +771,14 @@ namespace AnimationController {
           } // switch
         } // while(!nextAudioFrameFound && !terminatorFound)
 
+        ++_numAudioFramesPlayed;
         --_numAudioFramesBuffered;
         
         if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
           --_numAudioFramesBuffered;
+          ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
                 _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);

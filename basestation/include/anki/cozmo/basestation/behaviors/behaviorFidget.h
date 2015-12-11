@@ -20,10 +20,14 @@ namespace Cozmo {
   
   class BehaviorFidget : public IBehavior
   {
-  public:
+  private:
     
+    // Enforce creation through BehaviorFactory
+    friend class BehaviorFactory;
     BehaviorFidget(Robot& robot, const Json::Value& config);
     virtual ~BehaviorFidget();
+    
+  public:
     
     virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
     

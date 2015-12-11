@@ -29,7 +29,7 @@ static std::vector<std::string> _animReactions = {
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
-  _name = "ReactToPickup";
+  SetDefaultName("ReactToPickup");
  
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTriggerTags({

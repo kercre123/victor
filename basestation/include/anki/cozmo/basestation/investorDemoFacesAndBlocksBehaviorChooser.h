@@ -29,6 +29,8 @@ public:
   virtual const char* GetName() const override { return "IDF+B"; }
 
 protected:
+  
+  void AddNonFactoryBehavior(BehaviorFactory& behaviorFactory, IBehavior* newBehavior);
   void SetupBehaviors(Robot& robot, const Json::Value& config);
   
 private:

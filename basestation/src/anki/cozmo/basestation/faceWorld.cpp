@@ -26,8 +26,19 @@ namespace Cozmo {
   
   Result FaceWorld::UpdateFaceTracking(const Vision::TrackedFace& face)
   {
-    const Vec3f& robotTrans = _robot.GetPose().GetTranslation();
+    //const Vec3f& robotTrans = _robot.GetPose().GetTranslation();
     
+    // Compare to the pose of the robot when the marker was observed
+    RobotPoseStamp *p;
+    if(RESULT_OK != _robot.GetPoseHistory()->GetComputedPoseAt(face.GetTimeStamp(), &p)) {
+      PRINT_NAMED_ERROR("FaceWorld.UpdateFaceTracking.PoseHistoryError",
+                        "Could not get historical pose for face observed at t=%d",
+                        face.GetTimeStamp());
+      return RESULT_FAIL;
+    }
+    
+    const Vec3f& robotTrans = p->GetPose().GetTranslation();
+
     Pose3d headPose;
     if(false == face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose)) {
       PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
