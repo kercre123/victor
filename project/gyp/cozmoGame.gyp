@@ -688,6 +688,23 @@
                 ],
               },
               {
+                'action_name': 'create_symlink_resources_sound',
+                'inputs': [
+                  '<(externals_path)/cozmosoundbanks/GeneratedSoundBanks/Mac',
+                ],
+                'outputs': [
+                  '<(PRODUCT_DIR)/resources/sound',
+                ],
+                'action': [
+                  'ln',
+                  '-s',
+                  '-f',
+                  '-n',
+                  '<@(_inputs)',
+                  '<@(_outputs)',
+                ],
+              },
+              {
                 'action_name': 'create_symlink_resources_configs',
                 'inputs': [
                   '<(cozmo_engine_path)/resources/config',
