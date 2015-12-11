@@ -20,6 +20,7 @@
 #include <util/signals/simpleSignal.hpp>
 #include "clad/audio/audioMessageTypes.h"
 #include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioStateTypes.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
@@ -46,18 +47,21 @@ public:
   void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
   CallbackIdType PostEvent( EventType event,
-                            uint16_t gameObjectId,
+                            GameObjectType gameObject = GameObjectType::Default,
                             AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
 
-  void PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState );
+  void PostGameState( GameStateGroupType gameStateGroup,
+                      GameStateType gameState );
   
-  void PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId );
+  void PostSwitchState( SwitchStateGroupType switchStateGroup,
+                        SwitchStateType switchState,
+                        GameObjectType gameObject = GameObjectType::Default );
   
   void PostParameter( ParameterType parameter,
                       float parameterValue,
-                      uint16_t gameObjectId,
-                      int32_t timeInMilliSeconds,
-                      CurveType curve ) const;
+                      GameObjectType gameObject = GameObjectType::Default,
+                      int32_t timeInMilliSeconds = 0,
+                      CurveType curve = CurveType::Linear ) const;
   
 protected:
   
