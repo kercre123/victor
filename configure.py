@@ -15,7 +15,10 @@ GAME_ROOT = os.path.normpath(
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
 EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
+os.environ['EXTERNALS_DIR'] = "{0}".format(EXTERNAL_ROOT)
 sys.path.insert(0, ENGINE_ROOT)
+sys.path.insert(0, EXTERNAL_ROOT)
+
 from configure import BUILD_TOOLS_ROOT, print_header, print_status
 from configure import ArgumentParser, generate_gyp, configure
 
@@ -146,10 +149,6 @@ class GamePlatformConfiguration(object):
 
         self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
 
-        self.unity_audio_assets_symlink = os.path.join(GAME_ROOT, 'unity', 'Cozmo', 'Assets', 'Resources',
-                                                       'sound', self.platform)
-        self.unity_audio_assets_symlink_target = os.path.join(EXTERNAL_ROOT, "cozmosoundbanks",
-                                                              "GeneratedSoundBanks", self.platform.title())
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
@@ -209,7 +208,6 @@ class GamePlatformConfiguration(object):
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
         workspace.add_project(relative_gyp_project)
 
-        ankibuild.util.File.ln_s(self.unity_audio_assets_symlink_target, self.unity_audio_assets_symlink)
 
         if not self.options.do_not_check_dependencies:
             assert isinstance(dependencies, object)
@@ -315,7 +313,6 @@ class GamePlatformConfiguration(object):
             ankibuild.util.File.rm(self.unity_build_symlink)
             ankibuild.util.File.rm(self.unity_output_symlink)
             ankibuild.util.File.rm(self.unity_opencv_symlink)
-        ankibuild.util.File.rm(self.unity_audio_assets_symlink)
         ankibuild.util.File.rm_rf(self.platform_build_dir)
         ankibuild.util.File.rm_rf(self.platform_output_dir)
 
