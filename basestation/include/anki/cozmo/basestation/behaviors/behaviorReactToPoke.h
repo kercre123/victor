@@ -41,6 +41,9 @@ protected:
   
 private:
   
+  // Cap on how long ago we had to have observed a face in order to turn towards it
+  constexpr static TimeStamp_t kMaxTimeSinceLastObservedFace_ms = 120000;
+  
   enum class State {
     Inactive,
     ReactToPoke,
