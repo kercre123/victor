@@ -906,7 +906,7 @@ namespace Anki {
         // Note: assuming screen is about the same x distance from the neck joint as the head cam
         const Radians angleDiff = _targetAngle - currentAngle;
         const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (3*SCREEN_SIZE[0]));
+        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
         _eyeShiftTag = robot.ShiftEyes(xPixShift, 0, 0, true); // TODO: How to set the duration?
         _eyeShiftRemoved = false;
       }

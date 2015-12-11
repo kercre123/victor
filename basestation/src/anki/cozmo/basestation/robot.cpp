@@ -1450,10 +1450,9 @@ namespace Anki {
           faceParams.SetFacePosition(Point2f(x,y));
           
           // Scale "further" eye down a little and "closer" eye up a little
-          const f32 MinScaleAdj = 0.f;// 1.f / ProceduralFace::NominalEyeHeight; // one pixel
-          const f32 MaxScaleAdj = 0.3f;
+          const f32 MaxScaleAdj = 0.25f;
           f32 leftScaleY = 1.f, rightScaleY = 1.f;
-          const f32 xScaleAdj = std::abs(x) * (MaxScaleAdj-MinScaleAdj) / (0.5f * ProceduralFace::WIDTH) + MinScaleAdj;
+          const f32 xScaleAdj = std::abs(x) * MaxScaleAdj / (0.5f * ProceduralFace::WIDTH);
           if(x > 0) {
             leftScaleY  += xScaleAdj;
             rightScaleY -= xScaleAdj;
