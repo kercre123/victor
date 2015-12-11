@@ -57,7 +57,8 @@ def main(scriptArgs):
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
                       help='forces configure to only update .lst files and not run gyp project generation')
-
+  parser.add_argument('--externals', metavar='EXTERNALS_DIR', dest='externalsPath', action='store', default=None,
+                      help='Use repos checked out at EXTERNALS_DIR')
 
   # options controlling gyp output
   parser.add_argument('--arch', action='store',
@@ -150,6 +151,12 @@ def main(scriptArgs):
       return False
     coretechExternalPath = options.coretechExternalPath
 
+
+    if not options.externalsPath or not os.path.exists(options.externalsPath):
+        UtilLog.error('EXTERNALS directory not found [%s]' % (options.externalsPath) )
+        return False
+    externalsPath = options.externalsPath
+
     gypPath = os.path.join(options.buildToolsPath, 'gyp')
     if (options.gypPath is not None):
       gypPath = options.gypPath
@@ -192,8 +199,8 @@ def main(scriptArgs):
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
-  generator.processFolder(['game/src/anki/cozmo', 'game/include', 
-    'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations', 
+  generator.processFolder(['game/src/anki/cozmo', 'game/include',
+    'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
     'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlKeyboard', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlKeyboard.lst'])
   generator.processFolder(['simulator/controllers/webotsCtrlBuildServerTest', 'lib/anki/cozmo-engine/simulator/src/game'], ['project/gyp/ctrlBuildServerTest.lst'])
@@ -201,7 +208,7 @@ def main(scriptArgs):
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
 
   if options.updateListsOnly:
-    # TODO: remove dependency on abspath. 
+    # TODO: remove dependency on abspath.
     # there is a bug due to 'os.chdir' and user passed rel path
     if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure.py'),
      '--updateListsOnly', '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath]) != 0):
@@ -242,22 +249,22 @@ def main(scriptArgs):
   if options.mex:
     buildMex = 'yes'
 
-  # symlink coretech external resources 
+  # symlink coretech external resources
   if subprocess.call(['mkdir', '-p',
     os.path.join(projectRoot, 'generated/resources')]) != 0 :
     UtilLog.error("error creating generated/resources")
     return False
 
-  # symlink coretech external resources 
+  # symlink coretech external resources
   if subprocess.call(['ln', '-s', '-f', '-n',
     os.path.join(coretechExternalPath, 'pocketsphinx/pocketsphinx/model/en-us'),
     os.path.join(projectRoot, 'generated/resources/pocketsphinx')]) != 0 :
     UtilLog.error("error symlinking pocket sphinx resources")
     return False
-  
+
   # mac
   if 'mac' in options.platforms:
-      os.environ['GYP_DEFINES'] = """ 
+      os.environ['GYP_DEFINES'] = """
                                   OS=mac
                                   ndk_root=INVALID
                                   audio_library_type=static_library
@@ -286,36 +293,38 @@ def main(scriptArgs):
                                   cozmo_asset_path={16}
                                   ce-audio_path={17}
                                   cg-audio_path={18}
+				  externals_path={19}
                                   """.format(
-                                    options.arch, 
+                                    options.arch,
                                     os.path.join(options.projectRoot, 'generated/mac'),
-                                    coretechExternalPath, 
+                                    coretechExternalPath,
                                     webotsPath,
-                                    ctiGtestPath, 
+                                    ctiGtestPath,
                                     ctiAnkiUtilProjectPath,
                                     options.cozmoEnginePath,
-                                    ceGtestPath, 
-                                    ceAnkiUtilProjectPath, 
+                                    ceGtestPath,
+                                    ceAnkiUtilProjectPath,
                                     ceCoretechInternalProjectPath,
-                                    cgGtestPath, 
-                                    cgAnkiUtilProjectPath, 
+                                    cgGtestPath,
+                                    cgAnkiUtilProjectPath,
                                     cgCoretechInternalProjectPath,
                                     cgCozmoEngineProjectPath,
                                     cgMexProjectPath,
                                     buildMex,
                                     options.cozmoAssetPath,
                                     ceAudioProjectPath,
-                                    cgAudioProjectPath
+                                    cgAudioProjectPath,
+                                    externalsPath
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
-      
+
 
 
 
   # ios
   if 'ios' in options.platforms:
-    os.environ['GYP_DEFINES'] = """  
+    os.environ['GYP_DEFINES'] = """
                                 audio_library_type=static_library
                                 audio_library_build=profile
                                 bs_library_type=static_library
@@ -347,23 +356,25 @@ def main(scriptArgs):
                                 cg-ce_gyp_path={13}
                                 ce-audio_path={14}
                                 cg-audio_path={15}
+                                externals_path={16}
                                 """.format(
-                                  options.arch, 
+                                  options.arch,
                                   os.path.join(options.projectRoot, 'generated/ios'),
-                                  coretechExternalPath, 
+                                  coretechExternalPath,
                                   webotsPath,
-                                  ctiGtestPath, 
+                                  ctiGtestPath,
                                   ctiAnkiUtilProjectPath,
                                   options.cozmoEnginePath,
-                                  ceGtestPath, 
-                                  ceAnkiUtilProjectPath, 
+                                  ceGtestPath,
+                                  ceAnkiUtilProjectPath,
                                   ceCoretechInternalProjectPath,
-                                  cgGtestPath, 
-                                  cgAnkiUtilProjectPath, 
+                                  cgGtestPath,
+                                  cgAnkiUtilProjectPath,
                                   cgCoretechInternalProjectPath,
                                   cgCozmoEngineProjectPath,
                                   ceAudioProjectPath,
-                                  cgAudioProjectPath
+                                  cgAudioProjectPath,
+				  externalsPath
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -435,24 +446,26 @@ def main(scriptArgs):
                                 ndk_root={14}
                                 ce-audio_path={15}
                                 cg-audio_path={16}
+                                externals_path={17}
                                 """.format(
-                                  options.arch, 
+                                  options.arch,
                                   os.path.join(options.projectRoot, 'generated/android'),
-                                  coretechExternalPath, 
+                                  coretechExternalPath,
                                   webotsPath,
-                                  ctiGtestPath, 
+                                  ctiGtestPath,
                                   ctiAnkiUtilProjectPath,
                                   options.cozmoEnginePath,
-                                  ceGtestPath, 
-                                  ceAnkiUtilProjectPath, 
+                                  ceGtestPath,
+                                  ceAnkiUtilProjectPath,
                                   ceCoretechInternalProjectPath,
-                                  cgGtestPath, 
-                                  cgAnkiUtilProjectPath, 
+                                  cgGtestPath,
+                                  cgAnkiUtilProjectPath,
                                   cgCoretechInternalProjectPath,
                                   cgCozmoEngineProjectPath,
                                   ndk_root,
                                   ceAudioProjectPath,
-                                  cgAudioProjectPath
+                                  cgAudioProjectPath,
+				  externalsPath
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')

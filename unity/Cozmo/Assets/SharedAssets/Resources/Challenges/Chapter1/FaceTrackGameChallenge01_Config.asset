@@ -11,8 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7fa95c4d076fe44429d41889a1f60c85, type: 3}
   m_Name: FaceTrackGameChallenge01_Config
   m_EditorClassIdentifier: 
-  Goal: 3
-  TiltTreshold: 110
-  MoveSpeed: 30
-  Lenience: .100000001
+  Goal: 1
+  TiltTreshold: 90
+  Lenience: .0799999982
+  MaxFaceDistance: 375
+  MinFaceDistance: 100
+  FaceJumpLimit: 150
   WanderEnabled: 0
+  MaxAttempts: 3

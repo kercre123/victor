@@ -6,19 +6,27 @@ namespace FaceTracking {
   public class LookingForFaceState : State {
     
     // Make sure the face has been seen consistently to confirm that it is in fact a face
-    private float _SeenHoldDelay = 0.5f;
+    private float _UnSeenResetDelay = 0.75f;
+    private float _SeenHoldDelay = 1.0f;
     private float _FirstSeenTimestamp = -1;
+    private float _FirstUnSeenTimestamp = -1;
     private FaceTrackingGame _GameInstance;
+    private Face _TargetFace;
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as FaceTrackingGame;
+      _GameInstance.MidCelebration = false;
+      _TargetFace = null;
+      _CurrentRobot.SetHeadAngle(0.15f);
+      _CurrentRobot.SetLiftHeight(0.0f);
+      // Entering this state resets progress as you've lost Cozmo's attention
+      _GameInstance.StepsCompleted = 0.0f;
+      _GameInstance.TargetLeft = false;
+      _GameInstance.TargetRight = false;
 
-      _CurrentRobot.SetHeadAngle(0);
-      _CurrentRobot.SetLiftHeight(0);
       // Play Confused Animation as you enter this state, then begin
       // to wander aimlessly looking for a new face.
-
       if (_GameInstance.WanderEnabled) {
         _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
       }
@@ -26,29 +34,75 @@ namespace FaceTracking {
         _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       }
 
+      _GameInstance.ShowNextSlide();
     }
 
     public override void Update() {
       base.Update();
+      if (_GameInstance.MidCelebration) {
+        return;
+      }
       // Wander aimlessly
       // If a face has been found, enter FoundFaceState
       if (_CurrentRobot.Faces.Count > 0) {
-        // We found a face!
-        if (IsSeenTimestampUninitialized()) {
-          _FirstSeenTimestamp = Time.time;
+        if (_TargetFace == null) {
+          // If TargetFace is null, find the first valid face.
+          for (int i = 0; i < _CurrentRobot.Faces.Count; i++) {
+            if (_GameInstance.IsValidFace(_CurrentRobot.Faces[i])) {
+              _TargetFace = _CurrentRobot.Faces[i];
+              break;
+            }
+          }
         }
+        // Only count a face as found if it is within the appropriate bounds
+        if (_GameInstance.IsValidFace(_TargetFace)) {
+          // We found a face, and its in the right spot!
+          ResetUnSeenTimestamp();
 
-        if (Time.time - _FirstSeenTimestamp > _SeenHoldDelay) {
-          FindFace();
+          if (IsSeenTimestampUninitialized()) {
+            _FirstSeenTimestamp = Time.time;
+          }
+
+          // Lock onto the face if they remain within ideal range for the full duration
+          if (Time.time - _FirstSeenTimestamp > _SeenHoldDelay) {
+            FindFace();
+          }
+        }else {
+          // If the current face is not valid and there are multiple, grab the closest one
+          if (_CurrentRobot.Faces.Count > 1) {
+            _TargetFace = _GameInstance.ClosestFace();
+          }
         }
       }
       else {
-        ResetSeenTimestamp();
+        if (IsUnSeenTimestampUninitialized()) {
+          _FirstUnSeenTimestamp = Time.time;
+        }
+        if (Time.time - _FirstUnSeenTimestamp > _UnSeenResetDelay) {
+          ResetSeenTimestamp();
+          _TargetFace = null;
+        }
       }
     }
 
     public void FindFace() {
-      _StateMachine.SetNextState(new FoundFaceState());
+      _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
+      if (_TargetFace != null) {
+        if (_GameInstance.WanderEnabled) {
+          _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        }
+        _CurrentRobot.FacePose(_TargetFace);
+      }
+      AnimationState animState = new AnimationState();
+      animState.Initialize(AnimationName.kHappyA, HandleStateCompleteAnimationDone);
+      if (_GameInstance.StepsCompleted == 0.0f) {
+        _GameInstance.StepsCompleted += 0.333f;
+      }
+      _StateMachine.SetNextState(animState);
+    }
+
+    public void HandleStateCompleteAnimationDone(bool success) {
+      _StateMachine.SetNextState(new TrackFaceState());
     }
 
     private bool IsSeenTimestampUninitialized() {
@@ -58,6 +112,15 @@ namespace FaceTracking {
     private void ResetSeenTimestamp() {
       _FirstSeenTimestamp = -1;
     }
+
+    private bool IsUnSeenTimestampUninitialized() {
+      return _FirstUnSeenTimestamp == -1;
+    }
+
+    private void ResetUnSeenTimestamp() {
+      _FirstUnSeenTimestamp = -1;
+    }
+
   }
 
 }

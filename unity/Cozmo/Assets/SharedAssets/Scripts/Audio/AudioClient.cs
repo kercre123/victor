@@ -40,6 +40,7 @@ namespace Anki {
             _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
             _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
             _RobotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
+            _RobotEngineManager.ReceivedAudioCallbackError += HandleCallback;
             _IsInitialized = true;
           }
           else {
@@ -51,6 +52,7 @@ namespace Anki {
           _RobotEngineManager.ReceivedAudioCallbackDuration -= HandleCallback;
           _RobotEngineManager.ReceivedAudioCallbackMarker -= HandleCallback;
           _RobotEngineManager.ReceivedAudioCallbackComplete -= HandleCallback;
+          _RobotEngineManager.ReceivedAudioCallbackError -= HandleCallback;
 
           _RobotEngineManager = null;
           _IsInitialized = false;

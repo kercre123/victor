@@ -16,6 +16,7 @@ ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
 EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
 sys.path.insert(0, ENGINE_ROOT)
+
 from configure import BUILD_TOOLS_ROOT, print_header, print_status
 from configure import ArgumentParser, generate_gyp, configure
 
@@ -24,7 +25,9 @@ import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.xcode
 import importlib
+
 dependencies = importlib.import_module("project.build-scripts.dependencies")
+
 
 ####################
 # ARGUMENT PARSING #
@@ -143,15 +146,17 @@ class GamePlatformConfiguration(object):
         self.config_path = os.path.join(self.platform_output_dir, '{0}.xcconfig'.format(self.platform))
 
         self.gyp_project_path = os.path.join(self.platform_output_dir, 'cozmoGame.xcodeproj')
+
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
             self.unity_xcode_project_path = os.path.join(self.unity_xcode_project_dir,
                                                          'CozmoUnity_{0}.xcodeproj'.format(self.platform.upper()))
-
             self.unity_build_dir = os.path.join(self.platform_build_dir, 'unity-{0}'.format(self.platform))
+
             try:
                 tmp_pp = CERT_ROOT + '/' + self.options.provision_profile + '.mobileprovision'
-                self.provision_profile_uuid = subprocess.check_output('{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True)
+                self.provision_profile_uuid = subprocess.check_output(
+                    '{0}/mpParse -f {1} -o uuid'.format(CERT_ROOT, tmp_pp), shell=True)
                 self.codesign_identity = subprocess.check_output(
                     '{0}/mpParse -f {1} -o codesign_identity'.format(CERT_ROOT, tmp_pp), shell=True)
             except TypeError or AttributeError:
@@ -161,6 +166,7 @@ class GamePlatformConfiguration(object):
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
 
             self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
+
             if not os.environ.get("CORETECH_EXTERNAL_DIR"):
                 sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
             self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build',
@@ -191,6 +197,12 @@ class GamePlatformConfiguration(object):
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
 
+        if not self.options.do_not_check_dependencies:
+            assert isinstance(dependencies, object)
+            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
+
+        os.environ['EXTERNALS_DIR'] = "{0}".format(EXTERNAL_ROOT)
+
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
 
@@ -200,12 +212,15 @@ class GamePlatformConfiguration(object):
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
         workspace.add_project(relative_gyp_project)
 
-        if not self.options.do_not_check_dependencies:
-            assert isinstance(dependencies, object)
-            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT )
-
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
+            xcconfig = [
+                'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
+                'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',
+                'ANKI_BUILD_TARGET={0}'.format(self.platform),
+                '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
+                '']
+            ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
 
         elif self.platform == 'ios':
             relative_unity_xcode_project = os.path.relpath(self.unity_xcode_project_path, self.platform_output_dir)
@@ -222,6 +237,7 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
+                'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',
                 'PROVISIONING_PROFILE={0}'.format(self.provision_profile_uuid),
                 'CODE_SIGN_IDENTITY={0}'.format(self.codesign_identity),
