@@ -16,6 +16,8 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
+#define SET_GREEN(v, b)  (b ? (v |= 0x00FF00) : (v &= ~0x00FF00))
+
 static const u32 MAX_FAILED_TRANSFER_COUNT = 18000; // 1.5m for auto shutdown (if not on charger)
 
 GlobalDataToHead g_dataToHead;
@@ -58,6 +60,10 @@ int main(void)
     Battery::update();
 
     #ifndef BACKPACK_DEMO
+    // TEMPORARY FACTORY TEST CODE
+    SET_GREEN(g_dataToBody.backpackColors[1], Battery::onContacts);
+    SET_GREEN(g_dataToBody.backpackColors[2], true);
+    
     Lights::manage(g_dataToBody.backpackColors);
     #endif
 

@@ -34,6 +34,8 @@ public:
   virtual ~BehaviorLookAround() override;
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+
+  void SetLookAroundHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
   
 protected:
   
@@ -78,6 +80,7 @@ private:
   f32 _safeRadius = kDefaultSafeRadius;
   u32 _currentDriveActionID = 0;
   u32 _numDestinationsLeft = kDestinationsToReach;
+  f32 _lookAroundHeadAngle_rads = 0;
   
   std::set<ObjectID> _recentObjects;
   std::set<ObjectID> _oldBoringObjects;

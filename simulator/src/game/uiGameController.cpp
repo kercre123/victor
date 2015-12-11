@@ -39,10 +39,12 @@ namespace Anki {
         
         ExternalInterface::RobotState _robotStateMsg;
         
-        UiGameController::ObservedObject _currentlyObservedObject;
+        UiGameController::ObservedObject _lastObservedObject;
         std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
         std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
         std::map<s32, Pose3d> _objectIDToPoseMap;
+        
+        Vision::TrackedFace::ID_t _lastObservedFaceID;
         
         std::unordered_set<std::string> _availableAnimations;
         
@@ -104,11 +106,11 @@ namespace Anki {
       
       // TODO: Move this to WebotsKeyboardController?
       const f32 area = msg.img_width * msg.img_height;
-      _currentlyObservedObject.family = msg.objectFamily;
-      _currentlyObservedObject.type   = msg.objectType;
-      _currentlyObservedObject.id     = msg.objectID;
-      _currentlyObservedObject.isActive = msg.isActive;
-      _currentlyObservedObject.area   = area;
+      _lastObservedObject.family = msg.objectFamily;
+      _lastObservedObject.type   = msg.objectType;
+      _lastObservedObject.id     = msg.objectID;
+      _lastObservedObject.isActive = msg.isActive;
+      _lastObservedObject.area   = area;
 
       
       HandleRobotObservedObject(msg);
@@ -116,12 +118,14 @@ namespace Anki {
     
     void UiGameController::HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg)
     {
+      _lastObservedFaceID = msg.faceID;
+      
       HandleRobotObservedFace(msg);
     }
     
     void UiGameController::HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg)
     {
-      _currentlyObservedObject.Reset();
+      _lastObservedObject.Reset();
       
       HandleRobotObservedNothing(msg);
     }
@@ -272,7 +276,7 @@ namespace Anki {
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
       _robotPoseActual.SetRotation(0, Z_AXIS_3D());
       
-      _currentlyObservedObject.Reset();
+      _lastObservedObject.Reset();
     }
     
     UiGameController::~UiGameController()
@@ -854,6 +858,32 @@ namespace Anki {
       message.Set_PlaceObjectOnGround(m);
       SendMessage(message);
     }
+    
+    
+    void UiGameController::SendTrackToObject(const u32 objectID, bool headOnly)
+    {
+      ExternalInterface::TrackToObject m;
+      m.robotID = 1;
+      m.objectID = objectID;
+      m.headOnly = headOnly;
+      
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_TrackToObject(m);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendTrackToFace(const u32 faceID, bool headOnly)
+    {
+      ExternalInterface::TrackToFace m;
+      m.robotID = 1;
+      m.faceID = faceID;
+      m.headOnly = headOnly;
+      
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_TrackToFace(m);
+      SendMessage(message);
+    }
+    
     
     void UiGameController::SendExecuteTestPlan()
     {
@@ -1486,9 +1516,14 @@ namespace Anki {
       return _objectIDToPoseMap;
     }
     
-    const UiGameController::ObservedObject& UiGameController::GetCurrentlyObservedObject() const
+    const UiGameController::ObservedObject& UiGameController::GetLastObservedObject() const
     {
-      return _currentlyObservedObject;
+      return _lastObservedObject;
+    }
+    
+    const Vision::TrackedFace::ID_t UiGameController::GetLastObservedFaceID() const
+    {
+      return _lastObservedFaceID;
     }
     
     const std::unordered_set<std::string>& UiGameController::GetAvailableAnimations() const

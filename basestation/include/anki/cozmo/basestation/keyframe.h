@@ -208,6 +208,17 @@ namespace Cozmo {
     }
 
     const std::string& GetSoundName() const;
+    
+    // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
+    struct AudioRef {
+      std::string name;
+      s32 numSamples;
+      f32 volume;
+      // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
+      Audio::EventType audioEvent = Audio::EventType::Invalid;
+    };
+    
+    const AudioRef& GetAudioRef() const;
 
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot) override;
@@ -216,12 +227,6 @@ namespace Cozmo {
     
     Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
     
-    struct AudioRef {
-      std::string name;
-      s32 numSamples;
-      f32 volume;
-    };
-
     std::vector<AudioRef> _audioReferences;
 
     s32 _selectedAudioIndex;
@@ -245,8 +250,7 @@ namespace Cozmo {
     
     struct AudioRef {
       Audio::EventType audioEvent;
-      f32              volume;
-      // TODO: Any other parameters that need to be communicated to AudioManager?
+      // TODO: We can add other audio controlls to animation data - JMR
     };
     
     const AudioRef& GetAudioRef() const;
@@ -256,7 +260,7 @@ namespace Cozmo {
     
   private:
     
-    Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
+    Result AddAudioRef(const Audio::EventType event);
 
     std::vector<AudioRef> _audioReferences;
     

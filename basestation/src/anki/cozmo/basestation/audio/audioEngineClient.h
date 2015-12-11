@@ -35,6 +35,7 @@ class MessageAudioClient;
 struct AudioCallbackDuration;
 struct AudioCallbackMarker;
 struct AudioCallbackComplete;
+struct AudioCallbackError;
   
 class AudioEngineClient : Util::noncopyable
 {
@@ -71,6 +72,7 @@ protected:
   virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg );
   virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg );
   virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg );
+  virtual void HandleCallbackEvent( const AudioCallbackError& callbackMsg );
   
   CallbackIdType GetNewCallbackId();
   

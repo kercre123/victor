@@ -24,11 +24,12 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorBlockPlay_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorBlockPlay_H__
 
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/common/basestation/objectIDs.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/pathMotionProfile.h"
 
 
 namespace Anki {
@@ -83,14 +84,23 @@ namespace Cozmo {
     // also holding a block
     const f32 kTrackedObjectViewAngleThreshForRaisingCarriedBlock = 0.6; //atan2f(90, 200);
     
-    
-    
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
     virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
     
     // Handlers for signals coming from the engine
-    Result HandleObservedObjectWhileRunning(Robot& robot, const ExternalInterface::RobotObservedObject& msg, double currentTime_sec);
+    Result HandleObservedObjectWhileRunning(Robot& robot,
+                                            const ExternalInterface::RobotObservedObject& msg,
+                                            double currentTime_sec);
+    Result HandleObservedObjectWhileNotRunning(const Robot& robot,
+                                               const ExternalInterface::RobotObservedObject& msg,
+                                               double currentTime_sec);
+
+    // returns true if we care about this object
+    bool HandleObservedObjectHelper(const Robot& robot,
+                                    const ExternalInterface::RobotObservedObject& msg,
+                                    double currentTime_sec);
+    
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
     Result HandleObservedFace(const Robot& robot, const ExternalInterface::RobotObservedFace& msg, double currentTime_sec);
     Result HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg);
@@ -98,13 +108,15 @@ namespace Cozmo {
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
-    void PlayAnimation(Robot& robot, const std::string& animName);
+    void PlayAnimation(Robot& robot, const std::string& animName, bool sequential = true);
     void StartActing(Robot& robot, IActionRunner* action);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
     
     State _currentState;
     bool  _interrupted;
     bool _isActing = false;
+
+    f32 _holdUntilTime = -1.0f;
 
     // if we "lose" the block, we can use State::SearchingForMissingBlock. If we see it again, go back to this state
     State _missingBlockFoundState = State::TrackingFace;
@@ -114,7 +126,8 @@ namespace Cozmo {
     
     Result _lastHandlerResult;
 
-    
+    PathMotionProfile _motionProfile;
+
     // If it fails to pickup or place the same object a certain number of times in a row
     // then delete the object. Assuming that the failures are due to not being able to see
     // an object where it used to be.
@@ -142,6 +155,8 @@ namespace Cozmo {
 
     // The last time we saw _trackedObject
     f32 _lastObjectObservedTime = 0.0f;
+
+    f32 _trackedObjectStoppedMovingTime = -1.0f;
 
     // how long ago we should have seen the object to attempt interaction
     const f32 _objectObservedTimeThreshold = 0.75f;

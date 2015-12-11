@@ -30,6 +30,7 @@ struct PostAudioParameter;
 struct AudioCallbackDuration;
 struct AudioCallbackMarker;
 struct AudioCallbackComplete;
+struct AudioCallbackError;
   
 class AudioClientConnection : public Util::noncopyable {
   
@@ -46,6 +47,7 @@ public:
   virtual void PostCallback( const AudioCallbackDuration& callbackMessage ) const {}
   virtual void PostCallback( const AudioCallbackMarker& callbackMessage ) const {}
   virtual void PostCallback( const AudioCallbackComplete& callbackMessage ) const {}
+  virtual void PostCallback( const AudioCallbackError& callbackMessage ) const {}
   
   
 protected:

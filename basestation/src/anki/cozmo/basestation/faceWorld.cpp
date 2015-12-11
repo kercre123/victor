@@ -48,14 +48,22 @@ namespace Cozmo {
     const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
     const Radians panAngle = std::atan2(yDist, xDist);
     
-    static const Radians minHeadAngle(DEG_TO_RAD(1.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(1.f));
-    
-    PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
-    action->EnableMessageDisplay(false);
-    action->SetPanTolerance(minBodyAngle);
-    action->SetTiltTolerance(minHeadAngle);
-    _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+    static const Radians minHeadAngle(DEG_TO_RAD(2.f));
+    static const Radians minBodyAngle(DEG_TO_RAD(2.f));
+
+    // only do a tracking action if we aren't going to stomp on someone elses action
+    size_t qLength = _robot.GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
+    if( qLength == 0 ||
+        ( qLength == 1 &&
+          _robot.GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
+    {
+      PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
+      action->EnableMessageDisplay(false);
+      action->SetPanTolerance(minBodyAngle);
+      action->SetTiltTolerance(minHeadAngle);
+      _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+      _lastTrackingActionTag = action->GetTag();
+    }
                                           
     return RESULT_OK;
   } // UpdateFaceTracking()

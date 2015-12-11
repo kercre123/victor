@@ -1035,17 +1035,26 @@ namespace Cozmo {
           // Also rotate ("pan") body:
           bodyPanAngle_rad = std::atan2(yDist, xDist);
         }
+
+        // only do a tracking action if we aren't going to stomp on someone elses action
+        size_t qLength = _robot->GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
+        if( qLength == 0 ||
+            ( qLength == 1 &&
+              _robot->GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
+        {
+          PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
+          action->EnableMessageDisplay(false);
         
-        PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
-        action->EnableMessageDisplay(false);
+          // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
+          action->SetPanTolerance(DEG_TO_RAD(5));
+          action->SetTiltTolerance(DEG_TO_RAD(5));
         
-        // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
-        action->SetPanTolerance(DEG_TO_RAD(5));
-        action->SetTiltTolerance(DEG_TO_RAD(5));
+          // TODO: Expose / tune PanAndTilt speed/accel as needed
         
-        // TODO: Expose / tune PanAndTilt speed/accel as needed
-        
-        _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+          _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+
+          _lastTrackingActionTag = action->GetTag();
+        }
       }
       
       return RESULT_OK;

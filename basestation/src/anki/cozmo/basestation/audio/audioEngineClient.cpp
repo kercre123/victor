@@ -33,6 +33,7 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackDuration, callback ) );
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackMarker, callback ) );
   _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackComplete, callback ) );
+  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackError, callback ) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -127,6 +128,15 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
     }
       break;
       
+
+    case MessageAudioClientTag::AudioCallbackError:
+    {
+      // Handle Complete Callback
+      const AudioCallbackError& callbackMsg = event.GetData().Get_AudioCallbackError();
+      HandleCallbackEvent( callbackMsg );
+    }
+      break;
+      
     default:
     {
       PRINT_NAMED_ERROR( "HandleEvents.HandleEvents",
@@ -149,7 +159,12 @@ void AudioEngineClient::HandleCallbackEvent( const AudioCallbackMarker& callback
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::HandleCallbackEvent( const AudioCallbackComplete& callbackMsg )
 {
-} 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::HandleCallbackEvent( const AudioCallbackError& callbackMsg )
+{
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()
