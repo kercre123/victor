@@ -11,7 +11,7 @@
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
             "cozmosoundbanks": {
-                "version": 2,
+                "version": 3,
                 "package_name": "GeneratedSoundBanks.tar.gz"
             }
         }
