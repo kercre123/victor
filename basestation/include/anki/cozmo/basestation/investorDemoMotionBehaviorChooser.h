@@ -26,7 +26,7 @@ public:
 
   virtual Result Update(double currentTime_sec) override;
   
-  virtual const char* GetName() const override { return "IDemoMotion"; }
+  virtual const char* GetName() const override { return "IDMotion"; }
 
 protected:
   void SetupBehaviors(Robot& robot, const Json::Value& config);
