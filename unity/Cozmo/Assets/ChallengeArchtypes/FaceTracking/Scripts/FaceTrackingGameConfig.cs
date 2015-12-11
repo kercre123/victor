@@ -6,8 +6,10 @@ namespace FaceTracking {
 
     public int Goal;
     public float TiltTreshold;
-    public float MoveSpeed;
     public float Lenience;
+    public float MaxFaceDistance;
+    public float MinFaceDistance;
+    public float FaceJumpLimit;
     public bool WanderEnabled;
   
   }
