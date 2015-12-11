@@ -25,6 +25,7 @@ enum int_32 AnimConstants
   SCREEN_BYTES_PER_DROP = 4,
   MAX_FACE_FRAME_SIZE   = 1024,
   KEYFRAME_BUFFER_SIZE  = 16384,
+  PREROLL_LENGTH        = 7  // In number of audio frames
 }
 
 namespace AnimKeyFrame {

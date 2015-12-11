@@ -4,8 +4,9 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters_impl.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "util/logging/logging.h"
@@ -160,8 +161,10 @@ namespace Cozmo {
     newLayer.isPersistent = false;
     newLayer.sentOnce = false;
     
+#   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.AddFaceLayer",
                      "Tag = %d (Total layers=%lu)", newLayer.tag, _faceLayers.size()+1);
+#   endif
     
     _faceLayers.emplace_back(std::move(newLayer));
     
@@ -181,9 +184,11 @@ namespace Cozmo {
     
     const u32 returnTag = newLayer.tag;
     _faceLayers.emplace_back(std::move(newLayer));
-    
+   
+#   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.AddPersistentFaceLayer",
                      "Tag = %d (Total layers=%lu)", returnTag, _faceLayers.size());
+#   endif
     
     return returnTag;
   }
@@ -237,13 +242,25 @@ namespace Cozmo {
     RobotInterface::EngineToRobot* msg = nullptr;
     while(!_sendBuffer.empty()) {
 #     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("Animation.SendBufferedMessages",
+      PRINT_NAMED_INFO("AnimationStreamer.SendBufferedMessages",
                        "Send buffer length=%lu.", _sendBuffer.size());
 #     endif
       
+      // Compute number of bytes required and whether the robot is accepting any
+      // further audio frames yet
       msg = _sendBuffer.front();
       const size_t numBytesRequired = msg->Size();
-      if(numBytesRequired <= _numBytesToSend) {
+      
+      s32 numAudioFramesRequired = 0;
+      if(RobotInterface::EngineToRobotTag::animAudioSample == msg->GetTag() ||
+         RobotInterface::EngineToRobotTag::animAudioSilence == msg->GetTag())
+      {
+        ++numAudioFramesRequired;
+      }
+      
+      if(numBytesRequired <= _numBytesToSend &&
+         numAudioFramesRequired <= _numAudioFramesToSend)
+      {
         Result sendResult = robot.SendMessage(*msg);
         if(sendResult != RESULT_OK) {
           return sendResult;
@@ -254,18 +271,20 @@ namespace Cozmo {
 #       endif
         
         _numBytesToSend -= numBytesRequired;
+        _numAudioFramesToSend -= numAudioFramesRequired;
         
-        // Increment total number of bytes streamed to robot
+        // Increment total number of bytes and audio frames streamed to robot
         robot.IncrementNumAnimationBytesStreamed((int32_t)numBytesRequired);
+        robot.IncrementNumAnimationAudioFramesStreamed(numAudioFramesRequired);
         
         _sendBuffer.pop_front();
         delete msg;
       } else {
-        // Out of bytes to send, continue on next Update()
+        // Out of bytes or audio frames to send, continue on next Update()
 #       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("Animation.SendBufferedMessages",
-                         "Sent %d messages, but ran out of bytes to send from "
-                         "buffer. %lu remain, so will continue next Update().",
+        PRINT_NAMED_INFO("Animation.SendBufferedMessages.SentMax",
+                         "Sent %d messages, but ran out of bytes or audio frames to "
+                         "send from buffer. %lu bytes remain, so will continue next Update().",
                          numSent, _sendBuffer.size());
 #       endif
         return RESULT_OK;
@@ -448,10 +467,12 @@ namespace Cozmo {
       faceUpdated = GetFaceHelper(anim->GetTrack<ProceduralFaceKeyFrame>(), _startTime_ms, _streamingTime_ms, faceParams, true);
     }
     
+#   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
       PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
                        "NumLayers=%lu", _faceLayers.size());
     }
+#   endif
     
     for(auto faceLayerIter = _faceLayers.begin(); faceLayerIter != _faceLayers.end(); )
     {
@@ -475,16 +496,20 @@ namespace Cozmo {
             //...but is marked persistent, so keep applying last frame
             faceLayerIter->track.MoveToPrevKeyFrame(); // so we're not at end() anymore
             faceLayerIter->streamTime_ms -= RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
+#           if DEBUG_ANIMATION_STREAMING
             PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.HoldingLayer",
                              "Holding last frame of face layer with tag %d",
                              faceLayerIter->tag);
+#           endif
             faceLayerIter->sentOnce = true; // mark that it has been sent at least once
           }
           ++faceLayerIter;
         } else {
           //...and is not persistent, so delete it
+#         if DEBUG_ANIMATION_STREAMING
           PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.RemovingLayer",
                            "Tag = %d (Layers remaining=%lu)", faceLayerIter->tag, _faceLayers.size()-1);
+#         endif
           faceLayerIter = _faceLayers.erase(faceLayerIter);
         }
       } else {
@@ -600,7 +625,7 @@ namespace Cozmo {
     // There is no idle/streaming animation playing, but we haven't finished
     // streaming the face layers. Do so now.
     
-    UpdateNumBytesToSend(robot);
+    UpdateAmountToSend(robot);
     
     // Send anything still left in the buffer after last Update()
     lastResult = SendBufferedMessages(robot);
@@ -685,7 +710,7 @@ namespace Cozmo {
       deviceAudioTrack.MoveToNextKeyFrame();
     }
     
-    UpdateNumBytesToSend(robot);
+    UpdateAmountToSend(robot);
     
     // Send anything still left in the buffer after last Update()
     lastResult = SendBufferedMessages(robot);
@@ -978,20 +1003,23 @@ namespace Cozmo {
   } // AnimationStreamer::Update()
   
   
-  void AnimationStreamer::UpdateNumBytesToSend(Robot& robot)
+  void AnimationStreamer::UpdateAmountToSend(Robot& robot)
   {
     // Compute number of bytes free in robot animation buffer.
     // This is a lower bound since this is computed from a delayed measure
     // of the number of animation bytes already played on the robot.
     s32 totalNumBytesStreamed = robot.GetNumAnimationBytesStreamed();
     s32 totalNumBytesPlayed = robot.GetNumAnimationBytesPlayed();
+    s32 totalNumAudioFramesStreamed = robot.GetNumAnimationAudioFramesStreamed();
+    s32 totalNumAudioFramesPlayed = robot.GetNumAnimationAudioFramesPlayed();
+    
     bool overflow = (totalNumBytesStreamed < 0) && (totalNumBytesPlayed > 0);
     assert((totalNumBytesStreamed >= totalNumBytesPlayed) || overflow);
     
     s32 minBytesFreeInRobotBuffer = static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (totalNumBytesStreamed - totalNumBytesPlayed);
     if (overflow) {
       // Computation for minBytesFreeInRobotBuffer still works out in overflow case
-      PRINT_NAMED_INFO("Animation.Update.BytesStreamedOverflow",
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateAmountToSend.BytesStreamedOverflow",
                        "free %d (streamed = %d, played %d)",
                        minBytesFreeInRobotBuffer, totalNumBytesStreamed, totalNumBytesPlayed);
     }
@@ -1005,8 +1033,10 @@ namespace Cozmo {
     _numBytesToSend = std::min(MAX_BYTES_FOR_RELIABLE_TRANSPORT,
                                minBytesFreeInRobotBuffer);
     
-  } // UpdateNumBytesToSend()
-
+    s32 audioFramesInBuffer = totalNumAudioFramesStreamed - totalNumAudioFramesPlayed;
+    _numAudioFramesToSend = std::max(0, static_cast<s32>(AnimConstants::PREROLL_LENGTH)-audioFramesInBuffer);
+    
+  } // UpdateAmountToSend()
   
   Result StreamProceduralFace(Robot& robot,
                               const ProceduralFace& lastFace,

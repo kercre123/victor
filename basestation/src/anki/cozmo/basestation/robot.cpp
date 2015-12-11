@@ -559,6 +559,7 @@ namespace Anki {
       // Send state to visualizer for displaying
       VizManager::getInstance()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
+                                                static_cast<s32>(AnimConstants::PREROLL_LENGTH)-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
                                                 (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
                                                 (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                                                 _animationTag);
@@ -962,11 +963,12 @@ namespace Anki {
       }
         
       //////// Stream Animations /////////
-      
-      Result animStreamResult = _animationStreamer.Update(*this);
-      if(animStreamResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update",
-                            "Robot %d had an animation streaming failure.", GetID());
+      if(_timeSynced) { // Don't stream anything before we've connected
+        Result animStreamResult = _animationStreamer.Update(*this);
+        if(animStreamResult != RESULT_OK) {
+          PRINT_NAMED_WARNING("Robot.Update",
+                              "Robot %d had an animation streaming failure.", GetID());
+        }
       }
 
 

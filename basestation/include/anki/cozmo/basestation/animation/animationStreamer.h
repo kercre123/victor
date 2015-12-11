@@ -117,7 +117,7 @@ namespace Cozmo {
     // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation(Robot& robot);
     
-    void UpdateNumBytesToSend(Robot& robot);
+    void UpdateAmountToSend(Robot& robot);
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
@@ -193,7 +193,8 @@ namespace Cozmo {
     Result SendBufferedMessages(Robot& robot);
     
     std::list<RobotInterface::EngineToRobot*> _sendBuffer;
-    s32 _numBytesToSend;
+    s32 _numBytesToSend = 0;
+    s32 _numAudioFramesToSend = 0;
     uint8_t _tag;
     
     // "Flow control" for not overrunning reliable transport in a single

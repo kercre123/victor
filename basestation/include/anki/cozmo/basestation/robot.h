@@ -444,13 +444,18 @@ public:
     void SetProceduralFace(const ProceduralFace& face);
     void MarkProceduralFaceAsSent();
     
-    // Returns the number of animation bytes played on the robot since
+    // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
-    
-    // Returns a reference to a count of the total number of bytes streamed to the robot.
-    s32 GetNumAnimationBytesStreamed();
+    s32 GetNumAnimationAudioFramesPlayed() const;
+  
+    // Returns a reference to a count of the total number of bytes or audio frames
+    // streamed to the robot.
+    s32 GetNumAnimationBytesStreamed() const;
+    s32 GetNumAnimationAudioFramesStreamed() const;
+  
     void IncrementNumAnimationBytesStreamed(s32 num);
+    void IncrementNumAnimationAudioFramesStreamed(s32 num);
   
     // Tell the animation streamer to move the eyes by this x,y amount over the
     // specified duration (layered on top of any other animation that's playing).
@@ -826,9 +831,11 @@ public:
     AnimationStreamer        _animationStreamer;
     ProceduralFace           _proceduralFace, _lastProceduralFace;
     s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed   = 0;
-    s32 _numAnimationBytesStreamed = 0;
-    u8  _animationTag              = 0;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
@@ -967,12 +974,24 @@ inline s32 Robot::GetNumAnimationBytesPlayed() const {
   return _numAnimationBytesPlayed;
 }
 
-inline s32 Robot::GetNumAnimationBytesStreamed() {
+inline s32 Robot::GetNumAnimationBytesStreamed() const {
   return _numAnimationBytesStreamed;
 }
 
+inline s32 Robot::GetNumAnimationAudioFramesPlayed() const {
+  return _numAnimationAudioFramesPlayed;
+}
+  
+inline s32 Robot::GetNumAnimationAudioFramesStreamed() const {
+  return _numAnimationAudioFramesStreamed;
+}
+  
 inline void Robot::IncrementNumAnimationBytesStreamed(s32 num) {
   _numAnimationBytesStreamed += num;
+}
+  
+inline void Robot::IncrementNumAnimationAudioFramesStreamed(s32 num) {
+  _numAnimationAudioFramesStreamed += num;
 }
 
 inline f32 Robot::GetLocalizedToDistanceSq() const {
