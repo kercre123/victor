@@ -14,7 +14,8 @@ MonoBehaviour:
   Goal: 1
   TiltTreshold: 90
   Lenience: .0799999982
-  MaxFaceDistance: 350
-  MinFaceDistance: 200
+  MaxFaceDistance: 375
+  MinFaceDistance: 100
   FaceJumpLimit: 150
   WanderEnabled: 0
+  MaxAttempts: 3
