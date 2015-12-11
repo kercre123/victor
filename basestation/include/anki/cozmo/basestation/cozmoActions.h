@@ -66,7 +66,11 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
+      virtual u8 GetAnimTracksToDisable() const override
+      {
+        return _useManualSpeed ? 0 : (uint8_t)AnimTrackFlag::BODY_TRACK;
+      }
       
     protected:
 
@@ -83,9 +87,6 @@ namespace Anki {
       Result SetGoals(const std::vector<Pose3d>& poses, const Point3f& distThreshold, const Radians& angleThreshold);
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
-      
-      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       bool     _startedTraversingPath = false;
       
@@ -462,7 +463,7 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual bool ShouldLockWheels() const override { return true; }
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
@@ -514,7 +515,7 @@ namespace Anki {
       virtual Radians GetHeadAngle(f32 heightDiff) override;
       
       // Override to allow wheel control while facing the object
-      virtual bool ShouldLockWheels() const override { return false; }
+      virtual u8 GetAnimTracksToDisable() const override { return 0; }
       
       bool                 _facePoseCompoundActionDone;
       
@@ -581,9 +582,6 @@ namespace Anki {
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
-      
-      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/animationKeyFrames.h"
 
 namespace Anki {
   
@@ -37,10 +38,10 @@ namespace Anki {
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.GetMoveComponent().LockHead( ShouldLockHead() );
-        robot.GetMoveComponent().LockLift( ShouldLockLift() );
-        robot.GetMoveComponent().LockWheels( ShouldLockWheels() );
-        robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(GetAnimTracksToDisable())));
+        robot.GetMoveComponent().LockTracks(GetAnimTracksToDisable());
+        uint8_t lockedTracks = robot.GetMoveComponent().GetLockedTracks();
+        
+        robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(lockedTracks)));
         _isRunning = true;
       }
 
@@ -75,12 +76,13 @@ namespace Anki {
         }
         
         if(!_suppressTrackLocking) {
-          // Action is done, always completely unlock the robot
-          robot.GetMoveComponent().LockHead(false);
-          robot.GetMoveComponent().LockLift(false);
-          robot.GetMoveComponent().LockWheels(false);
+          const uint8_t previouslyLockedTracks = robot.GetMoveComponent().GetLockedTracks();
+          robot.GetMoveComponent().UnlockTracks(GetAnimTracksToDisable());
+          const uint8_t nowLockedTracks = robot.GetMoveComponent().GetLockedTracks();
+          const uint8_t tracksToEnable = previouslyLockedTracks ^ nowLockedTracks;
+          
           // Re-enable any animation tracks that were disabled
-          robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(GetAnimTracksToDisable())));
+          robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(tracksToEnable)));
         }
         _isRunning = false;
       }
@@ -132,6 +134,11 @@ namespace Anki {
       }
     }
 #   endif // USE_ACTION_CALLBACKS
+    
+    u8 IActionRunner::GetAnimTracksToDisable() const
+    {
+      return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
+    }
     
     
 #pragma mark ---- IAction ----

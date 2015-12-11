@@ -183,17 +183,13 @@ Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
   if(_robot.GetBlockWorld().GetObjectByID(_trackToObjectID) != nullptr) {
     _trackWithHeadOnly = headOnly;
     _trackToFaceID = Vision::TrackedFace::UnknownFace;
-    
-    // Store whether head/wheels were locked before tracking so we can
-    // return them to this state when we disable tracking
-    _headLockedBeforeTracking = IsHeadLocked();
-    _wheelsLockedBeforeTracking = AreWheelsLocked();
 
     // TODO:(bn) this doesn't seem to work (wheels aren't locked), but not sure if it should...
-    LockHead(true);
+    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
     if(!headOnly) {
-      LockWheels(true);
+      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
+    LockTracks(tracksToLock);
     
     return RESULT_OK;
   } else {
@@ -212,16 +208,11 @@ Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bo
     _trackWithHeadOnly = headOnly;
     _trackToObjectID.UnSet();
     
-    // Store whether head/wheels were locked before tracking so we can
-    // return them to this state when we disable tracking        // Store whether head/wheels were locked before tracking so we can
-    // return them to this state when we disable tracking
-    _headLockedBeforeTracking = IsHeadLocked();
-    _wheelsLockedBeforeTracking = AreWheelsLocked();
-    
-    LockHead(true);
+    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
     if(!headOnly) {
-      LockWheels(true);
+      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
+    LockTracks(tracksToLock);
     
     return RESULT_OK;
   } else {
@@ -237,9 +228,12 @@ Result MovementComponent::DisableTrackToObject()
 {
   if(_trackToObjectID.IsSet()) {
     _trackToObjectID.UnSet();
-    // Restore lock state to whatever it was when we enabled tracking
-    LockHead(_headLockedBeforeTracking);
-    LockWheels(_wheelsLockedBeforeTracking);
+    
+    uint8_t tracksToUnlock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
+    if(!_trackWithHeadOnly) {
+      tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
+    }
+    UnlockTracks(tracksToUnlock);
   }
   return RESULT_OK;
 }
@@ -248,11 +242,78 @@ Result MovementComponent::DisableTrackToFace()
 {
   if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
     _trackToFaceID = Vision::TrackedFace::UnknownFace;
-    // Restore lock state to whatever it was when we enabled tracking
-    LockHead(_headLockedBeforeTracking);
-    LockWheels(_wheelsLockedBeforeTracking);
+    
+    uint8_t tracksToUnlock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
+    if(!_trackWithHeadOnly) {
+      tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
+    }
+    UnlockTracks(tracksToUnlock);
   }
   return RESULT_OK;
+}
+  
+int MovementComponent::GetFlagIndex(uint8_t flag) const
+{
+  int i = 0;
+  while(flag > 1)
+  {
+    i++;
+    flag = flag >> 1;
+  }
+  return i;
+}
+
+void MovementComponent::LockTracks(uint8_t tracks)
+{
+  for (int i=0; i < NUM_TRACKS; i++)
+  {
+    uint8_t curMask = (1 << i);
+    if ((tracks & curMask) == curMask)
+    {
+      _trackLockCount[i]++;
+    }
+  }
+}
+
+void MovementComponent::UnlockTracks(uint8_t tracks)
+{
+  for (int i=0; i < NUM_TRACKS; i++)
+  {
+    uint8_t curMask = (1 << i);
+    if ((tracks & curMask) == curMask)
+    {
+      --_trackLockCount[i];
+      ASSERT_NAMED(_trackLockCount[i] >= 0, "Should have a matching number of track lock and unlocks!");
+    }
+  }
+}
+  
+uint8_t MovementComponent::GetLockedTracks() const
+{
+  uint8_t mask = 0;
+  for (int i=0; i < NUM_TRACKS; i++)
+  {
+    if (_trackLockCount[i] > 0)
+    {
+      mask |= (1 << i);
+    }
+  }
+  return mask;
+}
+  
+bool MovementComponent::IsHeadLocked() const
+{
+  return IsTrackLocked(AnimTrackFlag::HEAD_TRACK);
+}
+  
+bool MovementComponent::IsLiftLocked() const
+{
+  return IsTrackLocked(AnimTrackFlag::LIFT_TRACK);
+}
+  
+bool MovementComponent::AreWheelsLocked() const
+{
+  return IsTrackLocked(AnimTrackFlag::BODY_TRACK);
 }
 
 } // namespace Cozmo

@@ -26,6 +26,7 @@ namespace Cozmo {
 // declarations
 class Robot;
 class IExternalInterface;
+enum class AnimTrackFlag : uint8_t;
   
 class MovementComponent : private Util::noncopyable
 {
@@ -33,15 +34,13 @@ public:
   MovementComponent(Robot& robot);
   virtual ~MovementComponent() { }
   
-  // These are methods to lock/unlock subsystems of the robot to prevent
-  // MoveHead/MoveLift/DriveWheels/etc commands from having any effect.
-  void LockHead(bool tf) { _headLocked = tf; }
-  void LockLift(bool tf) { _liftLocked = tf; }
-  void LockWheels(bool tf) { _wheelsLocked = tf; }
+  bool IsHeadLocked() const;
+  bool IsLiftLocked() const;
+  bool AreWheelsLocked() const;
   
-  bool IsHeadLocked() const { return _headLocked; }
-  bool IsLiftLocked() const { return _liftLocked; }
-  bool AreWheelsLocked() const { return _wheelsLocked; }
+  void LockTracks(uint8_t tracks);
+  void UnlockTracks(uint8_t tracks);
+  uint8_t GetLockedTracks() const;
   
   // Enables lift power on the robot.
   // If disabled, lift goes limp.
@@ -84,19 +83,25 @@ protected:
   Robot& _robot;
   std::list<Signal::SmartHandle> _eventHandles;
 
-  bool _wheelsLocked = false;
-  bool _headLocked = false;
-  bool _liftLocked = false;
+  int32_t _wheelsLocked = 0;
+  int32_t _headLocked = 0;
+  int32_t _liftLocked = 0;
   
   // Object/Face to track head to whenever it is observed
   ObjectID _trackToObjectID;
   Vision::TrackedFace::ID_t   _trackToFaceID = Vision::TrackedFace::UnknownFace;
   bool _trackWithHeadOnly = false;
-  bool _headLockedBeforeTracking = false;
-  bool _wheelsLockedBeforeTracking = false;
+  
+  static constexpr int NUM_TRACKS = 8;
+  std::array<int, NUM_TRACKS> _trackLockCount = {};
   
 private:
   void InitEventHandlers(IExternalInterface& interface);
+  int GetFlagIndex(uint8_t flag) const;
+  bool IsTrackLocked(AnimTrackFlag track) const
+  {
+    return _trackLockCount[GetFlagIndex((uint8_t)track)] > 0;
+  }
   
 }; // class MovementComponent
 
