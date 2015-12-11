@@ -889,13 +889,7 @@ namespace Anki {
       
       Radians currentAngle;
       _inPosition = IsBodyInPosition(robot, currentAngle);
-      
-      // Move the eyes
-      // Note: assuming screen is about the same x distance from the neck joint as the head cam
-      const Radians angleDiff = _targetAngle - currentAngle;
-      const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-      const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (2*SCREEN_SIZE[0]));
-      _eyeShiftTag = robot.ShiftEyes(xPixShift, 0, 4*IKeyFrame::SAMPLE_LENGTH_MS, true); // TODO: How to set the duration?
+      _eyeShiftRemoved = true;
       
       if(!_inPosition) {
         RobotInterface::SetBodyAngle setBodyAngle;
@@ -905,8 +899,19 @@ namespace Anki {
         if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
           return ActionResult::FAILURE_RETRY;
         }
+        
+        // Store half the total difference so we know when to remove eye shift
+        _halfAngle = 0.5f*(_targetAngle - currentAngle).getAbsoluteVal();
+        
+        // Move the eyes (only if not in position)
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        const Radians angleDiff = _targetAngle - currentAngle;
+        const f32 x_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+        const f32 xPixShift = x_mm * (static_cast<f32>(ProceduralFace::WIDTH) / (4*SCREEN_SIZE[0]));
+        _eyeShiftTag = robot.ShiftEyes(xPixShift, 0, 0, true); // TODO: How to set the duration?
+        _eyeShiftRemoved = false;
       }
-    
+      
       return ActionResult::SUCCESS;
     }
     
@@ -925,6 +930,19 @@ namespace Anki {
       
       if(!_inPosition) {
         _inPosition = IsBodyInPosition(robot, currentAngle);
+      }
+      
+      // When we've turned at least halfway, remove eye dart
+      if(!_eyeShiftRemoved) {
+        if(_inPosition || NEAR(currentAngle-_targetAngle, 0.f, _halfAngle))
+        {
+          PRINT_NAMED_INFO("TurnInPlaceAction.CheckIfDone.RemovingEyeShift",
+                           "Currently at %.1fdeg, on the way to %.1fdeg, within "
+                           "half angle of %.1fdeg", currentAngle.getDegrees(),
+                           _targetAngle.getDegrees(), _halfAngle.getDegrees());
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          _eyeShiftRemoved = true;
+        }
       }
       
       // Wait to get a state message back from the physical robot saying its body
@@ -956,7 +974,11 @@ namespace Anki {
     
     void TurnInPlaceAction::Cleanup(Robot& robot)
     {
-      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_eyeShiftTag);
+      // Make sure eye shift gets removed no matter what
+      if(!_eyeShiftRemoved) {
+        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+        _eyeShiftRemoved = true;
+      }
     }
 
 #pragma mark ---- DriveStraightAction ----
@@ -1104,6 +1126,12 @@ namespace Anki {
     {
       return _compoundAction.Update(robot);
     }
+    
+    void PanAndTiltAction::Cleanup(Robot& robot)
+    {
+      _compoundAction.Cleanup(robot);
+    }
+
     
 #pragma mark ---- FacePoseAction ----
     
@@ -1559,13 +1587,7 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       
       _inPosition = IsHeadInPosition(robot);
-      
-      // Lead with the eyes
-      // Note: assuming screen is about the same x distance from the neck joint as the head cam
-      Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
-      const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
-      const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
-      _eyeShiftTag = robot.ShiftEyes(0, yPixShift, 4*IKeyFrame::SAMPLE_LENGTH_MS, true); // TODO: How to set the duration of the eye shift?
+      _eyeShiftRemoved = true;
       
       if(!_inPosition) {
         if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(_headAngle.ToFloat(),
@@ -1573,6 +1595,18 @@ namespace Anki {
         {
           result = ActionResult::FAILURE_ABORT;
         }
+        
+        // Store the half the angle differene so we know when to remove eye shift
+        _halfAngle = 0.5f*(_headAngle - robot.GetHeadAngle()).getAbsoluteVal();
+        
+        // Lead with the eyes, if not in position
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        Radians angleDiff =  robot.GetHeadAngle() - _headAngle;
+        const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
+        const f32 yPixShift = y_mm * (static_cast<f32>(ProceduralFace::HEIGHT) / (3*SCREEN_SIZE[1]));
+        _eyeShiftTag = robot.ShiftEyes(0, yPixShift, 0, true); // TODO: How to set the duration of the eye shift?
+        
+        _eyeShiftRemoved = false;
       }
       
       return result;
@@ -1584,6 +1618,20 @@ namespace Anki {
       
       if(!_inPosition) {
         _inPosition = IsHeadInPosition(robot);
+      }
+      
+      if(!_eyeShiftRemoved) {
+        // If we're not there yet but at least halfway, remove eye shift
+        if(_inPosition || NEAR(Radians(robot.GetHeadAngle()) - _headAngle, 0.f, _halfAngle))
+        {
+          PRINT_NAMED_INFO("MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
+                           "Currently at %.1fdeg, on the way to %.1fdeg, within "
+                           "half angle of %.1fdeg", RAD_TO_DEG(robot.GetHeadAngle()),
+                           _headAngle.getDegrees(), _halfAngle.getDegrees());
+
+          robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+          _eyeShiftRemoved = true;
+        }
       }
       
       // Wait to get a state message back from the physical robot saying its head
@@ -1602,7 +1650,11 @@ namespace Anki {
     
     void MoveHeadToAngleAction::Cleanup(Robot& robot)
     {
-      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_eyeShiftTag);
+      // Make sure eye shift got removed
+      if(!_eyeShiftRemoved) {
+        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_eyeShiftTag);
+        _eyeShiftRemoved = true;
+      }
     }
          
 #pragma mark ---- MoveLiftToHeightAction ----
@@ -1957,7 +2009,7 @@ namespace Anki {
           // Note that we do not make the key frame live, because we don't want it to
           // be removed after being played once!
           squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
-          _squintLayerTag = robot.GetAnimationStreamer().AddLoopingFaceLayer(squintLayer);
+          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(squintLayer);
         }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())
@@ -2010,7 +2062,7 @@ namespace Anki {
       }
       
       // Stop squinting
-      robot.GetAnimationStreamer().RemoveLoopingFaceLayer(_squintLayerTag);
+      robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag);
     }
            
 
