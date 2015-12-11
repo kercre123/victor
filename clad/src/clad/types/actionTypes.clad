@@ -6,6 +6,10 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_32 ActionConstants {
+  INVALID_TAG = 0
+}
+
 // TODO: Convert to uint_8 or int_16
 enum int_32 RobotActionType {
     COMPOUND = -2,

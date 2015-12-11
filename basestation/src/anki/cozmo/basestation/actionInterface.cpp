@@ -27,7 +27,20 @@ namespace Anki {
     IActionRunner::IActionRunner()
     {
       // Assign every action a unique tag
-      _idTag = IActionRunner::sTagCounter++;
+      if (++IActionRunner::sTagCounter == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+        ++IActionRunner::sTagCounter;
+      }
+      
+      _idTag = IActionRunner::sTagCounter;
+    }
+    
+    void IActionRunner::SetTag(u32 tag)
+    {
+      if (tag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+        PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "INVALID_TAG==%d", ActionConstants::INVALID_TAG);
+      } else {
+        _idTag = tag;
+      }
     }
     
     // NOTE: THere should be no way for Update() to fail independently of its
