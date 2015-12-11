@@ -66,47 +66,32 @@ namespace Cozmo.HubWorld {
     }
 
     private void CreateLockedButton(ChallengeData challengeData) {
-      // For each locked challenge, create 1 asteroids in each quadrant
-      // Right now we're not doing anything on locked challenge tap so this is okay.
-      int numAsteroids = 4;
 
-      for (int i = 0; i < numAsteroids; i++) {
-        CreateAsteroidInQuadrant(i % 4);
-      }
+      // Create an asteroid for this challenge
+      CreateRandomAsteroid();
 
       // Add two more in random quadrants for funsies
       for (int i = 0; i < 2; i++) {
-        CreateAsteroidInQuadrant(Random.Range(0, 4));
+        CreateRandomAsteroid();
       }
     }
 
-    private void CreateAsteroidInQuadrant(int quadrant) {
-      switch (quadrant) {
-      case 0: 
-        CreateAsteroid(-950, -500, -460, 0);
-        break;
-      case 1:
-        CreateAsteroid(-950, -500, 0, 510);
-        break;
-      case 2:
-        CreateAsteroid(500, 950, -460, 0);
-        break;
-      case 3:
-        CreateAsteroid(500, 950, 0, 510);
-        break;
-      default:
-        break;
-      }
+    private void CreateRandomAsteroid() {
+
+      float apogee = Random.Range(500f, 750f);
+      float perigee = Random.Range(750f, 1000f);
+      float orbitLength = 120f;
+      float rotationSpeed = Random.Range(10f, 30f);
+      float startingAngle = Random.Range(0f, 360f);
+      Vector3 apogeeDirection = Random.insideUnitCircle.normalized;
+      CreateAsteroid(apogee, perigee, orbitLength, rotationSpeed, startingAngle, apogeeDirection);
     }
 
-    private void CreateAsteroid(float minLocalX, float maxLocalX, float minLocalY, float maxLocalY) {
+    private void CreateAsteroid(float apogee, float perigee, float orbitLength, float rotationSpeed, float startingAngle, Vector3 apogeeDirection) {
       GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedAsteroidPrefab.gameObject, _LockedButtonContainer);
       Asteroid asteroid = newButton.GetComponent<Asteroid>();
-      newButton.transform.localPosition = new Vector3(Random.Range(minLocalX, maxLocalX),
-        Random.Range(minLocalY, maxLocalY), Random.Range(-75, 75));
 
-      asteroid.Initialize(null);
-      //buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
+      asteroid.Initialize(apogee, perigee, orbitLength, rotationSpeed, startingAngle, apogeeDirection);
     }
 
     private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {

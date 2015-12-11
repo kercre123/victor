@@ -6,59 +6,72 @@ using Random = UnityEngine.Random;
 
 public class Asteroid : MonoBehaviour {
 
-  private GameObject _Child;
+  private Transform _Child;
   private Vector3 _SpinAxis;
+  private Transform _Transform;
+
+  private float _Apogee;
+  private float _Perigee;
+  private float _OrbitLength;
+  private float _RotationSpeed;
+  private float _CurrentAngle;
+  private Quaternion _Orientation;
+
+  private float _MajorRadii;
+  private float _MinorRadii;
+  private Vector3 _OrbitCenter;
 
   private void Awake() {
 
     var index = Random.Range(0, 25);
     var prefab = Resources.Load<GameObject>("Prefabs/Asteroids/Asteroid_" + index);
 
-    _Child = (GameObject)GameObject.Instantiate(prefab);
+    var child = (GameObject)GameObject.Instantiate(prefab);
 
-    _Child.transform.SetParent(transform, false);
+    _Child = child.transform;
 
-    _Child.transform.rotation = Quaternion.LookRotation(Random.onUnitSphere, Random.onUnitSphere);
+    _Child.SetParent(transform, false);
+
+    _Child.rotation = Quaternion.LookRotation(Random.onUnitSphere, Random.onUnitSphere);
 
     _SpinAxis = Random.onUnitSphere;
+
+    _Transform = transform;
   }
 
-  private Sequence _BobbingSequence;
+  public void Initialize(float apogee, float perigee, float orbitLength, float rotationSpeed, float startingAngle, Vector3 apogeeDirection) {
+    _Apogee = apogee;
+    _Perigee = perigee;
 
-  public void Initialize(ChallengeData challengeData) {
+    float centerDistance = (_Apogee - _Perigee) * 0.5f;
 
-    StartCoroutine(DelayedBobAnimation());
-  }
+    _MajorRadii = _Apogee - centerDistance;
 
-  private void OnDestroy() {
-    if (_BobbingSequence != null) {
-      _BobbingSequence.Kill();
-    }
-  }
+    _MinorRadii = Mathf.Sqrt(_MajorRadii * _MajorRadii - centerDistance * centerDistance);
 
-  private IEnumerator DelayedBobAnimation() {
-    float delay = Random.Range(0f, 1f);
-    yield return new WaitForSeconds(delay);
+    _OrbitLength = orbitLength;
+    _RotationSpeed = rotationSpeed;
+    _CurrentAngle = startingAngle;
 
-    // Start a bobbing animation that plays forever
-    float duration = Random.Range(3.5f, 5.5f);
-    float yOffset = Random.Range(10f, 25f);
-    yOffset = Random.Range(0f, 1f) > 0.5f ? yOffset : -yOffset;
-    float xOffset = Random.Range(10f, 25f);
-    xOffset = Random.Range(0f, 1f) > 0.5f ? xOffset : -xOffset;
-    _BobbingSequence = DOTween.Sequence();
-    _BobbingSequence.SetLoops(-1, LoopType.Yoyo);  
-    _BobbingSequence.Append(transform.DOLocalMove(new Vector3(transform.localPosition.x - xOffset,
-      transform.localPosition.y - yOffset,
-      transform.localPosition.z), duration).SetEase(Ease.InOutSine));
-    _BobbingSequence.Play();
+    _Orientation = Quaternion.FromToRotation(Vector3.up, apogeeDirection);
+    _OrbitCenter = apogeeDirection * centerDistance;
   }
 
   private void Update() {
-    var angle = Mathf.LerpAngle(0f, 15f, Time.deltaTime);
+    // apply spin
+    var spinAngle = Mathf.LerpAngle(0f, _RotationSpeed, Time.deltaTime);
+    _Child.Rotate(_SpinAxis, spinAngle);
 
-    transform.Rotate(_SpinAxis, angle);
+    var orbitDeltaAngle = Mathf.LerpAngle(0f, 360 / _OrbitLength, Time.deltaTime);
 
+    _CurrentAngle += orbitDeltaAngle;
+    if (_CurrentAngle > 360) {
+      _CurrentAngle -= 360;
+    }
+
+    Vector3 position = new Vector3(_MajorRadii * Mathf.Cos(_CurrentAngle * Mathf.Deg2Rad), _MinorRadii * Mathf.Sin(_CurrentAngle * Mathf.Deg2Rad), 0);
+
+    _Transform.localPosition = _Orientation * position + _OrbitCenter;    
   }
 }
 

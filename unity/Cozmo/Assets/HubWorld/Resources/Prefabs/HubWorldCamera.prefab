@@ -77,7 +77,7 @@ Camera:
     height: 1
   near clip plane: .300000012
   far clip plane: 3000
-  field of view: 40
+  field of view: 50
   orthographic: 0
   orthographic size: 540
   m_Depth: 0
@@ -112,6 +112,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _WorldCamera: {fileID: 2059894}
+  _FrustrumWidth: 2000
 --- !u!124 &12446872
 Behaviour:
   m_ObjectHideFlags: 1
