@@ -182,7 +182,6 @@ namespace FaceTracking {
         return false;
       }
       float dist = Vector3.Distance(CurrentRobot.WorldPosition, toCheck.WorldPosition);
-      Debug.Log(string.Format("Current Distance : {0}", dist));
       return (dist < DistanceMax && dist > DistanceMin);
     }
 
@@ -190,8 +189,11 @@ namespace FaceTracking {
     }
 
     // Returns the name of the slide that corresponds to the current state
+    // This is currently set up to expect only one full success to end the challenge.
+    // If we want multiple successes we'll need one more alternate for Lean In.
+    // As well as an action for Cozmo to intentionally break eye contact and lose a face.
     public void ShowNextSlide() {
-      if (Progress <= 0.0f) {
+      if (StepsCompleted <= 0.0f) {
         if (AttemptsLeft == MaxAttempts) {
           _CurrentSlideName = kLeanIn;
         }

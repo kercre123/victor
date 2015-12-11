@@ -9,7 +9,7 @@ namespace FaceTracking {
 
     #region Tunable values
 
-    private float _UnseenForgivenessSeconds = 1.0f;
+    private float _UnseenForgivenessSeconds = 2.5f;
 
     #endregion
     
