@@ -26,6 +26,8 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "clad/types/actionTypes.h"
+
 #include <vector>
 
 namespace Anki
@@ -341,8 +343,7 @@ namespace Anki
       ObjectID _selectedObject;
 
       // For tracking, keep track of the id of the actions we are doing
-      u32 _lastTrackingActionTag = 0;
-      bool _hasTrackingAction = false;
+      u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
                   
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;
