@@ -73,8 +73,8 @@ class ToneStreamer(AnimationStreamer):
                     self.sendSamples(samples)
                 
     def sendSamples(self, samples):
-        audioSamples = Anki.Cozmo.AnimKeyFrame.AudioSample(samples)
-        self.send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSample=audioSamples))
+        audioSamples = Anki.Cozmo.AnimKeyFrame.AudioSampleEP1(samples)
+        self.send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSampleEP1=audioSamples))
 
     def __init__(self):
         self.tonerator = None

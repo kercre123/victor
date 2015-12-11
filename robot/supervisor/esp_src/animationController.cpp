@@ -316,8 +316,8 @@ namespace AnimationController {
         
         // If the next message is not audio, then delete it until it is.
         while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
-              msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
-          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %x instead). Dumping message. (FYI AudioSample_ID = %x)\r\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
+              msgID != RobotInterface::EngineToRobot::Tag_animAudioSampleEP1) {
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got %x instead). Dumping message. (FYI AudioSample_ID = %x)\r\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSampleEP1);
           GetFromBuffer(&msg);
           msgID = PeekBufferTag();
         }
@@ -329,7 +329,7 @@ namespace AnimationController {
           _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
           return false;
         }
-        else if (msgID == RobotInterface::EngineToRobot::Tag_animAudioSample)
+        else if (msgID == RobotInterface::EngineToRobot::Tag_animAudioSampleEP1)
         {
           u8 tag;
           GetFromBuffer(&tag, 1); // Get the audio sample header out
@@ -396,7 +396,7 @@ namespace AnimationController {
       
       switch(msgID)
       {
-        case RobotInterface::EngineToRobot::Tag_animAudioSample:
+        case RobotInterface::EngineToRobot::Tag_animAudioSampleEP1:
         case RobotInterface::EngineToRobot::Tag_animAudioSilence:
         {
           nextAudioFrameFound = true;
