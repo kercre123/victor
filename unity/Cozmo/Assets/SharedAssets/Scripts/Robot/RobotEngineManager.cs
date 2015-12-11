@@ -52,6 +52,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
   public event Action<AudioCallbackMarker> ReceivedAudioCallbackMarker;
   public event Action<AudioCallbackComplete> ReceivedAudioCallbackComplete;
+  public event Action<AudioCallbackError> ReceivedAudioCallbackError;
 
   #endregion
 
@@ -307,6 +308,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
       ReceivedSpecificMessage(message.AudioCallbackComplete);
+      break;
+    case G2U.MessageEngineToGame.Tag.AudioCallbackError:
+      ReceivedSpecificMessage(message.AudioCallbackError);
       break;
     case G2U.MessageEngineToGame.Tag.InitDebugConsoleVarMessage:
       ReceivedSpecificMessage(message.InitDebugConsoleVarMessage);
@@ -601,6 +605,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackComplete message) {
     if (ReceivedAudioCallbackComplete != null) {
       ReceivedAudioCallbackComplete(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackError message) {
+    if (ReceivedAudioCallbackComplete != null) {
+      ReceivedAudioCallbackError(message);
     }
   }
 
