@@ -50,31 +50,6 @@
       "Name": "AriaLine2",
       "Id": 2,
       "Sequencial": true,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
-          "LineKey": "MotionDetectionIntro.Node 2",
-          "Speaker": "Aria",
-          "IsRight": false
-        },
-        {
-          "$type": "ScriptedSequences.Actions.WaitAction, Assembly-CSharp",
-          "TimeInSeconds": 15.0,
-          "BlockInput": true,
-          "AllowSkipAfterDelay": true,
-          "SkipDelayInSeconds": 0.0
-        }
-      ],
-      "ExitConditions": []
-    },
-    {
-      "Name": "AriaLine3",
-      "Id": 3,
-      "Sequencial": true,
       "Final": true,
       "FailOnError": false,
       "ExitOnActionsComplete": true,
@@ -82,7 +57,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.DisplayConversationLine, Assembly-CSharp",
-          "LineKey": "MotionDetectionIntro.Node 3",
+          "LineKey": "MotionDetectionIntro.Node 2",
           "Speaker": "Aria",
           "IsRight": false
         },
