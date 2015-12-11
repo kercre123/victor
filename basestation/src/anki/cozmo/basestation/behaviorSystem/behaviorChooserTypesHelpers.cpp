@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviorSystem/behaviorchooserTypesHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "util/enums/stringToEnumMapper.hpp"
 
 
@@ -32,4 +32,3 @@ BehaviorChooserType BehaviorChooserTypeFromString(const char* inString)
 
 } // namespace Cozmo
 } // namespace Anki
-
