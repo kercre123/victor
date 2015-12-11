@@ -64,7 +64,7 @@ namespace Cozmo {
     // Actual streaming occurs on calls to Update().
     u8 SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1);
     
-    u8 SetStreamingAnimation(Animation* anim, u32 numLoops = 1);
+    u8 SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops = 1);
     
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.

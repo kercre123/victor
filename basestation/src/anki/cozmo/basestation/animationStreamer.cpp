@@ -52,10 +52,10 @@ namespace Cozmo {
       return 0;
     }
     
-    return SetStreamingAnimation(_animationContainer.GetAnimation(name), numLoops);
+    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops);
   }
   
-  u8 AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
   {
     _streamingAnimation = anim;
     
