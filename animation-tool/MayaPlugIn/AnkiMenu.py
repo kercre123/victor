@@ -10,7 +10,7 @@ from operator import itemgetter
 #In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
 
 kPluginCmdName = "AnkiAnimExport"
-#something like /Users/mollyjameson/cozmo-game/lib/anki/products-cozmo-assets/animations
+#something like ~/cozmo-game/lib/anki/products-cozmo-assets/animations
 g_AnkiExportPath = ""
 g_PrevMenuName = ""
 g_ProceduralFaceKeyFrames = []
@@ -246,8 +246,12 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val,frameNumbe
 def ExportAnkiAnim(item):
     global g_AnkiExportPath;
     print "AnkiAnimExportStarted..."
+    #Check if we've set something before this session, use a maya.env var or force dialog
     if( g_AnkiExportPath == ""):
-        SetAnkiExportPath("Default");
+        environment_path = mel.eval("getenv ANKI_ANIM_EXPORT_PATH")
+        g_AnkiExportPath = environment_path
+        if( g_AnkiExportPath == ""):
+            SetAnkiExportPath("Default")
     global ANIM_FPS
     global MAX_FRAMES
     global DATA_NODE_NAME
@@ -367,7 +371,7 @@ class scriptedCommand(OpenMayaMPx.MPxCommand):
     # Invoked when the command is run. ( Command so can be integrated with other scripts. )
     def doIt(self,argList):
         print "Anki Plugin called!"
-        ExportAnkiAnim()
+        ExportAnkiAnim(True)
 
 # Creator
 def cmdCreator():
