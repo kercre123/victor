@@ -71,10 +71,10 @@ namespace Anki {
       // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
       virtual u8 GetMovementTracksToIgnore() const override
       {
-        u8 ignoredTracks = IAction::GetMovementTracksToIgnore();
-        if (_useManualSpeed)
+        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        if (!_useManualSpeed)
         {
-          ignoredTracks &= ~((uint8_t)AnimTrackFlag::BODY_TRACK);
+          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
         }
         return ignoredTracks;
       }
@@ -576,10 +576,10 @@ namespace Anki {
       // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
       virtual u8 GetMovementTracksToIgnore() const override
       {
-        u8 ignoredTracks = IAction::GetMovementTracksToIgnore();
-        if (_useManualSpeed)
+        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        if (!_useManualSpeed)
         {
-          ignoredTracks &= ~((uint8_t)AnimTrackFlag::BODY_TRACK);
+          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
         }
         return ignoredTracks;
       }
