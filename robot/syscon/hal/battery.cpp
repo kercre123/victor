@@ -17,10 +17,11 @@ const Fixed VEXT_SCALE  = TO_FIXED(2.0); // Cozmo 4.1 voltage divider
 const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
 //const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
-//const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.70); // V
+const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
+
 //const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
 
-//const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
+const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
 // Read battery dead state N times before we believe it is dead
 //const u8 BATTERY_DEAD_CYCLES = 60;
@@ -149,21 +150,23 @@ void Battery::update()
     case ANALOG_V_BAT_SENSE:
       g_dataToHead.VBat = calcResult(VBAT_SCALE);
       startADCsample(ANALOG_V_EXT_SENSE);
+
+      // after 1 minute of low battery, turn off
+      static const int LOW_BAT_TIME = 1000 / 20; // 1 minute
+      static int lowBatTimer = 0;
+      if (g_dataToHead.VBat < VBAT_CHGD_LO_THRESHOLD) {
+        if (++lowBatTimer >= LOW_BAT_TIME) {
+          powerOff();
+        }
+      } else {
+        lowBatTimer = 0;
+      }
+    
       break ;
 
     case ANALOG_V_EXT_SENSE:
       static int ground_short = 0;
       uint32_t raw = NRF_ADC->RESULT;
-      
-      static int off_charger = 0;
-      if (raw < 0x80) {
-        if (off_charger++ >= 3600) {
-          powerOff();
-          for (;;) ;
-        }
-      } else {
-        off_charger = 0;
-      }
 
       if (raw < 0x30) {
         if (ground_short++ >= 40) {
@@ -175,6 +178,8 @@ void Battery::update()
       }
     
       g_dataToHead.VExt = calcResult(VEXT_SCALE);
+      onContacts = g_dataToHead.VExt > VEXT_DETECT_THRESHOLD;
+
       startADCsample(ANALOG_CLIFF_SENSE);
       break ;
     
