@@ -3,7 +3,7 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, socket, threading, time, select
+import sys, os, socket, threading, time, select, math, muencode
 
 if sys.version_info.major < 3:
     sys.stdout.write("Python2.x is depricated\r\n")
@@ -25,6 +25,7 @@ from clad.robotInterface.messageEngineToRobot import Anki
 from clad.robotInterface.messageRobotToEngine import Anki as _Anki
 Anki.update(_Anki.deep_clone())
 RobotInterface = Anki.Cozmo.RobotInterface
+AnimKeyFrame = Anki.Cozmo.AnimKeyFrame
 
 class CozmoCLI(IDataReceiver):
     "A class for managing the CLI REPL"
@@ -64,20 +65,85 @@ class CozmoCLI(IDataReceiver):
         
 
     def send(self, msg):
-        return self.transport.SendData(True, False, self.robot, msg.pack())
+        self.transport.SendData(True, False, self.robot, msg.pack())
 
     def helpFtn(self, *args):
         "Prints out help text on CLI functions"
-        sys.stdout.write("Cozmo CLI:\n")
-        for cmd, ftn in self.functions.items():
-            sys.stdout.write("\t%s:\t%s\n" % (cmd, ftn.__doc__))
-        sys.stdout.write("^D to end REPL\n\n")
+        sys.stdout.write("TODO Implement help function :-(\r\n")
         return True
 
     def exitFtn(self, *args):
         "Exit the REPL"
         raise EOFError
         return False
+        
+    def sendTone(self, *args):
+        "Sends a tone to the animaation controller"
+        SAMPLES_PER_SECOND  = 7440 * 4
+        SAMPLES_PER_MESSAGE = Anki.Cozmo.AnimConstants.AUDIO_SAMPLE_SIZE
+        try:
+            freq = float(eval(args[0]))
+        except:
+            sys.stderr.write("tone requres a floating point frequencey argument\r\n")
+            return False
+        sys.stdout.write("Tone frequency {:d}Hz\r\n".format(int(freq)))
+        try:
+            duration = float(eval(args[1]))
+        except:
+            duration = SAMPLES_PER_MESSAGE / SAMPLES_PER_SECOND
+        def ToneGenerator(period, length):
+            p = 0.0
+            while True:
+                samples = []
+                while len(samples) < length:
+                    samples.append(muencode.encodeSample(int((math.sin(p))*0x200)))
+                    p += 2*math.pi/period
+                yield samples
+        def soundGenerator(length):
+            raw = open("beethoven.mu", "rb")
+            while True:
+                yield raw.read(length)
+        def SawtoothGenerator(length):
+            phase = 0
+            while True:
+                samples = []
+                while len(samples) < length:
+                    samples.append(phase)
+                    if phase < 255:
+                        phase += 1
+                    else:
+                        phase = 0;
+                yield samples
+        def SquareGenerator(period, length):
+            phase = 0
+            while True:
+                samples = []
+                while len(samples) < length:
+                    if phase < period/2:
+                        samples.append(0)
+                    else:
+                        samples.append(0x3f)
+                    if phase < period-1:
+                        phase += 1
+                    else:
+                        phase = 0
+                yield samples
+        #tonerator = ToneGenerator(SAMPLES_PER_SECOND / freq, SAMPLES_PER_MESSAGE)
+        #tonerator = soundGenerator(SAMPLES_PER_MESSAGE)
+        #tonerator = SawtoothGenerator(SAMPLES_PER_MESSAGE)
+        tonerator = SquareGenerator(round(freq), SAMPLES_PER_MESSAGE)
+        buffersSent = 1
+        self.send(RobotInterface.EngineToRobot(animAudioSample=AnimKeyFrame.AudioSample(tonerator.send(None))))
+        self.send(RobotInterface.EngineToRobot(animStartOfAnimation=AnimKeyFrame.StartOfAnimation(0xaa)))
+        sentTime = SAMPLES_PER_MESSAGE / SAMPLES_PER_SECOND
+        while sentTime < duration:
+            sentTime += SAMPLES_PER_MESSAGE / SAMPLES_PER_SECOND
+            sys.stdout.write("{:f} ({:f})\r\n".format(sentTime, duration))
+            self.send(RobotInterface.EngineToRobot(animAudioSample=AnimKeyFrame.AudioSample(tonerator.send(None))))
+            buffersSent += 1
+        self.send(RobotInterface.EngineToRobot(animEndOfAnimation=AnimKeyFrame.EndOfAnimation()))
+        sys.stdout.write("Sent {} buffers, {} total samples\r\n".format(buffersSent, buffersSent*SAMPLES_PER_MESSAGE))
+        return True
 
     def REP(self):
         "Read, eval, print"
@@ -89,6 +155,8 @@ class CozmoCLI(IDataReceiver):
                 return self.helpFtn(*args[1:])
             elif args[0] == 'exit':
                 return self.exitFtn(*args[1:])
+            elif args[0] == 'tone':
+                return self.sendTone(*args[1:])
             elif not hasattr(RobotInterface.EngineToRobot, args[0]):
                 sys.stderr.write("Unrecognized command \"{}\", try \"help\"\r\n".format(args[0]))
                 return False
@@ -122,20 +190,6 @@ class CozmoCLI(IDataReceiver):
             else:
                 if ret not in (True, False, None):
                     sys.stdout.write("\t%s\n" % str(ret))
-
-    def DriveWheels(self, *args):
-        "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
-        try:
-            lws = float(eval(args[0]))
-        except:
-            sys.stderr.write("Drive wheels requires at least one floating point number argument\r\n")
-            return False
-        try:
-            rws = float(eval(args[1]))
-        except:
-            rws = lws
-        self.send(RobotInterface.EngineToRobot(drive=RobotInterface.DriveWheels(lws, rws)))
-        return True
         
 if __name__ == '__main__':
     transport = UDPTransport()

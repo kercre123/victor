@@ -41,7 +41,7 @@ namespace Anki {
       extern "C"
       {
         // Pump face buffer data out to OLED
-        u32 PumpScreenData();
+        int PumpScreenData(uint8_t* dest);
         
         // Display text on the screen until turned off
         void FacePrintf(const char *format, ...);

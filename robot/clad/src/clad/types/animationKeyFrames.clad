@@ -20,18 +20,23 @@ enum uint_8 AnimTrackFlag {
 
 enum int_32 AnimConstants
 {
+  AUDIO_SAMPLE_RATE     = 22320,
   AUDIO_SAMPLE_SIZE     = 800,
-  AUDIO_BYTES_PER_DROP  = 4,
-  SCREEN_BYTES_PER_DROP = 4,
+  AUDIO_SAMPLE_SIZE_EP1 = 744,
   MAX_FACE_FRAME_SIZE   = 1024,
   KEYFRAME_BUFFER_SIZE  = 16384,
 }
 
 namespace AnimKeyFrame {
 
-  message AudioSample // Don't touch this definition, AudioSample messages are processed as raw bytes on the robot
+  message AudioSample
   {
     uint_8 sample[800] // AUDIO_SAMPLE_SIZE above
+  }
+
+  message AudioSampleEP1
+  {
+    uint_8 sample[744] // AUDIO_SAMPLE_SIZE_EP1 above
   }
 
   message AudioSilence

@@ -20,8 +20,8 @@
 extern bool i2spiSynchronizedCallback(uint32 param);
 
 // Forward declaration
-uint32 PumpAudioData(void);
-uint32 PumpScreenData(void);
+bool PumpAudioData(uint8_t* dest);
+int  PumpScreenData(uint8_t* dest);
 
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
@@ -144,17 +144,21 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   }
 
   DropToRTIP drop;
-  //uint32 isocData;
   os_memset(&drop, 0, DROP_TO_RTIP_SIZE);
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
-  /*isocData = PumpAudioData();
-  os_memcpy(&(drop.audioData), &isocData, MAX_AUDIO_BYTES_PER_DROP);
-  isocData = PumpScreenData();
-  os_memcpy(&drop.screenData, &isocData, MAX_SCREEN_BYTES_PER_DROP);
-  drop.droplet = screenDataValid | audioDataValid;*/
-  drop.payloadLen = length;
-  if (payload != NULL) os_memcpy(&(drop.payload), payload, length);
+  if (PumpAudioData(drop.audioData)) drop.droplet |= audioDataValid;
+  const int screenInd = PumpScreenData(drop.screenData);
+  if (screenInd == (screenInd & 0xff))
+  {
+    drop.droplet  |= screenDataValid;
+    drop.screenInd = screenInd & 0xff;
+  }
+  if (payload != NULL)
+  {
+    os_memcpy(&(drop.payload), payload, length);
+    drop.payloadLen = length;
+  }
   // Copy into the DMA buffer
   uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
   if (((DMA_BUF_SIZE/2) - outgoingPhase) >= (DROP_TO_RTIP_SIZE/2)) // Whole drop fits here

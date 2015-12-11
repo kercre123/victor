@@ -1,0 +1,76 @@
+/** Logging / debugging types and enums
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+
+enum int_8 LogLevel
+{
+  ANKI_LOG_LEVEL_DEBUG = -1,
+  ANKI_LOG_LEVEL_PRINT = 0,
+  ANKI_LOG_LEVEL_INFO,
+  ANKI_LOG_LEVEL_EVENT,
+  ANKI_LOG_LEVEL_WARN,
+  ANKI_LOG_LEVEL_ASSERT,
+  ANKI_LOG_LEVEL_ERROR,
+  ANKI_LOG_LEVEL_NUMLEVELS,
+}
+
+/// Enums to define things to trace from the RTIP.
+enum uint_16 RtipTrace
+{
+  RTIP_dummy_trace, // <An example put optional format string in angle brackets>
+  Invalid_CLAD_message, // <%02x size %d, got %d bytes>
+  HAL_init_failed,
+  Messages_init_failed,
+  Localization_init_failed,
+  PathFollower_init_failed,
+  BackpackLightController_init_failed,
+  DockingController_init_failed,
+  PickAndPlaceController_init_failed,
+  LiftController_init_failed,
+  HeadController_init_failed,
+  Robot_radio_connected
+  // Add trace enums with friendly names here.
+}
+
+/// These traces replace printing text with a much lower level of overhead
+message PrintTrace
+{
+  RtipTrace name,
+  LogLevel  level,
+  int_32    value[uint_8:15], // We can use type casts to pack other things in here
+}
+
+message MainCycleTimeError
+{
+  uint_32 numMainTooLongErrors,
+  uint_32 avgMainTooLateTime,
+  uint_32 numMainTooLateErrors,
+  uint_32 avgMainTooLongTime,
+}
+
+message TimeProfileStat
+{
+  uint_32 avg,
+  uint_32 max,
+  bool    isHeader,
+  string  profName,
+}
+
+message DataDump
+{
+  uint_32 id,
+  uint_8  data[uint_8],
+}
+
+message PrintText
+{
+  LogLevel level,
+  string   text
+}
+
+} // namespace RobotInterface
+} // namespace Cozmo
+} // namespace Anki

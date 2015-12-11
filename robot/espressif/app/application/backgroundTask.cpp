@@ -13,6 +13,7 @@ extern "C" {
 }
 #include "face.h"
 #include "upgradeController.h"
+#include "animationController.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -64,6 +65,18 @@ void Exec(os_event_t *event)
       CheckForUpgrades();
       break;
     }
+    case 2:
+    {
+      static u32 lastAnimStateTime = 0;
+      const u32 now = system_get_time();
+      if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
+      {
+        if (AnimationController::SendAnimStateMessage() == RESULT_OK)
+        {
+          lastAnimStateTime = now;
+        }
+      }
+    }
     // Add new "long execution" tasks as switch cases here.
     default:
     {
@@ -94,10 +107,15 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;
   }
+  else if (Anki::Cozmo::AnimationController::Init() != Anki::RESULT_OK)
+  {
+    os_printf("\tCouldn't initalize animation controller\r\n");
+    return -2;
+  }
   else if (system_os_post(backgroundTask_PRIO, 0, 0) == false)
   {
     os_printf("\tCouldn't post background task initalization\r\n");
-    return -1;
+    return -3;
   }
   else
   {

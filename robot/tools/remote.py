@@ -3,123 +3,110 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, socket, threading, time, select
-import pygame
+import sys, os, time, pygame
+sys.path.insert(0, os.path.join("tools"))
+import robotInterface, fota, animationStreamer
 
-TOOLS_DIR = os.path.join("tools")
-CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
-
-#if not os.path.isdir(TOOLS_DIR):
-#    sys.exit("Cannot find tools directory \"{}\". Are you running from the base robot directory?".format(TOOLS_DIR))
-#elif not os.path.isdir(CLAD_DIR):
-#    sys.exit("Cannot find CLAD directory \"{}\". Are you running from the base robot directory?".format(CLAD_DIR))
-
-sys.path.insert(0, TOOLS_DIR)
-sys.path.insert(0, CLAD_DIR)
-
-from ReliableTransport import *
-
-from clad.robotInterface.messageEngineToRobot import Anki
-from clad.robotInterface.messageRobotToEngine import Anki as _Anki
-Anki.update(_Anki.deep_clone())
-Cozmo = Anki.Cozmo
-RobotInterface = Anki.Cozmo.RobotInterface
-
-class CozmoRemote(IDataReceiver):
-    "A class for managing the CLI REPL"
-
-    def __init__(self, unreliableTransport, robotAddress):
-        sys.stdout.write("Connecting to robot at: %s\n" % repr(robotAddress))
-        unreliableTransport.OpenSocket()
-        self.transport = ReliableTransport(unreliableTransport, self)
-        self.robot = robotAddress
-        self.transport.Connect(robotAddress)
-        self.transport.start()
-        self.connected = False
-
-    def __del__(self):
-        self.transport.KillThread()
-
-    def OnConnectionRequest(self, sourceAddress):
-        raise Exception("CozmoCLI wasn't expecing a connection request")
-
-    def OnConnected(self, sourceAddress):
-        sys.stdout.write("Connected to robot at %s\r\n" % repr(sourceAddress))
-        self.connected = True
-
-    def OnDisconnected(self, sourceAddress):
-        sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
-        self.connected = False
-
-    def ReceiveData(self, buffer, sourceAddress):
-        msg = RobotInterface.RobotToEngine.unpack(buffer)
-        if msg.tag == msg.Tag.printText:
-            sys.stdout.write("ROBOT: " + msg.printText.text)
-        
-
-    def send(self, msg):
-        return self.transport.SendData(True, False, self.robot, msg.pack())
-
+class Remote:
+    def __init__(self):
+        self.upgrader = None
+        self.animStreamer = None
+        robotInterface.Init()
+        pygame.init()
+        self.run()
+    
     def pwm(self, params):
         "Send a DriveWheels message to the robot. Args: <left wheel speed> <right wheel speed>"
-        if self.connected:
-            self.send(RobotInterface.EngineToRobot(setRawPWM=Cozmo.RawPWM(params)))
-
-def RemoteGame():
-    """Container for remote "game" under pygame."""
-    PWM_VAL = 20000
+        if robotInterface.GetState() == robotInterface.ConnectionState.connected:
+            robotInterface.Send(robotInterface.RI.EngineToRobot(setRawPWM=robotInterface.Anki.Cozmo.RawPWM(params)))
     
-    pygame.init()
-    screen_size = (320, 320)
-    background = (207, 176, 123)
-    screen = pygame.display.set_mode(screen_size)
-    
-    transport = UDPTransport()
-    remote = CozmoRemote(transport, ("172.31.1.1", ROBOT_PORT))
-    
-    cmd = (0, 0, 0, 0)
-    lastCmdTime = 0
-    running = True
-    while running:
-        event = pygame.event.poll()
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.scancode == 16: # q
+    def run(self):
+        """Container for remote "game" under pygame."""
+        PWM_VAL = 20000
+        PWM_JOG = 0x3fff
+        
+        robotInterface.Connect()
+        
+        screen_size = (640, 480)
+        background = (207, 176, 123)
+        screen = pygame.display.set_mode(screen_size)
+        
+        cmd = None
+        lastCmdTime = 0
+        lastJogTime = None
+        running = True
+        while running:
+            try:
+                if robotInterface.GetState() == robotInterface.ConnectionState.disconnected:
+                    running = False
+                event = pygame.event.poll()
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    key = pygame.key.get_pressed()
+                    lastJogTime = None
+                    cmd = None
+                    if key[pygame.K_q]: # q
+                        running = False
+                    elif key[pygame.K_UP]: # up arrow
+                        cmd = (+PWM_VAL, +PWM_VAL, 0, 0)
+                    elif key[pygame.K_DOWN]: # down arrow
+                        cmd =(-PWM_VAL, -PWM_VAL, 0, 0)
+                    elif key[pygame.K_LEFT]: # left arrow
+                        cmd =(-PWM_VAL, +PWM_VAL, 0, 0)
+                    elif key[pygame.K_RIGHT]: # right arrow
+                        cmd =(+PWM_VAL, -PWM_VAL, 0, 0)
+                    elif key[pygame.K_w]: # W
+                        cmd =(0, 0, PWM_VAL, 0)
+                    elif key[pygame.K_s]: # S
+                        cmd =(0, 0, -PWM_VAL, 0)
+                    elif key[pygame.K_e]: # E
+                        cmd =(0, 0, 0, PWM_VAL)
+                    elif key[pygame.K_d]: # D
+                        cmd =(0, 0, 0, -PWM_VAL)
+                    elif key[pygame.K_j]: # J
+                        lastJogTime = time.time()
+                    elif key[pygame.K_t]: # T
+                        if self.animStreamer is None:
+                            self.animStreamer = animationStreamer.ToneStreamer()
+                            self.animStreamer.start(800)
+                        else:
+                            self.animStreamer.stop()
+                            time.sleep(0.1)
+                            self.animStreamer = None
+                    elif key[pygame.K_u]:
+                        self.upgrader = fota.Upgrader()
+                        fota.UpgradeAll(self.upgrader, wifiImage="espressif.bin", rtipImage="robot.safe", bodyImage="syscon.safe")
+                    else:
+                        sys.stdout.write("Key = {}\r\n".format(event.scancode))
+                    lastCmdTime = 0
+                elif event.type == pygame.KEYUP and cmd is not None:
+                    cmd = (0, 0, 0, 0)
+                    lastCmdTime = 0
+                
+                if self.upgrader is None:
+                    now = time.time()
+                    if lastJogTime is not None:
+                        if (now - lastJogTime) < 1.0:
+                            cmd = (PWM_JOG,)*4
+                        elif (now - lastJogTime) < 2.0:
+                            cmd = (-PWM_JOG,)*4
+                        else:
+                            lastJogTime = now
+                    
+                    if now - lastCmdTime > 0.100 and cmd is not None:
+                        self.pwm(cmd)
+                        lastCmdTime = now
+            
+                screen.fill((0, 255, 0) if robotInterface.GetState() == robotInterface.ConnectionState.connected else (255, 0, 0))
+                pygame.display.flip()
+            except Exception as e:
                 running = False
-            elif event.scancode == 72: # up arrow
-                cmd = (+PWM_VAL, +PWM_VAL, 0, 0)
-            elif event.scancode == 80: # down arrow
-                cmd =(-PWM_VAL, -PWM_VAL, 0, 0)
-            elif event.scancode == 75: # left arrow
-                cmd =(-PWM_VAL, +PWM_VAL, 0, 0)
-            elif event.scancode == 77: # right arrow
-                cmd =(+PWM_VAL, -PWM_VAL, 0, 0)
-            elif event.scancode == 17: # W
-                cmd =(0, 0, PWM_VAL, 0)
-            elif event.scancode == 31: # S
-                cmd =(0, 0, -PWM_VAL, 0)
-            elif event.scancode == 18: # E
-                cmd =(0, 0, 0, PWM_VAL)
-            elif event.scancode == 32: # D
-                cmd =(0, 0, 0, -PWM_VAL)
-            else:
-                sys.stdout.write("Key = {}\r\n".format(event.scancode))
-            lastCmdTime = 0
-        elif event.type == pygame.KEYUP:
-            cmd = (0, 0, 0, 0)
-            lastCmdTime = 0
+                sys.stderr.write(str(e) + "\r\n")
         
-        now = time.time()
-        if now - lastCmdTime > 0.100:
-            remote.pwm(cmd)
-            lastCmdTime = now
-        
-        screen.fill((0, 255, 0) if remote.connected else (255, 0, 0))
-        pygame.display.flip()
-    
-    remote.pwm((0, 0, 0, 0))
-    remote.transport.KillThread()
+        self.pwm((0, 0, 0, 0))
+        robotInterface.Die()
+
 
 if __name__ == '__main__':
-    RemoteGame()
+    Remote()

@@ -4,7 +4,7 @@ Firmware over the air upgrade controller for loading new firmware images onto ro
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
-import sys, os, socket, threading, time, select, hashlib, struct
+import sys, os, time, hashlib, struct
 
 USAGE = """
 Upgrade firmware:
@@ -20,77 +20,21 @@ Any number of pairs of addresses and files may be specified.
 
 """.format(exe=sys.argv[0])
 
-if sys.version_info.major < 3:
-    sys.exit("Cozmo CLI only works with python3+")
+sys.path.insert(0, os.path.join("tools"))
+import robotInterface
+RI = robotInterface.RI
 
-TOOLS_DIR = os.path.join("tools")
-CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
+class Upgrader:
+    "robotInterface client to control the firmwre upgrade transmission"
 
-if not os.path.isdir(TOOLS_DIR):
-    sys.exit("Cannot find tools directory \"{}\". Are you running from the base robot directory?".format(TOOLS_DIR))
-elif not os.path.isdir(CLAD_DIR):
-    sys.exit("Cannot find CLAD directory \"{}\". Are you running from the base robot directory? Have you generated python clad?".format(CLAD_DIR))
-
-sys.path.insert(0, TOOLS_DIR)
-sys.path.insert(0, CLAD_DIR)
-
-from ReliableTransport import *
-
-from clad.robotInterface.messageEngineToRobot import Anki
-from clad.robotInterface.messageRobotToEngine import Anki as _Anki
-Anki.update(_Anki.deep_clone())
-RobotInterface = Anki.Cozmo.RobotInterface
-
-DEFAULT_ROBOT_ADDRESS = ("172.31.1.1", 5551)
-
-class Upgrader(IDataReceiver):
-    "ReliableTransport client to control the firmwre upgrade transmission"
-    
-    def __init__(self, robotAddress):
-        sys.stdout.write("Connecting to robot at {}:{}\r\n".format(*robotAddress))
-        self.robot = robotAddress
-        self.acked = False
-        self.connected = False
-        ut = UDPTransport(logInPackets="fotaInPackets.bin")
-        ut.OpenSocket()
-        self.transport = ReliableTransport(ut, self)
-        self.transport.Connect(self.robot)
-        self.transport.start()
-
-    def __del__(self):
-        self.transport.KillThread()
-
-    def OnConnectionRequest(self, sourceAddress):
-        "Callback when a conenction request is received"
-        raise Exception("Upgrader wasn't expecing a connection request")
-
-    def OnConnected(self, sourceAddress):
-        "Callback when robot accepts connection"
-        sys.stdout.write("Connected to robot at %s\r\n" % repr(sourceAddress))
-        self.connected = True
-
-    def OnDisconnected(self, sourceAddress):
-        "Callback if robot disconnects"
-        sys.stdout.write("Lost connection to robot at %s\r\n" % repr(sourceAddress))
-        self.connected = False
-        self.transport.KillThread()
-        exit()
-
-    def ReceiveData(self, buffer, sourceAddress):
-        "Callback for received messages from robot"
-        msg = RobotInterface.RobotToEngine.unpack(buffer)
-        if msg.tag == msg.Tag.printText:
-            sys.stdout.write("ROBOT: " + msg.printText.text)
-        elif msg.tag == msg.Tag.flashWriteAck:
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            self.acked = True
-        else:
-            sys.stderr.write("Upgrader received unexpected message from robot:\r\n\t{}\r\n".format(str(msg)))
+    def recieveAck(self, msg):
+        sys.stdout.write(".")
+        sys.stdout.flush()
+        self.acked = True
 
     def send(self, msg):
         "Send a message to the robot"
-        return self.transport.SendData(True, False, self.robot, msg.pack())
+        return robotInterface.Send(msg)
 
     def sendAndWait(self, msg):
         "Sends a flash command message and waits for a flash ack response"
@@ -119,65 +63,71 @@ class Upgrader(IDataReceiver):
             fw = struct.pack('i', fwSize) + fw
             fwSize = len(fw)
             # Wait for connection
-            while not self.connected:
+            while not robotInterface.GetConnected():
                 time.sleep(0.1)
             # Erase flash
-            self.sendAndWait(RobotInterface.EngineToRobot(eraseFlash=RobotInterface.EraseFlash(flashAddress, fwSize)))
+            self.sendAndWait(RI.EngineToRobot(eraseFlash=RI.EraseFlash(flashAddress, fwSize)))
             # Write Firmware
             written = 0
             while written < fwSize:
-                chunk = fw[written:written+FW_CHUNK_SIZE]
-                self.sendAndWait(RobotInterface.EngineToRobot(writeFlash=RobotInterface.WriteFlash(flashAddress+written, chunk)))
+                if sys.version_info.major < 3:
+                    chunk = [ord(b) for b in fw[written:written+FW_CHUNK_SIZE]]
+                else:
+                    chunk = fw[written:written+FW_CHUNK_SIZE]
+                self.sendAndWait(RI.EngineToRobot(writeFlash=RI.WriteFlash(flashAddress+written, chunk)))
                 written += len(chunk)
             # Finish OTA
-            self.send(RobotInterface.EngineToRobot(
-                triggerOTAUpgrade=RobotInterface.OTAUpgrade(
+            self.send(RI.EngineToRobot(
+                triggerOTAUpgrade=RI.OTAUpgrade(
                     start   = flashAddress,
                     version = version,
-                    sig     = sig,
+                    sig     = [ord(b) for b in sig] if sys.version_info.major < 3 else sig,
                     command = command
                 )
             ))
-    
-def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RobotInterface.OTAFlashRegions.OTA_WiFi_flash_address):
+
+    def __init__(self):
+        self.acked = None
+        robotInterface.Init()
+        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.flashWriteAck, self.recieveAck)
+
+def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_WiFi_flash_address):
     "Sends a WiFi firmware upgrade"
-    up.ota(fwPathName, RobotInterface.OTACommand.OTA_WiFi, version, flashAddress)
+    up.ota(fwPathName, RI.OTACommand.OTA_WiFi, version, flashAddress)
 
-def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RobotInterface.OTAFlashRegions.OTA_RTIP_flash_address):
+def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_RTIP_flash_address):
     "Sends an RTIP firmware upgrade"
-    up.ota(fwPathName, RobotInterface.OTACommand.OTA_RTIP, version, flashAddress)
+    up.ota(fwPathName, RI.OTACommand.OTA_RTIP, version, flashAddress)
 
-def UpgradeBody(up, fwPathName, version=0, flashAddress=RobotInterface.OTAFlashRegions.OTA_body_flash_address):
-    up.send(RobotInterface.EngineToRobot(enterBootloader=RobotInterface.EnterBootloader(RobotInterface.EnterBootloaderWhich.BOOTLOAD_BODY)))
-    up.ota(fwPathName, RobotInterface.OTACommand.OTA_body, version, flashAddress)
+def UpgradeBody(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_body_flash_address):
+    up.send(RI.EngineToRobot(enterBootloader=RI.EnterBootloader(RI.EnterBootloaderWhich.BOOTLOAD_BODY)))
+    up.ota(fwPathName, RI.OTACommand.OTA_body, version, flashAddress)
 
 def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
     "Sends an asset to flash"
     for f, a in zip(flashAddresss, assetPathName):
-        up.ota(a, RobotInterface.OTACommand.OTA_RTIP, version, f)
+        up.ota(a, RI.OTACommand.OTA_RTIP, version, f)
         time.sleep(1.0) # Wait for finish
-
-def UpgradeAll(up, version=0):
-    "Stages all firmware upgrades and triggers upgrade"
-    up.ota(DEFAULT_WIFI_IMAGE, RobotInterface.OTACommand.OTA_none,  version, RobotInterface.OTAFlashRegions.OTA_WiFi_flash_address)
-    up.ota(DEFAULT_RTIP_IMAGE, RobotInterface.OTACommand.OTA_none,  version, RobotInterface.OTAFlashRegions.OTA_RTIP_flash_address)
-    up.ota(DEFAULT_BODY_IMAGE, RobotInterface.OTACommand.OTA_stage, version, RobotInterface.OTAFlashRegions.OTA_body_flash_address)
-
-def WaitForUserEnd():
-    try:
-        time.sleep(3600)
-    except KeyboardInterrupt:
-        return
 
 DEFAULT_WIFI_IMAGE = os.path.join("espressif", "bin", "upgrade", "user1.2048.new.3.bin")
 DEFAULT_RTIP_IMAGE = os.path.join("build", "41", "robot.safe")
 DEFAULT_BODY_IMAGE = os.path.join("syscon", "build", "syscon.safe")
 
+def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RTIP_IMAGE, bodyImage=DEFAULT_BODY_IMAGE):
+    "Stages all firmware upgrades and triggers upgrade"
+    assert os.path.isfile(wifiImage)
+    assert os.path.isfile(rtipImage)
+    assert os.path.isfile(bodyImage)
+    up.ota(wifiImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_WiFi_flash_address)
+    up.ota(rtipImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
+    up.ota(bodyImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_body_flash_address)
+
 # Script entry point
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         sys.exit(USAGE)
-    up = Upgrader(DEFAULT_ROBOT_ADDRESS)
+    up = Upgrader()
+    robotInterface.Connect()
     if sys.argv[1] == 'all':
         UpgradeAll(up)
     elif sys.argv[1] == 'wifi':
@@ -199,4 +149,5 @@ if __name__ == '__main__':
             assetFNs.append(sys.argv[ind+1])
             ind += 2
         UpgradeAssets(up, addresses, assetFNs)
-    WaitForUserEnd()
+    time.sleep(5) # Wait for upgrade to finish
+    del up

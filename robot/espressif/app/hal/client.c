@@ -8,7 +8,7 @@
 #include "mem.h"
 #include "ets_sys.h"
 #include "osapi.h"
-#include "driver/uart.h"
+#include "driver/i2spi.h"
 #include "transport/IReceiver.h"
 #include "transport/reliableTransport.h"
 
@@ -174,6 +174,8 @@ void Receiver_OnConnected(ReliableConnection* conn)
 {
   printf("Reliable transport connection completed\r\n");
   clientConnectionId = 1; // Eventually we'll get this from the connection request or finished message
+  uint8_t msg[2] = {0xFC, true};
+  i2spiQueueMessage(msg, 2);
 }
 
 void Receiver_OnDisconnect(ReliableConnection* conn)
@@ -185,6 +187,8 @@ void Receiver_OnDisconnect(ReliableConnection* conn)
   }
   else
   {
+    uint8_t msg[2] = {0xFC, false};
+    i2spiQueueMessage(msg, 2);
     os_free(clientConnection->dest);
     os_free(clientConnection);
     clientConnection = NULL;

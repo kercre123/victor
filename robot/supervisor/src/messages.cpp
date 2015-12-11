@@ -593,6 +593,10 @@ namespace Anki {
       {
         // Not used here
       }
+      void Process_radioConnected(const bool&)
+      {
+        // Not used here
+      }
       
 // ----------- Send messages -----------------
 
