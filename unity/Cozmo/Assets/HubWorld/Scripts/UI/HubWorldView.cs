@@ -17,10 +17,10 @@ namespace Cozmo.HubWorld {
     private Canvas _HubWorldCanvas;
 
     [SerializeField]
-    private HubWorldButton _HubWorldLockedButtonPrefab;
+    private Asteroid _HubWorldLockedAsteroidPrefab;
 
     [SerializeField]
-    private RectTransform _LockedButtonContainer;
+    private Transform _LockedButtonContainer;
 
     [SerializeField]
     private HubWorldButton _HubWorldUnlockedButtonPrefab;
@@ -100,12 +100,12 @@ namespace Cozmo.HubWorld {
     }
 
     private void CreateAsteroid(float minLocalX, float maxLocalX, float minLocalY, float maxLocalY) {
-      GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedButtonPrefab.gameObject, _LockedButtonContainer);
-      HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+      GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedAsteroidPrefab.gameObject, _LockedButtonContainer);
+      Asteroid asteroid = newButton.GetComponent<Asteroid>();
       newButton.transform.localPosition = new Vector3(Random.Range(minLocalX, maxLocalX),
         Random.Range(minLocalY, maxLocalY), Random.Range(-75, 75));
 
-      buttonScript.Initialize(null);
+      asteroid.Initialize(null);
       //buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
     }
 
