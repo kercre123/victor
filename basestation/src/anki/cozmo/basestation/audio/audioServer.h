@@ -35,6 +35,7 @@ struct AudioCallbackDuration;
 struct AudioCallbackMarker;
 struct AudioCallbackMarkerComplete;
 enum class AudioCallbackFlag : uint8_t;
+enum class CallbackErrorType : uint8_t;
   
 class AudioServer : public Util::noncopyable {
   
@@ -72,11 +73,14 @@ private:
   
   ConnectionIdType GetNewClientConnectionId();
   
-  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags );
-  
   void PerformCallback( ConnectionIdType connectionId,
                         uint16_t callbackId,
                         const AudioEngine::AudioCallbackInfo& callbackInfo );
+  
+  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags );
+  
+  Anki::Cozmo::Audio::CallbackErrorType ConvertErrorCallbackType( AudioEngine::AudioCallbackErrorType errorType );
+  
 };
   
 } // Audio

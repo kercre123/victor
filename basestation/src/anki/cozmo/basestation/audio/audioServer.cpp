@@ -192,6 +192,68 @@ AudioServer::ConnectionIdType AudioServer::GetNewClientConnectionId()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioServer::PerformCallback( ConnectionIdType connectionId,
+                                   uint16_t callbackId,
+                                   const AudioEngine::AudioCallbackInfo& callbackInfo )
+{
+  PRINT_NAMED_INFO( "AudioServer.PerformCallback", "Event Callback ClientId %d CalbackId: %d - %s",
+                    connectionId, callbackId, callbackInfo.GetDescription().c_str());
+  
+  const AudioClientConnection* connection = GetConnection( connectionId );
+  if ( nullptr != connection ) {
+    using namespace AudioEngine;
+    
+    switch ( callbackInfo.callbackType ) {
+        
+      case AudioEngine::AudioCallbackType::Invalid:
+        // Do nothing
+        PRINT_NAMED_ERROR( "AudioServer.PerformCallback", "Invalid Callback" );
+        break;
+        
+      case AudioCallbackType::Duration:
+      {
+        const AudioDurationCallbackInfo& info = static_cast<const AudioDurationCallbackInfo&>( callbackInfo );
+        AudioCallbackDuration msg( callbackId,
+                                   info.duration,
+                                   info.estimatedDuration,
+                                   info.audioNodeId,
+                                   info.isStreaming );
+        connection->PostCallback( msg );
+      }
+        break;
+        
+      case AudioCallbackType::Marker:
+      {
+        const AudioMarkerCallbackInfo& info = static_cast<const AudioMarkerCallbackInfo&>( callbackInfo );
+        AudioCallbackMarker msg( callbackId,
+                                 info.identifier,
+                                 info.position,
+                                 info.labelStr );
+        connection->PostCallback( msg );
+      }
+        break;
+        
+      case AudioCallbackType::Complete:
+      {
+        AudioCallbackComplete msg( callbackId );
+        connection->PostCallback( msg );
+      }
+        break;
+        
+      case AudioCallbackType::Error:
+      {
+        const AudioErrorCallbackInfo& info = static_cast<const AudioErrorCallbackInfo&>( callbackInfo );
+        AudioCallbackError msg( callbackId,
+                                ConvertErrorCallbackType( info.error ) );
+        connection->PostCallback( msg );
+      }
+        break;
+      
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags )
 {
   AudioEngine::AudioCallbackFlag engineFlags = AudioEngine::AudioCallbackFlag::NoCallback;
@@ -209,55 +271,28 @@ AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( Anki::Cozmo
   }
   return engineFlags;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioServer::PerformCallback( ConnectionIdType connectionId,
-                                   uint16_t callbackId,
-                                   const AudioEngine::AudioCallbackInfo& callbackInfo )
+Anki::Cozmo::Audio::CallbackErrorType AudioServer::ConvertErrorCallbackType( AudioEngine::AudioCallbackErrorType errorType )
 {
-  PRINT_NAMED_INFO( "AudioServer.PerformCallback", "Event Callback ClientId %d CalbackId: %d - %s",
-                    connectionId, callbackId, callbackInfo.GetDescription().c_str());
+  CallbackErrorType error = CallbackErrorType::Invalid;
   
-  const AudioClientConnection* connection = GetConnection( connectionId );
-  if ( nullptr != connection ) {
-    using namespace AudioEngine;
-    
-    switch ( callbackInfo.callbackType ) {
-      case AudioCallbackType::Duration:
-      {
-        const AudioDurationCallbackInfo& info = static_cast<const AudioDurationCallbackInfo&>( callbackInfo );
-        AudioCallbackDuration msg( callbackId,
-                                   info.duration,
-                                   info.estimatedDuration,
-                                   info.audioNodeId,
-                                   info.isStreaming );
-        connection->PostCallback( msg );
-      }
-        break;
-
-      case AudioCallbackType::Marker:
-      {
-        const AudioMarkerCallbackInfo& info = static_cast<const AudioMarkerCallbackInfo&>( callbackInfo );
-        AudioCallbackMarker msg( callbackId,
-                                 info.identifier,
-                                 info.position,
-                                 info.labelStr );
-        connection->PostCallback( msg );
-      }
-        break;
-
-      case AudioCallbackType::Complete:
-      {
-        AudioCallbackComplete msg( callbackId );
-        connection->PostCallback( msg );
-      }
-        break;
-
-      default:
-        PRINT_NAMED_ERROR("AudioServer.PerformCallback", "Unknown Callback Type %d", callbackInfo.callbackType );
-        break;
-    }
+  switch ( errorType ) {
+      
+    case AudioEngine::AudioCallbackErrorType::Invalid:
+      // Do nothing
+      break;
+      
+    case AudioEngine::AudioCallbackErrorType::EventFailed:
+      error = CallbackErrorType::EventFailed;
+      break;
+      
+    case AudioEngine::AudioCallbackErrorType::Starvation:
+      error = CallbackErrorType::Starvation;
+      break;
   }
+  
+  return error;
 }
 
   

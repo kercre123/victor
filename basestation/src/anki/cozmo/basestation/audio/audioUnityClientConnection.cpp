@@ -92,7 +92,12 @@ void AudioUnityClientConnection::PostCallback( const AudioCallbackComplete& call
   _externalInterface.Broadcast( std::move( msg ) );
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioUnityClientConnection::PostCallback( const AudioCallbackError& callbackMessage ) const
+{
+  const ExternalInterface::MessageEngineToGame msg((AudioCallbackError( callbackMessage )));
+  _externalInterface.Broadcast( std::move( msg ) );
+}
   
 } // Audio
 } // Cozmo
