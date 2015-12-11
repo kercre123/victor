@@ -15,7 +15,6 @@ GAME_ROOT = os.path.normpath(
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
 EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
-os.environ['EXTERNALS_DIR'] = "{0}".format(EXTERNAL_ROOT)
 sys.path.insert(0, ENGINE_ROOT)
 
 from configure import BUILD_TOOLS_ROOT, print_header, print_status
@@ -198,6 +197,12 @@ class GamePlatformConfiguration(object):
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
 
+        if not self.options.do_not_check_dependencies:
+            assert isinstance(dependencies, object)
+            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
+
+        os.environ['EXTERNALS_DIR'] = "{0}".format(EXTERNAL_ROOT)
+
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
 
@@ -206,11 +211,6 @@ class GamePlatformConfiguration(object):
         relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
         workspace.add_project(relative_gyp_project)
-
-
-        if not self.options.do_not_check_dependencies:
-            assert isinstance(dependencies, object)
-            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
 
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
