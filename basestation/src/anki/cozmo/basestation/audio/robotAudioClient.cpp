@@ -59,6 +59,13 @@ bool RobotAudioClient::LoadAnimationAudio(Animation* anAnimation)
   _isFirstBufferLoaded = false;
   _animationName = anAnimation->GetName();
   _firstAudioEventOffset = 0;
+  
+  // Clear Audio Buffer Data
+  if ( _audioBuffer->HasAudioBufferStream() ) {
+    PRINT_STREAM_WARNING( "RobotAudioClient.LoadAnimationAudio", "Should Not have anything in the audio buffer when \
+                          loading the an animation" );
+    _audioBuffer->ClearBufferStreams();
+  }
 
   // Loop through tracks
   // Prep sound
