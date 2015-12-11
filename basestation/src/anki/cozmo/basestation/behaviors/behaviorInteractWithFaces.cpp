@@ -27,6 +27,9 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#define DO_FACE_MIMICKING 0
+#define DO_TOO_CLOSE_SCARED 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -35,7 +38,7 @@ namespace Cozmo {
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   {
-    _name = "InteractWithFaces";
+    SetDefaultName("Faces");
 
     // TODO: Init timeouts, etc, from Json config
 
@@ -45,9 +48,12 @@ namespace Cozmo {
       EngineToGameTag::RobotCompletedAction
     }});
     
-    // Primarily loneliness and then boredom -> InteractWithFaces
-    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
+    if (GetEmotionScorerCount() == 0)
+    {
+      // Primarily loneliness and then boredom -> InteractWithFaces
+      AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.2f, 0.5f}, {1.0f, 0.1f}}), false));
+      AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, { 0.0f, 1.0f}, {0.5f, 0.6f}, {1.0f, 0.5f}}), false));
+    }
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -132,12 +138,14 @@ namespace Cozmo {
   
   void ResetFaceToNeutral(Robot& robot)
   {
+#if DO_FACE_MIMICKING
     robot.GetMoveComponent().DisableTrackToFace();
     ProceduralFace resetFace;
     auto oldTimeStamp = robot.GetProceduralFace().GetTimeStamp();
     oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
     resetFace.SetTimeStamp(oldTimeStamp);
     robot.SetProceduralFace(resetFace);
+#endif
   }
   
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
@@ -155,7 +163,7 @@ namespace Cozmo {
     {
       case State::Inactive:
       {
-        _stateName = "Inactive";
+        SetStateName("Inactive");
         
         // If we're still finishing an action, just wait
         if(_isActing)
@@ -216,7 +224,7 @@ namespace Cozmo {
         if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
         {
           robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
-          PlayAnimation(robot, "Demo_Look_Around_See_Something_A");
+          PlayAnimation(robot, "ID_react2block_01");
           moodManager.AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
                                     EmotionType::Social, kEmotionChangeMedium,
                                     EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
@@ -238,13 +246,17 @@ namespace Cozmo {
         
       case State::TrackingFace:
       {
-        _stateName = "TrackingFace";
+        SetStateName("TrackingFace");
         
         auto faceID = robot.GetMoveComponent().GetTrackToFace();
         // If we aren't tracking the first faceID in the list, something's wrong
         if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
         {
           // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchToInactive",
+                           "faceID %lld not first of %lu interesting faces",
+                           faceID,
+                           _interestingFacesOrder.size());
           robot.GetMoveComponent().DisableTrackToFace();
           _currentState = State::Inactive;
           break;
@@ -306,6 +318,7 @@ namespace Cozmo {
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(robot, _crntProceduralFace, *face);
         
+#if DO_TOO_CLOSE_SCARED
         if(!_isActing &&
            (currentTime_sec - _lastTooCloseScaredTime) > kTooCloseScaredInterval_sec)
         {
@@ -336,13 +349,17 @@ namespace Cozmo {
             _lastTooCloseScaredTime = currentTime_sec;
           }
         }
+#else
+        // avoid pesky unused variable error
+        (void)_lastTooCloseScaredTime;
+#endif
         
         break;
       }
         
       case State::Interrupted:
       {
-        _stateName = "Interrupted";
+        SetStateName("Interrupted");
         
         status = Status::Complete;
         break;
@@ -384,7 +401,8 @@ namespace Cozmo {
   
 #pragma mark -
 #pragma mark Signal Handlers
-  
+
+#if DO_FACE_MIMICKING
   inline static f32 GetAverageHeight(const Vision::TrackedFace::Feature& feature,
                                      const Point2f relativeTo, const Radians& faceAngle_rad)
   {
@@ -424,10 +442,13 @@ namespace Cozmo {
     avgEyeHeight *= 0.5f;
     return avgEyeHeight;
   }
-  
+#endif
+
   void BehaviorInteractWithFaces::UpdateBaselineFace(Robot& robot, const Vision::TrackedFace* face)
   {
     robot.GetMoveComponent().EnableTrackToFace(face->GetID(), false);
+
+#if DO_FACE_MIMICKING
     
     const Radians& faceAngle = face->GetHeadRoll();
     
@@ -443,6 +464,13 @@ namespace Cozmo {
     _baselineEyeHeight = GetEyeHeight(face);
     
     _baselineIntraEyeDistance = face->GetIntraEyeDistance();
+#else
+    // hack to avoid unused warning
+    (void)_baselineEyeHeight;
+    (void)_baselineIntraEyeDistance;
+    (void)_baselineLeftEyebrowHeight;
+    (void)_baselineRightEyebrowHeight;
+#endif
   }
   
   void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event)
@@ -494,6 +522,11 @@ namespace Cozmo {
     if (_interestingFacesData.end() != dataIter
         && distVec.LengthSq() > (kTooFarDistance_mm * kTooFarDistance_mm))
     {
+      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.RemoveFace",
+                        "face %lld is too far (%f > %f), removing",
+                        faceID,
+                        distVec.Length(),
+                        kTooFarDistance_mm);
       RemoveFaceID(faceID);
       return;
     }
@@ -548,6 +581,7 @@ namespace Cozmo {
   
   void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const
   {
+#if DO_FACE_MIMICKING
     ProceduralFace prevProcFace(proceduralFace);
     
     const Radians& faceAngle = face.GetHeadRoll();
@@ -618,6 +652,7 @@ namespace Cozmo {
     proceduralFace.SetTimeStamp(face.GetTimeStamp());
     proceduralFace.MarkAsSentToRobot(false);
     robot.SetProceduralFace(proceduralFace);
+#endif // DO_FACE_MIMICKING
   }
   
   void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event)
@@ -626,7 +661,9 @@ namespace Cozmo {
     
     if(msg.idTag == _lastActionTag)
     {
+#if DO_FACE_MIMICKING
       robot.SetProceduralFace(_crntProceduralFace);
+#endif
       _isActing = false;
     }
   }

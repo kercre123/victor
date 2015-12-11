@@ -64,6 +64,8 @@ namespace Cozmo {
     // Actual streaming occurs on calls to Update().
     u8 SetStreamingAnimation(const std::string& name, u32 numLoops = 1);
     
+    u8 SetStreamingAnimation(Animation* anim, u32 numLoops = 1);
+    
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.
     // Use static LiveAnimation above to use live procedural animation (default).
@@ -73,12 +75,13 @@ namespace Cozmo {
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
     Result AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms = 0);
     
-    // Add a procedural face "layer" that is applied continuously until removed.
+    // Add a procedural face "layer" that is applied and then has its final
+    // adjustemtn "held" until removed.
     // A handle/tag for the layer is returned, which is needed for removal.
-    u32 AddLoopingFaceLayer(const FaceTrack& faceTrack);
+    u32 AddPersistentFaceLayer(const FaceTrack& faceTrack);
     
-    // Remove a previously-added looping face layer using its tag
-    void RemoveLoopingFaceLayer(u32 tag);
+    // Remove a previously-added persistent face layer using its tag
+    void RemovePersistentFaceLayer(u32 tag);
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update(Robot& robot);
@@ -91,6 +94,10 @@ namespace Cozmo {
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
     
+    // "Flow control" for not getting too far ahead of the robot, to help prevent
+    // too much delay when we want to layer something on "now". This is number of
+    // audio frames.
+    static const s32 NUM_AUDIO_FRAMES_LEAD;
 
   private:
     
@@ -116,7 +123,7 @@ namespace Cozmo {
     // to the _idleAnimation to be streamed.
     Result UpdateLiveAnimation(Robot& robot);
     
-    void UpdateNumBytesToSend(Robot& robot);
+    void UpdateAmountToSend(Robot& robot);
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
@@ -131,9 +138,10 @@ namespace Cozmo {
       FaceTrack   track;
       TimeStamp_t startTime_ms;
       TimeStamp_t streamTime_ms;
-      bool        isLooping;
+      bool        isPersistent;
       bool        sentOnce;
       u32         tag;
+      static u32  TagCtr;
     };
     std::list<FaceLayer> _faceLayers;
     
@@ -144,7 +152,7 @@ namespace Cozmo {
                        ProceduralFaceParams& faceParams,
                        bool shouldReplace);
     
-    bool HaveNonLoopingFaceLayersToSend();
+    bool HaveFaceLayersToSend();
     
     void UpdateFace(Robot& robot, Animation* anim, bool storeFace);
     
@@ -191,7 +199,8 @@ namespace Cozmo {
     Result SendBufferedMessages(Robot& robot);
     
     std::list<RobotInterface::EngineToRobot*> _sendBuffer;
-    s32 _numBytesToSend;
+    s32 _numBytesToSend = 0;
+    s32 _numAudioFramesToSend = 0;
     uint8_t _tag;
     
     // "Flow control" for not overrunning reliable transport in a single

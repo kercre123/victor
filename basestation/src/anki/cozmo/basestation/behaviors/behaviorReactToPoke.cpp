@@ -41,7 +41,7 @@ BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config
 {
   assert(_animReactions.size() == _animReactionHappyThresholds.size() + 1);
   
-  _name = "ReactToPoke";
+  SetDefaultName("ReactToPoke");
   
   // These are the tags that should trigger this behavior to be switched to immediately
   SubscribeToTriggerTags({

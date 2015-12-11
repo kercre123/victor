@@ -242,6 +242,8 @@ namespace Anki {
       f32     _maxSpeed_radPerSec = 50.f;
       f32     _accel_radPerSec2 = 10.f;
       u32     _eyeShiftTag = 0;
+      bool    _eyeShiftRemoved = false;
+      Radians _halfAngle = 0.f;
       
     }; // class TurnInPlaceAction
     
@@ -319,7 +321,9 @@ namespace Anki {
       f32         _accel_radPerSec2   = 20.f;
       
       u32         _eyeShiftTag = 0;
-
+      bool        _eyeShiftRemoved = false;
+      Radians     _halfAngle;
+      
     };  // class MoveHeadToAngleAction
     
     // Set the lift to specified height with a given tolerance. Note that settign
@@ -406,6 +410,7 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Reset() override;
+      virtual void Cleanup(Robot& robot) override;
       
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
       void SetHeadTiltAngle(Radians angle) { _headTiltAngle = angle; }

@@ -54,6 +54,11 @@ namespace Anki {
       
       void ClearNumBytesPlayed();
       
+      // Get total number of audio frames played since startup or ClearnNumAudioFrames() was last called.
+      s32 GetTotalNumAudioFramesPlayed();
+      
+      void ClearNumAudioFramesPlayed();
+      
       // Enables/disables the given tracks without changing the others' states.
       // Keyframes for disabled tracks that are encountered in the buffer are
       // discarded (but the numBytesPlayed count is still incremented)

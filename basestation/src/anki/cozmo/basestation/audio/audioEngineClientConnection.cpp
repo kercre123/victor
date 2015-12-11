@@ -61,6 +61,13 @@ void AudioEngineClientConnection::PostCallback( const AudioCallbackComplete& cal
   _messageHandler->Broadcast( std::move( msg ) );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClientConnection::PostCallback( const AudioCallbackError& callbackMessage ) const
+{
+  const MessageAudioClient msg(( AudioCallbackError( callbackMessage ) ));
+  _messageHandler->Broadcast( std::move( msg ) );
+}
+
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClientConnection::HandleEvents(const AnkiEvent<MessageAudioClient>& event)

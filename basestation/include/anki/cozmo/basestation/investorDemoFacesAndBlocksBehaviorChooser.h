@@ -26,9 +26,11 @@ public:
 
   virtual Result Update(double currentTime_sec) override;
   
-  virtual const char* GetName() const override { return "IDemoFace+Block"; }
+  virtual const char* GetName() const override { return "IDF+B"; }
 
 protected:
+  
+  void AddNonFactoryBehavior(BehaviorFactory& behaviorFactory, IBehavior* newBehavior);
   void SetupBehaviors(Robot& robot, const Json::Value& config);
   
 private:

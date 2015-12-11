@@ -38,7 +38,7 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _moveAreaCenter(robot.GetPose())
 {
-  _name = "LookAround";
+  SetDefaultName("LookAround");
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
@@ -46,9 +46,12 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     EngineToGameTag::RobotPutDown
   }});
 
-  // Boredom and loneliness -> LookAround
-  AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
-  AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+  if (GetEmotionScorerCount() == 0)
+  {
+    // Boredom and loneliness -> LookAround
+    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
+  }
 }
   
 BehaviorLookAround::~BehaviorLookAround()

@@ -29,8 +29,14 @@ namespace ExternalInterface { class MessageEngineToGame; }
   
 class BehaviorLookAround : public IBehavior
 {
-public:
+protected:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorLookAround(Robot& robot, const Json::Value& config);
+  
+public:
+
   virtual ~BehaviorLookAround() override;
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;

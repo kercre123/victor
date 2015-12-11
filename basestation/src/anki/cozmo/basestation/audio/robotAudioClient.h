@@ -84,6 +84,7 @@ protected:
   virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg ) override;
   virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg ) override;
   virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg ) override;
+  virtual void HandleCallbackEvent( const AudioCallbackError& callbackMsg ) override;
   
   
 private:

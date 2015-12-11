@@ -930,7 +930,6 @@ namespace Cozmo {
     {
       if(!_robot->GetMoveComponent().GetTrackToObject().IsSet()) {
         // Nothing to do if the robot isn't set to track anything
-        _hasTrackingAction = false;
         return RESULT_OK;
       }
       
@@ -939,7 +938,6 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("BlockWorld.Update.InvalidTrackToObject",
                           "Robot's track to object, ID=%d, does not exist",
                           _robot->GetMoveComponent().GetTrackToObject().GetValue());
-        _hasTrackingAction = false;
         return RESULT_FAIL;
       }
       
@@ -992,7 +990,18 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
+      //const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
+      
+      // Compare to the pose of the robot when the marker was observed
+      RobotPoseStamp *p;
+      if(RESULT_OK != _robot->GetPoseHistory()->GetComputedPoseAt(observedObject->GetLastObservedTime(), &p)) {
+        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject.PoseHistoryError",
+                          "Could not get historical pose for object observation time t=%d",
+                          observedObject->GetLastObservedTime());
+        return RESULT_FAIL;
+      }
+      
+      const Vec3f& robotTrans = p->GetPose().GetTranslation();
       
       const Vision::KnownMarker* closestMarker = nullptr;
       f32 minDistSq = std::numeric_limits<f32>::max();
@@ -1042,7 +1051,6 @@ namespace Cozmo {
         size_t qLength = _robot->GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
         if( qLength == 0 ||
             ( qLength == 1 &&
-              _hasTrackingAction &&
               _robot->GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
         {
           PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
@@ -1056,7 +1064,6 @@ namespace Cozmo {
         
           _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
 
-          _hasTrackingAction = true;
           _lastTrackingActionTag = action->GetTag();
         }
       }

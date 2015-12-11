@@ -26,13 +26,23 @@ namespace Cozmo {
   
   Result FaceWorld::UpdateFaceTracking(const Vision::TrackedFace& face)
   {
-    const Vec3f& robotTrans = _robot.GetPose().GetTranslation();
+    //const Vec3f& robotTrans = _robot.GetPose().GetTranslation();
     
+    // Compare to the pose of the robot when the marker was observed
+    RobotPoseStamp *p;
+    if(RESULT_OK != _robot.GetPoseHistory()->GetComputedPoseAt(face.GetTimeStamp(), &p)) {
+      PRINT_NAMED_ERROR("FaceWorld.UpdateFaceTracking.PoseHistoryError",
+                        "Could not get historical pose for face observed at t=%d",
+                        face.GetTimeStamp());
+      return RESULT_FAIL;
+    }
+    
+    const Vec3f& robotTrans = p->GetPose().GetTranslation();
+
     Pose3d headPose;
     if(false == face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose)) {
       PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
                         "Could not get pose of observed marker w.r.t. world for head tracking.\n");
-      _hasTrackingAction = false;
       return RESULT_FAIL;
     }
     
@@ -56,7 +66,6 @@ namespace Cozmo {
     size_t qLength = _robot.GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
     if( qLength == 0 ||
         ( qLength == 1 &&
-          _hasTrackingAction &&
           _robot.GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
     {
       PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
@@ -64,7 +73,6 @@ namespace Cozmo {
       action->SetPanTolerance(minBodyAngle);
       action->SetTiltTolerance(minHeadAngle);
       _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-      _hasTrackingAction = true;
       _lastTrackingActionTag = action->GetTag();
     }
                                           
@@ -160,9 +168,6 @@ namespace Cozmo {
        (_robot.GetMoveComponent().GetTrackToFace() == knownFace->face.GetID()))
     {
       UpdateFaceTracking(knownFace->face);
-    }
-    else {
-      _hasTrackingAction = false;
     }
     
     // Send out an event about this face being observed

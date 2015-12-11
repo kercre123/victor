@@ -51,9 +51,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #if USE_AUDIO_ENGINE
   {
     _audioEngine = new AudioEngineController();
-    
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/wwise/GeneratedSoundBanks/Mac/" );
-    
+    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "sound/" );
+
     // Set Language Local
     const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
     
@@ -177,6 +176,17 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
                                               } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
+    else if ( kInvalidAudioPlayingID == playingId &&
+             nullptr != callbackContext ) {
+      // Event Failed and there is a callback
+      // Perform Error callback for Event Failed and delete callbackContext
+      const AudioEventID eventId = _audioEngine->GetAudioHashFromString( eventName );
+      callbackContext->HandleCallback( AudioErrorCallbackInfo( gameObjectId,
+                                                               kInvalidAudioPlayingID,
+                                                               eventId,
+                                                               AudioEngine::AudioCallbackErrorType::EventFailed ) );
+      Util::SafeDelete( callbackContext );
+    }
   }
 #endif
   return playingId;
@@ -199,6 +209,16 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
         MoveCallbackContextToGarbageCollector( thisContext );
       } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
+    }
+    else if ( kInvalidAudioPlayingID == playingId &&
+              nullptr != callbackContext ) {
+      // Event Failed and there is a callback
+      // Perform Error callback for Event Failed and delete callbackContext
+      callbackContext->HandleCallback( AudioErrorCallbackInfo( gameObjectId,
+                                                               kInvalidAudioPlayingID,
+                                                               eventId,
+                                                               AudioEngine::AudioCallbackErrorType::EventFailed ) );
+      Util::SafeDelete( callbackContext );
     }
     
 #if CozmoPlugInDebugLogs
