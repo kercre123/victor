@@ -54,6 +54,7 @@ namespace FaceTracking {
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, _LeftEye, _RightEye);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       _TargetFace = null;
+      _GameInstance.ShowNextSlide();
     }
 
     public override void Update() {
@@ -67,7 +68,6 @@ namespace FaceTracking {
         // determine if the new face is actually what we should follow or if its
         // an additional face introduced
         _TargetFace = _CurrentRobot.Faces[0];
-        ResetUnseenTimestamp();
       }
       // Check to see if we've lost the face
       if (_CurrentRobot.Faces.Count <= 0 || !_GameInstance.IsValidFace(_TargetFace)) {
@@ -75,12 +75,16 @@ namespace FaceTracking {
         if (IsUnseenTimestampUninitialized()) {
           _FirstUnseenTimestamp = Time.time;
         }
-
+        // If its been too long since picking up a valid face, lose the face entirely
         if (Time.time - _FirstUnseenTimestamp > _UnseenForgivenessSeconds) {
           ResetUnseenTimestamp();
           _TargetFace = null;
           LoseFace();
         }
+      }
+      else {
+        // We still have the face, reset the Unseen Timestamp
+        ResetUnseenTimestamp();
       }
       // Attempt to follow your face if you have one
       if (_TargetFace != null) {
@@ -114,10 +118,16 @@ namespace FaceTracking {
     }
 
     public void LoseFace() {
-      _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
-      AnimationState animState = new AnimationState();
-      animState.Initialize(AnimationName.kByeBye, HandleStateCompleteAnimationDone);
-      _StateMachine.SetNextState(animState);
+      if (_GameInstance.TryDecrementAttempts()) {
+        _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kByeBye, HandleStateCompleteAnimationDone);
+        _StateMachine.SetNextState(animState);
+      }
+      else {
+        // If you're out of attempts, fail the game
+        _GameInstance.RaiseMiniGameLose();
+      }
     }
 
     public void HandleStateCompleteAnimationDone(bool success) {

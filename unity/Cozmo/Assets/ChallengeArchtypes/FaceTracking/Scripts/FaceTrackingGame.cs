@@ -9,6 +9,11 @@ namespace FaceTracking {
   /// faces directly rather than handling all the movement by hand.
   /// </summary>
   public class FaceTrackingGame : GameBase {
+
+    private const string kLeanIn = "slide1";
+    private const string kMoveToSide = "slide2";
+    private const string kMoveToOther = "slide3";
+    private const string kLeanInAlt = "slide4";
     
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
@@ -35,6 +40,8 @@ namespace FaceTracking {
 
     public bool MidCelebration { get; set; }
 
+    private string _CurrentSlideName = null;
+
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
       _TiltGoalTarget = config.Goal;
@@ -48,6 +55,9 @@ namespace FaceTracking {
       DistanceMin = config.MinFaceDistance;
       FaceJumpLimit = config.FaceJumpLimit;
       StepsCompleted = 0.0f;
+      MaxAttempts = config.MaxAttempts;
+
+
       InitializeMinigameObjects();
     }
 
@@ -77,10 +87,6 @@ namespace FaceTracking {
           StepsCompleted += .333f;
           MidCelebration = true;
           CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleMiniCelebration);
-        }
-        // Trigger a success if you've lit up both.
-        if (TargetLeft && TargetRight) {
-          TiltSuccess();
         }
       }
 
@@ -125,14 +131,28 @@ namespace FaceTracking {
 
     private void HandleMiniCelebration(bool success) {
       MidCelebration = false;
+      // Trigger a success if you've lit up both.
+      if (TargetLeft && TargetRight) {
+        TiltSuccess();
+      }
+      else {
+        // Otherwise show the next slide
+        ShowNextSlide();
+      }
     }
 
     private void HandleEndCelebration(bool success) {
       MidCelebration = false;
-      TargetLeft = false;
-      TargetRight = false;
       if (_TiltSuccessCount >= _TiltGoalTarget) {
         RaiseMiniGameWin();
+      }
+      else {
+        // Reset progress if we need to do this more than once to complete challenge
+        // Then move to the Looking for Face State
+        StepsCompleted = 0.0f;
+        TargetLeft = false;
+        TargetRight = false;
+        _StateMachine.SetNextState(new LookingForFaceState());
       }
     }
     /// <summary>
@@ -168,5 +188,25 @@ namespace FaceTracking {
 
     protected override void CleanUpOnDestroy() {
     }
+
+    // Returns the name of the slide that corresponds to the current state
+    public void ShowNextSlide() {
+      if (Progress <= 0.0f) {
+        if (AttemptsLeft == MaxAttempts) {
+          _CurrentSlideName = kLeanIn;
+        }
+        else {
+          _CurrentSlideName = kLeanInAlt;
+        }
+      }
+      else if (TargetLeft != TargetRight) {
+        _CurrentSlideName = kMoveToOther;
+      }
+      else {
+        _CurrentSlideName = kMoveToSide;
+      }
+      ShowHowToPlaySlide(_CurrentSlideName);
+    }
+
   }
 }

@@ -39,7 +39,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9fc01d730065f478d8752e65ad5ba99d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GamePanelPrefab: {fileID: 11463664, guid: 084a9061565504bb08ee4fbd10e2297d, type: 2}
+  _HowToPlayPrefabs:
+  - slideName: slide1
+    slidePrefab: {fileID: 22565770, guid: c9c614c8264a94e3494487be929746f7, type: 2}
+  - slideName: slide2
+    slidePrefab: {fileID: 22546926, guid: ee747965dd46b437a8ad0fb61a496dd4, type: 2}
+  - slideName: slide3
+    slidePrefab: {fileID: 22576192, guid: f01969d4acb3740b3bbcc1da6acd02d8, type: 2}
+  - slideName: slide4
+    slidePrefab: {fileID: 22551716, guid: 88ca3311251664ce598a1ad637cbbf55, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -47,6 +55,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: gameName_
       value: Follow Cube
@@ -68,6 +80,42 @@ Prefab:
       propertyPath: _GamePanelPrefab
       value: 
       objectReference: {fileID: 11463664, guid: 084a9061565504bb08ee4fbd10e2297d,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: slide1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slideName
+      value: slide2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slideName
+      value: slide3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slideName
+      value: slide4
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22565770, guid: c9c614c8264a94e3494487be929746f7,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slidePrefab
+      value: 
+      objectReference: {fileID: 22551716, guid: 88ca3311251664ce598a1ad637cbbf55,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slidePrefab
+      value: 
+      objectReference: {fileID: 22576192, guid: f01969d4acb3740b3bbcc1da6acd02d8,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22546926, guid: ee747965dd46b437a8ad0fb61a496dd4,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

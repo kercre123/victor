@@ -11,6 +11,7 @@ namespace FaceTracking {
     public float MinFaceDistance;
     public float FaceJumpLimit;
     public bool WanderEnabled;
+    public int MaxAttempts;
   
   }
 }

@@ -20,9 +20,13 @@ namespace FaceTracking {
       _TargetFace = null;
       _CurrentRobot.SetHeadAngle(0.15f);
       _CurrentRobot.SetLiftHeight(0.0f);
+      // Entering this state resets progress as you've lost Cozmo's attention
+      _GameInstance.StepsCompleted = 0.0f;
+      _GameInstance.TargetLeft = false;
+      _GameInstance.TargetRight = false;
+
       // Play Confused Animation as you enter this state, then begin
       // to wander aimlessly looking for a new face.
-
       if (_GameInstance.WanderEnabled) {
         _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
       }
@@ -30,6 +34,7 @@ namespace FaceTracking {
         _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       }
 
+      _GameInstance.ShowNextSlide();
     }
 
     public override void Update() {
@@ -83,11 +88,13 @@ namespace FaceTracking {
     public void FindFace() {
       _CurrentRobot.DisplayProceduralFace(0, Vector2.zero, Vector2.one, ProceduralEyeParameters.MakeDefaultLeftEye(), ProceduralEyeParameters.MakeDefaultRightEye());
       if (_TargetFace != null) {
+        if (_GameInstance.WanderEnabled) {
+          _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        }
         _CurrentRobot.FacePose(_TargetFace);
       }
       AnimationState animState = new AnimationState();
       animState.Initialize(AnimationName.kHappyA, HandleStateCompleteAnimationDone);
-      //_GameInstance.MidCelebration = true;
       if (_GameInstance.StepsCompleted == 0.0f) {
         _GameInstance.StepsCompleted += 0.333f;
       }
@@ -95,7 +102,6 @@ namespace FaceTracking {
     }
 
     public void HandleStateCompleteAnimationDone(bool success) {
-      //_GameInstance.MidCelebration = false;
       _StateMachine.SetNextState(new TrackFaceState());
     }
 

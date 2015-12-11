@@ -18,3 +18,4 @@ MonoBehaviour:
   MinFaceDistance: 200
   FaceJumpLimit: 150
   WanderEnabled: 0
+  MaxAttempts: 5
