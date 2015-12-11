@@ -141,11 +141,12 @@ namespace CubeLifting {
 
     private void HandleFinalStateCompleteAnimationDone(bool success) {
       _GameInstance.ShowHowToPlaySlide("TapToLift");
+      _CurrentRobot.TrackToObject(null);
       _StateMachine.SetNextState(new TapCubeState(new PickupCubeState(_SelectedCubeId), _SelectedCubeId));
     }
 
     private void HandleLoseAnimationDone(bool success) {
-      _StateMachine.GetGame().RaiseMiniGameLose();
+      (_StateMachine.GetGame() as CubeLiftingGame).LoseCubeSight();
     }
 
     private void HandleLifeLostAnimationDone(bool success) {
