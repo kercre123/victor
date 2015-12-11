@@ -86,28 +86,28 @@ enum uesb_mainstate_t {
 };
 
 // Main UESB configuration struct, contains all radio parameters
+struct uesb_address_desc_t
+{
+  uint8_t                 rf_channel;
+  uint32_t                base0;
+  uint32_t                base1;
+  uint8_t                 prefix[8];
+};
+
 struct uesb_config_t
 {
   // General RF parameters
   uesb_bitrate_t          bitrate;
   uesb_crc_t              crc;
   uesb_tx_power_t         tx_output_power;
-  uint8_t                 rf_channel;
   uint8_t                 payload_length;
   uint8_t                 rf_addr_length;
 
-  uint32_t                rx_address_base0;
-  uint32_t                rx_address_base1;
-  uint8_t                 rx_address_prefix[8];
   uint8_t                 rx_pipes_enabled;
 
   uint8_t                 radio_irq_priority;
-};
 
-enum uesb_address_type_t {
-  UESB_ADDRESS_BASE0,
-  UESB_ADDRESS_BASE1,
-  UESB_ADDRESS_PREFIX
+  uesb_address_desc_t     rx_address;
 };
 
 struct uesb_payload_t
@@ -115,7 +115,7 @@ struct uesb_payload_t
   // This is information regarding the state of the radio
   uint8_t length;
   uint8_t pipe;
-  uint8_t address;
+  uesb_address_desc_t address;
   int8_t  rssi;
 
   // This is the payload data
@@ -135,15 +135,14 @@ struct uesb_payload_fifo_t
 uint32_t uesb_init(const uesb_config_t *parameters);
 uint32_t uesb_disable(void);
 bool     uesb_is_idle(void);
-uint32_t uesb_write_tx_payload(uint8_t pipe, const void *payload, uint8_t length);
+uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *payload, uint8_t length);
 uint32_t uesb_read_rx_payload(uesb_payload_t *payload);
 uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
 uint32_t uesb_flush_tx(void);
 uint32_t uesb_flush_rx(void);
 uint32_t uesb_get_clear_interrupts(void);
-uint32_t uesb_set_address(uesb_address_type_t address, const void *data_ptr);
-uint32_t uesb_set_rf_channel(uint32_t channel);
+uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr);
 uint32_t uesb_set_tx_power(uesb_tx_power_t tx_output_power);
 extern "C" void uesb_event_handler(void);
 

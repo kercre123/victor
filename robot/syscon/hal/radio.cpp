@@ -68,11 +68,10 @@ static const uint32_t UNUSED_BASE = 0xE6E6E6E6;
 static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
 
 #define ADVERTISE_PREFIX    {0xE6, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX, 1, 2, 3, 4, 5}
+#define COMMUNICATE_PREFIX  {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9}
 
 static const int ROBOT_PAIR_PIPE = 1;
 static const int CUBE_ADVERT_PIPE = 2;
-
-static const uint8_t ADVERTISING_PREFIX[8] = ADVERTISE_PREFIX;
 
 static const int ADV_CHANNEL = 81;
 
@@ -84,7 +83,7 @@ static const int RADIO_TIMEOUT_MSB = 15;
 static const int RADIO_WAKEUP_OFFSET = 8;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
-static const uint8_t PIPE_VALUES[] = {CUBE_TO_ROBOT_PREFIX, 0x95, 0x97, 0x99, 0xA3, 0xA5, 0xA7, 0xA9};
+static const uint8_t PIPE_VALUES[] = COMMUNICATE_PREFIX;
 static const int BASE_PIPE = 1;
 
 static const int MAX_CHARGERS = 1;
@@ -98,15 +97,25 @@ extern GlobalDataToBody g_dataToBody;
 // Current status values of cubes/chargers
 static RadioState        radioState;
 
-static uint32_t targetAddress;
-static uint32_t targetChannel;
+static const uesb_address_desc_t AdvertiseAddress = {
+  ADV_CHANNEL,
+  UNUSED_BASE, 
+  ADVERTISE_BASE,
+  ADVERTISE_PREFIX
+};
+static uesb_address_desc_t TalkAddress = { 
+  0,
+  ADVERTISE_BASE,
+  0, 
+  COMMUNICATE_PREFIX 
+};
+
 static AccessorySlot accessories[MAX_ACCESSORIES];
 
 // Variables for locating a quiet channel
 static uint8_t currentNoiseLevel[MAX_TX_CHANNEL+1];
-static uint8_t scanChannel;
-static int locateTimeout;
 static uint8_t currentAccessory;
+static int locateTimeout;
 
 // This verifies there are not bit strings too long
 static inline uint32_t fixAddress(uint32_t word) {
@@ -137,19 +146,15 @@ void Radio::init() {
     UESB_BITRATE_1MBPS,
     UESB_CRC_8BIT,
     UESB_TX_POWER_0DBM,
-    ADV_CHANNEL,
     PACKET_SIZE,
-    5, // Address length
-    UNUSED_BASE,
-    ADVERTISE_BASE,
-    ADVERTISE_PREFIX,
+    5,    // Address length
     0xFF,
-    2                     // Service speed doesn't need to be that fast (prevent blocking encoders)
+    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   // Generate target address for the robot
-  Random::get(&targetAddress, sizeof(targetAddress));
-  targetAddress = fixAddress(targetAddress);
+  Random::get(&TalkAddress.base1, sizeof(TalkAddress.base1));
+  TalkAddress.base1 = fixAddress(TalkAddress.base1);
 
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
@@ -190,17 +195,11 @@ static int FreeAccessory(void) {
 }
 
 static void TalkAdvertise(void) {
-  uesb_set_rf_channel(ADV_CHANNEL);
-  uesb_set_address(UESB_ADDRESS_BASE0, &UNUSED_BASE);
-  uesb_set_address(UESB_ADDRESS_BASE1, &ADVERTISE_BASE);
-  uesb_set_address(UESB_ADDRESS_PREFIX, ADVERTISING_PREFIX);
+  uesb_set_rx_address(&AdvertiseAddress);
 }
 
 static void TalkCommunicate(void) {
-  uesb_set_rf_channel(targetChannel);
-  uesb_set_address(UESB_ADDRESS_BASE0, &ADVERTISE_BASE);
-  uesb_set_address(UESB_ADDRESS_BASE1, &targetAddress);
-  uesb_set_address(UESB_ADDRESS_PREFIX, PIPE_VALUES);
+  uesb_set_rx_address(&TalkAddress);
 }
 
 static void EnterState(RadioState state) { 
@@ -209,7 +208,7 @@ static void EnterState(RadioState state) {
   switch (state) {
     case RADIO_FIND_CHANNEL:
       locateTimeout = LOCATE_TIMEOUT;  
-      targetChannel = 0;
+      TalkAddress.rf_channel = 0;
       memset(currentNoiseLevel, 0, sizeof(currentNoiseLevel));
       TalkCommunicate();
       break ;
@@ -226,7 +225,7 @@ static bool turn_around = false;
 static void send_dummy_byte(void) {
   // This just send garbage
   static const uint8_t dummy_data = 0xC2;
-  uesb_write_tx_payload(0, &dummy_data, sizeof(dummy_data));
+  uesb_write_tx_payload(&TalkAddress, 0, &dummy_data, sizeof(dummy_data));
   turn_around  = true;
 }
 
@@ -242,7 +241,7 @@ extern "C" void uesb_event_handler(void)
 
     switch (radioState) {
     case RADIO_FIND_CHANNEL:
-      currentNoiseLevel[targetChannel]++;
+      currentNoiseLevel[TalkAddress.rf_channel]++;
       break ;
     case RADIO_PAIRING:
       slot = FreeAccessory();
@@ -269,23 +268,21 @@ extern "C" void uesb_event_handler(void)
         // Send a pairing packet
         CapturePacket pair;
 
-        pair.target_channel = targetChannel;
+        pair.target_channel = TalkAddress.rf_channel;
         pair.interval_delay = RADIO_INTERVAL_DELAY;
         pair.prefix = PIPE_VALUES[BASE_PIPE+slot];
-        pair.base = targetAddress;
+        pair.base = TalkAddress.base1;
         pair.timeout_msb = RADIO_TIMEOUT_MSB;
         pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
 
         // Tell this accessory to come over to my side
-        uesb_write_tx_payload(ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+        uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
       }
       
       break ;
       
     case RADIO_TALKING:
-      AccessorySlot* acc = &accessories[currentAccessory];
-      AcceleratorPacket* data;
-    
+      AccessorySlot* acc = &accessories[currentAccessory];   
       memcpy(&acc->rx_state, rx_payload.data, sizeof(AcceleratorPacket));
 
       send_dummy_byte();
@@ -317,23 +314,7 @@ void Radio::manage() {
       g_dataToHead.cubeToUpdate = 0;
     }
   }
-  
-  /*
-  // Send a pairing packet
-  CapturePacket pair;
 
-  pair.target_channel = targetChannel;
-  pair.interval_delay = RADIO_INTERVAL_DELAY;
-  pair.prefix = PIPE_VALUES[BASE_PIPE+0];
-  pair.base = targetAddress;
-  pair.timeout_msb = RADIO_TIMEOUT_MSB;
-  pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
-
-  // Tell this accessory to come over to my side
-  uesb_write_tx_payload(ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
-  return ;
-  */
-  
   // Handle per 5ms channel updates
   switch (radioState) {
   case RADIO_FIND_CHANNEL:
@@ -341,21 +322,17 @@ void Radio::manage() {
       locateTimeout = LOCATE_TIMEOUT;
 
       uesb_stop();
-      if (currentNoiseLevel[targetChannel] == 0) {
+      if (currentNoiseLevel[TalkAddress.rf_channel] == 0) {
         // Found a quiet place to sleep in
         EnterState(RADIO_PAIRING);
       } else {
-        if ((targetChannel += 13) > MAX_TX_CHANNEL) {
+        if ((TalkAddress.rf_channel += 13) > MAX_TX_CHANNEL) {
           // This trys to space the robots apart (the 7 is carefully picked)
-          targetChannel -= MAX_TX_CHANNEL;
+          TalkAddress.rf_channel -= MAX_TX_CHANNEL;
         }
           
         // a zero means a wrap around
-        if (targetChannel) {
-          // Probe the next channel
-          uesb_set_rf_channel(targetChannel);
-        } else {
-
+        if (!TalkAddress.rf_channel) {
           // We've reached the end of the usable frequency range, simply
           // pick quietest spot
           uint8_t noiseLevel = ~0;
@@ -363,7 +340,7 @@ void Radio::manage() {
           // Run to the quietest channel
           for (int i = 0; i <= MAX_TX_CHANNEL; i++) {
             if (currentNoiseLevel[i] < noiseLevel) {
-              targetChannel = i;
+              TalkAddress.rf_channel = i;
               noiseLevel = currentNoiseLevel[i];
             }
           }
@@ -377,16 +354,25 @@ void Radio::manage() {
     break ;
   
   default:
+    uesb_address_desc_t cube_classic = {
+      82, 0xE7E7E7E7, 0xC2C2C2C2, {0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8}
+    };
+    LEDPacket packet;
+    memset(&packet, 0xC0, sizeof(packet));
+    uesb_write_tx_payload(&cube_classic, 2, &packet, sizeof(packet));
+    
+    break ;
     // Transmit to accessories round-robin
     currentAccessory = (currentAccessory + 1) % TICK_LOOP;
     
     if (currentAccessory >= MAX_ACCESSORIES) break ;
 
-    EnterState(RADIO_TALKING);
     AccessorySlot* acc = &accessories[currentAccessory];
+    EnterState(RADIO_TALKING);
+    
     if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
       // Broadcast to the appropriate device
-      uesb_write_tx_payload(BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
+      uesb_write_tx_payload(&TalkAddress, BASE_PIPE+currentAccessory, &acc->tx_state, sizeof(LEDPacket));
     } else {
       // Timeslice is empty, send a dummy command on the channel so people know to stay away
       acc->active = false;
