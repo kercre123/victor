@@ -48,7 +48,13 @@ namespace Cozmo {
       return 0;
     }
     
-    _streamingAnimation = _animationContainer.GetAnimation(name);
+    return SetStreamingAnimation(_animationContainer.GetAnimation(name), numLoops);
+  }
+  
+  u8 AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops)
+  {
+    _streamingAnimation = anim;
+    
     if(_streamingAnimation == nullptr) {
       return 0;
     } else {
