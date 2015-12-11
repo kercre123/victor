@@ -110,7 +110,7 @@ namespace Cozmo {
     // Stream one audio sample from the AudioManager
     // If sendSilence==true, will buffer an AudioSilence message if no audio is
     // available (needed while streaming canned animations)
-    Result BufferAudioToSend(bool sendSilence);
+    Result BufferAudioToSend(bool sendSilence, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms);
     
     // Check whether the animation is done
     bool IsFinished(Animation* anim) const;

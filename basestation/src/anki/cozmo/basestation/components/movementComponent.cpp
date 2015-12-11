@@ -42,6 +42,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetHeadAngle>();
   helper.SubscribeInternal<MessageGameToEngineTag::TrackToObject>();
+  helper.SubscribeInternal<MessageGameToEngineTag::TrackToFace>();
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
   
@@ -101,7 +102,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::TrackToObject& ms
 {
   if(IsHeadLocked()) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.HeadLocked",
-                     "Ignoring ExternalInterface::TrackHeadToObject while head is locked.");
+                     "Ignoring ExternalInterface::TrackToObject while head is locked.");
+  } else if (AreWheelsLocked() && !msg.headOnly) {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.WheelsLocked",
+                     "Ignoring ExternalInterface::TrackToObject while wheels are locked and headOnly == false.");
   } else {
     if(msg.objectID == u32_MAX) {
       DisableTrackToObject();
@@ -111,6 +115,24 @@ void MovementComponent::HandleMessage(const ExternalInterface::TrackToObject& ms
   }
 }
 
+template<>
+void MovementComponent::HandleMessage(const ExternalInterface::TrackToFace& msg)
+{
+  if(IsHeadLocked()) {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackToFace.HeadLocked",
+                     "Ignoring ExternalInterface::TrackToFace while head is locked.");
+  } else if (AreWheelsLocked() && !msg.headOnly) {
+    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToFace.WheelsLocked",
+                     "Ignoring ExternalInterface::TrackToFace while wheels are locked and headOnly == false.");
+  } else {
+    if(msg.faceID == u32_MAX) {
+      DisableTrackToFace();
+    } else {
+      EnableTrackToFace(msg.faceID, msg.headOnly);
+    }
+  }
+}
+  
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
@@ -166,7 +188,8 @@ Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
     // return them to this state when we disable tracking
     _headLockedBeforeTracking = IsHeadLocked();
     _wheelsLockedBeforeTracking = AreWheelsLocked();
-    
+
+    // TODO:(bn) this doesn't seem to work (wheels aren't locked), but not sure if it should...
     LockHead(true);
     if(!headOnly) {
       LockWheels(true);

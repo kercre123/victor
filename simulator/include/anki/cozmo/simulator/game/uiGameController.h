@@ -205,6 +205,8 @@ protected:
                                 const bool usePreDockPose,
                                 const bool useManualSpeed = false);
   
+  void SendTrackToObject(const u32 objectID, bool headOnly = false);
+  void SendTrackToFace(const u32 faceID, bool headOnly = false);
   void SendExecuteTestPlan();
   void SendClearAllBlocks();
   void SendClearAllObjects();
@@ -260,8 +262,9 @@ protected:
   
   const std::map<s32, Pose3d>& GetObjectPoseMap();
   
-  const ObservedObject& GetCurrentlyObservedObject() const;
+  const ObservedObject& GetLastObservedObject() const;
 
+  const Vision::TrackedFace::ID_t GetLastObservedFaceID() const;
   
   const std::unordered_set<std::string>& GetAvailableAnimations() const;
   u32 GetNumAvailableAnimations() const;

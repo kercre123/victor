@@ -60,6 +60,7 @@ namespace Anki {
       size_t   Length() const { return _queue.size(); }
       
       IActionRunner* GetCurrentAction();
+      const IActionRunner* GetCurrentAction() const;
       void           PopCurrentAction();
       
       void Print() const;
@@ -116,7 +117,10 @@ namespace Anki {
       
       // Returns true if actionName is the name of one of the actions that are currently
       // being executed.
-      bool       IsCurrAction(const std::string& actionName);
+      bool       IsCurrAction(const std::string& actionName) const;
+
+      // Returns true if the passed in action tag matches the action currently playing in the given slot
+      bool       IsCurrAction(u32 idTag, SlotHandle fromSlot) const;
 
       
     protected:

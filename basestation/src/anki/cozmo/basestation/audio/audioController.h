@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
+#define CozmoPlugInDebugLogs 0
 
 namespace AudioEngine {
   class AudioEngineController;
@@ -106,6 +107,31 @@ private:
   
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
+  
+  // Debug Cozmo PlugIn Logs
+#if CozmoPlugInDebugLogs
+  enum class LogEnumType {
+    Post,
+    CreatePlugIn,
+    DestoryPlugIn,
+    Update,
+  };
+  
+  struct TimeLog {
+    LogEnumType LogType;
+    std::string Msg;
+    unsigned long long int TimeInNanoSec;
+    
+    TimeLog(LogEnumType logType, std::string msg, unsigned long long int timeInNanoSec) :
+    LogType(logType),
+    Msg(msg),
+    TimeInNanoSec(timeInNanoSec)
+    {
+    }
+  };
+  std::vector<TimeLog> _plugInLog;
+  void PrintPlugInLog();
+#endif
   
 };
 

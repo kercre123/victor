@@ -43,6 +43,7 @@ namespace Cozmo {
     if(false == face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose)) {
       PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
                         "Could not get pose of observed marker w.r.t. world for head tracking.\n");
+      _hasTrackingAction = false;
       return RESULT_FAIL;
     }
     
@@ -59,14 +60,24 @@ namespace Cozmo {
     const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
     const Radians panAngle = std::atan2(yDist, xDist);
     
-    static const Radians minHeadAngle(DEG_TO_RAD(1.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(1.f));
-    
-    PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
-    action->EnableMessageDisplay(false);
-    action->SetPanTolerance(minBodyAngle);
-    action->SetTiltTolerance(minHeadAngle);
-    _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+    static const Radians minHeadAngle(DEG_TO_RAD(2.f));
+    static const Radians minBodyAngle(DEG_TO_RAD(2.f));
+
+    // only do a tracking action if we aren't going to stomp on someone elses action
+    size_t qLength = _robot.GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
+    if( qLength == 0 ||
+        ( qLength == 1 &&
+          _hasTrackingAction &&
+          _robot.GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
+    {
+      PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
+      action->EnableMessageDisplay(false);
+      action->SetPanTolerance(minBodyAngle);
+      action->SetTiltTolerance(minHeadAngle);
+      _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+      _hasTrackingAction = true;
+      _lastTrackingActionTag = action->GetTag();
+    }
                                           
     return RESULT_OK;
   } // UpdateFaceTracking()
@@ -160,6 +171,9 @@ namespace Cozmo {
        (_robot.GetMoveComponent().GetTrackToFace() == knownFace->face.GetID()))
     {
       UpdateFaceTracking(knownFace->face);
+    }
+    else {
+      _hasTrackingAction = false;
     }
     
     // Send out an event about this face being observed

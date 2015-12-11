@@ -852,7 +852,7 @@ namespace Anki {
     {
       _angleTolerance = angleTol_rad.getAbsoluteVal();
 
-     const float minTolDeg = 0.5f;
+     const float minTolDeg = 2.f;
       
       if( _angleTolerance.ToFloat() < DEG_TO_RAD(minTolDeg) ) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",

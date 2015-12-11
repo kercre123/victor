@@ -134,17 +134,35 @@ namespace Anki {
       return currentSlot;
     }
     
-    bool ActionList::IsCurrAction(const std::string& actionName)
+    bool ActionList::IsCurrAction(const std::string& actionName) const
     {
       for(auto queueIter = _queues.begin(); queueIter != _queues.end();  ++queueIter)
       {
+        if (nullptr == queueIter->second.GetCurrentAction()) {
+          return false;
+        }
         if (queueIter->second.GetCurrentAction()->GetName() == actionName) {
           return true;
         }
       }
       return false;
     }
-    
+
+    bool ActionList::IsCurrAction(u32 idTag, SlotHandle fromSlot) const
+    {
+      const auto qIter = _queues.find(fromSlot);
+      if( qIter == _queues.end() ) {
+        // can't be playing if the slot doesn't exist
+        return false;
+      }
+
+      if( nullptr == qIter->second.GetCurrentAction() ) {
+        return false;
+      }
+
+      return qIter->second.GetCurrentAction()->GetTag() == idTag;
+    }
+
 #pragma mark ---- ActionQueue ----
     
     ActionQueue::ActionQueue()
@@ -294,7 +312,16 @@ namespace Anki {
       
       return _queue.front();
     }
-    
+
+    const IActionRunner* ActionQueue::GetCurrentAction() const
+    {
+      if(_queue.empty()) {
+        return nullptr;
+      }
+      
+      return _queue.front();
+    }
+
     void ActionQueue::PopCurrentAction()
     {
       if(!IsEmpty()) {

@@ -19,6 +19,9 @@
 #include <util/logging/logging.h>
 #include <unordered_map>
 
+#if CozmoPlugInDebugLogs
+#include <util/time/universalTime.h>
+#endif
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
 
@@ -40,6 +43,7 @@ namespace Cozmo {
 namespace Audio {
   
 using namespace AudioEngine;
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
@@ -76,6 +80,11 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
       assert( nullptr != _robotAudioBuffer );
+      _robotAudioBuffer->PrepareAudioBuffer();
+      
+#if CozmoPlugInDebugLogs
+      _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+#endif
     } );
 
     _cozmoPlugIn->SetDestroyPluginCallback( [this] () {
@@ -83,11 +92,20 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       assert( nullptr != _robotAudioBuffer );
       // Done with voice clear audio buffer
       _robotAudioBuffer->ClearCache();
+      
+#if CozmoPlugInDebugLogs
+      _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+      PrintPlugInLog();
+#endif
     } );
     
     _cozmoPlugIn->SetProcessCallback( [this] ( const AudioEngine::CozmoPlugIn::CozmoPlugInAudioBuffer& buffer )
     {
       _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
+
+#if CozmoPlugInDebugLogs
+      _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(buffer.frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+#endif
     });
     
     const bool success = _cozmoPlugIn->RegisterPlugin();
@@ -182,6 +200,10 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
       } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
+    
+#if CozmoPlugInDebugLogs
+    _plugInLog.emplace_back( TimeLog( LogEnumType::Post, "EventId: " + std::to_string(eventId) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+#endif
   }
 #endif
   return playingId;
@@ -242,7 +264,7 @@ void AudioController::StartUpSetDefaults()
   AudioEngine::AudioParameterId ROBOT_VOLUME = 1669075520;
 
   
-  SetParameter( ROBOT_VOLUME, 0.8, kInvalidAudioGameObject);
+  SetParameter( ROBOT_VOLUME, 0.2, kInvalidAudioGameObject);
   // This is effected by robot volume
   SetParameter( ROBOT_MASTER_VOLUME, 0.9, kInvalidAudioGameObject);
 }
@@ -292,6 +314,76 @@ void AudioController::ClearGarbageCollector()
                 [](AudioEngine::AudioCallbackContext* aContext){ Util::SafeDelete( aContext ); } );
   _callbackGarbageCollector.clear();
 }
+
+
+// Debug Cozmo PlugIn Logs
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+#if CozmoPlugInDebugLogs
+
+double ConvertToMiliSec(unsigned long long int miliSeconds) {
+  return (double)miliSeconds / 1000000.0;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::PrintPlugInLog() {
+  
+  unsigned long long int postTime = 0, createTime = 0, updateTime = 0;
+  bool isFirstUpdateLog = false;
+  for (auto& aLog : _plugInLog) {
+    switch (aLog.LogType) {
+      case LogEnumType::Post:
+      {
+        postTime = aLog.TimeInNanoSec;
+        
+        printf("----------------------------------------------\n \
+               Post Event %s - time: %f\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+      }
+        break;
+        
+      case LogEnumType::CreatePlugIn:
+      {
+        createTime = aLog.TimeInNanoSec;
+        isFirstUpdateLog = true;
+        
+        printf("Create PlugIn %s - time: %f\n \
+               - Post -> Create time delta = %f\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ), ConvertToMiliSec( createTime - postTime ));
+      }
+        break;
+        
+      case LogEnumType::Update:
+      {
+        printf("Update %s - time: %f\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+        
+        
+        if ( isFirstUpdateLog ) {
+          printf("- Post -> Update time delta = %f\n \
+                  - Create -> Update time delta = %f\n", ConvertToMiliSec( aLog.TimeInNanoSec - postTime ), ConvertToMiliSec( aLog.TimeInNanoSec - createTime ));
+        }
+        else {
+          printf("- Previous Update -> Update time delta = %f\n", ConvertToMiliSec( aLog.TimeInNanoSec - updateTime ));
+          
+        }
+        
+        updateTime = aLog.TimeInNanoSec;
+        isFirstUpdateLog = false;
+      }
+        break;
+        
+      case LogEnumType::DestoryPlugIn:
+      {
+        printf("Destory Plugin %s - time: %f\n \
+               ----------------------------------------------\n", aLog.Msg.c_str(), ConvertToMiliSec( aLog.TimeInNanoSec ));
+      }
+        break;
+        
+      default:
+        break;
+    }
+  }
+  _plugInLog.clear();
+}
+#endif
+
   
 } // Audio
 } // Cozmo
