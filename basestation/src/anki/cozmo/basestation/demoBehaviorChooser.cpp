@@ -12,20 +12,16 @@
 
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 
-#include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
-#include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
 
-// Disabled by default for now - it seems to work fine as far as I can tell but i don't want to risk breaking anyone
-#define USE_MOOD_MANAGER_FOR_DEMO_CHOOSER   0
+// MoodManager for demo chooser is enabled by default now
+#define USE_MOOD_MANAGER_FOR_DEMO_CHOOSER   1
 
 
 namespace Anki {
@@ -47,110 +43,22 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   
 void DemoBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
-  // Setup InteractWithFaces behavior
-  _behaviorInteractWithFaces = new BehaviorInteractWithFaces(robot, config);
-  Result addResult = super::AddBehavior(_behaviorInteractWithFaces);
-  if (Result::RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorInteractWithFaces was not created properly.");
-    return;
-  }
-  
-  // Setup OCD behavior
-  _behaviorOCD = new BehaviorOCD(robot, config);
-  addResult = super::AddBehavior(_behaviorOCD);
-  if (Result::RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorOCD was not created properly.");
-    return;
-  }
-  
-  // Setup LookAround behavior
-  _behaviorLookAround = new BehaviorLookAround(robot, config);
-  addResult = super::AddBehavior(_behaviorLookAround);
-  if (Result::RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorLookAround was not created properly.");
-    return;
-  }
-  
-  /*
-  // Setup Fidget behavior
-  _behaviorFidget = new BehaviorFidget(robot, config);
-  addResult = super::AddBehavior(_behaviorFidget);
-  if (Result::RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorFidget was not created properly.");
-    return;
-  }
-  */
-  
-  // Setup None Behavior
-  _behaviorNone = new BehaviorNone(robot, config);
-  addResult = super::AddBehavior(_behaviorNone);
-  if (Result::RESULT_OK != addResult)
-  {
-    PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorNone was not created properly.");
-    return;
-  }
-  
-  // Setup Happy React
-  {
-    BehaviorPlayAnim* behaviorPlayAnim = new BehaviorPlayAnim(robot, config);
-    addResult = super::AddBehavior(behaviorPlayAnim);
-    
-    if (Result::RESULT_OK == addResult)
-    {
-      behaviorPlayAnim->SetAnimationName("happy");
-      behaviorPlayAnim->SetName("HappyReact");
-      behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
-      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happy,
-                                                       Anki::Util::GraphEvaluator2d({{0.059f, 0.0f}, {0.059f, 0.7f}, {1.0f, 1.0f}}), true));
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorPlayAnim was not created properly.");
-      return;
-    }
-  }
-  
-  // Setup Sad React
-  {
-    BehaviorPlayAnim* behaviorPlayAnim = new BehaviorPlayAnim(robot, config);
-    addResult = super::AddBehavior(behaviorPlayAnim);
-    
-    if (Result::RESULT_OK == addResult)
-    {
-      behaviorPlayAnim->SetAnimationName("sad");
-      behaviorPlayAnim->SetName("SadReact");
-      behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
-      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Happy,
-                                                       Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.059f, 0.7f}, {-0.059f, 0.0f}}), true));
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorPlayAnim was not created properly.");
-      return;
-    }
-  }
+  BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
 
-  // Setup Angry React
+  _behaviorInteractWithFaces = behaviorFactory.CreateBehavior(BehaviorType::InteractWithFaces, robot, config);
+  _behaviorOCD               = behaviorFactory.CreateBehavior(BehaviorType::OCD, robot, config);
+  _behaviorLookAround        = behaviorFactory.CreateBehavior(BehaviorType::LookAround, robot, config);
+  _behaviorNone              = behaviorFactory.CreateBehavior(BehaviorType::NoneBehavior, robot, config);
+  //_behaviorFidget            = behaviorFactory.CreateBehavior(BehaviorType::Fidget, robot, config);
+  
+  for (const auto& it : behaviorFactory.GetBehaviorMap())
   {
-    BehaviorPlayAnim* behaviorPlayAnim = new BehaviorPlayAnim(robot, config);
-    addResult = super::AddBehavior(behaviorPlayAnim);
-    
-    if (Result::RESULT_OK == addResult)
+    IBehavior* behaviorToAdd = it.second;
+    const Result addResult = super::AddBehavior(behaviorToAdd);
+    if (Result::RESULT_OK != addResult)
     {
-      behaviorPlayAnim->SetAnimationName("angry");
-      behaviorPlayAnim->SetName("AngryReact");
-      behaviorPlayAnim->SetMinTimeBetweenRuns(10.0);
-      behaviorPlayAnim->AddEmotionScorer(EmotionScorer(EmotionType::Calm,
-                                                       Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {-0.059f, 0.7f}, {-0.059f, 0.0f}}), true));
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors", "BehaviorPlayAnim was not created properly.");
-      return;
+      PRINT_NAMED_ERROR("DemoBehaviorChooser.SetupBehaviors.FailedToAdd",
+                        "BehaviorFactory behavior '%s' failed to add to chooser!", behaviorToAdd->GetName().c_str());
     }
   }
 }

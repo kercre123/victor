@@ -31,7 +31,7 @@ using namespace ExternalInterface;
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
 {
-  _name = "PounceOnMotion";
+  SetDefaultName("PounceOnMotion");
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedMotion,

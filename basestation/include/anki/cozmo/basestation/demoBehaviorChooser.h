@@ -25,11 +25,6 @@ namespace Cozmo {
   
 // forward declarations
 class IBehavior;
-class BehaviorLookAround;
-class BehaviorInteractWithFaces;
-class BehaviorOCD;
-class BehaviorFidget;
-class BehaviorNone;
 class Robot;
 namespace ExternalInterface {
   class MessageGameToEngine;
@@ -55,11 +50,11 @@ protected:
   DemoBehaviorState _requestedState = _demoState;
   
   // Note these are for easy access - the inherited _behaviorList owns the memory
-  BehaviorLookAround* _behaviorLookAround = nullptr;
-  BehaviorInteractWithFaces* _behaviorInteractWithFaces = nullptr;
-  BehaviorOCD* _behaviorOCD = nullptr;
-  BehaviorFidget* _behaviorFidget = nullptr;
-  BehaviorNone* _behaviorNone = nullptr;
+  IBehavior* _behaviorLookAround = nullptr;
+  IBehavior* _behaviorInteractWithFaces = nullptr;
+  IBehavior* _behaviorOCD = nullptr;
+  IBehavior* _behaviorFidget = nullptr;
+  IBehavior* _behaviorNone = nullptr;
   
   void SetupBehaviors(Robot& robot, const Json::Value& config);
   void HandleSetDemoState(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);

@@ -16,6 +16,7 @@
 
 
 #include "clad/types/behaviorType.h"
+#include "util/helpers/noncopyable.h"
 #include <map>
 
 
@@ -32,29 +33,53 @@ class IBehavior;
 class Robot;
 
   
-class BehaviorFactory
+class BehaviorFactory : private Util::noncopyable
 {
 public:
   
-//  BehaviorFactory();
+  using NameToBehaviorMap = std::map<std::string, IBehavior*>;
   
-  static IBehavior* CreateBehavior(BehaviorType behaviorType, Robot& robot, const Json::Value& config);
+  // NameCollisionRule dictates how to handle name collision on creation - reuse existing entry, replace it, or error and return null
+  enum class NameCollisionRule : uint8_t
+  {
+    ReuseOld,
+    OverwriteWithNew,
+    Fail
+  };
+  
+  BehaviorFactory();
+  ~BehaviorFactory();
+  
+  IBehavior* CreateBehavior(BehaviorType behaviorType, Robot& robot, const Json::Value& config, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld);
+  IBehavior* CreateBehavior(const Json::Value& behaviorJson, Robot& robot, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld);
+  
+  void DestroyBehavior(IBehavior* behavior);
+  void SafeDestroyBehavior(IBehavior*& behaviorPtrRef); // destroy and null out the pointer
+  
+  IBehavior* FindBehaviorByName(const std::string& inName);
+  
+  // temp hack to give a public method for adding behaviors not created via the factory.
+  // NOTE: can modify newBehavior address (e.g. on name collision if rule is to reuse existing behavior)
+  void DEMO_HACK_AddToFactory(IBehavior*& newBehavior, NameCollisionRule nameCollisionRule = NameCollisionRule::ReuseOld)
+  {
+    newBehavior = AddToFactory(newBehavior, nameCollisionRule);
+  }
+  
+  const NameToBehaviorMap& GetBehaviorMap() { return _nameToBehaviorMap; }
   
 private:
+
+  // ============================== Private Member Funcs ==============================
   
-//  // ============================== Private Member Funcs ==============================
-//  
-//
-//    
-//  // ============================== Private Member Vars ==============================
-//
-//  using BehaviorHandle = uint32_t;
-//  using HandleToBehaviorMap = std::map<BehaviorHandle, IBehavior*>;
-//  
-//  //using = std::map<std::string, IBehavior*>
-//  
-//  BehaviorHandle        _nextBehaviorHandle;
-//  HandleToBehaviorMap   _handleToBehaviorMap;
+  // NOTE: can modify newBehavior (e.g. on name collision if rule is to reuse existing behavior)
+  IBehavior* AddToFactory(IBehavior* newBehavior, NameCollisionRule nameCollisionRule);
+  
+  bool RemoveBehaviorFromMap(IBehavior* behavior);
+  void DeleteBehaviorInternal(IBehavior* behavior);
+  
+  // ============================== Private Member Vars ==============================
+  
+  NameToBehaviorMap _nameToBehaviorMap;
 };
   
 

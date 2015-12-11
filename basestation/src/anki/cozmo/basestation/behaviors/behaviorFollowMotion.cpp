@@ -30,7 +30,7 @@ static std::vector<std::string> _animReactions = {
 BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
 {
-  _name = "FollowMotion";
+  SetDefaultName("FollowMotion");
 
   SubscribeToTags({{
     EngineToGameTag::RobotObservedMotion,

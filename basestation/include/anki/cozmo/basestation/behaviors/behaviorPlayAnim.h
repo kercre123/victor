@@ -20,13 +20,17 @@ namespace Cozmo {
   
 class BehaviorPlayAnim: public IBehavior
 {
+private:
+  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  BehaviorPlayAnim(Robot& robot, const Json::Value& config);
+  
 public:
   
-  BehaviorPlayAnim(Robot& robot, const Json::Value& config);
   virtual ~BehaviorPlayAnim();
   
   void SetAnimationName(const std::string& inName);
-  void SetName(const std::string& inName);
   
   void SetMinTimeBetweenRuns(double newVal) { _minTimeBetweenRuns = newVal; }
   

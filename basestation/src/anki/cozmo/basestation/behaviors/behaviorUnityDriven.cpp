@@ -19,10 +19,7 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
 
-static const std::string kBaseBehaviorName = "UnityDriven";
-  
   
 BehaviorUnityDriven::BehaviorUnityDriven(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -33,7 +30,7 @@ BehaviorUnityDriven::BehaviorUnityDriven(Robot& robot, const Json::Value& config
   , _isComplete(false)
   , _isResuming(false)
 {
-  _name = kBaseBehaviorName;
+  SetDefaultName("UnityDriven");
   
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction
