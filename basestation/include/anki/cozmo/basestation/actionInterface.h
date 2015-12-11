@@ -94,7 +94,13 @@ namespace Anki {
       // Override to have the action disable any animation tracks that may have
       // already been streamed and are in the robot's buffer, so they don't
       // interfere with the action. Note: uses the bits defined by AnimTrackFlag.
-      virtual u8 GetAnimTracksToDisable() const;
+      virtual u8 GetAnimTracksToDisable() const { return 0; }
+      
+      // Override these to have the action allow the robot to move certain
+      // subsystems while the action executes. I.e., by default actions
+      // will lockout all control of the robot, and extra movement commands are ignored.
+      // Note: uses the bits defined by AnimTrackFlag.
+      virtual u8 GetMovementTracksToIgnore() const;
       
       // Used (e.g. in initialization of CompoundActions) to specify that a
       // consituent action should not try to lock or unlock tracks it uses

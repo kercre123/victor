@@ -60,7 +60,9 @@ namespace Anki {
       // Default is 0 (no delay).
       void SetDelayBetweenActions(f32 seconds);
       
-      virtual u8 GetAnimTracksToDisable() const override { return 0; }
+      // We want to override and not ignore any movement tracks ourselves; our constituent actions will
+      // ignore what they want to when running
+      virtual u8 GetMovementTracksToIgnore() const override { return 0; }
       
     private:
       virtual void Reset() override;

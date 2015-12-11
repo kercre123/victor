@@ -66,12 +66,20 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
       
+      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
+      
       // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
-      virtual u8 GetAnimTracksToDisable() const override
+      virtual u8 GetMovementTracksToIgnore() const override
       {
-        return _useManualSpeed ? 0 : (uint8_t)AnimTrackFlag::BODY_TRACK;
+        u8 ignoredTracks = IAction::GetMovementTracksToIgnore();
+        if (_useManualSpeed)
+        {
+          ignoredTracks &= ~((uint8_t)AnimTrackFlag::BODY_TRACK);
+        }
+        return ignoredTracks;
       }
       
+
     protected:
 
       virtual ActionResult Init(Robot& robot) override;
@@ -463,7 +471,6 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
@@ -506,6 +513,12 @@ namespace Anki {
       
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
+      // We don't want to ignore movement commands for Body during FaceObjectAction
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+      }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -513,9 +526,6 @@ namespace Anki {
       virtual void Reset() override;
       
       virtual Radians GetHeadAngle(f32 heightDiff) override;
-      
-      // Override to allow wheel control while facing the object
-      virtual u8 GetAnimTracksToDisable() const override { return 0; }
       
       bool                 _facePoseCompoundActionDone;
       
@@ -556,6 +566,17 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
+      }
+      
+      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        u8 ignoredTracks = IAction::GetMovementTracksToIgnore();
+        if (_useManualSpeed)
+        {
+          ignoredTracks &= ~((uint8_t)AnimTrackFlag::BODY_TRACK);
+        }
+        return ignoredTracks;
       }
       
     protected:

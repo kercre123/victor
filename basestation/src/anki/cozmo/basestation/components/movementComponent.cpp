@@ -25,6 +25,8 @@ using namespace ExternalInterface;
 
 MovementComponent::MovementComponent(Robot& robot)
   : _robot(robot)
+  , _animTrackLockCount((int)AnimConstants::NUM_TRACKS)
+  , _ignoreTrackMovementCount((int)AnimConstants::NUM_TRACKS)
 {
   if (_robot.HasExternalInterface())
   {
@@ -49,7 +51,7 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
 {
-  if(AreWheelsLocked()) {
+  if(IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                      "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
@@ -66,7 +68,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::TurnInPlaceAtSpee
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 {
-  if(IsHeadLocked()) {
+  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveHead.HeadLocked",
                      "Ignoring ExternalInterface::MoveHead while head is locked.");
   } else {
@@ -77,7 +79,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveHead& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 {
-  if(IsLiftLocked()) {
+  if(IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.MoveLift.LiftLocked",
                      "Ignoring ExternalInterface::MoveLift while lift is locked.");
   } else {
@@ -88,7 +90,7 @@ void MovementComponent::HandleMessage(const ExternalInterface::MoveLift& msg)
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg)
 {
-  if(IsHeadLocked()) {
+  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
                      "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
   } else {
@@ -100,10 +102,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TrackToObject& msg)
 {
-  if(IsHeadLocked()) {
+  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.HeadLocked",
                      "Ignoring ExternalInterface::TrackToObject while head is locked.");
-  } else if (AreWheelsLocked() && !msg.headOnly) {
+  } else if (IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK) && !msg.headOnly) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.WheelsLocked",
                      "Ignoring ExternalInterface::TrackToObject while wheels are locked and headOnly == false.");
   } else {
@@ -118,10 +120,10 @@ void MovementComponent::HandleMessage(const ExternalInterface::TrackToObject& ms
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::TrackToFace& msg)
 {
-  if(IsHeadLocked()) {
+  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackToFace.HeadLocked",
                      "Ignoring ExternalInterface::TrackToFace while head is locked.");
-  } else if (AreWheelsLocked() && !msg.headOnly) {
+  } else if (IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK) && !msg.headOnly) {
     PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToFace.WheelsLocked",
                      "Ignoring ExternalInterface::TrackToFace while wheels are locked and headOnly == false.");
   } else {
@@ -189,7 +191,7 @@ Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
     if(!headOnly) {
       tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
-    LockTracks(tracksToLock);
+    LockAnimTracks(tracksToLock);
     
     return RESULT_OK;
   } else {
@@ -212,7 +214,7 @@ Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bo
     if(!headOnly) {
       tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
-    LockTracks(tracksToLock);
+    LockAnimTracks(tracksToLock);
     
     return RESULT_OK;
   } else {
@@ -233,7 +235,7 @@ Result MovementComponent::DisableTrackToObject()
     if(!_trackWithHeadOnly) {
       tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
-    UnlockTracks(tracksToUnlock);
+    UnlockAnimTracks(tracksToUnlock);
   }
   return RESULT_OK;
 }
@@ -247,7 +249,7 @@ Result MovementComponent::DisableTrackToFace()
     if(!_trackWithHeadOnly) {
       tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
-    UnlockTracks(tracksToUnlock);
+    UnlockAnimTracks(tracksToUnlock);
   }
   return RESULT_OK;
 }
@@ -263,57 +265,71 @@ int MovementComponent::GetFlagIndex(uint8_t flag) const
   return i;
 }
 
-void MovementComponent::LockTracks(uint8_t tracks)
+void MovementComponent::LockAnimTracks(uint8_t tracks)
 {
-  for (int i=0; i < NUM_TRACKS; i++)
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    uint8_t curMask = (1 << i);
-    if ((tracks & curMask) == curMask)
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
     {
-      _trackLockCount[i]++;
+      ++_animTrackLockCount[i];
+      
+      // If we just went from not locked to locked, inform the robot
+      if (_animTrackLockCount[i] == 1)
+      {
+        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(curTrack)));
+      }
     }
   }
 }
 
-void MovementComponent::UnlockTracks(uint8_t tracks)
+void MovementComponent::UnlockAnimTracks(uint8_t tracks)
 {
-  for (int i=0; i < NUM_TRACKS; i++)
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    uint8_t curMask = (1 << i);
-    if ((tracks & curMask) == curMask)
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
     {
-      --_trackLockCount[i];
-      ASSERT_NAMED(_trackLockCount[i] >= 0, "Should have a matching number of track lock and unlocks!");
+      --_animTrackLockCount[i];
+      
+      // If we just went from locked to not locked, inform the robot
+      if (_animTrackLockCount[i] == 0)
+      {
+        _robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(curTrack)));
+      }
+      ASSERT_NAMED(_animTrackLockCount[i] >= 0, "Should have a matching number of anim track lock and unlocks!");
     }
   }
 }
   
-uint8_t MovementComponent::GetLockedTracks() const
+void MovementComponent::IgnoreTrackMovement(uint8_t tracks)
 {
-  uint8_t mask = 0;
-  for (int i=0; i < NUM_TRACKS; i++)
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
   {
-    if (_trackLockCount[i] > 0)
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
     {
-      mask |= (1 << i);
+      ++_ignoreTrackMovementCount[i];
     }
   }
-  return mask;
 }
   
-bool MovementComponent::IsHeadLocked() const
+void MovementComponent::UnignoreTrackMovement(uint8_t tracks)
 {
-  return IsTrackLocked(AnimTrackFlag::HEAD_TRACK);
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
+    {
+      --_ignoreTrackMovementCount[i];
+      ASSERT_NAMED(_animTrackLockCount[i] >= 0, "Should have a matching number of ignore/unignore track movement!");
+    }
+  }
 }
   
-bool MovementComponent::IsLiftLocked() const
+bool MovementComponent::IsMovementTrackIgnored(AnimTrackFlag track) const
 {
-  return IsTrackLocked(AnimTrackFlag::LIFT_TRACK);
-}
-  
-bool MovementComponent::AreWheelsLocked() const
-{
-  return IsTrackLocked(AnimTrackFlag::BODY_TRACK);
+  return _ignoreTrackMovementCount[GetFlagIndex((uint8_t)track)] > 0;
 }
 
 } // namespace Cozmo

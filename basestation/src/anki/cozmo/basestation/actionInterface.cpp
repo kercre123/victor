@@ -38,10 +38,8 @@ namespace Anki {
     {
       if(!_isRunning && !_suppressTrackLocking) {
         // When the ActionRunner first starts, lock any specified subsystems
-        robot.GetMoveComponent().LockTracks(GetAnimTracksToDisable());
-        uint8_t lockedTracks = robot.GetMoveComponent().GetLockedTracks();
-        
-        robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::DisableAnimTracks(lockedTracks)));
+        robot.GetMoveComponent().LockAnimTracks(GetAnimTracksToDisable());
+        robot.GetMoveComponent().IgnoreTrackMovement(GetMovementTracksToIgnore());
         _isRunning = true;
       }
 
@@ -76,13 +74,8 @@ namespace Anki {
         }
         
         if(!_suppressTrackLocking) {
-          const uint8_t previouslyLockedTracks = robot.GetMoveComponent().GetLockedTracks();
-          robot.GetMoveComponent().UnlockTracks(GetAnimTracksToDisable());
-          const uint8_t nowLockedTracks = robot.GetMoveComponent().GetLockedTracks();
-          const uint8_t tracksToEnable = previouslyLockedTracks ^ nowLockedTracks;
-          
-          // Re-enable any animation tracks that were disabled
-          robot.SendMessage(RobotInterface::EngineToRobot(AnimKeyFrame::EnableAnimTracks(tracksToEnable)));
+          robot.GetMoveComponent().UnlockAnimTracks(GetAnimTracksToDisable());
+          robot.GetMoveComponent().UnignoreTrackMovement(GetMovementTracksToIgnore());
         }
         _isRunning = false;
       }
@@ -135,7 +128,7 @@ namespace Anki {
     }
 #   endif // USE_ACTION_CALLBACKS
     
-    u8 IActionRunner::GetAnimTracksToDisable() const
+    u8 IActionRunner::GetMovementTracksToIgnore() const
     {
       return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
