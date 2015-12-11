@@ -1486,6 +1486,7 @@ namespace Anki {
         ProceduralFaceParams& params = procFace.GetParams();
         params.SetFacePosition({xPix, yPix});
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
+        params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
         ProceduralFaceKeyFrame kf(procFace, duration_ms);
         kf.SetIsLive(true);
