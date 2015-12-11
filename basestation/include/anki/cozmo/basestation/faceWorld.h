@@ -5,6 +5,8 @@
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
+#include "clad/types/actionTypes.h"
+
 #include <map>
 
 namespace Anki {
@@ -40,8 +42,7 @@ namespace Cozmo {
     TimeStamp_t _deletionTimeout_ms = 3000;
 
     // For tracking, keep track of the id of the actions we are doing
-    u32 _lastTrackingActionTag = 0;
-    bool _hasTrackingAction = false;
+    u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
     
     Result UpdateFaceTracking(const Vision::TrackedFace& face);
     
