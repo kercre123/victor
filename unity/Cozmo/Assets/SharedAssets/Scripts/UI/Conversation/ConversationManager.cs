@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -33,6 +34,10 @@ namespace Conversations {
     [SerializeField]
     private BaseView _RightBubble;
 
+    [SerializeField]
+    private BaseView _ConvoOverlayPrefab;
+    private ConvoBackground _CurrBackground;
+
     private Conversation _CurrentConversation = new Conversation();
     private string _CurrentConversationKey;
     private SpeechBubble _CurrentSpeechBubble;
@@ -45,6 +50,9 @@ namespace Conversations {
     public void StartNewConversation(string conversationKey) {
       _CurrentConversation = new Conversation();
       _CurrentConversationKey = conversationKey;
+      if (_CurrBackground != null) {
+        UIManager.CloseView(_CurrBackground);
+      }
       if (_CurrentSpeechBubble != null) {
         UIManager.CloseView(_CurrentSpeechBubble);
       }
@@ -58,6 +66,9 @@ namespace Conversations {
       _CurrentConversation.AddToConversation(line);
       if (_CurrentSpeechBubble != null) {
         UIManager.CloseView(_CurrentSpeechBubble);
+      }
+      if (_CurrBackground == null) {
+        _CurrBackground = UIManager.OpenView(_ConvoOverlayPrefab) as ConvoBackground;
       }
       _CurrentSpeechBubble = CreateSpeechBubble(line);
     }
