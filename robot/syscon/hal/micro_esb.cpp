@@ -211,35 +211,33 @@ uint32_t uesb_start() {
     NRF_RADIO->INTENSET    = RADIO_INTENSET_DISABLED_Msk;
   
     if (m_tx_fifo.count > 0) {
-        
-        // Dequeue fifo
-        uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
-        uint8_t pipe = current_payload->pipe;
-        
-        if (pipe >= UESB_MAX_PIPES) {
-          return UESB_ERROR_INVALID_PARAMETERS;
-        }
-
-        m_pid[pipe] = (m_pid[pipe] + 1) % 4;
+      // Dequeue fifo
+      uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
+      uint8_t pipe = current_payload->pipe;
       
-        current_payload->pid = 0xCC | m_pid[pipe];
-        current_payload->null = 0;
+      if (pipe >= UESB_MAX_PIPES) {
+        return UESB_ERROR_INVALID_PARAMETERS;
+      }
 
-        // Configure the transmitter
-        update_rf_payload_format(current_payload->length);
+      m_pid[pipe] = (m_pid[pipe] + 1) % 4;
+    
+      current_payload->pid = 0xCC | m_pid[pipe];
+      current_payload->null = 0;
 
-        m_uesb_mainstate       = UESB_STATE_PTX;
-        
-      
-        NRF_RADIO->TXADDRESS   = current_payload->pipe;
-        NRF_RADIO->PACKETPTR = (uint32_t)&current_payload->pid;
+      // Configure the transmitter
+      update_rf_payload_format(current_payload->length);
+
+      m_uesb_mainstate       = UESB_STATE_PTX;
+
+      NRF_RADIO->TXADDRESS   = current_payload->pipe;
+      NRF_RADIO->PACKETPTR   = (uint32_t)&current_payload->pid;
     } else if (m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
-        update_rf_payload_format(m_config_local.payload_length);
+      update_rf_payload_format(m_config_local.payload_length);
 
-        m_uesb_mainstate       = UESB_STATE_PRX;
-        NRF_RADIO->RXADDRESSES = m_config_local.rx_pipes_enabled;
+      m_uesb_mainstate       = UESB_STATE_PRX;
+      NRF_RADIO->RXADDRESSES = m_config_local.rx_pipes_enabled;
 
-        NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_buffer;
+      NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_buffer;
     }
 
     NRF_RADIO->EVENTS_ADDRESS = NRF_RADIO->EVENTS_PAYLOAD = 0;
@@ -393,8 +391,8 @@ extern "C" void RADIO_IRQHandler()
                 break ;
         }
         
-        uesb_event_handler();
         m_uesb_mainstate = UESB_STATE_IDLE;
+        uesb_event_handler();
         uesb_start();
     }
 }

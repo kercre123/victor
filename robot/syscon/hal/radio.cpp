@@ -277,7 +277,6 @@ extern "C" void uesb_event_handler(void)
         pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
 
         // Tell this accessory to come over to my side
-        //MicroWait(100);
         uesb_write_tx_payload(ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
       }
       
@@ -318,6 +317,22 @@ void Radio::manage() {
       g_dataToHead.cubeToUpdate = 0;
     }
   }
+  
+  /*
+  // Send a pairing packet
+  CapturePacket pair;
+
+  pair.target_channel = targetChannel;
+  pair.interval_delay = RADIO_INTERVAL_DELAY;
+  pair.prefix = PIPE_VALUES[BASE_PIPE+0];
+  pair.base = targetAddress;
+  pair.timeout_msb = RADIO_TIMEOUT_MSB;
+  pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
+
+  // Tell this accessory to come over to my side
+  uesb_write_tx_payload(ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+  return ;
+  */
   
   // Handle per 5ms channel updates
   switch (radioState) {
