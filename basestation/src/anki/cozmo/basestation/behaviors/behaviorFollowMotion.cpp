@@ -10,12 +10,13 @@
  *
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -63,6 +64,8 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   // Do the initial reaction for first motion each time we restart this behavior
   _initialReactionAnimPlayed = false;
 
+  _previousIdleAnimation = robot.GetIdleAnimationName();
+
   return Result::RESULT_OK;
 }
 
@@ -73,6 +76,18 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
     robot.GetVisionComponent().SetModes(_originalVisionModes);
     return Status::Complete;
   } else {
+
+    if( _holdUnitl >= 0.0f ) {
+      if( _holdUnitl < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() ) {
+        return Status::Running;
+      }
+      else {
+        // restore idle animation
+        robot.SetIdleAnimation(_previousIdleAnimation);     
+        _holdUnitl = -1.0f;
+      }
+    }
+    
     return Status::Running;
   }
 }
@@ -81,6 +96,7 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
 {
   _actionRunning = 0;
   _interrupted = true;
+  _holdUnitl = -1.0f;
   return Result::RESULT_OK;
 }
 
@@ -90,6 +106,13 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
   {
     case MessageEngineToGameTag::RobotObservedMotion:
     {
+
+      if( _holdUnitl >= 0.0f ) {
+        if( _holdUnitl < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() ) {
+          break;
+        }
+      }
+      
       const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
       
       // Ignore motion while an action is running
@@ -117,15 +140,49 @@ void BehaviorFollowMotion::HandleWhileRunning(const EngineToGameEvent& event, Ro
                          relHeadAngle_rad.getDegrees(), relBodyPanAngle_rad.getDegrees());
         
         IAction* action = nullptr;
+
+        const bool inGroundPlane = motionObserved.ground_area > _minGroundAreaToConsider;
+        const float robotOffsetX = motionObserved.ground_x;
+        const float robotOffsetY = motionObserved.ground_y;
+        const float groundPlaneDist = std::sqrt( std::pow( robotOffsetX, 2 ) +
+                                                 std::pow( robotOffsetY, 2) );
+        const bool belowMinGroundPlaneDist = groundPlaneDist < _minDriveFrowardGroundPlaneDist_mm;
+
+        if( inGroundPlane ) {
+          if( belowMinGroundPlaneDist ) {
+            const float timeToHold = 1.25f;
+            _holdUnitl = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeToHold;
+            MoveHeadToAngleAction* action = new MoveHeadToAngleAction(MIN_HEAD_ANGLE);
+            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+            PRINT_NAMED_INFO("BehaviorFollowMotion.HoldingHeadLow",
+                             "got %f of image with dist %f, holding head at min angle for %f sec",
+                             motionObserved.ground_area,
+                             groundPlaneDist,
+                             timeToHold);
+            
+            _previousIdleAnimation = robot.GetIdleAnimationName();
+            robot.SetIdleAnimation("NONE");
+            break;
+          }
+        }
+
         
         if(relHeadAngle_rad.getAbsoluteVal() < _driveForwardTol &&
-           relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol)
+           relBodyPanAngle_rad.getAbsoluteVal() < _driveForwardTol )
         {
           // Move towards the motion since it's centered
           DriveStraightAction* driveAction = new DriveStraightAction(_moveForwardDist_mm, DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
           driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
           
           action = driveAction;
+
+          // TEMP:
+          PRINT_NAMED_INFO("BehaviorFollowMotion.DriveForward",
+                           "relHeadAngle = %fdeg, relBodyAngle = %fdeg, ground area %f, dist = %f",
+                           RAD_TO_DEG(relHeadAngle_rad.ToFloat()),
+                           RAD_TO_DEG(relBodyPanAngle_rad.ToFloat()),
+                           motionObserved.ground_area,
+                           groundPlaneDist);
           
         } else {
           PanAndTiltAction* panTiltAction = new PanAndTiltAction(relBodyPanAngle_rad, relHeadAngle_rad,

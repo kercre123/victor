@@ -1133,6 +1133,7 @@ namespace Cozmo {
   void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action)
   {
     // HACK! disable idle animation while acting
+    // TODO:(bn) at least store the old animation, so we don't restore the wrong one
     robot.SetIdleAnimation("NONE");
 
     _lastActionTag = action->GetTag();

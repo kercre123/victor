@@ -140,6 +140,9 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
 
     case MessageEngineToGameTag::RobotCompletedAction: {
       if( _waitForActionTag == event.GetData().Get_RobotCompletedAction().idTag ) {
+        // restore idle
+        robot.SetIdleAnimation(_previousIdleAnimation);
+        
         if( _state == State::Pouncing ) {
           PRINT_NAMED_INFO("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
           robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
@@ -185,6 +188,10 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec
   
   // TEMP: 
   std::string _pounceAnimation = "invDemo_P05_CatchFwd"; // TEMP: 
+
+  // disable idle
+  _previousIdleAnimation = robot.GetIdleAnimationName();
+  robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
   IActionRunner* newAction = new PlayAnimationAction( _pounceAnimation );
@@ -211,7 +218,12 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
                    robot.GetPitchAngle());
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
-  
+
+  // disable idle while animation plays
+  // TEMP:  // TODO:(bn) should we do this inside PlayAnimationAction???
+  _previousIdleAnimation = robot.GetIdleAnimationName();
+  robot.SetIdleAnimation("NONE");
+
   IActionRunner* newAction = nullptr;
   if( caught ) {
     newAction = new PlayAnimationAction( "happy" );
