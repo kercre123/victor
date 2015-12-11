@@ -150,7 +150,7 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>current_payload</ItemText>
+          <ItemText>NRF_RADIO</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

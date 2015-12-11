@@ -246,38 +246,40 @@ extern "C" void uesb_event_handler(void)
     case RADIO_PAIRING:
       slot = FreeAccessory();
       
-      if (rx_payload.pipe == CUBE_ADVERT_PIPE && slot >= 0) {
-        AdvertisePacket packet;
-        memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
-        ReleaseAccessory(packet.id);
-
-        // We don't want more than one charger paired (sorry about it)
-        if ((AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= MAX_CHARGERS) ||
-            (AccType(packet.id) == ACCESSORY_CUBE && CountAccessories(ACCESSORY_CUBE) >= MAX_CUBES)) {
-          break ;
-        }
-
-        // We are loading the slot
-        accessories[slot].active = true;
-        accessories[slot].id = packet.id;
-        accessories[slot].last_received = 0;        
-        
-        memset(&accessories[slot].rx_state, 0, sizeof(accessories[slot].rx_state));
-        memset(&accessories[slot].tx_state, 0xFF, sizeof(accessories[slot].tx_state));
-        
-        // Send a pairing packet
-        CapturePacket pair;
-
-        pair.target_channel = TalkAddress.rf_channel;
-        pair.interval_delay = RADIO_INTERVAL_DELAY;
-        pair.prefix = PIPE_VALUES[BASE_PIPE+slot];
-        pair.base = TalkAddress.base1;
-        pair.timeout_msb = RADIO_TIMEOUT_MSB;
-        pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
-
-        // Tell this accessory to come over to my side
-        uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+      if (rx_payload.pipe != CUBE_ADVERT_PIPE || slot < 0) {
+        break ;
       }
+
+      AdvertisePacket packet;
+      memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
+      ReleaseAccessory(packet.id);
+
+      // We don't want more than one charger paired (sorry about it)
+      if ((AccType(packet.id) == ACCESSORY_CHARGER && CountAccessories(ACCESSORY_CHARGER) >= MAX_CHARGERS) ||
+          (AccType(packet.id) == ACCESSORY_CUBE && CountAccessories(ACCESSORY_CUBE) >= MAX_CUBES)) {
+        break ;
+      }
+
+      // We are loading the slot
+      accessories[slot].active = true;
+      accessories[slot].id = packet.id;
+      accessories[slot].last_received = 0;        
+      
+      memset(&accessories[slot].rx_state, 0, sizeof(accessories[slot].rx_state));
+      memset(&accessories[slot].tx_state, 0xFF, sizeof(accessories[slot].tx_state));
+      
+      // Send a pairing packet
+      CapturePacket pair;
+
+      pair.target_channel = TalkAddress.rf_channel;
+      pair.interval_delay = RADIO_INTERVAL_DELAY;
+      pair.prefix = PIPE_VALUES[BASE_PIPE+slot];
+      pair.base = TalkAddress.base1;
+      pair.timeout_msb = RADIO_TIMEOUT_MSB;
+      pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
+
+      // Tell this accessory to come over to my side
+      uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
       
       break ;
       
@@ -330,7 +332,7 @@ void Radio::manage() {
           // This trys to space the robots apart (the 7 is carefully picked)
           TalkAddress.rf_channel -= MAX_TX_CHANNEL;
         }
-          
+
         // a zero means a wrap around
         if (!TalkAddress.rf_channel) {
           // We've reached the end of the usable frequency range, simply
@@ -344,7 +346,7 @@ void Radio::manage() {
               noiseLevel = currentNoiseLevel[i];
             }
           }
-          
+
           EnterState(RADIO_PAIRING);
         }
       }
@@ -358,6 +360,7 @@ void Radio::manage() {
       82, 0xE7E7E7E7, 0xC2C2C2C2, {0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8}
     };
     LEDPacket packet;
+    
     memset(&packet, 0xC0, sizeof(packet));
     uesb_write_tx_payload(&cube_classic, 2, &packet, sizeof(packet));
     
