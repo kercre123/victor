@@ -605,7 +605,7 @@ void Robot::HandleMessage(const ExternalInterface::SetIdleAnimation& msg)
 template<>
 void Robot::HandleMessage(const ExternalInterface::ReplayLastAnimation& msg)
 {
-  _animationStreamer.SetStreamingAnimation(_lastPlayedAnimationId, msg.numLoops);
+  _animationStreamer.SetStreamingAnimation(*this, _lastPlayedAnimationId, msg.numLoops);
 }
 
 template<>

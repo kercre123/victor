@@ -34,7 +34,7 @@ namespace Cozmo {
 
   }
 
-  u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -61,7 +61,7 @@ namespace Cozmo {
       }
     
       // Get the animation ready to play
-      InitStream(_streamingAnimation, _tagCtr);
+      InitStream(robot, _streamingAnimation, _tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
@@ -111,9 +111,24 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
-  
-  Result AnimationStreamer::InitStream(Animation* anim, u8 withTag)
+
+  const std::string& AnimationStreamer::GetIdleAnimationName() const
   {
+    if( nullptr == _idleAnimation ) {
+      static const std::string empty("");
+      return empty;
+    }
+
+    return _idleAnimation->GetName();
+  }
+  
+  Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, u8 withTag)
+  {
+    if( _startOfAnimationSent && ! _endOfAnimationSent ) {
+      // stop the animation if we are in the middle of one
+      SendEndOfAnimation(robot);
+    }
+    
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
@@ -872,7 +887,7 @@ namespace Cozmo {
 #         endif
           
           // Reset the animation so it can be played again:
-          InitStream(_streamingAnimation, _tagCtr);
+          InitStream(robot, _streamingAnimation, _tagCtr);
           
         } else {
 #         if DEBUG_ANIMATION_STREAMING
@@ -913,7 +928,7 @@ namespace Cozmo {
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        InitStream(_idleAnimation, IdleAnimationTag);
+        InitStream(robot, _idleAnimation, IdleAnimationTag);
         _isIdling = true;
         //InitIdleAnimation();
       }

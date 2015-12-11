@@ -62,12 +62,14 @@ namespace Cozmo {
     // Returns a tag you can use to monitor whether the robot is done playing this
     // animation.
     // Actual streaming occurs on calls to Update().
-    u8 SetStreamingAnimation(const std::string& name, u32 numLoops = 1);
+    u8 SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1);
     
     // Sets the "idle" animation that will be streamed (in a loop) when no other
     // animation is streaming. Use empty string ("") to disable.
     // Use static LiveAnimation above to use live procedural animation (default).
     Result SetIdleAnimation(const std::string& name);
+
+    const std::string& GetIdleAnimationName() const;
     
     // Add a procedural face "layer" to be combined with whatever is streaming
     using FaceTrack = Animations::Track<ProceduralFaceKeyFrame>;
@@ -96,7 +98,7 @@ namespace Cozmo {
     
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
-    Result InitStream(Animation* anim, u8 withTag);
+    Result InitStream(Robot& robot, Animation* anim, u8 withTag);
     
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
