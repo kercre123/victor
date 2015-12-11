@@ -30,10 +30,10 @@ namespace Cozmo {
     
     // Returns number of known faces
     // Actual face IDs returned in faceIDs
-    u32 GetKnownFaceIDs(std::vector<Vision::TrackedFace::ID_t> &faceIDs) const;
+    std::vector<Vision::TrackedFace::ID_t> GetKnownFaceIDs() const;
     
     // Returns number of known faces observed since seenSinceTime_ms
-    u32 GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms, std::map<TimeStamp_t, Vision::TrackedFace::ID_t> &faceIDs) const;
+    std::map<TimeStamp_t, Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
 
     // Returns time of the last observed face.
     // 0 if no face was ever observed.

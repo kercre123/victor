@@ -235,24 +235,24 @@ namespace Cozmo {
   }
 
 
-  u32 FaceWorld::GetKnownFaceIDs(std::vector<Vision::TrackedFace::ID_t> &faceIDs) const
+  std::vector<Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDs() const
   {
-    faceIDs.clear();
+    std::vector<Vision::TrackedFace::ID_t> faceIDs;
     for (auto pair : _knownFaces) {
       faceIDs.push_back(pair.first);
     }
-    return static_cast<u32>(faceIDs.size());
+    return faceIDs;
   }
   
-  u32 FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms, std::map<TimeStamp_t, Vision::TrackedFace::ID_t> &faceIDs) const
+  std::map<TimeStamp_t, Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
   {
-    faceIDs.clear();
+    std::map<TimeStamp_t, Vision::TrackedFace::ID_t> faceIDs;
     for (auto pair : _knownFaces) {
       if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
         faceIDs.insert(std::pair<TimeStamp_t, Vision::TrackedFace::ID_t>(pair.first, pair.second.face.GetTimeStamp()));
       }
     }
-    return static_cast<u32>(faceIDs.size());
+    return faceIDs;
   }
   
   
