@@ -774,6 +774,11 @@
           <GroupName>clad</GroupName>
           <Files>
             <File>
+              <FileName>robotLogging.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotLogging.cpp</FilePath>
+            </File>
+            <File>
               <FileName>activeObjectTypes.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\generated\clad\robot\clad\types\activeObjectTypes.cpp</FilePath>
