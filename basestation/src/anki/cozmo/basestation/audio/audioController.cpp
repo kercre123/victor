@@ -47,7 +47,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #if USE_AUDIO_ENGINE
   {
     _audioEngine = new AudioEngineController();
-    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/resources/sound/$(ANKI_BUILD_TARGET)" );
+    const std::string assetPath = dataPlatfrom->pathToResource(Util::Data::Scope::Resources, "assets/resources/sound" );
 
     // Set Language Local
     const AudioLocaleType localeType = AudioLocaleType::EnglishUS;
