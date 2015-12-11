@@ -1072,10 +1072,15 @@ namespace Anki {
       
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
       action->SetTolerance(_panAngleTol);
+      action->SetMaxSpeed(_maxPanSpeed_radPerSec);
+      action->SetAccel(_panAccel_radPerSec2);
       _compoundAction.AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : robot.GetHeadAngle() + _headTiltAngle;
-      _compoundAction.AddAction(new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol));
+      MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
+      headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
+      headAction->SetAccel(_tiltAccel_radPerSec2);
+      _compoundAction.AddAction(headAction);
       
       // Put the angles in the name for debugging
       _name = ("Pan" + std::to_string(std::round(_bodyPanAngle.getDegrees())) +
