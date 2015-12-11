@@ -142,11 +142,12 @@ namespace Cozmo {
       _endOfAnimationSent = anim->IsEmpty();
       _startOfAnimationSent = false;
       
+#     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
       _audioClient.LoadAnimationAudio(anim);
       // Set Pre Buffer Key Frame Size
       _audioClient.SetPreBufferRobotAudioMessageCount(10);
-
+#     endif
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
       // This prevents us from replaying the same keyframe
@@ -608,8 +609,10 @@ namespace Cozmo {
     _endOfAnimationSent = true;
     _startOfAnimationSent = false;
     
-    // Increment running total of bytes streamed
+    // Increment running total of bytes and "audio frames" streamed (we consider
+    // end of anim to be "audio" for flow control counting)
     robot.IncrementNumAnimationBytesStreamed((int32_t)endMsgSize);
+    robot.IncrementNumAnimationAudioFramesStreamed(1);
     
     return lastResult;
   } // SendEndOfAnimation()
@@ -666,11 +669,6 @@ namespace Cozmo {
       const bool sendSilence = (_faceLayers.empty() ? false : true);
       BufferAudioToSend( sendSilence, _startTime_ms, _streamingTime_ms );
       
-      // Increment fake "streaming" time, so we can evaluate below whether
-      // it's time to stream out any of the other tracks. Note that it is still
-      // relative to the same start time.
-      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-      
       if(!_startOfAnimationSent) {
         SendStartOfAnimation();
       }
@@ -684,6 +682,11 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed", "");
         break;
       }
+      
+      // Increment fake "streaming" time, so we can evaluate below whether
+      // it's time to stream out any of the other tracks. Note that it is still
+      // relative to the same start time.
+      _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
     }
     
     // If we just finished buffering all the face layers, send an end of animation message
@@ -1008,9 +1011,14 @@ namespace Cozmo {
     
     // If we didn't do any streaming above, but we've still got face layers to
     // stream or there's audio waiting to go out, stream those now
-    if(!streamUpdated && HaveFaceLayersToSend())
+    if(!streamUpdated)
     {
-      lastResult = StreamFaceLayersOrAudio(robot);
+      if(HaveFaceLayersToSend()) {
+        lastResult = StreamFaceLayersOrAudio(robot);
+      } else if(_startOfAnimationSent && !_endOfAnimationSent) {
+        SendEndOfAnimation(robot);
+      }
+      
     }
     
     return lastResult;

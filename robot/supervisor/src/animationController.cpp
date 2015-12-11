@@ -531,7 +531,6 @@ namespace AnimationController {
           case RobotInterface::EngineToRobot::Tag_animAudioSilence:
           {
             HAL::AudioPlaySilence();
-            ++_numAudioFramesPlayed;
             break;
           }
           case RobotInterface::EngineToRobot::Tag_animAudioSample:
@@ -541,7 +540,6 @@ namespace AnimationController {
             } else {
               HAL::AudioPlaySilence();
             }
-            ++_numAudioFramesPlayed;
             break;
           }
           default:
@@ -768,12 +766,14 @@ namespace AnimationController {
           } // switch
         } // while(!nextAudioFrameFound && !terminatorFound)
 
+        ++_numAudioFramesPlayed;
         --_numAudioFramesBuffered;
         
         if(terminatorFound) {
           _isPlaying = false;
           _haveReceivedTerminationFrame = false;
           --_numAudioFramesBuffered;
+          ++_numAudioFramesPlayed; // end of anim considered "audio" for counting
 #         if DEBUG_ANIMATION_CONTROLLER
           PRINT("Reached animation %d termination frame (%d frames still buffered, curPos/lastPos = %d/%d).\n",
                 _currentTag, _numAudioFramesBuffered, _currentBufferPos, _lastBufferPos);
