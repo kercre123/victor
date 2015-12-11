@@ -47,7 +47,7 @@ public:
   BehaviorInteractWithFaces_investorDemo(Robot& robot, const Json::Value& config)
     : BehaviorInteractWithFaces(robot, config)
   {
-    DEMO_HACK_SetName("InteractWithFaces_ID"); // to avoid clash in factory with subclass
+    DEMO_HACK_SetName("Faces_ID"); // to avoid clash in factory with subclass
   }
 
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override {
@@ -83,23 +83,28 @@ InvestorDemoFacesAndBlocksBehaviorChooser::InvestorDemoFacesAndBlocksBehaviorCho
   // robot.GetVisionComponent().EnableMode(VisionMode::DetectingFacesAndBlocks, true);
 }
 
+
+void InvestorDemoFacesAndBlocksBehaviorChooser::AddNonFactoryBehavior(BehaviorFactory& behaviorFactory, IBehavior* newBehavior)
+{
+  behaviorFactory.DEMO_HACK_AddToFactory(newBehavior);
+  super::AddBehavior( newBehavior );
+}
+  
+  
 void InvestorDemoFacesAndBlocksBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
 {
   BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
   
   super::AddBehavior( behaviorFactory.CreateBehavior(BehaviorType::NoneBehavior, robot, config) );
-    
-  {
-    IBehavior* newBehavior = new BehaviorInteractWithFaces_investorDemo(robot, config);
-    behaviorFactory.DEMO_HACK_AddToFactory(newBehavior);
-    super::AddBehavior( newBehavior );
-  }
   
   {
-    IBehavior* newBehavior = new BehaviorBlockPlay_investorDemo(robot, config);
-    behaviorFactory.DEMO_HACK_AddToFactory(newBehavior);
-    super::AddBehavior( newBehavior );
+    BehaviorLookAround_investorDemo* lookAround = new BehaviorLookAround_investorDemo(robot, config);
+    lookAround->SetLookAroundHeadAngle( DEG_TO_RAD( 17.5f ) );
+    AddNonFactoryBehavior( behaviorFactory, lookAround );
   }
+  
+  AddNonFactoryBehavior( behaviorFactory, new BehaviorInteractWithFaces_investorDemo(robot, config) );
+  AddNonFactoryBehavior( behaviorFactory, new BehaviorBlockPlay_investorDemo(robot, config) );
 }
 
 Result InvestorDemoFacesAndBlocksBehaviorChooser::Update(double currentTime_sec)
