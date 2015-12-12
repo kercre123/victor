@@ -16,8 +16,8 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "ID_wake_sleeping",
-          "LoopForever": true,
+          "AnimationName": "ID_sleeping_02",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -97,7 +97,7 @@
       "Name": "7. Follow Motion (Behav)",
       "Id": 11,
       "Sequencial": true,
-      "Final": true,
+      "Final": false,
       "FailOnError": false,
       "ExitOnActionsComplete": false,
       "Conditions": [],
@@ -112,6 +112,26 @@
           "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
         }
       ]
+    },
+    {
+      "Name": "8. End Behavior",
+      "Id": 12,
+      "Sequencial": true,
+      "Final": true,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
+          "BehaviorChooser": "Selection"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
+          "Behavior": "NoneBehavior"
+        }
+      ],
+      "ExitConditions": []
     }
   ]
 }
