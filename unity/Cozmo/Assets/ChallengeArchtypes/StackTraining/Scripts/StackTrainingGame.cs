@@ -32,6 +32,7 @@ namespace StackTraining {
       var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
 
       MaxAttempts = config.MaxAttempts;
+      NumSegments = 5;
 
       InitializeMinigameObjects();
     }

@@ -44,6 +44,12 @@ MonoBehaviour:
     slidePrefab: {fileID: 22580812, guid: 2c3b63c03d4e14754a94435d77ab3ec6, type: 2}
   - slideName: HelpStack
     slidePrefab: {fileID: 22528040, guid: c991d199584b54dba9fe373e95e60e93, type: 2}
+  - slideName: HelpPickup
+    slidePrefab: {fileID: 22551302, guid: 363f72877dea04e37ada75b7505169e9, type: 2}
+  - slideName: TapCube
+    slidePrefab: {fileID: 22508958, guid: a8d4e61a7672e40c0876b303b28e971e, type: 2}
+  - slideName: TapCube2
+    slidePrefab: {fileID: 22508958, guid: 260dfb24a5b214380b8120709ee59f3b, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -53,7 +59,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.size
-      value: 2
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _GameId
@@ -76,6 +82,33 @@ Prefab:
       propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
       value: 
       objectReference: {fileID: 22528040, guid: c991d199584b54dba9fe373e95e60e93,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slideName
+      value: HelpPickup
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slidePrefab
+      value: 
+      objectReference: {fileID: 22551302, guid: 363f72877dea04e37ada75b7505169e9,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slideName
+      value: TapCube
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slidePrefab
+      value: 
+      objectReference: {fileID: 22508958, guid: a8d4e61a7672e40c0876b303b28e971e,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[4].slideName
+      value: TapCube2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[4].slidePrefab
+      value: 
+      objectReference: {fileID: 22508958, guid: 260dfb24a5b214380b8120709ee59f3b,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

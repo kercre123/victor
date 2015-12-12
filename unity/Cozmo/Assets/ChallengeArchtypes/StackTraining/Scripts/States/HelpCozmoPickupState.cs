@@ -47,6 +47,7 @@ namespace StackTraining {
           if(success) {
             _Game.Progress = 0.8f;
             topCube.SetLEDs(Color.blue);
+            _Game.ShowHowToPlaySlide("TapCube2");
             _StateMachine.SetNextState(new TapCubeState(new HelpCozmoStackState(), topCube.ID));
           }
           else {
