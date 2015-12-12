@@ -68,6 +68,18 @@ namespace Anki {
       
       virtual u8 GetAnimTracksToDisable() const override { return (uint8_t)AnimTrackFlag::BODY_TRACK; }
       
+      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        if (!_useManualSpeed)
+        {
+          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
+        }
+        return ignoredTracks;
+      }
+      
+
     protected:
 
       virtual ActionResult Init(Robot& robot) override;
@@ -83,9 +95,6 @@ namespace Anki {
       Result SetGoals(const std::vector<Pose3d>& poses, const Point3f& distThreshold, const Radians& angleThreshold);
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
-      
-      // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       bool     _startedTraversingPath = false;
       
@@ -467,7 +476,6 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual bool ShouldLockWheels() const override { return true; }
       
       // Max amount of time to wait before verifying after moving head that we are
       // indeed seeing the object/marker we expect.
@@ -510,6 +518,12 @@ namespace Anki {
       
       virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
       
+      // We don't want to ignore movement commands for Body during FaceObjectAction
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+      }
+      
     protected:
       
       virtual ActionResult Init(Robot& robot) override;
@@ -517,9 +531,6 @@ namespace Anki {
       virtual void Reset() override;
       
       virtual Radians GetHeadAngle(f32 heightDiff) override;
-      
-      // Override to allow wheel control while facing the object
-      virtual bool ShouldLockWheels() const override { return false; }
       
       bool                 _facePoseCompoundActionDone;
       
@@ -562,6 +573,17 @@ namespace Anki {
         return (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
       }
       
+      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
+      virtual u8 GetMovementTracksToIgnore() const override
+      {
+        u8 ignoredTracks = (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK;
+        if (!_useManualSpeed)
+        {
+          ignoredTracks |= ((uint8_t)AnimTrackFlag::BODY_TRACK);
+        }
+        return ignoredTracks;
+      }
+      
     protected:
       
       // IDockAction implements these two required methods from IAction for its
@@ -586,9 +608,6 @@ namespace Anki {
       
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
-      
-      // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
-      virtual bool ShouldLockWheels() const override { return !_useManualSpeed; }
       
       ObjectID                   _dockObjectID;
       DockAction                 _dockAction;

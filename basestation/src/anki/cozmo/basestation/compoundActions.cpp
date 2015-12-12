@@ -306,40 +306,6 @@ namespace Anki {
       return result;
     } // CompoundActionParallel::Update()
     
-    bool CompoundActionParallel::ShouldLockHead() const
-    {
-      auto actionIter = _actions.begin();
-      while(actionIter != _actions.end()) {
-        if(actionIter->second->ShouldLockHead()) {
-          return true;
-        }
-      }
-      return false;
-    }
-    
-    bool CompoundActionParallel::ShouldLockLift() const
-    {
-      auto actionIter = _actions.begin();
-      while(actionIter != _actions.end()) {
-        if(actionIter->second->ShouldLockLift()) {
-          return true;
-        }
-      }
-      return false;
-    }
-    
-    bool CompoundActionParallel::ShouldLockWheels() const
-    {
-      auto actionIter = _actions.begin();
-      while(actionIter != _actions.end()) {
-        if(actionIter->second->ShouldLockWheels()) {
-          return true;
-        }
-        ++actionIter;
-      }
-      return false;
-    }
-    
     u8 CompoundActionParallel::GetAnimTracksToDisable() const
     {
       u8 whichTracks = 0;
