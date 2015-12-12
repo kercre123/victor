@@ -322,7 +322,7 @@ void MovementComponent::UnignoreTrackMovement(uint8_t tracks)
     if ((tracks & curTrack) == curTrack)
     {
       --_ignoreTrackMovementCount[i];
-      ASSERT_NAMED(_animTrackLockCount[i] >= 0, "Should have a matching number of ignore/unignore track movement!");
+      ASSERT_NAMED(_ignoreTrackMovementCount[i] >= 0, "Should have a matching number of ignore/unignore track movement!");
     }
   }
 }

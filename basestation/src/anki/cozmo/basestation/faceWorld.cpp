@@ -30,10 +30,12 @@ namespace Cozmo {
     
     // Compare to the pose of the robot when the marker was observed
     RobotPoseStamp *p;
-    if(RESULT_OK != _robot.GetPoseHistory()->GetComputedPoseAt(face.GetTimeStamp(), &p)) {
+    TimeStamp_t junkTime;
+    if(RESULT_OK != _robot.GetPoseHistory()->ComputeAndInsertPoseAt(face.GetTimeStamp(), junkTime, &p)) {
       PRINT_NAMED_ERROR("FaceWorld.UpdateFaceTracking.PoseHistoryError",
-                        "Could not get historical pose for face observed at t=%d",
-                        face.GetTimeStamp());
+                        "Could not get historical pose for face observed at t=%d (lastRobotMsgTime = %d)",
+                        face.GetTimeStamp(),
+                        _robot.GetLastMsgTimestamp());
       return RESULT_FAIL;
     }
     
@@ -42,7 +44,7 @@ namespace Cozmo {
     Pose3d headPose;
     if(false == face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose)) {
       PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                        "Could not get pose of observed marker w.r.t. world for head tracking.\n");
+                        "Could not get pose of face w.r.t. world for head tracking.\n");
       return RESULT_FAIL;
     }
     
