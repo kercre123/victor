@@ -22,7 +22,8 @@ InvestorDemoMotionBehaviorChooser::InvestorDemoMotionBehaviorChooser(Robot& robo
 {
   SetupBehaviors(robot, config);
 
-  // robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
+  // enable live idle animation
+  robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
 }
 
 void InvestorDemoMotionBehaviorChooser::SetupBehaviors(Robot& robot, const Json::Value& config)
@@ -31,7 +32,6 @@ void InvestorDemoMotionBehaviorChooser::SetupBehaviors(Robot& robot, const Json:
   super::AddBehavior( robot.GetBehaviorFactory().CreateBehavior(BehaviorType::PounceOnMotion, robot, config) );
   super::AddBehavior( robot.GetBehaviorFactory().CreateBehavior(BehaviorType::FollowMotion,   robot, config) );
 }
-
 
 Result InvestorDemoMotionBehaviorChooser::Update(double currentTime_sec)
 {
