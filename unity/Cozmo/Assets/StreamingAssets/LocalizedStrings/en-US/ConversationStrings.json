@@ -34,7 +34,7 @@
     "translation": "OK, we are go for launch. Protocol initiated.  Transfer in 5, 4, 3, 2, 1..."
   },
   "IntroSequence.CozmoBleepLine": {
-    "translation": "[AFFIRMATIVE BLEEPS]"
+    "translation": "☆ミヾ[∇≦ ]ヾ[≧∇≦]〃[ ≧∇]ノ彡☆"
   },
   "IntroSequence.AriaIntroLine": {
     "translation": "Cozmo, this is Mission Control. You have passed the final checks. The bot has been prepared for your arrival. Confirm when you are ready. Over."
@@ -61,7 +61,7 @@
     "translation": "Shake your hand in the center of cozmo's view!"
   },
   "MotionDetectionIntro.CozmoLine1": {
-    "translation": "[ O___o ] :D"
+    "translation": "[ o___O  ] :D"
   },
   "FaceTrackingIntro.AriaLine1": {
     "translation": "Let's help Cozmo recognize humans."
@@ -73,13 +73,13 @@
     "translation": "Cozmo, let's lift a cube. What? You can't?"
   },
   "CubeLiftingIntro.CozmoLine1": {
-    "translation": "[ -___-;;]     :<"
+    "translation": "[ -___- ;;]     :<"
   },
   "CubeVisionIntro.AriaLine1": {
     "translation": "Cozmo, HQ has some Power Cubes for you to test."
   },
   "CubeVisionIntro.CozmoLine1": {
-    "translation": ":?    [ >___>]a"
+    "translation": ":?    [ <___<  ]a"
   },
   "DockTrainingIntro.CozmoLine1": {
     "translation": ">:D     \\[ o w o ]/"
@@ -91,7 +91,7 @@
     "translation": "Chase the cube Cozmo! Chase it!"
   },
   "FollowCubeIntro.CozmoLine1": {
-    "translation": "ε=ε=ε=[ﾉ≧ ∀]ﾉ"
+    "translation": "ε=ε=ε=[ﾉ ≧ ∀ ]ﾉ"
   },
   "StackTrainingIntro.AriaLine1": {
     "translation": "Hmmm.... can we do anything else with these?"
