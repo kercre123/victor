@@ -44,6 +44,7 @@ MonoBehaviour:
     slidePrefab: {fileID: 22580126, guid: a702754e50a1f4892a91b5ddcbd1831c, type: 2}
   - slideName: PlaceCubeVision
     slidePrefab: {fileID: 22542104, guid: 85de59f09e7184fb6a7e1e8bf45714cc, type: 2}
+  _TutorialSequenceName: CubeVisionIntro
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -76,6 +77,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
       value: ShowCubeVision
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _TutorialSequenceName
+      value: CubeVisionIntro
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

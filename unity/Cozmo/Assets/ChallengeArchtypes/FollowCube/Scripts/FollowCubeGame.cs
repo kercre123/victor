@@ -16,13 +16,28 @@ namespace FollowCube {
 
     public float NotSeenForgivenessThreshold = 2f;
 
+    [SerializeField]
+    private string _TutorialSequenceName = "FollowCubeIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      InitializeMinigameObjects();
       MaxAttempts = 7;
       AttemptsLeft = 7;
 
       Progress = 0.0f;
       NumSegments = 5;
+
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
     }
 
     public enum FollowTask {

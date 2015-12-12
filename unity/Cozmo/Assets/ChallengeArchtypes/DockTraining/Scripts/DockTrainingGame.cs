@@ -15,12 +15,27 @@ namespace DockTraining {
     private LightCube _CurrentTarget = null;
     private float _LastSeenTargetTime = 0.0f;
 
+    [SerializeField]
+    private string _TutorialSequenceName = "DockTrainingIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      InitializeMinigameObjects();
       AttemptsLeft = 5;
       MaxAttempts = 5;
       _StartingPosition = CurrentRobot.WorldPosition;
       _StartingRotation = CurrentRobot.Rotation;
+
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
     }
 
     protected void InitializeMinigameObjects() {

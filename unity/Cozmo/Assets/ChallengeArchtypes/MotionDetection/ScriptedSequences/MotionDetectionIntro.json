@@ -40,6 +40,9 @@
           "$type": "ScriptedSequences.Actions.PlayAudio, Assembly-CSharp",
           "EventType": "PLAY_VO_ARIA_CH1_11_OKTRAINERWENEED",
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.BlockInput, Assembly-CSharp"
         }
       ],
       "ExitConditions": [
@@ -67,6 +70,9 @@
           "$type": "ScriptedSequences.Actions.PlayAudio, Assembly-CSharp",
           "EventType": "PLAY_VO_ARIA_CH1_10_WHOATHERECOWBOY",
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.BlockInput, Assembly-CSharp"
         }
       ],
       "ExitConditions": [
@@ -95,6 +101,9 @@
           "AnimationName": "enjoyPattern",
           "LoopForever": false,
           "WaitToEnd": true
+        },
+        {
+          "$type": "ScriptedSequences.Actions.BlockInput, Assembly-CSharp"
         }
       ],
       "ExitConditions": [
@@ -114,6 +123,9 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.EndConversation, Assembly-CSharp"
+        },
+        {
+          "$type": "ScriptedSequences.Actions.UnblockInput, Assembly-CSharp"
         }
       ],
       "ExitConditions": []
