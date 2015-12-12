@@ -8,7 +8,9 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "driver/i2spi.h"
+#include "anki/cozmo/robot/drop.h"
 }
+#include "anki/cozmo/robot/logging.h"
 #include "rtip.h"
 #include "anki/cozmo/robot/esp.h"
 
@@ -18,15 +20,9 @@ namespace RTIP {
 
 bool SendMessage(RobotInterface::EngineToRobot& msg)
 {
-  if (i2spiQueueMessage(msg.GetBuffer(), msg.Size()))
-  {
-    return true;
-  }
-  else
-  {
-    PRINT("Couldn't forward message to RTIP\r\n");
-    return false;
-  }
+  AnkiConditionalErrorAndReturnValue(msg.Size() <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, "RTIP.SendMessage: Message too large for RTIP, %d > %d", msg.Size(), DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msg.GetBuffer(), msg.Size()), false, "RTIP.SendMessage: Couldn't forward message to RTIP\r\n");
+  return true;
 }
 
 } // RTIP

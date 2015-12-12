@@ -51,6 +51,10 @@ python: $(OUTPUT_PYTHON)
 	$(CLAD_PYTHON) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR_PYTHON)robot $*.clad
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$*.py
 
+cpplilib: cpp
+	cd $(OUTPUT_DIR); find . -type f -iname '*.cpp' > cpps.list; awk '{ print "#include \"" $$0 "\"" }' <cpps.list >clad.cpp
+	@rm $(OUTPUT_DIR)cpps.list
+
 show:
 	echo "*** input files ***"
 	echo $(INPUT_FILES)

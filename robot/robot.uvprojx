@@ -68,9 +68,9 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash prebuild.sh</UserProg1Name>
+            <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -177,7 +177,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -367,9 +367,9 @@
             <v6LangP>0</v6LangP>
             <VariousControls>
               <MiscControls>--asm</MiscControls>
-              <Define>COZMO_ROBOT_3A97,USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
+              <Define>USE_STDPERIPH_DRIVER,STM32F429_439xx,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;.\generated\clad\robot</IncludePath>
+              <IncludePath>.\arm_hal;.\arm_hal\lib;..\include;..\coretech\common\include;..\coretech\messaging\include;..\coretech\planning\include;..\coretech\vision\include;.\supervisor\src;.\include;..\tools\anki-util\source\anki;generated\clad\robot;sim_hal\transport</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -412,11 +412,6 @@
         <Group>
           <GroupName>hal</GroupName>
           <Files>
-            <File>
-              <FileName>imuhal.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imuhal.cpp</FilePath>
-            </File>
             <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
@@ -501,6 +496,11 @@
               <FileName>audio.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\audio.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imuhal.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imuhal.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -763,11 +763,6 @@
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
             <File>
-              <FileName>blockLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>ledController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\ledController.cpp</FilePath>
@@ -778,9 +773,99 @@
               <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
             <File>
+              <FileName>blockLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
+            </File>
+            <File>
               <FileName>proxSensors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>clad</GroupName>
+          <Files>
+            <File>
+              <FileName>activeObjectTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\activeObjectTypes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>animationKeyFrames.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\animationKeyFrames.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dockingSignals.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\dockingSignals.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imageTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\imageTypes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\imu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\ledTypes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotStatusAndActions.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotStatusAndActions.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotTestModes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotTestModes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>rtipTraces.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\rtipTraces.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lightCubeMessage.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\lightCubeMessage.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageEngineToRobot.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageEngineToRobot.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageFromActiveObject.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageFromActiveObject.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageRobotToEngine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageRobotToEngine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageToActiveObject.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageToActiveObject.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>otaMessages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotLogging.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotLogging.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -845,72 +930,17 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>sim_hal\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
+              <FilePath>sim_hal\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\tools\anki-util\source\anki\util\transport\reliableMessageTypes.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>clad</GroupName>
-          <Files>
-            <File>
-              <FileName>messageEngineToRobot.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\robotInterface\messageEngineToRobot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>messageRobotToEngine.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\robotInterface\messageRobotToEngine.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>activeObjectTypes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\activeObjectTypes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>animationKeyFrames.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\animationKeyFrames.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imageTypes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\imageTypes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>ledTypes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\ledTypes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>robotStatusAndActions.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\robotStatusAndActions.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>robotTestModes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\robotTestModes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>rtipTraces.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\rtipTraces.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>otaMessages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1323,11 +1353,6 @@
           <GroupName>hal</GroupName>
           <Files>
             <File>
-              <FileName>imuhal.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\arm_hal\hal\imuhal.cpp</FilePath>
-            </File>
-            <File>
               <FileName>lights.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\lights.cpp</FilePath>
@@ -1411,6 +1436,11 @@
               <FileName>audio.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\arm_hal\hal\audio.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imuhal.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\arm_hal\hal\imuhal.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1735,11 +1765,6 @@
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
             <File>
-              <FileName>blockLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>ledController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\ledController.cpp</FilePath>
@@ -1750,9 +1775,99 @@
               <FilePath>.\supervisor\src\timeProfiler.cpp</FilePath>
             </File>
             <File>
+              <FileName>blockLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\blockLightController.cpp</FilePath>
+            </File>
+            <File>
               <FileName>proxSensors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\proxSensors.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>clad</GroupName>
+          <Files>
+            <File>
+              <FileName>activeObjectTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\activeObjectTypes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>animationKeyFrames.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\animationKeyFrames.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dockingSignals.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\dockingSignals.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imageTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\imageTypes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>imu.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\imu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>ledTypes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\ledTypes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotStatusAndActions.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotStatusAndActions.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotTestModes.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotTestModes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>rtipTraces.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\rtipTraces.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lightCubeMessage.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\lightCubeMessage.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageEngineToRobot.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageEngineToRobot.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageFromActiveObject.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageFromActiveObject.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageRobotToEngine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageRobotToEngine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>messageToActiveObject.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\messageToActiveObject.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>otaMessages.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotLogging.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\generated\clad\robot\clad\types\robotLogging.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -1879,72 +1994,17 @@
             <File>
               <FileName>reliableSequenceId.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableSequenceId.c</FilePath>
+              <FilePath>sim_hal\transport\reliableSequenceId.c</FilePath>
             </File>
             <File>
               <FileName>reliableTransport.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tools\anki-util\source\anki\utilEmbedded\transport\reliableTransport.c</FilePath>
+              <FilePath>sim_hal\transport\reliableTransport.c</FilePath>
             </File>
             <File>
               <FileName>reliableMessageTypes.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\tools\anki-util\source\anki\util\transport\reliableMessageTypes.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>clad</GroupName>
-          <Files>
-            <File>
-              <FileName>messageEngineToRobot.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\robotInterface\messageEngineToRobot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>messageRobotToEngine.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\robotInterface\messageRobotToEngine.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>activeObjectTypes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\activeObjectTypes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>animationKeyFrames.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\animationKeyFrames.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>imageTypes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\imageTypes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>ledTypes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\ledTypes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>robotStatusAndActions.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\robotStatusAndActions.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>robotTestModes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\robotTestModes.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>rtipTraces.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\types\rtipTraces.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>otaMessages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\generated\clad\robot\clad\robotInterface\otaMessages.cpp</FilePath>
             </File>
           </Files>
         </Group>
