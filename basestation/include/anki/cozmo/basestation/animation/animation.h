@@ -65,12 +65,16 @@ public:
   void Clear();
 
   const std::string& GetName() const { return _name; }
+  
+  bool IsLive() const { return _isLive; }
+  void SetIsLive(bool isLive);
 
 private:
 
   // Name of this animation
   std::string _name;
   bool _isInitialized;
+  bool _isLive = false;
 
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;

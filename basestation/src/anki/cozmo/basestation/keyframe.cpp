@@ -38,7 +38,6 @@ namespace Anki {
     IKeyFrame::IKeyFrame()
     : _triggerTime_ms(0)
     , _isValid(false)
-    , _isLive(false)
     {
       
     }

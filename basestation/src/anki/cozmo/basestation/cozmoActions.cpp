@@ -2006,10 +2006,8 @@ namespace Anki {
             squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
           }
           
-          // Note that we do not make the key frame live, because we don't want it to
-          // be removed after being played once!
           squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
-          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(squintLayer);
+          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
         }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())

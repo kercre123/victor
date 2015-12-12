@@ -1479,7 +1479,6 @@ namespace Anki {
                        "Shift/scale values should be non-nan!");
           
           faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
-          // NOTE: don't use live frames for persistent layer
         }
       } else {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
@@ -1490,10 +1489,7 @@ namespace Anki {
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
-        ProceduralFaceKeyFrame kf(procFace, duration_ms);
-        kf.SetIsLive(true);
-        
-        faceTrack.AddKeyFrame(std::move(kf));
+        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, duration_ms));
       }
       
       if(makePersistent) {
