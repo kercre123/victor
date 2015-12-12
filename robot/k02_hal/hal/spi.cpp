@@ -41,6 +41,7 @@ static bool ProcessDrop(void) {
     
     DropToRTIP* drop = (DropToRTIP*)target;
 
+#if 0
     // THIS IS GARBAGE TEMPORARY CODE
     static int OLED_DIVIDER_TEMPORARY = 3;
     if (--OLED_DIVIDER_TEMPORARY == 0) {
@@ -59,7 +60,8 @@ static bool ProcessDrop(void) {
       }
       OLED::FeedFace(OLED_ADDRESS_TEMPORARY++, (uint8_t*)&OLED_DATA_TEMPORARY);
     }
-
+#endif
+    
     FeedDAC(drop->audioData, MAX_AUDIO_BYTES_PER_DROP);
     EnableAudio(drop->droplet & audioDataValid);
 
