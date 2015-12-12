@@ -44,6 +44,7 @@ MonoBehaviour:
     slidePrefab: {fileID: 22580812, guid: 2c3b63c03d4e14754a94435d77ab3ec6, type: 2}
   - slideName: HelpStack
     slidePrefab: {fileID: 22528040, guid: c991d199584b54dba9fe373e95e60e93, type: 2}
+  _TutorialSequenceName: StackTrainingIntro
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -77,6 +78,10 @@ Prefab:
       value: 
       objectReference: {fileID: 22528040, guid: c991d199584b54dba9fe373e95e60e93,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _TutorialSequenceName
+      value: StackTrainingIntro
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 186758}
