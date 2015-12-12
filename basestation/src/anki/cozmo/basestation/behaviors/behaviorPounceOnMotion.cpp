@@ -214,11 +214,11 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
   
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationAction( "happy" );
+    newAction = new PlayAnimationAction( "ID_catch_success" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationAction( "sad" );
+    newAction = new PlayAnimationAction( "ID_catch_fail" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
