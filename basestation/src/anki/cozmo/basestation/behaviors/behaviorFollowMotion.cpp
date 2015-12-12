@@ -61,7 +61,12 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
   // Do the initial reaction for first motion each time we restart this behavior
-  _initialReactionAnimPlayed = false;
+  // (but only if it's been long enough since last interruption)
+  if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
+    _initialReactionAnimPlayed = false;
+  } else {
+    _initialReactionAnimPlayed = true;
+  }
 
   return Result::RESULT_OK;
 }
@@ -81,6 +86,8 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
 {
   _actionRunning = 0;
   _interrupted = true;
+  _lastInterruptTime_sec = currentTime_sec;
+  
   return Result::RESULT_OK;
 }
 

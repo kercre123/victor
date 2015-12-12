@@ -44,16 +44,18 @@ protected:
 
 private:
   
-  bool _interrupted = false;
-  u32  _actionRunning = 0;
-  u8   _originalVisionModes = 0;
+  bool    _interrupted = false;
+  u32     _actionRunning = 0;
+  u8      _originalVisionModes = 0;
+  bool    _initialReactionAnimPlayed = false;
+  double  _lastInterruptTime_sec = std::numeric_limits<double>::min();
   
   // TODO: Read these from json config
   f32     _moveForwardDist_mm = 15.f;
   f32     _moveForwardSpeedIncrease = 2.f;
   Radians _driveForwardTol = DEG_TO_RAD(3.f); // both pan/tilt less than this will result in drive forward
   Radians _panAndTiltTol = DEG_TO_RAD(3.f);  // pan/tilt must be greater than this to actually turn
-  bool    _initialReactionAnimPlayed;
+  double  _initialReactionWaitTime_sec = 20.f;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
