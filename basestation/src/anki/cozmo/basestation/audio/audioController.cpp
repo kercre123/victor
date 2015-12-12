@@ -136,7 +136,6 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     _dispatchQueue = Util::Dispatch::Create();
     const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
     _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
-    
   }
 }
 
@@ -273,6 +272,20 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
     _audioEngine->SetRTPCValue( parameterId, rtpcValue, gameObject, valueChangeDuration, curve );
   }
 #endif
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjectId, std::string gameObjectName )
+{
+  bool success = false;
+  
+#if USE_AUDIO_ENGINE
+  if ( _isInitialized ) {
+    success = _audioEngine->RegisterAudioGameObject( gameObjectId, gameObjectName );
+  }
+#endif
+  
   return success;
 }
 

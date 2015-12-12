@@ -6,11 +6,11 @@ namespace Audio {
 
 message AudioCallbackDuration
 {
-  uint_16 callbackId            = 0,
-  float_32   duration           = 0.0,
-  float_32   estimatedDuration  = 0.0,
-  uint_32 audioNodeId           = 0,
-  bool    isStreaming           = 0
+  uint_16   callbackId         = 0,
+  float_32  duration           = 0.0,
+  float_32  estimatedDuration  = 0.0,
+  uint_32   audioNodeId        = 0,
+  bool      isStreaming        = 0
 }
 
 message AudioCallbackMarker

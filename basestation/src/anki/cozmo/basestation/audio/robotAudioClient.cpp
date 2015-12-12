@@ -41,7 +41,7 @@ RobotAudioClient::~RobotAudioClient()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( EventType event, AudioCallbackFlag callbackFlag )
 {
-  const CallbackIdType callbackId = PostEvent( event, 0, callbackFlag );
+  const CallbackIdType callbackId = PostEvent( event, GameObjectType::CozmoAnimation, callbackFlag );
   
   return callbackId;
 }

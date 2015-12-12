@@ -21,6 +21,7 @@
 #include <util/logging/logging.h>
 #include <unordered_map>
 
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
@@ -32,6 +33,9 @@ AudioServer::AudioServer( AudioController* audioController ) :
   _audioController( audioController )
 {
   ASSERT_NAMED( nullptr != _audioController, "AudioServer Audio Controller is NULL");
+
+  // Register CLAD Game Objects
+  RegisterCladGameObjectsWithAudioController();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,7 +78,7 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
 {
   // Decode Event Message
   const AudioEventID eventId = static_cast<AudioEventID>( message.audioEvent );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const AudioEngine::AudioCallbackFlag callbackFlags = ConvertCallbackFlagType( message.callbackFlag );
   const uint16_t callbackId = message.callbackId;
   // Perform Event
@@ -99,7 +103,7 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
   
   if ( playingId == kInvalidAudioPlayingID ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Play Event %s on GameObject %d",
-                       EnumToString( message.audioEvent ), message.gameObjectId );
+                       EnumToString( message.audioEvent ), message.gameObject );
   }
 }
 
@@ -123,12 +127,13 @@ void AudioServer::ProcessMessage( const PostAudioSwitchState& message, Connectio
   // Decode Switch State Message
   const AudioSwitchGroupId groupId = static_cast<AudioStateGroupId>( message.switchStateGroup);
   const AudioSwitchStateId stateId = static_cast<AudioSwitchStateId>( message.switchState );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
   if ( !success ) {
-    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %d",
-                       EnumToString( message.switchStateGroup ), EnumToString( message.switchState ), message.gameObjectId );
+    PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Set Switch State %s : %s on GameObject %s",
+                       EnumToString( message.switchStateGroup ), EnumToString( message.switchState ),
+                       EnumToString( message.gameObject ) );
   }
 }
 
@@ -138,7 +143,7 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   // Decode Parameter Message
   const AudioParameterId parameterId = static_cast<AudioParameterId>( message.parameter );
   const AudioRTPCValue value = static_cast<AudioRTPCValue>( message.parameterValue );
-  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObjectId );
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const AudioTimeMs duration = static_cast<AudioTimeMs>( message.timeInMilliSeconds );
   
   // Translate Curve Enum types
@@ -170,9 +175,9 @@ void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionI
   const bool success = _audioController->SetParameter( parameterId, value, objectId, duration, curve );
   if ( !success ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage",
-                       "Unable To Set Parameter %s to Value %f on GameObject %d with duration %d milliSeconds with \
+                       "Unable To Set Parameter %s to Value %f on GameObject %s with duration %d milliSeconds with \
                        curve type %s",
-                       EnumToString( message.parameter ), message.parameterValue, message.gameObjectId,
+                       EnumToString( message.parameter ), message.parameterValue, EnumToString( message.gameObject ),
                        message.timeInMilliSeconds, EnumToString( message.curve ) );
   }
 }
@@ -254,7 +259,25 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags )
+void AudioServer::RegisterCladGameObjectsWithAudioController()
+{
+  // Enumerate through GameObjectType Enums
+  for ( uint32_t aGameObj = static_cast<uint32_t>(GameObjectType::Default);
+        aGameObj < static_cast<uint32_t>(GameObjectType::End);
+        ++aGameObj) {
+    // Register GameObjectType
+    bool success = _audioController->RegisterGameObject( static_cast<AudioGameObject>(aGameObj),
+                                                         std::string(EnumToString(static_cast<GameObjectType>(aGameObj)) ));
+    if (!success) {
+      PRINT_NAMED_ERROR( "AudioServer.RegisterCladGameObjectsWithAudioController",
+                         "Registering GameObjectId: %ul - %s was unsuccessful",
+                         aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)) );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( const Anki::Cozmo::Audio::AudioCallbackFlag flags ) const
 {
   AudioEngine::AudioCallbackFlag engineFlags = AudioEngine::AudioCallbackFlag::NoCallback;
   
@@ -273,7 +296,7 @@ AudioEngine::AudioCallbackFlag AudioServer::ConvertCallbackFlagType( Anki::Cozmo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Anki::Cozmo::Audio::CallbackErrorType AudioServer::ConvertErrorCallbackType( AudioEngine::AudioCallbackErrorType errorType )
+Anki::Cozmo::Audio::CallbackErrorType AudioServer::ConvertErrorCallbackType( const AudioEngine::AudioCallbackErrorType errorType ) const
 {
   CallbackErrorType error = CallbackErrorType::Invalid;
   
