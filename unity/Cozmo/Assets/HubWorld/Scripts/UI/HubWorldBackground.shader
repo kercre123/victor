@@ -49,9 +49,11 @@
 
             float horizontalFlow = min(uv.x, 1 - uv.x) * 2;
 
-            float sint = abs(_SinTime.x) * 2 - 1;
+            float scaledTime = _Time.y / 10;
 
-            float horizontalGlowAlpha = saturate(min(sint - horizontalFlow + 0.4, horizontalFlow + 0.4 - sint) * 5);
+            float timeFactor = (scaledTime - floor(scaledTime)) * 2 - 0.5;
+
+            float horizontalGlowAlpha = saturate(min(timeFactor - horizontalFlow + 0.4, horizontalFlow + 0.4 - timeFactor) * 5);
 
             glowAlpha += glowAlpha * horizontalGlowAlpha;
 
@@ -67,9 +69,9 @@
         {
             float2 delta = (IN.uv_MainTex * 2 - float2(1, 1)) * _GradientScale.xy;
 
-            float2 deltaSqr = delta * delta;
+            float deltaLen = length(delta);
 
-            float gradientAlpha = saturate(1 - sqrt(deltaSqr.x  + deltaSqr.y));
+            float gradientAlpha = saturate(1 - deltaLen);
 
             fixed4 gradient = _GradientColor * gradientAlpha;
 
