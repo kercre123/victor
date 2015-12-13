@@ -272,8 +272,6 @@ namespace AnimationController {
     
     _tracksToPlay = ENABLE_ALL_TRACKS;
     
-    _tracksInUse  = 0;
-    
     Clear();
     
     DefineHardCodedAnimations();
@@ -310,9 +308,29 @@ namespace AnimationController {
   s32 GetTotalNumAudioFramesPlayed() {
     return _numAudioFramesPlayed;
   }
-  
+
   void ClearNumAudioFramesPlayed() {
     _numAudioFramesPlayed = 0;
+  }
+  
+  void StopTracksInUse()
+  {
+    if(_tracksInUse) {
+      // In case we are aborting an animation, stop any tracks that were in use
+      // (For now, this just means motor-based tracks.) Note that we don't
+      // stop tracks we weren't using, in case we were, for example, playing
+      // a head animation while driving a path.
+      if(_tracksInUse & HEAD_TRACK) {
+        HeadController::SetAngularVelocity(0);
+      }
+      if(_tracksInUse & LIFT_TRACK) {
+        LiftController::SetAngularVelocity(0);
+      }
+      if(_tracksInUse & BODY_TRACK) {
+        SteeringController::ExecuteDirectDrive(0, 0);
+      }
+    }
+    _tracksInUse = 0;
   }
   
   void Clear()
@@ -337,23 +355,7 @@ namespace AnimationController {
     _isBufferStarved = false;
     _bufferFullMessagePrintedThisTick = false;
     
-    if(_tracksInUse) {
-      // In case we are aborting an animation, stop any tracks that were in use
-      // (For now, this just means motor-based tracks.) Note that we don't
-      // stop tracks we weren't using, in case we were, for example, playing
-      // a head animation while driving a path.
-      if(_tracksInUse & HEAD_TRACK) {
-        HeadController::SetAngularVelocity(0);
-      }
-      if(_tracksInUse & LIFT_TRACK) {
-        LiftController::SetAngularVelocity(0);
-      }
-      if(_tracksInUse & BODY_TRACK) {
-        SteeringController::ExecuteDirectDrive(0, 0);
-      }
-    }
-      
-    _tracksInUse = 0;
+    StopTracksInUse();
     
 #   if DEBUG_ANIMATION_CONTROLLER
     _currentTime_ms = 0;
@@ -602,7 +604,7 @@ namespace AnimationController {
 #             endif
               GetFromBuffer(&msg);
               terminatorFound = true;
-              _tracksInUse = 0;
+              StopTracksInUse();
               break;
             }
               

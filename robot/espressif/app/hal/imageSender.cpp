@@ -2,9 +2,9 @@ extern "C" {
   #include "client.h"
   #include "osapi.h"
   #include "user_interface.h"
-  #include "clad/types/imageTypes.h"
-  #include "clad/robotInterface/messageRobotToEngine.h"
 }
+#include "clad/types/imageTypes.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -15,7 +15,7 @@ void sendImgChunk(ImageChunk& msg, bool eof)
   msg.resolution    = QVGA;
   if (eof)
   {
-    msg.frameTimeStamp  = system_get_time(); //XXX Need to replace with GetTimeStamp() as soon as we have it
+    msg.frameTimeStamp  = system_get_time(); //XXX Need to replace with real image time stamp as soon as we have one
     msg.imageId++;
     msg.imageChunkCount = msg.chunkId + 1;
   }

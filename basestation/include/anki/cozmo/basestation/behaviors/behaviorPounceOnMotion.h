@@ -44,7 +44,7 @@ protected:
   virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt) override;
 
-  float _maxPounceDist = 70.0f;
+  float _maxPounceDist = 75.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
   
@@ -67,6 +67,8 @@ private:
   u32 _waitForActionTag = 0;
 
   float _stopRelaxingTime = 0.0f;
+
+  std::string _previousIdleAnimation;
   
   void CheckPounceResult(Robot& robot);
 

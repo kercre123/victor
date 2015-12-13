@@ -94,8 +94,7 @@ int main (void)
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
-
-  //StartupSelfTest();
+  StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur

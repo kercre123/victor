@@ -13,6 +13,7 @@ extern "C" {
 }
 #include "face.h"
 #include "upgradeController.h"
+#include "animationController.h"
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
@@ -39,6 +40,29 @@ void CheckForUpgrades(void)
   }
 }
 
+void WiFiFace(void)
+{
+  static bool wasConnected = false;
+  if (clientConnected() && !wasConnected)
+  {
+    Face::FaceUnPrintf();
+    wasConnected = true;
+  }
+  else
+  {
+    wasConnected = false;
+    struct softap_config ap_config;
+    if (wifi_softap_get_config(&ap_config) == false)
+    {
+      os_printf("WiFiFace couldn't read back config\r\n");
+    }
+    {
+      Face::FacePrintf("SSID: %s\nPSK:  %s\nChan: %d\nStas: %d\n",
+                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num());
+    }
+  }
+}
+
 /** The OS task which dispatches subtasks.
 */
 void Exec(os_event_t *event)
@@ -62,6 +86,24 @@ void Exec(os_event_t *event)
     case 1:
     {
       CheckForUpgrades();
+      break;
+    }
+    case 2:
+    {
+      static u32 lastAnimStateTime = 0;
+      const u32 now = system_get_time();
+      if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
+      {
+        if (AnimationController::SendAnimStateMessage() == RESULT_OK)
+        {
+          lastAnimStateTime = now;
+        }
+      }
+      break;
+    }
+    case 3:
+    {
+      WiFiFace();
       break;
     }
     // Add new "long execution" tasks as switch cases here.
@@ -94,10 +136,15 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't register background OS task\r\n");
     return -1;
   }
+  else if (Anki::Cozmo::AnimationController::Init() != Anki::RESULT_OK)
+  {
+    os_printf("\tCouldn't initalize animation controller\r\n");
+    return -2;
+  }
   else if (system_os_post(backgroundTask_PRIO, 0, 0) == false)
   {
     os_printf("\tCouldn't post background task initalization\r\n");
-    return -1;
+    return -3;
   }
   else
   {

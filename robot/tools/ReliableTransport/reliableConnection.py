@@ -111,7 +111,7 @@ class ReliableConnection:
         self._nextInSequenceId = NextSequenceId(self._nextInSequenceId)
 
     def UpdateLastAckedMessage(self, seqId):
-        #print("%s UpdateLastAckedMessage to %d" % (threading.currentThread().name, seqId))
+        #print("%s UpdateLastAckedMessage to %d\n\tpending %d - %d" % (threading.currentThread().name, seqId, self.GetFirstUnackedOutId(), self.GetLastUnackedOutId()))
         updated = False
         if seqId != INVALID_RELIABLE_SEQ_ID and len(self.pendingMessageList) > 0:
             while IsSequenceIdInRange(seqId, self.GetFirstUnackedOutId(), self.GetLastUnackedOutId()):
@@ -226,7 +226,7 @@ class ReliableConnection:
                 self.pendingMessageList.remove(pm) # Remove all the unreliable messages from the queue
             assert len(buffer) == numBytesToSend, (len(buffer), numBytesToSend)
             transport.ReSendReliableMessage(self, buffer, EReliableMessageType.MultipleMixedMessages, seqIdMin, seqIdMax)
-        self.latestUnackedMessageSentTime = GetCurrentTime()
+        if loInd == 0: self.latestUnackedMessageSentTime = GetCurrentTime()
         return numMessagesToSend
 
     @property
@@ -242,6 +242,7 @@ class ReliableConnection:
             else:
                 firstToSend += numMessagesSentThisPacket
                 numPacketsSent += 1
+        #print("SendUnAckedPackets {}\r\n".format(numPacketsSent))
         return numPacketsSent
 
     def Update(self, transport):

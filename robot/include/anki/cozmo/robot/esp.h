@@ -42,4 +42,4 @@ extern "C" {
 #define PRINT Face::FacePrintf
 #endif
 
-#define assert(x) while((x)) PRINT("ASSERT in %s line %d\r\n", __FILE__, __LINE__)
+#define assert(x) while(!(x)) PRINT("ASSERT in %s line %d\r\n", __FILE__, __LINE__)

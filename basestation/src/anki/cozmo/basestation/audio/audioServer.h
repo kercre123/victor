@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <unordered_map>
 
+
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
@@ -66,7 +67,6 @@ private:
   using ClientConnectionMap = std::unordered_map< ConnectionIdType, AudioClientConnection* >;
   ClientConnectionMap _clientConnections;
   
-  
   uint8_t _previousClientConnectionId = 0;
   
   // Methods
@@ -77,11 +77,14 @@ private:
                         uint16_t callbackId,
                         const AudioEngine::AudioCallbackInfo& callbackInfo );
   
-  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( Anki::Cozmo::Audio::AudioCallbackFlag flags );
+  void RegisterCladGameObjectsWithAudioController();
   
-  Anki::Cozmo::Audio::CallbackErrorType ConvertErrorCallbackType( AudioEngine::AudioCallbackErrorType errorType );
+  AudioEngine::AudioCallbackFlag ConvertCallbackFlagType( const Anki::Cozmo::Audio::AudioCallbackFlag flags ) const;
+  
+  Anki::Cozmo::Audio::CallbackErrorType ConvertErrorCallbackType( const AudioEngine::AudioCallbackErrorType errorType ) const;
   
 };
+
   
 } // Audio
 } // Cozmo

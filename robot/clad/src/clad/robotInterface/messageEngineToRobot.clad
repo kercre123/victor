@@ -259,8 +259,10 @@ union EngineToRobot
   // Anim future expansion                                  = 0x9C,
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
+  AnimKeyFrame::AudioSampleEP1  animAudioSampleEP1, // # Git rid of this as soon as we don't have to maintain compatibility
   
   // WiFi to RTIP messages, not actually sent by engine
+  bool                          radioConnected              = 0xFC,
   uint_32                       bodyUpgradeData             = 0xFD,
   EnterBootloader               enterBootloader             = 0xFE,
 }

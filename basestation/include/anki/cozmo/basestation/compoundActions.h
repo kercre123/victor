@@ -37,10 +37,6 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       
-      virtual bool ShouldLockHead() const override { return false; }
-      virtual bool ShouldLockLift() const override { return false; }
-      virtual bool ShouldLockWheels() const override { return false; }
-      
       virtual RobotActionType GetType() const override { return RobotActionType::COMPOUND; }
       
     protected:
@@ -63,6 +59,10 @@ namespace Anki {
       // Add a delay, in seconds, between running each action in the group.
       // Default is 0 (no delay).
       void SetDelayBetweenActions(f32 seconds);
+      
+      // We want to override and not ignore any movement tracks ourselves; our constituent actions will
+      // ignore what they want to when running
+      virtual u8 GetMovementTracksToIgnore() const override { return 0; }
       
     private:
       virtual void Reset() override;
@@ -88,12 +88,6 @@ namespace Anki {
       CompoundActionParallel(std::initializer_list<IActionRunner*> actions);
       
       virtual void AddAction(IActionRunner* action) override;
-      
-      // If any of the consituent actions lock a system, the compound action
-      // will also lock it -- *for the entire duration of the compound action*
-      virtual bool ShouldLockHead() const override;
-      virtual bool ShouldLockLift() const override;
-      virtual bool ShouldLockWheels() const override;
       
       // This compound action will disable the union of all tracks its constituent
       // actions want locked *for the entire duration of the compound action*.

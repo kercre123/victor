@@ -7,6 +7,7 @@ extern "C" {
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "anki/cozmo/robot/esp.h"
+#include "anki/cozmo/robot/logging.h"
 
 namespace Anki {
   namespace Cozmo {
@@ -20,84 +21,73 @@ namespace Anki {
       void ProcessMessage(u8* buffer, u16 bufferSize)
       {
         RobotInterface::EngineToRobot msg;
-        if (bufferSize > msg.MAX_SIZE)
+        AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, "Messages: Received message too big! %02x[%d] > \n", buffer[0], bufferSize);
+        memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+        if (msg.tag < 0x80) // Message for RTIP not us
         {
-          PRINT("Received message too big! %02x[%d]\n", buffer[0], bufferSize);
-          return;
+          RTIP::SendMessage(msg);
         }
         else
         {
-          memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-          if (msg.tag < 0x80) // Message for RTIP not us
+          AnkiConditionalWarnAndReturn(msg.IsValid(), "Messages: Received invalid message: %02x[%d]\n", buffer[0], bufferSize);
+          switch(msg.tag)
           {
-            RTIP::SendMessage(msg);
-          }
-          else
-          {
-            if (!msg.IsValid())
+            case RobotInterface::EngineToRobot::Tag_eraseFlash:
             {
-              PRINT("Received invalid message: %02x[%d]\n", buffer[0], bufferSize);
-              return;
+              UpgradeController::EraseFlash(msg.eraseFlash);
+              break;
             }
-            switch(msg.tag)
+            case RobotInterface::EngineToRobot::Tag_writeFlash:
             {
-              case RobotInterface::EngineToRobot::Tag_eraseFlash:
-              {
-                UpgradeController::EraseFlash(msg.eraseFlash);
-                break;
-              }
-              case RobotInterface::EngineToRobot::Tag_writeFlash:
-              {
-                UpgradeController::WriteFlash(msg.writeFlash);
-                break;
-              }
-              case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
-              {
-                UpgradeController::Trigger(msg.triggerOTAUpgrade);
-                break;
-              }
-              case RobotInterface::EngineToRobot::Tag_abortAnimation:
-              {
+              UpgradeController::WriteFlash(msg.writeFlash);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
+            {
+              UpgradeController::Trigger(msg.triggerOTAUpgrade);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_abortAnimation:
+            {
+              AnimationController::Clear();
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_animAudioSampleEP1:
+            case RobotInterface::EngineToRobot::Tag_animAudioSilence:
+            case RobotInterface::EngineToRobot::Tag_animHeadAngle:
+            case RobotInterface::EngineToRobot::Tag_animLiftHeight:
+            case RobotInterface::EngineToRobot::Tag_animFacePosition:
+            case RobotInterface::EngineToRobot::Tag_animBlink:
+            case RobotInterface::EngineToRobot::Tag_animFaceImage:
+            case RobotInterface::EngineToRobot::Tag_animBackpackLights:
+            case RobotInterface::EngineToRobot::Tag_animBodyMotion:
+            case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
+            case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
+            {
+              if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
+                AnkiWarn("Messages: Failed to buffer a keyframe! Clearing Animation buffer!\n");
                 AnimationController::Clear();
-                break;
               }
-              case RobotInterface::EngineToRobot::Tag_animAudioSample:
-              case RobotInterface::EngineToRobot::Tag_animAudioSilence:
-              case RobotInterface::EngineToRobot::Tag_animHeadAngle:
-              case RobotInterface::EngineToRobot::Tag_animLiftHeight:
-              case RobotInterface::EngineToRobot::Tag_animFacePosition:
-              case RobotInterface::EngineToRobot::Tag_animBlink:
-              case RobotInterface::EngineToRobot::Tag_animFaceImage:
-              case RobotInterface::EngineToRobot::Tag_animBackpackLights:
-              case RobotInterface::EngineToRobot::Tag_animBodyMotion:
-              case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
-              case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
-              {
-                if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
-                  //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
-                  AnimationController::Clear();
-                }
-                break;
-              }
-              case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
-              {
-                AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
-                break;
-              }
-              case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
-              {
-                AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
-                break;
-              }
-              case RobotInterface::EngineToRobot::Tag_enterBootloader:
-              {
-                RTIP::SendMessage(msg);
-                break;
-              }
-              default:
-              {
-                PRINT("Received message not expected here tag=%02x\n", msg.tag);
-              }
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_disableAnimTracks:
+            {
+              AnimationController::DisableTracks(msg.disableAnimTracks.whichTracks);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_enableAnimTracks:
+            {
+              AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_enterBootloader:
+            {
+              RTIP::SendMessage(msg);
+              break;
+            }
+            default:
+            {
+              AnkiWarn("Messages: Received message not expected here tag=%02x\n", msg.tag);
             }
           }
         }
@@ -108,12 +98,12 @@ namespace Anki {
       {
         va_list argptr;
         va_start(argptr, format);
-        SendText(format, argptr);
+        SendText(RobotInterface::ANKI_LOG_LEVEL_PRINT, format, argptr);
         va_end(argptr);
         return 0;
       }
 
-      int SendText(const char *format, va_list vaList)
+      int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList)
       {
         RobotInterface::PrintText m;
         int len;
@@ -127,6 +117,7 @@ namespace Anki {
         if (len > 0)
         {
           m.text_length = len;
+          m.level = level;
           RobotInterface::SendMessage(m);
         }
 
@@ -134,5 +125,18 @@ namespace Anki {
       }
       
     } // namespace Messages
+    
+    namespace RobotInterface {
+      int SendLog(const RobotInterface::LogLevel level, ...)
+      {
+        va_list argptr;
+        va_start(argptr, level);
+        const char* fmt = va_arg(argptr, const char*);
+        /*const int numArgs =*/ va_arg(argptr, int);
+        Messages::SendText(level, fmt, argptr);
+        va_end(argptr);
+        return 0;
+      }
+    }
   } // namespace Cozmo
 } // namespace Anki

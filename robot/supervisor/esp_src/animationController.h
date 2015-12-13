@@ -26,6 +26,9 @@
 #include "anki/types.h"
 #include "messages.h"
 
+/// Send animation state message every 5ms = 5,000 us
+#define ANIM_STATE_INTERVAL 5000
+
 namespace Anki {
   namespace Cozmo {
     namespace AnimationController {
@@ -38,15 +41,20 @@ namespace Anki {
       // Plays any buffered keyframes available, if enough of a pre-roll is
       // buffered up or we've received all the keyframes for the animation
       // that's currently playing.
-      extern "C" bool Update(unsigned int param);
+      void Update();
       
-      // Retrieves one drop worth of audio data to pass along to RTIP
+      /// Retrieves one drop worth of audio data to pass along to RTIP
       // When an audio frame is finished, a call to Update is posted
-      extern "C" u32 PumpAudioData();
+      // @param dest A buffer to copy data into
+      // @boot True if data was provided false if none available
+      extern "C" bool PumpAudioData(uint8_t* dest);
       
       // Clears any remaining buffered keyframes and thus immediately stops
       // animation from playing
       void Clear();
+      
+      // Sends the animation state message to the base station
+      Result SendAnimStateMessage();
       
       // Returns true if there are buffered keyframes being played
       bool IsPlaying();

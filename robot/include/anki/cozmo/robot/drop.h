@@ -46,6 +46,9 @@
 /// Number of bytes of SCREEN data to the RTIP each drop
 #define MAX_SCREEN_BYTES_PER_DROP 4
 
+/// What fraction of the time to send screen data
+#define TX_SCREEN_DATA_EVERY (2)
+#define TX_SCREEN_DATA_OUTOF (3)
 
 /// Maximum variable payload to RTIP
 #define DROP_TO_RTIP_MAX_VAR_PAYLOAD (64)

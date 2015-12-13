@@ -37,12 +37,12 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event, uint16_t gameObjectId, AudioCallbackFlag callbackFlag )
+AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event, GameObjectType gameObject, AudioCallbackFlag callbackFlag )
 {
   if ( nullptr != _messageHandler ) {
     const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ?
     GetNewCallbackId() : kInvalidCallbackId;
-    const MessageAudioClient msg( PostAudioEvent( event, gameObjectId, callbackFlag, callbackId ) );
+    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackFlag, callbackId ) );
     _messageHandler->Broadcast( std::move( msg ) );
     return callbackId;
   }
@@ -66,10 +66,10 @@ void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameSt
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, uint16_t gameObjectId )
+void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObjectId ));
+    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObject ));
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -80,12 +80,12 @@ void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::PostParameter( ParameterType parameter,
                                        float parameterValue,
-                                       uint16_t gameObjectId,
+                                       GameObjectType gameObject,
                                        int32_t timeInMilliSeconds,
                                        CurveType curve ) const
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObjectId, timeInMilliSeconds, curve) );
+    const MessageAudioClient msg( PostAudioParameter( parameter, parameterValue, gameObject, timeInMilliSeconds, curve) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {

@@ -37,7 +37,7 @@ namespace Anki {
       int SendText(const char *format, ...);
 
       // va_list version
-      int SendText(const char *format, va_list vaList);
+      int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList);
       
     } // namespace Messages
   } // namespace Cozmo

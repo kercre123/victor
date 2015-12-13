@@ -2,6 +2,9 @@
 #include "messages.h"
 #include "anki/cozmo/robot/faceDisplayDecode.h"
 #include "anki/cozmo/robot/esp.h"
+extern "C" {
+#include "anki/cozmo/robot/drop.h"
+}
 #include <stdarg.h>
 
 namespace Anki {
@@ -79,11 +82,11 @@ namespace Face {
   }
   
   // Pump face buffer data out to OLED
-  extern "C" u32 PumpScreenData()
+  extern "C" int PumpScreenData(uint8_t* dest)
   {
-    u32 ret;
-    memcpy(&ret, (u8*)m_frame + _pumpByte, SCREEN_BYTES_PER_DROP);
-    _pumpByte += SCREEN_BYTES_PER_DROP;
+    const int ret = _pumpByte;
+    memcpy(&dest, (u8*)m_frame + _pumpByte, MAX_SCREEN_BYTES_PER_DROP);
+    _pumpByte += MAX_SCREEN_BYTES_PER_DROP;
     if (_pumpByte >= (ROWS * COLS / 8))
     {
       _pumpByte = 0;

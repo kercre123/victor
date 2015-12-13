@@ -420,21 +420,25 @@ namespace Anki {
           }
           
           // Check for accel spike
-          const f32 peakAccelThresh = 4000.f;
-          const u32 maxAccelPeakDuration_ms = 75;
-          if (std::fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
-            peakAccelMaxTime = currTime;
-          } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
-            if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
-              PRINT("POKE DETECTED (ACCEL)\n");
-              peakAccelStartTime = currTime;
-              lastPokeDetectTime = currTime;
-              
-              RobotInterface::RobotPoked m;
-              RobotInterface::SendMessage(m);
-            } else {
-              peakAccelStartTime = currTime;
+          if (!HeadController::IsMoving()) {
+            const f32 peakAccelThresh = 4000.f;
+            const u32 maxAccelPeakDuration_ms = 75;
+            if (std::fabsf(accel_robot_frame_filt[0]) > peakAccelThresh) {
+              peakAccelMaxTime = currTime;
+            } else if (std::fabsf(accel_robot_frame_filt[0]) < peakAccelThresh) {
+              if ((peakAccelMaxTime > peakAccelStartTime) && (peakAccelMaxTime - peakAccelStartTime < maxAccelPeakDuration_ms)) {
+                PRINT("POKE DETECTED (ACCEL)\n");
+                peakAccelStartTime = currTime;
+                lastPokeDetectTime = currTime;
+                
+                RobotInterface::RobotPoked m;
+                RobotInterface::SendMessage(m);
+              } else {
+                peakAccelStartTime = currTime;
+              }
             }
+          } else {
+            peakAccelStartTime = currTime;
           }
 
           

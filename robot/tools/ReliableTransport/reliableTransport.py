@@ -10,6 +10,7 @@ from ReliableTransport.reliableSequenceId import *
 from ReliableTransport.reliableConnection import ReliableConnection
 
 class IDataReceiver:
+    "Generic interface for receiving data from a reliable transport connection"
     def OnConnectionRequest(self, sourceAddress):
         raise Exception("IDataReceiver subclasses must implement their own OnConnectionRequest callback")
     def OnConnected(self, sourceAddress):

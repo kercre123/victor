@@ -641,7 +641,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->GetMoveComponent().IsLiftLocked()) {
+  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {

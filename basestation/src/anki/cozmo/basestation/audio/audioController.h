@@ -78,8 +78,11 @@ public:
   // Get Audio Buffer Obj for robot
   RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
   
-  // TODO: Add / Remove GameObj.
-  
+  // Register Game Objects
+  // Note Game Object Ids must be unique
+  bool RegisterGameObject( AudioEngine::AudioGameObject gameObjectId,  std::string gameObjectName );
+
+  // TODO: Add RemoveRegisterGameObject()
   
   // TEMP: Set Cozmo Speaker Volumes
   void StartUpSetDefaults();

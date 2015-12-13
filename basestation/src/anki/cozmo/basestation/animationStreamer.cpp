@@ -38,7 +38,7 @@ namespace Cozmo {
     _liveAnimation.SetIsLive(true);
   }
 
-  u8 AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -52,10 +52,10 @@ namespace Cozmo {
       return 0;
     }
     
-    return SetStreamingAnimation(_animationContainer.GetAnimation(name), numLoops);
+    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops);
   }
   
-  u8 AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops)
+  u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops)
   {
     _streamingAnimation = anim;
     
@@ -71,7 +71,7 @@ namespace Cozmo {
       }
     
       // Get the animation ready to play
-      InitStream(_streamingAnimation, _tagCtr);
+      InitStream(robot, _streamingAnimation, _tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
@@ -121,9 +121,24 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
-  
-  Result AnimationStreamer::InitStream(Animation* anim, u8 withTag)
+
+  const std::string& AnimationStreamer::GetIdleAnimationName() const
   {
+    if( nullptr == _idleAnimation ) {
+      static const std::string empty("");
+      return empty;
+    }
+
+    return _idleAnimation->GetName();
+  }
+  
+  Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, u8 withTag)
+  {
+    if( _startOfAnimationSent && ! _endOfAnimationSent ) {
+      // stop the animation if we are in the middle of one
+      SendEndOfAnimation(robot);
+    }
+    
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
     {
@@ -957,7 +972,7 @@ namespace Cozmo {
 #         endif
           
           // Reset the animation so it can be played again:
-          InitStream(_streamingAnimation, _tagCtr);
+          InitStream(robot, _streamingAnimation, _tagCtr);
           
         } else {
 #         if DEBUG_ANIMATION_STREAMING
@@ -998,7 +1013,7 @@ namespace Cozmo {
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        InitStream(_idleAnimation, IdleAnimationTag);
+        InitStream(robot, _idleAnimation, IdleAnimationTag);
         _isIdling = true;
         //InitIdleAnimation();
       }
@@ -1197,7 +1212,7 @@ namespace Cozmo {
        !robot.IsPickingOrPlacing())
     {
       // If wheels are available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0 && !robot.GetMoveComponent().AreWheelsLocked())
+      if(!robot.IsMoving() && (_bodyMoveDuration_ms+_bodyMoveSpacing_ms) <= 0)
       {
         _bodyMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, BodyMovementDurationMin_ms),
                                                    GET_PARAM(s32, BodyMovementDurationMax_ms));
@@ -1236,7 +1251,7 @@ namespace Cozmo {
       }
       
       // If lift is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.GetMoveComponent().IsLiftLocked() && !robot.IsCarryingObject()) {
+      if(!robot.IsLiftMoving() && (_liftMoveDuration_ms + _liftMoveSpacing_ms) <= 0 && !robot.IsCarryingObject()) {
         _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
                                                    GET_PARAM(s32, LiftMovementDurationMax_ms));
 
@@ -1262,7 +1277,7 @@ namespace Cozmo {
       }
       
       // If head is available, add a little random movement to keep Cozmo looking alive
-      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0 && !robot.GetMoveComponent().IsHeadLocked()) {
+      if(!robot.IsHeadMoving() && (_headMoveDuration_ms+_headMoveSpacing_ms) <= 0) {
         _headMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, HeadMovementDurationMin_ms),
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
