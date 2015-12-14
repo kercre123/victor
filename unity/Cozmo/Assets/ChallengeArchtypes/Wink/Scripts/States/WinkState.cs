@@ -18,12 +18,14 @@ namespace Wink {
     public override void Update() {
       base.Update();
       if (_WinkGame.GetWinkCompleted()) {
+        // Success if we trigger motion detection and get Cozmo's attention.
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kMajorWin, OnAnimationFinished);
         _WinkSuccess = true;
         _StateMachine.SetNextState(animState);
       }
-      else if (Time.time - _EnterWinkStateTime > 7.0f) {
+      else if (Time.time - _EnterWinkStateTime > _WinkGame.TimeLimit) {
+        // Failure if motion is not detected within time frame.
         AnimationState animState = new AnimationState();
         animState.Initialize(AnimationName.kShocked, OnAnimationFinished);
         _StateMachine.SetNextState(animState);
@@ -33,6 +35,9 @@ namespace Wink {
     private void OnAnimationFinished(bool success) {
       if (_WinkSuccess) {
         _WinkGame.WaveSuccess();
+      }
+      else if (!_WinkGame.TryDecrementAttempts()) {
+        _WinkGame.RaiseMiniGameLose();
       }
       _StateMachine.SetNextState(new WinkState());
     }
