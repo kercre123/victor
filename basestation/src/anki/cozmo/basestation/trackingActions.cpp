@@ -19,6 +19,8 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#include "anki/common/basestation/utils/timer.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -49,6 +51,11 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     const f32 distSq = trackingVector.LengthSq();
     if(trackingVector.LengthSq() > 0)
     {
+      // Record latest update to avoid timing out
+      if(_timeout_sec > 0.) {
+        _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      }
+      
       const Radians tiltAngle = std::atan(trackingVector.z()/std::sqrt(distSq));
       const Radians panAngle  = std::atan2(trackingVector.y(), trackingVector.x());
       
@@ -77,6 +84,15 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       PRINT_NAMED_WARNING("ITrackAction.CheckIfDone.ZeroLengthTracking",
                           "Ignoring tracking vector with zero length");
     }
+  } else if(_timeout_sec > 0.) {
+    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if(currentTime - _lastUpdateTime > _timeout_sec) {
+      PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
+                       "No tracking vector update received in %f seconds, returning done.",
+                       _timeout_sec);
+      return ActionResult::SUCCESS;
+    }
+    
   }
   
   return ActionResult::RUNNING;

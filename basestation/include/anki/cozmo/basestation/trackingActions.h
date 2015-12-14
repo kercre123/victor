@@ -44,6 +44,11 @@ public:
   void SetMode(Mode newMode) { _mode = newMode; }
   Mode GetMode() const { return _mode; }
   
+  // Set how long the tracker will run without seeing whatever it is trying to
+  // track. After this, it will complete "successfully".
+  // Set to 0 to disable timeout (default).
+  void SetTimeout(double timeout_sec) { _timeout_sec = timeout_sec; }
+  
   virtual u8 GetAnimTracksToDisable() const override;
   
 protected:
@@ -59,6 +64,8 @@ protected:
 private:
   
   Mode     _mode = Mode::HeadAndBody;
+  double   _timeout_sec = 0.;
+  double   _lastUpdateTime = 0.;
   
 }; // class ITrackAction
   
