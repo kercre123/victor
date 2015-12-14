@@ -54,6 +54,15 @@ AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
+{
+  if ( nullptr != _messageHandler ) {
+    const MessageAudioClient msg( (StopAllAudioEvents( gameObject )) );
+    _messageHandler->Broadcast( std::move( msg ) );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameStateType gameState )
 {
   if ( nullptr != _messageHandler ) {
@@ -69,7 +78,7 @@ void AudioEngineClient::PostGameState( GameStateGroupType gameStateGroup, GameSt
 void AudioEngineClient::PostSwitchState( SwitchStateGroupType switchStateGroup, SwitchStateType switchState, GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
-    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObject ));
+    const MessageAudioClient msg( PostAudioSwitchState( switchStateGroup, switchState, gameObject ) );
     _messageHandler->Broadcast( std::move( msg ) );
   }
   else {
@@ -127,7 +136,6 @@ void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
       HandleCallbackEvent( callbackMsg );
     }
       break;
-      
 
     case MessageAudioClientTag::AudioCallbackError:
     {

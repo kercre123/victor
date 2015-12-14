@@ -29,6 +29,7 @@ namespace Audio {
 class AudioController;
 class AudioClientConnection;
 struct PostAudioEvent;
+struct StopAllAudioEvents;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
@@ -54,6 +55,7 @@ public:
   
   // Client Connection Deletgate Methods
   void ProcessMessage( const PostAudioEvent& message, ConnectionIdType connectionId );
+  void ProcessMessage( const StopAllAudioEvents& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioSwitchState& message, ConnectionIdType connectionId );
   void ProcessMessage( const PostAudioParameter& message, ConnectionIdType connectionId );
