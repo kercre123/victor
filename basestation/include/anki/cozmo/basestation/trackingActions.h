@@ -28,6 +28,7 @@ namespace Cozmo {
 
 // Forward Declarations:
 class Robot;
+class RobotPoseStamp;
 class DriveStraightAction;
 
 class ITrackAction : public IAction
@@ -58,8 +59,11 @@ protected:
   
   // Implementation-specific method for computing the vector from the robot
   // to whatever is being tracked. The pan/tilt angles will be set from this vector.
-  // Return true if new vector provided, false if same as last time
-  virtual bool GetTrackingVector(Robot& robot, Vec3f& newTrackingVector) = 0;
+  // The poseStamp should be from the time of the observation from which the
+  // tracking angles were computed.
+  // Return true if new angles were provided, false if same as last time.
+  virtual bool GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                         RobotPoseStamp* &poseStamp) = 0;
   
 private:
   
@@ -83,7 +87,8 @@ protected:
   virtual ActionResult Init(Robot& robot) override;
   
   // Required by ITrackAction:
-  virtual bool GetTrackingVector(Robot& robot, Vec3f& newTrackingVector) override;
+  virtual bool GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                         RobotPoseStamp* &poseStamp) override;
   
 private:
   
@@ -112,7 +117,8 @@ protected:
   virtual ActionResult Init(Robot& robot) override;
   
   // Required by ITrackAction:
-  virtual bool GetTrackingVector(Robot& robot, Vec3f& newTrackingVector) override;
+  virtual bool GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                         RobotPoseStamp* &poseStamp) override;
   
 private:
 
@@ -137,7 +143,8 @@ protected:
   virtual ActionResult Init(Robot& robot) override;
   
   // Required by ITrackAction:
-  virtual bool GetTrackingVector(Robot& robot, Vec3f& newTrackingVector) override;
+  virtual bool GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                         RobotPoseStamp* &poseStamp) override;
   
 private:
   

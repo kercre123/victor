@@ -45,50 +45,50 @@ u8 ITrackAction::GetAnimTracksToDisable() const
 
 ActionResult ITrackAction::CheckIfDone(Robot& robot)
 {
-  Vec3f trackingVector;
-  if(GetTrackingVector(robot, trackingVector))
+  RobotPoseStamp* poseStamp;
+  Radians relPanAngle = 0, relTiltAngle = 0;
+  
+  // See if there are new relative pan/tilt angles from the derived class
+  if(GetAngles(robot, relPanAngle, relTiltAngle, poseStamp))
   {
-    const f32 distSq = trackingVector.LengthSq();
-    if(trackingVector.LengthSq() > 0)
-    {
-      // Record latest update to avoid timing out
-      if(_timeout_sec > 0.) {
-        _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      }
-      
-      const Radians tiltAngle = std::atan(trackingVector.z()/std::sqrt(distSq));
-      const Radians panAngle  = std::atan2(trackingVector.y(), trackingVector.x());
-      
-      // Pan and/or Tilt (normal behavior)
-      if(Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode)
-      {
-        // TODO: Set speed/accel based on angle difference
-        if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(tiltAngle.ToFloat(), 15.f, 20.f))
-        {
-          return ActionResult::FAILURE_ABORT;
-        }
-      }
-      
-      if(Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode)
-      {
-        RobotInterface::SetBodyAngle setBodyAngle;
-        setBodyAngle.angle_rad             = panAngle.ToFloat();
-        setBodyAngle.max_speed_rad_per_sec = DEFAULT_PATH_SPEED_MMPS; // TODO: Set based on angle difference
-        setBodyAngle.accel_rad_per_sec2    = DEFAULT_PATH_ACCEL_MMPS2; // TODO: Set based on angle difference
-        if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
-          return ActionResult::FAILURE_ABORT;
-        }
-      }
-      
-    } else {
-      PRINT_NAMED_WARNING("ITrackAction.CheckIfDone.ZeroLengthTracking",
-                          "Ignoring tracking vector with zero length");
+    ASSERT_NAMED(nullptr != poseStamp, "Pose stamp should not be NULL!");
+    
+    // Record latest update to avoid timing out
+    if(_timeout_sec > 0.) {
+      _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     }
+    
+    // Pan and/or Tilt (normal behavior)
+    if(Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode)
+    {
+      // Convert to absolute angle:
+      const Radians absTiltAngle = poseStamp->GetHeadAngle() + relTiltAngle;
+      
+      // TODO: Set speed/accel based on angle difference
+      if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), 15.f, 20.f))
+      {
+        return ActionResult::FAILURE_ABORT;
+      }
+    }
+    
+    if(Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode)
+    {
+      // Convert to absolute angle:
+      const Radians absPanAngle = poseStamp->GetPose().GetRotation().GetAngleAroundZaxis() + relPanAngle;
+      RobotInterface::SetBodyAngle setBodyAngle;
+      setBodyAngle.angle_rad             = absPanAngle.ToFloat();
+      setBodyAngle.max_speed_rad_per_sec = DEFAULT_PATH_SPEED_MMPS; // TODO: Set based on angle difference
+      setBodyAngle.accel_rad_per_sec2    = DEFAULT_PATH_ACCEL_MMPS2; // TODO: Set based on angle difference
+      if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+        return ActionResult::FAILURE_ABORT;
+      }
+    }
+      
   } else if(_timeout_sec > 0.) {
     const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     if(currentTime - _lastUpdateTime > _timeout_sec) {
       PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
-                       "No tracking vector update received in %f seconds, returning done.",
+                       "No tracking angle update received in %f seconds, returning done.",
                        _timeout_sec);
       return ActionResult::SUCCESS;
     }
@@ -135,7 +135,8 @@ ActionResult TrackObjectAction::Init(Robot& robot)
 } // Init()
 
   
-bool TrackObjectAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector)
+bool TrackObjectAction::GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                                  RobotPoseStamp* &poseStamp)
 {
   ObservableObject* matchingObject = nullptr;
   
@@ -181,16 +182,15 @@ bool TrackObjectAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector
   //const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
   
   // Compare to the pose of the robot when the marker was observed
-  RobotPoseStamp *p;
   assert(nullptr != robot.GetPoseHistory());
-  if(RESULT_OK != robot.GetPoseHistory()->GetComputedPoseAt(matchingObject->GetLastObservedTime(), &p)) {
+  if(RESULT_OK != robot.GetPoseHistory()->GetComputedPoseAt(matchingObject->GetLastObservedTime(), &poseStamp)) {
     PRINT_NAMED_ERROR("TrackObjectAction.GetAngles.PoseHistoryError",
                       "Could not get historical pose for object observation time t=%d",
                       matchingObject->GetLastObservedTime());
     return false;
   }
-  
-  const Vec3f& robotTrans = p->GetPose().GetTranslation();
+
+  const Vec3f& robotTrans = poseStamp->GetPose().GetTranslation();
   
   const Vision::KnownMarker* closestMarker = nullptr;
   f32 minDistSq = std::numeric_limits<f32>::max();
@@ -228,71 +228,87 @@ bool TrackObjectAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector
     return false;
   }
   
-  newTrackingVector = {xDist, yDist, zDist};
+  //newTrackingVector = {xDist, yDist, zDist};
+  if(minDistSq <= 0.f) {
+    return false;
+  }
+  
+  relTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
+  relPanAngle  = std::atan2(yDist, xDist);
   
   return true;
   
-} // GetTrackingVector()
+} // GetAngles()
   
   
 #pragma mark -
 #pragma mark TrackFaceAction
   
-  TrackFaceAction::TrackFaceAction(FaceID faceID)
-  : _faceID(faceID)
-  {
-    
+TrackFaceAction::TrackFaceAction(FaceID faceID)
+: _faceID(faceID)
+{
+  
+}
+
+
+ActionResult TrackFaceAction::Init(Robot& robot)
+{
+  _name = "TrackFace" + std::to_string(_faceID) + "Action";
+  
+  return ActionResult::SUCCESS;
+} // Init()
+
+
+bool TrackFaceAction::GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                                RobotPoseStamp* &poseStamp)
+{
+  const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(_faceID);
+  
+  if(nullptr == face) {
+    // No such face
+    return false;
   }
   
-  ActionResult TrackFaceAction::Init(Robot& robot)
-  {
-    _name = "TrackFace" + std::to_string(_faceID) + "Action";
-    
-    return ActionResult::SUCCESS;
-  } // Init()
+  // Compare to the pose of the robot when the marker was observed
+  TimeStamp_t junkTime;
+  if(RESULT_OK != robot.GetPoseHistory()->ComputeAndInsertPoseAt(face->GetTimeStamp(), junkTime, &poseStamp)) {
+    PRINT_NAMED_ERROR("TrackFaceAction.GetTrackingVector.PoseHistoryError",
+                      "Could not get historical pose for face observed at t=%d (lastRobotMsgTime = %d)",
+                      face->GetTimeStamp(),
+                      robot.GetLastMsgTimestamp());
+    return false;
+  }
   
+  const Vec3f& robotTrans = poseStamp->GetPose().GetTranslation();
   
-  bool TrackFaceAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector)
-  {
-    const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(_faceID);
-    
-    if(nullptr == face) {
-      // No such face
-      return false;
-    }
-    
-    // Compare to the pose of the robot when the marker was observed
-    RobotPoseStamp *p;
-    TimeStamp_t junkTime;
-    if(RESULT_OK != robot.GetPoseHistory()->ComputeAndInsertPoseAt(face->GetTimeStamp(), junkTime, &p)) {
-      PRINT_NAMED_ERROR("TrackFaceAction.GetTrackingVector.PoseHistoryError",
-                        "Could not get historical pose for face observed at t=%d (lastRobotMsgTime = %d)",
-                        face->GetTimeStamp(),
-                        robot.GetLastMsgTimestamp());
-      return false;
-    }
-    
-    const Vec3f& robotTrans = p->GetPose().GetTranslation();
-    
-    Pose3d headPose;
-    if(false == face->GetHeadPose().GetWithRespectTo(*robot.GetWorldOrigin(), headPose)) {
-      PRINT_NAMED_ERROR("TrackFaceAction.GetTrackingVector.PoseOriginError",
-                        "Could not get pose of face w.r.t. world for head tracking.\n");
-      return false;
-    }
-    
-    const f32 xDist = headPose.GetTranslation().x() - robotTrans.x();
-    const f32 yDist = headPose.GetTranslation().y() - robotTrans.y();
-    
-    // NOTE: This isn't perfectly accurate since it doesn't take into account the
-    // the head angle and is simply using the neck joint (which should also
-    // probably be queried from the robot instead of using the constant here)
-    const f32 zDist = headPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
-    
-    newTrackingVector = {xDist, yDist, zDist};
-    
-    return true;
-  } // GetTrackingVector()
+  Pose3d headPose;
+  if(false == face->GetHeadPose().GetWithRespectTo(*robot.GetWorldOrigin(), headPose)) {
+    PRINT_NAMED_ERROR("TrackFaceAction.GetTrackingVector.PoseOriginError",
+                      "Could not get pose of face w.r.t. world for head tracking.\n");
+    return false;
+  }
+  
+  const f32 xDist = headPose.GetTranslation().x() - robotTrans.x();
+  const f32 yDist = headPose.GetTranslation().y() - robotTrans.y();
+  
+  // NOTE: This isn't perfectly accurate since it doesn't take into account the
+  // the head angle and is simply using the neck joint (which should also
+  // probably be queried from the robot instead of using the constant here)
+  const f32 zDist = headPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
+  
+  //newTrackingVector = {xDist, yDist, zDist};
+  
+  const f32 xyDistSq = xDist*xDist + yDist*yDist;
+  
+  if(xyDistSq <= 0.f) {
+    return false;
+  }
+  
+  relTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
+  relPanAngle  = std::atan2(yDist, xDist);
+  
+  return true;
+} // GetAngles()
   
   
 #pragma mark -
@@ -320,29 +336,40 @@ bool TrackObjectAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector
   } // Init()
   
   
-  bool TrackMotionAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector)
+bool TrackMotionAction::GetAngles(Robot& robot, Radians& relPanAngle, Radians& relTiltAngle,
+                                  RobotPoseStamp* &poseStamp)
+{
+  if(_gotNewMotionObservation && _motionObservation.img_area > 0)
   {
-    if(_gotNewMotionObservation && _motionObservation.img_area > 0)
-    {
-      _gotNewMotionObservation = false;
-      
-      const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
-      
-      newTrackingVector = {-motionCentroid.x(), -motionCentroid.y(), robot.GetVisionComponent().GetCameraCalibration().GetFocalLength_x()};
-      
-      
-      PRINT_NAMED_INFO("TrackMotionAction.GetTrackingVector.Motion",
-                       "Motion area=%d, centroid=(%.1f,%.1f)",
-                       _motionObservation.img_area,
-                       motionCentroid.x(), motionCentroid.y());
+    _gotNewMotionObservation = false;
+    
+    const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
+    
+    const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
+    relTiltAngle = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
+    relPanAngle  = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
+    
+    TimeStamp_t junkTime;
+    if(RESULT_OK != robot.GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
+      PRINT_NAMED_ERROR("TrackMotionAction.GetTrackingVector.PoseHistoryError",
+                        "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
+                        _motionObservation.timestamp,
+                        robot.GetLastMsgTimestamp());
+      return false;
+    }
+    
+    PRINT_NAMED_INFO("TrackMotionAction.GetTrackingVector.Motion",
+                     "Motion area=%d, centroid=(%.1f,%.1f)",
+                     _motionObservation.img_area,
+                     motionCentroid.x(), motionCentroid.y());
+
+    return true;
+    
+  } // if(_gotNewMotionObservation && _motionObservation.img_area > 0)
   
-      return true;
-      
-    } // if(_gotNewMotionObservation && _motionObservation.img_area > 0)
-    
-    return false;
-    
-  } // GetTrackingVector()
+  return false;
+  
+} // GetAngles()
   
   
 } // namespace Cozmo
