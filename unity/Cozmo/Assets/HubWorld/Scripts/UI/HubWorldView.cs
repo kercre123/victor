@@ -17,30 +17,26 @@ namespace Cozmo.HubWorld {
     private Canvas _HubWorldCanvas;
 
     [SerializeField]
-    private HubWorldButton _HubWorldLockedButtonPrefab;
+    private Asteroid _HubWorldLockedAsteroidPrefab;
 
     [SerializeField]
-    private RectTransform _LockedButtonContainer;
+    private Transform _LockedButtonContainer;
 
     [SerializeField]
     private HubWorldButton _HubWorldUnlockedButtonPrefab;
 
     [SerializeField]
-    private RectTransform[] _UnlockedButtonNodes;
+    private RectTransform _ChallengeButtonContainer;
 
-    private int _UnlockedButtonCounter;
+    private List<RectTransform> _UnlockedButtons = new List<RectTransform>();
 
     [SerializeField]
     private HubWorldButton _HubWorldCompletedButtonPrefab;
 
-    [SerializeField]
-    private RectTransform[] _CompletedButtonNodes;
+    private List<RectTransform> _CompletedButtons = new List<RectTransform>();
 
-    private int _CompletedButtonCounter;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> _challengeStatesById) {
-      _UnlockedButtonCounter = 0;
-      _CompletedButtonCounter = 0;
 
       // For all the challenges
       foreach (ChallengeStatePacket challengeState in _challengeStatesById.Values) {
@@ -66,68 +62,51 @@ namespace Cozmo.HubWorld {
     }
 
     private void CreateLockedButton(ChallengeData challengeData) {
-      // For each locked challenge, create 1 asteroids in each quadrant
-      // Right now we're not doing anything on locked challenge tap so this is okay.
-      int numAsteroids = 4;
 
-      for (int i = 0; i < numAsteroids; i++) {
-        CreateAsteroidInQuadrant(i % 4);
-      }
+      // Create an asteroid for this challenge
+      CreateRandomAsteroid();
 
       // Add two more in random quadrants for funsies
       for (int i = 0; i < 2; i++) {
-        CreateAsteroidInQuadrant(Random.Range(0, 4));
+        CreateRandomAsteroid();
       }
     }
 
-    private void CreateAsteroidInQuadrant(int quadrant) {
-      switch (quadrant) {
-      case 0: 
-        CreateAsteroid(-950, -500, -460, 0);
-        break;
-      case 1:
-        CreateAsteroid(-950, -500, 0, 510);
-        break;
-      case 2:
-        CreateAsteroid(500, 950, -460, 0);
-        break;
-      case 3:
-        CreateAsteroid(500, 950, 0, 510);
-        break;
-      default:
-        break;
-      }
+    private void CreateRandomAsteroid() {
+
+      float apogee = Random.Range(500f, 750f);
+      float perigee = Random.Range(750f, 1000f);
+      float orbitLength = 240f;
+      float rotationSpeed = Random.Range(10f, 30f);
+      float startingAngle = Random.Range(0f, 360f);
+      Vector3 apogeeDirection = Random.insideUnitCircle.normalized;
+      CreateAsteroid(apogee, perigee, orbitLength, rotationSpeed, startingAngle, apogeeDirection);
     }
 
-    private void CreateAsteroid(float minLocalX, float maxLocalX, float minLocalY, float maxLocalY) {
-      GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedButtonPrefab.gameObject, _LockedButtonContainer);
+    private void CreateAsteroid(float apogee, float perigee, float orbitLength, float rotationSpeed, float startingAngle, Vector3 apogeeDirection) {
+      GameObject newButton = UIManager.CreateUIElement(_HubWorldLockedAsteroidPrefab.gameObject, _LockedButtonContainer);
+      Asteroid asteroid = newButton.GetComponent<Asteroid>();
+
+      asteroid.Initialize(apogee, perigee, orbitLength, rotationSpeed, startingAngle, apogeeDirection);
+    }
+
+    private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {      
+      GameObject newButton = UIManager.CreateUIElement(_HubWorldUnlockedButtonPrefab.gameObject, _ChallengeButtonContainer);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      newButton.transform.localPosition = new Vector3(Random.Range(minLocalX, maxLocalX),
-        Random.Range(minLocalY, maxLocalY), Random.Range(-75, 75));
-
-      buttonScript.Initialize(null);
-      //buttonScript.OnButtonClicked += HandleLockedChallengeClicked;
-    }
-
-    private void CreateUnlockedButton(ChallengeData challengeData, float unlockProgress) {
-      if (_UnlockedButtonCounter >= 0 && _UnlockedButtonCounter < _UnlockedButtonNodes.Length) {
-        GameObject newButton = UIManager.CreateUIElement(_HubWorldUnlockedButtonPrefab.gameObject, _UnlockedButtonNodes[_UnlockedButtonCounter]);
-        HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-        buttonScript.Initialize(challengeData);
-        buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
-        _UnlockedButtonCounter++;
-      }
+      buttonScript.Initialize(challengeData);
+      buttonScript.OnButtonClicked += HandleUnlockedChallengeClicked;
+      _UnlockedButtons.Add(newButton.GetComponent<RectTransform>());
+      LayoutUnlockedChallenges();
     }
 
     private void CreateCompletedButton(ChallengeData challengeData) {
       // TODO: The Completed button visuals are going to change, so don't worry about copy pasta
-      if (_CompletedButtonCounter >= 0 && _CompletedButtonCounter < _CompletedButtonNodes.Length) {
-        GameObject newButton = UIManager.CreateUIElement(_HubWorldCompletedButtonPrefab.gameObject, _CompletedButtonNodes[_CompletedButtonCounter]);
-        HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-        buttonScript.Initialize(challengeData);
-        buttonScript.OnButtonClicked += HandleCompletedChallengeClicked;
-        _CompletedButtonCounter++;
-      }
+      GameObject newButton = UIManager.CreateUIElement(_HubWorldCompletedButtonPrefab.gameObject, _ChallengeButtonContainer);
+      HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
+      buttonScript.Initialize(challengeData);
+      buttonScript.OnButtonClicked += HandleCompletedChallengeClicked;
+      _CompletedButtons.Add(newButton.GetComponent<RectTransform>());
+      LayoutCompletedChallenges();
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -145,6 +124,90 @@ namespace Cozmo.HubWorld {
     private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
       if (OnCompletedChallengeClicked != null) {
         OnCompletedChallengeClicked(challengeClicked, buttonTransform);
+      }
+    }
+
+    private void LayoutUnlockedChallenges() {
+      if (_UnlockedButtons.Count == 0) {
+        return;
+      }
+
+      // TODO: grow this?
+      const float radius = 400f;
+
+      float anglePerButton = 360 / _UnlockedButtons.Count;
+
+      // add a bit of randomness to the positions to feel more organic
+      float wiggleRoom = Mathf.Max(0f, anglePerButton * 0.5f - 15f);
+
+      for (int i = 0; i < _UnlockedButtons.Count; i++) {
+        float currentAngle = anglePerButton * i + Random.Range(-wiggleRoom, wiggleRoom);
+
+        _UnlockedButtons[i].localPosition = new Vector3(
+                      Mathf.Cos(currentAngle * Mathf.Deg2Rad), 
+                      Mathf.Sin(currentAngle * Mathf.Deg2Rad), 
+                      0) * radius;
+      }
+    }
+
+    private void LayoutCompletedChallenges() {
+      if (_CompletedButtons.Count == 0) {
+        return;
+      }
+
+      const float length = 40f;
+      const float wiggleRoom = 10f;
+      
+      // just put them in a hex grid with a little bit of wiggle
+      int offset = 0;
+      int side = 5;
+      int ring = 0;
+
+      const float sqrt3 = 1.73205080757f;
+
+      const float verticalOffset = 1.5f;
+
+      const float horizontalOffset = sqrt3;
+
+      Vector3 totalPositions = Vector3.zero;
+      for (int i = 0; i < _CompletedButtons.Count; i++) {
+
+        // this will produce { 2, 1, -1, -2, -1, 1 }
+        int v = (side % 3 == 0 ? 2 : 1) * (((side + 1) % 6) < 3 ? 1 : -1);
+        // this will produce { 0, 1, 1, 0, -1, -1 }
+        int h = (side % 3 == 0 ? 0 : 1) * ((side % 6) < 3 ? 1 : -1);
+
+        // this will produce { -1, -2, -1, 1, 2, 1 }
+        int ov = ((side + 2) % 3 == 0 ? 2 : 1) * (((side + 3) % 6) < 3 ? 1 : -1);
+        // this will produce { 1, 0, -1, -1, 0, 1 }
+        int oh = ((side + 2) % 3 == 0 ? 0 : 1) * (((side + 2) % 6) < 3 ? 1 : -1);
+
+        Vector3 startingPosition = new Vector3(
+                                     (v * ring + ov * offset) * verticalOffset,
+                                     (h * ring + oh * offset) * horizontalOffset,
+                                     0) * length;
+
+        var position = startingPosition + (Vector3)(wiggleRoom * Random.insideUnitCircle);
+        _CompletedButtons[i].localPosition = position;
+        // add a small amount of variation to button scale
+        _CompletedButtons[i].localScale = Random.Range(0.8f, 1.1f) * Vector3.one;
+
+        totalPositions += position;
+        offset++;
+        if (offset > ring) {
+          offset = 1;
+          side++;
+          if (side == 6) {
+            side = 0;
+            ring++;
+          }
+        }
+      }
+
+      var center = totalPositions / _CompletedButtons.Count;
+
+      for (int i = 0; i < _CompletedButtons.Count; i++) {
+        _CompletedButtons[i].localPosition -= center;
       }
     }
 
