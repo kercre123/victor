@@ -124,7 +124,10 @@ bool TrackObjectAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector
   ObservableObject* matchingObject = nullptr;
   
   if(_trackByType) {
-    matchingObject = robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(360));
+    BlockWorldFilter filter;
+    filter.OnlyConsiderLatestUpdate(true);
+    
+    matchingObject = robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(360), filter);
     if(nullptr == matchingObject) {
       PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.NoMatchingFound",
                           "Could not find matching %s object.",

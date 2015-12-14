@@ -2398,17 +2398,35 @@ namespace Cozmo {
   {
     ObservableObject* matchingObject = nullptr;
     
-    for(auto & objectsByFamily : _existingObjects) {
-      if(filter.ConsiderFamily(objectsByFamily.first)) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          if(filter.ConsiderType(objectsByType.first)) {
-            for(auto & objectsByID : objectsByType.second) {
-              if(filter.ConsiderObject(objectsByID.second))
-              {
-                if(findFcn(objectsByID.second, matchingObject)) {
-                  matchingObject = objectsByID.second;
-                  if(returnFirstFound) {
-                    return matchingObject;
+    if(filter.IsOnlyConsideringLatestUpdate()) {
+      
+      for(auto candidate : _currentObservedObjects) {
+        if(filter.ConsiderFamily(candidate->GetFamily()) &&
+           filter.ConsiderType(candidate->GetType()) &&
+           filter.ConsiderObject(candidate))
+        {
+          if(findFcn(candidate, matchingObject)) {
+            matchingObject = candidate;
+            if(returnFirstFound) {
+              return matchingObject;
+            }
+          }
+        }
+      }
+      
+    } else {
+      for(auto & objectsByFamily : _existingObjects) {
+        if(filter.ConsiderFamily(objectsByFamily.first)) {
+          for(auto & objectsByType : objectsByFamily.second) {
+            if(filter.ConsiderType(objectsByType.first)) {
+              for(auto & objectsByID : objectsByType.second) {
+                if(filter.ConsiderObject(objectsByID.second))
+                {
+                  if(findFcn(objectsByID.second, matchingObject)) {
+                    matchingObject = objectsByID.second;
+                    if(returnFirstFound) {
+                      return matchingObject;
+                    }
                   }
                 }
               }
@@ -2530,13 +2548,14 @@ namespace Cozmo {
   
     ObservableObject* BlockWorld::FindClosestMatchingObject(const ObservableObject& object,
                                                             const Vec3f& distThreshold,
-                                                            const Radians& angleThreshold)
+                                                            const Radians& angleThreshold,
+                                                            const BlockWorldFilter& filterIn)
     {
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
       // Don't check the object we're using as the comparison
-      BlockWorldFilter filter;
+      BlockWorldFilter filter(filterIn);
       filter.AddIgnoreID(object.GetID());
       
       // We override the default filter function to intentionally consider objects that are unknown here
@@ -2563,14 +2582,15 @@ namespace Cozmo {
     ObservableObject* BlockWorld::FindClosestMatchingObject(ObjectType withType,
                                                             const Pose3d& pose,
                                                             const Vec3f& distThreshold,
-                                                            const Radians& angleThreshold)
+                                                            const Radians& angleThreshold,
+                                                            const BlockWorldFilter& filterIn)
     {
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
       
       // We override the default filter function to intentionally consider objects that are unknown here
       // TODO: Why is this necessary? (Copied from similar function above)
-      BlockWorldFilter filter;
+      BlockWorldFilter filter(filterIn);
       filter.SetFilterFcn([] (ObservableObject*) { return true; });
       
       FindFcn findLambda = [withType,&pose,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)

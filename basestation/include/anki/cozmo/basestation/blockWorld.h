@@ -134,13 +134,15 @@ namespace Anki
       // Returns nullptr if none found.
       ObservableObject* FindClosestMatchingObject(const ObservableObject& object,
                                                   const Vec3f& distThreshold,
-                                                  const Radians& angleThreshold);
+                                                  const Radians& angleThreshold,
+                                                  const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Same as above, except type and pose are specified directly
       ObservableObject* FindClosestMatchingObject(ObjectType withType,
                                                   const Pose3d& pose,
                                                   const Vec3f& distThreshold,
-                                                  const Radians& angleThreshold);
+                                                  const Radians& angleThreshold,
+                                                  const BlockWorldFilter& filter = BlockWorldFilter());
       
       ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
