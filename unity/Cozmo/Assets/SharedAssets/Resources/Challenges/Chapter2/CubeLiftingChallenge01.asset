@@ -18,7 +18,7 @@ MonoBehaviour:
   _ChallengeTitleLocKey: cubeLifting01.title
   _ChallengeSubtitleLocKey: cubeLifting01.subtitle
   _ChallengeDescriptionLocKey: cubeLifting01.description
-  _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: a851a9b6a744d405a89f9076be1d7dff, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys:
