@@ -43,22 +43,13 @@ static bool ProcessDrop(void) {
 
 #if 0
     // THIS IS GARBAGE TEMPORARY CODE
-    static int OLED_DIVIDER_TEMPORARY = 3;
-    if (--OLED_DIVIDER_TEMPORARY == 0) {
-      drop->droplet &= ~screenDataValid;
-      OLED_DIVIDER_TEMPORARY = 3;
-    } else {
-      drop->droplet |= screenDataValid;
-    }
-    drop->droplet |= screenDataValid;
-
+    static uint8_t OLED_ADDRESS_TEMPORARY = 0;
+    static uint32_t OLED_DATA_TEMPORARY = 0xFFFFFFFF;
+    OLED_DATA_TEMPORARY = (OLED_DATA_TEMPORARY >> 1) ^ ((OLED_DATA_TEMPORARY & 1) ? 0xedb88320 : 0);
+    OLED::FeedFace(OLED_ADDRESS_TEMPORARY++, (uint8_t*)&OLED_DATA_TEMPORARY);
+#else
     if (drop->droplet & screenDataValid) {
-      static uint8_t OLED_ADDRESS_TEMPORARY = 0;
-      static uint32_t OLED_DATA_TEMPORARY = 0xFFFFFFFF;
-      for (int i = 0; i < sizeof(OLED_DATA_TEMPORARY); i++) {
-        OLED_DATA_TEMPORARY = (OLED_DATA_TEMPORARY >> 1) ^ ((OLED_DATA_TEMPORARY & 1) ? 0xedb88320 : 0);
-      }
-      OLED::FeedFace(OLED_ADDRESS_TEMPORARY++, (uint8_t*)&OLED_DATA_TEMPORARY);
+      OLED::FeedFace(drop->screenInd, drop->screenData);
     }
 #endif
     
