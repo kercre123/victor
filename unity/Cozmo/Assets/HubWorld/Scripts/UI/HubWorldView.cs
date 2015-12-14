@@ -189,7 +189,8 @@ namespace Cozmo.HubWorld {
 
         var position = startingPosition + (Vector3)(wiggleRoom * Random.insideUnitCircle);
         _CompletedButtons[i].localPosition = position;
-          
+        // add a small amount of variation to button scale
+        _CompletedButtons[i].localScale = Random.Range(0.8f, 1.1f) * Vector3.one;
 
         totalPositions += position;
         offset++;

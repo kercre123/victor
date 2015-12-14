@@ -10,14 +10,20 @@ public class Asteroid : MonoBehaviour {
   private Vector3 _SpinAxis;
   private Transform _Transform;
 
+  // the closest distance to the center in our orbit
   private float _Apogee;
+  // the furthest distance to the center in our orbit
   private float _Perigee;
+  // time it takes to complete an orbit
   private float _OrbitLength;
+  // the speed at which the asteroid spins in place
   private float _RotationSpeed;
   private float _CurrentAngle;
   private Quaternion _Orientation;
 
+  // the major radii of our ellipse
   private float _MajorRadii;
+  // the minor radii of our ellipse
   private float _MinorRadii;
   private Vector3 _OrbitCenter;
 
@@ -39,6 +45,7 @@ public class Asteroid : MonoBehaviour {
     _Transform = transform;
   }
 
+  // See https://en.wikipedia.org/wiki/Apsis
   public void Initialize(float apogee, float perigee, float orbitLength, float rotationSpeed, float startingAngle, Vector3 apogeeDirection) {
     _Apogee = apogee;
     _Perigee = perigee;
