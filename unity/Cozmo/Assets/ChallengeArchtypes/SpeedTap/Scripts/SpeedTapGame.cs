@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System;
+using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
@@ -69,7 +70,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      AudioManager.PlayAudioClip(_RollSound);
+      AudioClient.Instance.PostEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL, Anki.Cozmo.Audio.GameObjectType.Default);
     }
 
     private void UIButtonTapped() {
