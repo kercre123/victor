@@ -44,19 +44,6 @@ public:
   void SetMode(Mode newMode) { _mode = newMode; }
   Mode GetMode() const { return _mode; }
   
-  // If pan and tilt angles for tracking are *both* below this threshold,
-  // the robot will drive straight the specified distance at the specified speed.
-  // Set to zero to disable (default). This is independent of tracking Mode.
-  void SetDriveForward(const Radians& threshold, f32 distance_mm,
-                       f32 speed_mmps = 1.5f*DEFAULT_PATH_SPEED_MMPS,
-                       f32 accel_mmps2 = 1.5f*DEFAULT_PATH_ACCEL_MMPS2);
-  
-  const Radians& GetDriveForwardThreshold() const { return _driveForwardThreshold; }
-  f32 GetDriveForwardDistance() const { return _driveForwardDistance; }
-  
-  // Set an animation to play upon first detection of whatever is being tracked.
-  void SetInitialReactionAnimation(const std::string& name) { _initialReactionAnimation = name; }
-  
   virtual u8 GetAnimTracksToDisable() const override;
   
 protected:
@@ -69,32 +56,12 @@ protected:
   // Return true if new vector provided, false if same as last time
   virtual bool GetTrackingVector(Robot& robot, Vec3f& newTrackingVector) = 0;
   
-  virtual void Cleanup(Robot& robot) override;
-  
 private:
   
   Mode     _mode = Mode::HeadAndBody;
-  Radians  _driveForwardThreshold = 0.f;
-  f32      _driveForwardDistance = 20.f;
-  f32      _driveForwardSpeed = DEFAULT_PATH_SPEED_MMPS * 1.5f;
-  f32      _driveForwardAccel = DEFAULT_PATH_ACCEL_MMPS2 * 1.5f;
-  
-  bool        _initialReactionAnimPlayed = false;
-  std::string _initialReactionAnimation;
-  
-  DriveStraightAction* _driveForwardAction = nullptr;
   
 }; // class ITrackAction
   
-inline void ITrackAction::SetDriveForward(const Radians& threshold, f32 distance_mm,
-                                          f32 speed_mmps, f32 accel_mmps2)
-{
-  _driveForwardThreshold = threshold;
-  _driveForwardDistance = distance_mm;
-  _driveForwardSpeed = speed_mmps;
-  _driveForwardAccel = accel_mmps2;
-}
-
 
 class TrackObjectAction : public ITrackAction
 {
@@ -169,21 +136,11 @@ private:
   
   std::string _name = "TrackMotionAction";
   
-  // TODO: Provide setters for these
-  f32     _holdHeadDownUntil = -1.f;
-  f32     _holdHeadDownDuration = 1.5f;
-  f32     _minDriveFrowardGroundPlaneDist_mm = 93.1f;
-  f32     _minGroundAreaToConsider = 0.1f;
-  
-  Radians _origDriveForwardThreshold;
-  f32     _origDriveForwardDistance;
   bool _gotNewMotionObservation = false;
   
   ExternalInterface::RobotObservedMotion _motionObservation;
   
   Signal::SmartHandle _signalHandle;
-  
-  std::string _previousIdleAnimation;
   
 }; // class TrackMotionAction
   

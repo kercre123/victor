@@ -13,16 +13,11 @@
 
 
 #include "anki/cozmo/basestation/trackingActions.h"
-#include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/common/basestation/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-
-#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -48,16 +43,6 @@ u8 ITrackAction::GetAnimTracksToDisable() const
 
 ActionResult ITrackAction::CheckIfDone(Robot& robot)
 {
-  // Wait for drive forward to finish, if there is one
-  if(nullptr != _driveForwardAction) {
-    ActionResult result = _driveForwardAction->Update(robot);
-    if(ActionResult::SUCCESS == result) {
-      Util::SafeDelete(_driveForwardAction);
-    } else {
-      return result;
-    }
-  }
-  
   Vec3f trackingVector;
   if(GetTrackingVector(robot, trackingVector))
   {
@@ -67,42 +52,26 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       const Radians tiltAngle = std::atan(trackingVector.z()/std::sqrt(distSq));
       const Radians panAngle  = std::atan2(trackingVector.y(), trackingVector.x());
       
-      if(tiltAngle.getAbsoluteVal() < _driveForwardThreshold &&
-         panAngle.getAbsoluteVal() < _driveForwardThreshold )
+      // Pan and/or Tilt (normal behavior)
+      if(Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode)
       {
-        // Move towards the motion since it's centered
-        _driveForwardAction = new DriveStraightAction(_driveForwardDistance, _driveForwardSpeed);
-        _driveForwardAction->SetAccel(_driveForwardAccel);
-
-        ActionResult result = _driveForwardAction->Update(robot);
-        if(ActionResult::SUCCESS == result) {
-          Util::SafeDelete(_driveForwardAction);
-        } else {
-          return result;
-        }
-        
-      } else {
-        // Pan and/or Tilt (normal behavior)
-        if(Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode)
+        // TODO: Set speed/accel based on angle difference
+        if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(tiltAngle.ToFloat(), 15.f, 20.f))
         {
-          // TODO: Set speed/accel based on angle difference
-          if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(tiltAngle.ToFloat(), 15.f, 20.f))
-          {
-            return ActionResult::FAILURE_ABORT;
-          }
+          return ActionResult::FAILURE_ABORT;
         }
-
-        if(Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode)
-        {
-          RobotInterface::SetBodyAngle setBodyAngle;
-          setBodyAngle.angle_rad             = panAngle.ToFloat();
-          setBodyAngle.max_speed_rad_per_sec = DEFAULT_PATH_SPEED_MMPS; // TODO: Set based on angle difference
-          setBodyAngle.accel_rad_per_sec2    = DEFAULT_PATH_ACCEL_MMPS2; // TODO: Set based on angle difference
-          if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
-            return ActionResult::FAILURE_ABORT;
-          }
+      }
+      
+      if(Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode)
+      {
+        RobotInterface::SetBodyAngle setBodyAngle;
+        setBodyAngle.angle_rad             = panAngle.ToFloat();
+        setBodyAngle.max_speed_rad_per_sec = DEFAULT_PATH_SPEED_MMPS; // TODO: Set based on angle difference
+        setBodyAngle.accel_rad_per_sec2    = DEFAULT_PATH_ACCEL_MMPS2; // TODO: Set based on angle difference
+        if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
+          return ActionResult::FAILURE_ABORT;
         }
-      } // if drive straight or pan/tilt
+      }
       
     } else {
       PRINT_NAMED_WARNING("ITrackAction.CheckIfDone.ZeroLengthTracking",
@@ -113,14 +82,6 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
   return ActionResult::RUNNING;
 }
   
-void ITrackAction::Cleanup(Robot& robot)
-{
-  if(nullptr != _driveForwardAction) {
-    _driveForwardAction->Cleanup(robot);
-    Util::SafeDelete(_driveForwardAction);
-  }
-}
-
 #pragma mark -
 #pragma mark TrackObjectAction
 
@@ -336,72 +297,17 @@ bool TrackObjectAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector
     
     _signalHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
     
-    _holdHeadDownUntil = -1.f;
-    _origDriveForwardThreshold = GetDriveForwardThreshold();
-    _origDriveForwardDistance  = GetDriveForwardDistance();
-    
     return ActionResult::SUCCESS;
   } // Init()
   
   
   bool TrackMotionAction::GetTrackingVector(Robot& robot, Vec3f& newTrackingVector)
   {
-    if( _holdHeadDownUntil >= 0.0f ) {
-      if( _holdHeadDownUntil < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() ) {
-        return false;
-      } else {
-        // Restore idle animation and stop holding head down
-        robot.SetIdleAnimation(_previousIdleAnimation);
-        _holdHeadDownUntil = -1.0f;
-      }
-    }
-    
     if(_gotNewMotionObservation && _motionObservation.img_area > 0)
     {
       _gotNewMotionObservation = false;
       
-      const bool inGroundPlane = _motionObservation.ground_area > _minGroundAreaToConsider;
-      if(inGroundPlane)
-      {
-        const Point2f robotOffset(_motionObservation.ground_x, _motionObservation.ground_y);
-        const f32  groundPlaneDist = robotOffset.Length();
-        const bool belowMinGroundPlaneDist = groundPlaneDist < _minDriveFrowardGroundPlaneDist_mm;
-        
-        if(belowMinGroundPlaneDist)
-        {
-          // Disable drive forward
-          SetDriveForward(0.f, 0.f);
-          
-          _holdHeadDownUntil = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _holdHeadDownDuration;
-          
-          // Force head all the way down
-          newTrackingVector = {50.f, 0.f, -50.f};
-          
-          PRINT_NAMED_INFO("TrackMotionAction.GetTrackingVector.HoldingHeadLow",
-                           "got %f of image with dist %f, holding head at min angle for %f sec",
-                           _motionObservation.ground_area,
-                           groundPlaneDist,
-                           _holdHeadDownDuration);
-          
-          _previousIdleAnimation = robot.GetIdleAnimationName();
-          robot.SetIdleAnimation("NONE");
-          return true;
-        }
-      } // if(inGroundPlane)
-
-      // Make sure drive forward is enabled (in case we disabled it on previous
-      // update
-      SetDriveForward(_origDriveForwardThreshold, _origDriveForwardDistance);
-      
       const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
-      
-      // TODO: Does this belong here?
-      // Robot gets more happy/excited and less calm when he sees motion.
-      // (May not want to do this every time he sees motion, since it'll increase
-      //  pretty fast)
-      robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
-                                           EmotionType::Excited, kEmotionChangeSmall,
-                                           EmotionType::Calm,   -kEmotionChangeSmall, "MotionReact");
       
       newTrackingVector = {-motionCentroid.x(), -motionCentroid.y(), robot.GetVisionComponent().GetCameraCalibration().GetFocalLength_x()};
       
