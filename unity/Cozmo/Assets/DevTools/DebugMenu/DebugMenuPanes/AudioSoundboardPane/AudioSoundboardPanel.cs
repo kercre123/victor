@@ -31,6 +31,8 @@ namespace Anki {
         [SerializeField]
         private Button _PostAllButton;
         [SerializeField]
+        private Button _StopAllButton;
+        [SerializeField]
         private Button _PostEventButton;
         [SerializeField]
         private Button _PostGameStateButton;
@@ -65,6 +67,7 @@ namespace Anki {
             _PostRTPCParameter();
             _PostEvent();
           });
+          _StopAllButton.onClick.AddListener(_StopAllEvents);
           _PostEventButton.onClick.AddListener(_PostEvent);
           _PostGameStateButton.onClick.AddListener(_PostGameState);
           _PostSwitchStateButton.onClick.AddListener(_PostSwitchState);
@@ -177,6 +180,12 @@ namespace Anki {
             _AppendLogEvent(log);
           });
           _AppendLogEvent("Post Event: " + selectedEvent.ToString() + " GameObj: " + selectedGameObj.ToString());
+        }
+
+        private void _StopAllEvents() {
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          _audioClient.StopAllAudioEvents(selectedGameObj);
+          _AppendLogEvent("Stop All GameObj GameObj: " + selectedGameObj.ToString());
         }
 
         private void _PostGameState() {

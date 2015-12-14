@@ -64,7 +64,7 @@ namespace Anki {
                                 Anki.Cozmo.Audio.GameObjectType gameObject,
                                 Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                 CallbackHandler handler = null) {
-          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  gameObj: " +
+          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  GameObj: " +
                     gameObject.ToString() + " CallbackFlag: " + callbackFlag);
           ushort playId = _GetPlayId();
           PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObject, callbackFlag, playId);
@@ -78,6 +78,14 @@ namespace Anki {
           }
 
           return playId;
+        }
+
+        // Pass in game object type to stop audio events on that game object, use Invalid to stop all audio
+        public void StopAllAudioEvents(Anki.Cozmo.Audio.GameObjectType gameObject = Anki.Cozmo.Audio.GameObjectType.Invalid) {
+          DAS.Debug("AudioController.StopAllAudioEvents", "GameObj: " + gameObject.ToString());
+          StopAllAudioEvents msg = new Anki.Cozmo.Audio.StopAllAudioEvents(gameObject);
+          _RobotEngineManager.Message.StopAllAudioEvents = msg;
+          _RobotEngineManager.SendMessage();
         }
 
         public void PostGameState(Anki.Cozmo.Audio.GameStateGroupType gameStateGroup,
@@ -101,8 +109,8 @@ namespace Anki {
                                   GameObjectType gameObject,
                                   int timeInMilliSeconds = 0,
                                   Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
-          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " value: " + parameterValue +
-                    " gameObj: " + gameObject.ToString() + " timeInMilliSec: " + timeInMilliSeconds + " curve: " + curve);
+          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " Value: " + parameterValue +
+                    " GameObj: " + gameObject.ToString() + " TimeInMilliSec: " + timeInMilliSeconds + " Curve: " + curve);
           PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObject, timeInMilliSeconds, curve);
           _RobotEngineManager.Message.PostAudioParameter = msg;
           _RobotEngineManager.SendMessage();
