@@ -9,7 +9,7 @@ namespace SpeedTap {
     private float _StartTimeMs = 0;
     private float _OnDelayTimeMs = 2000.0f;
     private float _OffDelayTimeMs = 2000.0f;
-    private float _CozmoTapDelayTimeMs = 100.0f;
+    private float _CozmoTapDelayTimeMs = 300.0f;
     private float _MatchProbability = 0.35f;
 
     private bool _LightsOn = false;
