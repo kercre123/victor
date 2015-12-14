@@ -131,7 +131,7 @@ namespace SpeedTap {
       }
       else if (curWinState_ == WinState.Neutral) {
         curWinState_ = WinState.CozmoWins;
-        _SpeedTapGame.PlayerScore--;
+        _SpeedTapGame.PlayerScore = Mathf.Max(0, _SpeedTapGame.PlayerScore - 1);
         _SpeedTapGame.UpdateUI();
       }
     }
