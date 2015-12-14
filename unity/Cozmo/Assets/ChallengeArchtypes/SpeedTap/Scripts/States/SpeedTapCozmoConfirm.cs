@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SpeedTap {
 
-  public class SpeedTapStateBeginMatch : State {
+  public class SpeedTapCozmoConfirm : State {
 
     private SpeedTapGame _SpeedTapGame = null;
     private float _DriveTime = 1.0f;
@@ -11,9 +11,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      // Do a little dance
-      // Blink some lights
-      // Clear the score
+
       _SpeedTapGame.CozmoScore = 0;
       _SpeedTapGame.PlayerScore = 0;
       _SpeedTapGame.UpdateUI();
@@ -24,9 +22,16 @@ namespace SpeedTap {
       base.Update();
       _DriveTime -= Time.deltaTime;
       if (_DriveTime < 0.0f) {
-        _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
+        AnimationState animation = new AnimationState();
+        animation.Initialize(AnimationName.kTapCube, HandleTapDone);
+        _StateMachine.SetNextState(animation);
       }
 
+    }
+
+    private void HandleTapDone(bool success) {
+      _StateMachine.SetNextState(new SpeedTapPlayerConfirm());
+      _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
     }
 
     public override void Exit() {

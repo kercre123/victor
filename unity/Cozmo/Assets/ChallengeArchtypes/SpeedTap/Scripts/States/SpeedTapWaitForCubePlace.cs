@@ -21,7 +21,7 @@ namespace SpeedTap {
       if (_SpeedTapGame.CozmoBlock.MarkersVisible) {
         float distance = Vector3.Distance(_CurrentRobot.WorldPosition, _SpeedTapGame.CozmoBlock.WorldPosition);
         if (distance < 60.0f) {
-          _StateMachine.SetNextState(new SpeedTapStateBeginMatch());
+          _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
       }
     }

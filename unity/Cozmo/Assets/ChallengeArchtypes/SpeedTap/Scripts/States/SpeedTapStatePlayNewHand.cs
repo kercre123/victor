@@ -24,7 +24,7 @@ namespace SpeedTap {
 
     WinState curWinState_ = WinState.Neutral;
 
-    Color[] colors = { Color.white, Color.red, Color.green, Color.blue, Color.yellow, Color.magenta };
+    Color[] colors = { Color.white, Color.red, Color.green, Color.blue, Color.magenta };
 
     public override void Enter() {
       base.Enter();
@@ -33,6 +33,8 @@ namespace SpeedTap {
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
       _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
       _LightsOn = false;
+
+      _CurrentRobot.SetLiftHeight(1.0f);
 
       _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
       RobotEngineManager.Instance.RobotCompletedAnimation += RobotCompletedTapAnimation;
