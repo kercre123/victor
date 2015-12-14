@@ -87,16 +87,6 @@ namespace SpeedTap {
         // check for player tapped first here.
         CozmoDidTap();
         break;
-      case AnimationName.kFinishTabCubeLose:
-        DAS.Info("SpeedTapStatePlayNewHand.tap_lose", "");
-        _GotMatch = false;
-        _CozmoTapping = false;
-        break;
-      case AnimationName.kFinishTapCubeWin:
-        DAS.Info("SpeedTapStatePlayNewHand.tap_win", "");
-        _GotMatch = false;
-        _CozmoTapping = false;
-        break;
       }
 
     }
@@ -108,11 +98,11 @@ namespace SpeedTap {
         _SpeedTapGame.CozmoScore++;
         _SpeedTapGame.UpdateUI();
         // play sound, do dance
-        _CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin);
+        _StateMachine.SetNextState(new SpeedTapCozmoWins());
       }
       // otherwise cozmo is too late!
       else {
-        _CurrentRobot.SendAnimation(AnimationName.kFinishTabCubeLose);
+        _StateMachine.SetNextState(new SpeedTapPlayerWins());
       }
     }
 
@@ -135,6 +125,7 @@ namespace SpeedTap {
         curWinState_ = WinState.CozmoWins;
         _SpeedTapGame.PlayerScore = Mathf.Max(0, _SpeedTapGame.PlayerScore - 1);
         _SpeedTapGame.UpdateUI();
+        _StateMachine.SetNextState(new SpeedTapPlayerLoses());
       }
     }
 
