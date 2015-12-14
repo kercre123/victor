@@ -6,15 +6,17 @@ public class InitialCubesState : State {
 
   private State _NextState;
   private int _CubesRequired;
+  private bool _CubesMustBeVisible;
 
   public delegate void CubeStateDone();
 
   CubeStateDone _CubeStateDone = null;
 
-  public void InitialCubeRequirements(State nextState, int cubesRequired, CubeStateDone cubeStateDone) {
+  public void InitialCubeRequirements(State nextState, int cubesRequired, bool cubesMustBeVisible, CubeStateDone cubeStateDone) {
     _NextState = nextState;
     _CubesRequired = cubesRequired;
     _CubeStateDone = cubeStateDone;
+    _CubesMustBeVisible = cubesMustBeVisible;
   }
 
   public override void Enter() {
@@ -24,13 +26,21 @@ public class InitialCubesState : State {
   public override void Update() {
     base.Update();
 
+    int validCubes = 0;
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      for (int j = 0; j < lightCube.Value.Lights.Length; ++j) {
-        lightCube.Value.Lights[j].OnColor = CozmoPalette.ColorToUInt(Color.blue);
+
+      bool validCube = !_CubesMustBeVisible || lightCube.Value.MarkersVisible;
+
+      if (validCube) { 
+        lightCube.Value.SetLEDs(Color.blue);
+        validCubes++;
+      }
+      else {
+        lightCube.Value.TurnLEDsOff();
       }
     }
 
-    if (_StateMachine.GetGame().CurrentRobot.LightCubes.Count >= _CubesRequired) {
+    if (validCubes >= _CubesRequired) {
       _StateMachine.SetNextState(_NextState);
     }
   }

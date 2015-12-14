@@ -101,5 +101,41 @@
     },
     "motionDetection01.description" : {
         "translation" : "Wave your hand in front of Cozmo to train him how to detect motion."
+    },
+    "followCubeRotate1.title" : {
+        "translation" : "Follow Cube Rotate"
+    },
+    "followCubeRotate1.subtitle" : {
+        "translation" : "Follow Cube Rotate Subtitle"
+    },
+    "followCubeRotate1.description" : {
+        "translation" : "Rotate Cozmo Left and Right by leading with a cube."
+    },
+    "faceTrack1.title" : {
+        "translation" : "Face Tracking"
+    },
+    "faceTrack1.subtitle" : {
+        "translation" : "Face Tracking Subtitle"
+    },
+    "faceTrack1.description" : {
+        "translation" : "Show Cozmo your face, then slowly move left to right to help them learn to follow you."
+    },
+    "stackTraining01.title" : {
+        "translation" : "Stack Cube Training"
+    },
+    "stackTraining01.subtitle" : {
+        "translation" : "Stack Cube Training Subtitle"
+    },
+    "stackTraining01.description" : {
+        "translation" : "Teach Cozmo how to stack cubes, build a stack for cozmo so he can see how its done."
+    },
+    "cubeLifting01.title" : {
+        "translation" : "Cube Lifting Challenge"
+    },
+    "cubeLifting01.subtitle" : {
+        "translation" : "Cube Lifting Challenge Subtitle"
+    },
+    "cubeLifting01.description" : {
+        "translation" : "Teach Cozmo how to lift a block by raising and lowering it in front of him."
     }
 }

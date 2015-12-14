@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Cozmo.UI;
 
 namespace Conversations {
 
@@ -32,9 +34,14 @@ namespace Conversations {
     [SerializeField]
     private BaseView _RightBubble;
 
+    [SerializeField]
+    private BaseView _ConvoOverlayPrefab;
+    private ConvoBackground _CurrBackground;
+
     private Conversation _CurrentConversation = new Conversation();
     private string _CurrentConversationKey;
-    private SpeechBubble _CurrentSpeechBubble;
+    private SpeechBubble _CurrentLeftSpeechBubble;
+    private SpeechBubble _CurrentRightSpeechBubble;
 
     void Awake() {
       Instance = this;
@@ -44,8 +51,15 @@ namespace Conversations {
     public void StartNewConversation(string conversationKey) {
       _CurrentConversation = new Conversation();
       _CurrentConversationKey = conversationKey;
-      if (_CurrentSpeechBubble != null) {
-        UIManager.CloseView(_CurrentSpeechBubble);
+      if (_CurrBackground != null) {
+        UIManager.CloseView(_CurrBackground);
+        _CurrBackground = null;
+      }
+      if (_CurrentLeftSpeechBubble != null) {
+        UIManager.CloseView(_CurrentLeftSpeechBubble);
+      }
+      if (_CurrentRightSpeechBubble != null) {
+        UIManager.CloseView(_CurrentRightSpeechBubble);
       }
     }
 
@@ -55,10 +69,10 @@ namespace Conversations {
 
     public void AddConversationLine(ConversationLine line) {
       _CurrentConversation.AddToConversation(line);
-      if (_CurrentSpeechBubble != null) {
-        UIManager.CloseView(_CurrentSpeechBubble);
+      if (_CurrBackground == null) {
+        _CurrBackground = UIManager.OpenView(_ConvoOverlayPrefab) as ConvoBackground;
       }
-      _CurrentSpeechBubble = CreateSpeechBubble(line);
+      CreateSpeechBubble(line);
     }
 
     public void SaveConversationToHistory() {
@@ -70,10 +84,16 @@ namespace Conversations {
     private SpeechBubble CreateSpeechBubble(ConversationLine line) {
       SpeechBubble newBubble;
       if (line.IsRight) {
-        newBubble = UIManager.OpenView(_RightBubble) as SpeechBubble;
+        if (_CurrentRightSpeechBubble != null) {
+          UIManager.CloseView(_CurrentRightSpeechBubble);
+        }
+        newBubble = _CurrentRightSpeechBubble = UIManager.OpenView(_RightBubble) as SpeechBubble;
       }
       else {
-        newBubble = UIManager.OpenView(_LeftBubble) as SpeechBubble;
+        if (_CurrentLeftSpeechBubble != null) {
+          UIManager.CloseView(_CurrentLeftSpeechBubble);
+        }
+        newBubble = _CurrentLeftSpeechBubble = UIManager.OpenView(_LeftBubble) as SpeechBubble;
       }
       newBubble.Initialize(line);
       return newBubble;

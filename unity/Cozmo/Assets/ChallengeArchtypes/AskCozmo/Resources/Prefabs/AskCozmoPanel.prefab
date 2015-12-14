@@ -62,7 +62,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9730d4b4c4424a5faaa7debb612cc52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _dialogId: AskCozmoDialog
+  _CloseDialogOnTapOutside: 0
   _AskButton: {fileID: 11448876}
 --- !u!114 &11433574
 MonoBehaviour:
@@ -224,9 +224,9 @@ RectTransform:
   - {fileID: 22437552}
   m_Father: {fileID: 22426394}
   m_RootOrder: 0
-  m_AnchorMin: {x: .5, y: .5}
-  m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: .5, y: 0}
+  m_AnchorMax: {x: .5, y: 0}
+  m_AnchoredPosition: {x: 0, y: 145.100006}
   m_SizeDelta: {x: 600, y: 200}
   m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000

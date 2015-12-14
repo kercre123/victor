@@ -14,34 +14,66 @@ namespace FollowCube {
 
     public float DistanceMax { get; set; }
 
+    public float NotSeenForgivenessThreshold = 2f;
+
     [SerializeField]
-    private FollowCubeGamePanel _GamePanelPrefab;
+    private string _TutorialSequenceName = "FollowCubeIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
 
-    private FollowCubeGamePanel _GamePanel;
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
+      MaxAttempts = 7;
+      AttemptsLeft = 7;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
-      // TODO
+      Progress = 0.0f;
+      NumSegments = 5;
+
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
     }
 
-    void Start() {
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
+    }
+
+    public enum FollowTask {
+      Forwards,
+      Backwards,
+      TurnLeft,
+      TurnRight,
+      FollowDrive
+    }
+
+    public FollowTask CurrentFollowTask;
+
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new FollowCubeState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
+
+      ShowHowToPlaySlide("ShowCubeVision");
+
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
 
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<FollowCubeGamePanel>();
-
-      CreateDefaultQuitButton();
     }
 
-    public override void CleanUp() {
-      if (_GamePanel != null) {
-        UIManager.CloseViewImmediately(_GamePanel);
-      }
+    protected override void CleanUpOnDestroy() {
 
-      DestroyDefaultQuitButton();
+    }
+
+    public void FailedAttempt() {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
+        (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
+      }
     }
 
     // Update is called once per frame
@@ -51,6 +83,7 @@ namespace FollowCube {
 
     void InitialCubesDone() {
       SetSpeed();
+      CurrentFollowTask = FollowTask.Forwards;
     }
 
     void SetSpeed() {
@@ -59,9 +92,6 @@ namespace FollowCube {
       DistanceMin = 90.0f;
     }
 
-    public void SetAttemptsLeft(int attemptsLeft) {
-      _GamePanel.SetAttemptsLeft(attemptsLeft);
-    }
   }
 
 }

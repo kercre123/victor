@@ -45,12 +45,14 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, uint> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
+  public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
 
   #region Audio Callback events
 
   public event Action<AudioCallbackDuration> ReceivedAudioCallbackDuration;
   public event Action<AudioCallbackMarker> ReceivedAudioCallbackMarker;
   public event Action<AudioCallbackComplete> ReceivedAudioCallbackComplete;
+  public event Action<AudioCallbackError> ReceivedAudioCallbackError;
 
   #endregion
 
@@ -307,6 +309,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AudioCallbackComplete:
       ReceivedSpecificMessage(message.AudioCallbackComplete);
       break;
+    case G2U.MessageEngineToGame.Tag.AudioCallbackError:
+      ReceivedSpecificMessage(message.AudioCallbackError);
+      break;
     case G2U.MessageEngineToGame.Tag.InitDebugConsoleVarMessage:
       ReceivedSpecificMessage(message.InitDebugConsoleVarMessage);
       break;
@@ -315,6 +320,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotObservedMotion:
       ReceivedSpecificMessage(message.RobotObservedMotion);
+      break;
+    case G2U.MessageEngineToGame.Tag.CliffEvent:
+      ReceivedSpecificMessage(message.CliffEvent);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -597,6 +605,18 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackComplete message) {
     if (ReceivedAudioCallbackComplete != null) {
       ReceivedAudioCallbackComplete(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallbackError message) {
+    if (ReceivedAudioCallbackComplete != null) {
+      ReceivedAudioCallbackError(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
+    if (OnCliffEvent != null) {
+      OnCliffEvent(message);
     }
   }
 

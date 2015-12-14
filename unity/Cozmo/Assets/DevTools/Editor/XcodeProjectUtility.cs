@@ -2,32 +2,72 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using System;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Xcode {
+
   public static class XcodeProjectUtility {
 
     private static readonly IDAS sDAS = DAS.GetInstance(typeof(XcodeProjectUtility));
 
+    private static void DoWithTimer(string title, ref int step, int stepCount, Action thingToDo) {
+
+      UnityEditor.EditorUtility.DisplayProgressBar("Fixup Cozmo_iOS", title, step / (float)stepCount);
+      var start = DateTime.UtcNow;
+
+      thingToDo();
+
+      var end = DateTime.UtcNow;
+
+      var delta = end - start;
+
+      Debug.Log("Time To " + title + " (seconds): " + delta.TotalSeconds);
+      step++;
+    }
+
     [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Project")]
     public static void FixupCozmoIos() {
-      string original = File.ReadAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj");
+      try {
 
-      var proj = XcodeProjectParser.Deserialize(original);
+        // use the same seed so the same files will give you the same guids
+        SetRandomSeed(0);
 
-      proj.RemoveFolder("UnityBuild");
+        XcodeProject proj = null;
 
-      proj.AddFolder("../ios", "../ios/UnityBuild/Classes", "UnityBuild/Classes");
-      proj.AddFolder("../ios", "../ios/UnityBuild/Libraries", "UnityBuild/Libraries");
-      proj.AddFolder("../ios", "../ios/UnityBuild/Unity-iPhone", "UnityBuild/Unity-iPhone");
-      proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhoneLandscape.png", "UnityBuild/LaunchScreen-iPhoneLandscape.png");
-      proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhonePortrait.png", "UnityBuild/LaunchScreen-iPhonePortrait.png");
-      proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhone.xib", "UnityBuild/LaunchScreen-iPhone.xib");
+        int step = 0;
+        int totalSteps = 8;
 
-      // This is just a bunch of headers that we don't need to include
-      proj.RemoveFolder("UnityBuild/Libraries/libil2cpp");
+        DoWithTimer("Read and Parse", ref step, totalSteps, () => {
+          string original = File.ReadAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj");
+          proj = XcodeProjectParser.Deserialize(original);
+        });
 
-      var parsed = XcodeProjectParser.Serialize(proj);
-      File.WriteAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj", parsed);
+        DoWithTimer("Remove Old UnityBuild", ref step, totalSteps, () =>
+          proj.RemoveFolder("UnityBuild"));
+
+        DoWithTimer("Add Classes", ref step, totalSteps, () =>
+          proj.AddFolder("../ios", "../ios/UnityBuild/Classes", "UnityBuild/Classes", new Regex(".*/Native/.*\\.h")));
+
+        DoWithTimer("Add Libraries", ref step, totalSteps, () =>
+          proj.AddFolder("../ios", "../ios/UnityBuild/Libraries", "UnityBuild/Libraries", new Regex(".*/libil2cpp(/.*)?")));
+        DoWithTimer("Add Unity-iPhone", ref step, totalSteps, () =>
+          proj.AddFolder("../ios", "../ios/UnityBuild/Unity-iPhone", "UnityBuild/Unity-iPhone"));
+        
+        DoWithTimer("Add Images, etc.", ref step, totalSteps, () => {
+          proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhoneLandscape.png", "UnityBuild/LaunchScreen-iPhoneLandscape.png");
+          proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhonePortrait.png", "UnityBuild/LaunchScreen-iPhonePortrait.png");
+          proj.AddFile("../ios", "../ios/UnityBuild/LaunchScreen-iPhone.xib", "UnityBuild/LaunchScreen-iPhone.xib");
+        });
+
+        DoWithTimer("Serialize and save", ref step, totalSteps, () => {
+          var parsed = XcodeProjectParser.Serialize(proj);
+          File.WriteAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj", parsed);
+        });
+      } finally {
+        UnityEditor.EditorUtility.ClearProgressBar();
+      }
     }
 
     [MenuItem("Cozmo/Xcode/Test Make Relative Folder")]
@@ -174,9 +214,23 @@ namespace Xcode {
       // TODO: Add any FileTypes that I've missed
     };
 
-    private static string NewGuid() {
-      return System.Guid.NewGuid().ToString().Replace("-", "").ToUpper().Substring(0, 24);
+    private static System.Random _Random = new System.Random();
+
+    private static void SetRandomSeed(int seed) {
+      _Random = new System.Random(seed);
     }
+
+    private static string NewGuid() {
+      const string alphabet = "0123456789ABCDEF";
+
+      char[] guid = new char[24];
+      for (int i = 0; i < 24; i++) {
+        guid[i] = alphabet[_Random.Next(alphabet.Length)];
+      }
+
+      return new string(guid);
+    }
+
     private static FileId NewFileId(string name, string group = null) {
       return new FileId() { Value = NewGuid(), FileName = name, Group = group };
     }
@@ -240,7 +294,7 @@ namespace Xcode {
       return project.objects.PBXGroupSection.Get(lastFolderId);
     }
 
-    public static void AddFolder(this XcodeProject project, string projectRootPath, string fileSystemFolderPath, string projectFolderPath) {
+    public static void AddFolder(this XcodeProject project, string projectRootPath, string fileSystemFolderPath, string projectFolderPath, Regex exclusions = null) {
 
       var projectRoot = project.objects.PBXProjectSection.Only().mainGroup;
 
@@ -249,11 +303,21 @@ namespace Xcode {
       // this should be the folder which will get the contents of our folder
 
       foreach (var file in Directory.GetFiles(fileSystemFolderPath)) {
+
+        if (exclusions != null && exclusions.IsMatch(file)) {
+          continue;
+        }
+
         project.AddFile(projectRootPath, folderGroup, file);
       }
 
       foreach (var directoryName in Directory.GetDirectories(fileSystemFolderPath)) {
         var directory = directoryName.TrimEnd('/');
+
+        if (exclusions != null && exclusions.IsMatch(directory)) {
+          continue;
+        }
+
         var extension = Path.GetExtension(directory).TrimStart('.');
 
         // Some folders are treated as files, like frameworks and image folders
@@ -266,7 +330,7 @@ namespace Xcode {
           if (folderName.StartsWith(".")) {
             continue;
           }
-          project.AddFolder(projectRootPath, directory, Path.Combine(projectFolderPath, folderName));
+          project.AddFolder(projectRootPath, directory, Path.Combine(projectFolderPath, folderName), exclusions);
         }
       }
     }

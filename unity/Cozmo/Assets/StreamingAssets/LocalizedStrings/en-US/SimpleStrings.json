@@ -27,10 +27,25 @@
     "button.startChallenge" : {
         "translation" : "Start Challenge"
     },
+    "label.challengeCompleted" : {
+        "translation" : "Challenge Completed"
+    },
+    "label.challengeFailed" : {
+        "translation" : "Challenge Failed"
+    },
     "badge.new" : {
         "translation" : "NEW!"
     },
     "label.percentComplete" : {
         "translation" : "{0:P2} Complete"
+    },
+    "button.yes" : {
+        "translation" : "Yes"
+    },
+    "button.no" : {
+        "translation" : "No"
+    },
+    "button.continue" : {
+        "translation" : "Continue"
     }
 }

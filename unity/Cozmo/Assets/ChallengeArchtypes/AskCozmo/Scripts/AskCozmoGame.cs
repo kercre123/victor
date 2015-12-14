@@ -15,14 +15,15 @@ namespace AskCozmo {
 
     private AskCozmoConfig _Config;
 
-    void Start() {
+    private string _CurrentSlideName = null;
+
+    protected void InitializeMinigameObjects() {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
-      CreateDefaultQuitButton();
-      ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("AzkCozmoSequence");
+      // ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("AzkCozmoSequence");
     }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       
       var askCozmoConfig = minigameConfig as AskCozmoConfig;
 
@@ -39,13 +40,26 @@ namespace AskCozmo {
       for (int i = 0; i < _Config.ParamList.Length; ++i) {
         DAS.Debug(this, _Config.ParamList[i].ToString());
       }
+      InitializeMinigameObjects();
+
+      MaxAttempts = 3;
+      AttemptsLeft = 3;
+
+      Progress = 0.5f;
+      NumSegments = 4;
+
+      // By default says "Challenge Progress"
+      // ProgressBarLabelText = Localization.Get(keyNameHere);
+
+      // Play a slide
+      _CurrentSlideName = GetNextSlide();
+      ShowHowToPlaySlide(_CurrentSlideName);
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
-      DestroyDefaultQuitButton();
     }
 
     // user just asked the question and pressed the
@@ -58,14 +72,34 @@ namespace AskCozmo {
       _AnimationPlaying = true;
       if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.5f) {
         CurrentRobot.SendAnimation(AnimationName.kMajorWin, HandleAnimationDone);
+        Progress += 0.25f;
+        if (Progress >= 1) {
+          RaiseMiniGameWin();
+        }
       }
       else {
         CurrentRobot.SendAnimation(AnimationName.kShocked, HandleAnimationDone);
+        Progress -= 0.25f;
       }
+
+      AttemptsLeft--;
+      if (AttemptsLeft <= 0) {
+        RaiseMiniGameLose();
+      }
+
+      _CurrentSlideName = GetNextSlide();
+      ShowHowToPlaySlide(_CurrentSlideName);
     }
 
     void HandleAnimationDone(bool success) {
       _AnimationPlaying = false;
+    }
+
+    private string GetNextSlide() {
+      if (_CurrentSlideName == null || _CurrentSlideName == "Slide2") {
+        return "Slide1";
+      }
+      return "Slide2";
     }
   }
 

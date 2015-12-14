@@ -23,18 +23,19 @@ namespace SpeedTap {
     [SerializeField]
     private AudioClip _RollSound;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
+      InitializeMinigameObjects();
     }
 
     // Use this for initialization
-    void Start() { 
+    protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
 
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
@@ -44,19 +45,18 @@ namespace SpeedTap {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
     }
 
-    public override void CleanUp() {
+    protected override void CleanUpOnDestroy() {
       if (_GamePanel != null) {
         UIManager.CloseViewImmediately(_GamePanel);
       }
-      DestroyDefaultQuitButton();
+
+      LightCube.TappedAction -= BlockTapped;
     }
 
     void InitialCubesDone() {

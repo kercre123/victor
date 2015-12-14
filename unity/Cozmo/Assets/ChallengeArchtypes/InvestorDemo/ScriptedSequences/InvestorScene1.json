@@ -1,11 +1,34 @@
 {
   "Name": "InvestorScene1",
-  "RequiresConditionRemainsMet": false,
+  "RequiresConditionRemainsMet": true,
+  "ActivateOnConditionMet": true,
   "Repeatable": true,
   "Condition": null,
   "Nodes": [
     {
-      "Name": "WakeUp Animation",
+      "Name": "1. Sleeping (anim)",
+      "Id": 8,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_wake_sleeping",
+          "LoopForever": true,
+          "WaitToEnd": true
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        }
+      ]
+    },
+    {
+      "Name": "2. Open eyes (anim)",
       "Id": 1,
       "Sequencial": true,
       "Final": false,
@@ -15,7 +38,8 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "invDemo_P01_WakeUp",
+          "AnimationName": "ID_wake_openEyes",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -26,27 +50,8 @@
       ]
     },
     {
-      "Name": "Wait For Wave",
-      "Id": 2,
-      "Sequencial": true,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.WaitForWaveAction, Assembly-CSharp"
-        }
-      ],
-      "ExitConditions": [
-        {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        }
-      ]
-    },
-    {
-      "Name": "Get Off Charger Animation",
-      "Id": 3,
+      "Name": "3. Surprise (anim)",
+      "Id": 6,
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
@@ -55,7 +60,8 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "invDemo_P02_GetOffCharger",
+          "AnimationName": "ID_reactTppl_Surprise",
+          "LoopForever": false,
           "WaitToEnd": true
         }
       ],
@@ -66,17 +72,19 @@
       ]
     },
     {
-      "Name": "Follow Motion Behavior",
-      "Id": 4,
+      "Name": "4. Get Off Charger (anim)",
+      "Id": 7,
       "Sequencial": true,
       "Final": false,
       "FailOnError": false,
-      "ExitOnActionsComplete": false,
+      "ExitOnActionsComplete": true,
       "Conditions": [],
       "Actions": [
         {
-          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
-          "Behavior": "FollowMotion"
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_offCharger_thrustFwd",
+          "LoopForever": false,
+          "WaitToEnd": true
         }
       ],
       "ExitConditions": [
@@ -86,8 +94,8 @@
       ]
     },
     {
-      "Name": "StopBehavior",
-      "Id": 5,
+      "Name": "7. Follow Motion (Behav)",
+      "Id": 11,
       "Sequencial": true,
       "Final": true,
       "FailOnError": false,
@@ -95,8 +103,8 @@
       "Conditions": [],
       "Actions": [
         {
-          "$type": "ScriptedSequences.Actions.EnterCozmoBehavior, Assembly-CSharp",
-          "Behavior": "NoneBehavior"
+          "$type": "ScriptedSequences.Actions.EnterCozmoBehaviorChooser, Assembly-CSharp",
+          "BehaviorChooser": "InvestorDemoMotion"
         }
       ],
       "ExitConditions": [

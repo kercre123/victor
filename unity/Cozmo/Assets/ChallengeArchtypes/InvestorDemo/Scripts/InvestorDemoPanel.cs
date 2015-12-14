@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Cozmo.UI;
 
 namespace InvestorDemo {
   public class InvestorDemoPanel : BaseView {

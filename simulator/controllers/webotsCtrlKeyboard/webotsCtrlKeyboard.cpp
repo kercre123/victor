@@ -17,6 +17,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorchooserTypesHelpers.h"
 #include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/block.h"
 #include "clad/types/actionTypes.h"
@@ -229,6 +230,8 @@ namespace Anki {
         printf("                      Test modes:  Alt + Testmode#\n");
         printf("                Follow test plan:  t\n");
         printf("        Force-add specifed robot:  Shift+r\n");
+        printf("                 Select behavior:  Shift+c\n");
+        printf("         Select behavior chooser:  h\n");
         printf("           Set DemoState Default:  j\n");
         printf("         Set DemoState FacesOnly:  Shift+j\n");
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
@@ -327,6 +330,10 @@ namespace Anki {
           // Speed of point turns (when no target angle specified). See SendTurnInPlaceAtSpeed().
           f32 pointTurnSpeed = std::fabs(root_->getField("pointTurnSpeed_degPerSec")->getSFFloat());
           
+          // Dock speed
+          const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
+          const f32 dockAccel_mmps2 = root_->getField("dockAccel_mmps2")->getSFFloat();
+          
           // Path speeds
           const f32 pathSpeed_mmps = root_->getField("pathSpeed_mmps")->getSFFloat();
           const f32 pathAccel_mmps2 = root_->getField("pathAccel_mmps2")->getSFFloat();
@@ -341,6 +348,8 @@ namespace Anki {
           pathMotionProfile_.pointTurnSpeed_rad_per_sec = pathPointTurnSpeed_radPerSec;
           pathMotionProfile_.pointTurnAccel_rad_per_sec2 = pathPointTurnAccel_radPerSec2;
           pathMotionProfile_.pointTurnDecel_rad_per_sec2 = pathPointTurnDecel_radPerSec2;
+          pathMotionProfile_.dockSpeed_mmps = dockSpeed_mmps;
+          pathMotionProfile_.dockAccel_mmps2 = dockAccel_mmps2;
           
           
           // For pickup or placeRel, specify whether or not you want to use the
@@ -756,26 +765,36 @@ namespace Anki {
                   
                   trackingObject = !trackingObject;
 
-                  ExternalInterface::TrackToObject m;
-                  m.robotID = 1;
-
                   if(trackingObject) {
-                    const bool headOnly = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                    const bool headOnly = false;
                     
-                    printf("Telling robot to track %sto the selected object %d\n",
+                    printf("Telling robot to track %sto the currently observed object %d\n",
                            headOnly ? "its head " : "",
-                           GetCurrentlyObservedObject().id);
+                           GetLastObservedObject().id);
                     
-                    m.objectID = GetCurrentlyObservedObject().id;
-                    m.headOnly = headOnly;
+                    SendTrackToObject(GetLastObservedObject().id, headOnly);
                   } else {
                     // Disable tracking
-                    m.objectID = u32_MAX;
+                    SendTrackToObject(u32_MAX);
                   }
+                  
+                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  static bool trackingFace = false;
+                  
+                  trackingFace = !trackingFace;
+                  
+                  if(trackingFace) {
+                    const bool headOnly = false;
                     
-                  ExternalInterface::MessageGameToEngine message;
-                  message.Set_TrackToObject(m);
-                  SendMessage(message);
+                    printf("Telling robot to track %sto the currently observed face %d\n",
+                           headOnly ? "its head " : "",
+                           (u32)GetLastObservedFaceID());
+                    
+                    SendTrackToFace((u32)GetLastObservedFaceID(), headOnly);
+                  } else {
+                    // Disable tracking
+                    SendTrackToFace(u32_MAX);
+                  }
 
                 } else {
                   SendExecuteTestPlan();
@@ -793,7 +812,6 @@ namespace Anki {
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
                
-                  static bool isDemoMode = true;
                   // Send whatever animation is specified in the animationToSendName field
                   webots::Field* behaviorNameField = root_->getField("behaviorName");
                   if (behaviorNameField == nullptr) {
@@ -802,28 +820,26 @@ namespace Anki {
                   }
                   std::string behaviorName = behaviorNameField->getSFString();
                   if (behaviorName.empty()) {
-                    printf("ERROR: animationToSendName field is empty\n");
+                    printf("ERROR: behaviorName field is empty\n");
                     break;
                   }
                   
                   if (behaviorName == "DISABLED")
                   {
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(false)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::SetBehaviorSystemEnabled(false)));
                   }
                   else
                   {
-                    if (behaviorName == "AUTO" && !isDemoMode)
-                    {
-                      isDemoMode = true;
-                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Demo)));
-                    }
-                    else if (behaviorName != "AUTO" && isDemoMode)
-                    {
-                      isDemoMode = false;
-                      SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
-                    }
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetBehaviorSystemEnabled(true)));
+                    printf("Selecting behavior: %s\n", behaviorName.c_str());
+
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
+                
                   }
                   
                 }
@@ -834,6 +850,39 @@ namespace Anki {
                   // 'c' without SHIFT
                   SendClearAllBlocks();
                 }
+                break;
+              }
+
+              case (s32)'H':
+              {
+                // select behavior chooser
+                webots::Field* behaviorChooserNameField = root_->getField("behaviorChooserName");
+                if (behaviorChooserNameField == nullptr) {
+                  printf("ERROR: No behaviorChooserNameField field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                  
+                std::string behaviorChooserName = behaviorChooserNameField->getSFString();
+                if (behaviorChooserName.empty()) {
+                  printf("ERROR: behaviorChooserName field is empty\n");
+                  break;
+                }
+                  
+                BehaviorChooserType chooser = BehaviorChooserTypeFromString(behaviorChooserName);
+                if( chooser == BehaviorChooserType::Count ) {
+                  printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
+                         behaviorChooserName.c_str());
+                  break;
+                }
+
+                printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
+                
+                SendMessage(ExternalInterface::MessageGameToEngine(
+                              ExternalInterface::SetBehaviorSystemEnabled(true)));
+
+                SendMessage(ExternalInterface::MessageGameToEngine(
+                              ExternalInterface::ActivateBehaviorChooser(chooser)));
+                
                 break;
               }
                 
@@ -887,11 +936,17 @@ namespace Anki {
               case (s32)'R':
               {
                 bool usePreDockPose = !(modifier_key & webots::Supervisor::KEYBOARD_SHIFT);
-                bool useManualSpeed = (modifier_key & webots::Supervisor::KEYBOARD_ALT);
+                bool useManualSpeed = false;
                 
-                SendTraverseSelectedObject(pathMotionProfile_,
+                if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendTraverseSelectedObject(pathMotionProfile_,
+                                             usePreDockPose,
+                                             useManualSpeed);
+                } else {
+                  SendMountSelectedCharger(pathMotionProfile_,
                                            usePreDockPose,
                                            useManualSpeed);
+                }
                 break;
               }
                 
@@ -1056,7 +1111,7 @@ namespace Anki {
                   msgWrapper.Set_SetAllActiveObjectLEDs(msg);
                   SendMessage(msgWrapper);
                 }
-                else if(GetCurrentlyObservedObject().id >= 0 && GetCurrentlyObservedObject().isActive)
+                else if(GetLastObservedObject().id >= 0 && GetLastObservedObject().isActive)
                 {
                   // Proof of concept: cycle colors
                   const s32 NUM_COLORS = 4;
@@ -1068,7 +1123,7 @@ namespace Anki {
                   static s32 colorIndex = 0;
 
                   ExternalInterface::SetActiveObjectLEDs msg;
-                  msg.objectID = GetCurrentlyObservedObject().id;
+                  msg.objectID = GetLastObservedObject().id;
                   msg.robotID = 1;
                   msg.onPeriod_ms = 250;
                   msg.offPeriod_ms = 250;
@@ -1462,7 +1517,7 @@ namespace Anki {
           counter = 0;
           
           ExternalInterface::SetActiveObjectLEDs msg;
-          msg.objectID = GetCurrentlyObservedObject().id;
+          msg.objectID = GetLastObservedObject().id;
           msg.robotID = 1;
           msg.onPeriod_ms = 100;
           msg.offPeriod_ms = 100;

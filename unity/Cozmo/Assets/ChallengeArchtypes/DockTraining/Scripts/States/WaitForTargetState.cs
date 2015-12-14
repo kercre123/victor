@@ -9,6 +9,9 @@ namespace DockTraining {
     public override void Enter() {
       base.Enter();
       _DockTrainingGame = _StateMachine.GetGame() as DockTrainingGame;
+      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _DockTrainingGame.ShowHowToPlaySlide("ShowCubeVision");
     }
 
     public override void Update() {
@@ -16,7 +19,9 @@ namespace DockTraining {
 
       LightCube target = _DockTrainingGame.GetCurrentTarget();
       if (target != null) {
-        _StateMachine.SetNextState(new DetermineNextAction());
+        target.SetLEDs(Color.blue);
+        _DockTrainingGame.ShowHowToPlaySlide("TapCube");
+        _StateMachine.SetNextState(new TapCubeState(new DetermineNextAction(), target.ID));
       }
     }
 

@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using DG.Tweening;
+using Cozmo.UI;
 
 namespace PatternPlay {
 

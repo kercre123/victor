@@ -11,18 +11,18 @@ namespace TreasureHunt {
 
     public Vector2 GoldPosition { get; set; }
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
       // TODO
+      InitializeMinigameObjects();
     }
 
-    void Start() {
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("TreasureHuntStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new LookForGoldCubeState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-      CreateDefaultQuitButton();
     }
 
     void InitialCubesDone() {
@@ -109,8 +109,7 @@ namespace TreasureHunt {
       _StateMachineManager.UpdateAllMachines();
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
     }
   }
 

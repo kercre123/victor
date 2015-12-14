@@ -39,7 +39,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 060c4a65fbbdc47deb912d16890e311f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameId: dockTraining
+  _HowToPlayPrefabs:
+  - slideName: ShowCubeVision
+    slidePrefab: {fileID: 22556390, guid: b87844ef8589a4411bb9521b7a5dde10, type: 2}
+  - slideName: TapCube
+    slidePrefab: {fileID: 22560662, guid: 5560fe24514624488a10b67235cbd1d5, type: 2}
+  - slideName: WaveToLineUp
+    slidePrefab: {fileID: 22525994, guid: 52e6eb47df5d14b52bfa924eb3d6cd88, type: 2}
+  _TutorialSequenceName: DockTrainingIntro
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -48,8 +55,43 @@ Prefab:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
       propertyPath: _GameId
       value: dockTraining
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: ShowCubeVision
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22556390, guid: b87844ef8589a4411bb9521b7a5dde10,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slideName
+      value: TapCube
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22560662, guid: 5560fe24514624488a10b67235cbd1d5,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slideName
+      value: WaveToLineUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slidePrefab
+      value: 
+      objectReference: {fileID: 22525994, guid: 52e6eb47df5d14b52bfa924eb3d6cd88,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _TutorialSequenceName
+      value: DockTrainingIntro
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

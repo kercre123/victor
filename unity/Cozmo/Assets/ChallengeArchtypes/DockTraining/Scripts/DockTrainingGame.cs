@@ -9,31 +9,52 @@ namespace DockTraining {
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
 
+    private Vector3 _StartingPosition;
+    private Quaternion _StartingRotation;
+
     private LightCube _CurrentTarget = null;
     private float _LastSeenTargetTime = 0.0f;
 
-    public override void LoadMinigameConfig(MinigameConfigBase minigameConfig) {
+    [SerializeField]
+    private string _TutorialSequenceName = "DockTrainingIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
+    protected override void Initialize(MinigameConfigBase minigameConfig) {
+      AttemptsLeft = 5;
+      MaxAttempts = 5;
+      _StartingPosition = CurrentRobot.WorldPosition;
+      _StartingRotation = CurrentRobot.Rotation;
+
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
     }
 
-    void Start() {
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
+    }
+
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
-
-      CreateDefaultQuitButton();
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
       if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
-        if (Time.time - _LastSeenTargetTime > 1.0f) {
+        if (Time.time - _LastSeenTargetTime > 2.0f) {
           if (_CurrentTarget != null) {
             _CurrentTarget.SetLEDs(0);
           }
-          // we haven't seen the current target for more than a second
+          // we haven't seen the current target for more than 2 seconds
           // so let's try to find a new one.
           _CurrentTarget = FindNewTarget();
           _LastSeenTargetTime = Time.time;
@@ -42,37 +63,40 @@ namespace DockTraining {
       else {
         _LastSeenTargetTime = Time.time;
       }
-
-      if (_CurrentTarget != null) {
-        _CurrentTarget.SetLEDs(CozmoPalette.ColorToUInt(Color.white));
-      }
-
     }
 
     private void InitialCubesDone() {
 
     }
 
+    public Vector3 StartingPosition() {
+      return _StartingPosition;
+    }
+
+    public Quaternion StartingRotation() {
+      return _StartingRotation;
+    }
+
     public LightCube GetCurrentTarget() {
       return _CurrentTarget;
     }
 
-    public override void CleanUp() {
-      DestroyDefaultQuitButton();
+    protected override void CleanUpOnDestroy() {
     }
 
     public bool ShouldTryDock() {
+      if (_CurrentTarget == null)
+        return false;
       float distance = Vector2.Distance(CurrentRobot.WorldPosition, _CurrentTarget.WorldPosition);
-      return (distance < 75.0f);
+      return (distance < 60.0f);
     }
 
     public bool ShouldTryDockSucceed() {
-      if (ShouldTryDock() == false) {
+      if (_CurrentTarget == null)
         return false;
-      }
       // check to see if the robots forward vector is toward the cube enough to attempt a successful dock.
-      float dotVal = Vector2.Dot(CurrentRobot.Forward, (CurrentRobot.WorldPosition - _CurrentTarget.WorldPosition).normalized);
-      if (dotVal > 0.95f) {
+      float dotVal = Vector2.Dot(CurrentRobot.Forward, (_CurrentTarget.WorldPosition - CurrentRobot.WorldPosition).normalized);
+      if (dotVal > 0.9f) {
         return true;
       }
       return false;
@@ -88,6 +112,13 @@ namespace DockTraining {
         }
       }
       return null;
+    }
+
+    public void DockFailed() {
+      AttemptsLeft--;
+      if (AttemptsLeft == 0) {
+        RaiseMiniGameLose();
+      }
     }
   }
 

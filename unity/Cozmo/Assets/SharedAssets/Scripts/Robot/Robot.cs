@@ -201,6 +201,7 @@ public class Robot : IDisposable {
   }
 
   private int _CarryingObjectID;
+
   public int CarryingObjectID { 
     get { return _CarryingObjectID; } 
     private set { 
@@ -214,6 +215,7 @@ public class Robot : IDisposable {
   }
 
   private int _HeadTrackingObjectID;
+
   public int HeadTrackingObjectID { 
     get { return _HeadTrackingObjectID; } 
     private set { 
@@ -258,6 +260,7 @@ public class Robot : IDisposable {
   private U2G.SetBehaviorSystemEnabled SetBehaviorSystemEnabledMessage;
   private U2G.ActivateBehaviorChooser ActivateBehaviorChooserMessage;
   private U2G.PlaceRelObject PlaceRelObjectMessage;
+  private U2G.PlaceOnObject PlaceOnObjectMessage;
   private U2G.PlayAnimation PlayAnimationMessage;
   private U2G.PlayAnimation[] PlayAnimationMessages;
   private U2G.SetIdleAnimation SetIdleAnimationMessage;
@@ -364,6 +367,7 @@ public class Robot : IDisposable {
     SetBehaviorSystemEnabledMessage = new U2G.SetBehaviorSystemEnabled();
     ActivateBehaviorChooserMessage = new U2G.ActivateBehaviorChooser();
     PlaceRelObjectMessage = new U2G.PlaceRelObject();
+    PlaceOnObjectMessage = new U2G.PlaceOnObject();
     PlayAnimationMessage = new U2G.PlayAnimation();
     PlayAnimationMessages = new U2G.PlayAnimation[2];
     PlayAnimationMessages[0] = new U2G.PlayAnimation();
@@ -383,6 +387,8 @@ public class Robot : IDisposable {
     PathMotionProfileDefault.pointTurnSpeed_rad_per_sec = 2.0f;
     PathMotionProfileDefault.pointTurnAccel_rad_per_sec2 = 100.0f;
     PathMotionProfileDefault.pointTurnDecel_rad_per_sec2 = 500.0f;
+    PathMotionProfileDefault.dockSpeed_mmps = 100.0f;
+    PathMotionProfileDefault.dockAccel_mmps2 = 200.0f;
 
     SetIdleAnimationMessage = new U2G.SetIdleAnimation();
     SetLiveIdleAnimationParametersMessage = new U2G.SetLiveIdleAnimationParameters();
@@ -444,6 +450,21 @@ public class Robot : IDisposable {
     ClearData();
   }
 
+  public void ResetRobotState() {
+    DriveWheels(0.0f, 0.0f);
+    SetHeadAngle(0.0f);
+    SetLiftHeight(0.0f);
+    TrackToObject(null);
+    CancelAllCallbacks();
+    SetBehaviorSystem(false);
+    ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
+      kvp.Value.SetLEDs(Color.black);
+    }
+    SetBackpackLEDs(CozmoPalette.ColorToUInt(Color.black));
+  }
+
   public void ClearData(bool initializing = false) {
     if (!initializing) {
       TurnOffAllLights(true);
@@ -503,9 +524,6 @@ public class Robot : IDisposable {
     BatteryPercent = (message.batteryVoltage / CozmoUtil.kMaxVoltage);
     CarryingObjectID = message.carryingObjectID;
     HeadTrackingObjectID = message.headTrackingObjectID;
-
-    if (HeadTrackingObjectID == _LastHeadTrackingObjectID)
-      _LastHeadTrackingObjectID = -1;
 
     WorldPosition = new Vector3(message.pose_x, message.pose_y, message.pose_z);
     Rotation = new Quaternion(message.pose_qx, message.pose_qy, message.pose_qz, message.pose_qw);
@@ -684,7 +702,7 @@ public class Robot : IDisposable {
   }
 
   public void PlaceObjectRel(ObservedObject target, float offsetFromMarker, float approachAngle, RobotCallback callback = null) {
-    DAS.Debug(this, "PlaceObjectRel" + target.ID);
+    DAS.Debug(this, "PlaceObjectRel " + target.ID);
 
     PlaceRelObjectMessage.approachAngle_rad = approachAngle;
     PlaceRelObjectMessage.placementOffsetX_mm = offsetFromMarker;
@@ -698,6 +716,22 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
 
     _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
+  }
+
+  public void PlaceOnObject(ObservedObject target, float approachAngle, RobotCallback callback = null) {
+    DAS.Debug(this, "PlaceOnObject " + target.ID);
+
+    PlaceOnObjectMessage.approachAngle_rad = approachAngle;
+    PlaceOnObjectMessage.objectID = target.ID;
+    PlaceOnObjectMessage.useApproachAngle = true;
+    PlaceOnObjectMessage.usePreDockPose = true;
+    PlaceOnObjectMessage.useManualSpeed = false;
+    PlaceOnObjectMessage.motionProf = PathMotionProfileDefault;
+
+    RobotEngineManager.Instance.Message.PlaceOnObject = PlaceOnObjectMessage;
+    RobotEngineManager.Instance.SendMessage();
+
+    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_HIGH, callback));
   }
 
   public void CancelAction(RobotActionType actionType = RobotActionType.UNKNOWN) {
@@ -826,11 +860,7 @@ public class Robot : IDisposable {
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
-    if (HeadTrackingObjectID == observedObject) {
-      _LastHeadTrackingObjectID = -1;
-      return;
-    }
-    else if (_LastHeadTrackingObjectID == observedObject) {
+    if (HeadTrackingObjectID == observedObject && _LastHeadTrackingObjectID == observedObject) {
       return;
     }
 
@@ -937,6 +967,11 @@ public class Robot : IDisposable {
     _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.PLACE_OBJECT_LOW, callback));
   }
 
+  public void GotoPose(Vector3 position, Quaternion rotation, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
+    float rotationAngle = rotation.eulerAngles.z * Mathf.Deg2Rad;
+    GotoPose(position.x, position.y, rotationAngle, callback, level, useManualSpeed);
+  }
+
   public void GotoPose(float x_mm, float y_mm, float rad, RobotCallback callback = null, bool level = false, bool useManualSpeed = false) {
     GotoPoseMessage.level = System.Convert.ToByte(level);
     GotoPoseMessage.useManualSpeed = useManualSpeed;
@@ -1000,7 +1035,7 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.Message.SetLiftHeight = SetLiftHeightMessage;
     RobotEngineManager.Instance.SendMessage();
 
-    _RobotCallbacks.Add(new RobotCallbackWrapper(RobotActionType.MOVE_LIFT_TO_HEIGHT, callback));
+    _RobotCallbacks.Add(new RobotCallbackWrapper(callback, RobotActionType.MOVE_LIFT_TO_HEIGHT, RobotActionType.PLACE_OBJECT_LOW));
   }
 
   public void SetRobotCarryingObject(int objectID = -1) {

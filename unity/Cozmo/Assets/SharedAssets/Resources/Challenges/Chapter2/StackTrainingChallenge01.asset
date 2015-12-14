@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+  m_Name: StackTrainingChallenge01
+  m_EditorClassIdentifier: 
+  _MinigamePrefab: {fileID: 186758, guid: ee6cd99ec016246b795500b6e2ee67d7, type: 2}
+  _ChallengeID: StackTrainingChallenge01
+  _EnableHubWorldChallenge: 1
+  _EnableDevWorldChallenge: 1
+  _ChallengeTitleLocKey: stackTraining01.title
+  _ChallengeSubtitleLocKey: stackTraining01.subtitle
+  _ChallengeDescriptionLocKey: stackTraining01.description
+  _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeReqs:
+    ChallengeGateKeys:
+    - CubeLiftingChallenge01
+    StatGateArray: []
+  MinigameConfig: {fileID: 11400000, guid: b01e79e09439c48c88300f4abed554d3, type: 2}
