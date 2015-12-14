@@ -51,20 +51,16 @@ namespace Anki {
       [SerializeField]
       private Text _TextLabel;
 
-      [SerializeField]
-      private Color _TextEnabledColor = Color.white;
+      public Color TextEnabledColor = Color.white;
 
-      [SerializeField]
-      private Color _TextPressedColor = Color.gray;
+      public Color TextPressedColor = Color.gray;
 
-      [SerializeField]
-      private Color _TextDisabledColor = Color.gray;
+      public Color TextDisabledColor = Color.gray;
 
       [SerializeField]
       private CanvasGroup _AlphaController;
 
-      [SerializeField]
-      private AnkiButtonImage[] _ButtonGraphics;
+      public AnkiButtonImage[] ButtonGraphics;
 
       public string Text {
         get{ return _TextLabel.text; }
@@ -223,7 +219,7 @@ namespace Anki {
       }
 
       private void ShowEnabledState() {
-        foreach (AnkiButtonImage graphic in _ButtonGraphics) {
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
             SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
           }
@@ -232,11 +228,11 @@ namespace Anki {
           }
         }
 
-        _TextLabel.color = _TextEnabledColor;
+        _TextLabel.color = TextEnabledColor;
       }
 
       private void ShowPressedState() {
-        foreach (AnkiButtonImage graphic in _ButtonGraphics) {
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
             SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor);
           }
@@ -244,11 +240,11 @@ namespace Anki {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
-        _TextLabel.color = _TextPressedColor;
+        _TextLabel.color = TextPressedColor;
       }
 
       private void ShowDisabledState() {
-        foreach (AnkiButtonImage graphic in _ButtonGraphics) {
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
           if (graphic.targetImage != null && graphic.enabledSprite != null) {
             SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor);
           }
@@ -256,7 +252,7 @@ namespace Anki {
             DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
           }
         }
-        _TextLabel.color = _TextDisabledColor;
+        _TextLabel.color = TextDisabledColor;
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
