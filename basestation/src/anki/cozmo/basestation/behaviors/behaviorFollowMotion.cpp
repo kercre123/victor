@@ -71,6 +71,7 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   _previousIdleAnimation = robot.GetIdleAnimationName();
 
   _state = State::WaitingForFirstMotion;
+  SetStateName("Wait");
   
   return Result::RESULT_OK;
 }
@@ -113,6 +114,7 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
   _state = State::Interrupted;
+  SetStateName("Interrupted");
   
   return Result::RESULT_OK;
 }
@@ -125,6 +127,7 @@ void BehaviorFollowMotion::StartTracking(Robot& robot)
   robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
   
   _state = State::Tracking;
+  SetStateName("Tracking");
 }
  
   
@@ -234,6 +237,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
         robot.SetIdleAnimation("NONE");
         
         _state = State::HoldingHeadDown;
+        SetStateName("HeadDown");
       }
     } // if(motion in ground plane)
     
@@ -246,6 +250,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
       _actionRunning = driveAction->GetTag();
       
       _state = State::DrivingForward;
+      SetStateName("DriveForward");
       
       // Queue action now will stop the tracking that's currently running
       robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
@@ -280,12 +285,14 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
         _initialReactionAnimPlayed = true;
         StartTracking(robot);
         _state = State::Tracking;
+        SetStateName("Tracking");
         break;
         
       case State::Tracking:
         PRINT_NAMED_INFO("BehaviorFollowMotion.HandleWhileRunning.TrackingCompleted",
                          "Tracking action completed, marking behavior as interruped.");
         _state = State::Interrupted;
+        SetStateName("Interrupted");
         break;
         
       case State::HoldingHeadDown:

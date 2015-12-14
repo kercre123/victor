@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -180,6 +181,14 @@ Result MovementComponent::StopAllMotors()
   
 Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
 {
+  TrackObjectAction* action = new TrackObjectAction(objectID);
+  if(headOnly) {
+    action->SetMode(ITrackAction::Mode::HeadOnly);
+  }
+  _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+  return RESULT_OK;
+  
+  /*
   _trackToObjectID = objectID;
   
   if(_robot.GetBlockWorld().GetObjectByID(_trackToObjectID) != nullptr) {
@@ -201,21 +210,33 @@ Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
     _trackToObjectID.UnSet();
     return RESULT_FAIL;
   }
+   */
 }
 
 Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bool headOnly)
 {
+  
+  TrackFaceAction* action = new TrackFaceAction(faceID);
+  if(headOnly) {
+    action->SetMode(ITrackAction::Mode::HeadOnly);
+  }
+  
+  _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
+
+  return RESULT_OK;
+  
+  /*
   _trackToFaceID = faceID;
   if(_robot.GetFaceWorld().GetFace(_trackToFaceID) != nullptr) {
     _trackWithHeadOnly = headOnly;
     _trackToObjectID.UnSet();
     
-    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!headOnly) {
-      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    LockAnimTracks(tracksToLock);
-    
+//    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
+//    if(!headOnly) {
+//      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
+//    }
+//    LockAnimTracks(tracksToLock);
+
     return RESULT_OK;
   } else {
     PRINT_NAMED_ERROR("MovementComponent.EnableTrackToFace.UnknownFace",
@@ -224,10 +245,14 @@ Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bo
     _trackToFaceID = Vision::TrackedFace::UnknownFace;
     return RESULT_FAIL;
   }
+   */
 }
 
 Result MovementComponent::DisableTrackToObject()
 {
+  _robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
+  
+  /*
   if(_trackToObjectID.IsSet()) {
     _trackToObjectID.UnSet();
     
@@ -237,11 +262,15 @@ Result MovementComponent::DisableTrackToObject()
     }
     UnlockAnimTracks(tracksToUnlock);
   }
+   */
   return RESULT_OK;
 }
 
 Result MovementComponent::DisableTrackToFace()
 {
+  _robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
+  
+  /*
   if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
     _trackToFaceID = Vision::TrackedFace::UnknownFace;
     
@@ -251,6 +280,7 @@ Result MovementComponent::DisableTrackToFace()
     }
     UnlockAnimTracks(tracksToUnlock);
   }
+   */
   return RESULT_OK;
 }
   

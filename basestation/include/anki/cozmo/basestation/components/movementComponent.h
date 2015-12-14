@@ -85,7 +85,8 @@ protected:
 
   // Object/Face to track head to whenever it is observed
   ObjectID _trackToObjectID;
-  Vision::TrackedFace::ID_t   _trackToFaceID = Vision::TrackedFace::UnknownFace;
+  
+  Vision::TrackedFace::ID_t _trackToFaceID = Vision::TrackedFace::UnknownFace;
   bool _trackWithHeadOnly = false;
   
   std::vector<int> _animTrackLockCount;
