@@ -20,6 +20,11 @@ message PostAudioEvent
   uint_16           callbackId = 0
 }
 
+message StopAllAudioEvents
+{
+  GameObjectType  gameObject,
+}
+
 message PostAudioGameState
 {
   GameStateGroupType  gameStateGroup,

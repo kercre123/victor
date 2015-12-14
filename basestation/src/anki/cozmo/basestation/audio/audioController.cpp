@@ -229,6 +229,16 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::StopAllAudioEvents( AudioEngine::AudioGameObject gameObject )
+{
+#if USE_AUDIO_ENGINE
+  if ( _isInitialized ) {
+    _audioEngine->StopAllAudioEvents( gameObject );
+  }
+#endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::SetState( AudioEngine::AudioStateGroupId stateGroupId,
                                 AudioEngine::AudioStateId stateId ) const
 {

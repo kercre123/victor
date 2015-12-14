@@ -61,6 +61,10 @@ public:
   AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
+
+  // Stops playing all sounds on the specified game object
+  // + If AudioGameObject::Invalid is specified, then ALL audio will be stopped
+  void StopAllAudioEvents( AudioEngine::AudioGameObject gameObject = AudioEngine::kInvalidAudioGameObject );
   
   bool SetState( AudioEngine::AudioStateGroupId stateGroupId,
                  AudioEngine::AudioStateId stateId ) const;

@@ -108,6 +108,13 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioServer::ProcessMessage( const StopAllAudioEvents& message, ConnectionIdType connectionId )
+{
+  const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
+  _audioController->StopAllAudioEvents( objectId );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId )
 {
   // Decode Game State Message
