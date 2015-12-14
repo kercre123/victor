@@ -11,11 +11,26 @@ namespace VisionTraining {
     private float _LastTimeTargetSeen;
     private LightCube _CurrentTarget = null;
 
+    [SerializeField]
+    private string _TutorialSequenceName = "CubeVisionIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      InitializeMinigameObjects();
       _LastTimeTargetSeen = Time.time;
       AttemptsLeft = 5;
       MaxAttempts = 5;
+
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
     }
 
     protected void InitializeMinigameObjects() {
