@@ -18,7 +18,7 @@ MonoBehaviour:
   _ChallengeTitleLocKey: motionDetection01.title
   _ChallengeSubtitleLocKey: motionDetection01.subtitle
   _ChallengeDescriptionLocKey: motionDetection01.description
-  _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: 34be909b994d24f3c959d03948ea90a6, type: 3}
   _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
