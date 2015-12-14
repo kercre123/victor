@@ -21,12 +21,12 @@
  * Copyright: Anki, Inc. 2015
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
-
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -158,9 +158,7 @@ namespace Cozmo {
           _trackedObjectStoppedMovingTime = currentTime_sec;
         }
       }
-    }
-
-    
+    }    
 
     if( _holdUntilTime > 0.0f) {
       if( currentTime_sec < _holdUntilTime ) {
@@ -174,7 +172,13 @@ namespace Cozmo {
     if (_isActing || !_animActionTags.empty()) {
       return Status::Running;
     }
-      
+
+
+    // check lift animation lock
+    if( _currentState != State::TrackingBlock || robot.IsCarryingObject() ) {
+      LiftShouldBeUnlocked(robot);
+    }
+    
     switch(_currentState)
     {
       case State::TrackingFace:
@@ -709,7 +713,15 @@ namespace Cozmo {
     // Delete anim action tag, in case we somehow missed it.
     _animActionTags.erase(msg.idTag);
 
-
+    if( _isDrivingForward && _driveForwardActionTag == msg.idTag )
+    {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.DoneDrivingForward",
+                             "finished drive forward action, no longer driving forward, result=%s",
+                             ActionResultToString(msg.result));
+      // TODO:(bn) will need to re-enable tracking here once andrew's tracking changes go in
+      _isDrivingForward = false;
+      return lastResult;
+    }
     
     if (msg.idTag != _lastActionTag) {
       // PRINT_NAMED_INFO("BehaviorBlockPlay.HandleActionCompleted.ExternalAction", "Ignoring");
@@ -1042,7 +1054,7 @@ namespace Cozmo {
       robot.GetMoveComponent().DisableTrackToFace();
       robot.GetMoveComponent().EnableTrackToObject(_trackedObject, false);
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
-
+     
       if( robot.IsCarryingObject() ) {
         PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
       }
@@ -1062,10 +1074,110 @@ namespace Cozmo {
 
     if( objectID == _trackedObject && msg.markersVisible ) {
       _lastObjectObservedTime = currentTime_sec;
+
+      if( _currentState == State::TrackingBlock && !robot.IsCarryingObject() ) {
+        TrackBlockWithLift(robot, oObject->GetPose());
+      }
     }
 
     return RESULT_OK;
-  }  
+  }
+
+  void BehaviorBlockPlay::LiftShouldBeLocked(Robot& robot)
+  {
+    if( ! _lockedLift ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
+                             "LOCKED");
+
+      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      _lockedLift = true;
+    }
+  }
+
+  void BehaviorBlockPlay::LiftShouldBeUnlocked(Robot& robot)
+  {
+    if( _lockedLift ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
+                             "UNLOCKED");
+
+      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      _lockedLift = false;
+    }
+  }
+
+
+  void BehaviorBlockPlay::TrackBlockWithLift(Robot& robot, const Pose3d& objectPose)
+  {
+    // get the pose of the block WRT the lift joint
+    Pose3d liftToObjectPose;
+    if( objectPose.GetWithRespectTo(robot.GetLiftBasePose(), liftToObjectPose) ) {
+
+      const float sideAngle = atan2f( liftToObjectPose.GetTranslation().y(), liftToObjectPose.GetTranslation().x() );
+
+      float targetHeight = LIFT_HEIGHT_LOWDOCK;
+
+      if( robot.GetHeadAngle() > _minHeadAngleforLiftUp_rads &
+          liftToObjectPose.GetTranslation().x() <= _maxObjectDistToMoveLift) {
+        if( std::abs(sideAngle) < _minTrackingAngleToMove_rads ) {
+          targetHeight = _highLiftHeight;
+          LiftShouldBeLocked(robot);
+        }
+        else {
+          // within range, but bad angle, so leave the lift where it is and let the tracking controller turn us
+          targetHeight = robot.GetLiftHeight();
+        }
+      }
+      else {
+        // far away, or too low, so lower the lift and let idle take control again
+        LiftShouldBeUnlocked(robot);
+      }
+
+      if( ! NEAR( robot.GetLiftHeight(), targetHeight, 5.0f ) ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.Move",
+                               "new target height: %fmm",
+                               targetHeight);
+        
+        // queue this action in the animation slot to avoid stomping on tracking
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(targetHeight);
+        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+      }
+
+      
+      // check if we should move forward
+      if( !_isDrivingForward &&
+          liftToObjectPose.GetTranslation().x() >= _minObjectDistanceToMove &&
+          std::abs(sideAngle) < _minTrackingAngleToMove_rads ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.DriveForward",
+                               "x dist = %f, side angle = %fdeg, driving forward",
+                               liftToObjectPose.GetTranslation().x(),
+                               RAD_TO_DEG(sideAngle));
+
+        DriveStraightAction* driveAction = new DriveStraightAction(_distToDriveForwardWhileTracking,
+                                                                   _speedToDriveForwardWhileTracking);
+        // drive actions go in the main slot
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
+        _driveForwardActionTag = driveAction->GetTag();
+              
+        _isDrivingForward = true;
+      }
+      else if ( !_isDrivingForward ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoDrive",
+                               "not driving forward because dist = %f, side angle = %fdeg",
+                               liftToObjectPose.GetTranslation().x(),
+                               RAD_TO_DEG(sideAngle));
+      }
+    }
+    else {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoPose",
+                             "couldn't get object pose WRT lift base.");
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoPose.Object",
+                             "object graph: %s",
+                             objectPose.GetNamedPathToOrigin(false).c_str());
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoPose.LiftBase",
+                             "lift base graph: %s",
+                             robot.GetLiftBasePose().GetNamedPathToOrigin(false).c_str());
+    }
+  }
 
   
   Result BehaviorBlockPlay::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec)

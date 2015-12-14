@@ -110,6 +110,8 @@ namespace Cozmo {
     Result HandleObservedFace(const Robot& robot, const ExternalInterface::RobotObservedFace& msg, double currentTime_sec);
     Result HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg, double currentTime_sec);
+
+    void TrackBlockWithLift(Robot& robot, const Pose3d& objectPose);
     
     void InitState(const Robot& robot);
     void SetCurrState(State s);
@@ -157,6 +159,22 @@ namespace Cozmo {
 
     // The block that currently has Cozmo's attention
     ObjectID _trackedObject;
+
+    // used for moving the lift to track (grab at) the cube
+    const f32 _maxObjectDistToMoveLift = 145.0f;
+    const f32 _minObjectDistanceToMove = 180.0f;
+    const f32 _minTrackingAngleToMove_rads = DEG_TO_RAD(10.0f);
+    const f32 _distToDriveForwardWhileTracking = 40.0f;
+    const f32 _speedToDriveForwardWhileTracking = 90.0f;
+    const f32 _highLiftHeight = 70.0f;
+    const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
+    u32 _driveForwardActionTag = 0;
+    bool _isDrivingForward = false;
+
+    bool _lockedLift = false;
+    void LiftShouldBeLocked(Robot& robot);
+    void LiftShouldBeUnlocked(Robot& robot);
+
 
     // The last time we saw _trackedObject
     f32 _lastObjectObservedTime = 0.0f;

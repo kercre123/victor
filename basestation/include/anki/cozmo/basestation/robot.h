@@ -240,6 +240,7 @@ public:
     const f32              GetHeadAngle()    const;
     const f32              GetLiftAngle()    const;
     const Pose3d&          GetLiftPose()     const { return _liftPose; }  // At current lift position!
+    const Pose3d&          GetLiftBasePose() const { return _liftBasePose; }
     const PoseFrameID_t    GetPoseFrameID()  const { return _frameId; }
     const Pose3d*          GetWorldOrigin()  const { return _worldOrigin; }
     Pose3d                 GetCameraPose(f32 atAngle) const;
