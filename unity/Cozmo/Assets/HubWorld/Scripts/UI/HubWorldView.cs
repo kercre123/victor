@@ -76,7 +76,7 @@ namespace Cozmo.HubWorld {
 
       float apogee = Random.Range(500f, 750f);
       float perigee = Random.Range(750f, 1000f);
-      float orbitLength = 120f;
+      float orbitLength = 240f;
       float rotationSpeed = Random.Range(10f, 30f);
       float startingAngle = Random.Range(0f, 360f);
       Vector3 apogeeDirection = Random.insideUnitCircle.normalized;

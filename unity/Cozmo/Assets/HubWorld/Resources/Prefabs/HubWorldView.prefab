@@ -479,7 +479,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a067e1e193e90401c946405b6fa06ccb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DegreesPerSecond: 5
+  DegreesPerSecond: -5
 --- !u!212 &21201244
 SpriteRenderer:
   m_ObjectHideFlags: 1
