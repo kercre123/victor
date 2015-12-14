@@ -11,20 +11,21 @@ namespace Cozmo.HubWorld {
     public override void Initialize(ChallengeData challengeData) {
 
       base.Initialize(challengeData);
-
-      StartCoroutine(DelayedBobAnimation());
     }
 
-    private void OnDestroy() {
+    private void OnEnable() {
+      DelayedBobAnimation();
+    }
+
+    private void OnDisable() {
       if (_BobbingSequence != null) {
         _BobbingSequence.Kill();
+        _BobbingSequence = null;
       }
     }
 
-    private IEnumerator DelayedBobAnimation() {
-      float delay = Random.Range(0f, 1f);
-      yield return new WaitForSeconds(delay);
-
+    private void DelayedBobAnimation() {
+      float delay = Random.Range(0f, 1f);        
       // Start a bobbing animation that plays forever
       float duration = Random.Range(3.5f, 5.5f);
       float yOffset = Random.Range(10f, 25f);
@@ -36,6 +37,7 @@ namespace Cozmo.HubWorld {
       _BobbingSequence.Append(transform.DOLocalMove(new Vector3(transform.localPosition.x - xOffset,
         transform.localPosition.y - yOffset,
         transform.localPosition.z), duration).SetEase(Ease.InOutSine));
+      _BobbingSequence.SetDelay(delay);
       _BobbingSequence.Play();
     }
   }

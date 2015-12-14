@@ -62,6 +62,7 @@ public class Asteroid : MonoBehaviour {
 
     _Orientation = Quaternion.FromToRotation(Vector3.up, apogeeDirection);
     _OrbitCenter = apogeeDirection * centerDistance;
+    Update();
   }
 
   private void Update() {

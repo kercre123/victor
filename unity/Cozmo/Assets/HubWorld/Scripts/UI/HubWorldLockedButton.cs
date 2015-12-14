@@ -40,10 +40,8 @@ namespace Cozmo.HubWorld {
       }
     }
 
-    private IEnumerator DelayedBobAnimation() {
+    private void DelayedBobAnimation() {
       float delay = Random.Range(0f, 1f);
-      yield return new WaitForSeconds(delay);
-
       // Start a bobbing animation that plays forever
       float duration = Random.Range(3.5f, 5.5f);
       float yOffset = Random.Range(8f, 15f);
@@ -57,6 +55,7 @@ namespace Cozmo.HubWorld {
         transform.localPosition.y - yOffset,
         transform.localPosition.z), duration).SetEase(Ease.InOutSine));
       _BobbingSequence.Join(transform.DOScale(new Vector3(targetScale, targetScale, 1), duration).SetEase(Ease.InOutSine));
+      _BobbingSequence.SetDelay(delay);
       _BobbingSequence.Play();
     }
   }

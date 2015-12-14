@@ -23,19 +23,21 @@ namespace Cozmo.HubWorld {
           _ChallengeIconImage.gameObject.SetActive(false);
         }
       }
-
-      StartCoroutine(DelayedBobAnimation());
     }
 
-    private void OnDestroy() {
+    private void OnEnable() {
+      DelayedBobAnimation();
+    }
+
+    private void OnDisable() {
       if (_BobbingSequence != null) {
         _BobbingSequence.Kill();
+        _BobbingSequence = null;
       }
     }
 
-    private IEnumerator DelayedBobAnimation() {
+    private void DelayedBobAnimation() {
       float delay = Random.Range(0f, 1.5f);
-      yield return new WaitForSeconds(delay);
 
       // Start a bobbing animation that plays forever
       float duration = Random.Range(1.5f, 2f);
@@ -43,6 +45,7 @@ namespace Cozmo.HubWorld {
       _BobbingSequence = DOTween.Sequence();
       _BobbingSequence.SetLoops(-1, LoopType.Yoyo); 
       _BobbingSequence.Append(transform.DOLocalMoveY(transform.localPosition.y - yOffset, duration).SetEase(Ease.InOutSine));
+      _BobbingSequence.SetDelay(delay);
       _BobbingSequence.Play();
     }
   }
