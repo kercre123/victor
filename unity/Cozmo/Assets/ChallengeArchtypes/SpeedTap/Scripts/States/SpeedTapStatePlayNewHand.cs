@@ -16,14 +16,6 @@ namespace SpeedTap {
     private bool _GotMatch = false;
     private bool _CozmoTapping = false;
 
-    enum WinState {
-      Neutral,
-      CozmoWins,
-      PlayerWins
-    }
-
-    WinState curWinState_ = WinState.Neutral;
-
     Color[] colors = { Color.white, Color.red, Color.green, Color.blue, Color.magenta };
 
     public override void Enter() {
@@ -64,7 +56,6 @@ namespace SpeedTap {
       }
       else {
         if ((currTimeMs - _StartTimeMs) >= _OffDelayTimeMs) {
-          curWinState_ = WinState.Neutral;
           RollForLights();
           _LightsOn = true;
           _StartTimeMs = currTimeMs;
@@ -93,17 +84,7 @@ namespace SpeedTap {
 
     void CozmoDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
-      if (curWinState_ == WinState.Neutral) {
-        curWinState_ = WinState.CozmoWins;
-        _SpeedTapGame.CozmoScore++;
-        _SpeedTapGame.UpdateUI();
-        // play sound, do dance
-        _StateMachine.SetNextState(new SpeedTapCozmoWins());
-      }
-      // otherwise cozmo is too late!
-      else {
-        _StateMachine.SetNextState(new SpeedTapPlayerWins());
-      }
+      _StateMachine.SetNextState(new SpeedTapCozmoWins());
     }
 
     void BlockTapped(int blockID, int numTaps) {
@@ -115,16 +96,9 @@ namespace SpeedTap {
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
-        if (curWinState_ == WinState.Neutral) {
-          curWinState_ = WinState.PlayerWins;
-          _SpeedTapGame.PlayerScore++;
-          _SpeedTapGame.UpdateUI();
-        }
+        _StateMachine.SetNextState(new SpeedTapPlayerWins());
       }
-      else if (curWinState_ == WinState.Neutral && _LightsOn) {
-        curWinState_ = WinState.CozmoWins;
-        _SpeedTapGame.PlayerScore = Mathf.Max(0, _SpeedTapGame.PlayerScore - 1);
-        _SpeedTapGame.UpdateUI();
+      else if (_LightsOn) {
         _StateMachine.SetNextState(new SpeedTapPlayerLoses());
       }
     }
