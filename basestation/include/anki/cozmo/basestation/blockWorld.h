@@ -136,6 +136,12 @@ namespace Anki
                                                   const Vec3f& distThreshold,
                                                   const Radians& angleThreshold);
       
+      // Same as above, except type and pose are specified directly
+      ObservableObject* FindClosestMatchingObject(ObjectType withType,
+                                                  const Pose3d& pose,
+                                                  const Vec3f& distThreshold,
+                                                  const Radians& angleThreshold);
+      
       ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's

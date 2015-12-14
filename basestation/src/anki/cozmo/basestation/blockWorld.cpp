@@ -2540,6 +2540,7 @@ namespace Cozmo {
       filter.AddIgnoreID(object.GetID());
       
       // We override the default filter function to intentionally consider objects that are unknown here
+      // TODO: Why is this necessary?
       filter.SetFilterFcn([] (ObservableObject*) { return true; });
       
       FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
@@ -2557,8 +2558,40 @@ namespace Cozmo {
       
       ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
       return closestObject;
-    }
-    
+    } // FindClosestMatchingObject(given object)
+  
+    ObservableObject* BlockWorld::FindClosestMatchingObject(ObjectType withType,
+                                                            const Pose3d& pose,
+                                                            const Vec3f& distThreshold,
+                                                            const Radians& angleThreshold)
+    {
+      Vec3f closestDist(distThreshold);
+      Radians closestAngle(angleThreshold);
+      
+      // We override the default filter function to intentionally consider objects that are unknown here
+      // TODO: Why is this necessary? (Copied from similar function above)
+      BlockWorldFilter filter;
+      filter.SetFilterFcn([] (ObservableObject*) { return true; });
+      
+      FindFcn findLambda = [withType,&pose,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
+      {
+        Vec3f Tdiff;
+        Radians angleDiff;
+        if(current->GetType() == withType &&
+           current->GetPose().IsSameAs(pose, closestDist, closestAngle, Tdiff, angleDiff))
+        {
+          closestDist = Tdiff.GetAbs();
+          closestAngle = angleDiff.getAbsoluteVal();
+          return true;
+        } else {
+          return false;
+        }
+      };
+      
+      ObservableObject* closestObject = FindObjectHelper(findLambda, filter);
+      return closestObject;
+    } // FindClosestMatchingObject(given pose)
+  
     void BlockWorld::ClearObjectsByFamily(const ObjectFamily family)
     {
       if(_canDeleteObjects) {
