@@ -364,9 +364,18 @@ namespace Cozmo.HubWorld {
       var startPosition = rectTransform.localPosition;
       var startScale = rectTransform.localScale;
 
+      var button = rectTransform.GetComponent<HubWorldButton>();
+      if (button != null) {
+        button.enabled = false;
+      }
+
       _Tweeners.Add(new Tween((t) => {
         rectTransform.localPosition = Vector3.Lerp(startPosition, position, t);
         rectTransform.localScale = Vector3.Lerp(startScale, scale, t);
+      }, () => {
+        if(button) { 
+          button.enabled = true;
+        }
       }));
     }
 

@@ -8,24 +8,36 @@ namespace Cozmo.HubWorld {
 
     private Sequence _BobbingSequence;
 
+    private int _CoroutineStartFrame;
+
     public override void Initialize(ChallengeData challengeData) {
 
       base.Initialize(challengeData);
     }
 
     private void OnEnable() {
-      DelayedBobAnimation();
+      _CoroutineStartFrame++;
+      StartCoroutine(DelayedBobAnimation());
     }
 
     private void OnDisable() {
+      _CoroutineStartFrame++;
       if (_BobbingSequence != null) {
         _BobbingSequence.Kill();
         _BobbingSequence = null;
       }
     }
 
-    private void DelayedBobAnimation() {
-      float delay = Random.Range(0f, 1f);        
+    private IEnumerator DelayedBobAnimation() {
+      float delay = Random.Range(0f, 1f);
+
+      int startFrame = _CoroutineStartFrame;
+      yield return new WaitForSeconds(delay);
+
+      if (startFrame != _CoroutineStartFrame) {
+        yield break;
+      }
+        
       // Start a bobbing animation that plays forever
       float duration = Random.Range(3.5f, 5.5f);
       float yOffset = Random.Range(10f, 25f);
@@ -34,10 +46,10 @@ namespace Cozmo.HubWorld {
       xOffset = Random.Range(0f, 1f) > 0.5f ? xOffset : -xOffset;
       _BobbingSequence = DOTween.Sequence();
       _BobbingSequence.SetLoops(-1, LoopType.Yoyo);  
+
       _BobbingSequence.Append(transform.DOLocalMove(new Vector3(transform.localPosition.x - xOffset,
         transform.localPosition.y - yOffset,
         transform.localPosition.z), duration).SetEase(Ease.InOutSine));
-      _BobbingSequence.SetDelay(delay);
       _BobbingSequence.Play();
     }
   }
