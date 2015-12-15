@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -202,7 +203,9 @@ namespace Cozmo {
           if (_faceID != Face::UnknownFace) {
             
             // If we have a valid faceID, track it.
-            robot.GetMoveComponent().EnableTrackToFace(_faceID, false);
+            TrackFaceAction* action = new TrackFaceAction(_faceID);
+            _lastActionTag = action->GetTag();
+            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
                                    "EnableTrackToFace %lld", _faceID);
             
@@ -257,7 +260,7 @@ namespace Cozmo {
         else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
           PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
                            "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
-          robot.GetMoveComponent().DisableTrackToFace();
+          robot.GetActionList().Cancel(_lastActionTag, Robot::DriveAndManipulateSlot);
         }
 
         break;
@@ -269,7 +272,7 @@ namespace Cozmo {
           if( robot.GetMoveComponent().GetTrackToObject().IsSet() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackingBlockUnset",
                                    "disabling object tracking because object was deleted / unset");
-            robot.GetMoveComponent().DisableTrackToObject();
+            robot.GetActionList().Cancel(_lastActionTag, Robot::DriveAndManipulateSlot);
           }
           _faceID = Face::UnknownFace;
           SetCurrState(State::TrackingFace);
@@ -313,8 +316,8 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
-          robot.GetMoveComponent().DisableTrackToObject();
-          PlayAnimation(robot, "ID_react2block_02", false);
+          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
+          PlayAnimation(robot, "ID_react2block_02", false); 
 
           // hold a bit before making a decision about the block
           const float inspectTime = 0.3f;
@@ -1039,8 +1042,9 @@ namespace Cozmo {
 
       _noFacesStartTime = -1.0; // reset face timeout
       SetCurrState(State::TrackingBlock);
-      robot.GetMoveComponent().DisableTrackToFace();
-      robot.GetMoveComponent().EnableTrackToObject(_trackedObject, false);
+      TrackObjectAction* action = new TrackObjectAction(_trackedObject);
+      _lastActionTag = action->GetTag();
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
 
       if( robot.IsCarryingObject() ) {

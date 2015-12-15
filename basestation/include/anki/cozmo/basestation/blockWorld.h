@@ -294,9 +294,6 @@ namespace Anki
                                               const ObjectType&    withType,
                                               const ObjectFamily&  fromFamily);
       
-      
-      Result UpdateTrackToObject();
-      
       Result BroadcastObjectObservation(const ObservableObject* observedObject,
                                         bool markersVisible);
       

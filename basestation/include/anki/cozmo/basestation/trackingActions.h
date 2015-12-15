@@ -82,6 +82,7 @@ public:
 protected:
   
   virtual ActionResult Init(Robot& robot) override;
+  virtual void Cleanup(Robot& robot) override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;
@@ -111,6 +112,7 @@ public:
 protected:
   
   virtual ActionResult Init(Robot& robot) override;
+  virtual void Cleanup(Robot& robot) override;
   
   // Required by ITrackAction:
   virtual bool GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle) override;

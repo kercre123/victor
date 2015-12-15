@@ -133,9 +133,15 @@ ActionResult TrackObjectAction::Init(Robot& robot)
     _name = "TrackObject" + std::to_string(_objectID) + "Action";
   }
   
+  robot.GetMoveComponent().SetTrackToObject(_objectID);
+  
   return ActionResult::SUCCESS;
 } // Init()
 
+void TrackObjectAction::Cleanup(Robot& robot)
+{
+  robot.GetMoveComponent().UnSetTrackToObject();
+}
   
 bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
 {
@@ -163,6 +169,13 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
   }
   
   assert(nullptr != matchingObject);
+  
+  if(ObservableObject::PoseState::Unknown == matchingObject->GetPoseState()) {
+    PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.PoseStateUnknown",
+                        "Object %d's pose state is unknown. Cannot update angles.",
+                        _objectID.GetValue());
+    return false;
+  }
   
   _lastTrackToPose = matchingObject->GetPose();
   
@@ -241,11 +254,18 @@ TrackFaceAction::TrackFaceAction(FaceID faceID)
 ActionResult TrackFaceAction::Init(Robot& robot)
 {
   _name = "TrackFace" + std::to_string(_faceID) + "Action";
+  robot.GetMoveComponent().SetTrackToFace(_faceID);
   
   return ActionResult::SUCCESS;
 } // Init()
+  
+  
+void TrackFaceAction::Cleanup(Robot& robot)
+{
+  robot.GetMoveComponent().UnSetTrackToFace();
+}
 
-
+  
 bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
 {
   const Vision::TrackedFace* face = robot.GetFaceWorld().GetFace(_faceID);

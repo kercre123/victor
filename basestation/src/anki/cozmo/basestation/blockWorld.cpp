@@ -926,151 +926,6 @@ namespace Cozmo {
     } // AddAndUpdateObjects()
   
   
-    Result BlockWorld::UpdateTrackToObject()
-    {
-      if(!_robot->GetMoveComponent().GetTrackToObject().IsSet()) {
-        // Nothing to do if the robot isn't set to track anything
-        return RESULT_OK;
-      }
-      
-      const ObservableObject* trackToObject = GetObjectByID(_robot->GetMoveComponent().GetTrackToObject());
-      if(nullptr == trackToObject) {
-        PRINT_NAMED_ERROR("BlockWorld.Update.InvalidTrackToObject",
-                          "Robot's track to object, ID=%d, does not exist",
-                          _robot->GetMoveComponent().GetTrackToObject().GetValue());
-        return RESULT_FAIL;
-      }
-      
-      const ObservableObject* observedObject = nullptr;
-      static Pose3d lastTrackToPose = trackToObject->GetPose();
-      
-      std::list<ObservableObject*> matchingObjects;
-      for(auto object : _currentObservedObjects) {
-        if(object->GetType() == trackToObject->GetType()) {
-          matchingObjects.push_back(object);
-        }
-      }
-      
-      if(matchingObjects.empty()) {
-        // Nothing to do: there are current observed objects, but none of them
-        // match the type of the object we're tracking
-        return RESULT_OK;
-      } else if(matchingObjects.size() == 1) {
-        // Special case: only one matching type. Just use that one
-        observedObject = matchingObjects.front();
-      } else if(matchingObjects.size() > 1) {
-        // Multiple objects of the TrackTo type seen simultaneously. Find
-        // the closest one to the last known position of the track-to object
-        // and use it (Not sure this is exactly what we want: we might want to
-        // use the last tracked position...)
-        f32 minDist = std::numeric_limits<f32>::max();
-        
-        for(auto matchingObject : matchingObjects) {
-          f32 dist = ComputeDistanceBetween(matchingObject->GetPose(), lastTrackToPose);
-          if(dist < minDist) {
-            observedObject = matchingObject;
-            minDist = dist;
-          }
-        }
-      } // if(num matching objects == 1 or > 1)
-      
-      ASSERT_NAMED(nullptr != observedObject, "ObservedObject should be non-null by now");
-      lastTrackToPose = observedObject->GetPose();
-      
-      // Find the observed marker closest to the robot and use that as the one we
-      // track to
-      std::vector<const Vision::KnownMarker*> observedMarkers;
-      observedObject->GetObservedMarkers(observedMarkers, observedObject->GetLastObservedTime());
-      
-      if(observedMarkers.empty()) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                          "No markers on observed object %d marked as observed since time %d, "
-                          "expecting at least one.",
-                          observedObject->GetID().GetValue(), observedObject->GetLastObservedTime());
-        return RESULT_FAIL;
-      }
-      
-      //const Vec3f& robotTrans = _robot->GetPose().GetTranslation();
-      
-      // Compare to the pose of the robot when the marker was observed
-      RobotPoseStamp *p;
-      if(RESULT_OK != _robot->GetPoseHistory()->GetComputedPoseAt(observedObject->GetLastObservedTime(), &p)) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject.PoseHistoryError",
-                          "Could not get historical pose for object observation time t=%d",
-                          observedObject->GetLastObservedTime());
-        return RESULT_FAIL;
-      }
-      
-      const Vec3f& robotTrans = p->GetPose().GetTranslation();
-      
-      const Vision::KnownMarker* closestMarker = nullptr;
-      f32 minDistSq = std::numeric_limits<f32>::max();
-      f32 xDist = 0.f, yDist = 0.f, zDist = 0.f;
-      
-      for(auto marker : observedMarkers) {
-        Pose3d markerPose;
-        if(false == marker->GetPose().GetWithRespectTo(*_robot->GetWorldOrigin(), markerPose)) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                            "Could not get pose of observed marker w.r.t. world for head tracking.\n");
-          return RESULT_FAIL;
-        }
-        
-        const f32 xDist_crnt = markerPose.GetTranslation().x() - robotTrans.x();
-        const f32 yDist_crnt = markerPose.GetTranslation().y() - robotTrans.y();
-        
-        const f32 currentDistSq = xDist_crnt*xDist_crnt + yDist_crnt*yDist_crnt;
-        if(currentDistSq < minDistSq) {
-          closestMarker = marker;
-          minDistSq = currentDistSq;
-          xDist = xDist_crnt;
-          yDist = yDist_crnt;
-          
-          // Keep track of best zDist too, so we don't have to redo the GetWithRespectTo call outside this loop
-          // NOTE: This isn't perfectly accurate since it doesn't take into account the
-          // the head angle and is simply using the neck joint (which should also
-          // probably be queried from the robot instead of using the constant here)
-          zDist = markerPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
-        }
-        
-      } // For all markers
-      
-      if(closestMarker == nullptr) {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject", "No closest marker found!\n");
-        return RESULT_FAIL;
-      } else {
-        const f32 minDist = std::sqrt(minDistSq);
-        const f32 headAngle = std::atan(zDist/(minDist + 1e-6f));
-        f32 bodyPanAngle_rad = 0.f;
-          
-        if(false == _robot->GetMoveComponent().IsTrackingWithHeadOnly()) {
-          // Also rotate ("pan") body:
-          bodyPanAngle_rad = std::atan2(yDist, xDist);
-        }
-
-        // only do a tracking action if we aren't going to stomp on someone elses action
-        size_t qLength = _robot->GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
-        if( qLength == 0 ||
-            ( qLength == 1 &&
-              _robot->GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
-        {
-          PanAndTiltAction* action = new PanAndTiltAction(bodyPanAngle_rad, headAngle, true, true);
-          action->EnableMessageDisplay(false);
-        
-          // TODO: Expose / tune these parameters to get the appropriate amount of eye tracking vs. movement
-          action->SetPanTolerance(DEG_TO_RAD(5));
-          action->SetTiltTolerance(DEG_TO_RAD(5));
-        
-          // TODO: Expose / tune PanAndTilt speed/accel as needed
-        
-          _robot->GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-
-          _lastTrackingActionTag = action->GetTag();
-        }
-      }
-      
-      return RESULT_OK;
-    } // UpdateTrackToObject()
-  
     u32 BlockWorld::CheckForUnobservedObjects(TimeStamp_t atTimestamp)
     {
       u32 numVisibleObjects = 0;
@@ -2172,13 +2027,7 @@ namespace Cozmo {
       if(_currentObservedObjects.empty()) {
         // If we didn't see/update anything, send a signal saying so
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotObservedNothing(_robot->GetID())));
-      } else {
-        // See if the type of object the robot is tracking to got updated
-        Result trackResult = UpdateTrackToObject();
-        if(RESULT_OK != trackResult) {
-          PRINT_NAMED_WARNING("BlockWorld.Update.UpdateTrackToFailed", "");
-        }
-      }
+      } 
       
       //PRINT_NAMED_INFO("BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
       
@@ -2364,15 +2213,6 @@ namespace Cozmo {
                            ObjectTypeToString(object->GetType()),
                            object->GetID().GetValue());
           _selectedObject.UnSet();
-        }
-        
-        if(_robot->GetMoveComponent().GetTrackToObject() == object->GetID()) {
-          PRINT_NAMED_INFO("BlockWorld.ClearObjectHelper.ClearingTrackHeadToObject",
-                           "Clearing %s object %d which robot %d is currently tracking its head to.",
-                           ObjectTypeToString(object->GetType()),
-                           object->GetID().GetValue(),
-                           _robot->GetID());
-          _robot->GetMoveComponent().DisableTrackToObject();
         }
         
         object->SetPoseState(ObservableObject::PoseState::Unknown);

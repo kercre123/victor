@@ -596,7 +596,9 @@ union RobotActionUnion {
   PopAWheelie        popAWheelie,
   SetLiftHeight      setLiftHeight,
   SetHeadAngle       setHeadAngle,
-  TurnInPlace        turnInPlace
+  TurnInPlace        turnInPlace,
+  TrackToFace        trackFace,
+  TrackToObject      trackObject
 }
 
 // QueueSingleAction

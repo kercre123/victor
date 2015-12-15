@@ -44,8 +44,6 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetHeadAngle>();
-  helper.SubscribeInternal<MessageGameToEngineTag::TrackToObject>();
-  helper.SubscribeInternal<MessageGameToEngineTag::TrackToFace>();
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
   
@@ -95,47 +93,15 @@ void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg
     PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
                      "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
   } else {
-    DisableTrackToObject();
+    // Disable all tracking
+    _robot.GetActionList().Cancel(-1, RobotActionType::TRACK_FACE);
+    _robot.GetActionList().Cancel(-1, RobotActionType::TRACK_OBJECT);
+    _robot.GetActionList().Cancel(-1, RobotActionType::TRACK_MOTION);
+
     MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
   }
 }
 
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::TrackToObject& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.HeadLocked",
-                     "Ignoring ExternalInterface::TrackToObject while head is locked.");
-  } else if (IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK) && !msg.headOnly) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.WheelsLocked",
-                     "Ignoring ExternalInterface::TrackToObject while wheels are locked and headOnly == false.");
-  } else {
-    if(msg.objectID == u32_MAX) {
-      DisableTrackToObject();
-    } else {
-      EnableTrackToObject(msg.objectID, msg.headOnly);
-    }
-  }
-}
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::TrackToFace& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackToFace.HeadLocked",
-                     "Ignoring ExternalInterface::TrackToFace while head is locked.");
-  } else if (IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK) && !msg.headOnly) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToFace.WheelsLocked",
-                     "Ignoring ExternalInterface::TrackToFace while wheels are locked and headOnly == false.");
-  } else {
-    if(msg.faceID == u32_MAX) {
-      DisableTrackToFace();
-    } else {
-      EnableTrackToFace(msg.faceID, msg.headOnly);
-    }
-  }
-}
-  
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
@@ -177,111 +143,6 @@ Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
 Result MovementComponent::StopAllMotors()
 {
   return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
-}
-  
-Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
-{
-  TrackObjectAction* action = new TrackObjectAction(objectID);
-  if(headOnly) {
-    action->SetMode(ITrackAction::Mode::HeadOnly);
-  }
-  _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-  return RESULT_OK;
-  
-  /*
-  _trackToObjectID = objectID;
-  
-  if(_robot.GetBlockWorld().GetObjectByID(_trackToObjectID) != nullptr) {
-    _trackWithHeadOnly = headOnly;
-    _trackToFaceID = Vision::TrackedFace::UnknownFace;
-
-    // TODO:(bn) this doesn't seem to work (wheels aren't locked), but not sure if it should...
-    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!headOnly) {
-      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    LockAnimTracks(tracksToLock);
-    
-    return RESULT_OK;
-  } else {
-    PRINT_NAMED_ERROR("MovementComponent.EnableTrackToObject.UnknownObject",
-                      "Cannot track to object ID=%d, which does not exist.",
-                      objectID);
-    _trackToObjectID.UnSet();
-    return RESULT_FAIL;
-  }
-   */
-}
-
-Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bool headOnly)
-{
-  
-  TrackFaceAction* action = new TrackFaceAction(faceID);
-  if(headOnly) {
-    action->SetMode(ITrackAction::Mode::HeadOnly);
-  }
-  
-  _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-
-  return RESULT_OK;
-  
-  /*
-  _trackToFaceID = faceID;
-  if(_robot.GetFaceWorld().GetFace(_trackToFaceID) != nullptr) {
-    _trackWithHeadOnly = headOnly;
-    _trackToObjectID.UnSet();
-    
-//    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-//    if(!headOnly) {
-//      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-//    }
-//    LockAnimTracks(tracksToLock);
-
-    return RESULT_OK;
-  } else {
-    PRINT_NAMED_ERROR("MovementComponent.EnableTrackToFace.UnknownFace",
-                      "Cannot track to face ID=%lld, which does not exist.",
-                      faceID);
-    _trackToFaceID = Vision::TrackedFace::UnknownFace;
-    return RESULT_FAIL;
-  }
-   */
-}
-
-Result MovementComponent::DisableTrackToObject()
-{
-  _robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
-  
-  /*
-  if(_trackToObjectID.IsSet()) {
-    _trackToObjectID.UnSet();
-    
-    uint8_t tracksToUnlock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!_trackWithHeadOnly) {
-      tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    UnlockAnimTracks(tracksToUnlock);
-  }
-   */
-  return RESULT_OK;
-}
-
-Result MovementComponent::DisableTrackToFace()
-{
-  _robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
-  
-  /*
-  if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
-    _trackToFaceID = Vision::TrackedFace::UnknownFace;
-    
-    uint8_t tracksToUnlock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!_trackWithHeadOnly) {
-      tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    UnlockAnimTracks(tracksToUnlock);
-  }
-   */
-  return RESULT_OK;
 }
   
 int MovementComponent::GetFlagIndex(uint8_t flag) const

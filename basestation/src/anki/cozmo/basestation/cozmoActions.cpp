@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "bridge.h"
 #include "pathPlanner.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -1350,7 +1351,7 @@ namespace Anki {
       }
       
       // Can't track head to an object and face it
-      robot.GetMoveComponent().DisableTrackToObject();
+      robot.GetMoveComponent().UnSetTrackToFace();
       
       // Disable completion signals since this is inside another action
       _visuallyVerifyAction.SetEmitCompletionSignal(false);
@@ -1391,13 +1392,7 @@ namespace Anki {
       }
 
       if(_headTrackWhenDone) {
-        if(robot.GetMoveComponent().EnableTrackToObject(_objectID, true) == RESULT_OK) {
-          return ActionResult::SUCCESS;
-        } else {
-          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.HeadTracKFail",
-                              "Failed to enable head tracking when done.\n");
-          return ActionResult::FAILURE_PROCEED;
-        }
+        robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, new TrackObjectAction(_objectID));
       }
       
       return ActionResult::SUCCESS;
