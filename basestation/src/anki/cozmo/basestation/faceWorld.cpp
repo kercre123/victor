@@ -24,62 +24,6 @@ namespace Cozmo {
     
   }
   
-  Result FaceWorld::UpdateFaceTracking(const Vision::TrackedFace& face)
-  {
-    //const Vec3f& robotTrans = _robot.GetPose().GetTranslation();
-    
-    // Compare to the pose of the robot when the marker was observed
-    RobotPoseStamp *p;
-    TimeStamp_t junkTime;
-    if(RESULT_OK != _robot.GetPoseHistory()->ComputeAndInsertPoseAt(face.GetTimeStamp(), junkTime, &p)) {
-      PRINT_NAMED_ERROR("FaceWorld.UpdateFaceTracking.PoseHistoryError",
-                        "Could not get historical pose for face observed at t=%d (lastRobotMsgTime = %d)",
-                        face.GetTimeStamp(),
-                        _robot.GetLastMsgTimestamp());
-      return RESULT_FAIL;
-    }
-    
-    const Vec3f& robotTrans = p->GetPose().GetTranslation();
-
-    Pose3d headPose;
-    if(false == face.GetHeadPose().GetWithRespectTo(*_robot.GetWorldOrigin(), headPose)) {
-      PRINT_NAMED_ERROR("BlockWorld.UpdateTrackToObject",
-                        "Could not get pose of face w.r.t. world for head tracking.\n");
-      return RESULT_FAIL;
-    }
-    
-    const f32 xDist = headPose.GetTranslation().x() - robotTrans.x();
-    const f32 yDist = headPose.GetTranslation().y() - robotTrans.y();
-    
-    const f32 minDist = std::sqrt(xDist*xDist + yDist*yDist);
-  
-    // NOTE: This isn't perfectly accurate since it doesn't take into account the
-    // the head angle and is simply using the neck joint (which should also
-    // probably be queried from the robot instead of using the constant here)
-    const f32 zDist = headPose.GetTranslation().z() - (robotTrans.z() + NECK_JOINT_POSITION[2]);
-    
-    const Radians headAngle = std::atan(zDist/(minDist + 1e-6f));
-    const Radians panAngle = std::atan2(yDist, xDist);
-    
-    static const Radians minHeadAngle(DEG_TO_RAD(2.f));
-    static const Radians minBodyAngle(DEG_TO_RAD(2.f));
-
-    // only do a tracking action if we aren't going to stomp on someone elses action
-    size_t qLength = _robot.GetActionList().GetQueueLength(Robot::DriveAndManipulateSlot);
-    if( qLength == 0 ||
-        ( qLength == 1 &&
-          _robot.GetActionList().IsCurrAction(_lastTrackingActionTag, Robot::DriveAndManipulateSlot) ) )
-    {
-      PanAndTiltAction* action = new PanAndTiltAction(panAngle, headAngle, true, true);
-      action->EnableMessageDisplay(false);
-      action->SetPanTolerance(minBodyAngle);
-      action->SetTiltTolerance(minHeadAngle);
-      _robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
-      _lastTrackingActionTag = action->GetTag();
-    }
-                                          
-    return RESULT_OK;
-  } // UpdateFaceTracking()
   
   Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
   {
@@ -174,13 +118,7 @@ namespace Cozmo {
                                                                    humanHeadSize,
                                                                    knownFace->face.GetHeadPose(),
                                                                    ::Anki::NamedColors::GREEN);
-    
-    if((_robot.GetMoveComponent().GetTrackToFace() != Vision::TrackedFace::UnknownFace) &&
-       (_robot.GetMoveComponent().GetTrackToFace() == knownFace->face.GetID()))
-    {
-      UpdateFaceTracking(knownFace->face);
-    }
-    
+        
     // Send out an event about this face being observed
     using namespace ExternalInterface;
     const Vec3f& trans = knownFace->face.GetHeadPose().GetTranslation();

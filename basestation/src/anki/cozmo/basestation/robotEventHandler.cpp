@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
@@ -54,6 +55,8 @@ RobotEventHandler::RobotEventHandler(RobotManager& manager, IExternalInterface* 
       ExternalInterface::MessageGameToEngineTag::FaceObject,
       ExternalInterface::MessageGameToEngineTag::FacePose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,
+      ExternalInterface::MessageGameToEngineTag::TrackToObject,
+      ExternalInterface::MessageGameToEngineTag::TrackToFace
     };
     
     // Subscribe to desired events
@@ -343,6 +346,30 @@ IActionRunner* GetFacePoseActionHelper(Robot& robot, const ExternalInterface::Fa
                             Radians(facePose.maxTurnAngle));
 }
   
+IActionRunner* GetTrackFaceActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
+{
+  TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
+  
+  // TODO: Support body-only mode
+  if(trackFace.headOnly) {
+    action->SetMode(ITrackAction::Mode::HeadOnly);
+  }
+  
+  return action;
+}
+  
+IActionRunner* GetTrackObjectActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
+{
+  TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
+  
+  // TODO: Support body-only mode
+  if(trackObject.headOnly) {
+    action->SetMode(ITrackAction::Mode::HeadOnly);
+  }
+  
+  return action;
+}
+
 IActionRunner* CreateNewActionByType(Robot& robot,
                                      const ExternalInterface::RobotActionUnion& actionUnion)
 {
@@ -398,6 +425,11 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::alignWithObject:
       return GetDriveToAlignWithObjectActionHelper(robot, actionUnion.Get_alignWithObject());
 
+    case RobotActionUnionTag::trackFace:
+      return GetTrackFaceActionHelper(robot, actionUnion.Get_trackFace());
+      
+    case RobotActionUnionTag::trackObject:
+      return GetTrackObjectActionHelper(robot, actionUnion.Get_trackObject());
       
       // TODO: Add cases for other actions
       
@@ -563,6 +595,17 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
                                         event.GetData().Get_TurnInPlace().isAbsolute);
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::TrackToFace:
+    {
+      newAction = GetTrackFaceActionHelper(robot, event.GetData().Get_TrackToFace());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::TrackToObject:
+    {
+      newAction = GetTrackObjectActionHelper(robot, event.GetData().Get_TrackToObject());
+      break;
+    }
+    
     default:
     {
       PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",

@@ -53,11 +53,6 @@ namespace Cozmo {
     
     TimeStamp_t _deletionTimeout_ms = 3000;
 
-    // For tracking, keep track of the id of the actions we are doing
-    u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
-    
-    Result UpdateFaceTracking(const Vision::TrackedFace& face);
-    
     Vision::TrackedFace::ID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;

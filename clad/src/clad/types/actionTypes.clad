@@ -41,7 +41,10 @@ enum int_32 RobotActionType {
     WAIT,
     MOVE_LIFT_TO_HEIGHT,
     PAN_AND_TILT,
-    DRIVE_STRAIGHT
+    DRIVE_STRAIGHT,
+    TRACK_OBJECT,
+    TRACK_FACE,
+    TRACK_MOTION
 }
 
 

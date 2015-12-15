@@ -40,7 +40,9 @@ namespace Cozmo {
     ObjectFamily  GetFamily()  const { return _family; }
     ObjectType    GetType()    const { return _type; }
     
-    ActiveIdentityState GetIdentityState() const { return _identityState; }
+    // Returns Identified for non-Active objects and the active identity state
+    // for Active objects.
+    ActiveIdentityState GetIdentityState() const;
     
     // Overload base IsSameAs() to first compare type and family
     // (Note that we have to overload all if we overload one)
@@ -67,6 +69,16 @@ namespace Cozmo {
     
   }; // class ObservableObject
   
+  
+  inline ActiveIdentityState ObservableObject::GetIdentityState() const {
+    if(IsActive()) {
+      return _identityState;
+    } else {
+      // Non-Active Objects are always "identified"
+      return ActiveIdentityState::Identified;
+    }
+  }
+
 #pragma mark -
 #pragma mark Inlined Implementations
   

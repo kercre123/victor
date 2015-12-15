@@ -79,6 +79,8 @@ namespace Anki {
     public:
       using SlotHandle = s32;
       
+      static const SlotHandle UnknownSlot = -1;
+      
       ActionList();
       ~ActionList();
       

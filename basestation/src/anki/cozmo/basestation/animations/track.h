@@ -27,7 +27,7 @@ namespace Cozmo {
 // Forward declaration
 namespace RobotInterface {
 class EngineToRobot;
-enum class EngineToRobotTag : uint8_t;
+  enum class EngineToRobotTag : uint8_t;
 }
 class Robot;
 
@@ -36,11 +36,16 @@ namespace Animations {
 // templated class for storing/accessing various "tracks", which
 // hold different types of KeyFrames.
 template<class FRAME_TYPE>
-class Track {
+class Track
+{
 public:
   static const size_t MAX_FRAMES_PER_TRACK = 1000;
 
   void Init();
+  
+  // If set to true, keyframes in this track will be deleted after they are played
+  void SetIsLive(bool isLive) { _isLive = isLive; }
+  bool IsLive() const { return _isLive; }
 
   Result AddKeyFrame(const FRAME_TYPE& keyFrame);
   Result AddKeyFrame(const Json::Value& jsonRoot);
@@ -77,7 +82,9 @@ private:
   FrameList _frames;
   typename FrameList::iterator _frameIter;
   
-}; // class Animation::Track
+  bool _isLive = false;
+  
+}; // class Track
 
 
 template<typename FRAME_TYPE>
@@ -89,7 +96,7 @@ void Track<FRAME_TYPE>::Init()
 template<typename FRAME_TYPE>
 void Track<FRAME_TYPE>::MoveToNextKeyFrame()
 {
-  if(_frameIter->IsLive()) {
+  if(_isLive) {
     // Live frames get removed from the track once played
     _frameIter = _frames.erase(_frameIter);
   } else {
@@ -100,13 +107,13 @@ void Track<FRAME_TYPE>::MoveToNextKeyFrame()
   }
 }
   
-  template<typename FRAME_TYPE>
-  void Track<FRAME_TYPE>::MoveToPrevKeyFrame()
-  {
-    if(_frameIter != _frames.begin()) {
-      --_frameIter;
-    }
+template<typename FRAME_TYPE>
+void Track<FRAME_TYPE>::MoveToPrevKeyFrame()
+{
+  if(_frameIter != _frames.begin()) {
+    --_frameIter;
   }
+}
   
 template<typename FRAME_TYPE>
 FRAME_TYPE* Track<FRAME_TYPE>::GetNextKeyFrame()
