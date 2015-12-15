@@ -1,21 +1,28 @@
 ﻿using System;
 using Anki.Cozmo.Audio;
+using System.ComponentModel;
 
 namespace ScriptedSequences.Actions {
   public class PlayAudio : ScriptedSequenceAction {
 
     public EventType EventType;
 
+    public GameObjectType GameObjectType;
+
+    [DefaultValue(true)]
     public bool WaitToEnd = true;
+
+    [DefaultValue(true)]
+    public bool StopSoundOnEnd = true;
 
     public override ISimpleAsyncToken Act() {
       
       SimpleAsyncToken token = new SimpleAsyncToken();
 
-      if (WaitToEnd) {
+      if (WaitToEnd) {        
         // Play with Callback
         // TODO: Need to set the Game Object Type appropriately
-        AudioClient.Instance.PostEvent(EventType, Anki.Cozmo.Audio.GameObjectType.Default, AudioCallbackFlag.EventComplete, (c) => {
+        AudioClient.Instance.PostEvent(EventType, GameObjectType, AudioCallbackFlag.EventComplete, (c) => {
           if (c.CallbackType == AudioCallbackFlag.EventComplete || c.CallbackType == AudioCallbackFlag.EventError) {
             token.Succeed();
           }
@@ -25,10 +32,15 @@ namespace ScriptedSequences.Actions {
             token.Fail(new Exception("Received Error Playing event " + EventType + ": " + errorType));
           }
         });
+        if (StopSoundOnEnd) {
+          token.OnAbort += () => {
+            AudioClient.Instance.StopAllAudioEvents(GameObjectType);
+          };
+        }
       }
       else {
         // TODO: Need to set the Game Object Type appropriately
-        AudioClient.Instance.PostEvent(EventType, Anki.Cozmo.Audio.GameObjectType.Default);
+        AudioClient.Instance.PostEvent(EventType, GameObjectType);
         // Play without Callback
         token.Succeed();
       }
