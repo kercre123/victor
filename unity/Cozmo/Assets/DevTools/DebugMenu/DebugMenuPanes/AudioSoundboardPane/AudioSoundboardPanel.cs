@@ -31,6 +31,8 @@ namespace Anki {
         [SerializeField]
         private Button _PostAllButton;
         [SerializeField]
+        private Button _StopAllButton;
+        [SerializeField]
         private Button _PostEventButton;
         [SerializeField]
         private Button _PostGameStateButton;
@@ -65,6 +67,7 @@ namespace Anki {
             _PostRTPCParameter();
             _PostEvent();
           });
+          _StopAllButton.onClick.AddListener(_StopAllEvents);
           _PostEventButton.onClick.AddListener(_PostEvent);
           _PostGameStateButton.onClick.AddListener(_PostGameState);
           _PostSwitchStateButton.onClick.AddListener(_PostSwitchState);
@@ -78,6 +81,12 @@ namespace Anki {
         }
 
         private void _SetupStaticDropdowns() {
+
+          // Game Objects
+          foreach (Anki.Cozmo.Audio.GameObjectType anEnum in _audioClient.GetGameObjects()) {
+            _GameObjectDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
+          }
+
           // Events
           foreach (Anki.Cozmo.Audio.EventType anEnum in _audioClient.GetEvents()) {
             _EventDropdown.options.Add(new Dropdown.OptionData(anEnum.ToString()));
@@ -165,29 +174,45 @@ namespace Anki {
         // Proform Audio Client operations
         private void _PostEvent() {
           Anki.Cozmo.Audio.EventType selectedEvent = _audioClient.GetEvents()[_EventDropdown.value];
-          _audioClient.PostEvent(selectedEvent, 0, AudioCallbackFlag.EventAll, (CallbackInfo info) => {
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          _audioClient.PostEvent(selectedEvent, selectedGameObj, AudioCallbackFlag.EventAll, (CallbackInfo info) => {
             string log = "Callback Event PlayId: " + info.PlayId + " Type: " + info.CallbackType.ToString();
             _AppendLogEvent(log);
           });
-          _AppendLogEvent("Post Event: " + selectedEvent.ToString());
+          _AppendLogEvent("Post Event: " + selectedEvent.ToString() + " GameObj: " + selectedGameObj.ToString());
+        }
+
+        private void _StopAllEvents() {
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+          _audioClient.StopAllAudioEvents(selectedGameObj);
+          _AppendLogEvent("Stop All GameObj GameObj: " + selectedGameObj.ToString());
         }
 
         private void _PostGameState() {
           GameStateGroupType groupType = _audioClient.GetGameStateGroups()[_GameStateGroupDropdown.value];
           GameStateType stateType = GameStateType.Invalid;
-          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString());
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+
+          // TODO: Add PostGameState call
+          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString() + " GameObj: " + selectedGameObj.ToString());
         }
 
         private void _PostSwitchState() {
           SwitchStateGroupType groupType = _audioClient.GetSwitchStateGroups()[_SwitchStateGroupDropdown.value];
           SwitchStateType stateType = SwitchStateType.Invalid;
-          _AppendLogEvent("Post Switch State: " + groupType.ToString() + " : " + stateType.ToString());
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+
+          // TODO: Add PostGameState call
+          _AppendLogEvent("Post Switch State: " + groupType.ToString() + " : " + stateType.ToString() + " GameObj: " + selectedGameObj.ToString());
         }
 
         private void _PostRTPCParameter() {
           ParameterType parameterType = _audioClient.GetParameters()[_ParameterDropdown.value];
           float sliderValue = _RTPCSlider.value;
-          _AppendLogEvent("Post RTPC: " + parameterType.ToString() + " : " + sliderValue.ToString());
+          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
+
+          // TODO: Add PostGameState call
+          _AppendLogEvent("Post RTPC: " + parameterType.ToString() + " : " + sliderValue.ToString() + " GameObj: " + selectedGameObj.ToString());
         }
       }
 

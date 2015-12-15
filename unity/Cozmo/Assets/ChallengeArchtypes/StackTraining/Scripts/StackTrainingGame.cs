@@ -27,6 +27,10 @@ namespace StackTraining {
       }
     }
 
+    [SerializeField]
+    private string _TutorialSequenceName = "FollowCubeIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
 
       var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
@@ -34,6 +38,16 @@ namespace StackTraining {
       MaxAttempts = config.MaxAttempts;
       NumSegments = 5;
 
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
       InitializeMinigameObjects();
     }
 

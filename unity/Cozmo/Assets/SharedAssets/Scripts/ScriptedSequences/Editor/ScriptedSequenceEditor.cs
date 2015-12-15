@@ -48,13 +48,12 @@ public class ScriptedSequenceEditor : EditorWindow {
   private static Dictionary<System.Type, System.Type> _HelperLookup;
 
 
-  static ScriptedSequenceEditor()
-  {
+  static ScriptedSequenceEditor() {
     // get all conditions
     var ctypes = Assembly.GetAssembly(typeof(ScriptedSequenceCondition))
                          .GetTypes()
-                         .Where(t => typeof(ScriptedSequenceCondition).IsAssignableFrom(t) && 
-                                !t.IsAbstract);
+                         .Where(t => typeof(ScriptedSequenceCondition).IsAssignableFrom(t) &&
+                 !t.IsAbstract);
     _ConditionTypes = ctypes.ToArray();
     _ConditionTypeNames = _ConditionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
 
@@ -66,8 +65,8 @@ public class ScriptedSequenceEditor : EditorWindow {
     // get all actions
     var atypes = Assembly.GetAssembly(typeof(ScriptedSequenceAction))
                          .GetTypes()
-                         .Where(t => typeof(ScriptedSequenceAction).IsAssignableFrom(t) && 
-                                !t.IsAbstract);
+                         .Where(t => typeof(ScriptedSequenceAction).IsAssignableFrom(t) &&
+                 !t.IsAbstract);
     _ActionTypes = atypes.ToArray();
     _ActionTypeNames = _ActionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
 
@@ -85,7 +84,7 @@ public class ScriptedSequenceEditor : EditorWindow {
     _HelperLookup = htypes
       .ToDictionary(x => ((ScriptedSequenceHelperAttribute)x
                             .GetCustomAttributes(typeof(ScriptedSequenceHelperAttribute), false)[0]).Type,
-                    x => x);
+      x => x);
   }
     
   // whether we should display the text field for the Sequence Name
@@ -105,64 +104,54 @@ public class ScriptedSequenceEditor : EditorWindow {
   private ScriptedSequenceHelper<ScriptedSequenceAction> _DraggingActionHelper;
 
   // generic way to get start dragging a condition or action
-  public void SetDraggingHelper<T>(ScriptedSequenceHelper<T> val) where T : IScriptedSequenceItem
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public void SetDraggingHelper<T>(ScriptedSequenceHelper<T> val) where T : IScriptedSequenceItem {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       _DraggingConditionHelper = (ScriptedSequenceHelper<ScriptedSequenceCondition>)(object)val;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       _DraggingActionHelper = (ScriptedSequenceHelper<ScriptedSequenceAction>)(object)val;
     }
   }
 
   // generic way to get the dragging condition or action
-  public ScriptedSequenceHelper<T> GetDraggingHelper<T>() where T : IScriptedSequenceItem
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public ScriptedSequenceHelper<T> GetDraggingHelper<T>() where T : IScriptedSequenceItem {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return (ScriptedSequenceHelper<T>)(object)_DraggingConditionHelper;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       return (ScriptedSequenceHelper<T>)(object)_DraggingActionHelper;
     }
     return null;
   }
 
   // generic way to get the color for condition or action
-  public Color GetColor<T>() where T : IScriptedSequenceItem
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public Color GetColor<T>() where T : IScriptedSequenceItem {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return _Colors.ConditionColor;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       return _Colors.ActionColor;
     }
     return Color.black;
   }
 
   // generic way to get the text color for condition or action
-  public Color GetTextColor<T>() where T : IScriptedSequenceItem
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public Color GetTextColor<T>() where T : IScriptedSequenceItem {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return _Colors.ConditionTextColor;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       return _Colors.ActionTextColor;
     }
     return Color.white;
   }
 
   // generic way to get the background color for condition or action
-  public Color GetBackgroundColor<T>() where T : IScriptedSequenceItem
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public Color GetBackgroundColor<T>() where T : IScriptedSequenceItem {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return _Colors.ConditionBackgroundColor;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       return _Colors.ActionBackgroundColor;
     }
     return Color.black;
@@ -205,33 +194,31 @@ public class ScriptedSequenceEditor : EditorWindow {
   // generic way to retrieve the helper for a condition/action if it exists
   private bool TryGetHelper<T>(T key, out ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
-    if(typeof(T) == typeof(ScriptedSequenceCondition)) {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ConditionHelpers;
     }
-    else if(typeof(T) == typeof(ScriptedSequenceAction)) {
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ActionHelpers;
     }
-    if(helpers == null) {
+    if (helpers == null) {
       helper = null;
       return false;
-    } else {
+    }
+    else {
       return helpers.TryGetValue(key, out helper);
     }
   }
 
   // generic way to set the helper for a condition/action
-  private void SetHelper<T>(T key, ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem
-  {
+  private void SetHelper<T>(T key, ScriptedSequenceHelper<T> helper)  where T : IScriptedSequenceItem {
     Dictionary<T, ScriptedSequenceHelper<T>> helpers = null;
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ConditionHelpers;
     }
-    else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       helpers = (Dictionary<T, ScriptedSequenceHelper<T>>)(object)_ActionHelpers;
     }
-    if(helpers != null) {
+    if (helpers != null) {
       helpers[key] = helper;
     }
   }
@@ -269,25 +256,21 @@ public class ScriptedSequenceEditor : EditorWindow {
   private ScriptedSequenceAction _CopiedAction;
 
   // generic method to set the copied condition/action
-  public void SetCopiedValue<T>(T val)
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public void SetCopiedValue<T>(T val) {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       _CopiedCondition = (ScriptedSequenceCondition)(object)val;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       _CopiedAction = (ScriptedSequenceAction)(object)val;
     }
   }
 
   // generic method to get the copied condition/action
-  public T GetCopiedValue<T>()
-  {
-    if(typeof(T) == typeof(ScriptedSequenceCondition))
-    {
+  public T GetCopiedValue<T>() {
+    if (typeof(T) == typeof(ScriptedSequenceCondition)) {
       return (T)(object)_CopiedCondition;
-    } else if(typeof(T) == typeof(ScriptedSequenceAction))
-    {
+    }
+    else if (typeof(T) == typeof(ScriptedSequenceAction)) {
       return (T)(object)_CopiedAction;
     }
     return default(T);
@@ -296,19 +279,19 @@ public class ScriptedSequenceEditor : EditorWindow {
   // copy a node by creating a new sequence and using CopySerialized
   public ScriptedSequenceNode CopyNode(ScriptedSequenceNode node) {
     return JsonConvert.DeserializeObject<ScriptedSequenceNode>(
-          JsonConvert.SerializeObject(node, 
-                                      Formatting.None, 
-                                      GlobalSerializerSettings.JsonSettings), 
-          GlobalSerializerSettings.JsonSettings);
+      JsonConvert.SerializeObject(node, 
+        Formatting.None, 
+        GlobalSerializerSettings.JsonSettings), 
+      GlobalSerializerSettings.JsonSettings);
   }
 
   // copy a condition
   public T Copy<T>(T value) where T : IScriptedSequenceItem {
     T copy = (T)JsonConvert.DeserializeObject(
-          JsonConvert.SerializeObject(value, 
-                                      Formatting.None, 
-                                      GlobalSerializerSettings.JsonSettings),
-          value.GetType());
+               JsonConvert.SerializeObject(value, 
+                 Formatting.None, 
+                 GlobalSerializerSettings.JsonSettings),
+               value.GetType());
     return copy;
   }
 
@@ -323,10 +306,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a label
   private static GUIStyle _LabelStyle;
-  public static GUIStyle LabelStyle
-  {
-    get
-    {
+
+  public static GUIStyle LabelStyle {
+    get {
       if (_LabelStyle == null) {
         _LabelStyle = new GUIStyle();
         _LabelStyle.fontStyle = FontStyle.Bold;
@@ -339,10 +321,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a label with large text
   private static GUIStyle _BigLabelStyle;
-  public static GUIStyle BigLabelStyle
-  {
-    get
-    {
+
+  public static GUIStyle BigLabelStyle {
+    get {
       if (_BigLabelStyle == null) {
         _BigLabelStyle = new GUIStyle();
         _BigLabelStyle.fontStyle = FontStyle.Bold;
@@ -356,10 +337,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a box
   private static GUIStyle _BoxStyle;
-  public static GUIStyle BoxStyle
-  {
-    get
-    {
+
+  public static GUIStyle BoxStyle {
+    get {
       if (_BoxStyle == null) {
         _BoxStyle = new GUIStyle();
         _BoxStyle.normal.textColor = Color.white;
@@ -372,10 +352,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a text field
   private static GUIStyle _TextFieldStyle;
-  public static GUIStyle TextFieldStyle
-  {
-    get
-    {
+
+  public static GUIStyle TextFieldStyle {
+    get {
       if (_TextFieldStyle == null) {
         _TextFieldStyle = new GUIStyle(EditorStyles.textField);
         _TextFieldStyle.normal.textColor = Color.white;
@@ -392,10 +371,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a button
   private static GUIStyle _ButtonStyle;
-  public static GUIStyle ButtonStyle
-  {
-    get
-    {
+
+  public static GUIStyle ButtonStyle {
+    get {
       if (_ButtonStyle == null) {
         _ButtonStyle = new GUIStyle(EditorStyles.miniButton);
         _ButtonStyle.normal.textColor = Color.white;
@@ -407,10 +385,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a toolbar button
   private static GUIStyle _ToolbarButtonStyle;
-  public static GUIStyle ToolbarButtonStyle
-  {
-    get
-    {
+
+  public static GUIStyle ToolbarButtonStyle {
+    get {
       if (_ToolbarButtonStyle == null) {
         _ToolbarButtonStyle = new GUIStyle(EditorStyles.toolbarButton);
         _ToolbarButtonStyle.normal.textColor = Color.white;
@@ -422,10 +399,9 @@ public class ScriptedSequenceEditor : EditorWindow {
 
   // custom Unity Style for a toolbar button
   private static GUIStyle _ToolbarStyle;
-  public static GUIStyle ToolbarStyle
-  {
-    get
-    {
+
+  public static GUIStyle ToolbarStyle {
+    get {
       if (_ToolbarStyle == null) {
         _ToolbarStyle = new GUIStyle(EditorStyles.toolbar);
         _ToolbarStyle.normal.textColor = Color.white;
@@ -436,10 +412,9 @@ public class ScriptedSequenceEditor : EditorWindow {
   }
 
   private static GUIStyle _FoldoutStyle;
-  public static GUIStyle FoldoutStyle
-  {
-    get
-    {
+
+  public static GUIStyle FoldoutStyle {
+    get {
       if (_FoldoutStyle == null) {
         _FoldoutStyle = new GUIStyle(EditorStyles.foldout);
         Color white = Color.white;
@@ -479,12 +454,10 @@ public class ScriptedSequenceEditor : EditorWindow {
     UpdateUndoRedo();
   }
 
-  private bool CheckDiscardUnsavedSequence()
-  {
+  private bool CheckDiscardUnsavedSequence() {
     bool canOpen = true;
-    if (CurrentSequence != null && (string.IsNullOrEmpty(CurrentSequenceFile) || JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(CurrentSequenceFile)))
-    {
-      canOpen = EditorUtility.DisplayDialog("Warning","Opening a Sequence will Discard Unsaved Changes. Are you Sure?", "Yes");
+    if (CurrentSequence != null && (string.IsNullOrEmpty(CurrentSequenceFile) || JsonConvert.SerializeObject(CurrentSequence, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(CurrentSequenceFile))) {
+      canOpen = EditorUtility.DisplayDialog("Warning", "Opening a Sequence will Discard Unsaved Changes. Are you Sure?", "Yes");
     }
     return canOpen;
   }
@@ -531,12 +504,10 @@ public class ScriptedSequenceEditor : EditorWindow {
     }
 
     if (GUILayout.Button("Find and Load", ToolbarButtonStyle)) {
-      if(CheckDiscardUnsavedSequence())
-      {
+      if (CheckDiscardUnsavedSequence()) {
         string path = EditorUtility.OpenFilePanel("Open Sequence", "Assets", "json");
 
-        if(!string.IsNullOrEmpty(path))
-        {
+        if (!string.IsNullOrEmpty(path)) {
           LoadFile(path);
         }
       }
@@ -715,7 +686,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       }
     }
     else {
-      GUI.Label(titleRect, "Sequence: "+sequence.Name, BigLabelStyle);
+      GUI.Label(titleRect, "Sequence: " + sequence.Name, BigLabelStyle);
 
       // if you right click the sequence name, it goes to edit mode
       if (mouseEvent == EventType.ContextClick) {
@@ -736,18 +707,18 @@ public class ScriptedSequenceEditor : EditorWindow {
     EditorGUIUtility.labelWidth = 200;
     sequence.Repeatable = EditorGUILayout.Toggle(
       new GUIContent("Repeatable",
-                     "If this sequence can play multiple times"), 
+        "If this sequence can play multiple times"), 
       sequence.Repeatable);
     
     sequence.RequiresConditionRemainsMet = EditorGUILayout.Toggle(
       new GUIContent("Condition Must Stay Met",
-                     "If the condition becomes unmet while the sequence is running, the sequence will reset"), 
+        "If the condition becomes unmet while the sequence is running, the sequence will reset"), 
       sequence.RequiresConditionRemainsMet);
     
     sequence.ActivateOnConditionMet = EditorGUILayout.Toggle(
       new GUIContent("Activates On Condition Met", 
-                     "If this is true, the sequence will start playing as soon as the condition is met."+
-                      " Otherwise it must be started by name."), 
+        "If this is true, the sequence will start playing as soon as the condition is met." +
+        " Otherwise it must be started by name."), 
       sequence.ActivateOnConditionMet);
     EditorGUIUtility.labelWidth = 0;
 
@@ -839,7 +810,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       var lastTextColor = GUI.color;
       GUI.backgroundColor = DragColor;
       GUI.contentColor = DragTextColor;
-      GUI.Box(new Rect(evt.mousePosition + DragOffset, DragSize), "  "+DragTitle, BoxStyle);
+      GUI.Box(new Rect(evt.mousePosition + DragOffset, DragSize), "  " + DragTitle, BoxStyle);
       GUI.backgroundColor = lastColor;
       GUI.contentColor = lastTextColor;
     }
@@ -853,9 +824,9 @@ public class ScriptedSequenceEditor : EditorWindow {
       return;
     }
 
-    if (Event.current.type == EventType.keyDown && 
-      (Event.current.command || Event.current.control) && 
-      Event.current.keyCode == KeyCode.Z) {
+    if (Event.current.type == EventType.keyDown &&
+        (Event.current.command || Event.current.control) &&
+        Event.current.keyCode == KeyCode.Z) {
 
       if (Event.current.shift) { // redo
         Redo();
@@ -889,7 +860,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       return;
     }
 
-    if(DateTime.UtcNow < _SnapshotCountdownStart + new TimeSpan(0, 0, 1)) {
+    if (DateTime.UtcNow < _SnapshotCountdownStart + new TimeSpan(0, 0, 1)) {
       return;
     }
 
@@ -915,7 +886,7 @@ public class ScriptedSequenceEditor : EditorWindow {
       return;
     }
     var id = GetNextId();
-    sequence.Nodes.Insert(index, new ScriptedSequenceNode(){ Id = id, Name = "Node "+id });
+    sequence.Nodes.Insert(index, new ScriptedSequenceNode(){ Id = id, Name = "Node " + id });
   }
 
   private void Undo() {
@@ -955,8 +926,7 @@ public class ScriptedSequenceEditor : EditorWindow {
   }
 
   // get a uint 1 higher than the highest node's Id
-  private uint GetNextId()
-  {
+  private uint GetNextId() {
     var sequence = CurrentSequence;
 
     if (sequence == null) {
@@ -1130,20 +1100,20 @@ public class ScriptedSequenceEditor : EditorWindow {
 
     node.Sequencial = EditorGUILayout.Toggle(
       new GUIContent("Sequencial", 
-                     "If this is checked, this node will fire as soon as the node immediately above it is complete"), 
+        "If this is checked, this node will fire as soon as the node immediately above it is complete"), 
       node.Sequencial);
     node.Final = EditorGUILayout.Toggle(
       new GUIContent("Final",
-                     "The Sequence will end as soon as this node is complete if checked"), 
+        "The Sequence will end as soon as this node is complete if checked"), 
       node.Final);
     node.FailOnError = EditorGUILayout.Toggle(
       new GUIContent("Fail On Error", 
-                     "If this node fails, the sequence will end in a failure state. It will not be marked complete."), 
+        "If this node fails, the sequence will end in a failure state. It will not be marked complete."), 
       node.FailOnError);
 
     DrawConditionOrActionList(
       new GUIContent("Conditions", 
-                      "A set of preconditions before the actions in this node will fire"), 
+        "A set of preconditions before the actions in this node will fire"), 
       node.Conditions, mousePosition, eventType);
 
     DrawConditionOrActionList(
@@ -1154,8 +1124,8 @@ public class ScriptedSequenceEditor : EditorWindow {
     EditorGUIUtility.labelWidth = 200;
     node.ExitOnActionsComplete = EditorGUILayout.Toggle(
       new GUIContent("Exit On Actions Complete", 
-                     "If checked, this node will exit as soon as the actions are complete regardless of any incomplete "+
-                      "exit conditions. If unchecked, exit conditions must be met to mark this node complete."),
+        "If checked, this node will exit as soon as the actions are complete regardless of any incomplete " +
+        "exit conditions. If unchecked, exit conditions must be met to mark this node complete."),
       node.ExitOnActionsComplete);
     EditorGUIUtility.labelWidth = 0;
 
@@ -1251,8 +1221,7 @@ public class ScriptedSequenceEditor : EditorWindow {
   }
 
   // some things ignore indent. This is a work around
-  public Rect GetIndentedLabelRect()
-  {
+  public Rect GetIndentedLabelRect() {
     var rect = EditorGUILayout.GetControlRect();
     rect.x += 15 * (EditorGUI.indentLevel);
     rect.width -= 15 * (EditorGUI.indentLevel);
@@ -1272,8 +1241,7 @@ public class ScriptedSequenceEditor : EditorWindow {
 
       helper.OnGUI(mousePosition, eventType);
     }
-    else
-    {
+    else {
       var nextRect = EditorGUILayout.GetControlRect();
 
       var newObject = ShowAddPopup<T>(nextRect);
@@ -1326,17 +1294,15 @@ public class ScriptedSequenceEditor : EditorWindow {
     EditorGUI.indentLevel--;
   }
 
-  [MenuItem("Cozmo/Scripted Sequence Editor %t")]
-  public static void OpenScriptedSequenceEditor()
-  {
-    ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow (typeof (ScriptedSequenceEditor));
+  [MenuItem("Cozmo/Sequences/Scripted Sequence Editor %t")]
+  public static void OpenScriptedSequenceEditor() {
+    ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow(typeof(ScriptedSequenceEditor));
     window.titleContent = new GUIContent("Scripted Sequence Editor");
     window.Show();
   }
 
-  [MenuItem("Assets/Cozmo/Edit Sequence")]
-  public static void EditSequence()
-  {
+  [MenuItem("Cozmo/Sequences/Edit Sequence")]
+  public static void EditSequence() {
     var selection = Selection.objects.FirstOrDefault() as TextAsset;
     if (selection != null) {
       ScriptedSequenceEditor window = (ScriptedSequenceEditor)EditorWindow.GetWindow(typeof(ScriptedSequenceEditor));

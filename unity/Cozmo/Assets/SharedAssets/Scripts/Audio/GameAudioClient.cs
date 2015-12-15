@@ -14,33 +14,29 @@ namespace Anki {
         static public ushort PostUIEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
         }
 
         static public ushort PostSFXEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                           Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.SFX, callbackFlag, handler);
         }
 
         static public ushort PostAnnouncerVOEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                                   Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                                   CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Aria, callbackFlag, handler);
         }
 
         static public ushort PostCozmoVOEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                               Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                               CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Default, callbackFlag, handler);
         }
 
         // Remove callback handle from Audio Client

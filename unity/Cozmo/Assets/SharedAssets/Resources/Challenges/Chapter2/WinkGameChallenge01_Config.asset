@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 196f5b2aa420243ebb86ef4173783fc2, type: 3}
   m_Name: WinkGameChallenge01_Config
   m_EditorClassIdentifier: 
+  TimeLimit: 7
+  MaxAttempts: 3
+  WaveSuccessGoal: 3

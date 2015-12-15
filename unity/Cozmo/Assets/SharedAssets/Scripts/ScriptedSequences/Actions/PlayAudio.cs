@@ -14,8 +14,9 @@ namespace ScriptedSequences.Actions {
 
       if (WaitToEnd) {
         // Play with Callback
-        AudioClient.Instance.PostEvent(EventType, 0, AudioCallbackFlag.EventComplete, (c) => {
-          if (c.CallbackType == AudioCallbackFlag.EventComplete) {
+        // TODO: Need to set the Game Object Type appropriately
+        AudioClient.Instance.PostEvent(EventType, Anki.Cozmo.Audio.GameObjectType.Default, AudioCallbackFlag.EventComplete, (c) => {
+          if (c.CallbackType == AudioCallbackFlag.EventComplete || c.CallbackType == AudioCallbackFlag.EventError) {
             token.Succeed();
           }
           else {
@@ -26,7 +27,8 @@ namespace ScriptedSequences.Actions {
         });
       }
       else {
-        AudioClient.Instance.PostEvent(EventType, 0);
+        // TODO: Need to set the Game Object Type appropriately
+        AudioClient.Instance.PostEvent(EventType, Anki.Cozmo.Audio.GameObjectType.Default);
         // Play without Callback
         token.Succeed();
       }
