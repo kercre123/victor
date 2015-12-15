@@ -48,7 +48,7 @@ void WiFiFace(void)
     Face::FaceUnPrintf();
     wasConnected = true;
   }
-  else
+  else if (!clientConnected())
   {
     wasConnected = false;
     struct softap_config ap_config;
