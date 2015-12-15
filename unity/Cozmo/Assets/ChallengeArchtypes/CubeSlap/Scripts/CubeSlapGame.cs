@@ -30,8 +30,7 @@ namespace CubeSlap {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("CubeSlapStateMachine", _StateMachine);
 
-      CurrentRobot.SetBehaviorSystem(true);
-      CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      CurrentRobot.SetBehaviorSystem(false);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       InitialCubesState initCubeState = new InitialCubesState();
