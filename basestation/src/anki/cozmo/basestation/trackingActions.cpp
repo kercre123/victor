@@ -64,7 +64,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
 #   endif
     
     // Tilt Head:
-    const f32 relTiltAngle = (absTiltAngle - robot.GetHeadAngle()).getAbsoluteVal();
+    const f32 relTiltAngle = std::abs((absTiltAngle - robot.GetHeadAngle()).ToFloat());
     if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > DEG_TO_RAD(1.5f))
     {
       // Set speed/accel based on angle difference
@@ -84,7 +84,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     }
     
     // Pan Body:
-    const f32 relPanAngle = (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).getAbsoluteVal();
+    const f32 relPanAngle = std::abs((absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
     if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && relPanAngle > DEG_TO_RAD(1.f))
     {
       // Get rotation angle around drive center
@@ -99,7 +99,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       //const f32 MinAccel = 30.f;
       //const f32 MaxAccel = 80.f;
       
-      const f32 angleFrac = std::min(1.f, relPanAngle/M_PI);
+      const f32 angleFrac = std::min(1.f, relPanAngle/(f32)M_PI);
       const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
       const f32 accel = DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
@@ -178,10 +178,14 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     filter.OnlyConsiderLatestUpdate(true);
     
     matchingObject = robot.GetBlockWorld().FindClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
+    
     if(nullptr == matchingObject) {
-      PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.NoMatchingFound",
-                          "Could not find matching %s object.",
-                          EnumToString(_objectType));
+      // Did not see an object of the right type during latest blockworld update
+#     if DEBUG_TRACKING_ACTIONS
+      PRINT_NAMED_INFO("TrackObjectAction.GetAngles.NoMatchingTypeFound",
+                       "Could not find matching %s object.",
+                       EnumToString(_objectType));
+#     endif
       return false;
     } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
       // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
@@ -254,7 +258,7 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     return false;
   }
   
-  NAMED_ASSERT(minDistSq > 0.f, "Distance to closest marker should be > 0.");
+  ASSERT_NAMED(minDistSq > 0.f, "Distance to closest marker should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -327,7 +331,7 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
   
   const f32 xyDistSq = xDist*xDist + yDist*yDist;
   
-  NAMED_ASSERT(xyDistSq > 0.f, "Distance to tracked face should be > 0.");
+  ASSERT_NAMED(xyDistSq > 0.f, "Distance to tracked face should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + robot.GetPose().GetRotation().GetAngleAroundZaxis();
