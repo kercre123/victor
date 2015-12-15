@@ -18,6 +18,9 @@ namespace CubeSlap {
 
     public override void Update() {
       base.Update();
+      // TODO: Check to see if there's been a change of state to make sure that Cozmo hasn't been tampered with
+      // and that players haven't already pulled the cube too early. If they have, return to the Seek state and automatically
+      // trigger a failure on the player's part.
       if (!_SlapTriggered && Time.time - _FirstTimestamp > _SlapDelay) {
         _CubeSlapGame.AttemptSlap();
         _SlapTriggered = true;

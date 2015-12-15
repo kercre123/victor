@@ -16,14 +16,19 @@ namespace CubeSlap {
       if (currentTarget != null) {
         currentTarget.SetLEDs(Color.white);
       }
+      else {
+        // If we don't have a target for some reason, return to the seek state and keep waiting
+        _StateMachine.SetNextState(new SeekState());
+        return;
+      }
 
       if (_SelectedCubeId == -1) {
-        _SelectedCubeId = _CubeSlapGame.GetCurrentTarget().ID;
+        _SelectedCubeId = currentTarget.ID;
       }
       _CurrentRobot.SetHeadAngle(0.25f);
       _CurrentRobot.SetLiftHeight(1.0f);
       // Using the identified cube, move to pick up the cube.
-      _CurrentRobot.GotoObject(_CurrentRobot.LightCubes[_SelectedCubeId], 0.5f, callback: OnCubeLineUp);
+      _CurrentRobot.GotoObject(_CurrentRobot.LightCubes[_SelectedCubeId], 5.0f, callback: OnCubeLineUp);
     }
 
     // Cube Pickup attempt
@@ -33,10 +38,29 @@ namespace CubeSlap {
     // then advance to the SlapGameState if successful.
     private void OnCubeLineUp(bool success) {
       if (success) {
-        // Place the Cube and mount
+        // Attempt to mount cube.
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kTapCube, HandleAnimConfirmState);
+        _StateMachine.SetNextState(animState);
       }
       else {
         // Reset to the SeekState, something went wrong.
+        AnimationState animState = new AnimationState();
+        animState.Initialize(AnimationName.kByeBye, HandleAnimFailState);
+        _StateMachine.SetNextState(animState);
+      }
+    }
+
+    public void HandleAnimFailState(bool success) {
+      _StateMachine.SetNextState(new SeekState());
+    }
+
+    public void HandleAnimConfirmState(bool success) {
+      if (success) {
+        _StateMachine.SetNextState(new SlapGameState());
+      }
+      else {
+        _StateMachine.SetNextState(new SeekState());
       }
     }
 

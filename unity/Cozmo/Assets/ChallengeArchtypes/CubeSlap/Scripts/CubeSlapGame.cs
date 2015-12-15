@@ -11,6 +11,7 @@ namespace CubeSlap {
     private int _SuccessCount;
 
     private LightCube _CurrentTarget = null;
+    private float _LastSeenTargetTime = -1;
 
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
@@ -32,13 +33,32 @@ namespace CubeSlap {
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
 
-      _StateMachine.SetNextState(new SeekState());
-
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      InitialCubesState initCubeState = new InitialCubesState();
+      initCubeState.InitialCubeRequirements(new SeekState(), 1, true, InitialCubesDone);
+      _StateMachine.SetNextState(initCubeState);
+    }
+
+    private void InitialCubesDone() {
+      Debug.Log("Cube Slap : Cube Setup Confirmed");
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
+      if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
+        if (Time.time - _LastSeenTargetTime > 2.0f) {
+          if (_CurrentTarget != null) {
+            _CurrentTarget.SetLEDs(0);
+          }
+          // we haven't seen the current target for more than 2 seconds
+          // so let's try to find a new one.
+          _CurrentTarget = FindNewTarget();
+          _LastSeenTargetTime = Time.time;
+        }
+      }
+      else {
+        _LastSeenTargetTime = Time.time;
+      }
     }
 
     protected override void CleanUpOnDestroy() {
@@ -63,6 +83,16 @@ namespace CubeSlap {
 
     // Attempt the pounce
     public void AttemptSlap() {
+      // Enter Animation State to attempt a pounce.
+      // Set Callback for HandleEndSlapAttempt
+    }
+
+    private void HandleEndSlapAttempt(bool success) {
+      // If the animation completes Cozmo is no longer on top of the Cube,
+      // The player has won
+
+      // If the animation completes and the cube is still beneath Cozmo,
+      // Cozmo has won.
     }
 
     public void OnSuccess() {
