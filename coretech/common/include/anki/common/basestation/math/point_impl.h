@@ -324,7 +324,7 @@ namespace Anki {
   bool Point<N,T>::operator<= (const Point<N,T>& other) const
   {
     CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] < other[0];
+    bool retVal = this->data[0] <= other[0];
     PointDimType i = 1;
     while(retVal && i<N) {
       retVal = this->data[i] <= other[i];
@@ -338,7 +338,7 @@ namespace Anki {
   bool Point<N,T>::operator>= (const Point<N,T>& other) const
   {
     CORETECH_ASSERT(N>0);
-    bool retVal = this->data[0] > other[0];
+    bool retVal = this->data[0] >= other[0];
     PointDimType i = 1;
     while(retVal && i<N) {
       retVal = this->data[i] >= other[i];
