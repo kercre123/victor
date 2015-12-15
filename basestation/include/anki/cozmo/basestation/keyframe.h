@@ -54,7 +54,7 @@ namespace Cozmo {
     ~IKeyFrame();
     
     // Returns true if current time has reached frame's "trigger" time, relative
-    // to the given start time, or if this has been set as a "Live" keyframe
+    // to the given start time
     bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
     
     // Returns the time to trigger whatever change is implied by the KeyFrame
@@ -67,11 +67,6 @@ namespace Cozmo {
     // Set all members from Json. Calls virtual SetMembersFromJson() method so
     // subclasses can specify how to populate their members.
     Result DefineFromJson(const Json::Value &json);
-    
-    // The trigger time for "live" keyframes is irrelevant; they are always
-    // ready to play.
-    bool IsLive() const { return _isLive; }
-    void SetIsLive(bool tf) { _isLive = tf; }
     
     // Fill some kind of message for streaming and return it. Return nullptr
     // if not available.
@@ -97,7 +92,6 @@ namespace Cozmo {
     static Util::RandomGenerator sRNG;
 
     TimeStamp_t   _triggerTime_ms = 0;
-    bool          _isLive = false;
     
   }; // class IKeyFrame
   

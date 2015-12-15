@@ -165,17 +165,19 @@ namespace Cozmo {
   // Helper macro for running a given method of all tracks and combining the result
   // in the specified way. To just call a method, use ";" for COMBINE_WITH, or
   // use "&&" or "||" to combine into a single result.
-# define ALL_TRACKS(__METHOD__, __COMBINE_WITH__) \
-_headTrack.__METHOD__() __COMBINE_WITH__ \
-_liftTrack.__METHOD__() __COMBINE_WITH__ \
-_faceAnimTrack.__METHOD__() __COMBINE_WITH__ \
-_proceduralFaceTrack.__METHOD__() __COMBINE_WITH__ \
-_facePosTrack.__METHOD__() __COMBINE_WITH__ \
-_deviceAudioTrack.__METHOD__() __COMBINE_WITH__ \
-_robotAudioTrack.__METHOD__() __COMBINE_WITH__ \
-_backpackLightsTrack.__METHOD__() __COMBINE_WITH__ \
-_bodyPosTrack.__METHOD__() __COMBINE_WITH__ \
-_blinkTrack.__METHOD__()
+#define ALL_TRACKS(__METHOD__, __COMBINE_WITH__, ...) \
+_headTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_faceAnimTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_facePosTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_deviceAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_backpackLightsTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_bodyPosTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_blinkTrack.__METHOD__(__VA_ARGS__)
+  
+  //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
   
   Result Animation::Init()
   {
@@ -207,6 +209,11 @@ _blinkTrack.__METHOD__()
     return ALL_TRACKS(HasFramesLeft, ||);
   }
 
+  void Animation::SetIsLive(bool isLive)
+  {
+    _isLive = isLive;
+    ALL_TRACKS(SetIsLive, ;, isLive);
+  }
   
 } // namespace Cozmo
 } // namespace Anki

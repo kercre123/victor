@@ -1430,16 +1430,16 @@ namespace Anki {
     {
       u32 layerTag = 0;
       
+      // Clip, but retain sign
+      xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
+      yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
+      
       AnimationStreamer::FaceTrack faceTrack;
       
       if(duration_ms == 0) {
         // Dart over three frames: go 2/3 of the distance in the first frame,
         // 2/9 the second (that's 2/3 of the remaining 1/3) and then the final 1/9
         // at the end.
-        
-        // Clip, but retain sign
-        xPix = CLIP(xPix, -ProceduralFace::WIDTH*.25f, ProceduralFace::WIDTH*.25f);
-        yPix = CLIP(yPix, -ProceduralFace::HEIGHT*.25f, ProceduralFace::HEIGHT*.25f);
         
         const f32 dist = std::sqrt(xPix*xPix + yPix*yPix);
         const f32 divisor = (dist > 0 ? 1.f/dist : 1.f); // prevent divide by zero when (xPix==yPix==0)
@@ -1484,7 +1484,6 @@ namespace Anki {
                        "Shift/scale values should be non-nan!");
           
           faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, t+=IKeyFrame::SAMPLE_LENGTH_MS));
-          // NOTE: don't use live frames for persistent layer
         }
       } else {
         //PRINT_NAMED_INFO("Robot.ShiftEyes", "Shifting eyes by (%.1f,%.1f) pixels", xPix, yPix);
@@ -1495,10 +1494,7 @@ namespace Anki {
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xScale);
         params.SetParameterBothEyes(ProceduralEyeParameter::EyeScaleY, yScale);
         
-        ProceduralFaceKeyFrame kf(procFace, duration_ms);
-        kf.SetIsLive(true);
-        
-        faceTrack.AddKeyFrame(std::move(kf));
+        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(procFace, duration_ms));
       }
       
       if(makePersistent) {

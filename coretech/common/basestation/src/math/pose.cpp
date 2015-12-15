@@ -374,13 +374,13 @@ namespace Anki {
     
     T_diff = P_other.GetTranslation() - this->GetTranslation();
     
-    if(T_diff.GetAbs() < distThreshold) {
+    if(T_diff.GetAbs() <= distThreshold) {
       angleDiff = this->GetRotation().GetAngleDiffFrom(P_other.GetRotation());
       
 //      PRINT_INFO("Angle diff = %.3frad / %.1fdeg\n", // around (%.1f,%.1f,%.1f)\n",
 //                 angleDiff.ToFloat(), angleDiff.getDegrees()); //,
 //                 Rdiff.GetAxis().x(), Rdiff.GetAxis().y(), Rdiff.GetAxis().z());
-      if(angleDiff < angleThreshold) {
+      if(angleDiff <= angleThreshold) {
         isSame = true;
       }
     }

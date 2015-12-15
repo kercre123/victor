@@ -11,6 +11,7 @@
  **/
 
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "bridge.h"
 #include "pathPlanner.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -1349,9 +1350,6 @@ namespace Anki {
         return facePoseInitResult;
       }
       
-      // Can't track head to an object and face it
-      robot.GetMoveComponent().DisableTrackToObject();
-      
       // Disable completion signals since this is inside another action
       _visuallyVerifyAction.SetEmitCompletionSignal(false);
       
@@ -1391,13 +1389,14 @@ namespace Anki {
       }
 
       if(_headTrackWhenDone) {
-        if(robot.GetMoveComponent().EnableTrackToObject(_objectID, true) == RESULT_OK) {
-          return ActionResult::SUCCESS;
-        } else {
-          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.HeadTracKFail",
-                              "Failed to enable head tracking when done.\n");
-          return ActionResult::FAILURE_PROCEED;
+        ActionList::SlotHandle inSlot = GetSlotHandle();
+        if(ActionList::UnknownSlot == inSlot) {
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.UnknownSlot",
+                              "Queuing TrackObjectAction because headTrackWhenDone==true, but "
+                              "slot unknown. Using DriveAndManipulateSlot");
+          inSlot = Robot::DriveAndManipulateSlot;
         }
+        robot.GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
       }
       
       return ActionResult::SUCCESS;
@@ -2011,10 +2010,8 @@ namespace Anki {
             squintFace.GetParams().SetParameter(whichEye, ProceduralFace::Parameter::EyeScaleY, DockSquintScaleY);
           }
           
-          // Note that we do not make the key frame live, because we don't want it to
-          // be removed after being played once!
           squintLayer.AddKeyFrame(ProceduralFaceKeyFrame(squintFace, 0));
-          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(squintLayer);
+          _squintLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(squintLayer));
         }
       }
       else if (!robot.IsPickingOrPlacing() && !robot.IsMoving())

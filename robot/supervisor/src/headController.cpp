@@ -23,8 +23,6 @@ namespace HeadController {
       const Radians HEAD_CAL_OFFSET = DEG_TO_RAD(2);
 #endif
       
-      const Radians ANGLE_TOLERANCE = DEG_TO_RAD(2.f);
-      
       // Used when calling SetDesiredAngle with just an angle:
       const f32 DEFAULT_START_ACCEL_FRAC = 0.1f;
       const f32 DEFAULT_END_ACCEL_FRAC   = 0.1f;
@@ -318,7 +316,7 @@ namespace HeadController {
       // Check if already at desired angle
       if (inPosition_ &&
           (angle == desiredAngle_) &&
-          (ABS((desiredAngle_ - currentAngle_).ToFloat()) < ANGLE_TOLERANCE) ) {
+          (ABS((desiredAngle_ - currentAngle_).ToFloat()) < HEAD_ANGLE_TOL) ) {
         #if(DEBUG_HEAD_CONTROLLER)
         PRINT("HEAD: Already at desired angle %f degrees\n", RAD_TO_DEG_F32(angle));
         #endif
@@ -440,7 +438,7 @@ namespace HeadController {
         
 
         // If accurately tracking current desired angle...
-        if(((ABS(angleError_) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_))) {
+        if(((ABS(angleError_) < HEAD_ANGLE_TOL) && (desiredAngle_ == currDesiredAngle_))) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();

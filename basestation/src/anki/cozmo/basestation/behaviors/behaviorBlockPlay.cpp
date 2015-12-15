@@ -21,12 +21,14 @@
  * Copyright: Anki, Inc. 2015
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
-#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -158,9 +160,7 @@ namespace Cozmo {
           _trackedObjectStoppedMovingTime = currentTime_sec;
         }
       }
-    }
-
-    
+    }    
 
     if( _holdUntilTime > 0.0f) {
       if( currentTime_sec < _holdUntilTime ) {
@@ -174,7 +174,13 @@ namespace Cozmo {
     if (_isActing || !_animActionTags.empty()) {
       return Status::Running;
     }
-      
+
+
+    // check lift animation lock
+    if( _currentState != State::TrackingBlock || robot.IsCarryingObject() ) {
+      LiftShouldBeUnlocked(robot);
+    }
+    
     switch(_currentState)
     {
       case State::TrackingFace:
@@ -202,14 +208,14 @@ namespace Cozmo {
           if (_faceID != Face::UnknownFace) {
             
             // If we have a valid faceID, track it.
-            robot.GetMoveComponent().EnableTrackToFace(_faceID, false);
+            TrackFaceAction* action = new TrackFaceAction(_faceID);
+            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
                                    "EnableTrackToFace %lld", _faceID);
             
           } else if (_hasValidLastKnownFacePose) {
             
             // Otherwise, if had previously seen a valid face, turn to face its last known pose
-            robot.GetActionList().Cancel(_lastActionTag);
             IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
 
             // if we also need to lower the lift, do it in parallel (this is the most common case)
@@ -257,7 +263,7 @@ namespace Cozmo {
         else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
           PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
                            "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
-          robot.GetMoveComponent().DisableTrackToFace();
+          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
         }
 
         break;
@@ -269,7 +275,7 @@ namespace Cozmo {
           if( robot.GetMoveComponent().GetTrackToObject().IsSet() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackingBlockUnset",
                                    "disabling object tracking because object was deleted / unset");
-            robot.GetMoveComponent().DisableTrackToObject();
+            robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
           }
           _faceID = Face::UnknownFace;
           SetCurrState(State::TrackingFace);
@@ -313,8 +319,8 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
-          robot.GetMoveComponent().DisableTrackToObject();
-          PlayAnimation(robot, "ID_react2block_02", false);
+          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
+          PlayAnimation(robot, "ID_react2block_02", false); 
 
           // hold a bit before making a decision about the block
           const float inspectTime = 0.3f;
@@ -385,7 +391,6 @@ namespace Cozmo {
         }
         
         // Execute roll
-        robot.GetActionList().Cancel(_lastActionTag);
         IActionRunner* rollAction = nullptr;
         if (preActionPoses.size() > 1) {
           // Block must be upside down so choose any roll action
@@ -416,7 +421,6 @@ namespace Cozmo {
           break;
         }
         
-        robot.GetActionList().Cancel(_lastActionTag);
         StartActing(robot, new DriveToPickupObjectAction(_objectToPickUp, _motionProfile));
         break;
       }
@@ -430,7 +434,6 @@ namespace Cozmo {
           break;
         }
         
-        robot.GetActionList().Cancel(_lastActionTag);
         StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile));
         break;
       }
@@ -709,7 +712,15 @@ namespace Cozmo {
     // Delete anim action tag, in case we somehow missed it.
     _animActionTags.erase(msg.idTag);
 
-
+    if( _isDrivingForward && _driveForwardActionTag == msg.idTag )
+    {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.DoneDrivingForward",
+                             "finished drive forward action, no longer driving forward, result=%s",
+                             ActionResultToString(msg.result));
+      // TODO:(bn) will need to re-enable tracking here once andrew's tracking changes go in
+      _isDrivingForward = false;
+      return lastResult;
+    }
     
     if (msg.idTag != _lastActionTag) {
       // PRINT_NAMED_INFO("BehaviorBlockPlay.HandleActionCompleted.ExternalAction", "Ignoring");
@@ -1039,10 +1050,10 @@ namespace Cozmo {
 
       _noFacesStartTime = -1.0; // reset face timeout
       SetCurrState(State::TrackingBlock);
-      robot.GetMoveComponent().DisableTrackToFace();
-      robot.GetMoveComponent().EnableTrackToObject(_trackedObject, false);
+      TrackObjectAction* action = new TrackObjectAction(_trackedObject);
+      robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
-
+     
       if( robot.IsCarryingObject() ) {
         PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
       }
@@ -1062,10 +1073,114 @@ namespace Cozmo {
 
     if( objectID == _trackedObject && msg.markersVisible ) {
       _lastObjectObservedTime = currentTime_sec;
+
+      if( _currentState == State::TrackingBlock && !robot.IsCarryingObject() ) {
+        TrackBlockWithLift(robot, oObject->GetPose());
+      }
     }
 
     return RESULT_OK;
-  }  
+  }
+
+  void BehaviorBlockPlay::LiftShouldBeLocked(Robot& robot)
+  {
+    if( ! _lockedLift ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
+                             "LOCKED");
+
+      robot.GetMoveComponent().LockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      _lockedLift = true;
+    }
+  }
+
+  void BehaviorBlockPlay::LiftShouldBeUnlocked(Robot& robot)
+  {
+    if( _lockedLift ) {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.AnimLockLift",
+                             "UNLOCKED");
+
+      robot.GetMoveComponent().UnlockAnimTracks(static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      _lockedLift = false;
+    }
+  }
+
+
+  void BehaviorBlockPlay::TrackBlockWithLift(Robot& robot, const Pose3d& objectPose)
+  {
+    // get the pose of the block WRT the lift joint
+    Pose3d liftToObjectPose;
+    if( objectPose.GetWithRespectTo(robot.GetLiftBasePose(), liftToObjectPose) ) {
+
+      const float sideAngle = atan2f( liftToObjectPose.GetTranslation().y(), liftToObjectPose.GetTranslation().x() );
+
+      float targetHeight = LIFT_HEIGHT_LOWDOCK;
+
+      if( robot.GetHeadAngle() > _minHeadAngleforLiftUp_rads &
+          liftToObjectPose.GetTranslation().x() <= _maxObjectDistToMoveLift) {
+        if( std::abs(sideAngle) < _minTrackingAngleToMove_rads ) {
+          targetHeight = _highLiftHeight;
+          LiftShouldBeLocked(robot);
+        }
+        else {
+          // within range, but bad angle, so leave the lift where it is and let the tracking controller turn us
+          targetHeight = robot.GetLiftHeight();
+        }
+      }
+      else {
+        // far away, or too low, so lower the lift and let idle take control again
+        LiftShouldBeUnlocked(robot);
+      }
+
+      if( ! NEAR( robot.GetLiftHeight(), targetHeight, 5.0f ) ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.Move",
+                               "new target height: %fmm",
+                               targetHeight);
+        
+        // queue this action in the animation slot to avoid stomping on tracking
+        MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(targetHeight);
+        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, liftAction);
+      }
+
+      
+      // check if we should move forward
+      if( !_isDrivingForward &&
+          liftToObjectPose.GetTranslation().x() >= _minObjectDistanceToMove &&
+          std::abs(sideAngle) < _minTrackingAngleToMove_rads ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.DriveForward",
+                               "x dist = %f, side angle = %fdeg, driving forward",
+                               liftToObjectPose.GetTranslation().x(),
+                               RAD_TO_DEG(sideAngle));
+
+        DriveStraightAction* driveAction = new DriveStraightAction(_distToDriveForwardWhileTracking,
+                                                                   _speedToDriveForwardWhileTracking);
+        // drive actions go in the main slot
+        robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
+        _driveForwardActionTag = driveAction->GetTag();
+
+        // resume tracking after driving forward
+        TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
+        robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, trackingAction);
+              
+        _isDrivingForward = true;
+      }
+      else if ( !_isDrivingForward ) {
+        BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoDrive",
+                               "not driving forward because dist = %f, side angle = %fdeg",
+                               liftToObjectPose.GetTranslation().x(),
+                               RAD_TO_DEG(sideAngle));
+      }
+    }
+    else {
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoPose",
+                             "couldn't get object pose WRT lift base.");
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoPose.Object",
+                             "object graph: %s",
+                             objectPose.GetNamedPathToOrigin(false).c_str());
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackBlockWithLift.NoPose.LiftBase",
+                             "lift base graph: %s",
+                             robot.GetLiftBasePose().GetNamedPathToOrigin(false).c_str());
+    }
+  }
 
   
   Result BehaviorBlockPlay::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec)
@@ -1137,7 +1252,7 @@ namespace Cozmo {
     robot.SetIdleAnimation("NONE");
 
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
+    robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
     _isActing = true;
   }
 

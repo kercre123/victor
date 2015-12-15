@@ -463,7 +463,12 @@ namespace Anki {
       }
 
     } // AddOccluder(Quad3f)
-    
+   
+    void Camera::ComputePanAndTiltAngles(const Point2f& imgPoint, Radians& relPanAngle, Radians& relTiltAngle) const
+    {
+      relTiltAngle = std::atan(-imgPoint.y() / _calibration->GetFocalLength_y());
+      relPanAngle  = std::atan(-imgPoint.x() / _calibration->GetFocalLength_x());
+    }
     
   } // namespace Vision
 } // namespace Anki

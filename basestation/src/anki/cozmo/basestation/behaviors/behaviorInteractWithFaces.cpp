@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/keyframe.h"
@@ -138,20 +139,36 @@ namespace Cozmo {
   
   void ResetFaceToNeutral(Robot& robot)
   {
-#if DO_FACE_MIMICKING
-    robot.GetMoveComponent().DisableTrackToFace();
+#   if DO_FACE_MIMICKING
+    //robot.GetMoveComponent().DisableTrackToFace();
+    StopTracking(robot);
     ProceduralFace resetFace;
     auto oldTimeStamp = robot.GetProceduralFace().GetTimeStamp();
     oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
     resetFace.SetTimeStamp(oldTimeStamp);
     robot.SetProceduralFace(resetFace);
-#endif
+#   endif
   }
   
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
     return !_interestingFacesOrder.empty();
   }
+  
+  void BehaviorInteractWithFaces::StartTracking(Robot& robot, Face::ID_t faceID)
+  {
+    _trackedFaceID = faceID;
+    TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
+    _trackActionTag = trackAction->GetTag();
+    robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, trackAction);
+  }
+  
+  void BehaviorInteractWithFaces::StopTracking(Robot& robot)
+  {
+    _trackedFaceID = Face::UnknownFace;
+    robot.GetActionList().Cancel(_trackActionTag);
+  }
+  
   
   IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot, double currentTime_sec)
   {
@@ -236,6 +253,7 @@ namespace Cozmo {
         dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
+        StartTracking(robot, face->GetID());
         UpdateBaselineFace(robot, face);
         
         PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchToTracking",
@@ -248,7 +266,9 @@ namespace Cozmo {
       {
         SetStateName("TrackingFace");
         
-        auto faceID = robot.GetMoveComponent().GetTrackToFace();
+        //auto faceID = robot.GetMoveComponent().GetTrackToFace();
+        auto faceID = _trackedFaceID;
+        
         // If we aren't tracking the first faceID in the list, something's wrong
         if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
         {
@@ -257,8 +277,8 @@ namespace Cozmo {
                            "faceID %lld not first of %lu interesting faces",
                            faceID,
                            _interestingFacesOrder.size());
-          robot.GetMoveComponent().DisableTrackToFace();
-          _currentState = State::Inactive;
+          //robot.GetMoveComponent().DisableTrackToFace();
+          StopTracking(robot);
           break;
         }
         
@@ -269,7 +289,9 @@ namespace Cozmo {
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
                                                EmotionType::Social, -kEmotionChangeVerySmall, "LostFace");
           
-          robot.GetMoveComponent().DisableTrackToFace();
+          //robot.GetMoveComponent().DisableTrackToFace();
+          StopTracking(robot);
+
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           
@@ -277,7 +299,6 @@ namespace Cozmo {
                            "Current t=%.2f - lastSeen time=%.2f > timeout=%.2f. "
                            "Switching back to looking around.",
                            currentTime_sec, lastSeen, _trackingTimeout_sec);
-          _currentState = State::Inactive;
           break;
         }
         
@@ -289,7 +310,9 @@ namespace Cozmo {
                                                EmotionType::Excited, kEmotionChangeSmall,
                                                EmotionType::Social,  kEmotionChangeLarge,  "LotsOfFace");
 
-          robot.GetMoveComponent().DisableTrackToFace();
+          //robot.GetMoveComponent().DisableTrackToFace();
+          StopTracking(robot);
+          
           _interestingFacesOrder.erase(_interestingFacesOrder.begin());
           _interestingFacesData.erase(faceID);
           _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration_sec;
@@ -297,7 +320,6 @@ namespace Cozmo {
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.FaceOnCooldown",
                            "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
                            watchingFaceDuration, kFaceInterestingDuration_sec);
-          _currentState = State::Inactive;
         }
         
         // We need a face to work with
@@ -310,15 +332,15 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
-          robot.GetMoveComponent().DisableTrackToFace();
-          _currentState = State::Inactive;
+          //robot.GetMoveComponent().DisableTrackToFace();
+          StopTracking(robot);
           break;
         }
         
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(robot, _crntProceduralFace, *face);
         
-#if DO_TOO_CLOSE_SCARED
+#       if DO_TOO_CLOSE_SCARED
         if(!_isActing &&
            (currentTime_sec - _lastTooCloseScaredTime) > kTooCloseScaredInterval_sec)
         {
@@ -342,17 +364,24 @@ namespace Cozmo {
                              headWrtRobot.GetTranslation().Length());
             
             // Relinquish control over head/wheels so animation plays correctly,
-            robot.GetMoveComponent().DisableTrackToFace();
+            //robot.GetMoveComponent().DisableTrackToFace();
             
-            PlayAnimation(robot, "Demo_Face_Interaction_ShockedScared_A");
+            // Queue the animation to happen now, which will cancel tracking, but
+            // re-enable tracking immediately after:
+            robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A"));
+            
+            TrackFaceAction* trackAction = new TrackFaceAction(face->GetID());
+            _trackActionTag = trackAction->GetTag();
+            robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, trackAction);
+            
             robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");
             _lastTooCloseScaredTime = currentTime_sec;
           }
         }
-#else
+#       else
         // avoid pesky unused variable error
         (void)_lastTooCloseScaredTime;
-#endif
+#       endif // DO_TOO_CLOSE_SCARED
         
         break;
       }
@@ -360,7 +389,7 @@ namespace Cozmo {
       case State::Interrupted:
       {
         SetStateName("Interrupted");
-        
+        StopTracking(robot);
         status = Status::Complete;
         break;
       }
@@ -392,7 +421,8 @@ namespace Cozmo {
 
     if (_resumeState == State::Interrupted)
     {
-      robot.GetMoveComponent().DisableTrackToFace();
+      //robot.GetMoveComponent().DisableTrackToFace();
+      StopTracking(robot);
     }
     _currentState = State::Interrupted;
     
@@ -402,7 +432,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Signal Handlers
 
-#if DO_FACE_MIMICKING
+# if DO_FACE_MIMICKING
   inline static f32 GetAverageHeight(const Vision::TrackedFace::Feature& feature,
                                      const Point2f relativeTo, const Radians& faceAngle_rad)
   {
@@ -442,13 +472,13 @@ namespace Cozmo {
     avgEyeHeight *= 0.5f;
     return avgEyeHeight;
   }
-#endif
+# endif
 
   void BehaviorInteractWithFaces::UpdateBaselineFace(Robot& robot, const Vision::TrackedFace* face)
   {
-    robot.GetMoveComponent().EnableTrackToFace(face->GetID(), false);
-
-#if DO_FACE_MIMICKING
+    //robot.GetMoveComponent().EnableTrackToFace(face->GetID(), false);
+   
+#   if DO_FACE_MIMICKING
     
     const Radians& faceAngle = face->GetHeadRoll();
     
@@ -464,13 +494,13 @@ namespace Cozmo {
     _baselineEyeHeight = GetEyeHeight(face);
     
     _baselineIntraEyeDistance = face->GetIntraEyeDistance();
-#else
+#   else
     // hack to avoid unused warning
     (void)_baselineEyeHeight;
     (void)_baselineIntraEyeDistance;
     (void)_baselineLeftEyebrowHeight;
     (void)_baselineRightEyebrowHeight;
-#endif
+#   endif // DO_FACE_MIMICKING
   }
   
   void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event)
@@ -581,7 +611,7 @@ namespace Cozmo {
   
   void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const
   {
-#if DO_FACE_MIMICKING
+#   if DO_FACE_MIMICKING
     ProceduralFace prevProcFace(proceduralFace);
     
     const Radians& faceAngle = face.GetHeadRoll();
@@ -652,8 +682,8 @@ namespace Cozmo {
     proceduralFace.SetTimeStamp(face.GetTimeStamp());
     proceduralFace.MarkAsSentToRobot(false);
     robot.SetProceduralFace(proceduralFace);
-#endif // DO_FACE_MIMICKING
-  }
+#   endif // DO_FACE_MIMICKING
+  } // UpdateProceduralFace()
   
   void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event)
   {
@@ -661,9 +691,9 @@ namespace Cozmo {
     
     if(msg.idTag == _lastActionTag)
     {
-#if DO_FACE_MIMICKING
+#     if DO_FACE_MIMICKING
       robot.SetProceduralFace(_crntProceduralFace);
-#endif
+#     endif
       _isActing = false;
     }
   }

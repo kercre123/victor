@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/trackingActions.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -43,8 +44,6 @@ void MovementComponent::InitEventHandlers(IExternalInterface& interface)
   helper.SubscribeInternal<MessageGameToEngineTag::MoveHead>();
   helper.SubscribeInternal<MessageGameToEngineTag::MoveLift>();
   helper.SubscribeInternal<MessageGameToEngineTag::SetHeadAngle>();
-  helper.SubscribeInternal<MessageGameToEngineTag::TrackToObject>();
-  helper.SubscribeInternal<MessageGameToEngineTag::TrackToFace>();
   helper.SubscribeInternal<MessageGameToEngineTag::StopAllMotors>();
 }
   
@@ -94,47 +93,13 @@ void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg
     PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
                      "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
   } else {
-    DisableTrackToObject();
+    // Note that this will temporarily take over the head but because it's not an action,
+    // any tracking that's using the head should just re-take control on next
+    // observation.
     MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
   }
 }
 
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::TrackToObject& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.HeadLocked",
-                     "Ignoring ExternalInterface::TrackToObject while head is locked.");
-  } else if (IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK) && !msg.headOnly) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToObject.WheelsLocked",
-                     "Ignoring ExternalInterface::TrackToObject while wheels are locked and headOnly == false.");
-  } else {
-    if(msg.objectID == u32_MAX) {
-      DisableTrackToObject();
-    } else {
-      EnableTrackToObject(msg.objectID, msg.headOnly);
-    }
-  }
-}
-
-template<>
-void MovementComponent::HandleMessage(const ExternalInterface::TrackToFace& msg)
-{
-  if(IsMovementTrackIgnored(AnimTrackFlag::HEAD_TRACK)) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackToFace.HeadLocked",
-                     "Ignoring ExternalInterface::TrackToFace while head is locked.");
-  } else if (IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK) && !msg.headOnly) {
-    PRINT_NAMED_INFO("MovementComponent.EventHandler.TrackHeadToFace.WheelsLocked",
-                     "Ignoring ExternalInterface::TrackToFace while wheels are locked and headOnly == false.");
-  } else {
-    if(msg.faceID == u32_MAX) {
-      DisableTrackToFace();
-    } else {
-      EnableTrackToFace(msg.faceID, msg.headOnly);
-    }
-  }
-}
-  
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::StopAllMotors& msg)
 {
@@ -176,82 +141,6 @@ Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
 Result MovementComponent::StopAllMotors()
 {
   return _robot.SendRobotMessage<RobotInterface::StopAllMotors>();
-}
-  
-Result MovementComponent::EnableTrackToObject(const u32 objectID, bool headOnly)
-{
-  _trackToObjectID = objectID;
-  
-  if(_robot.GetBlockWorld().GetObjectByID(_trackToObjectID) != nullptr) {
-    _trackWithHeadOnly = headOnly;
-    _trackToFaceID = Vision::TrackedFace::UnknownFace;
-
-    // TODO:(bn) this doesn't seem to work (wheels aren't locked), but not sure if it should...
-    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!headOnly) {
-      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    LockAnimTracks(tracksToLock);
-    
-    return RESULT_OK;
-  } else {
-    PRINT_NAMED_ERROR("MovementComponent.EnableTrackToObject.UnknownObject",
-                      "Cannot track to object ID=%d, which does not exist.",
-                      objectID);
-    _trackToObjectID.UnSet();
-    return RESULT_FAIL;
-  }
-}
-
-Result MovementComponent::EnableTrackToFace(Vision::TrackedFace::ID_t faceID, bool headOnly)
-{
-  _trackToFaceID = faceID;
-  if(_robot.GetFaceWorld().GetFace(_trackToFaceID) != nullptr) {
-    _trackWithHeadOnly = headOnly;
-    _trackToObjectID.UnSet();
-    
-    uint8_t tracksToLock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!headOnly) {
-      tracksToLock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    LockAnimTracks(tracksToLock);
-    
-    return RESULT_OK;
-  } else {
-    PRINT_NAMED_ERROR("MovementComponent.EnableTrackToFace.UnknownFace",
-                      "Cannot track to face ID=%lld, which does not exist.",
-                      faceID);
-    _trackToFaceID = Vision::TrackedFace::UnknownFace;
-    return RESULT_FAIL;
-  }
-}
-
-Result MovementComponent::DisableTrackToObject()
-{
-  if(_trackToObjectID.IsSet()) {
-    _trackToObjectID.UnSet();
-    
-    uint8_t tracksToUnlock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!_trackWithHeadOnly) {
-      tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    UnlockAnimTracks(tracksToUnlock);
-  }
-  return RESULT_OK;
-}
-
-Result MovementComponent::DisableTrackToFace()
-{
-  if(_trackToFaceID != Vision::TrackedFace::UnknownFace) {
-    _trackToFaceID = Vision::TrackedFace::UnknownFace;
-    
-    uint8_t tracksToUnlock = (uint8_t)AnimTrackFlag::HEAD_TRACK;
-    if(!_trackWithHeadOnly) {
-      tracksToUnlock |= (uint8_t)AnimTrackFlag::BODY_TRACK;
-    }
-    UnlockAnimTracks(tracksToUnlock);
-  }
-  return RESULT_OK;
 }
   
 int MovementComponent::GetFlagIndex(uint8_t flag) const

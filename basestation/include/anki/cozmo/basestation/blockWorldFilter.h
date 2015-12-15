@@ -59,6 +59,12 @@ namespace Cozmo {
     using FilterFcn = std::function<bool(ObservableObject*)>;
     void SetFilterFcn(FilterFcn filterFcn);
     
+    // Normally, all objects known to BlockWorld are checked. Setting this to
+    // true will only check those objects observed in the most recent BlockWorld
+    // Update() call.
+    void OnlyConsiderLatestUpdate(bool tf) { _onlyConsiderLatestUpdate = tf; }
+    bool IsOnlyConsideringLatestUpdate() const { return _onlyConsiderLatestUpdate; }
+    
   protected:
     std::set<ObjectID>      _ignoreIDs;
     std::set<ObjectType>    _ignoreTypes;
@@ -66,6 +72,8 @@ namespace Cozmo {
     
     FilterFcn _filterFcn = &BlockWorldFilter::DefaultFilterFcn;
     
+    bool _onlyConsiderLatestUpdate = false;
+      
     // The default filter function should be overriden if the poseState will be unknown or other functionality is desired
     static bool DefaultFilterFcn(ObservableObject* object) { assert(nullptr != object); return !object->IsPoseStateUnknown(); }
     

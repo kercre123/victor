@@ -57,9 +57,6 @@ namespace Anki {
       f32 angularDistExpected_;
       f32 angularDistTraversed_;
       const f32 ANGULAR_TRAVERSAL_DISTANCE_MARGIN = 0.1;
-      
-      // If distance to target is less than this, point turn is considered to be complete.
-      const float POINT_TURN_TARGET_DIST_STOP_RAD = 0.03;
 
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
@@ -470,7 +467,7 @@ namespace Anki {
 
       angularDistTraversed_ = 0;
       
-      if (ABS(angularDistExpected_) < POINT_TURN_TARGET_DIST_STOP_RAD) {
+      if (ABS(angularDistExpected_) < POINT_TURN_ANGLE_TOL) {
         ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
         PRINT("POINT TURN: Already at destination\n");
@@ -532,7 +529,7 @@ namespace Anki {
         
         // Check for stop condition
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
-        if (absAngularDistToTarget < POINT_TURN_TARGET_DIST_STOP_RAD) {
+        if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
           ExitPointTurn();
   #if(DEBUG_STEERING_CONTROLLER)
           PRINT("POINT TURN: Stopping\n");

@@ -44,10 +44,26 @@ protected:
 
 private:
   
-  bool _interrupted = false;
-  u32  _actionRunning = 0;
-  u8   _originalVisionModes = 0;
+  void StartTracking(Robot& robot);
   
+  enum class State : u8 {
+    WaitingForFirstMotion,
+    Tracking,
+    HoldingHeadDown,
+    DrivingForward,
+    Interrupted
+  };
+  
+  // Internal state of the behavior:
+  State       _state;
+  u32         _actionRunning = (u32)ActionConstants::INVALID_TAG;
+  u8          _originalVisionModes = 0;
+  bool        _initialReactionAnimPlayed = false;
+  double      _lastInterruptTime_sec = std::numeric_limits<double>::lowest(); // Not min(), which is +ve!
+  f32         _holdHeadDownUntil = -1.0f;
+  std::string _previousIdleAnimation;
+  
+  // Configuration parameters:
   // TODO: Read these from json config
   f32     _moveForwardDist_mm = 15.f;
   f32     _moveForwardSpeedIncrease = 2.f;
@@ -55,14 +71,13 @@ private:
   f32     _minDriveFrowardGroundPlaneDist_mm = 93.1f;
   f32     _minGroundAreaToConsider = 0.1f;
   Radians _panAndTiltTol = DEG_TO_RAD(3.f);  // pan/tilt must be greater than this to actually turn
-  bool    _initialReactionAnimPlayed;
+  double  _initialReactionWaitTime_sec = 20.f;
 
-  f32     _holdUnitl = -1.0f;
-
-  std::string _previousIdleAnimation;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-
+  void HandleObservedMotion(const EngineToGameEvent& event, Robot& robot);
+  void HandleCompletedAction(const EngineToGameEvent& event, Robot& robot);
+  
 }; // class BehaviorFollowMotion
   
 

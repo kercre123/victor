@@ -119,6 +119,8 @@ namespace Anki {
     bool operator< (const Point<N,T>& other) const; // all elements less than
     bool operator> (const Point<N,T>& other) const; // all elements greater than
     bool operator==(const Point<N,T>& other) const; // all elements equal
+    bool operator<=(const Point<N,T>& other) const; // all elements less than or equal
+    bool operator>=(const Point<N,T>& other) const; // all elements greater than or equal
     
     // Absolute value of each element
     Point<N,T>  GetAbs() const;

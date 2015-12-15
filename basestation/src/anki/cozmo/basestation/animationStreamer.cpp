@@ -39,7 +39,7 @@ namespace Cozmo {
   , _liveAnimation(LiveAnimation)
   , _audioClient( audioClient )
   {
-
+    _liveAnimation.SetIsLive(true);
   }
 
   u8 AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops)
@@ -184,9 +184,11 @@ namespace Cozmo {
   // Initialize the static tag counter
   u32 AnimationStreamer::FaceLayer::TagCtr = 0;
   
-  Result AnimationStreamer::AddFaceLayer(const FaceTrack& faceTrack, TimeStamp_t delay_ms)
+  Result AnimationStreamer::AddFaceLayer(FaceTrack&& faceTrack, TimeStamp_t delay_ms)
   {
     Result lastResult = RESULT_OK;
+    
+    faceTrack.SetIsLive(true);
     
     FaceLayer newLayer;
     newLayer.tag = FaceLayer::TagCtr++;
@@ -207,8 +209,10 @@ namespace Cozmo {
     return lastResult;
   }
   
-  u32 AnimationStreamer::AddPersistentFaceLayer(const FaceTrack& faceTrack)
+  u32 AnimationStreamer::AddPersistentFaceLayer(FaceTrack&& faceTrack)
   {
+    faceTrack.SetIsLive(false); // don't want keyframes to delete as they play
+    
     FaceLayer newLayer;
     newLayer.tag = FaceLayer::TagCtr++;
     newLayer.track = faceTrack;
@@ -241,14 +245,13 @@ namespace Cozmo {
         // where this persistent frame leaves off to no adjustment at all.
         // (Currently, this is hardcoded to happen over 3 frames)
         FaceTrack faceTrack;
+        faceTrack.SetIsLive(true);
         ProceduralFaceKeyFrame firstFrame(layerIter->track.GetCurrentKeyFrame());
         firstFrame.SetTriggerTime(0);
-        firstFrame.SetIsLive(true);
         faceTrack.AddKeyFrame(std::move(firstFrame));
         
         ProceduralFaceKeyFrame lastFrame;
         lastFrame.SetTriggerTime(IKeyFrame::SAMPLE_LENGTH_MS*3);
-        lastFrame.SetIsLive(true);
         faceTrack.AddKeyFrame(std::move(lastFrame));
         
         AddFaceLayer(std::move(faceTrack));
@@ -477,17 +480,14 @@ namespace Cozmo {
       blinkFace.SetParams(ProceduralFaceParams());
       
       FaceTrack faceTrack;
+      faceTrack.SetIsLive(true);
       TimeStamp_t totalOffset = 0;
       bool moreBlinkFrames = false;
       do {
         TimeStamp_t timeInc;
         moreBlinkFrames = blinkFace.GetNextBlinkFrame(timeInc);
         totalOffset += timeInc;
-        
-        ProceduralFaceKeyFrame kf(blinkFace, totalOffset);
-        kf.SetIsLive(true);
-        
-        faceTrack.AddKeyFrame(std::move(kf));
+        faceTrack.AddKeyFrame(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
       
       AddFaceLayer(std::move(faceTrack));
@@ -1129,9 +1129,7 @@ namespace Cozmo {
       proceduralFace.GetParams().Interpolate(lastFace.GetParams(), nextFace.GetParams(), blendFraction, useSaccades);
       
       // Add this procedural face as a keyframe in the live animation
-      ProceduralFaceKeyFrame kf(proceduralFace);
-      kf.SetIsLive(true);
-      if(RESULT_OK != liveAnimation.AddKeyFrame(kf)) {
+      if(RESULT_OK != liveAnimation.AddKeyFrame(ProceduralFaceKeyFrame(proceduralFace))) {
         PRINT_NAMED_ERROR("AnimationStreamer.StreamProceduralFace.AddFrameFailed", "");
         return RESULT_FAIL;
       }
@@ -1243,9 +1241,8 @@ namespace Cozmo {
                          "Speed=%d, curvature=%d, duration=%d",
                          speed, curvature, _bodyMoveDuration_ms);
 #       endif
-        BodyMotionKeyFrame kf(speed, curvature, _bodyMoveDuration_ms);
-        kf.SetIsLive(true);
-        if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
+        
+        if(RESULT_OK != _liveAnimation.AddKeyFrame(BodyMotionKeyFrame(speed, curvature, _bodyMoveDuration_ms))) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddBodyMotionKeyFrameFailed", "");
           return RESULT_FAIL;
         }
@@ -1271,7 +1268,6 @@ namespace Cozmo {
         LiftHeightKeyFrame kf(GET_PARAM(u8, LiftHeightMean_mm),
                               GET_PARAM(u8, LiftHeightVariability_mm),
                               _liftMoveDuration_ms);
-        kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddLiftHeightKeyFrameFailed", "");
           return RESULT_FAIL;
@@ -1297,7 +1293,6 @@ namespace Cozmo {
                          "duration=%d", _headMoveDuration_ms);
 #       endif
         HeadAngleKeyFrame kf(currentAngle_deg, GET_PARAM(u8, HeadAngleVariability_deg), _headMoveDuration_ms);
-        kf.SetIsLive(true);
         if(RESULT_OK != _liveAnimation.AddKeyFrame(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");
           return RESULT_FAIL;

@@ -59,6 +59,12 @@ namespace Cozmo {
     void UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const;
     void PlayAnimation(Robot& robot, const std::string& animName);
     
+    // Sets face tracking ID and queues TrackFaceAction "now".
+    void StartTracking(Robot& robot, Face::ID_t faceID);
+    
+    // Unsets face tracking ID and cancels last action tag. Also sets current state to Inactive.
+    void StopTracking(Robot& robot);
+    
     enum class State {
       Inactive,
       TrackingFace,
@@ -67,6 +73,8 @@ namespace Cozmo {
     
     State _currentState = State::Interrupted;
     State _resumeState  = State::Interrupted;
+    
+    Face::ID_t _trackedFaceID = Face::UnknownFace;
     
     f32 _trackingTimeout_sec = 3;
     
@@ -77,8 +85,9 @@ namespace Cozmo {
     f32 _baselineLeftEyebrowHeight;
     f32 _baselineRightEyebrowHeight;
     
-    u32 _lastActionTag;
-    bool _isActing = false;
+    u32    _trackActionTag = (u32)ActionConstants::INVALID_TAG;
+    u32    _lastActionTag = (u32)ActionConstants::INVALID_TAG;
+    bool   _isActing = false;
     double _lastGlanceTime = 0;
     double _lastTooCloseScaredTime = 0;
     double _newFaceAnimCooldownTime = 0.0;
