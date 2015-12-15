@@ -21,9 +21,6 @@ namespace SpeedTap {
     private SpeedTapPanel _GamePanelPrefab;
     private SpeedTapPanel _GamePanel;
 
-    [SerializeField]
-    private AudioClip _RollSound;
-
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       InitializeMinigameObjects();
     }
@@ -33,7 +30,7 @@ namespace SpeedTap {
       DAS.Info(this, "Game Created");
 
       _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
+      _StateMachineManager.AddStateMachine("SpeedTapStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
