@@ -77,8 +77,9 @@ namespace Cozmo {
   Result BehaviorFidget::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
   {
     _interrupted = false;
-    _nextFidgetWait_sec = 0.f;
-    _lastFidgetTime_sec = 0.f;
+    
+    // Note we don't clear out the _lastFidgetTime and fidgetWait here, as we want the waiting
+    // to persist between switching to other behaviors and coming back
     
     return RESULT_OK;
   }
@@ -188,6 +189,7 @@ namespace Cozmo {
           if (msg.idTag == _queuedActionTag)
           {
             _queuedActionTag = (uint32_t)ActionConstants::INVALID_TAG;
+            SetStateName("");
             _currentActionMustComplete = false;
           }
         }
