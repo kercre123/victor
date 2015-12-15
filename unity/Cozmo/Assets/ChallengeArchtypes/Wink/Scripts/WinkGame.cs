@@ -10,6 +10,8 @@ namespace Wink {
     private float _WinkWaveAccumulator = 0.0f;
     private float _LastWaveMessageTime = 0.0f;
     private int _WaveSuccessCount = 0;
+    private int _GoalSuccessCount = 3;
+    public float TimeLimit = 7.0f;
 
     public enum WinkStatus {
       Left,
@@ -20,13 +22,18 @@ namespace Wink {
     private WinkStatus _WinkStatus = WinkStatus.Neutral;
 
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
-
+      WinkGameConfig config = minigameConfigData as WinkGameConfig;
+      TimeLimit = config.TimeLimit;
+      _GoalSuccessCount = config.WaveSuccessGoal;
+      MaxAttempts = config.MaxAttempts;
+      Progress = 0.0f;
       InitializeMinigameObjects();
     }
 
     public void WaveSuccess() {
       _WaveSuccessCount++;
-      if (_WaveSuccessCount > 3) {
+      Progress = (_WaveSuccessCount / _GoalSuccessCount);
+      if (_WaveSuccessCount >= _GoalSuccessCount) {
         RaiseMiniGameWin();
       }
     }

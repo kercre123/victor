@@ -28,6 +28,7 @@ namespace StackTraining {
       _Game = _StateMachine.GetGame() as StackTrainingGame;
       _Carrying = true;
 
+      _Game.ShowHowToPlaySlide("HelpStack");
       RobotEngineManager.Instance.OnObservedMotion += HandleDetectMotion;
       _StartPosition = _CurrentRobot.WorldPosition;
       _StartRotation = _CurrentRobot.Rotation;

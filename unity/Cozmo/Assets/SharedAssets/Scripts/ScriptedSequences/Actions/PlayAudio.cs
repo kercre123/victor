@@ -1,21 +1,29 @@
 ﻿using System;
 using Anki.Cozmo.Audio;
+using System.ComponentModel;
 
 namespace ScriptedSequences.Actions {
   public class PlayAudio : ScriptedSequenceAction {
 
     public EventType EventType;
 
+    public GameObjectType GameObjectType;
+
+    [DefaultValue(true)]
     public bool WaitToEnd = true;
+
+    [DefaultValue(true)]
+    public bool StopSoundOnEnd = true;
 
     public override ISimpleAsyncToken Act() {
       
       SimpleAsyncToken token = new SimpleAsyncToken();
 
-      if (WaitToEnd) {
+      if (WaitToEnd) {        
         // Play with Callback
-        AudioClient.Instance.PostEvent(EventType, 0, AudioCallbackFlag.EventComplete, (c) => {
-          if (c.CallbackType == AudioCallbackFlag.EventComplete) {
+        // TODO: Need to set the Game Object Type appropriately
+        AudioClient.Instance.PostEvent(EventType, GameObjectType, AudioCallbackFlag.EventComplete, (c) => {
+          if (c.CallbackType == AudioCallbackFlag.EventComplete || c.CallbackType == AudioCallbackFlag.EventError) {
             token.Succeed();
           }
           else {
@@ -24,9 +32,15 @@ namespace ScriptedSequences.Actions {
             token.Fail(new Exception("Received Error Playing event " + EventType + ": " + errorType));
           }
         });
+        if (StopSoundOnEnd) {
+          token.OnAbort += () => {
+            AudioClient.Instance.StopAllAudioEvents(GameObjectType);
+          };
+        }
       }
       else {
-        AudioClient.Instance.PostEvent(EventType, 0);
+        // TODO: Need to set the Game Object Type appropriately
+        AudioClient.Instance.PostEvent(EventType, GameObjectType);
         // Play without Callback
         token.Succeed();
       }

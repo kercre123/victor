@@ -23,16 +23,23 @@ namespace Cozmo.HubWorld {
           _ChallengeIconImage.gameObject.SetActive(false);
         }
       }
+    }
 
+    private void OnEnable() {
       StartCoroutine(DelayedBobAnimation());
     }
 
-    private void OnDestroy() {
+    private void OnDisable() {
+      StopAllCoroutines();
       if (_BobbingSequence != null) {
         _BobbingSequence.Kill();
+        _BobbingSequence = null;
       }
     }
 
+    // use a coroutine because Sequences don't allow
+    // delay, and we don't want to jump the prefab by
+    // on start
     private IEnumerator DelayedBobAnimation() {
       float delay = Random.Range(0f, 1.5f);
       yield return new WaitForSeconds(delay);

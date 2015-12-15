@@ -14,33 +14,29 @@ namespace Anki {
         static public ushort PostUIEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                          CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.UI, callbackFlag, handler);
         }
 
         static public ushort PostSFXEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                           Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                           CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.SFX, callbackFlag, handler);
         }
 
         static public ushort PostAnnouncerVOEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                                   Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                                   CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Aria, callbackFlag, handler);
         }
 
         static public ushort PostCozmoVOEvent(Anki.Cozmo.Audio.EventType audioEvent,
                                               Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                               CallbackHandler handler = null) {
-          // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          return client.PostEvent(audioEvent, 0, callbackFlag, handler);
+          return client.PostEvent(audioEvent, Anki.Cozmo.Audio.GameObjectType.Default, callbackFlag, handler);
         }
 
         // Remove callback handle from Audio Client
@@ -52,9 +48,20 @@ namespace Anki {
         static public void SetVolumeValue(ParameterType parameter, float volume ) {
           // TODO Fix GameObject Id
           AudioClient client = AudioClient.Instance;
-          client.PostParameter(parameter, volume, 0); // TODO Need to const for Invalid GameObj to set global RTPCs
+          client.PostParameter(parameter, volume, GameObjectType.Invalid); // TODO Need to cast for Invalid GameObj to set global RTPCs
         }
 
+        // Set Music States
+        // We can move this, I just need a place to keep static state to start the music
+        private static bool _didPlayMusic = false; 
+        static public void SetMusicState(Anki.Cozmo.Audio.MusicGroupStates state) {
+          AudioClient client = AudioClient.Instance;
+          if (!_didPlayMusic) {
+            client.PostEvent(EventType.PLAY_MUSIC, GameObjectType.Default);
+            _didPlayMusic = true;
+          }
+          client.PostGameState(GameStateGroupType.Music, (GameStateType)state);
+        }
       }
     }
   }

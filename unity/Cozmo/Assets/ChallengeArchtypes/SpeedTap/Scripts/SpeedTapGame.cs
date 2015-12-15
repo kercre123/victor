@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System;
+using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
@@ -35,7 +36,7 @@ namespace SpeedTap {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new SpeedTapStateGoToCube(), 2, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.VisionWhileMoving(true);
@@ -69,7 +70,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      AudioManager.PlayAudioClip(_RollSound);
+      AudioClient.Instance.PostEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL, Anki.Cozmo.Audio.GameObjectType.Default);
     }
 
     private void UIButtonTapped() {

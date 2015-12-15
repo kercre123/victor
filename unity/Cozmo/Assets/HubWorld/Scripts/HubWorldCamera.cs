@@ -14,6 +14,9 @@ public class HubWorldCamera : MonoBehaviour {
   [SerializeField]
   private Camera _WorldCamera;
 
+  [SerializeField]
+  private float _FrustrumWidth = 2000;
+
   private Vector3 _DefaultLocalPosition;
 
   public Camera WorldCamera {
@@ -23,7 +26,25 @@ public class HubWorldCamera : MonoBehaviour {
 
   private void Start() {
     _HubWorldCameraInstance = this;
+
+    var ray = _WorldCamera.ViewportPointToRay(new Vector3(1, 1, 0));
+
+    var zplane = new Plane(Vector3.back, Vector3.zero);
+
+    float len;
+    zplane.Raycast(ray, out len);
+
+    var planeIntersection = ray.GetPoint(len);
+
+    Debug.Log("Plane Intersection: " + planeIntersection);
+
+    float xDelta = _FrustrumWidth / 2 - planeIntersection.x;
+
+    float zDelta = xDelta * (_WorldCamera.transform.localPosition.z / planeIntersection.x);
+
     _DefaultLocalPosition = _WorldCamera.transform.localPosition;
+    _DefaultLocalPosition.z += zDelta;
+    _WorldCamera.transform.localPosition = _DefaultLocalPosition;
   }
 
   public Tweener CenterCameraOnTarget(Vector3 targetWorldPos) {

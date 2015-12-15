@@ -41,6 +41,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _LeftBubble: {fileID: 11482668, guid: 686f2b7feed7840c8ac5f7336f5dcbf7, type: 2}
   _RightBubble: {fileID: 11482668, guid: dbc8d8b13a20749b98ddb424e2c7668b, type: 2}
+  _ConvoOverlayPrefab: {fileID: 11418368, guid: 7c54784e8a936417b81768548155d826,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

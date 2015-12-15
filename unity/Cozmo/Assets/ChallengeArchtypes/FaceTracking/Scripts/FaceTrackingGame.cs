@@ -40,6 +40,10 @@ namespace FaceTracking {
 
     private string _CurrentSlideName = null;
 
+    [SerializeField]
+    private string _TutorialSequenceName = "FaceTrackingIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfigData) {
       FaceTrackingGameConfig config = (minigameConfigData as FaceTrackingGameConfig);
       WanderEnabled = config.WanderEnabled;
@@ -53,8 +57,17 @@ namespace FaceTracking {
       FaceJumpLimit = config.FaceJumpLimit;
       StepsCompleted = 0.0f;
       MaxAttempts = config.MaxAttempts;
+      Progress = 0.0f;
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
+    }
 
-
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
       InitializeMinigameObjects();
     }
 
@@ -67,7 +80,7 @@ namespace FaceTracking {
 
       // Determine success, or if we're even headed in the right direction, don't trigger success
       // if we are too far to the desired direction
-      if (1.0f >= goalVal && goalVal >= (1.0f-GoalLenience) && !MidCelebration) {
+      if (1.0f >= goalVal && goalVal >= (1.0f - GoalLenience) && !MidCelebration) {
         // Mark successful leading to each side.
         // TODO: Create a buildup delay so players have to hold for a short duration before triggering
         // a success.
@@ -100,7 +113,6 @@ namespace FaceTracking {
       
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
-      Progress = 0.0f;
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
@@ -141,6 +153,7 @@ namespace FaceTracking {
       MidCelebration = false;
       RaiseMiniGameWin();
     }
+
     /// <summary>
     /// Checks through all current robot's faces to find the closest
     /// </summary>

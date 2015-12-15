@@ -1128,6 +1128,8 @@ public class Robot : IDisposable {
   }
 
   public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
+    DAS.Debug(this, "ActivateBehaviorChooser: " + behaviorChooserType);
+
     ActivateBehaviorChooserMessage.behaviorChooserType = behaviorChooserType;
 
     RobotEngineManager.Instance.Message.ActivateBehaviorChooser = ActivateBehaviorChooserMessage;

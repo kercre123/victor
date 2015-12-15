@@ -61,13 +61,13 @@ namespace Anki {
         // Basic Audio Client Operations
         // Return PlayId - Note: PlayId is not guaranteed to be unique it will eventually roll over.
         public ushort PostEvent(Anki.Cozmo.Audio.EventType audioEvent,
-                                ushort gameObjectId,
+                                Anki.Cozmo.Audio.GameObjectType gameObject,
                                 Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
                                 CallbackHandler handler = null) {
-          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  gameObjId: " +
-                   gameObjectId + " CallbackFlag: " + callbackFlag);
+          DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  GameObj: " +
+                    gameObject.ToString() + " CallbackFlag: " + callbackFlag);
           ushort playId = _GetPlayId();
-          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObjectId, callbackFlag, playId);
+          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObject, callbackFlag, playId);
           _RobotEngineManager.Message.PostAudioEvent = msg;
           _RobotEngineManager.SendMessage();
 
@@ -80,6 +80,14 @@ namespace Anki {
           return playId;
         }
 
+        // Pass in game object type to stop audio events on that game object, use Invalid to stop all audio
+        public void StopAllAudioEvents(Anki.Cozmo.Audio.GameObjectType gameObject = Anki.Cozmo.Audio.GameObjectType.Invalid) {
+          DAS.Debug("AudioController.StopAllAudioEvents", "GameObj: " + gameObject.ToString());
+          StopAllAudioEvents msg = new Anki.Cozmo.Audio.StopAllAudioEvents(gameObject);
+          _RobotEngineManager.Message.StopAllAudioEvents = msg;
+          _RobotEngineManager.SendMessage();
+        }
+
         public void PostGameState(Anki.Cozmo.Audio.GameStateGroupType gameStateGroup,
                                   Anki.Cozmo.Audio.GameStateType gameState) {
           DAS.Debug("AudioController.PostAudioGameState", "GameState: " + gameState.ToString());
@@ -88,22 +96,22 @@ namespace Anki {
           _RobotEngineManager.SendMessage();
         }
 
-        public void PostSwitchState(Anki.Cozmo.Audio.SwitchStateGroupType switchStateGroup, Anki.Cozmo.Audio.SwitchStateType switchState, ushort gameObjectId) {
+        public void PostSwitchState(Anki.Cozmo.Audio.SwitchStateGroupType switchStateGroup, Anki.Cozmo.Audio.SwitchStateType switchState, GameObjectType gameObject) {
           DAS.Debug("AudioController.PostAudioSwitchState", "SwitchState: " + switchState.ToString() +
-          " gameObjId: " + gameObjectId);
-          PostAudioSwitchState msg = new PostAudioSwitchState(switchStateGroup, switchState, gameObjectId);
+                    " gameObj: " + gameObject.ToString());
+          PostAudioSwitchState msg = new PostAudioSwitchState(switchStateGroup, switchState, gameObject);
           _RobotEngineManager.Message.PostAudioSwitchState = msg;
           _RobotEngineManager.SendMessage();
         }
 
         public void PostParameter(Anki.Cozmo.Audio.ParameterType parameter,
                                   float parameterValue,
-                                  ushort gameObjectId,
+                                  GameObjectType gameObject,
                                   int timeInMilliSeconds = 0,
                                   Anki.Cozmo.Audio.CurveType curve = CurveType.Linear) {
-          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " value: " + parameterValue +
-          " gameObjId: " + gameObjectId + " timeInMilliSec: " + timeInMilliSeconds + " curve: " + curve);
-          PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObjectId, timeInMilliSeconds, curve);
+          DAS.Debug("AudioController.PostAudioParameter", "Parameter: " + parameter.ToString() + " Value: " + parameterValue +
+                    " GameObj: " + gameObject.ToString() + " TimeInMilliSec: " + timeInMilliSeconds + " Curve: " + curve);
+          PostAudioParameter msg = new PostAudioParameter(parameter, parameterValue, gameObject, timeInMilliSeconds, curve);
           _RobotEngineManager.Message.PostAudioParameter = msg;
           _RobotEngineManager.SendMessage();
         }
@@ -213,6 +221,7 @@ namespace Anki {
         }
 
         // Data Helpers
+        private List<Anki.Cozmo.Audio.GameObjectType> _GameObjects;
         private List<Anki.Cozmo.Audio.EventType> _Events;
         private List<Anki.Cozmo.Audio.GameStateGroupType> _GameStateGroups;
         private Dictionary<Anki.Cozmo.Audio.GameStateGroupType, List<Anki.Cozmo.Audio.GameStateType>> _GameStateTypes;
@@ -220,6 +229,13 @@ namespace Anki {
         private Dictionary<Anki.Cozmo.Audio.SwitchStateGroupType, List<Anki.Cozmo.Audio.SwitchStateType>> _SwitchStateTypes;
         private List<Anki.Cozmo.Audio.ParameterType> _RTPCParameters;
 
+
+        public List<Anki.Cozmo.Audio.GameObjectType> GetGameObjects() {
+          if (null == _GameObjects) {
+            _GameObjects = Enum.GetValues(typeof(Anki.Cozmo.Audio.GameObjectType)).Cast<Anki.Cozmo.Audio.GameObjectType>().ToList();
+          }
+          return _GameObjects;
+        }
 
         public List<Anki.Cozmo.Audio.EventType> GetEvents() {
           if (null == _Events) {
@@ -250,6 +266,9 @@ namespace Anki {
         public List<Anki.Cozmo.Audio.GameStateType> GetGameStates(Anki.Cozmo.Audio.GameStateGroupType stateGroup) {
           if (null == _GameStateTypes) {
             _GameStateTypes = new Dictionary<GameStateGroupType, List<GameStateType>>();
+            // FIXME This a temp solution to add group types
+            List<Anki.Cozmo.Audio.GameStateType> musicStates = Enum.GetValues(typeof(Anki.Cozmo.Audio.MusicGroupStates)).Cast<Anki.Cozmo.Audio.GameStateType>().ToList();
+            _GameStateTypes.Add(GameStateGroupType.Music, musicStates);
           }
 
           List<Anki.Cozmo.Audio.GameStateType> groupStates;

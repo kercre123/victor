@@ -18,18 +18,20 @@ namespace MotionDetection {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as MotionDetectionConfig ?? new MotionDetectionConfig();
-      InitializeMinigameObjects();
       if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
         _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
         _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
       }
-    }
-
-    protected void InitializeMinigameObjects() {
-
+      else {
+        HandleTutorialSequenceDone(null);
+      }
     }
 
     private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
+    }
+
+    protected void InitializeMinigameObjects() {
       ShowHowToPlaySlide("MotionDetectionHelp01");
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("DetectMotionStateMachine", _StateMachine);

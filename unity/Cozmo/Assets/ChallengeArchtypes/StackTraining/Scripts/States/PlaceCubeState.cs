@@ -14,7 +14,7 @@ namespace StackTraining {
 
       _CurrentRobot.SetHeadAngle(0f);
       _CurrentRobot.SetLiftHeight(0f);
-      _Game.ShowHowToPlaySlide("HelpStack");
+      _Game.ShowHowToPlaySlide("HelpPickup");
     }
 
     public override void Update() {
@@ -33,6 +33,7 @@ namespace StackTraining {
       if (_BottomCubeBounds.Contains(bottomCubePosition) && bottomCube.MarkersVisible) {
         bottomCube.SetLEDs(Color.blue);
 
+        _Game.ShowHowToPlaySlide("TapCube");
         _StateMachine.SetNextState(new TapCubeState(new HelpCozmoPickupState(), bottomCube.ID));
       }
       else {

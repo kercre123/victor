@@ -11,9 +11,29 @@ namespace CubeLifting {
     private StateMachine _StateMachine = new StateMachine();
     private CubeLiftingConfig _Config;
 
+    [SerializeField]
+    private string _TutorialSequenceName = "CubeLiftingIntro";
+    private ScriptedSequences.ISimpleAsyncToken _TutorialSequenceDoneToken;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = minigameConfig as CubeLiftingConfig ?? new CubeLiftingConfig();
 
+      MaxAttempts = _Config.MaxAttempts;
+
+      if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
+        _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
+        _TutorialSequenceDoneToken.Ready(HandleTutorialSequenceDone);
+      }
+      else {
+        HandleTutorialSequenceDone(null);
+      }
+    }
+
+    private void HandleTutorialSequenceDone(ScriptedSequences.ISimpleAsyncToken token) {
+      InitializeMinigameObjects();
+    }
+
+    protected void InitializeMinigameObjects() {
       _StateMachine.SetGameRef(this);
       _StateMachineManager.AddStateMachine("CubeLiftingStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
@@ -24,8 +44,6 @@ namespace CubeLifting {
 
       CurrentRobot.SetLiftHeight(0);
       CurrentRobot.SetHeadAngle(0);
-
-      MaxAttempts = _Config.MaxAttempts;
     }
 
     void Update() {
