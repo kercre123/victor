@@ -102,6 +102,21 @@
     "peekaboo.label.points" : {
         "translation" : "{0} Points"
     },
+    "handSlap.title" : {
+        "translation" : "Hand Slap"
+    },
+    "handSlap.subtitle" : {
+        "translation" : "Hand Slap Subtitle"
+    },
+    "handSlap.description" : {
+        "translation" : "Hand Slap Description"
+    },
+    "handSlap.score.cozmo" : {
+        "translation" : "cozmo: {0:N}"
+    },
+    "handSlap.score.player" : {
+        "translation" : "player: {0:N}"
+    },
     "minigame.quitView.title" : {
         "translation" : "Return to Main Menu?"
     },
