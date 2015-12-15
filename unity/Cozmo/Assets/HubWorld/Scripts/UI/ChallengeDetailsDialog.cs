@@ -24,7 +24,7 @@ public class ChallengeDetailsDialog : BaseView {
   private Image _ChallengeKeyArt;
 
   [SerializeField]
-  private Button _StartChallengeButton;
+  private AnkiButton _StartChallengeButton;
 
   [SerializeField]
   private Vector3 _CenteredIconViewportPos;

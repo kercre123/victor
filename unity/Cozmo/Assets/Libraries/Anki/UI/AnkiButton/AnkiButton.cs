@@ -11,7 +11,21 @@ namespace Anki {
   namespace UI {
     [AddComponentMenu("Anki/Button", 02)]
     [ExecuteInEditMode]
-    public class AnkiButton : Selectable, IPointerClickHandler {
+    public class AnkiButton : UIBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
+
+      [SerializeField]
+      private bool _Interactable = true;
+
+      public bool interactable {
+        get { return _Interactable; }
+        set { 
+          if (value != _Interactable) {
+            _Interactable = value; 
+
+            UpdateVisuals();
+          }
+        }
+      }
 
       [Serializable]
       public class ButtonClickedEvent : UnityEvent {
@@ -25,26 +39,33 @@ namespace Anki {
       public class ButtonUpEvent : UnityEvent {
       }
 
-      [FormerlySerializedAs("onClick")]
-      [SerializeField]
       private ButtonClickedEvent _OnClick = new ButtonClickedEvent();
 
-      [FormerlySerializedAs("onPress")]
-      [SerializeField]
       private ButtonDownEvent _OnPress = new ButtonDownEvent();
 
-      [FormerlySerializedAs("onRelease")]
-      [SerializeField]
       private ButtonUpEvent _OnRelease = new ButtonUpEvent();
 
       [SerializeField]
       private string _DASEventName;
 
       [SerializeField]
-      private Text _TextLabel;
+      private AnkiTextLabel _TextLabel;
+
+      [SerializeField]
+      private float _TextLabelOffset = -5f;
+      private Vector3 _TextDefaultPosition;
+      private Vector3 _TextPressedPosition;
+
+      public Color TextEnabledColor = Color.white;
+
+      public Color TextPressedColor = Color.gray;
+
+      public Color TextDisabledColor = Color.gray;
 
       [SerializeField]
       private CanvasGroup _AlphaController;
+
+      public AnkiButtonImage[] ButtonGraphics;
 
       public string Text {
         get{ return _TextLabel.text; }
@@ -93,35 +114,67 @@ namespace Anki {
       }
       */
 
+      public bool IsInteractable() {
+        return _Interactable;
+      }
+
+      protected override void Start() {
+        base.Start();
+        _TextDefaultPosition = _TextLabel.gameObject.transform.localPosition;
+        _TextPressedPosition = _TextDefaultPosition;
+        _TextPressedPosition.y += _TextLabelOffset;
+        UpdateVisuals();
+      }
+
       protected override void OnEnable() {
         base.OnEnable();
 
+        // Grab the text label while in editor
         if (_TextLabel == null) {
-          _TextLabel = GetComponentInChildren<Text>();
+          _TextLabel = GetComponentInChildren<AnkiTextLabel>();
         }
       }
 
+      private bool DisableInteraction() {
+        return !IsActive() || !IsInteractable();
+      }
+
       private void Tap() {
-        if (!IsActive() || !IsInteractable()) {
+        if (DisableInteraction()) {
           return;
         }
+
+        // Set to pressed visual state
+        ShowPressedState();
+        StartCoroutine(DelayedResetButton());
     
         PlayAudioEvent();
         _OnClick.Invoke();
       }
 
+      private System.Collections.IEnumerator DelayedResetButton() {
+        yield return new WaitForSeconds(0.1f);
+        UpdateVisuals();
+      }
+
       private void Press() {
-        if (!IsActive() || !IsInteractable()) {
+        if (DisableInteraction()) {
           return;
         }
+
+        // Set to pressed visual state
+        ShowPressedState();
 
         _OnPress.Invoke();
       }
 
       private void Release() {
-        if (!IsActive() || !IsInteractable()) {
+        if (DisableInteraction()) {
           return;
         }
+
+        // Reset to normal visual state
+        ShowEnabledState();
     
         _OnRelease.Invoke();
       }
@@ -142,27 +195,92 @@ namespace Anki {
         Tap();
       }
 
-      public override void OnPointerDown(PointerEventData eventData) {
-        base.OnPointerDown(eventData);
+      public void OnPointerDown(PointerEventData eventData) {
         DAS.Debug("AnkiButton.OnPointerDown", string.Format("{0} Pressed", _DASEventName));
 
         Press();
       }
 
-      public override void OnPointerUp(PointerEventData eventData) {
-        base.OnPointerUp(eventData);
+      public void OnPointerUp(PointerEventData eventData) {
         DAS.Debug("AnkiButton.OnPointerUp", string.Format("{0} Released", _DASEventName));
 
         Release();
       }
 
-
       public void PlayAudioEvent() {
+        if (DisableInteraction()) {
+          return;
+        }
+
         // TODO: Audio
         //DAS.Debug("AnkiButton", string.Format("Playing {0} sound", _UISoundEvent));
         //AudioController.PostUIButtonAudioEvent(_UISoundEvent);
       }
 
+      private void UpdateVisuals() {
+        if (IsInteractable()) {
+          ShowEnabledState();
+        }
+        else {
+          ShowDisabledState();
+        }
+      }
+
+      private void ShowEnabledState() {
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
+          if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            SetGraphic(graphic, graphic.enabledSprite, graphic.enabledColor);
+          }
+          else {
+            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+          }
+        }
+
+        _TextLabel.color = TextEnabledColor;
+        _TextLabel.transform.localPosition = _TextDefaultPosition;
+      }
+
+      private void ShowPressedState() {
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
+          if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor);
+          }
+          else {
+            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+          }
+        }
+        _TextLabel.color = TextPressedColor;
+        _TextLabel.transform.localPosition = _TextPressedPosition;
+      }
+
+      private void ShowDisabledState() {
+        foreach (AnkiButtonImage graphic in ButtonGraphics) {
+          if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor);
+          }
+          else {
+            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+          }
+        }
+        _TextLabel.color = TextDisabledColor;
+        _TextLabel.transform.localPosition = _TextDefaultPosition;
+      }
+
+      private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
+        graphic.targetImage.overrideSprite = desiredSprite ?? graphic.enabledSprite;
+        graphic.targetImage.color = desiredColor;
+      }
+
+      [Serializable]
+      public class AnkiButtonImage {
+        public Image targetImage;
+        public Sprite enabledSprite;
+        public Color enabledColor = Color.white;
+        public Sprite pressedSprite;
+        public Color pressedColor = Color.gray;
+        public Sprite disabledSprite;
+        public Color disabledColor = Color.gray;
+      }
     }
   }
 }
