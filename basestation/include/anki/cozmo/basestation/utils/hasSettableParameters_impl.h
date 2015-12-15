@@ -81,6 +81,10 @@ namespace Cozmo {
                         msg.paramNames.size(), msg.paramValues.size());
     } else {
       
+      if(msg.setUnspecifiedToDefault) {
+        SetDefaultParams();
+      }
+      
       for(size_t i=0; i<msg.paramNames.size(); ++i) {
         SetParam(msg.paramNames[i], msg.paramValues[i]);
       }
