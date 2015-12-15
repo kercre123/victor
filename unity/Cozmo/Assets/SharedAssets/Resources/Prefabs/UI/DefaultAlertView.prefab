@@ -59,6 +59,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22456398}
   - 114: {fileID: 11464034}
+  - 225: {fileID: 22541362}
   m_Layer: 5
   m_Name: DefaultAlertView
   m_TagString: Untagged
@@ -527,6 +528,7 @@ MonoBehaviour:
   _Interactable: 1
   _DASEventName: Minigame Quit Pressed
   _TextLabel: {fileID: 11404376}
+  _TextLabelOffset: -5
   TextEnabledColor: {r: .972549021, g: .996078432, b: 1, a: 1}
   TextPressedColor: {r: .972549021, g: .996078432, b: 1, a: 1}
   TextDisabledColor: {r: .545098066, g: .627451003, b: .686274529, a: 1}
@@ -696,11 +698,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseDialogOnTapOutside: 1
+  DimBackground: 1
   _AlertTitleText: {fileID: 11467514}
   _AlertMessageText: {fileID: 11431532}
   _PrimaryButton: {fileID: 11424916}
   _SecondaryButton: {fileID: 11469680}
   _CloseButton: {fileID: 11492572}
+  _AlphaController: {fileID: 22541362}
 --- !u!114 &11465796
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -801,6 +805,7 @@ MonoBehaviour:
   _Interactable: 1
   _DASEventName: Minigame Quit Pressed
   _TextLabel: {fileID: 11416328}
+  _TextLabelOffset: -5
   TextEnabledColor: {r: .972549021, g: .996078432, b: 1, a: 1}
   TextPressedColor: {r: .972549021, g: .996078432, b: 1, a: 1}
   TextDisabledColor: {r: .545098066, g: .627451003, b: .686274529, a: 1}
@@ -879,6 +884,7 @@ MonoBehaviour:
   _Interactable: 1
   _DASEventName: Alert Close
   _TextLabel: {fileID: 11412732}
+  _TextLabelOffset: -5
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
   TextPressedColor: {r: .5, g: .5, b: .5, a: 1}
   TextDisabledColor: {r: .5, g: .5, b: .5, a: 1}
@@ -1354,6 +1360,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: -60, y: 0}
   m_Pivot: {x: .5, y: .5}
+--- !u!225 &22541362
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 123496}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
 --- !u!225 &22549914
 CanvasGroup:
   m_ObjectHideFlags: 1
@@ -1374,6 +1391,22 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: m_RaycastTarget
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: DimBackground
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _AlphaController
+      value: 
+      objectReference: {fileID: 22541362}
+    - target: {fileID: 0}
+      propertyPath: m_BlocksRaycasts
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_Interactable
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
