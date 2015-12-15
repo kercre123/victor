@@ -5,19 +5,24 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time
 
+CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython", "robot")
-## We odn't check for the directory existance because redistributable packages
-# relocate all the files to the same directory
-#if not os.path.isdir(TOOLS_DIR):
-#    sys.exit("Cannot find tools directory \"{}\". Are you running from the base robot directory?".format(TOOLS_DIR))
-#elif not os.path.isdir(CLAD_DIR):
-#    sys.exit("Cannot find CLAD directory \"{}\". Are you running from the base robot directory?".format(CLAD_DIR))
+
+if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
+    import subprocess
+    make = subprocess.Popen(["make", "python", "-C", "clad"])
+    if make.wait() != 0:
+        sys.exit("Could't build/update python clad, exit status {:d}\r\n".format(make.wait()))
+
 sys.path.insert(0, CLAD_DIR)
 
-from ReliableTransport import *
+try:
+    from ReliableTransport import *
+    from clad.robotInterface.messageEngineToRobot import Anki
+    from clad.robotInterface.messageRobotToEngine import Anki as _Anki
+except:
+    sys.exit("Can't import ReliableTransport / CLAD libraries!\r\n\t* Are you running from the base robot directory?\r\n")
 
-from clad.robotInterface.messageEngineToRobot import Anki
-from clad.robotInterface.messageRobotToEngine import Anki as _Anki
 Anki.update(_Anki.deep_clone())
 RI = Anki.Cozmo.RobotInterface # namespace shortcut
 
