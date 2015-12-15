@@ -220,14 +220,7 @@ namespace Anki {
           }
         }
       }
-
-      void ClearFace()
-      {
-        face_->setColor(0);
-        face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
-        face_->setColor(0x0000f0ff);
-      }
-
+      
       void FaceUpdate()
       {
         // Check if blinking
@@ -515,7 +508,7 @@ namespace Anki {
       face_ = webotRobot_.getDisplay("face_display");
       assert(face_->getWidth() == DISPLAY_WIDTH);
       assert(face_->getHeight() == DISPLAY_HEIGHT);
-      ClearFace();
+      FaceClear();
 
       isInitialized = true;
       return RESULT_OK;
@@ -1032,11 +1025,17 @@ namespace Anki {
       #endif
     }
 
+    void HAL::FaceClear()
+    {
+      face_->setColor(0);
+      face_->fillRectangle(0,0, DISPLAY_WIDTH, DISPLAY_HEIGHT);
+      face_->setColor(0x0000f0ff);
+    }
 
     void HAL::FaceAnimate(u8* src)
     {
       // Clear the display
-      ClearFace();
+      FaceClear();
 
       // Decode face
       FaceDisplayDecode(src, DISPLAY_HEIGHT, DISPLAY_WIDTH, faceFrame_);
@@ -1068,7 +1067,7 @@ namespace Anki {
       u8 w = DISPLAY_WIDTH - ABS(x);
       u8 h = DISPLAY_HEIGHT - ABS(y);
 
-      ClearFace();
+      FaceClear();
 
       for (u8 i = 0; i < w; ++i) {
         for (u8 j = 0; j < h; ++j) {
@@ -1087,7 +1086,7 @@ namespace Anki {
     void HAL::FaceBlink()
     {
       faceBlinkStartTime_ = GetTimeStamp();
-      ClearFace();
+      FaceClear();
     }
 
 
