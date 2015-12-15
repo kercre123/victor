@@ -51,7 +51,6 @@ namespace Cozmo.HubWorld {
 
     private void ShowHubWorldDialog() {
       // Create dialog with the game prefabs
-
       GameObject newView = GameObject.Instantiate(_HubWorldViewPrefab.gameObject);
       newView.transform.position = Vector3.zero;
 
@@ -62,6 +61,12 @@ namespace Cozmo.HubWorld {
 
       // Show the current state of challenges being locked/unlocked
       _HubWorldViewInstance.Initialize(_ChallengeStatesById);
+
+      // Make the robot do something while the player is picking a challenge
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
+      }
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -130,6 +135,12 @@ namespace Cozmo.HubWorld {
     }
 
     private void PlayMinigame(ChallengeData challengeData) {
+      // Reset the robot behavior
+      if (RobotEngineManager.Instance.CurrentRobot != null) {
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+        RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+      }
+
       GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
       _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
       _MiniGameInstance.InitializeMinigame(challengeData);
