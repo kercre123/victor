@@ -38,10 +38,6 @@ namespace Anki {
         // TODO: Find out what this actually is
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD(0.35f);
         
-        // If angle is within this tolerance of the desired angle
-        // we are considered to be in position
-        const f32 ANGLE_TOLERANCE = DEG_TO_RAD(1.5f);
-        
         // Initialized in Init()
         f32 LIFT_ANGLE_LOW_LIMIT;
 
@@ -418,7 +414,7 @@ namespace Anki {
         // Check if already at desired height
         if (inPosition_ &&
             (Height2Rad(newDesiredHeight) == desiredAngle_) &&
-            (ABS((desiredAngle_ - currentAngle_).ToFloat()) < ANGLE_TOLERANCE) ) {
+            (ABS((desiredAngle_ - currentAngle_).ToFloat()) < LIFT_ANGLE_TOL) ) {
           #if(DEBUG_LIFT_CONTROLLER)
           PRINT("LIFT: Already at desired height %f\n", newDesiredHeight);
           #endif
@@ -542,7 +538,7 @@ namespace Anki {
         
 
         // If accurately tracking current desired angle...
-        if((ABS(angleError) < ANGLE_TOLERANCE) && (desiredAngle_ == currDesiredAngle_)) {
+        if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_ == currDesiredAngle_)) {
           
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = HAL::GetTimeStamp();
