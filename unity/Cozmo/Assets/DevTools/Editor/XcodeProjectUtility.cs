@@ -5,6 +5,7 @@ using UnityEditor;
 using System;
 using System.Text.RegularExpressions;
 using System.Linq;
+using UnityEditor.Callbacks;
 
 namespace Xcode {
 
@@ -25,6 +26,13 @@ namespace Xcode {
 
       Debug.Log("Time To " + title + " (seconds): " + delta.TotalSeconds);
       step++;
+    }
+
+    [PostProcessBuild(1)]
+    public static void OnPostprocessBuild(BuildTarget target, string pathToBuiltProject) {
+      if (target == BuildTarget.iOS) {
+        FixupCozmoIos();
+      }
     }
 
     [MenuItem("Cozmo/Xcode/Fixup Cozmo_IOS Project")]
