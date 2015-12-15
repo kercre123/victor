@@ -25,7 +25,6 @@ namespace SpeedTap {
     private AudioClip _RollSound;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // TODO
       InitializeMinigameObjects();
     }
 
@@ -46,6 +45,21 @@ namespace SpeedTap {
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
+
+      // set idle parameters
+      Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementSpacingMin_ms,
+        Anki.Cozmo.LiveIdleAnimationParameter.LiftMovementSpacingMin_ms,
+        Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+      };
+
+      float[] paramValues = {
+        float.MaxValue,
+        float.MaxValue,
+        50.0f
+      };
+      CurrentRobot.SetIdleAnimation("_LIVE_");
+      CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
     }
 
     void Update() {
