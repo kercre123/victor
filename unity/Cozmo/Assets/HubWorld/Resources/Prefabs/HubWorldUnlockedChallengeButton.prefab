@@ -44,6 +44,7 @@ GameObject:
   - 224: {fileID: 22436402}
   - 114: {fileID: 11472562}
   - 114: {fileID: 11423902}
+  - 225: {fileID: 22501722}
   m_Layer: 5
   m_Name: HubWorldUnlockedChallengeButton
   m_TagString: Untagged
@@ -225,6 +226,17 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: .5, y: .5}
+--- !u!225 &22501722
+CanvasGroup:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 190438}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
