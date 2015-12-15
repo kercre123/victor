@@ -49,22 +49,18 @@ namespace Simon {
     public void PickNewSequence() {
       _CurrentIDSequence.Clear();
       int sequenceLength = Random.Range(3, 10);
-      int lastPickedID = -1;
       for (int i = 0; i < sequenceLength; ++i) {
         int pickedID = -1;
-        do {
-          int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
-          int j = 0;
-          foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
-            if (j == pickIndex) {
-              pickedID = kvp.Key;
-              break;
-            }
-            ++j;
+        int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
+        int j = 0;
+        foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
+          if (j == pickIndex) {
+            pickedID = kvp.Key;
+            break;
           }
-        } while (pickedID == lastPickedID);
+          ++j;
+        }
         _CurrentIDSequence.Add(pickedID);
-        lastPickedID = pickedID;
       }
     }
 
