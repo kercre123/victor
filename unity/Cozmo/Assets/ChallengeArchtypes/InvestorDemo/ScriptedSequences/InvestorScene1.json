@@ -6,6 +6,33 @@
   "Condition": null,
   "Nodes": [
     {
+      "Name": "0. Turn head down",
+      "Id": 13,
+      "Sequencial": true,
+      "Final": false,
+      "FailOnError": false,
+      "ExitOnActionsComplete": true,
+      "Conditions": [],
+      "Actions": [
+        {
+          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
+          "AnimationName": "ID_headDown",
+          "LoopForever": false,
+          "WaitToEnd": true
+        }
+      ],
+      "ExitConditions": [
+        {
+          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        },
+        {
+          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+          "AnyAnimation": false,
+          "AnimationName": "ID_sleeping_02"
+        }
+      ]
+    },
+    {
       "Name": "1. Sleeping (anim)",
       "Id": 8,
       "Sequencial": true,
@@ -17,13 +44,18 @@
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
           "AnimationName": "ID_sleeping_02",
-          "LoopForever": false,
+          "LoopForever": true,
           "WaitToEnd": true
         }
       ],
       "ExitConditions": [
         {
           "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
+        },
+        {
+          "$type": "ScriptedSequences.Conditions.AnimationComplete, Assembly-CSharp",
+          "AnyAnimation": false,
+          "AnimationName": "ID_sleeping_02"
         }
       ]
     },
@@ -38,51 +70,7 @@
       "Actions": [
         {
           "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "ID_wake_openEyes",
-          "LoopForever": false,
-          "WaitToEnd": true
-        }
-      ],
-      "ExitConditions": [
-        {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        }
-      ]
-    },
-    {
-      "Name": "3. Surprise (anim)",
-      "Id": 6,
-      "Sequencial": true,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "ID_reactTppl_Surprise",
-          "LoopForever": false,
-          "WaitToEnd": true
-        }
-      ],
-      "ExitConditions": [
-        {
-          "$type": "ScriptedSequences.Conditions.InvestorNextButtonPressed, Assembly-CSharp"
-        }
-      ]
-    },
-    {
-      "Name": "4. Get Off Charger (anim)",
-      "Id": 7,
-      "Sequencial": true,
-      "Final": false,
-      "FailOnError": false,
-      "ExitOnActionsComplete": true,
-      "Conditions": [],
-      "Actions": [
-        {
-          "$type": "ScriptedSequences.Actions.PlayCozmoAnimation, Assembly-CSharp",
-          "AnimationName": "ID_offCharger_thrustFwd",
+          "AnimationName": "ID_WakeUp",
           "LoopForever": false,
           "WaitToEnd": true
         }
