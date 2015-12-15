@@ -98,25 +98,27 @@ def IsProceduralAttribute(currattr):
     return False
 
 def GetAudioJSON():
-    audioNode = cmds.timeControl(mel.eval( '$tmpVar=$gPlayBackSlider' ),query=True, sound=True)
-    if( (audioNode  is not None) and (audioNode != "") ):
-        audioStart = cmds.sound(audioNode,query=True, offset=True)
-        audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
-        audioFile = cmds.sound(audioNode,query=True, file=True)
-
-        audioPathSplit = audioFile.split("/sounds/", 1)
-        if( len(audioPathSplit) < 2 ):
-            print "ERROR: no sound added, it must be in the sounds directory"
-            return None
-        audioFile = audioPathSplit[1]
-        audio_json = {         
-                        "audioName": [audioFile],
-                        "volume": 1.0,
-                        "triggerTime_ms": round(audioStart * 1000  / ANIM_FPS, 0),
-                        "durationTime_ms": round((audioEnd - audioStart) * 1000  / ANIM_FPS, 0),
-                        "Name": "RobotAudioKeyFrame"
-                    }
-        return audio_json
+    all_audio_clips = cmds.ls(type='audio')
+    if( len(all_audio_clips) > 0):
+        json_arr = []
+        for audioNode in all_audio_clips:
+            audioStart = cmds.sound(audioNode,query=True, offset=True)
+            audioEnd = cmds.sound(audioNode,query=True, sourceEnd=True)
+            audioFile = cmds.sound(audioNode,query=True, file=True)
+            audioPathSplit = audioFile.split("/sounds/", 1)
+            if( len(audioPathSplit) < 2 ):
+                print "ERROR: sound must be in the sounds directory"
+                continue
+            audioFile = audioPathSplit[1]
+            audio_json = {         
+                            "audioName": [audioFile],
+                            "volume": 1.0,
+                            "triggerTime_ms": round(audioStart * 1000  / ANIM_FPS, 0),
+                            "durationTime_ms": round((audioEnd - audioStart) * 1000  / ANIM_FPS, 0),
+                            "Name": "RobotAudioKeyFrame"
+                        }
+            json_arr.append(audio_json)
+        return json_arr
     else:
         print "No audio found"
     return None
@@ -390,7 +392,7 @@ def ExportAnkiAnim(item):
     #Grab the robot sounds from the main timeline, not a datanode attribute
     audio_json = GetAudioJSON()
     if( audio_json is not None):
-        json_arr.append(audio_json)
+        json_arr.extend(audio_json)
     #Grab the robot movement relative to the curve
     movement_json_arr = GetMovementJSON()
     if( movement_json_arr is not None):
