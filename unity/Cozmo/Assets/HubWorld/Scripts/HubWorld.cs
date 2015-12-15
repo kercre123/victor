@@ -211,13 +211,18 @@ namespace Cozmo.HubWorld {
       if (!DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallengeId)) {
         // Add the current challenge to the completed list
         DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallengeId);
-        _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.COMPLETED;
+        _ChallengeStatesById[completedChallengeId].currentState = ChallengeState.FRESHLY_COMPLETED;
 
         // Check all the locked challenges to see if any new ones unlocked.
         foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
           if (challengeState.currentState == ChallengeState.LOCKED) {
+            var lastState = challengeState.currentState;
             challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, 
               DataPersistenceManager.Instance.Data.CompletedChallengeIds);
+
+            if (lastState == ChallengeState.LOCKED && challengeState.currentState == ChallengeState.UNLOCKED) {
+              challengeState.currentState = ChallengeState.FRESHLY_UNLOCKED;
+            }
           }
         }
         DataPersistenceManager.Instance.Save();
@@ -260,6 +265,11 @@ namespace Cozmo.HubWorld {
   public enum ChallengeState {
     LOCKED,
     UNLOCKED,
-    COMPLETED
+    COMPLETED,
+
+    // these are used by the UI to know when to play animations. 
+    // HubWorldView will then bump them into unlocked or completed
+    FRESHLY_COMPLETED,
+    FRESHLY_UNLOCKED
   }
 }
