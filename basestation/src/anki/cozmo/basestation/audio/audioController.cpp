@@ -117,7 +117,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       "Init.bnk",
       "Music.bnk",
       "UI.bnk",
-      "VO.bnk",
+      "VO_Aria.bnk",
+      "VO_Cozmo.bnk",
       "Cozmo_Movement.bnk",
       "Debug.bnk",
     };
