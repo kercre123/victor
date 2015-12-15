@@ -217,10 +217,11 @@
 		EC28A47D0A2517D9E3A913ED /* RegisterMonoModules.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4F3A8324190E7AC89BF3ABD5 /* RegisterMonoModules.cpp */; };
 		1783BD77EA082D68F613F4F3 /* RegisterMonoModules.h in Sources */ = {isa = PBXBuildFile; fileRef = A8A7FFD6E8722A67BC4E889B /* RegisterMonoModules.h */; };
 		A1CA195FD8D417782F632417 /* libiPhone-lib.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 221E7052AF67C005801FA277 /* libiPhone-lib.a */; };
-		B4AC5ED531A4A6E9C9F74FDA /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4195E2A6C4AEA74BB7379B32 /* Images.xcassets */; };
-		C7785EFC621B79D19A6739CB /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = ACF0652EE7B9738270E325D0 /* LaunchScreen-iPhoneLandscape.png */; };
-		3736BD6D1A9A07A940789EBD /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = D70B9FAE5DFAD81DD03F0E5C /* LaunchScreen-iPhonePortrait.png */; };
-		95A307631D4CE2A52A7A8774 /* LaunchScreen-iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7E4CEE5F552FF33C8E35E310 /* LaunchScreen-iPhone.xib */; };
+		ACF0652EE7B9738270E325D0 /* backgroundTransfer.mm in Sources */ = {isa = PBXBuildFile; fileRef = B4AC5ED531A4A6E9C9F74FDA /* backgroundTransfer.mm */; };
+		3736BD6D1A9A07A940789EBD /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D70B9FAE5DFAD81DD03F0E5C /* Images.xcassets */; };
+		95A307631D4CE2A52A7A8774 /* LaunchScreen-iPhoneLandscape.png in Resources */ = {isa = PBXBuildFile; fileRef = 7E4CEE5F552FF33C8E35E310 /* LaunchScreen-iPhoneLandscape.png */; };
+		60884D8573AE72D1AD497E0E /* LaunchScreen-iPhonePortrait.png in Resources */ = {isa = PBXBuildFile; fileRef = 72D6E474D78103503774AB43 /* LaunchScreen-iPhonePortrait.png */; };
+		302A8A845EC504EB7F107615 /* LaunchScreen-iPhone.xib in Resources */ = {isa = PBXBuildFile; fileRef = 46202AB2A9BFC46CCBD6B7F4 /* LaunchScreen-iPhone.xib */; };
 /* End PBXBuildFile section */
 
 
@@ -452,10 +453,11 @@
 		4F3A8324190E7AC89BF3ABD5 /* RegisterMonoModules.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterMonoModules.cpp; path = UnityBuild/Libraries/RegisterMonoModules.cpp; sourceTree = "<group>"; };
 		A8A7FFD6E8722A67BC4E889B /* RegisterMonoModules.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegisterMonoModules.h; path = UnityBuild/Libraries/RegisterMonoModules.h; sourceTree = "<group>"; };
 		221E7052AF67C005801FA277 /* libiPhone-lib.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libiPhone-lib.a"; path = "UnityBuild/Libraries/libiPhone-lib.a"; sourceTree = "<group>"; };
-		4195E2A6C4AEA74BB7379B32 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "UnityBuild/Unity-iPhone/Images.xcassets"; sourceTree = "<group>"; };
-		ACF0652EE7B9738270E325D0 /* LaunchScreen-iPhoneLandscape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhoneLandscape.png"; path = "UnityBuild/LaunchScreen-iPhoneLandscape.png"; sourceTree = "<group>"; };
-		D70B9FAE5DFAD81DD03F0E5C /* LaunchScreen-iPhonePortrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhonePortrait.png"; path = "UnityBuild/LaunchScreen-iPhonePortrait.png"; sourceTree = "<group>"; };
-		7E4CEE5F552FF33C8E35E310 /* LaunchScreen-iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "LaunchScreen-iPhone.xib"; path = "UnityBuild/LaunchScreen-iPhone.xib"; sourceTree = "<group>"; };
+		B4AC5ED531A4A6E9C9F74FDA /* backgroundTransfer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = backgroundTransfer.mm; path = UnityBuild/Libraries/Plugins/iOS/backgroundTransfer.mm; sourceTree = "<group>"; };
+		D70B9FAE5DFAD81DD03F0E5C /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = "UnityBuild/Unity-iPhone/Images.xcassets"; sourceTree = "<group>"; };
+		7E4CEE5F552FF33C8E35E310 /* LaunchScreen-iPhoneLandscape.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhoneLandscape.png"; path = "UnityBuild/LaunchScreen-iPhoneLandscape.png"; sourceTree = "<group>"; };
+		72D6E474D78103503774AB43 /* LaunchScreen-iPhonePortrait.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "LaunchScreen-iPhonePortrait.png"; path = "UnityBuild/LaunchScreen-iPhonePortrait.png"; sourceTree = "<group>"; };
+		46202AB2A9BFC46CCBD6B7F4 /* LaunchScreen-iPhone.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = "LaunchScreen-iPhone.xib"; path = "UnityBuild/LaunchScreen-iPhone.xib"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -606,10 +608,10 @@
 			children = (
 				03DAAB104371B43A8B21F93B /* Classes */,
 				6E86286DA36E47A4F7B3425D /* Libraries */,
-				CF6435D35803FEA1D609DB40 /* Unity-iPhone */,
-				ACF0652EE7B9738270E325D0 /* LaunchScreen-iPhoneLandscape.png */,
-				D70B9FAE5DFAD81DD03F0E5C /* LaunchScreen-iPhonePortrait.png */,
-				7E4CEE5F552FF33C8E35E310 /* LaunchScreen-iPhone.xib */,
+				C7785EFC621B79D19A6739CB /* Unity-iPhone */,
+				7E4CEE5F552FF33C8E35E310 /* LaunchScreen-iPhoneLandscape.png */,
+				72D6E474D78103503774AB43 /* LaunchScreen-iPhonePortrait.png */,
+				46202AB2A9BFC46CCBD6B7F4 /* LaunchScreen-iPhone.xib */,
 			);
 			name = UnityBuild;
 			sourceTree = "<group>";
@@ -898,14 +900,31 @@
 				4F3A8324190E7AC89BF3ABD5 /* RegisterMonoModules.cpp */,
 				A8A7FFD6E8722A67BC4E889B /* RegisterMonoModules.h */,
 				221E7052AF67C005801FA277 /* libiPhone-lib.a */,
+				CF6435D35803FEA1D609DB40 /* Plugins */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
 		};
-		CF6435D35803FEA1D609DB40 /* Unity-iPhone */ = {
+		CF6435D35803FEA1D609DB40 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
-				4195E2A6C4AEA74BB7379B32 /* Images.xcassets */,
+				4195E2A6C4AEA74BB7379B32 /* iOS */,
+			);
+			name = Plugins;
+			sourceTree = "<group>";
+		};
+		4195E2A6C4AEA74BB7379B32 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				B4AC5ED531A4A6E9C9F74FDA /* backgroundTransfer.mm */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		C7785EFC621B79D19A6739CB /* Unity-iPhone */ = {
+			isa = PBXGroup;
+			children = (
+				D70B9FAE5DFAD81DD03F0E5C /* Images.xcassets */,
 			);
 			name = "Unity-iPhone";
 			sourceTree = "<group>";
@@ -985,10 +1004,10 @@
 				1C8935093980A7C2D70C950F /* web.config in Resources */,
 				EA1A4F7CF1927D5F9E2511AF /* Compat.browser in Resources */,
 				1456E1EDF44E7B43DE9F5E4A /* config.xml in Resources */,
-				B4AC5ED531A4A6E9C9F74FDA /* Images.xcassets in Resources */,
-				C7785EFC621B79D19A6739CB /* LaunchScreen-iPhoneLandscape.png in Resources */,
-				3736BD6D1A9A07A940789EBD /* LaunchScreen-iPhonePortrait.png in Resources */,
-				95A307631D4CE2A52A7A8774 /* LaunchScreen-iPhone.xib in Resources */,
+				3736BD6D1A9A07A940789EBD /* Images.xcassets in Resources */,
+				95A307631D4CE2A52A7A8774 /* LaunchScreen-iPhoneLandscape.png in Resources */,
+				60884D8573AE72D1AD497E0E /* LaunchScreen-iPhonePortrait.png in Resources */,
+				302A8A845EC504EB7F107615 /* LaunchScreen-iPhone.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1171,6 +1190,7 @@
 				7A84D11D0D45D099D285362D /* Il2CppOptions.cpp in Sources */,
 				4543ED64DEB031DCF507DCC4 /* RegisterFeatures.cpp in Sources */,
 				EC28A47D0A2517D9E3A913ED /* RegisterMonoModules.cpp in Sources */,
+				ACF0652EE7B9738270E325D0 /* backgroundTransfer.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
