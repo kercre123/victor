@@ -47,21 +47,6 @@ namespace SpeedTap {
 
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
-
-      // set idle parameters
-      /*Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
-        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementSpacingMin_ms,
-        Anki.Cozmo.LiveIdleAnimationParameter.LiftMovementSpacingMin_ms,
-        Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
-      };
-
-      float[] paramValues = {
-        float.MaxValue,
-        float.MaxValue,
-        50.0f
-      };
-      CurrentRobot.SetIdleAnimation("_LIVE_");
-      CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);*/
     }
 
     void Update() {
