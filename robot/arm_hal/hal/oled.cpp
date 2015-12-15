@@ -287,7 +287,7 @@ namespace Anki
         GPIO_RESET(GPIO_CMD, PIN_CMD);
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
         
-#if 0        
+        /*
         // Draw "programmer art" face until we get real assets
         u8 face[] = {
           CLEAR_COL(24),
@@ -300,19 +300,22 @@ namespace Anki
           COPY_COL(15),
           CLEAR_COL(24)
         };
-#else
+        FaceAnimate(face);        
+        */
+
+        FaceClear();        
+      }
+      
+      void FaceClear()
+      {
         // Empty face
         u8 face[] = {
-          CLEAR_COL(60),
-          CLEAR_COL(60),
-          CLEAR_COL(8)
+           CLEAR_COL(60),
+           CLEAR_COL(60),
+           CLEAR_COL(8)
         };
-#endif        
-        
         FaceAnimate(face);
-        
       }
-
 
       // Update the face to the next frame of an animation
       // @param frame - a pointer to a variable length frame of face animation data
