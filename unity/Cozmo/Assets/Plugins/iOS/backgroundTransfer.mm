@@ -77,6 +77,9 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
   // Start the task
   [task resume];
    */
+  
+  // This completionHandler will be called at the end of the task run above, so remove it from here when implementing
+  completionHandler(UIBackgroundFetchResultNewData);
 }
 
 @end
