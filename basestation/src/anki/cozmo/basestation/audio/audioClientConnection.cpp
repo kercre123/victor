@@ -46,6 +46,17 @@ void AudioClientConnection::HandleMessage( const PostAudioEvent& eventMessage )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioClientConnection::HandleMessage( const StopAllAudioEvents& stopEventMessage )
+{
+  if ( nullptr != _server ) {
+    _server->ProcessMessage( stopEventMessage, GetConnectionId() );
+  }
+  else {
+    PRINT_NAMED_ERROR( "AudioClientConnection.HandleMessage" , "Server is NULL" );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioClientConnection::HandleMessage( const PostAudioGameState& gameStateMessage )
 {
   if ( nullptr != _server ) {

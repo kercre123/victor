@@ -24,6 +24,7 @@ namespace Audio {
 
 class AudioServer;
 struct PostAudioEvent;
+struct StopAllAudioEvents;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
@@ -53,6 +54,7 @@ public:
 protected:
   
   virtual void HandleMessage( const PostAudioEvent& eventMessage );
+  virtual void HandleMessage( const StopAllAudioEvents& stopEventMessage );
   virtual void HandleMessage( const PostAudioGameState& gameStateMessage );
   virtual void HandleMessage( const PostAudioSwitchState& switchStateMessage );
   virtual void HandleMessage( const PostAudioParameter& parameterMessage );

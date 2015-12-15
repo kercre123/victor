@@ -7,8 +7,8 @@ CLAD_DEPENDENCIES=$(CLAD_LIB_DIR)/*.py
 CLAD_CPP=$(CLAD_EMITTER_DIR)/CPP_emitter.py
 CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_PYTHON=$(CLAD_EMITTER_DIR)/Python_emitter.py
-CLAD_CPP_DECL=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_declarations_emitter.py
-CLAD_CPP_SWITCH=$(CLAD_EMITTER_DIR)/specialized/cozmo_CPP_switch_emitter.py
+CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
+CLAD_CPP_SWITCH=./cozmo_CPP_switch_emitter.py
 
 OUTPUT_DIR:=../generated/clad/
 OUTPUT_DIR_CSHARP=../generated/cladCsharp/
