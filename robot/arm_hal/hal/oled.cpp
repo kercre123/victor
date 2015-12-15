@@ -275,8 +275,8 @@ namespace Anki
         EnqueueWrite(DATA, m_frame, sizeof(m_frame));
       }
 
-      #define CLEAR_ROW(x)      (0x00 | x)
-      #define COPY_ROW(x)       (0x40 | x)
+      #define CLEAR_COL(x)      (0x00 | x)
+      #define COPY_COL(x)       (0x40 | x)
       #define RLE_PATTERN(c, p) (0x80 | (c << 2) | p)
 
       void OLEDInit(void)
@@ -286,20 +286,31 @@ namespace Anki
         // Init sequence for 128x64 OLED module
         GPIO_RESET(GPIO_CMD, PIN_CMD);
         EnqueueWrite(COMMAND, InitDisplay, sizeof(InitDisplay));
-
+        
+#if 0        
         // Draw "programmer art" face until we get real assets
         u8 face[] = {
-          CLEAR_ROW(24),
+          CLEAR_COL(24),
           RLE_PATTERN(12, 0),
           RLE_PATTERN(8, 3),
-          COPY_ROW(15),
+          COPY_COL(15),
           CLEAR_ROW(48),
           RLE_PATTERN(12, 0),
           RLE_PATTERN(8, 3),
-          COPY_ROW(15),
-          CLEAR_ROW(24)
+          COPY_COL(15),
+          CLEAR_COL(24)
         };
+#else
+        // Empty face
+        u8 face[] = {
+          CLEAR_COL(60),
+          CLEAR_COL(60),
+          CLEAR_COL(8)
+        };
+#endif        
+        
         FaceAnimate(face);
+        
       }
 
 
