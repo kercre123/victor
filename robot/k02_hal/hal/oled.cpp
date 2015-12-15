@@ -24,7 +24,8 @@ const uint8_t I2C_SINGLE        = 0x80;
 
 const int SCREEN_WIDTH = 128;
 const int SCREEN_HEIGHT = 64;
-const int MAX_FACE_POSITIONS = SCREEN_WIDTH * SCREEN_HEIGHT / 8 / MAX_SCREEN_BYTES_PER_DROP;
+const int FRAME_BUFFER_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT / 8;
+const int MAX_FACE_POSITIONS = FRAME_BUFFER_SIZE / MAX_SCREEN_BYTES_PER_DROP;
 
 // Display constants
 static const uint8_t InitDisplay[] = {
@@ -39,7 +40,7 @@ static const uint8_t InitDisplay[] = {
   I2C_COMMAND | I2C_SINGLE, CHARGEPUMP,
   I2C_COMMAND | I2C_SINGLE, 0x14, 
   I2C_COMMAND | I2C_SINGLE, MEMORYMODE,
-  I2C_COMMAND | I2C_SINGLE, 0x00, 
+  I2C_COMMAND | I2C_SINGLE, 0x01,
   I2C_COMMAND | I2C_SINGLE, SEGREMAP | 0x1,
   I2C_COMMAND | I2C_SINGLE, COMSCANDEC,
   I2C_COMMAND | I2C_SINGLE, SETCOMPINS,
@@ -84,14 +85,20 @@ void Anki::Cozmo::HAL::OLED::Init(void) {
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), ResetCursor, sizeof(ResetCursor), NULL);
 }
 
+void Anki::Cozmo::HAL::OLED::SendFrame(uint8_t *frame, i2c_callback cb) {
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), frame, FRAME_BUFFER_SIZE, cb);
+}
+
 void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
   if (address != FaceCopyLocation || PrintFaceLock) return ;
 
   static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
-
-  memcpy(bytes, face_bytes, sizeof(bytes));  
+  memcpy(bytes, face_bytes, MAX_SCREEN_BYTES_PER_DROP);  
+  
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL, I2C_OPTIONAL | I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, sizeof(bytes), NULL);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, MAX_SCREEN_BYTES_PER_DROP, NULL);
   FaceCopyLocation = (FaceCopyLocation + 1) % MAX_FACE_POSITIONS;
 }
 
@@ -163,9 +170,7 @@ extern "C" void FacePrintf(const char *format, ...) {
 
   PrintFaceLock = true;
 
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), NULL);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), FrameBuffer, px_ptr, &FinishFace);
+  OLED::SendFrame(FrameBuffer, &FinishFace);
   
   while (!PrintComplete)  __asm { WFI } ;
 }

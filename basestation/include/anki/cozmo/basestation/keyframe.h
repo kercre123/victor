@@ -53,8 +53,6 @@ namespace Cozmo {
     //IKeyFrame(const Json::Value& root);
     ~IKeyFrame();
     
-    bool IsValid() const { return _isValid; }
-    
     // Returns true if current time has reached frame's "trigger" time, relative
     // to the given start time
     bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
@@ -93,8 +91,7 @@ namespace Cozmo {
     // A random number generator for all keyframes to share (for adding variability)
     static Util::RandomGenerator sRNG;
 
-    TimeStamp_t   _triggerTime_ms;
-    bool          _isValid;
+    TimeStamp_t   _triggerTime_ms = 0;
     
   }; // class IKeyFrame
   

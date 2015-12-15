@@ -289,7 +289,7 @@ namespace Vision {
     }
     
     // Find max output and return its index
-    float maxVal = std::numeric_limits<float>::min();
+    float maxVal = std::numeric_limits<float>::lowest();
     for(s32 i=0; i<output.size(); ++i) {
       if(output[i] > maxVal) {
         classLabel = i;

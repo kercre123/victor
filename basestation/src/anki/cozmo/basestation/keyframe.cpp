@@ -36,8 +36,6 @@ namespace Anki {
     Util::RandomGenerator IKeyFrame::sRNG;
     
     IKeyFrame::IKeyFrame()
-    : _triggerTime_ms(0)
-    , _isValid(false)
     {
       
     }
@@ -62,10 +60,6 @@ namespace Anki {
         lastResult = RESULT_FAIL;
       } else {
         _triggerTime_ms = json["triggerTime_ms"].asUInt();
-        
-        // Only way to set isValid=true is that SetMembersFromJson succeeded and
-        // triggerTime was found:
-        _isValid = true;
       }
       
       if(lastResult == RESULT_OK) {
@@ -113,7 +107,7 @@ return RESULT_FAIL; \
       // Add variability:
       if(_angleVariability_deg > 0) {
         _streamHeadMsg.angle_deg = static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
-                                                                       _angle_deg + _angleVariability_deg));
+                                                                           _angle_deg + _angleVariability_deg));
       } else {
         _streamHeadMsg.angle_deg = _angle_deg;
       }

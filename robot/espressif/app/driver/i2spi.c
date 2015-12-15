@@ -20,8 +20,8 @@
 extern bool i2spiSynchronizedCallback(uint32 param);
 
 // Forward declaration
-bool PumpAudioData(uint8_t* dest);
-int  PumpScreenData(uint8_t* dest);
+bool    PumpAudioData(uint8_t* dest);
+uint8_t PumpScreenData(uint8_t* dest);
 
 #define min(a, b) (a < b ? a : b)
 #define asDesc(x) ((struct sdio_queue*)(x))
@@ -149,16 +149,14 @@ bool makeDrop(uint8_t* payload, uint8_t length)
   drop.preamble = TO_RTIP_PREAMBLE;
   // Fill in the drop itself
   if (PumpAudioData(drop.audioData)) drop.droplet |= audioDataValid;
+  
   if (screenTxFraction++ < TX_SCREEN_DATA_EVERY)
   {
-    const int screenInd = PumpScreenData(drop.screenData);
-    if (screenInd == (screenInd & 0xff))
-    {
-      drop.droplet  |= screenDataValid;
-      drop.screenInd = screenInd & 0xff;
-    }
+    drop.screenInd = PumpScreenData(drop.screenData);
+    drop.droplet  |= screenDataValid;
   }
-  if (screenTxFraction >= TX_SCREEN_DATA_OUTOF) screenTxFraction = 0;
+  else if (screenTxFraction >= TX_SCREEN_DATA_OUTOF) screenTxFraction = 0;
+  
   if (payload != NULL)
   {
     os_memcpy(&(drop.payload), payload, length);

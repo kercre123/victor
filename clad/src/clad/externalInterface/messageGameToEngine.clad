@@ -552,7 +552,8 @@ message DisplayProceduralFace {
 message SetLiveIdleAnimationParameters {
   LiveIdleAnimationParameter   paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
-  uint_8                       robotID
+  uint_8                       robotID,
+  bool                         setUnspecifiedToDefault = 0
 }
 
 // VisualizeQuad

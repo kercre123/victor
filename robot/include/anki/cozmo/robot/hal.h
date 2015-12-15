@@ -435,6 +435,9 @@ namespace Anki
       // last called.
       void FaceMove(s32 x, s32 y);
 
+      // Clear the currently animated face
+      void FaceClear();
+      
       // Blink the eyes
       void FaceBlink();
 

@@ -66,9 +66,18 @@ namespace BackpackLightController {
     }
     _enable = true;
     
+    // Initial power on lights
+    LightState *p = &_ledParams[LED_BACKPACK_BACK];
+    p->onColor = 0x00ff0000;
+    p->offColor = 0x00880000;
+    p->onPeriod_ms = 500;
+    p->offPeriod_ms = 500;
+    p->transitionOnPeriod_ms = 4500;
+    p->transitionOffPeriod_ms = 4500;
+
     
     // Set charging light params
-    LightState *p = &_chargingParams[LED_BACKPACK_BACK];
+    p = &_chargingParams[LED_BACKPACK_BACK];
     p->onColor = 0x00ff0000;
     p->offColor = 0x0;
     p->onPeriod_ms = 1000;

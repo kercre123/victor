@@ -96,6 +96,7 @@ void InvestorDemoFacesAndBlocksBehaviorChooser::SetupBehaviors(Robot& robot, con
   BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
   
   super::AddBehavior( behaviorFactory.CreateBehavior(BehaviorType::NoneBehavior, robot, config) );
+  super::AddBehavior( behaviorFactory.CreateBehavior(BehaviorType::Fidget,       robot, config) );
   
   {
     BehaviorLookAround_investorDemo* lookAround = new BehaviorLookAround_investorDemo(robot, config);

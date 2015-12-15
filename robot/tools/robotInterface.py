@@ -92,7 +92,8 @@ class _Dispatcher(IDataReceiver):
         try:
             msg = RI.RobotToEngine.unpack(buffer)
         except Exception as e:
-            sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(ord(buffer[0]), len(buffer), str(e)))
+            tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
+            sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]\r\n\t{2:s}\r\n".format(tag, len(buffer), str(e)))
         else:
             if msg.tag == msg.Tag.printText:
                 sys.stdout.write("ROBOT: " + msg.printText.text)

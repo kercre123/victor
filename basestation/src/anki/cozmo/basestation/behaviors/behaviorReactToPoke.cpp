@@ -93,7 +93,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
     case State::ReactToPoke:
     {
       // Decrease happy
-      robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeMedium, "Poked");
+      robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked");
       
       // Do startled animation
       s32 animIndex = robot.GetLastMsgTimestamp() % _animStartled.size(); // Randomly select anim to play

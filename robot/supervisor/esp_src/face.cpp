@@ -16,7 +16,7 @@ namespace Face {
 
   namespace { // Anonymous namespace for "private" members
     u64 m_frame[COLS];
-    s16 _pumpByte;
+    u8   _pumpByte;
     bool _textMode;
     
     // 96 characters from ASCII 32 to 127, each 5x8 pixels in 5 bytes oriented vertically
@@ -82,15 +82,11 @@ namespace Face {
   }
   
   // Pump face buffer data out to OLED
-  extern "C" int PumpScreenData(uint8_t* dest)
+  extern "C" uint8_t PumpScreenData(uint8_t* dest)
   {
-    const int ret = _pumpByte;
-    memcpy(&dest, (u8*)m_frame + _pumpByte, MAX_SCREEN_BYTES_PER_DROP);
-    _pumpByte += MAX_SCREEN_BYTES_PER_DROP;
-    if (_pumpByte >= (ROWS * COLS / 8))
-    {
-      _pumpByte = 0;
-    }
+    const uint8_t ret = _pumpByte;
+    memcpy(dest, ((uint8_t*)m_frame) + (_pumpByte * MAX_SCREEN_BYTES_PER_DROP), MAX_SCREEN_BYTES_PER_DROP);
+    _pumpByte++;
     return ret;
   }
   

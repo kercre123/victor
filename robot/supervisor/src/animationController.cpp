@@ -604,7 +604,15 @@ namespace AnimationController {
 #             endif
               GetFromBuffer(&msg);
               terminatorFound = true;
-              StopTracksInUse();
+              
+              // Failsafe: make sure body stops moving when we hit end of animation
+              // We don't have to do this with lift/head, because they will stop
+              // when the controller reaches its desired value.
+              if(_tracksInUse & BODY_TRACK) {
+                SteeringController::ExecuteDirectDrive(0, 0);
+              }
+              
+              _tracksInUse = 0;
               break;
             }
               

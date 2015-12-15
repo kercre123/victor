@@ -119,12 +119,23 @@ void PhysVizController::Draw(int pass, const char *view)
 
       // Draw the path
       glBegin(GL_LINE_STRIP);
-
       for (auto pathIt = pathMapIt->second.begin(); pathIt != pathMapIt->second.end(); pathIt++) {
-        glVertex3f((*pathIt)[0],(*pathIt)[1],(*pathIt)[2] + _heightOffset);
+        glVertex3f(pathIt->x,pathIt->y,pathIt->z + _heightOffset);
       }
       glEnd();
 
+      
+      // Draw segment start markers
+      glColor4ub(230, 230, 0, 255); // yellow marker
+      for (auto pathIt = pathMapIt->second.begin(); pathIt != pathMapIt->second.end(); pathIt++) {
+        if (pathIt->isStartOfSegment) {
+          glPushMatrix();
+          glTranslatef(pathIt->x,pathIt->y,pathIt->z + _heightOffset);
+          glutSolidCube(0.001);
+          glPopMatrix();
+        }
+      }
+      
       // Restore default color
       //glColor3f(DEFAULT_COLOR[0], DEFAULT_COLOR[1], DEFAULT_COLOR[2]);
       glColor4ub(::Anki::NamedColors::DEFAULT.r(),
@@ -360,8 +371,8 @@ void PhysVizController::ProcessVizAppendPathSegmentLineMessage(const AnkiEvent<V
   const auto& payload = msg.GetData().Get_AppendPathSegmentLine();
   PRINT("Processing AppendLine\n");
 
-  std::vector<float> startPt = {payload.x_start_m, payload.y_start_m, payload.z_start_m};
-  std::vector<float> endPt = {payload.x_end_m, payload.y_end_m, payload.z_end_m};
+  PathPoint startPt(payload.x_start_m, payload.y_start_m, payload.z_start_m, true);
+  PathPoint endPt(payload.x_end_m, payload.y_end_m, payload.z_end_m);
 
   _pathMap[payload.pathID].push_back(startPt);
   _pathMap[payload.pathID].push_back(endPt);
@@ -409,10 +420,12 @@ void PhysVizController::ProcessVizAppendPathSegmentArcMessage(const AnkiEvent<Vi
   float dx,dy;//,cosCurrRad;
   //dWebotsConsolePrintf("***** ARC rad %f (%f to %f), radius %f\n", currRad, startRad, endRad, radius);
 
+  bool firstPt = true;
   while (currRad*dir < endRad*dir) {
     dx = (float)(cos(currRad) * radius);
     dy = (float)(sin(currRad) * radius);
-    std::vector<float> pt = {center_x + dx, center_y + dy, center_z};
+    PathPoint pt(center_x + dx, center_y + dy, center_z, firstPt);
+    firstPt = false;
     _pathMap[payload.pathID].push_back(pt);
     currRad += dir * _arcRes_rad;
   }

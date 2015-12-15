@@ -15,6 +15,10 @@
 
 #define DEBUG_ANIMATION_STREAMING 0
 
+// If 1, plays audio for physical robot on device too.
+// If 0, only plays audio meant for sim robot on device.
+// Only works if PLAY_ROBOT_AUDIO_ON_DEVICE == 1
+#define PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO 0
 
 namespace Anki {
 namespace Cozmo {
@@ -907,21 +911,23 @@ namespace Cozmo {
     
 #   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-    for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
-    {
-      if(!anim->HasFramesLeft() ||   // If all tracks buffered already, then play this now.
-         ((_playedRobotAudio_ms < _startTime_ms + audioKF->GetTriggerTime()) &&
-          audioKF->IsTimeToPlay(_startTime_ms,  currTime_ms)))
+    if (PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO || !robot.IsPhysical()) {
+      for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
       {
-        // TODO: Insert some kind of small delay to simulate latency?
-        SoundManager::getInstance()->Play(audioKF->GetSoundName());
-        _playedRobotAudio_ms = currTime_ms;
-        
-        _lastPlayedOnDeviceRobotAudioKeyFrame = audioKF;
-        _onDeviceRobotAudioKeyFrameQueue.pop_front();
+        if(!anim->HasFramesLeft() ||   // If all tracks buffered already, then play this now.
+           ((_playedRobotAudio_ms < _startTime_ms + audioKF->GetTriggerTime()) &&
+            audioKF->IsTimeToPlay(_startTime_ms,  currTime_ms)))
+        {
+          // TODO: Insert some kind of small delay to simulate latency?
+          SoundManager::getInstance()->Play(audioKF->GetSoundName());
+          _playedRobotAudio_ms = currTime_ms;
+          
+          _lastPlayedOnDeviceRobotAudioKeyFrame = audioKF;
+          _onDeviceRobotAudioKeyFrameQueue.pop_front();
+        }
       }
     }
-#   endif
+#   endif // PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
 #   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
     // Send an end-of-animation keyframe when done
