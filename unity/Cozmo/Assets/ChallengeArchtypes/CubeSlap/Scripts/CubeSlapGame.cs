@@ -9,6 +9,8 @@ namespace CubeSlap {
     private float _MaxSlapDelay;
     private int _SuccessGoal;
     private int _SuccessCount;
+    private bool _AttemptedSlap = false;
+    private bool _CliffFlagTrown = false;
 
     private LightCube _CurrentTarget = null;
     private float _LastSeenTargetTime = -1;
@@ -31,67 +33,84 @@ namespace CubeSlap {
       _StateMachineManager.AddStateMachine("CubeSlapStateMachine", _StateMachine);
 
       CurrentRobot.SetBehaviorSystem(false);
-
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+
+      RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
+
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SeekState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
     }
 
     private void InitialCubesDone() {
-      Debug.Log("Cube Slap : Cube Setup Confirmed");
+      _CurrentTarget = GetClosestAvailableBlock();
     }
 
     void Update() {
       _StateMachineManager.UpdateAllMachines();
-      if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
-        if (Time.time - _LastSeenTargetTime > 2.0f) {
-          if (_CurrentTarget != null) {
-            _CurrentTarget.SetLEDs(0);
-          }
-          // we haven't seen the current target for more than 2 seconds
-          // so let's try to find a new one.
-          _CurrentTarget = FindNewTarget();
-          _LastSeenTargetTime = Time.time;
-        }
-      }
-      else {
-        _LastSeenTargetTime = Time.time;
-      }
     }
 
     protected override void CleanUpOnDestroy() {
+
+      RobotEngineManager.Instance.OnCliffEvent -= HandleCliffEvent;
       
     }
 
     public LightCube GetCurrentTarget() {
+      if (_CurrentTarget == null) {
+        _CurrentTarget = GetClosestAvailableBlock();
+      }
       return _CurrentTarget;
     }
 
-    private LightCube FindNewTarget() {
-      for (int i = 0; i < CurrentRobot.VisibleObjects.Count; ++i) {
-        float distance = Vector3.Distance(CurrentRobot.WorldPosition, CurrentRobot.VisibleObjects[i].WorldPosition);
-        float relDot = Vector3.Dot(CurrentRobot.Forward, (CurrentRobot.VisibleObjects[i].WorldPosition - CurrentRobot.WorldPosition).normalized);
+    private LightCube GetClosestAvailableBlock() {
+      float minDist = float.MaxValue;
+      ObservedObject closest = null;
 
-        if (distance > 100.0f && relDot > 0.8f && CurrentRobot.VisibleObjects[i] is LightCube) {
-          return CurrentRobot.VisibleObjects[i] as LightCube;
+      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
+        if (CurrentRobot.SeenObjects[i] is LightCube) {
+          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
+          if (d < minDist) {
+            minDist = d;
+            closest = CurrentRobot.SeenObjects[i];
+          }
         }
       }
-      return null;
+      return closest as LightCube;
     }
 
     // Attempt the pounce
     public void AttemptSlap() {
       // Enter Animation State to attempt a pounce.
       // Set Callback for HandleEndSlapAttempt
+      _AttemptedSlap = true;
+      _CliffFlagTrown = false;
+      CurrentRobot.SendAnimation(AnimationName.kTapCube, HandleEndSlapAttempt); // TODO: Replace with new animation
     }
 
     private void HandleEndSlapAttempt(bool success) {
-      // If the animation completes Cozmo is no longer on top of the Cube,
-      // The player has won
-
-      // If the animation completes and the cube is still beneath Cozmo,
+      _AttemptedSlap = false;
+      // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
+      if (_CliffFlagTrown) {
+        OnFailure();
+        return;
+      }
+      else {
+        // If the animation completes Cozmo is not on top of the Cube,
+        // The player has won this round
+        OnSuccess();
+      }
+    }
+
+    private void HandleCliffEvent() {
+      if (_AttemptedSlap) {
+        _CliffFlagTrown = true;
+      }
+      else {
+        // Someone is tampering with Cozmo, DISQUALIFIED!!!
+        OnFailure();
+      }
     }
 
     public void OnSuccess() {
@@ -99,6 +118,9 @@ namespace CubeSlap {
       Progress = _SuccessCount / _SuccessGoal;
       if (_SuccessCount >= _SuccessGoal) {
         RaiseMiniGameWin();
+      }
+      else {
+        _StateMachine.SetNextState(new SeekState());
       }
     }
 

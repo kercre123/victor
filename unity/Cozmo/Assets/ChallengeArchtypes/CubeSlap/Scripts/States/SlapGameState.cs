@@ -13,17 +13,36 @@ namespace CubeSlap {
       base.Enter();
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
       _SlapDelay = _CubeSlapGame.GetSlapDelay();
-      _FirstTimestamp = Time.time;
+      _FirstTimestamp = Time.time; 
     }
 
     public override void Update() {
       base.Update();
-      // TODO: Check to see if there's been a change of state to make sure that Cozmo hasn't been tampered with
+      // Check to see if there's been a change of state to make sure that Cozmo hasn't been tampered with
       // and that players haven't already pulled the cube too early. If they have, return to the Seek state and automatically
       // trigger a failure on the player's part.
-      if (!_SlapTriggered && Time.time - _FirstTimestamp > _SlapDelay) {
-        _CubeSlapGame.AttemptSlap();
-        _SlapTriggered = true;
+      if (!_SlapTriggered) {
+        // If the slap hasn't been triggered, check to make sure the Cube hasn't been tampered with.
+        // If the cube is not visible or it has moved outside of the ideal range, trigger a failure.
+        LightCube target = _CubeSlapGame.GetCurrentTarget();
+        if (target != null) {
+          bool didFail = true;
+          // Unless the cube is in the right position, trigger a failure since you moved it
+          if (target.MarkersVisible) {
+            float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
+            if (distance < 60.0f) {
+              didFail = false;
+            }
+          }
+          if (didFail) {
+            _CubeSlapGame.OnFailure();
+          }
+        }
+
+        if (Time.time - _FirstTimestamp > _SlapDelay) {
+          _CubeSlapGame.AttemptSlap();
+          _SlapTriggered = true;
+        }
       }
     }
 
