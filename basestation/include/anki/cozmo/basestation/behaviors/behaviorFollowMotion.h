@@ -56,7 +56,7 @@ private:
   
   // Internal state of the behavior:
   State       _state;
-  u32         _actionRunning = 0;
+  u32         _actionRunning = (u32)ActionConstants::INVALID_TAG;
   u8          _originalVisionModes = 0;
   bool        _initialReactionAnimPlayed = false;
   double      _lastInterruptTime_sec = std::numeric_limits<double>::lowest(); // Not min(), which is +ve!

@@ -1350,9 +1350,6 @@ namespace Anki {
         return facePoseInitResult;
       }
       
-      // Can't track head to an object and face it
-      robot.GetMoveComponent().UnSetTrackToFace();
-      
       // Disable completion signals since this is inside another action
       _visuallyVerifyAction.SetEmitCompletionSignal(false);
       
@@ -1392,7 +1389,14 @@ namespace Anki {
       }
 
       if(_headTrackWhenDone) {
-        robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, new TrackObjectAction(_objectID));
+        ActionList::SlotHandle inSlot = GetSlotHandle();
+        if(ActionList::UnknownSlot == inSlot) {
+          PRINT_NAMED_WARNING("FaceObjectAction.CheckIfDone.UnknownSlot",
+                              "Queuing TrackObjectAction because headTrackWhenDone==true, but "
+                              "slot unknown. Using DriveAndManipulateSlot");
+          inSlot = Robot::DriveAndManipulateSlot;
+        }
+        robot.GetActionList().QueueActionNext(inSlot, new TrackObjectAction(_objectID));
       }
       
       return ActionResult::SUCCESS;

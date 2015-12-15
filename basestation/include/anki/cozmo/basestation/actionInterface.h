@@ -18,6 +18,8 @@
 #include "anki/common/basestation/math/pose.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/actionContainers.h"
+
 #include "clad/types/actionTypes.h"
 
 #include "util/random/randomGenerator.h"
@@ -119,6 +121,12 @@ namespace Anki {
       void SetEmitCompletionSignal(bool shouldEmit) { _emitCompletionSignal = shouldEmit; }
       bool GetEmitCompletionSignal() const { return _emitCompletionSignal; }
       
+      // Keep track of which ActionList "slot" an action is in. For example,
+      // this will let an action queue a subsequent action in its same slot.
+      // The ActionList will set this automatically when queuing an action.
+      void SetSlotHandle(ActionList::SlotHandle inSlot) { _inSlot = inSlot; }
+      ActionList::SlotHandle GetSlotHandle() const { return _inSlot; }
+      
     protected:
       
       virtual ActionResult UpdateInternal(Robot& robot) = 0;
@@ -146,6 +154,8 @@ namespace Anki {
       bool          _emitCompletionSignal   = true;
       
       u32           _idTag;
+      
+      ActionList::SlotHandle _inSlot = ActionList::UnknownSlot;
       
       static u32    sTagCounter;
       

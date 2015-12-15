@@ -93,11 +93,9 @@ void MovementComponent::HandleMessage(const ExternalInterface::SetHeadAngle& msg
     PRINT_NAMED_INFO("MovementComponent.EventHandler.SetHeadAngle.HeadLocked",
                      "Ignoring ExternalInterface::SetHeadAngle while head is locked.");
   } else {
-    // Disable all tracking
-    _robot.GetActionList().Cancel(-1, RobotActionType::TRACK_FACE);
-    _robot.GetActionList().Cancel(-1, RobotActionType::TRACK_OBJECT);
-    _robot.GetActionList().Cancel(-1, RobotActionType::TRACK_MOTION);
-
+    // Note that this will temporarily take over the head but because it's not an action,
+    // any tracking that's using the head should just re-take control on next
+    // observation.
     MoveHeadToAngle(msg.angle_rad, msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2, msg.duration_sec);
   }
 }

@@ -83,8 +83,6 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
   switch(_state)
   {
     case State::Interrupted:
-      // Restore original vision modes
-      robot.GetVisionComponent().SetModes(_originalVisionModes);
       status = Status::Complete;
       break;
 
@@ -110,9 +108,13 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
 
 Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
 {
-  _actionRunning = 0;
+  _actionRunning = ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
+  
+  // Restore original vision modes
+  robot.GetVisionComponent().SetModes(_originalVisionModes);
+  
   _state = State::Interrupted;
   SetStateName("Interrupted");
   
@@ -159,9 +161,10 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
   
   // Convert image positions to desired relative angles
   const Point2f motionCentroid(motionObserved.img_x, motionObserved.img_y);
-  const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-  const Radians relHeadAngle_rad = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
-  const Radians relBodyPanAngle_rad = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
+  
+  // Compute the relative pan and tilt angles to put the centroid in the center of the image
+  Radians relHeadAngle_rad = 0, relBodyPanAngle_rad = 0;
+  robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, relBodyPanAngle_rad, relHeadAngle_rad);
   
   if(State::WaitingForFirstMotion == _state && _actionRunning==0 && motionObserved.img_area > 0)
   {

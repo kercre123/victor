@@ -144,6 +144,10 @@ namespace Anki {
       // TODO: Method to remove radial distortion from an image
       // (This requires an image class)
       
+      // Compute the pan and tilt angles for putting the given image point at the
+      // center of the image.
+      void ComputePanAndTiltAngles(const Point2f& imgPoint, Radians& relPanAngle, Radians& relTiltAngle) const;
+
     protected:
       CameraID_t               _camID;
       const CameraCalibration* _calibration;

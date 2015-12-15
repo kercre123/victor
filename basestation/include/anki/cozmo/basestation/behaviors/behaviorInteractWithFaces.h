@@ -85,8 +85,9 @@ namespace Cozmo {
     f32 _baselineLeftEyebrowHeight;
     f32 _baselineRightEyebrowHeight;
     
-    u32 _lastActionTag;
-    bool _isActing = false;
+    u32    _trackActionTag = (u32)ActionConstants::INVALID_TAG;
+    u32    _lastActionTag = (u32)ActionConstants::INVALID_TAG;
+    bool   _isActing = false;
     double _lastGlanceTime = 0;
     double _lastTooCloseScaredTime = 0;
     double _newFaceAnimCooldownTime = 0.0;

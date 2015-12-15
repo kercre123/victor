@@ -204,7 +204,6 @@ namespace Cozmo {
             
             // If we have a valid faceID, track it.
             TrackFaceAction* action = new TrackFaceAction(_faceID);
-            _lastActionTag = action->GetTag();
             robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
                                    "EnableTrackToFace %lld", _faceID);
@@ -260,7 +259,7 @@ namespace Cozmo {
         else if( robot.GetMoveComponent().GetTrackToFace() != _faceID ) {
           PRINT_NAMED_INFO("BehaviorBlockPlay.TrackingWrongFace",
                            "Disabling face tracking because we aren't tracking the correct face (or it was deleted)");
-          robot.GetActionList().Cancel(_lastActionTag, Robot::DriveAndManipulateSlot);
+          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
         }
 
         break;
@@ -272,7 +271,7 @@ namespace Cozmo {
           if( robot.GetMoveComponent().GetTrackToObject().IsSet() ) {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackingBlockUnset",
                                    "disabling object tracking because object was deleted / unset");
-            robot.GetActionList().Cancel(_lastActionTag, Robot::DriveAndManipulateSlot);
+            robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
           }
           _faceID = Face::UnknownFace;
           SetCurrState(State::TrackingFace);
@@ -316,7 +315,7 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.StopTrackingBlock",
                                  "disabling block tracking in order to inspect block");
           SetCurrState(State::InspectingBlock);
-          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_FACE);
+          robot.GetActionList().Cancel(Robot::DriveAndManipulateSlot, RobotActionType::TRACK_OBJECT);
           PlayAnimation(robot, "ID_react2block_02", false); 
 
           // hold a bit before making a decision about the block
@@ -1043,7 +1042,6 @@ namespace Cozmo {
       _noFacesStartTime = -1.0; // reset face timeout
       SetCurrState(State::TrackingBlock);
       TrackObjectAction* action = new TrackObjectAction(_trackedObject);
-      _lastActionTag = action->GetTag();
       robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action); // will cancel face tracking 
       SetBlockLightState(robot, _trackedObject, BlockLightState::Visible);
 

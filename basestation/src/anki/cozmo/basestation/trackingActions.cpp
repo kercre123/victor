@@ -63,19 +63,19 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
                      absPanAngle.getDegrees(), absTiltAngle.getDegrees());
 #   endif
     
-    // Pan and/or Tilt (normal behavior)
-    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
-       (absTiltAngle - robot.GetHeadAngle()).getAbsoluteVal() > DEG_TO_RAD(1.5f))
+    // Tilt Head:
+    const f32 relTiltAngle = (absTiltAngle - robot.GetHeadAngle()).getAbsoluteVal();
+    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > DEG_TO_RAD(1.5f))
     {
       // Set speed/accel based on angle difference
       const f32 MinSpeed = 20.f;
       const f32 MaxSpeed = 40.f;
-      const f32 MinAccel = 20.f;
-      const f32 MaxAccel = 40.f;
+      //const f32 MinAccel = 20.f;
+      //const f32 MaxAccel = 40.f;
       
-      const f32 angleFrac = std::abs(absTiltAngle.ToFloat() - robot.GetHeadAngle())/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
+      const f32 angleFrac = relTiltAngle/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
       const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
-      const f32 accel = (MaxAccel - MinAccel)*angleFrac + MinAccel;
+      const f32 accel = 20.f; // (MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
@@ -83,8 +83,9 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       }
     }
     
-    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) &&
-       (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).getAbsoluteVal() > DEG_TO_RAD(1.f))
+    // Pan Body:
+    const f32 relPanAngle = (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).getAbsoluteVal();
+    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && relPanAngle > DEG_TO_RAD(1.f))
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
@@ -95,13 +96,12 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       // Set speed/accel based on angle difference
       const f32 MinSpeed = 10.f;
       const f32 MaxSpeed = 60.f;
-      const f32 MinAccel = 30.f;
-      const f32 MaxAccel = 80.f;
+      //const f32 MinAccel = 30.f;
+      //const f32 MaxAccel = 80.f;
       
-      const f32 angleFrac = std::abs(absPanAngle.ToFloat() -
-                                     robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat())/M_PI;
+      const f32 angleFrac = std::min(1.f, relPanAngle/M_PI);
       const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
-      const f32 accel = (MaxAccel - MinAccel)*angleFrac + MinAccel;
+      const f32 accel = DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       RobotInterface::SetBodyAngle setBodyAngle;
       setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
@@ -183,6 +183,9 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
                           "Could not find matching %s object.",
                           EnumToString(_objectType));
       return false;
+    } else if(ActiveIdentityState::Identified == matchingObject->GetIdentityState()) {
+      // We've possibly switched IDs that we're tracking. Keep MovementComponent's ID in sync.
+      robot.GetMoveComponent().SetTrackToObject(matchingObject->GetID());
     }
   } else {
     matchingObject = robot.GetBlockWorld().GetObjectByID(_objectID);
@@ -196,12 +199,8 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
   
   assert(nullptr != matchingObject);
   
-  if(ObservableObject::PoseState::Unknown == matchingObject->GetPoseState()) {
-    PRINT_NAMED_WARNING("TrackObjectAction.GetAngles.PoseStateUnknown",
-                        "Object %d's pose state is unknown. Cannot update angles.",
-                        _objectID.GetValue());
-    return false;
-  }
+  ASSERT_NAMED(ObservableObject::PoseState::Unknown != matchingObject->GetPoseState(),
+               "Object's pose state should not be Unknkown");
   
   _lastTrackToPose = matchingObject->GetPose();
   
@@ -255,9 +254,7 @@ bool TrackObjectAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     return false;
   }
   
-  if(minDistSq <= 0.f) {
-    return false;
-  }
+  NAMED_ASSERT(minDistSq > 0.f, "Distance to closest marker should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(minDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -330,9 +327,7 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
   
   const f32 xyDistSq = xDist*xDist + yDist*yDist;
   
-  if(xyDistSq <= 0.f) {
-    return false;
-  }
+  NAMED_ASSERT(xyDistSq > 0.f, "Distance to tracked face should be > 0.");
   
   absTiltAngle = std::atan(zDist/std::sqrt(xyDistSq));
   absPanAngle  = std::atan2(yDist, xDist) + robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -374,9 +369,8 @@ bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     
     const Point2f motionCentroid(_motionObservation.img_x, _motionObservation.img_y);
     
-    const Vision::CameraCalibration& calibration = robot.GetVisionComponent().GetCameraCalibration();
-    absTiltAngle = std::atan(-motionCentroid.y() / calibration.GetFocalLength_y());
-    absPanAngle  = std::atan(-motionCentroid.x() / calibration.GetFocalLength_x());
+    // Note: we start with relative angles here, but make them absolute below.
+    robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
     
     // Find pose of robot at time motion was observed
     RobotPoseStamp* poseStamp = nullptr;

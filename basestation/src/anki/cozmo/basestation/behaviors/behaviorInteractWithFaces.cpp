@@ -159,14 +159,14 @@ namespace Cozmo {
   {
     _trackedFaceID = faceID;
     TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
-    //_lastActionTag = trackAction->GetTag();
+    _trackActionTag = trackAction->GetTag();
     robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, trackAction);
   }
   
   void BehaviorInteractWithFaces::StopTracking(Robot& robot)
   {
     _trackedFaceID = Face::UnknownFace;
-    robot.GetActionList().Cancel(_lastActionTag);
+    robot.GetActionList().Cancel(_trackActionTag);
   }
   
   
@@ -371,7 +371,7 @@ namespace Cozmo {
             robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, new PlayAnimationAction("Demo_Face_Interaction_ShockedScared_A"));
             
             TrackFaceAction* trackAction = new TrackFaceAction(face->GetID());
-            _lastActionTag = trackAction->GetTag();
+            _trackActionTag = trackAction->GetTag();
             robot.GetActionList().QueueActionNext(Robot::DriveAndManipulateSlot, trackAction);
             
             robot.GetMoodManager().AddToEmotion(EmotionType::Brave, -kEmotionChangeMedium, "CloseFace");

@@ -522,9 +522,17 @@ namespace Cozmo {
         // Store pointers to any existing objects that overlap with this one
         //std::vector<ObservableObject*> overlappingObjects;
         //FindOverlappingObjects(objSeen, objectsExisting, overlappingObjects);
+        
+        // Override the default filter function to intentionally consider objects
+        // that are unknown here. Otherwise, we'd never be able to match new
+        // observations to existing objects whose pose has been set to unknown!
+        BlockWorldFilter filter;
+        filter.SetFilterFcn([] (ObservableObject*) { return true; });
+
         ObservableObject* matchingObject = FindClosestMatchingObject(*objSeen,
                                                                      objSeen->GetSameDistanceTolerance(),
-                                                                     objSeen->GetSameAngleTolerance());
+                                                                     objSeen->GetSameAngleTolerance(),
+                                                                     filter);
         
         // If this is the object we're carrying, do nothing and continue to the next observed object
         if ((matchingObject != nullptr) && (matchingObject->GetID() == _robot->GetCarryingObject())) {
@@ -2398,10 +2406,6 @@ namespace Cozmo {
       BlockWorldFilter filter(filterIn);
       filter.AddIgnoreID(object.GetID());
       
-      // We override the default filter function to intentionally consider objects that are unknown here
-      // TODO: Why is this necessary?
-      filter.SetFilterFcn([] (ObservableObject*) { return true; });
-      
       FindFcn findLambda = [&object,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
       {
         Vec3f Tdiff;
@@ -2423,15 +2427,10 @@ namespace Cozmo {
                                                             const Pose3d& pose,
                                                             const Vec3f& distThreshold,
                                                             const Radians& angleThreshold,
-                                                            const BlockWorldFilter& filterIn)
+                                                            const BlockWorldFilter& filter)
     {
       Vec3f closestDist(distThreshold);
       Radians closestAngle(angleThreshold);
-      
-      // We override the default filter function to intentionally consider objects that are unknown here
-      // TODO: Why is this necessary? (Copied from similar function above)
-      BlockWorldFilter filter(filterIn);
-      filter.SetFilterFcn([] (ObservableObject*) { return true; });
       
       FindFcn findLambda = [withType,&pose,&closestDist,&closestAngle](ObservableObject* current, ObservableObject* best)
       {
