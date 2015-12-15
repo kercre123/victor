@@ -266,6 +266,9 @@ namespace Anki {
         public List<Anki.Cozmo.Audio.GameStateType> GetGameStates(Anki.Cozmo.Audio.GameStateGroupType stateGroup) {
           if (null == _GameStateTypes) {
             _GameStateTypes = new Dictionary<GameStateGroupType, List<GameStateType>>();
+            // FIXME This a temp solution to add group types
+            List<Anki.Cozmo.Audio.GameStateType> musicStates = Enum.GetValues(typeof(Anki.Cozmo.Audio.MusicGroupStates)).Cast<Anki.Cozmo.Audio.GameStateType>().ToList();
+            _GameStateTypes.Add(GameStateGroupType.Music, musicStates);
           }
 
           List<Anki.Cozmo.Audio.GameStateType> groupStates;
