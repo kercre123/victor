@@ -216,7 +216,6 @@ namespace Cozmo {
           } else if (_hasValidLastKnownFacePose) {
             
             // Otherwise, if had previously seen a valid face, turn to face its last known pose
-            robot.GetActionList().Cancel(_lastActionTag);
             IActionRunner* lookAtFaceAction = new FacePoseAction(_lastKnownFacePose, DEG_TO_RAD(5), PI_F);
 
             // if we also need to lower the lift, do it in parallel (this is the most common case)
@@ -392,7 +391,6 @@ namespace Cozmo {
         }
         
         // Execute roll
-        robot.GetActionList().Cancel(_lastActionTag);
         IActionRunner* rollAction = nullptr;
         if (preActionPoses.size() > 1) {
           // Block must be upside down so choose any roll action
@@ -423,7 +421,6 @@ namespace Cozmo {
           break;
         }
         
-        robot.GetActionList().Cancel(_lastActionTag);
         StartActing(robot, new DriveToPickupObjectAction(_objectToPickUp, _motionProfile));
         break;
       }
@@ -437,7 +434,6 @@ namespace Cozmo {
           break;
         }
         
-        robot.GetActionList().Cancel(_lastActionTag);
         StartActing(robot, new DriveToPlaceOnObjectAction(robot, _objectToPlaceOn, _motionProfile));
         break;
       }
@@ -1160,6 +1156,10 @@ namespace Cozmo {
         // drive actions go in the main slot
         robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, driveAction);
         _driveForwardActionTag = driveAction->GetTag();
+
+        // resume tracking after driving forward
+        TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
+        robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, trackingAction);
               
         _isDrivingForward = true;
       }
@@ -1252,7 +1252,7 @@ namespace Cozmo {
     robot.SetIdleAnimation("NONE");
 
     _lastActionTag = action->GetTag();
-    robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, action);
+    robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
     _isActing = true;
   }
 
