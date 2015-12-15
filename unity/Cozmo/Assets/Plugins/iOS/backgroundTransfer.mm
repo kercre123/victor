@@ -1,14 +1,28 @@
+/**
+ * File: backgroundTransfer.mm
+ *
+ * Author: Lee Crippen
+ * Created: 12/13/15
+ *
+ * Description: Handles Objective-C events for background data transfer.
+ * WARNING: THIS FILE IS COPIED OVER FROM THE SOURCE FOUND IN THE UNITY ASSETS, SO MODIFY IT THERE.
+ *
+ * Copyright: Anki, Inc. 2015
+ *
+ **/
+
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 #import "UnityAppController.h"
+
 
 // This BackgroundTransfer not currently implemented at all, merely here as placeholder
 @interface BackgroundTransfer : NSObject <NSURLSessionDelegate, NSURLSessionTaskDelegate, NSURLSessionDownloadDelegate>
 
 @end
 
-// This App Controller is a subclass of the Unity generated AppController, registered with the #define at the bottom
-@interface MyAppController : UnityAppController
+// This App Controller is a subclass of the Unity generated AppController, registered with the #define at the bottom of this file
+@interface CozmoAppController : UnityAppController
 
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions;
 
@@ -17,7 +31,7 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 
 @end
 
-@implementation MyAppController
+@implementation CozmoAppController
 
 // This adds the launch option to say we want the BackgroundFetch to actually happen sometimes (whenever the OS decrees)
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions
@@ -42,13 +56,16 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
                                           completionHandler(UIBackgroundFetchResultFailed);
                                           return;
                                         }
-                                        
-                                        //NSData *dataCast = data;
-                                        NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-                                        
-                                        ::printf("%s", [dataString UTF8String]);
-                                        
-                                        completionHandler(UIBackgroundFetchResultNewData);
+                                        // TODO the section below just does a proof-of-concept pull from the specified URL
+                                        // and spits it out.
+                                        /*
+                                         NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                                         
+                                         ::printf("%s", [dataString UTF8String]);
+                                         
+                                         completionHandler(UIBackgroundFetchResultNewData);
+                                         */
+                                        completionHandler(UIBackgroundFetchResultNoData);
                                       }];
   // Start the task
   [task resume];
@@ -56,4 +73,4 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 
 @end
 
-IMPL_APP_CONTROLLER_SUBCLASS(MyAppController);
+IMPL_APP_CONTROLLER_SUBCLASS(CozmoAppController);
