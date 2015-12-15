@@ -117,7 +117,8 @@ namespace Cozmo.HubWorld {
 
               // Expand to 2x, then shrink to zero
               if( t < 0.5f) {
-                oldButton.transform.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 5, t);
+                oldButton.transform.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 3, t);
+                oldButton.transform.localPosition = newButton.transform.localPosition;
               }
               else {
                 oldButton.transform.localScale = Vector3.Lerp(Vector3.one * 4, Vector3.zero, t);
@@ -251,7 +252,8 @@ namespace Cozmo.HubWorld {
       if (_UnlockedButtons.Count == 0) {
         return;
       }
-      // Set the seed so the layout is the same until the layout changes
+      // Set the seed so the layout is always the same unless we change the seed
+      // which we will do when the status of challenges changes.
       Random.seed = sSeed;
 
       // TODO: grow this?
