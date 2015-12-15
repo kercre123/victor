@@ -190,11 +190,9 @@ namespace Anki {
 
         private void _PostGameState() {
           GameStateGroupType groupType = _audioClient.GetGameStateGroups()[_GameStateGroupDropdown.value];
-          GameStateType stateType = GameStateType.Invalid;
-          Anki.Cozmo.Audio.GameObjectType selectedGameObj = _audioClient.GetGameObjects()[_GameObjectDropdown.value];
-
-          // TODO: Add PostGameState call
-          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString() + " GameObj: " + selectedGameObj.ToString());
+          GameStateType stateType = _audioClient.GetGameStates(groupType)[_GameStateTypeDropdown.value];
+          _audioClient.PostGameState(groupType, stateType);
+          _AppendLogEvent("Post Game State: " + groupType.ToString() + " : " + stateType.ToString());
         }
 
         private void _PostSwitchState() {
