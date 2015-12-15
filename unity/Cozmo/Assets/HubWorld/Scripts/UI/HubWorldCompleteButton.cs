@@ -8,36 +8,31 @@ namespace Cozmo.HubWorld {
 
     private Sequence _BobbingSequence;
 
-    private int _CoroutineStartFrame;
-
     public override void Initialize(ChallengeData challengeData) {
 
       base.Initialize(challengeData);
     }
 
     private void OnEnable() {
-      _CoroutineStartFrame++;
       StartCoroutine(DelayedBobAnimation());
     }
 
     private void OnDisable() {
-      _CoroutineStartFrame++;
+      StopAllCoroutines();
       if (_BobbingSequence != null) {
         _BobbingSequence.Kill();
         _BobbingSequence = null;
       }
     }
 
+    // use a coroutine because Sequences don't allow
+    // delay, and we don't want to jump the prefab by
+    // on start
     private IEnumerator DelayedBobAnimation() {
       float delay = Random.Range(0f, 1f);
 
-      int startFrame = _CoroutineStartFrame;
       yield return new WaitForSeconds(delay);
-
-      if (startFrame != _CoroutineStartFrame) {
-        yield break;
-      }
-        
+              
       // Start a bobbing animation that plays forever
       float duration = Random.Range(3.5f, 5.5f);
       float yOffset = Random.Range(10f, 25f);
