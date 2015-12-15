@@ -71,6 +71,7 @@ namespace Conversations {
       _CurrentConversation.AddToConversation(line);
       if (_CurrBackground == null) {
         _CurrBackground = UIManager.OpenView(_ConvoOverlayPrefab) as ConvoBackground;
+        _CurrBackground.InitButtonText(LocalizationKeys.kButtonContinue);
       }
       CreateSpeechBubble(line);
     }

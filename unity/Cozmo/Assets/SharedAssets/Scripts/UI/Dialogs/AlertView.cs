@@ -95,7 +95,7 @@ namespace Cozmo {
       private void SetupButton(AnkiButton button, String title, Action action) {
         if (button != null) {
           button.gameObject.SetActive(true);
-          button.Text = title.ToUpper();
+          button.Text = title;
           button.onClick.RemoveAllListeners();
           button.onClick.AddListener(() => {
             if (action != null) {
