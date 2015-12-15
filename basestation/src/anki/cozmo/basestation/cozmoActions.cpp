@@ -20,7 +20,6 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/random/randomGenerator.h"
 #include "util/helpers/templateHelpers.h"
@@ -854,14 +853,12 @@ namespace Anki {
       _angleTolerance = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
-      const float minTolRad = 0.031;
-      
-      if( _angleTolerance.ToFloat() < minTolRad ) {
+      if( _angleTolerance.ToFloat() < POINT_TURN_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("TurnInPlaceAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_angleTolerance.ToFloat()),
-                            RAD_TO_DEG(minTolRad));
-        _angleTolerance = minTolRad;
+                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+        _angleTolerance = POINT_TURN_ANGLE_TOL;
       }
     }
 
@@ -1062,14 +1059,12 @@ namespace Anki {
       _panAngleTol = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
-      const float minTolRad = 0.031;
-      
-      if( _panAngleTol.ToFloat() < minTolRad ) {
+      if( _panAngleTol.ToFloat() < POINT_TURN_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_panAngleTol.ToFloat()),
-                            RAD_TO_DEG(minTolRad));
-        _panAngleTol = minTolRad;
+                            RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+        _panAngleTol = POINT_TURN_ANGLE_TOL;
       }
     }
 
@@ -1078,14 +1073,12 @@ namespace Anki {
       _tiltAngleTol = angleTol_rad.getAbsoluteVal();
 
       // NOTE: can't be lower than what is used internally on the robot
-      const float minTolRad = 0.031;
-      
-      if( _tiltAngleTol.ToFloat() < minTolRad ) {
+      if( _tiltAngleTol.ToFloat() < HEAD_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("PanAndTiltAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_tiltAngleTol.ToFloat()),
-                            RAD_TO_DEG(minTolRad));
-        _tiltAngleTol = minTolRad;
+                            RAD_TO_DEG(HEAD_ANGLE_TOL));
+        _tiltAngleTol = HEAD_ANGLE_TOL;
       }
     }
     
@@ -1561,14 +1554,12 @@ namespace Anki {
         _headAngle = MAX_HEAD_ANGLE;
       }
 
-      const float minTolRad = 0.031;
-      
-      if( _angleTolerance.ToFloat() < minTolRad ) {
+      if( _angleTolerance.ToFloat() < HEAD_ANGLE_TOL ) {
         PRINT_NAMED_WARNING("MoveHeadToAngleAction.InvalidTolerance",
                             "Tried to set tolerance of %fdeg, min is %f",
                             RAD_TO_DEG(_angleTolerance.ToFloat()),
-                            RAD_TO_DEG(minTolRad));
-        _angleTolerance = minTolRad;
+                            RAD_TO_DEG(HEAD_ANGLE_TOL));
+        _angleTolerance = HEAD_ANGLE_TOL;
       }
       
       if(_variability > 0) {
