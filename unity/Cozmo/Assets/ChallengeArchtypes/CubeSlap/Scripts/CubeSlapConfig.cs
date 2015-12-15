@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace HandSlap {
+namespace CubeSlap {
 
-  public class HandSlapConfig : MinigameConfigBase {
+  public class CubeSlapConfig : MinigameConfigBase {
     public float MinSlapDelay;
     public float MaxSlapDelay;
     public int MaxAttempts;

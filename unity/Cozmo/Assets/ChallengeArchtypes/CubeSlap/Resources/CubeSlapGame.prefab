@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 439342}
   - 114: {fileID: 11489490}
   m_Layer: 0
-  m_Name: HandSlapGame
+  m_Name: CubeSlapGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36,7 +36,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 141604}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f905efdea013f4085956720e8419d6e5, type: 3}
+  m_Script: {fileID: 11500000, guid: 1c8b193790a284a36a9a0a09bbb3a8ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _HowToPlayPrefabs: []

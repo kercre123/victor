@@ -102,20 +102,14 @@
     "peekaboo.label.points" : {
         "translation" : "{0} Points"
     },
-    "handSlap.title" : {
-        "translation" : "Hand Slap"
+    "cubeSlap.title" : {
+        "translation" : "Cube Slap"
     },
-    "handSlap.subtitle" : {
-        "translation" : "Hand Slap Subtitle"
+    "cubeSlap.subtitle" : {
+        "translation" : "Cube Slap Subtitle"
     },
-    "handSlap.description" : {
-        "translation" : "Hand Slap Description"
-    },
-    "handSlap.score.cozmo" : {
-        "translation" : "cozmo: {0:N}"
-    },
-    "handSlap.score.player" : {
-        "translation" : "player: {0:N}"
+    "cubeSlap.description" : {
+        "translation" : "Cube Slap Description"
     },
     "minigame.quitView.title" : {
         "translation" : "Return to Main Menu?"
