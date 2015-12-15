@@ -36,6 +36,7 @@ namespace StackTraining {
       var config = minigameConfig as StackTrainingConfig ?? new StackTrainingConfig();
 
       MaxAttempts = config.MaxAttempts;
+      NumSegments = 5;
 
       if (!string.IsNullOrEmpty(_TutorialSequenceName)) {
         _TutorialSequenceDoneToken = ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence(_TutorialSequenceName);
