@@ -49,7 +49,12 @@ namespace Anki {
       private string _DASEventName;
 
       [SerializeField]
-      private Text _TextLabel;
+      private AnkiTextLabel _TextLabel;
+
+      [SerializeField]
+      private float _TextLabelOffset = -5f;
+      private Vector3 _TextDefaultPosition;
+      private Vector3 _TextPressedPosition;
 
       public Color TextEnabledColor = Color.white;
 
@@ -115,6 +120,9 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
+        _TextDefaultPosition = _TextLabel.gameObject.transform.localPosition;
+        _TextPressedPosition = _TextDefaultPosition;
+        _TextPressedPosition.y += _TextLabelOffset;
         UpdateVisuals();
       }
 
@@ -123,7 +131,7 @@ namespace Anki {
 
         // Grab the text label while in editor
         if (_TextLabel == null) {
-          _TextLabel = GetComponentInChildren<Text>();
+          _TextLabel = GetComponentInChildren<AnkiTextLabel>();
         }
       }
 
@@ -229,6 +237,7 @@ namespace Anki {
         }
 
         _TextLabel.color = TextEnabledColor;
+        _TextLabel.transform.localPosition = _TextDefaultPosition;
       }
 
       private void ShowPressedState() {
@@ -241,6 +250,7 @@ namespace Anki {
           }
         }
         _TextLabel.color = TextPressedColor;
+        _TextLabel.transform.localPosition = _TextPressedPosition;
       }
 
       private void ShowDisabledState() {
@@ -253,10 +263,11 @@ namespace Anki {
           }
         }
         _TextLabel.color = TextDisabledColor;
+        _TextLabel.transform.localPosition = _TextDefaultPosition;
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor) {
-        graphic.targetImage.sprite = desiredSprite ?? graphic.enabledSprite;
+        graphic.targetImage.overrideSprite = desiredSprite ?? graphic.enabledSprite;
         graphic.targetImage.color = desiredColor;
       }
 
