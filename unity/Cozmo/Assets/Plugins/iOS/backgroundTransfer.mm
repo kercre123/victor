@@ -46,29 +46,37 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
 // This handles the fetch when the OS says we should do one. Needs to call the passed in completionHandler with the appropriate result
 -(void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler{
   
+  // TODO the section below just does a proof-of-concept post to the specified URL
+  // and spits out the result it gets back
+  /*
   NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
   NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
   
-  NSURL *url = [[NSURL alloc] initWithString:@"http://www.anki.com"];
-  NSURLSessionDataTask *task = [session dataTaskWithURL:url
+  // Note this URL should be changed to the IP of the dev machine doing testing, since the app is running on device
+  NSURL *url = [[NSURL alloc] initWithString:@"http://localhost:8000"];
+  
+  NSString *deviceID = [[NSUserDefaults standardUserDefaults] objectForKey:@"deviceID"];
+  NSString *textContent = @"COZMO WUZ HERE";
+  NSString *noteDataString = [NSString stringWithFormat:@"deviceId=%@&textContent=%@", deviceID, textContent];
+  NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:url];
+  request.HTTPBody = [noteDataString dataUsingEncoding:NSUTF8StringEncoding];
+  request.HTTPMethod = @"POST";
+  
+  NSURLSessionDataTask *task = [session dataTaskWithRequest:request
                                       completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
-                                        if (error) {
-                                          completionHandler(UIBackgroundFetchResultFailed);
-                                          return;
-                                        }
-                                        // TODO the section below just does a proof-of-concept pull from the specified URL
-                                        // and spits it out.
-                                        /*
-                                         NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+                                          if (error) {
+                                            completionHandler(UIBackgroundFetchResultFailed);
+                                            return;
+                                          }
+                                          NSString *dataString = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
                                          
-                                         ::printf("%s", [dataString UTF8String]);
+                                          ::printf("%s", [dataString UTF8String]);
                                          
-                                         completionHandler(UIBackgroundFetchResultNewData);
-                                         */
-                                        completionHandler(UIBackgroundFetchResultNoData);
+                                          completionHandler(UIBackgroundFetchResultNewData);
                                       }];
   // Start the task
   [task resume];
+   */
 }
 
 @end
