@@ -55,6 +55,11 @@ public:
   // Tracking is meant to be ongoing, so "never" timeout
   virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
   
+  // Angles returned by GetAngles() method must be greater than these tolerances
+  // to actually trigger movement.
+  void SetPanTolerance(const Radians& panThreshold) { _panTolerance = panThreshold.getAbsoluteVal(); }
+  void SetTiltTolerance(const Radians& tiltThreshold) { _tiltTolerance = tiltThreshold.getAbsoluteVal(); }
+
 protected:
 
   // Derived classes must implement Init(), but cannot implement CheckIfDone().
@@ -70,7 +75,10 @@ private:
   Mode     _mode = Mode::HeadAndBody;
   double   _updateTimeout_sec = 0.;
   double   _lastUpdateTime = 0.;
+  Radians  _panTolerance = DEG_TO_RAD(1.f);
+  Radians  _tiltTolerance = DEG_TO_RAD(1.5f);
   
+
 }; // class ITrackAction
   
 

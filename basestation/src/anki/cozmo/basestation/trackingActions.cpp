@@ -65,7 +65,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     
     // Tilt Head:
     const f32 relTiltAngle = std::abs((absTiltAngle - robot.GetHeadAngle()).ToFloat());
-    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > DEG_TO_RAD(1.5f))
+    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) && relTiltAngle > _tiltTolerance.ToFloat())
     {
       // Set speed/accel based on angle difference
       const f32 MinSpeed = 20.f;
@@ -85,7 +85,7 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
     
     // Pan Body:
     const f32 relPanAngle = std::abs((absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
-    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && relPanAngle > DEG_TO_RAD(1.f))
+    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) && relPanAngle > _panTolerance.ToFloat())
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
@@ -95,13 +95,13 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       
       // Set speed/accel based on angle difference
       const f32 MinSpeed = 10.f;
-      const f32 MaxSpeed = 60.f;
+      const f32 MaxSpeed = 80.f;
       //const f32 MinAccel = 30.f;
       //const f32 MaxAccel = 80.f;
       
       const f32 angleFrac = std::min(1.f, relPanAngle/(f32)M_PI);
       const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
-      const f32 accel = DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
+      const f32 accel = 10.f; //(MaxAccel - MinAccel)*angleFrac + MinAccel;
       
       RobotInterface::SetBodyAngle setBodyAngle;
       setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
