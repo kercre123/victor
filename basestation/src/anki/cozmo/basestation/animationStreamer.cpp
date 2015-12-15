@@ -911,9 +911,7 @@ namespace Cozmo {
     
 #   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-#   if !PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO
-    if (!robot.IsPhysical()) {
-#   endif
+    if (PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO || !robot.IsPhysical()) {
       for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
       {
         if(!anim->HasFramesLeft() ||   // If all tracks buffered already, then play this now.
@@ -928,9 +926,7 @@ namespace Cozmo {
           _onDeviceRobotAudioKeyFrameQueue.pop_front();
         }
       }
-#   if !PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO
     }
-#   endif // if !PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO
 #   endif // PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
 #   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
