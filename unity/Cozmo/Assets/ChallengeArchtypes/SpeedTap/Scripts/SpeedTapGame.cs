@@ -38,10 +38,15 @@ namespace SpeedTap {
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
+
+      CurrentRobot.SetLiftHeight(0.0f);
+      CurrentRobot.SetHeadAngle(-1.0f);
 
       // set idle parameters
       /*Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {

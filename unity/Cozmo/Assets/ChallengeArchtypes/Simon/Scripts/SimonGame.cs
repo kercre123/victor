@@ -26,6 +26,9 @@ namespace Simon {
       initCubeState.InitialCubeRequirements(new CozmoSetSimonState(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
     }
 
     private void InitialCubesDone() {
