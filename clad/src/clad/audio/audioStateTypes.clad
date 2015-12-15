@@ -6,15 +6,21 @@ namespace Audio {
 enum uint_32 GameStateGroupType
 {
   Invalid = 0,
-  Music = 712897226,
+  Music = 3991942870,
 }
 
 enum uint_32 GameStateType
 {
   Invalid = 0,
-  MUS_CUBE_INTERACTIONFIRST = 177292647,
 }
 
+// Specific Music Stats
+enum uint_32 MusicGroupStates
+{
+  CUBE_INTERACTIONFIRST = 379889963,
+  PLAYFUL = 1971384320,
+  SILENCE = 3041563226,
+}
 
 }
 }

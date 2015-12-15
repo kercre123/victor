@@ -423,7 +423,7 @@ namespace Cozmo {
     
     for(auto iFeature : {Vision::TrackedFace::FeatureName::LeftEye, Vision::TrackedFace::FeatureName::RightEye})
     {
-      f32 maxY = std::numeric_limits<f32>::min();
+      f32 maxY = std::numeric_limits<f32>::lowest();
       f32 minY = std::numeric_limits<f32>::max();
       
       for(auto point : face->GetFeature(iFeature)) {

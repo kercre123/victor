@@ -402,7 +402,7 @@ namespace Cozmo {
     // TODO: Better, cheaper algorithm for finding top face?
     //const Vision::KnownMarker* topMarker = _markers.front();
     auto topMarker = _markers.begin();
-    f32 maxDotProd = std::numeric_limits<f32>::min();
+    f32 maxDotProd = std::numeric_limits<f32>::lowest();
     //for(FaceName whichFace = FIRST_FACE; whichFace < NUM_FACES; ++whichFace) {
     for(auto marker = _markers.begin(); marker != _markers.end(); ++marker) {
       //const Vision::KnownMarker& marker = _markers[whichFace];
