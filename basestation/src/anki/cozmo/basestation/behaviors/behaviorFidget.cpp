@@ -16,6 +16,9 @@
 #include "anki/cozmo/basestation/cozmoActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/actionTypes.h"
+
 #define DEBUG_FIDGET_BEHAVIOR 1
 
 namespace Anki {
@@ -23,7 +26,7 @@ namespace Cozmo {
 
   BehaviorFidget::BehaviorFidget(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _totalProb(0)
+  , _queuedActionTag((uint32_t)ActionConstants::INVALID_TAG)
   {
     SetDefaultName("Fidget");
     
@@ -32,29 +35,17 @@ namespace Cozmo {
     
     _minWait_sec = 2.f;
     _maxWait_sec = 5.f;
-    
-    AddFidget("HeadTwitch",
-              [](){return new MoveHeadToAngleAction(0, DEG_TO_RAD(2), 30);}
-              , 1);
-    
-    AddFidget("LiftWiggle", [](){return new CompoundActionSequential({
-      new MoveLiftToHeightAction(32, 2, 5),
-      new MoveLiftToHeightAction(32, 2, 5),
-      new MoveLiftToHeightAction(32, 2, 5)});},
-              1);
-    
-    AddFidget("LiftTap", [this](){return new PlayAnimationAction("firstTap", GetRNG().RandIntInRange(1, 3));}, 1);
-    
-    AddFidget("TurnInPlace", [](){
-      TurnInPlaceAction* action = new TurnInPlaceAction(0, false);
-      action->SetTolerance(DEG_TO_RAD(90));
-      return action;
-    }, 2);
+
+    AddFidget("Brickout", [this](){return new PlayAnimationAction("ID_idle_brickout");}, 1, 60, true);
     
     // TODO: Make probabilities non-zero once we have these animations available
+    /*
     AddFidget("Yawn", [](){return new PlayAnimationAction("Yawn");}, 0);
     AddFidget("Stretch", [](){return new PlayAnimationAction("Stretch");}, 0);
     AddFidget("Sneeze", [](){return new PlayAnimationAction("Sneeze");}, 0);
+     */
+    
+    SubscribeToTags({EngineToGameTag::RobotCompletedAction});
     
     if (GetEmotionScorerCount() == 0)
     {
@@ -63,12 +54,18 @@ namespace Cozmo {
     }
   }
   
-  void BehaviorFidget::AddFidget(const std::string& name, MakeFidgetAction fcn,
-                                 s32 frequency)
+  void BehaviorFidget::AddFidget(const std::string& name,
+                                 MakeFidgetAction fcn,
+                                 s32 frequency,
+                                 float minTimeBetween/* = 0*/,
+                                 bool mustComplete/* = false*/)
   {
     if(frequency > 0) {
-      _totalProb += frequency;
-      _fidgets[_totalProb] = std::make_pair(name, fcn);
+      _fidgets.push_back({._name=name,
+                          ._function=fcn,
+                          ._frequency=frequency,
+                          ._minTimeBetween_sec=minTimeBetween,
+                          ._mustComplete=mustComplete});
     }
   }
   
@@ -88,32 +85,73 @@ namespace Cozmo {
   
   IBehavior::Status BehaviorFidget::UpdateInternal(Robot& robot, double currentTime_sec)
   {
-    if(_interrupted) {
-      // TODO: Do we need to cancel the last commanded fidget action?
+    if(_interrupted)
+    {
+      // If we don't have any actions in progress we can be done
+      if (_queuedActionTag == (uint32_t)ActionConstants::INVALID_TAG)
+      {
+        return Status::Complete;
+      }
+      
+      // If we have actions in progress that can't be interrupted, keep running
+      if (_currentActionMustComplete)
+      {
+        return Status::Running;
+      }
+      
+      // Otherwise cancel our running action and complete
+      robot.GetActionList().Cancel(_queuedActionTag);
       return Status::Complete;
     }
     
-    if(currentTime_sec > _lastFidgetTime_sec + _nextFidgetWait_sec) {
+    // If we already have an action queued up don't bother looking for more, just keep running
+    if (_queuedActionTag != (uint32_t)ActionConstants::INVALID_TAG)
+    {
+      return Status::Running;
+    }
     
-      // Pick another random fidget action
-      s32 prob = GetRNG().RandIntInRange(0, _totalProb);
-
-      auto fidgetIter = _fidgets.begin();
-      while(prob > fidgetIter->first) {
-        ++fidgetIter;
+    if(currentTime_sec > _lastFidgetTime_sec + _nextFidgetWait_sec)
+    {
+      // Make a map of the fidgets that aren't on cooldown to their probability slice to randomly choose between
+      int32_t totalProb = 0;
+      std::map<int32_t, FidgetData*> fidgetChances;
+      for (auto& fidget : _fidgets)
+      {
+        if (fidget._lastTimeUsed_sec == 0 || (fidget._lastTimeUsed_sec + fidget._minTimeBetween_sec) < currentTime_sec)
+        {
+          totalProb += fidget._frequency;
+          fidgetChances[totalProb] = &fidget;
+        }
       }
       
-#     if DEBUG_FIDGET_BEHAVIOR
-      PRINT_NAMED_INFO("BehaviorFidget.Update.Selection",
-                       "Random prob=%d out of totalProb=%d, selected '%s'.\n",
-                       prob, _totalProb, fidgetIter->second.first.c_str());
-#     endif
-      
-      // Set the name based on the selected fidget and then queue the action
-      // returned by its MakeFidgetAction function
-      SetStateName(fidgetIter->second.first);
-      robot.GetActionList().QueueActionNext(IBehavior::sActionSlot,
-                                             fidgetIter->second.second());
+      // Assuming we have any to choose from, pick a random fidget to use
+      if (totalProb > 0)
+      {
+        // Pick another random fidget action
+        s32 prob = GetRNG().RandIntInRange(0, totalProb);
+
+        auto fidgetIter = fidgetChances.begin();
+        while(prob > fidgetIter->first) {
+          ++fidgetIter;
+        }
+        
+  #     if DEBUG_FIDGET_BEHAVIOR
+        PRINT_NAMED_INFO("BehaviorFidget.Update.Selection",
+                         "Random prob=%d out of totalProb=%d, selected '%s'.\n",
+                         prob, totalProb, fidgetIter->second->_name.c_str());
+  #     endif
+        
+        // Set the name based on the selected fidget and then queue the action
+        // returned by its MakeFidgetAction function
+        SetStateName(fidgetIter->second->_name);
+        IActionRunner* fidgetAction = fidgetIter->second->_function();
+        _queuedActionTag = fidgetAction->GetTag();
+        _currentActionMustComplete = fidgetIter->second->_mustComplete;
+        
+        robot.GetActionList().QueueActionNext(IBehavior::sActionSlot, fidgetAction);
+        
+        fidgetIter->second->_lastTimeUsed_sec = currentTime_sec;
+      }
       
       // Set next time to fidget
       // TODO: Get min/max wait times from Json config
@@ -132,14 +170,36 @@ namespace Cozmo {
   
   Result BehaviorFidget::InterruptInternal(Robot& robot, double currentTime_sec, bool isShortInterrupt)
   {
-    // Mark the behavior as interrupted so it will return COMPLETE on next update
+    // Mark the behavior as interrupted so it will handle on next update
     _interrupted = true;
-    
-    // TODO: Is there any cleanup that needs to happen?
     
     return RESULT_OK;
   }
   
+  void BehaviorFidget::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+  {
+    switch (event.GetData().GetTag())
+    {
+      case EngineToGameTag::RobotCompletedAction:
+      {
+        if (_queuedActionTag != (uint32_t)ActionConstants::INVALID_TAG)
+        {
+          auto& msg = event.GetData().Get_RobotCompletedAction();
+          if (msg.idTag == _queuedActionTag)
+          {
+            _queuedActionTag = (uint32_t)ActionConstants::INVALID_TAG;
+            _currentActionMustComplete = false;
+          }
+        }
+      }
+      break;
+      default:
+        PRINT_NAMED_DEBUG("BehaviorFidget::AlwaysHandle::UnexpectedEvent",
+                          "Not handling unexpected event type %s",
+                          ExternalInterface::MessageEngineToGameTagToString(event.GetData().GetTag()));
+        
+    }
+  }
   
 
 } // namespace Cozmo
