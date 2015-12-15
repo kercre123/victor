@@ -1171,7 +1171,12 @@ namespace Anki {
       std::string   _name;
       u32           _numLoops;
       bool          _startedPlaying;
+      bool          _stoppedPlaying;
       u8            _animTag;
+      
+      // For responding to AnimationStarted and AnimationEnded events
+      Signal::SmartHandle _startSignalHandle;
+      Signal::SmartHandle _endSignalHandle;
       
     }; // class PlayAnimationAction
     
