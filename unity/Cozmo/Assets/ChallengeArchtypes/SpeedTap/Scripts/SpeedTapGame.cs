@@ -11,6 +11,7 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public int CozmoScore;
     public int PlayerScore;
+    public Color MatchColor;
 
     public event Action PlayerTappedBlockEvent;
 
