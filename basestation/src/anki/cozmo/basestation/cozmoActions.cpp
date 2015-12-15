@@ -3428,20 +3428,69 @@ namespace Anki {
       completionInfo.animName = _animName;
     }
     
-#pragma mark ---- PlaySoundAction ----
-    
-    PlaySoundAction::PlaySoundAction(const std::string& soundName)
-    : _soundName(soundName)
-    , _name("PlaySound" + soundName + "Action")
-    {
-      
-    }
 
-    ActionResult PlaySoundAction::CheckIfDone(Robot& robot)
+#pragma mark ---- DeviceAudioAction ----
+    
+    DeviceAudioAction::DeviceAudioAction(const Audio::EventType event,
+                                         const Audio::GameObjectType gameObj,
+                                         const bool waitUntilDone)
+    : _actionType( AudioActionType::Event )
+    , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
+    , _event( event )
+    , _gameObj( gameObj )
+    { }
+    
+    // Stop All Events on Game Object, pass in Invalid to stop all audio
+    DeviceAudioAction::DeviceAudioAction(const Audio::GameObjectType gameObj)
+    : _actionType( AudioActionType::StopEvents )
+    , _name( "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)) )
+    , _gameObj( gameObj )
+    { }
+    
+    // Change Music state
+    DeviceAudioAction::DeviceAudioAction(const Audio::MusicGroupStates state)
+    : _actionType( AudioActionType::SetState )
+    , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
+    , _stateGroup( Audio::GameStateGroupType::Music )
+    , _state( static_cast<Audio::GameStateType>(state) )
+    { }
+    
+    ActionResult DeviceAudioAction::Init(Robot& robot)
     {
-      // TODO: Implement!
-      return ActionResult::FAILURE_ABORT;
+      switch ( _actionType ) {
+        case AudioActionType::Event:
+          robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
+          break;
+          
+        case AudioActionType::StopEvents:
+          robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
+          break;
+          
+        case AudioActionType::SetState:
+        {
+          // FIXME: This is temp until we add boot process which will start music at launch
+          if (Audio::GameStateGroupType::Music == _stateGroup) {
+            static bool didStartMusic = false;
+            if (!didStartMusic) {
+              robot.GetRobotAudioClient()->PostEvent( Audio::EventType::PLAY_MUSIC, Audio::GameObjectType::Default );
+              didStartMusic = true;
+            }
+          }
+          
+          robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
+        }
+          break;
+      }
+      
+      _didInit = true;
+      return ActionResult::SUCCESS;
     }
+    
+    ActionResult DeviceAudioAction::CheckIfDone(Robot& robot)
+    {
+      return _didInit ? ActionResult::SUCCESS : ActionResult::RUNNING;
+    }
+    
     
 #pragma mark ---- WaitAction ----
     

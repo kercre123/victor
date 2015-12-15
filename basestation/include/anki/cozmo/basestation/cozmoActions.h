@@ -24,6 +24,13 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/pathMotionProfile.h"
+// Audio
+#include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
+#include "clad/audio/audioStateTypes.h"
+#include "clad/audio/audioSwitchTypes.h"
+#include "clad/audio/audioParameterTypes.h"
+
 
 namespace Anki {
   
@@ -1169,22 +1176,48 @@ namespace Anki {
     }; // class PlayAnimationAction
     
     
-    class PlaySoundAction : public IAction
+    class DeviceAudioAction : public IAction
     {
     public:
-      PlaySoundAction(const std::string& soundName);
+      // Play Audio Event
+      // TODO: Add bool to set if caller want's to block "wait" until audio is completed
+      DeviceAudioAction(const Audio::EventType event,
+                        const Audio::GameObjectType gameObj,
+                        const bool waitUntilDone = false);
+      
+      // Stop All Events on Game Object, pass in Invalid to stop all audio
+      DeviceAudioAction(const Audio::GameObjectType gameObj);
+      
+      // Change Music state
+      DeviceAudioAction(const Audio::MusicGroupStates state);
       
       virtual const std::string& GetName() const override { return _name; }
-      virtual RobotActionType GetType() const override { return RobotActionType::PLAY_SOUND; }
+      virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
       
+      // TODO: Add Completion strct
+//      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+
     protected:
       
+      virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       
-      std::string _soundName;
-      std::string _name;
+      enum class AudioActionType : uint8_t {
+        Event = 0,
+        StopEvents,
+        SetState,
+      };
       
-    }; // class PlaySoundAction
+      AudioActionType           _actionType;
+      std::string               _name;
+      bool                      _didInit    = false;
+      Audio::EventType          _event      = Audio::EventType::Invalid;
+      Audio::GameObjectType     _gameObj    = Audio::GameObjectType::Invalid;
+      Audio::GameStateGroupType _stateGroup = Audio::GameStateGroupType::Invalid;
+      Audio::GameStateType      _state      = Audio::GameStateType::Invalid;
+      
+    }; // class PlayAudioAction
+    
     
     // Waits for a specified amount of time in seconds, from the time the action
     // is begun. Returns RUNNING while waiting and SUCCESS when the time has
