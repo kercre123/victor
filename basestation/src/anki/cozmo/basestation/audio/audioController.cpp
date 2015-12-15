@@ -117,7 +117,8 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
       "Init.bnk",
       "Music.bnk",
       "UI.bnk",
-      "VO.bnk",
+      "VO_Aria.bnk",
+      "VO_Cozmo.bnk",
       "Cozmo_Movement.bnk",
       "Debug.bnk",
     };
@@ -226,6 +227,16 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
   }
 #endif
   return playingId;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::StopAllAudioEvents( AudioEngine::AudioGameObject gameObject )
+{
+#if USE_AUDIO_ENGINE
+  if ( _isInitialized ) {
+    _audioEngine->StopAllAudioEvents( gameObject );
+  }
+#endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -49,6 +49,8 @@ public:
   CallbackIdType PostEvent( EventType event,
                             GameObjectType gameObject = GameObjectType::Default,
                             AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
+  
+  void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
 
   void PostGameState( GameStateGroupType gameStateGroup,
                       GameStateType gameState );
