@@ -29,7 +29,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #define DO_FACE_MIMICKING 0
-#define DO_TOO_CLOSE_SCARED 1
+#define DO_TOO_CLOSE_SCARED 0
 
 namespace Anki {
 namespace Cozmo {
@@ -139,7 +139,7 @@ namespace Cozmo {
   
   void ResetFaceToNeutral(Robot& robot)
   {
-#if DO_FACE_MIMICKING
+#   if DO_FACE_MIMICKING
     //robot.GetMoveComponent().DisableTrackToFace();
     StopTracking(robot);
     ProceduralFace resetFace;
@@ -147,7 +147,7 @@ namespace Cozmo {
     oldTimeStamp += IKeyFrame::SAMPLE_LENGTH_MS;
     resetFace.SetTimeStamp(oldTimeStamp);
     robot.SetProceduralFace(resetFace);
-#endif
+#   endif
   }
   
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
@@ -159,7 +159,7 @@ namespace Cozmo {
   {
     _trackedFaceID = faceID;
     TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
-    _lastActionTag = trackAction->GetTag();
+    //_lastActionTag = trackAction->GetTag();
     robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, trackAction);
   }
   
@@ -340,7 +340,7 @@ namespace Cozmo {
         // Update cozmo's face based on our currently focused face
         UpdateProceduralFace(robot, _crntProceduralFace, *face);
         
-#if DO_TOO_CLOSE_SCARED
+#       if DO_TOO_CLOSE_SCARED
         if(!_isActing &&
            (currentTime_sec - _lastTooCloseScaredTime) > kTooCloseScaredInterval_sec)
         {
@@ -378,10 +378,10 @@ namespace Cozmo {
             _lastTooCloseScaredTime = currentTime_sec;
           }
         }
-#else
+#       else
         // avoid pesky unused variable error
         (void)_lastTooCloseScaredTime;
-#endif
+#       endif // DO_TOO_CLOSE_SCARED
         
         break;
       }
@@ -389,7 +389,7 @@ namespace Cozmo {
       case State::Interrupted:
       {
         SetStateName("Interrupted");
-        
+        StopTracking(robot);
         status = Status::Complete;
         break;
       }
@@ -432,7 +432,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Signal Handlers
 
-#if DO_FACE_MIMICKING
+# if DO_FACE_MIMICKING
   inline static f32 GetAverageHeight(const Vision::TrackedFace::Feature& feature,
                                      const Point2f relativeTo, const Radians& faceAngle_rad)
   {
@@ -472,13 +472,13 @@ namespace Cozmo {
     avgEyeHeight *= 0.5f;
     return avgEyeHeight;
   }
-#endif
+# endif
 
   void BehaviorInteractWithFaces::UpdateBaselineFace(Robot& robot, const Vision::TrackedFace* face)
   {
     //robot.GetMoveComponent().EnableTrackToFace(face->GetID(), false);
    
-#if DO_FACE_MIMICKING
+#   if DO_FACE_MIMICKING
     
     const Radians& faceAngle = face->GetHeadRoll();
     
@@ -494,13 +494,13 @@ namespace Cozmo {
     _baselineEyeHeight = GetEyeHeight(face);
     
     _baselineIntraEyeDistance = face->GetIntraEyeDistance();
-#else
+#   else
     // hack to avoid unused warning
     (void)_baselineEyeHeight;
     (void)_baselineIntraEyeDistance;
     (void)_baselineLeftEyebrowHeight;
     (void)_baselineRightEyebrowHeight;
-#endif
+#   endif // DO_FACE_MIMICKING
   }
   
   void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event)
@@ -611,7 +611,7 @@ namespace Cozmo {
   
   void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const
   {
-#if DO_FACE_MIMICKING
+#   if DO_FACE_MIMICKING
     ProceduralFace prevProcFace(proceduralFace);
     
     const Radians& faceAngle = face.GetHeadRoll();
@@ -682,8 +682,8 @@ namespace Cozmo {
     proceduralFace.SetTimeStamp(face.GetTimeStamp());
     proceduralFace.MarkAsSentToRobot(false);
     robot.SetProceduralFace(proceduralFace);
-#endif // DO_FACE_MIMICKING
-  }
+#   endif // DO_FACE_MIMICKING
+  } // UpdateProceduralFace()
   
   void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event)
   {
@@ -691,9 +691,9 @@ namespace Cozmo {
     
     if(msg.idTag == _lastActionTag)
     {
-#if DO_FACE_MIMICKING
+#     if DO_FACE_MIMICKING
       robot.SetProceduralFace(_crntProceduralFace);
-#endif
+#     endif
       _isActing = false;
     }
   }

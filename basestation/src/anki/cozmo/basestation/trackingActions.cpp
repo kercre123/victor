@@ -21,6 +21,8 @@
 
 #include "anki/common/basestation/utils/timer.h"
 
+#define DEBUG_TRACKING_ACTIONS 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -51,25 +53,38 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
   if(GetAngles(robot, absPanAngle, absTiltAngle))
   {
     // Record latest update to avoid timing out
-    if(_timeout_sec > 0.) {
+    if(_updateTimeout_sec > 0.) {
       _lastUpdateTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     }
     
+#   if DEBUG_TRACKING_ACTIONS
     PRINT_NAMED_INFO("ITrackAction.CheckIfDone.NewAngles",
                      "Commanding abs angles: pan=%.1fdeg, tilt=%.1fdeg",
                      absPanAngle.getDegrees(), absTiltAngle.getDegrees());
+#   endif
     
     // Pan and/or Tilt (normal behavior)
-    if(Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode)
+    if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&
+       (absTiltAngle - robot.GetHeadAngle()).getAbsoluteVal() > DEG_TO_RAD(1.5f))
     {
-      // TODO: Set speed/accel based on angle difference
-      if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), 15.f, 20.f))
+      // Set speed/accel based on angle difference
+      const f32 MinSpeed = 20.f;
+      const f32 MaxSpeed = 40.f;
+      const f32 MinAccel = 20.f;
+      const f32 MaxAccel = 40.f;
+      
+      const f32 angleFrac = std::abs(absTiltAngle.ToFloat() - robot.GetHeadAngle())/(MAX_HEAD_ANGLE-MIN_HEAD_ANGLE);
+      const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
+      const f32 accel = (MaxAccel - MinAccel)*angleFrac + MinAccel;
+      
+      if(RESULT_OK != robot.GetMoveComponent().MoveHeadToAngle(absTiltAngle.ToFloat(), speed, accel))
       {
         return ActionResult::FAILURE_ABORT;
       }
     }
     
-    if(Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode)
+    if((Mode::HeadAndBody == _mode || Mode::BodyOnly == _mode) &&
+       (absPanAngle - robot.GetPose().GetRotation().GetAngleAroundZaxis()).getAbsoluteVal() > DEG_TO_RAD(1.f))
     {
       // Get rotation angle around drive center
       Pose3d rotatedPose;
@@ -77,21 +92,32 @@ ActionResult ITrackAction::CheckIfDone(Robot& robot)
       dcPose.SetRotation(absPanAngle, Z_AXIS_3D());
       robot.ComputeOriginPose(dcPose, rotatedPose);
       
+      // Set speed/accel based on angle difference
+      const f32 MinSpeed = 10.f;
+      const f32 MaxSpeed = 60.f;
+      const f32 MinAccel = 30.f;
+      const f32 MaxAccel = 80.f;
+      
+      const f32 angleFrac = std::abs(absPanAngle.ToFloat() -
+                                     robot.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat())/M_PI;
+      const f32 speed = (MaxSpeed - MinSpeed)*angleFrac + MinSpeed;
+      const f32 accel = (MaxAccel - MinAccel)*angleFrac + MinAccel;
+      
       RobotInterface::SetBodyAngle setBodyAngle;
       setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
-      setBodyAngle.max_speed_rad_per_sec = DEFAULT_PATH_SPEED_MMPS; // TODO: Set based on angle difference
-      setBodyAngle.accel_rad_per_sec2    = DEFAULT_PATH_ACCEL_MMPS2; // TODO: Set based on angle difference
+      setBodyAngle.max_speed_rad_per_sec = speed;
+      setBodyAngle.accel_rad_per_sec2    = accel; 
       if(RESULT_OK != robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::FAILURE_ABORT;
       }
     }
       
-  } else if(_timeout_sec > 0.) {
+  } else if(_updateTimeout_sec > 0.) {
     const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if(currentTime - _lastUpdateTime > _timeout_sec) {
+    if(currentTime - _lastUpdateTime > _updateTimeout_sec) {
       PRINT_NAMED_INFO("ITrackAction.CheckIfDone.Timeout",
                        "No tracking angle update received in %f seconds, returning done.",
-                       _timeout_sec);
+                       _updateTimeout_sec);
       return ActionResult::SUCCESS;
     }
     
@@ -283,7 +309,7 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
   
   Pose3d headPoseWrtRobot;
   if(false == face->GetHeadPose().GetWithRespectTo(robot.GetPose(), headPoseWrtRobot)) {
-    PRINT_NAMED_ERROR("TrackFaceAction.GetTrackingVector.PoseOriginError",
+    PRINT_NAMED_ERROR("TrackFaceAction.GetAngles.PoseOriginError",
                       "Could not get pose of face w.r.t. robot.");
     return false;
   }
@@ -296,9 +322,11 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
   // probably be queried from the robot instead of using the constant here)
   const f32 zDist = headPoseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
 
+# if DEBUG_TRACKING_ACTIONS
   PRINT_NAMED_INFO("TrackFaceAction.GetAngles.HeadPose",
                    "Translation w.r.t. robot = (%.1f, %.1f, %.1f) [t=%d]",
                    xDist, yDist, zDist, face->GetTimeStamp());
+# endif
   
   const f32 xyDistSq = xDist*xDist + yDist*yDist;
   
@@ -354,7 +382,7 @@ bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     RobotPoseStamp* poseStamp = nullptr;
     TimeStamp_t junkTime;
     if(RESULT_OK != robot.GetPoseHistory()->ComputeAndInsertPoseAt(_motionObservation.timestamp, junkTime, &poseStamp)) {
-      PRINT_NAMED_ERROR("TrackMotionAction.GetTrackingVector.PoseHistoryError",
+      PRINT_NAMED_ERROR("TrackMotionAction.GetAngles.PoseHistoryError",
                         "Could not get historical pose for motion observed at t=%d (lastRobotMsgTime = %d)",
                         _motionObservation.timestamp,
                         robot.GetLastMsgTimestamp());
@@ -367,11 +395,13 @@ bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& a
     absTiltAngle += poseStamp->GetHeadAngle();
     absPanAngle  += poseStamp->GetPose().GetRotation().GetAngleAroundZaxis();
     
-    PRINT_NAMED_INFO("TrackMotionAction.GetTrackingVector.Motion",
+#   if DEBUG_TRACKING_ACTIONS
+    PRINT_NAMED_INFO("TrackMotionAction.GetAngles.Motion",
                      "Motion area=%d, centroid=(%.1f,%.1f)",
                      _motionObservation.img_area,
                      motionCentroid.x(), motionCentroid.y());
-
+#   endif
+    
     return true;
     
   } // if(_gotNewMotionObservation && _motionObservation.img_area > 0)

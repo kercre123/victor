@@ -48,9 +48,12 @@ public:
   // Set how long the tracker will run without seeing whatever it is trying to
   // track. After this, it will complete "successfully".
   // Set to 0 to disable timeout (default).
-  void SetTimeout(double timeout_sec) { _timeout_sec = timeout_sec; }
+  void SetUpdateTimeout(double timeout_sec) { _updateTimeout_sec = timeout_sec; }
   
   virtual u8 GetAnimTracksToDisable() const override;
+  
+  // Tracking is meant to be ongoing, so "never" timeout
+  virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
   
 protected:
 
@@ -65,7 +68,7 @@ protected:
 private:
   
   Mode     _mode = Mode::HeadAndBody;
-  double   _timeout_sec = 0.;
+  double   _updateTimeout_sec = 0.;
   double   _lastUpdateTime = 0.;
   
 }; // class ITrackAction
