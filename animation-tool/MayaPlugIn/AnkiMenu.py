@@ -4,12 +4,16 @@ import maya.OpenMayaMPx as OpenMayaMPx
 import maya.cmds as cmds
 import maya.mel as mel
 import json
+import math
+import os
 from operator import itemgetter
 
 #To setup add "MAYA_PLUG_IN_PATH = <INSERT PATH TO COZMO GAME HERE>/cozmo-game/animation-tool/MayaPlugIn" in "~/Library/Preferences/Autodesk/maya/2016/Maya.env"
 #In maya "Windows -> Setting/Preferences -> Plug-In Manager" and check under AnkiMenu.py" hit load and auto-load and an Anki menu will appear on the main menu
 
 kPluginCmdName = "AnkiAnimExport"
+kShortFlagName = "oj"
+kLongFlagName = "open_json"
 #something like ~/cozmo-game/lib/anki/products-cozmo-assets/animations
 g_AnkiExportPath = ""
 g_PrevMenuName = ""
@@ -134,10 +138,10 @@ def GetMovementJSON():
     keyframe_attr_data["RadiusValues"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, valueChange=True)
     keyframe_attr_data["TurnValues"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, valueChange=True)
     keyframe_attr_data["FwdValues"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, valueChange=True)
+    keyframe_attr_data["TimesRadius"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, timeChange=True)
+    keyframe_attr_data["TimesTurn"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, timeChange=True)
     keyframe_attr_data["TimesForward"] = cmds.keyframe( dataNodeObject, attribute = "Forward", query=True, timeChange=True)
-    keyframe_attr_data["TimesRadius"] = cmds.keyframe( dataNodeObject, attribute = "Turn", query=True, timeChange=True)
-    keyframe_attr_data["TimesTurn"] = cmds.keyframe( dataNodeObject, attribute = "Radius", query=True, timeChange=True)
-
+    
     if( keyframe_attr_data["TimesForward"] is None or 
         keyframe_attr_data["TimesRadius"] is None or 
         keyframe_attr_data["TimesTurn"] is None):
@@ -147,7 +151,9 @@ def GetMovementJSON():
     min_keyframes = min([len(keyframe_attr_data["TimesForward"]),len(keyframe_attr_data["TimesRadius"]),len(keyframe_attr_data["TimesTurn"])])
 
     move_data_combined = [] #object so I don't have a bunch of different arrays
-    i = 1 #Skip the init frame and round off.
+    i = 1 #can skip the init frame and round off.
+    valid_count = 0
+    single_frame_time = 1 / ANIM_FPS
     for i in range(min_keyframes):
         valid_keyframe = {
                 "Forward": round(keyframe_attr_data["FwdValues"][i]),
@@ -155,7 +161,12 @@ def GetMovementJSON():
                 "Radius": round(keyframe_attr_data["RadiusValues"][i]),
                 "Time": keyframe_attr_data["TimesForward"][i]
             }
-        move_data_combined.append( valid_keyframe )
+        #if our scale has shorted a frame too much, ignore it.
+        if( valid_count > 0):
+            if( keyframe_attr_data["TimesForward"][i] - move_data_combined[valid_count-1]["Time"] < single_frame_time):
+                continue
+        move_data_combined.append( valid_keyframe );
+        valid_count = valid_count + 1
 
     #TODO: error message if all are not keyed.
     if( len(move_data_combined) == 0):
@@ -170,35 +181,40 @@ def GetMovementJSON():
             continue
         duration = (move_data_combined[i+1]["Time"] - move_data_combined[i]["Time"]) * 1000 / ANIM_FPS
         triggerTime_ms = round((move_data_combined[i]["Time"]) * 1000  / ANIM_FPS, 0);
-        durationTime_ms = round(duration, 0); 
+        durationTime_ms = round(duration, 0)
+        time_in_seconds = durationTime_ms / 1000.0
         curr = {
                     "triggerTime_ms": triggerTime_ms,
                     "durationTime_ms": durationTime_ms,
                     "Name": "BodyMotionKeyFrame"
                 }
-        if( (move_data_combined[i+1]["Forward"] == 0) and  
+        fwd_delta = move_data_combined[i+1]["Forward"] - move_data_combined[i]["Forward"]
+        turn_delta = move_data_combined[i+1]["Turn"] - move_data_combined[i]["Turn"]
+        radius_delta = move_data_combined[i+1]["Radius"] - move_data_combined[i]["Radius"]
+        if( (fwd_delta == 0) and  
             (move_data_combined[i+1]["Radius"] == 0) and
-            (move_data_combined[i+1]["Turn"]  == 0)):
+            (turn_delta  == 0)):
             #just an empty reset frame.
             continue
-        if( (move_data_combined[i+1]["Forward"]  != 0) and  
+        if( (fwd_delta  != 0) and  
             (move_data_combined[i+1]["Radius"]  == 0) and
-            (move_data_combined[i+1]["Turn"]  == 0)):
+            (turn_delta  == 0)):
             curr["radius_mm"] = "STRAIGHT"
-            curr["speed"] =round(keyframe_attr_data["FwdValues"][i+1])
-        elif( (move_data_combined[i+1]["Forward"] == 0) and  
+            curr["speed"] = fwd_delta
+        elif( (fwd_delta == 0) and  
             (move_data_combined[i+1]["Radius"] == 0) and
-            (move_data_combined[i+1]["Turn"]  != 0)):
+            (turn_delta  != 0)):
             curr["radius_mm"] = "TURN_IN_PLACE"
             # whereas in maya the turn values are in degrees. The one robot Mooly tested on turned about 360 degrees in 1.25 seconds
             # but in theory the max is 8 radians per second 
-            rot_degrees_wanted = keyframe_attr_data["TurnValues"][i+1]
-            time_in_seconds = durationTime_ms / 1000
+            rot_degrees_wanted = turn_delta
             curr["speed"] = round(rot_degrees_wanted / time_in_seconds)
         # Radius and turn is non-zero and forward is 0, then it's an arc
         else:
             curr["radius_mm"] = keyframe_attr_data["RadiusValues"][i+1]
-            curr["speed"] =round(keyframe_attr_data["TurnValues"][i+1])
+            rot_radians = math.radians(turn_delta)
+            arc_length = curr["radius_mm"] * rot_radians
+            curr["speed"] = round(arc_length / time_in_seconds)
         json_arr.append(curr)
     return json_arr
 
@@ -247,16 +263,29 @@ def AddProceduralKeyframe(currattr,triggerTime_ms,durationTime_ms,val,frameNumbe
         frame[write_info["cladName"]] = val
     return
 
-#JSON printing
-def ExportAnkiAnim(item):
+def VerifyAnkiExportPath():
     global g_AnkiExportPath;
-    print "AnkiAnimExportStarted..."
-    #Check if we've set something before this session, use a maya.env var or force dialog
     if( g_AnkiExportPath == ""):
         environment_path = mel.eval("getenv ANKI_ANIM_EXPORT_PATH")
         g_AnkiExportPath = environment_path
         if( g_AnkiExportPath == ""):
             SetAnkiExportPath("Default")
+
+def OpenJson(item):
+    global g_AnkiExportPath
+    VerifyAnkiExportPath();
+    output_name = cmds.file(query=True, sceneName=True, shortName=True).split('.')[0]
+    json_filename =g_AnkiExportPath + "/"+output_name +".json"
+    print "Attempting to open: " + json_filename
+    os.system("open "+json_filename)
+    
+#JSON printing
+def ExportAnkiAnim(item):
+    global g_AnkiExportPath;
+    print "AnkiAnimExportStarted..."
+    #Check if we've set something before this session, use a maya.env var or force dialog
+    VerifyAnkiExportPath()
+
     global ANIM_FPS
     global MAX_FRAMES
     global DATA_NODE_NAME
@@ -379,20 +408,31 @@ class scriptedCommand(OpenMayaMPx.MPxCommand):
         
     # Invoked when the command is run. ( Command so can be integrated with other scripts. )
     def doIt(self,argList):
-        print "Anki Plugin called!"
-        ExportAnkiAnim(True)
+        print "Anki Plugin called!" 
+        argData = OpenMaya.MArgParser( self.syntax(), argList )
+        #Run with "AnkiAnimExport -open_json"
+        if argData.isFlagSet( kShortFlagName ):
+            OpenJson(True)
+        else:
+            ExportAnkiAnim(True)
 
 # Creator
 def cmdCreator():
     return OpenMayaMPx.asMPxPtr( scriptedCommand() )
-    
+
+def syntaxCreator():
+    ''' Defines the argument and flag syntax for this command. '''
+    syntax = OpenMaya.MSyntax()
+    syntax.addFlag( kShortFlagName, kLongFlagName, OpenMaya.MSyntax.kNoArg )
+    return syntax
+
 # Initialize the script plug-in
 def initializePlugin(mobject):
     global g_PrevMenuName
     mplugin = OpenMayaMPx.MFnPlugin(mobject)
     print "Initting Anki plugin"
     try:
-        mplugin.registerCommand( kPluginCmdName, cmdCreator )
+        mplugin.registerCommand( kPluginCmdName, cmdCreator, syntaxCreator )
         #create the menu on the main menu bar
         g_PrevMenuName = cmds.menu( label='Anki', parent='MayaWindow')
         cmds.menuItem( label='Export Anim', command=ExportAnkiAnim, ctrlModifier=True, keyEquivalent="e"  ) 
