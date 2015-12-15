@@ -218,6 +218,7 @@ static void start_transaction() {
     active = getActive();
 
     if (~active->flags & I2C_OPTIONAL || active->slave_address != _active_slave) {
+      active->flags &= ~I2C_OPTIONAL;
       break ;
     }
     
