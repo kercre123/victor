@@ -78,18 +78,18 @@ namespace Cozmo {
            {
              SetBehaviorChooser( new InvestorDemoMotionBehaviorChooser(_robot, config) );
 
-             BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+             // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
              // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
              // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
-             AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
              break;
            }
            case BehaviorChooserType::InvestorDemoFacesAndBlocks:
            {
              SetBehaviorChooser( new InvestorDemoFacesAndBlocksBehaviorChooser(_robot, config) );
              
-             BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-             AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+             // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+             // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
              break;
            }
            default:

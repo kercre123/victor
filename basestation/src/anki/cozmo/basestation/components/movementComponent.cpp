@@ -19,10 +19,32 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+#define DEBUG_ANIMATION_LOCKING 1
+
 namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
+
+// TODO:(bn) move this somewhere central
+namespace AnimTrackFlagHelpers
+{
+
+std::string AnimTrackFlagsToString(uint8_t tracks)
+{
+  std::stringstream ss;
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    uint8_t currTrack = (1 << i);
+    if( tracks & currTrack ) {
+      ss << EnumToString( static_cast<AnimTrackFlag>(currTrack) ) << ' ';
+    }
+  }
+
+  return ss.str();
+}
+}
+
 
 MovementComponent::MovementComponent(Robot& robot)
   : _robot(robot)
@@ -170,6 +192,12 @@ void MovementComponent::LockAnimTracks(uint8_t tracks)
       }
     }
   }
+#if DEBUG_ANIMATION_LOCKING
+  PRINT_NAMED_INFO("MovementComponent.LockAnimTracks", "locked: (0x%x) %s, result:",
+                   tracks,
+                   AnimTrackFlagHelpers::AnimTrackFlagsToString(tracks).c_str());
+  PrintAnimationLockState();
+#endif
 }
 
 void MovementComponent::UnlockAnimTracks(uint8_t tracks)
@@ -189,7 +217,27 @@ void MovementComponent::UnlockAnimTracks(uint8_t tracks)
       ASSERT_NAMED(_animTrackLockCount[i] >= 0, "Should have a matching number of anim track lock and unlocks!");
     }
   }
+#if DEBUG_ANIMATION_LOCKING
+  PRINT_NAMED_INFO("MovementComponent.LockAnimTracks", "unlocked: (0x%x) %s, result:",
+                   tracks,
+                   AnimTrackFlagHelpers::AnimTrackFlagsToString(tracks).c_str());
+  PrintAnimationLockState();
+#endif
 }
+
+void MovementComponent::PrintAnimationLockState() const
+{
+  std::stringstream ss;
+  for( int trackNum = 0; trackNum < (int)AnimConstants::NUM_TRACKS; ++trackNum ) {
+    if( _animTrackLockCount[trackNum] > 0 ) {
+      uint8_t trackEnumVal = 1 << trackNum;
+      ss << AnimTrackFlagHelpers::AnimTrackFlagsToString(trackEnumVal) << ":" << _animTrackLockCount[trackNum] << ' ';
+    }
+  }
+
+  PRINT_NAMED_DEBUG("MovementComponent.AnimationLocks", "%s", ss.str().c_str());
+}
+
   
 void MovementComponent::IgnoreTrackMovement(uint8_t tracks)
 {

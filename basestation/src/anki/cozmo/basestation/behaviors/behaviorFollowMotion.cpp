@@ -60,18 +60,20 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
+  _previousIdleAnimation = robot.GetIdleAnimationName();
+
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
     _initialReactionAnimPlayed = false;
+    _state = State::WaitingForFirstMotion;
+    SetStateName("Wait");
   } else {
     _initialReactionAnimPlayed = true;
+    StartTracking(robot);
+    _state = State::Tracking;
+    SetStateName("Tracking");
   }
-
-  _previousIdleAnimation = robot.GetIdleAnimationName();
-
-  _state = State::WaitingForFirstMotion;
-  SetStateName("Wait");
   
   return Result::RESULT_OK;
 }
@@ -301,7 +303,11 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
         break;
         
       case State::HoldingHeadDown:
-        ASSERT_NAMED(completedAction.actionType == RobotActionType::MOVE_HEAD_TO_ANGLE, "Expecting completed action to be MoveHeadToAngle when HoldingHeadDown");
+        if( completedAction.actionType != RobotActionType::MOVE_HEAD_TO_ANGLE ){
+          PRINT_NAMED_WARNING("BehaviorFollowMotion.HandleWhileRunning.HoldingHeadDown.InvalidAction",
+                              "Expecting completed action to be MoveHeadToAngle, instead got %s",
+                              RobotActionTypeToString(completedAction.actionType));
+        }
         // Nothing to do: we transition out of this state once timer elapses
         break;
         
