@@ -2,9 +2,6 @@
 {
 	Properties
 	{
-		_MainTex ("Texture", 2D) = "white" {}
-    _Color ("Main Color", COLOR) = (1,1,1,1)
-
     _FaceAngle ("Face Angle", Float) = 0
     _FaceCenterScale ("Face Center Scale", Vector) = (0, 0, 1, 1)
 
@@ -262,10 +259,8 @@
       fixed4 frag (v2f i) : SV_Target
       {
         float2 imagePos = IMAGE_SIZE * i.uv * float2(1, -1) + float2(0, IMAGE_HEIGHT);
-        // pixel effect
-        //float2 imagePos = floor(IMAGE_SIZE * i.uv * 2) * 0.5 * float2(1, -1) + float2(0, IMAGE_HEIGHT);
 
-        float4 baseColor = floor(mod(imagePos.y, 2)) * _Color;
+        float4 baseColor = float4(1,1,1,1);
 
         float2 facePos = (imagePos - _FaceCenterScale.xy - IMAGE_SIZE * 0.5) / _FaceCenterScale.zw;
 
