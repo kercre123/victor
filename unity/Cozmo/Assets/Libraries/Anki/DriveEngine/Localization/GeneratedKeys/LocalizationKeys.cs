@@ -59,9 +59,27 @@ public static class LocalizationKeys {
   public const string kIntroSequenceAriaIntroLine3 = "IntroSequence.AriaIntroLine3";
   public const string kIntroSequenceAriaUploadLine1 = "IntroSequence.AriaUploadLine1";
   public const string kIntroSequenceAriaUploadLine2 = "IntroSequence.AriaUploadLine2";
-  public const string kMotionDetectionIntroNode1 = "MotionDetectionIntro.Node 1";
-  public const string kMotionDetectionIntroNode2 = "MotionDetectionIntro.Node 2";
-  public const string kMotionDetectionIntroNode3 = "MotionDetectionIntro.Node 3";
+  public const string kMotionDetectionIntroAriaLine1 = "MotionDetectionIntro.AriaLine1";
+  public const string kMotionDetectionIntroAriaLine2 = "MotionDetectionIntro.AriaLine2";
+  public const string kMotionDetectionIntroCozmoLine1 = "MotionDetectionIntro.CozmoLine1";
+  public const string kFaceTrackingIntroAriaLine1 = "FaceTrackingIntro.AriaLine1";
+  public const string kFaceTrackingIntroCozmoLine1 = "FaceTrackingIntro.CozmoLine1";
+  public const string kCubeLiftingIntroAriaLine1 = "CubeLiftingIntro.AriaLine1";
+  public const string kCubeLiftingIntroCozmoLine1 = "CubeLiftingIntro.CozmoLine1";
+  public const string kCubeVisionIntroAriaLine1 = "CubeVisionIntro.AriaLine1";
+  public const string kCubeVisionIntroCozmoLine1 = "CubeVisionIntro.CozmoLine1";
+  public const string kDockTrainingIntroCozmoLine1 = "DockTrainingIntro.CozmoLine1";
+  public const string kDockTrainingIntroAriaLine1 = "DockTrainingIntro.AriaLine1";
+  public const string kFollowCubeIntroAriaLine1 = "FollowCubeIntro.AriaLine1";
+  public const string kFollowCubeIntroCozmoLine1 = "FollowCubeIntro.CozmoLine1";
+  public const string kStackTrainingIntroAriaLine1 = "StackTrainingIntro.AriaLine1";
+  public const string kStackTrainingIntroCozmoLine1 = "StackTrainingIntro.CozmoLine1";
+  public const string kTestConvoNode1 = "TestConvo.Node 1";
+  public const string kTestConvoNode2 = "TestConvo.Node 2";
+  public const string kTestConvoNode3 = "TestConvo.Node 3";
+  public const string kTestConvoNode4 = "TestConvo.Node 4";
+  public const string kTestConvoNode5 = "TestConvo.Node 5";
+  public const string kTestConvoNode6 = "TestConvo.Node 6";
 
   #endregion
 

@@ -30,6 +30,8 @@ namespace Cozmo {
       [SerializeField]
       private bool _CloseDialogOnTapOutside;
 
+      public bool DimBackground = false;
+
       private Sequence _TransitionAnimation;
 
       public void OnDestroy() {

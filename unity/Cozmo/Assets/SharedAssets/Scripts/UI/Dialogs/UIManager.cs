@@ -37,15 +37,20 @@ public class UIManager : MonoBehaviour {
   [SerializeField]
   private GameObject _TouchCatcherPrefab;
 
-  private List<BaseView> _OpenViews;
+  [SerializeField]
+  private GameObject _DimBackgroundPrefab;
 
+  private List<BaseView> _OpenViews;
   private TouchCatcher _TouchCatcherInstance;
+  private GameObject _DimBackgroundInstance;
+  private int _NumDialogsDimmingBackground;
 
   public TouchCatcher TouchCatcher { get { return _TouchCatcherInstance != null && _TouchCatcherInstance.isActiveAndEnabled ? _TouchCatcherInstance : null; } }
 
   void Awake() {
     Instance = this;
     _OpenViews = new List<BaseView>();
+    _NumDialogsDimmingBackground = 0;
     DOTween.Init();
     BaseView.BaseViewCloseAnimationFinished += HandleBaseViewCloseAnimationFinished;
   }
@@ -68,13 +73,29 @@ public class UIManager : MonoBehaviour {
     return newUi;
   }
 
-  public static BaseView OpenView(BaseView viewPrefab) {
+  public static BaseView OpenView(BaseView viewPrefab, bool animateImmediately = true) {
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
-    newView.transform.SetParent(Instance._OverlayCanvas.transform, false);
 
     BaseView baseViewScript = newView.GetComponent<BaseView>();
-    baseViewScript.OpenView();
     Instance._OpenViews.Add(baseViewScript);
+
+    if (baseViewScript.DimBackground) {
+      Instance._NumDialogsDimmingBackground++;
+      if (Instance._NumDialogsDimmingBackground == 1) {
+        // First dialog to dim the background, we need to create a dimmer
+        // on top of existing ui
+        Instance._DimBackgroundInstance = GameObject.Instantiate(Instance._DimBackgroundPrefab);
+        Instance._DimBackgroundInstance.transform.SetParent(Instance._OverlayCanvas.transform, false);
+      }
+    }
+
+    // Set the parent of the dialog after dimmer is created so that it displays
+    // on top of the dimmer
+    newView.transform.SetParent(Instance._OverlayCanvas.transform, false);
+
+    if (animateImmediately) {
+      baseViewScript.OpenView();
+    }
 
     return baseViewScript;
   }
@@ -116,6 +137,17 @@ public class UIManager : MonoBehaviour {
   }
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
+    if (view.DimBackground) {
+      Instance._NumDialogsDimmingBackground--;
+      if (Instance._NumDialogsDimmingBackground <= 0) {
+        // Destroy the dimmer when no dialogs want it anymore
+        Instance._NumDialogsDimmingBackground = 0;
+        if (Instance._DimBackgroundInstance != null) {
+          Destroy(Instance._DimBackgroundInstance);
+        }
+      }
+    }
+
     Instance._OpenViews.Remove(view);
   }
 

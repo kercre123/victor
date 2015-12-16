@@ -24,6 +24,9 @@ namespace Cozmo {
       [SerializeField]
       private AnkiButton _CloseButton;
 
+      [SerializeField]
+      private CanvasGroup _AlphaController;
+
       private string _TitleKey;
       private string _DescriptionKey;
 
@@ -95,7 +98,7 @@ namespace Cozmo {
       private void SetupButton(AnkiButton button, String title, Action action) {
         if (button != null) {
           button.gameObject.SetActive(true);
-          button.Text = title.ToUpper();
+          button.Text = title;
           button.onClick.RemoveAllListeners();
           button.onClick.AddListener(() => {
             if (action != null) {
@@ -110,9 +113,20 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
+        openAnimation.Append(transform.DOLocalMoveY(
+          50, 0.15f).From().SetEase(Ease.OutQuad).SetRelative());
+        if (_AlphaController != null) {
+          _AlphaController.alpha = 0;
+          openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
+        }
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
+        closeAnimation.Append(transform.DOLocalMoveY(
+          -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
+        if (_AlphaController != null) {
+          closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
+        }
       }
     }
   }
