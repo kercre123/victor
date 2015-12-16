@@ -5,6 +5,8 @@
 #include "anki/common/shared/radians.h"
 #include "anki/common/shared/velocityProfileGenerator.h"
 
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+
 #include "headController.h"
 #include "liftController.h"
 #include "localization.h"
@@ -591,6 +593,11 @@ namespace AnimationController {
             {
               GetFromBuffer(&msg);
               _currentTag = msg.animStartOfAnimation.tag;
+              
+              RobotInterface::AnimationStarted msg;
+              msg.tag = _currentTag;
+              RobotInterface::SendMessage(msg);
+              
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
 #             endif
@@ -604,6 +611,10 @@ namespace AnimationController {
 #             endif
               GetFromBuffer(&msg);
               terminatorFound = true;
+              
+              RobotInterface::AnimationEnded msg;
+              msg.tag = _currentTag;
+              RobotInterface::SendMessage(msg);
               
               // Failsafe: make sure body stops moving when we hit end of animation
               // We don't have to do this with lift/head, because they will stop

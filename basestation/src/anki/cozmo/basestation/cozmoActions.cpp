@@ -22,9 +22,13 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/random/randomGenerator.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
+
 #include <iomanip>
 
 namespace Anki {
@@ -3375,7 +3379,30 @@ namespace Anki {
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
       _startedPlaying = false;
+      _stoppedPlaying = false;
       _animTag = robot.PlayAnimation(_animName, _numLoops);
+      
+      using namespace RobotInterface;
+      auto startLambda = [this](const AnkiEvent<RobotToEngine>& event)
+      {
+        if(this->_animTag == event.GetData().Get_animStarted().tag) {
+          PRINT_NAMED_INFO("PlayAnimation.StartAnimationHandler", "Animation tag %d started", this->_animTag);
+          _startedPlaying = true;
+        }
+      };
+      
+      auto endLambda = [this](const AnkiEvent<RobotToEngine>& event)
+      {
+        if(_startedPlaying && this->_animTag == event.GetData().Get_animEnded().tag) {
+          PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler", "Animation tag %d ended", this->_animTag);
+          _stoppedPlaying = true;
+        }
+      };
+      
+      _startSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animStarted, startLambda);
+
+      _endSignalHandle   = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
+      
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
       } else {
@@ -3385,30 +3412,10 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      // Wait for the current animation tag to match the one corresponding to
-      // this action, so we know the robot has actually started playing _this_
-      // animation.
-      if(!_startedPlaying)
-      {
-        if(robot.GetCurrentAnimationTag() == _animTag) {
-          _startedPlaying = true;
-        } else {
-          PRINT_NAMED_INFO("PlayAnimationAction.CheckIfDone.WaitForStart",
-                           "Waiting for robot to actually start animating '%s' with tag=%d (current=%d).",
-                           _animName.c_str(), _animTag, robot.GetCurrentAnimationTag());
-          return ActionResult::RUNNING;
-        }
-      }
-      
-      // If we've made it this far, we must have started the expected animation,
-      // so just wait for the current animation tag to change to know when it is
-      // done playing on the robot.
-      assert(_startedPlaying);
-      if(robot.GetCurrentAnimationTag() == _animTag)
-      {
-        return ActionResult::RUNNING;
-      } else {
+      if(_stoppedPlaying) {
         return ActionResult::SUCCESS;
+      } else {
+        return ActionResult::RUNNING;
       }
     }
     
