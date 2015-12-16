@@ -2,7 +2,6 @@
 #define HARDWARE_H
 
 #define NRF_BAUD(x) (int)(x * 268.435456) // 2^28/1MHz
-#define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
 
 //#define DEBUG_MESSAGES
 //#define RADIO_TIMING_TEST

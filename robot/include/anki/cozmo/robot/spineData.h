@@ -35,7 +35,7 @@ struct AcceleratorPacket {
 };
 
 struct LEDPacket {
-  uint8_t ledStatus[12]; // 4-LEDs, three colors
+  uint8_t ledStatus[16]; // 4-LEDs, three colors
   uint8_t ledDark;       // Dark byte
 };
 

@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "nrf.h"
 
-void TimerInit()
+void Timer::Init()
 {
   // The synthesized LFCLK requires the 16MHz HFCLK to be running, since there's no
   // external crystal/oscillator.
