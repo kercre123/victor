@@ -344,8 +344,8 @@ namespace Anki {
                         Radians& angleDiff) const
 //                        Pose3d& P_diff) const
   {
-    assert(distThreshold > 0.f);
-    assert(angleThreshold.ToFloat() > 0.f);
+    assert(distThreshold >= 0.f);
+    assert(angleThreshold.ToFloat() >= 0.f);
     
     bool isSame = false;
     /*
