@@ -206,8 +206,22 @@ public class CozmoFace : MonoBehaviour {
         _LeftEye.EyeCenter += _LastLeftEye.EyeCenter;
         _LeftEye.EyeScale = new Vector2(_LeftEye.EyeScale.x * _LastLeftEye.EyeScale.x, _LeftEye.EyeScale.y * _LastLeftEye.EyeScale.y);
 
+        _LeftEye.LowerLidAngle = _LastLeftEye.LowerLidAngle;
+        _LeftEye.LowerLidBend = _LastLeftEye.LowerLidBend;
+        _LeftEye.LowerLidY = _LastLeftEye.LowerLidY;
+        _LeftEye.UpperLidAngle = _LastLeftEye.UpperLidAngle;
+        _LeftEye.UpperLidBend = _LastLeftEye.UpperLidBend;
+        _LeftEye.UpperLidY = _LastLeftEye.UpperLidY;
+
         _RightEye.EyeCenter += _LastRightEye.EyeCenter;
         _RightEye.EyeScale = new Vector2(_RightEye.EyeScale.x * _LastRightEye.EyeScale.x, _RightEye.EyeScale.y * _LastRightEye.EyeScale.y);
+
+        _RightEye.LowerLidAngle = _LastRightEye.LowerLidAngle;
+        _RightEye.LowerLidBend = _LastRightEye.LowerLidBend;
+        _RightEye.LowerLidY = _LastRightEye.LowerLidY;
+        _RightEye.UpperLidAngle = _LastRightEye.UpperLidAngle;
+        _RightEye.UpperLidBend = _LastRightEye.UpperLidBend;
+        _RightEye.UpperLidY = _LastRightEye.UpperLidY;
 
         FaceAngle += _LastFaceAngle;
         FaceCenter += _LastFaceCenter;
