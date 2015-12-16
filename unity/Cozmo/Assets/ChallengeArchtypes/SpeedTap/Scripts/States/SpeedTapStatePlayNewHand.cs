@@ -42,8 +42,7 @@ namespace SpeedTap {
       if (_LightsOn) {
         if (_GotMatch) {
           if (!_CozmoTapping) {
-            if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) {
-              DAS.Info("SpeedTap.CozmoTapping", "" + _SpeedTapGame.CozmoScore);
+            if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimation(AnimationName.kTapCube);
               _CozmoTapping = true;
             }
