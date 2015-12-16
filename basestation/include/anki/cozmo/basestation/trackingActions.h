@@ -14,6 +14,7 @@
 #ifndef __Anki_Cozmo_Basestation_TrackingActions_H__
 #define __Anki_Cozmo_Basestation_TrackingActions_H__
 
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
 

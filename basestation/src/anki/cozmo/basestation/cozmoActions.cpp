@@ -1731,12 +1731,44 @@ namespace Anki {
         } else {
           _heightWithVariation = carry;
         }
+      } else if (_height_mm < LIFT_HEIGHT_LOWDOCK || _height_mm > LIFT_HEIGHT_CARRY) {
+        PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.InvalidHeight", "%f mm", _height_mm);
+        return ActionResult::FAILURE_ABORT;
       } else {
         _heightWithVariation = _height_mm;
         if(_variability > 0.f) {
           _heightWithVariation += _rng.RandDblInRange(-_variability, _variability);
         }
         _heightWithVariation = CLIP(_heightWithVariation, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+        
+        
+        // Convert height tolerance to angle tolerance and make sure that it's larger
+        // than the tolerance that the liftController uses.
+
+        // Convert target height, height - tol, and height + tol to angles.
+        f32 heightLower = _heightWithVariation - _heightTolerance;
+        f32 heightUpper = _heightWithVariation + _heightTolerance;
+        f32 targetAngle = Robot::ConvertLiftHeightToLiftAngleRad(_heightWithVariation);
+        f32 targetAngleLower = Robot::ConvertLiftHeightToLiftAngleRad(heightLower);
+        f32 targetAngleUpper = Robot::ConvertLiftHeightToLiftAngleRad(heightUpper);
+        
+        // Neither of the angular differences between targetAngle and its associated
+        // lower and upper tolerance limits should be smaller than LIFT_ANGLE_TOL.
+        // That is, unless the limits exceed the physical limits of the lift.
+        f32 minAngleDiff = std::numeric_limits<f32>::max();
+        if (heightLower > LIFT_HEIGHT_LOWDOCK) {
+          minAngleDiff = targetAngle - targetAngleLower;
+        }
+        if (heightUpper < LIFT_HEIGHT_CARRY) {
+          minAngleDiff = std::min(minAngleDiff, targetAngleUpper - targetAngle);
+        }
+        
+        if (minAngleDiff < LIFT_ANGLE_TOL) {
+          PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.HeightTolTooSmall",
+                              "HeightTol %f mm == AngleTol %f rad near height of %f mm (LIFT_ANGLE_TOL=%f)",
+                              _heightTolerance, minAngleDiff, _heightWithVariation, LIFT_ANGLE_TOL);
+          return ActionResult::FAILURE_ABORT;
+        }
       }
       
       _inPosition = IsLiftInPosition(robot);

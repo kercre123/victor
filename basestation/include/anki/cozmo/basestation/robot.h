@@ -263,6 +263,10 @@ public:
     // Return current height of lift's gripper
     f32 GetLiftHeight() const;
   
+    // Conversion functions between lift height and angle
+    static f32 ConvertLiftHeightToLiftAngleRad(f32 height_mm);
+    static f32 ConvertLiftAngleToLiftHeightMM(f32 angle_rad);
+  
     // Get pitch angle of robot
     f32 GetPitchAngle();
   
