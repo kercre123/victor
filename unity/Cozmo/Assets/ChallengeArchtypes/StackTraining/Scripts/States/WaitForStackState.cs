@@ -46,7 +46,7 @@ namespace StackTraining {
           if (!bottomCube.IsMoving && !topCube.IsMoving) {
             _StackTime += Time.deltaTime;
 
-            if (_StackTime > 3f) {
+            if (_StackTime > 2f) {
               HandleComplete();
             }
             return;
