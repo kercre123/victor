@@ -60,18 +60,20 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
+  _previousIdleAnimation = robot.GetIdleAnimationName();
+
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
     _initialReactionAnimPlayed = false;
+    _state = State::WaitingForFirstMotion;
+    SetStateName("Wait");
   } else {
     _initialReactionAnimPlayed = true;
+    StartTracking(robot);
+    _state = State::Tracking;
+    SetStateName("Tracking");
   }
-
-  _previousIdleAnimation = robot.GetIdleAnimationName();
-
-  _state = State::WaitingForFirstMotion;
-  SetStateName("Wait");
   
   return Result::RESULT_OK;
 }
