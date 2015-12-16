@@ -44,6 +44,36 @@ u8 ITrackAction::GetAnimTracksToDisable() const
       return (u8)AnimTrackFlag::BODY_TRACK;
   }
 }
+  
+void ITrackAction::SetPanTolerance(const Radians& panThreshold)
+{
+  _panTolerance = panThreshold.getAbsoluteVal();
+  
+  // NOTE: can't be lower than what is used internally on the robot
+  if( _panTolerance.ToFloat() < POINT_TURN_ANGLE_TOL ) {
+    PRINT_NAMED_WARNING("ITrackAction.InvalidTolerance",
+                        "Tried to set tolerance of %fdeg, min is %f",
+                        RAD_TO_DEG(_panTolerance.ToFloat()),
+                        RAD_TO_DEG(POINT_TURN_ANGLE_TOL));
+    _panTolerance = POINT_TURN_ANGLE_TOL;
+  }
+}
+
+  
+void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
+{
+  _tiltTolerance = tiltThreshold.getAbsoluteVal();
+  
+  // NOTE: can't be lower than what is used internally on the robot
+  if( _tiltTolerance.ToFloat() < HEAD_ANGLE_TOL ) {
+    PRINT_NAMED_WARNING("ITrackAction.InvalidTolerance",
+                        "Tried to set tolerance of %fdeg, min is %f",
+                        RAD_TO_DEG(_tiltTolerance.ToFloat()),
+                        RAD_TO_DEG(HEAD_ANGLE_TOL));
+    _tiltTolerance = HEAD_ANGLE_TOL;
+  }
+}
+  
 
 ActionResult ITrackAction::CheckIfDone(Robot& robot)
 {
