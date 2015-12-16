@@ -13,3 +13,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ChallengeData:
   - {fileID: 11400000, guid: 287f6fbfe815b45b09c31e6b0a00c391, type: 2}
+  - {fileID: 11400000, guid: eebd08c113bca4b7585f8cb879003166, type: 2}
+  - {fileID: 11400000, guid: f8ff97abab9ce4f28b4405992866d3fa, type: 2}
+  - {fileID: 11400000, guid: a77fbd9a90cd642ebbdb10afdd8e687c, type: 2}
