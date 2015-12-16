@@ -38,16 +38,16 @@ namespace Anki {
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).
       #include "clad/robotInterface/messageEngineToRobot_declarations.def"
-    
+
       void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
-    
+
       Result Init();
 
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
-      
+
       void Process_anim(const RobotInterface::EngineToRobot& msg);
 
       // Start looking for a particular message ID

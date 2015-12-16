@@ -65,12 +65,12 @@ namespace Anki {
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
         return RESULT_OK;
       }
-      
+
       void ProcessBadTag_EngineToRobot(RobotInterface::EngineToRobot::Tag badTag)
       {
         PRINT("Received message with bad tag %02x\n", badTag);
       }
-      
+
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
         #include "clad/robotInterface/messageEngineToRobot_switch.def"
@@ -167,12 +167,12 @@ namespace Anki {
 
       void Process_syncTime(const RobotInterface::SyncTime& msg)
       {
-        
+
         RobotInterface::SyncTimeAck syncTimeAckMsg;
         if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
           PRINT("Error: Failed to send syncTimeAckMsg");
         }
-        
+
         initReceived_ = true;
 
         // TODO: Compare message ID to robot ID as a handshake?
@@ -364,7 +364,7 @@ namespace Anki {
         HeadController::SetMaxSpeedAndAccel(msg.max_speed_rad_per_sec, msg.accel_rad_per_sec2);
         HeadController::SetDesiredAngle(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
       }
-      
+
       void Process_headAngleUpdate(const RobotInterface::HeadAngleUpdate& msg) {
         HeadController::SetAngleRad(msg.newAngle);
       }
@@ -375,12 +375,12 @@ namespace Anki {
                                              msg.accel_rad_per_sec2,
                                              msg.accel_rad_per_sec2, true);
       }
-      
+
       void Process_setCarryState(const CarryState& state)
       {
         PickAndPlaceController::SetCarryState(state);
       }
-      
+
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
       {
         IMUFilter::RecordAndSend(msg.length_ms);
@@ -390,7 +390,7 @@ namespace Anki {
         PRINT("Turning in place at %f rad/s (%f rad/s2)\n", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
-      
+
       void Process_stop(const RobotInterface::StopAllMotors& msg) {
         SteeringController::ExecuteDirectDrive(0,0);
         LiftController::SetAngularVelocity(0);
@@ -505,12 +505,12 @@ namespace Anki {
       {
         AnimationController::Clear();
       }
-      
+
       void Process_disableAnimTracks(const AnimKeyFrame::DisableAnimTracks& msg)
       {
         AnimationController::DisableTracks(msg.whichTracks);
       }
-      
+
       void Process_enableAnimTracks(const AnimKeyFrame::EnableAnimTracks& msg)
       {
         AnimationController::EnableTracks(msg.whichTracks);
@@ -533,12 +533,12 @@ namespace Anki {
                                              msg.lights[i].transitionOnPeriod_ms, msg.lights[i].transitionOffPeriod_ms);
         }
       }
-      
+
       void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
         IMUFilter::EnablePickupParalysis(msg.enable);
       }
-      
+
       void Process_enableLiftPower(const RobotInterface::EnableLiftPower& msg)
       {
         if (msg.enable) {
@@ -547,7 +547,7 @@ namespace Anki {
           LiftController::Disable();
         }
       }
-      
+
 
       // --------- Block control messages ----------
 
@@ -598,7 +598,7 @@ namespace Anki {
       {
         // Not used here
       }
-      
+
 // ----------- Send messages -----------------
 
 
@@ -655,24 +655,30 @@ namespace Anki {
         return 0;
       }
 
-      int SendText(const char *format, va_list vaList)
+      int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList)
       {
         RobotInterface::PrintText m;
         int len;
-                
+
         #define MAX_SEND_TEXT_LENGTH 255 // uint_8 definition in messageRobotToEngine.clad
         memset(m.text, 0, MAX_SEND_TEXT_LENGTH);
 
         // Create formatted text
         len = vsnprintf(m.text, MAX_SEND_TEXT_LENGTH, format, vaList);
-        
+
         if (len > 0)
         {
           m.text_length = len;
+          m.level = level;
           RobotInterface::SendMessage(m);
         }
 
         return 0;
+      }
+      
+      int SendText(const char *format, va_list vaList)
+      {
+        return SendText(RobotInterface::ANKI_LOG_LEVEL_PRINT, format, vaList);
       }
 
       bool ReceivedInit()
@@ -773,6 +779,19 @@ namespace Anki {
 
     } // namespace Messages
 
+    namespace RobotInterface {
+      int SendLog(const RobotInterface::LogLevel level, ...)
+      {
+        va_list argptr;
+        va_start(argptr, level);
+        const char* fmt = va_arg(argptr, const char*);
+        /*const int numArgs =*/ va_arg(argptr, int);
+        Messages::SendText(level, fmt, argptr);
+        va_end(argptr);
+        return 0;
+      }
+    }
+
     namespace HAL {
       bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable, const bool hot)
       {
@@ -826,8 +845,8 @@ bool UnreliableTransport_SendPacket(uint8_t* buffer, uint16_t bufferSize)
 void Receiver_ReceiveData(uint8_t* buffer, uint16_t bufferSize, ReliableConnection* connection)
 {
   Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
-  
-  // Copy into structured memory  
+
+  // Copy into structured memory
   memcpy(msgBuf.GetBuffer(), buffer, bufferSize);
   if (!msgBuf.IsValid())
   {
