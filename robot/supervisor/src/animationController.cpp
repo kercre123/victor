@@ -213,6 +213,8 @@ namespace AnimationController {
 
   static u32 GetFromBuffer(u8* data, u32 numBytes)
   {
+    assert(numBytes < KEYFRAME_BUFFER_SIZE);
+    
     if(_currentBufferPos + numBytes < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current position to end of buffer to just
       // copy directly
@@ -395,6 +397,7 @@ namespace AnimationController {
                 _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
                 return true; // Play audio
               #else
+                GetFromBuffer(&msg);
                 HAL::AudioPlayFrame(&msg.animAudioSample);
                 return true; // Advance animation
               #endif
@@ -538,10 +541,11 @@ namespace AnimationController {
               #else
                 SteeringController::ExecuteDirectDrive(0, 0);
               #endif
-              RobotInterface::AnimationEnded aem;
-              aem.tag = _currentTag;
-              RobotInterface::SendMessage(aem);
             }
+            
+            RobotInterface::AnimationEnded aem;
+            aem.tag = _currentTag;
+            RobotInterface::SendMessage(aem);
 
             _tracksInUse = 0;
             break;
