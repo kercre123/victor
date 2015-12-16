@@ -92,6 +92,7 @@ protected:
   virtual void HandleActiveObjectStoppedMoving(ObjectStoppedMoving const& msg){};
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
+  virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
   
   
   // Message senders
@@ -291,6 +292,7 @@ private:
   void HandleActiveObjectStoppedMovingBase(ObjectStoppedMoving const& msg);
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
+  void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
   
   void UpdateActualObjectPoses();
   

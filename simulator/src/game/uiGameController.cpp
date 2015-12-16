@@ -264,6 +264,12 @@ namespace Anki {
       HandleAnimationAvailable(msg);
     }
     
+    void UiGameController::HandleDebugStringBase(ExternalInterface::DebugString const& msg)
+    {
+      PRINT_NAMED_INFO("HandleDebugString", "%s", msg.text.c_str());
+      HandleDebugString(msg);
+    }
+    
     // ===== End of message handler callbacks ====
     
   
@@ -365,6 +371,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::AnimationAvailable:
             HandleAnimationAvailableBase(message.Get_AnimationAvailable());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::DebugString:
+            HandleDebugStringBase(message.Get_DebugString());
             break;
           default:
             // ignore

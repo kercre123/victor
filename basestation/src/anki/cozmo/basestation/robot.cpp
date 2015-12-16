@@ -3275,6 +3275,32 @@ namespace Anki {
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
     }
+    
+    Result Robot::SendDebugString(const char* format, ...)
+    {
+      int len = 0;
+      const int kMaxDebugStringLen = u8_MAX;
+      char text[kMaxDebugStringLen];
+      memset(text, 0, kMaxDebugStringLen);
+      
+      // Create formatted text
+      va_list argptr;
+      va_start(argptr, format);
+      len = vsnprintf(text, kMaxDebugStringLen, format, argptr);
+      va_end(argptr);
+        
+      std::string str(text);
+      
+      // Send message to game
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
+      
+      // Send message to viz
+      VizManager::getInstance()->SetText(VizManager::DEBUG_STRING,
+                                         NamedColors::ORANGE,
+                                         "%s", text);
+      
+      return RESULT_OK;
+    }
       
       
     void Robot::ComputeDriveCenterPose(const Pose3d &robotPose, Pose3d &driveCenterPose) const
