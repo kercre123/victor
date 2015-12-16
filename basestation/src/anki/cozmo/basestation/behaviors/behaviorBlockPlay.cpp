@@ -34,6 +34,8 @@
 
 #define DEBUG_BLOCK_PLAY_BEHAVIOR 1
 
+#define DO_2001_MUSIC_GAG 0
+
 // TODO:(bn) when driving to the side or back of the cube to roll it, the position is really far off. Instead
 // of relying on the action (or maybe add this logic within the action?) plan to a pre-dock pose which is much
 // further away from the block, so it can adjust more naturally instead of having to back up and do weird
@@ -1058,7 +1060,23 @@ namespace Cozmo {
         PlayAnimation(robot, "ID_reactTo2ndBlock_01", false);
       }
       else {
+#if DO_2001_MUSIC_GAG
+        // play the animation, followed by the music
+        PlayAnimationAction* animAction = new PlayAnimationAction("ID_react2block_01");
+        DeviceAudioAction* startMusicAction = new DeviceAudioAction(Audio::MusicGroupStates::CUBE_INTERACTIONFIRST);
+        WaitAction* musicWaitAction = new WaitAction(8.0f);
+        DeviceAudioAction* stopMusicAction = new DeviceAudioAction(Audio::MusicGroupStates::SILENCE);
+
+        CompoundActionSequential* combinedAction = new CompoundActionSequential({animAction,
+              startMusicAction,
+              musicWaitAction,
+              stopMusicAction});
+
+        _animActionTags[combinedAction->GetTag()] = "animPlusMusic";
+        robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, combinedAction);
+#else
         PlayAnimation(robot, "ID_react2block_01", false);
+#endif
       }
     }
     
@@ -1074,7 +1092,7 @@ namespace Cozmo {
     if( objectID == _trackedObject && msg.markersVisible ) {
       _lastObjectObservedTime = currentTime_sec;
 
-      if( _currentState == State::TrackingBlock && !robot.IsCarryingObject() ) {
+      if( _currentState == State::TrackingBlock && !robot.IsCarryingObject() && _animActionTags.empty()) {
         TrackBlockWithLift(robot, oObject->GetPose());
       }
     }

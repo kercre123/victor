@@ -84,6 +84,8 @@ protected:
   Vision::TrackedFace::ID_t _trackToFaceID = Vision::TrackedFace::UnknownFace;
   
   //bool _trackWithHeadOnly = false;
+
+  void PrintAnimationLockState() const;
   
   std::vector<int> _animTrackLockCount;
   std::vector<int> _ignoreTrackMovementCount;

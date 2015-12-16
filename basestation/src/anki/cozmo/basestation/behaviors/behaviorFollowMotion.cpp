@@ -60,18 +60,20 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec, 
   _originalVisionModes = robot.GetVisionComponent().GetEnabledModes();
   robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
+  _previousIdleAnimation = robot.GetIdleAnimationName();
+
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
     _initialReactionAnimPlayed = false;
+    _state = State::WaitingForFirstMotion;
+    SetStateName("Wait");
   } else {
     _initialReactionAnimPlayed = true;
+    StartTracking(robot);
+    _state = State::Tracking;
+    SetStateName("Tracking");
   }
-
-  _previousIdleAnimation = robot.GetIdleAnimationName();
-
-  _state = State::WaitingForFirstMotion;
-  SetStateName("Wait");
   
   return Result::RESULT_OK;
 }
@@ -113,6 +115,8 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
+
+  PRINT_NAMED_DEBUG("BehaviorFollowMotion.InterruptInternal", "restoring original vision modes");
   
   // Restore original vision modes
   robot.GetVisionComponent().SetModes(_originalVisionModes);
@@ -301,7 +305,11 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
         break;
         
       case State::HoldingHeadDown:
-        ASSERT_NAMED(completedAction.actionType == RobotActionType::MOVE_HEAD_TO_ANGLE, "Expecting completed action to be MoveHeadToAngle when HoldingHeadDown");
+        if( completedAction.actionType != RobotActionType::MOVE_HEAD_TO_ANGLE ){
+          PRINT_NAMED_WARNING("BehaviorFollowMotion.HandleWhileRunning.HoldingHeadDown.InvalidAction",
+                              "Expecting completed action to be MoveHeadToAngle, instead got %s",
+                              RobotActionTypeToString(completedAction.actionType));
+        }
         // Nothing to do: we transition out of this state once timer elapses
         break;
         
