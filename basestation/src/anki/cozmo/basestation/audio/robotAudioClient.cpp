@@ -240,22 +240,7 @@ bool RobotAudioClient::IsFirstBufferReady()
 
 // Protected
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::HandleCallbackEvent( const AudioCallbackDuration& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::HandleCallbackEvent( const AudioCallbackMarker& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::HandleCallbackEvent( const AudioCallbackComplete& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::HandleCallbackEvent( const AudioCallbackError& callbackMsg )
+void RobotAudioClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
 {
 }
 

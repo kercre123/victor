@@ -25,6 +25,7 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include <vector>
+#include <functional>
 
 namespace Anki {
 namespace Cozmo {
@@ -32,23 +33,21 @@ namespace Audio {
   
 class AudioEngineMessageHandler;
 class MessageAudioClient;
-// Callback Structs
-struct AudioCallbackDuration;
-struct AudioCallbackMarker;
-struct AudioCallbackComplete;
-struct AudioCallbackError;
+struct AudioCallback;
   
 class AudioEngineClient : Util::noncopyable
 {
 public:
   
   using CallbackIdType = uint16_t;
+  using CallbackFunc = std::function<void ( )>;
   
   void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
   CallbackIdType PostEvent( EventType event,
                             GameObjectType gameObject = GameObjectType::Default,
-                            AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
+                            AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone,
+                            CallbackFunc* callback = nullptr );
   
   void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
 
@@ -73,12 +72,8 @@ protected:
   static constexpr CallbackIdType kInvalidCallbackId = 0;
   CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
-  void HandleEvents( const AnkiEvent<MessageAudioClient>& event );
   
-  virtual void HandleCallbackEvent( const AudioCallbackDuration& callbackMsg );
-  virtual void HandleCallbackEvent( const AudioCallbackMarker& callbackMsg );
-  virtual void HandleCallbackEvent( const AudioCallbackComplete& callbackMsg );
-  virtual void HandleCallbackEvent( const AudioCallbackError& callbackMsg );
+  virtual void HandleCallbackEvent( const AudioCallback& callbackMsg ) {}
   
   CallbackIdType GetNewCallbackId();
   
