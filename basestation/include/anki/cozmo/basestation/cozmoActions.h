@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/cozmo/basestation/compoundActions.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/types.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -243,7 +244,7 @@ namespace Anki {
       bool    _inPosition = false;
       bool    _turnStarted = false;
       Radians _targetAngle;
-      Radians _angleTolerance = DEG_TO_RAD(5);
+      Radians _angleTolerance = POINT_TURN_ANGLE_TOL;
       Radians _variability = 0;
       bool    _isAbsoluteAngle;
       f32     _maxSpeed_radPerSec = 50.f;
@@ -294,7 +295,7 @@ namespace Anki {
     class MoveHeadToAngleAction : public IAction
     {
     public:
-      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = DEG_TO_RAD(2.f),
+      MoveHeadToAngleAction(const Radians& headAngle, const Radians& tolerance = HEAD_ANGLE_TOL,
                             const Radians& variability = 0);
       
       virtual const std::string& GetName() const override { return _name; }
@@ -1171,7 +1172,12 @@ namespace Anki {
       std::string   _name;
       u32           _numLoops;
       bool          _startedPlaying;
+      bool          _stoppedPlaying;
       u8            _animTag;
+      
+      // For responding to AnimationStarted and AnimationEnded events
+      Signal::SmartHandle _startSignalHandle;
+      Signal::SmartHandle _endSignalHandle;
       
     }; // class PlayAnimationAction
     

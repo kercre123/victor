@@ -263,6 +263,10 @@ public:
     // Return current height of lift's gripper
     f32 GetLiftHeight() const;
   
+    // Conversion functions between lift height and angle
+    static f32 ConvertLiftHeightToLiftAngleRad(f32 height_mm);
+    static f32 ConvertLiftAngleToLiftHeightMM(f32 angle_rad);
+  
     // Get pitch angle of robot
     f32 GetPitchAngle();
   
@@ -634,7 +638,11 @@ public:
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
     bool HasExternalInterface() const { return _externalInterface != nullptr; }
     IExternalInterface* GetExternalInterface() {
-      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
+      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface;
+    }
+    RobotInterface::MessageHandler* GetRobotMessageHandler() {
+      ASSERT_NAMED(_msgHandler != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _msgHandler;
+    }
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   

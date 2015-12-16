@@ -9,6 +9,7 @@
 #include "micro_esb.h"
   
 #include "hardware.h"
+#include "rtos.h"
 #include "debug.h"
 #include "radio.h"
 #include "timer.h"
@@ -53,7 +54,11 @@ struct CapturePacket {
 
 static void EnterState(RadioState state);
 
-static const int TICK_LOOP = 7;                   // 35ms period
+static const int TOTAL_PERIOD = CYCLES_MS(35.0f);
+static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
+
+static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
+
 static const int LOCATE_TIMEOUT = TICK_LOOP;      // One entire cozmo period
 static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
 
@@ -79,7 +84,8 @@ static const int ADV_CHANNEL = 81;
 static const int MAX_TX_CHANNEL = 80;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
-static const int RADIO_TIMEOUT_MSB = 15;
+//static const int RADIO_TIMEOUT_MSB = 15;
+static const int RADIO_TIMEOUT_MSB = 35;
 static const int RADIO_WAKEUP_OFFSET = 18;
 
 static const int MAX_ADDRESS_BIT_RUN = 3;
@@ -103,10 +109,10 @@ static const uesb_address_desc_t AdvertiseAddress = {
   ADVERTISE_PREFIX
 };
 
-static uesb_address_desc_t TalkAddress = { 
+static uesb_address_desc_t TalkAddress = {
   0,
   ADVERTISE_BASE,
-  0, 
+  UNUSED_BASE,
   COMMUNICATE_PREFIX 
 };
 
@@ -153,7 +159,7 @@ void Radio::init() {
   };
 
   // Generate target address for the robot
-  Random::get(&TalkAddress.base1, sizeof(TalkAddress.base1));
+  //Random::get(&TalkAddress.base1, sizeof(TalkAddress.base1));
   TalkAddress.base1 = fixAddress(TalkAddress.base1);
 
   // Clear our our states
@@ -164,6 +170,8 @@ void Radio::init() {
   uesb_init(&uesb_config);
   EnterState(RADIO_FIND_CHANNEL);
   uesb_start();
+
+  RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
 }
 
 static inline uint8_t AccType(uint32_t id) {
@@ -218,9 +226,25 @@ static void EnterState(RadioState state) {
 static bool turn_around = false;
 static void send_dummy_byte(void) {
   // This just send garbage
-  static const uint8_t dummy_data = 0xC2;
-  uesb_write_tx_payload(&TalkAddress, 0, &dummy_data, sizeof(dummy_data));
+  uesb_write_tx_payload(&TalkAddress, 1, NULL, 0);
   turn_around  = true;
+}
+
+static void send_capture_packet(void* userdata) {
+  int slot = (int) userdata;
+
+  // Send a pairing packet
+  CapturePacket pair;
+
+  pair.target_channel = TalkAddress.rf_channel;
+  pair.interval_delay = RADIO_INTERVAL_DELAY;
+  pair.prefix = TalkAddress.prefix[BASE_PIPE+slot];
+  memcpy(&pair.base, &TalkAddress.base1, sizeof(TalkAddress.base1));
+  pair.timeout_msb = RADIO_TIMEOUT_MSB;
+  pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
+
+  // Tell this accessory to come over to my side
+  uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
 extern "C" void uesb_event_handler(void)
@@ -266,31 +290,21 @@ extern "C" void uesb_event_handler(void)
       // If we are not re-establishing an existing connection, clear the active state
       if (!accessories[slot].active) {
         memset(&accessories[slot].rx_state, 0, sizeof(accessories[slot].rx_state));
-        memset(&accessories[slot].tx_state, 0xC0, sizeof(accessories[slot].tx_state));
+        memset(&accessories[slot].tx_state, 0xff, sizeof(accessories[slot].tx_state));
       }
 
       // We are loading the slot
       accessories[slot].active = true;
       accessories[slot].id = packet.id;
       accessories[slot].last_received = 0;
-            
-      // Send a pairing packet
-      CapturePacket pair;
 
-      pair.target_channel = TalkAddress.rf_channel;
-      pair.interval_delay = RADIO_INTERVAL_DELAY;
-      pair.prefix = TalkAddress.prefix[BASE_PIPE+slot];
-      memcpy(&pair.base, &TalkAddress.base1, sizeof(TalkAddress.base1));
-      pair.timeout_msb = RADIO_TIMEOUT_MSB;
-      pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
-
-      // Tell this accessory to come over to my side
-      MicroWait(300);
-      uesb_write_tx_payload(&AdvertiseAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+      // Schedule a one time capture for this slot
+      RTOS::schedule(send_capture_packet, CYCLES_MS(0.5f), (void*) slot, false);
       break ;
       
     case RADIO_TALKING:
       AccessorySlot* acc = &accessories[currentAccessory];   
+      acc->last_received = 0;
       memcpy(&acc->rx_state, rx_payload.data, sizeof(AcceleratorPacket));
 
       send_dummy_byte();
@@ -306,7 +320,7 @@ extern "C" void uesb_event_handler(void)
   }
 }
 
-void Radio::manage() {
+void Radio::manage(void* userdata) {
   // This maintains the spine communication for cube updates (this will eventually be reworked
   if (Head::spokenTo) {
     AccessorySlot* acc = &accessories[g_dataToHead.cubeToUpdate];

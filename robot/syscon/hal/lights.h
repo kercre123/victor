@@ -11,7 +11,7 @@ struct charliePlex_s
 
 namespace Lights {
   void init();
-  void manage(volatile uint32_t *);
+  void manage(void *);
 }
 
 #endif /* LIGHTS_H */

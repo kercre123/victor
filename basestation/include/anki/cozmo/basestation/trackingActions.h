@@ -14,6 +14,7 @@
 #ifndef __Anki_Cozmo_Basestation_TrackingActions_H__
 #define __Anki_Cozmo_Basestation_TrackingActions_H__
 
+#include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/actionInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
 
@@ -57,8 +58,8 @@ public:
   
   // Angles returned by GetAngles() method must be greater than these tolerances
   // to actually trigger movement.
-  void SetPanTolerance(const Radians& panThreshold) { _panTolerance = panThreshold.getAbsoluteVal(); }
-  void SetTiltTolerance(const Radians& tiltThreshold) { _tiltTolerance = tiltThreshold.getAbsoluteVal(); }
+  void SetPanTolerance(const Radians& panThreshold);
+  void SetTiltTolerance(const Radians& tiltThreshold);
 
 protected:
 
@@ -75,8 +76,8 @@ private:
   Mode     _mode = Mode::HeadAndBody;
   double   _updateTimeout_sec = 0.;
   double   _lastUpdateTime = 0.;
-  Radians  _panTolerance = DEG_TO_RAD(1.f);
-  Radians  _tiltTolerance = DEG_TO_RAD(1.5f);
+  Radians  _panTolerance = POINT_TURN_ANGLE_TOL;
+  Radians  _tiltTolerance = HEAD_ANGLE_TOL;
   
 
 }; // class ITrackAction

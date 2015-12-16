@@ -6,6 +6,7 @@
 #include "anki/cozmo/robot/spineData.h"
 
 #include "hardware.h"
+#include "rtos.h"
 
 // Updated to 3.0
 const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
@@ -101,6 +102,8 @@ void Battery::init()
   int temp = getADCsample(ANALOG_CLIFF_SENSE, VEXT_SCALE);
 
   startADCsample(ANALOG_CLIFF_SENSE);
+
+  RTOS::schedule(Battery::manage);
 }
 
 void Battery::powerOn()
@@ -139,7 +142,7 @@ static inline void sampleCliffSensor() {
   ledOn = !ledOn;
 }
 
-void Battery::update()
+void Battery::manage(void* userdata)
 {
   if (!NRF_ADC->EVENTS_END) {
     return ;

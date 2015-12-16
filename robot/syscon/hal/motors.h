@@ -3,6 +3,7 @@
 
 #include "portable.h"
 #include <stdint.h>
+#include <stddef.h>
 
 #define MOTOR_COUNT 4
 
@@ -17,7 +18,7 @@ namespace Motors {
   Fixed getSpeed(u8 motorID);
   
   // Updates the PWM values for the timers in a safe manner
-  void update();
+  void manage(void* userdata = NULL);
 
   // Print the raw encoder input values over the UART
   void printEncodersRaw();
