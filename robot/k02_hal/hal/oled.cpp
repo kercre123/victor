@@ -94,9 +94,19 @@ void Anki::Cozmo::HAL::OLED::SendFrame(uint8_t *frame, i2c_callback cb) {
 void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
   if (address != FaceCopyLocation || PrintFaceLock) return ;
 
-  static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
-  memcpy(bytes, face_bytes, MAX_SCREEN_BYTES_PER_DROP);  
+  // NOTE: The length of the ring buffer is currently arbitrary
+  static uint8_t screen_bytes[8 * MAX_SCREEN_BYTES_PER_DROP];
+  static int ring_pos = 0;
   
+  // Use a ring buffer to pad out screen data
+  uint8_t *bytes = &screen_bytes[ring_pos];
+  ring_pos += MAX_SCREEN_BYTES_PER_DROP;
+  if (ring_pos >= sizeof(screen_bytes)) {
+    ring_pos = 0;
+  }
+  
+  // Load face data on the I2C bus
+  memcpy(bytes, face_bytes, MAX_SCREEN_BYTES_PER_DROP);  
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL, I2C_OPTIONAL | I2C_FORCE_START);
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, MAX_SCREEN_BYTES_PER_DROP, NULL);
   FaceCopyLocation = (FaceCopyLocation + 1) % MAX_FACE_POSITIONS;
