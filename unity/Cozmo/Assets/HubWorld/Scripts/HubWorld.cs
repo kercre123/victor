@@ -61,12 +61,6 @@ namespace Cozmo.HubWorld {
 
       // Show the current state of challenges being locked/unlocked
       _HubWorldViewInstance.Initialize(_ChallengeStatesById);
-
-      // Make the robot do something while the player is picking a challenge
-      if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-        RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
-      }
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
