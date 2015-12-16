@@ -10,7 +10,7 @@ namespace SpeedTap {
     private float _StartTimeMs = 0;
     private float _OnDelayTimeMs = 2000.0f;
     private float _OffDelayTimeMs = 2000.0f;
-    private float _CozmoTapDelayTimeMs = 300.0f;
+    private float _CozmoTapDelayTimeMs = 380.0f;
     private float _MatchProbability = 0.35f;
 
     private bool _LightsOn = false;
@@ -21,6 +21,7 @@ namespace SpeedTap {
 
     public override void Enter() {
       base.Enter();
+      GameAudioClient.SetMusicState(MusicGroupStates.PLAYFUL);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
@@ -66,6 +67,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
+      GameAudioClient.SetMusicState(MusicGroupStates.SILENCE);
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_02);
       RobotEngineManager.Instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
