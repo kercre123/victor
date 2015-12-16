@@ -11,9 +11,6 @@ namespace Cozmo.HubWorld {
     [SerializeField]
     private Button _ButtonScript;
 
-    [SerializeField]
-    private Anki.UI.AnkiTextLabel _ButtonLabel;
-
     private string _ChallengeId;
 
     public virtual void Initialize(ChallengeData challengeData) {
@@ -22,11 +19,6 @@ namespace Cozmo.HubWorld {
         _ChallengeId = challengeData.ChallengeID;
       }
       _ButtonScript.onClick.AddListener(HandleButtonClicked);
-
-      // Allow for buttons that only show an image and no text
-      if (_ButtonLabel != null) {
-        _ButtonLabel.text = Localization.Get(challengeData.ChallengeTitleLocKey);
-      }
     }
 
     private void Update() {

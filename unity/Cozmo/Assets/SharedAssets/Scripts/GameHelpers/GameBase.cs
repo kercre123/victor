@@ -52,8 +52,9 @@ public abstract class GameBase : MonoBehaviour {
   protected HowToPlaySlide[] _HowToPlayPrefabs;
 
   public void InitializeMinigame(ChallengeData challengeData) {
-    GameObject minigameViewObj = UIManager.CreateUIElement(UIPrefabHolder.Instance.SharedMinigameViewPrefab.gameObject);
-    _SharedMinigameViewInstance = minigameViewObj.GetComponent<SharedMinigameView>();
+    _SharedMinigameViewInstance = UIManager.OpenView(
+      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      false) as SharedMinigameView;
 
     _ChallengeData = challengeData;
     _WonChallenge = false;

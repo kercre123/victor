@@ -173,6 +173,7 @@ MonoBehaviour:
   _OverlayCanvas: {fileID: 22391958}
   _EventSystemScript: {fileID: 11485194}
   _TouchCatcherPrefab: {fileID: 151494, guid: f9f945bbe0c2a4469a9e59ccfe209d55, type: 2}
+  _DimBackgroundPrefab: {fileID: 177414, guid: 624443755833e44aa9939d4b069a9f3c, type: 2}
 --- !u!223 &22391958
 Canvas:
   m_ObjectHideFlags: 1
@@ -213,7 +214,11 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _DimBackgroundPrefab
+      value: 
+      objectReference: {fileID: 177414, guid: 624443755833e44aa9939d4b069a9f3c, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 144758}
