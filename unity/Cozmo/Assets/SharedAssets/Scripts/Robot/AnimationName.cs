@@ -6,6 +6,8 @@ public static class AnimationName {
   public const string kFinishTapCubeWin = "finishTapCubeWin";
   public const string kFinishTabCubeLose = "finishTapCubeLose";
 
+  public const string kPounceForward = "pounceForward";
+
   public const string kMajorWin = "majorWin";
   public const string kShocked = "shocked";
 
