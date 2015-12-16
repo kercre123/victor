@@ -215,7 +215,6 @@ uint32_t uesb_start() {
   if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
     
   update_radio_parameters();
-  update_rf_payload_format(m_config_local.payload_length);
 
   uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
 
@@ -241,6 +240,7 @@ uint32_t uesb_start() {
 
     m_uesb_mainstate       = UESB_STATE_PTX;
 
+    update_rf_payload_format(m_config_local.payload_length); // NOTE: Ignore payload length for now
     configure_addresses(&current_payload->address);
 
     NRF_RADIO->TXADDRESS   = current_payload->pipe;
@@ -251,6 +251,7 @@ uint32_t uesb_start() {
   } else if (m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
     m_uesb_mainstate       = UESB_STATE_PRX;
     
+    update_rf_payload_format(m_config_local.payload_length);
     configure_addresses(&m_config_local.rx_address);
     
     NRF_RADIO->RXADDRESSES = m_config_local.rx_pipes_enabled;

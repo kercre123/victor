@@ -19,6 +19,7 @@ extern "C" {
 //#include "anki/common/robot/utilities_c.h"
 //#include "anki/common/shared/radians.h"
 //#include "anki/common/shared/velocityProfileGenerator.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "headController.h"
 #include "liftController.h"
 #include "localization.h"
@@ -491,14 +492,26 @@ namespace AnimationController {
           }
           case RobotInterface::EngineToRobot::Tag_animAudioSilence:
           {
-            nextAudioFrameFound = true;
-            break;
-          }
-          case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
-          {
-            GetFromBuffer(&msg);
-            _currentTag = msg.animStartOfAnimation.tag;
-#           if DEBUG_ANIMATION_CONTROLLER
+            case RobotInterface::EngineToRobot::Tag_animAudioSample:
+            {
+              _tracksInUse |= BACKPACK_LIGHTS_TRACK;
+              // Fall through to below...
+            }
+            case RobotInterface::EngineToRobot::Tag_animAudioSilence:
+            {
+              nextAudioFrameFound = true;
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
+            {
+              GetFromBuffer(&msg);
+              _currentTag = msg.animStartOfAnimation.tag;
+              
+              RobotInterface::AnimationStarted msg;
+              msg.tag = _currentTag;
+              RobotInterface::SendMessage(msg);
+              
+#             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
 #           endif
             break;
@@ -525,6 +538,9 @@ namespace AnimationController {
               #else
                 SteeringController::ExecuteDirectDrive(0, 0);
               #endif
+              RobotInterface::AnimationEnded msg;
+              msg.tag = _currentTag;
+              RobotInterface::SendMessage(msg);
             }
 
             _tracksInUse = 0;

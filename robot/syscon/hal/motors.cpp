@@ -8,6 +8,7 @@
 #include <limits.h>
 
 #include "debug.h"
+#include "rtos.h"
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
@@ -307,6 +308,8 @@ void Motors::init()
       nrf_gpio_cfg_input(motorInfo->encoderPins[1], NRF_GPIO_PIN_NOPULL);
     }
   }
+
+  RTOS::schedule(Motors::manage);
 }
 
 void Motors::setPower(u8 motorID, s16 power)
@@ -355,7 +358,7 @@ Fixed Motors::getSpeed(u8 motorID)
   return FIXED_DIV(deltaPosition, deltaSeconds);
 }
 
-void Motors::update()
+void Motors::manage(void* userdata)
 {
   // Stop the timer task and clear it, along with GPIO for the motors
   if ((m_motors[0].nextPWM != m_motors[0].oldPWM) ||

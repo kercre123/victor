@@ -1,3 +1,6 @@
+#include "nrf.h"
+#include "nrf_gpio.h"
+
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
@@ -5,8 +8,7 @@
 #include "radio.h"
 #include "timer.h"
 #include "lights.h"
-#include "nrf.h"
-#include "nrf_gpio.h"
+#include "rtos.h"
 #include "anki/cozmo/robot/spineData.h"
 
 #include "hardware.h"
@@ -26,10 +28,10 @@ void TestRun(u8 cmd, s16 arg)
   if (cmd <= 4)
   {
     Motors::setPower(cmd, arg);
-    Motors::update();
+    Motors::manage();
     MicroWait(5000);
     Motors::printEncoder(cmd);
-    Motors::update();
+    Motors::manage();
     MicroWait(5000);
   }
   // Execute read sensors command (4)
@@ -101,30 +103,30 @@ static void TestMotors() {
       {
         Motors::setPower(0, 0x2000);
         Motors::setPower(1, 0x2000);
-        Motors::update();
+        Motors::manage();
         MicroWait(5000);
-        Motors::update();
+        Motors::manage();
       }
       Motors::setPower(0, 0);
       Motors::setPower(1, 0);
-      Motors::update();
+      Motors::manage();
       MicroWait(5000);
-      Motors::update();
+      Motors::manage();
 
       MicroWait(3000000);
       while(Motors::debugWheelsGetTicks(0) >= 0) // go back 0.25m
       {
         Motors::setPower(0, -0x2000);
         Motors::setPower(1, -0x2000);
-        Motors::update();
+        Motors::manage();
         MicroWait(5000);
-        Motors::update();
+        Motors::manage();
       }
       Motors::setPower(0, 0);
       Motors::setPower(1, 0);
-      Motors::update();
+      Motors::manage();
       MicroWait(5000);
-      Motors::update();
+      Motors::manage();
     #endif
 
     UART::print("\r\nForward: ");
@@ -134,9 +136,9 @@ static void TestMotors() {
     for (int i = 2; i < 4; i++)
       Motors::setPower(i, 0x2800);
     #endif
-    Motors::update();
+    Motors::manage();
     MicroWait(5000);
-    Motors::update();
+    Motors::manage();
 
     // Let motors run, then print the deltas
     MicroWait(500000);
@@ -149,15 +151,15 @@ static void TestMotors() {
     for (int i = 2; i < 4; i++)
       Motors::setPower(i, -0x2800);
     #endif
-    Motors::update();
+    Motors::manage();
     MicroWait(5000);
-    Motors::update();
+    Motors::manage();
 
     // Let motors run, then print the deltas
     MicroWait(500000);
     Motors::printEncodersRaw();
 
-    Battery::update();
+    Battery::manage();
   }
 }
 
