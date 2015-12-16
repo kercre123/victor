@@ -249,9 +249,6 @@ namespace Cozmo {
             }
           }
 
-          // TEMP: what I really need is a "search for faces" beahvior, instead of look around. It would
-          // always be runnable. Then when we "abort" this behavior, we could go to that one
-
           if( moveLiftAction != nullptr) {
             // execute the lower lift action before we start tracking faces
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.LowerLift",
@@ -309,6 +306,32 @@ namespace Cozmo {
                             new MoveHeadToAngleAction( 0 ) }) );
             // robot.GetMoveComponent().MoveLiftToHeight(LIFT_HEIGHT_CARRY, 2, 5);
             // robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
+          }
+        }
+        else if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f ) {
+          if( _lastObjectObservedTime + _lostBlockTimeToLookDown < currentTime_sec ) {
+            const float targetAngle = 0.0f;
+            if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(5.0f) ) {
+
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.LookDownForBlock",
+                                     "haven't seen block since %f (t=%f), looking down",
+                                     _lastObjectObservedTime,
+                                     currentTime_sec);
+
+              _oldHeadAngle_rads = robot.GetHeadAngle();
+              
+              // look down to see if we see the cube there
+              MoveHeadToAngleAction* lookDownAction = new MoveHeadToAngleAction(targetAngle);
+              MoveLiftToHeightAction* moveLiftAction =
+                new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
+              
+              StartActing(robot, new CompoundActionSequential({lookDownAction, moveLiftAction}));
+
+              // resume tracking afterwards
+              TrackObjectAction* trackingAction = new TrackObjectAction(_trackedObject);
+              robot.GetActionList().QueueActionAtEnd(Robot::DriveAndManipulateSlot, trackingAction);
+              break;
+            }
           }
         }
         
@@ -791,7 +814,7 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
                                  "failed roll, searching for cube");
-          _missingBlockFoundState = State::RollingBlock;
+          _missingBlockFoundState = State::InspectingBlock;
           SetCurrState(State::SearchingForMissingBlock);
           _isActing = false;
         }
@@ -850,7 +873,7 @@ namespace Cozmo {
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                    "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
                                    "failed pickup, searching");
-            _missingBlockFoundState = State::PickingUpBlock;
+            _missingBlockFoundState = State::InspectingBlock;
             SetCurrState(State::SearchingForMissingBlock);
             _isActing = false;
         }
@@ -999,7 +1022,8 @@ namespace Cozmo {
     // Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
     
     // If this is observed while tracking face, then switch to tracking this object
-    if (_currentState == State::TrackingFace // &&
+    if (_currentState == State::TrackingFace &&
+        msg.markersVisible// &&
         // // (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
         // (diffVec.z() > oObject->GetSize().z())
       ) {
@@ -1037,7 +1061,8 @@ namespace Cozmo {
     // Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
 
     // If this is observed while tracking face, then switch to tracking this object
-    if (_currentState == State::TrackingFace // &&
+    if (_currentState == State::TrackingFace &&
+        msg.markersVisible // &&
         // (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
         // (diffVec.z() > oObject->GetSize().z())
       ) {

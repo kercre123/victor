@@ -156,7 +156,8 @@ namespace Cozmo {
     bool   _hasValidLastKnownFacePose;
     double _noFacesStartTime = -1.0;
     
-
+    float _oldHeadAngle_rads = 0.0f;
+    
     // The block that currently has Cozmo's attention
     ObjectID _trackedObject;
 
@@ -168,6 +169,7 @@ namespace Cozmo {
     const f32 _speedToDriveForwardWhileTracking = 90.0f;
     const f32 _highLiftHeight = 70.0f;
     const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
+    const f32 _lostBlockTimeToLookDown = 2.5f;
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
 
