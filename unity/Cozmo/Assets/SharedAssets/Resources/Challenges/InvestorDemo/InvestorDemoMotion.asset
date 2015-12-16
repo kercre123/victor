@@ -9,13 +9,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
-  m_Name: InvestorDemoScene2
+  m_Name: InvestorDemoMotion
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 129546, guid: 0e71c546d357d459bbcd620dad638440, type: 2}
-  _ChallengeID: InvestorDemoScene2
+  _ChallengeID: InvestorDemoMotion
   _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 0
-  _ChallengeTitleLocKey: investorDemo.investorDemoScene2
+  _ChallengeTitleLocKey: investorDemo.investorDemoMotion
   _ChallengeSubtitleLocKey: 
   _ChallengeDescriptionLocKey: 
   _ChallengeIcon: {fileID: 0}
@@ -23,4 +23,4 @@ MonoBehaviour:
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
-  MinigameConfig: {fileID: 11400000, guid: d9a056105c52a458ea994dc06d5ff4e1, type: 2}
+  MinigameConfig: {fileID: 11400000, guid: 7f9ec57d6fbd74021a12c3c433bf20ec, type: 2}
