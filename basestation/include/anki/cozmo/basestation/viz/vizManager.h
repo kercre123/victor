@@ -57,7 +57,8 @@ namespace Anki {
         LOCALIZED_TO,
         WORLD_ORIGIN,
         VISION_MODE,
-        BEHAVIOR_STATE
+        BEHAVIOR_STATE,
+        DEBUG_STRING
       } TextLabelType;
       
       using Handle_t = u32;
