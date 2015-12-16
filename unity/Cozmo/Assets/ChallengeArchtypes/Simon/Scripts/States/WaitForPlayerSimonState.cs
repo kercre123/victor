@@ -46,7 +46,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times) {
-      AudioClient.Instance.PostEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL, Anki.Cozmo.Audio.GameObjectType.Default);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
       if (_SequenceList[_CurrentSequenceIndex] != id) {
         LoseGame();
       }

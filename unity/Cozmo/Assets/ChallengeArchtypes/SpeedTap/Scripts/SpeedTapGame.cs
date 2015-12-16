@@ -72,7 +72,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      AudioClient.Instance.PostEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL, Anki.Cozmo.Audio.GameObjectType.Default);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
     }
 
     private void UIButtonTapped() {
