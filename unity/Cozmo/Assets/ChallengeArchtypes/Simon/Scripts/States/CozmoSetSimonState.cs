@@ -18,6 +18,8 @@ namespace Simon {
       _GameInstance.PickNewSequence();
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     public override void Update() {

@@ -32,11 +32,15 @@ namespace Simon {
     }
 
     private void InitialCubesDone() {
+
+    }
+
+    public void PickNewSequence() {
+
       // give cubes colors
       List<Color> colors = new List<Color>();
       colors.Add(Color.white);
       colors.Add(Color.blue);
-      colors.Add(Color.red);
       colors.Add(Color.magenta);
       colors.Add(Color.green);
       foreach (KeyValuePair<int, LightCube> kvp in CurrentRobot.LightCubes) {
@@ -47,9 +51,7 @@ namespace Simon {
           break;
         }
       }
-    }
 
-    public void PickNewSequence() {
       _CurrentIDSequence.Clear();
       int sequenceLength = Random.Range(3, 5);
       for (int i = 0; i < sequenceLength; ++i) {

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace StackTraining {
   public class HelpCozmoStackState : State {
@@ -122,7 +123,7 @@ namespace StackTraining {
         if (TouchingTopCube()) {
           // move backwards slowly as we lower the lift to place the cube
           _CurrentRobot.DriveWheels(-25f, -25f);
-          _CurrentRobot.SetLiftHeight(0f);
+          _CurrentRobot.SetLiftHeight(0.1f);
           _Carrying = false;
           _InvisibleBlockTime = 0f;
         }
@@ -158,8 +159,8 @@ namespace StackTraining {
 
       // check that cube is withing N units of cozmo and its y is centered
       const float placementRange = 75f;
-      return (topCubePosition.sqrMagnitude < placementRange * placementRange && 
-        Mathf.Abs(topCubePosition.y) < 10f);
+      return (topCubePosition.sqrMagnitude < placementRange * placementRange &&
+      Mathf.Abs(topCubePosition.y) < 10f);
     }
 
     private void HandleDetectMotion(Vector2 position) {
@@ -172,6 +173,9 @@ namespace StackTraining {
       AnimationState animState = new AnimationState();
       animState.Initialize(AnimationName.kMajorWin, HandleWinComplete);
       _StateMachine.SetNextState(animState);
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
+        kvp.Value.SetFlashingLEDs(Color.white, 100, 100, 0);
+      }
     }
 
     private void HandleFailed() {
