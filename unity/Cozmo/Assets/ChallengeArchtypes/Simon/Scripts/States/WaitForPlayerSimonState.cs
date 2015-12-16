@@ -9,12 +9,14 @@ namespace Simon {
     private SimonGame _GameInstance;
     private IList<int> _SequenceList;
     private int _CurrentSequenceIndex = 0;
+    private float _LastTappedTime;
 
     public override void Enter() {
       base.Enter();
       LightCube.TappedAction += OnBlockTapped;
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _SequenceList = _GameInstance.GetCurrentSequence();
+      _CurrentRobot.SetHeadAngle(1.0f);
     }
 
     public override void Update() {
@@ -31,21 +33,35 @@ namespace Simon {
 
     private void HandleOnAnimationDone(bool success) {
       _StateMachine.SetNextState(new CozmoSetSimonState());
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
+        kvp.Value.SetFlashingLEDs(Color.black, uint.MaxValue, 0, 0);
+      }
     }
 
     private void LoseGame() {
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
+        kvp.Value.SetFlashingLEDs(Color.red, 100, 100, 0);
+      }
       AnimationState animation = new AnimationState();
       animation.Initialize(AnimationName.kShocked, HandleOnAnimationDone);
       _StateMachine.SetNextState(animation);
     }
 
     private void WinGame() {
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
+        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, 100, 100, 0, 0);
+      }
       AnimationState animation = new AnimationState();
       animation.Initialize(AnimationName.kMajorWin, HandleOnAnimationDone);
       _StateMachine.SetNextState(animation);
     }
 
     private void OnBlockTapped(int id, int times) {
+      if (Time.time - _LastTappedTime < 0.8f) {
+        return;
+      }
+
+      _LastTappedTime = Time.time;
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
       if (_SequenceList[_CurrentSequenceIndex] != id) {
         LoseGame();

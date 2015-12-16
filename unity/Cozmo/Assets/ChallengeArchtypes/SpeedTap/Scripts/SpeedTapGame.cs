@@ -60,6 +60,7 @@ namespace SpeedTap {
       }
 
       LightCube.TappedAction -= BlockTapped;
+      GameAudioClient.SetMusicState(MusicGroupStates.SILENCE);
     }
 
     void InitialCubesDone() {
