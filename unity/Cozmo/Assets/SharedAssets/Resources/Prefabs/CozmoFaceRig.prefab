@@ -11,7 +11,6 @@ GameObject:
   - 20: {fileID: 2038188}
   - 124: {fileID: 12477956}
   - 92: {fileID: 9295896}
-  - 81: {fileID: 8171974}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -27,7 +26,6 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 472266}
-  - 95: {fileID: 9502988}
   m_Layer: 0
   m_Name: CozmoFaceRig
   m_TagString: Untagged
@@ -45,7 +43,8 @@ GameObject:
   - 224: {fileID: 22418638}
   - 222: {fileID: 22220554}
   - 114: {fileID: 11418052}
-  m_Layer: 0
+  - 114: {fileID: 11426214}
+  m_Layer: 5
   m_Name: Face
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -62,7 +61,7 @@ GameObject:
   - 224: {fileID: 22493260}
   - 223: {fileID: 22336382}
   - 114: {fileID: 11459590}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -90,7 +89,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 108854}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 472266}
@@ -129,13 +128,6 @@ Camera:
   m_StereoConvergence: 10
   m_StereoSeparation: .0219999999
   m_StereoMirrorMode: 0
---- !u!81 &8171974
-AudioListener:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 108854}
-  m_Enabled: 1
 --- !u!92 &9295896
 Behaviour:
   m_ObjectHideFlags: 1
@@ -143,23 +135,6 @@ Behaviour:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 108854}
   m_Enabled: 1
---- !u!95 &9502988
-Animator:
-  serializedVersion: 3
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 138318}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: d2287ca316f454a979974ea701b5c629, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
 --- !u!114 &11418052
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -186,6 +161,18 @@ MonoBehaviour:
     y: 0
     width: 1
     height: 1
+--- !u!114 &11426214
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 141200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ad32b0a3bba5461e9e0f10ea5ab3927, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Image: {fileID: 11418052}
 --- !u!114 &11459590
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -228,7 +215,7 @@ Canvas:
   m_GameObject: {fileID: 163492}
   m_Enabled: 1
   serializedVersion: 2
-  m_RenderMode: 1
+  m_RenderMode: 2
   m_Camera: {fileID: 2038188}
   m_PlaneDistance: 100
   m_PixelPerfect: 1
@@ -261,8 +248,8 @@ RectTransform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 163492}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 1.5}
+  m_LocalScale: {x: .15625, y: .15625, z: .15625}
   m_Children:
   - {fileID: 22418638}
   m_Father: {fileID: 472266}
@@ -270,8 +257,8 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
+  m_SizeDelta: {x: 128, y: 64}
+  m_Pivot: {x: .5, y: .5}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

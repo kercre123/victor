@@ -8,12 +8,15 @@ using Newtonsoft.Json;
 [RequireComponent(typeof(RawImage))]
 public class CozmoFace : MonoBehaviour {
 
+  private static readonly IDAS sDAS = DAS.GetInstance(typeof(CozmoFace));
+
   private static CozmoFace _Instance;
-  public static CozmoFace Instance {
-    get {
-      return _Instance;
-    }
-  }
+
+  private Vector2 _LastFaceCenter;
+  private Vector2 _LastFaceScale = Vector2.one;
+  private float _LastFaceAngle; 
+  private readonly ProceduralEyeParameters _LastLeftEye = ProceduralEyeParameters.MakeDefaultLeftEye();
+  private readonly ProceduralEyeParameters _LastRightEye = ProceduralEyeParameters.MakeDefaultRightEye();
 
   private readonly ProceduralEyeParameters _LeftEye = ProceduralEyeParameters.MakeDefaultLeftEye();
   private readonly ProceduralEyeParameters _RightEye = ProceduralEyeParameters.MakeDefaultRightEye();
@@ -26,61 +29,132 @@ public class CozmoFace : MonoBehaviour {
 
   public RawImage Image;
 
+  private float _BlinkTimer;
+
   private List<KeyFrame> _CurrentSequence;
   private long _CurrentSequenceStartTime;
   private int _CurrentSequenceIndex;
   private System.Action _CurrentSequenceCompleteCallback;
+  private bool _CurrentSequenceRelative;
+
+  private static readonly Dictionary<string, List<KeyFrame>> _Animations = new Dictionary<string, List<KeyFrame>>();
+
+  private static List<KeyFrame> LoadAnimation(string name) {
+    
+    string fileName = "";
+#if UNITY_EDITOR
+    fileName = Application.dataPath + string.Format("/../../../lib/anki/products-cozmo-assets/animations/{0}.json", name);
+#elif UNITY_IOS
+
+    Debug.Log("Folders in dataPath "+ string.Join(", ", System.IO.Directory.GetDirectories(Application.dataPath)));
+
+    fileName = Application.dataPath + string.Format("/cozmo_assets/assets/animations/{0}.json", name);
+#endif
+    try {
+      var jsonText = System.IO.File.ReadAllText(fileName);
+
+      var sequenceWrapper = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, List<KeyFrame>>>(
+        jsonText,
+        new JsonSerializerSettings() {
+          TypeNameHandling = TypeNameHandling.None,
+          Converters = new List<JsonConverter> {
+            new UtcDateTimeConverter(),
+            new Newtonsoft.Json.Converters.StringEnumConverter()
+          }
+        });
+
+      var sequence = sequenceWrapper[name];
+
+      // drop everything thats not face
+      sequence.RemoveAll(x => x.Name != KeyFrameName.ProceduralFaceKeyFrame);
+      sequence.Sort((x, y) => {
+        return x.triggerTime_ms.CompareTo(y.triggerTime_ms);
+      });
+        
+      return sequence;
+    }
+    catch(System.Exception ex) {
+      sDAS.Error("Failed to load Animation " + name);
+      sDAS.Error(ex);
+      return null;
+    }
+  }
+
+  public static void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
+    if (_Instance != null) {
+      _Instance.FaceAngle = faceAngle;
+      _Instance.FaceCenter = faceCenter;
+      _Instance.FaceScale = faceScale;
+      leftEyeParams.CopyTo(_Instance.LeftEye.Array, 0);
+      rightEyeParams.CopyTo(_Instance.RightEye.Array, 0);
+
+      _Instance._LastFaceAngle = faceAngle;
+      _Instance._LastFaceCenter = faceCenter;
+      _Instance._LastFaceScale = faceScale;
+      leftEyeParams.CopyTo(_Instance._LastLeftEye.Array, 0);
+      rightEyeParams.CopyTo(_Instance._LastRightEye.Array, 0);
+    }
+  }
+
+  public static void PlayAnimation(string name, bool relative = false, System.Action callback = null) {
+    List<KeyFrame> anim;
+    Debug.Log("Playing Animation "+name);
+    if (!_Animations.TryGetValue(name, out anim)) {
+      anim = LoadAnimation(name);
+      _Animations[name] = anim;
+    }
+    if (_Instance != null) {
+      _Instance.PlayAnimation(anim, relative, callback);
+    }
+  }
+
 
   private void Awake() {
     _Instance = this;
     FaceScale = Vector2.one;
     // clone our face material to avoid making changes to the original
     Image.material = new Material(Image.material) { hideFlags = HideFlags.HideAndDontSave };
-
-
-    // TEST TEST TEST !!!!
-    string name = "faceTransition_w_breakdowns_anim";
-
-    var sequenceWrapper = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, List<KeyFrame>>>(
-        System.IO.File.ReadAllText(Application.dataPath + string.Format("/../../../lib/anki/products-cozmo-assets/animations/{0}.json", name)),
-      new JsonSerializerSettings() {
-        TypeNameHandling = TypeNameHandling.None,
-        Converters = new List<JsonConverter> {
-          new UtcDateTimeConverter(),
-          new Newtonsoft.Json.Converters.StringEnumConverter()
-        }
-      });
-
-    var sequence = sequenceWrapper[name];
-
-    System.Action playAnimation = null;
-
-    playAnimation = () => {
-      PlayAnimation(sequence, playAnimation);
-    };
-
-    playAnimation();
   }
 
   private void Update() {
+    UpdateBlink();
     UpdateSequence();
     UpdateMaterial();
   }
 
-  public void PlayAnimation(List<KeyFrame> sequence, System.Action callback = null) {
+  private void PlayAnimation(List<KeyFrame> sequence, bool relative = false, System.Action callback = null) {
 
     _CurrentSequence = sequence;
-    _CurrentSequence.RemoveAll(x => x.Name != KeyFrameName.ProceduralFaceKeyFrame);
-    _CurrentSequence.Sort((x, y) => {
-      return x.triggerTime_ms.CompareTo(y.triggerTime_ms);
-    });
+    _CurrentSequenceRelative = relative;
     _CurrentSequenceIndex = 0;
     _CurrentSequenceStartTime = System.DateTime.UtcNow.ToUtcMs();
     _CurrentSequenceCompleteCallback = callback;
   }
 
+  private void UpdateBlink() {
+    if(_CurrentSequence == null) {
+      _BlinkTimer -= Time.deltaTime;
+      if (_BlinkTimer < 0) {
+        PlayAnimation("procedural_blink", true);
+        _BlinkTimer = UnityEngine.Random.Range(3f, 4f);
+      }
+    }
+  }
+
   private void UpdateSequence() {
     if (_CurrentSequence == null) {
+
+      // lerp back to our displayed position after finishing the animation
+      if (_CurrentSequenceRelative) {
+        float lerpAmount = 15f * Time.deltaTime;
+
+        // lerp to default position
+        ArrayLerp(_LeftEye.Array, _LastLeftEye.Array, lerpAmount, _LeftEye.Array);
+        ArrayLerp(_RightEye.Array, _LastRightEye.Array, lerpAmount, _RightEye.Array);
+        FaceScale = Vector2.Lerp(FaceScale, _LastFaceScale, lerpAmount);
+        FaceCenter = Vector2.Lerp(FaceCenter, _LastFaceCenter, lerpAmount);
+        FaceAngle = Mathf.Lerp(FaceAngle, _LastFaceAngle, lerpAmount);
+      }
       return;
     }
 
@@ -131,12 +205,34 @@ public class CozmoFace : MonoBehaviour {
         frame.leftEye.CopyTo(_LeftEye.Array, 0);
         frame.rightEye.CopyTo(_RightEye.Array, 0);
       }
+
+      if (_CurrentSequenceRelative) {
+        _LeftEye.EyeCenter += _LastLeftEye.EyeCenter;
+        _LeftEye.EyeScale = new Vector2(_LeftEye.EyeScale.x * _LastLeftEye.EyeScale.x, _LeftEye.EyeScale.y * _LastLeftEye.EyeScale.y);
+
+        _RightEye.EyeCenter += _LastRightEye.EyeCenter;
+        _RightEye.EyeScale = new Vector2(_RightEye.EyeScale.x * _LastRightEye.EyeScale.x, _RightEye.EyeScale.y * _LastRightEye.EyeScale.y);
+
+        FaceAngle += _LastFaceAngle;
+        FaceCenter += _LastFaceCenter;
+        FaceScale = new Vector2(FaceScale.x * _LastFaceScale.x, FaceScale.y * _LastFaceScale.y);
+      }
     }
     else {
       // Reached End of animation
       _CurrentSequence = null;
       var callback = _CurrentSequenceCompleteCallback;
       _CurrentSequenceCompleteCallback = null;
+
+      // if this wasn't a relative animation, update our last face to the current face
+      if (!_CurrentSequenceRelative) {
+        _LastFaceCenter = FaceCenter;
+        _LastFaceScale = FaceScale;
+        _LastFaceAngle = FaceAngle;
+        _LeftEye.Array.CopyTo(_LastLeftEye.Array, 0);
+        _RightEye.Array.CopyTo(_LastRightEye.Array, 0);
+      }
+
       if (callback != null) {
         callback();
       }
