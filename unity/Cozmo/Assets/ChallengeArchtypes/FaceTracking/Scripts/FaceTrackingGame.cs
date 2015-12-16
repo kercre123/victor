@@ -112,7 +112,7 @@ namespace FaceTracking {
     protected void InitializeMinigameObjects() {
       
       _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("PeekGameStateMachine", _StateMachine);
+      _StateMachineManager.AddStateMachine("FaceTrackingGameStateMachine", _StateMachine);
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
