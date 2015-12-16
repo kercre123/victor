@@ -301,7 +301,11 @@ void BehaviorFollowMotion::HandleCompletedAction(const EngineToGameEvent &event,
         break;
         
       case State::HoldingHeadDown:
-        ASSERT_NAMED(completedAction.actionType == RobotActionType::MOVE_HEAD_TO_ANGLE, "Expecting completed action to be MoveHeadToAngle when HoldingHeadDown");
+        if( completedAction.actionType != RobotActionType::MOVE_HEAD_TO_ANGLE ){
+          PRINT_NAMED_WARNING("BehaviorFollowMotion.HandleWhileRunning.HoldingHeadDown.InvalidAction",
+                              "Expecting completed action to be MoveHeadToAngle, instead got %s",
+                              RobotActionTypeToString(completedAction.actionType));
+        }
         // Nothing to do: we transition out of this state once timer elapses
         break;
         
