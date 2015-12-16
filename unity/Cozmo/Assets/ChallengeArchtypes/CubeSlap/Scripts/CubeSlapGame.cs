@@ -13,7 +13,6 @@ namespace CubeSlap {
     private bool _CliffFlagTrown = false;
 
     private LightCube _CurrentTarget = null;
-    private float _LastSeenTargetTime = -1;
 
     private StateMachineManager _StateMachineManager = new StateMachineManager();
     private StateMachine _StateMachine = new StateMachine();
@@ -103,7 +102,12 @@ namespace CubeSlap {
       }
     }
 
-    private void HandleCliffEvent() {
+    private void HandleCliffEvent(Anki.Cozmo.CliffEvent cliff) {
+      // Ignore if it throws this without a cliff actually detected
+      if (!cliff.detected) {
+        return;
+      }
+
       if (_AttemptedSlap) {
         _CliffFlagTrown = true;
       }
