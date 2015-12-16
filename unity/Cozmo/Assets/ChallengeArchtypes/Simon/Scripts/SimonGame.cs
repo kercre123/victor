@@ -75,6 +75,10 @@ namespace Simon {
 
     }
 
+    void Update() {
+      _StateMachineManager.UpdateAllMachines();
+    }
+
   }
 
 }
