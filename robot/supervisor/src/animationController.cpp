@@ -6,6 +6,7 @@
 #ifdef TARGET_ESPRESSIF
 #include "anki/cozmo/robot/esp.h"
 #include "rtip.h"
+#include "anki/cozmo/robot/logging.h"
 #include "face.h"
 extern "C" {
   #include "client.h"
@@ -15,7 +16,7 @@ extern "C" {
 
 #else // Not on Espressif
 #include "anki/cozmo/robot/hal.h"
-//#include "anki/common/robot/errorHandling.h"
+#include "anki/common/robot/errorHandling.h"
 //#include "anki/common/robot/utilities_c.h"
 //#include "anki/common/shared/radians.h"
 //#include "anki/common/shared/velocityProfileGenerator.h"
@@ -27,8 +28,6 @@ extern "C" {
 #include "steeringController.h"
 #include "speedController.h"
 #endif
-
-#include "anki/cozmo/robot/logging.h"
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
@@ -327,7 +326,7 @@ namespace AnimationController {
       if (!ready) {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
-          AnkiWarn("AnimationController.IsReadyToPlay.BufferStarved\r\n");
+          PRINT("AnimationController.IsReadyToPlay.BufferStarved\r\n");
         }
       } else {
         _isBufferStarved = false;
@@ -369,7 +368,7 @@ namespace AnimationController {
         // If the next message is not audio, then delete it until it is.
         while(msgID != RobotInterface::EngineToRobot::Tag_animAudioSilence &&
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample) {
-          AnkiWarn("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
+          PRINT("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead). Dumping message. (FYI AudioSample_ID = 0x%02x)\n", msgID, RobotInterface::EngineToRobot::Tag_animAudioSample);
           GetFromBuffer(&msg);
           msgID = PeekBufferTag();
         }
@@ -416,7 +415,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiError("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)\n", msgID);
+            PRINT("Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)\n", msgID);
             Clear();
             return false;
           }
@@ -477,7 +476,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          AnkiWarn("Ran out of animation buffer after getting audio/silence.\n");
+          PRINT("Ran out of animation buffer after getting audio/silence.\n");
           return RESULT_FAIL;
         }
 
@@ -492,24 +491,17 @@ namespace AnimationController {
           }
           case RobotInterface::EngineToRobot::Tag_animAudioSilence:
           {
-            case RobotInterface::EngineToRobot::Tag_animAudioSample:
-            {
-              _tracksInUse |= BACKPACK_LIGHTS_TRACK;
-              // Fall through to below...
-            }
-            case RobotInterface::EngineToRobot::Tag_animAudioSilence:
-            {
-              nextAudioFrameFound = true;
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
-            {
-              GetFromBuffer(&msg);
-              _currentTag = msg.animStartOfAnimation.tag;
+            nextAudioFrameFound = true;
+            break;
+          }
+          case RobotInterface::EngineToRobot::Tag_animStartOfAnimation:
+          {
+            GetFromBuffer(&msg);
+            _currentTag = msg.animStartOfAnimation.tag;
               
-              RobotInterface::AnimationStarted msg;
-              msg.tag = _currentTag;
-              RobotInterface::SendMessage(msg);
+            RobotInterface::AnimationStarted msg;
+            msg.tag = _currentTag;
+            RobotInterface::SendMessage(msg);
               
 #             if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController: StartOfAnimation w/ tag=%d\n", _currentTag);
@@ -730,7 +722,7 @@ namespace AnimationController {
 
           default:
           {
-            AnkiWarn("Unexpected message type %d in animation buffer!\n", msgID);
+            PRINT("Unexpected message type %d in animation buffer!\n", msgID);
             return RESULT_FAIL;
           }
 
