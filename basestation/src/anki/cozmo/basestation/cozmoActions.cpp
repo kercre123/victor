@@ -1719,6 +1719,12 @@ namespace Anki {
     {
       ActionResult result = ActionResult::SUCCESS;
       
+      if (_height_mm >= 0 && (_height_mm < LIFT_HEIGHT_LOWDOCK || _height_mm > LIFT_HEIGHT_CARRY)) {
+        PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.InvalidHeight",
+                            "%f mm. Clipping to be in range.", _height_mm);
+        _height_mm = CLIP(_height_mm, LIFT_HEIGHT_LOWDOCK, LIFT_HEIGHT_CARRY);
+      }
+      
       if(_height_mm < 0.f) {
         // Choose whatever is closer to current height, LOW or CARRY:
         const f32 currentHeight = robot.GetLiftHeight();
@@ -1731,9 +1737,6 @@ namespace Anki {
         } else {
           _heightWithVariation = carry;
         }
-      } else if (_height_mm < LIFT_HEIGHT_LOWDOCK || _height_mm > LIFT_HEIGHT_CARRY) {
-        PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.InvalidHeight", "%f mm", _height_mm);
-        return ActionResult::FAILURE_ABORT;
       } else {
         _heightWithVariation = _height_mm;
         if(_variability > 0.f) {
@@ -1764,10 +1767,15 @@ namespace Anki {
         }
         
         if (minAngleDiff < LIFT_ANGLE_TOL) {
-          PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.HeightTolTooSmall",
-                              "HeightTol %f mm == AngleTol %f rad near height of %f mm (LIFT_ANGLE_TOL=%f)",
-                              _heightTolerance, minAngleDiff, _heightWithVariation, LIFT_ANGLE_TOL);
-          return ActionResult::FAILURE_ABORT;
+          // Tolerance is too small. Clip to be within range.
+          f32 desiredHeightLower = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle - LIFT_ANGLE_TOL);
+          f32 desiredHeightUpper = Robot::ConvertLiftAngleToLiftHeightMM(targetAngle + LIFT_ANGLE_TOL);
+          f32 newHeightTolerance = std::max(_height_mm - desiredHeightLower, desiredHeightUpper - _height_mm);
+          
+          PRINT_NAMED_WARNING("MoveLiftToHeightAction.Init.TolTooSmall",
+                              "HeightTol %f mm == AngleTol %f rad near height of %f mm. Clipping tol to %f mm",
+                              _heightTolerance, minAngleDiff, _heightWithVariation, newHeightTolerance);
+          _heightTolerance = newHeightTolerance;
         }
       }
       
