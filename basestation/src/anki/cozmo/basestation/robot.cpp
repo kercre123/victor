@@ -1110,6 +1110,11 @@ namespace Anki {
       
       VizManager::getInstance()->SendEndRobotUpdate();
       
+      
+      // Sending debug string to game and viz
+      SendDebugString("This is the engine debug string");
+      
+      
       return RESULT_OK;
       
     } // Update()
@@ -3281,7 +3286,7 @@ namespace Anki {
       int len = 0;
       const int kMaxDebugStringLen = u8_MAX;
       char text[kMaxDebugStringLen];
-      memset(text, 0, kMaxDebugStringLen);
+      strcpy(text, format);
       
       // Create formatted text
       va_list argptr;
