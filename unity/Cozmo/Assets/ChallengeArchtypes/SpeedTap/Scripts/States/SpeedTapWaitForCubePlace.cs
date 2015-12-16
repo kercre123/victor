@@ -25,6 +25,24 @@ namespace SpeedTap {
         }
       }
     }
+
+    public override void Exit() {
+      base.Exit();
+      // set idle parameters
+      Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = {
+        Anki.Cozmo.LiveIdleAnimationParameter.BodyMovementSpacingMin_ms,
+        Anki.Cozmo.LiveIdleAnimationParameter.LiftMovementSpacingMin_ms,
+        Anki.Cozmo.LiveIdleAnimationParameter.HeadAngleVariability_deg,
+      };
+
+      float[] paramValues = {
+        float.MaxValue,
+        float.MaxValue,
+        20.0f
+      };
+      _CurrentRobot.SetIdleAnimation("_LIVE_");
+      _CurrentRobot.SetLiveIdleAnimationParameters(paramNames, paramValues);
+    }
   }
 
 }

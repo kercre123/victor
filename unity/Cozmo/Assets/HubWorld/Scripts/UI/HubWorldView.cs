@@ -37,19 +37,20 @@ namespace Cozmo.HubWorld {
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
 
-    // Using my own tweening because I couldn't figure out how to make 
+    // Using my own tweening because I couldn't figure out how to make
     // DOTween work properly
     private class Tween {
       public System.Action<float> TweenAction;
       public System.Action CompleteAction;
+
       public Tween(System.Action<float> tweenAction, 
-                    System.Action completeAction = null) {
+                   System.Action completeAction = null) {
         TweenAction = tweenAction;
         CompleteAction = completeAction;
       }
     }
 
-    private const float _TweenLength = 3f;
+    private const float _TweenLength = 0.5f;
     private float _TweenProgress;
     private readonly List<Tween> _Tweeners = new List<Tween>();
 
@@ -116,7 +117,7 @@ namespace Cozmo.HubWorld {
             _Tweeners.Add(new Tween((t) => {
 
               // Expand to 2x, then shrink to zero
-              if( t < 0.5f) {
+              if (t < 0.5f) {
                 oldButton.transform.localScale = Vector3.Lerp(Vector3.one, Vector3.one * 3, t);
                 oldButton.transform.localPosition = newButton.transform.localPosition;
               }
@@ -268,9 +269,9 @@ namespace Cozmo.HubWorld {
         float currentAngle = anglePerButton * i + Random.Range(-wiggleRoom, wiggleRoom);
 
         var position = new Vector3(
-          Mathf.Cos(currentAngle * Mathf.Deg2Rad), 
-          Mathf.Sin(currentAngle * Mathf.Deg2Rad), 
-          0) * radius;
+                         Mathf.Cos(currentAngle * Mathf.Deg2Rad), 
+                         Mathf.Sin(currentAngle * Mathf.Deg2Rad), 
+                         0) * radius;
 
         if (immediate) {
           _UnlockedButtons[i].localPosition = position;
@@ -373,7 +374,7 @@ namespace Cozmo.HubWorld {
         rectTransform.localPosition = Vector3.Lerp(startPosition, position, t);
         rectTransform.localScale = Vector3.Lerp(startScale, scale, t);
       }, () => {
-        if(button) { 
+        if (button) { 
           button.enabled = true;
         }
       }));

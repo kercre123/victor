@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
@@ -11,8 +12,10 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
+      _SpeedTapGame.CozmoBlock.SetFlashingLEDs(_SpeedTapGame.MatchColor, 100, 100, 0);
       _CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin, HandleAnimationDone);
+      _SpeedTapGame.CozmoScore++;
+      _SpeedTapGame.UpdateUI();
     }
 
     private void HandleAnimationDone(bool success) {
