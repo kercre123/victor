@@ -30,12 +30,14 @@ namespace Wink {
       InitializeMinigameObjects();
     }
 
-    public void WaveSuccess() {
+    public bool WaveSuccess() {
       _WaveSuccessCount++;
-      Progress = (_WaveSuccessCount / _GoalSuccessCount);
+      Progress = ((float)_WaveSuccessCount / (float)_GoalSuccessCount);
       if (_WaveSuccessCount >= _GoalSuccessCount) {
         RaiseMiniGameWin();
+        return true;
       }
+      return false;
     }
 
     protected void InitializeMinigameObjects() {

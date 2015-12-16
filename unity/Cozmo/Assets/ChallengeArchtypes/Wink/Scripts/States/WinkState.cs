@@ -33,13 +33,16 @@ namespace Wink {
     }
 
     private void OnAnimationFinished(bool success) {
+      bool gameDone = false;
       if (_WinkSuccess) {
-        _WinkGame.WaveSuccess();
+        gameDone = _WinkGame.WaveSuccess();
       }
       else if (!_WinkGame.TryDecrementAttempts()) {
         _WinkGame.RaiseMiniGameLose();
       }
-      _StateMachine.SetNextState(new WinkState());
+      if (!gameDone) {
+        _StateMachine.SetNextState(new WinkState());
+      }
     }
 
     public override void Exit() {
