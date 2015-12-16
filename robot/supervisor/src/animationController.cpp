@@ -30,7 +30,7 @@ static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp(); }
 #endif
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-#define DEBUG_ANIMATION_CONTROLLER 2
+#define DEBUG_ANIMATION_CONTROLLER 0
 
 namespace Anki {
 namespace Cozmo {
@@ -421,9 +421,20 @@ namespace AnimationController {
       else
       {
 #ifdef TARGET_ESPRESSIF
-        if (!_playSilence) GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
+        if (!_playSilence) 
+        {
+          if (_audioReadInd == AUDIO_SAMPLE_SIZE-2) // XXX Temporary hack for EP1 compatibility until we can adjust the audio chunk size
+          {
+            GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP-1);
+            dest[MAX_AUDIO_BYTES_PER_DROP-1] = dest[MAX_AUDIO_BYTES_PER_DROP-2]; 
+          }
+          else
+          {
+            GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
+          }
+        }
         _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
-        if (_audioReadInd >= AUDIO_SAMPLE_SIZE_EP1)
+        if (_audioReadInd >= AUDIO_SAMPLE_SIZE)
         {
           --_numAudioFramesBuffered;
           ++_numAudioFramesPlayed;

@@ -52,7 +52,7 @@ namespace Anki {
               AnimationController::Clear();
               break;
             }
-            case RobotInterface::EngineToRobot::Tag_animAudioSampleEP1:
+            case RobotInterface::EngineToRobot::Tag_animAudioSample:
             case RobotInterface::EngineToRobot::Tag_animAudioSilence:
             case RobotInterface::EngineToRobot::Tag_animHeadAngle:
             case RobotInterface::EngineToRobot::Tag_animLiftHeight:
