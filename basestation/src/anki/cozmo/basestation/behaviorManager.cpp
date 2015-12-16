@@ -350,8 +350,11 @@ namespace Cozmo {
   
   void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   {
-    // These behavior pointers are going to be invalidated, so clear them
-    _currentBehavior = _nextBehavior = _forceSwitchBehavior = nullptr;
+    // These behavior pointers are going to be invalidated, so clear them. Leave current behavior, since it
+    // lives in the factory and doesn't get deleted
+    // TEMP: // TODO:(bn) ask Wesley about this
+    
+    _nextBehavior = _forceSwitchBehavior = nullptr;
     _resumeBehavior = nullptr;
 
     if( _behaviorChooser != nullptr ) {

@@ -115,6 +115,8 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;
+
+  PRINT_NAMED_DEBUG("BehaviorFollowMotion.InterruptInternal", "restoring original vision modes");
   
   // Restore original vision modes
   robot.GetVisionComponent().SetModes(_originalVisionModes);
