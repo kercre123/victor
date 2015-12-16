@@ -459,6 +459,10 @@ public class Robot : IDisposable {
     SetBehaviorSystem(false);
     ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    SetIdleAnimation("NONE");
+    Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
+    float[] paramValues = { };
+    SetLiveIdleAnimationParameters(paramNames, paramValues, true);
     foreach (KeyValuePair<int, LightCube> kvp in LightCubes) {
       kvp.Value.SetLEDs(Color.black);
     }
@@ -776,11 +780,12 @@ public class Robot : IDisposable {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues) {
+  public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
 
     SetLiveIdleAnimationParametersMessage.paramNames = paramNames;
     SetLiveIdleAnimationParametersMessage.paramValues = paramValues;
     SetLiveIdleAnimationParametersMessage.robotID = 1;
+    SetLiveIdleAnimationParametersMessage.setUnspecifiedToDefault = setUnspecifiedToDefault;
 
     RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters = SetLiveIdleAnimationParametersMessage;
     RobotEngineManager.Instance.SendMessage();

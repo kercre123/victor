@@ -11,6 +11,7 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public int CozmoScore;
     public int PlayerScore;
+    public Color MatchColor;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -21,11 +22,7 @@ namespace SpeedTap {
     private SpeedTapPanel _GamePanelPrefab;
     private SpeedTapPanel _GamePanel;
 
-    [SerializeField]
-    private AudioClip _RollSound;
-
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      // TODO
       InitializeMinigameObjects();
     }
 
@@ -34,7 +31,7 @@ namespace SpeedTap {
       DAS.Info(this, "Game Created");
 
       _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
+      _StateMachineManager.AddStateMachine("SpeedTapStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -42,10 +39,15 @@ namespace SpeedTap {
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
       _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<SpeedTapPanel>();
       _GamePanel.TapButtonPressed += UIButtonTapped;
       UpdateUI();
+
+      CurrentRobot.SetLiftHeight(0.0f);
+      CurrentRobot.SetHeadAngle(-1.0f);
     }
 
     void Update() {
@@ -70,7 +72,7 @@ namespace SpeedTap {
     }
 
     public void RollingBlocks() {
-      AudioClient.Instance.PostEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL, Anki.Cozmo.Audio.GameObjectType.Default);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL);
     }
 
     private void UIButtonTapped() {

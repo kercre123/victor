@@ -32,6 +32,7 @@ namespace SpeedTap {
     private void HandleTapDone(bool success) {
       _StateMachine.SetNextState(new SpeedTapPlayerConfirm());
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
+      _CurrentRobot.SetLiftHeight(1.0f);
     }
 
     public override void Exit() {

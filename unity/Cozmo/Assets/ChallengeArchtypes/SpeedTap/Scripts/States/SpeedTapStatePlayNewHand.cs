@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
@@ -16,7 +17,7 @@ namespace SpeedTap {
     private bool _GotMatch = false;
     private bool _CozmoTapping = false;
 
-    Color[] colors = { Color.white, Color.red, Color.green, Color.blue, Color.magenta };
+    Color[] colors = { Color.white, Color.green, Color.blue, Color.magenta };
 
     public override void Enter() {
       base.Enter();
@@ -65,7 +66,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_POSITIVE_02);
       RobotEngineManager.Instance.RobotCompletedAnimation -= RobotCompletedTapAnimation;
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
     }
@@ -111,9 +112,9 @@ namespace SpeedTap {
         // Do match
         _GotMatch = true;
         int randColorIndex = ((int)(matchExperiment * 1000f)) % colors.Length;
-        Color matchColor = colors[randColorIndex];
-        _SpeedTapGame.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
-        _SpeedTapGame.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(matchColor), 0, 0xFF);
+        _SpeedTapGame.MatchColor = colors[randColorIndex];
+        _SpeedTapGame.CozmoBlock.SetLEDs(CozmoPalette.ColorToUInt(_SpeedTapGame.MatchColor), 0, 0xFF);
+        _SpeedTapGame.PlayerBlock.SetLEDs(CozmoPalette.ColorToUInt(_SpeedTapGame.MatchColor), 0, 0xFF);
       }
       else {
         // Do non-match
