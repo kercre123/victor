@@ -43,6 +43,13 @@ namespace Cozmo {
       public AlertView ChallengeEndViewPrefab {
         get { return _ChallengeEndViewPrefab; }
       }
+
+      [SerializeField]
+      private Anki.UI.AnkiButton _DefaultButtonPrefab;
+
+      public Anki.UI.AnkiButton DefaultButtonPrefab {
+        get { return _DefaultButtonPrefab; }
+      }
     }
   }
 }

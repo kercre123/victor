@@ -158,6 +158,10 @@ public class LightCube : ObservedObject {
     SetLEDs(CozmoPalette.ColorToUInt(onColor), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
+  public void SetFlashingLEDs(uint onColor, uint onDurationMs, uint offDurationMs, uint transitionMs) {
+    SetLEDs(onColor, 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
+  }
+
   public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 

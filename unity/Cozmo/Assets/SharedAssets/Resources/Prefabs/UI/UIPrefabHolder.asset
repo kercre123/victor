@@ -18,3 +18,5 @@ MonoBehaviour:
     type: 2}
   _ChallengeEndViewPrefab: {fileID: 11495826, guid: 1b4135647dd7e4fb2bd98651dea5bac5,
     type: 2}
+  _DefaultButtonPrefab: {fileID: 11483728, guid: 0de3c51819c924d1fb37bf88d22a2414,
+    type: 2}
