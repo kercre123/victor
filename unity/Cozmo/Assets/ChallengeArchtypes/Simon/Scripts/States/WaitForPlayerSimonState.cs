@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Anki.Cozmo.Audio;
 
 namespace Simon {
   public class WaitForPlayerSimonState : State {
@@ -45,6 +46,7 @@ namespace Simon {
     }
 
     private void OnBlockTapped(int id, int times) {
+      AudioClient.Instance.PostEvent(Anki.Cozmo.Audio.EventType.PLAY_SFX_UI_CLICK_GENERAL, Anki.Cozmo.Audio.GameObjectType.Default);
       if (_SequenceList[_CurrentSequenceIndex] != id) {
         LoseGame();
       }
