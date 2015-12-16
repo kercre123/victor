@@ -39,7 +39,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1c8b193790a284a36a9a0a09bbb3a8ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _HowToPlayPrefabs: []
+  _HowToPlayPrefabs:
+  - slideName: SetUp
+    slidePrefab: {fileID: 22542324, guid: 41cd2f89e409049caa2f0d5aac91926f, type: 2}
+  - slideName: WaitForPounce
+    slidePrefab: {fileID: 22545294, guid: 5f695b093a1694c6b8136a1b594aacdd, type: 2}
+  - slideName: CozmoWinEarly
+    slidePrefab: {fileID: 22518314, guid: 3f0bf26771230433183dfecaf8475480, type: 2}
+  - slideName: CozmoWinPounce
+    slidePrefab: {fileID: 22592278, guid: a90079693b5024559b8290b75e53a2ff, type: 2}
+  - slideName: PlayerWin
+    slidePrefab: {fileID: 22581792, guid: 09f5eea8ed5a14118b87e4f36651acd1, type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -47,6 +57,10 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.size
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: gameName_
       value: Speed Tap
@@ -69,6 +83,47 @@ Prefab:
       propertyPath: _GameId
       value: speedTap
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slideName
+      value: CozmoWinEarly
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slideName
+      value: CozmoWinPounce
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slideName
+      value: SetUp
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slideName
+      value: WaitForPounce
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[0].slidePrefab
+      value: 
+      objectReference: {fileID: 22542324, guid: 41cd2f89e409049caa2f0d5aac91926f,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[1].slidePrefab
+      value: 
+      objectReference: {fileID: 22545294, guid: 5f695b093a1694c6b8136a1b594aacdd,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[2].slidePrefab
+      value: 
+      objectReference: {fileID: 22518314, guid: 3f0bf26771230433183dfecaf8475480,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[3].slidePrefab
+      value: 
+      objectReference: {fileID: 22592278, guid: a90079693b5024559b8290b75e53a2ff,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _HowToPlayPrefabs.Array.data[4].slidePrefab
+      value: 
+      objectReference: {fileID: 22581792, guid: 09f5eea8ed5a14118b87e4f36651acd1,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}
