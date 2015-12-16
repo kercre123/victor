@@ -114,9 +114,9 @@ namespace Cozmo {
     {
       case RobotActionType::PLAY_ANIMATION:
         printf("Robot %d finished playing animation %s. [Tag=%d]\n",
-               msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
+               msg.robotID, msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.idTag);
         if ((_testState == TestState::ExecutingTestAnimation) &&
-            (msg.completionInfo.animName.compare(_lastAnimPlayed) == 0)) {
+            (msg.completionInfo.Get_animationCompleted().animationName.compare(_lastAnimPlayed) == 0)) {
           
           CST_EXPECT(msg.result == ActionResult::SUCCESS,
                      _lastAnimPlayed << " failed to play");
