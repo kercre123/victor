@@ -38,9 +38,9 @@ namespace Simon {
         // time the light blinking
         _CurrentRobot.DriveWheels(0.0f, 0.0f);
         if (Time.time - _StartLightBlinkTime > 2.0f) {
+          StopSimonNodeBlink();
           _TurningToTarget = true;
           _CurrentSequenceIndex++;
-          StopSimonNodeBlink();
         }
       }
 
@@ -51,18 +51,20 @@ namespace Simon {
       Vector3 robotToTarget = currentTarget.WorldPosition - _CurrentRobot.WorldPosition;
       float crossValue = Vector3.Cross(_CurrentRobot.Forward, robotToTarget).z;
       if (crossValue > 0.0f) {
-        _CurrentRobot.DriveWheels(15.0f, -15.0f);
+        _CurrentRobot.DriveWheels(-35.0f, 35.0f);
       }
       else {
-        _CurrentRobot.DriveWheels(-15.0f, 15.0f);
+        _CurrentRobot.DriveWheels(35.0f, -35.0f);
       }
-      return Vector2.Dot(robotToTarget.normalized, _CurrentRobot.Forward) > 0.9f;
+      return Vector2.Dot(robotToTarget.normalized, _CurrentRobot.Forward) > 0.98f;
     }
 
     private void SetSimonNodeBlink() {
       _StartLightBlinkTime = Time.time;
       LightCube currentCube = GetCurrentTarget();
+      _CurrentRobot.SendAnimation(AnimationName.kSeeOldPattern);
       currentCube.SetFlashingLEDs(currentCube.Lights[0].OnColor, 100, 100, 0);
+      _CurrentRobot.DriveWheels(0.0f, 0.0f);
     }
 
     private LightCube GetCurrentTarget() {
@@ -77,6 +79,9 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      foreach (KeyValuePair<int, LightCube> kvp in _CurrentRobot.LightCubes) {
+        kvp.Value.SetLEDs(kvp.Value.Lights[0].OnColor, 0, uint.MaxValue, 0, 0, 0);
+      }
     }
 
   }

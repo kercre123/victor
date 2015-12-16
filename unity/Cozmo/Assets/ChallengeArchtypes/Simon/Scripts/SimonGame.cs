@@ -51,7 +51,7 @@ namespace Simon {
 
     public void PickNewSequence() {
       _CurrentIDSequence.Clear();
-      int sequenceLength = Random.Range(3, 10);
+      int sequenceLength = Random.Range(3, 5);
       for (int i = 0; i < sequenceLength; ++i) {
         int pickedID = -1;
         int pickIndex = Random.Range(0, CurrentRobot.LightCubes.Count);
