@@ -9,7 +9,6 @@ namespace CubeSlap {
     private float _MaxSlapDelay;
     private int _SuccessGoal;
     private int _SuccessCount;
-    private bool _AttemptedSlap = false;
     private bool _CliffFlagTrown = false;
 
     private LightCube _CurrentTarget = null;
@@ -23,6 +22,8 @@ namespace CubeSlap {
       _SuccessGoal = config.SuccessGoal;
       _MinSlapDelay = config.MinSlapDelay;
       _MaxSlapDelay = config.MaxSlapDelay;
+      _SuccessCount = 0;
+      Progress = 0.0f;
       InitializeMinigameObjects();
     }
 
@@ -33,6 +34,8 @@ namespace CubeSlap {
 
       CurrentRobot.SetBehaviorSystem(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
+      CurrentRobot.SetHeadAngle(-1.0f);
+      CurrentRobot.SetLiftHeight(0.0f);
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
 
@@ -82,15 +85,15 @@ namespace CubeSlap {
     public void AttemptSlap() {
       // Enter Animation State to attempt a pounce.
       // Set Callback for HandleEndSlapAttempt
-      _AttemptedSlap = true;
+      Debug.Log("CubeSlap - Attempt Slap now");
       _CliffFlagTrown = false;
-      CurrentRobot.SendAnimation(AnimationName.kTapCube, HandleEndSlapAttempt); // TODO: Replace with new animation
+      CurrentRobot.SendAnimation(AnimationName.kPounceForward, HandleEndSlapAttempt);
     }
 
     private void HandleEndSlapAttempt(bool success) {
-      _AttemptedSlap = false;
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
+      Debug.Log("CubeSlap - Slap Ended");
       if (_CliffFlagTrown) {
         OnFailure();
         return;
@@ -104,36 +107,42 @@ namespace CubeSlap {
 
     private void HandleCliffEvent(Anki.Cozmo.CliffEvent cliff) {
       // Ignore if it throws this without a cliff actually detected
+      Debug.Log("CubeSlap - Handle Cliff Event");
       if (!cliff.detected) {
         return;
       }
-
-      if (_AttemptedSlap) {
-        _CliffFlagTrown = true;
-      }
-      else {
-        // Someone is tampering with Cozmo, DISQUALIFIED!!!
-        OnFailure();
-      }
+      Debug.Log("CubeSlap - Handle Cliff Event - Cliff Detected");
+      _CliffFlagTrown = true;
     }
 
     public void OnSuccess() {
       _SuccessCount++;
+      Debug.Log("CubeSlap - Player Wins");
       Progress = _SuccessCount / _SuccessGoal;
-      if (_SuccessCount >= _SuccessGoal) {
-        RaiseMiniGameWin();
-      }
-      else {
-        _StateMachine.SetNextState(new SeekState());
-      }
+      AnimationState animState = new AnimationState();
+      animState.Initialize("VeryIrritated", HandleAnimationDone);
+      _StateMachine.SetNextState(animState);
     }
 
     public void OnFailure() {
-      if (TryDecrementAttempts()) {
-        _StateMachine.SetNextState(new SeekState());
+      Debug.Log("CubeSlap - Cozmo Wins");
+      TryDecrementAttempts();
+      AnimationState animState = new AnimationState();
+      animState.Initialize(AnimationName.kMajorWin, HandleAnimationDone);
+      _StateMachine.SetNextState(animState);
+    }
+
+    public void HandleAnimationDone(bool success) {
+      // Determines winner and loser at the end of Cozmo's animation, or returns
+      // to seek state for the next round
+      if (_SuccessCount >= _SuccessGoal) {
+        RaiseMiniGameWin();
+      }
+      else if (AttemptsLeft <= 0) {
+        RaiseMiniGameLose();
       }
       else {
-        RaiseMiniGameLose();
+        _StateMachine.SetNextState(new SeekState());
       }
     }
 

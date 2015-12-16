@@ -12,8 +12,8 @@ namespace CubeSlap {
     public override void Enter() {
       base.Enter();
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
-      _CurrentRobot.SetHeadAngle(0.0f);
-      _CurrentRobot.SetLiftHeight(1.0f);
+      _CurrentRobot.SetHeadAngle(-1.0f);
+      _CurrentRobot.SetLiftHeight(0.7f);
     }
 
     // Target cube is marked as Red if not in the right position, and green if in the right position.
@@ -26,7 +26,7 @@ namespace CubeSlap {
         // If Cube is in the right position, enter game state.
         if (target.MarkersVisible) {
           float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-          if (distance < 60.0f) {
+          if (distance < 80.0f) {
             isBad = false;
             target.SetLEDs(Color.green);
             if (_FirstSeenTimestamp == -1) {
