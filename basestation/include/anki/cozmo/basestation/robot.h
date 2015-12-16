@@ -634,7 +634,11 @@ public:
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
     bool HasExternalInterface() const { return _externalInterface != nullptr; }
     IExternalInterface* GetExternalInterface() {
-      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface; }
+      ASSERT_NAMED(_externalInterface != nullptr, "Robot.ExternalInterface.nullptr"); return _externalInterface;
+    }
+    RobotInterface::MessageHandler* GetRobotMessageHandler() {
+      ASSERT_NAMED(_msgHandler != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _msgHandler;
+    }
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   

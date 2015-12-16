@@ -39,6 +39,17 @@ message AnimationState
   uint_8 tag,
 }
 
+// These two messages bookend animations as they are played on the robot
+message AnimationStarted
+{
+  uint_8 tag
+}
+
+message AnimationEnded
+{
+  uint_8 tag
+}
+
 message CameraCalibration
 {
   float_32 focalLength_x,
@@ -100,6 +111,8 @@ union RobotToEngine {
   CameraCalibration          cameraCalibration      = 0x83,
   RobotAvailable             robotAvailable         = 0x84,
   FlashWriteAcknowledge      flashWriteAck          = 0x85,
+  AnimationStarted           animStarted            = 0x86,
+  AnimationEnded             animEnded              = 0x87,
 }
 
 

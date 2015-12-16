@@ -21,9 +21,13 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/random/randomGenerator.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngineTag.h"
+
 #include <iomanip>
 
 namespace Anki {
@@ -3366,7 +3370,30 @@ namespace Anki {
     ActionResult PlayAnimationAction::Init(Robot& robot)
     {
       _startedPlaying = false;
+      _stoppedPlaying = false;
       _animTag = robot.PlayAnimation(_animName, _numLoops);
+      
+      using namespace RobotInterface;
+      auto startLambda = [this](const AnkiEvent<RobotToEngine>& event)
+      {
+        if(this->_animTag == event.GetData().Get_animStarted().tag) {
+          PRINT_NAMED_INFO("PlayAnimation.StartAnimationHandler", "Animation tag %d started", this->_animTag);
+          _startedPlaying = true;
+        }
+      };
+      
+      auto endLambda = [this](const AnkiEvent<RobotToEngine>& event)
+      {
+        if(_startedPlaying && this->_animTag == event.GetData().Get_animEnded().tag) {
+          PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler", "Animation tag %d ended", this->_animTag);
+          _stoppedPlaying = true;
+        }
+      };
+      
+      _startSignalHandle = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animStarted, startLambda);
+
+      _endSignalHandle   = robot.GetRobotMessageHandler()->Subscribe(robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
+      
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
       } else {
@@ -3376,30 +3403,10 @@ namespace Anki {
     
     ActionResult PlayAnimationAction::CheckIfDone(Robot& robot)
     {
-      // Wait for the current animation tag to match the one corresponding to
-      // this action, so we know the robot has actually started playing _this_
-      // animation.
-      if(!_startedPlaying)
-      {
-        if(robot.GetCurrentAnimationTag() == _animTag) {
-          _startedPlaying = true;
-        } else {
-          PRINT_NAMED_INFO("PlayAnimationAction.CheckIfDone.WaitForStart",
-                           "Waiting for robot to actually start animating '%s' with tag=%d (current=%d).",
-                           _animName.c_str(), _animTag, robot.GetCurrentAnimationTag());
-          return ActionResult::RUNNING;
-        }
-      }
-      
-      // If we've made it this far, we must have started the expected animation,
-      // so just wait for the current animation tag to change to know when it is
-      // done playing on the robot.
-      assert(_startedPlaying);
-      if(robot.GetCurrentAnimationTag() == _animTag)
-      {
-        return ActionResult::RUNNING;
-      } else {
+      if(_stoppedPlaying) {
         return ActionResult::SUCCESS;
+      } else {
+        return ActionResult::RUNNING;
       }
     }
     
@@ -3416,20 +3423,69 @@ namespace Anki {
       completionInfo.animName = _animName;
     }
     
-#pragma mark ---- PlaySoundAction ----
-    
-    PlaySoundAction::PlaySoundAction(const std::string& soundName)
-    : _soundName(soundName)
-    , _name("PlaySound" + soundName + "Action")
-    {
-      
-    }
 
-    ActionResult PlaySoundAction::CheckIfDone(Robot& robot)
+#pragma mark ---- DeviceAudioAction ----
+    
+    DeviceAudioAction::DeviceAudioAction(const Audio::EventType event,
+                                         const Audio::GameObjectType gameObj,
+                                         const bool waitUntilDone)
+    : _actionType( AudioActionType::Event )
+    , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
+    , _event( event )
+    , _gameObj( gameObj )
+    { }
+    
+    // Stop All Events on Game Object, pass in Invalid to stop all audio
+    DeviceAudioAction::DeviceAudioAction(const Audio::GameObjectType gameObj)
+    : _actionType( AudioActionType::StopEvents )
+    , _name( "StopAudioEvents_GameObj_" + std::string(EnumToString(gameObj)) )
+    , _gameObj( gameObj )
+    { }
+    
+    // Change Music state
+    DeviceAudioAction::DeviceAudioAction(const Audio::MusicGroupStates state)
+    : _actionType( AudioActionType::SetState )
+    , _name( "PlayAudioMusicState_" + std::string(EnumToString(state)) )
+    , _stateGroup( Audio::GameStateGroupType::Music )
+    , _state( static_cast<Audio::GameStateType>(state) )
+    { }
+    
+    ActionResult DeviceAudioAction::Init(Robot& robot)
     {
-      // TODO: Implement!
-      return ActionResult::FAILURE_ABORT;
+      switch ( _actionType ) {
+        case AudioActionType::Event:
+          robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
+          break;
+          
+        case AudioActionType::StopEvents:
+          robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
+          break;
+          
+        case AudioActionType::SetState:
+        {
+          // FIXME: This is temp until we add boot process which will start music at launch
+          if (Audio::GameStateGroupType::Music == _stateGroup) {
+            static bool didStartMusic = false;
+            if (!didStartMusic) {
+              robot.GetRobotAudioClient()->PostEvent( Audio::EventType::PLAY_MUSIC, Audio::GameObjectType::Default );
+              didStartMusic = true;
+            }
+          }
+          
+          robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
+        }
+          break;
+      }
+      
+      _didInit = true;
+      return ActionResult::SUCCESS;
     }
+    
+    ActionResult DeviceAudioAction::CheckIfDone(Robot& robot)
+    {
+      return _didInit ? ActionResult::SUCCESS : ActionResult::RUNNING;
+    }
+    
     
 #pragma mark ---- WaitAction ----
     
