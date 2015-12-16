@@ -21,7 +21,7 @@ namespace SpeedTap {
 
     public override void Enter() {
       base.Enter();
-      GameAudioClient.SetMusicState(MusicGroupStates.PLAYFUL);
+      GameAudioClient.SetMusicState(MusicGroupStates.CUBE_INTERACTIONFIRST);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
