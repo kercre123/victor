@@ -173,6 +173,11 @@ namespace Anki {
       _lastFace = msg;
     }
 
+    void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
+    {
+      printf("HandleDebugString: %s", msg.text.c_str());
+    }
+    
     // ============== End of message handlers =================
     
     
