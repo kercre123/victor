@@ -7,7 +7,7 @@
 #include "nrf_gpio.h"
 
 #include "radio.h"
-
+#include "rtos.h"
 #include "hardware.h"
 
 #include "anki/cozmo/robot/spineData.h"
@@ -66,6 +66,8 @@ void Head::init()
   // We begin in receive mode (slave)
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
+
+  RTOS::schedule(Head::manage);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -116,7 +118,7 @@ inline void transmitByte() {
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
 }
 
-void Head::manage(void) {
+void Head::manage(void* userdata) {
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   txRxIndex = 0;
 
