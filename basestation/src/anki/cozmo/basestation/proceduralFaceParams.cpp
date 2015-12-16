@@ -213,7 +213,7 @@ ProceduralFaceParams& ProceduralFaceParams::Combine(const ProceduralFaceParams& 
 ProceduralFaceParams::Value ProceduralFaceParams::Clip(WhichEye eye, Parameter param, Value newValue) const
 {
 # define POS_INF std::numeric_limits<Value>::max()
-# define NEG_INF std::numeric_limits<Value>::min()
+# define NEG_INF std::numeric_limits<Value>::lowest()
   
   static const std::map<Parameter, std::pair<Value,Value>> LimitsLUT = {
     {Parameter::LowerLidAngle,      {-45,   45}},

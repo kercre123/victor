@@ -136,7 +136,7 @@ T Polygon<N,T>::GetMinX(void) const
 template <PolygonDimType N, typename T>
 T Polygon<N,T>::GetMaxX(void) const
 {
-  T maxX = std::numeric_limits<T>::min();
+  T maxX = std::numeric_limits<T>::lowest();
   for(const auto& it : _points) {
     if( it.x() > maxX) {
       maxX = it.x();
@@ -162,7 +162,7 @@ T Polygon<N,T>::GetMinY(void) const
 template <PolygonDimType N, typename T>
 T Polygon<N,T>::GetMaxY(void) const
 {
-  T maxX = std::numeric_limits<T>::min();
+  T maxX = std::numeric_limits<T>::lowest();
   for(const auto& it : _points) {
     if( it.y() > maxX) {
       maxX = it.y();
