@@ -39,6 +39,7 @@ namespace Anki
       {
         buflen = 0;
         TransmitDrop(buf, buflen, eof);
+        IMU::Manage();
         I2C::Enable();
         UartTransmit();
       }

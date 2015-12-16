@@ -133,7 +133,7 @@ void Anki::Cozmo::HAL::I2C::WriteAndVerify(uint8_t slave, uint8_t addr, uint8_t 
   WriteReg(slave, addr, data);
   resp = ReadReg(slave, addr);
   
-  while (resp != data) ;
+  //while (resp != data) ;
 }
 
 // This should only be used during 
