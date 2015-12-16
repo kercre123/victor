@@ -45,10 +45,7 @@ public class CozmoFace : MonoBehaviour {
 #if UNITY_EDITOR
     fileName = Application.dataPath + string.Format("/../../../lib/anki/products-cozmo-assets/animations/{0}.json", name);
 #elif UNITY_IOS
-
-    Debug.Log("Folders in dataPath "+ string.Join(", ", System.IO.Directory.GetDirectories(Application.dataPath)));
-
-    fileName = Application.dataPath + string.Format("/cozmo_assets/assets/animations/{0}.json", name);
+    fileName = Application.dataPath + string.Format("/../cozmo_resources/assets/animations/{0}.json", name);
 #endif
     try {
       var jsonText = System.IO.File.ReadAllText(fileName);
@@ -98,7 +95,6 @@ public class CozmoFace : MonoBehaviour {
 
   public static void PlayAnimation(string name, bool relative = false, System.Action callback = null) {
     List<KeyFrame> anim;
-    Debug.Log("Playing Animation "+name);
     if (!_Animations.TryGetValue(name, out anim)) {
       anim = LoadAnimation(name);
       _Animations[name] = anim;
