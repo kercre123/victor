@@ -4,7 +4,13 @@ using System.Collections;
 namespace CubeSlap {
   
   public class CubeSlapGame : GameBase {
-    
+
+    public const string kSetUp = "SetUp";
+    public const string kWaitForPounce = "WaitForPounce";
+    public const string kCozmoWinEarly = "CozmoWinEarly";
+    public const string kCozmoWinPounce = "CozmoWinPounce";
+    public const string kPlayerWin = "PlayerWin";
+
     private float _MinSlapDelay;
     private float _MaxSlapDelay;
     private int _SuccessGoal;
@@ -95,12 +101,14 @@ namespace CubeSlap {
       // Cozmo has won.
       Debug.Log("CubeSlap - Slap Ended");
       if (_CliffFlagTrown) {
+        ShowHowToPlaySlide(kCozmoWinPounce);
         OnFailure();
         return;
       }
       else {
         // If the animation completes Cozmo is not on top of the Cube,
         // The player has won this round
+        ShowHowToPlaySlide(kPlayerWin);
         OnSuccess();
       }
     }
@@ -149,6 +157,6 @@ namespace CubeSlap {
     public float GetSlapDelay() {
       return Random.Range(_MinSlapDelay,_MaxSlapDelay);
     }
-
+ 
   }
 }
