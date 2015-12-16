@@ -24,7 +24,6 @@ from emitters import CPP_emitter
 class UnionSwitchEmitter(ast.NodeVisitor):
     "An emitter that generates the handler switch statement."
     
-    CPPLite = False
     groupSwitchPrefix = None
     groupedSwitchMembers = []
     
@@ -47,7 +46,7 @@ class UnionSwitchEmitter(ast.NodeVisitor):
         default:
         \tProcessBadTag_{union_name}(msg.{tagAccessor});
         \tbreak;
-        ''').format(tagAccessor = 'tag' if self.CPPLite else 'GetTag()', **globals))
+        ''').format(tagAccessor = 'tag', **globals))
 
     
     def writeFooter(self, node, globals):
@@ -61,26 +60,18 @@ class UnionSwitchEmitter(ast.NodeVisitor):
         for member in node.members():
             if self.groupSwitchPrefix is not None and member.name.startswith(self.groupSwitchPrefix):
                 self.groupedSwitchMembers.append(member)
-            elif self.CPPLite:
+            else:
                 self.output.write(textwrap.dedent('''\
                     case {member_tag}:
                     \tProcess_{member_name}(msg.{member_name});
                     \tbreak;
                     ''').format(member_tag=member.tag, member_name=member.name, **globals))
-            else:
-                self.output.write(textwrap.dedent('''\
-                    case {qualified_union_name}::Tag::{member_name}:
-                    \tProcess_{member_name}(msg.Get_{member_name}());
-                    \tbreak;
-                    ''').format(member_name=member.name, **globals))
 
 if __name__ == '__main__':
     from clad import emitterutil
     from emitters import CPP_emitter
     
-    if 'CPPLite' in sys.argv[0]: # These should be arguments
-        UnionSwitchEmitter.CPPLite = True
-        UnionSwitchEmitter.groupSwitchPrefix = "anim"
+    UnionSwitchEmitter.groupSwitchPrefix = "anim"
     
     emitterutil.c_main(language='C++', extension='_switch.def',
         emitter_types=[UnionSwitchEmitter],

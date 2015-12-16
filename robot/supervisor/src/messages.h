@@ -16,38 +16,46 @@
  *              of specific message definitions -- those are defined in
  *              MessageDefinitions.h.
  *
- * Copyright: Anki, Inc. 2013
+ * Major overhaul to use CLAD generated messages and function definitions and to split between the Espressif and K02
+ * Author: Daniel Casner
+ * 10/22/2015
+ *
+ * Copyright: Anki, Inc. 2015
  **/
 
 #ifndef COZMO_MESSAGE_ROBOT_H
 #define COZMO_MESSAGE_ROBOT_H
 
 #include "anki/types.h"
+#include <stdarg.h>
+#ifdef SIMULATOR
 #include "anki/common/robot/array2d_declarations.h"
-
+#endif
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
-
+#ifndef TARGET_ESPRESSIF
       // Return a const reference to the current robot state message
       RobotState const& GetRobotStateMsg();
 
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).
       #include "clad/robotInterface/messageEngineToRobot_declarations.def"
-    
-      void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
-    
-      Result Init();
 
+      void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
+#endif
+      Result Init();
+#ifdef TARGET_ESPRESSIF
+      extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
+#else
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
-      
+
       void Process_anim(const RobotInterface::EngineToRobot& msg);
 
       // Start looking for a particular message ID
@@ -62,12 +70,15 @@ namespace Anki {
       // Sends robot state message, either the one passed in or the one
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
-
+#endif
       // For sending text message to basestation
       int SendText(const char *format, ...);
 
       // va_list version
       int SendText(const char *format, va_list vaList);
+      
+      // va_list version with level
+      int SendText(const RobotInterface::LogLevel level, const char *format, va_list vaList);
 
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();

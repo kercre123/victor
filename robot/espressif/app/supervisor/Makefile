@@ -15,7 +15,7 @@ ifndef PDIR
 GEN_LIBS = libsupervisor.a
 endif
 
-ESP_SRC_DIR=../../../supervisor/esp_src
+ESP_SRC_DIR:=../../../supervisor/src
 
 #############################################################
 # Configuration i.e. compile options etc.
@@ -26,7 +26,7 @@ ESP_SRC_DIR=../../../supervisor/esp_src
 #
 #DEFINES +=
 
-CXXSRCS := $(shell find $(ESP_SRC_DIR) -type f -iname '*.cpp')
+CXXSRCS:=$(ESP_SRC_DIR)/animationController.cpp
 
 
 define MakeLibrary

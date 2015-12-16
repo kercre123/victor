@@ -53,7 +53,7 @@ class AnimationStreamer:
 class ToneStreamer(AnimationStreamer):
     "Sends a constant tone to the robot"
 
-    CHUNK_SIZE = Anki.Cozmo.AnimConstants.AUDIO_SAMPLE_SIZE_EP1
+    CHUNK_SIZE = Anki.Cozmo.AnimConstants.AUDIO_SAMPLE_SIZE
 
     def getMore(self, available):
         "Sends tone data"
@@ -73,8 +73,8 @@ class ToneStreamer(AnimationStreamer):
                     self.sendSamples(samples)
                 
     def sendSamples(self, samples):
-        audioSamples = Anki.Cozmo.AnimKeyFrame.AudioSampleEP1(samples)
-        self.send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSampleEP1=audioSamples))
+        audioSamples = Anki.Cozmo.AnimKeyFrame.AudioSample(samples)
+        self.send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSample=audioSamples))
 
     def __init__(self):
         self.tonerator = None
