@@ -112,7 +112,7 @@ namespace Anki {
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of
       // the completion info of their constituent actions.
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const;
 
       // Enable/disable message display (Default is true)
       void EnableMessageDisplay(bool tf) { _displayMessages = tf; }
@@ -140,7 +140,7 @@ namespace Anki {
       
       // This is called when the action stops running, as long as it is not
       // marked as being part of a compound action. This calls the overload-able
-      // GetCompletionStruct() method above.
+      // GetCompletionUnion() method above.
       void EmitCompletionSignal(Robot& robot, ActionResult result) const;
 
       u8            _numRetriesRemaining = 0;

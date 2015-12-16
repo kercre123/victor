@@ -217,7 +217,7 @@ message RobotCompletedAction {
     uint_32 idTag,                        // The identifier of the specific action that completed
     RobotActionType  actionType,          // see enum in actionTypes.def
     ActionResult  result,                 //  "
-    ActionCompletedStruct completionInfo  //  "
+    ActionCompletedUnion completionInfo   //  "
 }
 
 // BlockPickedUp
