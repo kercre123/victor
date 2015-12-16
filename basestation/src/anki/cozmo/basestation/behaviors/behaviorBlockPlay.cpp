@@ -78,7 +78,6 @@ namespace Cozmo {
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
-      EngineToGameTag::BlockPlaced,
       EngineToGameTag::RobotObservedFace,
       EngineToGameTag::RobotDeletedFace
     }});
@@ -129,7 +128,7 @@ namespace Cozmo {
         SetCurrState(State::TrackingFace);
       }
     } else if (_objectToPickUp.IsSet()) {
-      SetCurrState(State::RollingBlock);
+      SetCurrState(State::InspectingBlock);
     } else {
       SetCurrState(State::TrackingFace);
     }
@@ -592,7 +591,6 @@ namespace Cozmo {
     {
       case EngineToGameTag::RobotCompletedAction:
       case EngineToGameTag::RobotDeletedObject:
-      case EngineToGameTag::BlockPlaced:
       case EngineToGameTag::RobotObservedFace:
       case EngineToGameTag::RobotDeletedFace:
         // Handled by AlwaysHandle() / HandleWhileRunning
@@ -780,11 +778,13 @@ namespace Cozmo {
         } else if( msg.result == ActionResult::FAILURE_RETRY ) {
           
           // We failed to pick up or place the last block, try again
-          PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
+          PlayAnimation(robot, "ID_rollBlock_fail_01");
 
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.RollFailure",
                                  "failed roll with FAILURE_RETRY,trying again");
+          // go back to inspecting so we know if we need to do a roll or a pickup
+          SetCurrState(State::InspectingBlock);
           _isActing = false;
 
         } else {
@@ -818,8 +818,8 @@ namespace Cozmo {
               
               PRINT_NAMED_ERROR("BehaviorBlockPlay.PickingUp.PICK_AND_PLACE_INCOMPLETE", "THIS ACTUALLY HAPPENS?");
               
-              // We failed to pick up or place the last block, try again
-              SetCurrState(State::PickingUpBlock);
+              // We failed to pick up or place the last block, try again, and check if we need to roll or not
+              SetCurrState(State::InspectingBlock);
               _isActing = false;
               break;
 
@@ -842,7 +842,8 @@ namespace Cozmo {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR,
                                  "BehaviorBlockPlay.HandleActionCompleted.PickupFailure",
                                  "failed pickup, trying again");
-          PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
+          PlayAnimation(robot, "ID_rollBlock_fail_01"); // TODO:(bn) different one?
+          SetCurrState(State::InspectingBlock);
           _isActing = false;
 
         } else {
@@ -991,16 +992,17 @@ namespace Cozmo {
       return RESULT_OK;
     }
 
-    const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+    // const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
 
-    // Get height of the object.
-    // Only track the block if it's above a certain height.
-    Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
+    // // Get height of the object.
+    // // Only track the block if it's above a certain height.
+    // Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
     
     // If this is observed while tracking face, then switch to tracking this object
-    if ((_currentState == State::TrackingFace) &&
-        (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
-        (diffVec.z() > oObject->GetSize().z()) ) {
+    if (_currentState == State::TrackingFace // &&
+        // // (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
+        // (diffVec.z() > oObject->GetSize().z())
+      ) {
       PRINT_NAMED_INFO("BehaviorBlockPlay.HandleObservedObjectWhileNotRunning.TrackingBlock",
                        "Now tracking object %d",
                        objectID.GetValue());
@@ -1032,12 +1034,13 @@ namespace Cozmo {
     
     // Get height of the object.
     // Only track the block if it's above a certain height.
-    Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
+    // Vec3f diffVec = ComputeVectorBetween(oObject->GetPose(), robot.GetPose());
 
     // If this is observed while tracking face, then switch to tracking this object
-    if ((_currentState == State::TrackingFace) &&
-        (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
-        (diffVec.z() > oObject->GetSize().z()) ) {
+    if (_currentState == State::TrackingFace // &&
+        // (robot.GetMoveComponent().GetTrackToFace() != Face::UnknownFace) &&
+        // (diffVec.z() > oObject->GetSize().z())
+      ) {
       PRINT_NAMED_INFO("BehaviorBlockPlay.HandleObservedObjectWhileRunning.TrackingBlock",
                        "Now tracking object %d",
                        objectID.GetValue());

@@ -19,7 +19,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-#define DEBUG_ANIMATION_LOCKING 1
+#define DEBUG_ANIMATION_LOCKING 0
 
 namespace Anki {
 namespace Cozmo {
