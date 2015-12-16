@@ -20,16 +20,17 @@ extern "C" {
 //#include "anki/common/robot/utilities_c.h"
 //#include "anki/common/shared/radians.h"
 //#include "anki/common/shared/velocityProfileGenerator.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "headController.h"
 #include "liftController.h"
 #include "localization.h"
 #include "wheelController.h"
 #include "steeringController.h"
 #include "speedController.h"
+static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp(); }
 #endif
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-#define DEBUG_ANIMATION_CONTROLLER 0
+#define DEBUG_ANIMATION_CONTROLLER 2
 
 namespace Anki {
 namespace Cozmo {
@@ -188,11 +189,7 @@ namespace AnimationController {
   Result SendAnimStateMessage()
   {
     RobotInterface::AnimationState msg;
-    #ifdef TARGET_ESPRESSIF
     msg.timestamp = system_get_time();
-    #else
-    msg.timestamp = HAL::GetTimeStamp();
-    #endif
     msg.numAnimBytesPlayed = GetTotalNumBytesPlayed();
     msg.numAudioFramesPlayed = GetTotalNumAudioFramesPlayed();
     msg.status = 0;
@@ -512,7 +509,7 @@ namespace AnimationController {
           {
 #           if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] hit EndOfAnimation\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
+                    _currentTime_ms, system_get_time());
 #           endif
             GetFromBuffer(&msg);
             terminatorFound = true;
@@ -530,9 +527,9 @@ namespace AnimationController {
               #else
                 SteeringController::ExecuteDirectDrive(0, 0);
               #endif
-              RobotInterface::AnimationEnded msg;
-              msg.tag = _currentTag;
-              RobotInterface::SendMessage(msg);
+              RobotInterface::AnimationEnded aem;
+              aem.tag = _currentTag;
+              RobotInterface::SendMessage(aem);
             }
 
             _tracksInUse = 0;
@@ -545,7 +542,7 @@ namespace AnimationController {
             if(_tracksToPlay & HEAD_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] requesting head angle of %ddeg over %.2fsec\n",
-                    _currentTime_ms, HAL::GetTimeStamp(),
+                    _currentTime_ms, system_get_time(),
                     msg.animHeadAngle.angle_deg, static_cast<f32>(msg.animHeadAngle.time_ms)*.001f);
 #               endif
               #ifdef TARGET_ESPRESSIF
@@ -565,7 +562,7 @@ namespace AnimationController {
             if(_tracksToPlay & LIFT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] requesting lift height of %dmm over %.2fsec\n",
-                    _currentTime_ms, HAL::GetTimeStamp(),
+                    _currentTime_ms, system_get_time(),
                     msg.animLiftHeight.height_mm, static_cast<f32>(msg.animLiftHeight.time_ms)*.001f);
 #               endif
 
@@ -587,11 +584,11 @@ namespace AnimationController {
             if(_tracksToPlay & BACKPACK_LIGHTS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] setting backpack LEDs.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
+                    _currentTime_ms, system_get_time());
 #               endif
 
               #ifdef TARGET_ESPRESSIF
-                RTIP::SendMessage(msg)
+                RTIP::SendMessage(msg);
               #else
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
                   HAL::SetLED(static_cast<LEDId>(iLED), msg.animBackpackLights.colors[iLED]);
@@ -609,11 +606,11 @@ namespace AnimationController {
             if(_tracksToPlay & FACE_IMAGE_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] setting face frame.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
+                    _currentTime_ms, system_get_time());
 #               endif
 
               #ifdef TARGET_ESPRESSIF
-                Face::Update(msg.animFaceImage)
+                Face::Update(msg.animFaceImage);
               #else
                 HAL::FaceAnimate(msg.animFaceImage.image);
               #endif
@@ -630,7 +627,7 @@ namespace AnimationController {
             if(_tracksToPlay & FACE_POS_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] setting face position to (%d,%d).\n",
-                    _currentTime_ms, HAL::GetTimeStamp(), msg.animFacePosition.xCen, msg.animFacePosition.yCen);
+                    _currentTime_ms, system_get_time(), msg.animFacePosition.xCen, msg.animFacePosition.yCen);
 #               endif
 
               #ifdef TARGET_ESPRESSIF
@@ -651,7 +648,7 @@ namespace AnimationController {
             if(_tracksToPlay & BLINK_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] Blinking.\n",
-                    _currentTime_ms, HAL::GetTimeStamp());
+                    _currentTime_ms, system_get_time());
 #               endif
 
               if(msg.animBlink.blinkNow) {
@@ -679,7 +676,7 @@ namespace AnimationController {
             if(_tracksToPlay & BODY_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
               PRINT("AnimationController[t=%dms(%d)] setting body motion to radius=%d, speed=%d\n",
-                    _currentTime_ms, HAL::GetTimeStamp(), msg.animBodyMotion.curvatureRadius_mm,
+                    _currentTime_ms, system_get_time(), msg.animBodyMotion.curvatureRadius_mm,
                     msg.animBodyMotion.speed);
 #               endif
 

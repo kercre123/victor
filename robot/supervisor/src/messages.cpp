@@ -627,12 +627,7 @@ namespace Anki {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
-          RobotInterface::AnimationState am;
-          am.timestamp = m->timestamp;
-          am.numAnimBytesPlayed = AnimationController::GetTotalNumBytesPlayed();
-          am.numAudioFramesPlayed = AnimationController::GetTotalNumAudioFramesPlayed();
-          am.tag = AnimationController::GetCurrentTag();
-          RobotInterface::SendMessage(am, false, false);
+          AnimationController::SendAnimStateMessage();
           return RESULT_OK;
         } else {
           return RESULT_FAIL;
