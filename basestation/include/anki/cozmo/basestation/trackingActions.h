@@ -51,7 +51,9 @@ public:
   // Set to 0 to disable timeout (default).
   void SetUpdateTimeout(double timeout_sec) { _updateTimeout_sec = timeout_sec; }
   
+  // Tracking will lock animation and movement for head and/or body, depending on Mode.
   virtual u8 GetAnimTracksToDisable() const override;
+  virtual u8 GetMovementTracksToIgnore() const override;
   
   // Tracking is meant to be ongoing, so "never" timeout
   virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }

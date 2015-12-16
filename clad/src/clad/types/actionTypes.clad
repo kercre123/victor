@@ -69,8 +69,9 @@ structure ActionCompletedStruct {
 }
 
 enum uint_8 QueueActionPosition {
-    NOW = 0, // Queue now, but leave rest of queue intact
+    NOW = 0,                 // Queue now, cancel current, but leave rest of queue intact
     NOW_AND_CLEAR_REMAINING, // Queue now and clear rest of queue
+    NOW_AND_RESUME,          // Queue now, reset current and return to it once new action completes
     NEXT,
     AT_END
 }

@@ -45,6 +45,11 @@ u8 ITrackAction::GetAnimTracksToDisable() const
   }
 }
   
+u8 ITrackAction::GetMovementTracksToIgnore() const
+{
+  return GetAnimTracksToDisable();
+}
+  
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)
 {
   _panTolerance = panThreshold.getAbsoluteVal();

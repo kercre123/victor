@@ -233,11 +233,30 @@ namespace Anki {
         return QueueAtEnd(action, numRetries);
         
       } else {
-        
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
         _queue.front()->Cancel();
         return QueueNext(action, numRetries);
+      }
+    }
+    
+    Result ActionQueue::QueueAtFront(IActionRunner* action, u8 numRetries)
+    {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueAFront.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
+      if(_queue.empty()) {
+        // Nothing in the queue, so this is the same as QueueAtEnd
+        return QueueAtEnd(action, numRetries);
+      } else {
+        // Reset whatever is running and put this new action in front of it
+        _queue.front()->Reset();
+        action->SetNumRetries(numRetries);
+        _queue.push_front(action);
+        return RESULT_OK;
       }
     }
     
