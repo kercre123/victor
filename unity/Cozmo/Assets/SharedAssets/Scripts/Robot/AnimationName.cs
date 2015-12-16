@@ -22,8 +22,9 @@ public static class AnimationName {
   public const string kGetOffCharger = "invDemo_P02_GetOffCharger";
   public const string kCatchForward = "invDemo_P05_CatchFwd";
 
-  public const string kSleeping = "ID_wake_sleeping";
-  public const string kOpenEyes = "ID_wake_openEyes";
+  public const string kHeadDown = "ID_headDown";
+  public const string kSleeping = "ID_sleeping_02";
+  public const string kOpenEyes = "ID_WakeUp";
   public const string kSurprise = "ID_reactTppl_Surprise";
   public const string kThrustFwd = "ID_offCharger_thrustFwd";
   public const string kccGotcha = "ID_catCatch_gotcha";
