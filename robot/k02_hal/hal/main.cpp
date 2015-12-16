@@ -41,7 +41,6 @@ namespace Anki
         TransmitDrop(buf, buflen, eof);
         I2C::Enable();
         UartTransmit();
-        IMU::Manage();
       }
     }
   }
@@ -89,13 +88,13 @@ int main (void)
   I2C::Init();
   IMU::Init();
   OLED::Init();
+  UartInit();
 
   CameraInit();
-  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UART RX FIFO WILL LOCK
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
-  StartupSelfTest();
+  //StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur

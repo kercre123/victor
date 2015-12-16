@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 enum TRANSFER_MODE {
+  TRANSMIT_UNINITALIZED,
   TRANSMIT_RECEIVE,
   TRANSMIT_SEND,
   TRANSMIT_RECOVERY
@@ -63,9 +64,7 @@ void Anki::Cozmo::HAL::UartInit() {
 
   g_dataToBody.source = (uint32_t)SPI_SOURCE_HEAD;
 
-  //MicroWait(1000);
-
-  transmit_mode(TRANSMIT_RECEIVE);
+  uart_mode = TRANSMIT_UNINITALIZED;
 }
 
 inline void transmit_mode(TRANSFER_MODE mode) { 
@@ -97,17 +96,12 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       PORTD_PCR7 = PORT_PCR_MUX(0);
       UART0_C2 = UART_C2_RE_MASK;
       break ;
+    default:
+      break ;
   }
-  
+
   uart_mode = mode;
   txRxIndex = 0;
-}
-
-static inline void HUPFifo(void) {
-  UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
-  UART0->PFIFO &= ~UART_PFIFO_RXFE_MASK;
-  uint8_t c = UART0->D;
-  UART0->PFIFO |= UART_PFIFO_RXFE_MASK;
 }
 
 void Anki::Cozmo::HAL::EnterBodyRecovery(void) {
@@ -162,12 +156,10 @@ void Anki::Cozmo::HAL::WaitForSync() {
 }
 
 void Anki::Cozmo::HAL::UartTransmit(void) { 
-  // Attempt to clear out buffer overruns
-  if (UART0_S1 & UART_S1_OR_MASK) {
-    HUPFifo();
-  }
-
   switch (uart_mode) {
+    case TRANSMIT_UNINITALIZED:
+      transmit_mode(TRANSMIT_RECEIVE);
+      break ;
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
         txRxBuffer[txRxIndex] = UART0_D;
