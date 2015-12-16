@@ -18,6 +18,8 @@ namespace StackTraining {
       _Game = _StateMachine.GetGame() as StackTrainingGame;
       _Game.PickCubes();
       _Game.ShowHowToPlaySlide("MakeStack");
+      _CurrentRobot.SetLiftHeight(0.0f);
+      _CurrentRobot.SetHeadAngle(-0.2f);
     }
 
     public override void Update() {
