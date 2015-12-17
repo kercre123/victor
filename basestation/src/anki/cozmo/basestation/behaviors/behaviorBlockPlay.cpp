@@ -79,7 +79,8 @@ namespace Cozmo {
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::RobotObservedFace,
-      EngineToGameTag::RobotDeletedFace
+      EngineToGameTag::RobotDeletedFace,
+      EngineToGameTag::ObjectMoved
     }});
 
 
@@ -145,6 +146,12 @@ namespace Cozmo {
     
     if(_interrupted) {
       return Status::Complete;
+    }
+
+    for( auto it = _objectsToTurnOffLights.begin();
+         it != _objectsToTurnOffLights.end();
+         it = _objectsToTurnOffLights.erase(it) ) {
+      SetBlockLightState(robot, *it, BlockLightState::None);
     }
 
     // hack to track object motion
@@ -507,14 +514,6 @@ namespace Cozmo {
         break;
       }
       
-      case State::Complete:
-      {
-        // TODO:(bn) fade lights out??
-        SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::None);
-        SetBlockLightState(robot, _objectToPickUp, BlockLightState::None);
-        return Status::Complete;
-      }
-      
       default:
         PRINT_NAMED_ERROR("BehaviorBlockPlay.Update.UnknownState",
                           "Reached unknown state %d.", _currentState);
@@ -569,6 +568,10 @@ namespace Cozmo {
       case EngineToGameTag::RobotDeletedFace:
         _lastHandlerResult = HandleDeletedFace(event.GetData().Get_RobotDeletedFace());
         break;
+
+      case EngineToGameTag::ObjectMoved:
+        _lastHandlerResult = HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
+        break;
         
       default:
         PRINT_NAMED_ERROR("BehaviorBlockPlay.AlwaysHandle.InvalidTag",
@@ -577,6 +580,7 @@ namespace Cozmo {
         break;
     }
   }
+
   
   void BehaviorBlockPlay::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
   {
@@ -585,6 +589,7 @@ namespace Cozmo {
       case EngineToGameTag::RobotDeletedObject:
       case EngineToGameTag::RobotObservedFace:
       case EngineToGameTag::RobotDeletedFace:
+      case EngineToGameTag::ObjectMoved:
         // Handled by AlwaysHandle()
         break;
         
@@ -616,6 +621,7 @@ namespace Cozmo {
       case EngineToGameTag::RobotDeletedObject:
       case EngineToGameTag::RobotObservedFace:
       case EngineToGameTag::RobotDeletedFace:
+      case EngineToGameTag::ObjectMoved:
         // Handled by AlwaysHandle() / HandleWhileRunning
         break;
 
@@ -665,9 +671,6 @@ namespace Cozmo {
         break;
       case State::SearchingForMissingBlock:
         SetStateName("SEARCHING");
-        break;
-      case State::Complete:
-        SetStateName("COMPLETE");
         break;
       default:
         PRINT_NAMED_WARNING("BehaviorBlockPlay.SetCurrState.InvalidState", "");
@@ -755,7 +758,6 @@ namespace Cozmo {
       case State::TrackingFace:
       case State::TrackingBlock:
       case State::InspectingBlock:
-      case State::Complete:
         _isActing = false;
         break;
       case State::RollingBlock:
@@ -893,9 +895,17 @@ namespace Cozmo {
               
               SetBlockLightState(robot, _objectToPlaceOn, BlockLightState::Complete);
               SetBlockLightState(robot, _objectToPickUp, BlockLightState::Complete);
+
+              IgnoreObject(robot, _objectToPlaceOn);
+              _objectToPlaceOn.UnSet();
+              
+              IgnoreObject(robot, _objectToPickUp);
+              _objectToPickUp.UnSet();
+
+              _trackedObject.UnSet();
               
               PlayAnimation(robot, "ID_reactTo2ndBlock_success");
-              SetCurrState(State::Complete);
+              SetCurrState(State::TrackingFace);
               _isActing = false;
               break;
               
@@ -966,6 +976,21 @@ namespace Cozmo {
     return lastResult;
   } // HandleActionCompleted()
 
+  void BehaviorBlockPlay::IgnoreObject(Robot& robot, ObjectID objectID)
+  {
+    const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
+    if (nullptr != oObject) {
+      if( oObject->IsActive() && oObject->GetIdentityState() == ActiveIdentityState::Identified ) {
+        // TEMP: I actually need to know if I'm "connected" to this object. This could create big problems
+        // otherwise, because we'll never get a "moved" message. Potential work-around: keep track of which
+        // objects we *ever* got a moved message from, and don't add them here
+        _objectsToIgnore.insert(objectID);
+        PRINT_NAMED_INFO("BehaviorBlockPlay.IgnoreObject", "ignoring block %d",
+                         objectID.GetValue());
+      }
+    }
+  }
+
   bool BehaviorBlockPlay::HandleObservedObjectHelper(const Robot& robot,
                                                      const ExternalInterface::RobotObservedObject& msg,
                                                      double currentTime_sec)
@@ -992,6 +1017,10 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("BehaviorBlockPlay.HandleObservedObject.UnidentifiedActiveObject",
                           "How'd this happen? (ObjectID %d, idState=%s)",
                           objectID.GetValue(), EnumToString(oObject->GetIdentityState()));
+      return false;
+    }
+
+    if( _objectsToIgnore.find(objectID) != _objectsToIgnore.end() ) {
       return false;
     }
     
@@ -1289,7 +1318,24 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
-  
+
+  Result BehaviorBlockPlay::HandleObjectMoved(const Robot& robot, const ObjectMoved &msg)
+  {
+    ObjectID objectID;
+    objectID = msg.objectID;
+
+    auto it = _objectsToIgnore.find(objectID);
+    if( it != _objectsToIgnore.end() ) {
+      PRINT_NAMED_INFO("BehaviorBlockPlay.IgnoreObject", "re-considering object %d because it moved",
+                       objectID.GetValue());
+      _objectsToIgnore.erase(it);
+
+      // flag this so we turn off lights as soon as we can
+      _objectsToTurnOffLights.push_back(objectID);
+    }
+
+    return RESULT_OK;
+  }  
 
   void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action)
   {
