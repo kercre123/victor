@@ -69,7 +69,6 @@ namespace Cozmo {
       PickingUpBlock,
       PlacingBlock,
       SearchingForMissingBlock, // this is only entered if a block "disappears" on us
-      Complete,
     };
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec, bool isResuming) override;
@@ -107,9 +106,15 @@ namespace Cozmo {
                                     double currentTime_sec);
     
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
-    Result HandleObservedFace(const Robot& robot, const ExternalInterface::RobotObservedFace& msg, double currentTime_sec);
+    Result HandleObservedFace(const Robot& robot,
+                              const ExternalInterface::RobotObservedFace& msg,
+                              double currentTime_sec);
     Result HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg);
-    Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg, double currentTime_sec);
+    Result HandleActionCompleted(Robot& robot,
+                                 const ExternalInterface::RobotCompletedAction& msg,
+                                 double currentTime_sec);
+    Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
+
 
     void TrackBlockWithLift(Robot& robot, const Pose3d& objectPose);
     
@@ -156,9 +161,15 @@ namespace Cozmo {
     bool   _hasValidLastKnownFacePose;
     double _noFacesStartTime = -1.0;
     
-
+    float _oldHeadAngle_rads = 0.0f;
+    
     // The block that currently has Cozmo's attention
     ObjectID _trackedObject;
+
+    // blocks that should be ignored (which happens at the end of the demo)
+    std::set<ObjectID> _objectsToIgnore;
+
+    std::vector<ObjectID> _objectsToTurnOffLights;
 
     // used for moving the lift to track (grab at) the cube
     const f32 _maxObjectDistToMoveLift = 145.0f;
@@ -168,12 +179,15 @@ namespace Cozmo {
     const f32 _speedToDriveForwardWhileTracking = 90.0f;
     const f32 _highLiftHeight = 70.0f;
     const f32 _minHeadAngleforLiftUp_rads = DEG_TO_RAD(20.0f);
+    const f32 _lostBlockTimeToLookDown = 2.5f;
     u32 _driveForwardActionTag = 0;
     bool _isDrivingForward = false;
 
     bool _lockedLift = false;
     void LiftShouldBeLocked(Robot& robot);
     void LiftShouldBeUnlocked(Robot& robot);
+
+    void IgnoreObject(Robot& robot, ObjectID objectID);
 
 
     // The last time we saw _trackedObject
