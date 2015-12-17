@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 public class StateMachine {
+
+  private List<State> _StateStack = new List<State>();
 
   private State _CurrState = null;
   private State _NextState = null;
@@ -10,6 +12,10 @@ public class StateMachine {
 
   public GameBase GetGame() {
     return _Game;
+  }
+
+  public State GetParentState() {
+    return _StateStack.Count > 0 ? _StateStack[_StateStack.Count - 1] : null;
   }
 
   // This is useful for if you want a reference back to the MonoBehaviour that created
@@ -21,7 +27,28 @@ public class StateMachine {
 
   public void SetNextState(State nextState) {
     _NextState = nextState;
+    if (_NextState != null) {
+      _NextState.SetStateMachine(this);
+    }
+  }
+
+  public void PushSubState(State subState) {
+    _StateStack.Add(_CurrState);
+    _NextState = subState;
     _NextState.SetStateMachine(this);
+    _CurrState = null;
+  }
+    
+  public void PopState() {
+    var oldState = _CurrState;
+
+    _CurrState = _StateStack[_StateStack.Count - 1];
+    _StateStack.RemoveAt(_StateStack.Count - 1);
+    _NextState = null;
+
+    if (oldState != null) {      
+      oldState.Exit();
+    }
   }
 
   public void UpdateStateMachine() {
@@ -29,14 +56,25 @@ public class StateMachine {
       if (_CurrState != null) {
         _CurrState.Exit();
       }
-      _NextState.Enter();
       _CurrState = _NextState;
       _NextState = null;
+      // its possible the call to CurrState.Exit
+      // above could change the value of NextState to null
+      if (_CurrState != null) {
+        _CurrState.Enter();
+      }
     }
-    else {
+    else if(_CurrState != null) {
       _CurrState.Update();
     }
   }
 
+  public void Stop() {
+    if (_CurrState != null) {
+      _CurrState.Exit();
+      _CurrState = null;
+    }
+    _NextState = null;
+  }
 }
   

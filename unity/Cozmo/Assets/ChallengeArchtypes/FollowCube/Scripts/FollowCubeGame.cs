@@ -5,9 +5,6 @@ namespace FollowCube {
 
   public class FollowCubeGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     public float ForwardSpeed { get; set; }
 
     public float DistanceMin { get; set; }
@@ -51,8 +48,6 @@ namespace FollowCube {
     public FollowTask CurrentFollowTask;
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new FollowCubeForwardState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -74,11 +69,6 @@ namespace FollowCube {
       if (AttemptsLeft == 0) {
         (_StateMachine.GetGame() as FollowCubeGame).RaiseMiniGameLose();
       }
-    }
-
-    // Update is called once per frame
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
     void InitialCubesDone() {

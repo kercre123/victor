@@ -15,9 +15,6 @@ namespace SpeedTap {
 
     public event Action PlayerTappedBlockEvent;
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     [SerializeField]
     private SpeedTapPanel _GamePanelPrefab;
     private SpeedTapPanel _GamePanel;
@@ -30,8 +27,6 @@ namespace SpeedTap {
     protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
 
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("SpeedTapStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -48,10 +43,6 @@ namespace SpeedTap {
 
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(-1.0f);
-    }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
     protected override void CleanUpOnDestroy() {
