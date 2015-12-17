@@ -68,6 +68,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &142302
+GameObject:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22404602}
+  - 222: {fileID: 22204800}
+  - 114: {fileID: 11483826}
+  m_Layer: 5
+  m_Name: GuessesLeft
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &147528
 GameObject:
   m_ObjectHideFlags: 1
@@ -95,7 +112,7 @@ GameObject:
   - 222: {fileID: 22241668}
   - 114: {fileID: 11435698}
   m_Layer: 5
-  m_Name: GuessesLeft
+  m_Name: HowToPlay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -188,7 +205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _SubmitGuessButton: {fileID: 11402074}
-  _GuessesLeftLabel: {fileID: 11435698}
+  _GuessesLeftLabel: {fileID: 11483826}
 --- !u!114 &11435698
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -220,7 +237,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'GUESSES: 99'
+  m_Text: '#codeBreaker.text.howToPlayLong'
 --- !u!114 &11451376
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -334,6 +351,38 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11483826
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 142302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
+      Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+  m_FontData:
+    m_Font: {fileID: 12800000, guid: 6ef5f80c68ce34039a34f24769e5dc26, type: 3}
+    m_FontSize: 64
+    m_FontStyle: 1
+    m_BestFit: 0
+    m_MinSize: 10
+    m_MaxSize: 40
+    m_Alignment: 4
+    m_RichText: 1
+    m_HorizontalOverflow: 0
+    m_VerticalOverflow: 0
+    m_LineSpacing: 1
+  m_Text: 'GUESSES: 99'
 --- !u!114 &11495570
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -361,6 +410,12 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!222 &22204800
+CanvasRenderer:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 142302}
 --- !u!222 &22207794
 CanvasRenderer:
   m_ObjectHideFlags: 1
@@ -414,6 +469,23 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: -4.76837158e-06}
   m_SizeDelta: {x: -80, y: -39.9999886}
   m_Pivot: {x: .5, y: .5}
+--- !u!224 &22404602
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 142302}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22414850}
+  m_RootOrder: 2
+  m_AnchorMin: {x: .5, y: .5}
+  m_AnchorMax: {x: .5, y: .5}
+  m_AnchoredPosition: {x: 485, y: 69}
+  m_SizeDelta: {x: 481, y: 376.5}
+  m_Pivot: {x: .5, y: .5}
 --- !u!224 &22414850
 RectTransform:
   m_ObjectHideFlags: 1
@@ -424,8 +496,9 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22495360}
   - {fileID: 22432546}
+  - {fileID: 22495360}
+  - {fileID: 22404602}
   m_Father: {fileID: 22494576}
   m_RootOrder: 0
   m_AnchorMin: {x: .5, y: .5}
@@ -444,11 +517,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22414850}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 1.90734863e-06, y: 69.5000153}
-  m_SizeDelta: {x: 913, y: 139}
+  m_AnchoredPosition: {x: -254, y: 0}
+  m_SizeDelta: {x: 953, y: 669}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22436908
 RectTransform:
@@ -534,10 +607,10 @@ RectTransform:
   m_Children:
   - {fileID: 22487232}
   m_Father: {fileID: 22414850}
-  m_RootOrder: 0
+  m_RootOrder: 1
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 0, y: -92}
+  m_AnchoredPosition: {x: 485, y: -272}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: .5, y: .5}
 --- !u!225 &22572456

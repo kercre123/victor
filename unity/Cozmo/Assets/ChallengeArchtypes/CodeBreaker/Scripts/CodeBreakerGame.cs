@@ -10,18 +10,21 @@ namespace CodeBreaker {
 
     private CodeBreakerReadySlide _ReadySlide;
     private CodeBreakerPanel _GamePanelSlide;
+
+    [SerializeField]
     private Color[] _ValidCodeColors;
+
+    private CodeBreakerGameConfig _Config;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       DAS.Info(this, "Game Created");
 
-      CodeBreakerGameConfig config = minigameConfig as CodeBreakerGameConfig;
-      _ValidCodeColors = new Color[config.ValidCodeColors.Length];
-      config.ValidCodeColors.CopyTo(_ValidCodeColors, 0);
+      _Config = minigameConfig as CodeBreakerGameConfig;
 
       // INGO Potentially we'll need to clamp the #cubes?
+      // TODO: Potentially show a slide for showing Cozmo a # of cubes; need a consistent solution across games
       InitialCubesState initCubeState = new InitialCubesState();
-      initCubeState.InitialCubeRequirements(new HowToPlayState(), config.NumCubesInCode, true, InitialCubesDone);
+      initCubeState.InitialCubeRequirements(new HowToPlayState(), _Config.NumCubesInCode, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -38,6 +41,8 @@ namespace CodeBreaker {
     protected override void CleanUpOnDestroy() {
       // Don't need to destroy slides because the SharedMinigameView will handle it
     }
+
+    #region UI
 
     public void ShowHowToPlaySlide(ReadyButtonClickedHandler readyButtonCallback) {
       GameObject howToPlaySlide = ShowHowToPlaySlide(kHowToPlaySlideName);
@@ -86,9 +91,34 @@ namespace CodeBreaker {
       }
     }
 
-    public Color GetRandomColor() {
-      return Color.white;
+    #endregion
+
+    #region Data
+
+    public CubeCode GetRandomCode() {
+      CubeCode code = new CubeCode();
+      code.cubeColors = new Color[_Config.NumCubesInCode];
+      for (int i = 0; i < code.cubeColors.Length; i++) {
+        code.cubeColors[i] = GetRandomColor();
+      }
+      return code;
     }
+
+    private Color GetRandomColor() {
+      int maxColorIndex;
+      if (_Config.NumCodeColors <= _ValidCodeColors.Length) {
+        maxColorIndex = _Config.NumCodeColors - 1;
+      }
+      else {
+        DAS.Error(this, _Config.name + " is trying to use more code colors than are available! Check the number of " +
+        "valid colors on the " + typeof(CodeBreakerGame).ToString() + " prefab!");
+        maxColorIndex = _ValidCodeColors.Length - 1;
+      }
+      int colorIndex = Random.Range(0, maxColorIndex);
+      return _ValidCodeColors[colorIndex];
+    }
+
+    #endregion
   }
 
   // Represents a code picked by Cozmo
@@ -98,5 +128,13 @@ namespace CodeBreaker {
     /// Cozmo. (Index 0 indicates the leftmost cube from Cozmo)
     /// </summary>
     public Color[] cubeColors;
+
+    public override string ToString() {
+      string str = "CubeCode: ";
+      for (int i = 0; i < cubeColors.Length; i++) {
+        str += i + "(" + cubeColors[i].ToString() + ") ";
+      }
+      return str;
+    }
   }
 }

@@ -8,6 +8,10 @@ namespace CodeBreaker {
       base.Enter();
       CodeBreakerGame game = _StateMachine.GetGame() as CodeBreakerGame;
       game.ShowHowToPlaySlide(HandleReadyButtonClicked);
+
+      // Play an idle animation on Cozmo; will be inturrupted by 
+      // other animations.
+      _CurrentRobot.SetIdleAnimation("_LIVE_​");
     }
 
     public void HandleReadyButtonClicked() {
