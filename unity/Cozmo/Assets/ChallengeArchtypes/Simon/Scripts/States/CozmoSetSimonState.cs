@@ -9,11 +9,18 @@ namespace Simon {
     private SimonGame _GameInstance;
     private int _CurrentSequenceIndex = -1;
     private IList<int> _CurrentSequence;
+    private int _SequenceLength;
+
+    public CozmoSetSimonState(int sequenceLength) {
+      _SequenceLength = sequenceLength;
+    }
 
     public override void Enter() {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
-      _GameInstance.PickNewSequence();
+      _GameInstance.PickNewSequence(_SequenceLength);
+      _GameInstance.Progress = _SequenceLength / (float)_GameInstance.MaxSequenceLength;
+      _GameInstance.ShowHowToPlaySlide("WatchPattern");
       _CurrentSequence = _GameInstance.GetCurrentSequence();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(0.0f);
