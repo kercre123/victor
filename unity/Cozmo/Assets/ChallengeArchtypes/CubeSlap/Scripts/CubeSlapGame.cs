@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace CubeSlap {
   
@@ -10,14 +11,30 @@ namespace CubeSlap {
     public const string kCozmoWinEarly = "CozmoWinEarly";
     public const string kCozmoWinPounce = "CozmoWinPounce";
     public const string kPlayerWin = "PlayerWin";
+    // Consts for determining the exact placement and forgiveness for cube location
+    // Must be consistent for animations to work
+    public const float kCubePlaceDist = 80.0f;
+    public const float kCubeLostDelay = 0.25f;
 
     private float _MinSlapDelay;
     private float _MaxSlapDelay;
     private int _SuccessGoal;
     private int _SuccessCount;
     private bool _CliffFlagTrown = false;
+    // Flag to keep track if we've actually done the Pounce animation this round
+    private bool _SlapFlagThrown = false;
+    private float _CurrentSlapChance;
+    private float _BaseSlapChance;
+    private int _MaxFakeouts;
 
     private LightCube _CurrentTarget = null;
+
+    [SerializeField]
+    private List<string> _FakeoutAnimations;
+    [SerializeField]
+    private string _PounceAnimation;
+    [SerializeField]
+    private string _RetractAnimation;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubeSlapConfig config = minigameConfig as CubeSlapConfig;
@@ -25,6 +42,8 @@ namespace CubeSlap {
       _SuccessGoal = config.SuccessGoal;
       _MinSlapDelay = config.MinSlapDelay;
       _MaxSlapDelay = config.MaxSlapDelay;
+      _BaseSlapChance = config.StartingSlapChance;
+      _MaxFakeouts = config.MaxFakeouts;
       _SuccessCount = 0;
       Progress = 0.0f;
       InitializeMinigameObjects();
@@ -79,17 +98,34 @@ namespace CubeSlap {
 
     // Attempt the pounce
     public void AttemptSlap() {
-      // Enter Animation State to attempt a pounce.
-      // Set Callback for HandleEndSlapAttempt
-      Debug.Log("CubeSlap - Attempt Slap now");
-      _CliffFlagTrown = false;
-      CurrentRobot.SendAnimation(AnimationName.kPounceForward, HandleEndSlapAttempt);
+      float SlapRoll;
+      if (_MaxFakeouts <= 0) {
+        SlapRoll = 0.0f;
+      }
+      else {
+        SlapRoll = Random.Range(0.0f,1.0f);
+      }
+      if (SlapRoll <= _CurrentSlapChance) {
+        // Enter Animation State to attempt a pounce.
+        // Set Callback for HandleEndSlapAttempt
+        _CliffFlagTrown = false;
+        _SlapFlagThrown = true;
+        CurrentRobot.SendAnimation(_PounceAnimation, HandleEndSlapAttempt);
+      }
+      else {
+        // If you do a fakeout instead, increase the likelyhood of a slap
+        // attempt based on the max number of fakeouts.
+        int rand = Random.Range(0, _FakeoutAnimations.Count);
+        _CurrentSlapChance += ((1.0f - _BaseSlapChance) / _MaxFakeouts);
+        AnimationState animState = new AnimationState();
+        animState.Initialize(_FakeoutAnimations[rand], HandleFakeoutEnd);
+        _StateMachine.SetNextState(animState);
+      }
     }
 
     private void HandleEndSlapAttempt(bool success) {
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
-      Debug.Log("CubeSlap - Slap Ended");
       if (_CliffFlagTrown) {
         ShowHowToPlaySlide(kCozmoWinPounce);
         OnFailure();
@@ -103,19 +139,20 @@ namespace CubeSlap {
       }
     }
 
+    public void HandleFakeoutEnd(bool success) {
+      _StateMachine.SetNextState(new SlapGameState());
+    }
+
     private void HandleCliffEvent(Anki.Cozmo.CliffEvent cliff) {
       // Ignore if it throws this without a cliff actually detected
-      Debug.Log("CubeSlap - Handle Cliff Event");
       if (!cliff.detected) {
         return;
       }
-      Debug.Log("CubeSlap - Handle Cliff Event - Cliff Detected");
       _CliffFlagTrown = true;
     }
 
     public void OnSuccess() {
       _SuccessCount++;
-      Debug.Log("CubeSlap - Player Wins");
       Progress = _SuccessCount / _SuccessGoal;
       AnimationState animState = new AnimationState();
       animState.Initialize("VeryIrritated", HandleAnimationDone);
@@ -123,7 +160,6 @@ namespace CubeSlap {
     }
 
     public void OnFailure() {
-      Debug.Log("CubeSlap - Cozmo Wins");
       TryDecrementAttempts();
       AnimationState animState = new AnimationState();
       animState.Initialize(AnimationName.kMajorWin, HandleAnimationDone);
@@ -139,13 +175,27 @@ namespace CubeSlap {
       else if (AttemptsLeft <= 0) {
         RaiseMiniGameLose();
       }
+      else if (_SlapFlagThrown) {
+        _SlapFlagThrown = false;
+        AnimationState animState = new AnimationState();
+        animState.Initialize(_RetractAnimation, HandleRetractDone);
+        _StateMachine.SetNextState(animState);
+      }
       else {
         _StateMachine.SetNextState(new SeekState());
       }
     }
 
+    public void HandleRetractDone(bool success) {
+      _StateMachine.SetNextState(new SeekState());
+    }
+
     public float GetSlapDelay() {
       return Random.Range(_MinSlapDelay,_MaxSlapDelay);
+    }
+
+    public void ResetSlapChance() {
+      _CurrentSlapChance = _BaseSlapChance;
     }
  
   }
