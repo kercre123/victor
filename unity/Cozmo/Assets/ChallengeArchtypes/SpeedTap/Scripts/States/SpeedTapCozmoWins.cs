@@ -14,8 +14,7 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       _SpeedTapGame.CozmoBlock.SetFlashingLEDs(_SpeedTapGame.MatchColor, 100, 100, 0);
       _CurrentRobot.SendAnimation(AnimationName.kFinishTapCubeWin, HandleAnimationDone);
-      _SpeedTapGame.CozmoScore++;
-      _SpeedTapGame.UpdateUI();
+      _SpeedTapGame.CozmoWinsHand();
     }
 
     private void HandleAnimationDone(bool success) {

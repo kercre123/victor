@@ -9,9 +9,11 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
-    public int CozmoScore;
-    public int PlayerScore;
     public Color MatchColor;
+
+    private int _CozmoScore;
+
+    private int _PlayerScore;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -21,6 +23,27 @@ namespace SpeedTap {
     [SerializeField]
     private SpeedTapPanel _GamePanelPrefab;
     private SpeedTapPanel _GamePanel;
+
+    public void ResetScore() {
+      _CozmoScore = 0;
+      _PlayerScore = 0;
+      UpdateUI();
+    }
+
+    public void CozmoWinsHand() {
+      _CozmoScore++;
+      UpdateUI();
+    }
+
+    public void PlayerWinsHand() {
+      _PlayerScore++;
+      UpdateUI();
+    }
+
+    public void PlayerLosesHand() {
+      _PlayerScore = Mathf.Max(0, _PlayerScore - 1);
+      UpdateUI();
+    }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       InitializeMinigameObjects();
@@ -69,7 +92,7 @@ namespace SpeedTap {
     }
 
     public void UpdateUI() {
-      _GamePanel.SetScoreText(CozmoScore, PlayerScore);
+      _GamePanel.SetScoreText(_CozmoScore, _PlayerScore);
     }
 
     public void RollingBlocks() {
