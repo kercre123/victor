@@ -8,7 +8,6 @@ namespace CubeSlap {
     private float _SlapDelay;
     private float _FirstTimestamp = -1;
     private float _LastSeenTimeStamp = -1;
-    private float _TriggerLossDelay = 0.5f;
     public bool _SlapTriggered = false;
 
     public override void Enter() {
@@ -37,7 +36,7 @@ namespace CubeSlap {
           // Unless the cube is in the right position, trigger a failure since you moved it
           if (target.MarkersVisible) {
             float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-            if (distance < 90.0f) {
+            if (distance < CubeSlapGame.kCubePlaceDist) {
               didFail = false;
               ResetLastSeenTimeStamp();
             }
@@ -46,7 +45,7 @@ namespace CubeSlap {
             if (_LastSeenTimeStamp == -1) {
               _LastSeenTimeStamp = Time.time;
             }
-            if (Time.time - _LastSeenTimeStamp > _TriggerLossDelay) {
+            if (Time.time - _LastSeenTimeStamp > CubeSlapGame.kCubeLostDelay) {
               _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kCozmoWinEarly);
               _CubeSlapGame.OnFailure();
             }

@@ -28,7 +28,7 @@ namespace CubeSlap {
         // If Cube is in the right position, enter game state.
         if (target.MarkersVisible) {
           float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-          if (distance < 90.0f) {
+          if (distance < CubeSlapGame.kCubePlaceDist) {
             isBad = false;
             target.SetLEDs(Color.green);
             if (_FirstSeenTimestamp == -1) {

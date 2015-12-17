@@ -11,9 +11,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d4aed587cb1d4f179e52757a3a66d2f, type: 3}
   m_Name: CubeSlapChallenge01_Config
   m_EditorClassIdentifier: 
-  MinSlapDelay: 2
-  MaxSlapDelay: 4
+  MinSlapDelay: 1.5
+  MaxSlapDelay: 3
   MaxAttempts: 3
   SuccessGoal: 3
-  StartingSlapChance: .100000001
-  MaxFakeouts: 5
+  StartingSlapChance: .200000003
+  MaxFakeouts: 4
