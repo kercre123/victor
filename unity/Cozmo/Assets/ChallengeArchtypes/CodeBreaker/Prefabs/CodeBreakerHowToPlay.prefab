@@ -195,7 +195,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: cebe9bd6558b34df6941993bdc22a093, type: 3}
-    m_FontSize: 96
+    m_FontSize: 48
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 10
@@ -205,10 +205,13 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'FPO HOW TO PLAY FPO
-
-
-    SLIDE 1'
+  m_Text: "Guess Cozmo's Code before you run out of guesses!\nThe Code is a number
+    of cubes of different colors, arranged horizontally in a line in front of Cozmo.\n1.
+    Cozmo will pick a code.\n2. Tap a Cube to change the Cube's color.\n3. Arrange
+    the cubes in a line in front of Cozmo. \n4. Tap \"Guess Code\" when you're ready
+    to guess.\n5. Cozmo will display lights on his back to let you know correctness:\nGreen
+    = A Cube is the correct Color AND Position\nBlue = A Cube is in the correct Color,
+    but the WRONG Position"
 --- !u!114 &11442328
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -240,7 +243,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: buttonText
+  m_Text: START CODEBREAKING
 --- !u!114 &11464472
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -503,7 +506,7 @@ RectTransform:
   m_AnchorMin: {x: .5, y: .5}
   m_AnchorMax: {x: .5, y: .5}
   m_AnchoredPosition: {x: 0, y: -268.5}
-  m_SizeDelta: {x: 512, y: 128}
+  m_SizeDelta: {x: 1000, y: 128}
   m_Pivot: {x: .5, y: .5}
 --- !u!224 &22492110
 RectTransform:

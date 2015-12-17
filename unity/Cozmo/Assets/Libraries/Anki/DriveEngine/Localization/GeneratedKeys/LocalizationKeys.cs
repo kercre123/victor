@@ -125,6 +125,8 @@ public static class LocalizationKeys {
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";
+  public const string kCodeBreakerButtonPickingCode = "codeBreaker.button.pickingCode";
+  public const string kCodeBreakerTextHowToPlayLong = "codeBreaker.text.howToPlayLong";
 
   #endregion
 
@@ -140,6 +142,7 @@ public static class LocalizationKeys {
   public const string kButtonYes = "button.yes";
   public const string kButtonNo = "button.no";
   public const string kButtonContinue = "button.continue";
+  public const string kButtonReady = "button.ready";
 
   #endregion
 }

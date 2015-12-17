@@ -128,5 +128,19 @@
     },
     "minigame.progressBar.defaultLabel" : {
         "translation" : "Challenge Progress"
+    },
+    "codeBreaker.button.pickingCode" : {
+        "translation" : "PICKING CODE..."
+    },
+    "codeBreaker.text.howToPlayLong" : {
+        "translation" : "Guess Cozmo's Code before you run out of guesses!
+        The Code is a number of cubes of different colors, arranged horizontally in a line in front of Cozmo.
+        1. Cozmo will pick a code.
+        2. Tap a Cube to change the Cube's color.
+        3. Arrange the cubes in a line in front of Cozmo.
+        4. Tap 'Guess Code' when you're ready to guess.
+        5. Cozmo will display lights on his back to let you know correctness:
+        Green = A Cube is the correct Color AND Position
+        Blue = A Cube is in the correct Color, but the WRONG Position"
     }
 }
