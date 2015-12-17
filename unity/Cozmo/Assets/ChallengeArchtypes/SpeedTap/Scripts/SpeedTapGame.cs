@@ -32,14 +32,14 @@ namespace SpeedTap {
 
     public void CozmoWinsHand() {
       _CozmoScore++;
-      UpdateUI();
       CheckRounds();
+      UpdateUI();
     }
 
     public void PlayerWinsHand() {
       _PlayerScore++;
-      UpdateUI();
       CheckRounds();
+      UpdateUI();
     }
 
     public void PlayerLosesHand() {
@@ -67,8 +67,8 @@ namespace SpeedTap {
           else {
             RaiseMiniGameLose();
           }
-          return;
         }
+        ResetScore();
       }
     }
 
