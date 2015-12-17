@@ -15,7 +15,6 @@ namespace SpeedTap {
     private int _PlayerScore;
     private int _PlayerRoundsWon;
     private int _CozmoRoundsWon;
-    private int _CurrentRound;
     private int _Rounds;
     private int _MaxScorePerRound;
 
@@ -34,6 +33,7 @@ namespace SpeedTap {
     public void CozmoWinsHand() {
       _CozmoScore++;
       UpdateUI();
+      CheckRounds();
     }
 
     public void PlayerWinsHand() {
@@ -57,7 +57,10 @@ namespace SpeedTap {
           _CozmoRoundsWon++;
         }
 
-        if (_CurrentRound >= _Rounds) {
+        int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
+        int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
+        int roundsLeft = _Rounds - losingScore - winningScore;
+        if (winningScore > losingScore + roundsLeft) {
           if (_PlayerRoundsWon > _CozmoRoundsWon) {
             RaiseMiniGameWin();
           }
@@ -66,7 +69,6 @@ namespace SpeedTap {
           }
           return;
         }
-        _CurrentRound++;
       }
     }
 
