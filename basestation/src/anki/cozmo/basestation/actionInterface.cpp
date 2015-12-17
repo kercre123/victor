@@ -100,18 +100,19 @@ namespace Anki {
       return result;
     }
     
-    void IActionRunner::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void IActionRunner::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
-      completionInfo.numObjects = 0;
-      completionInfo.objectIDs.fill(-1);
-      completionInfo.animName = "";
+      ObjectInteractionCompleted info;
+      info.numObjects = 0;
+      info.objectIDs.fill(-1);
+      completionInfo.Set_objectInteractionCompleted( std::move(info) );
     }
     
     void IActionRunner::EmitCompletionSignal(Robot& robot, ActionResult result) const
     {
-      ActionCompletedStruct completionInfo;
+      ActionCompletedUnion completionInfo;
 
-      GetCompletionStruct(robot, completionInfo);
+      GetCompletionUnion(robot, completionInfo);
       
       robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCompletedAction(robot.GetID(), _idTag, GetType(), result, completionInfo)));
     }

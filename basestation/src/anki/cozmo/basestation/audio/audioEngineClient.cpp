@@ -29,15 +29,17 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
   ASSERT_NAMED(nullptr != messageHandler, "Can NOT set message handler to NULL");
   // Subscribe to Audio Messages
   _messageHandler = messageHandler;
-  auto callback = std::bind( &AudioEngineClient::HandleEvents, this, std::placeholders::_1 );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackDuration, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackMarker, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackComplete, callback ) );
-  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallbackError, callback ) );
+  auto callback = [this]( const AnkiEvent<MessageAudioClient>& event ) {
+    HandleCallbackEvent( event.GetData().Get_AudioCallback() );
+  };
+  _signalHandles.emplace_back( _messageHandler->Subscribe( MessageAudioClientTag::AudioCallback, callback ) );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event, GameObjectType gameObject, AudioCallbackFlag callbackFlag )
+AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
+                                                                GameObjectType gameObject,
+                                                                AudioCallbackFlag callbackFlag,
+                                                                CallbackFunc* callback )
 {
   if ( nullptr != _messageHandler ) {
     const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ?
@@ -103,77 +105,7 @@ void AudioEngineClient::PostParameter( ParameterType parameter,
 }
 
 
-// Private
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleEvents(const AnkiEvent<MessageAudioClient>& event)
-{
-  PRINT_NAMED_INFO("HandleEvents.HandleEvents",
-                   "Handle game event of type %s !",
-                   MessageAudioClientTagToString(event.GetData().GetTag()) );
-  
-  switch ( event.GetData().GetTag() ) {
-      
-    case MessageAudioClientTag::AudioCallbackDuration:
-    {
-      // Handle Duration Callback
-      const AudioCallbackDuration& callbackMsg = event.GetData().Get_AudioCallbackDuration();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-      
-    case MessageAudioClientTag::AudioCallbackMarker:
-    {
-      // Handle Marker Callback
-      const AudioCallbackMarker& callbackMsg = event.GetData().Get_AudioCallbackMarker();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-      
-    case MessageAudioClientTag::AudioCallbackComplete:
-    {
-      // Handle Complete Callback
-      const AudioCallbackComplete& callbackMsg = event.GetData().Get_AudioCallbackComplete();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-
-    case MessageAudioClientTag::AudioCallbackError:
-    {
-      // Handle Complete Callback
-      const AudioCallbackError& callbackMsg = event.GetData().Get_AudioCallbackError();
-      HandleCallbackEvent( callbackMsg );
-    }
-      break;
-      
-    default:
-    {
-      PRINT_NAMED_ERROR( "HandleEvents.HandleEvents",
-                        "Subscribed to unhandled event of type %s !",
-                        MessageAudioClientTagToString(event.GetData().GetTag()) );
-    }
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackDuration& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackMarker& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackComplete& callbackMsg )
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClient::HandleCallbackEvent( const AudioCallbackError& callbackMsg )
-{
-}
-  
+// Private  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::GetNewCallbackId()
 {

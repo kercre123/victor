@@ -96,6 +96,11 @@ message RobotPoked {
     uint_8   robotID
 }
 
+// Generic string for sending debug string up to game
+message DebugString {
+    string    text
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  VISION  ////////////////////////////////////
@@ -212,7 +217,7 @@ message RobotCompletedAction {
     uint_32 idTag,                        // The identifier of the specific action that completed
     RobotActionType  actionType,          // see enum in actionTypes.def
     ActionResult  result,                 //  "
-    ActionCompletedStruct completionInfo  //  "
+    ActionCompletedUnion completionInfo   //  "
 }
 
 // BlockPickedUp

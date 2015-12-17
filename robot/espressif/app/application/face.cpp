@@ -141,6 +141,7 @@ namespace Face {
   extern "C" void FaceUnPrintf(void)
   {
     _textMode = false;
+    memset(m_frame, 0, sizeof(m_frame));
   }
   
   

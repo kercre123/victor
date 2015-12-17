@@ -1110,6 +1110,11 @@ namespace Anki {
       
       VizManager::getInstance()->SendEndRobotUpdate();
       
+      
+      // Sending debug string to game and viz
+      SendDebugString("This is the engine debug string");
+      
+      
       return RESULT_OK;
       
     } // Update()
@@ -3274,6 +3279,32 @@ namespace Anki {
         lights[i].transitionOffPeriod_ms = ledState.transitionOffPeriod_ms;
       }
       return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
+    }
+    
+    Result Robot::SendDebugString(const char* format, ...)
+    {
+      int len = 0;
+      const int kMaxDebugStringLen = u8_MAX;
+      char text[kMaxDebugStringLen];
+      strcpy(text, format);
+      
+      // Create formatted text
+      va_list argptr;
+      va_start(argptr, format);
+      len = vsnprintf(text, kMaxDebugStringLen, format, argptr);
+      va_end(argptr);
+        
+      std::string str(text);
+      
+      // Send message to game
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::DebugString(str)));
+      
+      // Send message to viz
+      VizManager::getInstance()->SetText(VizManager::DEBUG_STRING,
+                                         NamedColors::ORANGE,
+                                         "%s", text);
+      
+      return RESULT_OK;
     }
       
       

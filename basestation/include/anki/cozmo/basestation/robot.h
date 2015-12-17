@@ -632,7 +632,11 @@ public:
     // Send a message to the physical robot
     Result SendMessage(const RobotInterface::EngineToRobot& message,
                        bool reliable = true, bool hot = false) const;
-    
+  
+  
+    // Sends debug string out to game and viz
+    Result SendDebugString(const char *format, ...);
+  
     // =========  Events  ============
     using RobotWorldOriginChangedSignal = Signal::Signal<void (RobotID_t)>;
     RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }

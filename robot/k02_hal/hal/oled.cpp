@@ -1,7 +1,5 @@
 #include <string.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdarg.h>
 
 #include "MK02F12810.h"
 
@@ -13,6 +11,7 @@
 
 #include "hardware.h"
 
+#define ONLY_DIGITS
 #include "font.h"
 
 const uint8_t SLAVE_ADDRESS     = 0x78 >> 1;
@@ -67,8 +66,7 @@ static const uint8_t ResetCursor[] = {
 
 static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
 
-static uint8_t FaceCopyLocation = 0;
-static bool PrintFaceLock = false;
+static bool FaceLock = false;
 
 void Anki::Cozmo::HAL::OLED::Init(void) {
   using namespace Anki::Cozmo::HAL;
@@ -92,85 +90,54 @@ void Anki::Cozmo::HAL::OLED::SendFrame(uint8_t *frame, i2c_callback cb) {
 }
 
 void Anki::Cozmo::HAL::OLED::FeedFace(uint8_t address, uint8_t *face_bytes) {
-  if (address != FaceCopyLocation || PrintFaceLock) return ;
+  static uint8_t FaceCopyLocation = 0;
 
-  static uint8_t bytes[MAX_SCREEN_BYTES_PER_DROP];
-  memcpy(bytes, face_bytes, MAX_SCREEN_BYTES_PER_DROP);  
+  if (address != FaceCopyLocation || FaceLock) return ;
+
+  // NOTE: The length of the ring buffer is currently arbitrary
+  static uint8_t screen_bytes[8 * MAX_SCREEN_BYTES_PER_DROP];
+  static int ring_pos = 0;
   
+  // Use a ring buffer to pad out screen data
+  uint8_t *bytes = &screen_bytes[ring_pos];
+  ring_pos += MAX_SCREEN_BYTES_PER_DROP;
+  if (ring_pos >= sizeof(screen_bytes)) {
+    ring_pos = 0;
+  }
+  
+  // Load face data on the I2C bus
+  memcpy(bytes, face_bytes, MAX_SCREEN_BYTES_PER_DROP);  
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL, I2C_OPTIONAL | I2C_FORCE_START);
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), bytes, MAX_SCREEN_BYTES_PER_DROP, NULL);
   FaceCopyLocation = (FaceCopyLocation + 1) % MAX_FACE_POSITIONS;
 }
 
-// Detach from the face and resume streaming of face data
-extern "C" void LeaveFacePrintf(void) {
-  using namespace Anki::Cozmo::HAL;
-
-  if (!PrintFaceLock) return ;
-    
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), NULL, I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), NULL);
-  PrintFaceLock = true;
-  FaceCopyLocation = 0;
+static volatile bool pending = false;
+static void StopHalt(const void* data, int count) {
+  pending = false;
 }
 
-// Flag when the frame has copied and the stack is safe to return
-static volatile bool PrintComplete = false;
-static void FinishFace(const void *data, int count) {
-  PrintComplete = true;
-}
-
-// Print to the face
-extern "C" void FacePrintf(const char *format, ...) {
+// Display a number
+void Anki::Cozmo::HAL::OLED::ErrorCode(uint16_t code) {
   using namespace Anki::Cozmo::HAL;
-
-  const int CHARS_PER_LINE = SCREEN_WIDTH / (CHAR_WIDTH + 1);
-  const int LINES = SCREEN_HEIGHT / CHAR_HEIGHT;
-  const int OVERFLOW = SCREEN_WIDTH - CHARS_PER_LINE * (CHAR_WIDTH + 1);
-  const int MAX_CHARS = CHARS_PER_LINE * LINES;
   
   uint8_t FrameBuffer[SCREEN_HEIGHT*SCREEN_WIDTH/8];
-  char buffer[MAX_CHARS];
-  
-  va_list aptr;
-  int chars;
-  
-  va_start(aptr, format);
-  vsnprintf(buffer, sizeof(buffer), format, aptr);
-  va_end(aptr);
-
-  char *write = buffer;
-  int px_ptr = 0;
+  uint8_t *write_ptr = &FrameBuffer[sizeof(FrameBuffer) - SCREEN_WIDTH/8];
   
   memset(FrameBuffer, 0, sizeof(FrameBuffer));
   
-  int x_rem = CHARS_PER_LINE;
-  int y_rem = LINES;
+  FaceLock = true;
+  do {
+    const uint8_t *px = &FONT[code % 10][CHAR_WIDTH-1];
+    code /= 10;
 
-  PrintComplete = false ;
-  while (*write && y_rem > 0) {
-    if (*write == '\n' || x_rem-- <= 0) {
-      px_ptr += OVERFLOW + x_rem * (CHAR_WIDTH + 1);
-      x_rem = CHARS_PER_LINE;
-      y_rem --;
-    } 
-
-    uint8_t ch = *(write++);
-
-    if (ch == '\n') {
-      continue ;
-    } else if (ch < CHAR_START || ch > CHAR_END) {
-      ch = CHAR_START;
+    for (int i = 0; i < CHAR_WIDTH; i++) {
+      *write_ptr = *(px--);
+      write_ptr -= SCREEN_HEIGHT/8;
     }
+  } while (code > 0);
 
-    memcpy(&FrameBuffer[px_ptr], FONT[ch - CHAR_START], CHAR_WIDTH);
-    px_ptr += CHAR_WIDTH;
-    FrameBuffer[px_ptr++] = 0;
-  }
-
-  PrintFaceLock = true;
-
-  OLED::SendFrame(FrameBuffer, &FinishFace);
-  
-  while (!PrintComplete)  __asm { WFI } ;
+  pending = true;
+  OLED::SendFrame(FrameBuffer, &StopHalt);
+  while (pending) ;
 }

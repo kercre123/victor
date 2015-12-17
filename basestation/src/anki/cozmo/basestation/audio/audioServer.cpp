@@ -90,7 +90,7 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
     // Register callbacks for event
     callbackContext->SetEventCallbackFunc( [this, connectionId, callbackId]
                                            ( const AudioCallbackContext* thisContext,
-                                             const AudioCallbackInfo& callbackInfo )
+                                             const AudioEngine::AudioCallbackInfo& callbackInfo )
     {
       PerformCallback( connectionId, callbackId, callbackInfo );
     } );
@@ -215,6 +215,9 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
   if ( nullptr != connection ) {
     using namespace AudioEngine;
     
+    AudioCallback callbackMsg;
+    callbackMsg.callbackId = callbackId;
+    
     switch ( callbackInfo.callbackType ) {
         
       case AudioEngine::AudioCallbackType::Invalid:
@@ -225,42 +228,43 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
       case AudioCallbackType::Duration:
       {
         const AudioDurationCallbackInfo& info = static_cast<const AudioDurationCallbackInfo&>( callbackInfo );
-        AudioCallbackDuration msg( callbackId,
-                                   info.duration,
-                                   info.estimatedDuration,
-                                   info.audioNodeId,
-                                   info.isStreaming );
-        connection->PostCallback( msg );
+        AudioCallbackDuration callbackInfo( info.duration,
+                                            info.estimatedDuration,
+                                            info.audioNodeId,
+                                            info.isStreaming );
+        callbackMsg.callbackInfo.Set_callbackDuration( std::move( callbackInfo ) );
       }
         break;
         
       case AudioCallbackType::Marker:
       {
         const AudioMarkerCallbackInfo& info = static_cast<const AudioMarkerCallbackInfo&>( callbackInfo );
-        AudioCallbackMarker msg( callbackId,
-                                 info.identifier,
-                                 info.position,
-                                 info.labelStr );
-        connection->PostCallback( msg );
+        AudioCallbackMarker callbackInfo( info.identifier,
+                                          info.position,
+                                          info.labelStr );
+        callbackMsg.callbackInfo.Set_callbackMarker( std::move( callbackInfo ) );
       }
         break;
         
       case AudioCallbackType::Complete:
       {
-        AudioCallbackComplete msg( callbackId );
-        connection->PostCallback( msg );
+        const AudioCompletionCallbackInfo& info = static_cast<const AudioCompletionCallbackInfo&>( callbackInfo );
+        AudioCallbackComplete callbackInfo( static_cast<EventType>( info.eventId ) );
+        callbackMsg.callbackInfo.Set_callbackComplete( std::move( callbackInfo ) );
       }
         break;
         
       case AudioCallbackType::Error:
       {
         const AudioErrorCallbackInfo& info = static_cast<const AudioErrorCallbackInfo&>( callbackInfo );
-        AudioCallbackError msg( callbackId,
-                                ConvertErrorCallbackType( info.error ) );
-        connection->PostCallback( msg );
+        AudioCallbackError callbackInfo( ConvertErrorCallbackType( info.error ) );
+        callbackMsg.callbackInfo.Set_callbackError( std::move( callbackInfo ) );
       }
         break;
-      
+    }
+    
+    if (AudioCallbackInfo::Tag::INVALID != callbackMsg.callbackInfo.GetTag()) {
+      connection->PostCallback( std::move( callbackMsg ) );
     }
   }
 }

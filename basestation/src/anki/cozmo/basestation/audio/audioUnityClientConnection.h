@@ -30,18 +30,15 @@ class MessageGameToEngine;
 }
   
 namespace Audio {
-  
+
 class AudioUnityClientConnection : public AudioClientConnection {
 
 public:
 
   AudioUnityClientConnection( IExternalInterface& externalInterface );
 
-  void PostCallback( const AudioCallbackDuration& callbackMessage ) const override;
-  void PostCallback( const AudioCallbackMarker& callbackMessage ) const override;
-  void PostCallback( const AudioCallbackComplete& callbackMessage ) const override;
-  void PostCallback( const AudioCallbackError& callbackMessage ) const override;
-
+  void PostCallback( const AudioCallback& callbackMessage ) const override;
+  
 
 private:
   

@@ -3,6 +3,8 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
+#include "clad/audio/audioEventTypes.clad"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -59,14 +61,30 @@ enum int_32 ActionResult {
     CANCELLED
 }
 
-// This is present in every action completion message, but different fields will
-// be used depending on the type of action that completed.
-// TODO: Use a union instead?
-structure ActionCompletedStruct {
+
+// Object Interaction completed is used actions that interact with objects
+structure ObjectInteractionCompleted {
     int_32     objectIDs[5],
     uint_8     numObjects,
-    string     animName
 }
+
+// Used by PlayAnimationAction
+structure AnimationCompleted {
+  string animationName,
+}
+
+// Used by DeviceAudioAction
+structure DeviceAudioCompleted {
+  Audio::EventType eventType,
+}
+
+// Use tag to determine what struct to use
+union ActionCompletedUnion {
+  ObjectInteractionCompleted  objectInteractionCompleted,
+  AnimationCompleted          animationCompleted,
+  DeviceAudioCompleted        deviceAudioCompleted,
+}
+
 
 enum uint_8 QueueActionPosition {
     NOW = 0,                 // Queue now, cancel current, but leave rest of queue intact

@@ -28,10 +28,8 @@ struct StopAllAudioEvents;
 struct PostAudioGameState;
 struct PostAudioSwitchState;
 struct PostAudioParameter;
-struct AudioCallbackDuration;
-struct AudioCallbackMarker;
-struct AudioCallbackComplete;
-struct AudioCallbackError;
+struct AudioCallback;
+  
   
 class AudioClientConnection : public Util::noncopyable {
   
@@ -45,10 +43,7 @@ public:
   void SetConnectionId( uint8_t connectionId ) { _connectionId = connectionId; }
   uint8_t GetConnectionId() const { return _connectionId; }
   
-  virtual void PostCallback( const AudioCallbackDuration& callbackMessage ) const {}
-  virtual void PostCallback( const AudioCallbackMarker& callbackMessage ) const {}
-  virtual void PostCallback( const AudioCallbackComplete& callbackMessage ) const {}
-  virtual void PostCallback( const AudioCallbackError& callbackMessage ) const {}
+  virtual void PostCallback( const AudioCallback& callbackMessage ) const {}
   
   
 protected:

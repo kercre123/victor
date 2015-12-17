@@ -42,32 +42,12 @@ AudioEngineClientConnection::~AudioEngineClientConnection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage ) const
+void AudioEngineClientConnection::PostCallback( const AudioCallback& callbackMessage ) const
 {
-  const MessageAudioClient msg(( AudioCallbackDuration( callbackMessage ) ));
+  const MessageAudioClient msg(( AudioCallback( callbackMessage ) ));
   _messageHandler->Broadcast( std::move( msg ) );
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage ) const
-{
-  const MessageAudioClient msg(( AudioCallbackMarker( callbackMessage ) ));
-  _messageHandler->Broadcast( std::move( msg ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage ) const
-{
-  const MessageAudioClient msg(( AudioCallbackComplete( callbackMessage ) ));
-  _messageHandler->Broadcast( std::move( msg ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioEngineClientConnection::PostCallback( const AudioCallbackError& callbackMessage ) const
-{
-  const MessageAudioClient msg(( AudioCallbackError( callbackMessage ) ));
-  _messageHandler->Broadcast( std::move( msg ) );
-}
 
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

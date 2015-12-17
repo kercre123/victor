@@ -123,10 +123,11 @@ void Lights::manage(void *clr)
 {
   uint8_t *in_colors = (uint8_t*) clr;
 
+  // This is a packed structure now
+  static const int channels[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+
   int pos = 0;
-  for (int i = 0; i < numCharlieChannels; i++, in_colors++) {
-    for (int b = 0; b < numLightsPerChannel; b++)
-      colors[pos++] = AdjustTable[*(in_colors++)] & colorMask;
-      ;
+  for (int i = 0; i < numLights; i++) {
+    colors[channels[i]] = AdjustTable[*(in_colors++)];
   }
 }

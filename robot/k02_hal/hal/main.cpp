@@ -38,9 +38,10 @@ namespace Anki
       void HALExec(u8* buf, int buflen, int eof)
       {
         buflen = 0;
-        TransmitDrop(buf, buflen, eof);
+        SPI::TransmitDrop(buf, buflen, eof);
+        IMU::Manage();
         I2C::Enable();
-        UartTransmit();
+        UART::Transmit();
       }
     }
   }
@@ -63,12 +64,12 @@ int main (void)
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
 
-  DebugInit();
+  UART::DebugInit();
   TimerInit();
   PowerInit();
 
-  DACInit();
-  DACTone();
+  DAC::Init();
+  DAC::Tone();
 
   // Wait for Espressif to boot
   for (int i=0; i<2; ++i) {
@@ -84,13 +85,13 @@ int main (void)
 
   MicroWait(100000); // Because the FLL is lame
   
-  SPIInit();
+  SPI::Init();
   I2C::Init();
   IMU::Init();
   OLED::Init();
+  UART::Init();
 
   CameraInit();
-  UartInit(); // MUST HAPPEN AFTER CAMARA INIT HAPPENS, OTHERWISE UART RX FIFO WILL LOCK
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
@@ -98,6 +99,6 @@ int main (void)
 
   for(;;) {
     // Wait for head body sync to occur
-    WaitForSync() ;
+    UART::WaitForSync() ;
   }
 }

@@ -12,7 +12,10 @@
  *   Updating to support streaming animations from Basestation instead of a set of static, 
  *   canned animations stored on the Robot.
  *
- * Copyright: Anki, Inc. 2014
+ * Update: Daniel Casner, 10/23/2015
+ *   Refactoring to run buffer and spooling on the Espressif with most of the execution happening on the K02
+ *
+ * Copyright: Anki, Inc. 2015
  *
  **/
 
@@ -22,6 +25,9 @@
 
 #include "anki/types.h"
 #include "messages.h"
+
+/// Send animation state message every 5ms = 5,000 us
+#define ANIM_STATE_INTERVAL 5000
 
 namespace Anki {
   namespace Cozmo {
@@ -40,6 +46,9 @@ namespace Anki {
       // Clears any remaining buffered keyframes and thus immediately stops
       // animation from playing
       void Clear();
+      
+      // Sends the animation state message to the base station
+      Result SendAnimStateMessage();
       
       // Returns true if there are buffered keyframes being played
       bool IsPlaying();

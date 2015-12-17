@@ -698,7 +698,7 @@ namespace Cozmo {
       if (_animActionTags.count(msg.idTag) > 0) {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.AnimCompleted",
                                "%s (result %d)",
-                               msg.completionInfo.animName.c_str(),
+                               msg.completionInfo.Get_animationCompleted().animationName.c_str(),
                                msg.result);
         
         // Erase this animation action and resume pickOrPlace if there are no more animations pending
