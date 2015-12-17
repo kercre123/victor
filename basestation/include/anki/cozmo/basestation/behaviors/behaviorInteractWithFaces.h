@@ -100,6 +100,8 @@ namespace Cozmo {
       bool _playedInitAnim = false;
     };
     
+    std::set<Face::ID_t> _trackingFaces;
+    
     std::list<Face::ID_t> _interestingFacesOrder;
     std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
     std::unordered_map<Face::ID_t, double> _cooldownFaces;

@@ -292,7 +292,7 @@ namespace Cozmo {
           //robot.GetMoveComponent().DisableTrackToFace();
           StopTracking(robot);
 
-          _interestingFacesOrder.erase(_interestingFacesOrder.begin());
+          _interestingFacesOrder.pop_front();
           _interestingFacesData.erase(faceID);
           
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.DisablingTracking",
@@ -543,42 +543,46 @@ namespace Cozmo {
 
       return;
     }
-    
+
     Vec3f distVec = headPose.GetTranslation();
     distVec.z() = 0;
+    const bool closeEnough = distVec.LengthSq() < (kCloseEnoughDistance_mm * kCloseEnoughDistance_mm);
+    
     auto dataIter = _interestingFacesData.find(faceID);
-
-    // If we do have data on this face id but now it's too far, remove it
-    if (_interestingFacesData.end() != dataIter
-        && distVec.LengthSq() > (kTooFarDistance_mm * kTooFarDistance_mm))
+    if (_interestingFacesData.end() != dataIter)
     {
-      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.RemoveFace",
-                        "face %lld is too far (%f > %f), removing",
-                        faceID,
-                        distVec.Length(),
-                        kTooFarDistance_mm);
-      RemoveFaceID(faceID);
-      return;
-    }
-    // If we aren't tracking this face and it's close enough, add it
-    else if (_interestingFacesData.end() == dataIter
-             && distVec.LengthSq() < (kCloseEnoughDistance_mm * kCloseEnoughDistance_mm))
-    {
-      
+      // This is a face we already knew about. If it's close enough, update the
+      // last seen time. If not, remove it.
+      if(closeEnough) {
+        dataIter->second._lastSeen_sec = event.GetCurrentTime();
+      } else {
+        PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.RemoveFace",
+                          "face %lld is too far (%f > %f), removing",
+                          faceID,
+                          distVec.Length(),
+                          kTooFarDistance_mm);
+        RemoveFaceID(faceID);
+        return;
+      }
+    } else if(closeEnough) {
+      // This is not a face we already knew about, but it's close enough. Add it.
       _interestingFacesOrder.push_back(faceID);
       auto insertRet = _interestingFacesData.insert( { faceID, FaceData() } );
       if (insertRet.second)
       {
         dataIter = insertRet.first;
+        dataIter->second._lastSeen_sec = event.GetCurrentTime();
       }
     }
-
-    // If we are now keeping track of this faceID, update its last seen
-    if (_interestingFacesData.end() != dataIter)
+    
+    if(State::TrackingFace == _currentState)
     {
-      dataIter->second._lastSeen_sec = event.GetCurrentTime();
+      // We are currently tracking. Update the list of faces being tracked
+      _trackingFaces.insert(faceID);
     }
-  }
+    
+  } // HandleRobotObservedFace()
+  
   
   void BehaviorInteractWithFaces::HandleRobotDeletedFace(const EngineToGameEvent& event)
   {
@@ -607,6 +611,8 @@ namespace Cozmo {
         orderIter++;
       }
     }
+    
+    _trackingFaces.erase(faceID);
   }
   
   void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const
