@@ -6,9 +6,6 @@ namespace Simon {
 
   public class SimonGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     // list of ids of LightCubes that are tapped, in order.
     private List<int> _CurrentIDSequence = new List<int>();
 
@@ -20,8 +17,6 @@ namespace Simon {
     protected void InitializeMinigameObjects() { 
       DAS.Info(this, "Game Created");
 
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("SimonGameStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new CozmoSetSimonState(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -75,10 +70,6 @@ namespace Simon {
 
     protected override void CleanUpOnDestroy() {
 
-    }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
   }

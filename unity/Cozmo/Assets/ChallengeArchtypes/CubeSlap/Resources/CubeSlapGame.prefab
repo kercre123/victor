@@ -50,6 +50,12 @@ MonoBehaviour:
     slidePrefab: {fileID: 22592278, guid: a90079693b5024559b8290b75e53a2ff, type: 2}
   - slideName: PlayerWin
     slidePrefab: {fileID: 22581792, guid: 09f5eea8ed5a14118b87e4f36651acd1, type: 2}
+  _FakeoutAnimations:
+  - pounceFakeout1
+  - pounceFakeout2
+  - pounceFakeout3
+  _PounceAnimation: pounceForward
+  _RetractAnimation: pounceRetract
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -60,6 +66,14 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _HowToPlayPrefabs.Array.size
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: fakeoutAnimations.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _FakeoutAnimations.Array.size
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: gameName_
@@ -124,6 +138,46 @@ Prefab:
       value: 
       objectReference: {fileID: 22581792, guid: 09f5eea8ed5a14118b87e4f36651acd1,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: fakeoutAnimations.Array.data[0]
+      value: pounceFakeout1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: fakeoutAnimations.Array.data[1]
+      value: pounceFakeout2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: fakeoutAnimations.Array.data[2]
+      value: pounceFakeout3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: pounceAnimation
+      value: pounceForward
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: retractAnimation
+      value: pounceRetract
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _PounceAnimation
+      value: pounceForward
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _RetractAnimation
+      value: pounceRetract
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _FakeoutAnimations.Array.data[0]
+      value: pounceFakeout1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _FakeoutAnimations.Array.data[1]
+      value: pounceFakeout2
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _FakeoutAnimations.Array.data[2]
+      value: pounceFakeout3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}

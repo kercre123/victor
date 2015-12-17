@@ -43,7 +43,9 @@ namespace InvestorDemo {
       }
     }
 
-    void Update() {
+    protected override void Update() {
+      base.Update();
+
       if (_DemoConfig.UseSequence) {
         ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.CurrentSequence;
         if (sequence != null) {
@@ -71,7 +73,9 @@ namespace InvestorDemo {
     protected override void CleanUpOnDestroy() {
       if (_DemoConfig.UseSequence) {
         ScriptedSequences.ScriptedSequence sequence = ScriptedSequences.ScriptedSequenceManager.Instance.Sequences.Find(s => s.Name == _DemoConfig.SequenceName);
-        sequence.ResetSequence();
+        if (sequence != null) {
+          sequence.ResetSequence();
+        }
       }
 
       if (_GamePanel != null) {

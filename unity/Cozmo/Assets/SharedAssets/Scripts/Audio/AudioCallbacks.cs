@@ -11,28 +11,37 @@ namespace Anki {
         public readonly AudioCallbackFlag CallbackType;
         public readonly System.Object Info;
 
-        public CallbackInfo(Anki.Cozmo.Audio.AudioCallbackDuration info) {
-          this.CallbackType = AudioCallbackFlag.EventDuration;
-          this.PlayId = info.callbackId;
-          this.Info = info;
-        }
+        public CallbackInfo(Anki.Cozmo.Audio.AudioCallback callback) {
+          this.PlayId = callback.callbackId;
+          this.CallbackType = AudioCallbackFlag.EventNone;
+          this.Info = null;
 
-        public CallbackInfo(Anki.Cozmo.Audio.AudioCallbackMarker info) {
-          this.CallbackType = AudioCallbackFlag.EventMarker;
-          this.PlayId = info.callbackId;
-          this.Info = info;
-        }
+          switch (callback.callbackInfo.GetTag()) {
 
-        public CallbackInfo(Anki.Cozmo.Audio.AudioCallbackComplete info) {
-          this.CallbackType = AudioCallbackFlag.EventComplete;
-          this.PlayId = info.callbackId;
-          this.Info = info;
-        }
+          case AudioCallbackInfo.Tag.callbackDuration:
+            this.CallbackType = AudioCallbackFlag.EventDuration;
+            this.Info = callback.callbackInfo.callbackDuration;
+            break;
 
-        public CallbackInfo(Anki.Cozmo.Audio.AudioCallbackError info) {
-          this.CallbackType = AudioCallbackFlag.EventError;
-          this.PlayId = info.callbackId;
-          this.Info = info;
+          case AudioCallbackInfo.Tag.callbackMarker:
+            this.CallbackType = AudioCallbackFlag.EventMarker;
+            this.Info = callback.callbackInfo.callbackMarker;
+            break;
+
+          case AudioCallbackInfo.Tag.callbackComplete:
+            this.CallbackType = AudioCallbackFlag.EventComplete;
+            this.Info = callback.callbackInfo.callbackComplete;
+            break;
+
+          case AudioCallbackInfo.Tag.callbackError:
+            this.CallbackType = AudioCallbackFlag.EventError;  
+            this.Info = callback.callbackInfo.callbackError;
+            break;
+
+          case AudioCallbackInfo.Tag.INVALID:
+            DAS.Error("CallbackInfo", "Callback Info type is INVALID!!");
+            break; 
+          }
         }
 
         public Anki.Cozmo.Audio.AudioCallbackDuration DurationInfo {

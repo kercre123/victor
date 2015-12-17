@@ -11,9 +11,6 @@ namespace PatternPlay {
     private PatternCollectionViewController viewControllerPrefab_;
     private PatternCollectionViewController viewControllerInstance_;
 
-    private StateMachineManager patternPlayStateMachineManager_ = new StateMachineManager();
-    private StateMachine patternPlayStateMachine_ = new StateMachine();
-
     private Dictionary<int, BlockPatternData> blockPatternData_ = new Dictionary<int, BlockPatternData>();
     private PatternMemory patternMemory_ = new PatternMemory();
     private bool initialCubesDone_ = false;
@@ -35,11 +32,9 @@ namespace PatternPlay {
 
     protected void InitializeMinigameObjects() {
       DAS.Info(this, "Game Created");
-      patternPlayStateMachine_.SetGameRef(this);
-      patternPlayStateMachineManager_.AddStateMachine("PatternPlayStateMachine", patternPlayStateMachine_);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new LookForPatternState(), 3, false, InitialCubesDone);
-      patternPlayStateMachine_.SetNextState(initCubeState);
+      _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(BehaviorChooserType.Selection);
@@ -56,12 +51,8 @@ namespace PatternPlay {
       patternPlayAudio_ = GetComponent<PatternPlayAudio>();
     }
 
-    void Update() {
-
-      // update cozmo's behavioral state machine for pattern play.
-      // this drives the initialcubestate machine so has to be before
-      // the return check.
-      patternPlayStateMachineManager_.UpdateAllMachines();
+    protected override void Update() {
+      base.Update();
 
       if (!initialCubesDone_) {
         return;

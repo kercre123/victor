@@ -6,9 +6,6 @@ namespace MotionDetection {
 
   public class MotionDetectionGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     private MotionDetectionConfig _Config;
 
     [SerializeField]
@@ -33,16 +30,10 @@ namespace MotionDetection {
 
     protected void InitializeMinigameObjects() {
       ShowHowToPlaySlide("MotionDetectionHelp01");
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("DetectMotionStateMachine", _StateMachine);
       _StateMachine.SetNextState(new RecognizeMotionState(_Config.TimeAllowedBetweenWaves, _Config.TotalWaveTime));
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
-    }
-
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
     }
 
     protected override void CleanUpOnDestroy() {

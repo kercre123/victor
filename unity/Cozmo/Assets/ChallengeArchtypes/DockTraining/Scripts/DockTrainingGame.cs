@@ -6,9 +6,6 @@ namespace DockTraining {
 
   public class DockTrainingGame : GameBase {
 
-    private StateMachineManager _StateMachineManager = new StateMachineManager();
-    private StateMachine _StateMachine = new StateMachine();
-
     private Vector3 _StartingPosition;
     private Quaternion _StartingRotation;
 
@@ -39,16 +36,14 @@ namespace DockTraining {
     }
 
     protected void InitializeMinigameObjects() {
-      _StateMachine.SetGameRef(this);
-      _StateMachineManager.AddStateMachine("FollowCubeStateMachine", _StateMachine);
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new WaitForTargetState(), 1, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
     }
 
-    void Update() {
-      _StateMachineManager.UpdateAllMachines();
+    protected override void Update() {
+      base.Update();
       if (CurrentRobot.VisibleObjects.Contains(_CurrentTarget) == false) {
         if (Time.time - _LastSeenTargetTime > 2.0f) {
           if (_CurrentTarget != null) {
