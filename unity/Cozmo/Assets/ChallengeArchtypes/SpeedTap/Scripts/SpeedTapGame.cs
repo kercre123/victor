@@ -13,8 +13,11 @@ namespace SpeedTap {
 
     private int _CozmoScore;
     private int _PlayerScore;
+    private int _PlayerRoundsWon;
+    private int _CozmoRoundsWon;
+    private int _CurrentRound;
     private int _Rounds;
-    private int _HandPerRound;
+    private int _MaxScorePerRound;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -36,6 +39,7 @@ namespace SpeedTap {
     public void PlayerWinsHand() {
       _PlayerScore++;
       UpdateUI();
+      CheckRounds();
     }
 
     public void PlayerLosesHand() {
@@ -43,11 +47,34 @@ namespace SpeedTap {
       UpdateUI();
     }
 
+    private void CheckRounds() {
+      if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
+
+        if (_PlayerScore > _CozmoScore) {
+          _PlayerRoundsWon++;
+        }
+        else {
+          _CozmoRoundsWon++;
+        }
+
+        if (_CurrentRound >= _Rounds) {
+          if (_PlayerRoundsWon > _CozmoRoundsWon) {
+            RaiseMiniGameWin();
+          }
+          else {
+            RaiseMiniGameLose();
+          }
+          return;
+        }
+        _CurrentRound++;
+      }
+    }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       InitializeMinigameObjects();
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       _Rounds = speedTapConfig.Rounds;
-      _HandPerRound = speedTapConfig.HandsPerRound;
+      _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
     }
 
     // Use this for initialization
