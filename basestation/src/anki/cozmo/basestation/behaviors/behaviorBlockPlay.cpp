@@ -44,9 +44,6 @@
 // TODO:(bn) tune speed, so maybe we can move faster and make everything look better. Ideally, this whole
 // behavior could have a single parameter for this
 
-// TODO:(bn) remove face tracking as first step, and integrate this behavior with the follow faces behavior
-// TODO:(bn) make sure we can go back and forth at the various staged between these behaviors
-
 // TODO:(bn) need to apply motion profile to turn in place and face pose action???
 
 
@@ -91,8 +88,32 @@ namespace Cozmo {
   
   bool BehaviorBlockPlay::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    return _trackedObject.IsSet() || _objectToPickUp.IsSet() || _objectToPlaceOn.IsSet() ||
-      (_currentState == State::TrackingFace && _faceID != Face::UnknownFace && robot.IsCarryingObject());
+    const bool holdingBlock = robot.IsCarryingObject() && _objectToPickUp.IsSet();
+    const bool alreadyRunning = _currentState != State::TrackingFace;    
+    const bool hasSeenFace = _faceID != Face::UnknownFace || _hasValidLastKnownFacePose;
+    const bool hasObject = _trackedObject.IsSet();
+
+    bool ret = alreadyRunning || holdingBlock || (hasSeenFace && hasObject);
+
+    // static bool wasTrue = false;
+    // if(ret) {
+    //   wasTrue = true;
+    // }
+
+    // if( wasTrue && ! ret ) {
+    //   PRINT_NAMED_INFO("BehaviorBlockPlay.IsRunnable.NowFalse",
+    //                    "iscarrying? %d, pickupSet? %d, currStateTracking? %d, faceIDKnown? %d, lastValid? %d, trackedSet? %d",
+    //                    robot.IsCarryingObject() ? 1 : 0,
+    //                    _objectToPickUp.IsSet()  ? 1 : 0,
+    //                    alreadyRunning ? 1 : 0,
+    //                    _faceID != Face::UnknownFace ? 1 : 0,
+    //                    _hasValidLastKnownFacePose  ? 1 : 0,
+    //                    hasObject ? 1 : 0);
+    //   wasTrue = false;
+    // }
+      
+    
+    return ret;
   }
   
   Result BehaviorBlockPlay::InitInternal(Robot& robot, double currentTime_sec, bool isResuming)
@@ -228,19 +249,21 @@ namespace Cozmo {
 
             // if we also need to lower the lift, do it in parallel (this is the most common case)
             if( moveLiftAction != nullptr) {
-              StartActing(robot, new CompoundActionParallel({moveLiftAction, lookAtFaceAction}));
+              StartActing(robot,
+                          new CompoundActionParallel({moveLiftAction, lookAtFaceAction}),
+                          [this](ActionResult ret){ _hasValidLastKnownFacePose = false; });
               moveLiftAction = nullptr;
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
                                      "Moving to last face pose AND lowering lift");
             }
             else {
               // otherwise just execute the look action
-              StartActing(robot, lookAtFaceAction);
+              StartActing(robot,
+                          lookAtFaceAction,
+                          [this](ActionResult ret){ _hasValidLastKnownFacePose = false; });
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.FindingOldFace",
                                      "Moving to last face pose");
             }
-            
-            _hasValidLastKnownFacePose = false;
           } else {
 
             // There's no face visible.
@@ -315,7 +338,10 @@ namespace Cozmo {
             // robot.GetMoveComponent().MoveHeadToAngle(0, 2, 5);
           }
         }
-        else if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f ) {
+        else if( currentTime_sec > _trackedObjectStoppedMovingTime + 0.5f &&
+                 currentTime_sec < _trackedObjectStoppedMovingTime + 5.0f) {
+          // if the block recently stopped moving, look down
+          
           if( _lastObjectObservedTime + _lostBlockTimeToLookDown < currentTime_sec ) {
             const float targetAngle = 0.0f;
             if( robot.GetHeadAngle() > targetAngle + DEG_TO_RAD(5.0f) ) {
@@ -470,8 +496,6 @@ namespace Cozmo {
       }
       case State::SearchingForMissingBlock:
       {
-        // TODO:(bn) add a "huh, where's the block?" animation here
-
         // first face the block object (where we think it is, if we know), then look a bit to the left and
         // right
 
@@ -612,7 +636,6 @@ namespace Cozmo {
     }
   }
   
-  // TODO: Get rid of this if it's doing nothing
   void BehaviorBlockPlay::HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot)
   {
     switch(event.GetData().GetTag())
@@ -738,19 +761,26 @@ namespace Cozmo {
     // Delete anim action tag, in case we somehow missed it.
     _animActionTags.erase(msg.idTag);
 
+    // TODO:(bn) just use callback for this?
     if( _isDrivingForward && _driveForwardActionTag == msg.idTag )
     {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.DoneDrivingForward",
                              "finished drive forward action, no longer driving forward, result=%s",
                              ActionResultToString(msg.result));
-      // TODO:(bn) will need to re-enable tracking here once andrew's tracking changes go in
       _isDrivingForward = false;
       return lastResult;
     }
     
     if (msg.idTag != _lastActionTag) {
-      // PRINT_NAMED_INFO("BehaviorBlockPlay.HandleActionCompleted.ExternalAction", "Ignoring");
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleActionCompleted.OtherAction",
+                             "finished action id=%d, but only care about id %d",
+                             msg.idTag,
+                             _lastActionTag);
       return lastResult;
+    }
+
+    if( _actionResultCallback ) {
+      _actionResultCallback(msg.result);
     }
     
     switch(_currentState)
@@ -967,12 +997,6 @@ namespace Cozmo {
         break;
     } // switch(_currentState)
 
-
-    // hack: re-enable idle animations
-    if( ! _isActing ) {
-      robot.SetIdleAnimation(AnimationStreamer::LiveAnimation);
-    }
-
     return lastResult;
   } // HandleActionCompleted()
 
@@ -981,9 +1005,10 @@ namespace Cozmo {
     const ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(objectID);
     if (nullptr != oObject) {
       if( oObject->IsActive() && oObject->GetIdentityState() == ActiveIdentityState::Identified ) {
-        // TEMP: I actually need to know if I'm "connected" to this object. This could create big problems
+        // NOTE: I actually need to know if I'm "connected" to this object. This could create big problems
         // otherwise, because we'll never get a "moved" message. Potential work-around: keep track of which
-        // objects we *ever* got a moved message from, and don't add them here
+        // objects we *ever* got a moved message from, and don't add them here. This code will work correctly
+        // as long as blocks stay powered and connected, otherwise we won't be able to re-play the demo
         _objectsToIgnore.insert(objectID);
         PRINT_NAMED_INFO("BehaviorBlockPlay.IgnoreObject", "ignoring block %d",
                          objectID.GetValue());
@@ -1337,13 +1362,10 @@ namespace Cozmo {
     return RESULT_OK;
   }  
 
-  void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action)
+  void BehaviorBlockPlay::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
   {
-    // HACK! disable idle animation while acting
-    // TODO:(bn) at least store the old animation, so we don't restore the wrong one
-    robot.SetIdleAnimation("NONE");
-
     _lastActionTag = action->GetTag();
+    _actionResultCallback = callback;
     robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, action);
     _isActing = true;
   }
@@ -1375,7 +1397,7 @@ namespace Cozmo {
       robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, animAction);
     }
     else {
-      robot.GetActionList().QueueActionNow(Robot::FaceAnimationSlot, animAction);
+      robot.GetActionList().QueueActionAtEnd(Robot::FaceAnimationSlot, animAction);
     }
   }
   

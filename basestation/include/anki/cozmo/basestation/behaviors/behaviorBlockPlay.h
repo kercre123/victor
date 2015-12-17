@@ -121,8 +121,11 @@ namespace Cozmo {
     void InitState(const Robot& robot);
     void SetCurrState(State s);
     void PlayAnimation(Robot& robot, const std::string& animName, bool sequential = true);
-    void StartActing(Robot& robot, IActionRunner* action);
     void SetBlockLightState(Robot& robot, const ObjectID& objID, BlockLightState state);
+
+    using ActionResultCallback = std::function<void(ActionResult result)>;
+    
+    void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
     
     State _currentState;
     bool  _interrupted;
@@ -149,7 +152,7 @@ namespace Cozmo {
     // ID tag of last queued action
     u32 _lastActionTag;
     std::map<u32, std::string> _animActionTags;
-    
+    ActionResultCallback _actionResultCallback;
 
     //f32 _inactionStartTime;
     
