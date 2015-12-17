@@ -534,7 +534,7 @@ int JPEGEnd(u8* out)
   while (timeDCT < 0)   timeDCT += 6553600;
   while (timeQuant < 0) timeQuant += 6553600;
   while (timeHuff < 0)  timeHuff += 6553600;
-  DebugPrintf(" DCT=%5dus, Quant=%5dus, Huff=%5dus\n", timeDCT/100, timeQuant/100, timeHuff/100);
+  UART::DebugPrintf(" DCT=%5dus, Quant=%5dus, Huff=%5dus\n", timeDCT/100, timeQuant/100, timeHuff/100);
   timeDCT = timeQuant = timeHuff = 0;
 #endif  
     

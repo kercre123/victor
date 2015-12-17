@@ -41,7 +41,7 @@ static inline void TestPause(const int duration) {
   using namespace Anki::Cozmo::HAL;
 
   for (int i = duration * 20; i > 0; i--) {
-    WaitForSync();
+    UART::WaitForSync();
   }
 }
 
@@ -49,25 +49,17 @@ extern "C" void LeaveFacePrintf(void);
 
 void StartupSelfTest(void) {
   using namespace Anki::Cozmo::HAL;
-  
+
   int result = RunTests();
   
   if (result != ERROR_NONE) {
-    FacePrintf("Fail %03d", (int) result);
-  } else {
-    const uint16_t* SSID = (uint16_t*) 0xFFC;
-    FacePrintf("               OK%2x", *SSID);
+    OLED::ErrorCode(result);
   }
-  
-  TestPause(1000/5);
-  LeaveFacePrintf();
 }
 
 int RunTests(void) {
   using namespace Anki::Cozmo::HAL;
 
-  FacePrintf("Self Test    v08");
-  
   uint8_t imuid = IMU::ReadID();
   
   if (imuid != 0xD1) {
