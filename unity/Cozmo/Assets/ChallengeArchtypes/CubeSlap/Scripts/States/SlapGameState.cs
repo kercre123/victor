@@ -14,7 +14,8 @@ namespace CubeSlap {
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
       _SlapDelay = _CubeSlapGame.GetSlapDelay();
       _CurrentRobot.SetLiftHeight(1.0f);
-      _FirstTimestamp = Time.time; 
+      _FirstTimestamp = Time.time;
+      _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kWaitForPounce); 
     }
 
     public override void Update() {
@@ -31,11 +32,12 @@ namespace CubeSlap {
           // Unless the cube is in the right position, trigger a failure since you moved it
           if (target.MarkersVisible) {
             float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-            if (distance < 80.0f) {
+            if (distance < 90.0f) {
               didFail = false;
             }
           }
           if (didFail) {
+            _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kCozmoWinEarly);
             _CubeSlapGame.OnFailure();
           }
         }

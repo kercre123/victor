@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Name: InvestorChallengeList
   m_EditorClassIdentifier: 
   ChallengeData:
-  - {fileID: 11400000, guid: 7135ed987d6e64971b67f3056b725701, type: 2}
-  - {fileID: 11400000, guid: 2df179545474d4a1c9a7b6452a9a1e9f, type: 2}
+  - {fileID: 11400000, guid: 287f6fbfe815b45b09c31e6b0a00c391, type: 2}
+  - {fileID: 11400000, guid: eebd08c113bca4b7585f8cb879003166, type: 2}
+  - {fileID: 11400000, guid: f8ff97abab9ce4f28b4405992866d3fa, type: 2}
+  - {fileID: 11400000, guid: a77fbd9a90cd642ebbdb10afdd8e687c, type: 2}
