@@ -63,6 +63,12 @@ namespace Anki
         // Max speed the robot can travel when in assisted RC mode
         const f32 MAX_ASSISTED_RC_SPEED = 50.f;
         
+        // Target speed to decelerate to when slowing down at end of segment
+        const u16 END_OF_PATH_TARGET_SPEED_MMPS = 20;
+        
+        // Whether or not deceleration to end of current segment has started
+        bool startedDecelOnSegment_ = false;
+        
       } // Private Members
       
       
@@ -194,6 +200,7 @@ namespace Anki
           
           currPathSegment_ = 0;
           realPathSegment_ = currPathSegment_;
+          startedDecelOnSegment_ = false;
           
 
           /*
@@ -285,6 +292,7 @@ namespace Anki
       Planning::SegmentRangeStatus ProcessPathSegment(f32 &shortestDistanceToPath_mm, f32 &radDiff)
       {
         // Get current robot pose
+        f32 distToEnd = 0;
         f32 x, y, lookaheadX, lookaheadY;
         Radians angle;
         Localization::GetDriveCenterPose(x, y, angle);
@@ -292,11 +300,11 @@ namespace Anki
         lookaheadX = x;
         lookaheadY = y;
 
-        bool checkRobotOriginStatus = false;
         Planning::PathSegmentType currType = path_[currPathSegment_].GetType();
+        assert(currType == Planning::PST_LINE || currType == Planning::PST_ARC);
         
         // Compute lookahead position
-        if (LOOK_AHEAD_DIST_MM != 0 && (currType == Planning::PST_LINE || currType == Planning::PST_ARC) ) {
+        if (LOOK_AHEAD_DIST_MM != 0) {
           if (path_[currPathSegment_].GetTargetSpeed() > 0) {
             lookaheadX += LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
             lookaheadY += LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
@@ -304,21 +312,59 @@ namespace Anki
             lookaheadX -= LOOK_AHEAD_DIST_MM * cosf(angle.ToFloat());
             lookaheadY -= LOOK_AHEAD_DIST_MM * sinf(angle.ToFloat());
           }
-          checkRobotOriginStatus = true;
         }
         
-        Planning::SegmentRangeStatus status = path_[currPathSegment_].GetDistToSegment(lookaheadX,lookaheadY,angle.ToFloat(),shortestDistanceToPath_mm,radDiff);
+        Planning::SegmentRangeStatus status = path_[currPathSegment_].GetDistToSegment(lookaheadX,lookaheadY,angle.ToFloat(),shortestDistanceToPath_mm,radDiff, &distToEnd);
         
-        // If this is the last piece or the next piece is a point turn
-        // check if the robot origin is out of range.
-        if (status == Planning::OOR_NEAR_END &&
-            checkRobotOriginStatus &&
-            ((currPathSegment_ == path_.GetNumSegments() - 1)
-             || (path_[currPathSegment_+1].GetType() == Planning::PST_POINT_TURN))
-            ) {
+        // If this is the last segment or the next segment is a point turn we need to
+        // (1) check if the lookahead point is out of range and if so, use the
+        //     robot drive center to compute distance to segment, and
+        // (2) decelerate towards the end of the piece according to the segment's
+        //     deceleration or faster if necessary.
+        if ((currPathSegment_ == path_.GetNumSegments() - 1) || (path_[currPathSegment_+1].GetType() == Planning::PST_POINT_TURN)) {
           
-          f32 junk_mm, junk_rad;
-          status = path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),junk_mm, junk_rad);
+          // 1) Check if time to switch to robot drive center instead of origin
+          if (status == Planning::OOR_NEAR_END) {
+            if (LOOK_AHEAD_DIST_MM != 0) {
+              f32 junk_mm, junk_rad;
+              status = path_[currPathSegment_].GetDistToSegment(x,y,angle.ToFloat(),junk_mm, junk_rad, &distToEnd);
+              //PRINT("PATH-OOR: status %d (distToEnd %f, currCmdSpeed %d mm/s, currSpeed %d mm/s)\n", status, distToEnd, (s32)
+              //      SpeedController::GetUserCommandedCurrentVehicleSpeed(), (s32)SpeedController::GetCurrentMeasuredVehicleSpeed());
+            }
+          } else {
+            // For purposes of determining if we should decelerate we should consider the
+            // distance remaining between the segment end and the robot's drive center
+            // rather than the lookahead point.
+            distToEnd += LOOK_AHEAD_DIST_MM;
+          }
+          
+          // 2) Check if time to decelerate
+          if (!startedDecelOnSegment_) {
+            // See if the current deceleration rate is sufficient to stop the robot at the end of the path
+            u16 decel = SpeedController::GetUserCommandedDeceleration();
+            s32 currSpeed = SpeedController::GetUserCommandedCurrentVehicleSpeed();
+            s32 currMeasSpeed = SpeedController::GetCurrentMeasuredVehicleSpeed();
+            f32 distToStopIfDecelNow = 0.5f*currSpeed*currSpeed / decel;
+
+            // Is it time to start slowing down?
+            if (distToStopIfDecelNow >= distToEnd) {
+              // Compute the deceleration necessary to stop robot at end of segment in the remaining distance
+              // Since we're actually decelerating to END_OF_PATH_TARGET_SPEED_MMPS, this is just an approximation.
+              u16 requiredDecel = 0.5f*currSpeed*currSpeed / distToEnd;
+              SpeedController::SetUserCommandedDeceleration(requiredDecel);
+              SpeedController::SetUserCommandedDesiredVehicleSpeed(END_OF_PATH_TARGET_SPEED_MMPS);
+              startedDecelOnSegment_ = true;
+              PRINT("PathFollower: Decel to end of segment %d (of %d) at %d mm/s^2 from speed of %d mm/s (meas %d mm/s) over %f mm\n",
+                    currPathSegment_, path_.GetNumSegments(), requiredDecel, currSpeed, currMeasSpeed, distToEnd);
+            }
+          }
+#         if(DEBUG_PATH_FOLLOWER)
+          else {
+            PRINT("PATH-DECEL: currCmdSpeed %d mm/s, currSpeed %d mm/s)\n",
+                  (s32)SpeedController::GetUserCommandedCurrentVehicleSpeed(),
+                  (s32)SpeedController::GetCurrentMeasuredVehicleSpeed());
+          }
+#         endif
         }
         
         return status;
@@ -463,6 +509,7 @@ namespace Anki
             return RESULT_OK;
           }
           ++realPathSegment_;
+          startedDecelOnSegment_ = false;
           
           // Command new speed for segment
           // (Except for point turns whose speeds are handled at the steering controller level)

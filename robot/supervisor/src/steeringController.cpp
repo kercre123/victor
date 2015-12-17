@@ -413,6 +413,7 @@ namespace Anki {
       
       // Stop the robot if not already
       if (SpeedController::GetUserCommandedDesiredVehicleSpeed() != 0) {
+        SpeedController::SetUserCommandedDeceleration(10000);
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
       }
 
