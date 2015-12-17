@@ -114,7 +114,7 @@ namespace SpeedTap {
     }
 
     public void UpdateUI() {
-      _GamePanel.SetScoreText(_CozmoScore, _PlayerScore);
+      _GamePanel.SetScoreText(_CozmoScore, _PlayerScore, _CozmoRoundsWon, _PlayerRoundsWon, _Rounds);
     }
 
     public void RollingBlocks() {
