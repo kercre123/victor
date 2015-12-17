@@ -51,13 +51,40 @@ namespace Anki
       u8* CamGetRaw();
       int CamGetReadyRow();
 
-      static void GetId()
+      static void PopulateIDCard()
       {
-        // XXX: Replace with flash identification block
-        printf("My ID: %08x", *(int*)(0x1FFF7A10));
-        m_idCard.esn = 2;
-        if (*(int*)(0x1FFF7A10) == 0x00250031)
-          m_idCard.esn = 1;
+        u32 id = *(u32*)(0x1FFF7A10);
+        printf("My ID: %08x", id);
+        
+        // Convert unique ID into a more recognizable ID (i.e. SSID)
+        // for 4.1 robots.
+        m_idCard.esn = 0;
+        switch(id) {
+          case 0x3f0028:
+            m_idCard.esn = 0x3A94;
+            break;
+          case 0x4c0029:
+            m_idCard.esn = 0x3A99;
+            break;
+          case 0x280026:
+            m_idCard.esn = 0x3AA0;
+            break;
+          case 0x280028:
+            m_idCard.esn = 0x3AA7;
+            break;
+          case 0x530029:   // BryonsHead
+            m_idCard.esn = 0x40;
+            break;
+          default:
+            m_idCard.esn = id;
+            break;
+        }
+      }
+      
+           
+      u32 GetID()
+      {
+        return m_idCard.esn;
       }
       
       volatile ImageSendMode imageSendMode_ = Stream;
@@ -208,7 +235,7 @@ int main(void)
   LightsInit();
   UARTInit();
   printf("UART..");
-  GetId();
+  PopulateIDCard();
 
   FrontCameraInit();
   printf("camera..");

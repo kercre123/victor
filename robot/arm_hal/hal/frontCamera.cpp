@@ -22,65 +22,51 @@ namespace Anki
   namespace Cozmo
   {
     
-#ifdef COZMO_ROBOT_3A99
-    // Calibration values from August 11, 2015 - on headboard with SSID 3a99
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 273.316765624f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 274.838250766f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 199.638842523f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 160.682934109f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.03956f,
-      -0.08955f,
-      0.00044f,
-      0.00188f
-    };
-#elif defined(COZMO_ROBOT_3A94)
-    // Calibration values from Oct 26, 2015 - on headboard with SSID 3a94
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 278.116827643f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 278.911858028f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 192.335473712f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 159.149178809f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.09793295f,
-      -0.32495782f,
-      0.00181705f,
-      -0.00264056f
-    };
-#elif defined(COZMO_ROBOT_3AA0)
-    // Calibration values from Oct 14, 2015 - on headboard with SSID 3aa0
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 274.291991607f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 276.143080182f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 191.448668019f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 150.948649329f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.21464833f,
-      -0.92671181f,
-      0.00176247f,
-      -0.00123075f
-    };    
-#elif defined(COZMO_ROBOT_3AA7)
-    // Calibration values from Dec 9, 2015 - on 4.0 robot headboard with SSID 3aa7
-    const u16 HEAD_CAM_CALIB_WIDTH  = 400;
-    const u16 HEAD_CAM_CALIB_HEIGHT = 296;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 277.967971768f;
-    const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 280.139456164f;
-    const f32 HEAD_CAM_CALIB_CENTER_X       = 199.567887592f;
-    const f32 HEAD_CAM_CALIB_CENTER_Y       = 151.843694566f;
-    const f32 HEAD_CAM_CALIB_DISTORTION[NUM_RADIAL_DISTORTION_COEFFS] = {
-      0.192541876f,
-      -0.708972973f,
-      -0.000604805681f,
-      -0.000706399739f
-    };
-#else
-#error Need to define which robot. (e.g. COZMO_ROBOT_3A94)
-#endif
+    // private namespace
+    namespace {
+      const u16 HEAD_CAM_CALIB_WIDTH  = 400;
+      const u16 HEAD_CAM_CALIB_HEIGHT = 296;
+      
+      static HAL::CameraInfo camCal_3A94 = {
+        278.116827643f,  // focalLength_x
+        278.911858028f,  // focalLength_y
+        192.335473712f,  // center_x
+        159.149178809f,  // center_y
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+      
+      static HAL::CameraInfo camCal_3A99 = {
+        273.316765624f,
+        274.838250766f,
+        199.638842523f,
+        160.682934109f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+      
+      static HAL::CameraInfo camCal_3AA0 = {
+        274.291991607f,
+        276.143080182f,
+        191.448668019f,
+        150.948649329f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+
+      static HAL::CameraInfo camCal_3AA7 = {
+        277.967971768f,
+        280.139456164f,
+        199.567887592f,
+        151.843694566f,
+        0.f,
+        HEAD_CAM_CALIB_HEIGHT,
+        HEAD_CAM_CALIB_WIDTH
+      };
+    }
     
     
     namespace HAL
@@ -1319,17 +1305,18 @@ namespace Anki
 
       const CameraInfo* GetHeadCamInfo(void)
       {
-        static CameraInfo s_headCamInfo = {
-          HEAD_CAM_CALIB_FOCAL_LENGTH_X,
-          HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-          HEAD_CAM_CALIB_CENTER_X,
-          HEAD_CAM_CALIB_CENTER_Y,
-          0.f,
-          HEAD_CAM_CALIB_HEIGHT,
-          HEAD_CAM_CALIB_WIDTH
-        };
-
-        return &s_headCamInfo;
+        switch(GetID())
+        {
+          case 0x3A94:
+            return &camCal_3A94;
+          case 0x3A99:
+            return &camCal_3A99;
+          case 0x3AA0:
+            return &camCal_3AA0;
+          case 0x3AA7:
+          default:
+            return &camCal_3AA7;
+        }
       }
     }
   }

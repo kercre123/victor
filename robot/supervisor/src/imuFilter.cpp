@@ -339,8 +339,10 @@ namespace Anki {
         
         if (!infoDisplayed) {
           
-          HAL::FacePrintf("Motors DISABLED\n"
+          HAL::FacePrintf("ID: %x\n"
+                          "Motors OFF\n"
                           "Batt: %.1fV\n",
+                          HAL::GetID(),
                           0.1f * (f32)HAL::BatteryGetVoltage10x()
                           );
 
@@ -350,8 +352,10 @@ namespace Anki {
           HeadController::Disable();
         } else {
           
-          HAL::FacePrintf("Motors ENABLED\n"
+          HAL::FacePrintf("ID: %x\n"
+                          "Motors ON\n"
                           "Batt: %.1fV\n",
+                          HAL::GetID(),
                           0.1f * (f32)HAL::BatteryGetVoltage10x()
                           );
           

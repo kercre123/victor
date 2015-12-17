@@ -525,6 +525,9 @@ namespace Anki
 
       IDCard* GetIDCard();
 
+      // Returns the unique serial number of the robot
+      u32 GetID();
+      
       // For board-level debugging only - read the comments in uart.cpp or find a better printf
       void BoardPrintf(const char *format, ...);
     } // namespace HAL
