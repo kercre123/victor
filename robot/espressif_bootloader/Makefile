@@ -35,7 +35,7 @@ $(RBOOT_BUILD_BASE)/rboot-stage2a.o: rboot-stage2a.c rboot-private.h rboot.h
 	@echo "CC $<"
 	@$(CC) $(CFLAGS) $(RBOOT_EXTRA_INCDIR) -c $< -o $@
 
-$(RBOOT_BUILD_BASE)/rboot.o: rboot.c rboot-private.h rboot.h
+$(RBOOT_BUILD_BASE)/rboot.o: rboot.c rboot-private.h rboot.h build/version.h
 	@echo "CC $<"
 	@$(CC) $(CFLAGS) -I$(RBOOT_BUILD_BASE) $(RBOOT_EXTRA_INCDIR) -c $< -o $@
 

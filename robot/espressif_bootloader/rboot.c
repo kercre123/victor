@@ -32,6 +32,7 @@
  */
 
 #include "rboot-private.h"
+#include "build/version.h"
 
 //#define DEBUG
 
@@ -212,6 +213,7 @@ void NOINLINE setupSerial(void)
   //ets_delay_us(2000000);
   
   ets_printf("Welcome to rboot\r\n");
+  ets_printf("Version commit %x\r\nBuild by %s on %s\r\n", COZMO_VERSION_COMMIT, DAS_USER, BUILD_DATE);
 }
 
 /** Command SPI flash to make certain sectors read only until next power cycle
