@@ -235,6 +235,8 @@ public class Robot : IDisposable {
   private float _LiftHeightRequested;
   private float _LastLiftHeightRequestTime;
 
+  public string CurrentBehaviorString { get; set; }
+
   private U2G.DriveWheels DriveWheelsMessage;
   private U2G.PlaceObjectOnGroundHere PlaceObjectOnGroundHereMessage;
   private U2G.CancelAction CancelActionMessage;
