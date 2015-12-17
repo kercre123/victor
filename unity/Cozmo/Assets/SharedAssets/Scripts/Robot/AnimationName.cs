@@ -9,6 +9,7 @@ public static class AnimationName {
   public const string kPounceForward = "pounceForward";
 
   public const string kMajorWin = "majorWin";
+  public const string kMajorFail = "MajorFail";
   public const string kShocked = "shocked";
 
   public const string kEnjoyPattern = "enjoyPattern";

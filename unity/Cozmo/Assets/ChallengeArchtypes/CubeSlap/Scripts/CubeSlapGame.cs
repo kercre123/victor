@@ -156,7 +156,7 @@ namespace CubeSlap {
       _SuccessCount++;
       Progress = ((float)_SuccessCount / (float)_SuccessGoal);
       AnimationState animState = new AnimationState();
-      animState.Initialize("MajorFail", HandleAnimationDone);
+      animState.Initialize(AnimationName.kMajorFail, HandleAnimationDone);
       _StateMachine.SetNextState(animState);
     }
 
