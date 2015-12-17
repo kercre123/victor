@@ -78,11 +78,17 @@ structure DeviceAudioCompleted {
   Audio::EventType eventType,
 }
 
+// Used by TrackFaceAction
+structure TrackFaceCompleted {
+  int_32 faceID
+}
+
 // Use tag to determine what struct to use
 union ActionCompletedUnion {
   ObjectInteractionCompleted  objectInteractionCompleted,
   AnimationCompleted          animationCompleted,
   DeviceAudioCompleted        deviceAudioCompleted,
+  TrackFaceCompleted          trackFaceCompleted,
 }
 
 
