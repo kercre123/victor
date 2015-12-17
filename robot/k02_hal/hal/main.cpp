@@ -31,7 +31,11 @@ namespace Anki
       void CameraInit(void);
       void TimerInit(void);
       void PowerInit(void);
-      
+
+      TimeStamp_t t_;
+      TimeStamp_t GetTimeStamp(void){ return t_; }
+      void SetTimeStamp(TimeStamp_t t) {t_ = t;}
+
       // This method is called at 7.5KHz (once per scan line)
       // After 7,680 (core) cycles, it is illegal to run any DMA or take any interrupt
       // So, you must hit all the registers up front in this method, and set up any DMA to finish quickly
@@ -78,7 +82,7 @@ int main (void)
   while((MCG->S & MCG_S_CLKST_MASK)) ;
 
   MicroWait(100000); // Because the FLL is lame
-  
+
   SPI::Init();
   I2C::Init();
   IMU::Init();
@@ -89,7 +93,7 @@ int main (void)
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraInit()
   // So, we just loop around for now
-  StartupSelfTest();
+  //StartupSelfTest();
 
   for(;;) {
     // Wait for head body sync to occur

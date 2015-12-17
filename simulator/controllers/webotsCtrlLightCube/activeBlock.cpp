@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 
 #include <webots/Supervisor.hpp>
 #include <webots/Receiver.hpp>

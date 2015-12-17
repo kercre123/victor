@@ -14,6 +14,7 @@
 #ifndef VIZ_MANAGER_H
 #define VIZ_MANAGER_H
 
+#include "anki/common/constantsAndMacros.h"
 #include "anki/common/basestation/math/fastPolygon2d.h"
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/polygon.h"

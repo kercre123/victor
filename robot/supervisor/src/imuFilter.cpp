@@ -16,6 +16,7 @@
 
 #include "anki/common/robot/trig_fast.h"
 #include "imuFilter.h"
+#include <math.h>
 #include "headController.h"
 #include "liftController.h"
 #include "wheelController.h"
@@ -37,6 +38,7 @@ static const unsigned int COZMO_VERSION_COMMIT = 0;
 // For event callbacks
 #include "testModeController.h"
 
+#include "anki/cozmo/robot/version.h"
 
 #define DEBUG_IMU_FILTER 0
 

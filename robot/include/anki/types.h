@@ -36,7 +36,11 @@ typedef uint64_t u64;
 typedef int64_t  s64;
 typedef float    f32;
 typedef double   f64;
-#include "util/math/constantsAndMacros.h"
+//#include "util/math/constantsAndMacros.h"
+#endif
+
+#ifndef NULL
+#define NULL 0
 #endif
 
 // A key associated with each computed pose retrieved from history
@@ -71,7 +75,7 @@ namespace Anki
   //       bytes), has implications for message alignment since it currently
   //       comes first in the message structs.
   typedef u32 TimeStamp_t;
-  
+
   // PoseFrameID_t is used to denote a set of poses that were recorded since
   // the last absolute localization update. This is required in order to
   // know which pose updates coming from the robot are of the robot before

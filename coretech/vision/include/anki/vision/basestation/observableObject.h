@@ -20,6 +20,8 @@
 #include <list>
 #include <set>
 
+#include "anki/common/constantsAndMacros.h"
+
 #include "anki/vision/basestation/visionMarker.h"
 
 #include "anki/common/basestation/objectIDs.h"

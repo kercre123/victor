@@ -12,6 +12,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #ifndef _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 #define _ANKICORETECHEMBEDDED_COMMON_UTILITIES_H_
 
+#include <math.h>
+#include <float.h>
+#include "anki/common/types.h"
+#include "anki/common/constantsAndMacros.h"
 #include "anki/common/robot/utilities_declarations.h"
 #include "anki/common/robot/errorHandling.h"
 #include "anki/common/robot/utilities_c.h"

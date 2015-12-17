@@ -3,6 +3,7 @@
 #include "hal/i2c.h"
 #include "hal/imu.h"
 #include "MK02F12810.h"
+#include <string.h>
 #include "anki/cozmo/robot/drop.h"
 
 static const int IMU_UPDATE_FREQUENCY = 200; // 200hz (5ms)

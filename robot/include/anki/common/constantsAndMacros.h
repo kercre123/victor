@@ -27,15 +27,32 @@
  *
  **/
 
+#ifndef UTIL_CONSTANTS_AND_MACROS_H_
+#define UTIL_CONSTANTS_AND_MACROS_H_
 
-#ifndef ANKICORETECH_COMMON_CONSTANTSANDMACROSOLD_H_
-#define ANKICORETECH_COMMON_CONSTANTSANDMACROSOLD_H_
+//////////////////////////////////////////////////////////////////////////////
+// MISCELLANEOUS CONSTANTS
+//////////////////////////////////////////////////////////////////////////////
+#ifndef TRUE
+#define TRUE                  1
+#endif
 
-#include <math.h>
+#ifndef FALSE
+#define FALSE                 0
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // MATH CONSTANTS
 //////////////////////////////////////////////////////////////////////////////
+
+/* Why not use M_PI and M_PI_2 that are provided by the math.h include above? */
+#ifndef M_PI
+#define M_PI       3.14159265358979323846f
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2     1.57079632679489661923f
+#endif
 
 #ifndef PI
 #define PI M_PI
@@ -52,7 +69,6 @@
 #ifndef PIDIV2_F
 #define PIDIV2_F ((float) M_PI_2)
 #endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // MAX / MIN VALUES
@@ -209,4 +225,4 @@
 #define QUOTE_HELPER(__ARG__) #__ARG__
 #define QUOTE(__ARG__) QUOTE_HELPER(__ARG__)
 
-#endif /* ANKICORETECH_COMMON_CONSTANTSANDMACROSOLD_H_ */
+#endif // UTIL_CONSTANTS_AND_MACROS_H_

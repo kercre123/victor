@@ -23,7 +23,7 @@
 #define ANKICORETECH_COMMON_TYPES_H_
 
 #include <stdint.h>
-#include "util/math/constantsAndMacros.h"
+#include "anki/common/constantsAndMacros.h"
 
 typedef uint8_t  u8;
 typedef int8_t   s8;
@@ -67,7 +67,7 @@ namespace Anki
   //       bytes), has implications for message alignment since it currently
   //       comes first in the message structs.
   typedef u32 TimeStamp_t;
-  
+
   // PoseFrameID_t is used to denote a set of poses that were recorded since
   // the last absolute localization update. This is required in order to
   // know which pose updates coming from the robot are of the robot before

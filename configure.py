@@ -9,6 +9,7 @@ import os.path
 import platform
 import sys
 import time
+import subprocess
 
 ENGINE_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
 
@@ -372,9 +373,7 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
-        print "******************HERE1"
         generate_gyp(self.gyp_dir, self.platform, self.options)
-        print "******************HERE2"
         ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):
@@ -421,8 +420,15 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
     
     print_header('RUNNING COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
     
+    versionHeaderFile = os.path.join("robot","include","anki","cozmo","robot","version.h")
+    versionHeaderTool = os.path.join("robot","tools","versionGenerator","versionGenerator.sh")
+    
     if options.command in ('generate', 'build', 'install', 'run'):
         install_dependencies(options)
+        # Generate version header
+        if not os.path.isfile(versionHeaderFile):
+            if subprocess.call([versionHeaderTool, versionHeaderFile]) != 0:
+                sys.exit("Couldn't generate version header.")
         # TODO: Generate CLAD
     
     for platform in options.platforms:
@@ -441,6 +447,8 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
                 print_status('Deleting generated folders (if empty)...')
             for folder in shared_generated_folders:
                 ankibuild.util.File.rmdir(folder)
+        if os.path.isfile(versionHeaderFile):
+            os.remove(versionHeaderFile)
         
         # TODO: Delete generated CLAD
     

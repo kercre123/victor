@@ -21,6 +21,8 @@
 #ifndef _ANKICORETECH_COMMON_POINT_IMPL_H_
 #define _ANKICORETECH_COMMON_POINT_IMPL_H_
 
+#include "anki/common/constantsAndMacros.h"
+
 #include "anki/common/basestation/math/point.h"
 
 #include "anki/common/shared/radians.h"

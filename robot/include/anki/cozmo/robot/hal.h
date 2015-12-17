@@ -31,12 +31,9 @@
 
 #ifndef ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
 #define ANKI_COZMO_ROBOT_HARDWAREINTERFACE_H
-#include "anki/common/robot/config.h"
-#include "anki/common/robot/utilities_c.h"
 #include "anki/types.h"
-#include "anki/vision/CameraSettings.h"
+#include "anki/common/robot/config.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
@@ -53,7 +50,11 @@
 
 // Disables PRINT macros entirely.
 // When 1, overrides all of the above macros.
+#ifdef TARGET_K02
+#define DISABLE_PRINT_MACROS 1
+#else
 #define DISABLE_PRINT_MACROS 0
+#endif
 
 // Enable to stream debug images via UART to Pete's tool.
 // This disables PRINT macros so they don't disrupt the stream of debug and image data.

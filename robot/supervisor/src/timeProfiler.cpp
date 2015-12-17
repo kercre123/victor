@@ -19,6 +19,7 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -29,12 +30,12 @@ namespace Cozmo {
     name_[MAX_PROF_NAME_LENGTH-1] = 0;
     Reset();
   }
-  
+
   void TimeProfiler::Reset()
   {
     numCyclesInProfile_ = 0;
     isProfiling_ = false;
-    
+
     const u32 BUFSIZE = MAX_NUM_PROFILES * sizeof(u32);
     memset(timeProfiles_, 0, BUFSIZE);
     memset(totalTimeProfiles_, 0, BUFSIZE);
@@ -44,35 +45,35 @@ namespace Cozmo {
   void TimeProfiler::StartProfiling(const char* profName) {
     timeProfIdx_ = 0;
     timeProfiles_[timeProfIdx_] = HAL::GetMicroCounter();
-    
+
     if (numCyclesInProfile_ == 0) {
       strncpy(timeProfName_[timeProfIdx_], profName, MAX_PROF_NAME_LENGTH);
       timeProfName_[timeProfIdx_][MAX_PROF_NAME_LENGTH-1] = 0;
     }
-    
+
     ++timeProfIdx_;
     isProfiling_ = true;
   }
-  
+
   void TimeProfiler::MarkNextProfile_Internal() {
     assert(timeProfIdx_ < MAX_NUM_PROFILES);
     timeProfiles_[timeProfIdx_] = HAL::GetMicroCounter();
-    
+
     // Update total time
     u32 duration = timeProfiles_[timeProfIdx_] - timeProfiles_[timeProfIdx_-1];
     totalTimeProfiles_[timeProfIdx_-1] += duration;
-    
+
     // Update max observed time
     if (duration > maxTimeProfiles_[timeProfIdx_-1]) {
       maxTimeProfiles_[timeProfIdx_-1] = duration;
     }
-    
+
     ++timeProfIdx_;
   }
-  
+
   void TimeProfiler::MarkNextProfile(const char* profName) {
     assert(timeProfIdx_ < MAX_NUM_PROFILES);
-    
+
     if (numCyclesInProfile_ == 0) {
       strncpy(timeProfName_[timeProfIdx_], profName, MAX_PROF_NAME_LENGTH);
       timeProfName_[timeProfIdx_][MAX_PROF_NAME_LENGTH-1] = 0;
@@ -80,8 +81,8 @@ namespace Cozmo {
 
     MarkNextProfile_Internal();
   }
-  
-  
+
+
   void TimeProfiler::EndProfiling() {
     MarkNextProfile_Internal();
     ++numCyclesInProfile_;
@@ -98,40 +99,40 @@ namespace Cozmo {
     if (index < timeProfIdx_) {
       return (const char*)&timeProfName_[index];
     }
-    
+
     return NULL;
   }
-  
+
   u32 TimeProfiler::ComputeStats(u32 *avgTimes[], u32 *maxTimes[]) {
     if (isProfiling_) {
       PRINT("WARN (TimeProfiler): ComputeStats called in middle of profile. Ignoring.\n");
       return 0;
     }
-    
+
     // Compute average time
     for(u8 i=0; i<timeProfIdx_; ++i) {
       avgTimeProfiles_[i] = totalTimeProfiles_[i] / numCyclesInProfile_;
     }
-    
+
     if (avgTimes)  *avgTimes = avgTimeProfiles_;
     if (maxTimes)  *maxTimes = maxTimeProfiles_;
-    
+
     return timeProfIdx_-1;
   }
-  
+
   void TimeProfiler::PrintStats() {
     RobotInterface::TimeProfileStat msg;
     u32 *avgTimes;
     u32 *maxTimes;
-    
+
     u32 numProfiles = ComputeStats(&avgTimes, &maxTimes);
-    
+
     msg.isHeader = true;
     msg.profName_length = strlen(name_); // Limits to 255 because _length is a u8
     memcpy(msg.profName, name_, msg.profName_length);
     RobotInterface::SendMessage(msg);
     msg.isHeader = false;
-    
+
     for (u32 i=0; i<numProfiles; ++i) {
       msg.profName_length = strlen(timeProfName_[i]);  // Limits to 255 because _length is a u8
       memcpy(msg.profName, timeProfName_[i], msg.profName_length);
@@ -140,8 +141,8 @@ namespace Cozmo {
       RobotInterface::SendMessage(msg);
     }
   }
-  
-  
-  
+
+
+
 } // namespace Cozmo
 } // namespace Anki

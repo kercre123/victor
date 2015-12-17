@@ -45,6 +45,7 @@ int main(int argc, char **argv)
   
   while(Robot::step_MainExecution() == Anki::RESULT_OK)
   {
+    HAL::UpdateDisplay();
     if( Robot::step_LongExecution() == Anki::RESULT_FAIL ) {
       fprintf(stdout, "step_LongExecution failed.\n");
       break;
