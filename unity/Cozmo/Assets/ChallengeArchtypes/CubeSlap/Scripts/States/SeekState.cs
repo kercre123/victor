@@ -15,6 +15,7 @@ namespace CubeSlap {
       _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kSetUp);
       _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(0.7f);
+      _CubeSlapGame.ResetSlapChance();
     }
 
     // Target cube is marked as Red if not in the right position, and green if in the right position.

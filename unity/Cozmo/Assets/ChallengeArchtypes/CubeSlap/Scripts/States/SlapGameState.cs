@@ -7,14 +7,19 @@ namespace CubeSlap {
     private CubeSlapGame _CubeSlapGame;
     private float _SlapDelay;
     private float _FirstTimestamp = -1;
+    private float _LastSeenTimeStamp = -1;
+    private float _TriggerLossDelay = 0.5f;
     public bool _SlapTriggered = false;
 
     public override void Enter() {
       base.Enter();
       _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
       _SlapDelay = _CubeSlapGame.GetSlapDelay();
+      _CurrentRobot.SetHeadAngle(-1.0f);
       _CurrentRobot.SetLiftHeight(1.0f);
       _FirstTimestamp = Time.time;
+      _SlapTriggered = false;
+      _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kWaitForPounce); 
     }
 
@@ -34,19 +39,30 @@ namespace CubeSlap {
             float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
             if (distance < 90.0f) {
               didFail = false;
+              ResetLastSeenTimeStamp();
             }
           }
           if (didFail) {
-            _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kCozmoWinEarly);
-            _CubeSlapGame.OnFailure();
+            if (_LastSeenTimeStamp == -1) {
+              _LastSeenTimeStamp = Time.time;
+            }
+            if (Time.time - _LastSeenTimeStamp > _TriggerLossDelay) {
+              _CubeSlapGame.ShowHowToPlaySlide(CubeSlapGame.kCozmoWinEarly);
+              _CubeSlapGame.OnFailure();
+            }
           }
         }
 
         if (Time.time - _FirstTimestamp > _SlapDelay) {
+          
           _CubeSlapGame.AttemptSlap();
           _SlapTriggered = true;
         }
       }
+    }
+
+    private void ResetLastSeenTimeStamp() {
+      _LastSeenTimeStamp = -1;
     }
 
     public override void Exit() {

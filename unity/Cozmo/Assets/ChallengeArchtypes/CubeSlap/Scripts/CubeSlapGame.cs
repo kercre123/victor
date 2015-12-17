@@ -16,6 +16,9 @@ namespace CubeSlap {
     private int _SuccessGoal;
     private int _SuccessCount;
     private bool _CliffFlagTrown = false;
+    private float _SlapChance;
+    private float _BaseSlapChance;
+    private int _MaxFakeouts;
 
     private LightCube _CurrentTarget = null;
 
@@ -25,6 +28,8 @@ namespace CubeSlap {
       _SuccessGoal = config.SuccessGoal;
       _MinSlapDelay = config.MinSlapDelay;
       _MaxSlapDelay = config.MaxSlapDelay;
+      _BaseSlapChance = config.StartingSlapChance;
+      _MaxFakeouts = config.MaxFakeouts;
       _SuccessCount = 0;
       Progress = 0.0f;
       InitializeMinigameObjects();
@@ -79,11 +84,30 @@ namespace CubeSlap {
 
     // Attempt the pounce
     public void AttemptSlap() {
-      // Enter Animation State to attempt a pounce.
-      // Set Callback for HandleEndSlapAttempt
-      Debug.Log("CubeSlap - Attempt Slap now");
-      _CliffFlagTrown = false;
-      CurrentRobot.SendAnimation(AnimationName.kPounceForward, HandleEndSlapAttempt);
+      float SlapRoll;
+      if (_MaxFakeouts <= 0) {
+        SlapRoll = 0.0f;
+      }
+      else {
+        SlapRoll = Random.Range(0.0f,1.0f);
+      }
+      if (SlapRoll <= _SlapChance) {
+        Debug.Log("CubeSlap - Attempt Slap now");
+        // Enter Animation State to attempt a pounce.
+        // Set Callback for HandleEndSlapAttempt
+        _CliffFlagTrown = false;
+        CurrentRobot.SendAnimation(AnimationName.kPounceForward, HandleEndSlapAttempt);
+      }
+      else {
+        // If you do a fakeout instead, increase the likelyhood of a slap
+        // attempt based on the max number of fakeouts.
+        int rand = Random.Range(1, 4);
+        Debug.Log(string.Format("CubeSlap - Attempt pounceFakeout{0}",rand));
+        _SlapChance += ((1.0f - _BaseSlapChance) / _MaxFakeouts);
+        AnimationState animState = new AnimationState();
+        animState.Initialize(string.Format("pounceFakeout{0}",rand), HandleFakeoutEnd);
+        _StateMachine.SetNextState(animState);
+      }
     }
 
     private void HandleEndSlapAttempt(bool success) {
@@ -101,6 +125,10 @@ namespace CubeSlap {
         ShowHowToPlaySlide(kPlayerWin);
         OnSuccess();
       }
+    }
+
+    public void HandleFakeoutEnd(bool success) {
+      _StateMachine.SetNextState(new SlapGameState());
     }
 
     private void HandleCliffEvent(Anki.Cozmo.CliffEvent cliff) {
@@ -146,6 +174,10 @@ namespace CubeSlap {
 
     public float GetSlapDelay() {
       return Random.Range(_MinSlapDelay,_MaxSlapDelay);
+    }
+
+    public void ResetSlapChance() {
+      _SlapChance = _BaseSlapChance;
     }
  
   }

@@ -8,5 +8,7 @@ namespace CubeSlap {
     public float MaxSlapDelay;
     public int MaxAttempts;
     public int SuccessGoal;
+    public float StartingSlapChance;
+    public int MaxFakeouts;
   }
 }
