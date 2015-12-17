@@ -238,13 +238,6 @@ bool RobotAudioClient::IsFirstBufferReady()
 }
 
 
-// Protected
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
-{
-}
-
-
 } // Audio
 } // Cozmo
 } // Anki

@@ -25,7 +25,10 @@
 #include "clad/audio/audioSwitchTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include <vector>
+#include <unordered_map>
 #include <functional>
+#include <util/hashing/hashing.h>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -40,14 +43,14 @@ class AudioEngineClient : Util::noncopyable
 public:
   
   using CallbackIdType = uint16_t;
-  using CallbackFunc = std::function<void ( )>;
+  using CallbackFunc = std::function< void ( AudioCallback callback ) >;
   
   void SetMessageHandler( AudioEngineMessageHandler* messageHandler );
   
   CallbackIdType PostEvent( EventType event,
                             GameObjectType gameObject = GameObjectType::Default,
                             AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone,
-                            CallbackFunc* callback = nullptr );
+                            CallbackFunc callback = nullptr );
   
   void StopAllEvents( GameObjectType gameObject = GameObjectType::Invalid );
 
@@ -72,8 +75,19 @@ protected:
   static constexpr CallbackIdType kInvalidCallbackId = 0;
   CallbackIdType _previousCallbackId = kInvalidCallbackId;
   
+  struct AudioCallbackBundle {
+    AudioCallbackFlag Flag = AudioCallbackFlag::EventNone;
+    CallbackFunc      Func = nullptr;
+    AudioCallbackBundle(AudioCallbackFlag flag, CallbackFunc func)
+    : Flag( flag )
+    , Func( func )
+    { }
+  };
   
-  virtual void HandleCallbackEvent( const AudioCallback& callbackMsg ) {}
+  using CallbackMap = std::unordered_map< CallbackIdType, AudioCallbackBundle >;
+  CallbackMap _callbackMap;
+  
+  void HandleCallbackEvent( const AudioCallback& callbackMsg );
   
   CallbackIdType GetNewCallbackId();
   

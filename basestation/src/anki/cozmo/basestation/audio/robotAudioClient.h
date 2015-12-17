@@ -78,11 +78,6 @@ public:
   // This returns true if there is no RobotAudioBuffer
   bool IsFirstBufferReady();
 
-protected:
-  
-  // Override callback events for client
-  virtual void HandleCallbackEvent( const AudioCallback& callbackMsg ) override;
-  
   
 private:
   
