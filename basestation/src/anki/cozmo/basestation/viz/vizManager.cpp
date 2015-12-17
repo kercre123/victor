@@ -291,7 +291,7 @@ namespace Anki {
     void VizManager::EraseCuboid(const u32 blockID)
     {
       CORETECH_ASSERT(blockID < _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
-      EraseVizObject(_VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID);
+      EraseVizObject(VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID);
     }
 
     void VizManager::EraseAllCuboids()
@@ -530,6 +530,18 @@ namespace Anki {
     void VizManager::EraseAllMatMarkers()
     {
       EraseAllQuadsWithType((uint32_t)VizQuadType::VIZ_QUAD_MAT_MARKER);
+    }
+    
+    // ==== Draw functions by identifier =====
+
+    void VizManager::DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessage{identifier, quads}));
+    }
+    
+    void VizManager::EraseQuadVector(const std::string& identifier)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SimpleQuadVectorMessage{identifier, {}}));
     }
     
     // =============== Circle methods ==================

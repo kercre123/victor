@@ -28,6 +28,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/vizInterface/messageViz.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include "util/math/numericCast.h"
 #include <vector>
 
 namespace Anki {
@@ -275,6 +276,8 @@ namespace Anki {
       void DrawPoly(const u32 polyID,
                     const FastPolygon& poly,
                     const ColorRGBA& color);
+
+      // ==== Erase functions =====
       
       void ErasePoly(u32 polyID);
       
@@ -290,6 +293,20 @@ namespace Anki {
       void EraseAllPlannerObstacles(const bool isReplan);
       
       void EraseAllMatMarkers();
+
+      // ==== Draw functions by identifier =====
+      // This supports sending requests to draw primitives without requiring to assign a single ID to every
+      // one of them. For debugging purposes where the underlaying geometry is not directly related to any object
+      
+      // vector if simple quads
+      using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
+      void DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads);
+      void EraseQuadVector(const std::string& identifier);
+      
+//      // TODO use poly template
+//      // helper to create SimpleQuad from Color and Quad2f
+//      inline static VizInterface::SimpleQuad MakeSimpleQuad(const ColorRGBA& color, const Quad3f& quad);
+      inline static VizInterface::SimpleQuad MakeSimpleQuad(const ColorRGBA& color, const Point3f& center, float sideSize);
       
       // ==== Circle functions =====
       template<typename T>
@@ -563,6 +580,37 @@ namespace Anki {
     {
       DrawQuad(VizQuadType::VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, color);
     }
+    
+    VizInterface::SimpleQuad VizManager::MakeSimpleQuad(const ColorRGBA& color, const Point3f& center, float sideSize)
+    {
+      VizInterface::SimpleQuad ret;
+      ret.color = color.AsRGBA();
+      ret.sideSize = Anki::Util::numeric_cast<float>(MM_TO_M(sideSize));;
+      ret.center[0] = Anki::Util::numeric_cast<float>(MM_TO_M(center[0]));
+      ret.center[1] = Anki::Util::numeric_cast<float>(MM_TO_M(center[1]));
+      ret.center[2] = Anki::Util::numeric_cast<float>(MM_TO_M(center[2]));
+      return ret;
+    }
+//    VizInterface::SimpleQuad VizManager::MakeSimpleQuad(const ColorRGBA& color, const Quad3f& quad)
+//    {
+//      VizInterface::SimpleQuad ret;
+//      ret.color = color.AsRGBA();
+//      ret.coords[0] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::TopLeft].x() ));
+//      ret.coords[1] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::TopLeft].y() ));
+//      ret.coords[2] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::TopLeft].z() ));
+//      ret.coords[3] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::BottomLeft].x() ));
+//      ret.coords[4] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::BottomLeft].y() ));
+//      ret.coords[5] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::BottomLeft].z() ));
+//      ret.coords[6] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::TopRight].x() ));
+//      ret.coords[7] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::TopRight].y() ));
+//      ret.coords[8] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::TopRight].z() ));
+//      ret.coords[9] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::BottomRight].x() ));
+//      ret.coords[10] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::BottomRight].y() ));
+//      ret.coords[11] = Anki::Util::numeric_cast<float>(MM_TO_M( quad[Quad::BottomRight].z() ));
+//      
+//      return ret;
+//    }
+
     
     template <typename T>
     void VizManager::DrawXYCircle(u32 polyID,

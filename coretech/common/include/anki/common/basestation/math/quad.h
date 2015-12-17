@@ -126,6 +126,9 @@ namespace Anki {
     //  - the corners are ordered such that TopLeft/BottomRight are opposite
     //    one antoher and BottomLeft/TopRight are opposite one another
     bool Contains(const Point<2,T>& point) const;
+    
+    // Returns true if this quad contains all the corners from the other quad (fully contains the other convex quad)
+    bool Contains(const Quadrilateral<2,T>& other) const;
 
     // Returns true if the two quads intersect.
     // Only valid for 2D quads. Assumes quads are convex and checks whether

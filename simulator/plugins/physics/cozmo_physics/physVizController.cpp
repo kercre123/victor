@@ -37,6 +37,8 @@ void PhysVizController::Init() {
     std::bind(&PhysVizController::ProcessVizObjectMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::Quad,
     std::bind(&PhysVizController::ProcessVizQuadMessage, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SimpleQuadVectorMessage,
+    std::bind(&PhysVizController::ProcessVizSimpleQuadVectorMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EraseObject,
     std::bind(&PhysVizController::ProcessVizEraseObjectMessage, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EraseQuad,
@@ -272,6 +274,39 @@ void PhysVizController::Draw(int pass, const char *view)
       } // for each quad
     } // for each quad type
 
+    // Draw simple quad vectors
+    for(const auto & quadVectorPerIdentifier : _simpleQuadVectorMap) {
+      for(const auto & quadInVector : quadVectorPerIdentifier.second) {
+
+        // Set color for the quad
+        Anki::ColorRGBA quadColor(quadInVector.color);
+        glColor4ub(quadColor.r(), quadColor.g(), quadColor.b(), quadColor.alpha());
+        
+        const float halfSize = quadInVector.sideSize*0.5f;
+        const float zPadding = MM_TO_M(10.0f);
+        DrawQuadFill(
+            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2]+zPadding, // up L
+            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2]+zPadding, // lo L
+            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]+zPadding, // up R
+            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]+zPadding  // lo R
+         );
+        
+        glColor4ub(255,255,255,255);
+        DrawQuad(
+            quadInVector.center[0]+halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2]+zPadding, // up L
+            quadInVector.center[0]-halfSize, quadInVector.center[1]+halfSize, quadInVector.center[2]+zPadding, // lo L
+            quadInVector.center[0]+halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]+zPadding, // up R
+            quadInVector.center[0]-halfSize, quadInVector.center[1]-halfSize, quadInVector.center[2]+zPadding  // lo R
+         );
+
+        // Restore default color
+        glColor4ub(::Anki::NamedColors::DEFAULT.r(),
+          ::Anki::NamedColors::DEFAULT.g(),
+          ::Anki::NamedColors::DEFAULT.b(),
+          ::Anki::NamedColors::DEFAULT.alpha());
+      } // for each quadInVector
+    } // for each vector in map
+
     glPopMatrix(); // global viz transform
     
   } // if (pass == 1 && view == NULL)
@@ -319,6 +354,21 @@ void PhysVizController::ProcessVizQuadMessage(const AnkiEvent<VizInterface::Mess
     payload.xLowerRight, payload.yLowerRight, payload.zLowerRight);
 
   _quadMap[(int)payload.quadType][payload.quadID] = VizInterface::Quad(payload);
+}
+
+void PhysVizController::ProcessVizSimpleQuadVectorMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SimpleQuadVectorMessage();
+  PRINT("Processing SimpleQuadVectorMessage '%s' (quad count: %zu)\n",
+    payload.identifier.c_str(), payload.quads.size());
+  
+  // erase entry or assign depending on whether the incoming vector has elements
+  if ( payload.quads.empty() ) {
+    _simpleQuadVectorMap.erase( payload.identifier );
+  } else {
+    // copy all quads into container to draw later
+    _simpleQuadVectorMap[payload.identifier] = payload.quads;
+  }
 }
 
 void PhysVizController::ProcessVizEraseObjectMessage(const AnkiEvent<VizInterface::MessageViz>& msg)
@@ -701,6 +751,20 @@ void PhysVizController::DrawQuad(const float xUpperLeft,  const float yUpperLeft
   glVertex3f(xUpperRight, yUpperRight, zUpperRight);
   glVertex3f(xLowerRight, yLowerRight, zLowerRight);
   glVertex3f(xLowerLeft,  yLowerLeft,  zLowerLeft );
+  glEnd();
+}
+
+void PhysVizController::DrawQuadFill(
+  const float xUpperLeft,  const float yUpperLeft, const float zUpperLeft,
+  const float xLowerLeft,  const float yLowerLeft, const float zLowerLeft,
+  const float xUpperRight, const float yUpperRight, const float zUpperRight,
+  const float xLowerRight, const float yLowerRight, const float zLowerRight)
+{
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex3f(xUpperLeft,  yUpperLeft,  zUpperLeft );
+  glVertex3f(xLowerLeft,  yLowerLeft,  zLowerLeft );
+  glVertex3f(xLowerRight, yLowerRight, zLowerRight);
+  glVertex3f(xUpperRight, yUpperRight, zUpperRight);
   glEnd();
 }
 

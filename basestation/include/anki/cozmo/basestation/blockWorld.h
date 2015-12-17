@@ -40,6 +40,7 @@ namespace Anki
     class RobotMessageHandler;
     class ActiveCube;
     class IExternalInterface;
+    class INavMemoryMap;
     
     class BlockWorld
     {
@@ -203,6 +204,13 @@ namespace Anki
       Result UpdateObjectOrigins(const Pose3d* oldOrigin,
                                  const Pose3d* newOrigin);
       
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Navigation memory
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // update memory map
+      void UpdateNavMemoryMap();      
+      
       //
       // Visualization
       //
@@ -215,6 +223,9 @@ namespace Anki
       // Call every existing object's Visualize() method and call the
       // VisualizePreActionPoses() on the currently-selected ActionableObject.
       void DrawAllObjects() const;
+      
+      // Visualize the navigation memory information
+      void DrawNavMemoryMap() const;
       
     protected:
       
@@ -349,6 +360,9 @@ namespace Anki
 
       // For tracking, keep track of the id of the actions we are doing
       u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
+      
+      // Map the world knows the robot has traveled
+      std::unique_ptr<INavMemoryMap> _navMemoryMap;
                   
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;

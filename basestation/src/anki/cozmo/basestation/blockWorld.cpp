@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMap.h"
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
@@ -34,6 +35,7 @@
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/cozmoActions.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -75,6 +77,7 @@ namespace Cozmo {
     , _didObjectsChange(false)
     , _canDeleteObjects(true)
     , _canAddObjects(true)
+    , _navMemoryMap( new NavMemoryMap{} )
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -484,6 +487,13 @@ namespace Cozmo {
     return result;
   }
   
+  void BlockWorld::UpdateNavMemoryMap()
+  {
+    if ( _navMemoryMap ) {
+      _navMemoryMap->AddClearQuad(_robot->GetBoundingQuadXY());
+    }
+  }
+  
   void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
   {
     if(!object->GetID().IsSet()) {
@@ -499,6 +509,7 @@ namespace Cozmo {
       }
     }
     
+    // TODO if an object with same ID exists, it will leak
     existingFamily[object->GetType()][object->GetID()] = object;
   }
   
@@ -2772,6 +2783,13 @@ namespace Cozmo {
       }
       
     } // DrawAllObjects()
+  
+    void BlockWorld::DrawNavMemoryMap() const
+    {
+      if ( _navMemoryMap ) {
+        _navMemoryMap->Draw();
+      }
+    }
     
 } // namespace Cozmo
 } // namespace Anki
