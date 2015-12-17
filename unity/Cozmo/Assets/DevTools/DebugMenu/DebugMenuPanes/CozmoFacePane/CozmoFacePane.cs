@@ -99,8 +99,6 @@ public class CozmoFacePane : MonoBehaviour {
   [SerializeField] Text _RightLowerLidAngleLabel;
   [SerializeField] Text _RightLowerLidBendLabel;
 
-  [SerializeField] Image _CozmoFacePreview;
-
   [SerializeField] Button _SendToCozmoButton;
 
   private ProceduralEyeParameters _LeftEyeParameters = ProceduralEyeParameters.MakeDefaultLeftEye();
@@ -242,12 +240,12 @@ public class CozmoFacePane : MonoBehaviour {
   }
     
   private void UpdateCozmoFaceMaterial() {
-    _CozmoFacePreview.material.SetVector("_FaceCenterScale", 
-        new Vector4(_FaceCenterX.value, _FaceCenterY.value, _FaceScaleX.value, _FaceScaleY.value));
-    _CozmoFacePreview.material.SetFloat("_FaceAngle", _FaceAngle.value);
-
-    _LeftEyeParameters.SetMaterialValues(_CozmoFacePreview.material, left:true);
-    _RightEyeParameters.SetMaterialValues(_CozmoFacePreview.material, left:false);
+    CozmoFace.DisplayProceduralFace(
+      _FaceAngle.value,
+      new Vector2(_FaceCenterX.value, _FaceCenterY.value), 
+      new Vector2(_FaceScaleX.value, _FaceScaleY.value),
+      _LeftEyeParameters,
+      _RightEyeParameters);
   }
 
   void Awake() {
