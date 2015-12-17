@@ -6,6 +6,8 @@ using System;
 using System.Text.RegularExpressions;
 using System.Linq;
 using UnityEditor.Callbacks;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Xcode {
 
@@ -218,17 +220,24 @@ namespace Xcode {
       // TODO: Add any FileTypes that I've missed
     };
 
-    private static string NewGuid(string key) {
+    private static string CalculateMD5Hash(string input)
+    {
+      // step 1, calculate MD5 hash from input
+      MD5 md5 = System.Security.Cryptography.MD5.Create();
+      byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
+      byte[] hash = md5.ComputeHash(inputBytes);
 
-      var random = new System.Random(key.GetHashCode());
-      const string alphabet = "0123456789ABCDEF";
-
-      char[] guid = new char[24];
-      for (int i = 0; i < 24; i++) {
-        guid[i] = alphabet[random.Next(alphabet.Length)];
+      // step 2, convert byte array to hex string
+      StringBuilder sb = new StringBuilder();
+      for (int i = 0; i < hash.Length; i++)
+      {
+        sb.Append(hash[i].ToString("X2"));
       }
+      return sb.ToString();
+    }
 
-      return new string(guid);
+    private static string NewGuid(string key) {
+      return CalculateMD5Hash(key).Substring(0, 24);
     }
 
     private static FileId NewFileId(string path, string name, string group = null) {
