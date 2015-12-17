@@ -59,11 +59,14 @@ namespace Anki
       extern volatile GlobalDataToHead g_dataToHead;      
       bool IsCliffDetected()
       {
-#if (defined(COZMO_ROBOT_3AA7) || defined(COZMO_ROBOT_3A94))
-        return false;
-#else        
-        return g_dataToHead.cliffLevel < DROP_LEVEL;
-#endif        
+        switch(HAL::GetID()) {
+          // Cliff sensors not working on these robots
+          case 0x3AA7:
+          case 0x3A94:
+            return false;
+          default:
+            return g_dataToHead.cliffLevel < DROP_LEVEL;
+        }
       }
     }
   }

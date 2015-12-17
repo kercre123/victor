@@ -337,24 +337,23 @@ namespace Anki {
       {
         static bool infoDisplayed = false;
         
+        HAL::FacePrintf("ID: %x\n"
+                        "SHA1: %x\n"
+                        "Date: %s\n"
+                        "Motors %s\n"
+                        "Batt: %.1fV\n",
+                        HAL::GetID(),
+                        COZMO_VERSION_COMMIT,
+                        BUILD_DATE,
+                        infoDisplayed ? "ON" : "OFF",
+                        0.1f * (f32)HAL::BatteryGetVoltage10x()
+                        );
+        
         if (!infoDisplayed) {
-          
-          HAL::FacePrintf("Motors DISABLED\n"
-                          "Batt: %.1fV\n",
-                          0.1f * (f32)HAL::BatteryGetVoltage10x()
-                          );
-
-          
           WheelController::Disable();
           LiftController::Disable();
           HeadController::Disable();
         } else {
-          
-          HAL::FacePrintf("Motors ENABLED\n"
-                          "Batt: %.1fV\n",
-                          0.1f * (f32)HAL::BatteryGetVoltage10x()
-                          );
-          
           WheelController::Enable();
           LiftController::Enable();
           HeadController::Enable();

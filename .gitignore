@@ -165,6 +165,7 @@ robot/som/*.jpg
 !robot/**/releases/*.bin
 fixture.build
 
+robot/include/anki/cozmo/robot/version.h
 robot/fixture/ankilog/Release
 robot/fixture/ankilog/Debug
 robot/fixture/ankilog/obj
