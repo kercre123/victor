@@ -60,7 +60,11 @@ namespace Anki {
           DAS.Debug("AudioController.PostAudioEvent", "Event: " + audioEvent.ToString() + "  GameObj: " +
                     gameObject.ToString() + " CallbackFlag: " + callbackFlag);
           ushort playId = _GetPlayId();
-          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObject, callbackFlag, playId);
+
+          // Only register for callbacks if a flag is set.
+          // Callbacks are only registered if callbackId != kInvalidPlayId
+          ushort callbackId = AudioCallbackFlag.EventNone == callbackFlag ? kInvalidPlayId : playId;
+          PostAudioEvent msg = new PostAudioEvent(audioEvent, gameObject, callbackId);
           _RobotEngineManager.Message.PostAudioEvent = msg;
           _RobotEngineManager.SendMessage();
 
@@ -153,22 +157,23 @@ namespace Anki {
         private void PerformCallbackHandler(ushort playId, CallbackInfo info, bool? unregisterHandle = null) {
           CallbackBundle callbackBundle;
           if (_callbackDelegates.TryGetValue(playId, out callbackBundle)) {
-            callbackBundle.Handler(info);
+            // Only perform callback that the caller requested or an error
+            AudioCallbackFlag callbackType = info.CallbackType;
+            if (((callbackBundle.Flags & callbackType) == callbackType) || AudioCallbackFlag.EventError == callbackType) {
+              callbackBundle.Handler(info);
+            }
             // Auto unregister Event
-            // Unregister if caller requested event duration callback only or if this is the event complete callback.
-            // Note: Event Marker callbacks will always get complete callbacks which will unregister the handler.
+            // Unregister if callback handle if this is the completion or error callback
+            // FIXME: Waiting to hear back form WWise if Completeion callback is allways called after and error callback
             if (null == unregisterHandle) {
-              if ( (AudioCallbackFlag.EventComplete & info.CallbackType) == AudioCallbackFlag.EventComplete ||
-                  AudioCallbackFlag.EventDuration == callbackBundle.Flags) {
+              if ((AudioCallbackFlag.EventComplete & callbackType) == AudioCallbackFlag.EventComplete ||
+                  (AudioCallbackFlag.EventError & callbackType) == AudioCallbackFlag.EventError) {
                 UnregisterCallbackHandler(playId);
               }
             }
             else if ( unregisterHandle.Value ) {
               UnregisterCallbackHandler(playId);
             }
-          }
-          else {
-            DAS.Warn("AudioClient.PerformCallbackHandler", "Could not find Callback Handler for PlayId: " + playId.ToString());
           }
         }
       
