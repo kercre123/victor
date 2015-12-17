@@ -93,7 +93,6 @@ namespace Anki {
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
       virtual void Cleanup(Robot &robot) override;
-      virtual void Reset() override;
       
       Result SetGoal(const Pose3d& pose);
       Result SetGoal(const Pose3d& pose, const Point3f& distThreshold, const Radians& angleThreshold);
@@ -172,7 +171,6 @@ namespace Anki {
                                     bool& alreadyInPosition);
       
       virtual void Cleanup(Robot &robot) override;
-      virtual void Reset() override;
       
       // Not private b/c DriveToPlaceCarriedObject uses
       ObjectID                   _objectID;
@@ -417,7 +415,6 @@ namespace Anki {
     protected:
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       virtual void Cleanup(Robot& robot) override;
       
       void SetBodyPanAngle(Radians angle) { _bodyPanAngle = angle; }
@@ -536,7 +533,6 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       
       virtual Radians GetHeadAngle(f32 heightDiff) override;
       
@@ -559,7 +555,7 @@ namespace Anki {
       IDockAction(ObjectID objectID,
                   const bool useManualSpeed = false);
       
-      virtual ~IDockAction();
+      virtual ~IDockAction() { }
       
       // Use a value <= 0 to ignore how far away the robot is from the closest
       // PreActionPose and proceed regardless.
@@ -612,8 +608,6 @@ namespace Anki {
       virtual PreActionPose::ActionType GetPreActionType() = 0;
       virtual ActionResult Verify(Robot& robot) = 0;
       
-      virtual void Reset() override;
-      
       // Optional additional delay before verification
       virtual f32 GetVerifyDelayInSeconds() const { return 0.f; }
       
@@ -625,14 +619,18 @@ namespace Anki {
       f32                        _waitToVerifyTime               = -1;
       bool                       _wasPickingOrPlacing            = false;
       bool                       _useManualSpeed                 = false;
-      FaceObjectAction*          _faceAndVerifyAction            = nullptr;
+      IActionRunner*             _faceAndVerifyAction            = nullptr;
       f32                        _placementOffsetX_mm            = 0;
       f32                        _placementOffsetY_mm            = 0;
       f32                        _placementOffsetAngle_rad       = 0;
       bool                       _placeObjectOnGroundIfCarrying  = false;
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
+      
+    private:
+      
       u32                        _squintLayerTag;
+      
     }; // class IDockAction
 
     
@@ -659,8 +657,6 @@ namespace Anki {
       
       virtual ActionResult Verify(Robot& robot) override;
       
-      virtual void Reset() override;
-      
     }; // class AlignWithObjectAction
     
     
@@ -670,7 +666,6 @@ namespace Anki {
     public:
       PickupObjectAction(ObjectID objectID,
                          const bool useManualSpeed = false);
-      virtual ~PickupObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -688,8 +683,6 @@ namespace Anki {
       
       virtual ActionResult Verify(Robot& robot) override;
       
-      virtual void Reset() override;
-      
       // For verifying if we successfully picked up the object
       Pose3d _dockObjectOrigPose;
       
@@ -704,7 +697,6 @@ namespace Anki {
                            const bool placeOnGround = false,
                            const f32 placementOffsetX_mm = 0,
                            const bool useManualSpeed = false);
-      virtual ~PlaceRelObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -722,8 +714,6 @@ namespace Anki {
       
       virtual ActionResult Verify(Robot& robot) override;
       
-      virtual void Reset() override;
-      
       // For verifying if we successfully picked up the object
       //Pose3d _dockObjectOrigPose;
       
@@ -732,7 +722,7 @@ namespace Anki {
       ObjectID                   _carryObjectID;
       const Vision::KnownMarker* _carryObjectMarker;
       
-      IActionRunner*             _placementVerifyAction;
+      IActionRunner*             _placementVerifyAction = nullptr;
       bool                       _verifyComplete; // used in PLACE modes
       
     }; // class PlaceRelObjectAction
@@ -745,7 +735,6 @@ namespace Anki {
     public:
       RollObjectAction(ObjectID objectID,
                        const bool useManualSpeed = false);
-      virtual ~RollObjectAction();
       
       virtual const std::string& GetName() const override;
       
@@ -764,14 +753,12 @@ namespace Anki {
       
       virtual ActionResult Verify(Robot& robot) override;
       
-      virtual void Reset() override;
-
       // For verifying if we successfully rolled the object
       Pose3d _dockObjectOrigPose;
       
-      const Vision::KnownMarker* _expectedMarkerPostRoll;
+      const Vision::KnownMarker* _expectedMarkerPostRoll = nullptr;
       
-      IActionRunner*             _rollVerifyAction;
+      IActionRunner*             _rollVerifyAction = nullptr;
       
     }; // class RollObjectAction
     
@@ -782,7 +769,6 @@ namespace Anki {
     public:
       PopAWheelieAction(ObjectID objectID,
                         const bool useManualSpeed = false);
-      virtual ~PopAWheelieAction();
       
       virtual const std::string& GetName() const override;
       
@@ -800,8 +786,6 @@ namespace Anki {
       virtual Result SelectDockAction(Robot& robot, ActionableObject* object) override;
       
       virtual ActionResult Verify(Robot& robot) override;
-      
-     // virtual void Reset() override;
       
     }; // class PopAWheelieAction
 
@@ -977,7 +961,6 @@ namespace Anki {
     public:
       
       PlaceObjectOnGroundAction();
-      virtual ~PlaceObjectOnGroundAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
@@ -988,14 +971,13 @@ namespace Anki {
       
       virtual ActionResult Init(Robot& robot) override;
       virtual ActionResult CheckIfDone(Robot& robot) override;
-      virtual void Reset() override;
       
       // Need longer than default for check if done:
       virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
       
       ObjectID                    _carryingObjectID;
-      const Vision::KnownMarker*  _carryObjectMarker;
-      FaceObjectAction*           _faceAndVerifyAction;
+      const Vision::KnownMarker*  _carryObjectMarker = nullptr;
+      IActionRunner*              _faceAndVerifyAction = nullptr;
       
     }; // class PlaceObjectOnGroundAction
     
@@ -1097,16 +1079,9 @@ namespace Anki {
     {
     public:
       TraverseObjectAction(ObjectID objectID, const bool useManualSpeed);
-      virtual ~TraverseObjectAction();
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::TRAVERSE_OBJECT; }
-      
-      virtual void Cleanup(Robot& robot) override {
-        if(_chosenAction != nullptr) {
-          _chosenAction->Cleanup(robot);
-        }
-      }
       
       void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
       
@@ -1114,10 +1089,10 @@ namespace Anki {
       
       // Update will just call the chosenAction's implementation
       virtual ActionResult UpdateInternal(Robot& robot) override;
-      virtual void Reset() override;
+      virtual void Reset() override { }
       
       ObjectID       _objectID;
-      IActionRunner* _chosenAction;
+      IActionRunner* _chosenAction = nullptr;
       f32            _speed_mmps;
       f32            _accel_mmps2;
       bool           _useManualSpeed;

@@ -63,6 +63,8 @@ public:
   void SetPanTolerance(const Radians& panThreshold);
   void SetTiltTolerance(const Radians& tiltThreshold);
 
+  virtual bool Interrupt() override final;
+  
 protected:
 
   // Derived classes must implement Init(), but cannot implement CheckIfDone().

@@ -136,12 +136,6 @@ namespace Anki {
       
     }
     
-    void DriveToPoseAction::Reset()
-    {
-      IAction::Reset();
-      _timeToAbortPlanning = -1.0f;
-    }
-    
     DriveToPoseAction::DriveToPoseAction(const Pose3d& pose,
                                          const PathMotionProfile motionProf,
                                          const bool forceHeadDown,
@@ -290,7 +284,7 @@ namespace Anki {
               PRINT_NAMED_INFO("DriveToPoseAction",
                                "Received signal that robot %d's origin changed. Resetting action.",
                                robotID);
-              this->Reset();
+              Reset();
               robotPtr->AbortDrivingToPose();
             }
           };
@@ -451,12 +445,6 @@ namespace Anki {
     , _pathMotionProfile(motionProfile)
     {
       // NOTE: _goalPose will be set later, when we check preconditions
-    }
-    
-    void DriveToObjectAction::Reset()
-    {
-      IAction::Reset();
-      _compoundAction.ClearActions();
     }
     
     const std::string& DriveToObjectAction::GetName() const
@@ -629,6 +617,10 @@ namespace Anki {
         
         result = GetPossiblePoses(robot, object, possiblePoses, alreadyInPosition);
       }
+      
+      // In case we are re-running this action, make sure compound actions are cleared.
+      // These will do nothing if compoundAction has nothing in it yet (i.e., on first Init)
+      _compoundAction.ClearActions(robot);
       
       if(result == ActionResult::SUCCESS) {
         if(!alreadyInPosition) {
@@ -1051,12 +1043,6 @@ namespace Anki {
     {
 
     }
-    
-    void PanAndTiltAction::Reset()
-    {
-      IAction::Reset();
-      _compoundAction.ClearActions();
-    }
 
     void PanAndTiltAction::SetPanTolerance(const Radians& angleTol_rad)
     {
@@ -1088,6 +1074,9 @@ namespace Anki {
     
     ActionResult PanAndTiltAction::Init(Robot &robot)
     {
+      // In case this is a retry, make sure compound actions are cleared
+      _compoundAction.ClearActions(robot);
+      
       _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
       
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle, _isPanAbsolute);
@@ -1254,12 +1243,6 @@ namespace Anki {
 
     }
     
-    void FaceObjectAction::Reset()
-    {
-      FacePoseAction::Reset();
-      _facePoseCompoundActionDone = false;
-    }
-    
     Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
     {
       // TODO: Just commanding fixed head angle depending on height of object.
@@ -1346,6 +1329,8 @@ namespace Anki {
       if(ActionResult::SUCCESS != facePoseInitResult) {
         return facePoseInitResult;
       }
+      
+      _facePoseCompoundActionDone = false;
       
       // Disable completion signals since this is inside another action
       _visuallyVerifyAction.SetEmitCompletionSignal(false);
@@ -1831,18 +1816,7 @@ namespace Anki {
     : _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
     {
-      
-    }
-    
-    IDockAction::~IDockAction()
-    {
-      Reset();
-    }
-    
-    void IDockAction::Reset()
-    {
-      IAction::Reset();
-      Util::SafeDelete(_faceAndVerifyAction);
+      RegisterSubAction(_faceAndVerifyAction);
     }
     
     void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)
@@ -2118,11 +2092,6 @@ namespace Anki {
 
     }
     
-    void AlignWithObjectAction::Reset()
-    {
-      IDockAction::Reset();
-    }
-    
     const std::string& AlignWithObjectAction::GetName() const
     {
       static const std::string name("AlignWithObjectAction");
@@ -2183,16 +2152,6 @@ namespace Anki {
     : IDockAction(objectID, useManualSpeed)
     {
       
-    }
-    
-    PickupObjectAction::~PickupObjectAction()
-    {
-      
-    }
-    
-    void PickupObjectAction::Reset()
-    {
-      IDockAction::Reset();
     }
     
     const std::string& PickupObjectAction::GetName() const
@@ -2387,22 +2346,10 @@ namespace Anki {
                                                const f32 placementOffsetX_mm,
                                                const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
-    , _placementVerifyAction(nullptr)
-    , _verifyComplete(false)
     {
       SetPlacementOffset(placementOffsetX_mm, 0, 0);
       SetPlaceOnGround(placeOnGround);
-    }
-    
-    PlaceRelObjectAction::~PlaceRelObjectAction()
-    {
-      Reset();
-    }
-    
-    void PlaceRelObjectAction::Reset()
-    {
-      IDockAction::Reset();
-      Util::SafeDelete(_placementVerifyAction);
+      RegisterSubAction(_placementVerifyAction);
     }
     
     const std::string& PlaceRelObjectAction::GetName() const
@@ -2486,7 +2433,6 @@ namespace Anki {
       return RESULT_OK;
     } // SelectDockAction()
     
-    
     ActionResult PlaceRelObjectAction::Verify(Robot& robot)
     {
       ActionResult result = ActionResult::FAILURE_ABORT;
@@ -2508,6 +2454,7 @@ namespace Anki {
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
               _placementVerifyAction = new FaceObjectAction(_carryObjectID, Radians(0), Radians(0), true, false);
+              _verifyComplete = false;
               
               // Disable completion signals since this is inside another action
               _placementVerifyAction->SetEmitCompletionSignal(false);
@@ -2594,21 +2541,9 @@ namespace Anki {
     
     RollObjectAction::RollObjectAction(ObjectID objectID, const bool useManualSpeed)
     : IDockAction(objectID, useManualSpeed)
-    , _expectedMarkerPostRoll(nullptr)
-    , _rollVerifyAction(nullptr)
     {
-      _dockAction = DockAction::DA_ROLL_LOW;  
-    }
-    
-    RollObjectAction::~RollObjectAction()
-    {
-      Reset();
-    }
-    
-    void RollObjectAction::Reset()
-    {
-      IDockAction::Reset();
-      Util::SafeDelete(_rollVerifyAction);
+      _dockAction = DockAction::DA_ROLL_LOW;
+      RegisterSubAction(_rollVerifyAction);
     }
     
     const std::string& RollObjectAction::GetName() const
@@ -2766,12 +2701,6 @@ namespace Anki {
     {
       
     }
-    
-    PopAWheelieAction::~PopAWheelieAction()
-    {
-      Reset();
-    }
-    
     
     const std::string& PopAWheelieAction::GetName() const
     {
@@ -3030,20 +2959,8 @@ namespace Anki {
 #pragma mark ---- PlaceObjectOnGroundAction ----
     
     PlaceObjectOnGroundAction::PlaceObjectOnGroundAction()
-    : _faceAndVerifyAction(nullptr)
     {
-      
-    }
-    
-    PlaceObjectOnGroundAction::~PlaceObjectOnGroundAction()
-    {
-      Reset();
-    }
-    
-    void PlaceObjectOnGroundAction::Reset()
-    {
-      IAction::Reset();
-      Util::SafeDelete(_faceAndVerifyAction);
+      RegisterSubAction(_faceAndVerifyAction);
     }
     
     const std::string& PlaceObjectOnGroundAction::GetName() const
@@ -3290,26 +3207,15 @@ namespace Anki {
     TraverseObjectAction::TraverseObjectAction(ObjectID objectID,
                                                const bool useManualSpeed)
     : _objectID(objectID)
-    , _chosenAction(nullptr)
     , _useManualSpeed(useManualSpeed)
     {
-      
-    }
-    
-    TraverseObjectAction::~TraverseObjectAction()
-    {
-      Reset();
+      RegisterSubAction(_chosenAction);
     }
     
     const std::string& TraverseObjectAction::GetName() const
     {
       static const std::string name("TraverseObjectAction");
       return name;
-    }
-    
-    void TraverseObjectAction::Reset()
-    {
-      Util::SafeDelete(_chosenAction);
     }
     
     void TraverseObjectAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2) {
