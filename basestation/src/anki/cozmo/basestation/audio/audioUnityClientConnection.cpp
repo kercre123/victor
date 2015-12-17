@@ -74,30 +74,9 @@ void AudioUnityClientConnection::HandleGameEvents(const AnkiEvent<ExternalInterf
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackDuration& callbackMessage ) const
+void AudioUnityClientConnection::PostCallback( const AudioCallback& callbackMessage ) const
 {
-  const ExternalInterface::MessageEngineToGame msg((AudioCallbackDuration( callbackMessage )));
-  _externalInterface.Broadcast( std::move( msg ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackMarker& callbackMessage ) const
-{
-  const ExternalInterface::MessageEngineToGame msg((AudioCallbackMarker( callbackMessage )));
-  _externalInterface.Broadcast( std::move( msg ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackComplete& callbackMessage ) const
-{
-  const ExternalInterface::MessageEngineToGame msg((AudioCallbackComplete( callbackMessage )));
-  _externalInterface.Broadcast( std::move( msg ) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioUnityClientConnection::PostCallback( const AudioCallbackError& callbackMessage ) const
-{
-  const ExternalInterface::MessageEngineToGame msg((AudioCallbackError( callbackMessage )));
+  const ExternalInterface::MessageEngineToGame msg( (AudioCallback( callbackMessage)) );
   _externalInterface.Broadcast( std::move( msg ) );
 }
 

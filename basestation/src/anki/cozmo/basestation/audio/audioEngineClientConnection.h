@@ -35,11 +35,7 @@ public:
   
   AudioEngineMessageHandler* GetMessageHandler() const { return _messageHandler; }
   
-  void PostCallback( const AudioCallbackDuration& callbackMessage ) const override;
-  void PostCallback( const AudioCallbackMarker& callbackMessage ) const override;
-  void PostCallback( const AudioCallbackComplete& callbackMessage ) const override;
-  void PostCallback( const AudioCallbackError& callbackMessage ) const override;
-  
+  virtual void PostCallback( const AudioCallback& callbackMessage ) const override;
   
   
 private:

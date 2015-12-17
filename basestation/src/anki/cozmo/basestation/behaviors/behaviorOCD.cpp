@@ -1179,7 +1179,10 @@ namespace Cozmo {
         switch(msg.actionType) {
           case RobotActionType::PLAY_ANIMATION:
             if (_animActionTags.count(msg.idTag) > 0) {
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result %d)", msg.completionInfo.animName.c_str(), msg.result);
+
+              ASSERT_NAMED( msg.completionInfo.GetTag() ==  ActionCompletedUnionTag::animationCompleted, "");
+              
+              BEHAVIOR_VERBOSE_PRINT(DEBUG_OCD_BEHAVIOR, "BehaviorOCD.HandleActionCompleted.AnimCompleted", "%s (result %d)", msg.completionInfo.Get_animationCompleted().animationName.c_str(), msg.result);
               
               // Erase this animation action and resume pickOrPlace if there are no more animations pending
               _animActionTags.erase(msg.idTag);

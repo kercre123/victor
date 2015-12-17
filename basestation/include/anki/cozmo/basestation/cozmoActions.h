@@ -524,7 +524,7 @@ namespace Anki {
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::FACE_OBJECT; }
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
       
       // We don't want to ignore movement commands for Body during FaceObjectAction
       virtual u8 GetMovementTracksToIgnore() const override
@@ -651,7 +651,7 @@ namespace Anki {
       
     protected:
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
 
@@ -680,7 +680,7 @@ namespace Anki {
       
     protected:
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
       
@@ -714,7 +714,7 @@ namespace Anki {
       
     protected:
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
       
       virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
       
@@ -754,7 +754,7 @@ namespace Anki {
       virtual RobotActionType GetType() const override;
 
       // Override completion signal to fill in information about rolled objects
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
 
     protected:
       
@@ -791,7 +791,7 @@ namespace Anki {
       virtual RobotActionType GetType() const override;
       
       // Override completion signal to fill in information about rolled objects
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
       
     protected:
       
@@ -828,8 +828,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::ALIGN_WITH_OBJECT; }
       
       // Use AlignWithObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionInfo);
       }
       
     };
@@ -855,8 +855,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PickupObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionInfo);
       }
       
     };
@@ -882,8 +882,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PlaceRelObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionInfo);
       }
       
     };
@@ -916,8 +916,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use PlaceRelObjectAction's completion info
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionInfo);
       }
       
     };
@@ -942,8 +942,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use RollObjectAction's completion signal
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionInfo);
       }
       
     };
@@ -966,8 +966,8 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return _actions.back().second->GetType(); }
       
       // Use RollObjectAction's completion signal
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override {
-        _actions.back().second->GetCompletionStruct(robot, completionInfo);
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override {
+        _actions.back().second->GetCompletionUnion(robot, completionInfo);
       }
       
     };
@@ -1159,7 +1159,7 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::PLAY_ANIMATION; }
       
-      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
       
     protected:
       
@@ -1201,7 +1201,7 @@ namespace Anki {
       virtual RobotActionType GetType() const override { return RobotActionType::DEVICE_AUDIO; }
       
       // TODO: Add Completion strct
-//      virtual void GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const override;
+//      virtual void GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const override;
 
     protected:
       

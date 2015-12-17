@@ -191,34 +191,45 @@ namespace Anki {
       {
         case RobotActionType::PICKUP_OBJECT_HIGH:
         case RobotActionType::PICKUP_OBJECT_LOW:
+        {
+          const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %d %s picking up stack of %d objects with IDs: ",
                  msg.robotID, ActionResultToString(msg.result),
-                 msg.completionInfo.numObjects);
-          for(int i=0; i<msg.completionInfo.numObjects; ++i) {
-            printf("%d ", msg.completionInfo.objectIDs[i]);
+                 info.numObjects);
+          for(int i=0; i<info.numObjects; ++i) {
+            printf("%d ", info.objectIDs[i]);
           }
           printf("[Tag=%d]\n", msg.idTag);
+        }
           break;
           
         case RobotActionType::PLACE_OBJECT_HIGH:
         case RobotActionType::PLACE_OBJECT_LOW:
+        {
+          const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %d %s placing stack of %d objects with IDs: ",
                  msg.robotID, ActionResultToString(msg.result),
-                 msg.completionInfo.numObjects);
-          for(int i=0; i<msg.completionInfo.numObjects; ++i) {
-            printf("%d ", msg.completionInfo.objectIDs[i]);
+                 info.numObjects);
+          for(int i=0; i<info.numObjects; ++i) {
+            printf("%d ", info.objectIDs[i]);
           }
           printf("[Tag=%d]\n", msg.idTag);
+        }
           break;
 
         case RobotActionType::PLAY_ANIMATION:
+        {
+          const AnimationCompleted info = msg.completionInfo.Get_animationCompleted();
           PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d finished playing animation %s. [Tag=%d]",
-                 msg.robotID, msg.completionInfo.animName.c_str(), msg.idTag);
+                 msg.robotID, info.animationName.c_str(), msg.idTag);
+        }
           break;
           
         default:
+        {
           PRINT_NAMED_INFO("UiGameController.HandleRobotCompletedActionBase", "Robot %d completed action with type=%d and tag=%d: %s.",
                  msg.robotID, msg.actionType, msg.idTag, ActionResultToString(msg.result));
+        }
       }
       
       HandleRobotCompletedAction(msg);

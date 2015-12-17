@@ -1406,10 +1406,12 @@ namespace Anki {
       return name;
     }
     
-    void FaceObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void FaceObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
-      completionInfo.numObjects = 1;
-      completionInfo.objectIDs[0] = _objectID;
+      ObjectInteractionCompleted info;
+      info.numObjects = 1;
+      info.objectIDs[0] = _objectID;
+      completionInfo.Set_objectInteractionCompleted(std::move( info ));
     }
     
     
@@ -2130,13 +2132,15 @@ namespace Anki {
     }
 
 
-    void AlignWithObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void AlignWithObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
-      completionInfo.numObjects = 1;
-      completionInfo.objectIDs.fill(-1);
-      completionInfo.objectIDs[0] = _dockObjectID;
+      ObjectInteractionCompleted info;
+      info.numObjects = 1;
+      info.objectIDs.fill(-1);
+      info.objectIDs[0] = _dockObjectID;
+      completionInfo.Set_objectInteractionCompleted(std::move( info ));
       
-      IDockAction::GetCompletionStruct(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionInfo);
     }
 
     
@@ -2218,7 +2222,7 @@ namespace Anki {
       }
     }
     
-    void PickupObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void PickupObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -2231,12 +2235,16 @@ namespace Anki {
           } else {
             
             const std::set<ObjectID> carriedObjects = robot.GetCarryingObjects();
-            completionInfo.numObjects = carriedObjects.size();
-            completionInfo.objectIDs.fill(-1);
+            ObjectInteractionCompleted info;
+            info.numObjects = carriedObjects.size();
+            info.objectIDs.fill(-1);
+            info.objectIDs[0] = _dockObjectID;
+            
             u8 objectCnt = 0;
             for (auto& objID : carriedObjects) {
-              completionInfo.objectIDs[objectCnt++] = objID.GetValue();
+              info.objectIDs[objectCnt++] = objID.GetValue();
             }
+            completionInfo.Set_objectInteractionCompleted(std::move( info ));
             
             return;
           }
@@ -2247,7 +2255,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionStruct(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionInfo);
     }
     
     Result PickupObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2428,7 +2436,7 @@ namespace Anki {
       }
     }
     
-    void PlaceRelObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void PlaceRelObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -2443,19 +2451,21 @@ namespace Anki {
                               _dockObjectID.GetValue());
           } else {
             
-            ActionCompletedStruct completionInfo;
+            ObjectInteractionCompleted info;
             
-            auto objectStackIter = completionInfo.objectIDs.begin();
-            completionInfo.objectIDs.fill(-1);
-            completionInfo.numObjects = 0;
+            auto objectStackIter = info.objectIDs.begin();
+            info.objectIDs.fill(-1);
+            info.numObjects = 0;
             while(object != nullptr &&
-                  completionInfo.numObjects < completionInfo.objectIDs.size())
+                  info.numObjects < info.objectIDs.size())
             {
               *objectStackIter = object->GetID().GetValue();
               ++objectStackIter;
-              ++completionInfo.numObjects;
+              ++info.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
+            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            
             return;
           }
           break;
@@ -2465,7 +2475,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionStruct(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionInfo);
     }
     
     Result PlaceRelObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2631,7 +2641,7 @@ namespace Anki {
       }
     }
     
-    void RollObjectAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void RollObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -2640,10 +2650,14 @@ namespace Anki {
           if(robot.IsCarryingObject()) {
             PRINT_NAMED_WARNING("RollObjectAction.EmitCompletionSignal",
                                 "Expecting robot to think it's not carrying object for roll action.");
-          } else {
-            completionInfo.numObjects = 1;
-            completionInfo.objectIDs.fill(-1);
-            completionInfo.objectIDs[0] = _dockObjectID;
+          }
+          else {  
+            ObjectInteractionCompleted info;
+            info.numObjects = 1;
+            info.objectIDs.fill(-1);
+            info.objectIDs[0] = _dockObjectID;
+            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            
             return;
           }
           break;
@@ -2653,7 +2667,7 @@ namespace Anki {
                               "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionStruct(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionInfo);
     }
     
     Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2793,7 +2807,7 @@ namespace Anki {
       }
     }
     
-    void PopAWheelieAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void PopAWheelieAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
       switch(_dockAction)
       {
@@ -2803,9 +2817,12 @@ namespace Anki {
             PRINT_NAMED_WARNING("PopAWheelieAction.EmitCompletionSignal",
                                 "Expecting robot to think it's not carrying object for roll action.");
           } else {
-            completionInfo.numObjects = 1;
-            completionInfo.objectIDs.fill(-1);
-            completionInfo.objectIDs[0] = _dockObjectID;
+            ObjectInteractionCompleted info;
+            info.numObjects = 1;
+            info.objectIDs.fill(-1);
+            info.objectIDs[0] = _dockObjectID;
+            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            
             return;
           }
           break;
@@ -2815,7 +2832,7 @@ namespace Anki {
                               "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionStruct(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionInfo);
     }
     
     Result PopAWheelieAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -3458,9 +3475,11 @@ namespace Anki {
       }
     }
     
-    void PlayAnimationAction::GetCompletionStruct(Robot& robot, ActionCompletedStruct& completionInfo) const
+    void PlayAnimationAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
     {
-      completionInfo.animName = _animName;
+      AnimationCompleted info;
+      info.animationName = _animName;
+      completionInfo.Set_animationCompleted(std::move( info ));
     }
     
 
