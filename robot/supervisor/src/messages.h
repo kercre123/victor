@@ -28,6 +28,7 @@
 
 #include "anki/types.h"
 #include <stdarg.h>
+#include <stddef.h>
 #ifdef SIMULATOR
 #include "anki/common/robot/array2d_declarations.h"
 #endif
