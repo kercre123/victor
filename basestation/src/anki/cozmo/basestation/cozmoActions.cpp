@@ -1391,12 +1391,12 @@ namespace Anki {
       return name;
     }
     
-    void FaceObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void FaceObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
       info.numObjects = 1;
       info.objectIDs[0] = _objectID;
-      completionInfo.Set_objectInteractionCompleted(std::move( info ));
+      completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     
     
@@ -2101,15 +2101,15 @@ namespace Anki {
     }
 
 
-    void AlignWithObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void AlignWithObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
       info.numObjects = 1;
       info.objectIDs.fill(-1);
       info.objectIDs[0] = _dockObjectID;
-      completionInfo.Set_objectInteractionCompleted(std::move( info ));
+      completionUnion.Set_objectInteractionCompleted(std::move( info ));
       
-      IDockAction::GetCompletionUnion(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionUnion);
     }
 
     
@@ -2181,7 +2181,7 @@ namespace Anki {
       }
     }
     
-    void PickupObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void PickupObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       switch(_dockAction)
       {
@@ -2203,7 +2203,7 @@ namespace Anki {
             for (auto& objID : carriedObjects) {
               info.objectIDs[objectCnt++] = objID.GetValue();
             }
-            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            completionUnion.Set_objectInteractionCompleted(std::move( info ));
             
             return;
           }
@@ -2214,7 +2214,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionUnion(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
     Result PickupObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2383,7 +2383,7 @@ namespace Anki {
       }
     }
     
-    void PlaceRelObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void PlaceRelObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       switch(_dockAction)
       {
@@ -2411,7 +2411,7 @@ namespace Anki {
               ++info.numObjects;
               object = robot.GetBlockWorld().FindObjectOnTopOf(*object, 15.f);
             }
-            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            completionUnion.Set_objectInteractionCompleted(std::move( info ));
             
             return;
           }
@@ -2422,7 +2422,7 @@ namespace Anki {
                             "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionUnion(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
     Result PlaceRelObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2576,7 +2576,7 @@ namespace Anki {
       }
     }
     
-    void RollObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void RollObjectAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       switch(_dockAction)
       {
@@ -2591,7 +2591,7 @@ namespace Anki {
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
-            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            completionUnion.Set_objectInteractionCompleted(std::move( info ));
             
             return;
           }
@@ -2602,7 +2602,7 @@ namespace Anki {
                               "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionUnion(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
     Result RollObjectAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -2736,7 +2736,7 @@ namespace Anki {
       }
     }
     
-    void PopAWheelieAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void PopAWheelieAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       switch(_dockAction)
       {
@@ -2750,7 +2750,7 @@ namespace Anki {
             info.numObjects = 1;
             info.objectIDs.fill(-1);
             info.objectIDs[0] = _dockObjectID;
-            completionInfo.Set_objectInteractionCompleted(std::move( info ));
+            completionUnion.Set_objectInteractionCompleted(std::move( info ));
             
             return;
           }
@@ -2761,7 +2761,7 @@ namespace Anki {
                               "Dock action not set before filling completion signal.");
       }
       
-      IDockAction::GetCompletionUnion(robot, completionInfo);
+      IDockAction::GetCompletionUnion(robot, completionUnion);
     }
     
     Result PopAWheelieAction::SelectDockAction(Robot& robot, ActionableObject* object)
@@ -3381,11 +3381,11 @@ namespace Anki {
       }
     }
     
-    void PlayAnimationAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionInfo) const
+    void PlayAnimationAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
     {
       AnimationCompleted info;
       info.animationName = _animName;
-      completionInfo.Set_animationCompleted(std::move( info ));
+      completionUnion.Set_animationCompleted(std::move( info ));
     }
     
 
@@ -3396,6 +3396,7 @@ namespace Anki {
                                          const bool waitUntilDone)
     : _actionType( AudioActionType::Event )
     , _name( "PlayAudioEvent_" + std::string(EnumToString(event)) + "_GameObj_" + std::string(EnumToString(gameObj)) )
+    , _waitUntilDone( waitUntilDone )
     , _event( event )
     , _gameObj( gameObj )
     { }
@@ -3415,15 +3416,46 @@ namespace Anki {
     , _state( static_cast<Audio::GameStateType>(state) )
     { }
     
+    void DeviceAudioAction::GetCompletionUnion(Robot& robot, ActionCompletedUnion& completionUnion) const
+    {
+      DeviceAudioCompleted info;
+      info.eventType = _event;
+      completionUnion.Set_deviceAudioCompleted(std::move( info ));
+    }
+    
     ActionResult DeviceAudioAction::Init(Robot& robot)
     {
+      using namespace Audio;
       switch ( _actionType ) {
         case AudioActionType::Event:
-          robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
+        {
+          if (_waitUntilDone) {
+            
+            const AudioEngineClient::CallbackFunc callback = [this] ( AudioCallback callback )
+            {
+              const AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
+              if (AudioCallbackInfoTag::callbackComplete == tag ||
+                  AudioCallbackInfoTag::callbackError == tag) {
+                _isCompleted = true;
+              }
+            };
+            
+            robot.GetRobotAudioClient()->PostEvent(_event, _gameObj,
+                                                   AudioCallbackFlag::EventComplete,
+                                                   callback);
+          }
+          else {
+            robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);
+            _isCompleted = true;
+          }
+        }
           break;
           
         case AudioActionType::StopEvents:
+        {
           robot.GetRobotAudioClient()->StopAllEvents(_gameObj);
+          _isCompleted = true;
+        }
           break;
           
         case AudioActionType::SetState:
@@ -3432,23 +3464,23 @@ namespace Anki {
           if (Audio::GameStateGroupType::Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              robot.GetRobotAudioClient()->PostEvent( Audio::EventType::PLAY_MUSIC, Audio::GameObjectType::Default );
+              robot.GetRobotAudioClient()->PostEvent( EventType::PLAY_MUSIC, GameObjectType::Default );
               didStartMusic = true;
             }
           }
           
           robot.GetRobotAudioClient()->PostGameState(_stateGroup, _state);
+          _isCompleted = true;
         }
           break;
       }
       
-      _didInit = true;
       return ActionResult::SUCCESS;
     }
     
     ActionResult DeviceAudioAction::CheckIfDone(Robot& robot)
     {
-      return _didInit ? ActionResult::SUCCESS : ActionResult::RUNNING;
+      return _isCompleted ? ActionResult::SUCCESS : ActionResult::RUNNING;
     }
     
     
