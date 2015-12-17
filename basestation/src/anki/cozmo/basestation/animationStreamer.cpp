@@ -1188,6 +1188,7 @@ namespace Cozmo {
     
     bool anyFramesAdded = false;
     
+    /*
     // Use procedural face
     const ProceduralFace& lastFace = robot.GetLastProceduralFace();
 //    const TimeStamp_t lastTime = lastFace.GetTimeStamp();
@@ -1210,7 +1211,8 @@ namespace Cozmo {
     }
     
     anyFramesAdded = faceSent;
-
+*/
+    
     // Don't start wiggling until we've been idling for a bit and make sure we
     // picking or placing
     if(_isLiveTwitchEnabled &&

@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
+#include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/vision/basestation/trackedFace.h"
 
 #include <list>
@@ -56,14 +57,24 @@ namespace Cozmo {
     
     void UpdateBaselineFace(Robot& robot, const Face* face);
     void RemoveFaceID(Face::ID_t faceID);
-    void UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const;
-    void PlayAnimation(Robot& robot, const std::string& animName);
+    void UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face);
+    void PlayAnimation(Robot& robot, const std::string& animName, QueueActionPosition position);
     
     // Sets face tracking ID and queues TrackFaceAction "now".
-    void StartTracking(Robot& robot, Face::ID_t faceID);
+    void StartTracking(Robot& robot, Face::ID_t faceID, double currentTime_sec);
     
     // Unsets face tracking ID and cancels last action tag. Also sets current state to Inactive.
     void StopTracking(Robot& robot);
+    
+    // Remove last face from the set of _trackingFaces. If any left, pick the next random
+    // one to track. If not, StopTracking (and go back to Inactive)
+    void TrackNextFace(Robot& robot, Face::ID_t lastFace, double currentTime_sec);
+    
+    // Like TrackNextFace, but does not remove current face from list. Just switches
+    // to a different face in the list. If the list only has one face in it, does nothing.
+    void SwitchToDifferentFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
+  
+    Face::ID_t GetRandIdHelper(const std::set<Face::ID_t>& faceList);
     
     enum class State {
       Inactive,
@@ -75,8 +86,6 @@ namespace Cozmo {
     State _resumeState  = State::Interrupted;
     
     Face::ID_t _trackedFaceID = Face::UnknownFace;
-    
-    f32 _trackingTimeout_sec = 3;
     
     ProceduralFace _lastProceduralFace, _crntProceduralFace;;
     
@@ -93,24 +102,39 @@ namespace Cozmo {
     double _newFaceAnimCooldownTime = 0.0;
     double _timeWhenInterrupted = 0.0;
     
+    f32    _faceTiltSpacing = 0.f;
+    f32    _lastFaceTiltTime = 0.f;
+    f32    _currentTilt = 0;
+    u32    _tiltLayerTag = 0;
+    
+    AnimationStreamer::ParamContainer _originalLiveIdleParams;
+    
     struct FaceData
     {
       double _lastSeen_sec = 0;
       double _trackingStart_sec = 0;
-      bool _playedInitAnim = false;
+      bool   _playedInitAnim = false;
     };
     
     std::set<Face::ID_t> _trackingFaces;
-    
     std::list<Face::ID_t> _interestingFacesOrder;
     std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
     std::unordered_map<Face::ID_t, double> _cooldownFaces;
     
+    // Length of time we'll allow the tracking action to go without an update
+    // before completing and returning to Inactive state
+    constexpr static float kTrackingTimeout_sec = 3;
+    
     // Length of time in seconds to keep interacting with the same face non-stop
-    constexpr static float kFaceInterestingDuration_sec = 20;
+    constexpr static float kFaceInterestingDuration_sec = 10;
+    
+    // Average length of time in seconds to watch one face when multiple faces
+    // are present, and +/- variability in seconds on that average.
+    constexpr static float kMultiFaceInterestingDuration_sec = 2;
+    constexpr static float kMultiFaceInterestingVariation_sec = 1;
     
     // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
-    constexpr static float kFaceCooldownDuration_sec = 20;
+    constexpr static float kFaceCooldownDuration_sec = 10;
     
     // Distance inside of which Cozmo will start noticing a face
     constexpr static float kCloseEnoughDistance_mm = 1250;
@@ -135,6 +159,12 @@ namespace Cozmo {
     // Min time between playing the shocked/scared animation when a face gets
     // too close
     constexpr static float kTooCloseScaredInterval_sec = 2;
+    
+    // Amount to periodically tilt the robot's face while watching a face, and the spacing
+    // between tilts
+    constexpr static float kTiltFaceAmount_deg = 5.f;
+    constexpr static float kTiltSpacingMin_sec = 3.f;
+    constexpr static float kTiltSpacingMax_sec = 6.f;
     
   }; // BehaviorInteractWithFaces
   

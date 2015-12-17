@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 
 #include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -152,28 +153,136 @@ namespace Cozmo {
   
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    return !_interestingFacesOrder.empty();
+    return !_interestingFacesOrder.empty() || !_trackingFaces.empty();
   }
   
-  void BehaviorInteractWithFaces::StartTracking(Robot& robot, Face::ID_t faceID)
+  void BehaviorInteractWithFaces::StartTracking(Robot& robot, const Face::ID_t faceID, double currentTime_sec)
   {
+    PRINT_NAMED_INFO("BehaviorInteractWithFaces.StartTracking", "FaceID = %llu", faceID);
+    
+    const Face* face = robot.GetFaceWorld().GetFace(faceID);
+    if(nullptr == face) {
+      PRINT_NAMED_ERROR("BehaviorInteractWithFaces.StartTracking.NullFace",
+                        "FaceWorld returned null face for ID %llu", faceID);
+      RemoveFaceID(faceID);
+      return;
+    }
+    
+    auto dataIter = _interestingFacesData.find(faceID);
+    if (_interestingFacesData.end() == dataIter)
+    {
+      PRINT_NAMED_ERROR("BehaviorInteractWithFaces.StartTracking.MissingInteractionData",
+                        "Failed to find interaction data associated with faceID %llu", faceID);
+      return;
+    }
+    
+    if (_newFaceAnimCooldownTime == 0.0)
+    {
+      _newFaceAnimCooldownTime = currentTime_sec;
+    }
+    
+    // If we haven't played our init anim yet for this face and it's been awhile
+    // since we did so, do so now and start tracking afterward
+    QueueActionPosition queueTrackingPosition = QueueActionPosition::NOW;
+    if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
+    {
+      robot.GetActionList().Cancel();
+      robot.GetActionList().QueueActionNow(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
+      PlayAnimation(robot, "ID_react2block_01", QueueActionPosition::AT_END);
+      robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
+                                           EmotionType::Social, kEmotionChangeMedium,
+                                           EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
+      dataIter->second._playedInitAnim = true;
+      _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
+      queueTrackingPosition = QueueActionPosition::AT_END;
+    }
+    
+    dataIter->second._trackingStart_sec = currentTime_sec;
+    
+    _trackingFaces.insert(faceID);
+    
     _trackedFaceID = faceID;
     TrackFaceAction* trackAction = new TrackFaceAction(_trackedFaceID);
     _trackActionTag = trackAction->GetTag();
-    robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, trackAction);
+    trackAction->SetUpdateTimeout(kTrackingTimeout_sec);
+    robot.GetActionList().QueueAction(Robot::DriveAndManipulateSlot, queueTrackingPosition, trackAction);
+    
+    _currentState = State::TrackingFace;
+    
+    {
+      // Store LiveIdle params so we can restore after tracking
+      _originalLiveIdleParams = robot.GetAnimationStreamer().GetAllParams();
+     
+      using Param = LiveIdleAnimationParameter;
+      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMinTime_ms, 0.f);
+      robot.GetAnimationStreamer().SetParam(Param::EyeDartSpacingMaxTime_ms, 0.25f);
+      robot.GetAnimationStreamer().SetParam(Param::EyeDartMaxDistance_pix,   1.f);
+    }
   }
   
   void BehaviorInteractWithFaces::StopTracking(Robot& robot)
   {
+    PRINT_NAMED_INFO("BehaviorInteractWithFaces.StopTracking", "");
     _trackedFaceID = Face::UnknownFace;
     robot.GetActionList().Cancel(_trackActionTag);
+    _trackActionTag = (u32)ActionConstants::INVALID_TAG;
+    _currentState = State::Inactive;
+    _trackingFaces.clear();
+    
+    // Put the live idle params back like they were
+    robot.GetAnimationStreamer().SetAllParams(_originalLiveIdleParams);
   }
+  
+  inline BehaviorInteractWithFaces::Face::ID_t BehaviorInteractWithFaces::GetRandIdHelper(const std::set<Face::ID_t>& faceList)
+  {
+    assert(!faceList.empty());
+    s32 offset = GetRNG().RandIntInRange(0, static_cast<s32>(faceList.size()-1));
+    auto randIter = faceList.begin();
+    while(offset-- > 0) {
+      ++randIter;
+      assert(randIter != faceList.end());
+    }
+    
+    return *randIter;
+  }
+  
+  void BehaviorInteractWithFaces::TrackNextFace(Robot& robot, Face::ID_t lastFace, double currentTime_sec)
+  {
+    _trackingFaces.erase(lastFace);
+    
+    if(_trackingFaces.empty()) {
+      PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace.NoMoreFaces",
+                       "No more faces to track, switching to Inactive.");
+      StopTracking(robot);
+    } else {
+      // Pick next face from those available to look at
+      Face::ID_t nextFace = GetRandIdHelper(_trackingFaces);
+      PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace",
+                       "LastFace = %llu, NextFace = %llu", lastFace, nextFace);
+      StartTracking(robot, nextFace, currentTime_sec);
+    }
+  } // TrackNextFace()
+  
+  
+  void BehaviorInteractWithFaces::SwitchToDifferentFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec)
+  {
+    if(_trackingFaces.size() > 1 || _trackingFaces.count(currentFace)==0)
+    {
+      auto tempList(_trackingFaces);
+      tempList.erase(currentFace); // remove current face from consideration
+      Face::ID_t nextFace = GetRandIdHelper(tempList);
+      PRINT_NAMED_INFO("BehaviorInteractWithFaces.SwitchToDifferentFace",
+                       "CurrentFace = %llu, NextFace = %llu", currentFace, nextFace);
+      StartTracking(robot, nextFace, currentTime_sec);
+    } else {
+      PRINT_NAMED_WARNING("BehaviorInteractWithFaces.SwitchToDifferentFace.NoMoreFaces",
+                          "Face %llu is the only one in the tracking list", currentFace);
+    }
+  } // SwitchToDifferentFace()
   
   
   IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot, double currentTime_sec)
   {
-    MoodManager& moodManager = robot.GetMoodManager();
-    
     Status status = Status::Running;
     
     switch(_currentState)
@@ -193,67 +302,43 @@ namespace Cozmo {
         {
           float headAngle = robot.GetHeadAngle();
           
-          // Move head down to check for a block
-          MoveHeadToAngleAction* moveHeadAction = new MoveHeadToAngleAction(0);
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
-          
-          // Now move the head back up to the angle it was previously at
-          moveHeadAction = new MoveHeadToAngleAction(headAngle);
-          
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, moveHeadAction);
+          // Move head down to check for a block, then look back up.
+          CompoundActionSequential* moveHeadAction = new CompoundActionSequential({
+            new MoveHeadToAngleAction(0),
+            new MoveHeadToAngleAction(headAngle),
+          });
           _lastActionTag = moveHeadAction->GetTag();
+          robot.GetActionList().QueueActionNow(Robot::DriveAndManipulateSlot, moveHeadAction);
+          
           _isActing = true;
           _lastGlanceTime = currentTime_sec;
           break;
         }
         
-        // If we don't have any faces to care about, we're done here
+        // Otherwise, move to the next "interesting" face in our list that's still
+        // a valid face in FaceWorld
+        //auto observedFaces = robot.GetFaceWorld().GetKnownFaceIDsObservedSince(robot.GetLastImageTimeStamp());
         auto iterFirst = _interestingFacesOrder.begin();
-        if (_interestingFacesOrder.end() == iterFirst)
+        Face::ID_t faceID = Face::UnknownFace;
+        const Face* face = nullptr;
+        while(nullptr == face && iterFirst != _interestingFacesOrder.end())
         {
-          _currentState = State::Interrupted;
-          break;
+          faceID = *iterFirst;
+          face = robot.GetFaceWorld().GetFace(faceID);
+          iterFirst = _interestingFacesOrder.erase(iterFirst);
         }
-        
-        auto faceID = *iterFirst;
-        const Face* face = robot.GetFaceWorld().GetFace(faceID);
+
         if(face == nullptr)
         {
-          PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
-                            "Got event that face ID %lld was observed, but it wasn't found.",
-                            faceID);
+          // If we don't have any faces to care about, we're done here
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.NoValidFaceIDs",
+                           "No valid face IDs remaining.");
+          status = IBehavior::Status::Complete;
           break;
         }
-        
-        auto dataIter = _interestingFacesData.find(faceID);
-        if (_interestingFacesData.end() == dataIter)
-        {
-          PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.MissingInteractionData",
-                            "Failed to find interaction data associated with faceID %llu", faceID);
-          break;
-        }
-        
-        if (_newFaceAnimCooldownTime == 0.0)
-        {
-          _newFaceAnimCooldownTime = currentTime_sec;
-        }
-        // If we haven't played our init anim yet for this face and it's been awhile since we did so, do so and break early
-        if (!dataIter->second._playedInitAnim && currentTime_sec >= _newFaceAnimCooldownTime)
-        {
-          robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, new FacePoseAction(face->GetHeadPose(), 0, DEG_TO_RAD(179)));
-          PlayAnimation(robot, "ID_react2block_01");
-          moodManager.AddToEmotions(EmotionType::Happy,  kEmotionChangeMedium,
-                                    EmotionType::Social, kEmotionChangeMedium,
-                                    EmotionType::Excited,    kEmotionChangeSmall,  "SeeSomethingNew");
-          dataIter->second._playedInitAnim = true;
-          _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
-          break;
-        }
-        
-        dataIter->second._trackingStart_sec = currentTime_sec;
         
         // Start tracking face
-        StartTracking(robot, face->GetID());
+        StartTracking(robot, face->GetID(), currentTime_sec);
         UpdateBaselineFace(robot, face);
         
         PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchToTracking",
@@ -269,57 +354,45 @@ namespace Cozmo {
         //auto faceID = robot.GetMoveComponent().GetTrackToFace();
         auto faceID = _trackedFaceID;
         
-        // If we aren't tracking the first faceID in the list, something's wrong
-        if (_interestingFacesOrder.empty() || _interestingFacesOrder.front() != faceID)
+        // If we aren't tracking something in the tracking list, something's wrong
+        if(_trackingFaces.count(faceID) == 0)
         {
-          // The face we're tracking doesn't match the first one in our list, so reset our state to select the right one
-          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchToInactive",
-                           "faceID %lld not first of %lu interesting faces",
-                           faceID,
-                           _interestingFacesOrder.size());
-          //robot.GetMoveComponent().DisableTrackToFace();
-          StopTracking(robot);
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.InvalidFace",
+                           "Face %lld is not in the set of tracking faces. "
+                           "Trying another.", faceID);
+          TrackNextFace(robot, faceID, currentTime_sec);
           break;
         }
-        
-        // If too much time has passed since we last saw this face, remove it go back to inactive state and find a new face
-        auto lastSeen = _interestingFacesData[faceID]._lastSeen_sec;
-        if(currentTime_sec - lastSeen > _trackingTimeout_sec)
-        {
-          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
-                                               EmotionType::Social, -kEmotionChangeVerySmall, "LostFace");
-          
-          //robot.GetMoveComponent().DisableTrackToFace();
-          StopTracking(robot);
-
-          _interestingFacesOrder.pop_front();
-          _interestingFacesData.erase(faceID);
-          
-          PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.DisablingTracking",
-                           "Current t=%.2f - lastSeen time=%.2f > timeout=%.2f. "
-                           "Switching back to looking around.",
-                           currentTime_sec, lastSeen, _trackingTimeout_sec);
-          break;
-        }
-        
-        // If we've watched this face longer than it's considered interesting, put it on cooldown and go to inactive
+       
+        // If we've watched this face longer than it's considered interesting, put it on cooldown
         auto watchingFaceDuration = currentTime_sec - _interestingFacesData[faceID]._trackingStart_sec;
-        if (watchingFaceDuration >= kFaceInterestingDuration_sec)
+        
+        //float interestingDurationThreshold = kFaceInterestingDuration_sec;
+        if(_trackingFaces.size() > 1) {
+          const float interestingDurationThreshold = GetRNG().RandDblInRange(kMultiFaceInterestingDuration_sec-kMultiFaceInterestingVariation_sec, kMultiFaceInterestingDuration_sec+kMultiFaceInterestingVariation_sec);
+        
+          if(watchingFaceDuration >= interestingDurationThreshold)
+          {
+            SwitchToDifferentFace(robot, faceID, currentTime_sec);
+            
+            PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchFaces",
+                             "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
+                             watchingFaceDuration, interestingDurationThreshold);
+            break;
+          }
+        } else if(watchingFaceDuration >= kFaceInterestingDuration_sec)
         {
           robot.GetMoodManager().AddToEmotions(EmotionType::Happy,   kEmotionChangeSmall,
                                                EmotionType::Excited, kEmotionChangeSmall,
                                                EmotionType::Social,  kEmotionChangeLarge,  "LotsOfFace");
-
-          //robot.GetMoveComponent().DisableTrackToFace();
-          StopTracking(robot);
           
-          _interestingFacesOrder.erase(_interestingFacesOrder.begin());
-          _interestingFacesData.erase(faceID);
           _cooldownFaces[faceID] = currentTime_sec + kFaceCooldownDuration_sec;
+          StopTracking(robot);
           
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.FaceOnCooldown",
                            "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
                            watchingFaceDuration, kFaceInterestingDuration_sec);
+          break;
         }
         
         // We need a face to work with
@@ -332,8 +405,9 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("BehaviorInteractWithFaces.Update.InvalidFaceID",
                             "Updating with face ID %lld, but it wasn't found.",
                             faceID);
-          //robot.GetMoveComponent().DisableTrackToFace();
-          StopTracking(robot);
+          
+          TrackNextFace(robot, faceID, currentTime_sec);
+          
           break;
         }
         
@@ -406,10 +480,11 @@ namespace Cozmo {
     return status;
   } // Update()
   
-  void BehaviorInteractWithFaces::PlayAnimation(Robot& robot, const std::string& animName)
+  void BehaviorInteractWithFaces::PlayAnimation(Robot& robot, const std::string& animName,
+                                                QueueActionPosition position)
   {
     PlayAnimationAction* animAction = new PlayAnimationAction(animName);
-    robot.GetActionList().QueueActionAtEnd(IBehavior::sActionSlot, animAction);
+    robot.GetActionList().QueueAction(IBehavior::sActionSlot, position, animAction);
     _lastActionTag = animAction->GetTag();
     _isActing = true;
   }
@@ -425,6 +500,8 @@ namespace Cozmo {
       StopTracking(robot);
     }
     _currentState = State::Interrupted;
+    
+    robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);
     
     return RESULT_OK;
   }
@@ -511,7 +588,7 @@ namespace Cozmo {
     
     Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
     
-    // We need a face to work with
+    // We need a valid face to work with
     const Face* face = robot.GetFaceWorld().GetFace(faceID);
     if(face == nullptr)
     {
@@ -591,6 +668,7 @@ namespace Cozmo {
     RemoveFaceID(static_cast<Face::ID_t>(msg.faceID));
   }
   
+  
   void BehaviorInteractWithFaces::RemoveFaceID(Face::ID_t faceID)
   {
     auto dataIter = _interestingFacesData.find(faceID);
@@ -608,15 +686,47 @@ namespace Cozmo {
       }
       else
       {
-        orderIter++;
+        ++orderIter;
       }
     }
     
     _trackingFaces.erase(faceID);
-  }
+  } // RemoveFaceID()
   
-  void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face) const
+  
+  void BehaviorInteractWithFaces::UpdateProceduralFace(Robot& robot, ProceduralFace& proceduralFace, const Face& face)
   {
+    // Occasionally tilt face
+    // TODO: move these params / consts to the header
+    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if(currentTime - _lastFaceTiltTime > _faceTiltSpacing)
+    {
+      AnimationStreamer::FaceTrack tiltTrack;
+      ProceduralFace face;
+
+      if(_currentTilt == 0.f) {
+        if(GetRNG().RandDbl() > 0.5) {
+          _currentTilt = kTiltFaceAmount_deg;
+        } else {
+          _currentTilt = -kTiltFaceAmount_deg;
+        }
+      } else {
+        _currentTilt = 0.f;
+      }
+      
+      face.GetParams().SetFaceAngle(_currentTilt);
+
+      tiltTrack.AddKeyFrame(ProceduralFaceKeyFrame(face, 250));
+      if(_tiltLayerTag != 0) {
+        robot.GetAnimationStreamer().RemovePersistentFaceLayer(_tiltLayerTag);
+      }
+      _tiltLayerTag = robot.GetAnimationStreamer().AddPersistentFaceLayer(std::move(tiltTrack));
+      
+      _lastFaceTiltTime = currentTime;
+      _faceTiltSpacing = GetRNG().RandDblInRange(kTiltSpacingMin_sec, kTiltSpacingMax_sec);
+      
+    } // if(time to tilt face)
+    
 #   if DO_FACE_MIMICKING
     ProceduralFace prevProcFace(proceduralFace);
     
@@ -691,6 +801,7 @@ namespace Cozmo {
 #   endif // DO_FACE_MIMICKING
   } // UpdateProceduralFace()
   
+  
   void BehaviorInteractWithFaces::HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event)
   {
     const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
@@ -702,6 +813,27 @@ namespace Cozmo {
 #     endif
       _isActing = false;
     }
-  }
+    
+    if(RobotActionType::TRACK_FACE == msg.actionType) {
+      if(_trackActionTag == msg.idTag) {
+        const auto lastFaceID = msg.completionInfo.Get_trackFaceCompleted().faceID;
+        
+        if(ActionResult::FAILURE_TIMEOUT == msg.result) {
+          PRINT_NAMED_INFO("BehaviorInteractWithFaces.HandleRobotCompletedAction.TimedOut",
+                           "Timed out tracking face %d, attempting to switch to next.",
+                           lastFaceID);
+          
+          robot.GetMoodManager().AddToEmotions(EmotionType::Happy,  -kEmotionChangeVerySmall,
+                                               EmotionType::Social, -kEmotionChangeVerySmall, "LostFace");
+        }
+        
+        TrackNextFace(robot, lastFaceID, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+      }
+    }
+  } // HandleRobotCompletedAction()
+  
+
+
+
 } // namespace Cozmo
 } // namespace Anki
