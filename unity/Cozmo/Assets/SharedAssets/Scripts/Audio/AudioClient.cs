@@ -37,10 +37,7 @@ namespace Anki {
           _RobotEngineManager = RobotEngineManager.Instance;
           // Setup Engine To Game callbacks
           if (null != _RobotEngineManager) {
-            _RobotEngineManager.ReceivedAudioCallbackDuration += HandleCallback;
-            _RobotEngineManager.ReceivedAudioCallbackMarker += HandleCallback;
-            _RobotEngineManager.ReceivedAudioCallbackComplete += HandleCallback;
-            _RobotEngineManager.ReceivedAudioCallbackError += HandleCallback;
+            _RobotEngineManager.ReceivedAudioCallback += HandleCallback;
             _IsInitialized = true;
           }
           else {
@@ -49,11 +46,7 @@ namespace Anki {
         }
 
         ~AudioClient() {
-          _RobotEngineManager.ReceivedAudioCallbackDuration -= HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackMarker -= HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackComplete -= HandleCallback;
-          _RobotEngineManager.ReceivedAudioCallbackError -= HandleCallback;
-
+          _RobotEngineManager.ReceivedAudioCallback -= HandleCallback;
           _RobotEngineManager = null;
           _IsInitialized = false;
         }
@@ -180,38 +173,8 @@ namespace Anki {
         }
       
         // Handle message types
-        private void HandleCallback(AudioCallbackDuration message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Duration " + message.ToString());
-          CallbackInfo info = new CallbackInfo(message);
-          if (null != OnAudioCallback) {
-            OnAudioCallback(info);
-          }
-          // Call back handle
-          PerformCallbackHandler(info.PlayId, info);
-        }
-
-        private void HandleCallback(AudioCallbackMarker message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Marker " + message.ToString());
-          CallbackInfo info = new CallbackInfo(message);
-          if (null != OnAudioCallback) {
-            OnAudioCallback(info);
-          }
-          // Call back handle
-          PerformCallbackHandler(info.PlayId, info);
-        }
-
-        private void HandleCallback(AudioCallbackComplete message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Complete " + message.ToString());
-          CallbackInfo info = new CallbackInfo(message);
-          if (null != OnAudioCallback) {
-            OnAudioCallback(info);
-          }
-          // Call back handle
-          PerformCallbackHandler(info.PlayId, info);
-        }
-
-        private void HandleCallback(AudioCallbackError message) {
-          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback Error " + message.ToString());
+        private void HandleCallback(AudioCallback message) {
+          DAS.Debug("AudioController.HandleCallback", "Received Audio Callback " + message.ToString());
           CallbackInfo info = new CallbackInfo(message);
           if (null != OnAudioCallback) {
             OnAudioCallback(info);
