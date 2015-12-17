@@ -11,6 +11,7 @@
 #include "navMeshQuadTreeNode.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
+#include "util/math/constantsAndMacros.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -60,7 +61,7 @@ Quad2f NavMeshQuadTreeNode::MakeQuadXY() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
+bool NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
 {
   // we need to subdivide or fit within the clear quad, since this implementation doesn't keep partial
   // info within a quad, that's what subquads would be for
@@ -70,9 +71,14 @@ void NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
 
   // if we are already clear, we won't gain new info, so we can skip
   if ( _contentType == EContentType::Clear ) {
-    return;
+    return false;
   }
+  
+  // to check for changes
+  EContentType previousType = _contentType;
+  bool childChanged = false;
 
+  // check if the quad affects us
   const Quad2f& myQuad = MakeQuadXY();
   if ( myQuad.Intersects(quad) )
   {
@@ -106,10 +112,10 @@ void NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
       {
         // ask children to add quad
         for( auto& child : _children ) {
-          child.AddClearQuad(quad);
+          childChanged = child.AddClearQuad(quad) || childChanged;
         }
         
-        // try to automerge
+        // try to automerge (if it does content type will changed from subdivided to something else)
         TryAutoMerge();
       }
       else
@@ -151,10 +157,47 @@ void NavMeshQuadTreeNode::AddClearQuad(const Quad2f& quad)
       }
     }
   }
-  else
-  {
-    // no new info, keep old
-  }
+  
+  const bool ret = (_contentType != previousType) || childChanged;
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void NavMeshQuadTreeNode::UpgradeToParent(const Point2f& direction)
+{
+  CORETECH_ASSERT( !NEAR_ZERO(direction.x()) && !NEAR_ZERO(direction.y()) );
+
+  // save my old children to store in the child that is taking my spot
+  std::vector<NavMeshQuadTreeNode> oldChildren;
+  std::swap(oldChildren, _children);
+
+  const bool xPlus = FLT_GTR_ZERO(direction.x());
+  const bool yPlus = FLT_GTR_ZERO(direction.y());
+  
+  // move to its new center
+  const float oldHalfSize = _size * 0.50f;
+  _center.x() = _center.x() + (xPlus ? oldHalfSize : -oldHalfSize);
+  _center.y() = _center.y() + (yPlus ? oldHalfSize : -oldHalfSize);
+
+  // create new children
+  _children.emplace_back( Point3f{_center.x()+oldHalfSize, _center.y()+oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // up L
+  _children.emplace_back( Point3f{_center.x()-oldHalfSize, _center.y()+oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // lo L
+  _children.emplace_back( Point3f{_center.x()+oldHalfSize, _center.y()-oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // up R
+  _children.emplace_back( Point3f{_center.x()-oldHalfSize, _center.y()-oldHalfSize, _center.z()}, _size, _maxDepth, EContentType::Unknown ); // lo E
+
+  // calculate the child that takes my place by using the opposite direction to expansion
+  size_t childIdx = 0;
+  if      (  xPlus && !yPlus ) { childIdx = 1; }
+  else if ( !xPlus &&  yPlus ) { childIdx = 2; }
+  else if (  xPlus &&  yPlus ) { childIdx = 3; }
+  
+  // swap children with the temp
+  std::swap(_children[childIdx]._children, oldChildren);
+  _children[childIdx]._contentType = _contentType; // inherit content type
+  
+  // upgrade my remaining stats
+  _size = _size * 2.0f;
+  ++_maxDepth;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -173,6 +216,7 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
       case EContentType::Obstacle   : { color = Anki::NamedColors::RED;       break; }
     }
     color.SetAlpha(0.25f);
+    //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_maxDepth*100}, _size));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _size));
   }
   else

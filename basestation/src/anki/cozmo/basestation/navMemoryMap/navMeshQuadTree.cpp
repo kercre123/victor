@@ -34,6 +34,8 @@ void NavMeshQuadTree::Draw() const
     VizManager::SimpleQuadVector quadVector;
     _root.AddQuadsToDraw(quadVector);
     VizManager::getInstance()->DrawQuadVector("NavMemoryMap", quadVector); // TODO set proper name
+
+    PRINT_NAMED_INFO("RSAM", "#quads : %zu", quadVector.size());
   
     _gfxDirty = false;
   }
@@ -42,19 +44,28 @@ void NavMeshQuadTree::Draw() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void NavMeshQuadTree::AddClearQuad(const Quad2f& quad)
 {
-  _gfxDirty = true;
-
   // if the root fully contains the quad, then delegate on it
   if ( _root.Contains( quad ) )
   {
-    _root.AddClearQuad(quad);
+    _gfxDirty = _root.AddClearQuad(quad);
   }
   else
   {
-    // otherwise, we need to expand the root, but that means either rebuilding the quadtree or finding
-    // a smart way to merge the current root into a new parent. Note that increases the depth and the size
-    // of the root, so I'll think about it later (rsam 12/15/2015)
-//    ASSERT_NAMED(false, "NavMeshQuadTree.AddClearQuad.NotImplemented");
+    _gfxDirty = true;
+    
+    // Find in which direction we are expanding and upgrade root level in that direction
+    const Vec2f& direction = quad.ComputeCentroid() - Point2f{_root.GetCenter().x(), _root.GetCenter().y()};
+    _root.UpgradeToParent(direction);
+
+    // should be contained, otherwise more expansions as required. This can only happen if quad size is too small
+    // or direction is wrong
+    if ( !_root.Contains(quad) ) {
+      PRINT_NAMED_ERROR("NavMeshQuadTree.AddClearQuad.InsufficientExpansion",
+        "Quad caused expansion, but expansion was not enough.");
+    }
+
+    // treat the quad after expansion
+    _root.AddClearQuad(quad);
   }
 }
 

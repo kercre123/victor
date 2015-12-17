@@ -65,10 +65,14 @@ public:
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // notifies 
-  void AddClearQuad(const Quad2f& quad);
+  // process a clear quad that affected this node's parent. Returns true if the node changed
+  bool AddClearQuad(const Quad2f& quad);
   
-  void AddObstacle(); // new obstacle found, split mesh to cover obstacle
+  // process an obstacle that affected this node's parent
+  void AddObstacle();
+
+  // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
+  void UpgradeToParent(const Point2f& direction);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Render
