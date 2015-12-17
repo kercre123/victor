@@ -39,8 +39,7 @@ public:
   void SetAudioBuffer( RobotAudioBuffer* audioBuffer ) { _audioBuffer = audioBuffer; }
   
   // Post Cozmo specific Audio events
-  CallbackIdType PostCozmoEvent( EventType event,
-                                 AudioCallbackFlag callbackFlag = AudioCallbackFlag::EventNone );
+  CallbackIdType PostCozmoEvent( EventType event );
   
   // Load animation and begin to buffer audio
   bool LoadAnimationAudio( Animation* anAnimation );
@@ -59,7 +58,7 @@ public:
   
   // Return false if we expect to have buffer however it is not ready yet
   bool PrepareRobotAudioMessage( TimeStamp_t startTime_ms,
-                                 TimeStamp_t streamingTime_ms);
+                                 TimeStamp_t streamingTime_ms );
 
   // Pop the front EngineToRobot audio message
   // Will set out_RobotAudioMessagePtr to Null if there are no messages for provided current time. Use this to identify

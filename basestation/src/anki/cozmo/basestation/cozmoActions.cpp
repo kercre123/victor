@@ -3435,14 +3435,12 @@ namespace Anki {
             {
               const AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
               if (AudioCallbackInfoTag::callbackComplete == tag ||
-                  AudioCallbackInfoTag::callbackError == tag) {
+                  AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
                 _isCompleted = true;
               }
             };
             
-            robot.GetRobotAudioClient()->PostEvent(_event, _gameObj,
-                                                   AudioCallbackFlag::EventComplete,
-                                                   callback);
+            robot.GetRobotAudioClient()->PostEvent(_event, _gameObj, callback);
           }
           else {
             robot.GetRobotAudioClient()->PostEvent(_event, _gameObj);

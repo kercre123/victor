@@ -38,19 +38,18 @@ void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHan
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType AudioEngineClient::PostEvent( EventType event,
                                                                 GameObjectType gameObject,
-                                                                AudioCallbackFlag callbackFlag,
                                                                 CallbackFunc callback )
 {
   if ( nullptr != _messageHandler ) {
     
-    const CallbackIdType callbackId = AudioCallbackFlag::EventNone != callbackFlag ? GetNewCallbackId() : kInvalidCallbackId;
+    const CallbackIdType callbackId = nullptr != callback ? GetNewCallbackId() : kInvalidCallbackId;
     
     // Store callback
-    if (AudioCallbackFlag::EventNone != callbackFlag && nullptr != callback) {
-      _callbackMap.emplace( callbackId, AudioCallbackBundle( callbackFlag, callback ) );
+    if ( nullptr != callback ) {
+      _callbackMap.emplace( callbackId, callback );
     }
     // Post event
-    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackFlag, callbackId ) );
+    const MessageAudioClient msg( PostAudioEvent( event, gameObject, callbackId ) );
     _messageHandler->Broadcast( std::move( msg ) );
     return callbackId;
   }
@@ -122,13 +121,13 @@ void AudioEngineClient::HandleCallbackEvent( const AudioCallback& callbackMsg )
   const auto& callbackIt = _callbackMap.find( static_cast<CallbackIdType>( callbackMsg.callbackId ) );
   if ( callbackIt != _callbackMap.end() ) {
     // Perfomr Callback Func
-    callbackIt->second.Func( callbackMsg );
+    callbackIt->second( callbackMsg );
     
-    // Delete if it is completed, there there is an error or callback listener is only waiting for Duration callback
+    // FIXME: Waiting to hear back from WWise if complete callback is allways called, if so remove callback check
+    // Delete if it is completed or there there is an error
     AudioCallbackInfoTag callbackTag = callbackMsg.callbackInfo.GetTag();
     if ( AudioCallbackInfoTag::callbackComplete == callbackTag ||
-         AudioCallbackInfoTag::callbackError == callbackTag ||
-        ( AudioCallbackInfoTag::callbackDuration == callbackTag && AudioCallbackFlag::EventDuration == callbackIt->second.Flag ) )
+         AudioCallbackInfoTag::callbackError == callbackTag )
     {
       _callbackMap.erase( callbackIt );
     }

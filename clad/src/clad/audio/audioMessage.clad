@@ -16,8 +16,7 @@ message PostAudioEvent
 {
   EventType         audioEvent,
   GameObjectType    gameObject,
-  AudioCallbackFlag callbackFlag,
-  uint_16           callbackId = 0
+  uint_16           callbackId = 0  // Send all callbacks if this is NOT == 0
 }
 
 message StopAllAudioEvents
