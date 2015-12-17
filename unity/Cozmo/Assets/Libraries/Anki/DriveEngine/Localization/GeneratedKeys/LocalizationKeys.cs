@@ -100,6 +100,9 @@ public static class LocalizationKeys {
   public const string kSpeedTapTitle = "speedTap.title";
   public const string kSpeedTapSubtitle = "speedTap.subtitle";
   public const string kSpeedTapDescription = "speedTap.description";
+  public const string kSpeedTapRoundsText = "speedTap.roundsText";
+  public const string kSpeedTapRoundsWonCozmo = "speedTap.roundsWon.cozmo";
+  public const string kSpeedTapRoundsWonPlayer = "speedTap.roundsWon.player";
   public const string kSpeedTapScoreCozmo = "speedTap.score.cozmo";
   public const string kSpeedTapScorePlayer = "speedTap.score.player";
   public const string kTreasureHuntTitle = "treasureHunt.title";
@@ -113,6 +116,9 @@ public static class LocalizationKeys {
   public const string kVortexVortexWon = "vortex.vortexWon";
   public const string kPeekabooTitle = "peekaboo.title";
   public const string kPeekabooLabelPoints = "peekaboo.label.points";
+  public const string kCubeSlapTitle = "cubeSlap.title";
+  public const string kCubeSlapSubtitle = "cubeSlap.subtitle";
+  public const string kCubeSlapDescription = "cubeSlap.description";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameProgressBarDefaultLabel = "minigame.progressBar.defaultLabel";

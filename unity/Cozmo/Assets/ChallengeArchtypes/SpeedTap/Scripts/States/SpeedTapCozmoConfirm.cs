@@ -11,10 +11,6 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-
-      _SpeedTapGame.CozmoScore = 0;
-      _SpeedTapGame.PlayerScore = 0;
-      _SpeedTapGame.UpdateUI();
       _CurrentRobot.DriveWheels(20.0f, 20.0f);
     }
 

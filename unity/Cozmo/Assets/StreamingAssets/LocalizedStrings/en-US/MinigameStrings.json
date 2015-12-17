@@ -63,11 +63,20 @@
     "speedTap.description" : {
         "translation" : "Speed Tap Description"
     },
+    "speedTap.roundsText" : {
+        "translation" : "Round: {0:N1}/{1:N1}"
+    },
+    "speedTap.roundsWon.cozmo" : {
+        "translation" : "cozmo rounds won: {0:N1}"
+    },
+    "speedTap.roundsWon.player" : {
+        "translation" : "player rounds won: {0:N1}"
+    },
     "speedTap.score.cozmo" : {
-        "translation" : "cosmo: {0:N}"
+        "translation" : "cozmo score: {0:N1}"
     },
     "speedTap.score.player" : {
-        "translation" : "player: {0:N}"
+        "translation" : "player score: {0:N1}"
     },
     "treasureHunt.title" : {
         "translation" : "Treasure Hunt"

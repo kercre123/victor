@@ -14,6 +14,7 @@ namespace SpeedTap {
       _CurrentRobot.SetHeadAngle(-1.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
+      _SpeedTapGame.ResetScore();
     }
 
     public override void Update() {

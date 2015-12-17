@@ -11,3 +11,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a449b0de3bc04d88802548a816083a6, type: 3}
   m_Name: SpeedTapGameChallenge_Config
   m_EditorClassIdentifier: 
+  Rounds: 3
+  MaxScorePerRound: 5

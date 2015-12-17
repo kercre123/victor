@@ -9,9 +9,14 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
-    public int CozmoScore;
-    public int PlayerScore;
     public Color MatchColor;
+
+    private int _CozmoScore;
+    private int _PlayerScore;
+    private int _PlayerRoundsWon;
+    private int _CozmoRoundsWon;
+    private int _Rounds;
+    private int _MaxScorePerRound;
 
     public event Action PlayerTappedBlockEvent;
 
@@ -19,14 +24,63 @@ namespace SpeedTap {
     private SpeedTapPanel _GamePanelPrefab;
     private SpeedTapPanel _GamePanel;
 
+    public void ResetScore() {
+      _CozmoScore = 0;
+      _PlayerScore = 0;
+      UpdateUI();
+    }
+
+    public void CozmoWinsHand() {
+      _CozmoScore++;
+      CheckRounds();
+      UpdateUI();
+    }
+
+    public void PlayerWinsHand() {
+      _PlayerScore++;
+      CheckRounds();
+      UpdateUI();
+    }
+
+    public void PlayerLosesHand() {
+      _PlayerScore = Mathf.Max(0, _PlayerScore - 1);
+      UpdateUI();
+    }
+
+    private void CheckRounds() {
+      if (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound) {
+
+        if (_PlayerScore > _CozmoScore) {
+          _PlayerRoundsWon++;
+        }
+        else {
+          _CozmoRoundsWon++;
+        }
+
+        int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
+        int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
+        int roundsLeft = _Rounds - losingScore - winningScore;
+        if (winningScore > losingScore + roundsLeft) {
+          if (_PlayerRoundsWon > _CozmoRoundsWon) {
+            RaiseMiniGameWin();
+          }
+          else {
+            RaiseMiniGameLose();
+          }
+        }
+        ResetScore();
+      }
+    }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       InitializeMinigameObjects();
+      SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
+      _Rounds = speedTapConfig.Rounds;
+      _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
     }
 
     // Use this for initialization
     protected void InitializeMinigameObjects() { 
-      DAS.Info(this, "Game Created");
-
       InitialCubesState initCubeState = new InitialCubesState();
       initCubeState.InitialCubeRequirements(new SpeedTapWaitForCubePlace(), 2, true, InitialCubesDone);
       _StateMachine.SetNextState(initCubeState);
@@ -60,7 +114,7 @@ namespace SpeedTap {
     }
 
     public void UpdateUI() {
-      _GamePanel.SetScoreText(CozmoScore, PlayerScore);
+      _GamePanel.SetScoreText(_CozmoScore, _PlayerScore, _CozmoRoundsWon, _PlayerRoundsWon, _Rounds);
     }
 
     public void RollingBlocks() {
@@ -74,7 +128,6 @@ namespace SpeedTap {
     }
 
     private void BlockTapped(int blockID, int tappedTimes) {
-      DAS.Info(this, "Player Block Tapped.");
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
           PlayerTappedBlockEvent();

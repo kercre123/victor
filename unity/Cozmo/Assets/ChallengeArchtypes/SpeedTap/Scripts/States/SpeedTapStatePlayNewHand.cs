@@ -21,7 +21,7 @@ namespace SpeedTap {
 
     public override void Enter() {
       base.Enter();
-      GameAudioClient.SetMusicState(MusicGroupStates.CUBE_INTERACTIONFIRST);
+      GameAudioClient.SetMusicState(MusicGroupStates.PLAYFUL);
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _StartTimeMs = Time.time * 1000.0f;
       _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
@@ -42,8 +42,7 @@ namespace SpeedTap {
       if (_LightsOn) {
         if (_GotMatch) {
           if (!_CozmoTapping) {
-            if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) {
-              DAS.Info("SpeedTap.CozmoTapping", "" + _SpeedTapGame.CozmoScore);
+            if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimation(AnimationName.kTapCube);
               _CozmoTapping = true;
             }
