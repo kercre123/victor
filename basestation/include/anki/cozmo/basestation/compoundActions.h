@@ -27,10 +27,13 @@ namespace Anki {
       
       virtual void AddAction(IActionRunner* action);
       
-      void ClearActions();
       
       // Call any unfinished constituent actions' Cleanup() methods
       virtual void Cleanup(Robot& robot) override final;
+      
+      // First calls cleanup on any constituent actions and then removes them
+      // from this compound action completely.
+      void ClearActions(Robot& robot);
       
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();

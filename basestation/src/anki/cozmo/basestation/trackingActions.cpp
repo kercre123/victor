@@ -45,6 +45,11 @@ u8 ITrackAction::GetAnimTracksToDisable() const
   }
 }
   
+u8 ITrackAction::GetMovementTracksToIgnore() const
+{
+  return GetAnimTracksToDisable();
+}
+  
 void ITrackAction::SetPanTolerance(const Radians& panThreshold)
 {
   _panTolerance = panThreshold.getAbsoluteVal();
@@ -74,6 +79,11 @@ void ITrackAction::SetTiltTolerance(const Radians& tiltThreshold)
   }
 }
   
+bool ITrackAction::Interrupt()
+{
+  _lastUpdateTime = 0.f;
+  return true;
+}
 
 ActionResult ITrackAction::CheckIfDone(Robot& robot)
 {
@@ -312,7 +322,7 @@ ActionResult TrackFaceAction::Init(Robot& robot)
 {
   _name = "TrackFace" + std::to_string(_faceID) + "Action";
   robot.GetMoveComponent().SetTrackToFace(_faceID);
-  
+  _lastFaceUpdate = 0;
   return ActionResult::SUCCESS;
 } // Init()
   
@@ -373,27 +383,29 @@ bool TrackFaceAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& abs
 #pragma mark -
 #pragma mark TrackMotionAction
   
-  ActionResult TrackMotionAction::Init(Robot& robot)
-  {
-    if(false == robot.HasExternalInterface()) {
-      PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
-                        "Robot must have an external interface so action can "
-                        "subscribe to motion observation events.");
-      return ActionResult::FAILURE_ABORT;
-    }
-    
-    using namespace ExternalInterface;
-    auto HandleObservedMotion = [this](const AnkiEvent<MessageEngineToGame>& event)
-    {
-      _gotNewMotionObservation = true;
-      this->_motionObservation = event.GetData().Get_RobotObservedMotion();
-    };
-    
-    _signalHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
-    
-    return ActionResult::SUCCESS;
-  } // Init()
+ActionResult TrackMotionAction::Init(Robot& robot)
+{
+  if(false == robot.HasExternalInterface()) {
+    PRINT_NAMED_ERROR("TrackMotionAction.Init.NoExternalInterface",
+                      "Robot must have an external interface so action can "
+                      "subscribe to motion observation events.");
+    return ActionResult::FAILURE_ABORT;
+  }
   
+  _gotNewMotionObservation = false;
+  
+  using namespace ExternalInterface;
+  auto HandleObservedMotion = [this](const AnkiEvent<MessageEngineToGame>& event)
+  {
+    _gotNewMotionObservation = true;
+    this->_motionObservation = event.GetData().Get_RobotObservedMotion();
+  };
+  
+  _signalHandle = robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion, HandleObservedMotion);
+  
+  return ActionResult::SUCCESS;
+} // Init()
+
   
 bool TrackMotionAction::GetAngles(Robot& robot, Radians& absPanAngle, Radians& absTiltAngle)
 {

@@ -475,10 +475,16 @@ void RobotEventHandler::QueueActionHelper(const QueueActionPosition position, co
       actionList.QueueActionAtEnd(inSlot, action, numRetries);
       break;
     }
+    case QueueActionPosition::NOW_AND_RESUME:
+    {
+      actionList.QueueActionAtFront(inSlot, action, numRetries);
+      break;
+    }
     default:
     {
       PRINT_NAMED_ERROR("CozmoGameImpl.QueueActionHelper.InvalidPosition",
-                        "Unrecognized 'position' for queuing action.\n");
+                        "Unrecognized 'position' %s for queuing action.",
+                        EnumToString(position));
       return;
     }
   }
@@ -618,7 +624,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
   }
   
   // Everything's ok and we have an action, so queue it
-  QueueActionHelper(QueueActionPosition::AT_END, Robot::DriveAndManipulateSlot, robot.GetActionList(), newAction, numRetries);
+  QueueActionHelper(QueueActionPosition::NOW, Robot::DriveAndManipulateSlot, robot.GetActionList(), newAction, numRetries);
 }
   
 void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -684,7 +690,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
     return;
   }
   
-  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::BODY_TRACK)) {
+  if(robot->GetMoveComponent().IsMovementTrackIgnored(AnimTrackFlag::LIFT_TRACK)) {
     PRINT_NAMED_INFO("RobotEventHandler.HandleSetLiftHeight.LiftLocked",
                      "Ignoring ExternalInterface::SetLiftHeight while lift is locked.");
   } else {
@@ -695,7 +701,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
       
       // Put the block down right here
       IActionRunner* newAction = new PlaceObjectOnGroundAction();
-      QueueActionHelper(QueueActionPosition::AT_END, Robot::DriveAndManipulateSlot, robot->GetActionList(), newAction);
+      QueueActionHelper(QueueActionPosition::NOW, Robot::DriveAndManipulateSlot, robot->GetActionList(), newAction);
     }
     else {
       // In the normal case directly set the lift height

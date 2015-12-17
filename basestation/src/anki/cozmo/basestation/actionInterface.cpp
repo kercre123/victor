@@ -18,6 +18,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
   
@@ -75,6 +76,9 @@ namespace Anki {
                            (result==ActionResult::SUCCESS ? "succeeded" :
                             result==ActionResult::CANCELLED ? "was cancelled" : "failed"));
         }
+      
+        // Clean up after any registered sub actions and the action itself
+        ClearSubActions(robot);
         Cleanup(robot);
         
         if (_emitCompletionSignal)
@@ -147,6 +151,25 @@ namespace Anki {
       return  (uint8_t)AnimTrackFlag::HEAD_TRACK | (uint8_t)AnimTrackFlag::LIFT_TRACK | (uint8_t)AnimTrackFlag::BODY_TRACK;
     }
     
+    void IActionRunner::RegisterSubAction(IActionRunner* &subAction)
+    {
+      _subActions.push_back(&subAction);
+    }
+    
+    void IActionRunner::ClearSubActions(Robot& robot)
+    {
+      if(_subActions.empty())
+      {
+        for(auto subAction : _subActions) {
+          if(nullptr != (*subAction)) {
+            (*subAction)->Cleanup(robot);
+            Util::SafeDelete(*subAction);
+          }
+        }
+        _subActions.clear();
+      }
+    }
+    
     
 #pragma mark ---- IAction ----
     
@@ -192,6 +215,11 @@ namespace Anki {
         if(!_preconditionsMet) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
           SetStatus(GetName() + ": check preconditions");
+          
+          // Before calling Init(), clean up any subactions, in case this is not
+          // the first call to Init() -- i.e., if this is a retry or resume after
+          // being interrupted.
+          ClearSubActions(robot);
           
           // Note that derived classes will define what to do when pre-conditions
           // are not met: if they return RUNNING, then the action will effectively

@@ -90,6 +90,12 @@ namespace Anki {
       // in Reset() as well.
       virtual void Reset() = 0;
       
+      // If this method returns true, then it means the derived class is interruptible,
+      // can safely re-queued using "NOW_AND_RESUME", and will pick back up safely
+      // after the newly-queued action completes. Otherwise, this action will just
+      // be cancelled when NOW_AND_RESUME is used.
+      virtual bool Interrupt() { return false; }
+      
       // Get last status message
       const std::string& GetStatus() const { return _statusMsg; }
       
@@ -136,7 +142,19 @@ namespace Anki {
       // Derived actions can use this to set custom status messages here.
       void SetStatus(const std::string& msg);
       
+      // "Register" an action created/used by a derived class so that its
+      // Cleanup gets called as needed, and it gets deleted as needed.
+      // If this action's cleanup gets called, all registered sub actions'
+      // cleanup methods get called. Also, just before Init(), in case the
+      // action is reset and run again.
+      void RegisterSubAction(IActionRunner* &subAction);
+
+      // Call cleanup on any registered sub actions and then delete them
+      void ClearSubActions(Robot& robot);
+      
     private:
+      
+      std::list<IActionRunner**>  _subActions;
       
       // This is called when the action stops running, as long as it is not
       // marked as being part of a compound action. This calls the overload-able
@@ -221,7 +239,7 @@ namespace Anki {
       // Before giving up on entire action. Optional: default is 30 seconds
       virtual f32 GetTimeoutInSeconds()          const { return 30.f; }
       
-      virtual void Reset() override;
+      virtual void Reset() override final;
       
       // A random number generator all subclasses can share
       Util::RandomGenerator _rng;

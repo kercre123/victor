@@ -100,7 +100,7 @@ namespace Cozmo {
     if(rangeIter != _ranges.end()) {
       return rangeIter->second;
     } else {
-      static const Range fullRange(std::numeric_limits<Value_t>::min(),
+      static const Range fullRange(std::numeric_limits<Value_t>::lowest(),
                                    std::numeric_limits<Value_t>::max());
       return fullRange;
     }

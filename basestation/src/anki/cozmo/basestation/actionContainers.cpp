@@ -233,12 +233,46 @@ namespace Anki {
         return QueueAtEnd(action, numRetries);
         
       } else {
-        
         // Cancel whatever is running now and then queue this to happen next
         // (right after any cleanup due to the cancellation completes)
         _queue.front()->Cancel();
         return QueueNext(action, numRetries);
       }
+    }
+    
+    Result ActionQueue::QueueAtFront(IActionRunner* action, u8 numRetries)
+    {
+      if(action == nullptr) {
+        PRINT_NAMED_ERROR("ActionQueue.QueueAFront.NullActionPointer",
+                          "Refusing to queue a null action pointer.\n");
+        return RESULT_FAIL;
+      }
+      
+      Result result = RESULT_OK;
+      
+      if(_queue.empty()) {
+        // Nothing in the queue, so this is the same as QueueAtEnd
+        result = QueueAtEnd(action, numRetries);
+      } else {
+        // Try to interrupt whatever is running and put this new action in front of it
+        if(_queue.front()->Interrupt()) {
+          // Current front action is interruptible. Reset it so it's ready to be
+          // re-run and put the new action in front of it in the queue.
+          PRINT_NAMED_INFO("ActionQueue.QueueAtFront.Interrupt",
+                           "Interrupting %s to put %s in front of it.",
+                           _queue.front()->GetName().c_str(),
+                           action->GetName().c_str());
+          _queue.front()->Reset();
+          action->SetNumRetries(numRetries);
+          _queue.push_front(action);
+        } else {
+          // Current front action is not interruptible, so just use QueueNow and
+          // cancel it
+          result = QueueNow(action, numRetries);
+        }
+      }
+      
+      return result;
     }
     
     Result ActionQueue::QueueAtEnd(IActionRunner *action, u8 numRetries)

@@ -70,8 +70,9 @@ namespace Anki {
       _name += "]";
     }
     
-    void ICompoundAction::ClearActions()
+    void ICompoundAction::ClearActions(Robot& robot)
     {
+      Cleanup(robot);
       _actions.clear();
       Reset();
     }
